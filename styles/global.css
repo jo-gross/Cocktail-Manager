@@ -1,0 +1,24 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.rti--tag {
+    @apply badge badge-outline p-4 space-x-2 !important;
+}
+
+.rti--container {
+    @apply textarea textarea-bordered !important;
+}
+
+.rti--input {
+    @apply input input-bordered !important;
+}
+
+
+.card-body {
+    @apply p-4 !important;
+}
+
+.card {
+    @apply shadow-lg bg-base-300 space-y-2 !important;
+}

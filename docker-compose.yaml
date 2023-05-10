@@ -1,0 +1,16 @@
+version: '3.1'
+services:
+  postgres:
+    image: postgres:latest
+    container_name: cocktail-recipe-postgres
+    ports:
+      - '5432:5432'
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=cocktail_recipe
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

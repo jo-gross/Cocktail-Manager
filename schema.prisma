@@ -1,0 +1,75 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Glass {
+  id             String           @id @default(cuid())
+  name           String
+  volume         Float?
+  image          String?
+  deposit        Float
+  CocktailRecipe CocktailRecipe[]
+}
+
+model Decoration {
+  id             String           @id @default(cuid())
+  name           String
+  price          Float?
+  CocktailRecipe CocktailRecipe[]
+}
+
+model CocktailRecipe {
+  id           String               @id @default(cuid())
+  name         String
+  description  String?
+  tags         String[]
+  image        String?
+  price        Float?
+  glassWithIce String
+  glassId      String?
+  glass        Glass?               @relation(fields: [glassId], references: [id])
+  decorationId String?
+  decoration   Decoration?          @relation(fields: [decorationId], references: [id])
+  steps        CocktailRecipeStep[]
+}
+
+model CocktailRecipeStep {
+  id         String @id @default(cuid())
+  stepNumber Int
+
+  mixing Boolean
+
+  tool String
+
+  ingredients CocktailRecipeIngredient[]
+
+  cocktailRecipe   CocktailRecipe @relation(fields: [cocktailRecipeId], references: [id])
+  cocktailRecipeId String
+}
+
+model CocktailRecipeIngredient {
+  id               String      @id @default(cuid())
+  ingredientNumber Int
+  amount           Float?
+  unit             String?
+  ingredientId     String?
+  ingredient       Ingredient? @relation(fields: [ingredientId], references: [id])
+
+  cocktailRecipeStep   CocktailRecipeStep @relation(fields: [cocktailRecipeStepId], references: [id])
+  cocktailRecipeStepId String
+}
+
+model Ingredient {
+  id                       String                     @id @default(cuid())
+  name                     String
+  shortName                String?
+  price                    Float?
+  volume                   Float?
+  unit                     String?
+  CocktailRecipeIngredient CocktailRecipeIngredient[]
+}
