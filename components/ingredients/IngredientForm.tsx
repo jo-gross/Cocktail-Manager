@@ -48,10 +48,10 @@ export function IngredientForm(props: IngredientFormProps) {
         if (!values.name) {
           errors.name = "Required";
         }
-        if (!values.price) {
+        if (values.price.toString() == "" || isNaN(values.price)) {
           errors.price = "Required";
         }
-        if (!values.volume) {
+        if (values.volume.toString() == "" || isNaN(values.volume)) {
           errors.volume = "Required";
         }
         if (!values.unit) {
@@ -92,7 +92,6 @@ export function IngredientForm(props: IngredientFormProps) {
                     <span className={"label-text"}>Abkürzung</span>
                     <span className={"label-text-alt text-error space-x-2"}>
                     <span>{errors.shortName && touched.shortName && errors.shortName}</span>
-                    <span>*</span>
                   </span>
                   </label>
                   <input

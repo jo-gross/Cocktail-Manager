@@ -2,6 +2,7 @@ import prisma from "../../../lib/prisma";
 import { Glass } from "@prisma/client";
 import Link from "next/link";
 import { ManageEntityLayout } from "../../../components/layout/ManageEntityLayout";
+import { ManageColumn } from "../../../components/ManageColumn";
 
 export const getServerSideProps = async () => {
   const glasses: Glass[] = await prisma.glass.findMany();
@@ -46,13 +47,7 @@ export default function ManageGlassesOverviewPage(props: { glasses }) {
                   <td>
                     {glass.deposit} €
                   </td>
-                  <td>
-                    <div className={"flex justify-end items-center"}>
-                      <Link href={`/manage/glasses/${glass.id}`}>
-                        <div className={"btn btn-primary btn-sm"}>Edit</div>
-                      </Link>
-                    </div>
-                  </td>
+                  <ManageColumn entity={"glasses"} id={glass.id} />
                 </tr>
               ))}
               </tbody>

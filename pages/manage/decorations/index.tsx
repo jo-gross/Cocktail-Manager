@@ -2,6 +2,7 @@ import prisma from "../../../lib/prisma";
 import { Decoration } from "@prisma/client";
 import Link from "next/link";
 import { ManageEntityLayout } from "../../../components/layout/ManageEntityLayout";
+import { ManageColumn } from "../../../components/ManageColumn";
 
 export const getServerSideProps = async () => {
   const decoration: Decoration[] = await prisma.decoration.findMany();
@@ -29,23 +30,17 @@ export default function ManageGlassesOverviewPage(props: { decoration }) {
               </tr>
               </thead>
               <tbody>
-              {props.decoration.map((glass) => (
-                <tr className={"p-4"} key={glass.id}>
+              {props.decoration.map((decoration) => (
+                <tr className={"p-4"} key={decoration.id}>
                   <td>
                     <div className="font-bold">
-                      {glass.name}
+                      {decoration.name}
                     </div>
                   </td>
                   <td>
-                    {glass.price} €
+                    {decoration.price} €
                   </td>
-                  <td>
-                    <div className={"flex justify-end items-center"}>
-                      <Link href={`/manage/decorations/${glass.id}`}>
-                        <div className={"btn btn-primary btn-sm"}>Edit</div>
-                      </Link>
-                    </div>
-                  </td>
+                  <ManageColumn entity={"decorations"} id={decoration.id} />
                 </tr>
               ))}
               </tbody>

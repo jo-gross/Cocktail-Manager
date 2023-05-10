@@ -405,7 +405,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                           <div key={`form-recipe-step${step.id}-ingredient-${ingredient.id}`} className={"input-group flex-row w-full"}>
                                             <select
                                               name={`steps.${indexStep}.ingredients.${indexIngredient}.ingredientId`}
-                                              className={`select select-bordered flex-1 ${errors.steps?.[indexStep]?.ingredients?.[indexIngredient]?.ingredientId && "select-error"} `}
+                                              className={`select select-bordered flex-1 ${(errors.steps?.[indexStep] as any)?.ingredients?.[indexIngredient]?.ingredientId && "select-error"} `}
                                               onChange={(e) => {
                                                 handleChange(e);
                                                 const ingredient = props.ingredients.find((ingredient) => ingredient.id == e.target.value);
@@ -431,7 +431,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                             />
                                             <select
                                               name={`steps.${indexStep}.ingredients.${indexIngredient}.unit`}
-                                              className={`select select-bordered ${errors.steps?.[indexStep]?.ingredients?.[indexIngredient]?.unit ? "select-error" : ""}`}
+                                              className={`select select-bordered ${(errors.steps?.[indexStep] as any)?.ingredients?.[indexIngredient]?.unit ? "select-error" : ""}`}
                                               onChange={handleChange}
                                               onBlur={handleBlur}
                                               value={values.steps[indexStep].ingredients[indexIngredient].unit}

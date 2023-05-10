@@ -3,6 +3,7 @@ import { GetServerSideProps } from "next";
 import { Ingredient } from "@prisma/client";
 import Link from "next/link";
 import { ManageEntityLayout } from "../../../components/layout/ManageEntityLayout";
+import { ManageColumn } from "../../../components/ManageColumn";
 
 export const getServerSideProps: GetServerSideProps = async ({ params }) => {
   const ingredients: Ingredient[] = await prisma.ingredient.findMany();
@@ -41,11 +42,7 @@ export default function IngredientsOverviewPage(props: { ingredients }) {
                   <td>{ingredient.shortName}</td>
                   <td>{ingredient.price} €</td>
                   <td>{ingredient.volume} {ingredient.unit}</td>
-                  <td className={"flex justify-end"}>
-                    <a href={`/manage/ingredients/${ingredient.id}`}>
-                      <div className={"btn btn-outline btn-primary btn-sm"}>Edit</div>
-                    </a>
-                  </td>
+                  <ManageColumn entity={"ingredients"} id={ingredient.id} />
                 </tr>
               ))}
               </tbody>
