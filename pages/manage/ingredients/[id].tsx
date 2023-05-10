@@ -1,6 +1,7 @@
 import { GetServerSideProps } from "next";
 import prisma from "../../../lib/prisma";
 import { IngredientForm } from "../../../components/ingredients/IngredientForm";
+import { ManageEntityLayout } from "../../../components/layout/ManageEntityLayout";
 
 export const getServerSideProps: GetServerSideProps = async ({ params }) => {
 
@@ -23,5 +24,7 @@ export const getServerSideProps: GetServerSideProps = async ({ params }) => {
 
 
 export default function EditCocktailRecipe(props: { ingredient }) {
-  return <IngredientForm ingredient={props.ingredient} />;
+  return <ManageEntityLayout backLink={"/manage"} title={"Zutaten"}>
+    <IngredientForm ingredient={props.ingredient} />
+  </ManageEntityLayout>;
 }

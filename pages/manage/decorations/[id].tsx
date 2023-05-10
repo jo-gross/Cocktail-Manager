@@ -1,6 +1,7 @@
 import { GetServerSideProps } from "next";
 import prisma from "../../../lib/prisma";
 import { DecorationForm } from "../../../components/decorations/DecorationForm";
+import { ManageEntityLayout } from "../../../components/layout/ManageEntityLayout";
 
 export const getServerSideProps: GetServerSideProps = async ({ params }) => {
   const decoration = await prisma.decoration.findUnique({
@@ -14,5 +15,7 @@ export const getServerSideProps: GetServerSideProps = async ({ params }) => {
   };
 };
 export default function EditDecorationPage(props: { decoration }) {
-  return <DecorationForm decoration={props.decoration} />;
+  return <ManageEntityLayout backLink={"/manage"} title={"Dekoration"}>
+    <DecorationForm decoration={props.decoration} />
+  </ManageEntityLayout>;
 }

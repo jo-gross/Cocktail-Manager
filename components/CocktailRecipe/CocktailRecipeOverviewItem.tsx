@@ -12,20 +12,28 @@ export default function CocktailRecipeOverviewItem(props: CocktailRecipeOverview
     <div className={"col-span-1"}>
       <div className={"card"}>
         {props.showImage && (
-          <figure className={"relative"}>
-            <div className={"absolute top-1 right-1 bg-accent rounded-xl p-2"}>
-              {props.cocktailRecipe.price} € (+
-              {props.cocktailRecipe.glass.deposit}€)
-            </div>
-            <div className={"absolute bottom-1 space-x-2 space-y-2"}>
+          props.cocktailRecipe.image == "" || props.cocktailRecipe.image == undefined ?
+            <div className={"p-2 space-x-2 space-y-2 border-b border-base-200"}>
               {props.cocktailRecipe.tags.map((tag) => (
                 <div key={props.cocktailRecipe.id + "-" + tag} className={"badge badge-accent"}>
                   {tag}
                 </div>
               ))}
-            </div>
-            <img src={props.cocktailRecipe.image} alt={"Cocktail"} />
-          </figure>
+            </div> :
+            <figure className={"relative"}>
+              <div className={"absolute top-1 right-1 bg-accent rounded-xl p-2"}>
+                {props.cocktailRecipe.price} € (+
+                {props.cocktailRecipe.glass.deposit}€)
+              </div>
+              <div className={"absolute bottom-1 space-x-2 space-y-2"}>
+                {props.cocktailRecipe.tags.map((tag) => (
+                  <div key={props.cocktailRecipe.id + "-" + tag} className={"badge badge-accent"}>
+                    {tag}
+                  </div>
+                ))}
+              </div>
+              <img src={props.cocktailRecipe.image} alt={"Cocktail"} />
+            </figure>
         )}
         <div className={"card-body"}>
           <CompactCocktailRecipeInstruction showPrice={!props.showImage} cocktailRecipe={props.cocktailRecipe} />
