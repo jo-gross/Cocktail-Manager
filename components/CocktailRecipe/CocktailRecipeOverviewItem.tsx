@@ -5,6 +5,7 @@ import { CompactCocktailRecipeInstruction } from "../CompactCocktailRecipeInstru
 interface CocktailRecipeOverviewItemProps {
   cocktailRecipe: CocktailRecipeFull;
   showImage?: boolean;
+  specialPrice?: number;
 }
 
 export default function CocktailRecipeOverviewItem(props: CocktailRecipeOverviewItemProps) {
@@ -22,7 +23,7 @@ export default function CocktailRecipeOverviewItem(props: CocktailRecipeOverview
             </div> :
             <figure className={"relative"}>
               <div className={"absolute top-1 right-1 bg-accent rounded-xl p-2"}>
-                {props.cocktailRecipe.price} € (+
+                {props.specialPrice != undefined ? props.specialPrice : props.cocktailRecipe.price} € (+
                 {props.cocktailRecipe.glass.deposit}€)
               </div>
               <div className={"absolute bottom-1 space-x-2 space-y-2"}>
@@ -36,7 +37,10 @@ export default function CocktailRecipeOverviewItem(props: CocktailRecipeOverview
             </figure>
         )}
         <div className={"card-body"}>
-          <CompactCocktailRecipeInstruction showPrice={!props.showImage} cocktailRecipe={props.cocktailRecipe} />
+          <CompactCocktailRecipeInstruction
+            specialPrice={props.specialPrice}
+            showPrice={!props.showImage}
+            cocktailRecipe={props.cocktailRecipe} />
         </div>
       </div>
     </div>

@@ -9,6 +9,7 @@ export default function ManagePage() {
         <ManageCard title={"Cocktails"} link={"/manage/cocktails"} />
         <ManageCard title={"Zutaten"} link={"/manage/ingredients"} />
         <ManageCard title={"Dekorationen"} link={"/manage/decorations"} />
+        <ManageCard title={"Karten"} link={"/manage/cards"} />
       </div>
     </ManageEntityLayout>
   );
