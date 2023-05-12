@@ -1,6 +1,7 @@
 import { GetServerSideProps } from "next";
 import prisma from "../../../lib/prisma";
 import { ManageEntityLayout } from "../../../components/layout/ManageEntityLayout";
+import { Formik } from "formik";
 
 export const getServerSideProps: GetServerSideProps = async ({ params }) => {
   const cocktailsPromise = prisma.cocktailRecipe.findMany();
@@ -33,6 +34,8 @@ export const getServerSideProps: GetServerSideProps = async ({ params }) => {
 
 export default function EditCocktailRecipe(props: { glasses; cocktailRecipe; decorations; ingredients }) {
   return <ManageEntityLayout backLink={"/manage"} title={"Cocktail"}>
-    <div></div>
+    <Formik initialValues={{}} onSubmit={() => {
+    }}>
+    </Formik>
   </ManageEntityLayout>;
 }
