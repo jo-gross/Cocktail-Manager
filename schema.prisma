@@ -24,18 +24,19 @@ model Decoration {
 }
 
 model CocktailRecipe {
-  id           String               @id @default(cuid())
-  name         String
-  description  String?
-  tags         String[]
-  image        String?
-  price        Float?
-  glassWithIce String
-  glassId      String?
-  glass        Glass?               @relation(fields: [glassId], references: [id])
-  decorationId String?
-  decoration   Decoration?          @relation(fields: [decorationId], references: [id])
-  steps        CocktailRecipeStep[]
+  id                    String                  @id @default(cuid())
+  name                  String
+  description           String?
+  tags                  String[]
+  image                 String?
+  price                 Float?
+  glassWithIce          String
+  glassId               String?
+  glass                 Glass?                  @relation(fields: [glassId], references: [id])
+  decorationId          String?
+  decoration            Decoration?             @relation(fields: [decorationId], references: [id])
+  steps                 CocktailRecipeStep[]
+  CocktailCardGroupItem CocktailCardGroupItem[]
 }
 
 model CocktailRecipeStep {
@@ -72,4 +73,30 @@ model Ingredient {
   volume                   Float?
   unit                     String?
   CocktailRecipeIngredient CocktailRecipeIngredient[]
+}
+
+model CocktailCard {
+  id     String              @id @default(cuid())
+  name   String
+  date   DateTime            @default(now())
+  groups CocktailCardGroup[]
+}
+
+model CocktailCardGroup {
+  id             String                  @id @default(cuid())
+  name           String
+  cocktailCardId String
+  groupPrice     Float?
+  cocktailCard   CocktailCard            @relation(fields: [cocktailCardId], references: [id])
+  items          CocktailCardGroupItem[]
+}
+
+model CocktailCardGroupItem {
+  cocktailCardGroupId String
+  cocktailCardGroup   CocktailCardGroup @relation(fields: [cocktailCardGroupId], references: [id])
+  cocktailId          String
+  cocktail            CocktailRecipe    @relation(fields: [cocktailId], references: [id])
+  specialPrice        Float?
+
+  @@id([cocktailCardGroupId, cocktailId])
 }

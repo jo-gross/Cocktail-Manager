@@ -172,7 +172,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
     >
       {({ values, setFieldValue, errors, touched, handleChange, handleBlur, handleSubmit, isSubmitting }) => (
         <form onSubmit={handleSubmit}>
-          <div className={"grid md:grid-cols-3 grid-cols-1 p-12 gap-4"}>
+          <div className={"grid md:grid-cols-3 grid-cols-1 gap-4"}>
             <div className={"card md:col-span-2 grid-cols-1"}>
               <div className={"card-body"}>
                 <div className={"text-2xl font-bold text-center"}>Cocktail erfassen</div>
@@ -495,7 +495,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                               cocktailRecipeId: "",
                               tool: CocktailUtensil.SHAKE,
                               mixing: true,
-                              stepNumber: 0,
+                              stepNumber: values.steps.length,
                               ingredients: [{
                                 id: "",
                                 amount: 0,

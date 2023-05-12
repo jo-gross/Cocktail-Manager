@@ -3,6 +3,7 @@ import { CocktailRecipeFull } from "../models/CocktailRecipeFull";
 interface CompactCocktailRecipeInstructionProps {
   cocktailRecipe: CocktailRecipeFull;
   showPrice?: boolean;
+  specialPrice?: number;
 }
 
 export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeInstructionProps) {
@@ -11,7 +12,7 @@ export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeIns
       <div className={`${props.showPrice ? "col-span-2" : "col-span-3"} font-bold text-xl`}>{props.cocktailRecipe.name == "" ? "<Name>" : props.cocktailRecipe.name}</div>
       {props.showPrice == true ? (
         <div className={"col-span-1 text-right font-bold text-xl"}>
-          {props.cocktailRecipe.price} €
+          {props.specialPrice ?? props.cocktailRecipe.price} €
         </div>
       ) : <></>}
       <div className={"row-span-2 flex justify-center items-center h-min"}><img className="h-20" src={props.cocktailRecipe.glass?.image} alt={props.cocktailRecipe.glass?.name} />
