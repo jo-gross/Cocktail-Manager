@@ -1,9 +1,9 @@
 import { BsSearch } from "react-icons/bs";
-import { CompactCocktailRecipeInstruction } from "./CompactCocktailRecipeInstruction";
+import { CompactCocktailRecipeInstruction } from "../cocktails/CompactCocktailRecipeInstruction";
 import React, { useCallback, useContext, useState } from "react";
-import { CocktailRecipeFull } from "../models/CocktailRecipeFull";
-import { Loading } from "./Loading";
-import { ModalContext } from "../lib/context/ModalContextProvider";
+import { CocktailRecipeFull } from "../../models/CocktailRecipeFull";
+import { Loading } from "../Loading";
+import { ModalContext } from "../../lib/context/ModalContextProvider";
 
 interface SearchModalProps {
   onCocktailSelected?: (id: string) => void;

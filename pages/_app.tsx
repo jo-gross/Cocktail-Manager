@@ -1,6 +1,6 @@
 import { AppProps } from "next/app";
 import "../styles/global.css";
-import { GlobalModal } from "../components/GlobalModal";
+import { GlobalModal } from "../components/modals/GlobalModal";
 import { useState } from "react";
 import { ModalContext } from "../lib/context/ModalContextProvider";
 

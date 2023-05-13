@@ -3,10 +3,10 @@ import prisma from "../../../lib/prisma";
 import { ManageEntityLayout } from "../../../components/layout/ManageEntityLayout";
 import { FieldArray, Formik } from "formik";
 import { FaEuroSign, FaTrashAlt } from "react-icons/fa";
-import { CompactCocktailRecipeInstruction } from "../../../components/CompactCocktailRecipeInstruction";
+import { CompactCocktailRecipeInstruction } from "../../../components/cocktails/CompactCocktailRecipeInstruction";
 import React, { useContext } from "react";
 import { ModalContext } from "../../../lib/context/ModalContextProvider";
-import { SearchModal } from "../../../components/SearchModal";
+import { SearchModal } from "../../../components/modals/SearchModal";
 import { useRouter } from "next/router";
 
 export const getServerSideProps: GetServerSideProps = async ({ params }) => {
@@ -209,17 +209,17 @@ export default function EditCocktailRecipe(props: { card; cocktails }) {
                           <label className={"label"}>
                             <div className={"label-text"}>Gruppen Preis</div>
                             <div className={"label-text-alt text-error"}>
-                              <span>{errors.groups?.[groupIndex] && errors.groups[groupIndex].specialPrice && touched.groups?.[groupIndex] && touched.groups[groupIndex].specialPrice ? errors.groups[groupIndex].specialPrice : ""}</span>
+                              <span>{errors.groups?.[groupIndex] && errors.groups[groupIndex].groupPrice && touched.groups?.[groupIndex] && touched.groups[groupIndex].groupPrice ? errors.groups[groupIndex].groupPrice : ""}</span>
                             </div>
                           </label>
                           <div className={"input-group"}>
                             <input
                               type="number"
                               className={"input input-bordered w-full"}
-                              name={`groups.${groupIndex}.specialPrice`}
+                              name={`groups.${groupIndex}.groupPrice`}
                               onChange={handleChange}
                               onBlur={handleBlur}
-                              value={values.groups[groupIndex].specialPrice}
+                              value={values.groups[groupIndex].groupPrice}
                             />
                             <span className={"btn-primary"}><FaEuroSign /></span>
                           </div>

@@ -2,7 +2,7 @@ import { CocktailRecipeFull } from "../../models/CocktailRecipeFull";
 import { IceType } from "../../models/IceType";
 import { FaAngleDown, FaAngleUp, FaEuroSign, FaPlus, FaTrashAlt } from "react-icons/fa";
 import { TagsInput } from "react-tag-input-component";
-import { CompactCocktailRecipeInstruction } from "../CompactCocktailRecipeInstruction";
+import { CompactCocktailRecipeInstruction } from "./CompactCocktailRecipeInstruction";
 import { Field, FieldArray, Formik } from "formik";
 import React from "react";
 import { useRouter } from "next/router";

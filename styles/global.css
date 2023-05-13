@@ -16,7 +16,7 @@
 
 
 .card-body {
-    @apply p-4 !important;
+    @apply p-3 !important;
 }
 
 .card {
