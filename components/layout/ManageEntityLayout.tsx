@@ -5,6 +5,7 @@ interface ManageEntityLayoutProps {
   children: React.ReactNode;
   backLink: string;
   title?: string;
+  actions?: React.ReactNode;
 }
 
 export function ManageEntityLayout(props: ManageEntityLayoutProps) {
@@ -14,7 +15,7 @@ export function ManageEntityLayout(props: ManageEntityLayoutProps) {
         <div className={"btn btn-primary btn-square rounded-xl"}><FaArrowLeft /></div>
       </Link>
       <div className={"text-3xl font-bold"}>{props.title}</div>
-      <div></div>
+      <div>{props.actions}</div>
     </div>
     <div className={"p-8"}>
       {props.children}

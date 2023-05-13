@@ -84,6 +84,7 @@ model CocktailCard {
 
 model CocktailCardGroup {
   id             String                  @id @default(cuid())
+  groupNumber    Int                     @default(autoincrement())
   name           String
   cocktailCardId String
   groupPrice     Float?
@@ -92,6 +93,7 @@ model CocktailCardGroup {
 }
 
 model CocktailCardGroupItem {
+  itemNumber          Int               @default(autoincrement())
   cocktailCardGroupId String
   cocktailCardGroup   CocktailCardGroup @relation(fields: [cocktailCardGroupId], references: [id])
   cocktailId          String

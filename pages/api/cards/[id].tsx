@@ -38,6 +38,25 @@ export default async function handle(req, res) {
       }
     );
     return res.json(result);
+  } else if (req.method === "DELETE") {
+    const cocktailRecipeIngredients = await prisma.cocktailCardGroupItem.deleteMany({
+      where: {
+        cocktailCardGroup: {
+          cocktailCardId: id
+        }
+      }
+    });
+    const cocktailRecipeSteps = await prisma.cocktailCardGroup.deleteMany({
+      where: {
+        cocktailCardId: id
+      }
+    });
+    const result = await prisma.cocktailCard.delete({
+      where: {
+        id: id
+      }
+    });
+    return res.json(result);
   } else {
     throw new Error(
       `The HTTP ${req.method} method is not supported at this route.`

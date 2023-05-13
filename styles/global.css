@@ -20,5 +20,5 @@
 }
 
 .card {
-    @apply shadow-lg bg-base-300 space-y-2 !important;
+    @apply shadow-lg bg-base-300 !important;
 }

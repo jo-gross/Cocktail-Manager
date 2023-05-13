@@ -2,6 +2,7 @@
 
 import prisma from "../../../lib/prisma";
 import { Prisma } from ".prisma/client";
+import { CocktailRecipeFull } from "../../../models/CocktailRecipeFull";
 import CocktailRecipeCreateInput = Prisma.CocktailRecipeCreateInput;
 
 export default async function handle(req, res) {
@@ -18,6 +19,32 @@ export default async function handle(req, res) {
     steps
   } = req.body;
 
+  if (req.method === "GET") {
+    const search = req.query.search;
+    const cocktailRecipes: CocktailRecipeFull[] = await prisma.cocktailRecipe.findMany({
+      include: {
+        glass: true,
+        decoration: true,
+        steps: {
+          include: {
+            ingredients: {
+              include: {
+                ingredient: true
+              }
+            }
+          }
+        }
+      }
+    });
+
+    return res.json(cocktailRecipes.filter((cocktail) => search.trim() != "" && (
+      cocktail.name.toLowerCase().includes(search.toLowerCase()) ||
+      cocktail.tags.some((tag) => tag.toLowerCase().includes(search.toLowerCase())) ||
+      (cocktail.decoration != undefined && cocktail.decoration.name.toLowerCase().includes(search.toLowerCase())) ||
+      cocktail.steps.some((step) => step.ingredients.filter(ingredient => ingredient.ingredient.name != undefined).some((ingredient) => ingredient.ingredient.name.toLowerCase().includes(search.toLowerCase()) || ingredient.ingredient.shortName.toLowerCase().includes(search.toLowerCase()))))
+    ));
+  }
+
   const input: CocktailRecipeCreateInput = {
     id: id,
     name: name,
@@ -30,7 +57,7 @@ export default async function handle(req, res) {
     decoration: decorationId == undefined ? undefined : { connect: { id: decorationId } }
   };
 
-  if(id != undefined) {
+  if (id != undefined) {
     await prisma.cocktailRecipeIngredient.deleteMany({
       where: {
         cocktailRecipeStep: {
@@ -47,7 +74,7 @@ export default async function handle(req, res) {
           id: id
         }
       }
-    })
+    });
   }
 
   let result;
