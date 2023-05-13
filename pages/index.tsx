@@ -5,7 +5,7 @@ import { FaEye, FaSearch } from "react-icons/fa";
 import Link from "next/link";
 import { BsFillGearFill } from "react-icons/bs";
 import { CocktailCardFull } from "../models/CocktailCardFull";
-import CocktailRecipeOverviewItem from "../components/CocktailRecipe/CocktailRecipeOverviewItem";
+import CocktailRecipeOverviewItem from "../components/cocktails/CocktailRecipeOverviewItem";
 import { CocktailCard } from "@prisma/client";
 import { useRouter } from "next/router";
 import { CocktailRecipeFull } from "../models/CocktailRecipeFull";

@@ -37,7 +37,7 @@ export function UploadDropZone(props: UploadDropZoneProps) {
           type="file"
           name="file"
           className="hidden"
-          accept={'image/*'}
+          accept={"image/*"}
           onChange={(event) => {
             const file = event?.target?.files;
             if (file) {

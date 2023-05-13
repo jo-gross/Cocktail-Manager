@@ -1,4 +1,4 @@
-const tagRegex = new RegExp('^([a-z]+)$');
+const tagRegex = new RegExp("^([a-z]+)$");
 
 export function updateTags(localTags: string[], setTagValidation: (validation: string | null) => void): string[] {
   const newTags = localTags.map((tag) => tag.trim());
@@ -12,7 +12,7 @@ export function validateTag(tag: string, setTagValidation: (validation: string |
   const valid = tagRegex.test(tag);
   if (!valid) {
     setTagValidation(
-      'Tag muss aus Kleinbuchstaben und Zahlen bestehen und darf keine Leerzeichen enthalten. (z.B. "sour")',
+      "Tag muss aus Kleinbuchstaben und Zahlen bestehen und darf keine Leerzeichen enthalten. (z.B. \"sour\")"
     );
   } else {
     setTagValidation(null);
