@@ -10,7 +10,7 @@ import { CocktailCard } from "@prisma/client";
 import { useRouter } from "next/router";
 import { CocktailRecipeFull } from "../models/CocktailRecipeFull";
 import { ModalContext } from "../lib/context/ModalContextProvider";
-import { SearchModal } from "../components/SearchModal";
+import { SearchModal } from "../components/modals/SearchModal";
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
 
@@ -99,6 +99,7 @@ export default function OverviewPage(props: { cards, cocktails: CocktailRecipeFu
                   <CocktailRecipeOverviewItem
                     key={`card-${selectedCard.id}-group-${group.id}-cocktail-${groupItem.cocktailId}-${index}`}
                     showImage={showImage}
+                    showPrice={groupItem.specialPrice == undefined && group.groupPrice == undefined}
                     specialPrice={groupItem.specialPrice ?? group.groupPrice}
                     cocktailRecipe={groupItem.cocktail}
                   />

@@ -6,7 +6,15 @@ import { GetStaticProps } from "next";
 import Link from "next/link";
 
 export const getStaticProps: GetStaticProps = async () => {
-  const cards: CocktailCardFull[] = await prisma.cocktailCard.findMany({ include: { groups: { include: { items: true } } } });
+  const cards: CocktailCardFull[] = await prisma.cocktailCard.findMany({
+    include: {
+      groups: {
+        include: {
+          items: true
+        }
+      }
+    }
+  });
   return {
     props: {
       cards: cards.map((card) => {

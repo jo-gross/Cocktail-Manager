@@ -1,5 +1,5 @@
 import React, { useContext, useEffect } from "react";
-import { ModalContext } from "../lib/context/ModalContextProvider";
+import { ModalContext } from "../../lib/context/ModalContextProvider";
 
 interface GlobalModalProps {
   children: React.ReactNode;
