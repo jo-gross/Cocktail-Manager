@@ -142,7 +142,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
             image: values.image,
             tags: values.tags,
             glassWithIce: values.glassWithIce,
-            steps: values.steps.map((step,index) => {
+            steps: values.steps.map((step, index) => {
               return {
                 ...step,
                 stepNumber: index,

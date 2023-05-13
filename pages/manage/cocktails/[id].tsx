@@ -1,6 +1,6 @@
 import { GetServerSideProps } from "next";
 import prisma from "../../../lib/prisma";
-import { CocktailRecipeForm } from "../../../components/CocktailRecipe/CocktailRecipeForm";
+import { CocktailRecipeForm } from "../../../components/cocktails/CocktailRecipeForm";
 import { ManageEntityLayout } from "../../../components/layout/ManageEntityLayout";
 
 export const getServerSideProps: GetServerSideProps = async ({ params }) => {

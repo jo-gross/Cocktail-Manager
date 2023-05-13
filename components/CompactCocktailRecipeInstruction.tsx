@@ -24,7 +24,7 @@ export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeIns
       </div>
       <div className={"border-b border-base-200 col-span-4"}></div>
       <div className={"col-span-4"}>
-        {props.cocktailRecipe.steps?.sort((a,b) => a.stepNumber - b.stepNumber).map((step, index) => (
+        {props.cocktailRecipe.steps?.sort((a, b) => a.stepNumber - b.stepNumber).map((step, index) => (
           <div key={`step-${step.id}`} className={"flex flex-row space-x-2"}>
             <div className={"font-bold"}>{step.tool}</div>
             {step.mixing && (
