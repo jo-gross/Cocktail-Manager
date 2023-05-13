@@ -1,6 +1,8 @@
 import { CocktailRecipeFull } from "../../models/CocktailRecipeFull";
-import React from "react";
+import React, { useContext } from "react";
 import { CompactCocktailRecipeInstruction } from "../CompactCocktailRecipeInstruction";
+import { FaInfoCircle } from "react-icons/fa";
+import { ModalContext } from "../../lib/context/ModalContextProvider";
 
 interface CocktailRecipeOverviewItemProps {
   cocktailRecipe: CocktailRecipeFull;
@@ -9,39 +11,25 @@ interface CocktailRecipeOverviewItemProps {
 }
 
 export default function CocktailRecipeOverviewItem(props: CocktailRecipeOverviewItemProps) {
+  const modalContext = useContext(ModalContext);
   return (
     <div className={"col-span-1"}>
-      <div className={"card"}>
-        {props.showImage && (
-          props.cocktailRecipe.image == "" || props.cocktailRecipe.image == undefined ?
-            <div className={"p-2 space-x-2 space-y-2 border-b border-base-200"}>
-              {props.cocktailRecipe.tags.map((tag) => (
-                <div key={props.cocktailRecipe.id + "-" + tag} className={"badge badge-accent"}>
-                  {tag}
-                </div>
-              ))}
-            </div> :
-            <figure className={"relative"}>
-              <div className={"absolute top-1 right-1 bg-accent rounded-xl p-2"}>
-                {props.specialPrice != undefined ? props.specialPrice : props.cocktailRecipe.price} € (+
-                {props.cocktailRecipe.glass.deposit}€)
-              </div>
-              <div className={"absolute bottom-1 space-x-2 space-y-2"}>
-                {props.cocktailRecipe.tags.map((tag) => (
-                  <div key={props.cocktailRecipe.id + "-" + tag} className={"badge badge-accent"}>
-                    {tag}
-                  </div>
-                ))}
-              </div>
-              <img src={props.cocktailRecipe.image} alt={"Cocktail"} />
-            </figure>
-        )}
+      <div className={"card card-side"}>
+        <div className={"absolute top-1 right-1 btn btn-ghost btn-sm btn-circle bg-info/50"} onClick={() => modalContext.openModal(<div>Test</div>)}><FaInfoCircle /></div>
         <div className={"card-body"}>
           <CompactCocktailRecipeInstruction
             specialPrice={props.specialPrice}
-            showPrice={!props.showImage}
+            showPrice={true}
             cocktailRecipe={props.cocktailRecipe} />
         </div>
+        {(props.showImage && props.cocktailRecipe.image != "" && props.cocktailRecipe.image != undefined) ? (
+          <figure>
+            <img
+              className={"rounded-lg shadow-md w-36 h-full object-fit object-center"}
+              src={props.cocktailRecipe.image}
+              alt={"Cocktail"} />
+          </figure>
+        ) : <></>}
       </div>
     </div>
   );

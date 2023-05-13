@@ -1,4 +1,5 @@
 import { CocktailRecipeFull } from "../models/CocktailRecipeFull";
+import React from "react";
 
 interface CompactCocktailRecipeInstructionProps {
   cocktailRecipe: CocktailRecipeFull;
