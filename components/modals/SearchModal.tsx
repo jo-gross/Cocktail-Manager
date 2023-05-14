@@ -7,6 +7,7 @@ import { ModalContext } from "../../lib/context/ModalContextProvider";
 
 interface SearchModalProps {
   onCocktailSelected?: (id: string) => void;
+  selectedCocktails?: string[];
 }
 
 export function SearchModal(props: SearchModalProps) {
@@ -56,11 +57,15 @@ export function SearchModal(props: SearchModalProps) {
                   </div>
 
                   {props.onCocktailSelected != undefined ? <div className={"card-actions flex flex-row justify-end pt-2"}>
-                    <button type="button" className={"btn btn-primary btn-sm"} onClick={() => {
-                      props.onCocktailSelected(cocktail.id);
-                      setSearch("");
-                      modalContext.closeModal();
-                    }}>Hinzufügen
+                    <button
+                      type="button"
+                      disabled={props.selectedCocktails?.includes(cocktail.id) ?? false}
+                      className={"btn btn-primary btn-sm"}
+                      onClick={() => {
+                        props.onCocktailSelected(cocktail.id);
+                        setSearch("");
+                        modalContext.closeModal();
+                      }}>Hinzufügen
                     </button>
                   </div> : <></>}
                 </div>

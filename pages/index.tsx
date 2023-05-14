@@ -11,6 +11,7 @@ import { useRouter } from "next/router";
 import { CocktailRecipeFull } from "../models/CocktailRecipeFull";
 import { ModalContext } from "../lib/context/ModalContextProvider";
 import { SearchModal } from "../components/modals/SearchModal";
+import { themeChange } from "theme-change";
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
 
@@ -58,6 +59,11 @@ export default function OverviewPage(props: { cards, cocktails: CocktailRecipeFu
   const modalContext = useContext(ModalContext);
 
   const [showImage, setShowImage] = useState(false);
+  const [showTags, setShowTags] = useState(false);
+
+  useEffect(() => {
+    themeChange(false);
+  }, []);
 
   const [selectedCardId, setSelectedCardId] = useState<string | undefined>(props.cards > 0 ? props.cards[0].id : undefined);
   const [selectedCard, setSelectedCard] = useState<CocktailCardFull | undefined>(props.cards > 0 ? props.cards[0].id : undefined);
@@ -92,13 +98,14 @@ export default function OverviewPage(props: { cards, cocktails: CocktailRecipeFu
       <div className={""}>
         <div className={"flex flex-col overflow-y-auto p-4 rounded-xl space-y-2"}>
           {selectedCard?.groups?.sort((a, b) => a.groupNumber - b.groupNumber).map((group) => (
-            <div key={`card-${selectedCard.id}-group-${group.id}`} className={"border border-base-300 rounded-xl p-2"}>
-              <div className={"font-bold text-2xl"}>{group.name}{group.groupPrice && (` - Special Preis: ${group.groupPrice}€`)}</div>
+            <div key={`card-${selectedCard.id}-group-${group.id}`} className={"border border-base-200 rounded-xl p-2"}>
+              <div className={"font-bold text-2xl text-center"}>{group.name}{group.groupPrice && (` - Special Preis: ${group.groupPrice}€`)}</div>
               <div className={"grid 2xl:grid-cols-6 xl:grid-cols-4 md:grid-cols-3 xs:grid-cols-2 grid-cols-1 gap-2 p-2"}>
                 {group.items?.sort((a, b) => a.itemNumber - b.itemNumber).map((groupItem, index) => (
                   <CocktailRecipeOverviewItem
                     key={`card-${selectedCard.id}-group-${group.id}-cocktail-${groupItem.cocktailId}-${index}`}
                     showImage={showImage}
+                    showTags={showTags}
                     showPrice={groupItem.specialPrice == undefined && group.groupPrice == undefined}
                     specialPrice={groupItem.specialPrice ?? group.groupPrice}
                     cocktailRecipe={groupItem.cocktail}
@@ -147,6 +154,16 @@ export default function OverviewPage(props: { cards, cocktails: CocktailRecipeFu
                   <input type={"checkbox"} className={"toggle toggle-primary"} defaultChecked={showImage} onClick={() => setShowImage(!showImage)} />
                 </label>
               </div>
+              <div className="form-control">
+                <label className="label">Tags anzeigen
+                  <input type={"checkbox"} className={"toggle toggle-primary"} defaultChecked={showTags} onClick={() => setShowTags(!showTags)} />
+                </label>
+              </div>
+              <label className={"label"}>
+                <div className={"label-text"}>Hell</div>
+                <input className={"toggle"} type={"checkbox"} data-toggle-theme="bumblebee,halloween" data-act-class="toggle-primary"></input>
+                <div className={"label-text"}>Dark</div>
+              </label>
 
             </div>
           </div>

@@ -100,7 +100,7 @@ export default async function handle(req, res) {
           tool: step.tool,
           stepNumber: step.stepNumber,
           cocktailRecipe: { connect: { id: result.id } },
-          ingredients: {
+          ingredients: step.mixing ? {
             create: step.ingredients.map((ingredient) => {
                 return {
                   amount: ingredient.amount,
@@ -110,7 +110,7 @@ export default async function handle(req, res) {
                 };
               }
             )
-          }
+          } : undefined
         }
       });
     });
