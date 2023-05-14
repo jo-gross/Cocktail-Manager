@@ -9,7 +9,7 @@ interface CompactCocktailRecipeInstructionProps {
 
 export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeInstructionProps) {
   return (
-    <div className={"grid grid-cols-4 gap-1 divide-y"}>
+    <div className={"grid grid-cols-4 gap-1"}>
       <div className={`${props.showPrice ? "col-span-2" : "col-span-3"} font-bold text-xl`}>{props.cocktailRecipe.name == "" ? "<Name>" : props.cocktailRecipe.name}</div>
       {props.showPrice == true ? (
         <div className={"col-span-1 text-right font-bold text-xl"}>
@@ -22,7 +22,7 @@ export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeIns
         <div>Glas: {props.cocktailRecipe.glass?.name ?? "<Glas>"}</div>
         <div>Eis: {props.cocktailRecipe?.glassWithIce ?? "<Eis>"}</div>
       </div>
-      <div className={"border-b border-base-200 col-span-4"}></div>
+      <div className={"border-b border-base-100 col-span-4"}></div>
       <div className={"col-span-4"}>
         {props.cocktailRecipe.steps?.sort((a, b) => a.stepNumber - b.stepNumber).map((step, index) => (
           <div key={`step-${step.id}`} className={"break-words"}>
@@ -33,7 +33,7 @@ export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeIns
           </div>
         ))}
       </div>
-      <div className={"border-b border-base-200 col-span-4"}></div>
+      <div className={"border-b border-base-100 col-span-4"}></div>
       <div className={"col-span-4"}>
         Deko: {props.cocktailRecipe.decoration?.name}
       </div>

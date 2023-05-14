@@ -2,7 +2,6 @@ import { CocktailRecipeFull } from "../../models/CocktailRecipeFull";
 import { IceType } from "../../models/IceType";
 import { FaAngleDown, FaAngleUp, FaEuroSign, FaPlus, FaTrashAlt } from "react-icons/fa";
 import { TagsInput } from "react-tag-input-component";
-import { CompactCocktailRecipeInstruction } from "./CompactCocktailRecipeInstruction";
 import { Field, FieldArray, Formik } from "formik";
 import React from "react";
 import { useRouter } from "next/router";
@@ -14,6 +13,7 @@ import { CocktailUtensil } from "../../models/CocktailUtensil";
 import { CocktailTool } from "../../models/CocktailTool";
 import { CocktailIngredientUnit } from "../../models/CocktailIngredientUnit";
 import { CocktailRecipeStepFull } from "../../models/CocktailRecipeStepFull";
+import CocktailRecipeOverviewItem from "./CocktailRecipeOverviewItem";
 
 interface CocktailRecipeFormProps {
   glasses: Glass[];
@@ -37,7 +37,9 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
             image: undefined,
             glass: undefined,
             decoration: undefined,
-            steps: []
+            steps: [],
+            showImage: false,
+            showTags: false
           }
           : {
             name: props.cocktailRecipe.name,
@@ -67,7 +69,9 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                   };
                 }).sort((a, b) => a.ingredientNumber - b.ingredientNumber)
               };
-            }).sort((a, b) => a.stepNumber - b.stepNumber)
+            }).sort((a, b) => a.stepNumber - b.stepNumber),
+            showImage: false,
+            showTags: false
           }
       }
       validate={(values) => {
@@ -355,7 +359,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                           const value = values.steps[indexStep];
                                           const reorderedSteps = values.steps.filter((_, i) => i != indexStep);
                                           reorderedSteps.splice(indexStep - 1, 0, value);
-                                          setFieldValue("steps", reorderedSteps);
+                                          setFieldValue("steps", reorderedSteps.map((step, index) => ({ ...step, stepNumber: index })));
                                         }}
                                 >
                                   <FaAngleUp />
@@ -367,7 +371,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                           const value = values.steps[indexStep];
                                           const reorderedSteps = values.steps.filter((_, i) => i != indexStep);
                                           reorderedSteps.splice(indexStep + 1, 0, value);
-                                          setFieldValue("steps", reorderedSteps);
+                                          setFieldValue("steps", reorderedSteps.map((step, index) => ({ ...step, stepNumber: index })));
                                         }}
                                 >
                                   <FaAngleDown />
@@ -400,8 +404,40 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                 <FieldArray name={`steps.${indexStep}.ingredients`}>
                                   {({ push: pushIngredient, remove: removeIngredient }) => (
                                     <>
-                                      {step.ingredients.map((ingredient, indexIngredient) => (
-                                        <>
+                                      {step.ingredients.sort((a, b) => a.ingredientNumber - b.ingredientNumber).map((ingredient, indexIngredient) => (
+                                        <div className={"flex flex-row"}>
+                                          <div className={"input-group input-group-vertical"}>
+                                            <button type={"button"}
+                                                    disabled={indexIngredient == 0}
+                                                    className={"btn btn-outline btn-xs btn-square"}
+                                                    onClick={() => {
+                                                      const value = values.steps[indexStep].ingredients[indexIngredient];
+                                                      const reorderedGroups = values.steps[indexStep].ingredients.filter((_, i) => i != indexIngredient);
+                                                      reorderedGroups.splice(indexIngredient - 1, 0, value);
+                                                      setFieldValue(`steps.${indexStep}.ingredients`, reorderedGroups.map((group, groupIndex) => ({
+                                                        ...group,
+                                                        ingredientNumber: groupIndex
+                                                      })));
+                                                    }}
+                                            >
+                                              <FaAngleUp />
+                                            </button>
+                                            <button type={"button"}
+                                                    disabled={!(values.steps[indexStep].ingredients.length > 1) || indexIngredient == values.steps[indexStep].ingredients.length - 1}
+                                                    className={"btn btn-outline btn-xs btn-square"}
+                                                    onClick={() => {
+                                                      const value = values.steps[indexStep].ingredients[indexIngredient];
+                                                      const reorderedGroups = values.steps[indexStep].ingredients.filter((_, i) => i != indexIngredient);
+                                                      reorderedGroups.splice(indexIngredient + 1, 0, value);
+                                                      setFieldValue(`steps.${indexStep}.ingredients`, reorderedGroups.map((group, groupIndex) => ({
+                                                        ...group,
+                                                        ingredientNumber: groupIndex
+                                                      })));
+                                                    }}
+                                            >
+                                              <FaAngleDown />
+                                            </button>
+                                          </div>
                                           <div key={`form-recipe-step${step.id}-ingredient-${ingredient.id}`} className={"input-group flex-row w-full"}>
                                             <select
                                               name={`steps.${indexStep}.ingredients.${indexIngredient}.ingredientId`}
@@ -451,7 +487,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                               <FaTrashAlt />
                                             </button>
                                           </div>
-                                        </>
+                                        </div>
                                       ))}
 
                                       <div className={"w-full flex justify-end"}>
@@ -547,21 +583,55 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
 
                   <div className={"text-2xl font-bold text-center"}>Vorschau</div>
                   <div className={"divider"}></div>
-                  <CompactCocktailRecipeInstruction
-                    cocktailRecipe={{
-                      id: "0",
-                      image: "",
-                      name: values.name,
-                      description: values.description,
-                      tags: values.tags,
-                      price: values.price,
-                      glassWithIce: values.glassWithIce,
-                      glassId: values.glass,
-                      glass: props.glasses.find((glass) => glass.id === values.glass),
-                      decorationId: values.decoration,
-                      decoration: props.decorations.find((decoration) => decoration.id === values.decoration),
-                      steps: values.steps
-                    }}
+                  <div className={"form-control"}>
+                    <label className={"label"}>
+                      <span className={"label-text"}>Zeige Bilder</span>
+                      <span className={"text-error label-text-alt"}>
+                    </span>
+                      <input
+                        type={"checkbox"}
+                        className={"toggle toggle-primary"}
+                        name={"showImage"}
+                        onChange={handleChange}
+                        defaultChecked={false}
+                        checked={values.showImage}
+                        onBlur={handleBlur}
+                      />
+                    </label>
+                  </div>
+                  <div className={"form-control"}>
+                    <label className={"label"}>
+                      <span className={"label-text"}>Zeige Tags</span>
+                      <span className={"text-error label-text-alt"}>
+                    </span>
+                      <input
+                        type={"checkbox"}
+                        className={"toggle toggle-primary"}
+                        name={"showTags"}
+                        onChange={handleChange}
+                        defaultChecked={false}
+                        checked={values.showTags}
+                        onBlur={handleBlur}
+                      />
+                    </label>
+                  </div>
+                  <CocktailRecipeOverviewItem cocktailRecipe={{
+                    id: "0",
+                    image: values.image,
+                    name: values.name,
+                    description: values.description,
+                    tags: values.tags,
+                    price: values.price,
+                    glassWithIce: values.glassWithIce,
+                    glassId: values.glass,
+                    glass: props.glasses.find((glass) => glass.id === values.glass),
+                    decorationId: values.decoration,
+                    decoration: props.decorations.find((decoration) => decoration.id === values.decoration),
+                    steps: values.steps
+                  }}
+                                              showInfo={true}
+                                              showTags={values.showTags}
+                                              showImage={values.showImage}
                   />
                 </div>
 

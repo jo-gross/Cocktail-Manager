@@ -316,9 +316,11 @@ export default function EditCocktailRecipe(props: { card; cocktails }) {
                                 <button
                                   type="button"
                                   className={"btn btn-secondary btn-sm btn-outline"}
-                                  onClick={() => modalContext.openModal(<SearchModal onCocktailSelected={(id) => {
-                                    pushItem({ cocktailId: id });
-                                  }} />)}>
+                                  onClick={() => modalContext.openModal(<SearchModal
+                                    selectedCocktails={values.groups[groupIndex].items.map(item => item.cocktailId)}
+                                    onCocktailSelected={(id) => {
+                                      pushItem({ cocktailId: id });
+                                    }} />)}>
                                   Cocktail hinzufügen
                                 </button>
                               </div>

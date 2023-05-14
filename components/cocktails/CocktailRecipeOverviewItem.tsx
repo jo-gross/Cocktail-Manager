@@ -11,6 +11,7 @@ interface CocktailRecipeOverviewItemProps {
   specialPrice?: number;
   showPrice?: boolean;
   showInfo?: boolean;
+  showTags?: boolean;
 }
 
 export default function CocktailRecipeOverviewItem(props: CocktailRecipeOverviewItemProps) {
@@ -28,6 +29,11 @@ export default function CocktailRecipeOverviewItem(props: CocktailRecipeOverview
             specialPrice={props.specialPrice}
             showPrice={props.showPrice ?? true}
             cocktailRecipe={props.cocktailRecipe} />
+          <div>
+            {props.showTags ? props.cocktailRecipe.tags.map((tag) => (
+              <span className={"badge badge-outline badge-primary mr-1"}>{tag}</span>
+            )) : <></>}
+          </div>
         </div>
         {(props.showImage && props.cocktailRecipe.image != "" && props.cocktailRecipe.image != undefined) ? (
           <figure>
