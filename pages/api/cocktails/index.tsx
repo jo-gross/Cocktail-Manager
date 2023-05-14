@@ -41,7 +41,7 @@ export default async function handle(req, res) {
       cocktail.name.toLowerCase().includes(search.toLowerCase()) ||
       cocktail.tags.some((tag) => tag.toLowerCase().includes(search.toLowerCase())) ||
       (cocktail.decoration != undefined && cocktail.decoration.name.toLowerCase().includes(search.toLowerCase())) ||
-      cocktail.steps.some((step) => step.ingredients.filter(ingredient => ingredient.ingredient.name != undefined).some((ingredient) => ingredient.ingredient.name.toLowerCase().includes(search.toLowerCase()) || ingredient.ingredient.shortName.toLowerCase().includes(search.toLowerCase()))))
+      cocktail.steps.some((step) => step.ingredients.filter(ingredient => ingredient.ingredient.name != undefined).some((ingredient) => ingredient.ingredient.name.toLowerCase().includes(search.toLowerCase()) || (ingredient.ingredient.shortName ?? "").toLowerCase().includes(search.toLowerCase()))))
     ));
   }
 
@@ -94,26 +94,24 @@ export default async function handle(req, res) {
   if (steps.length > 0) {
     await steps.forEach(async (step) => {
 
-      const cocktailRecipeStep = await prisma.cocktailRecipeStep.create({
+      await prisma.cocktailRecipeStep.create({
         data: {
           mixing: step.mixing,
           tool: step.tool,
           stepNumber: step.stepNumber,
-          cocktailRecipe: { connect: { id: result.id } }
-        }
-      });
-
-      await step.ingredients.map(async (ingredient) => {
-        await prisma.cocktailRecipeIngredient.create({
-          data: {
-            id: ingredient.id,
-            amount: ingredient.amount,
-            ingredientNumber: ingredient.ingredientNumber,
-            unit: ingredient.unit,
-            cocktailRecipeStepId: cocktailRecipeStep.id,
-            ingredientId: ingredient.ingredientId
+          cocktailRecipe: { connect: { id: result.id } },
+          ingredients: {
+            create: step.ingredients.map((ingredient) => {
+                return {
+                  amount: ingredient.amount,
+                  ingredientNumber: ingredient.ingredientNumber,
+                  unit: ingredient.unit,
+                  ingredient: { connect: { id: ingredient.ingredientId } }
+                };
+              }
+            )
           }
-        });
+        }
       });
     });
   }

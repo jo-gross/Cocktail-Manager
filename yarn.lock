@@ -199,7 +199,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@prisma/client@npm:^4.13.0":
+"@prisma/client@npm:4.13.0":
   version: 4.13.0
   resolution: "@prisma/client@npm:4.13.0"
   dependencies:
@@ -1001,12 +1001,13 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "hello-next@workspace:."
   dependencies:
-    "@prisma/client": ^4.13.0
+    "@prisma/client": 4.13.0
     "@types/node": 17.0.14
     "@types/react": 17.0.38
     autoprefixer: ^10.4.14
     daisyui: ^2.51.6
     formik: ^2.2.9
+    jssoup: ^0.0.15
     next: 12.0.10
     postcss: ^8.4.23
     prettier: 2.8.8
@@ -1027,6 +1028,13 @@ __metadata:
   dependencies:
     react-is: ^16.7.0
   checksum: b1538270429b13901ee586aa44f4cc3ecd8831c061d06cb8322e50ea17b3f5ce4d0e2e66394761e6c8e152cd8c34fb3b4b690116c6ce2bd45b18c746516cb9e8
+  languageName: node
+  linkType: hard
+
+"htmlparser@npm:^1.7.7":
+  version: 1.7.7
+  resolution: "htmlparser@npm:1.7.7"
+  checksum: 9611fa46f3a73fc9f62e837f1790f2cba9e9b0c387f6570f4f9d499fd4f64c4926280fae4ebbc07e92556bb44d8f835b15d5d26f38a43a64b5ee509121e87d24
   languageName: node
   linkType: hard
 
@@ -1224,6 +1232,15 @@ __metadata:
   version: 4.0.0
   resolution: "js-tokens@npm:4.0.0"
   checksum: 8a95213a5a77deb6cbe94d86340e8d9ace2b93bc367790b260101d2f36a2eaf4e4e22d9fa9cf459b38af3a32fb4190e638024cf82ec95ef708680e405ea7cc78
+  languageName: node
+  linkType: hard
+
+"jssoup@npm:^0.0.15":
+  version: 0.0.15
+  resolution: "jssoup@npm:0.0.15"
+  dependencies:
+    htmlparser: ^1.7.7
+  checksum: e2dd5839c20df22bd45268ffea95e198c1fefc57e5416d585205d973a25e5fdf57e777f4b735ed5f4f6da507ecf8272e6388b8986a5a35d0db555c5d37c9a5a8
   languageName: node
   linkType: hard
 

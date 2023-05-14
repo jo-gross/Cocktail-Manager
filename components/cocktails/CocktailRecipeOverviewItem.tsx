@@ -10,6 +10,7 @@ interface CocktailRecipeOverviewItemProps {
   showImage?: boolean;
   specialPrice?: number;
   showPrice?: boolean;
+  showInfo?: boolean;
 }
 
 export default function CocktailRecipeOverviewItem(props: CocktailRecipeOverviewItemProps) {
@@ -17,9 +18,11 @@ export default function CocktailRecipeOverviewItem(props: CocktailRecipeOverview
   return (
     <div className={"col-span-1"}>
       <div className={"card card-side"}>
-        <div className={"absolute top-1 right-1 btn btn-ghost btn-sm btn-circle bg-info/50"} onClick={() =>
+        {props.showInfo == true ? <div className={"absolute top-1 right-1 btn btn-ghost btn-sm btn-circle bg-info/50"} onClick={() =>
           modalContext.openModal(<CocktailDetailModal cocktail={props.cocktailRecipe} />)
-        }><FaInfoCircle /></div>
+        }>
+          <FaInfoCircle />
+        </div> : <></>}
         <div className={"card-body"}>
           <CompactCocktailRecipeInstruction
             specialPrice={props.specialPrice}

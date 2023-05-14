@@ -72,6 +72,7 @@ model Ingredient {
   price                    Float?
   volume                   Float?
   unit                     String?
+  link                     String?
   CocktailRecipeIngredient CocktailRecipeIngredient[]
 }
 

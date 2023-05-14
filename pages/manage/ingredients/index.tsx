@@ -4,6 +4,8 @@ import { Ingredient } from "@prisma/client";
 import Link from "next/link";
 import { ManageEntityLayout } from "../../../components/layout/ManageEntityLayout";
 import { ManageColumn } from "../../../components/ManageColumn";
+import { FaCheck, FaTimes } from "react-icons/fa";
+import React from "react";
 
 export const getServerSideProps: GetServerSideProps = async ({ params }) => {
   const ingredients: Ingredient[] = await prisma.ingredient.findMany();
@@ -26,6 +28,8 @@ export default function IngredientsOverviewPage(props: { ingredients }) {
                 <th className="w-1/4">Abkürzung</th>
                 <th className="w-1/8">Preis</th>
                 <th className="w-1/8">Menge</th>
+                <th className="w-1/8">Preis/Menge</th>
+                <th className="w-1/8">Link</th>
                 <th className="w-1/4">
                   <div className={"w-full flex justify-end"}>
                     <Link href={"/manage/ingredients/create"}>
@@ -36,12 +40,14 @@ export default function IngredientsOverviewPage(props: { ingredients }) {
               </tr>
               </thead>
               <tbody>
-              {props.ingredients.map((ingredient) => (
+              {props.ingredients.sort((a, b) => a.name.localeCompare(b.name)).map((ingredient) => (
                 <tr key={ingredient.id}>
                   <td>{ingredient.name}</td>
                   <td>{ingredient.shortName}</td>
                   <td>{ingredient.price} €</td>
                   <td>{ingredient.volume} {ingredient.unit}</td>
+                  <td>{(ingredient.price / ingredient.volume).toFixed(2)} €</td>
+                  <td>{ingredient.link == undefined ? <div className={"text-red-500"}><FaTimes /></div> : <div className={"text-success"}><FaCheck /></div>}</td>
                   <ManageColumn entity={"ingredients"} id={ingredient.id} />
                 </tr>
               ))}

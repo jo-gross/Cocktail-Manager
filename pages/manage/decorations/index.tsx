@@ -30,7 +30,7 @@ export default function ManageGlassesOverviewPage(props: { decoration }) {
               </tr>
               </thead>
               <tbody>
-              {props.decoration.map((decoration) => (
+              {props.decoration.sort((a, b) => a.name.localeCompare(b.name)).map((decoration) => (
                 <tr className={"p-4"} key={decoration.id}>
                   <td>
                     <div className="font-bold">
