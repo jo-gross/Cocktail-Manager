@@ -35,7 +35,7 @@ export default function CocktailsOverviewPage(props: { cocktailRecipes }) {
               </tr>
               </thead>
               <tbody>
-              {props.cocktailRecipes.map((cocktailRecipe) => (
+              {props.cocktailRecipes.sort((a, b) => a.name.localeCompare(b.name)).map((cocktailRecipe) => (
                 <tr key={cocktailRecipe.id}>
                   <td>{cocktailRecipe.name}</td>
                   <td>{cocktailRecipe.price} €</td>

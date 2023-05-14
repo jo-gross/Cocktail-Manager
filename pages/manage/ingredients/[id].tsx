@@ -24,7 +24,7 @@ export const getServerSideProps: GetServerSideProps = async ({ params }) => {
 
 
 export default function EditCocktailRecipe(props: { ingredient }) {
-  return <ManageEntityLayout backLink={"/manage"} title={"Zutaten"}>
+  return <ManageEntityLayout backLink={"/manage/ingredients"} title={"Zutaten"}>
     <IngredientForm ingredient={props.ingredient} />
   </ManageEntityLayout>;
 }

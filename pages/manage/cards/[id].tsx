@@ -2,7 +2,7 @@ import { GetServerSideProps } from "next";
 import prisma from "../../../lib/prisma";
 import { ManageEntityLayout } from "../../../components/layout/ManageEntityLayout";
 import { FieldArray, Formik } from "formik";
-import { FaEuroSign, FaTrashAlt } from "react-icons/fa";
+import { FaAngleDown, FaAngleLeft, FaAngleRight, FaAngleUp, FaEuroSign, FaTrashAlt } from "react-icons/fa";
 import { CompactCocktailRecipeInstruction } from "../../../components/cocktails/CompactCocktailRecipeInstruction";
 import React, { useContext } from "react";
 import { ModalContext } from "../../../lib/context/ModalContextProvider";
@@ -185,7 +185,7 @@ export default function EditCocktailRecipe(props: { card; cocktails }) {
             <FieldArray name={"groups"}>
               {({ push: pushGroup, remove: removeGroup }) => (
                 <>
-                  {values?.groups.map((group, groupIndex) => (
+                  {values?.groups.sort((a, b) => a.groupNumber - b.groupNumber).map((group, groupIndex) => (
                     <div key={groupIndex} className={"border border-base-300 rounded-2xl p-2"}>
                       <div className={"grid grid-cols-3 items-center gap-2"}>
                         <div className={"flex-1 form-control"}>
@@ -224,7 +224,37 @@ export default function EditCocktailRecipe(props: { card; cocktails }) {
                             <span className={"btn-primary"}><FaEuroSign /></span>
                           </div>
                         </div>
-                        <div className={"justify-self-end"}>
+                        <div className={"justify-self-end space-x-2"}>
+                          <button type={"button"}
+                                  disabled={groupIndex == 0}
+                                  className={"btn btn-outline btn-sm btn-square"}
+                                  onClick={() => {
+                                    const value = values.groups[groupIndex];
+                                    const reorderedGroups = values.groups.filter((_, i) => i != groupIndex);
+                                    reorderedGroups.splice(groupIndex - 1, 0, value);
+                                    setFieldValue("groups", reorderedGroups.map((group, groupIndex) => ({
+                                      ...group,
+                                      groupNumber: groupIndex
+                                    })));
+                                  }}
+                          >
+                            <FaAngleUp />
+                          </button>
+                          <button type={"button"}
+                                  disabled={!(values.groups.length > 1) || group == values.groups.length - 1}
+                                  className={"btn btn-outline btn-sm btn-square"}
+                                  onClick={() => {
+                                    const value = values.groups[groupIndex];
+                                    const reorderedGroups = values.groups.filter((_, i) => i != groupIndex);
+                                    reorderedGroups.splice(groupIndex + 1, 0, value);
+                                    setFieldValue("groups", reorderedGroups.map((group, groupIndex) => ({
+                                      ...group,
+                                      groupNumber: groupIndex
+                                    })));
+                                  }}
+                          >
+                            <FaAngleDown />
+                          </button>
                           <button type="button" className={"btn btn-error btn-sm btn-square"} onClick={() => removeGroup(groupIndex)}>
                             <FaTrashAlt />
                           </button>
@@ -235,12 +265,43 @@ export default function EditCocktailRecipe(props: { card; cocktails }) {
                         <FieldArray name={`groups.${groupIndex}.items`}>
                           {({ push: pushItem, remove: removeItem }) => (
                             <div className={"grid grid-cols-3 gap-2"}>
-                              {values.groups[groupIndex].items.map((item, itemIndex) => (
+                              {values.groups[groupIndex].items.sort((a, b) => a.itemNumber - b.itemNumber).map((item, itemIndex) => (
                                 <div className={"col-span-1"}>
                                   <div className={"card"}>
                                     <div className={"card-body"}>
-                                      <                                      div>
-                                        <div className={"absolute right-2 top-2 btn btn-outline btn-error btn-square btn-sm"} onClick={() => removeItem(itemIndex)}><FaTrashAlt />
+                                      <div>
+                                        <div className={"flex justify-end space-x-2"}>
+                                          <button type={"button"}
+                                                  disabled={itemIndex == 0}
+                                                  className={"btn btn-outline btn-sm btn-square"}
+                                                  onClick={() => {
+                                                    const value = values.groups[groupIndex].items[itemIndex];
+                                                    const reorderedItems = values.groups[groupIndex].items.filter((_, i) => i != itemIndex);
+                                                    reorderedItems.splice(itemIndex - 1, 0, value);
+                                                    setFieldValue(`groups.${groupIndex}.items`, reorderedItems.map((item, itemIndex) => ({
+                                                      ...item,
+                                                      itemNumber: itemIndex
+                                                    })));
+                                                  }}
+                                          >
+                                            <FaAngleLeft />
+                                          </button>
+                                          <button type={"button"}
+                                                  disabled={!(values.groups[groupIndex].items.length > 1) || itemIndex == values.groups[groupIndex].items.length - 1}
+                                                  className={"btn btn-outline btn-sm btn-square"}
+                                                  onClick={() => {
+                                                    const value = values.groups[groupIndex].items[itemIndex];
+                                                    const reorderedItems = values.groups[groupIndex].items.filter((_, i) => i != itemIndex);
+                                                    reorderedItems.splice(itemIndex + 1, 0, value);
+                                                    setFieldValue(`groups.${groupIndex}.items`, reorderedItems.map((item, itemIndex) => ({
+                                                      ...item,
+                                                      itemNumber: itemIndex
+                                                    })));
+                                                  }}
+                                          >
+                                            <FaAngleRight />
+                                          </button>
+                                          <div className={"btn btn-outline btn-error btn-square btn-sm"} onClick={() => removeItem(itemIndex)}><FaTrashAlt /></div>
                                         </div>
 
                                         {props.cocktails.find(cocktail => cocktail.id == item.cocktailId) != undefined ?

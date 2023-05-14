@@ -415,7 +415,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                               value={values.steps[indexStep].ingredients[indexIngredient].ingredientId}
                                             >
                                               <option value={""}>Auswählen</option>
-                                              {props.ingredients.map((ingredient) => (
+                                              {props.ingredients.sort((a, b) => a.name.localeCompare(b.name)).map((ingredient) => (
                                                 <option key={`form-recipe-step${step.id}-ingredients-${ingredient.id}`} value={ingredient.id}>
                                                   {ingredient.name}
                                                 </option>
@@ -572,6 +572,46 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                 </button>
               </div>
 
+
+              <div className={"card"}>
+                <div className={"card-body"}>
+
+                  <div className={"text-2xl font-bold text-center"}>Finanzen</div>
+                  <div className={"divider"}></div>
+                  <div className={"grid grid-cols-2 gap-1"}>
+                    <>
+                      {values.steps.filter((step) => step.ingredients.some(ingredient => ingredient.ingredient != undefined)).length > 0 ? (values.steps.map((step, indexStep) => (step.ingredients.filter(ingredient => ingredient.ingredient != undefined))).flat()?.map((ingredient, indexIngredient) => (
+                        <>
+                          <div key={`price-calculation-step-${indexIngredient}-name`}>{ingredient.ingredient.shortName ?? ingredient.ingredient.name}</div>
+                          <div
+                            key={`price-calculation-step-${indexIngredient}-price`}
+                            className={"grid grid-cols-2"}
+                          >
+                            <div>{ingredient.amount} x {(ingredient.ingredient.price / ingredient.ingredient.volume).toFixed(2)}</div>
+                            <div
+                              className={"text-end"}>{indexIngredient > 0 ? "+ " : ""}{((ingredient.ingredient.price / ingredient.ingredient.volume) * ingredient.amount).toFixed(2)}€
+                            </div>
+                          </div>
+                        </>
+                      ))) : <></>}
+                    </>
+                    <div className={"col-span-2 border-b border-base-200"}></div>
+                    <div>Summe</div>
+                    <div className={"grid grid-cols-3"}>
+                      <div></div>
+                      <div></div>
+                      <div className={"font-bold text-end"}>
+                        {values.steps.filter((step) => step.ingredients.some(ingredient => ingredient.ingredient != undefined)).length > 0 ? (
+                          values.steps.map((step, indexStep) => (step.ingredients.filter(ingredient => ingredient.ingredient != undefined))).flat().map(ingredient => ((ingredient.ingredient.price / ingredient.ingredient.volume) * ingredient.amount))
+                            .reduce((summ, sum) => (summ + sum)).toFixed(2) + " €"
+                        ) : (
+                          "0.00 €"
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </form>

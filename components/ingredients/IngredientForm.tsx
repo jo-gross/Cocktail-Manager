@@ -1,7 +1,7 @@
-import { Formik } from "formik";
+import { Formik, FormikProps } from "formik";
 import { Ingredient } from "@prisma/client";
 import { useRouter } from "next/router";
-import React from "react";
+import React, { useRef } from "react";
 import { CocktailIngredientUnit } from "../../models/CocktailIngredientUnit";
 
 interface IngredientFormProps {
@@ -10,15 +10,18 @@ interface IngredientFormProps {
 
 export function IngredientForm(props: IngredientFormProps) {
   const router = useRouter();
+  const formRef = useRef<FormikProps<any>>(null);
 
   return (
     <Formik
+      innerRef={formRef}
       initialValues={{
         name: props.ingredient?.name ?? "",
         shortName: props.ingredient?.shortName ?? "",
         price: props.ingredient?.price ?? 0,
         volume: props.ingredient?.volume ?? 0,
-        unit: props.ingredient?.unit ?? CocktailIngredientUnit.CL
+        unit: props.ingredient?.unit ?? CocktailIngredientUnit.CL,
+        link: props.ingredient?.link ?? ""
       }}
       onSubmit={async (values) => {
         try {
@@ -27,7 +30,9 @@ export function IngredientForm(props: IngredientFormProps) {
             name: values.name.trim(),
             shortName: values.shortName?.trim() == "" ? undefined : values.shortName.trim(),
             price: values.price,
-            volume: values.volume == 0 ? undefined : values.volume
+            unit: values.unit,
+            volume: values.volume == 0 ? undefined : values.volume,
+            link: values.link?.trim() == "" ? undefined : values.link.trim()
           };
           const result = await fetch("/api/ingredients", {
             method: props.ingredient == undefined ? "POST" : "PUT",
@@ -157,6 +162,24 @@ export function IngredientForm(props: IngredientFormProps) {
                       ))}
                     </select>
                   </div>
+                </div>
+                <div>Preis/{values.unit}: {(values.price / values.volume).toFixed(2)}€</div>
+                <div className={"form-control"}>
+                  <label className={"label"}>
+                    <span className={"label-text"}>Link</span>
+                    <span className={"label-text-alt text-error space-x-2"}>
+                    <span>{errors.link && touched.link && errors.link}</span>
+                  </span>
+                  </label>
+                  <input
+                    type={"text"}
+                    placeholder={""}
+                    className={`input input-bordered ${errors.link && touched.link && "input-error"}`}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    value={values.link}
+                    name={"link"}
+                  />
                 </div>
                 <div className={"form-control"}>
                   <button type={"submit"} className={"btn btn-primary"}>
