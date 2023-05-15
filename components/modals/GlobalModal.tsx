@@ -1,5 +1,6 @@
 import React, { useContext, useEffect } from "react";
 import { ModalContext } from "../../lib/context/ModalContextProvider";
+import { FaTimes } from "react-icons/fa";
 
 interface GlobalModalProps {
   children: React.ReactNode;
@@ -31,6 +32,7 @@ export function GlobalModal(props: GlobalModalProps) {
       />
       <label htmlFor="globalModal" className="modal cursor-pointer">
         <label className="modal-box relative" htmlFor="">
+          <label htmlFor="globalModal" className="btn btn-sm btn-outline btn-circle absolute right-2 top-2"><FaTimes /></label>
           <label
             className={""}
             htmlFor=""

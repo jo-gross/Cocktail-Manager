@@ -29,8 +29,9 @@ export default function IngredientsOverviewPage(props: { ingredients }) {
                 <th className="w-1/8">Preis</th>
                 <th className="w-1/8">Menge</th>
                 <th className="w-1/8">Preis/Menge</th>
+                <th className="w-1/8">Tags</th>
                 <th className="w-1/8">Link</th>
-                <th className="w-1/4">
+                <th className="w-1/8">
                   <div className={"w-full flex justify-end"}>
                     <Link href={"/manage/ingredients/create"}>
                       <div className={"btn btn-primary btn-sm"}>Hinzufügen</div>
@@ -42,11 +43,26 @@ export default function IngredientsOverviewPage(props: { ingredients }) {
               <tbody>
               {props.ingredients.sort((a, b) => a.name.localeCompare(b.name)).map((ingredient) => (
                 <tr key={ingredient.id}>
-                  <td>{ingredient.name}</td>
+                  <td className={""}>
+                    {ingredient.image ?
+                      <div className="flex items-center space-x-3">
+                        <div className="avatar">
+                          <div className="mask mask-squircle w-12 h-12">
+                            <img src={ingredient.image} className={"w-8 h-8 rounded-full mr-2"} />
+                          </div>
+                        </div>
+                        {ingredient.name}
+                      </div>
+                      : <>
+                        {ingredient.name}
+                      </>
+                    }
+                  </td>
                   <td>{ingredient.shortName}</td>
                   <td>{ingredient.price} €</td>
                   <td>{ingredient.volume} {ingredient.unit}</td>
                   <td>{(ingredient.price / ingredient.volume).toFixed(2)} €</td>
+                  <td>{ingredient.tags.map((tag) => <div className={"badge badge-primary badge-outline m-1"}>{tag}</div>)}</td>
                   <td>{ingredient.link == undefined ? <div className={"text-red-500"}><FaTimes /></div> : <div className={"text-success"}><FaCheck /></div>}</td>
                   <ManageColumn entity={"ingredients"} id={ingredient.id} />
                 </tr>

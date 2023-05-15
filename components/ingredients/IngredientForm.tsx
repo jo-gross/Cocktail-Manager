@@ -3,6 +3,11 @@ import { Ingredient } from "@prisma/client";
 import { useRouter } from "next/router";
 import React, { useRef } from "react";
 import { CocktailIngredientUnit } from "../../models/CocktailIngredientUnit";
+import { TagsInput } from "react-tag-input-component";
+import { updateTags, validateTag } from "../../models/tags/TagUtils";
+import { UploadDropZone } from "../UploadDropZone";
+import { convertToBase64 } from "../../lib/Base64Converter";
+import { FaTrashAlt } from "react-icons/fa";
 
 interface IngredientFormProps {
   ingredient: Ingredient;
@@ -21,7 +26,9 @@ export function IngredientForm(props: IngredientFormProps) {
         price: props.ingredient?.price ?? 0,
         volume: props.ingredient?.volume ?? 0,
         unit: props.ingredient?.unit ?? CocktailIngredientUnit.CL,
-        link: props.ingredient?.link ?? ""
+        link: props.ingredient?.link ?? "",
+        tags: props.ingredient?.tags ?? [],
+        image: props.ingredient?.image ?? ""
       }}
       onSubmit={async (values) => {
         try {
@@ -32,7 +39,9 @@ export function IngredientForm(props: IngredientFormProps) {
             price: values.price,
             unit: values.unit,
             volume: values.volume == 0 ? undefined : values.volume,
-            link: values.link?.trim() == "" ? undefined : values.link.trim()
+            link: values.link?.trim() == "" ? undefined : values.link.trim(),
+            tags: values.tags,
+            image: values.image?.trim() == "" ? undefined : values.image.trim()
           };
           const result = await fetch("/api/ingredients", {
             method: props.ingredient == undefined ? "POST" : "PUT",
@@ -164,6 +173,48 @@ export function IngredientForm(props: IngredientFormProps) {
                   </div>
                 </div>
                 <div>Preis/{values.unit}: {(values.price / values.volume).toFixed(2)}€</div>
+                <div>
+                  <label className={"label"}>
+                    <span className={"label-text"}>Tags</span>
+                    <span className={"text-error label-text-alt"}>{errors.tags && touched.tags && errors.tags}</span>
+                  </label>
+                  <TagsInput
+                    value={values.tags}
+                    onChange={(tags) =>
+                      setFieldValue(
+                        "tags",
+                        updateTags(tags, (text) => (errors.tags = text))
+                      )
+                    }
+                    name="tags"
+                    beforeAddValidate={(tag, _) => validateTag(tag, (text) => (errors.tags = text))}
+                    onBlur={handleBlur}
+                  />
+                </div>
+                <div className={"col-span-2"}>
+                  {values.image != undefined ? (
+                    <label className={"label"}>
+                      <span className={"label-text"}>Zutaten Bild</span>
+                    </label>
+                  ) : (
+                    <></>
+                  )}
+                  {values.image == undefined ? (
+                    <UploadDropZone
+                      onSelectedFilesChanged={async (file) => setFieldValue("image", await convertToBase64(file))}
+                    />
+                  ) : (
+                    <div className={"relative"}>
+                      <div
+                        className={"absolute top-2 right-2 btn-error btn btn-outline btn-sm btn-square"}
+                        onClick={() => setFieldValue("image", undefined)}
+                      >
+                        <FaTrashAlt />
+                      </div>
+                      <img className={"rounded-lg h-32"} src={values.image} alt={"Cocktail Image"} />
+                    </div>
+                  )}
+                </div>
                 <div className={"form-control"}>
                   <label className={"label"}>
                     <span className={"label-text"}>Link</span>

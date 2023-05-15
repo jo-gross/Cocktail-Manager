@@ -20,6 +20,7 @@ model Decoration {
   id             String           @id @default(cuid())
   name           String
   price          Float?
+  image          String?
   CocktailRecipe CocktailRecipe[]
 }
 
@@ -73,6 +74,8 @@ model Ingredient {
   volume                   Float?
   unit                     String?
   link                     String?
+  image                    String?
+  tags                     String[]
   CocktailRecipeIngredient CocktailRecipeIngredient[]
 }
 

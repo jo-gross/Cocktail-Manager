@@ -5,12 +5,13 @@ import { Prisma } from ".prisma/client";
 import DecorationCreateInput = Prisma.DecorationCreateInput;
 
 export default async function handle(req, res) {
-  const { name, price, id } = req.body;
+  const { name, price, id, image } = req.body;
 
   const input: DecorationCreateInput = {
     id: id,
     name: name,
-    price: price
+    price: price,
+    image: image
   };
   if (req.method === "PUT") {
     const result = await prisma.decoration.update({

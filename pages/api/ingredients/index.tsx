@@ -5,7 +5,7 @@ import { Prisma } from ".prisma/client";
 import IngredientCreateInput = Prisma.IngredientCreateInput;
 
 export default async function handle(req, res) {
-  const { name, price, volume, unit, id, shortName, link } = req.body;
+  const { name, price, volume, unit, id, shortName, link, tags, image } = req.body;
 
   const input: IngredientCreateInput = {
     id: id,
@@ -14,7 +14,9 @@ export default async function handle(req, res) {
     shortName: shortName,
     unit: unit,
     price: price,
-    link: link
+    link: link,
+    tags: tags,
+    image: image
   };
   if (req.method === "PUT") {
     const result = await prisma.ingredient.update({
