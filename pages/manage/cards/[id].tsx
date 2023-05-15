@@ -49,7 +49,7 @@ export const getServerSideProps: GetServerSideProps = async ({ params }) => {
       props: {
         cocktails, card: {
           ...card,
-          date: card.date.toISOString()
+          date: card.date?.toISOString() ?? null
         }
       }
     };
@@ -77,15 +77,12 @@ export default function EditCocktailRecipe(props: { card; cocktails }) {
     <Formik initialValues={{
       groups: props.card?.groups.sort((a, b) => a.groupNumber - b.groupNumber) ?? [],
       name: props.card?.name ?? "",
-      date: (props.card != undefined ? new Date(props.card.date).toISOString() : new Date().toISOString()).split("T")[0]
+      date: props.card?.date != undefined ? new Date(props.card.date).toISOString().split("T")[0] : ""
     }}
             validate={(values) => {
               const errors: any = {};
               if (!values.name || values.name.trim() == "") {
                 errors.name = "Required";
-              }
-              if (!values.date || values.date.trim() == "") {
-                errors.date = "Required";
               }
 
               let groupErrors: any = [];
@@ -111,7 +108,6 @@ export default function EditCocktailRecipe(props: { card; cocktails }) {
                 errors.groups = groupErrors;
               }
 
-
               console.log(errors);
 
               return errors;
@@ -123,7 +119,7 @@ export default function EditCocktailRecipe(props: { card; cocktails }) {
                 body: JSON.stringify({
                   id: props.card?.id,
                   name: values.name,
-                  date: new Date(values.date).toISOString(),
+                  date: values.date != "" ? new Date(values.date).toISOString() : null,
                   groups: values.groups.map((group, index) => ({
                     name: group.name,
                     groupNumber: index,
@@ -169,7 +165,6 @@ export default function EditCocktailRecipe(props: { card; cocktails }) {
                   <div className={"label-text"}>Datum</div>
                   <div className={"label-text-alt text-error"}>
                     <span>{errors.date && touched.date ? errors.date : ""}</span>
-                    <span>*</span>
                   </div>
                 </label>
                 <input
@@ -186,7 +181,7 @@ export default function EditCocktailRecipe(props: { card; cocktails }) {
               {({ push: pushGroup, remove: removeGroup }) => (
                 <>
                   {values?.groups.sort((a, b) => a.groupNumber - b.groupNumber).map((group, groupIndex) => (
-                    <div key={groupIndex} className={"border border-base-300 rounded-2xl p-2"}>
+                    <div key={`card-group-${groupIndex}`} className={"border border-base-300 rounded-2xl p-2"}>
                       <div className={"grid grid-cols-3 items-center gap-2"}>
                         <div className={"flex-1 form-control"}>
                           <label className={"label"}>
@@ -266,7 +261,7 @@ export default function EditCocktailRecipe(props: { card; cocktails }) {
                           {({ push: pushItem, remove: removeItem }) => (
                             <div className={"grid grid-cols-3 gap-2"}>
                               {values.groups[groupIndex].items.sort((a, b) => a.itemNumber - b.itemNumber).map((item, itemIndex) => (
-                                <div className={"col-span-1"}>
+                                <div key={`card-group-${groupIndex}-item-${itemIndex}`} className={"col-span-1"}>
                                   <div className={"card"}>
                                     <div className={"card-body"}>
                                       <div>
@@ -333,7 +328,7 @@ export default function EditCocktailRecipe(props: { card; cocktails }) {
                   <div className={"flex flex-row justify-end items-center space-x-2"}>
                     <button type="button"
                             className={"btn btn-secondary btn-sm"}
-                            onClick={() => pushGroup({ name: "", items: [], date: new Date(), specialPrice: undefined })}>
+                            onClick={() => pushGroup({ name: "", items: [], specialPrice: undefined })}>
                       Gruppe hinzufügen
                     </button>
                     <button type="submit"

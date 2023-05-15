@@ -47,7 +47,6 @@ export default async function handle(req, res) {
       data: input
     });
   } else if (req.method === "POST") {
-
     cocktailCardResult = await prisma.cocktailCard.create({
       data: input
     });

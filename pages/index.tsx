@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useCallback, useContext, useEffect, useState } from "react";
 import { GetServerSideProps } from "next";
 import prisma from "../lib/prisma";
 import { FaEye, FaSearch } from "react-icons/fa";
@@ -46,7 +46,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
         cards: cards.map((card) => {
           return {
             ...card,
-            date: new Date(card.date).toISOString()
+            date: card.date != undefined ? new Date(card.date).toISOString() : null
           };
         }),
         cocktails
@@ -86,9 +86,34 @@ export default function OverviewPage(props: { cards, cocktails: CocktailRecipeFu
     }
   }, [selectedCardId]);
 
+  const sortCards = useCallback((a: CocktailCard, b: CocktailCard) => {
+    const today = new Date().toISOString().slice(0, 10);
+
+    if ((a != undefined && new Date(a.date).toISOString().slice(0, 10) == today) && (b != undefined && new Date(b.date).toISOString().slice(0, 10) != today)) {
+      return -1; // a (heutiges Datum) kommt vor b
+    }
+    if ((a != undefined && new Date(a.date).toISOString().slice(0, 10) != today) && (b != undefined && new Date(b.date).toISOString().slice(0, 10) == today)) {
+      return 1; // b (heutiges Datum) kommt vor a
+    }
+    if (a.date == undefined && b.date != undefined) {
+      return -1; // a (Datum Null) kommt vor b
+    }
+    if (a.date != undefined && b.date == undefined) {
+      return 1; // b (Datum Null) kommt vor a
+    }
+
+    if (new Date(a.date).toISOString().slice(0, 10) > today && new Date(b.date).toISOString().slice(0, 10) <= today) {
+      return -1; // a (zukünftiges Datum) kommt vor b
+    }
+    if (new Date(a.date).toISOString().slice(0, 10) <= today && new Date(b.date).toISOString().slice(0, 10) > today) {
+      return 1; // b (zukünftiges Datum) kommt vor a
+    }
+
+    return a.name.localeCompare(b.name);
+  }, []);
   useEffect(() => {
     if (selectedCardId == undefined && props.cards.length > 0) {
-      setSelectedCardId(props.cards.sort((a, b) => a.name.localeCompare(b.name))[0].id);
+      setSelectedCardId(props.cards.sort(sortCards)[0].id);
       router.replace("/", { query: { card: props.cards[0].id } });
     }
   }, [props.cards]);
@@ -106,6 +131,7 @@ export default function OverviewPage(props: { cards, cocktails: CocktailRecipeFu
                     key={`card-${selectedCard.id}-group-${group.id}-cocktail-${groupItem.cocktailId}-${index}`}
                     showImage={showImage}
                     showTags={showTags}
+                    showInfo={true}
                     showPrice={groupItem.specialPrice == undefined && group.groupPrice == undefined}
                     specialPrice={groupItem.specialPrice ?? group.groupPrice}
                     cocktailRecipe={groupItem.cocktail}
@@ -124,13 +150,14 @@ export default function OverviewPage(props: { cards, cocktails: CocktailRecipeFu
             <div className={"flex flex-col space-x-2"}>
               <div className={"divider"}>Karte</div>
               <div className={"flex flex-col"}>
-                {props.cards.length == 0 ? <div>Keine Karten vorhanden</div> : props.cards.sort((a, b) => a.name.localeCompare(b.name)).map((card) => (
+                {props.cards.length == 0 ? <div>Keine Karten vorhanden</div> : props.cards.sort(sortCards).map((card) => (
                   <div
                     key={"card-" + card.id}
                     className="form-control">
                     <label className="label">
                       <div className={"label-text"}>
-                        {card.name}
+                        {card.name}{card.date != undefined ?
+                        <span> - ({(new Date().toISOString().split("T")[0] == new Date(card.date).toISOString().split("T")[0]) ? "Heute" : new Date(card.date).toLocaleDateString("de")})</span> : ""}
                       </div>
                       <input name={"card-radio"}
                              type={"radio"}

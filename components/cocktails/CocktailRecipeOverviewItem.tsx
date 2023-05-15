@@ -3,7 +3,7 @@ import React, { useContext } from "react";
 import { CompactCocktailRecipeInstruction } from "./CompactCocktailRecipeInstruction";
 import { FaInfoCircle } from "react-icons/fa";
 import { ModalContext } from "../../lib/context/ModalContextProvider";
-import { CocktailDetailModal } from "./CocktailDetailModal";
+import { CocktailDetailModal } from "../modals/CocktailDetailModal";
 
 interface CocktailRecipeOverviewItemProps {
   cocktailRecipe: CocktailRecipeFull;
