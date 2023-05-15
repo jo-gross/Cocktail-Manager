@@ -20,7 +20,7 @@ export const getStaticProps: GetStaticProps = async () => {
       cards: cards.map((card) => {
         return {
           ...card,
-          date: new Date(card.date).toISOString()
+          date: card.date != undefined ? new Date(card.date).toISOString() : null
         };
       })
     }

@@ -79,7 +79,7 @@ model Ingredient {
 model CocktailCard {
   id     String              @id @default(cuid())
   name   String
-  date   DateTime            @default(now())
+  date   DateTime?
   groups CocktailCardGroup[]
 }
 
