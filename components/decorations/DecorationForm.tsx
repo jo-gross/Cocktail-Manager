@@ -3,6 +3,9 @@ import { Decoration } from "@prisma/client";
 import { useRouter } from "next/router";
 import React from "react";
 import { SingleFormLayout } from "../layout/SingleFormLayout";
+import { UploadDropZone } from "../UploadDropZone";
+import { convertToBase64 } from "../../lib/Base64Converter";
+import { FaTrashAlt } from "react-icons/fa";
 
 interface DecorationFormProps {
   decoration: Decoration;
@@ -15,14 +18,16 @@ export function DecorationForm(props: DecorationFormProps) {
     <Formik
       initialValues={{
         name: props.decoration?.name ?? "",
-        price: props.decoration?.price ?? 0
+        price: props.decoration?.price ?? 0,
+        image: props.decoration?.image ?? ""
       }}
       onSubmit={async (values) => {
         try {
           const body = {
             id: props.decoration == undefined ? undefined : props.decoration.id,
             name: values.name,
-            price: values.price
+            price: values.price,
+            image: values.image == "" ? null : values.image
           };
           const result = await fetch("/api/decorations", {
             method: props.decoration == undefined ? "POST" : "PUT",
@@ -93,6 +98,30 @@ export function DecorationForm(props: DecorationFormProps) {
                 />
                 <span className={"btn-secondary"}>€</span>
               </div>
+            </div>
+            <div className={"col-span-2"}>
+              {values.image != undefined ? (
+                <label className={"label"}>
+                  <span className={"label-text"}>Zutaten Bild</span>
+                </label>
+              ) : (
+                <></>
+              )}
+              {values.image == undefined ? (
+                <UploadDropZone
+                  onSelectedFilesChanged={async (file) => setFieldValue("image", await convertToBase64(file))}
+                />
+              ) : (
+                <div className={"relative"}>
+                  <div
+                    className={"absolute top-2 right-2 btn-error btn btn-outline btn-sm btn-square"}
+                    onClick={() => setFieldValue("image", undefined)}
+                  >
+                    <FaTrashAlt />
+                  </div>
+                  <img className={"rounded-lg h-32"} src={values.image} alt={"Cocktail Image"} />
+                </div>
+              )}
             </div>
             <div className={"form-control"}>
               <button type={"submit"} className={"btn btn-primary"}>

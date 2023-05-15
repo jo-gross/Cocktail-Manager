@@ -12,10 +12,10 @@ const App = ({ Component, pageProps }: AppProps) => {
     value={{
       content: modalContent,
       openModal: content => {
-        setModalContent(content);
-        if ((document.getElementById("globalModal") as HTMLInputElement | null)?.checked == false) {
+        if ((document.getElementById("globalModal") as any)?.checked == false) {
           document.getElementById("globalModal")?.click();
         }
+        setModalContent(content);
       },
       closeModal() {
         if ((document.getElementById("globalModal") as HTMLInputElement | null)?.checked == true) {

@@ -1,9 +1,8 @@
 import { CocktailRecipeFull } from "../../models/CocktailRecipeFull";
 import React, { useContext } from "react";
 import { CompactCocktailRecipeInstruction } from "./CompactCocktailRecipeInstruction";
-import { FaInfoCircle } from "react-icons/fa";
 import { ModalContext } from "../../lib/context/ModalContextProvider";
-import { CocktailDetailModal } from "../modals/CocktailDetailModal";
+import { ShowCocktailInfoButton } from "./ShowCocktailInfoButton";
 
 interface CocktailRecipeOverviewItemProps {
   cocktailRecipe: CocktailRecipeFull;
@@ -19,11 +18,8 @@ export default function CocktailRecipeOverviewItem(props: CocktailRecipeOverview
   return (
     <div className={"col-span-1"}>
       <div className={"card card-side"}>
-        {props.showInfo == true ? <div className={"absolute top-1 right-1 btn btn-ghost btn-sm btn-circle bg-info/50"} onClick={() =>
-          modalContext.openModal(<CocktailDetailModal cocktail={props.cocktailRecipe} />)
-        }>
-          <FaInfoCircle />
-        </div> : <></>}
+        <ShowCocktailInfoButton showInfo={props.showInfo}
+                                cocktailRecipe={props.cocktailRecipe} />
         <div className={"card-body"}>
           <CompactCocktailRecipeInstruction
             specialPrice={props.specialPrice}

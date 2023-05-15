@@ -4,6 +4,7 @@ import React, { useCallback, useContext, useState } from "react";
 import { CocktailRecipeFull } from "../../models/CocktailRecipeFull";
 import { Loading } from "../Loading";
 import { ModalContext } from "../../lib/context/ModalContextProvider";
+import { ShowCocktailInfoButton } from "../cocktails/ShowCocktailInfoButton";
 
 interface SearchModalProps {
   onCocktailSelected?: (id: string) => void;
@@ -52,6 +53,7 @@ export function SearchModal(props: SearchModalProps) {
                 <div className="collapse-content">
                   <div className={"card"}>
                     <div className={"card-body"}>
+                      <ShowCocktailInfoButton showInfo={true} cocktailRecipe={cocktail} />
                       <CompactCocktailRecipeInstruction
                         showPrice={true}
                         cocktailRecipe={cocktail}

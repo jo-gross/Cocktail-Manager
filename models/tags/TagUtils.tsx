@@ -1,4 +1,4 @@
-const tagRegex = new RegExp("^([a-z]+)$");
+const tagRegex = new RegExp("^([a-zäöüß]+)$");
 
 export function updateTags(localTags: string[], setTagValidation: (validation: string | null) => void): string[] {
   const newTags = localTags.map((tag) => tag.trim());
