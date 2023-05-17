@@ -1,50 +1,36 @@
-import { GetServerSideProps } from "next";
-import prisma from "../../../lib/prisma";
-import { CocktailRecipeForm } from "../../../components/cocktails/CocktailRecipeForm";
-import { ManageEntityLayout } from "../../../components/layout/ManageEntityLayout";
+import { CocktailRecipeForm } from '../../../components/cocktails/CocktailRecipeForm';
+import { ManageEntityLayout } from '../../../components/layout/ManageEntityLayout';
+import { CocktailRecipeFull } from '../../../models/CocktailRecipeFull';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/router';
+import { Loading } from '../../../components/Loading';
 
-export const getServerSideProps: GetServerSideProps = async ({ params }) => {
-  const glassesPromise = prisma.glass.findMany();
-  const decorationsPromise = prisma.decoration.findMany();
-  const ingredientsPromise = prisma.ingredient.findMany();
+export default function EditCocktailRecipe() {
+  const router = useRouter();
+  const { id } = router.query;
 
-  const [glasses, decorations, ingredients] = await Promise.all([glassesPromise, decorationsPromise, ingredientsPromise]);
-  if (params.id == "create") {
-    return {
-      props: { glasses, decorations, ingredients }
-    };
-  } else {
-    const cocktailRecipe = await prisma.cocktailRecipe.findUnique({
-      where: {
-        id: String(params.id)
-      },
-      include: {
-        glass: true,
-        decoration: true,
-        steps: {
-          include: {
-            ingredients: {
-              include: {
-                ingredient: true
-              }
-            }
-          }
-        }
-      }
-    });
+  const [cocktailRecipe, setCocktailRecipe] = useState<CocktailRecipeFull | undefined>(undefined);
+  const [loading, setLoading] = useState(true);
 
-    return {
-      props: { glasses, cocktailRecipe, decorations, ingredients }
-    };
-  }
-};
+  useEffect(() => {
+    if (id) {
+      setLoading(true);
+      fetch(`/api/cocktails/${id}`)
+        .then((response) => response.json())
+        .then((data) => {
+          setCocktailRecipe(data);
+        })
+        .finally(() => {
+          setLoading(false);
+        });
+    }
+  }, [id]);
 
-
-export default function EditCocktailRecipe(props: { glasses; cocktailRecipe; decorations; ingredients }) {
-  return <ManageEntityLayout backLink={"/manage"} title={"Cocktail"}>
-    <CocktailRecipeForm cocktailRecipe={props.cocktailRecipe}
-                        glasses={props.glasses ?? []}
-                        decorations={props.decorations ?? []}
-                        ingredients={props.ingredients ?? []} />
-  </ManageEntityLayout>;
+  return loading ? (
+    <Loading />
+  ) : (
+    <ManageEntityLayout backLink={'/manage/cocktails'} title={'Cocktail'}>
+      <CocktailRecipeForm cocktailRecipe={cocktailRecipe} />
+    </ManageEntityLayout>
+  );
 }

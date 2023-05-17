@@ -5,6 +5,7 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  // url      = "postgresql://postgres:postgres@postgres:5432/cocktail_recipe"
 }
 
 model Glass {

@@ -1,26 +1,17 @@
 // pages/api/post/index.ts
 
-import prisma from "../../../lib/prisma";
-import { Prisma } from ".prisma/client";
-import { CocktailRecipeFull } from "../../../models/CocktailRecipeFull";
+import prisma from '../../../lib/prisma';
+import { Prisma } from '.prisma/client';
+import { CocktailRecipeFull } from '../../../models/CocktailRecipeFull';
+import { NextApiRequest, NextApiResponse } from 'next';
+import { CocktailRecipe } from '@prisma/client';
+import { CocktailRecipeStepFull } from '../../../models/CocktailRecipeStepFull';
 import CocktailRecipeCreateInput = Prisma.CocktailRecipeCreateInput;
 
-export default async function handle(req, res) {
-  const {
-    id,
-    name,
-    description,
-    tags,
-    price,
-    glassWithIce,
-    image,
-    glassId,
-    decorationId,
-    steps
-  } = req.body;
+export default async function handle(req: NextApiRequest, res: NextApiResponse) {
+  const { id, name, description, tags, price, glassWithIce, image, glassId, decorationId, steps } = req.body;
 
-  if (req.method === "GET") {
-    const search = req.query.search;
+  if (req.method === 'GET') {
     const cocktailRecipes: CocktailRecipeFull[] = await prisma.cocktailRecipe.findMany({
       include: {
         glass: true,
@@ -29,20 +20,35 @@ export default async function handle(req, res) {
           include: {
             ingredients: {
               include: {
-                ingredient: true
-              }
-            }
-          }
-        }
-      }
+                ingredient: true,
+              },
+            },
+          },
+        },
+      },
     });
-
-    return res.json(cocktailRecipes.filter((cocktail) => search.trim() != "" && (
-      cocktail.name.toLowerCase().includes(search.toLowerCase()) ||
-      cocktail.tags.some((tag) => tag.toLowerCase().includes(search.toLowerCase())) ||
-      (cocktail.decoration != undefined && cocktail.decoration.name.toLowerCase().includes(search.toLowerCase())) ||
-      cocktail.steps.some((step) => step.ingredients.filter(ingredient => ingredient.ingredient.name != undefined).some((ingredient) => ingredient.ingredient.name.toLowerCase().includes(search.toLowerCase()) || (ingredient.ingredient.shortName ?? "").toLowerCase().includes(search.toLowerCase()))))
-    ));
+    let searchParam = req.query.search as string | undefined;
+    if (searchParam == undefined) {
+      return res.json(cocktailRecipes);
+    }
+    const search = searchParam.trim().toLowerCase();
+    return res.json(
+      cocktailRecipes.filter(
+        (cocktail) =>
+          cocktail.name.toLowerCase().includes(search) ||
+          cocktail.tags.some((tag) => tag.toLowerCase().includes(search)) ||
+          (cocktail.decoration != undefined && cocktail.decoration.name.toLowerCase().includes(search)) ||
+          cocktail.steps.some((step) =>
+            step.ingredients
+              .filter((ingredient) => ingredient.ingredient?.name != undefined)
+              .some(
+                (ingredient) =>
+                  ingredient.ingredient?.name.toLowerCase().includes(search) ||
+                  (ingredient.ingredient?.shortName ?? '').toLowerCase().includes(search),
+              ),
+          ),
+      ),
+    );
   }
 
   const input: CocktailRecipeCreateInput = {
@@ -54,7 +60,7 @@ export default async function handle(req, res) {
     glassWithIce: glassWithIce,
     image: image ?? null,
     glass: { connect: { id: glassId } },
-    decoration: decorationId == undefined ? undefined : { connect: { id: decorationId } }
+    decoration: decorationId == undefined ? undefined : { connect: { id: decorationId } },
   };
 
   if (id != undefined) {
@@ -62,56 +68,56 @@ export default async function handle(req, res) {
       where: {
         cocktailRecipeStep: {
           cocktailRecipe: {
-            id: id
-          }
-        }
-      }
+            id: id,
+          },
+        },
+      },
     });
 
     await prisma.cocktailRecipeStep.deleteMany({
       where: {
         cocktailRecipe: {
-          id: id
-        }
-      }
+          id: id,
+        },
+      },
     });
   }
 
-  let result;
-  if (req.method === "PUT") {
+  let result: CocktailRecipe | undefined = undefined;
+  if (req.method === 'PUT') {
     result = await prisma.cocktailRecipe.update({
       where: {
-        id: id
+        id: id,
       },
-      data: input
+      data: input,
     });
-  } else if (req.method === "POST") {
+  } else if (req.method === 'POST') {
     result = await prisma.cocktailRecipe.create({
-      data: input
+      data: input,
     });
   }
 
-  if (steps.length > 0) {
-    await steps.forEach(async (step) => {
-
+  if (steps.length > 0 && result != undefined) {
+    await steps.forEach(async (step: CocktailRecipeStepFull) => {
       await prisma.cocktailRecipeStep.create({
         data: {
           mixing: step.mixing,
           tool: step.tool,
           stepNumber: step.stepNumber,
-          cocktailRecipe: { connect: { id: result.id } },
-          ingredients: step.mixing ? {
-            create: step.ingredients.map((ingredient) => {
-                return {
-                  amount: ingredient.amount,
-                  ingredientNumber: ingredient.ingredientNumber,
-                  unit: ingredient.unit,
-                  ingredient: { connect: { id: ingredient.ingredientId } }
-                };
+          cocktailRecipe: { connect: { id: result!.id } },
+          ingredients: step.mixing
+            ? {
+                create: step.ingredients.map((ingredient) => {
+                  return {
+                    amount: ingredient.amount,
+                    ingredientNumber: ingredient.ingredientNumber,
+                    unit: ingredient.unit,
+                    ingredient: { connect: { id: ingredient.ingredientId } },
+                  };
+                }),
               }
-            )
-          } : undefined
-        }
+            : undefined,
+        },
       });
     });
   }

@@ -1,21 +1,36 @@
-import { GetServerSideProps } from "next";
-import prisma from "../../../lib/prisma";
-import { GlassForm } from "../../../components/glasses/GlassForm";
-import { ManageEntityLayout } from "../../../components/layout/ManageEntityLayout";
+import { GlassForm } from '../../../components/glasses/GlassForm';
+import { ManageEntityLayout } from '../../../components/layout/ManageEntityLayout';
+import { useRouter } from 'next/router';
+import { useEffect, useState } from 'react';
+import { Glass } from '@prisma/client';
+import { Loading } from '../../../components/Loading';
 
-export const getServerSideProps: GetServerSideProps = async ({ params }) => {
-  const glass = await prisma.glass.findUnique({
-    where: {
-      id: String(params.id)
+export default function EditGlassPage() {
+  const router = useRouter();
+  const { id } = router.query;
+
+  const [loading, setLoading] = useState(true);
+  const [glass, setGlass] = useState<Glass | undefined>(undefined);
+
+  useEffect(() => {
+    if (id) {
+      setLoading(true);
+      fetch(`/api/glasses/${id}`)
+        .then((response) => response.json())
+        .then((data) => {
+          setGlass(data);
+        })
+        .finally(() => {
+          setLoading(false);
+        });
     }
-  });
+  }, [id]);
 
-  return {
-    props: { glass }
-  };
-};
-export default function EditGlassPage(props: { glass }) {
-  return <ManageEntityLayout backLink={"/manage"} title={"Gläser"}>
-    <GlassForm glass={props.glass} />
-  </ManageEntityLayout>;
+  return loading ? (
+    <Loading />
+  ) : (
+    <ManageEntityLayout backLink={'/manage'} title={'Gläser'}>
+      <GlassForm glass={glass} />
+    </ManageEntityLayout>
+  );
 }
