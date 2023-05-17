@@ -1,6 +1,6 @@
-import React, { useContext, useEffect } from "react";
-import { ModalContext } from "../../lib/context/ModalContextProvider";
-import { FaTimes } from "react-icons/fa";
+import React, { useContext, useEffect } from 'react';
+import { ModalContext } from '../../lib/context/ModalContextProvider';
+import { FaTimes } from 'react-icons/fa';
 
 interface GlobalModalProps {
   children: React.ReactNode;
@@ -15,28 +15,23 @@ export function GlobalModal(props: GlobalModalProps) {
         modalContext.closeModal();
       }
     };
-    window.addEventListener("keydown", handleEsc);
+    window.addEventListener('keydown', handleEsc);
 
     return () => {
-      window.removeEventListener("keydown", handleEsc);
+      window.removeEventListener('keydown', handleEsc);
     };
-  }, []);
+  }, [modalContext]);
 
   return (
     <div>
       {props.children}
-      <input
-        type="checkbox"
-        id="globalModal"
-        className="modal-toggle"
-      />
+      <input type="checkbox" id="globalModal" className="modal-toggle" />
       <label htmlFor="globalModal" className="modal cursor-pointer">
         <label className="modal-box relative" htmlFor="">
-          <label htmlFor="globalModal" className="btn btn-sm btn-outline btn-circle absolute right-2 top-2"><FaTimes /></label>
-          <label
-            className={""}
-            htmlFor=""
-          >
+          <label htmlFor="globalModal" className="btn btn-sm btn-outline btn-circle absolute right-2 top-2">
+            <FaTimes />
+          </label>
+          <label className={''} htmlFor="">
             {modalContext.content}
           </label>
         </label>

@@ -11,6 +11,28 @@ services:
       - POSTGRES_DB=cocktail_recipe
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - cocktail-recipe-network
+
+  cocktails:
+    depends_on:
+      - postgres
+    links:
+      - postgres
+    image: cocktails:latest
+    container_name: cocktail-recipe-cocktails
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - '3003:3000'
+    environment:
+      DATABASE_URL: "postgres://postgres:postgres@postgres:5432/cocktail_recipe"
+    networks:
+      - cocktail-recipe-network
+
+networks:
+  cocktail-recipe-network:
 
 volumes:
   postgres_data:

@@ -1,21 +1,36 @@
-import { GetServerSideProps } from "next";
-import prisma from "../../../lib/prisma";
-import { DecorationForm } from "../../../components/decorations/DecorationForm";
-import { ManageEntityLayout } from "../../../components/layout/ManageEntityLayout";
+import { DecorationForm } from '../../../components/decorations/DecorationForm';
+import { ManageEntityLayout } from '../../../components/layout/ManageEntityLayout';
+import { useRouter } from 'next/router';
+import { useEffect, useState } from 'react';
+import { Decoration } from '@prisma/client';
+import { Loading } from '../../../components/Loading';
 
-export const getServerSideProps: GetServerSideProps = async ({ params }) => {
-  const decoration = await prisma.decoration.findUnique({
-    where: {
-      id: String(params.id)
+export default function EditDecorationPage() {
+  const router = useRouter();
+  const { id } = router.query;
+
+  const [decoration, setDecoration] = useState<Decoration | undefined>(undefined);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (id) {
+      setLoading(true);
+      fetch(`/api/decorations/${id}`)
+        .then((response) => response.json())
+        .then((data) => {
+          setDecoration(data);
+        })
+        .finally(() => {
+          setLoading(false);
+        });
     }
-  });
+  }, [id]);
 
-  return {
-    props: { decoration }
-  };
-};
-export default function EditDecorationPage(props: { decoration }) {
-  return <ManageEntityLayout backLink={"/manage"} title={"Dekoration"}>
-    <DecorationForm decoration={props.decoration} />
-  </ManageEntityLayout>;
+  return loading ? (
+    <Loading />
+  ) : (
+    <ManageEntityLayout backLink={'/manage'} title={'Dekoration'}>
+      <DecorationForm decoration={decoration} />
+    </ManageEntityLayout>
+  );
 }

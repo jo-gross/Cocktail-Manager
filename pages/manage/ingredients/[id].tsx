@@ -1,30 +1,33 @@
-import { GetServerSideProps } from "next";
-import prisma from "../../../lib/prisma";
-import { IngredientForm } from "../../../components/ingredients/IngredientForm";
-import { ManageEntityLayout } from "../../../components/layout/ManageEntityLayout";
+import { IngredientForm } from '../../../components/ingredients/IngredientForm';
+import { ManageEntityLayout } from '../../../components/layout/ManageEntityLayout';
+import { Ingredient } from '@prisma/client';
+import { useRouter } from 'next/router';
+import { useEffect, useState } from 'react';
+import { Loading } from '../../../components/Loading';
 
-export const getServerSideProps: GetServerSideProps = async ({ params }) => {
+export default function EditCocktailRecipe() {
+  const router = useRouter();
+  const { id } = router.query;
 
-  if (params.id == "create") {
-    return {
-      props: {}
-    };
-  } else {
-    const ingredient = await prisma.ingredient.findUnique({
-      where: {
-        id: String(params.id)
-      }
-    });
+  const [ingredient, setIngredient] = useState<Ingredient | undefined>(undefined);
+  const [loading, setLoading] = useState(true);
 
-    return {
-      props: { ingredient }
-    };
-  }
-};
+  useEffect(() => {
+    fetch(`/api/ingredients/${id}`)
+      .then((response) => response.json())
+      .then((data) => {
+        setIngredient(data);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, [id]);
 
-
-export default function EditCocktailRecipe(props: { ingredient }) {
-  return <ManageEntityLayout backLink={"/manage/ingredients"} title={"Zutaten"}>
-    <IngredientForm ingredient={props.ingredient} />
-  </ManageEntityLayout>;
+  return loading ? (
+    <Loading />
+  ) : (
+    <ManageEntityLayout backLink={'/manage/ingredients'} title={'Zutaten'}>
+      <IngredientForm ingredient={ingredient} />
+    </ManageEntityLayout>
+  );
 }
