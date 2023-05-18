@@ -39,14 +39,14 @@ services:
     backup_system:
         restart: always
         image: registry.hek.whka.de/hekit/hekservices/hekvolbackup:prod
-        container_name: hekbar_backup_system
+        container_name: hekbar_cocktails_backup_system
         volumes:
             - /backup-data/:/backup
             - /backup/:/mnt/backup1
             - hekbar_cocktails_db_data:/mounts/hekbar_cocktails_db_data
     restore_system:
         image: registry.hek.whka.de/hekit/hekservices/hekvolrestore:prod
-        container_name: hekbar_restore_system
+        container_name: hekbar_cocktails_restore_system
         volumes:
             - /backup-data/:/backup
             - hekbar_cocktails_db_data:/mounts/hekbar_cocktails_db_data
