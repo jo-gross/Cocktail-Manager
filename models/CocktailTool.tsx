@@ -1,6 +1,6 @@
 export enum CocktailTool {
-  STRAIN = "Strain",
-  DOUBLE_STRAIN = "Double strain",
-  PESTLE = "Stößel",
-  WITHOUT = "Einschenken",
+  SINGLE_STRAIN = 'Single strain',
+  DOUBLE_STRAIN = 'Double strain',
+  PESTLE = 'Stößel',
+  WITHOUT = 'Einschenken',
 }
