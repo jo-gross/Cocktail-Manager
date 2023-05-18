@@ -36,7 +36,7 @@ export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeIns
         {props.cocktailRecipe.steps
           ?.sort((a, b) => a.stepNumber - b.stepNumber)
           .map((step, index) => (
-            <div key={`step-${step.id}`} className={'break-words'}>
+            <div key={`step-${step.id}`} className={'break-words pb-2'}>
               <span className={'font-bold'}>{step.tool} </span>
               {step.mixing &&
                 step.ingredients
