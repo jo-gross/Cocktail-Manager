@@ -43,9 +43,9 @@ export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeIns
                   ?.sort((a, b) => a.ingredientNumber - b.ingredientNumber)
                   .map(
                     (ingredient, indexIngredient) =>
-                      `${ingredient.amount ?? ''} ${ingredient.unit ?? ''} ${
+                      <div>{ingredient.amount ?? ''} {ingredient.unit ?? ''} {
                         ingredient.ingredient?.shortName ?? ingredient.ingredient?.name ?? ''
-                      } ${indexIngredient < step.ingredients.length - 1 ? <br/> : <></>}`,
+                      } {indexIngredient < step.ingredients.length - 1 ? <></> : <></>}</div>,
                   )}
             </div>
           ))}
