@@ -45,7 +45,7 @@ export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeIns
                     (ingredient, indexIngredient) =>
                       `${ingredient.amount ?? ''} ${ingredient.unit ?? ''} ${
                         ingredient.ingredient?.shortName ?? ingredient.ingredient?.name ?? ''
-                      } ${indexIngredient < step.ingredients.length - 1 ? '\n' : ''}`,
+                      } ${indexIngredient < step.ingredients.length - 1 ? <br/> : <></>}`,
                   )}
             </div>
           ))}
