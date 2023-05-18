@@ -65,7 +65,9 @@ export default function EditCocktailRecipe() {
       title={'Karte'}
       actions={
         card != undefined ? (
-          <div
+          <button
+            type={'button'}
+            disabled={process.env.ALLOW_DELETE == 'false' ?? true}
             className={'btn btn-error btn-square btn-outline'}
             onClick={async () => {
               await fetch(`/api/cards/${card.id}`, {
@@ -75,7 +77,7 @@ export default function EditCocktailRecipe() {
             }}
           >
             <FaTrashAlt />
-          </div>
+          </button>
         ) : (
           <></>
         )
