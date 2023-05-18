@@ -15,7 +15,7 @@ services:
             - webgateway
             - hekbar_cocktails_net
         environment:
-            - DB_PASSWORD=${HEKBAR_COCKTAILS_DB_PASSWORD}
+            - DATABASE_URL=postgresql://hekbaruser:${HEKBAR_COCKTAILS_DB_PASSWORD}@hekbar_cocktails_db:5432/hekbar_cocktails
         labels:
             - "traefik.enable=true"
             - "traefik.http.routers.hekbar_cocktails.entrypoints=websecure"
