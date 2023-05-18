@@ -9,18 +9,21 @@ export default function EditCocktailRecipe() {
   const router = useRouter();
   const { id } = router.query;
 
-  const [ingredient, setIngredient] = useState<Ingredient | undefined>(undefined);
   const [loading, setLoading] = useState(true);
+  const [ingredient, setIngredient] = useState<Ingredient | undefined>(undefined);
 
   useEffect(() => {
-    fetch(`/api/ingredients/${id}`)
-      .then((response) => response.json())
-      .then((data) => {
-        setIngredient(data);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
+    if (id) {
+      setLoading(true);
+      fetch(`/api/ingredients/${id}`)
+        .then((response) => response.json())
+        .then((data) => {
+          setIngredient(data);
+        })
+        .finally(() => {
+          setLoading(false);
+        });
+    }
   }, [id]);
 
   return loading ? (
