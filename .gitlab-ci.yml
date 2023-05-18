@@ -1,0 +1,44 @@
+variables:
+  DOCKER_DRIVER: overlay2
+  IMAGE_NAME: docker/compose:1.24.0
+
+stages:
+  - build
+  - deploy
+  - restore
+
+include:
+  - project: 'HEKit/HEKservices/gitlab-ci'
+    file: '/gitlab-ci.yml'
+  - project: 'HEKit/HEKservices/gitlab-ci'
+    file: '/gitlab-ci-restore.yml'
+  - project: 'HEKit/HEKservices/hekdependency'
+    file: '/.gitlab-ci.yml'
+
+#  - template: Code-Quality.gitlab-ci.yml
+#  - template: Security/Secret-Detection.gitlab-ci.yml
+
+#code_quality:
+#  artifacts:
+#    paths: [gl-code-quality-report.json]
+#  tags:
+#    - privileged
+
+
+build prod:
+  script:
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+    - export REGISTRY_TAG=prod
+    - docker-compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.prod.build.yml build --parallel
+    - docker-compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.prod.build.yml push
+    - export REGISTRY_TAG="prod-${CI_COMMIT_SHORT_SHA}"
+    - docker-compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.prod.build.yml build --parallel
+    - docker-compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.prod.build.yml push
+
+deploy:
+  script:
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+    - export REGISTRY_TAG="prod-${CI_COMMIT_SHORT_SHA}"
+    - docker-compose -f docker-compose.yml -f docker-compose.prod.yml pull
+# only start the main service and everything it depends on. Otherwise everytime the restore service would be startet
+    - docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d --remove-orphans --always-recreate-deps main

@@ -1,0 +1,60 @@
+version: "3.5"
+
+services:
+    main:
+        # used for CI script to know which images to start on deployment
+        image: rwgrim/docker-noop
+        depends_on:
+            - hekbar
+
+    hekbar_cocktails:
+        image: registry.hek.whka.de/hekbar/hekbar-cocktails:${REGISTRY_TAG}
+        depends_on:
+            - backup_system
+        networks:
+            - webgateway
+            - hekbar_cocktails_net
+        environment:
+            - DB_PASSWORD=${HEKBAR_COCKTAILS_DB_PASSWORD}
+        labels:
+            - "traefik.enable=true"
+            - "traefik.http.routers.hekbar.entrypoints=websecure"
+            - "traefik.http.routers.hekbar.rule=Host(`bar-cocktails.hek.whka.de`)"
+            - "traefik.http.routers.hekbar.middlewares=ipcheck-hekinternal@file"
+            - "traefik.http.routers.hekbar.service=hekbar"
+            - "traefik.http.services.hekbar.loadbalancer.server.port=3000"
+            - "traefik.docker.network=webgateway"
+            - "traefik.tags=migrated"
+
+    hekbar_cocktails_db:
+        ports:
+            -   "42345:5432"
+        networks:
+            - hekbar_cocktails_net
+        environment:
+            - POSTGRES_PASSWORD=${HEKBAR_COCKTAILS_DB_PASSWORD}
+        volumes:
+            - hekbar_cocktails_db_data:/var/lib/postgresql/data/
+
+    backup_system:
+        restart: always
+        image: registry.hek.whka.de/hekit/hekservices/hekvolbackup:prod
+        container_name: hekbar_backup_system
+        volumes:
+            - /backup-data/:/backup
+            - /backup/:/mnt/backup1
+            - hekbar_cocktails_db_data:/mounts/hekbar_cocktails_db_data
+    restore_system:
+        image: registry.hek.whka.de/hekit/hekservices/hekvolrestore:prod
+        container_name: hekbar_restore_system
+        volumes:
+            - /backup-data/:/backup
+            - hekbar_cocktails_db_data:/mounts/hekbar_cocktails_db_data
+
+volumes:
+    hekbar_cocktails_db_data:
+        name: hekbar_cocktails_db_data
+
+networks:
+    webgateway:
+        external: true
