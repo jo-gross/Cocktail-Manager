@@ -10,7 +10,7 @@ WORKDIR /app
 COPY --from=dependencies /app/node_modules ./node_modules
 COPY . .
 
-RUN npx prisma generate
+RUN yarn prisma generate
 RUN yarn build
 
 FROM node:18-alpine AS deploy
@@ -23,6 +23,7 @@ COPY --from=build /app/public ./public
 COPY --from=build /app/package.json ./package.json
 COPY --from=build /app/.next/standalone ./
 COPY --from=build /app/.next/static ./.next/static
+COPY schema.prisma ./prisma/schema.prisma
 
 EXPOSE 3000
 
