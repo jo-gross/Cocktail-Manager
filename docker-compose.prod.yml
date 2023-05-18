@@ -21,7 +21,7 @@ services:
             - "traefik.http.routers.hekbar.entrypoints=websecure"
             - "traefik.http.routers.hekbar.rule=Host(`bar-cocktails.hek.whka.de`)"
             - "traefik.http.routers.hekbar.middlewares=ipcheck-hekinternal@file"
-            - "traefik.http.routers.hekbar.service=hekbar"
+            - "traefik.http.routers.hekbar.service=hekbar_cocktails"
             - "traefik.http.services.hekbar.loadbalancer.server.port=3000"
             - "traefik.docker.network=webgateway"
             - "traefik.tags=migrated"
