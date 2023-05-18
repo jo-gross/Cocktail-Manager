@@ -5,7 +5,7 @@ services:
         # used for CI script to know which images to start on deployment
         image: rwgrim/docker-noop
         depends_on:
-            - hekbar
+            - hekbar_cocktails
 
     hekbar_cocktails:
         image: registry.hek.whka.de/hekbar/hekbar-cocktails:${REGISTRY_TAG}
