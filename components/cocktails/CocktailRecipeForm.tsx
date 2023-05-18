@@ -448,7 +448,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                     onChange={(e) => {
                                       handleChange(e);
                                       if (values.steps[indexStep].mixing) {
-                                        setFieldValue(`steps.${indexStep}.tool`, CocktailTool.STRAIN);
+                                        setFieldValue(`steps.${indexStep}.tool`, CocktailTool.SINGLE_STRAIN);
                                       } else {
                                         setFieldValue(`steps.${indexStep}.tool`, CocktailUtensil.SHAKE);
                                       }
