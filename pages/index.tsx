@@ -157,7 +157,7 @@ export default function OverviewPage(props: { cards: CocktailCardFull[]; cocktai
                   {group.groupPrice && ` - Special Preis: ${group.groupPrice}€`}
                 </div>
                 <div
-                  className={'grid 2xl:grid-cols-6 xl:grid-cols-4 md:grid-cols-3 xs:grid-cols-2 grid-cols-1 gap-2 p-2'}
+                  className={`grid 2xl:grid-cols-6 ${showImage? 'xl:grid-cols-3' : 'xl:grid-cols-4'} md:grid-cols-3 xs:grid-cols-2 grid-cols-1 gap-2 p-2`}
                 >
                   {group.items
                     ?.sort((a, b) => a.itemNumber - b.itemNumber)
