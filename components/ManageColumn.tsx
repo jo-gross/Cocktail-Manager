@@ -14,7 +14,7 @@ export function ManageColumn(props: ManageColumnProps) {
         </a>
         <button
           type={'button'}
-          disabled={process.env.ALLOW_DELETE == 'false' ?? true}
+          disabled={!(process.env.ALLOW_DELETE == 'true') ?? true}
           className={'btn btn-outline btn-error btn-sm'}
           onClick={async () => {
             try {

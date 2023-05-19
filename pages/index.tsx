@@ -1,6 +1,4 @@
 import React, { useCallback, useContext, useEffect, useState } from 'react';
-import { GetServerSideProps } from 'next';
-import prisma from '../lib/prisma';
 import { FaEye, FaSearch } from 'react-icons/fa';
 import Link from 'next/link';
 import { BsFillGearFill } from 'react-icons/bs';
@@ -8,67 +6,44 @@ import { CocktailCardFull } from '../models/CocktailCardFull';
 import CocktailRecipeOverviewItem from '../components/cocktails/CocktailRecipeOverviewItem';
 import { CocktailCard } from '@prisma/client';
 import { useRouter } from 'next/router';
-import { CocktailRecipeFull } from '../models/CocktailRecipeFull';
 import { ModalContext } from '../lib/context/ModalContextProvider';
 import { SearchModal } from '../components/modals/SearchModal';
 import { themeChange } from 'theme-change';
 import { Loading } from '../components/Loading';
+import { PageCenter } from '../components/layout/PageCenter';
 
-export const getServerSideProps: GetServerSideProps = async () => {
-  const cocktails: CocktailRecipeFull[] = await prisma.cocktailRecipe.findMany({
-    include: {
-      glass: true,
-      decoration: true,
-      steps: {
-        include: {
-          ingredients: {
-            include: {
-              ingredient: true,
-            },
-          },
-        },
-      },
-    },
-  });
-
-  const cards: CocktailCard[] = await prisma.cocktailCard.findMany({
-    include: {
-      groups: {
-        include: {
-          items: true,
-        },
-      },
-    },
-  });
-
-  return {
-    props: {
-      cards: cards.map((card) => {
-        return {
-          ...card,
-          date: card.date != undefined ? new Date(card.date).toISOString() : null,
-        };
-      }),
-      cocktails,
-    },
-  };
-};
-
-export default function OverviewPage(props: { cards: CocktailCardFull[]; cocktails: CocktailRecipeFull[] }) {
+export default function OverviewPage() {
   const modalContext = useContext(ModalContext);
 
   const [showImage, setShowImage] = useState(false);
+  const [showImageSide, setShowImageSide] = useState(false);
   const [showTags, setShowTags] = useState(false);
+  const [lessItems, setLessItems] = useState(false);
+
+  const [cocktailCards, setCocktailCards] = useState<CocktailCardFull[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setLoading(true);
+    fetch('/api/cards')
+      .then((response) => response.json())
+      .then((data) => {
+        setCocktailCards(data);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, []);
 
   useEffect(() => {
     themeChange(false);
   }, []);
 
   const [selectedCardId, setSelectedCardId] = useState<string | undefined>(
-    props.cards.length > 0 ? props.cards[0].id : undefined,
+    cocktailCards.length > 0 ? cocktailCards[0].id : undefined,
   );
   const [selectedCard, setSelectedCard] = useState<CocktailCardFull | undefined>(
-    props.cards.length > 0 ? props.cards[0] : undefined,
+    cocktailCards.length > 0 ? cocktailCards[0] : undefined,
   );
   const router = useRouter();
 
@@ -135,58 +110,71 @@ export default function OverviewPage(props: { cards: CocktailCardFull[]; cocktai
   }, []);
 
   useEffect(() => {
-    if (selectedCardId == undefined && props.cards.length > 0) {
-      setSelectedCardId(props.cards.sort(sortCards)[0].id);
-      router.replace('/', { query: { card: props.cards[0].id } });
+    if (selectedCardId == undefined && cocktailCards.length > 0) {
+      setSelectedCardId(cocktailCards.sort(sortCards)[0].id);
+      router.replace('/', { query: { card: cocktailCards[0].id } });
     }
-  }, [props.cards, router, selectedCardId, sortCards]);
+  }, [cocktailCards, router, selectedCardId, sortCards]);
 
   return (
     <div className={'static h-screen'}>
       <div className={''}>
         <div className={'flex flex-col overflow-y-auto p-4 rounded-xl space-y-2'}>
-          {selectedCard?.groups
-            ?.sort((a, b) => a.groupNumber - b.groupNumber)
-            .map((group) => (
-              <div
-                key={`card-${selectedCard.id}-group-${group.id}`}
-                className={'border border-base-200 rounded-xl p-2'}
-              >
-                <div className={'font-bold text-2xl text-center'}>
-                  {group.name}
-                  {group.groupPrice && ` - Special Preis: ${group.groupPrice}€`}
-                </div>
+          {loading ? (
+            <PageCenter>
+              <Loading />
+            </PageCenter>
+          ) : (
+            selectedCard?.groups
+              ?.sort((a, b) => a.groupNumber - b.groupNumber)
+              .map((group) => (
                 <div
-                  className={`grid 2xl:grid-cols-6 ${showImage? 'xl:grid-cols-3' : 'xl:grid-cols-4'} md:grid-cols-3 xs:grid-cols-2 grid-cols-1 gap-2 p-2`}
+                  key={`card-${selectedCard.id}-group-${group.id}`}
+                  className={'border border-base-200 rounded-xl p-2'}
                 >
-                  {group.items
-                    ?.sort((a, b) => a.itemNumber - b.itemNumber)
-                    .map((groupItem, index) => {
-                      if (groupItem.cocktail != undefined) {
-                        return (
-                          <CocktailRecipeOverviewItem
-                            key={`card-${selectedCard.id}-group-${group.id}-cocktail-${groupItem.cocktailId}-${index}`}
-                            showImage={showImage}
-                            showTags={showTags}
-                            showInfo={true}
-                            showPrice={groupItem.specialPrice == undefined && group.groupPrice == undefined}
-                            specialPrice={groupItem.specialPrice ?? group.groupPrice ?? undefined}
-                            cocktailRecipe={groupItem.cocktail}
-                          />
-                        );
-                      } else {
-                        return (
-                          <div
-                            key={`card-${selectedCard.id}-group-${group.id}-cocktail-${groupItem.cocktailId}-${index}`}
-                          >
-                            <Loading />
-                          </div>
-                        );
-                      }
-                    })}
+                  <div className={'font-bold text-2xl text-center'}>
+                    {group.name}
+                    {group.groupPrice && ` - Special Preis: ${group.groupPrice}€`}
+                  </div>
+                  <div
+                    className={`grid 
+                      ${lessItems ? '2xl:grid-cols-5 ' : '2xl:grid-cols-6 '}
+                      ${lessItems ? 'xl:grid-cols-3 ' : 'xl:grid-cols-4 '}
+                      ${lessItems ? 'md:grid-cols-2 ' : 'md:grid-cols-3 '}
+                      ${lessItems ? 'xs:grid-cols-1 ' : ' xs:grid-cols-2 '}
+                       grid-cols-1
+                       gap-2 p-2`}
+                  >
+                    {group.items
+                      ?.sort((a, b) => a.itemNumber - b.itemNumber)
+                      .map((groupItem, index) => {
+                        if (groupItem.cocktail != undefined) {
+                          return (
+                            <CocktailRecipeOverviewItem
+                              key={`card-${selectedCard.id}-group-${group.id}-cocktail-${groupItem.cocktailId}-${index}`}
+                              showImage={showImage}
+                              showImageSide={showImageSide}
+                              showTags={showTags}
+                              showInfo={true}
+                              showPrice={groupItem.specialPrice == undefined && group.groupPrice == undefined}
+                              specialPrice={groupItem.specialPrice ?? group.groupPrice ?? undefined}
+                              cocktailRecipe={groupItem.cocktail}
+                            />
+                          );
+                        } else {
+                          return (
+                            <div
+                              key={`card-${selectedCard.id}-group-${group.id}-cocktail-${groupItem.cocktailId}-${index}`}
+                            >
+                              <Loading />
+                            </div>
+                          );
+                        }
+                      })}
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))
+          )}
         </div>
       </div>
 
@@ -199,10 +187,12 @@ export default function OverviewPage(props: { cards: CocktailCardFull[]; cocktai
             <div className={'flex flex-col space-x-2'}>
               <div className={'divider'}>Karte</div>
               <div className={'flex flex-col'}>
-                {props.cards.length == 0 ? (
+                {loading ? (
+                  <Loading />
+                ) : cocktailCards.length == 0 ? (
                   <div>Keine Karten vorhanden</div>
                 ) : (
-                  props.cards.sort(sortCards).map((card) => (
+                  cocktailCards.sort(sortCards).map((card) => (
                     <div key={'card-' + card.id} className="form-control">
                       <label className="label">
                         <div className={'label-text'}>
@@ -251,12 +241,34 @@ export default function OverviewPage(props: { cards: CocktailCardFull[]; cocktai
               </div>
               <div className="form-control">
                 <label className="label">
+                  Bilder seitlich
+                  <input
+                    type={'checkbox'}
+                    className={'toggle toggle-primary'}
+                    defaultChecked={showImageSide}
+                    onClick={() => setShowImageSide(!showImageSide)}
+                  />
+                </label>
+              </div>
+              <div className="form-control">
+                <label className="label">
                   Tags anzeigen
                   <input
                     type={'checkbox'}
                     className={'toggle toggle-primary'}
                     defaultChecked={showTags}
                     onClick={() => setShowTags(!showTags)}
+                  />
+                </label>
+              </div>
+              <div className="form-control">
+                <label className="label">
+                  Weniger Spalten
+                  <input
+                    type={'checkbox'}
+                    className={'toggle toggle-primary'}
+                    defaultChecked={lessItems}
+                    onClick={() => setLessItems(!lessItems)}
                   />
                 </label>
               </div>

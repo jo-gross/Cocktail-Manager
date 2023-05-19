@@ -1,13 +1,13 @@
-import { Formik } from 'formik';
+import { Formik, FormikProps } from 'formik';
 import { Ingredient } from '@prisma/client';
 import { useRouter } from 'next/router';
-import React from 'react';
+import React, { useRef } from 'react';
 import { CocktailIngredientUnit } from '../../models/CocktailIngredientUnit';
 import { TagsInput } from 'react-tag-input-component';
 import { updateTags, validateTag } from '../../models/tags/TagUtils';
 import { UploadDropZone } from '../UploadDropZone';
 import { convertToBase64 } from '../../lib/Base64Converter';
-import { FaTrashAlt } from 'react-icons/fa';
+import { FaSyncAlt, FaTrashAlt } from 'react-icons/fa';
 import { alertService } from '../../lib/alertService';
 
 interface IngredientFormProps {
@@ -17,8 +17,11 @@ interface IngredientFormProps {
 export function IngredientForm(props: IngredientFormProps) {
   const router = useRouter();
 
+  const formRef = useRef<FormikProps<any>>(null);
+
   return (
     <Formik
+      innerRef={formRef}
       initialValues={{
         name: props.ingredient?.name ?? '',
         shortName: props.ingredient?.shortName ?? '',
@@ -27,20 +30,20 @@ export function IngredientForm(props: IngredientFormProps) {
         unit: props.ingredient?.unit ?? CocktailIngredientUnit.CL,
         link: props.ingredient?.link ?? '',
         tags: props.ingredient?.tags ?? [],
-        image: props.ingredient?.image ?? '',
+        image: props.ingredient?.image ?? undefined,
       }}
       onSubmit={async (values) => {
         try {
           const body = {
             id: props.ingredient == undefined ? undefined : props.ingredient.id,
             name: values.name.trim(),
-            shortName: values.shortName?.trim() == '' ? undefined : values.shortName.trim(),
+            shortName: values.shortName?.trim() == '' ? undefined : values.shortName?.trim(),
             price: values.price,
             unit: values.unit,
             volume: values.volume == 0 ? undefined : values.volume,
-            link: values.link?.trim() == '' ? undefined : values.link.trim(),
+            link: values.link?.trim() == '' ? undefined : values.link?.trim(),
             tags: values.tags,
-            image: values.image?.trim() == '' ? undefined : values.image.trim(),
+            image: values.image?.trim() == '' ? undefined : values.image?.trim(),
           };
           const result = await fetch('/api/ingredients', {
             method: props.ingredient == undefined ? 'POST' : 'PUT',
@@ -70,6 +73,7 @@ export function IngredientForm(props: IngredientFormProps) {
         if (!values.unit) {
           errors.unit = 'Required';
         }
+        console.log(errors);
         return errors;
       }}
     >
@@ -241,15 +245,41 @@ export function IngredientForm(props: IngredientFormProps) {
                       <span>{errors.link && touched.link && errors.link}</span>
                     </span>
                   </label>
-                  <input
-                    type={'text'}
-                    placeholder={''}
-                    className={`input input-bordered ${errors.link && touched.link && 'input-error'}`}
-                    onChange={handleChange}
-                    onBlur={handleBlur}
-                    value={values.link}
-                    name={'link'}
-                  />
+                  <div className={'input-group'}>
+                    <input
+                      type={'text'}
+                      placeholder={''}
+                      className={`input input-bordered w-full ${errors.link && touched.link && 'input-error'}`}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      value={values.link}
+                      name={'link'}
+                    />
+                    <div
+                      className={`btn btn-primary ${values.fetchingExternalData ? 'loading' : ''}`}
+                      onClick={() => {
+                        setFieldValue('fetchingExternalData', true);
+                        fetch(`/api/scraper/ingredient?url=${values.link}`)
+                          .then((response) => {
+                            if (response.ok) {
+                              response.json().then((data) => {
+                                setFieldValue('name', data.name);
+                                setFieldValue('price', data.price);
+                                setFieldValue('image', data.image);
+                                setFieldValue('volume', data.volume);
+                              });
+                            } else {
+                              alertService.warn('Es konnten keine Daten über die URL geladen werden.');
+                            }
+                          })
+                          .finally(() => {
+                            setFieldValue('fetchingExternalData', false);
+                          });
+                      }}
+                    >
+                      <FaSyncAlt />
+                    </div>
+                  </div>
                 </div>
                 <div className={'form-control'}>
                   <button type={'submit'} className={`btn btn-primary ${isSubmitting ? 'loading' : ''}`}>
