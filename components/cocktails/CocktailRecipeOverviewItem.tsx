@@ -11,6 +11,7 @@ interface CocktailRecipeOverviewItemProps {
   showPrice?: boolean;
   showInfo?: boolean;
   showTags?: boolean;
+  showImageSide?: boolean;
 }
 
 export default function CocktailRecipeOverviewItem(props: CocktailRecipeOverviewItemProps) {
@@ -22,6 +23,7 @@ export default function CocktailRecipeOverviewItem(props: CocktailRecipeOverview
         <div className={'card-body'}>
           <CompactCocktailRecipeInstruction
             specialPrice={props.specialPrice}
+            showImage={!(props.showImageSide == true) && (props.showImage ?? false)}
             showPrice={props.showPrice ?? true}
             cocktailRecipe={props.cocktailRecipe}
           />
@@ -40,10 +42,13 @@ export default function CocktailRecipeOverviewItem(props: CocktailRecipeOverview
             )}
           </div>
         </div>
-        {props.showImage && props.cocktailRecipe.image != '' && props.cocktailRecipe.image != undefined ? (
+        {props.showImageSide &&
+        props.showImage &&
+        props.cocktailRecipe.image != '' &&
+        props.cocktailRecipe.image != undefined ? (
           <figure>
             <img
-              className={'rounded-lg shadow-md w-36 h-full object-fit object-center'}
+              className={' shadow-md w-36 h-full object-fit object-center'}
               src={props.cocktailRecipe.image}
               alt={'Cocktail'}
             />

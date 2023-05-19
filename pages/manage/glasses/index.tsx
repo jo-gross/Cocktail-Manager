@@ -49,13 +49,12 @@ export default function ManageGlassesOverviewPage() {
                     <tr className={'p-4'} key={glass.id}>
                       <td>
                         <div className="flex items-center space-x-3">
-                          <div className="avatar">
-                            <div className="mask mask-squircle w-12 h-12">
-                              <img
-                                src={glass.image ?? '/images/glasses/default-glass.png'}
-                                alt="Avatar Tailwind CSS Component"
-                              />
-                            </div>
+                          <div className="w-12 h-12 mask-squircle mask">
+                            <img
+                              className={'w-fit h-full mr-2 object-contain'}
+                              src={glass.image ?? '/images/glasses/default-glass.png'}
+                              alt="Avatar Tailwind CSS Component"
+                            />
                           </div>
                           <div className="font-bold">{glass.name}</div>
                         </div>

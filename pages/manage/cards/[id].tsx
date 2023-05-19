@@ -67,7 +67,7 @@ export default function EditCocktailRecipe() {
         card != undefined ? (
           <button
             type={'button'}
-            disabled={process.env.ALLOW_DELETE == 'false' ?? true}
+            disabled={!(process.env.ALLOW_DELETE == 'true') ?? true}
             className={'btn btn-error btn-square btn-outline'}
             onClick={async () => {
               await fetch(`/api/cards/${card.id}`, {

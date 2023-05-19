@@ -60,10 +60,8 @@ export default function IngredientsOverviewPage() {
                         <td className={''}>
                           {ingredient.image ? (
                             <div className="flex items-center space-x-3">
-                              <div className="avatar">
-                                <div className="mask mask-squircle w-12 h-12">
-                                  <img src={ingredient.image} className={'w-8 h-8 rounded-full mr-2'} />
-                                </div>
+                              <div className="w-12 h-12 mask-squircle mask">
+                                <img className={'w-fit h-full mr-2 object-contain'} src={ingredient.image} />
                               </div>
                               {ingredient.name}
                             </div>

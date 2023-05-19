@@ -5,6 +5,7 @@ interface CompactCocktailRecipeInstructionProps {
   cocktailRecipe: CocktailRecipeFull;
   showPrice?: boolean;
   specialPrice?: number;
+  showImage?: boolean;
 }
 
 export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeInstructionProps) {
@@ -32,7 +33,11 @@ export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeIns
         <div>Eis: {props.cocktailRecipe?.glassWithIce ?? '<Eis>'}</div>
       </div>
       <div className={'border-b border-base-100 col-span-4'}></div>
-      <div className={'col-span-4'}>
+      <div
+        className={`${
+          props.cocktailRecipe.image != undefined && props.showImage == true ? 'col-span-3' : 'col-span-4'
+        }`}
+      >
         {props.cocktailRecipe.steps
           ?.sort((a, b) => a.stepNumber - b.stepNumber)
           .map((step, index) => (
@@ -41,17 +46,37 @@ export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeIns
               {step.mixing &&
                 step.ingredients
                   ?.sort((a, b) => a.ingredientNumber - b.ingredientNumber)
-                  .map(
-                    (ingredient, indexIngredient) =>
-                      <div>{ingredient.amount ?? ''} {ingredient.unit ?? ''} {
-                        ingredient.ingredient?.shortName ?? ingredient.ingredient?.name ?? ''
-                      } {indexIngredient < step.ingredients.length - 1 ? <></> : <></>}</div>,
-                  )}
+                  .map((ingredient, indexIngredient) => (
+                    <div
+                      key={`cocktail-${props.cocktailRecipe.id}-step-${step.id}-ingredient-${ingredient.id}-index-${indexIngredient}`}
+                    >
+                      {ingredient.amount ?? ''} {ingredient.unit ?? ''}{' '}
+                      {ingredient.ingredient?.shortName ?? ingredient.ingredient?.name ?? ''}{' '}
+                      {indexIngredient < step.ingredients.length - 1 ? <></> : <></>}
+                    </div>
+                  ))}
             </div>
           ))}
       </div>
-      <div className={'border-b border-base-100 col-span-4'}></div>
-      <div className={'col-span-4'}>Deko: {props.cocktailRecipe.decoration?.name ?? 'Keine'}</div>
+      {props.cocktailRecipe.image != undefined && props.showImage == true ? (
+        <div className={'row-span-3 justify-self-center self-center h-full pt-2'}>
+          <img src={props.cocktailRecipe.image} className={'object-cover h-full w-fit rounded-xl'} alt={''} />
+        </div>
+      ) : (
+        <></>
+      )}
+      <div
+        className={`border-b border-base-100 ${
+          props.cocktailRecipe.image != undefined && props.showImage == true ? 'col-span-3' : 'col-span-4'
+        }`}
+      ></div>
+      <div
+        className={`${
+          props.cocktailRecipe.image != undefined && props.showImage == true ? 'col-span-3' : 'col-span-4'
+        }`}
+      >
+        Deko: {props.cocktailRecipe.decoration?.name ?? 'Keine'}
+      </div>
     </div>
   );
 }
