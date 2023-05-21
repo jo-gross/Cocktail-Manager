@@ -32,6 +32,8 @@ export default function CardsOverviewPage() {
     >
       {loading ? (
         <Loading />
+      ) : cards.length == 0 ? (
+        <div className={'text-center'}>Keine Einträge gefunden</div>
       ) : (
         <div className={'grid grid-cols-2 gap-4'}>
           {cards

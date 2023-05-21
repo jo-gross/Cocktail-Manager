@@ -45,6 +45,12 @@ export default function CocktailsOverviewPage() {
                       <Loading />
                     </td>
                   </tr>
+                ) : cocktailRecipes.length == 0 ? (
+                  <tr>
+                    <td colSpan={4} className={'text-center'}>
+                      Keine Einträge gefunden
+                    </td>
+                  </tr>
                 ) : (
                   cocktailRecipes
                     .sort((a, b) => a.name.localeCompare(b.name))

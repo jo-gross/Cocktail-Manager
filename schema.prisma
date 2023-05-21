@@ -17,9 +17,10 @@ model Glass {
   CocktailRecipe CocktailRecipe[]
 }
 
-model Decoration {
+model Garnish {
   id             String           @id @default(cuid())
   name           String
+  description    String?
   price          Float?
   image          String?
   CocktailRecipe CocktailRecipe[]
@@ -35,8 +36,8 @@ model CocktailRecipe {
   glassWithIce          String
   glassId               String?
   glass                 Glass?                  @relation(fields: [glassId], references: [id])
-  decorationId          String?
-  decoration            Decoration?             @relation(fields: [decorationId], references: [id])
+  garnishId             String?
+  garnish               Garnish?                @relation(fields: [garnishId], references: [id])
   steps                 CocktailRecipeStep[]
   CocktailCardGroupItem CocktailCardGroupItem[]
 }

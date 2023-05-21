@@ -95,9 +95,9 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                 'col-span-2 border-2 border-base-300 rounded-lg p-2 space-y-2 flex flex-row space-x-2 items-center'
               }
             >
-              <span className={'font-bold text-xl flex-1'}>{props.cocktail?.decoration?.name ?? 'Keine'}</span>
-              {props.cocktail?.decoration?.image != undefined ? (
-                <img src={props.cocktail.decoration.image} alt={'Deko'} className={'object-cover h-16 avatar'} />
+              <span className={'font-bold text-xl flex-1'}>{props.cocktail?.garnish?.name ?? 'Keine'}</span>
+              {props.cocktail?.garnish?.image != undefined ? (
+                <img src={props.cocktail.garnish.image} alt={'Deko'} className={'object-cover h-16 avatar'} />
               ) : (
                 <></>
               )}

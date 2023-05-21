@@ -1,5 +1,5 @@
 import { Formik } from 'formik';
-import { Decoration } from '@prisma/client';
+import { Garnish } from '@prisma/client';
 import { useRouter } from 'next/router';
 import React from 'react';
 import { SingleFormLayout } from '../layout/SingleFormLayout';
@@ -8,35 +8,35 @@ import { convertToBase64 } from '../../lib/Base64Converter';
 import { FaTrashAlt } from 'react-icons/fa';
 import { alertService } from '../../lib/alertService';
 
-interface DecorationFormProps {
-  decoration?: Decoration;
+interface GarnishFormProps {
+  garnish?: Garnish;
 }
 
-export function DecorationForm(props: DecorationFormProps) {
+export function GarnishForm(props: GarnishFormProps) {
   const router = useRouter();
 
   return (
     <Formik
       initialValues={{
-        name: props.decoration?.name ?? '',
-        price: props.decoration?.price ?? 0,
-        image: props.decoration?.image ?? undefined,
+        name: props.garnish?.name ?? '',
+        price: props.garnish?.price ?? 0,
+        image: props.garnish?.image ?? undefined,
       }}
       onSubmit={async (values) => {
         try {
           const body = {
-            id: props.decoration == undefined ? undefined : props.decoration.id,
+            id: props.garnish == undefined ? undefined : props.garnish.id,
             name: values.name,
             price: values.price,
             image: values.image == '' ? null : values.image,
           };
-          const result = await fetch('/api/decorations', {
-            method: props.decoration == undefined ? 'POST' : 'PUT',
+          const result = await fetch('/api/garnishes', {
+            method: props.garnish == undefined ? 'POST' : 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body),
           });
           if (result.status.toString().startsWith('2')) {
-            await router.push('/manage/decorations');
+            await router.push('/manage/garnishes');
           } else {
             console.error(result.status + ' ' + result.statusText);
           }
@@ -57,7 +57,7 @@ export function DecorationForm(props: DecorationFormProps) {
     >
       {({ values, setFieldValue, errors, touched, handleChange, handleBlur, handleSubmit, isSubmitting }) => (
         <form onSubmit={handleSubmit}>
-          <SingleFormLayout title={'Dekoration erfassen'}>
+          <SingleFormLayout title={'Garnitur erfassen'}>
             <div className={'form-control'}>
               <label className={'label'}>
                 <span className={'label-text'}>Name</span>

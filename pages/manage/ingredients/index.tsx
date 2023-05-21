@@ -52,6 +52,12 @@ export default function IngredientsOverviewPage() {
                       <Loading />
                     </td>
                   </tr>
+                ) : ingredients.length == 0 ? (
+                  <tr>
+                    <td colSpan={8} className={'text-center'}>
+                      Keine Einträge gefunden
+                    </td>
+                  </tr>
                 ) : (
                   ingredients
                     .sort((a, b) => a.name.localeCompare(b.name))

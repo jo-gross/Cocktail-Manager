@@ -1,7 +1,7 @@
 import prisma from '../../../lib/prisma';
 import { NextApiRequest, NextApiResponse } from 'next';
 
-// DELETE /api/decoration/:id
+// DELETE /api/garnish/:id
 
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
   const id = req.query.id as string | undefined;
@@ -9,14 +9,14 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     return res.status(400).json({ message: 'id is undefined' });
   } else if (req.method == 'GET') {
     return res.json(
-      await prisma.decoration.findUnique({
+      await prisma.garnish.findUnique({
         where: {
           id: id,
         },
       }),
     );
   } else if (req.method === 'DELETE') {
-    const result = await prisma.decoration.delete({
+    const result = await prisma.garnish.delete({
       where: {
         id: id,
       },

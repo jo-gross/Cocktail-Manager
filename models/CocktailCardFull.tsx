@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client";
+import { Prisma } from '@prisma/client';
 
 export type CocktailCardFull = Prisma.CocktailCardGetPayload<{
   include: {
@@ -8,22 +8,22 @@ export type CocktailCardFull = Prisma.CocktailCardGetPayload<{
           include: {
             cocktail: {
               include: {
-                glass: true,
-                decoration: true,
+                glass: true;
+                garnish: true;
                 steps: {
                   include: {
                     ingredients: {
                       include: {
-                        ingredient: true
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
+                        ingredient: true;
+                      };
+                    };
+                  };
+                };
+              };
+            };
+          };
+        };
+      };
+    };
+  };
 }>;

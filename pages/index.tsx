@@ -124,6 +124,10 @@ export default function OverviewPage() {
             <PageCenter>
               <Loading />
             </PageCenter>
+          ) : (selectedCard?.groups ?? []).length == 0 ? (
+            <PageCenter>
+              <div className={'text-center'}>Keine Einträge gefunden</div>
+            </PageCenter>
           ) : (
             selectedCard?.groups
               ?.sort((a, b) => a.groupNumber - b.groupNumber)
@@ -145,32 +149,36 @@ export default function OverviewPage() {
                        grid-cols-1
                        gap-2 p-2`}
                   >
-                    {group.items
-                      ?.sort((a, b) => a.itemNumber - b.itemNumber)
-                      .map((groupItem, index) => {
-                        if (groupItem.cocktail != undefined) {
-                          return (
-                            <CocktailRecipeOverviewItem
-                              key={`card-${selectedCard.id}-group-${group.id}-cocktail-${groupItem.cocktailId}-${index}`}
-                              showImage={showImage}
-                              showImageSide={showImageSide}
-                              showTags={showTags}
-                              showInfo={true}
-                              showPrice={groupItem.specialPrice == undefined && group.groupPrice == undefined}
-                              specialPrice={groupItem.specialPrice ?? group.groupPrice ?? undefined}
-                              cocktailRecipe={groupItem.cocktail}
-                            />
-                          );
-                        } else {
-                          return (
-                            <div
-                              key={`card-${selectedCard.id}-group-${group.id}-cocktail-${groupItem.cocktailId}-${index}`}
-                            >
-                              <Loading />
-                            </div>
-                          );
-                        }
-                      })}
+                    {group.items.length == 0 ? (
+                      <div className={'col-span-full text-center'}>Keine Einträge vorhanden</div>
+                    ) : (
+                      group.items
+                        ?.sort((a, b) => a.itemNumber - b.itemNumber)
+                        .map((groupItem, index) => {
+                          if (groupItem.cocktail != undefined) {
+                            return (
+                              <CocktailRecipeOverviewItem
+                                key={`card-${selectedCard.id}-group-${group.id}-cocktail-${groupItem.cocktailId}-${index}`}
+                                showImage={showImage}
+                                showImageSide={showImageSide}
+                                showTags={showTags}
+                                showInfo={true}
+                                showPrice={groupItem.specialPrice == undefined && group.groupPrice == undefined}
+                                specialPrice={groupItem.specialPrice ?? group.groupPrice ?? undefined}
+                                cocktailRecipe={groupItem.cocktail}
+                              />
+                            );
+                          } else {
+                            return (
+                              <div
+                                key={`card-${selectedCard.id}-group-${group.id}-cocktail-${groupItem.cocktailId}-${index}`}
+                              >
+                                <Loading />
+                              </div>
+                            );
+                          }
+                        })
+                    )}
                   </div>
                 </div>
               ))

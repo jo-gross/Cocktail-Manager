@@ -9,7 +9,7 @@ export interface CocktailRecipeFullSchema extends CocktailRecipeFull {
 export type CocktailRecipeFull = Prisma.CocktailRecipeGetPayload<{
   include: {
     glass: true;
-    decoration: true;
+    garnish: true;
     steps: {
       include: {
         ingredients: {

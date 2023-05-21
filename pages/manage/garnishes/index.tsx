@@ -1,4 +1,4 @@
-import { Decoration } from '@prisma/client';
+import { Garnish } from '@prisma/client';
 import Link from 'next/link';
 import { ManageEntityLayout } from '../../../components/layout/ManageEntityLayout';
 import { ManageColumn } from '../../../components/ManageColumn';
@@ -6,14 +6,14 @@ import { useEffect, useState } from 'react';
 import { Loading } from '../../../components/Loading';
 
 export default function ManageGlassesOverviewPage() {
-  const [decoration, setDecoration] = useState<Decoration[]>([]);
+  const [garnishes, setGarnishes] = useState<Garnish[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/decorations')
+    fetch('/api/garnishes')
       .then((response) => response.json())
       .then((data) => {
-        setDecoration(data);
+        setGarnishes(data);
       })
       .finally(() => {
         setLoading(false);
@@ -21,7 +21,7 @@ export default function ManageGlassesOverviewPage() {
   }, []);
 
   return (
-    <ManageEntityLayout title={'Dekorationen'} backLink={'/manage'}>
+    <ManageEntityLayout title={'Garnituren'} backLink={'/manage'}>
       <div className={'card'}>
         <div className={'card-body'}>
           <div className="overflow-x-auto">
@@ -31,7 +31,7 @@ export default function ManageGlassesOverviewPage() {
                   <th className="">Name</th>
                   <th className="">Preis</th>
                   <th className="flex justify-end">
-                    <Link href={'/manage/decorations/create'}>
+                    <Link href={'/manage/garnishes/create'}>
                       <div className={'btn btn-primary btn-sm'}>Hinzufügen</div>
                     </Link>
                   </th>
@@ -42,18 +42,24 @@ export default function ManageGlassesOverviewPage() {
                   <tr>
                     <td colSpan={3}>
                       <Loading />
-                    </td>{' '}
+                    </td>
+                  </tr>
+                ) : garnishes.length == 0 ? (
+                  <tr>
+                    <td colSpan={3} className={'text-center'}>
+                      Keine Einträge gefunden
+                    </td>
                   </tr>
                 ) : (
-                  decoration
+                  garnishes
                     .sort((a, b) => a.name.localeCompare(b.name))
-                    .map((decoration) => (
-                      <tr className={'p-4'} key={decoration.id}>
+                    .map((garnish) => (
+                      <tr className={'p-4'} key={garnish.id}>
                         <td>
-                          <div className="font-bold">{decoration.name}</div>
+                          <div className="font-bold">{garnish.name}</div>
                         </td>
-                        <td>{decoration.price} €</td>
-                        <ManageColumn entity={'decorations'} id={decoration.id} />
+                        <td>{garnish.price} €</td>
+                        <ManageColumn entity={'garnishes'} id={garnish.id} />
                       </tr>
                     ))
                 )}
