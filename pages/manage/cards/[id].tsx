@@ -131,7 +131,6 @@ export default function EditCocktailRecipe() {
                 groupNumber: index,
                 groupPrice: group.groupPrice,
                 items: group.items.map((item, itemIndex) => ({
-                  ...item,
                   itemNumber: itemIndex,
                   cocktailId: item.cocktailId,
                   specialPrice: item.specialPrice,
