@@ -1,5 +1,4 @@
-import { CocktailRecipe, Prisma } from '@prisma/client';
-import { CocktailCardFull } from './CocktailCardFull';
+import { Prisma } from '@prisma/client';
 import { CocktailRecipeStepFull } from './CocktailRecipeStepFull';
 
 export interface CocktailRecipeFullSchema extends CocktailRecipeFull {
@@ -9,7 +8,11 @@ export interface CocktailRecipeFullSchema extends CocktailRecipeFull {
 export type CocktailRecipeFull = Prisma.CocktailRecipeGetPayload<{
   include: {
     glass: true;
-    garnish: true;
+    garnishes: {
+      include: {
+        garnish: true;
+      };
+    };
     steps: {
       include: {
         ingredients: {
