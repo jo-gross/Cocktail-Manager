@@ -9,13 +9,13 @@ import { CocktailRecipeStepFull } from '../../../models/CocktailRecipeStepFull';
 import CocktailRecipeCreateInput = Prisma.CocktailRecipeCreateInput;
 
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
-  const { id, name, description, tags, price, glassWithIce, image, glassId, decorationId, steps } = req.body;
+  const { id, name, description, tags, price, glassWithIce, image, glassId, garnishId, steps } = req.body;
 
   if (req.method === 'GET') {
     const cocktailRecipes: CocktailRecipeFull[] = await prisma.cocktailRecipe.findMany({
       include: {
         glass: true,
-        decoration: true,
+        garnish: true,
         steps: {
           include: {
             ingredients: {
@@ -37,7 +37,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         (cocktail) =>
           cocktail.name.toLowerCase().includes(search) ||
           cocktail.tags.some((tag) => tag.toLowerCase().includes(search)) ||
-          (cocktail.decoration != undefined && cocktail.decoration.name.toLowerCase().includes(search)) ||
+          (cocktail.garnish != undefined && cocktail.garnish.name.toLowerCase().includes(search)) ||
           cocktail.steps.some((step) =>
             step.ingredients
               .filter((ingredient) => ingredient.ingredient?.name != undefined)
@@ -60,7 +60,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     glassWithIce: glassWithIce,
     image: image ?? null,
     glass: { connect: { id: glassId } },
-    decoration: decorationId == undefined ? undefined : { connect: { id: decorationId } },
+    garnish: garnishId == undefined ? undefined : { connect: { id: garnishId } },
   };
 
   if (id != undefined) {

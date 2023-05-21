@@ -40,8 +40,14 @@ export default function ManageGlassesOverviewPage() {
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={4}>
+                    <td colSpan={3}>
                       <Loading />
+                    </td>
+                  </tr>
+                ) : glasses.length == 0 ? (
+                  <tr>
+                    <td colSpan={3} className={'text-center'}>
+                      Keine Einträge gefunden
                     </td>
                   </tr>
                 ) : (

@@ -75,7 +75,7 @@ export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeIns
           props.cocktailRecipe.image != undefined && props.showImage == true ? 'col-span-3' : 'col-span-4'
         }`}
       >
-        Deko: {props.cocktailRecipe.decoration?.name ?? 'Keine'}
+        Deko: {props.cocktailRecipe.garnish?.name ?? 'Keine'}
       </div>
     </div>
   );

@@ -8,7 +8,7 @@ export default function ManagePage() {
         <ManageCard title={'Cocktails'} link={'/manage/cocktails'} />
         <ManageCard title={'Karten'} link={'/manage/cards'} />
         <ManageCard title={'Zutaten'} link={'/manage/ingredients'} />
-        <ManageCard title={'Dekorationen'} link={'/manage/decorations'} />
+        <ManageCard title={'Garnituren'} link={'/manage/garnishes'} />
         <ManageCard title={'Gläser'} link={'/manage/glasses'} />
       </div>
     </ManageEntityLayout>

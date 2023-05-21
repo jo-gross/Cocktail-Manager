@@ -5,7 +5,7 @@ import { TagsInput } from 'react-tag-input-component';
 import { Field, FieldArray, Formik, FormikProps } from 'formik';
 import React, { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
-import { Decoration, Glass, Ingredient } from '@prisma/client';
+import { Garnish, Glass, Ingredient } from '@prisma/client';
 import { updateTags, validateTag } from '../../models/tags/TagUtils';
 import { UploadDropZone } from '../UploadDropZone';
 import { convertToBase64 } from '../../lib/Base64Converter';
@@ -67,18 +67,18 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
       });
   }, []);
 
-  const [decorations, setDecorations] = useState<Decoration[]>([]);
-  const [decorationsLoading, setDecorationsLoading] = useState(false);
+  const [garnishes, setGarnishes] = useState<Garnish[]>([]);
+  const [garnishesLoading, setGarnishesLoading] = useState(false);
 
   useEffect(() => {
-    setDecorationsLoading(true);
-    fetch(`/api/decorations`)
+    setGarnishesLoading(true);
+    fetch(`/api/garnishes`)
       .then((response) => response.json())
       .then((data) => {
-        setDecorations(data);
+        setGarnishes(data);
       })
       .finally(() => {
-        setDecorationsLoading(false);
+        setGarnishesLoading(false);
       });
   }, []);
 
@@ -89,13 +89,13 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
   }, [glasses, props.cocktailRecipe?.glassId]);
 
   useEffect(() => {
-    if (props.cocktailRecipe?.decorationId && decorations.length > 0) {
+    if (props.cocktailRecipe?.garnishId && garnishes.length > 0) {
       formRef.current?.setFieldValue(
-        'decoration',
-        decorations.find((g) => g.id == props.cocktailRecipe?.decorationId) ?? undefined,
+        'garnish',
+        garnishes.find((g) => g.id == props.cocktailRecipe?.garnishId) ?? undefined,
       );
     }
-  }, [decorations, props.cocktailRecipe?.decorationId]);
+  }, [garnishes, props.cocktailRecipe?.garnishId]);
 
   useEffect(() => {
     if (
@@ -131,8 +131,8 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
     image: props.cocktailRecipe?.image ?? null,
     glassId: props.cocktailRecipe?.glassId ?? null,
     glass: glasses.find((g) => g.id == props.cocktailRecipe?.glassId) ?? null,
-    decorationId: props.cocktailRecipe?.decorationId ?? null,
-    decoration: decorations.find((d) => d.id == props.cocktailRecipe?.decorationId) ?? null,
+    garnishId: props.cocktailRecipe?.garnishId ?? null,
+    garnish: garnishes.find((d) => d.id == props.cocktailRecipe?.garnishId) ?? null,
     steps: initSteps,
   };
 
@@ -211,7 +211,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
             description: values.description.trim() === '' ? undefined : values.description,
             price: values.price,
             glassId: values.glassId,
-            decorationId: values.decorationId,
+            garnishId: values.garnishId,
             image: values.image == '' ? null : values.image,
             tags: values.tags,
             glassWithIce: values.glassWithIce,
@@ -747,39 +747,39 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                       </div>
                     )}
                   </FieldArray>
-                  <div className={'col-span-2 divider'}>Deko</div>
+                  <div className={'col-span-2 divider'}>Garnitur</div>
                   <div className={'col-span-2'}>
                     <label className={'label'}>
-                      <span className={'label-text'}>Deko</span>
+                      <span className={'label-text'}>Garnitur</span>
                       <span className={'text-error label-text-alt'}>
-                        {errors.decorationId && touched.decorationId && errors.decorationId} *
+                        {errors.garnishId && touched.garnishId && errors.garnishId}
                       </span>
                     </label>
                     <select
-                      name="decorationId"
+                      name="garnishId"
                       className={`select select-bordered w-full ${
-                        errors.decorationId && touched.decorationId && 'select-error'
+                        errors.garnishId && touched.garnishId && 'select-error'
                       }`}
                       onChange={(event) => {
                         handleChange(event);
                         setFieldValue(
-                          'decoration',
-                          decorations.find((decoration) => decoration.id == event.target.value),
+                          'garnish',
+                          garnishes.find((garnish) => garnish.id == event.target.value),
                         );
                       }}
                       onBlur={handleBlur}
-                      value={values.decorationId}
+                      value={values.garnishId}
                     >
-                      {decorationsLoading ? (
+                      {garnishesLoading ? (
                         <option disabled={true} defaultChecked={true} value={undefined}>
                           Lädt...
                         </option>
                       ) : (
                         <>
                           <option value={''}>Auswählen</option>
-                          {decorations.map((decoration) => (
-                            <option key={`form-recipe-decoration-${decoration.id}`} value={decoration.id}>
-                              {decoration.name}
+                          {garnishes.map((garnish) => (
+                            <option key={`form-recipe-garnish-${garnish.id}`} value={garnish.id}>
+                              {garnish.name}
                             </option>
                           ))}
                         </>
@@ -835,8 +835,8 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                       glassWithIce: values.glassWithIce,
                       glassId: values.glassID ?? null,
                       glass: glasses.find((glass) => glass.id === values.glassId) ?? null,
-                      decorationId: values.decorationId ?? null,
-                      decoration: decorations.find((decoration) => decoration.id === values.decorationId) ?? null,
+                      garnishId: values.garnishId ?? null,
+                      garnish: garnishes.find((garnish) => garnish.id === values.garnishId) ?? null,
                       //@ts-ignore
                       steps: values.steps,
                     }}
@@ -895,16 +895,16 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                       ) : (
                         <></>
                       )}
-                      {values.decoration != null ? (
+                      {values.garnish != null ? (
                         <>
-                          <div key={`price-calculation-step-decoration-name`}>Deko: {values.decoration.name}</div>
-                          <div key={`price-calculation-step-decoration-price`} className={'grid grid-cols-2'}>
-                            <div>1 x {values.decoration.price.toFixed(2)}</div>
+                          <div key={`price-calculation-step-garnish-name`}>Garnitur: {values.garnish.name}</div>
+                          <div key={`price-calculation-step-garnish-price`} className={'grid grid-cols-2'}>
+                            <div>1 x {values.garnish.price.toFixed(2)}</div>
                             <div className={'text-end'}>
                               {(values.steps as CocktailRecipeStepFull[]).some((step) => step.ingredients.length > 0)
                                 ? '+ '
                                 : ''}
-                              {(values.decoration?.price ?? 0).toFixed(2)}€
+                              {(values.garnish?.price ?? 0).toFixed(2)}€
                             </div>
                           </div>
                         </>
@@ -932,7 +932,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                     ((ingredient.ingredient?.price ?? 0) / (ingredient.ingredient?.volume ?? 1)) *
                                     (ingredient.amount ?? 0),
                                 )
-                                .reduce((summ, sum) => summ + sum) + (values.decoration?.price ?? 0)
+                                .reduce((summ, sum) => summ + sum) + (values.garnish?.price ?? 0)
                             ).toFixed(2) + ' €'
                           : '0.00 €'}
                       </div>

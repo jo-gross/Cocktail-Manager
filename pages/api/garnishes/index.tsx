@@ -3,24 +3,24 @@
 import prisma from '../../../lib/prisma';
 import { Prisma } from '.prisma/client';
 import { NextApiRequest, NextApiResponse } from 'next';
-import DecorationCreateInput = Prisma.DecorationCreateInput;
+import GarnishCreateInput = Prisma.GarnishCreateInput;
 
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'GET') {
-    const decorations = await prisma.decoration.findMany();
-    return res.json(decorations);
+    const garnishes = await prisma.garnish.findMany();
+    return res.json(garnishes);
   }
 
   const { name, price, id, image } = req.body;
 
-  const input: DecorationCreateInput = {
+  const input: GarnishCreateInput = {
     id: id,
     name: name,
     price: price,
     image: image,
   };
   if (req.method === 'PUT') {
-    const result = await prisma.decoration.update({
+    const result = await prisma.garnish.update({
       where: {
         id: id,
       },
@@ -28,7 +28,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     });
     return res.json(result);
   } else if (req.method === 'POST') {
-    const result = await prisma.decoration.create({
+    const result = await prisma.garnish.create({
       data: input,
     });
     return res.json(result);

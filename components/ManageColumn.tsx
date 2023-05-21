@@ -2,7 +2,7 @@ import { FaTrashAlt } from 'react-icons/fa';
 
 interface ManageColumnProps {
   id: string;
-  entity: 'cocktails' | 'ingredients' | 'glasses' | 'decorations';
+  entity: 'cocktails' | 'ingredients' | 'glasses' | 'garnishes';
 }
 
 export function ManageColumn(props: ManageColumnProps) {
