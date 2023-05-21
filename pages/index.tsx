@@ -49,21 +49,17 @@ export default function OverviewPage() {
 
   useEffect(() => {
     if (selectedCardId != undefined) {
-      try {
-        fetch('/api/cards/' + selectedCardId).then((response) => {
+      setLoading(true);
+      fetch('/api/cards/' + selectedCardId)
+        .then((response) => {
           if (response.ok) {
-            response
-              .json()
-              .then((json) => {
-                console.log(json);
-                return json;
-              })
-              .then((json) => setSelectedCard(json));
+            return response.json();
+          } else {
+            return undefined;
           }
-        });
-      } catch (e) {
-        console.log(e);
-      }
+        })
+        .then((json) => setSelectedCard(json))
+        .finally(() => setLoading(false));
     }
   }, [selectedCardId]);
 
