@@ -90,17 +90,21 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
               ))}
             </div>
             <div className={'font-bold text-2xl'}>Deko</div>
-            <div
-              className={
-                'col-span-2 border-2 border-base-300 rounded-lg p-2 space-y-2 flex flex-row space-x-2 items-center'
-              }
-            >
-              <span className={'font-bold text-xl flex-1'}>{props.cocktail?.garnish?.name ?? 'Keine'}</span>
-              {props.cocktail?.garnish?.image != undefined ? (
-                <img src={props.cocktail.garnish.image} alt={'Deko'} className={'object-cover h-16 avatar'} />
-              ) : (
-                <></>
-              )}
+            <div className={'col-span-2 border-2 border-base-300 rounded-lg p-2 space-y-2 flex flex-col'}>
+              <div className={'font-bold text-xl'}>{props.cocktail?.garnish?.name ?? 'Keine'}</div>
+              <div className={'divider'}>Allgemeine Infos</div>
+              <div className={'flex flex-row'}>
+                {props.cocktail?.garnish?.description != undefined ? (
+                  <span className={'flex-1'}>{props.cocktail?.garnish?.description}</span>
+                ) : (
+                  <></>
+                )}
+                {props.cocktail?.garnish?.image != undefined ? (
+                  <img src={props.cocktail.garnish.image} alt={'Deko'} className={'object-cover h-16 avatar'} />
+                ) : (
+                  <></>
+                )}
+              </div>
             </div>
           </div>
         </div>
