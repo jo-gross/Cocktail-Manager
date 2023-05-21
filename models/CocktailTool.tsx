@@ -3,4 +3,5 @@ export enum CocktailTool {
   DOUBLE_STRAIN = 'Double strain',
   PESTLE = 'Stößel',
   WITHOUT = 'Einschenken',
+  DIRTY_ICE = 'Dirty Ice',
 }
