@@ -6,16 +6,17 @@ import { CocktailRecipeFull } from '../../../models/CocktailRecipeFull';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { CocktailRecipe } from '@prisma/client';
 import { CocktailRecipeStepFull } from '../../../models/CocktailRecipeStepFull';
+import { CocktailRecipeGarnishFull } from '../../../models/CocktailRecipeGarnishFull';
 import CocktailRecipeCreateInput = Prisma.CocktailRecipeCreateInput;
 
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
-  const { id, name, description, tags, price, glassWithIce, image, glassId, garnishId, steps } = req.body;
+  const { id, name, description, tags, price, glassWithIce, image, glassId, garnishes, steps } = req.body;
 
   if (req.method === 'GET') {
     const cocktailRecipes: CocktailRecipeFull[] = await prisma.cocktailRecipe.findMany({
       include: {
         glass: true,
-        garnish: true,
+        garnishes: { include: { garnish: true } },
         steps: {
           include: {
             ingredients: {
@@ -37,7 +38,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         (cocktail) =>
           cocktail.name.toLowerCase().includes(search) ||
           cocktail.tags.some((tag) => tag.toLowerCase().includes(search)) ||
-          (cocktail.garnish != undefined && cocktail.garnish.name.toLowerCase().includes(search)) ||
+          cocktail.garnishes.some((garnish) => garnish.garnish.name.toLowerCase().includes(search)) ||
           cocktail.steps.some((step) =>
             step.ingredients
               .filter((ingredient) => ingredient.ingredient?.name != undefined)
@@ -60,7 +61,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     glassWithIce: glassWithIce,
     image: image ?? null,
     glass: { connect: { id: glassId } },
-    garnish: garnishId == undefined ? undefined : { connect: { id: garnishId } },
+    // garnish: garnishId == undefined ? undefined : { connect: { id: garnishId } },
   };
 
   if (id != undefined) {
@@ -70,6 +71,14 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           cocktailRecipe: {
             id: id,
           },
+        },
+      },
+    });
+
+    await prisma.cocktailRecipeGarnish.deleteMany({
+      where: {
+        cocktailRecipe: {
+          id: id,
         },
       },
     });
@@ -117,6 +126,20 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
                 }),
               }
             : undefined,
+        },
+      });
+    });
+  }
+  console.log(garnishes);
+  if (garnishes.length > 0 && result != undefined) {
+    await garnishes.forEach(async (garnish: CocktailRecipeGarnishFull) => {
+      await prisma.cocktailRecipeGarnish.create({
+        data: {
+          cocktailRecipe: { connect: { id: result!.id } },
+          garnish: { connect: { id: garnish.garnishId } },
+          garnishNumber: garnish.garnishNumber,
+          description: garnish.description,
+          optional: garnish.optional,
         },
       });
     });

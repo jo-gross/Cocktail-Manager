@@ -9,7 +9,11 @@ export type CocktailCardFull = Prisma.CocktailCardGetPayload<{
             cocktail: {
               include: {
                 glass: true;
-                garnish: true;
+                garnishes: {
+                  include: {
+                    garnish: true;
+                  };
+                };
                 steps: {
                   include: {
                     ingredients: {

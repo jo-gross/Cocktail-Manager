@@ -75,7 +75,19 @@ export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeIns
           props.cocktailRecipe.image != undefined && props.showImage == true ? 'col-span-3' : 'col-span-4'
         }`}
       >
-        Deko: {props.cocktailRecipe.garnish?.name ?? 'Keine'}
+        <div className={'font-bold'}>Deko</div>
+        <div>
+          {props.cocktailRecipe.garnishes
+            ?.sort((a, b) => a.garnishNumber - b.garnishNumber)
+            .map((garnish) => (
+              <div
+                key={`cocktail-${props.cocktailRecipe.id}-garnish-${garnish.garnishNumber}-garnishId-${garnish.garnishId}`}
+              >
+                {garnish.garnish.name}
+                {garnish.optional ? ' (optional)' : ''}
+              </div>
+            )) ?? 'Keine'}
+        </div>
       </div>
     </div>
   );

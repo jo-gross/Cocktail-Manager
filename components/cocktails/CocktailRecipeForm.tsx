@@ -15,6 +15,7 @@ import { CocktailIngredientUnit } from '../../models/CocktailIngredientUnit';
 import { CocktailRecipeStepFull } from '../../models/CocktailRecipeStepFull';
 import CocktailRecipeOverviewItem from './CocktailRecipeOverviewItem';
 import { alertService } from '../../lib/alertService';
+import { CocktailRecipeGarnishFull } from '../../models/CocktailRecipeGarnishFull';
 
 interface CocktailRecipeFormProps {
   cocktailRecipe?: CocktailRecipeFull;
@@ -30,6 +31,11 @@ interface StepError {
   mixing?: string;
   tool?: string;
   ingredients?: IngredientError[];
+}
+
+interface GarnishError {
+  garnishId?: string;
+  optional?: string;
 }
 
 export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
@@ -89,13 +95,19 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
   }, [glasses, props.cocktailRecipe?.glassId]);
 
   useEffect(() => {
-    if (props.cocktailRecipe?.garnishId && garnishes.length > 0) {
+    if (props.cocktailRecipe != undefined && props.cocktailRecipe.garnishes?.length > 0 && garnishes.length > 0) {
       formRef.current?.setFieldValue(
-        'garnish',
-        garnishes.find((g) => g.id == props.cocktailRecipe?.garnishId) ?? undefined,
+        'garnishes',
+        props.cocktailRecipe?.garnishes.map((garnish) => {
+          return {
+            ...garnish,
+            garnishId: garnish.garnishId ?? '',
+            garnish: garnishes.find((g) => g.id == garnish.garnishId) ?? undefined,
+          };
+        }),
       );
     }
-  }, [garnishes, props.cocktailRecipe?.garnishId]);
+  }, [garnishes, props.cocktailRecipe, props.cocktailRecipe?.garnishes]);
 
   useEffect(() => {
     if (
@@ -131,8 +143,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
     image: props.cocktailRecipe?.image ?? null,
     glassId: props.cocktailRecipe?.glassId ?? null,
     glass: glasses.find((g) => g.id == props.cocktailRecipe?.glassId) ?? null,
-    garnishId: props.cocktailRecipe?.garnishId ?? null,
-    garnish: garnishes.find((d) => d.id == props.cocktailRecipe?.garnishId) ?? null,
+    garnishes: props.cocktailRecipe?.garnishes ?? [],
     steps: initSteps,
   };
 
@@ -201,6 +212,26 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
         if (hasErrors) {
           errors.steps = stepsErrors;
         }
+
+        hasErrors = false;
+        const garnishErrors: GarnishError[] = [];
+        (values.garnishes as CocktailRecipeGarnishFull[]).map((garnish, index) => {
+          const garnishError: GarnishError = {};
+          if (!garnish.garnishId || garnish.garnishId == '') {
+            garnishError.garnishId = 'Required';
+          }
+
+          garnishErrors.push(garnishError);
+        });
+
+        garnishErrors.map((garnishError) => {
+          if (Object.keys(garnishError).length > 0) {
+            hasErrors = true;
+          }
+        });
+        if (hasErrors) {
+          errors.garnishes = garnishErrors;
+        }
         return errors;
       }}
       onSubmit={async (values) => {
@@ -225,6 +256,12 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                     ingredientNumber: index,
                   };
                 }),
+              };
+            }),
+            garnishes: (values.garnishes as CocktailRecipeGarnishFull[]).map((garnish, index) => {
+              return {
+                ...garnish,
+                garnishNumber: index,
               };
             }),
           };
@@ -535,9 +572,9 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                         .map((ingredient, indexIngredient) => (
                                           <div
                                             key={`form-recipe-step-${step.id}-ingredient-${ingredient.id}`}
-                                            className={'flex flex-row'}
+                                            className={'flex flex-row space-x-2'}
                                           >
-                                            <div className={'input-group input-group-vertical'}>
+                                            <div className={'input-group input-group-vertical w-min'}>
                                               <button
                                                 type={'button'}
                                                 disabled={indexIngredient == 0}
@@ -586,11 +623,11 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                             </div>
                                             <div
                                               key={`form-recipe-step${step.id}-ingredient-${ingredient.id}`}
-                                              className={'input-group flex-row w-full'}
+                                              className={'input-group flex-row'}
                                             >
                                               <select
                                                 name={`steps.${indexStep}.ingredients.${indexIngredient}.ingredientId`}
-                                                className={`select select-bordered flex-1 ${
+                                                className={`select select-bordered ${
                                                   ((errors.steps as StepError[])?.[indexStep] as any)?.ingredients?.[
                                                     indexIngredient
                                                   ]?.ingredientId && 'select-error'
@@ -748,44 +785,170 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                     )}
                   </FieldArray>
                   <div className={'col-span-2 divider'}>Garnitur</div>
-                  <div className={'col-span-2'}>
-                    <label className={'label'}>
-                      <span className={'label-text'}>Garnitur</span>
-                      <span className={'text-error label-text-alt'}>
-                        {errors.garnishId && touched.garnishId && errors.garnishId}
-                      </span>
-                    </label>
-                    <select
-                      name="garnishId"
-                      className={`select select-bordered w-full ${
-                        errors.garnishId && touched.garnishId && 'select-error'
-                      }`}
-                      onChange={(event) => {
-                        handleChange(event);
-                        setFieldValue(
-                          'garnish',
-                          garnishes.find((garnish) => garnish.id == event.target.value),
-                        );
-                      }}
-                      onBlur={handleBlur}
-                      value={values.garnishId}
-                    >
-                      {garnishesLoading ? (
-                        <option disabled={true} defaultChecked={true} value={undefined}>
-                          Lädt...
-                        </option>
-                      ) : (
-                        <>
-                          <option value={''}>Auswählen</option>
-                          {garnishes.map((garnish) => (
-                            <option key={`form-recipe-garnish-${garnish.id}`} value={garnish.id}>
-                              {garnish.name}
-                            </option>
-                          ))}
-                        </>
-                      )}
-                    </select>
-                  </div>
+                  <FieldArray name={'garnishes'}>
+                    {({ push: pushGarnish, remove: removeGarnish }) => (
+                      <div className={'col-span-2 space-y-2'}>
+                        {values.garnishes.map((garnish: CocktailRecipeGarnishFull, indexGarnish: number) => (
+                          <div
+                            key={`form-recipe-garnish-${indexGarnish}`}
+                            className={'flex flex-row space-x-2 border border-neutral rounded-xl p-4'}
+                          >
+                            <div className={'flex-none flex items-center'}>
+                              <div className={'input-group input-group-vertical'}>
+                                <button
+                                  type={'button'}
+                                  disabled={indexGarnish == 0}
+                                  className={'btn btn-outline btn-xs btn-square'}
+                                  onClick={() => {
+                                    const value = values.garnishes[indexGarnish];
+                                    const reorderedGroups = (values.garnishes as CocktailRecipeGarnishFull[]).filter(
+                                      (_, i) => i != indexGarnish,
+                                    );
+                                    reorderedGroups.splice(indexGarnish - 1, 0, value);
+                                    setFieldValue(
+                                      `garnishes`,
+                                      reorderedGroups.map((garnish, garnishIndex) => ({
+                                        ...garnish,
+                                        garnishNumber: garnishIndex,
+                                      })),
+                                    );
+                                  }}
+                                >
+                                  <FaAngleUp />
+                                </button>
+                                <button
+                                  type={'button'}
+                                  disabled={
+                                    !(values.garnishes.length > 1) || indexGarnish == values.garnishes.length - 1
+                                  }
+                                  className={'btn btn-outline btn-xs btn-square'}
+                                  onClick={() => {
+                                    const value = values.garnishes[indexGarnish];
+                                    const reorderedGroups = (values.garnishes as CocktailRecipeGarnishFull[]).filter(
+                                      (_, i) => i != indexGarnish,
+                                    );
+                                    reorderedGroups.splice(indexGarnish + 1, 0, value);
+                                    setFieldValue(
+                                      `garnishes`,
+                                      reorderedGroups.map((garnishes, garnishIndex) => ({
+                                        ...garnishes,
+                                        garnishNumber: garnishIndex,
+                                      })),
+                                    );
+                                  }}
+                                >
+                                  <FaAngleDown />
+                                </button>
+                              </div>
+                            </div>
+                            <div className={'flex flex-col'}>
+                              <div className={'flex-1'}>
+                                <label className={'label'}>
+                                  <span className={'label-text'}>Garnitur</span>
+                                  <span className={'text-error label-text-alt'}>
+                                    {(errors.garnishes as GarnishError[])?.[indexGarnish]?.garnishId &&
+                                      (touched.garnishes as any)?.[indexGarnish]?.garnishId &&
+                                      (errors.garnishes as GarnishError[])?.[indexGarnish]?.garnishId}
+                                  </span>
+                                </label>
+                                <select
+                                  name={`garnishes.${indexGarnish}.garnishId`}
+                                  value={values.garnishes[indexGarnish].garnishId}
+                                  className={`select select-bordered w-full ${
+                                    (errors.garnishes as GarnishError[])?.[indexGarnish]?.garnishId &&
+                                    (touched.garnishes as any)?.[indexGarnish]?.garnishId &&
+                                    'select-error'
+                                  }`}
+                                  onChange={(event) => {
+                                    handleChange(event);
+                                    setFieldValue(
+                                      `garnishes.${indexGarnish}.garnish`,
+                                      garnishes.find((garnish) => garnish.id == event.target.value),
+                                    );
+                                  }}
+                                  onBlur={handleBlur}
+                                >
+                                  {garnishesLoading ? (
+                                    <option disabled={true} defaultChecked={true} value={undefined}>
+                                      Lädt...
+                                    </option>
+                                  ) : (
+                                    <>
+                                      <option value={''}>Auswählen</option>
+                                      {garnishes.map((garnish) => (
+                                        <option key={`form-recipe-garnish-${garnish.id}`} value={garnish.id}>
+                                          {garnish.name}
+                                        </option>
+                                      ))}
+                                    </>
+                                  )}
+                                </select>
+                              </div>
+                              <div className={'form-control'}>
+                                <label className={'label'}>
+                                  <span className={'label-text'}>Optional</span>
+                                  <span className={'text-error label-text-alt'}>
+                                    {(errors.garnishes as GarnishError[])?.[indexGarnish]?.optional &&
+                                      (touched.garnishes as any)?.[indexGarnish]?.optional &&
+                                      (errors.garnishes as GarnishError[])?.[indexGarnish]?.optional}
+                                  </span>
+                                  <Field
+                                    type={'checkbox'}
+                                    name={`garnishes.${indexGarnish}.optional`}
+                                    onChange={handleChange}
+                                    onBlur={handleBlur}
+                                    className={'toggle toggle-primary'}
+                                  />
+                                </label>
+                              </div>
+                            </div>
+                            <div className={'flex-1'}>
+                              <label className={'label'}>
+                                <span className={'label-text'}>Zusätzliche Beschreibung</span>
+                                <span className={'text-error label-text-alt'}>
+                                  {/*{errors.garnishDescription && touched.garnishDescription && errors.garnishDescription}*/}
+                                </span>
+                              </label>
+                              <textarea
+                                value={values.garnishes[indexGarnish].description}
+                                name={`garnishes.${indexGarnish}.description`}
+                                className={
+                                  'textarea h-24 textarea-bordered w-full'
+                                  // ${
+                                  // errors.garnishDescription && touched.garnishDescription && 'textarea-error'
+                                  // }`
+                                }
+                                onChange={handleChange}
+                                onBlur={handleBlur}
+                              />
+                            </div>
+                            <div className={'btn btn-error btn-sm'} onClick={() => removeGarnish(indexGarnish)}>
+                              <FaTrashAlt />
+                            </div>
+                          </div>
+                        ))}
+
+                        <div className={'flex justify-center'}>
+                          <div
+                            className={'btn btn-sm btn-primary space-x-2'}
+                            onClick={() => {
+                              const cocktailRecipeGarnish: CocktailRecipeGarnishFull = {
+                                cocktailRecipeId: '',
+                                garnishId: '',
+                                garnish: garnishes[0],
+                                optional: false,
+                                garnishNumber: values.garnishes.length - 1,
+                                description: '',
+                              };
+                              pushGarnish(cocktailRecipeGarnish);
+                            }}
+                          >
+                            <FaPlus /> <span>Garnitur hinzufügen</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </FieldArray>
                 </div>
               </div>
             </div>
@@ -835,8 +998,9 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                       glassWithIce: values.glassWithIce,
                       glassId: values.glassID ?? null,
                       glass: glasses.find((glass) => glass.id === values.glassId) ?? null,
-                      garnishId: values.garnishId ?? null,
-                      garnish: garnishes.find((garnish) => garnish.id === values.garnishId) ?? null,
+                      // garnishId: values.garnishId ?? null,
+                      // garnish: garnishes.find((garnish) => garnish.id === values.garnishId) ?? null,
+                      garnishes: values.garnishes,
                       //@ts-ignore
                       steps: values.steps,
                     }}

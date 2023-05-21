@@ -20,7 +20,11 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
                 cocktail: {
                   include: {
                     glass: true,
-                    garnish: true,
+                    garnishes: {
+                      include: {
+                        garnish: true,
+                      },
+                    },
                     steps: {
                       include: {
                         ingredients: {

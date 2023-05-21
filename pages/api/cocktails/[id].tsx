@@ -14,6 +14,12 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           id: id,
         },
         include: {
+          glass: true,
+          garnishes: {
+            include: {
+              garnish: true,
+            },
+          },
           steps: {
             include: {
               ingredients: {
