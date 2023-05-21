@@ -20,6 +20,7 @@ export function GarnishForm(props: GarnishFormProps) {
       initialValues={{
         name: props.garnish?.name ?? '',
         price: props.garnish?.price ?? 0,
+        description: props.garnish?.description ?? '',
         image: props.garnish?.image ?? undefined,
       }}
       onSubmit={async (values) => {
@@ -28,6 +29,7 @@ export function GarnishForm(props: GarnishFormProps) {
             id: props.garnish == undefined ? undefined : props.garnish.id,
             name: values.name,
             price: values.price,
+            description: values.description?.trim() == '' ? null : values.description?.trim(),
             image: values.image == '' ? null : values.image,
           };
           const result = await fetch('/api/garnishes', {
@@ -74,6 +76,24 @@ export function GarnishForm(props: GarnishFormProps) {
                 onBlur={handleBlur}
                 value={values.name}
                 name={'name'}
+              />
+            </div>
+
+            <div className={'form-control'}>
+              <label className={'label'}>
+                <span className={'label-text'}>Zubereitungsbeschreibung</span>
+                <span className={'label-text-alt text-error space-x-2'}>
+                  <span>{errors.description && touched.description && errors.description}</span>
+                </span>
+              </label>
+              <textarea
+                className={`textarea textarea-bordered ${
+                  errors.description && touched.description && 'textarea-error'
+                } w-full`}
+                value={values.description}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                name={'description'}
               />
             </div>
 

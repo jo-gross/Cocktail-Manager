@@ -11,13 +11,14 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     return res.json(garnishes);
   }
 
-  const { name, price, id, image } = req.body;
+  const { name, price, id, image, description } = req.body;
 
   const input: GarnishCreateInput = {
     id: id,
     name: name,
     price: price,
     image: image,
+    description: description,
   };
   if (req.method === 'PUT') {
     const result = await prisma.garnish.update({
