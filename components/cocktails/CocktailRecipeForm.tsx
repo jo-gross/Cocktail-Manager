@@ -185,7 +185,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
           if (step.mixing) {
             step.ingredients.map((ingredient, index) => {
               const ingredientErrors: IngredientError = {};
-              if (!ingredient.amount) {
+              if (ingredient.amount && isNaN(ingredient.amount)) {
                 ingredientErrors.amount = 'Required';
               }
               if (!ingredient.unit || ingredient.unit == '') {
@@ -232,6 +232,8 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
         if (hasErrors) {
           errors.garnishes = garnishErrors;
         }
+
+        console.log('Cocktail Form Errors: ', errors);
         return errors;
       }}
       onSubmit={async (values) => {
