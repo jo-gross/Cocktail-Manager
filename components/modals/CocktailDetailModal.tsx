@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { FaPencilAlt } from 'react-icons/fa';
 import { ModalContext } from '../../lib/context/ModalContextProvider';
 import { useContext } from 'react';
+import { CocktailTool } from '../../models/CocktailTool';
 
 interface CocktailDetailModalProps {
   cocktail: CocktailRecipeFull;
@@ -75,7 +76,7 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                   className={'col-span-2 border-2 border-base-300 rounded-lg p-2 space-y-2'}
                 >
                   <span className={'font-bold text-xl'}>
-                    {step.mixing ? (CocktailUtensil as any)[step.tool] : (CocktailUtensil as any)[step.tool]}
+                    {step.mixing ? (CocktailUtensil as any)[step.tool] : (CocktailTool as any)[step.tool]}
                   </span>
                   {step.ingredients.map((ingredient, index) => (
                     <div key={'cocktail-details-step-ingredient-' + ingredient.id} className={'pl-2'}>
