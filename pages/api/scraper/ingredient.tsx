@@ -72,12 +72,12 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       const name = soup.find('h1', 'item-detail__headline').text.replace('\n', '').trim();
 
       let price = soup
-        .find('div', 'base-price')
-        .contents[0]._text.trim()
-        .replace('(€ ', '')
-        .replace('/l)', '')
-        .replace(',', '.');
-
+        .find('div', 'normalPrice')
+        .contents[0].contents[0]._text.trim()
+        .replace(',', '.')
+        .replace('€', '')
+        .trim();
+      console.log(price);
       if (price == undefined) {
         price = 0;
       }
