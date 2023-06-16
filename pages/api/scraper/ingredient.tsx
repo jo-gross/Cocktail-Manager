@@ -4,6 +4,13 @@ import { NextApiRequest, NextApiResponse } from 'next';
 // @ts-ignore
 import JSSoup from 'jssoup';
 
+interface ResponseBody {
+  name: string;
+  image?: string;
+  price: number;
+  volume: number;
+}
+
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'GET') {
     if (req.query?.url?.includes('conalco.de')) {
@@ -36,6 +43,46 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
             .split(' ')[0]
             .trim(),
         ) * 100;
+
+      const result: ResponseBody = {
+        name: name,
+        image: image,
+        price: Number(price),
+        volume: Number(volume),
+      };
+
+      return res.json(result);
+    } else if (req.query?.url?.includes('expert24.com')) {
+      console.log(req.query.url);
+      const response = await fetch(req.query.url as string);
+      console.log(response.status + ' ' + response.statusText);
+      const body = await response.text();
+      const soup = new JSSoup(body);
+
+      const imageResponse = await fetch(soup.find('div', 'activeImage').contents[0].attrs.href).catch((error) => {
+        console.log(error);
+        return undefined;
+      });
+
+      const image =
+        imageResponse != undefined
+          ? 'data:image/jpg;base64,' + Buffer.from(await imageResponse.arrayBuffer()).toString('base64')
+          : undefined;
+
+      const name = soup.find('h1', 'item-detail__headline').text.replace('\n', '').trim();
+
+      let price = soup
+        .find('div', 'base-price')
+        .contents[0]._text.trim()
+        .replace('(€ ', '')
+        .replace('/l)', '')
+        .replace(',', '.');
+
+      if (price == undefined) {
+        price = 0;
+      }
+      const volume =
+        Number(name.split('Vol. ')[1].split(' ')[0].replace(',', '.').replace('l', '').replace('ml', '')) * 100;
 
       return res.json({
         name: name,
