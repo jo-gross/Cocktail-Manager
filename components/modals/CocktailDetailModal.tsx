@@ -2,18 +2,25 @@ import { CocktailRecipeFull } from '../../models/CocktailRecipeFull';
 import { CocktailUtensil } from '../../models/CocktailUtensil';
 import Link from 'next/link';
 import { FaPencilAlt } from 'react-icons/fa';
+import { ModalContext } from '../../lib/context/ModalContextProvider';
+import { useContext } from 'react';
 
 interface CocktailDetailModalProps {
   cocktail: CocktailRecipeFull;
 }
 
 export function CocktailDetailModal(props: CocktailDetailModalProps) {
+  const modalContext = useContext(ModalContext);
+
   return (
     <div className={''}>
       <div className={'card-body bg-base-100'}>
         <div className={'flex flex-row space-x-2'}>
-          <Link href={'/manage/cocktails' + props.cocktail.id}>
-            <div className={'btn btn-sm btn-secondary btn-outline btn-square'}>
+          <Link href={'/manage/cocktails/' + props.cocktail.id}>
+            <div
+              className={'btn btn-sm btn-secondary btn-outline btn-square'}
+              onClick={() => modalContext.closeModal()}
+            >
               <FaPencilAlt />
             </div>
           </Link>
@@ -60,7 +67,7 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
           </div>
           <div className={'col-span-1'}>Eis: {props.cocktail.glassWithIce}</div>
           <div className={'col-span-2 space-y-2'}>
-            <div className={'font-bold text-2xl'}>Zubereitung</div>
+            {props.cocktail.steps.length == 0 ? <></> : <div className={'font-bold text-2xl'}>Zubereitung</div>}
             <div className={'grid grid-cols-2 gap-4'}>
               {props.cocktail.steps.map((step, index) => (
                 <div
@@ -101,7 +108,7 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                 </div>
               ))}
             </div>
-            <div className={'font-bold text-2xl'}>Deko</div>
+            {props.cocktail?.garnishes.length == 0 ? <></> : <div className={'font-bold text-2xl'}>Deko</div>}
             {props.cocktail?.garnishes
               .sort((a, b) => a.garnishNumber - b.garnishNumber)
               .map((garnish) => (
@@ -110,25 +117,32 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                   className={'col-span-2 border-2 border-base-300 rounded-lg p-2 space-y-2 flex flex-col'}
                 >
                   <div className={'font-bold text-xl'}>{garnish?.garnish?.name ?? 'Keine'}</div>
-                  <div>{garnish.description}</div>
+                  {garnish.description == undefined || garnish.description.trim() == '' ? (
+                    <></>
+                  ) : (
+                    <div>{garnish.description}</div>
+                  )}
 
                   {garnish?.garnish?.description == undefined && garnish?.garnish?.image == undefined ? (
                     <></>
                   ) : (
-                    <div className={'divider'}>Allgemeine Infos</div>
+                    <>
+                      <div className={'divider'}>Allgemeine Infos</div>
+
+                      <div className={'flex flex-row'}>
+                        {garnish?.garnish?.description != undefined ? (
+                          <span className={'flex-1'}>{garnish?.garnish?.description}</span>
+                        ) : (
+                          <></>
+                        )}
+                        {garnish?.garnish?.image != undefined ? (
+                          <img src={garnish.garnish?.image} alt={'Deko'} className={'object-cover h-16 avatar'} />
+                        ) : (
+                          <></>
+                        )}
+                      </div>
+                    </>
                   )}
-                  <div className={'flex flex-row'}>
-                    {garnish?.garnish?.description != undefined ? (
-                      <span className={'flex-1'}>{garnish?.garnish?.description}</span>
-                    ) : (
-                      <></>
-                    )}
-                    {garnish?.garnish?.image != undefined ? (
-                      <img src={garnish.garnish?.image} alt={'Deko'} className={'object-cover h-16 avatar'} />
-                    ) : (
-                      <></>
-                    )}
-                  </div>
                 </div>
               ))}
           </div>

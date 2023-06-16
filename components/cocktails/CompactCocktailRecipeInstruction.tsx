@@ -1,7 +1,6 @@
 import { CocktailRecipeFull } from '../../models/CocktailRecipeFull';
 import React from 'react';
 import { CocktailUtensil } from '../../models/CocktailUtensil';
-import { CocktailTool } from '../../models/CocktailTool';
 
 interface CompactCocktailRecipeInstructionProps {
   cocktailRecipe: CocktailRecipeFull;
@@ -69,17 +68,21 @@ export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeIns
       ) : (
         <></>
       )}
-      <div
-        className={`border-b border-base-100 ${
-          props.cocktailRecipe.image != undefined && props.showImage == true ? 'col-span-3' : 'col-span-4'
-        }`}
-      ></div>
+      {props.cocktailRecipe.garnishes.length == 0 ? (
+        <></>
+      ) : (
+        <div
+          className={`border-b border-base-100 ${
+            props.cocktailRecipe.image != undefined && props.showImage == true ? 'col-span-3' : 'col-span-4'
+          }`}
+        ></div>
+      )}
       <div
         className={`${
           props.cocktailRecipe.image != undefined && props.showImage == true ? 'col-span-3' : 'col-span-4'
         }`}
       >
-        <div className={'font-bold'}>Deko</div>
+        {props.cocktailRecipe.garnishes.length == 0 ? <></> : <div className={'font-bold'}>Deko</div>}
         <div>
           {props.cocktailRecipe.garnishes
             ?.sort((a, b) => a.garnishNumber - b.garnishNumber)
