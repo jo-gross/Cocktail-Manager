@@ -418,6 +418,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/react-is@npm:^17.0.4":
+  version: 17.0.4
+  resolution: "@types/react-is@npm:17.0.4"
+  dependencies:
+    "@types/react": ^17
+  checksum: 4c273945795b539f6ae0efdbd917e86edfbd9a9fad12cd6724fb2216bf47d724560b7b3cd07541c3f9e86dd085b386d7020119c5db0a289fbb069524b1242586
+  languageName: node
+  linkType: hard
+
 "@types/react@npm:17.0.38":
   version: 17.0.38
   resolution: "@types/react@npm:17.0.38"
@@ -426,6 +435,17 @@ __metadata:
     "@types/scheduler": "*"
     csstype: ^3.0.2
   checksum: 4079f4f959cd4a4bfaeda8b89fe8a1b1f8bdc9d87acfdc5f74a0b39cec9ec6a470724357c62778c0f063180b360c250e920c5a142f1dbcda67d9cc25a6d43a85
+  languageName: node
+  linkType: hard
+
+"@types/react@npm:^17":
+  version: 17.0.62
+  resolution: "@types/react@npm:17.0.62"
+  dependencies:
+    "@types/prop-types": "*"
+    "@types/scheduler": "*"
+    csstype: ^3.0.2
+  checksum: 428a5aff44824ef504e9a9259b5894fe44a5db1c344b536990f07e132900ff5b34cbef0be77a84f30f37be1f88fc8b56dce328f568de8d65de3bfe414c05b2e1
   languageName: node
   linkType: hard
 
@@ -962,6 +982,7 @@ __metadata:
     "@prisma/client": 4.14.0
     "@types/node": 17.0.14
     "@types/react": 17.0.38
+    "@types/react-is": ^17.0.4
     autoprefixer: 10.4.14
     daisyui: 2.51.6
     eslint: 8.40.0

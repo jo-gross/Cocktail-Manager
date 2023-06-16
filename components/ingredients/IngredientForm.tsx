@@ -255,8 +255,10 @@ export function IngredientForm(props: IngredientFormProps) {
                       value={values.link}
                       name={'link'}
                     />
-                    <div
+                    <button
                       className={`btn btn-primary ${values.fetchingExternalData ? 'loading' : ''}`}
+                      type={'button'}
+                      disabled={!values.link.includes('expert24.com') || values.link.includes('conalco.de')}
                       onClick={() => {
                         setFieldValue('fetchingExternalData', true);
                         fetch(`/api/scraper/ingredient?url=${values.link}`)
@@ -278,7 +280,7 @@ export function IngredientForm(props: IngredientFormProps) {
                       }}
                     >
                       <FaSyncAlt />
-                    </div>
+                    </button>
                   </div>
                 </div>
                 <div className={'form-control'}>

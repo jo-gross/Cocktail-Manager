@@ -61,10 +61,10 @@ export function SearchModal(props: SearchModalProps) {
             <></>
           )
         ) : (
-          cocktails.map((cocktail) => (
+          cocktails.map((cocktail, index) => (
             <div
               key={'search-modal-' + cocktail.id}
-              tabIndex={0}
+              tabIndex={index}
               className="collapse collapse-arrow border border-base-300 bg-base-100 rounded-box"
             >
               <input type="checkbox" />

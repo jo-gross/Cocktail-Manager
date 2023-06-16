@@ -463,492 +463,6 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                       </div>
                     )}
                   </div>
-                  <div className={'col-span-2 divider'}>Zubereitung</div>
-                  <FieldArray name={'steps'}>
-                    {({ push: pushStep, remove: removeStep }) => (
-                      <div className={'col-span-2 space-y-2'}>
-                        {(values.steps as CocktailRecipeStepFull[]).map((step, indexStep) => (
-                          <div
-                            key={`form-recipe-step-${step.id}`}
-                            className={
-                              'flex flex-col justify-between w-full space-y-2 border border-neutral rounded-xl p-4'
-                            }
-                          >
-                            <div className={'grid grid-cols-3 gap-4'}>
-                              <div className={'font-bold'}>Schritt {indexStep + 1}</div>
-                              <div className={'form-control'}>
-                                <label className={'label'}>
-                                  <span className={'label-text'}>Andere</span>
-                                  <input
-                                    type="checkbox"
-                                    checked={values.steps[indexStep].mixing}
-                                    onChange={(e) => {
-                                      handleChange(e);
-                                      if (values.steps[indexStep].mixing) {
-                                        setFieldValue(`steps.${indexStep}.tool`, CocktailTool.SINGLE_STRAIN);
-                                      } else {
-                                        setFieldValue(`steps.${indexStep}.tool`, CocktailUtensil.SHAKE);
-                                      }
-                                    }}
-                                    onBlur={handleBlur}
-                                    className={'toggle toggle-primary'}
-                                    name={`steps.${indexStep}.mixing`}
-                                  />
-                                  <span className={'label-text'}>Mixen</span>
-                                </label>
-                              </div>
-                              <div className={'space-x-2 justify-self-end'}>
-                                <button
-                                  type={'button'}
-                                  disabled={indexStep == 0}
-                                  className={'btn btn-outline btn-sm btn-square'}
-                                  onClick={() => {
-                                    const value = values.steps[indexStep];
-                                    const reorderedSteps = (values.steps as CocktailRecipeStepFull[]).filter(
-                                      (_, i) => i != indexStep,
-                                    );
-                                    reorderedSteps.splice(indexStep - 1, 0, value);
-                                    setFieldValue(
-                                      'steps',
-                                      reorderedSteps.map((step, index) => ({ ...step, stepNumber: index })),
-                                    );
-                                  }}
-                                >
-                                  <FaAngleUp />
-                                </button>
-                                <button
-                                  type={'button'}
-                                  disabled={!(values.steps.length > 1) || indexStep == values.steps.length - 1}
-                                  className={'btn btn-outline btn-sm btn-square'}
-                                  onClick={() => {
-                                    const value = values.steps[indexStep];
-                                    const reorderedSteps = (values.steps as CocktailRecipeStepFull[]).filter(
-                                      (_, i) => i != indexStep,
-                                    );
-                                    reorderedSteps.splice(indexStep + 1, 0, value);
-                                    setFieldValue(
-                                      'steps',
-                                      reorderedSteps.map((step, index) => ({ ...step, stepNumber: index })),
-                                    );
-                                  }}
-                                >
-                                  <FaAngleDown />
-                                </button>
-                                <button
-                                  type={'button'}
-                                  className={'btn btn-error btn-sm btn-square'}
-                                  onClick={() => removeStep(indexStep)}
-                                >
-                                  <FaTrashAlt />
-                                </button>
-                              </div>
-                            </div>
-                            {step.mixing ? (
-                              <>
-                                <div className={'w-full flex flex-row justify-center items-center space-x-2'}>
-                                  {Object.values(CocktailUtensil).map((value) => (
-                                    <div
-                                      key={`form-recipe-step-${step.id}-tool-${value}`}
-                                      className={'flex flex-col justify-center items-center space-y-2'}
-                                    >
-                                      {/*<img className={"h-20"}*/}
-                                      {/*     src={"https://res.cloudinary.com/lusini/w_1500,h_1500,q_80,c_pad,f_auto/pim/7f30f8/bf7939/ff5def/23f663/419537/65/7f30f8bf7939ff5def23f66341953765.jpeg"} />*/}
-                                      <div>{value}</div>
-                                      <Field
-                                        type="radio"
-                                        name={`steps.${indexStep}.tool`}
-                                        value={value}
-                                        className={'radio radio-primary'}
-                                        onBlur={handleBlur}
-                                      />
-                                    </div>
-                                  ))}
-                                </div>
-                                <FieldArray name={`steps.${indexStep}.ingredients`}>
-                                  {({ push: pushIngredient, remove: removeIngredient }) => (
-                                    <>
-                                      {step.ingredients
-                                        .sort((a, b) => a.ingredientNumber - b.ingredientNumber)
-                                        .map((ingredient, indexIngredient) => (
-                                          <div
-                                            key={`form-recipe-step-${step.id}-ingredient-${ingredient.id}`}
-                                            className={'flex flex-row space-x-2'}
-                                          >
-                                            <div className={'input-group input-group-vertical w-min'}>
-                                              <button
-                                                type={'button'}
-                                                disabled={indexIngredient == 0}
-                                                className={'btn btn-outline btn-xs btn-square'}
-                                                onClick={() => {
-                                                  const value = values.steps[indexStep].ingredients[indexIngredient];
-                                                  const reorderedGroups = (values.steps as CocktailRecipeStepFull[])[
-                                                    indexStep
-                                                  ].ingredients.filter((_, i) => i != indexIngredient);
-                                                  reorderedGroups.splice(indexIngredient - 1, 0, value);
-                                                  setFieldValue(
-                                                    `steps.${indexStep}.ingredients`,
-                                                    reorderedGroups.map((group, groupIndex) => ({
-                                                      ...group,
-                                                      ingredientNumber: groupIndex,
-                                                    })),
-                                                  );
-                                                }}
-                                              >
-                                                <FaAngleUp />
-                                              </button>
-                                              <button
-                                                type={'button'}
-                                                disabled={
-                                                  !(values.steps[indexStep].ingredients.length > 1) ||
-                                                  indexIngredient == values.steps[indexStep].ingredients.length - 1
-                                                }
-                                                className={'btn btn-outline btn-xs btn-square'}
-                                                onClick={() => {
-                                                  const value = values.steps[indexStep].ingredients[indexIngredient];
-                                                  const reorderedGroups = (values.steps as CocktailRecipeStepFull[])[
-                                                    indexStep
-                                                  ].ingredients.filter((_, i) => i != indexIngredient);
-                                                  reorderedGroups.splice(indexIngredient + 1, 0, value);
-                                                  setFieldValue(
-                                                    `steps.${indexStep}.ingredients`,
-                                                    reorderedGroups.map((group, groupIndex) => ({
-                                                      ...group,
-                                                      ingredientNumber: groupIndex,
-                                                    })),
-                                                  );
-                                                }}
-                                              >
-                                                <FaAngleDown />
-                                              </button>
-                                            </div>
-                                            <div
-                                              key={`form-recipe-step${step.id}-ingredient-${ingredient.id}`}
-                                              className={'input-group flex-row'}
-                                            >
-                                              <select
-                                                name={`steps.${indexStep}.ingredients.${indexIngredient}.ingredientId`}
-                                                className={`select select-bordered ${
-                                                  ((errors.steps as StepError[])?.[indexStep] as any)?.ingredients?.[
-                                                    indexIngredient
-                                                  ]?.ingredientId && 'select-error'
-                                                } `}
-                                                onChange={(e) => {
-                                                  handleChange(e);
-                                                  const ingredient = ingredients.find(
-                                                    (ingredient) => ingredient.id == e.target.value,
-                                                  );
-                                                  setFieldValue(
-                                                    `steps.${indexStep}.ingredients.${indexIngredient}.ingredient`,
-                                                    ingredient,
-                                                  );
-                                                }}
-                                                onBlur={handleBlur}
-                                                value={
-                                                  values.steps[indexStep].ingredients[indexIngredient].ingredientId
-                                                }
-                                              >
-                                                {ingredientsLoading ? (
-                                                  <option disabled={true} defaultChecked={true}>
-                                                    Lädt...
-                                                  </option>
-                                                ) : (
-                                                  <>
-                                                    <option value={''}>Auswählen</option>
-                                                    {ingredients
-                                                      .sort((a, b) => a.name.localeCompare(b.name))
-                                                      .map((ingredient) => (
-                                                        <option
-                                                          key={`form-recipe-step${step.id}-ingredients-${ingredient.id}`}
-                                                          value={ingredient.id}
-                                                        >
-                                                          {ingredient.name}
-                                                        </option>
-                                                      ))}
-                                                  </>
-                                                )}
-                                              </select>
-                                              <input
-                                                type="number"
-                                                name={`steps.${indexStep}.ingredients.${indexIngredient}.amount`}
-                                                className={'input input-bordered'}
-                                                onChange={handleChange}
-                                                onBlur={handleBlur}
-                                                value={values.steps[indexStep].ingredients[indexIngredient].amount}
-                                              />
-                                              <select
-                                                name={`steps.${indexStep}.ingredients.${indexIngredient}.unit`}
-                                                className={`select select-bordered ${
-                                                  ((errors.steps as StepError[])?.[indexStep] as any)?.ingredients?.[
-                                                    indexIngredient
-                                                  ]?.unit
-                                                    ? 'select-error'
-                                                    : ''
-                                                }`}
-                                                onChange={handleChange}
-                                                onBlur={handleBlur}
-                                                value={values.steps[indexStep].ingredients[indexIngredient].unit}
-                                              >
-                                                <option value={''}>Auswählen</option>
-                                                {Object.values(CocktailIngredientUnit).map((value) => (
-                                                  <option
-                                                    key={`steps.${indexStep}.ingredients.${indexIngredient}.units-${value}`}
-                                                    value={value}
-                                                  >
-                                                    {value}
-                                                  </option>
-                                                ))}
-                                              </select>
-                                              <button
-                                                type={'button'}
-                                                className={'btn btn-error btn-square'}
-                                                disabled={values.steps[indexStep].ingredients.length == 1}
-                                                onClick={() => removeIngredient(indexIngredient)}
-                                              >
-                                                <FaTrashAlt />
-                                              </button>
-                                            </div>
-                                          </div>
-                                        ))}
-
-                                      <div className={'w-full flex justify-end'}>
-                                        <button
-                                          type={'button'}
-                                          className={'btn btn-outline btn-sm btn-secondary space-x-2'}
-                                          onClick={() =>
-                                            pushIngredient({
-                                              amount: 0,
-                                              unit: CocktailIngredientUnit.CL,
-                                              ingredient: undefined,
-                                            })
-                                          }
-                                        >
-                                          <FaPlus />
-                                          <span>Zutat hinzufügen</span>
-                                        </button>
-                                      </div>
-                                    </>
-                                  )}
-                                </FieldArray>
-                              </>
-                            ) : (
-                              <div className={'flex flex-row justify-center items-center space-x-2'}>
-                                {Object.values(CocktailTool).map((value) => (
-                                  <div
-                                    key={`form-recipe-step${step.id}-no-mixing-${value}`}
-                                    className={'flex flex-col justify-center items-center space-y-2'}
-                                  >
-                                    {/*<img className={"h-20"}*/}
-                                    {/*     src={"https://res.cloudinary.com/lusini/w_1500,h_1500,q_80,c_pad,f_auto/pim/7f30f8/bf7939/ff5def/23f663/419537/65/7f30f8bf7939ff5def23f66341953765.jpeg"} />*/}
-                                    <div>{value}</div>
-                                    <Field
-                                      type="radio"
-                                      name={`steps.${indexStep}.tool`}
-                                      value={value}
-                                      className="radio radio-primary"
-                                      onBlur={handleBlur}
-                                    />
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                        <div className={'flex justify-center'}>
-                          <div
-                            className={'btn btn-sm btn-primary space-x-2'}
-                            onClick={() => {
-                              const step: CocktailRecipeStepFull = {
-                                id: '',
-                                cocktailRecipeId: '',
-                                tool: CocktailUtensil.SHAKE,
-                                mixing: true,
-                                stepNumber: values.steps.length,
-                                ingredients: [
-                                  {
-                                    id: '',
-                                    amount: 0,
-                                    ingredientId: '',
-                                    cocktailRecipeStepId: '',
-                                    unit: CocktailIngredientUnit.CL,
-                                    ingredient: null,
-                                    ingredientNumber: 0,
-                                  },
-                                ],
-                              };
-                              pushStep(step);
-                            }}
-                          >
-                            <FaPlus /> <span>Schritt hinzufügen</span>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </FieldArray>
-                  <div className={'col-span-2 divider'}>Garnitur</div>
-                  <FieldArray name={'garnishes'}>
-                    {({ push: pushGarnish, remove: removeGarnish }) => (
-                      <div className={'col-span-2 space-y-2'}>
-                        {values.garnishes.map((garnish: CocktailRecipeGarnishFull, indexGarnish: number) => (
-                          <div
-                            key={`form-recipe-garnish-${indexGarnish}`}
-                            className={'flex flex-row space-x-2 border border-neutral rounded-xl p-4'}
-                          >
-                            <div className={'flex-none flex items-center'}>
-                              <div className={'input-group input-group-vertical'}>
-                                <button
-                                  type={'button'}
-                                  disabled={indexGarnish == 0}
-                                  className={'btn btn-outline btn-xs btn-square'}
-                                  onClick={() => {
-                                    const value = values.garnishes[indexGarnish];
-                                    const reorderedGroups = (values.garnishes as CocktailRecipeGarnishFull[]).filter(
-                                      (_, i) => i != indexGarnish,
-                                    );
-                                    reorderedGroups.splice(indexGarnish - 1, 0, value);
-                                    setFieldValue(
-                                      `garnishes`,
-                                      reorderedGroups.map((garnish, garnishIndex) => ({
-                                        ...garnish,
-                                        garnishNumber: garnishIndex,
-                                      })),
-                                    );
-                                  }}
-                                >
-                                  <FaAngleUp />
-                                </button>
-                                <button
-                                  type={'button'}
-                                  disabled={
-                                    !(values.garnishes.length > 1) || indexGarnish == values.garnishes.length - 1
-                                  }
-                                  className={'btn btn-outline btn-xs btn-square'}
-                                  onClick={() => {
-                                    const value = values.garnishes[indexGarnish];
-                                    const reorderedGroups = (values.garnishes as CocktailRecipeGarnishFull[]).filter(
-                                      (_, i) => i != indexGarnish,
-                                    );
-                                    reorderedGroups.splice(indexGarnish + 1, 0, value);
-                                    setFieldValue(
-                                      `garnishes`,
-                                      reorderedGroups.map((garnishes, garnishIndex) => ({
-                                        ...garnishes,
-                                        garnishNumber: garnishIndex,
-                                      })),
-                                    );
-                                  }}
-                                >
-                                  <FaAngleDown />
-                                </button>
-                              </div>
-                            </div>
-                            <div className={'flex flex-col'}>
-                              <div className={'flex-1'}>
-                                <label className={'label'}>
-                                  <span className={'label-text'}>Garnitur</span>
-                                  <span className={'text-error label-text-alt'}>
-                                    {(errors.garnishes as GarnishError[])?.[indexGarnish]?.garnishId &&
-                                      (touched.garnishes as any)?.[indexGarnish]?.garnishId &&
-                                      (errors.garnishes as GarnishError[])?.[indexGarnish]?.garnishId}
-                                  </span>
-                                </label>
-                                <select
-                                  name={`garnishes.${indexGarnish}.garnishId`}
-                                  value={values.garnishes[indexGarnish].garnishId}
-                                  className={`select select-bordered w-full ${
-                                    (errors.garnishes as GarnishError[])?.[indexGarnish]?.garnishId &&
-                                    (touched.garnishes as any)?.[indexGarnish]?.garnishId &&
-                                    'select-error'
-                                  }`}
-                                  onChange={(event) => {
-                                    handleChange(event);
-                                    setFieldValue(
-                                      `garnishes.${indexGarnish}.garnish`,
-                                      garnishes.find((garnish) => garnish.id == event.target.value),
-                                    );
-                                  }}
-                                  onBlur={handleBlur}
-                                >
-                                  {garnishesLoading ? (
-                                    <option disabled={true} defaultChecked={true} value={undefined}>
-                                      Lädt...
-                                    </option>
-                                  ) : (
-                                    <>
-                                      <option value={''}>Auswählen</option>
-                                      {garnishes.map((garnish) => (
-                                        <option key={`form-recipe-garnish-${garnish.id}`} value={garnish.id}>
-                                          {garnish.name}
-                                        </option>
-                                      ))}
-                                    </>
-                                  )}
-                                </select>
-                              </div>
-                              <div className={'form-control'}>
-                                <label className={'label'}>
-                                  <span className={'label-text'}>Optional</span>
-                                  <span className={'text-error label-text-alt'}>
-                                    {(errors.garnishes as GarnishError[])?.[indexGarnish]?.optional &&
-                                      (touched.garnishes as any)?.[indexGarnish]?.optional &&
-                                      (errors.garnishes as GarnishError[])?.[indexGarnish]?.optional}
-                                  </span>
-                                  <Field
-                                    type={'checkbox'}
-                                    name={`garnishes.${indexGarnish}.optional`}
-                                    onChange={handleChange}
-                                    onBlur={handleBlur}
-                                    className={'toggle toggle-primary'}
-                                  />
-                                </label>
-                              </div>
-                            </div>
-                            <div className={'flex-1'}>
-                              <label className={'label'}>
-                                <span className={'label-text'}>Zusätzliche Beschreibung</span>
-                                <span className={'text-error label-text-alt'}>
-                                  {/*{errors.garnishDescription && touched.garnishDescription && errors.garnishDescription}*/}
-                                </span>
-                              </label>
-                              <textarea
-                                value={values.garnishes[indexGarnish].description}
-                                name={`garnishes.${indexGarnish}.description`}
-                                className={
-                                  'textarea h-24 textarea-bordered w-full'
-                                  // ${
-                                  // errors.garnishDescription && touched.garnishDescription && 'textarea-error'
-                                  // }`
-                                }
-                                onChange={handleChange}
-                                onBlur={handleBlur}
-                              />
-                            </div>
-                            <div className={'btn btn-error btn-sm'} onClick={() => removeGarnish(indexGarnish)}>
-                              <FaTrashAlt />
-                            </div>
-                          </div>
-                        ))}
-
-                        <div className={'flex justify-center'}>
-                          <div
-                            className={'btn btn-sm btn-primary space-x-2'}
-                            onClick={() => {
-                              const cocktailRecipeGarnish: CocktailRecipeGarnishFull = {
-                                cocktailRecipeId: '',
-                                garnishId: '',
-                                garnish: garnishes[0],
-                                optional: false,
-                                garnishNumber: values.garnishes.length - 1,
-                                description: '',
-                              };
-                              pushGarnish(cocktailRecipeGarnish);
-                            }}
-                          >
-                            <FaPlus /> <span>Garnitur hinzufügen</span>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </FieldArray>
                 </div>
               </div>
             </div>
@@ -1103,6 +617,494 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                     </div>
                   </div>
                 </div>
+              </div>
+            </div>
+
+            <div className={'card col-span-full'}>
+              <div className={'card-body'}>
+                <div className={'text-2xl font-bold text-center'}>Zubereitung</div>
+
+                <FieldArray name={'steps'}>
+                  {({ push: pushStep, remove: removeStep }) => (
+                    <div className={'col-span-2 space-y-2'}>
+                      {(values.steps as CocktailRecipeStepFull[]).map((step, indexStep) => (
+                        <div
+                          key={`form-recipe-step-${step.id}`}
+                          className={
+                            'flex flex-col justify-between w-full space-y-2 border border-neutral rounded-xl p-4'
+                          }
+                        >
+                          <div className={'grid grid-cols-3 gap-4'}>
+                            <div className={'font-bold'}>Schritt {indexStep + 1}</div>
+                            <div className={'form-control'}>
+                              <label className={'label'}>
+                                <span className={'label-text'}>Andere</span>
+                                <input
+                                  type="checkbox"
+                                  checked={values.steps[indexStep].mixing}
+                                  onChange={(e) => {
+                                    handleChange(e);
+                                    if (values.steps[indexStep].mixing) {
+                                      setFieldValue(`steps.${indexStep}.tool`, 'SINGLE_STRAIN');
+                                    } else {
+                                      setFieldValue(`steps.${indexStep}.tool`, 'SHAKE');
+                                    }
+                                  }}
+                                  onBlur={handleBlur}
+                                  className={'toggle toggle-primary'}
+                                  name={`steps.${indexStep}.mixing`}
+                                />
+                                <span className={'label-text'}>Mixen</span>
+                              </label>
+                            </div>
+                            <div className={'space-x-2 justify-self-end'}>
+                              <button
+                                type={'button'}
+                                disabled={indexStep == 0}
+                                className={'btn btn-outline btn-sm btn-square'}
+                                onClick={() => {
+                                  const value = values.steps[indexStep];
+                                  const reorderedSteps = (values.steps as CocktailRecipeStepFull[]).filter(
+                                    (_, i) => i != indexStep,
+                                  );
+                                  reorderedSteps.splice(indexStep - 1, 0, value);
+                                  setFieldValue(
+                                    'steps',
+                                    reorderedSteps.map((step, index) => ({ ...step, stepNumber: index })),
+                                  );
+                                }}
+                              >
+                                <FaAngleUp />
+                              </button>
+                              <button
+                                type={'button'}
+                                disabled={!(values.steps.length > 1) || indexStep == values.steps.length - 1}
+                                className={'btn btn-outline btn-sm btn-square'}
+                                onClick={() => {
+                                  const value = values.steps[indexStep];
+                                  const reorderedSteps = (values.steps as CocktailRecipeStepFull[]).filter(
+                                    (_, i) => i != indexStep,
+                                  );
+                                  reorderedSteps.splice(indexStep + 1, 0, value);
+                                  setFieldValue(
+                                    'steps',
+                                    reorderedSteps.map((step, index) => ({ ...step, stepNumber: index })),
+                                  );
+                                }}
+                              >
+                                <FaAngleDown />
+                              </button>
+                              <button
+                                type={'button'}
+                                className={'btn btn-error btn-sm btn-square'}
+                                onClick={() => removeStep(indexStep)}
+                              >
+                                <FaTrashAlt />
+                              </button>
+                            </div>
+                          </div>
+                          {step.mixing ? (
+                            <>
+                              <div className={'w-full flex flex-row justify-center items-center space-x-2'}>
+                                {Object.entries(CocktailUtensil).map(([key, value]) => (
+                                  <div
+                                    key={`form-recipe-step-${step.id}-tool-${key}`}
+                                    className={'flex flex-col justify-center items-center space-y-2'}
+                                  >
+                                    {/*<img className={"h-20"}*/}
+                                    {/*     src={"https://res.cloudinary.com/lusini/w_1500,h_1500,q_80,c_pad,f_auto/pim/7f30f8/bf7939/ff5def/23f663/419537/65/7f30f8bf7939ff5def23f66341953765.jpeg"} />*/}
+                                    <div>{value}</div>
+                                    <Field
+                                      type="radio"
+                                      name={`steps.${indexStep}.tool`}
+                                      value={key}
+                                      className={'radio radio-primary'}
+                                      onBlur={handleBlur}
+                                    />
+                                  </div>
+                                ))}
+                              </div>
+                              <FieldArray name={`steps.${indexStep}.ingredients`}>
+                                {({ push: pushIngredient, remove: removeIngredient }) => (
+                                  <>
+                                    {step.ingredients
+                                      .sort((a, b) => a.ingredientNumber - b.ingredientNumber)
+                                      .map((ingredient, indexIngredient) => (
+                                        <div
+                                          key={`form-recipe-step-${step.id}-ingredient-${ingredient.id}`}
+                                          className={'flex flex-row space-x-2'}
+                                        >
+                                          <div className={'input-group input-group-vertical w-min'}>
+                                            <button
+                                              type={'button'}
+                                              disabled={indexIngredient == 0}
+                                              className={'btn btn-outline btn-xs btn-square'}
+                                              onClick={() => {
+                                                const value = values.steps[indexStep].ingredients[indexIngredient];
+                                                const reorderedGroups = (values.steps as CocktailRecipeStepFull[])[
+                                                  indexStep
+                                                ].ingredients.filter((_, i) => i != indexIngredient);
+                                                reorderedGroups.splice(indexIngredient - 1, 0, value);
+                                                setFieldValue(
+                                                  `steps.${indexStep}.ingredients`,
+                                                  reorderedGroups.map((group, groupIndex) => ({
+                                                    ...group,
+                                                    ingredientNumber: groupIndex,
+                                                  })),
+                                                );
+                                              }}
+                                            >
+                                              <FaAngleUp />
+                                            </button>
+                                            <button
+                                              type={'button'}
+                                              disabled={
+                                                !(values.steps[indexStep].ingredients.length > 1) ||
+                                                indexIngredient == values.steps[indexStep].ingredients.length - 1
+                                              }
+                                              className={'btn btn-outline btn-xs btn-square'}
+                                              onClick={() => {
+                                                const value = values.steps[indexStep].ingredients[indexIngredient];
+                                                const reorderedGroups = (values.steps as CocktailRecipeStepFull[])[
+                                                  indexStep
+                                                ].ingredients.filter((_, i) => i != indexIngredient);
+                                                reorderedGroups.splice(indexIngredient + 1, 0, value);
+                                                setFieldValue(
+                                                  `steps.${indexStep}.ingredients`,
+                                                  reorderedGroups.map((group, groupIndex) => ({
+                                                    ...group,
+                                                    ingredientNumber: groupIndex,
+                                                  })),
+                                                );
+                                              }}
+                                            >
+                                              <FaAngleDown />
+                                            </button>
+                                          </div>
+                                          <div
+                                            key={`form-recipe-step${step.id}-ingredient-${ingredient.id}`}
+                                            className={'input-group flex flex-row'}
+                                          >
+                                            <select
+                                              name={`steps.${indexStep}.ingredients.${indexIngredient}.ingredientId`}
+                                              className={`select select-bordered flex-1 ${
+                                                ((errors.steps as StepError[])?.[indexStep] as any)?.ingredients?.[
+                                                  indexIngredient
+                                                ]?.ingredientId && 'select-error'
+                                              } `}
+                                              onChange={(e) => {
+                                                handleChange(e);
+                                                const ingredient = ingredients.find(
+                                                  (ingredient) => ingredient.id == e.target.value,
+                                                );
+                                                setFieldValue(
+                                                  `steps.${indexStep}.ingredients.${indexIngredient}.ingredient`,
+                                                  ingredient,
+                                                );
+                                              }}
+                                              onBlur={handleBlur}
+                                              value={values.steps[indexStep].ingredients[indexIngredient].ingredientId}
+                                            >
+                                              {ingredientsLoading ? (
+                                                <option disabled={true} defaultChecked={true}>
+                                                  Lädt...
+                                                </option>
+                                              ) : (
+                                                <>
+                                                  <option value={''}>Auswählen</option>
+                                                  {ingredients
+                                                    .sort((a, b) => a.name.localeCompare(b.name))
+                                                    .map((ingredient) => (
+                                                      <option
+                                                        key={`form-recipe-step${step.id}-ingredients-${ingredient.id}`}
+                                                        value={ingredient.id}
+                                                      >
+                                                        {ingredient.name}
+                                                      </option>
+                                                    ))}
+                                                </>
+                                              )}
+                                            </select>
+                                            <input
+                                              type="number"
+                                              name={`steps.${indexStep}.ingredients.${indexIngredient}.amount`}
+                                              className={'input input-bordered'}
+                                              onChange={handleChange}
+                                              onBlur={handleBlur}
+                                              value={values.steps[indexStep].ingredients[indexIngredient].amount}
+                                            />
+                                            <select
+                                              name={`steps.${indexStep}.ingredients.${indexIngredient}.unit`}
+                                              className={`select select-bordered ${
+                                                ((errors.steps as StepError[])?.[indexStep] as any)?.ingredients?.[
+                                                  indexIngredient
+                                                ]?.unit
+                                                  ? 'select-error'
+                                                  : ''
+                                              }`}
+                                              onChange={handleChange}
+                                              onBlur={handleBlur}
+                                              value={values.steps[indexStep].ingredients[indexIngredient].unit}
+                                            >
+                                              <option value={''}>Auswählen</option>
+                                              {Object.values(CocktailIngredientUnit).map((value) => (
+                                                <option
+                                                  key={`steps.${indexStep}.ingredients.${indexIngredient}.units-${value}`}
+                                                  value={value}
+                                                >
+                                                  {value}
+                                                </option>
+                                              ))}
+                                            </select>
+                                            <button
+                                              type={'button'}
+                                              className={'btn btn-error btn-square'}
+                                              disabled={values.steps[indexStep].ingredients.length == 1}
+                                              onClick={() => removeIngredient(indexIngredient)}
+                                            >
+                                              <FaTrashAlt />
+                                            </button>
+                                          </div>
+                                        </div>
+                                      ))}
+
+                                    <div className={'w-full flex justify-end'}>
+                                      <button
+                                        type={'button'}
+                                        className={'btn btn-outline btn-sm btn-secondary space-x-2'}
+                                        onClick={() =>
+                                          pushIngredient({
+                                            amount: 0,
+                                            unit: CocktailIngredientUnit.CL,
+                                            ingredient: undefined,
+                                          })
+                                        }
+                                      >
+                                        <FaPlus />
+                                        <span>Zutat hinzufügen</span>
+                                      </button>
+                                    </div>
+                                  </>
+                                )}
+                              </FieldArray>
+                            </>
+                          ) : (
+                            <div className={'flex flex-row justify-center items-center space-x-2'}>
+                              {Object.entries(CocktailTool).map(([key, value]) => (
+                                <div
+                                  key={`form-recipe-step${step.id}-no-mixing-${key}`}
+                                  className={'flex flex-col justify-center items-center space-y-2'}
+                                >
+                                  {/*<img className={"h-20"}*/}
+                                  {/*     src={"https://res.cloudinary.com/lusini/w_1500,h_1500,q_80,c_pad,f_auto/pim/7f30f8/bf7939/ff5def/23f663/419537/65/7f30f8bf7939ff5def23f66341953765.jpeg"} />*/}
+                                  <div>{value}</div>
+                                  <Field
+                                    type="radio"
+                                    name={`steps.${indexStep}.tool`}
+                                    value={key}
+                                    className="radio radio-primary"
+                                    onBlur={handleBlur}
+                                  />
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                      <div className={'flex justify-center'}>
+                        <div
+                          className={'btn btn-sm btn-primary space-x-2'}
+                          onClick={() => {
+                            const step: CocktailRecipeStepFull = {
+                              id: '',
+                              cocktailRecipeId: '',
+                              tool: 'SHAKE',
+                              mixing: true,
+                              stepNumber: values.steps.length,
+                              ingredients: [
+                                {
+                                  id: '',
+                                  amount: 0,
+                                  ingredientId: '',
+                                  cocktailRecipeStepId: '',
+                                  unit: CocktailIngredientUnit.CL,
+                                  ingredient: null,
+                                  ingredientNumber: 0,
+                                },
+                              ],
+                            };
+                            pushStep(step);
+                          }}
+                        >
+                          <FaPlus /> <span>Schritt hinzufügen</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </FieldArray>
+                <div className={'col-span-2 divider'}>Garnitur</div>
+                <FieldArray name={'garnishes'}>
+                  {({ push: pushGarnish, remove: removeGarnish }) => (
+                    <div className={'col-span-2 space-y-2'}>
+                      {values.garnishes.map((garnish: CocktailRecipeGarnishFull, indexGarnish: number) => (
+                        <div
+                          key={`form-recipe-garnish-${indexGarnish}`}
+                          className={'flex flex-row space-x-2 border border-neutral rounded-xl p-4'}
+                        >
+                          <div className={'flex-none flex items-center'}>
+                            <div className={'input-group input-group-vertical'}>
+                              <button
+                                type={'button'}
+                                disabled={indexGarnish == 0}
+                                className={'btn btn-outline btn-xs btn-square'}
+                                onClick={() => {
+                                  const value = values.garnishes[indexGarnish];
+                                  const reorderedGroups = (values.garnishes as CocktailRecipeGarnishFull[]).filter(
+                                    (_, i) => i != indexGarnish,
+                                  );
+                                  reorderedGroups.splice(indexGarnish - 1, 0, value);
+                                  setFieldValue(
+                                    `garnishes`,
+                                    reorderedGroups.map((garnish, garnishIndex) => ({
+                                      ...garnish,
+                                      garnishNumber: garnishIndex,
+                                    })),
+                                  );
+                                }}
+                              >
+                                <FaAngleUp />
+                              </button>
+                              <button
+                                type={'button'}
+                                disabled={!(values.garnishes.length > 1) || indexGarnish == values.garnishes.length - 1}
+                                className={'btn btn-outline btn-xs btn-square'}
+                                onClick={() => {
+                                  const value = values.garnishes[indexGarnish];
+                                  const reorderedGroups = (values.garnishes as CocktailRecipeGarnishFull[]).filter(
+                                    (_, i) => i != indexGarnish,
+                                  );
+                                  reorderedGroups.splice(indexGarnish + 1, 0, value);
+                                  setFieldValue(
+                                    `garnishes`,
+                                    reorderedGroups.map((garnishes, garnishIndex) => ({
+                                      ...garnishes,
+                                      garnishNumber: garnishIndex,
+                                    })),
+                                  );
+                                }}
+                              >
+                                <FaAngleDown />
+                              </button>
+                            </div>
+                          </div>
+                          <div className={'flex flex-col'}>
+                            <div className={'flex-1'}>
+                              <label className={'label'}>
+                                <span className={'label-text'}>Garnitur</span>
+                                <span className={'text-error label-text-alt'}>
+                                  {(errors.garnishes as GarnishError[])?.[indexGarnish]?.garnishId &&
+                                    (touched.garnishes as any)?.[indexGarnish]?.garnishId &&
+                                    (errors.garnishes as GarnishError[])?.[indexGarnish]?.garnishId}
+                                </span>
+                              </label>
+                              <select
+                                name={`garnishes.${indexGarnish}.garnishId`}
+                                value={values.garnishes[indexGarnish].garnishId}
+                                className={`select select-bordered w-full ${
+                                  (errors.garnishes as GarnishError[])?.[indexGarnish]?.garnishId &&
+                                  (touched.garnishes as any)?.[indexGarnish]?.garnishId &&
+                                  'select-error'
+                                }`}
+                                onChange={(event) => {
+                                  handleChange(event);
+                                  setFieldValue(
+                                    `garnishes.${indexGarnish}.garnish`,
+                                    garnishes.find((garnish) => garnish.id == event.target.value),
+                                  );
+                                }}
+                                onBlur={handleBlur}
+                              >
+                                {garnishesLoading ? (
+                                  <option disabled={true} defaultChecked={true} value={undefined}>
+                                    Lädt...
+                                  </option>
+                                ) : (
+                                  <>
+                                    <option value={''}>Auswählen</option>
+                                    {garnishes.map((garnish) => (
+                                      <option key={`form-recipe-garnish-${garnish.id}`} value={garnish.id}>
+                                        {garnish.name}
+                                      </option>
+                                    ))}
+                                  </>
+                                )}
+                              </select>
+                            </div>
+                            <div className={'form-control'}>
+                              <label className={'label'}>
+                                <span className={'label-text'}>Optional</span>
+                                <span className={'text-error label-text-alt'}>
+                                  {(errors.garnishes as GarnishError[])?.[indexGarnish]?.optional &&
+                                    (touched.garnishes as any)?.[indexGarnish]?.optional &&
+                                    (errors.garnishes as GarnishError[])?.[indexGarnish]?.optional}
+                                </span>
+                                <Field
+                                  type={'checkbox'}
+                                  name={`garnishes.${indexGarnish}.optional`}
+                                  onChange={handleChange}
+                                  onBlur={handleBlur}
+                                  className={'toggle toggle-primary'}
+                                />
+                              </label>
+                            </div>
+                          </div>
+                          <div className={'flex-1'}>
+                            <label className={'label'}>
+                              <span className={'label-text'}>Zusätzliche Beschreibung</span>
+                              <span className={'text-error label-text-alt'}>
+                                {/*{errors.garnishDescription && touched.garnishDescription && errors.garnishDescription}*/}
+                              </span>
+                            </label>
+                            <textarea
+                              value={values.garnishes[indexGarnish].description}
+                              name={`garnishes.${indexGarnish}.description`}
+                              className={
+                                'textarea h-24 textarea-bordered w-full'
+                                // ${
+                                // errors.garnishDescription && touched.garnishDescription && 'textarea-error'
+                                // }`
+                              }
+                              onChange={handleChange}
+                              onBlur={handleBlur}
+                            />
+                          </div>
+                          <div className={'btn btn-error btn-sm'} onClick={() => removeGarnish(indexGarnish)}>
+                            <FaTrashAlt />
+                          </div>
+                        </div>
+                      ))}
+
+                      <div className={'flex justify-center'}>
+                        <div
+                          className={'btn btn-sm btn-primary space-x-2'}
+                          onClick={() => {
+                            const cocktailRecipeGarnish: CocktailRecipeGarnishFull = {
+                              cocktailRecipeId: '',
+                              garnishId: '',
+                              garnish: garnishes[0],
+                              optional: false,
+                              garnishNumber: values.garnishes.length - 1,
+                              description: '',
+                            };
+                            pushGarnish(cocktailRecipeGarnish);
+                          }}
+                        >
+                          <FaPlus /> <span>Garnitur hinzufügen</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </FieldArray>
               </div>
             </div>
           </div>
