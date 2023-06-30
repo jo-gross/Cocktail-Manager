@@ -36,6 +36,7 @@ export default function IngredientsOverviewPage() {
                   <th className="w-1/8">Preis/Menge</th>
                   <th className="w-1/8">Tags</th>
                   <th className="w-1/8">Link</th>
+                  <th className="w-1/8">Seite</th>
                   <th className="w-1/8">
                     <div className={'w-full flex justify-end'}>
                       <Link href={'/manage/ingredients/create'}>
@@ -90,6 +91,20 @@ export default function IngredientsOverviewPage() {
                               {tag}
                             </div>
                           ))}
+                        </td>
+                        <td>
+                          {ingredient.link
+                            ?.replace('https://', '')
+                            .replace('http://', '')
+                            .replace('www.', '')
+                            .substring(
+                              0,
+                              ingredient.link
+                                ?.replace('https://', '')
+                                .replace('http://', '')
+                                .replace('www.', '')
+                                .indexOf('/'),
+                            ) ?? ''}
                         </td>
                         <td>
                           {ingredient.link == undefined ? (
