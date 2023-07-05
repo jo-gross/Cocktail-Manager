@@ -258,7 +258,13 @@ export function IngredientForm(props: IngredientFormProps) {
                     <button
                       className={`btn btn-primary ${values.fetchingExternalData ? 'loading' : ''}`}
                       type={'button'}
-                      disabled={!(values.link.includes('expert24.com') || values.link.includes('conalco.de'))}
+                      disabled={
+                        !(
+                          values.link.includes('expert24.com') ||
+                          values.link.includes('conalco.de') ||
+                          values.link.includes('metro.de')
+                        )
+                      }
                       onClick={() => {
                         setFieldValue('fetchingExternalData', true);
                         fetch(`/api/scraper/ingredient?url=${values.link}`)

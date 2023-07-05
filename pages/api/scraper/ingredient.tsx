@@ -1,6 +1,7 @@
 // pages/api/post/index.ts
 
 import { NextApiRequest, NextApiResponse } from 'next';
+
 // @ts-ignore
 import JSSoup from 'jssoup';
 
@@ -77,7 +78,6 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         .replace(',', '.')
         .replace('€', '')
         .trim();
-      console.log(price);
       if (price == undefined) {
         price = 0;
       }
@@ -90,7 +90,52 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         price: Number(price),
         volume: Number(volume),
       });
+    } else if (req.query?.url?.includes('metro.de')) {
+      console.log(req.query.url);
+
+      const playwright = require('playwright');
+      const browser = await playwright['firefox'].launch();
+      const context = await browser.newContext();
+      const page = await context.newPage();
+      await page.goto(req.query.url);
+
+      const imageUrl = await page.locator('#mainImage').first().getAttribute('src');
+      const name = await page.locator('div.mfcss_article-detail--title > h2 > span').first().innerText();
+      let price = await page
+        .locator(
+          'div.mfcss_article-detail--price-container > div.row > div.text-right > div > span.mfcss_article-detail--price-breakdown > span > span',
+        )
+        .allInnerTexts();
+      price = price[1].replace(',', '.').replace('€', '').trim();
+
+      await browser.close();
+
+      const imageResponse = imageUrl
+        ? await fetch(imageUrl).catch((error) => {
+            console.log(error);
+            return undefined;
+          })
+        : undefined;
+
+      const image =
+        imageResponse != undefined
+          ? 'data:image/jpg;base64,' + Buffer.from(await imageResponse.arrayBuffer()).toString('base64')
+          : undefined;
+
+      if (price == undefined) {
+        price = 0;
+      }
+      const volume = 0;
+      // // Number(name.split('Vol. ')[1].split(' ')[0].replace(',', '.').replace('l', '').replace('ml', '')) * 100;
+      //
+      return res.json({
+        name: name,
+        image: image,
+        price: Number(price),
+        volume: Number(volume),
+      });
     }
   }
+
   return res.status(404).json({ message: 'URL not allowed' });
 }
