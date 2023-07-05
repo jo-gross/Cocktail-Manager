@@ -25,6 +25,8 @@ COPY --from=build /app/.next/standalone ./
 COPY --from=build /app/.next/static ./.next/static
 COPY schema.prisma ./prisma/schema.prisma
 
+RUN npx playwright install
+
 EXPOSE 3000
 
 ENV PORT 3000
