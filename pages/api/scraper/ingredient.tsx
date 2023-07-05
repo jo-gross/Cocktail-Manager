@@ -94,7 +94,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       console.log(req.query.url);
 
       const playwright = require('playwright');
-      const browser = await playwright['firefox'].launch();
+      const browser = await playwright['chromium'].launch();
       const context = await browser.newContext();
       const page = await context.newPage();
       await page.goto(req.query.url);

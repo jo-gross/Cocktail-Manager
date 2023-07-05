@@ -4,8 +4,6 @@ WORKDIR /app
 COPY package.json yarn.lock ./
 RUN yarn
 
-RUN npx playwright install
-
 FROM node:18-alpine AS build
 
 WORKDIR /app
@@ -27,6 +25,7 @@ COPY --from=build /app/.next/standalone ./
 COPY --from=build /app/.next/static ./.next/static
 COPY schema.prisma ./prisma/schema.prisma
 
+RUN yarn playwright install --with-deps chromium
 
 EXPOSE 3000
 

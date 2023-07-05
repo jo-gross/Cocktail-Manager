@@ -272,9 +272,13 @@ export function IngredientForm(props: IngredientFormProps) {
                             if (response.ok) {
                               response.json().then((data) => {
                                 setFieldValue('name', data.name);
-                                setFieldValue('price', data.price);
+                                if (data.price != 0) {
+                                  setFieldValue('price', data.price);
+                                }
                                 setFieldValue('image', data.image);
-                                setFieldValue('volume', data.volume);
+                                if (data.volume != 0) {
+                                  setFieldValue('volume', data.volume);
+                                }
                               });
                             } else {
                               alertService.warn('Es konnten keine Daten über die URL geladen werden.');
