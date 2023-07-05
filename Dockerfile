@@ -1,8 +1,19 @@
-FROM node:18-alpine AS dependencies
+FROM node:18 AS dependencies
 
 WORKDIR /app
 COPY package.json yarn.lock ./
 RUN yarn
+
+RUN apk update && apk add --no-cache \
+    bash \
+    wget \
+    chromium \
+    nss \
+    freetype \
+    freetype-dev \
+    harfbuzz \
+    ca-certificates \
+    ttf-freefont
 
 RUN yarn playwright install --with-deps chromium
 
