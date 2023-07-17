@@ -1,13 +1,17 @@
 module.exports = {
-  content: ["./pages/**/*.{js,ts,jsx,tsx}", "./components/**/*.{js,ts,jsx,tsx}"],
+  content: ['./pages/**/*.{js,ts,jsx,tsx}', './components/**/*.{js,ts,jsx,tsx}'],
   theme: {
-    extend: {}
+    extend: {
+      screens: {
+        print: { raw: 'print' },
+      },
+    },
   },
-  plugins: [require("daisyui")],
+  plugins: [require('daisyui')],
 
   daisyui: {
-    themes: ["bumblebee", "halloween"]
-  }
+    themes: ['bumblebee', 'halloween'],
+  },
 };
 // module.exports = {
 //     content: ['./pages/**/*.{js,ts,jsx,tsx}'],

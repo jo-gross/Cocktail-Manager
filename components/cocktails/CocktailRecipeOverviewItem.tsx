@@ -1,5 +1,5 @@
 import { CocktailRecipeFull } from '../../models/CocktailRecipeFull';
-import React, { useContext } from 'react';
+import React, { useContext, useEffect } from 'react';
 import { CompactCocktailRecipeInstruction } from './CompactCocktailRecipeInstruction';
 import { ModalContext } from '../../lib/context/ModalContextProvider';
 import { ShowCocktailInfoButton } from './ShowCocktailInfoButton';
@@ -16,6 +16,11 @@ interface CocktailRecipeOverviewItemProps {
 
 export default function CocktailRecipeOverviewItem(props: CocktailRecipeOverviewItemProps) {
   const modalContext = useContext(ModalContext);
+
+  useEffect(() => {
+    console.log('showImage', props.showImage);
+  }, [props.showImage]);
+
   return (
     <div className={'col-span-1'}>
       <div className={'card card-side'}>
