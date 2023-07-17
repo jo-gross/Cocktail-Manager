@@ -115,7 +115,7 @@ export default function OverviewPage() {
   return (
     <div className={'static h-screen'}>
       <div className={''}>
-        <div className={'flex flex-col overflow-y-auto p-4 rounded-xl space-y-2'}>
+        <div className={'flex flex-col overflow-y-auto print:overflow-clip p-4 print:p-0 rounded-xl space-y-2'}>
           {loading ? (
             <PageCenter>
               <Loading />
@@ -130,7 +130,7 @@ export default function OverviewPage() {
               .map((group) => (
                 <div
                   key={`card-${selectedCard.id}-group-${group.id}`}
-                  className={'border border-base-200 rounded-xl p-2'}
+                  className={'border border-base-200 rounded-xl p-2 print:p-1'}
                 >
                   <div className={'font-bold text-2xl text-center'}>
                     {group.name}
@@ -182,7 +182,7 @@ export default function OverviewPage() {
         </div>
       </div>
 
-      <div className={'fixed bottom-5 right-5 flex flex-col space-y-2'}>
+      <div className={'fixed bottom-5 right-5 flex flex-col space-y-2 print:hidden'}>
         <div className="dropdown dropdown-top dropdown-end pt-2">
           <label tabIndex={0} className={'btn btn-primary btn-square rounded-xl btn-lg'}>
             <FaEye />
