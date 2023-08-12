@@ -991,7 +991,7 @@ __metadata:
     "@types/react": 17.0.38
     "@types/react-is": ^17.0.4
     autoprefixer: 10.4.14
-    daisyui: ^3.2.1
+    daisyui: 3.5.1
     eslint: 8.40.0
     eslint-config-next: 13.4.2
     formik: 2.2.9
@@ -1131,16 +1131,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"daisyui@npm:^3.2.1":
-  version: 3.2.1
-  resolution: "daisyui@npm:3.2.1"
+"daisyui@npm:3.5.1":
+  version: 3.5.1
+  resolution: "daisyui@npm:3.5.1"
   dependencies:
     colord: ^2.9
     css-selector-tokenizer: ^0.8
     postcss: ^8
     postcss-js: ^4
     tailwindcss: ^3
-  checksum: 916d80b46b8576f41008f05aa9c0dd80bfdd4b95b2ac864386ed218ff91fabaaf5469b183a5bcd087a8666e55a84f9f1f7ca835d0f15b39623fb77c3b974f7fa
+  checksum: 0f7e572b8fd4bfd5922b8ae1315734cad635383cfcd5c9f272b932012fdcffc35cdec43ebee2f69ac9166114741fe948ebfdd67d929daa198cda3e0ab00ff99e
   languageName: node
   linkType: hard
 
