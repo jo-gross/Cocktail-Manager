@@ -281,7 +281,7 @@ export default function OverviewPage() {
                 <input
                   className={'toggle'}
                   type={'checkbox'}
-                  data-toggle-theme="bumblebee,halloween"
+                  data-toggle-theme="autumn,halloween"
                   data-act-class="toggle-primary"
                 ></input>
                 <div className={'label-text'}>Dark</div>

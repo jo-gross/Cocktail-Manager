@@ -10,7 +10,8 @@ module.exports = {
   plugins: [require('daisyui')],
 
   daisyui: {
-    themes: ['bumblebee', 'halloween'],
+    themes: ['autumn', 'halloween'],
+    darkTheme: 'halloween', // name of one of the included themes for dark mode
   },
 };
 // module.exports = {
