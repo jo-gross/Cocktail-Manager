@@ -15,7 +15,7 @@ interface GlassFormProps {
 
 export function GlassForm(props: GlassFormProps) {
   const router = useRouter();
-
+  const { workspaceId } = router.query;
   return (
     <Formik
       initialValues={{
@@ -33,13 +33,13 @@ export function GlassForm(props: GlassFormProps) {
             image: values.image,
             volume: values.volume == 0 ? undefined : values.volume,
           };
-          const result = await fetch('/api/glasses', {
+          const result = await fetch(`/api/workspaces/${workspaceId}/glasses`, {
             method: props.glass?.id == undefined ? 'POST' : 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body),
           });
           if (result.status.toString().startsWith('2')) {
-            await router.push('/manage/glasses');
+            await router.push(`/workspaces/${workspaceId}/manage/glasses`);
           } else {
             console.error(result.status + ' ' + result.statusText);
           }

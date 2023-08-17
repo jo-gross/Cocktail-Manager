@@ -5,6 +5,7 @@ import { CocktailRecipeFull } from '../../models/CocktailRecipeFull';
 import { Loading } from '../Loading';
 import { ModalContext } from '../../lib/context/ModalContextProvider';
 import { ShowCocktailInfoButton } from '../cocktails/ShowCocktailInfoButton';
+import { useRouter } from 'next/router';
 
 interface SearchModalProps {
   onCocktailSelected?: (id: string) => void;
@@ -12,34 +13,40 @@ interface SearchModalProps {
 }
 
 export function SearchModal(props: SearchModalProps) {
+  const router = useRouter();
+  const workspaceId = router.query.workspaceId as string | undefined;
   const modalContext = useContext(ModalContext);
 
   const [search, setSearch] = useState('');
   const [cocktails, setCocktails] = useState<CocktailRecipeFull[]>([]);
   const [isLoading, setLoading] = useState(false);
 
-  const fetchCocktails = useCallback((search) => {
-    setSearch(search);
-    setLoading(true);
-    fetch(
-      '/api/cocktails?' +
-        new URLSearchParams({
-          search: search,
-        }),
-    )
-      .then((response) => {
-        return response.json();
-      })
-      .then((json) => {
-        setCocktails(json);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  }, []);
+  const fetchCocktails = useCallback(
+    (search) => {
+      if (!workspaceId) return;
+      setSearch(search);
+      setLoading(true);
+      fetch(
+        `/api/workspaces/${workspaceId}/cocktails?` +
+          new URLSearchParams({
+            search: search,
+          }),
+      )
+        .then((response) => {
+          return response.json();
+        })
+        .then((json) => {
+          setCocktails(json);
+        })
+        .finally(() => {
+          setLoading(false);
+        });
+    },
+    [workspaceId],
+  );
 
   return (
-    <div className={'p-4 grid grid-cols-1 gap-2'}>
+    <div className={'md:p-2 grid grid-cols-1 gap-2'}>
       <div className={'font-bold text-2xl'}>Cocktail suchen</div>
       <div className={'input-group'}>
         <input

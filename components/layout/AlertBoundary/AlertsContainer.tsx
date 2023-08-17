@@ -99,8 +99,8 @@ function AlertsContainer(props: AlertsContainerProps) {
     <div className="space-y-2">
       {alerts.reverse().map((alert, index) => (
         <div key={index} className={`alert shadow-lg ${cssClasses(alert)}`}>
+          {icon(alert)}
           <div>
-            {icon(alert)}
             <span>{alert.message}</span>
           </div>
           <a className="btn btn-ghost btn-sm text-md" onClick={() => removeAlert(alert)}>

@@ -40,6 +40,7 @@ interface GarnishError {
 
 export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
   const router = useRouter();
+  const workspaceId = router.query.workspaceId as string | undefined;
 
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
   const [ingredientsLoading, setIngredientsLoading] = useState(false);
@@ -47,8 +48,10 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
   const formRef = useRef<FormikProps<any>>(null);
 
   useEffect(() => {
+    if (!workspaceId) return;
+
     setIngredientsLoading(true);
-    fetch(`/api/ingredients`)
+    fetch(`/api/workspaces/${workspaceId}/ingredients`)
       .then((response) => response.json())
       .then((data) => {
         setIngredients(data);
@@ -56,14 +59,15 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
       .finally(() => {
         setIngredientsLoading(false);
       });
-  }, []);
+  }, [workspaceId]);
 
   const [glasses, setGlasses] = useState<Glass[]>([]);
   const [glassesLoading, setGlassesLoading] = useState(false);
 
   useEffect(() => {
+    if (!workspaceId) return;
     setGlassesLoading(true);
-    fetch(`/api/glasses`)
+    fetch(`/api/workspaces/${workspaceId}/glasses`)
       .then((response) => response.json())
       .then((data) => {
         setGlasses(data);
@@ -71,14 +75,15 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
       .finally(() => {
         setGlassesLoading(false);
       });
-  }, []);
+  }, [workspaceId]);
 
   const [garnishes, setGarnishes] = useState<Garnish[]>([]);
   const [garnishesLoading, setGarnishesLoading] = useState(false);
 
   useEffect(() => {
+    if (!workspaceId) return;
     setGarnishesLoading(true);
-    fetch(`/api/garnishes`)
+    fetch(`/api/workspaces/${workspaceId}/garnishes`)
       .then((response) => response.json())
       .then((data) => {
         setGarnishes(data);
@@ -86,7 +91,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
       .finally(() => {
         setGarnishesLoading(false);
       });
-  }, []);
+  }, [workspaceId]);
 
   useEffect(() => {
     if (props.cocktailRecipe?.glassId && glasses.length > 0) {
@@ -145,6 +150,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
     glass: glasses.find((g) => g.id == props.cocktailRecipe?.glassId) ?? null,
     garnishes: props.cocktailRecipe?.garnishes ?? [],
     steps: initSteps,
+    workspaceId: workspaceId!,
   };
 
   return (
@@ -267,7 +273,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
               };
             }),
           };
-          const result = await fetch('/api/cocktails', {
+          const result = await fetch(`/api/workspaces/${workspaceId}/cocktails`, {
             method: props.cocktailRecipe?.id == undefined ? 'POST' : 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body),
@@ -519,6 +525,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                       garnishes: values.garnishes,
                       //@ts-ignore
                       steps: values.steps,
+                      workspaceId: workspaceId!,
                     }}
                     showInfo={true}
                     showTags={values.showTags}

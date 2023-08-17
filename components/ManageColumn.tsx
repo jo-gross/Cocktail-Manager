@@ -1,4 +1,5 @@
 import { FaTrashAlt } from 'react-icons/fa';
+import { useRouter } from 'next/router';
 
 interface ManageColumnProps {
   id: string;
@@ -6,10 +7,13 @@ interface ManageColumnProps {
 }
 
 export function ManageColumn(props: ManageColumnProps) {
+  const router = useRouter();
+  const workspaceId = router.query.workspaceId as string | undefined;
+
   return (
     <td>
       <div className={'flex justify-end space-x-2 items-center'}>
-        <a href={`/manage/${props.entity}/${props.id}`}>
+        <a href={`/workspaces/${workspaceId}/manage/${props.entity}/${props.id}`}>
           <div className={'btn btn-outline btn-primary btn-sm'}>Edit</div>
         </a>
         <button
@@ -18,7 +22,7 @@ export function ManageColumn(props: ManageColumnProps) {
           className={'btn btn-outline btn-error btn-sm'}
           onClick={async () => {
             try {
-              const response = await fetch(`/api/${props.entity}/${props.id}`, {
+              const response = await fetch(`/api/workspaces/${workspaceId}/${props.entity}/${props.id}`, {
                 method: 'DELETE',
               });
               if (response.status == 200) {

@@ -10,7 +10,7 @@ interface ManageEntityLayoutProps {
 
 export function ManageEntityLayout(props: ManageEntityLayoutProps) {
   return (
-    <div className={'flex flex-col p-4'}>
+    <div className={'flex flex-col md:p-4 p-1'}>
       <div className={'grid grid-cols-3 w-full justify-center items-center justify-items-center'}>
         <div className={'col-span-1 justify-self-start'}>
           <Link href={props.backLink}>

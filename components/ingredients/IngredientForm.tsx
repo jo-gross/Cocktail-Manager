@@ -16,7 +16,7 @@ interface IngredientFormProps {
 
 export function IngredientForm(props: IngredientFormProps) {
   const router = useRouter();
-
+  const workspaceId = router.query.workspaceId as string | undefined;
   const formRef = useRef<FormikProps<any>>(null);
 
   return (
@@ -45,13 +45,13 @@ export function IngredientForm(props: IngredientFormProps) {
             tags: values.tags,
             image: values.image?.trim() == '' ? undefined : values.image?.trim(),
           };
-          const result = await fetch('/api/ingredients', {
+          const result = await fetch(`/api/workspace/${workspaceId}/ingredients`, {
             method: props.ingredient == undefined ? 'POST' : 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body),
           });
           if (result.status.toString().startsWith('2')) {
-            await router.replace('/manage/ingredients');
+            await router.replace(`/workspaces/${workspaceId}/manage/ingredients`);
           } else {
             console.error(result.status + ' ' + result.statusText);
           }
