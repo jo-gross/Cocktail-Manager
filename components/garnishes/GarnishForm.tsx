@@ -14,6 +14,7 @@ interface GarnishFormProps {
 
 export function GarnishForm(props: GarnishFormProps) {
   const router = useRouter();
+  const { workspaceId } = router.query;
 
   return (
     <Formik
@@ -32,13 +33,13 @@ export function GarnishForm(props: GarnishFormProps) {
             description: values.description?.trim() == '' ? null : values.description?.trim(),
             image: values.image == '' ? null : values.image,
           };
-          const result = await fetch('/api/garnishes', {
+          const result = await fetch(`/api/workspaces/${workspaceId}/garnishes`, {
             method: props.garnish == undefined ? 'POST' : 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body),
           });
           if (result.status.toString().startsWith('2')) {
-            await router.push('/manage/garnishes');
+            await router.push(`/workspaces/${workspaceId}/manage/garnishes`);
           } else {
             console.error(result.status + ' ' + result.statusText);
           }

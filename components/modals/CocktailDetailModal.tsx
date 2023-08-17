@@ -5,19 +5,22 @@ import { FaPencilAlt } from 'react-icons/fa';
 import { ModalContext } from '../../lib/context/ModalContextProvider';
 import { useContext } from 'react';
 import { CocktailTool } from '../../models/CocktailTool';
+import { useRouter } from 'next/router';
 
 interface CocktailDetailModalProps {
   cocktail: CocktailRecipeFull;
 }
 
 export function CocktailDetailModal(props: CocktailDetailModalProps) {
+  const router = useRouter();
+  const workspaceId = router.query.workspaceId as string | undefined;
   const modalContext = useContext(ModalContext);
 
   return (
     <div className={''}>
       <div className={'card-body bg-base-100'}>
         <div className={'flex flex-row space-x-2'}>
-          <Link href={'/manage/cocktails/' + props.cocktail.id}>
+          <Link href={`/workspaces/${workspaceId}/manage/cocktails/props.cocktail.id`}>
             <div
               className={'btn btn-sm btn-secondary btn-outline btn-square'}
               onClick={() => modalContext.closeModal()}
