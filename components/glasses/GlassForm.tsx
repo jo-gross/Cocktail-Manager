@@ -3,11 +3,10 @@ import { UploadDropZone } from '../UploadDropZone';
 import { convertToBase64 } from '../../lib/Base64Converter';
 import { useRouter } from 'next/router';
 import { FaTrashAlt } from 'react-icons/fa';
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { SingleFormLayout } from '../layout/SingleFormLayout';
 import { alertService } from '../../lib/alertService';
 import { Glass } from '@prisma/client';
-import { Loading } from '../Loading';
 
 interface GlassFormProps {
   glass?: Glass;
@@ -33,18 +32,38 @@ export function GlassForm(props: GlassFormProps) {
             image: values.image,
             volume: values.volume == 0 ? undefined : values.volume,
           };
-          const result = await fetch(`/api/workspaces/${workspaceId}/glasses`, {
-            method: props.glass?.id == undefined ? 'POST' : 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body),
-          });
-          if (result.status.toString().startsWith('2')) {
-            await router.push(`/workspaces/${workspaceId}/manage/glasses`);
+          if (props.glass == undefined) {
+            const result = await fetch(`/api/workspaces/${workspaceId}/glasses`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(body),
+            });
+            if (result.status.toString().startsWith('2')) {
+              router
+                .push(`/workspaces/${workspaceId}/manage/glasses`)
+                .then(() => alertService.success('Glas erfolgreich erstellt'));
+            } else {
+              const body = await result.json();
+              alertService.error(body.message, result.status, result.statusText);
+            }
           } else {
-            console.error(result.status + ' ' + result.statusText);
+            const result = await fetch(`/api/workspaces/${workspaceId}/glasses/${props.glass.id}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(body),
+            });
+            if (result.status.toString().startsWith('2')) {
+              router
+                .push(`/workspaces/${workspaceId}/manage/glasses`)
+                .then(() => alertService.success('Glas erfolgreich gespeichert'));
+            } else {
+              const body = await result.json();
+              alertService.error(body.message, result.status, result.statusText);
+            }
           }
         } catch (error) {
           console.error(error);
+          alertService.error('Es ist ein fehler aufgetreten.');
         }
       }}
       validate={(values) => {

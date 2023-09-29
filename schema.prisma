@@ -56,6 +56,27 @@ model User {
   sessions Session[]
 
   workspaces WorkspaceUser[]
+  settings   UserSetting[]
+}
+
+enum Setting {
+  showImage
+  showImageSide
+  showTags
+  lessItems
+  theme
+}
+
+model UserSetting {
+  userId String
+
+  setting Setting
+
+  value String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, setting])
 }
 
 model VerificationToken {
@@ -71,7 +92,9 @@ model VerificationToken {
 }
 
 enum Role {
+  OWNER
   ADMIN
+  MANAGER
   USER
 }
 

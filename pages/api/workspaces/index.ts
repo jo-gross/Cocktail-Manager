@@ -1,10 +1,12 @@
 import prisma from '../../../lib/prisma';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { Role, User } from '@prisma/client';
-import { withAuthentication } from '../../../middleware/authenticationMiddleware';
+import { withAuthentication } from '../../../middleware/api/authenticationMiddleware';
+import HTTPMethod from 'http-method-enum';
+import { withHttpMethods } from '../../../middleware/api/handleMethods';
 
-export default withAuthentication(async (req: NextApiRequest, res: NextApiResponse, user: User) => {
-  if (req.method === 'POST') {
+export default withHttpMethods({
+  [HTTPMethod.POST]: withAuthentication(async (req: NextApiRequest, res: NextApiResponse, user: User) => {
     const { name } = req.body;
     const result = await prisma.workspace.create({
       data: {
@@ -12,13 +14,14 @@ export default withAuthentication(async (req: NextApiRequest, res: NextApiRespon
         users: {
           create: {
             userId: user.id,
-            role: Role.USER,
+            role: Role.OWNER,
           },
         },
       },
     });
-    return res.json(result);
-  } else if (req.method === 'GET') {
+    return res.json({ data: result });
+  }),
+  [HTTPMethod.GET]: withAuthentication(async (req: NextApiRequest, res: NextApiResponse, user: User) => {
     const result = await prisma.workspace.findMany({
       where: {
         users: {
@@ -29,8 +32,6 @@ export default withAuthentication(async (req: NextApiRequest, res: NextApiRespon
       },
     });
 
-    return res.json(result);
-  }
-
-  return res.status(400).json({ message: 'Only POST is supported' });
+    return res.json({ data: result });
+  }),
 });

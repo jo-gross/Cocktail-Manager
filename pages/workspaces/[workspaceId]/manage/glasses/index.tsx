@@ -2,31 +2,57 @@ import { Glass } from '@prisma/client';
 import Link from 'next/link';
 import { ManageEntityLayout } from '../../../../../components/layout/ManageEntityLayout';
 import { ManageColumn } from '../../../../../components/ManageColumn';
-import { useEffect, useState } from 'react';
+import { useCallback, useContext, useEffect, useState } from 'react';
 import { Loading } from '../../../../../components/Loading';
 import { useRouter } from 'next/router';
+import { alertService } from '../../../../../lib/alertService';
+import { UserContext } from '../../../../../lib/context/UserContextProvider';
+import Image from 'next/image';
+import DefaultGlassIcon from '../../../../../components/DefaultGlassIcon';
 
 export default function ManageGlassesOverviewPage() {
   const router = useRouter();
   const { workspaceId } = router.query;
 
+  const userContext = useContext(UserContext);
+
   const [glasses, setGlasses] = useState<Glass[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const refreshGlasses = useCallback(() => {
     if (!workspaceId) return;
     fetch(`/api/workspaces/${workspaceId}/glasses`)
-      .then((response) => response.json())
-      .then((data) => {
-        setGlasses(data);
+      .then(async (response) => {
+        const body = await response.json();
+        if (response.ok) {
+          setGlasses(body.data);
+        } else {
+          console.log('Glasses -> fetchGlasses', response, body);
+          alertService.error(body.message, response.status, response.statusText);
+        }
       })
+      .catch((err) => alertService.error(err.message))
       .finally(() => {
         setLoading(false);
       });
-  }, []);
+  }, [workspaceId]);
+
+  useEffect(() => {
+    refreshGlasses();
+  }, [refreshGlasses]);
 
   return (
-    <ManageEntityLayout backLink={`/workspaces/${workspaceId}/manage`} title={'Gläser'}>
+    <ManageEntityLayout
+      backLink={`/workspaces/${workspaceId}/manage`}
+      title={'Gläser'}
+      actions={
+        userContext.isUserManager() ? (
+          <Link href={`/workspaces/${workspaceId}/manage/glasses/create`}>
+            <div className={'btn btn-primary btn-sm'}>Hinzufügen</div>
+          </Link>
+        ) : undefined
+      }
+    >
       <div className={'card'}>
         <div className={'card-body'}>
           <div className="overflow-x-auto">
@@ -35,11 +61,7 @@ export default function ManageGlassesOverviewPage() {
                 <tr>
                   <th className="">Name</th>
                   <th className="">Pfand</th>
-                  <th className="flex justify-end">
-                    <Link href={`/workspaces/${workspaceId}/manage/glasses/create`}>
-                      <div className={'btn btn-primary btn-sm'}>Hinzufügen</div>
-                    </Link>
-                  </th>
+                  <th className="flex justify-end"></th>
                 </tr>
               </thead>
               <tbody>
@@ -61,17 +83,25 @@ export default function ManageGlassesOverviewPage() {
                       <td>
                         <div className="flex items-center space-x-3">
                           <div className="w-12 h-12 mask-squircle mask">
-                            <img
-                              className={'w-fit h-full mr-2 object-contain'}
-                              src={glass.image ?? '/images/glasses/default-glass.png'}
-                              alt="Avatar Tailwind CSS Component"
-                            />
+                            <>
+                              {glass.image ? (
+                                <Image
+                                  src={glass.image}
+                                  className={'w-fit h-full mr-2 object-contain bg-white'}
+                                  alt="Glass"
+                                  width={300}
+                                  height={300}
+                                />
+                              ) : (
+                                <DefaultGlassIcon />
+                              )}
+                            </>
                           </div>
                           <div className="font-bold">{glass.name}</div>
                         </div>
                       </td>
                       <td>{glass.deposit} €</td>
-                      <ManageColumn entity={'glasses'} id={glass.id} />
+                      <ManageColumn entity={'glasses'} id={glass.id} onRefresh={refreshGlasses} />
                     </tr>
                   ))
                 )}

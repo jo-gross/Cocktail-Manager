@@ -1,4 +1,4 @@
-import { createContext } from "react";
+import { createContext } from 'react';
 
 interface ModalContextProps {
   content: JSX.Element;
@@ -9,9 +9,7 @@ interface ModalContextProps {
 }
 
 export const ModalContext = createContext<ModalContextProps>({
-  content: <>{"N/A - Modal"}</>,
-  openModal: () => {
-  },
-  closeModal: () => {
-  }
+  content: <>{'N/A - Modal'}</>,
+  openModal: () => {},
+  closeModal: () => {},
 });

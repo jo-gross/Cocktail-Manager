@@ -101,11 +101,20 @@ function AlertsContainer(props: AlertsContainerProps) {
         <div key={index} className={`alert shadow-lg ${cssClasses(alert)}`}>
           {icon(alert)}
           <div>
-            <span>{alert.message}</span>
+            <>
+              {alert.status != undefined ? (
+                <span className={'font-bold'}>
+                  {alert.status} {alert.statusText} -{' '}
+                </span>
+              ) : (
+                <></>
+              )}
+              <span>{alert.message}</span>
+            </>
           </div>
-          <a className="btn btn-ghost btn-sm text-md" onClick={() => removeAlert(alert)}>
+          <div className="btn btn-ghost btn-sm text-md" onClick={() => removeAlert(alert)}>
             <FaTimes />
-          </a>
+          </div>
         </div>
       ))}
     </div>

@@ -22,3 +22,11 @@
 .card {
     @apply shadow-lg bg-base-300 !important;
 }
+
+.table > thead {
+    @apply bg-base-100;
+}
+
+.divider-sm {
+    @apply divider mt-0.5 mb-0.5 !important;
+}

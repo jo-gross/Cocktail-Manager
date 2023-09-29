@@ -2,13 +2,17 @@ import { ManageEntityLayout } from '../../../../../components/layout/ManageEntit
 import { FaRegEdit } from 'react-icons/fa';
 import Link from 'next/link';
 import { CocktailCardFull } from '../../../../../models/CocktailCardFull';
-import { useEffect, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { Loading } from '../../../../../components/Loading';
 import { useRouter } from 'next/router';
+import { alertService } from '../../../../../lib/alertService';
+import { UserContext } from '../../../../../lib/context/UserContextProvider';
 
 export default function CardsOverviewPage() {
   const router = useRouter();
   const { workspaceId } = router.query;
+
+  const userContext = useContext(UserContext);
 
   const [cards, setCards] = useState<CocktailCardFull[]>([]);
   const [loading, setLoading] = useState(true);
@@ -16,10 +20,16 @@ export default function CardsOverviewPage() {
   useEffect(() => {
     if (!workspaceId) return;
     fetch(`/api/workspaces/${workspaceId}/cards`)
-      .then((response) => response.json())
-      .then((data) => {
-        setCards(data);
+      .then(async (response) => {
+        const body = await response.json();
+        if (response.ok) {
+          setCards(body.data);
+        } else {
+          console.log('Cards -> fetchCards', response, body);
+          alertService.error(body.message, response.status, response.statusText);
+        }
       })
+      .catch((err) => alertService.error(err.message))
       .finally(() => {
         setLoading(false);
       });
@@ -30,9 +40,11 @@ export default function CardsOverviewPage() {
       backLink={`/workspaces/${workspaceId}/manage`}
       title={'Karten'}
       actions={
-        <Link href={`/workspaces/${workspaceId}/manage/cards/create`}>
-          <div className={'btn btn-primary'}>Hinzufügen</div>
-        </Link>
+        userContext.isUserManager() ? (
+          <Link href={`/workspaces/${workspaceId}/manage/cards/create`}>
+            <div className={'btn btn-primary'}>Hinzufügen</div>
+          </Link>
+        ) : undefined
       }
     >
       {loading ? (
@@ -40,7 +52,7 @@ export default function CardsOverviewPage() {
       ) : cards.length == 0 ? (
         <div className={'text-center'}>Keine Einträge gefunden</div>
       ) : (
-        <div className={'grid grid-cols-2 gap-4'}>
+        <div className={'grid md:grid-cols-2 grid-cols-1 md:gap-4 gap-2'}>
           {cards
             .sort((a, b) => a.name.localeCompare(b.name))
             .map((card) => (
@@ -53,13 +65,17 @@ export default function CardsOverviewPage() {
                     <div>{card.groups?.length} Gruppen</div>
                     <div>{card.groups?.reduce((acc, group) => acc + group.items.length, 0)} Cocktails</div>
                   </div>
-                  <div className="card-actions justify-end">
-                    <Link href={`/workspaces/${workspaceId}/manage/cards/${card.id}`}>
-                      <div className="btn btn-primary">
-                        <FaRegEdit />
+                  <>
+                    {userContext.isUserManager() && (
+                      <div className="card-actions justify-end">
+                        <Link href={`/workspaces/${workspaceId}/manage/cards/${card.id}`}>
+                          <div className="btn btn-primary">
+                            <FaRegEdit />
+                          </div>
+                        </Link>
                       </div>
-                    </Link>
-                  </div>
+                    )}
+                  </>
                 </div>
               </div>
             ))}

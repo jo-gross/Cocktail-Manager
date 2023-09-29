@@ -2,6 +2,8 @@ import { CocktailRecipeFull } from '../../models/CocktailRecipeFull';
 import React from 'react';
 import { CocktailUtensil } from '../../models/CocktailUtensil';
 import { CocktailTool } from '../../models/CocktailTool';
+import DefaultGlassIcon from '../DefaultGlassIcon';
+import Image from 'next/image';
 
 interface CompactCocktailRecipeInstructionProps {
   cocktailRecipe: CocktailRecipeFull;
@@ -24,11 +26,21 @@ export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeIns
         <></>
       )}
       <div className={'row-span-2 flex justify-center items-center h-min'}>
-        <img
-          className="h-16"
-          src={props.cocktailRecipe.glass?.image ?? '/images/glasses/default-glass.png'}
-          alt={props.cocktailRecipe.glass?.name}
-        />
+        <>
+          {props.cocktailRecipe.glass?.image == undefined ? (
+            <div className={'flex flex-col items-center justify-center'}>
+              <DefaultGlassIcon />
+            </div>
+          ) : (
+            <Image
+              className={'h-12 object-contain'}
+              src={props.cocktailRecipe.glass.image}
+              alt={props.cocktailRecipe.glass.name}
+              width={60}
+              height={60}
+            />
+          )}
+        </>
       </div>
       <div className={'col-span-3 font-thin flex flex-row space-x-2 justify-between'}>
         <div>Glas: {props.cocktailRecipe.glass?.name ?? '<Glas>'}</div>

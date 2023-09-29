@@ -33,18 +33,39 @@ export function GarnishForm(props: GarnishFormProps) {
             description: values.description?.trim() == '' ? null : values.description?.trim(),
             image: values.image == '' ? null : values.image,
           };
-          const result = await fetch(`/api/workspaces/${workspaceId}/garnishes`, {
-            method: props.garnish == undefined ? 'POST' : 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body),
-          });
-          if (result.status.toString().startsWith('2')) {
-            await router.push(`/workspaces/${workspaceId}/manage/garnishes`);
+          if (props.garnish == undefined) {
+            const response = await fetch(`/api/workspaces/${workspaceId}/garnishes`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(body),
+            });
+            if (response.status.toString().startsWith('2')) {
+              router
+                .push(`/workspaces/${workspaceId}/manage/garnishes`)
+                .then(() => alertService.success('Garnitur erfolgreich erstellt'));
+            } else {
+              const body = await response.json();
+              console.log('GarnishForm -> createGarnish', response, body);
+              alertService.error(body.message, response.status, response.statusText);
+            }
           } else {
-            console.error(result.status + ' ' + result.statusText);
+            const result = await fetch(`/api/workspaces/${workspaceId}/garnishes/${props.garnish.id}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(body),
+            });
+            if (result.status.toString().startsWith('2')) {
+              router
+                .push(`/workspaces/${workspaceId}/manage/garnishes`)
+                .then(() => alertService.success('Garnitur erfolgreich gespeichert'));
+            } else {
+              const body = await result.json();
+              alertService.error(body.message, result.status, result.statusText);
+            }
           }
         } catch (error) {
           console.error(error);
+          alertService.error('Es ist ein Fehler aufgetreten.');
         }
       }}
       validate={(values) => {

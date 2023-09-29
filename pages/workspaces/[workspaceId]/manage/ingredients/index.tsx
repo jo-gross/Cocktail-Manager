@@ -1,33 +1,58 @@
 import { Ingredient } from '@prisma/client';
 import Link from 'next/link';
 import { ManageEntityLayout } from '../../../../../components/layout/ManageEntityLayout';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { Loading } from '../../../../../components/Loading';
 import { FaCheck, FaTimes } from 'react-icons/fa';
 import { ManageColumn } from '../../../../../components/ManageColumn';
+import { alertService } from '../../../../../lib/alertService';
+import { UserContext } from '../../../../../lib/context/UserContextProvider';
+import AvatarImage from '../../../../../components/AvatarImage';
 
 export default function IngredientsOverviewPage() {
   const router = useRouter();
   const { workspaceId } = router.query;
 
+  const userContext = useContext(UserContext);
+
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const refreshIngredients = useCallback(() => {
     if (!workspaceId) return;
     fetch(`/api/workspaces/${workspaceId}/ingredients`)
-      .then((response) => response.json())
-      .then((data) => {
-        setIngredients(data);
+      .then(async (response) => {
+        const body = await response.json();
+        if (response.ok) {
+          setIngredients(body.data);
+        } else {
+          console.log('Ingredients -> fetchIngredients', response, body);
+          alertService.error(body.message, response.status, response.statusText);
+        }
       })
+      .catch((err) => alertService.error(err.message))
       .finally(() => {
         setLoading(false);
       });
   }, [workspaceId]);
 
+  useEffect(() => {
+    refreshIngredients();
+  }, [refreshIngredients]);
+
   return (
-    <ManageEntityLayout title={'Zutaten'} backLink={`/workspaces/${workspaceId}/manage`}>
+    <ManageEntityLayout
+      title={'Zutaten'}
+      backLink={`/workspaces/${workspaceId}/manage`}
+      actions={
+        userContext.isUserManager() ? (
+          <Link href={`/workspaces/${workspaceId}/manage/ingredients/create`}>
+            <div className={'btn btn-primary'}>Hinzufügen</div>
+          </Link>
+        ) : undefined
+      }
+    >
       <div className={'card'}>
         <div className={'card-body'}>
           <div className="overflow-x-auto">
@@ -42,13 +67,7 @@ export default function IngredientsOverviewPage() {
                   <th className="w-1/8">Tags</th>
                   <th className="w-1/8">Link</th>
                   <th className="w-1/8">Seite</th>
-                  <th className="w-1/8">
-                    <div className={'w-full flex justify-end'}>
-                      <Link href={`/workspaces/${workspaceId}/manage/ingredients/create`}>
-                        <div className={'btn" btn-primary btn-sm'}>Hinzufügen</div>
-                      </Link>
-                    </div>
-                  </th>
+                  <th className="w-1/8"></th>
                 </tr>
               </thead>
               <tbody>
@@ -72,10 +91,10 @@ export default function IngredientsOverviewPage() {
                         <td className={''}>
                           {ingredient.image ? (
                             <div className="flex items-center space-x-3">
-                              <div className="w-12 h-12 mask-squircle mask">
-                                <img className={'w-fit" h-full mr-2 object-contain'} src={ingredient.image} />
+                              <div className="w-12 h-12">
+                                <AvatarImage src={ingredient.image} alt={'Cocktail'} />
                               </div>
-                              {ingredient.name}
+                              <div>{ingredient.name}</div>
                             </div>
                           ) : (
                             <>{ingredient.name}</>
@@ -122,7 +141,7 @@ export default function IngredientsOverviewPage() {
                             </div>
                           )}
                         </td>
-                        <ManageColumn entity={'ingredients'} id={ingredient.id} />
+                        <ManageColumn entity={'ingredients'} id={ingredient.id} onRefresh={refreshIngredients} />
                       </tr>
                     ))
                 )}
