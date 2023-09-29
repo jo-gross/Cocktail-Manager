@@ -2,10 +2,12 @@ import { GlassForm } from '../../../../../components/glasses/GlassForm';
 import { ManageEntityLayout } from '../../../../../components/layout/ManageEntityLayout';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
-import { Glass } from '@prisma/client';
+import { Glass, Role } from '@prisma/client';
 import { Loading } from '../../../../../components/Loading';
+import { alertService } from '../../../../../lib/alertService';
+import { withPagePermission } from '../../../../../middleware/ui/withPagePermission';
 
-export default function EditGlassPage() {
+function EditGlassPage() {
   const router = useRouter();
   const { id, workspaceId } = router.query;
 
@@ -17,10 +19,16 @@ export default function EditGlassPage() {
     if (!workspaceId) return;
     setLoading(true);
     fetch(`/api/workspaces/${workspaceId}/glasses/${id}`)
-      .then((response) => response.json())
-      .then((data) => {
-        setGlass(data);
+      .then(async (response) => {
+        const body = await response.json();
+        if (response.ok) {
+          setGlass(body.data);
+        } else {
+          console.log('GlassId -> fetchGlass', response, body);
+          alertService.error(body.message, response.status, response.statusText);
+        }
       })
+      .catch((err) => alertService.error(err.message))
       .finally(() => {
         setLoading(false);
       });
@@ -34,3 +42,5 @@ export default function EditGlassPage() {
     </ManageEntityLayout>
   );
 }
+
+export default withPagePermission([Role.MANAGER], EditGlassPage, '/workspaces/[workspaceId]/manage');

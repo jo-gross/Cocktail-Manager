@@ -6,6 +6,9 @@ import { ModalContext } from '../../lib/context/ModalContextProvider';
 import { useContext } from 'react';
 import { CocktailTool } from '../../models/CocktailTool';
 import { useRouter } from 'next/router';
+import { UserContext } from '../../lib/context/UserContextProvider';
+import Image from 'next/image';
+import DefaultGlassIcon from '../DefaultGlassIcon';
 
 interface CocktailDetailModalProps {
   cocktail: CocktailRecipeFull;
@@ -15,26 +18,30 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
   const router = useRouter();
   const workspaceId = router.query.workspaceId as string | undefined;
   const modalContext = useContext(ModalContext);
-
+  const userContext = useContext(UserContext);
   return (
     <div className={''}>
       <div className={'card-body bg-base-100'}>
         <div className={'flex flex-row space-x-2'}>
-          <Link href={`/workspaces/${workspaceId}/manage/cocktails/props.cocktail.id`}>
-            <div
-              className={'btn btn-sm btn-secondary btn-outline btn-square'}
-              onClick={() => modalContext.closeModal()}
-            >
-              <FaPencilAlt />
-            </div>
-          </Link>
+          <>
+            {userContext.isUserManager() && (
+              <Link href={`/workspaces/${workspaceId}/manage/cocktails/${props.cocktail.id}`}>
+                <div
+                  className={'btn btn-sm btn-secondary btn-outline btn-square'}
+                  onClick={() => modalContext.closeModal()}
+                >
+                  <FaPencilAlt />
+                </div>
+              </Link>
+            )}
+          </>
           <h2 className={'card-title flex-1'}>
             {props.cocktail.name} - <span className={'font-bold'}>{props.cocktail.price}€</span>
           </h2>
         </div>
         <div className={'grid grid-cols-2 gap-4'}>
           <div className={'col-span-2 flex'}>
-            {props.cocktail.tags.map((tag, index) => (
+            {props.cocktail.tags.map((tag) => (
               <div key={`cocktail-details-${props.cocktail.id}-tag-` + tag} className={'m-1 badge badge-primary'}>
                 {tag}
               </div>
@@ -63,17 +70,19 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
           </div>
           <div className={'col-span-1'}>
             Glas: {props.cocktail.glass?.name}
-            <img
-              src={props.cocktail.glass?.image ?? '/images/glasses/default-glass.png'}
-              alt={'Glas'}
-              className={'w-16 h-16'}
-            />
+            <div className={'w-16 h-16'}>
+              {props.cocktail.glass?.image != undefined ? (
+                <Image src={props.cocktail.glass.image} alt={'Glas'} width={300} height={300} />
+              ) : (
+                <DefaultGlassIcon />
+              )}
+            </div>
           </div>
           <div className={'col-span-1'}>Eis: {props.cocktail.glassWithIce}</div>
           <div className={'col-span-2 space-y-2'}>
             {props.cocktail.steps.length == 0 ? <></> : <div className={'font-bold text-2xl'}>Zubereitung</div>}
             <div className={'grid grid-cols-2 gap-4'}>
-              {props.cocktail.steps.map((step, index) => (
+              {props.cocktail.steps.map((step) => (
                 <div
                   key={'cocktail-details-step-' + step.id}
                   className={'col-span-2 border-2 border-base-300 rounded-lg p-2 space-y-2'}
@@ -81,7 +90,7 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                   <span className={'font-bold text-xl'}>
                     {step.mixing ? (CocktailUtensil as any)[step.tool] : (CocktailTool as any)[step.tool]}
                   </span>
-                  {step.ingredients.map((ingredient, index) => (
+                  {step.ingredients.map((ingredient) => (
                     <div key={'cocktail-details-step-ingredient-' + ingredient.id} className={'pl-2'}>
                       <div className={'flex-1'}>
                         <div className={'flex flex-row space-x-2'}>
@@ -98,7 +107,7 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                         </div>
                       </div>
                       <div>
-                        {ingredient.ingredient?.tags?.map((tag, index) => (
+                        {ingredient.ingredient?.tags?.map((tag) => (
                           <div
                             key={`cocktail-details-${props.cocktail.id}-ingredients-${ingredient.id}-tags-${tag}`}
                             className={'m-1 badge badge-primary'}

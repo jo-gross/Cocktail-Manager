@@ -2,31 +2,55 @@ import { Garnish } from '@prisma/client';
 import Link from 'next/link';
 import { ManageEntityLayout } from '../../../../../components/layout/ManageEntityLayout';
 import { ManageColumn } from '../../../../../components/ManageColumn';
-import { useEffect, useState } from 'react';
+import { useCallback, useContext, useEffect, useState } from 'react';
 import { Loading } from '../../../../../components/Loading';
 import { useRouter } from 'next/router';
+import { alertService } from '../../../../../lib/alertService';
+import { UserContext } from '../../../../../lib/context/UserContextProvider';
 
 export default function ManageGlassesOverviewPage() {
   const router = useRouter();
   const { workspaceId } = router.query;
 
+  const userContext = useContext(UserContext);
+
   const [garnishes, setGarnishes] = useState<Garnish[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const refreshGarnishes = useCallback(() => {
     if (!workspaceId) return;
     fetch(`/api/workspaces/${workspaceId}/garnishes`)
-      .then((response) => response.json())
-      .then((data) => {
-        setGarnishes(data);
+      .then(async (response) => {
+        const body = await response.json();
+        if (response.ok) {
+          setGarnishes(body.data);
+        } else {
+          console.log('Garnishes -> fetchGarnishes', response, body);
+          alertService.error(body.message, response.status, response.statusText);
+        }
       })
+      .catch((err) => alertService.error(err.message))
       .finally(() => {
         setLoading(false);
       });
   }, [workspaceId]);
 
+  useEffect(() => {
+    refreshGarnishes();
+  }, [refreshGarnishes]);
+
   return (
-    <ManageEntityLayout title={'Garnituren'} backLink={`/workspaces/${workspaceId}/manage`}>
+    <ManageEntityLayout
+      title={'Garnituren'}
+      backLink={`/workspaces/${workspaceId}/manage`}
+      actions={
+        userContext.isUserManager() ? (
+          <Link href={`/workspaces/${workspaceId}/manage/garnishes/create`}>
+            <div className={'btn btn-primary'}>Hinzufügen</div>
+          </Link>
+        ) : undefined
+      }
+    >
       <div className={'card'}>
         <div className={'card-body'}>
           <div className="overflow-x-auto">
@@ -35,11 +59,7 @@ export default function ManageGlassesOverviewPage() {
                 <tr>
                   <th className="">Name</th>
                   <th className="">Preis</th>
-                  <th className="flex justify-end">
-                    <Link href={`/workspaces/${workspaceId}/manage/garnishes/create`}>
-                      <div className={'btn btn-primary btn-sm'}>Hinzufügen</div>
-                    </Link>
-                  </th>
+                  <th className="flex justify-end"></th>
                 </tr>
               </thead>
               <tbody>
@@ -64,7 +84,7 @@ export default function ManageGlassesOverviewPage() {
                           <div className="font-bold">{garnish.name}</div>
                         </td>
                         <td>{garnish.price} €</td>
-                        <ManageColumn entity={'garnishes'} id={garnish.id} />
+                        <ManageColumn entity={'garnishes'} id={garnish.id} onRefresh={refreshGarnishes} />
                       </tr>
                     ))
                 )}

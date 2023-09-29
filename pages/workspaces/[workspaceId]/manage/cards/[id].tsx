@@ -9,6 +9,9 @@ import { useRouter } from 'next/router';
 import { CocktailCardFull } from '../../../../../models/CocktailCardFull';
 import { CocktailRecipeFull } from '../../../../../models/CocktailRecipeFull';
 import { Loading } from '../../../../../components/Loading';
+import { alertService } from '../../../../../lib/alertService';
+import { withPagePermission } from '../../../../../middleware/ui/withPagePermission';
+import { Role } from '@prisma/client';
 
 interface CocktailCardGroupError {
   name?: string;
@@ -20,9 +23,8 @@ interface CocktailCardError {
   groups?: FormikErrors<CocktailCardGroupError[]>;
 }
 
-export default function EditCocktailRecipe() {
+function EditCocktailCard() {
   const modalContext = useContext(ModalContext);
-
   const router = useRouter();
 
   const { id, workspaceId } = router.query;
@@ -38,19 +40,31 @@ export default function EditCocktailRecipe() {
     if (!workspaceId) return;
     setLoadingCard(true);
     fetch(`/api/workspaces/${workspaceId}/cards/${id}`)
-      .then((response) => response.json())
-      .then((data) => {
-        setCard(data);
+      .then(async (response) => {
+        const body = await response.json();
+        if (response.ok) {
+          setCard(body.data);
+        } else {
+          console.log('CardId -> fetchCard', response, body);
+          alertService.error(body.message, response.status, response.statusText);
+        }
       })
+      .catch((err) => alertService.error(err.message))
       .finally(() => {
         setLoadingCard(false);
       });
     setLoadingCocktails(true);
     fetch(`/api/workspaces/${workspaceId}/cocktails`)
-      .then((response) => response.json())
-      .then((data) => {
-        setCocktails(data);
+      .then(async (response) => {
+        const body = await response.json();
+        if (response.ok) {
+          setCocktails(body.data);
+        } else {
+          console.log('CardId -> fetchRecipes', response, body);
+          alertService.error(body.message, response.status, response.statusText);
+        }
       })
+      .catch((err) => alertService.error(err.message))
       .finally(() => {
         setLoadingCocktails(false);
       });
@@ -66,13 +80,21 @@ export default function EditCocktailRecipe() {
         card != undefined ? (
           <button
             type={'button'}
-            disabled={!(process.env.ALLOW_DELETE == 'true') ?? true}
             className={'btn btn-error btn-square btn-outline'}
             onClick={async () => {
-              await fetch(`/api/workspaces/${workspaceId}/cards/${card.id}`, {
+              fetch(`/api/workspaces/${workspaceId}/cards/${card.id}`, {
                 method: 'DELETE',
+              }).then(async (response) => {
+                const body = await response.json();
+                if (response.ok) {
+                  router
+                    .replace(`/workspaces/${workspaceId}/manage/cards`)
+                    .then(() => alertService.success('Karte gelöscht'));
+                } else {
+                  console.log('CardId -> deleteCard', response, body);
+                  alertService.error(body.message, response.status, response.statusText);
+                }
               });
-              window.location.href = `/workspaces/${workspaceId}/manage/cards`;
             }}
           >
             <FaTrashAlt />
@@ -101,7 +123,7 @@ export default function EditCocktailRecipe() {
               groupErrors[groupIndex] = { name: 'Required' };
             }
             let itemErrors: any = [];
-            group.items.forEach((item, itemIndex) => {
+            group.items.forEach((item) => {
               const itemError: any = {};
               if (!item.cocktailId || item.cocktailId.trim() == '') {
                 itemError.cocktailId = 'Required';
@@ -118,30 +140,50 @@ export default function EditCocktailRecipe() {
           return errors;
         }}
         onSubmit={async (values) => {
-          const storeResult = await fetch(`/api/workspaces/${workspaceId}/cards`, {
-            method: card == undefined ? 'POST' : 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              id: card?.id,
-              name: values.name,
-              date: values.date != '' ? new Date(values.date).toISOString() : null,
-              groups: values.groups.map((group, index) => ({
-                name: group.name,
-                groupNumber: index,
-                groupPrice: group.groupPrice,
-                items: group.items.map((item, itemIndex) => ({
-                  itemNumber: itemIndex,
-                  cocktailId: item.cocktailId,
-                  specialPrice: item.specialPrice,
-                })),
+          const input = {
+            id: card?.id,
+            name: values.name,
+            date: values.date != '' ? new Date(values.date).toISOString() : null,
+            groups: values.groups.map((group, index) => ({
+              name: group.name,
+              groupNumber: index,
+              groupPrice: group.groupPrice,
+              items: group.items.map((item, itemIndex) => ({
+                itemNumber: itemIndex,
+                cocktailId: item.cocktailId,
+                specialPrice: item.specialPrice,
               })),
-            }),
-          });
+            })),
+          };
 
-          if (storeResult.status == 200) {
-            router.replace(`/workspaces/${workspaceId}/manage/cards`);
+          if (card == undefined) {
+            const storeResult = await fetch(`/api/workspaces/${workspaceId}/cards`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(input),
+            });
+
+            if (storeResult.ok) {
+              router
+                .replace(`/workspaces/${workspaceId}/manage/cards`)
+                .then(() => alertService.success('Karte erfolgreich erstellt'));
+            } else {
+              alertService.error(storeResult.statusText, storeResult.status, storeResult.statusText);
+            }
           } else {
-            alert('Fehler beim Speichern');
+            const storeResult = await fetch(`/api/workspaces/${workspaceId}/cards/${card.id}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(input),
+            });
+
+            if (storeResult.ok) {
+              router
+                .replace(`/workspaces/${workspaceId}/manage/cards`)
+                .then(() => alertService.success('Karte erfolgreich gespeichert'));
+            } else {
+              alertService.error(storeResult.statusText, storeResult.status, storeResult.statusText);
+            }
           }
         }}
       >
@@ -427,3 +469,4 @@ export default function EditCocktailRecipe() {
     </ManageEntityLayout>
   );
 }
+export default withPagePermission([Role.MANAGER], EditCocktailCard, '/workspaces/[workspaceId]/manage');

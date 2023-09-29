@@ -45,18 +45,38 @@ export function IngredientForm(props: IngredientFormProps) {
             tags: values.tags,
             image: values.image?.trim() == '' ? undefined : values.image?.trim(),
           };
-          const result = await fetch(`/api/workspace/${workspaceId}/ingredients`, {
-            method: props.ingredient == undefined ? 'POST' : 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body),
-          });
-          if (result.status.toString().startsWith('2')) {
-            await router.replace(`/workspaces/${workspaceId}/manage/ingredients`);
+          if (props.ingredient == undefined) {
+            const result = await fetch(`/api/workspaces/${workspaceId}/ingredients`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(body),
+            });
+            if (result.status.toString().startsWith('2')) {
+              router
+                .replace(`/workspaces/${workspaceId}/manage/ingredients`)
+                .then(() => alertService.success('Zutat erfolgreich erstellt'));
+            } else {
+              const body = await result.json();
+              alertService.error(body.message, result.status, result.statusText);
+            }
           } else {
-            console.error(result.status + ' ' + result.statusText);
+            const result = await fetch(`/api/workspaces/${workspaceId}/ingredients/${props.ingredient.id}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(body),
+            });
+            if (result.status.toString().startsWith('2')) {
+              router
+                .replace(`/workspaces/${workspaceId}/manage/ingredients`)
+                .then(() => alertService.success('Zutat erfolgreich gespeichert'));
+            } else {
+              const body = await result.json();
+              alertService.error(body.message, result.status, result.statusText);
+            }
           }
         } catch (error) {
           console.error(error);
+          alertService.error('Es ist ein Fehler aufgetreten');
         }
       }}
       validate={(values) => {
@@ -73,7 +93,7 @@ export function IngredientForm(props: IngredientFormProps) {
         if (!values.unit) {
           errors.unit = 'Required';
         }
-        console.log(errors);
+        console.log('Form errors', errors);
         return errors;
       }}
     >
@@ -89,7 +109,7 @@ export function IngredientForm(props: IngredientFormProps) {
         isSubmitting,
       }) => (
         <form onSubmit={handleSubmit}>
-          <div className={'grid md:grid-cols-3 grid-cols-1 p-12 gap-4'}>
+          <div className={'grid md:grid-cols-3 grid-cols-1 md:p-12 p-1 md:gap-4 gap-2'}>
             <div></div>
             <div className={'card'}>
               <div className={'card-body'}>

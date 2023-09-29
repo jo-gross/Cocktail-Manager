@@ -2,10 +2,12 @@ import { GarnishForm } from '../../../../../components/garnishes/GarnishForm';
 import { ManageEntityLayout } from '../../../../../components/layout/ManageEntityLayout';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
-import { Garnish } from '@prisma/client';
+import { Garnish, Role } from '@prisma/client';
 import { Loading } from '../../../../../components/Loading';
+import { alertService } from '../../../../../lib/alertService';
+import { withPagePermission } from '../../../../../middleware/ui/withPagePermission';
 
-export default function EditGarnishPage() {
+function EditGarnishPage() {
   const router = useRouter();
   const { id, workspaceId } = router.query;
 
@@ -17,10 +19,16 @@ export default function EditGarnishPage() {
     if (!workspaceId) return;
     setLoading(true);
     fetch(`/api/workspaces/${workspaceId}/garnishes/${id}`)
-      .then((response) => response.json())
-      .then((data) => {
-        setGarnish(data);
+      .then(async (response) => {
+        const body = await response.json();
+        if (response.ok) {
+          setGarnish(body.data);
+        } else {
+          console.log('GarnishId -> fetchGarnish', response, body);
+          alertService.error(body.message, response.status, response.statusText);
+        }
       })
+      .catch((err) => alertService.error(err.message))
       .finally(() => {
         setLoading(false);
       });
@@ -34,3 +42,5 @@ export default function EditGarnishPage() {
     </ManageEntityLayout>
   );
 }
+
+export default withPagePermission([Role.MANAGER], EditGarnishPage, '/workspaces/[workspaceId]/manage');

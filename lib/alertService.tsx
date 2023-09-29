@@ -21,6 +21,8 @@ export const AlertType = {
 export interface Alert {
   alertContainerId: string;
   itemId: number;
+  status?: number;
+  statusText?: string;
   message: string;
   type: string;
 }
@@ -38,8 +40,8 @@ function success(message: string, options?: any) {
   alert({ ...options, type: AlertType.Success, message });
 }
 
-function error(message: string, options?: any) {
-  alert({ ...options, type: AlertType.Error, message });
+function error(message: string, status?: number, statusText?: string, options?: any) {
+  alert({ ...options, type: AlertType.Error, status: status, statusText: statusText, message: message });
 }
 
 function info(message: string, options?: any) {

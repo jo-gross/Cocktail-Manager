@@ -1,12 +1,12 @@
 import { AppProps } from 'next/app';
 import '../styles/global.css';
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import { ModalContext } from '../lib/context/ModalContextProvider';
 import { AlertBoundary } from '../components/layout/AlertBoundary';
 import { SessionProvider } from 'next-auth/react';
-import { User } from '@prisma/client';
 import { AuthBoundary } from '../components/layout/AuthBoundary';
 import { GlobalModal } from '../components/modals/GlobalModal';
+import Head from 'next/head';
 
 const App = ({ Component, pageProps: { session, ...pageProps } }: AppProps) => {
   const [modalContent, setModalContent] = useState(<></>);
@@ -33,7 +33,12 @@ const App = ({ Component, pageProps: { session, ...pageProps } }: AppProps) => {
         >
           <AuthBoundary>
             <GlobalModal>
-              <Component {...pageProps} />
+              <>
+                <Head>
+                  <title>The Cocktail-Manager</title>
+                </Head>
+                <Component {...pageProps} />
+              </>
             </GlobalModal>
           </AuthBoundary>
         </ModalContext.Provider>

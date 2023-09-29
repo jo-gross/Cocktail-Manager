@@ -52,10 +52,16 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
 
     setIngredientsLoading(true);
     fetch(`/api/workspaces/${workspaceId}/ingredients`)
-      .then((response) => response.json())
-      .then((data) => {
-        setIngredients(data);
+      .then(async (response) => {
+        const body = await response.json();
+        if (response.ok) {
+          setIngredients(body.data);
+        } else {
+          console.log('CocktailRecipeForm -> fetchIngredients', response, body);
+          alertService.error(body.message, response.status, response.statusText);
+        }
       })
+      .catch((err) => alertService.error(err.message))
       .finally(() => {
         setIngredientsLoading(false);
       });
@@ -68,10 +74,16 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
     if (!workspaceId) return;
     setGlassesLoading(true);
     fetch(`/api/workspaces/${workspaceId}/glasses`)
-      .then((response) => response.json())
-      .then((data) => {
-        setGlasses(data);
+      .then(async (response) => {
+        const body = await response.json();
+        if (response.ok) {
+          setGlasses(body.data);
+        } else {
+          console.log('CocktailRecipeForm -> fetchGlasses', response, body);
+          alertService.error(body.message, response.status, response.statusText);
+        }
       })
+      .catch((err) => alertService.error(err.message))
       .finally(() => {
         setGlassesLoading(false);
       });
@@ -84,10 +96,16 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
     if (!workspaceId) return;
     setGarnishesLoading(true);
     fetch(`/api/workspaces/${workspaceId}/garnishes`)
-      .then((response) => response.json())
-      .then((data) => {
-        setGarnishes(data);
+      .then(async (response) => {
+        const body = await response.json();
+        if (response.ok) {
+          setGarnishes(body.data);
+        } else {
+          console.log('CocktailRecipeForm -> fetchGarnishes', response, body);
+          alertService.error(body.message, response.status, response.statusText);
+        }
       })
+      .catch((err) => alertService.error(err.message))
       .finally(() => {
         setGarnishesLoading(false);
       });
@@ -177,7 +195,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
         }
 
         const stepsErrors: StepError[] = [];
-        (values.steps as CocktailRecipeStepFull[]).map((step, index) => {
+        (values.steps as CocktailRecipeStepFull[]).map((step) => {
           const stepErrors: StepError = {};
           if (step.mixing == undefined) {
             stepErrors.mixing = 'Required';
@@ -189,7 +207,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
           const ingredientsErrors: IngredientError[] = [];
 
           if (step.mixing) {
-            step.ingredients.map((ingredient, index) => {
+            step.ingredients.map((ingredient) => {
               const ingredientErrors: IngredientError = {};
               if (ingredient.amount && isNaN(ingredient.amount)) {
                 ingredientErrors.amount = 'Required';
@@ -221,7 +239,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
 
         hasErrors = false;
         const garnishErrors: GarnishError[] = [];
-        (values.garnishes as CocktailRecipeGarnishFull[]).map((garnish, index) => {
+        (values.garnishes as CocktailRecipeGarnishFull[]).map((garnish) => {
           const garnishError: GarnishError = {};
           if (!garnish.garnishId || garnish.garnishId == '') {
             garnishError.garnishId = 'Required';
@@ -273,15 +291,36 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
               };
             }),
           };
-          const result = await fetch(`/api/workspaces/${workspaceId}/cocktails`, {
-            method: props.cocktailRecipe?.id == undefined ? 'POST' : 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body),
-          });
-          if (result.status.toString().startsWith('2')) {
-            await router.replace('/manage/cocktails');
+          if (props.cocktailRecipe == undefined) {
+            const response = await fetch(`/api/workspaces/${workspaceId}/cocktails`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(body),
+            });
+            if (response.status.toString().startsWith('2')) {
+              router
+                .replace(`/workspaces/${workspaceId}/manage/cocktails`)
+                .then(() => alertService.success('Erfolgreich erstellt'));
+            } else {
+              const body = await response.json();
+              console.log('CocktailRecipeForm -> createRecipe', response, body);
+              alertService.error(body.message, response.status, response.statusText);
+            }
           } else {
-            alert(result.status + ' ' + result.statusText);
+            const response = await fetch(`/api/workspaces/${workspaceId}/cocktails/${props.cocktailRecipe.id}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(body),
+            });
+            if (response.status.toString().startsWith('2')) {
+              router
+                .replace(`/workspaces/${workspaceId}/manage/cocktails`)
+                .then(() => alertService.success('Erfolgreich gespeichert'));
+            } else {
+              const body = await response.json();
+              console.log('CocktailRecipeForm -> updateRecipe', response, body);
+              alertService.error(body.message, response.status, response.statusText);
+            }
           }
         } catch (error) {
           console.error(error);
@@ -549,9 +588,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                         step.ingredients.some((ingredient) => ingredient.ingredient != undefined),
                       ).length > 0 ? (
                         (values.steps as CocktailRecipeStepFull[])
-                          .map((step, indexStep) =>
-                            step.ingredients.filter((ingredient) => ingredient.ingredient != undefined),
-                          )
+                          .map((step) => step.ingredients.filter((ingredient) => ingredient.ingredient != undefined))
                           .flat()
                           ?.map((ingredient, indexIngredient) => (
                             <>
@@ -610,7 +647,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                         ).length > 0
                           ? (
                               (values.steps as CocktailRecipeStepFull[])
-                                .map((step, indexStep) =>
+                                .map((step) =>
                                   step.ingredients.filter((ingredient) => ingredient.ingredient != undefined),
                                 )
                                 .flat()

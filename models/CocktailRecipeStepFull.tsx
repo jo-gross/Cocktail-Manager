@@ -1,11 +1,11 @@
-import { Prisma } from "@prisma/client";
+import { Prisma } from '@prisma/client';
 
 export type CocktailRecipeStepFull = Prisma.CocktailRecipeStepGetPayload<{
   include: {
     ingredients: {
       include: {
-        ingredient: true
-      }
-    }
+        ingredient: true;
+      };
+    };
   };
 }>;

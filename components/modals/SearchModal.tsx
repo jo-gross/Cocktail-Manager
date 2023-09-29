@@ -6,6 +6,7 @@ import { Loading } from '../Loading';
 import { ModalContext } from '../../lib/context/ModalContextProvider';
 import { ShowCocktailInfoButton } from '../cocktails/ShowCocktailInfoButton';
 import { useRouter } from 'next/router';
+import { alertService } from '../../lib/alertService';
 
 interface SearchModalProps {
   onCocktailSelected?: (id: string) => void;
@@ -32,12 +33,16 @@ export function SearchModal(props: SearchModalProps) {
             search: search,
           }),
       )
-        .then((response) => {
-          return response.json();
+        .then(async (response) => {
+          const body = await response.json();
+          if (response.ok) {
+            setCocktails(body.data);
+          } else {
+            console.log('SearchModal -> search', response, body);
+            alertService.error(body.message, response.status, response.statusText);
+          }
         })
-        .then((json) => {
-          setCocktails(json);
-        })
+        .catch((err) => alertService.error(err.message))
         .finally(() => {
           setLoading(false);
         });

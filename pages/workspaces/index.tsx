@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/router';
+import Head from 'next/head';
 
 export default function App() {
   const router = useRouter();
@@ -8,5 +9,12 @@ export default function App() {
     router.replace('/').then();
   }, [router]);
 
-  return null;
+  return (
+    <>
+      <Head>
+        <title>Leite weiter...</title>
+      </Head>
+      <div></div>
+    </>
+  );
 }

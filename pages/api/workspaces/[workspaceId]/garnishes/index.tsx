@@ -3,47 +3,46 @@
 import prisma from '../../../../../lib/prisma';
 import { Prisma } from '.prisma/client';
 import { NextApiRequest, NextApiResponse } from 'next';
+import { withHttpMethods } from '../../../../../middleware/api/handleMethods';
+import HTTPMethod from 'http-method-enum';
+import { withWorkspacePermission } from '../../../../../middleware/api/authenticationMiddleware';
+import { Role } from '@prisma/client';
 import GarnishCreateInput = Prisma.GarnishCreateInput;
 
-export default async function handle(req: NextApiRequest, res: NextApiResponse) {
-  const workspaceId = req.query.workspaceId as string | undefined;
-  if (!workspaceId) return res.status(400).json({ message: 'No workspace id' });
-
-  if (req.method === 'GET') {
-    const garnishes = await prisma.garnish.findMany({
-      where: {
-        workspaceId: workspaceId,
-      },
-    });
-    return res.json(garnishes);
-  }
-
-  const { name, price, id, image, description } = req.body;
-
-  const input: GarnishCreateInput = {
-    id: id,
-    name: name,
-    price: price,
-    image: image,
-    description: description,
-    workspace: {
-      connect: {
-        id: workspaceId,
-      },
+export default withHttpMethods({
+  [HTTPMethod.GET]: withWorkspacePermission(
+    [Role.USER],
+    async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
+      const garnishes = await prisma.garnish.findMany({
+        where: {
+          workspaceId: workspace.id,
+        },
+      });
+      return res.json({ data: garnishes });
     },
-  };
-  if (req.method === 'PUT') {
-    const result = await prisma.garnish.update({
-      where: {
+  ),
+  [HTTPMethod.POST]: withWorkspacePermission(
+    [Role.MANAGER],
+    async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
+      const { name, price, id, image, description } = req.body;
+
+      const input: GarnishCreateInput = {
         id: id,
-      },
-      data: input,
-    });
-    return res.json(result);
-  } else if (req.method === 'POST') {
-    const result = await prisma.garnish.create({
-      data: input,
-    });
-    return res.json(result);
-  }
-}
+        name: name,
+        price: price,
+        image: image,
+        description: description,
+        workspace: {
+          connect: {
+            id: workspace.id,
+          },
+        },
+      };
+
+      const result = await prisma.garnish.create({
+        data: input,
+      });
+      return res.json(result);
+    },
+  ),
+});

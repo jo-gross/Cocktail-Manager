@@ -15,11 +15,12 @@ services:
       - cocktail-recipe-network
 
   cocktails:
+    platform: linux/amd64
     depends_on:
       - postgres
     links:
       - postgres
-    image: cocktails:latest
+    image: 10.200.16.1:8881/cocktails/cocktail-recipe-cocktails:latest
     container_name: cocktail-recipe-cocktails
     build:
       context: .
