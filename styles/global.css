@@ -30,3 +30,26 @@
 .divider-sm {
     @apply divider mt-0.5 mb-0.5 !important;
 }
+
+@media print {
+    .card{
+        @apply shadow-none border !important;
+    }
+
+    .table{
+        @apply border !important;
+    }
+
+    thead > tr {
+        @apply border bg-base-200 !important;
+        print-color-adjust: exact;
+    }
+
+    @layer base {
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+    }
+}

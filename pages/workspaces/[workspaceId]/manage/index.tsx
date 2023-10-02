@@ -93,6 +93,7 @@ export default function ManagePage() {
               <ManageCard title={'Workspace-Einstellungen'} link={`/workspaces/${workspaceId}/manage/settings`} />
             )}
           </>
+          <ManageCard title={'Kalkulation'} link={`/workspaces/${workspaceId}/manage/calculations`} />
         </div>
       </ManageEntityLayout>
     </>

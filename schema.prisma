@@ -55,8 +55,9 @@ model User {
 
   sessions Session[]
 
-  workspaces WorkspaceUser[]
-  settings   UserSetting[]
+  workspaces          WorkspaceUser[]
+  settings            UserSetting[]
+  CocktailCalculation CocktailCalculation[]
 }
 
 enum Setting {
@@ -109,16 +110,17 @@ model WorkspaceUser {
 }
 
 model Workspace {
-  id             String           @id @default(cuid())
-  name           String
-  description    String?
-  image          String?
-  users          WorkspaceUser[]
-  Glass          Glass[]
-  Garnish        Garnish[]
-  CocktailRecipe CocktailRecipe[]
-  Ingredient     Ingredient[]
-  CocktailCard   CocktailCard[]
+  id                  String                @id @default(cuid())
+  name                String
+  description         String?
+  image               String?
+  users               WorkspaceUser[]
+  Glass               Glass[]
+  Garnish             Garnish[]
+  CocktailRecipe      CocktailRecipe[]
+  Ingredient          Ingredient[]
+  CocktailCard        CocktailCard[]
+  CocktailCalculation CocktailCalculation[]
 }
 
 model Glass {
@@ -159,8 +161,9 @@ model CocktailRecipe {
   steps                 CocktailRecipeStep[]
   CocktailCardGroupItem CocktailCardGroupItem[]
 
-  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  workspaceId String
+  workspace                Workspace                  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspaceId              String
+  CocktailCalculationItems CocktailCalculationItems[]
 }
 
 model CocktailRecipeGarnish {
@@ -247,4 +250,26 @@ model CocktailCardGroupItem {
   specialPrice        Float?
 
   @@id([cocktailCardGroupId, cocktailId])
+}
+
+model CocktailCalculation {
+  id   String @id @default(cuid())
+  name String
+
+  workspaceId              String
+  workspace                Workspace                  @relation(fields: [workspaceId], references: [id])
+  updatedByUserId          String
+  updatedByUser            User                       @relation(fields: [updatedByUserId], references: [id])
+  cocktailCalculationItems CocktailCalculationItems[]
+}
+
+model CocktailCalculationItems {
+  plannedAmount Int
+  customPrice   Float?
+  cocktailId    String
+  cocktail      CocktailRecipe      @relation(fields: [cocktailId], references: [id], onDelete: Cascade)
+  calculationId String
+  calculation   CocktailCalculation @relation(fields: [calculationId], references: [id], onDelete: Cascade)
+
+  @@id([calculationId, cocktailId])
 }
