@@ -7,7 +7,7 @@ import Link from 'next/link';
 
 interface ManageColumnProps {
   id: string;
-  entity: 'cocktails' | 'ingredients' | 'glasses' | 'garnishes';
+  entity: 'cocktails' | 'ingredients' | 'glasses' | 'garnishes' | 'calculations';
   onRefresh: () => void;
 }
 

@@ -22,19 +22,19 @@ export function ManageEntityLayout(props: ManageEntityLayoutProps) {
           )}
         </>
       </Head>
-      <div className={'flex flex-col md:p-4 p-1'}>
+      <div className={'flex flex-col md:p-4 p-1 print:p-1'}>
         <div className={'grid grid-cols-3 w-full justify-center items-center justify-items-center'}>
           <div className={'col-span-1 justify-self-start'}>
             <Link href={props.backLink}>
-              <div className={'btn btn-primary btn-square rounded-xl'}>
+              <div className={'btn btn-primary btn-square rounded-xl print:hidden'}>
                 <FaArrowLeft />
               </div>
             </Link>
           </div>
-          <div className={'justify-items-center text-3xl font-bold'}>{props.title}</div>
-          <div className={'justify-self-end'}>{props.actions}</div>
+          <div className={'justify-items-center text-3xl font-bold print:text-2xl'}>{props.title}</div>
+          <div className={'justify-self-end space-x-2 items-center flex print:hidden'}>{props.actions}</div>
         </div>
-        <div className={'md:p-8 p-2'}>{props.children}</div>
+        <div className={'md:p-8 p-2 print:p-2'}>{props.children}</div>
       </div>
     </>
   );
