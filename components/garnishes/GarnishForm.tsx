@@ -1,7 +1,7 @@
-import { Formik } from 'formik';
+import { Formik, FormikProps } from 'formik';
 import { Garnish } from '@prisma/client';
 import { useRouter } from 'next/router';
-import React, { useContext } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { SingleFormLayout } from '../layout/SingleFormLayout';
 import { UploadDropZone } from '../UploadDropZone';
 import { convertToBase64 } from '../../lib/Base64Converter';
@@ -12,6 +12,8 @@ import { ModalContext } from '../../lib/context/ModalContextProvider';
 
 interface GarnishFormProps {
   garnish?: Garnish;
+  setUnsavedChanges?: (unsavedChanges: boolean) => void;
+  formRef?: React.RefObject<FormikProps<any>>;
 }
 
 export function GarnishForm(props: GarnishFormProps) {
@@ -19,8 +21,19 @@ export function GarnishForm(props: GarnishFormProps) {
   const { workspaceId } = router.query;
   const modalContext = useContext(ModalContext);
 
+  const formRef = props.formRef;
+  const [originalValues, setOriginalValues] = useState<any>();
+
+  //Filling original values
+  useEffect(() => {
+    if (Object.keys(formRef?.current?.touched ?? {}).length == 0) {
+      setOriginalValues(formRef?.current?.values);
+    }
+  }, [formRef, formRef?.current?.values]);
+
   return (
     <Formik
+      innerRef={formRef}
       initialValues={{
         name: props.garnish?.name ?? '',
         price: props.garnish?.price ?? 0,
@@ -72,6 +85,9 @@ export function GarnishForm(props: GarnishFormProps) {
         }
       }}
       validate={(values) => {
+        props.setUnsavedChanges?.(
+          originalValues && JSON.stringify(originalValues) != JSON.stringify(formRef?.current?.values),
+        );
         const errors: any = {};
         if (!values.name) {
           errors.name = 'Required';
@@ -89,7 +105,9 @@ export function GarnishForm(props: GarnishFormProps) {
               <label className={'label'}>
                 <span className={'label-text'}>Name</span>
                 <span className={'label-text-alt text-error space-x-2'}>
-                  <span>{errors.name && touched.name && errors.name}</span>
+                  <span>
+                    <>{errors.name && touched.name && errors.name}</>
+                  </span>
                   <span>*</span>
                 </span>
               </label>
@@ -108,7 +126,9 @@ export function GarnishForm(props: GarnishFormProps) {
               <label className={'label'}>
                 <span className={'label-text'}>Zubereitungsbeschreibung</span>
                 <span className={'label-text-alt text-error space-x-2'}>
-                  <span>{errors.description && touched.description && errors.description}</span>
+                  <span>
+                    <>{errors.description && touched.description && errors.description}</>
+                  </span>
                 </span>
               </label>
               <textarea
@@ -126,7 +146,9 @@ export function GarnishForm(props: GarnishFormProps) {
               <label className={'label'}>
                 <span className={'label-text'}>Preis</span>
                 <span className={'label-text-alt text-error space-x-2'}>
-                  <span>{errors.price && touched.price && errors.price}</span>
+                  <span>
+                    <>{errors.price && touched.price && errors.price}</>
+                  </span>
                   <span>*</span>
                 </span>
               </label>

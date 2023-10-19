@@ -1,9 +1,9 @@
-import { Formik } from 'formik';
+import { Formik, FormikProps } from 'formik';
 import { UploadDropZone } from '../UploadDropZone';
 import { convertToBase64 } from '../../lib/Base64Converter';
 import { useRouter } from 'next/router';
 import { FaTrashAlt } from 'react-icons/fa';
-import React, { useContext } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { SingleFormLayout } from '../layout/SingleFormLayout';
 import { alertService } from '../../lib/alertService';
 import { Glass } from '@prisma/client';
@@ -12,6 +12,8 @@ import { ModalContext } from '../../lib/context/ModalContextProvider';
 
 interface GlassFormProps {
   glass?: Glass;
+  setUnsavedChanges?: (unsavedChanges: boolean) => void;
+  formRef?: React.RefObject<FormikProps<any>>;
 }
 
 export function GlassForm(props: GlassFormProps) {
@@ -20,8 +22,19 @@ export function GlassForm(props: GlassFormProps) {
 
   const modalContext = useContext(ModalContext);
 
+  const formRef = props.formRef;
+  const [originalValues, setOriginalValues] = useState<any>();
+
+  //Filling original values
+  useEffect(() => {
+    if (Object.keys(formRef?.current?.touched ?? {}).length == 0) {
+      setOriginalValues(formRef?.current?.values);
+    }
+  }, [formRef, formRef?.current?.values]);
+
   return (
     <Formik
+      innerRef={formRef}
       initialValues={{
         name: props.glass?.name ?? '',
         deposit: props.glass?.deposit ?? 0,
@@ -72,6 +85,9 @@ export function GlassForm(props: GlassFormProps) {
         }
       }}
       validate={(values) => {
+        props.setUnsavedChanges?.(
+          originalValues && JSON.stringify(originalValues) != JSON.stringify(formRef?.current?.values),
+        );
         const errors: any = {};
         if (!values.name) {
           errors.name = 'Required';
@@ -89,7 +105,9 @@ export function GlassForm(props: GlassFormProps) {
               <label className={'label'}>
                 <span className={'label-text'}>Name</span>
                 <span className={'label-text-alt text-error space-x-2'}>
-                  <span>{errors.name && touched.name && errors.name}</span>
+                  <span>
+                    <>{errors.name && touched.name && errors.name}</>
+                  </span>
                   <span>*</span>
                 </span>
               </label>
@@ -108,7 +126,9 @@ export function GlassForm(props: GlassFormProps) {
               <label className={'label'}>
                 <span className={'label-text'}>Pfand</span>
                 <span className={'label-text-alt text-error space-x-2'}>
-                  <span>{errors.deposit && touched.deposit && errors.deposit}</span>
+                  <span>
+                    <>{errors.deposit && touched.deposit && errors.deposit}</>
+                  </span>
                   <span>*</span>
                 </span>
               </label>

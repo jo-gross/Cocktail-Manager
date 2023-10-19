@@ -1,11 +1,12 @@
 import { GlassForm } from '../../../../../components/glasses/GlassForm';
 import { ManageEntityLayout } from '../../../../../components/layout/ManageEntityLayout';
 import { useRouter } from 'next/router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Glass, Role } from '@prisma/client';
 import { Loading } from '../../../../../components/Loading';
 import { alertService } from '../../../../../lib/alertService';
 import { withPagePermission } from '../../../../../middleware/ui/withPagePermission';
+import { FormikProps } from 'formik';
 
 function EditGlassPage() {
   const router = useRouter();
@@ -13,6 +14,9 @@ function EditGlassPage() {
 
   const [loading, setLoading] = useState(true);
   const [glass, setGlass] = useState<Glass | undefined>(undefined);
+
+  const [unsavedChanges, setUnsavedChanges] = useState(false);
+  const formRef: any = useRef<FormikProps<any>>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -37,8 +41,13 @@ function EditGlassPage() {
   return loading ? (
     <Loading />
   ) : (
-    <ManageEntityLayout backLink={`/workspaces/${workspaceId}/manage`} title={'Gläser'}>
-      <GlassForm glass={glass} />
+    <ManageEntityLayout
+      backLink={`/workspaces/${workspaceId}/manage/glasses`}
+      title={'Gläser'}
+      unsavedChanges={unsavedChanges}
+      formRef={formRef}
+    >
+      <GlassForm glass={glass} setUnsavedChanges={setUnsavedChanges} formRef={formRef} />
     </ManageEntityLayout>
   );
 }
