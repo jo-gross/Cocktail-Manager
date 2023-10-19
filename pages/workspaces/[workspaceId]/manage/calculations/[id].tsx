@@ -40,10 +40,21 @@ export default function CalculationPage() {
   const [calculationName, setCalculationName] = useState<string>('');
   const [cocktailCalculationItems, setCocktailCalculationItems] = useState<CocktailCalculationItem[]>([]);
 
+  const [originalItems, setOriginalItems] = useState<string>('[]');
+
   const [ingredientCalculationItems, setIngredientCalculationItems] = useState<IngredientCalculationItem[]>([]);
   const [garnishCalculationItems, setGarnishCalculationItems] = useState<GarnishCalculationItem[]>([]);
 
   const [loading, setLoading] = useState(false);
+
+  const [unsavedChanges, setUnsavedChanges] = useState(false);
+  useEffect(() => {
+    if (originalItems != JSON.stringify(cocktailCalculationItems)) {
+      setUnsavedChanges(true);
+    } else {
+      setUnsavedChanges(false);
+    }
+  }, [cocktailCalculationItems, originalItems]);
 
   useEffect(() => {
     if (!id) return;
@@ -55,6 +66,7 @@ export default function CalculationPage() {
         if (response.ok) {
           setCalculationName(body.data.name);
           setCocktailCalculationItems(body.data.cocktailCalculationItems);
+          setOriginalItems(JSON.stringify(body.data.cocktailCalculationItems));
         } else {
           console.log('CocktailCalculation -> useEffect[init, id != create]', response, body);
           alertService.error(body.message, response.status, response.statusText);
@@ -154,70 +166,77 @@ export default function CalculationPage() {
     setGarnishCalculationItems(calculationItems);
   }, [cocktailCalculationItems]);
 
-  const saveCalculationBackend = useCallback(() => {
-    if (!id) return;
-    if (!calculationName) return;
+  const saveCalculationBackend = useCallback(
+    (redirect: boolean = true) => {
+      if (!id) return;
+      if (!calculationName) return;
 
-    if (id == 'create') {
-      const body = {
-        name: calculationName,
-        calculationItems: cocktailCalculationItems.map((item) => {
-          return {
-            plannedAmount: item.plannedAmount,
-            customPrice: item.customPrice,
-            cocktailId: item.cocktail.id,
-          };
-        }),
-      };
-      fetch(`/api/workspaces/${workspaceId}/calculations`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      })
-        .then(async (response) => {
-          const body = await response.json();
-          if (response.ok) {
-            router.push(`/workspaces/${workspaceId}/manage/calculations/${body.data.id}`).then(() => {
+      if (id == 'create') {
+        const body = {
+          name: calculationName,
+          calculationItems: cocktailCalculationItems.map((item) => {
+            return {
+              plannedAmount: item.plannedAmount,
+              customPrice: item.customPrice,
+              cocktailId: item.cocktail.id,
+            };
+          }),
+        };
+        fetch(`/api/workspaces/${workspaceId}/calculations`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        })
+          .then(async (response) => {
+            const body = await response.json();
+            if (response.ok) {
+              setOriginalItems(JSON.stringify(cocktailCalculationItems));
+              if (redirect) {
+                await router.push(`/workspaces/${workspaceId}/manage/calculations/${body.data.id}`);
+              }
               alertService.success('Kalkulation erfolgreich erstellt');
-            });
-          } else {
-            console.log('CocktailCalculation -> useEffect[create, name]', response, body);
-            alertService.error(body.message, response.status, response.statusText);
-          }
+            } else {
+              console.log('CocktailCalculation -> useEffect[create, name]', response, body);
+              alertService.error(body.message, response.status, response.statusText);
+            }
+          })
+          .catch((err) => alertService.error(err.message))
+          .finally(() => {});
+      } else {
+        const body = {
+          name: calculationName,
+          calculationItems: cocktailCalculationItems.map((item) => {
+            return {
+              plannedAmount: item.plannedAmount,
+              customPrice: item.customPrice,
+              cocktailId: item.cocktail.id,
+            };
+          }),
+        };
+        fetch(`/api/workspaces/${workspaceId}/calculations/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
         })
-        .catch((err) => alertService.error(err.message))
-        .finally(() => {});
-    } else {
-      const body = {
-        name: calculationName,
-        calculationItems: cocktailCalculationItems.map((item) => {
-          return {
-            plannedAmount: item.plannedAmount,
-            customPrice: item.customPrice,
-            cocktailId: item.cocktail.id,
-          };
-        }),
-      };
-      fetch(`/api/workspaces/${workspaceId}/calculations/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      })
-        .then(async (response) => {
-          const body = await response.json();
-          if (response.ok) {
-            router.push(`/workspaces/${workspaceId}/manage/calculations/${body.data.id}`).then(() => {
+          .then(async (response) => {
+            const body = await response.json();
+            if (response.ok) {
+              setOriginalItems(JSON.stringify(cocktailCalculationItems));
+              if (redirect) {
+                await router.push(`/workspaces/${workspaceId}/manage/calculations/${body.data.id}`);
+              }
               alertService.success('Kalkulation erfolgreich gespeichert');
-            });
-          } else {
-            console.log('CocktailCalculation -> useEffect[create, name]', response, body);
-            alertService.error(body.message, response.status, response.statusText);
-          }
-        })
-        .catch((err) => alertService.error(err.message))
-        .finally(() => {});
-    }
-  }, [id, calculationName, cocktailCalculationItems, workspaceId, router]);
+            } else {
+              console.log('CocktailCalculation -> useEffect[create, name]', response, body);
+              alertService.error(body.message, response.status, response.statusText);
+            }
+          })
+          .catch((err) => alertService.error(err.message))
+          .finally(() => {});
+      }
+    },
+    [id, calculationName, cocktailCalculationItems, workspaceId, router],
+  );
 
   useEffect(() => {
     if (!id) return;
@@ -241,6 +260,15 @@ export default function CalculationPage() {
   return (
     <ManageEntityLayout
       backLink={`/workspaces/${workspaceId}/manage/calculations`}
+      unsavedChanges={unsavedChanges}
+      onSave={async () => {
+        if (id == 'create' && calculationName.trim() == '') {
+          openNameModal();
+        } else {
+          saveCalculationBackend(false);
+          await router.replace(`/workspaces/${workspaceId}/manage/calculations`);
+        }
+      }}
       title={
         calculationName.trim() == '' ? (
           'Kalkulation'
@@ -328,7 +356,6 @@ export default function CalculationPage() {
                               step={1}
                               value={cocktail.plannedAmount}
                               onChange={(event) => {
-                                console.log('Change');
                                 const updatedItems = cocktailCalculationItems.map((item) => {
                                   if (item.cocktail.id == cocktail.cocktail.id) {
                                     item.plannedAmount = Number(event.target.value);
@@ -363,7 +390,7 @@ export default function CalculationPage() {
                                   setCocktailCalculationItems(updatedItems);
                                 }}
                               />
-                              <span className={'input-group-text bg-secondary border border-secondary'}>€</span>
+                              <span className={'input-group-text bg-secondary border border-secondary'}> €</span>
                             </div>
                             <div className={'hidden print:flex'}>{cocktail.customPrice ?? '-'} €</div>
                           </td>
@@ -421,20 +448,20 @@ export default function CalculationPage() {
                         .map((cocktail) => (
                           <tr key={'cocktail-' + cocktail.cocktail.id}>
                             <td>{cocktail.cocktail.name}</td>
-                            <td>{cocktail.plannedAmount}x</td>
-                            <td>{calcCocktailTotalPrice(cocktail.cocktail).toFixed(2)}€</td>
-                            <td>{(cocktail.plannedAmount * calcCocktailTotalPrice(cocktail.cocktail)).toFixed(2)}€</td>
+                            <td>{cocktail.plannedAmount} x</td>
+                            <td>{calcCocktailTotalPrice(cocktail.cocktail).toFixed(2)} €</td>
+                            <td>{(cocktail.plannedAmount * calcCocktailTotalPrice(cocktail.cocktail)).toFixed(2)} €</td>
                             <td>
                               {(
                                 cocktail.plannedAmount * (cocktail.customPrice ?? cocktail.cocktail.price ?? 0)
-                              ).toFixed(2)}
+                              ).toFixed(2)}{' '}
                               €
                             </td>
                             <td>
                               {(
                                 cocktail.plannedAmount * (cocktail.customPrice ?? cocktail.cocktail.price ?? 0) -
                                 cocktail.plannedAmount * calcCocktailTotalPrice(cocktail.cocktail)
-                              ).toFixed(2)}
+                              ).toFixed(2)}{' '}
                               €
                             </td>
                           </tr>
@@ -448,7 +475,7 @@ export default function CalculationPage() {
                           {cocktailCalculationItems
                             .map((cocktail) => cocktail.plannedAmount * calcCocktailTotalPrice(cocktail.cocktail))
                             .reduce((acc, curr) => acc + curr, 0)
-                            .toFixed(2)}
+                            .toFixed(2)}{' '}
                           €
                         </td>
                         <td>
@@ -458,7 +485,7 @@ export default function CalculationPage() {
                                 cocktail.plannedAmount * (cocktail.customPrice ?? cocktail.cocktail.price ?? 0),
                             )
                             .reduce((acc, curr) => acc + curr, 0)
-                            .toFixed(2)}
+                            .toFixed(2)}{' '}
                           €
                         </td>
                         <td>
@@ -469,7 +496,7 @@ export default function CalculationPage() {
                                 cocktail.plannedAmount * calcCocktailTotalPrice(cocktail.cocktail),
                             )
                             .reduce((acc, curr) => acc + curr, 0)
-                            .toFixed(2)}
+                            .toFixed(2)}{' '}
                           €
                         </td>
                       </tr>
@@ -503,16 +530,14 @@ export default function CalculationPage() {
                           <tr key={'ingredientCalculation-' + ingredientCalculation.ingredient.id}>
                             <td>{ingredientCalculation.ingredient.name}</td>
                             <td>
-                              {ingredientCalculation.amount.toFixed(2)}
-                              {ingredientCalculation.ingredient.unit}
+                              {ingredientCalculation.amount.toFixed(2)} {ingredientCalculation.ingredient.unit}
                             </td>
                             <td>
                               {(ingredientCalculation.amount / (ingredientCalculation.ingredient.volume ?? 0)).toFixed(
                                 2,
                               )}
                               {' (á '}
-                              {ingredientCalculation.ingredient.volume}
-                              {ingredientCalculation.ingredient.unit})
+                              {ingredientCalculation.ingredient.volume} {ingredientCalculation.ingredient.unit})
                             </td>
                           </tr>
                         ))}

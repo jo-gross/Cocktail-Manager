@@ -1,11 +1,12 @@
 import { GarnishForm } from '../../../../../components/garnishes/GarnishForm';
 import { ManageEntityLayout } from '../../../../../components/layout/ManageEntityLayout';
 import { useRouter } from 'next/router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Garnish, Role } from '@prisma/client';
 import { Loading } from '../../../../../components/Loading';
 import { alertService } from '../../../../../lib/alertService';
 import { withPagePermission } from '../../../../../middleware/ui/withPagePermission';
+import { FormikProps } from 'formik';
 
 function EditGarnishPage() {
   const router = useRouter();
@@ -13,6 +14,9 @@ function EditGarnishPage() {
 
   const [garnish, setGarnish] = useState<Garnish | undefined>(undefined);
   const [loading, setLoading] = useState(true);
+
+  const [unsavedChanges, setUnsavedChanges] = useState(false);
+  const formRef: any = useRef<FormikProps<any>>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -37,8 +41,13 @@ function EditGarnishPage() {
   return loading ? (
     <Loading />
   ) : (
-    <ManageEntityLayout backLink={`/workspaces/${workspaceId}/manage`} title={'Garnitur'}>
-      <GarnishForm garnish={garnish} />
+    <ManageEntityLayout
+      backLink={`/workspaces/${workspaceId}/manage/garnishes`}
+      title={'Garnitur'}
+      unsavedChanges={unsavedChanges}
+      formRef={formRef}
+    >
+      <GarnishForm garnish={garnish} setUnsavedChanges={setUnsavedChanges} formRef={formRef} />
     </ManageEntityLayout>
   );
 }

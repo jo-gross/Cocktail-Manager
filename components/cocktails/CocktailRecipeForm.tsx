@@ -3,7 +3,7 @@ import { IceType } from '../../models/IceType';
 import { FaAngleDown, FaAngleUp, FaEuroSign, FaPlus, FaTrashAlt } from 'react-icons/fa';
 import { TagsInput } from 'react-tag-input-component';
 import { Field, FieldArray, Formik, FormikProps } from 'formik';
-import React, { useContext, useEffect, useRef, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { Garnish, Glass, Ingredient } from '@prisma/client';
 import { updateTags, validateTag } from '../../models/tags/TagUtils';
@@ -21,6 +21,8 @@ import { ModalContext } from '../../lib/context/ModalContextProvider';
 
 interface CocktailRecipeFormProps {
   cocktailRecipe?: CocktailRecipeFull;
+  setUnsavedChanges?: (unsavedChanges: boolean) => void;
+  formRef: React.RefObject<FormikProps<any>>;
 }
 
 interface IngredientError {
@@ -48,7 +50,15 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
   const [ingredientsLoading, setIngredientsLoading] = useState(false);
 
-  const formRef = useRef<FormikProps<any>>(null);
+  const formRef = props.formRef;
+  const [originalValues, setOriginalValues] = useState<any>();
+
+  //Filling original values
+  useEffect(() => {
+    if (Object.keys(formRef?.current?.touched ?? {}).length == 0) {
+      setOriginalValues(formRef?.current?.values);
+    }
+  }, [formRef, formRef?.current?.values]);
 
   useEffect(() => {
     if (!workspaceId) return;
@@ -183,6 +193,9 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
         showTags: false,
       }}
       validate={(values) => {
+        props.setUnsavedChanges?.(
+          originalValues && JSON.stringify(originalValues) != JSON.stringify(formRef?.current?.values),
+        );
         const errors: any = {};
         if (!values.name || values.name.trim() == '') {
           errors.name = 'Required';

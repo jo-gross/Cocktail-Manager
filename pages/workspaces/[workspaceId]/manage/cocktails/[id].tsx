@@ -1,12 +1,13 @@
 import { CocktailRecipeForm } from '../../../../../components/cocktails/CocktailRecipeForm';
 import { ManageEntityLayout } from '../../../../../components/layout/ManageEntityLayout';
 import { CocktailRecipeFull } from '../../../../../models/CocktailRecipeFull';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
 import { Loading } from '../../../../../components/Loading';
 import { alertService } from '../../../../../lib/alertService';
 import { withPagePermission } from '../../../../../middleware/ui/withPagePermission';
 import { Role } from '@prisma/client';
+import { FormikProps } from 'formik';
 
 function EditCocktailRecipe() {
   const router = useRouter();
@@ -14,6 +15,9 @@ function EditCocktailRecipe() {
 
   const [cocktailRecipe, setCocktailRecipe] = useState<CocktailRecipeFull | undefined>(undefined);
   const [loading, setLoading] = useState(true);
+
+  const [unsavedChanges, setUnsavedChanges] = useState(false);
+  const formRef: any = useRef<FormikProps<any>>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -38,8 +42,13 @@ function EditCocktailRecipe() {
   return loading ? (
     <Loading />
   ) : (
-    <ManageEntityLayout backLink={`/workspaces/${workspaceId}/manage/cocktails`} title={'Cocktail'}>
-      <CocktailRecipeForm cocktailRecipe={cocktailRecipe} />
+    <ManageEntityLayout
+      backLink={`/workspaces/${workspaceId}/manage/cocktails`}
+      title={'Cocktail'}
+      unsavedChanges={unsavedChanges}
+      formRef={formRef}
+    >
+      <CocktailRecipeForm cocktailRecipe={cocktailRecipe} setUnsavedChanges={setUnsavedChanges} formRef={formRef} />
     </ManageEntityLayout>
   );
 }

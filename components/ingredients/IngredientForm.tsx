@@ -1,7 +1,7 @@
 import { Formik, FormikProps } from 'formik';
 import { Ingredient } from '@prisma/client';
 import { useRouter } from 'next/router';
-import React, { useContext, useRef } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { CocktailIngredientUnit } from '../../models/CocktailIngredientUnit';
 import { TagsInput } from 'react-tag-input-component';
 import { updateTags, validateTag } from '../../models/tags/TagUtils';
@@ -14,13 +14,24 @@ import { ModalContext } from '../../lib/context/ModalContextProvider';
 
 interface IngredientFormProps {
   ingredient?: Ingredient;
+  setUnsavedChanges?: (unsavedChanges: boolean) => void;
+  formRef?: React.RefObject<FormikProps<any>>;
 }
 
 export function IngredientForm(props: IngredientFormProps) {
   const router = useRouter();
   const workspaceId = router.query.workspaceId as string | undefined;
-  const formRef = useRef<FormikProps<any>>(null);
   const modalContext = useContext(ModalContext);
+
+  const formRef = props.formRef;
+  const [originalValues, setOriginalValues] = useState<any>();
+
+  //Filling original values
+  useEffect(() => {
+    if (Object.keys(formRef?.current?.touched ?? {}).length == 0) {
+      setOriginalValues(formRef?.current?.values);
+    }
+  }, [formRef, formRef?.current?.values]);
 
   return (
     <Formik
@@ -83,6 +94,9 @@ export function IngredientForm(props: IngredientFormProps) {
         }
       }}
       validate={(values) => {
+        props.setUnsavedChanges?.(
+          originalValues && JSON.stringify(originalValues) != JSON.stringify(formRef?.current?.values),
+        );
         const errors: any = {};
         if (!values.name) {
           errors.name = 'Required';
