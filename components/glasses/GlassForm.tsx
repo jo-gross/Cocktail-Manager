@@ -3,10 +3,12 @@ import { UploadDropZone } from '../UploadDropZone';
 import { convertToBase64 } from '../../lib/Base64Converter';
 import { useRouter } from 'next/router';
 import { FaTrashAlt } from 'react-icons/fa';
-import React from 'react';
+import React, { useContext } from 'react';
 import { SingleFormLayout } from '../layout/SingleFormLayout';
 import { alertService } from '../../lib/alertService';
 import { Glass } from '@prisma/client';
+import { DeleteConfirmationModal } from '../modals/DeleteConfirmationModal';
+import { ModalContext } from '../../lib/context/ModalContextProvider';
 
 interface GlassFormProps {
   glass?: Glass;
@@ -15,6 +17,9 @@ interface GlassFormProps {
 export function GlassForm(props: GlassFormProps) {
   const router = useRouter();
   const { workspaceId } = router.query;
+
+  const modalContext = useContext(ModalContext);
+
   return (
     <Formik
       initialValues={{
@@ -158,8 +163,16 @@ export function GlassForm(props: GlassFormProps) {
               ) : (
                 <div className={'relative'}>
                   <div
-                    className={'absolute top-2 right-2 text-error'}
-                    onClick={() => setFieldValue('image', undefined)}
+                    className={'absolute top-2 right-2 btn-error btn btn-outline btn-sm btn-square'}
+                    onClick={() =>
+                      modalContext.openModal(
+                        <DeleteConfirmationModal
+                          spelling={'REMOVE'}
+                          entityName={'das Bild'}
+                          onApprove={() => setFieldValue('image', undefined)}
+                        />,
+                      )
+                    }
                   >
                     <FaTrashAlt />
                   </div>

@@ -12,6 +12,7 @@ import { Loading } from '../../../../../components/Loading';
 import { alertService } from '../../../../../lib/alertService';
 import { withPagePermission } from '../../../../../middleware/ui/withPagePermission';
 import { Role } from '@prisma/client';
+import { DeleteConfirmationModal } from '../../../../../components/modals/DeleteConfirmationModal';
 
 interface CocktailCardGroupError {
   name?: string;
@@ -81,21 +82,29 @@ function EditCocktailCard() {
           <button
             type={'button'}
             className={'btn btn-error btn-square btn-outline'}
-            onClick={async () => {
-              fetch(`/api/workspaces/${workspaceId}/cards/${card.id}`, {
-                method: 'DELETE',
-              }).then(async (response) => {
-                const body = await response.json();
-                if (response.ok) {
-                  router
-                    .replace(`/workspaces/${workspaceId}/manage/cards`)
-                    .then(() => alertService.success('Karte gelöscht'));
-                } else {
-                  console.log('CardId -> deleteCard', response, body);
-                  alertService.error(body.message, response.status, response.statusText);
-                }
-              });
-            }}
+            onClick={() =>
+              modalContext.openModal(
+                <DeleteConfirmationModal
+                  spelling={'DELETE'}
+                  entityName={'die Karte'}
+                  onApprove={async () => {
+                    fetch(`/api/workspaces/${workspaceId}/cards/${card.id}`, {
+                      method: 'DELETE',
+                    }).then(async (response) => {
+                      const body = await response.json();
+                      if (response.ok) {
+                        router
+                          .replace(`/workspaces/${workspaceId}/manage/cards`)
+                          .then(() => alertService.success('Karte gelöscht'));
+                      } else {
+                        console.log('CardId -> deleteCard', response, body);
+                        alertService.error(body.message, response.status, response.statusText);
+                      }
+                    });
+                  }}
+                />,
+              )
+            }
           >
             <FaTrashAlt />
           </button>
@@ -330,8 +339,16 @@ function EditCocktailCard() {
                               </button>
                               <button
                                 type="button"
-                                className={'btn btn-error btn-sm btn-square'}
-                                onClick={() => removeGroup(groupIndex)}
+                                className={'btn btn-error btn-sm btn-square btn-outline'}
+                                onClick={() =>
+                                  modalContext.openModal(
+                                    <DeleteConfirmationModal
+                                      spelling={'REMOVE'}
+                                      entityName={'die Gruppe'}
+                                      onApprove={() => removeGroup(groupIndex)}
+                                    />,
+                                  )
+                                }
                               >
                                 <FaTrashAlt />
                               </button>
@@ -397,7 +414,15 @@ function EditCocktailCard() {
                                                 </button>
                                                 <div
                                                   className={'btn btn-outline btn-error btn-square btn-sm'}
-                                                  onClick={() => removeItem(itemIndex)}
+                                                  onClick={() =>
+                                                    modalContext.openModal(
+                                                      <DeleteConfirmationModal
+                                                        spelling={'REMOVE'}
+                                                        entityName={'den Cocktail von der Gruppe'}
+                                                        onApprove={() => removeItem(itemIndex)}
+                                                      />,
+                                                    )
+                                                  }
                                                 >
                                                   <FaTrashAlt />
                                                 </div>
@@ -469,4 +494,5 @@ function EditCocktailCard() {
     </ManageEntityLayout>
   );
 }
+
 export default withPagePermission([Role.MANAGER], EditCocktailCard, '/workspaces/[workspaceId]/manage');

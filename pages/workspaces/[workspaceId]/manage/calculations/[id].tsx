@@ -11,6 +11,7 @@ import { Garnish, Ingredient } from '@prisma/client';
 import InputModal from '../../../../../components/modals/InputModal';
 import { PageCenter } from '../../../../../components/layout/PageCenter';
 import { Loading } from '../../../../../components/Loading';
+import { DeleteConfirmationModal } from '../../../../../components/modals/DeleteConfirmationModal';
 
 interface CocktailCalculationItem {
   cocktail: CocktailRecipeFull;
@@ -370,8 +371,17 @@ export default function CalculationPage() {
                             <div
                               className={'btn btn-sm btn-error'}
                               onClick={() => {
-                                setCocktailCalculationItems(
-                                  cocktailCalculationItems.filter((item) => item.cocktail.id != cocktail.cocktail.id),
+                                modalContext.openModal(
+                                  <DeleteConfirmationModal
+                                    spelling={'REMOVE'}
+                                    onApprove={() => {
+                                      setCocktailCalculationItems(
+                                        cocktailCalculationItems.filter(
+                                          (item) => item.cocktail.id != cocktail.cocktail.id,
+                                        ),
+                                      );
+                                    }}
+                                  />,
                                 );
                               }}
                             >

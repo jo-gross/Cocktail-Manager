@@ -31,6 +31,10 @@
     @apply divider mt-0.5 mb-0.5 !important;
 }
 
+.btn-red {
+    @apply bg-red-700 text-white hover:bg-red-800 border-red-800;
+}
+
 @media print {
     .card{
         @apply shadow-none border !important;

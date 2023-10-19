@@ -3,7 +3,7 @@ import { IceType } from '../../models/IceType';
 import { FaAngleDown, FaAngleUp, FaEuroSign, FaPlus, FaTrashAlt } from 'react-icons/fa';
 import { TagsInput } from 'react-tag-input-component';
 import { Field, FieldArray, Formik, FormikProps } from 'formik';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
 import { Garnish, Glass, Ingredient } from '@prisma/client';
 import { updateTags, validateTag } from '../../models/tags/TagUtils';
@@ -16,6 +16,8 @@ import { CocktailRecipeStepFull } from '../../models/CocktailRecipeStepFull';
 import CocktailRecipeOverviewItem from './CocktailRecipeOverviewItem';
 import { alertService } from '../../lib/alertService';
 import { CocktailRecipeGarnishFull } from '../../models/CocktailRecipeGarnishFull';
+import { DeleteConfirmationModal } from '../modals/DeleteConfirmationModal';
+import { ModalContext } from '../../lib/context/ModalContextProvider';
 
 interface CocktailRecipeFormProps {
   cocktailRecipe?: CocktailRecipeFull;
@@ -41,6 +43,7 @@ interface GarnishError {
 export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
   const router = useRouter();
   const workspaceId = router.query.workspaceId as string | undefined;
+  const modalContext = useContext(ModalContext);
 
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
   const [ingredientsLoading, setIngredientsLoading] = useState(false);
@@ -504,7 +507,15 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                       <div className={'relative'}>
                         <div
                           className={'absolute top-2 right-2 btn-error btn btn-outline btn-sm btn-square'}
-                          onClick={() => setFieldValue('image', undefined)}
+                          onClick={() =>
+                            modalContext.openModal(
+                              <DeleteConfirmationModal
+                                spelling={'REMOVE'}
+                                entityName={'das Bild'}
+                                onApprove={() => setFieldValue('image', undefined)}
+                              />,
+                            )
+                          }
                         >
                           <FaTrashAlt />
                         </div>
@@ -745,7 +756,15 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                               <button
                                 type={'button'}
                                 className={'btn btn-error btn-sm btn-square'}
-                                onClick={() => removeStep(indexStep)}
+                                onClick={() =>
+                                  modalContext.openModal(
+                                    <DeleteConfirmationModal
+                                      spelling={'REMOVE'}
+                                      entityName={'den Schritt'}
+                                      onApprove={() => removeStep(indexStep)}
+                                    />,
+                                  )
+                                }
                               >
                                 <FaTrashAlt />
                               </button>
@@ -908,7 +927,15 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                               type={'button'}
                                               className={'btn btn-error btn-square'}
                                               disabled={values.steps[indexStep].ingredients.length == 1}
-                                              onClick={() => removeIngredient(indexIngredient)}
+                                              onClick={() =>
+                                                modalContext.openModal(
+                                                  <DeleteConfirmationModal
+                                                    spelling={'REMOVE'}
+                                                    entityName={'die Zutat'}
+                                                    onApprove={() => removeIngredient(indexIngredient)}
+                                                  />,
+                                                )
+                                              }
                                             >
                                               <FaTrashAlt />
                                             </button>
@@ -1126,7 +1153,18 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                               onBlur={handleBlur}
                             />
                           </div>
-                          <div className={'btn btn-error btn-sm'} onClick={() => removeGarnish(indexGarnish)}>
+                          <div
+                            className={'btn btn-error btn-sm'}
+                            onClick={() =>
+                              modalContext.openModal(
+                                <DeleteConfirmationModal
+                                  spelling={'REMOVE'}
+                                  entityName={'die Garnitur'}
+                                  onApprove={() => removeGarnish(indexGarnish)}
+                                />,
+                              )
+                            }
+                          >
                             <FaTrashAlt />
                           </div>
                         </div>
