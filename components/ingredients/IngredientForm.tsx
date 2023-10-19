@@ -1,7 +1,7 @@
 import { Formik, FormikProps } from 'formik';
 import { Ingredient } from '@prisma/client';
 import { useRouter } from 'next/router';
-import React, { useRef } from 'react';
+import React, { useContext, useRef } from 'react';
 import { CocktailIngredientUnit } from '../../models/CocktailIngredientUnit';
 import { TagsInput } from 'react-tag-input-component';
 import { updateTags, validateTag } from '../../models/tags/TagUtils';
@@ -9,6 +9,8 @@ import { UploadDropZone } from '../UploadDropZone';
 import { convertToBase64 } from '../../lib/Base64Converter';
 import { FaSyncAlt, FaTrashAlt } from 'react-icons/fa';
 import { alertService } from '../../lib/alertService';
+import { DeleteConfirmationModal } from '../modals/DeleteConfirmationModal';
+import { ModalContext } from '../../lib/context/ModalContextProvider';
 
 interface IngredientFormProps {
   ingredient?: Ingredient;
@@ -18,6 +20,7 @@ export function IngredientForm(props: IngredientFormProps) {
   const router = useRouter();
   const workspaceId = router.query.workspaceId as string | undefined;
   const formRef = useRef<FormikProps<any>>(null);
+  const modalContext = useContext(ModalContext);
 
   return (
     <Formik
@@ -260,7 +263,15 @@ export function IngredientForm(props: IngredientFormProps) {
                     <div className={'relative'}>
                       <div
                         className={'absolute top-2 right-2 btn-error btn btn-outline btn-sm btn-square'}
-                        onClick={() => setFieldValue('image', undefined)}
+                        onClick={() =>
+                          modalContext.openModal(
+                            <DeleteConfirmationModal
+                              spelling={'REMOVE'}
+                              entityName={'das Bild'}
+                              onApprove={() => setFieldValue('image', undefined)}
+                            />,
+                          )
+                        }
                       >
                         <FaTrashAlt />
                       </div>
