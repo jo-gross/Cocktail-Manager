@@ -7,6 +7,7 @@ import { signOut } from 'next-auth/react';
 import LoadingText from '../../../../components/LoadingText';
 import Link from 'next/link';
 import AvatarImage from '../../../../components/AvatarImage';
+import { Role } from '@prisma/client';
 
 export default function ManagePage() {
   const router = useRouter();
@@ -89,7 +90,7 @@ export default function ManagePage() {
           <ManageCard title={'Garnituren'} link={`/workspaces/${workspaceId}/manage/garnishes`} />
           <ManageCard title={'Gläser'} link={`/workspaces/${workspaceId}/manage/glasses`} />
           <>
-            {userContext.isUserManager() && (
+            {userContext.isUserPermitted(Role.MANAGER) && (
               <ManageCard title={'Workspace-Einstellungen'} link={`/workspaces/${workspaceId}/manage/settings`} />
             )}
           </>

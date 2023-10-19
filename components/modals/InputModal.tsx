@@ -21,6 +21,7 @@ export default function InputModal(props: InputModalProps) {
       <div className={'input-group'}>
         <input
           value={inputValue}
+          autoFocus={true}
           className={'input input-bordered w-full'}
           onChange={(event) => setInputValue(event.target.value)}
         />

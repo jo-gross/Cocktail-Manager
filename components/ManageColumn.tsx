@@ -4,11 +4,14 @@ import { alertService } from '../lib/alertService';
 import { useContext } from 'react';
 import { UserContext } from '../lib/context/UserContextProvider';
 import Link from 'next/link';
+import { Role } from '@prisma/client';
 
 interface ManageColumnProps {
   id: string;
   entity: 'cocktails' | 'ingredients' | 'glasses' | 'garnishes' | 'calculations';
   onRefresh: () => void;
+  editRole?: Role;
+  deleteRole?: Role;
 }
 
 export function ManageColumn(props: ManageColumnProps) {
@@ -19,7 +22,7 @@ export function ManageColumn(props: ManageColumnProps) {
   return (
     <td>
       <>
-        {userContext.isUserManager() ? (
+        {userContext.isUserPermitted(props.editRole ?? Role.MANAGER) ? (
           <div className={'flex justify-end space-x-2 items-center'}>
             <Link href={`/workspaces/${workspaceId}/manage/${props.entity}/${props.id}`}>
               <div className={'btn btn-outline btn-primary btn-sm'}>Edit</div>
@@ -27,7 +30,7 @@ export function ManageColumn(props: ManageColumnProps) {
             <button
               type={'button'}
               className={'btn btn-outline btn-error btn-sm'}
-              disabled={!userContext.isUserAdmin()}
+              disabled={!userContext.isUserPermitted(props.deleteRole ?? Role.ADMIN)}
               onClick={async () => {
                 fetch(`/api/workspaces/${workspaceId}/${props.entity}/${props.id}`, {
                   method: 'DELETE',

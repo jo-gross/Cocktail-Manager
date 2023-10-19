@@ -119,7 +119,9 @@ export function IngredientForm(props: IngredientFormProps) {
                   <label className={'label'}>
                     <span className={'label-text'}>Name</span>
                     <span className={'label-text-alt text-error space-x-2'}>
-                      <span>{errors.name && touched.name && errors.name}</span>
+                      <span>
+                        <>{errors.name && touched.name && errors.name}</>
+                      </span>
                       <span>*</span>
                     </span>
                   </label>
@@ -137,7 +139,9 @@ export function IngredientForm(props: IngredientFormProps) {
                   <label className={'label'}>
                     <span className={'label-text'}>Abkürzung</span>
                     <span className={'label-text-alt text-error space-x-2'}>
-                      <span>{errors.shortName && touched.shortName && errors.shortName}</span>
+                      <span>
+                        <>{errors.shortName && touched.shortName && errors.shortName}</>
+                      </span>
                     </span>
                   </label>
                   <input
@@ -155,7 +159,9 @@ export function IngredientForm(props: IngredientFormProps) {
                   <label className={'label'}>
                     <span className={'label-text'}>Preis</span>
                     <span className={'label-text-alt text-error space-x-2'}>
-                      <span>{errors.price && touched.price && errors.price}</span>
+                      <span>
+                        <>{errors.price && touched.price && errors.price}</>
+                      </span>
                       <span>*</span>
                     </span>
                   </label>
@@ -176,7 +182,9 @@ export function IngredientForm(props: IngredientFormProps) {
                   <label className={'label'}>
                     <span className={'label-text'}>Menge</span>
                     <span className={'label-text-alt text-error space-x-2'}>
-                      <span>{errors.volume && touched.volume && errors.volume}</span>
+                      <span>
+                        <>{errors.volume && touched.volume && errors.volume}</>
+                      </span>
                       <span>*</span>
                     </span>
                   </label>
@@ -211,7 +219,9 @@ export function IngredientForm(props: IngredientFormProps) {
                 <div>
                   <label className={'label'}>
                     <span className={'label-text'}>Tags</span>
-                    <span className={'text-error label-text-alt'}>{errors.tags && touched.tags && errors.tags}</span>
+                    <span className={'text-error label-text-alt'}>
+                      <>{errors.tags && touched.tags && errors.tags}</>
+                    </span>
                   </label>
                   <TagsInput
                     value={values.tags}
@@ -262,7 +272,9 @@ export function IngredientForm(props: IngredientFormProps) {
                   <label className={'label'}>
                     <span className={'label-text'}>Link</span>
                     <span className={'label-text-alt text-error space-x-2'}>
-                      <span>{errors.link && touched.link && errors.link}</span>
+                      <span>
+                        <>{errors.link && touched.link && errors.link}</>
+                      </span>
                     </span>
                   </label>
                   <div className={'input-group'}>
@@ -285,8 +297,8 @@ export function IngredientForm(props: IngredientFormProps) {
                           values.link.includes('metro.de')
                         )
                       }
-                      onClick={() => {
-                        setFieldValue('fetchingExternalData', true);
+                      onClick={async () => {
+                        await setFieldValue('fetchingExternalData', true);
                         fetch(`/api/scraper/ingredient?url=${values.link}`)
                           .then((response) => {
                             if (response.ok) {

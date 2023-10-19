@@ -21,6 +21,8 @@ WORKDIR /app
 
 ENV NODE_ENV production
 
+RUN yarn add sharp
+
 COPY --from=build /app/public ./public
 COPY --from=build /app/package.json ./package.json
 COPY --from=build /app/.next/standalone ./
@@ -28,7 +30,6 @@ COPY --from=build /app/.next/static ./.next/static
 COPY schema.prisma ./prisma/schema.prisma
 
 EXPOSE 3000
-
 ENV PORT 3000
 
 CMD ["node", "server.js"]

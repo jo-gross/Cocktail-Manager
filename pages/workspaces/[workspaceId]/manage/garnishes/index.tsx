@@ -1,4 +1,4 @@
-import { Garnish } from '@prisma/client';
+import { Garnish, Role } from '@prisma/client';
 import Link from 'next/link';
 import { ManageEntityLayout } from '../../../../../components/layout/ManageEntityLayout';
 import { ManageColumn } from '../../../../../components/ManageColumn';
@@ -44,7 +44,7 @@ export default function ManageGlassesOverviewPage() {
       title={'Garnituren'}
       backLink={`/workspaces/${workspaceId}/manage`}
       actions={
-        userContext.isUserManager() ? (
+        userContext.isUserPermitted(Role.MANAGER) ? (
           <Link href={`/workspaces/${workspaceId}/manage/garnishes/create`}>
             <div className={'btn btn-primary'}>Hinzufügen</div>
           </Link>

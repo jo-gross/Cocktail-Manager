@@ -1,4 +1,4 @@
-import { Glass } from '@prisma/client';
+import { Glass, Role } from '@prisma/client';
 import Link from 'next/link';
 import { ManageEntityLayout } from '../../../../../components/layout/ManageEntityLayout';
 import { ManageColumn } from '../../../../../components/ManageColumn';
@@ -46,7 +46,7 @@ export default function ManageGlassesOverviewPage() {
       backLink={`/workspaces/${workspaceId}/manage`}
       title={'Gläser'}
       actions={
-        userContext.isUserManager() ? (
+        userContext.isUserPermitted(Role.MANAGER) ? (
           <Link href={`/workspaces/${workspaceId}/manage/glasses/create`}>
             <div className={'btn btn-primary btn-sm'}>Hinzufügen</div>
           </Link>

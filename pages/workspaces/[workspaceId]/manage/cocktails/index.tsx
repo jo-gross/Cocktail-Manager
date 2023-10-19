@@ -1,4 +1,4 @@
-import { CocktailRecipe } from '@prisma/client';
+import { CocktailRecipe, Role } from '@prisma/client';
 import Link from 'next/link';
 import { ManageEntityLayout } from '../../../../../components/layout/ManageEntityLayout';
 import { ManageColumn } from '../../../../../components/ManageColumn';
@@ -45,7 +45,7 @@ export default function CocktailsOverviewPage() {
       backLink={`/workspaces/${workspaceId}/manage`}
       title={'Cocktails'}
       actions={
-        userContext.isUserManager() ? (
+        userContext.isUserPermitted(Role.MANAGER) ? (
           <Link href={`/workspaces/${workspaceId}/manage/cocktails/create`}>
             <div className={'btn btn-primary'}>Hinzufügen</div>
           </Link>

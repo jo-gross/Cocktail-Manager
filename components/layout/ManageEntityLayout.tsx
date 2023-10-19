@@ -16,17 +16,17 @@ export function ManageEntityLayout(props: ManageEntityLayoutProps) {
       <Head>
         <>
           {typeof props.title === 'string' ? (
-            <title>{props.title} - The Cocktail-Manager</title>
+            <title>{`${props.title} - The Cocktail-Manager`}</title>
           ) : (
             <title>The Cocktail-Manager</title>
           )}
         </>
       </Head>
       <div className={'flex flex-col md:p-4 p-1 print:p-1'}>
-        <div className={'grid grid-cols-3 w-full justify-center items-center justify-items-center'}>
-          <div className={'col-span-1 justify-self-start'}>
+        <div className={'grid grid-cols-3 print:grid-cols-1 w-full justify-center items-center justify-items-center'}>
+          <div className={'col-span-1 justify-self-start print:hidden'}>
             <Link href={props.backLink}>
-              <div className={'btn btn-primary btn-square rounded-xl print:hidden'}>
+              <div className={'btn btn-primary btn-square rounded-xl'}>
                 <FaArrowLeft />
               </div>
             </Link>

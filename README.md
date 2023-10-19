@@ -1,4 +1,12 @@
-# Fullstack Authentication Example with Next.js and NextAuth.js
+# Cocktail-Manager
 
-This is the starter project for the fullstack tutorial with Next.js and Prisma. You can find the final version of this
-project in the [`final`](https://github.com/prisma/blogr-nextjs-prisma/tree/final) branch of this repo.
+## Build local for docker
+Build image
+```bash
+docker-compose -f docker-compose.yaml build
+```
+
+Push to local registry
+```bash
+docker push 10.200.16.1:8881/cocktails/cocktail-recipe-cocktails:latest
+```
