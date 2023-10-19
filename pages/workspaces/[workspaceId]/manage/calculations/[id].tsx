@@ -1,6 +1,5 @@
 import { ManageEntityLayout } from '../../../../../components/layout/ManageEntityLayout';
 import React, { useCallback, useContext, useEffect, useState } from 'react';
-import { UserContext } from '../../../../../lib/context/UserContextProvider';
 import { useRouter } from 'next/router';
 import { CocktailRecipeFull } from '../../../../../models/CocktailRecipeFull';
 import { FaPencilAlt, FaPrint, FaTrashAlt } from 'react-icons/fa';
@@ -30,7 +29,6 @@ interface GarnishCalculationItem {
 }
 
 export default function CalculationPage() {
-  const userContext = useContext(UserContext);
   const modalContext = useContext(ModalContext);
 
   const router = useRouter();
@@ -139,7 +137,7 @@ export default function CalculationPage() {
       item.cocktail.garnishes.forEach((garnish) => {
         let existingItem = calculationItems.find((calculationItem) => calculationItem.garnish.id == garnish.garnishId);
         if (existingItem) {
-          existingItem.amount += 1;
+          existingItem.amount += item.plannedAmount;
           calculationItems = [
             ...calculationItems.filter((item) => item.garnish.id != existingItem?.garnish.id),
             existingItem,
@@ -147,7 +145,7 @@ export default function CalculationPage() {
         } else {
           calculationItems.push({
             garnish: garnish.garnish,
-            amount: 1,
+            amount: item.plannedAmount,
           });
         }
       });
@@ -237,7 +235,7 @@ export default function CalculationPage() {
         defaultValue={calculationName}
       />,
     );
-  }, [modalContext]);
+  }, [calculationName, modalContext]);
 
   return (
     <ManageEntityLayout
@@ -249,7 +247,9 @@ export default function CalculationPage() {
           <div className={'flex flex-row'}>
             <span>{calculationName}</span>
             <div
-              className={'btn btn-xs btn-outline btn-circle btn-info border flex items-center justify-center'}
+              className={
+                'btn btn-xs btn-outline btn-circle btn-info border flex items-center justify-center print:hidden'
+              }
               onClick={openNameModal}
             >
               <FaPencilAlt />
@@ -303,7 +303,11 @@ export default function CalculationPage() {
                             className={'btn btn-sm btn-primary'}
                             onClick={() =>
                               modalContext.openModal(
-                                <SearchModal onCocktailSelected={(id) => addCocktailToSelection(id)}></SearchModal>,
+                                <SearchModal
+                                  onCocktailSelected={(id) => {
+                                    addCocktailToSelection(id);
+                                  }}
+                                ></SearchModal>,
                               )
                             }
                           >
@@ -517,10 +521,10 @@ export default function CalculationPage() {
                     <tbody>
                       {garnishCalculationItems
                         .sort((a, b) => a.garnish.name.localeCompare(b.garnish.name))
-                        .map((ingredientCalculation) => (
-                          <tr key={'garnishCalculation-' + ingredientCalculation.garnish.id}>
-                            <td>{ingredientCalculation.garnish.name}</td>
-                            <td>{ingredientCalculation.amount.toPrecision(1)}</td>
+                        .map((garnishCalculationItem) => (
+                          <tr key={'garnishCalculation-' + garnishCalculationItem.garnish.id}>
+                            <td>{garnishCalculationItem.garnish.name}</td>
+                            <td>{garnishCalculationItem.amount.toFixed(0)}</td>
                           </tr>
                         ))}
                     </tbody>

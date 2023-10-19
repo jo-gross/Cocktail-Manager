@@ -28,7 +28,7 @@ export default function ThemeChanger() {
     toggleTheme();
   }, [autoTheme, toggleTheme]);
 
-  const onBrowserThemeChanged = useCallback((callback) => {
+  const onBrowserThemeChanged = useCallback((callback: (theme: string) => void) => {
     const mql = window.matchMedia('(prefers-color-scheme: dark)');
     const mqlListener = (e: MediaQueryListEvent) => callback(e.matches ? 'halloween' : 'autumn');
     mql && mql.addListener(mqlListener);

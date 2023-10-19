@@ -1,4 +1,4 @@
-import { Ingredient } from '@prisma/client';
+import { Ingredient, Role } from '@prisma/client';
 import Link from 'next/link';
 import { ManageEntityLayout } from '../../../../../components/layout/ManageEntityLayout';
 import React, { useCallback, useContext, useEffect, useState } from 'react';
@@ -46,7 +46,7 @@ export default function IngredientsOverviewPage() {
       title={'Zutaten'}
       backLink={`/workspaces/${workspaceId}/manage`}
       actions={
-        userContext.isUserManager() ? (
+        userContext.isUserPermitted(Role.MANAGER) ? (
           <Link href={`/workspaces/${workspaceId}/manage/ingredients/create`}>
             <div className={'btn btn-primary'}>Hinzufügen</div>
           </Link>

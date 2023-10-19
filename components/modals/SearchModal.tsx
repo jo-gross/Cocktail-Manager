@@ -23,7 +23,7 @@ export function SearchModal(props: SearchModalProps) {
   const [isLoading, setLoading] = useState(false);
 
   const fetchCocktails = useCallback(
-    (search) => {
+    (search: string) => {
       if (!workspaceId) return;
       setSearch(search);
       setLoading(true);
@@ -57,6 +57,7 @@ export function SearchModal(props: SearchModalProps) {
         <input
           className={'w-full input input-bordered'}
           value={search}
+          autoFocus={true}
           onChange={(e) => fetchCocktails(e.target.value)}
         />
         <span className={'btn btn-outline btn-primary'}>

@@ -1,6 +1,6 @@
 import { AppProps } from 'next/app';
 import '../styles/global.css';
-import { useState } from 'react';
+import { useReducer, useState } from 'react';
 import { ModalContext } from '../lib/context/ModalContextProvider';
 import { AlertBoundary } from '../components/layout/AlertBoundary';
 import { SessionProvider } from 'next-auth/react';
@@ -11,23 +11,27 @@ import Head from 'next/head';
 const App = ({ Component, pageProps: { session, ...pageProps } }: AppProps) => {
   const [modalContent, setModalContent] = useState(<></>);
 
+  const [, forceUpdate] = useReducer((x) => x + 1, 0);
+
   return (
     <SessionProvider session={session}>
       <AlertBoundary>
         <ModalContext.Provider
           value={{
             content: modalContent,
-            openModal: (content) => {
+            openModal: async (content) => {
               if ((document.getElementById('globalModal') as any)?.checked == false) {
-                document.getElementById('globalModal')?.click();
+                (document.querySelector('#globalModal') as any).checked = true;
               }
+              // The await has the effect in chrome, that the modal was not replaces otherwise
+              await setModalContent(<></>);
               setModalContent(content);
             },
-            closeModal() {
+            async closeModal() {
               if ((document.getElementById('globalModal') as HTMLInputElement | null)?.checked == true) {
-                document.getElementById('globalModal')?.click();
+                (document.querySelector('#globalModal') as any).checked = false;
               }
-              setModalContent(<></>);
+              forceUpdate();
             },
           }}
         >

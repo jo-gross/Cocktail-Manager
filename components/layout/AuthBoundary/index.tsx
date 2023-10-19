@@ -33,12 +33,13 @@ export function AuthBoundary(props: AlertBoundaryProps) {
         if (response.ok) {
           setUser(body.data);
         } else {
-          console.log('AuthBoundary -> fetchUser', response, body);
           alertService.error(body.message, response.status, response.statusText);
+          await signOut();
         }
       })
-      .catch((err) => {
+      .catch(async (err) => {
         alertService.error(err.message);
+        await signOut();
       })
       .finally(async () => {
         setUserLoading(false);
@@ -46,13 +47,11 @@ export function AuthBoundary(props: AlertBoundaryProps) {
   }, []);
 
   useEffect(() => {
-    if (session.data?.user) {
+    if (session.data?.user != undefined && session.data?.user?.email != user?.email && !userLoading) {
       setUserLoading(true);
       fetchUser();
     }
-    // to avoid infinite loop
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session]);
+  }, [fetchUser, session.data?.user, user?.email, userLoading]);
 
   const fetchWorkspace = useCallback(() => {
     if (router.query.workspaceId && router.query.workspaceId != workspace?.id) {
@@ -88,15 +87,27 @@ export function AuthBoundary(props: AlertBoundaryProps) {
           refreshWorkspace: fetchWorkspace,
           refreshUser: fetchUser,
           workspaceRefreshing: workspaceLoading,
-          isUserAdmin: () => {
+
+          isUserPermitted: (role: Role) => {
             const userRole = workspace?.users.find((u) => u.userId == user?.id)?.role;
             if (!userRole) return false;
-            return Array.from([Role.ADMIN, Role.OWNER]).some((item) => item == userRole);
-          },
-          isUserManager: () => {
-            const userRole = workspace?.users.find((u) => u.userId == user?.id)?.role;
-            if (!userRole) return false;
-            return Array.from([Role.ADMIN, Role.MANAGER, Role.OWNER]).some((item) => item == userRole);
+
+            switch (userRole) {
+              case Role.USER:
+                const userRoles: Role[] = [Role.USER];
+                return userRoles.includes(role);
+              case Role.MANAGER:
+                const managerRoles: Role[] = [Role.MANAGER, Role.USER];
+                return managerRoles.includes(role);
+              case Role.ADMIN:
+                const adminRoles: Role[] = [Role.ADMIN, Role.MANAGER, Role.USER];
+                return adminRoles.includes(role);
+              case Role.OWNER:
+                const ownerRoles: Role[] = [Role.OWNER, Role.ADMIN, Role.MANAGER, Role.USER];
+                return ownerRoles.includes(role);
+              default:
+                return false;
+            }
           },
           updateUserSetting: (setting: string, value: string | null) => {
             fetch(`/api/users/settings`, {

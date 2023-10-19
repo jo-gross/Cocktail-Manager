@@ -146,9 +146,7 @@ export default function OverviewPage() {
   return (
     <>
       <Head>
-        <title>
-          {selectedCard?.name ?? 'Cocktailkarte'} - {userContext.workspace?.name ?? 'Cocktailkarte'}
-        </title>
+        <title>{`${selectedCard?.name ?? 'Cocktailkarte'} - ${userContext.workspace?.name ?? 'Cocktailkarte'}`}</title>
       </Head>
 
       <div className={'static h-screen'}>

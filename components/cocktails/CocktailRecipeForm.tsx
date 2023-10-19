@@ -349,7 +349,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                     <label className={'label'}>
                       <span className={'label-text'}>Name</span>
                       <span className={'text-error label-text-alt'}>
-                        {errors.name && touched.name && errors.name} *
+                        <>{errors.name && touched.name && errors.name}</> *
                       </span>
                     </label>
                     <input
@@ -365,7 +365,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                     <label className={'label'}>
                       <span className={'label-text'}>Beschreibung</span>
                       <span className={'text-error label-text-alt'}>
-                        {errors.description && touched.description && errors.description}
+                        <>{errors.description && touched.description && errors.description}</>
                       </span>
                     </label>
                     <textarea
@@ -382,7 +382,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                     <label className={'label'}>
                       <span className={'label-text'}>Preis</span>
                       <span className={'text-error label-text-alt'}>
-                        {errors.price && touched.price && errors.price} *
+                        <>{errors.price && touched.price && errors.price}</> *
                       </span>
                     </label>
                     <div className={'input-group w-full'}>
@@ -402,7 +402,9 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                   <div>
                     <label className={'label'}>
                       <span className={'label-text'}>Tags</span>
-                      <span className={'text-error label-text-alt'}>{errors.tags && touched.tags && errors.tags}</span>
+                      <span className={'text-error label-text-alt'}>
+                        <>{errors.tags && touched.tags && errors.tags}</>
+                      </span>
                     </label>
                     <TagsInput
                       value={values.tags}
@@ -423,7 +425,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                     <label className={'label'}>
                       <span className={'label-text'}>Glas</span>
                       <span className={'text-error label-text-alt'}>
-                        {errors.glassId && touched.glassId && errors.glassId} *
+                        <>{errors.glassId && touched.glassId && errors.glassId}</> *
                       </span>
                     </label>
                     <select
@@ -459,7 +461,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                     <label className={'label'}>
                       <span className={'label-text'}>Glas mit Eis</span>
                       <span className={'text-error label-text-alt'}>
-                        {errors.glassWithIce && touched.glassWithIce && errors.glassWithIce}
+                        <>{errors.glassWithIce && touched.glassWithIce && errors.glassWithIce}</>
                       </span>
                     </label>
                     <select
@@ -492,7 +494,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                       <UploadDropZone
                         onSelectedFilesChanged={async (file) => {
                           if (file != undefined) {
-                            setFieldValue('image', await convertToBase64(file));
+                            await setFieldValue('image', await convertToBase64(file));
                           } else {
                             alertService.error('Datei konnte nicht ausgewählt werden.');
                           }

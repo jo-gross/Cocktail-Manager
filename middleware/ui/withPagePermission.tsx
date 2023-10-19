@@ -17,10 +17,9 @@ export const withPagePermission = <P extends object>(
       if (router.query.workspaceId == undefined) return;
       if (userContext.user == undefined) return;
       if (userContext.workspaceRefreshing) return;
-      console.log(router.query.workspaceId);
-      if (roles.includes(Role.ADMIN) && userContext.isUserAdmin()) {
+      if (roles.includes(Role.ADMIN) && userContext.isUserPermitted(Role.ADMIN)) {
         return;
-      } else if (roles.includes(Role.MANAGER) && userContext.isUserManager()) {
+      } else if (roles.includes(Role.MANAGER) && userContext.isUserPermitted(Role.MANAGER)) {
         return;
       } else if (roles.includes(Role.USER)) {
         return;

@@ -129,7 +129,7 @@ export default function WorkspaceSettingPage() {
                   <th>Email</th>
                   <th>Rolle</th>
                   <th className={'flex justify-end'}>
-                    {userContext.isUserAdmin() && (
+                    {userContext.isUserPermitted(Role.ADMIN) && (
                       <button
                         className={'btn btn-primary btn-outline btn-sm'}
                         onClick={() => {
@@ -153,7 +153,7 @@ export default function WorkspaceSettingPage() {
                     </td>
                     <td>{workspaceUser.user.email}</td>
                     <td>
-                      {userContext.isUserAdmin() ? (
+                      {userContext.isUserPermitted(Role.ADMIN) ? (
                         <select
                           disabled={workspaceUser.user.id == userContext.user?.id || workspaceUser.role == Role.OWNER}
                           value={workspaceUser.role}
@@ -186,7 +186,7 @@ export default function WorkspaceSettingPage() {
                       )}
                     </td>
                     <td className={'flex justify-end'}>
-                      {userContext.isUserAdmin() ? (
+                      {userContext.isUserPermitted(Role.ADMIN) ? (
                         <button
                           className={'btn btn-error btn-sm ml-2'}
                           disabled={workspaceUser.role == Role.OWNER}
@@ -236,7 +236,7 @@ export default function WorkspaceSettingPage() {
             </table>
           </div>
         </div>
-        {userContext.isUserAdmin() ? (
+        {userContext.isUserPermitted(Role.ADMIN) ? (
           <div className={'card'}>
             <div className={'card-body'}>
               <div className={'card-title'}>Daten Transfer</div>
@@ -266,7 +266,7 @@ export default function WorkspaceSettingPage() {
         ) : (
           <></>
         )}
-        {userContext.isUserAdmin() ? (
+        {userContext.isUserPermitted(Role.ADMIN) ? (
           <div className={'col-span-1'}>
             <div className={'card'}>
               <div className={'card-body'}>

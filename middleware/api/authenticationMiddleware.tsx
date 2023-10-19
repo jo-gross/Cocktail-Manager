@@ -1,20 +1,21 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import prisma from '../../lib/prisma';
 import { Role, User, Workspace, WorkspaceUser } from '@prisma/client';
-import { getSession } from 'next-auth/react';
 import { constants as HttpStatus } from 'http2';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '../../pages/api/auth/[...nextauth]';
 
 export function withAuthentication(fn: (fnReq: NextApiRequest, fnRes: NextApiResponse, fnUser: User) => void) {
   return async (req: NextApiRequest, res: NextApiResponse) => {
-    const session = await getSession({ req });
+    const serverSession = await getServerSession(req, res, authOptions);
 
-    if (session == null) {
+    if (serverSession == null) {
       return res.status(HttpStatus.HTTP_STATUS_UNAUTHORIZED).json({ message: 'not authenticated' });
     }
 
     const userResult = await prisma.user.findUnique({
       where: {
-        id: session.user?.id,
+        id: serverSession.user?.id,
       },
     });
     if (userResult == null) {

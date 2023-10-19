@@ -7,6 +7,7 @@ import { useRouter } from 'next/router';
 import { alertService } from '../../../../../lib/alertService';
 import { UserContext } from '../../../../../lib/context/UserContextProvider';
 import { CocktailCalculationOverview } from '../../../../../models/CocktailCalculationOverview';
+import { Role } from '@prisma/client';
 
 export default function CocktailCalculationOverviewPage() {
   const router = useRouter();
@@ -91,6 +92,8 @@ export default function CocktailCalculationOverviewPage() {
                           entity={'calculations'}
                           id={cocktailCalculation.id}
                           onRefresh={refreshCocktailCalculations}
+                          editRole={Role.USER}
+                          deleteRole={Role.ADMIN}
                         />
                       </tr>
                     ))

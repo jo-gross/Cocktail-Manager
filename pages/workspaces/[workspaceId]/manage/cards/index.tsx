@@ -7,6 +7,7 @@ import { Loading } from '../../../../../components/Loading';
 import { useRouter } from 'next/router';
 import { alertService } from '../../../../../lib/alertService';
 import { UserContext } from '../../../../../lib/context/UserContextProvider';
+import { Role } from '@prisma/client';
 
 export default function CardsOverviewPage() {
   const router = useRouter();
@@ -40,7 +41,7 @@ export default function CardsOverviewPage() {
       backLink={`/workspaces/${workspaceId}/manage`}
       title={'Karten'}
       actions={
-        userContext.isUserManager() ? (
+        userContext.isUserPermitted(Role.MANAGER) ? (
           <Link href={`/workspaces/${workspaceId}/manage/cards/create`}>
             <div className={'btn btn-primary'}>Hinzufügen</div>
           </Link>
@@ -66,7 +67,7 @@ export default function CardsOverviewPage() {
                     <div>{card.groups?.reduce((acc, group) => acc + group.items.length, 0)} Cocktails</div>
                   </div>
                   <>
-                    {userContext.isUserManager() && (
+                    {userContext.isUserPermitted(Role.MANAGER) && (
                       <div className="card-actions justify-end">
                         <Link href={`/workspaces/${workspaceId}/manage/cards/${card.id}`}>
                           <div className="btn btn-primary">
