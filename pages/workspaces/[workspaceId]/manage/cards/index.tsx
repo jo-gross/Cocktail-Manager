@@ -1,8 +1,8 @@
 import { ManageEntityLayout } from '../../../../../components/layout/ManageEntityLayout';
-import { FaRegEdit } from 'react-icons/fa';
+import { FaPlus, FaRegEdit } from 'react-icons/fa';
 import Link from 'next/link';
 import { CocktailCardFull } from '../../../../../models/CocktailCardFull';
-import { useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { Loading } from '../../../../../components/Loading';
 import { useRouter } from 'next/router';
 import { alertService } from '../../../../../lib/alertService';
@@ -43,7 +43,9 @@ export default function CardsOverviewPage() {
       actions={
         userContext.isUserPermitted(Role.MANAGER) ? (
           <Link href={`/workspaces/${workspaceId}/manage/cards/create`}>
-            <div className={'btn btn-primary'}>Hinzufügen</div>
+            <div className={'btn btn-primary btn-square md:btn-md btn-sm'}>
+              <FaPlus />
+            </div>
           </Link>
         ) : undefined
       }

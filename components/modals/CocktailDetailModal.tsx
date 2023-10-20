@@ -96,8 +96,7 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                       <div className={'flex-1'}>
                         <div className={'flex flex-row space-x-2'}>
                           <div className={'font-bold'}>
-                            {ingredient.amount}
-                            {ingredient.unit}
+                            {ingredient.amount} {ingredient.unit}
                           </div>
                           <span>{ingredient.ingredient?.name}</span>
                           {ingredient.ingredient?.image != undefined ? (

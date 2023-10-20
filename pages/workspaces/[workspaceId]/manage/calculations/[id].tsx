@@ -288,12 +288,16 @@ export default function CalculationPage() {
         )
       }
       actions={[
-        <div key={'print-calculation'} className={'btn btn-outline btn-square'} onClick={() => window.print()}>
+        <div
+          key={'print-calculation'}
+          className={'btn btn-outline btn-square md:btn-md btn-sm'}
+          onClick={() => window.print()}
+        >
           <FaPrint />
         </div>,
         <div
           key={'save-calculation'}
-          className={'btn btn-primary'}
+          className={'btn btn-primary md:btn-md btn-sm'}
           onClick={() => {
             if (id == 'create' && calculationName.trim() == '') {
               openNameModal();

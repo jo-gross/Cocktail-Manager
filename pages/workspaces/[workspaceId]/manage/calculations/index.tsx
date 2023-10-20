@@ -8,6 +8,7 @@ import { alertService } from '../../../../../lib/alertService';
 import { UserContext } from '../../../../../lib/context/UserContextProvider';
 import { CocktailCalculationOverview } from '../../../../../models/CocktailCalculationOverview';
 import { Role } from '@prisma/client';
+import { FaPlus } from 'react-icons/fa';
 
 export default function CocktailCalculationOverviewPage() {
   const router = useRouter();
@@ -46,7 +47,9 @@ export default function CocktailCalculationOverviewPage() {
       title={'Kalkulationen'}
       actions={
         <Link href={`/workspaces/${workspaceId}/manage/calculations/create`}>
-          <div className={'btn btn-primary'}>Erstellen</div>
+          <div className={'btn btn-primary btn-square md:btn-md btn-sm'}>
+            <FaPlus />
+          </div>
         </Link>
       }
     >

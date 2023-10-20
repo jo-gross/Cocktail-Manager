@@ -36,7 +36,7 @@ export function ManageEntityLayout(props: ManageEntityLayoutProps) {
         <div className={'grid grid-cols-3 print:grid-cols-1 w-full justify-center items-center justify-items-center'}>
           <div className={'col-span-1 justify-self-start print:hidden'}>
             <div
-              className={'btn btn-primary btn-square rounded-xl'}
+              className={'btn btn-primary btn-square md:btn-md btn-sm '}
               onClick={() => {
                 props.unsavedChanges ?? false
                   ? modalContext.openModal(

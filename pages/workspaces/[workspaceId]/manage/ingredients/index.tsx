@@ -4,7 +4,7 @@ import { ManageEntityLayout } from '../../../../../components/layout/ManageEntit
 import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { Loading } from '../../../../../components/Loading';
-import { FaCheck, FaTimes } from 'react-icons/fa';
+import { FaCheck, FaPlus, FaTimes } from 'react-icons/fa';
 import { ManageColumn } from '../../../../../components/ManageColumn';
 import { alertService } from '../../../../../lib/alertService';
 import { UserContext } from '../../../../../lib/context/UserContextProvider';
@@ -48,7 +48,9 @@ export default function IngredientsOverviewPage() {
       actions={
         userContext.isUserPermitted(Role.MANAGER) ? (
           <Link href={`/workspaces/${workspaceId}/manage/ingredients/create`}>
-            <div className={'btn btn-primary'}>Hinzufügen</div>
+            <div className={'btn btn-primary btn-square md:btn-md btn-sm'}>
+              <FaPlus />
+            </div>
           </Link>
         ) : undefined
       }
@@ -101,11 +103,13 @@ export default function IngredientsOverviewPage() {
                           )}
                         </td>
                         <td>{ingredient.shortName}</td>
-                        <td>{ingredient.price} €</td>
-                        <td>
+                        <td className={'whitespace-nowrap'}>{ingredient.price} €</td>
+                        <td className={'whitespace-nowrap'}>
                           {ingredient.volume} {ingredient.unit}
                         </td>
-                        <td>{((ingredient.price ?? 0) / (ingredient.volume ?? 1)).toFixed(2)} €</td>
+                        <td className={'whitespace-nowrap'}>
+                          {((ingredient.price ?? 0) / (ingredient.volume ?? 1)).toFixed(2)} €
+                        </td>
                         <td>
                           {ingredient.tags.map((tag) => (
                             <div

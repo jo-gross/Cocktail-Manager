@@ -147,7 +147,7 @@ export default function WorkspaceSettingPage() {
               <tbody>
                 {workspaceUsers?.map((workspaceUser) => (
                   <tr key={workspaceUser.user.id}>
-                    <td>
+                    <td className={'whitespace-nowrap'}>
                       {workspaceUser.user.name}
                       {workspaceUser.user.id == userContext.user?.id ? ' (du)' : ''}
                     </td>
@@ -157,7 +157,7 @@ export default function WorkspaceSettingPage() {
                         <select
                           disabled={workspaceUser.user.id == userContext.user?.id || workspaceUser.role == Role.OWNER}
                           value={workspaceUser.role}
-                          className={'select select-bordered select-sm w-full max-w-xs'}
+                          className={'select select-bordered select-sm w-full max-w-xs min-w-fit'}
                           onChange={(event) => {
                             fetch(`/api/workspaces/${workspaceId}/users/${workspaceUser.userId}`, {
                               method: 'PUT',

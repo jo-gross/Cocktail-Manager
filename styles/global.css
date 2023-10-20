@@ -35,12 +35,26 @@
     @apply bg-red-700 text-white hover:bg-red-800 border-red-800;
 }
 
+/*
+Remove arrows from input field
+https://stackoverflow.com/a/74043438/12160393
+*/
+@layer base {
+    input[type='number']::-webkit-outer-spin-button,
+    input[type='number']::-webkit-inner-spin-button,
+    input[type='number'] {
+        -webkit-appearance: none;
+        margin: 0;
+        -moz-appearance: textfield !important;
+    }
+}
+
 @media print {
-    .card{
+    .card {
         @apply shadow-none border !important;
     }
 
-    .table{
+    .table {
         @apply border !important;
     }
 
