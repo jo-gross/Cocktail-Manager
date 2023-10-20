@@ -9,6 +9,7 @@ import { alertService } from '../../../../../lib/alertService';
 import { UserContext } from '../../../../../lib/context/UserContextProvider';
 import Image from 'next/image';
 import DefaultGlassIcon from '../../../../../components/DefaultGlassIcon';
+import { FaPlus } from 'react-icons/fa';
 
 export default function ManageGlassesOverviewPage() {
   const router = useRouter();
@@ -48,7 +49,9 @@ export default function ManageGlassesOverviewPage() {
       actions={
         userContext.isUserPermitted(Role.MANAGER) ? (
           <Link href={`/workspaces/${workspaceId}/manage/glasses/create`}>
-            <div className={'btn btn-primary btn-sm'}>Hinzufügen</div>
+            <div className={'btn btn-primary btn-square md:btn-md btn-sm'}>
+              <FaPlus />
+            </div>
           </Link>
         ) : undefined
       }

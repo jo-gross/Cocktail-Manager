@@ -8,6 +8,7 @@ import { useRouter } from 'next/router';
 import { alertService } from '../../../../../lib/alertService';
 import { UserContext } from '../../../../../lib/context/UserContextProvider';
 import AvatarImage from '../../../../../components/AvatarImage';
+import { FaPlus } from 'react-icons/fa';
 
 export default function CocktailsOverviewPage() {
   const router = useRouter();
@@ -47,7 +48,9 @@ export default function CocktailsOverviewPage() {
       actions={
         userContext.isUserPermitted(Role.MANAGER) ? (
           <Link href={`/workspaces/${workspaceId}/manage/cocktails/create`}>
-            <div className={'btn btn-primary'}>Hinzufügen</div>
+            <div className={'btn btn-primary btn-square md:btn-md btn-sm'}>
+              <FaPlus />
+            </div>
           </Link>
         ) : undefined
       }
@@ -81,7 +84,7 @@ export default function CocktailsOverviewPage() {
                   cocktailRecipes
                     .sort((a, b) => a.name.localeCompare(b.name))
                     .map((cocktailRecipe) => (
-                      <tr key={cocktailRecipe.id}>
+                      <tr key={cocktailRecipe.id} className={''}>
                         <td>
                           {cocktailRecipe.image ? (
                             <div className="flex items-center space-x-3">
@@ -94,8 +97,10 @@ export default function CocktailsOverviewPage() {
                             <>{cocktailRecipe.name}</>
                           )}
                         </td>
-                        <td>{cocktailRecipe.price} €</td>
-                        <td className={'space-x-2'}>
+                        <td className={''}>
+                          <span className={'whitespace-nowrap'}>{cocktailRecipe.price} €</span>
+                        </td>
+                        <td className={'flex gap-1 items-center'}>
                           {cocktailRecipe.tags.map((tag) => (
                             <div key={`cocktail-${cocktailRecipe.id}-tags-${tag}`} className={'badge badge-primary'}>
                               {tag}

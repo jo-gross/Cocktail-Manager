@@ -51,16 +51,16 @@ export function SearchModal(props: SearchModalProps) {
   );
 
   return (
-    <div className={'md:p-2 grid grid-cols-1 gap-2 w-fit'}>
-      <div className={'font-bold text-2xl'}>Cocktail suchen</div>
-      <div className={'input-group min-w-[32rem]'}>
+    <div className={'p-2 grid grid-cols-1 gap-2 w-full'}>
+      <div className={'font-bold text-2xl w-max'}>Cocktail suchen</div>
+      <div className={'input-group'}>
         <input
           className={'w-full input input-bordered'}
           value={search}
           autoFocus={true}
           onChange={(e) => fetchCocktails(e.target.value)}
         />
-        <span className={'btn btn-outline btn-primary'}>
+        <span className={'btn btn-outline btn-primary btn-square'}>
           <BsSearch />
         </span>
       </div>

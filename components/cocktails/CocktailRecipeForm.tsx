@@ -394,7 +394,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                       value={values.description}
                     />
                   </div>
-                  <div>
+                  <div className={'md:col-span-1 col-span-2'}>
                     <label className={'label'}>
                       <span className={'label-text'}>Preis</span>
                       <span className={'text-error label-text-alt'}>
@@ -415,7 +415,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                       </span>
                     </div>
                   </div>
-                  <div>
+                  <div className={'md:col-span-1 col-span-2'}>
                     <label className={'label'}>
                       <span className={'label-text'}>Tags</span>
                       <span className={'text-error label-text-alt'}>
@@ -539,7 +539,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                 </div>
               </div>
             </div>
-            <div>
+            <div className={'gap-4 flex flex-col'}>
               <div className={'card'}>
                 <div className={'card-body'}>
                   <div className={'text-2xl font-bold text-center'}>Vorschau</div>
@@ -598,7 +598,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                   />
                 </div>
               </div>
-              <div className={'p-4'}>
+              <div className={'md:flex hidden'}>
                 <button type="submit" className={`btn btn-primary w-full ${isSubmitting ?? 'loading'}`}>
                   {props.cocktailRecipe == undefined ? 'Erstellen' : 'Aktualisieren'}
                 </button>
@@ -706,9 +706,9 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                             'flex flex-col justify-between w-full space-y-2 border border-neutral rounded-xl p-4'
                           }
                         >
-                          <div className={'grid grid-cols-3 gap-4'}>
+                          <div className={'grid md:grid-cols-3 grid-cols-2 md:gap-4 gap-2 '}>
                             <div className={'font-bold'}>Schritt {indexStep + 1}</div>
-                            <div className={'form-control'}>
+                            <div className={'form-control md:order-2 order-3 md:col-span-1 col-span-2'}>
                               <label className={'label'}>
                                 <span className={'label-text'}>Andere</span>
                                 <input
@@ -789,7 +789,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                 {Object.entries(CocktailUtensil).map(([key, value]) => (
                                   <div
                                     key={`form-recipe-step-${step.id}-tool-${key}`}
-                                    className={'flex flex-col justify-center items-center space-y-2'}
+                                    className={'flex flex-col justify-end items-center space-y-2'}
                                   >
                                     {/*<img className={"h-20"}*/}
                                     {/*     src={"https://res.cloudinary.com/lusini/w_1500,h_1500,q_80,c_pad,f_auto/pim/7f30f8/bf7939/ff5def/23f663/419537/65/7f30f8bf7939ff5def23f66341953765.jpeg"} />*/}
@@ -863,11 +863,11 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                           </div>
                                           <div
                                             key={`form-recipe-step${step.id}-ingredient-${ingredient.id}`}
-                                            className={'input-group flex flex-row'}
+                                            className={'input-group flex flex-row w-full'}
                                           >
                                             <select
                                               name={`steps.${indexStep}.ingredients.${indexIngredient}.ingredientId`}
-                                              className={`select select-bordered flex-1 ${
+                                              className={`select select-bordered flex-8 w-full min-w-[20%] ${
                                                 ((errors.steps as StepError[])?.[indexStep] as any)?.ingredients?.[
                                                   indexIngredient
                                                 ]?.ingredientId && 'select-error'
@@ -908,14 +908,14 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                             <input
                                               type="number"
                                               name={`steps.${indexStep}.ingredients.${indexIngredient}.amount`}
-                                              className={'input input-bordered'}
+                                              className={'input input-bordered flex-auto md:w-40 w-20'}
                                               onChange={handleChange}
                                               onBlur={handleBlur}
                                               value={values.steps[indexStep].ingredients[indexIngredient].amount}
                                             />
                                             <select
                                               name={`steps.${indexStep}.ingredients.${indexIngredient}.unit`}
-                                              className={`select select-bordered ${
+                                              className={`select select-bordered md:max-w-none max-w-[20%] ${
                                                 ((errors.steps as StepError[])?.[indexStep] as any)?.ingredients?.[
                                                   indexIngredient
                                                 ]?.unit
@@ -938,7 +938,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                             </select>
                                             <button
                                               type={'button'}
-                                              className={'btn btn-error btn-square'}
+                                              className={'btn btn-error btn-square w-8'}
                                               disabled={values.steps[indexStep].ingredients.length == 1}
                                               onClick={() =>
                                                 modalContext.openModal(
@@ -1167,7 +1167,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                             />
                           </div>
                           <div
-                            className={'btn btn-error btn-sm'}
+                            className={'btn btn-error btn-sm btn-square'}
                             onClick={() =>
                               modalContext.openModal(
                                 <DeleteConfirmationModal
@@ -1205,6 +1205,11 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                   )}
                 </FieldArray>
               </div>
+            </div>
+            <div className={'md:hidden'}>
+              <button type="submit" className={`btn btn-primary w-full ${isSubmitting ?? 'loading'}`}>
+                {props.cocktailRecipe == undefined ? 'Erstellen' : 'Aktualisieren'}
+              </button>
             </div>
           </div>
         </form>
