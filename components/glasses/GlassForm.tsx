@@ -9,6 +9,7 @@ import { alertService } from '../../lib/alertService';
 import { Glass } from '@prisma/client';
 import { DeleteConfirmationModal } from '../modals/DeleteConfirmationModal';
 import { ModalContext } from '../../lib/context/ModalContextProvider';
+import _ from 'lodash';
 
 interface GlassFormProps {
   glass?: Glass;
@@ -85,9 +86,7 @@ export function GlassForm(props: GlassFormProps) {
         }
       }}
       validate={(values) => {
-        props.setUnsavedChanges?.(
-          originalValues && JSON.stringify(originalValues) != JSON.stringify(formRef?.current?.values),
-        );
+        props.setUnsavedChanges?.(originalValues && !_.isEqual(originalValues, formRef?.current?.values));
         const errors: any = {};
         if (!values.name) {
           errors.name = 'Required';

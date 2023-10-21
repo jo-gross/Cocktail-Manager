@@ -6,11 +6,13 @@ import { ManageEntityLayout } from '../../../../../components/layout/ManageEntit
 import { Role, User, WorkspaceUser } from '@prisma/client';
 import { UserContext } from '../../../../../lib/context/UserContextProvider';
 import { FaShareAlt } from 'react-icons/fa';
+import { DeleteConfirmationModal } from '../../../../../components/modals/DeleteConfirmationModal';
+import { ModalContext } from '../../../../../lib/context/ModalContextProvider';
 
 export default function WorkspaceSettingPage() {
   const router = useRouter();
-
   const userContext = useContext(UserContext);
+  const modalContext = useContext(ModalContext);
 
   const { workspaceId } = router.query;
 
@@ -290,7 +292,14 @@ export default function WorkspaceSettingPage() {
                   </button>
                 </div>
                 <div className={'divider'}></div>
-                <button className={'btn btn-outline btn-error'} onClick={handleDeleteWorkspace}>
+                <button
+                  className={'btn btn-outline btn-error'}
+                  onClick={() =>
+                    modalContext.openModal(
+                      <DeleteConfirmationModal onApprove={handleDeleteWorkspace} spelling={'DELETE'} />,
+                    )
+                  }
+                >
                   Workspace löschen
                 </button>
               </div>
