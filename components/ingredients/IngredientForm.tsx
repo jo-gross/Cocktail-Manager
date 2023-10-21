@@ -12,6 +12,7 @@ import { alertService } from '../../lib/alertService';
 import { DeleteConfirmationModal } from '../modals/DeleteConfirmationModal';
 import { ModalContext } from '../../lib/context/ModalContextProvider';
 import _ from 'lodash';
+import { compressFile } from '../../lib/ImageCompressor';
 
 interface IngredientFormProps {
   ingredient?: Ingredient;
@@ -266,7 +267,8 @@ export function IngredientForm(props: IngredientFormProps) {
                     <UploadDropZone
                       onSelectedFilesChanged={async (file) => {
                         if (file) {
-                          setFieldValue('image', await convertToBase64(file));
+                          const compressedImageFile = await compressFile(file);
+                          await setFieldValue('image', await convertToBase64(compressedImageFile));
                         } else {
                           alertService.error('Datei konnte nicht ausgewählt werden.');
                         }
