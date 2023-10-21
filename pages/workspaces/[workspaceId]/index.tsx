@@ -14,6 +14,7 @@ import { alertService } from '../../../lib/alertService';
 import ThemeChanger from '../../../components/ThemeChanger';
 import Head from 'next/head';
 import { UserContext } from '../../../lib/context/UserContextProvider';
+import SearchPage from './search';
 
 export default function OverviewPage() {
   const modalContext = useContext(ModalContext);
@@ -158,6 +159,8 @@ export default function OverviewPage() {
               <PageCenter>
                 <Loading />
               </PageCenter>
+            ) : selectedCardId == 'search' ? (
+              <SearchPage />
             ) : (selectedCard?.groups ?? []).length == 0 ? (
               <PageCenter>
                 <div className={'text-center'}>Keine Karte gefunden</div>
@@ -274,6 +277,24 @@ export default function OverviewPage() {
                   )}
                 </div>
                 <div className={'divider'}>Anzeige</div>
+                <label className="label">
+                  <div className={'label-text'}>Suche</div>
+                  <input
+                    name={'card-radio'}
+                    type={'radio'}
+                    className={'radio'}
+                    value={'search'}
+                    checked={selectedCardId == 'search'}
+                    readOnly={true}
+                    onClick={() => {
+                      setSelectedCardId('search');
+                      router.replace({
+                        pathname: '/workspaces/[workspaceId]',
+                        query: { card: 'search', workspaceId: workspaceId },
+                      });
+                    }}
+                  />
+                </label>
                 <div className="form-control">
                   <label className="label">
                     Bilder anzeigen

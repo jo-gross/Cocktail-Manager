@@ -18,6 +18,7 @@ import { alertService } from '../../lib/alertService';
 import { CocktailRecipeGarnishFull } from '../../models/CocktailRecipeGarnishFull';
 import { DeleteConfirmationModal } from '../modals/DeleteConfirmationModal';
 import { ModalContext } from '../../lib/context/ModalContextProvider';
+import _ from 'lodash';
 
 interface CocktailRecipeFormProps {
   cocktailRecipe?: CocktailRecipeFull;
@@ -193,9 +194,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
         showTags: false,
       }}
       validate={(values) => {
-        props.setUnsavedChanges?.(
-          originalValues && JSON.stringify(originalValues) != JSON.stringify(formRef?.current?.values),
-        );
+        props.setUnsavedChanges?.(originalValues && !_.isEqual(originalValues, formRef?.current?.values));
         const errors: any = {};
         if (!values.name || values.name.trim() == '') {
           errors.name = 'Required';

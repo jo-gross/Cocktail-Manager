@@ -10,13 +10,18 @@ import { alertService } from '../../lib/alertService';
 
 interface SearchModalProps {
   onCocktailSelected?: (id: string) => void;
+  onCocktailSelectedObject?: (cocktail: CocktailRecipeFull) => void;
   selectedCocktails?: string[];
+  selectionLabel?: string;
+  showRecipe?: boolean;
 }
 
 export function SearchModal(props: SearchModalProps) {
   const router = useRouter();
   const workspaceId = router.query.workspaceId as string | undefined;
   const modalContext = useContext(ModalContext);
+
+  const showRecipe = props.showRecipe ?? true;
 
   const [search, setSearch] = useState('');
   const [cocktails, setCocktails] = useState<CocktailRecipeFull[]>([]);
@@ -78,37 +83,59 @@ export function SearchModal(props: SearchModalProps) {
             <div
               key={'search-modal-' + cocktail.id}
               tabIndex={index}
-              className="collapse collapse-arrow border border-base-300 bg-base-100 rounded-box"
+              className={` ${
+                showRecipe ? 'collapse collapse-arrow' : ''
+              } border border-base-300 bg-base-100 rounded-box`}
             >
-              <input type="checkbox" />
-              <div className="collapse-title text-xl font-medium">{cocktail.name}</div>
-              <div className="collapse-content">
-                <div className={'card'}>
-                  <div className={'card-body'}>
-                    <ShowCocktailInfoButton showInfo={true} cocktailRecipe={cocktail} />
-                    <CompactCocktailRecipeInstruction showPrice={true} cocktailRecipe={cocktail} />
-                  </div>
-                </div>
-
-                {props.onCocktailSelected != undefined ? (
-                  <div className={'card-actions flex flex-row justify-end pt-2'}>
+              {showRecipe ? <input type="checkbox" /> : <></>}
+              <div className={`${showRecipe ? 'collapse-title' : 'p-2'} text-xl font-medium flex justify-between`}>
+                {cocktail.name}{' '}
+                {props.onCocktailSelected != undefined ||
+                  (props.onCocktailSelectedObject && (
                     <button
                       type="button"
                       disabled={props.selectedCocktails?.includes(cocktail.id) ?? false}
                       className={'btn btn-primary btn-sm'}
                       onClick={() => {
                         props.onCocktailSelected?.(cocktail.id);
+                        props.onCocktailSelectedObject?.(cocktail);
                         setSearch('');
                         modalContext.closeModal();
                       }}
                     >
-                      Hinzufügen
+                      {props.selectionLabel ?? 'Hinzufügen'}
                     </button>
-                  </div>
-                ) : (
-                  <></>
-                )}
+                  ))}
               </div>
+              {showRecipe && (
+                <div className="collapse-content">
+                  <div className={'card'}>
+                    <div className={'card-body'}>
+                      <ShowCocktailInfoButton showInfo={true} cocktailRecipe={cocktail} />
+                      <CompactCocktailRecipeInstruction showPrice={true} cocktailRecipe={cocktail} />
+                    </div>
+                  </div>
+
+                  {props.onCocktailSelected != undefined ||
+                    (props.onCocktailSelectedObject && (
+                      <div className={'card-actions flex flex-row justify-end pt-2'}>
+                        <button
+                          type="button"
+                          disabled={props.selectedCocktails?.includes(cocktail.id) ?? false}
+                          className={'btn btn-primary btn-sm'}
+                          onClick={() => {
+                            props.onCocktailSelected?.(cocktail.id);
+                            props.onCocktailSelectedObject?.(cocktail);
+                            setSearch('');
+                            modalContext.closeModal();
+                          }}
+                        >
+                          {props.selectionLabel ?? 'Hinzufügen'}
+                        </button>
+                      </div>
+                    ))}
+                </div>
+              )}
             </div>
           )) ?? <></>
         )}
