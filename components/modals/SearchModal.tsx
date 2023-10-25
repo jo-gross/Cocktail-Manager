@@ -1,6 +1,6 @@
 import { BsSearch } from 'react-icons/bs';
 import { CompactCocktailRecipeInstruction } from '../cocktails/CompactCocktailRecipeInstruction';
-import React, { useCallback, useContext, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { CocktailRecipeFull } from '../../models/CocktailRecipeFull';
 import { Loading } from '../Loading';
 import { ModalContext } from '../../lib/context/ModalContextProvider';
@@ -27,16 +27,23 @@ export function SearchModal(props: SearchModalProps) {
   const [cocktails, setCocktails] = useState<CocktailRecipeFull[]>([]);
   const [isLoading, setLoading] = useState(false);
 
+  let controller = new AbortController();
+
   const fetchCocktails = useCallback(
     (search: string) => {
       if (!workspaceId) return;
-      setSearch(search);
+      controller.abort(); // Vorherige Anfrage abbrechen
+      const newAbortController = new AbortController();
+      controller = newAbortController;
+
       setLoading(true);
       fetch(
         `/api/workspaces/${workspaceId}/cocktails?` +
           new URLSearchParams({
             search: search,
           }),
+
+        { signal: newAbortController.signal },
       )
         .then(async (response) => {
           const body = await response.json();
@@ -47,7 +54,11 @@ export function SearchModal(props: SearchModalProps) {
             alertService.error(body.message, response.status, response.statusText);
           }
         })
-        .catch((err) => alertService.error(err.message))
+        .catch((err) => {
+          if (err.name != 'AbortError') {
+            alertService.error(err.message);
+          }
+        })
         .finally(() => {
           setLoading(false);
         });
@@ -55,24 +66,32 @@ export function SearchModal(props: SearchModalProps) {
     [workspaceId],
   );
 
+  useEffect(() => {
+    if (workspaceId == undefined) return;
+    fetchCocktails('');
+  }, [fetchCocktails, workspaceId]);
+
   return (
     <div className={'p-2 grid grid-cols-1 gap-2 w-full'}>
       <div className={'font-bold text-2xl w-max'}>Cocktail suchen</div>
-      <div className={'input-group'}>
+      <div className={'input-group pb-2'}>
         <input
           className={'w-full input input-bordered'}
           value={search}
           autoFocus={true}
-          onChange={(e) => fetchCocktails(e.target.value)}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            if (e.target.value.trim().length != 0) {
+              fetchCocktails(e.target.value);
+            }
+          }}
         />
         <span className={'btn btn-outline btn-primary btn-square'}>
           <BsSearch />
         </span>
       </div>
       <>
-        {isLoading ? (
-          <Loading />
-        ) : cocktails.length == 0 ? (
+        {cocktails.length == 0 ? (
           search != '' ? (
             <div>Keine Einträge gefunden</div>
           ) : (
@@ -139,6 +158,7 @@ export function SearchModal(props: SearchModalProps) {
             </div>
           )) ?? <></>
         )}
+        {isLoading ? <Loading /> : <></>}
       </>
     </div>
   );

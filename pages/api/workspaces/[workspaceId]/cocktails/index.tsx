@@ -42,15 +42,16 @@ export default withHttpMethods({
         const result = cocktailRecipes.filter(
           (cocktail) =>
             cocktail.name.toLowerCase().includes(search) ||
-            cocktail.tags.some((tag) => tag.toLowerCase().includes(search)) ||
-            cocktail.garnishes.some((garnish) => garnish.garnish.name.toLowerCase().includes(search)) ||
+            (cocktail.tags.some((tag) => tag.toLowerCase().includes(search)) && search.length > 3) ||
+            (cocktail.garnishes.some((garnish) => garnish.garnish.name.toLowerCase().includes(search)) &&
+              search.length > 3) ||
             cocktail.steps.some((step) =>
               step.ingredients
                 .filter((ingredient) => ingredient.ingredient?.name != undefined)
                 .some(
                   (ingredient) =>
-                    ingredient.ingredient?.name.toLowerCase().includes(search) ||
-                    (ingredient.ingredient?.shortName ?? '').toLowerCase().includes(search),
+                    (ingredient.ingredient?.name.toLowerCase().includes(search) && search.length > 3) ||
+                    ((ingredient.ingredient?.shortName ?? '').toLowerCase().includes(search) && search.length > 3),
                 ),
             ),
         );
