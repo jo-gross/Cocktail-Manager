@@ -1,8 +1,0 @@
-include:
-  - project: 'HEKit/HEKservices/gitlab-ci'
-    file: '/gitlab-ci.yml'
-  - project: 'HEKit/HEKservices/gitlab-ci'
-    file: '/gitlab-ci-restore.yml'
-  - project: 'HEKit/HEKservices/hekdependency'
-    file: '.gitlab-ci.yml'
-

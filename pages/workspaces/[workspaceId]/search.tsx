@@ -7,7 +7,7 @@ export default function SearchPage() {
   const [selectedCocktail, setSelectedCocktail] = useState<CocktailRecipeFull | undefined>(undefined);
 
   return (
-    <div className={'flex flex-col-reverse md:flex-row gap-2 p-2'}>
+    <div className={'flex flex-col-reverse gap-2 p-2 md:flex-row'}>
       <div className={'card w-full flex-1'}>
         <div className={'card-body '}>
           <SearchModal

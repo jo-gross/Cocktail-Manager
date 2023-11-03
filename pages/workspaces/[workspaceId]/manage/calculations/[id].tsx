@@ -277,7 +277,7 @@ export default function CalculationPage() {
             <span>{calculationName}</span>
             <div
               className={
-                'btn btn-xs btn-outline btn-circle btn-info border flex items-center justify-center print:hidden'
+                'btn btn-circle btn-info btn-outline btn-xs flex items-center justify-center border print:hidden'
               }
               onClick={openNameModal}
             >
@@ -290,14 +290,14 @@ export default function CalculationPage() {
       actions={[
         <div
           key={'print-calculation'}
-          className={'btn btn-outline btn-square md:btn-md btn-sm'}
+          className={'btn btn-square btn-outline btn-sm md:btn-md'}
           onClick={() => window.print()}
         >
           <FaPrint />
         </div>,
         <div
           key={'save-calculation'}
-          className={'btn btn-primary md:btn-md btn-sm'}
+          className={'btn btn-primary btn-sm md:btn-md'}
           onClick={() => {
             if (id == 'create' && calculationName.trim() == '') {
               openNameModal();
@@ -315,16 +315,16 @@ export default function CalculationPage() {
           <Loading />
         </PageCenter>
       ) : (
-        <div className={'grid lg:grid-cols-3 md:grid-cols-2 grid-cols-1 xl:gap-4 gap-2 print:grid-cols-1'}>
-          <div className={'md:col-span-2 col-span-1 row-span-3 w-full print:col-span-1'}>
+        <div className={'grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-3 xl:gap-4 print:grid-cols-1'}>
+          <div className={'col-span-1 row-span-3 w-full md:col-span-2 print:col-span-1'}>
             <div className={'card'}>
               <div className={'card-body'}>
-                <div className={'text-2xl font-bold text-center print:text-xl'}>Getränke Übersicht</div>
+                <div className={'text-center text-2xl font-bold print:text-xl'}>Getränke Übersicht</div>
                 <div className={'print:hidden'}>
                   <div className={'divider-sm'}></div>
                 </div>
                 <div className="overflow-x-auto">
-                  <table className="table table-compact w-full">
+                  <table className="table-compact table w-full">
                     <thead>
                       <tr>
                         <th className={'w-20'}>Geplante Menge</th>
@@ -333,7 +333,7 @@ export default function CalculationPage() {
                         <th>Sonderpreis</th>
                         <th className={'flex justify-end print:hidden'}>
                           <div
-                            className={'btn btn-sm btn-primary'}
+                            className={'btn btn-primary btn-sm'}
                             onClick={() =>
                               modalContext.openModal(
                                 <SearchModal
@@ -394,13 +394,13 @@ export default function CalculationPage() {
                                   setCocktailCalculationItems(updatedItems);
                                 }}
                               />
-                              <span className={'input-group-text bg-secondary border border-secondary'}> €</span>
+                              <span className={'input-group-text border border-secondary bg-secondary'}> €</span>
                             </div>
                             <div className={'hidden print:flex'}>{cocktail.customPrice ?? '-'} €</div>
                           </td>
-                          <td className={'flex justify-end items-center print:hidden'}>
+                          <td className={'flex items-center justify-end print:hidden'}>
                             <div
-                              className={'btn btn-sm btn-error'}
+                              className={'btn btn-error btn-sm'}
                               onClick={() => {
                                 modalContext.openModal(
                                   <DeleteConfirmationModal
@@ -430,12 +430,12 @@ export default function CalculationPage() {
           <div className={'col-span-1 w-full'}>
             <div className={'card'}>
               <div className={'card-body'}>
-                <div className={'text-2xl font-bold text-center print:text-xl'}>Finanzen</div>
+                <div className={'text-center text-2xl font-bold print:text-xl'}>Finanzen</div>
                 <div className={'print:hidden'}>
                   <div className={'divider-sm'}></div>
                 </div>
                 <div className={'overflow-x-auto'}>
-                  <table className={'table table-compact w-full'}>
+                  <table className={'table-compact table w-full'}>
                     <thead>
                       <tr>
                         <th>Zutat</th>
@@ -513,13 +513,13 @@ export default function CalculationPage() {
           <div className={'col-span-1 w-full'}>
             <div className={'card'}>
               <div className={'card-body'}>
-                <div className={'text-2xl font-bold text-center print:text-xl'}>Einkaufsliste</div>
+                <div className={'text-center text-2xl font-bold print:text-xl'}>Einkaufsliste</div>
                 <div className={'print:hidden'}>
                   <div className={'divider-sm'}></div>
                 </div>
-                <div className={'font-bold text-lg'}>Zutaten</div>
+                <div className={'text-lg font-bold'}>Zutaten</div>
                 <div className={'overflow-x-auto'}>
-                  <table className={'table table-compact w-full'}>
+                  <table className={'table-compact table w-full'}>
                     <thead>
                       <tr>
                         <th>Zutat</th>
@@ -548,9 +548,9 @@ export default function CalculationPage() {
                     </tbody>
                   </table>
                 </div>
-                <div className={'font-bold text-lg'}>Dekorationen</div>
+                <div className={'text-lg font-bold'}>Dekorationen</div>
                 <div className={'overflow-x-auto'}>
-                  <table className={'table table-compact w-full'}>
+                  <table className={'table-compact table w-full'}>
                     <thead>
                       <tr>
                         <th>Dekoration</th>

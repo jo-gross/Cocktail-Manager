@@ -104,7 +104,7 @@ export function GarnishForm(props: GarnishFormProps) {
             <div className={'form-control'}>
               <label className={'label'}>
                 <span className={'label-text'}>Name</span>
-                <span className={'label-text-alt text-error space-x-2'}>
+                <span className={'label-text-alt space-x-2 text-error'}>
                   <span>
                     <>{errors.name && touched.name && errors.name}</>
                   </span>
@@ -125,7 +125,7 @@ export function GarnishForm(props: GarnishFormProps) {
             <div className={'form-control'}>
               <label className={'label'}>
                 <span className={'label-text'}>Zubereitungsbeschreibung</span>
-                <span className={'label-text-alt text-error space-x-2'}>
+                <span className={'label-text-alt space-x-2 text-error'}>
                   <span>
                     <>{errors.description && touched.description && errors.description}</>
                   </span>
@@ -145,7 +145,7 @@ export function GarnishForm(props: GarnishFormProps) {
             <div className={'form-control'}>
               <label className={'label'}>
                 <span className={'label-text'}>Preis</span>
-                <span className={'label-text-alt text-error space-x-2'}>
+                <span className={'label-text-alt space-x-2 text-error'}>
                   <span>
                     <>{errors.price && touched.price && errors.price}</>
                   </span>
@@ -187,7 +187,7 @@ export function GarnishForm(props: GarnishFormProps) {
               ) : (
                 <div className={'relative'}>
                   <div
-                    className={'absolute top-2 right-2 btn-error btn btn-outline btn-sm btn-square'}
+                    className={'btn btn-square btn-error btn-outline btn-sm absolute right-2 top-2'}
                     onClick={() => {
                       modalContext.openModal(
                         <DeleteConfirmationModal
@@ -202,7 +202,7 @@ export function GarnishForm(props: GarnishFormProps) {
                   >
                     <FaTrashAlt />
                   </div>
-                  <img className={'rounded-lg h-32'} src={values.image} alt={'Cocktail Image'} />
+                  <img className={'h-32 rounded-lg'} src={values.image} alt={'Cocktail Image'} />
                 </div>
               )}
             </div>

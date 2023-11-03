@@ -47,7 +47,7 @@ export default function ManageGlassesOverviewPage() {
       actions={
         userContext.isUserPermitted(Role.MANAGER) ? (
           <Link href={`/workspaces/${workspaceId}/manage/garnishes/create`}>
-            <div className={'btn btn-primary btn-square md:btn-md btn-sm'}>
+            <div className={'btn btn-square btn-primary btn-sm md:btn-md'}>
               <FaPlus />
             </div>
           </Link>
@@ -57,7 +57,7 @@ export default function ManageGlassesOverviewPage() {
       <div className={'card'}>
         <div className={'card-body'}>
           <div className="overflow-x-auto">
-            <table className="table table-compact w-full">
+            <table className="table-compact table w-full">
               <thead>
                 <tr>
                   <th className="">Name</th>

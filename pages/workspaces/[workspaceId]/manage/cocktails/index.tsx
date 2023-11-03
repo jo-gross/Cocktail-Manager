@@ -48,7 +48,7 @@ export default function CocktailsOverviewPage() {
       actions={
         userContext.isUserPermitted(Role.MANAGER) ? (
           <Link href={`/workspaces/${workspaceId}/manage/cocktails/create`}>
-            <div className={'btn btn-primary btn-square md:btn-md btn-sm'}>
+            <div className={'btn btn-square btn-primary btn-sm md:btn-md'}>
               <FaPlus />
             </div>
           </Link>
@@ -58,7 +58,7 @@ export default function CocktailsOverviewPage() {
       <div className={'card'}>
         <div className={'card-body'}>
           <div className="overflow-x-auto">
-            <table className="table table-compact w-full">
+            <table className="table-compact table w-full">
               <thead>
                 <tr>
                   <th className="">Name</th>
@@ -88,7 +88,7 @@ export default function CocktailsOverviewPage() {
                         <td>
                           {cocktailRecipe.image ? (
                             <div className="flex items-center space-x-3">
-                              <div className="w-12 h-12">
+                              <div className="h-12 w-12">
                                 <AvatarImage src={cocktailRecipe.image} alt={'Cocktail'} />
                               </div>
                               <div>{cocktailRecipe.name}</div>
@@ -100,7 +100,7 @@ export default function CocktailsOverviewPage() {
                         <td className={''}>
                           <span className={'whitespace-nowrap'}>{cocktailRecipe.price} €</span>
                         </td>
-                        <td className={'flex gap-1 items-center'}>
+                        <td className={'flex items-center gap-1'}>
                           {cocktailRecipe.tags.map((tag) => (
                             <div key={`cocktail-${cocktailRecipe.id}-tags-${tag}`} className={'badge badge-primary'}>
                               {tag}

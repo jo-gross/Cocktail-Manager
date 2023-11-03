@@ -77,7 +77,7 @@ export default function WorkspacesPage() {
       <Head>
         <title>The Cocktail-Manager</title>
       </Head>
-      <div className={'grid md:grid-cols-3 grid-cols-1'}>
+      <div className={'grid grid-cols-1 md:grid-cols-3'}>
         <div className={'col-span-3 items-center'}>
           <div className={'flex flex-col items-center justify-center space-y-2'}>
             <Image
@@ -88,7 +88,7 @@ export default function WorkspacesPage() {
               width={247}
             />
             <h1 className={'text-center text-4xl font-bold'}>Cocktail-Manager</h1>
-            <div className={'flex space-x-2 items-center'}>
+            <div className={'flex items-center space-x-2'}>
               <>
                 {userContext.user ? (
                   <>
@@ -107,7 +107,7 @@ export default function WorkspacesPage() {
           </div>
         </div>
         {userContext.user && (
-          <div className={'col-span-3 grid md:grid-cols-4 grid-cols-1 md:gap-4 gap-2 md:p-12 p-4'}>
+          <div className={'col-span-3 grid grid-cols-1 gap-2 p-4 md:grid-cols-4 md:gap-4 md:p-12'}>
             {workspacesLoading ? (
               <div className={'col-span-4'}>
                 <Loading />
@@ -117,18 +117,18 @@ export default function WorkspacesPage() {
                 {workspaces.map((workspace) => (
                   <div key={`workspace-${workspace.id}`} className={'card h-40'}>
                     <div className={'card-body'}>
-                      <div className={'text-center font-bold text-3xl'}>{workspace.name}</div>
+                      <div className={'text-center text-3xl font-bold'}>{workspace.name}</div>
                       <div className={'h-full'}></div>
                       <div className={'card-actions justify-center'}>
                         <Link href={'/workspaces/' + workspace.id}>
-                          <span className={'btn w-3/4 btn-primary btn-outline'}>Öffnen</span>
+                          <span className={'btn btn-primary btn-outline w-3/4'}>Öffnen</span>
                         </Link>
                       </div>
                     </div>
                   </div>
                 ))}
                 <div className={'card h-40'}>
-                  <div className={'card-body flex flex-col h-full items-center justify-center space-y-2'}>
+                  <div className={'card-body flex h-full flex-col items-center justify-center space-y-2'}>
                     <div className={'input-group'}>
                       <input
                         className={'input input-bordered w-full'}

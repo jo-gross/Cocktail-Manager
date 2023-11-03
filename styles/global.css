@@ -3,36 +3,35 @@
 @tailwind utilities;
 
 .rti--tag {
-    @apply badge badge-outline p-4 space-x-2 !important;
+  @apply badge badge-outline space-x-2 p-4 !important;
 }
 
 .rti--container {
-    @apply textarea textarea-bordered !important;
+  @apply textarea textarea-bordered !important;
 }
 
 .rti--input {
-    @apply input input-bordered !important;
+  @apply input input-bordered !important;
 }
 
-
 .card-body {
-    @apply p-3 !important;
+  @apply p-3 !important;
 }
 
 .card {
-    @apply shadow-lg bg-base-300 !important;
+  @apply bg-base-300 shadow-lg !important;
 }
 
 .table > thead {
-    @apply bg-base-100;
+  @apply bg-base-100;
 }
 
 .divider-sm {
-    @apply divider mt-0.5 mb-0.5 !important;
+  @apply divider mb-0.5 mt-0.5 !important;
 }
 
 .btn-red {
-    @apply bg-red-700 text-white hover:bg-red-800 border-red-800;
+  @apply border-red-800 bg-red-700 text-white hover:bg-red-800;
 }
 
 /*
@@ -40,34 +39,34 @@ Remove arrows from input field
 https://stackoverflow.com/a/74043438/12160393
 */
 @layer base {
-    input[type='number']::-webkit-outer-spin-button,
-    input[type='number']::-webkit-inner-spin-button,
-    input[type='number'] {
-        -webkit-appearance: none;
-        margin: 0;
-        -moz-appearance: textfield !important;
-    }
+  input[type='number']::-webkit-outer-spin-button,
+  input[type='number']::-webkit-inner-spin-button,
+  input[type='number'] {
+    -webkit-appearance: none;
+    margin: 0;
+    -moz-appearance: textfield !important;
+  }
 }
 
 @media print {
-    .card {
-        @apply shadow-none border !important;
-    }
+  .card {
+    @apply border shadow-none !important;
+  }
 
-    .table {
-        @apply border !important;
-    }
+  .table {
+    @apply border !important;
+  }
 
-    thead > tr {
-        @apply border bg-base-200 !important;
-        print-color-adjust: exact;
-    }
+  thead > tr {
+    @apply border bg-base-200 !important;
+    print-color-adjust: exact;
+  }
 
-    @layer base {
-        input[type="number"]::-webkit-inner-spin-button,
-        input[type="number"]::-webkit-outer-spin-button {
-            -webkit-appearance: none;
-            margin: 0;
-        }
+  @layer base {
+    input[type='number']::-webkit-inner-spin-button,
+    input[type='number']::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
     }
+  }
 }

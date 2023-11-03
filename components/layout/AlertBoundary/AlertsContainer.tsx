@@ -112,7 +112,7 @@ function AlertsContainer(props: AlertsContainerProps) {
               <span>{alert.message}</span>
             </>
           </div>
-          <div className="btn btn-ghost btn-sm text-md" onClick={() => removeAlert(alert)}>
+          <div className="text-md btn btn-ghost btn-sm" onClick={() => removeAlert(alert)}>
             <FaTimes />
           </div>
         </div>

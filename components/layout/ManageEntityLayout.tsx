@@ -32,11 +32,11 @@ export function ManageEntityLayout(props: ManageEntityLayoutProps) {
           )}
         </>
       </Head>
-      <div className={'flex flex-col md:p-4 p-1 print:p-1'}>
-        <div className={'grid grid-cols-3 print:grid-cols-1 w-full justify-center items-center justify-items-center'}>
+      <div className={'flex flex-col p-1 md:p-4 print:p-1'}>
+        <div className={'grid w-full grid-cols-3 items-center justify-center justify-items-center print:grid-cols-1'}>
           <div className={'col-span-1 justify-self-start print:hidden'}>
             <div
-              className={'btn btn-primary btn-square md:btn-md btn-sm '}
+              className={'btn btn-square btn-primary btn-sm md:btn-md '}
               onClick={() => {
                 props.unsavedChanges ?? false
                   ? modalContext.openModal(
@@ -56,12 +56,12 @@ export function ManageEntityLayout(props: ManageEntityLayoutProps) {
             </div>
           </div>
           <div className={'justify-items-center text-3xl font-bold print:text-2xl'}>{props.title}</div>
-          <div className={'justify-self-end space-x-2 items-center flex print:hidden'}>
-            {props.unsavedChanges && <div className={'print:hidden italic'}>Nicht gespeicherte Änderungen</div>}
+          <div className={'flex items-center space-x-2 justify-self-end print:hidden'}>
+            {props.unsavedChanges && <div className={'italic print:hidden'}>Nicht gespeicherte Änderungen</div>}
             {props.actions}
           </div>
         </div>
-        <div className={'md:p-8 p-2 print:p-2'}>{props.children}</div>
+        <div className={'p-2 md:p-8 print:p-2'}>{props.children}</div>
       </div>
     </>
   );

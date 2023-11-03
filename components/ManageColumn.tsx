@@ -26,13 +26,13 @@ export function ManageColumn(props: ManageColumnProps) {
     <td>
       <>
         {userContext.isUserPermitted(props.editRole ?? Role.MANAGER) ? (
-          <div className={'flex justify-end space-x-2 items-center'}>
+          <div className={'flex items-center justify-end space-x-2'}>
             <Link href={`/workspaces/${workspaceId}/manage/${props.entity}/${props.id}`}>
-              <div className={'btn btn-outline btn-primary btn-sm'}>Edit</div>
+              <div className={'btn btn-primary btn-outline btn-sm'}>Edit</div>
             </Link>
             <button
               type={'button'}
-              className={'btn btn-outline btn-error btn-sm'}
+              className={'btn btn-error btn-outline btn-sm'}
               disabled={!userContext.isUserPermitted(props.deleteRole ?? Role.ADMIN)}
               onClick={() => {
                 modalContext.openModal(

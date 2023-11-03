@@ -28,7 +28,7 @@ services:
     ports:
       - '3003:3000'
     environment:
-      DATABASE_URL: "postgres://postgres:postgres@postgres:5432/cocktail_recipe"
+      DATABASE_URL: 'postgres://postgres:postgres@postgres:5432/cocktail_recipe'
     networks:
       - cocktail-recipe-network
 

@@ -4,16 +4,16 @@ interface UploadDropZoneProps {
 
 export function UploadDropZone(props: UploadDropZoneProps) {
   return (
-    <div className="flex items-center justify-center w-full h-full">
+    <div className="flex h-full w-full items-center justify-center">
       <label
         htmlFor="dropzone-file"
-        className="flex flex-col items-center justify-center w-full h-full border-2 border-base-300 border-dashed rounded-lg cursor-pointer bg-base-200 dark:hover:bg-base-100 dark:bg-base-200 hover:bg-base-100 hover:border-base-300"
+        className="flex h-full w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-base-300 bg-base-200 hover:border-base-300 hover:bg-base-100 dark:bg-base-200 dark:hover:bg-base-100"
       >
-        <div className="text-2xl font-bo">Bild wählen</div>
-        <div className="flex flex-col items-center justify-center pt-5 pb-6">
+        <div className="font-bo text-2xl">Bild wählen</div>
+        <div className="flex flex-col items-center justify-center pb-6 pt-5">
           <svg
             aria-hidden="true"
-            className="w-10 h-10 mb-3 text-base-content"
+            className="mb-3 h-10 w-10 text-base-content"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -37,7 +37,7 @@ export function UploadDropZone(props: UploadDropZoneProps) {
           type="file"
           name="file"
           className="hidden"
-          accept={"image/*"}
+          accept={'image/*'}
           onChange={(event) => {
             const file = event?.target?.files;
             if (file) {

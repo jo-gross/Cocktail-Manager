@@ -14,7 +14,7 @@ export function ShowCocktailInfoButton(props: ShowCocktailInfoButtonProps) {
 
   return props.showInfo ? (
     <div
-      className={'absolute top-1 right-1 btn btn-ghost btn-sm btn-circle bg-info/50 print:hidden'}
+      className={'btn btn-circle btn-ghost btn-sm absolute right-1 top-1 bg-info/50 print:hidden'}
       onClick={async () => {
         await modalContext.closeModal();
         //Strange bug, otherwise the modal is closed after setting the content

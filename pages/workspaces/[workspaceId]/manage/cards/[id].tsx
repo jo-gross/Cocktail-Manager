@@ -81,7 +81,7 @@ function EditCocktailCard() {
         card != undefined ? (
           <button
             type={'button'}
-            className={'btn btn-error btn-square btn-outline'}
+            className={'btn btn-square btn-error btn-outline'}
             onClick={() =>
               modalContext.openModal(
                 <DeleteConfirmationModal
@@ -199,7 +199,7 @@ function EditCocktailCard() {
         {({ values, setFieldValue, errors, touched, handleChange, handleBlur, handleSubmit, isSubmitting }) => (
           <form onSubmit={handleSubmit}>
             <div className={'flex flex-col space-y-2'}>
-              <div className={'flex flex-row space-x-2 border-base-300 border p-2 rounded-2xl'}>
+              <div className={'flex flex-row space-x-2 rounded-2xl border border-base-300 p-2'}>
                 <div>
                   <label className={'label'}>
                     <div className={'label-text'}>Karte</div>
@@ -240,9 +240,9 @@ function EditCocktailCard() {
                     {values?.groups
                       .sort((a, b) => a.groupNumber - b.groupNumber)
                       .map((group, groupIndex) => (
-                        <div key={`card-group-${groupIndex}`} className={'border border-base-300 rounded-2xl p-2'}>
+                        <div key={`card-group-${groupIndex}`} className={'rounded-2xl border border-base-300 p-2'}>
                           <div className={'grid grid-cols-3 items-center gap-2'}>
-                            <div className={'flex-1 form-control'}>
+                            <div className={'form-control flex-1'}>
                               <label className={'label'}>
                                 <div className={'label-text'}>Gruppe</div>
                                 <div className={'label-text-alt text-error'}>
@@ -267,7 +267,7 @@ function EditCocktailCard() {
                                 value={values.groups[groupIndex].name}
                               />
                             </div>
-                            <div className={' flex-1 form-control'}>
+                            <div className={' form-control flex-1'}>
                               <label className={'label'}>
                                 <div className={'label-text'}>Gruppen Preis</div>
                                 <div className={'label-text-alt text-error'}>
@@ -298,11 +298,11 @@ function EditCocktailCard() {
                                 </span>
                               </div>
                             </div>
-                            <div className={'justify-self-end space-x-2'}>
+                            <div className={'space-x-2 justify-self-end'}>
                               <button
                                 type={'button'}
                                 disabled={groupIndex == 0}
-                                className={'btn btn-outline btn-sm btn-square'}
+                                className={'btn btn-square btn-outline btn-sm'}
                                 onClick={() => {
                                   const value = values.groups[groupIndex];
                                   const reorderedGroups = values.groups.filter((_, i) => i != groupIndex);
@@ -321,7 +321,7 @@ function EditCocktailCard() {
                               <button
                                 type={'button'}
                                 disabled={!(values.groups.length > 1) || groupIndex == values.groups.length - 1}
-                                className={'btn btn-outline btn-sm btn-square'}
+                                className={'btn btn-square btn-outline btn-sm'}
                                 onClick={() => {
                                   const value = values.groups[groupIndex];
                                   const reorderedGroups = values.groups.filter((_, i) => i != groupIndex);
@@ -339,7 +339,7 @@ function EditCocktailCard() {
                               </button>
                               <button
                                 type="button"
-                                className={'btn btn-error btn-sm btn-square btn-outline'}
+                                className={'btn btn-square btn-error btn-outline btn-sm'}
                                 onClick={() =>
                                   modalContext.openModal(
                                     <DeleteConfirmationModal
@@ -370,7 +370,7 @@ function EditCocktailCard() {
                                                 <button
                                                   type={'button'}
                                                   disabled={itemIndex == 0}
-                                                  className={'btn btn-outline btn-sm btn-square'}
+                                                  className={'btn btn-square btn-outline btn-sm'}
                                                   onClick={() => {
                                                     const value = values.groups[groupIndex].items[itemIndex];
                                                     const reorderedItems = values.groups[groupIndex].items.filter(
@@ -394,7 +394,7 @@ function EditCocktailCard() {
                                                     !(values.groups[groupIndex].items.length > 1) ||
                                                     itemIndex == values.groups[groupIndex].items.length - 1
                                                   }
-                                                  className={'btn btn-outline btn-sm btn-square'}
+                                                  className={'btn btn-square btn-outline btn-sm'}
                                                   onClick={() => {
                                                     const value = values.groups[groupIndex].items[itemIndex];
                                                     const reorderedItems = values.groups[groupIndex].items.filter(
@@ -413,7 +413,7 @@ function EditCocktailCard() {
                                                   <FaAngleRight />
                                                 </button>
                                                 <div
-                                                  className={'btn btn-outline btn-error btn-square btn-sm'}
+                                                  className={'btn btn-square btn-error btn-outline btn-sm'}
                                                   onClick={() =>
                                                     modalContext.openModal(
                                                       <DeleteConfirmationModal
@@ -446,10 +446,10 @@ function EditCocktailCard() {
                                         </div>
                                       </div>
                                     ))}
-                                  <div className={'col-span-3 flex justify-end flex-row'}>
+                                  <div className={'col-span-3 flex flex-row justify-end'}>
                                     <button
                                       type="button"
-                                      className={'btn btn-secondary btn-sm btn-outline'}
+                                      className={'btn btn-secondary btn-outline btn-sm'}
                                       onClick={() =>
                                         modalContext.openModal(
                                           <SearchModal
@@ -473,7 +473,7 @@ function EditCocktailCard() {
                           </div>
                         </div>
                       ))}
-                    <div className={'flex flex-row justify-end items-center space-x-2'}>
+                    <div className={'flex flex-row items-center justify-end space-x-2'}>
                       <button
                         type="button"
                         className={'btn btn-secondary btn-sm'}

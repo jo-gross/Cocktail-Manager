@@ -43,7 +43,7 @@ export default function CardsOverviewPage() {
       actions={
         userContext.isUserPermitted(Role.MANAGER) ? (
           <Link href={`/workspaces/${workspaceId}/manage/cards/create`}>
-            <div className={'btn btn-primary btn-square md:btn-md btn-sm'}>
+            <div className={'btn btn-square btn-primary btn-sm md:btn-md'}>
               <FaPlus />
             </div>
           </Link>
@@ -55,7 +55,7 @@ export default function CardsOverviewPage() {
       ) : cards.length == 0 ? (
         <div className={'text-center'}>Keine Einträge gefunden</div>
       ) : (
-        <div className={'grid md:grid-cols-2 grid-cols-1 md:gap-4 gap-2'}>
+        <div className={'grid grid-cols-1 gap-2 md:grid-cols-2 md:gap-4'}>
           {cards
             .sort((a, b) => a.name.localeCompare(b.name))
             .map((card) => (

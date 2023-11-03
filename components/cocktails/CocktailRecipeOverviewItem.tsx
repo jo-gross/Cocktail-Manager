@@ -31,7 +31,7 @@ export default function CocktailRecipeOverviewItem(props: CocktailRecipeOverview
               props.cocktailRecipe.tags.map((tag) => (
                 <span
                   key={`cocktail-overview-item-${props.cocktailRecipe.id}-tag-${tag}`}
-                  className={'badge badge-outline badge-primary mr-1'}
+                  className={'badge badge-primary badge-outline mr-1'}
                 >
                   {tag}
                 </span>
@@ -47,7 +47,7 @@ export default function CocktailRecipeOverviewItem(props: CocktailRecipeOverview
         props.cocktailRecipe.image != undefined ? (
           <figure>
             <img
-              className={' shadow-md w-36 h-full object-fit object-center'}
+              className={' object-fit h-full w-36 object-center shadow-md'}
               src={props.cocktailRecipe.image}
               alt={'Cocktail'}
             />

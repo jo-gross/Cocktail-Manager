@@ -120,11 +120,11 @@ export default function WorkspaceSettingPage() {
 
   return (
     <ManageEntityLayout backLink={`/workspaces/${workspaceId}/manage`} title={'Workspace-Einstellungen'}>
-      <div className={'grid md:grid-cols-2 md:gap-4 grid-cols-1 gap-2'}>
+      <div className={'grid grid-cols-1 gap-2 md:grid-cols-2 md:gap-4'}>
         <div className={'card overflow-y-auto md:col-span-2'}>
           <div className={'card-body'}>
             <div className={'card-title'}>Workspace Nutzer verwalten</div>
-            <table className={'table w-full border border-base-200 rounded-xl'}>
+            <table className={'table w-full rounded-xl border border-base-200'}>
               <thead>
                 <tr>
                   <th>Name</th>
@@ -159,7 +159,7 @@ export default function WorkspaceSettingPage() {
                         <select
                           disabled={workspaceUser.user.id == userContext.user?.id || workspaceUser.role == Role.OWNER}
                           value={workspaceUser.role}
-                          className={'select select-bordered select-sm w-full max-w-xs min-w-fit'}
+                          className={'select select-bordered select-sm w-full min-w-fit max-w-xs'}
                           onChange={(event) => {
                             fetch(`/api/workspaces/${workspaceId}/users/${workspaceUser.userId}`, {
                               method: 'PUT',
@@ -273,7 +273,7 @@ export default function WorkspaceSettingPage() {
             <div className={'card'}>
               <div className={'card-body'}>
                 <div className={'card-title'}>Gefahrenbereich</div>
-                <label className={'cursor-pointer label'}>
+                <label className={'label cursor-pointer'}>
                   <span className={'label-text'}>Gefahrenbereich verlassen</span>
                 </label>
                 <div className={'input-group'}>
@@ -284,7 +284,7 @@ export default function WorkspaceSettingPage() {
                     onChange={(event) => setNewWorkspaceName(event.target.value)}
                   />
                   <button
-                    className={'btn btn-outline btn-error'}
+                    className={'btn btn-error btn-outline'}
                     disabled={newWorkspaceName.length < 3 || newWorkspaceName.length > 50}
                     onClick={handleRenameWorkspace}
                   >
@@ -293,7 +293,7 @@ export default function WorkspaceSettingPage() {
                 </div>
                 <div className={'divider'}></div>
                 <button
-                  className={'btn btn-outline btn-error'}
+                  className={'btn btn-error btn-outline'}
                   onClick={() =>
                     modalContext.openModal(
                       <DeleteConfirmationModal onApprove={handleDeleteWorkspace} spelling={'DELETE'} />,

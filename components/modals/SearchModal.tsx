@@ -71,11 +71,11 @@ export function SearchModal(props: SearchModalProps) {
   }, [fetchCocktails, workspaceId]);
 
   return (
-    <div className={'p-2 grid grid-cols-1 gap-2 w-full'}>
-      <div className={'font-bold text-2xl w-max'}>Cocktail suchen</div>
+    <div className={'grid w-full grid-cols-1 gap-2 p-2'}>
+      <div className={'w-max text-2xl font-bold'}>Cocktail suchen</div>
       <div className={'input-group pb-2'}>
         <input
-          className={'w-full input input-bordered'}
+          className={'input input-bordered w-full'}
           value={search}
           autoFocus={true}
           onChange={(e) => {
@@ -85,7 +85,7 @@ export function SearchModal(props: SearchModalProps) {
             }
           }}
         />
-        <span className={'btn btn-outline btn-primary btn-square'}>
+        <span className={'btn btn-square btn-primary btn-outline'}>
           <BsSearch />
         </span>
       </div>
@@ -103,10 +103,10 @@ export function SearchModal(props: SearchModalProps) {
               tabIndex={index}
               className={` ${
                 showRecipe ? 'collapse collapse-arrow' : ''
-              } border border-base-300 bg-base-100 rounded-box`}
+              } rounded-box border border-base-300 bg-base-100`}
             >
               {showRecipe ? <input type="checkbox" /> : <></>}
-              <div className={`${showRecipe ? 'collapse-title' : 'p-2'} text-xl font-medium flex justify-between`}>
+              <div className={`${showRecipe ? 'collapse-title' : 'p-2'} flex justify-between text-xl font-medium`}>
                 {cocktail.name}{' '}
                 {props.showRecipe && !showRecipe && props.onCocktailSelectedObject != undefined && (
                   <button

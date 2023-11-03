@@ -8,18 +8,18 @@ interface AvatarImageProps {
 
 export default function AvatarImage(props: AvatarImageProps) {
   return (
-    <div className="w-full h-full relative mask mask-squircle">
-      <div className={'w-full h-full absolute z-1000'}>
+    <div className="mask mask-squircle relative h-full w-full">
+      <div className={'z-1000 absolute h-full w-full'}>
         <Image
-          className={'w-full h-full object-cover blur-sm'}
+          className={'h-full w-full object-cover blur-sm'}
           src={props.src}
           alt={props.alt}
           width={300}
           height={300}
         />
       </div>
-      <div className={'h-full w-full absolute z-100'}>
-        <Image className={'w-min h-full object-contain'} src={props.src} alt={props.alt} width={300} height={300} />
+      <div className={'z-100 absolute h-full w-full'}>
+        <Image className={'h-full w-min object-contain'} src={props.src} alt={props.alt} width={300} height={300} />
       </div>
     </div>
   );

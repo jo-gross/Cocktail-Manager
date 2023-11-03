@@ -104,7 +104,7 @@ export function GlassForm(props: GlassFormProps) {
             <div className={'form-control'}>
               <label className={'label'}>
                 <span className={'label-text'}>Name</span>
-                <span className={'label-text-alt text-error space-x-2'}>
+                <span className={'label-text-alt space-x-2 text-error'}>
                   <span>
                     <>{errors.name && touched.name && errors.name}</>
                   </span>
@@ -125,7 +125,7 @@ export function GlassForm(props: GlassFormProps) {
             <div className={'form-control'}>
               <label className={'label'}>
                 <span className={'label-text'}>Pfand</span>
-                <span className={'label-text-alt text-error space-x-2'}>
+                <span className={'label-text-alt space-x-2 text-error'}>
                   <span>
                     <>{errors.deposit && touched.deposit && errors.deposit}</>
                   </span>
@@ -184,7 +184,7 @@ export function GlassForm(props: GlassFormProps) {
               ) : (
                 <div className={'relative'}>
                   <div
-                    className={'absolute top-2 right-2 btn-error btn btn-outline btn-sm btn-square'}
+                    className={'btn btn-square btn-error btn-outline btn-sm absolute right-2 top-2'}
                     onClick={() =>
                       modalContext.openModal(
                         <DeleteConfirmationModal
@@ -197,7 +197,7 @@ export function GlassForm(props: GlassFormProps) {
                   >
                     <FaTrashAlt />
                   </div>
-                  <img className={'rounded-lg max-h-20'} src={values.image} alt={'Cocktail Image'} />
+                  <img className={'max-h-20 rounded-lg'} src={values.image} alt={'Cocktail Image'} />
                 </div>
               )}
             </div>

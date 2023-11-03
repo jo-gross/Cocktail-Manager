@@ -138,9 +138,9 @@ export function AuthBoundary(props: AlertBoundaryProps) {
       >
         {userLoading ? (
           <PageCenter>
-            <div className={'flex flex-col justify-center items-center gap-4'}>
+            <div className={'flex flex-col items-center justify-center gap-4'}>
               <Loading name={'Lade Nutzer...'} />
-              <button className={'btn btn-outline btn-error btn-xs'} onClick={cancelLogin}>
+              <button className={'btn btn-error btn-outline btn-xs'} onClick={cancelLogin}>
                 Abbrechen
               </button>
             </div>

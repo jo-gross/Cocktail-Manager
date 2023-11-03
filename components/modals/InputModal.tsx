@@ -15,8 +15,8 @@ export default function InputModal(props: InputModalProps) {
   const [inputValue, setInputValue] = useState(props.defaultValue || '');
 
   return (
-    <div className={'flex flex-col w-fit space-y-2'}>
-      <div className={'font-bold text-2xl'}>{props.title}</div>
+    <div className={'flex w-fit flex-col space-y-2'}>
+      <div className={'text-2xl font-bold'}>{props.title}</div>
       <div>{props.description}</div>
       <div className={'input-group'}>
         <input

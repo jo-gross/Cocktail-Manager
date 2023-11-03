@@ -126,16 +126,16 @@ export function IngredientForm(props: IngredientFormProps) {
         isSubmitting,
       }) => (
         <form onSubmit={handleSubmit}>
-          <div className={'grid md:grid-cols-3 grid-cols-1 md:p-12 p-1 md:gap-4 gap-2'}>
+          <div className={'grid grid-cols-1 gap-2 p-1 md:grid-cols-3 md:gap-4 md:p-12'}>
             <div></div>
             <div className={'card'}>
               <div className={'card-body'}>
-                <div className={'text-2xl font-bold text-center'}>Zutat erfassen</div>
+                <div className={'text-center text-2xl font-bold'}>Zutat erfassen</div>
                 <div className={'divider'}></div>
                 <div className={'form-control'}>
                   <label className={'label'}>
                     <span className={'label-text'}>Name</span>
-                    <span className={'label-text-alt text-error space-x-2'}>
+                    <span className={'label-text-alt space-x-2 text-error'}>
                       <span>
                         <>{errors.name && touched.name && errors.name}</>
                       </span>
@@ -155,7 +155,7 @@ export function IngredientForm(props: IngredientFormProps) {
                 <div className={'form-control'}>
                   <label className={'label'}>
                     <span className={'label-text'}>Abkürzung</span>
-                    <span className={'label-text-alt text-error space-x-2'}>
+                    <span className={'label-text-alt space-x-2 text-error'}>
                       <span>
                         <>{errors.shortName && touched.shortName && errors.shortName}</>
                       </span>
@@ -175,7 +175,7 @@ export function IngredientForm(props: IngredientFormProps) {
                 <div className={'form-control'}>
                   <label className={'label'}>
                     <span className={'label-text'}>Preis</span>
-                    <span className={'label-text-alt text-error space-x-2'}>
+                    <span className={'label-text-alt space-x-2 text-error'}>
                       <span>
                         <>{errors.price && touched.price && errors.price}</>
                       </span>
@@ -198,7 +198,7 @@ export function IngredientForm(props: IngredientFormProps) {
                 <div className={'form-control'}>
                   <label className={'label'}>
                     <span className={'label-text'}>Menge</span>
-                    <span className={'label-text-alt text-error space-x-2'}>
+                    <span className={'label-text-alt space-x-2 text-error'}>
                       <span>
                         <>{errors.volume && touched.volume && errors.volume}</>
                       </span>
@@ -236,7 +236,7 @@ export function IngredientForm(props: IngredientFormProps) {
                 <div>
                   <label className={'label'}>
                     <span className={'label-text'}>Tags</span>
-                    <span className={'text-error label-text-alt'}>
+                    <span className={'label-text-alt text-error'}>
                       <>{errors.tags && touched.tags && errors.tags}</>
                     </span>
                   </label>
@@ -277,7 +277,7 @@ export function IngredientForm(props: IngredientFormProps) {
                   ) : (
                     <div className={'relative'}>
                       <div
-                        className={'absolute top-2 right-2 btn-error btn btn-outline btn-sm btn-square'}
+                        className={'btn btn-square btn-error btn-outline btn-sm absolute right-2 top-2'}
                         onClick={() =>
                           modalContext.openModal(
                             <DeleteConfirmationModal
@@ -290,14 +290,14 @@ export function IngredientForm(props: IngredientFormProps) {
                       >
                         <FaTrashAlt />
                       </div>
-                      <img className={'rounded-lg h-32'} src={values.image} alt={'Cocktail Image'} />
+                      <img className={'h-32 rounded-lg'} src={values.image} alt={'Cocktail Image'} />
                     </div>
                   )}
                 </div>
                 <div className={'form-control'}>
                   <label className={'label'}>
                     <span className={'label-text'}>Link</span>
-                    <span className={'label-text-alt text-error space-x-2'}>
+                    <span className={'label-text-alt space-x-2 text-error'}>
                       <span>
                         <>{errors.link && touched.link && errors.link}</>
                       </span>
