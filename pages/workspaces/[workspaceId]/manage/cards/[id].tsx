@@ -456,9 +456,10 @@ function EditCocktailCard() {
                                             selectedCocktails={values.groups[groupIndex].items.map(
                                               (item) => item.cocktailId,
                                             )}
-                                            onCocktailSelected={(id) => {
-                                              pushItem({ cocktailId: id });
+                                            onCocktailSelectedObject={(cocktail) => {
+                                              pushItem({ cocktailId: cocktail.id });
                                             }}
+                                            selectionLabel={'Hinzufügen'}
                                           />,
                                         )
                                       }

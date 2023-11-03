@@ -9,7 +9,6 @@ import { useRouter } from 'next/router';
 import { alertService } from '../../lib/alertService';
 
 interface SearchModalProps {
-  onCocktailSelected?: (id: string) => void;
   onCocktailSelectedObject?: (cocktail: CocktailRecipeFull) => void;
   selectedCocktails?: string[];
   selectionLabel?: string;
@@ -109,22 +108,20 @@ export function SearchModal(props: SearchModalProps) {
               {showRecipe ? <input type="checkbox" /> : <></>}
               <div className={`${showRecipe ? 'collapse-title' : 'p-2'} text-xl font-medium flex justify-between`}>
                 {cocktail.name}{' '}
-                {props.onCocktailSelected != undefined ||
-                  (props.onCocktailSelectedObject && (
-                    <button
-                      type="button"
-                      disabled={props.selectedCocktails?.includes(cocktail.id) ?? false}
-                      className={'btn btn-primary btn-sm'}
-                      onClick={() => {
-                        props.onCocktailSelected?.(cocktail.id);
-                        props.onCocktailSelectedObject?.(cocktail);
-                        setSearch('');
-                        modalContext.closeModal();
-                      }}
-                    >
-                      {props.selectionLabel ?? 'Hinzufügen'}
-                    </button>
-                  ))}
+                {props.showRecipe && !showRecipe && props.onCocktailSelectedObject != undefined && (
+                  <button
+                    type="button"
+                    disabled={props.selectedCocktails?.includes(cocktail.id) ?? false}
+                    className={'btn btn-primary btn-sm'}
+                    onClick={() => {
+                      props.onCocktailSelectedObject?.(cocktail);
+                      setSearch('');
+                      modalContext.closeModal();
+                    }}
+                  >
+                    {props.selectionLabel ?? 'Hinzufügen'}
+                  </button>
+                )}
               </div>
               {showRecipe && (
                 <div className="collapse-content">
@@ -135,24 +132,22 @@ export function SearchModal(props: SearchModalProps) {
                     </div>
                   </div>
 
-                  {props.onCocktailSelected != undefined ||
-                    (props.onCocktailSelectedObject && (
-                      <div className={'card-actions flex flex-row justify-end pt-2'}>
-                        <button
-                          type="button"
-                          disabled={props.selectedCocktails?.includes(cocktail.id) ?? false}
-                          className={'btn btn-primary btn-sm'}
-                          onClick={() => {
-                            props.onCocktailSelected?.(cocktail.id);
-                            props.onCocktailSelectedObject?.(cocktail);
-                            setSearch('');
-                            modalContext.closeModal();
-                          }}
-                        >
-                          {props.selectionLabel ?? 'Hinzufügen'}
-                        </button>
-                      </div>
-                    ))}
+                  {(showRecipe || props.onCocktailSelectedObject) && (
+                    <div className={'card-actions flex flex-row justify-end pt-2'}>
+                      <button
+                        type="button"
+                        disabled={props.selectedCocktails?.includes(cocktail.id) ?? false}
+                        className={'btn btn-primary btn-sm'}
+                        onClick={() => {
+                          props.onCocktailSelectedObject?.(cocktail);
+                          setSearch('');
+                          modalContext.closeModal();
+                        }}
+                      >
+                        {props.selectionLabel ?? 'Hinzufügen'}
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
