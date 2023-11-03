@@ -3,5 +3,5 @@ interface PageCenterProps {
 }
 
 export function PageCenter(props: PageCenterProps) {
-  return <div className="flex flex-col items-center justify-center w-full h-screen">{props.children}</div>;
+  return <div className="flex h-screen w-full flex-col items-center justify-center">{props.children}</div>;
 }

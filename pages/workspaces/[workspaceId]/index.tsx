@@ -153,7 +153,7 @@ export default function OverviewPage() {
       <div className={'static h-screen'}>
         <div className={''}>
           <div
-            className={'flex flex-col overflow-y-auto print:overflow-clip md:p-2 p-0 print:p-0 rounded-xl space-y-2'}
+            className={'flex flex-col space-y-2 overflow-y-auto rounded-xl p-0 md:p-2 print:overflow-clip print:p-0'}
           >
             {loading ? (
               <PageCenter>
@@ -171,9 +171,9 @@ export default function OverviewPage() {
                 .map((group) => (
                   <div
                     key={`card-${selectedCard.id}-group-${group.id}`}
-                    className={'md:border md:border-base-200 md:rounded-xl rounded-none p-1 print:p-1'}
+                    className={'rounded-none p-1 md:rounded-xl md:border md:border-base-200 print:p-1'}
                   >
-                    <div className={'font-bold text-2xl text-center p-2'}>
+                    <div className={'p-2 text-center text-2xl font-bold'}>
                       {group.name}
                       {group.groupPrice && ` - Special Preis: ${group.groupPrice}€`}
                     </div>
@@ -184,7 +184,7 @@ export default function OverviewPage() {
                       ${lessItems ? 'md:grid-cols-2 ' : 'md:grid-cols-3 '}
                       ${lessItems ? 'xs:grid-cols-1 ' : ' xs:grid-cols-2 '}
                        grid-cols-1
-                       gap-2 md:p-2 p-1`}
+                       gap-2 p-1 md:p-2`}
                     >
                       {group.items.length == 0 ? (
                         <div className={'col-span-full text-center'}>Keine Einträge vorhanden</div>
@@ -223,12 +223,12 @@ export default function OverviewPage() {
           </div>
         </div>
 
-        <div className={'fixed md:bottom-5 bottom-2 md:right-5 right-2 flex flex-col space-y-2 print:hidden'}>
-          <div className="dropdown dropdown-top dropdown-end pt-2">
-            <label tabIndex={0} className={'btn btn-primary btn-square rounded-xl md:btn-lg'}>
+        <div className={'fixed bottom-2 right-2 flex flex-col space-y-2 md:bottom-5 md:right-5 print:hidden'}>
+          <div className="dropdown-end dropdown dropdown-top pt-2">
+            <label tabIndex={0} className={'btn btn-square btn-primary rounded-xl md:btn-lg'}>
               <FaEye />
             </label>
-            <div tabIndex={0} className="dropdown-content p-2 shadow bg-base-100 rounded-box w-52">
+            <div tabIndex={0} className="dropdown-content rounded-box w-52 bg-base-100 p-2 shadow">
               <div className={'flex flex-col space-x-2'}>
                 <div className={'divider'}>Karte</div>
                 <div className={'flex flex-col'}>
@@ -361,13 +361,13 @@ export default function OverviewPage() {
           </div>
 
           <div
-            className={'btn btn-primary btn-square rounded-xl md:btn-lg'}
+            className={'btn btn-square btn-primary rounded-xl md:btn-lg'}
             onClick={() => modalContext.openModal(<SearchModal />)}
           >
             <FaSearch />
           </div>
           <Link href={`/workspaces/${workspaceId}/manage`}>
-            <div className={' btn btn-primary btn-square rounded-xl md:btn-lg'}>
+            <div className={' btn btn-square btn-primary rounded-xl md:btn-lg'}>
               <BsFillGearFill />
             </div>
           </Link>

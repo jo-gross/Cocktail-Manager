@@ -23,7 +23,7 @@ export default function ManagePage() {
           userContext.workspace?.name ? (
             <div className={'w-max'}>
               {userContext.workspace.name}
-              <span className={'md:inline hidden'}> - Verwalten</span>
+              <span className={'hidden md:inline'}> - Verwalten</span>
             </div>
           ) : (
             <div className={'flex flex-row items-center space-x-2'}>
@@ -35,7 +35,7 @@ export default function ManagePage() {
         actions={[
           <div
             key={'profile'}
-            className="dropdown dropdown-end border-base-200 border md:border-solid border-none rounded-xl"
+            className="dropdown-end dropdown rounded-xl border border-none border-base-200 md:border-solid"
           >
             <label tabIndex={0} className="btn btn-ghost">
               <>
@@ -47,7 +47,7 @@ export default function ManagePage() {
                   </div>
                 ) : (
                   <div className="avatar placeholder">
-                    <div className="bg-neutral-focus text-neutral-content rounded-full w-8">
+                    <div className="w-8 rounded-full bg-neutral-focus text-neutral-content">
                       <span className="text-xs">
                         {userContext.user?.name
                           ?.split(' ')
@@ -58,20 +58,20 @@ export default function ManagePage() {
                   </div>
                 )}
               </>
-              <div className={'md:inline hidden'}>{userContext.user?.name}</div>
+              <div className={'hidden md:inline'}>{userContext.user?.name}</div>
             </label>
             <ul
               tabIndex={0}
-              className="mt-2 z-[1] p-2 gap-2 shadow menu menu-sm dropdown-content bg-base-100 border-base-200 border rounded-box w-52"
+              className="menu dropdown-content rounded-box menu-sm z-[1] mt-2 w-52 gap-2 border border-base-200 bg-base-100 p-2 shadow"
             >
-              <div className={'md:hidden text-center font-bold text-lg pt-1'}>{userContext.user?.name}</div>
-              <div className={'md:hidden divider-sm'}></div>
-              <li className={'btn btn-sm btn-outline'}>
+              <div className={'pt-1 text-center text-lg font-bold md:hidden'}>{userContext.user?.name}</div>
+              <div className={'divider-sm md:hidden'}></div>
+              <li className={'btn btn-outline btn-sm'}>
                 <Link href={'/'}>Workspaces</Link>
               </li>
               <div className={'divider-sm'}></div>
               <button
-                className={'btn btn-sm btn-outline btn-error'}
+                className={'btn btn-error btn-outline btn-sm'}
                 onClick={async () => {
                   await router.replace('/');
                   await signOut();
@@ -83,7 +83,7 @@ export default function ManagePage() {
           </div>,
         ]}
       >
-        <div className={'grid md:grid-cols-2 md:gap-4 grid-cols-1 gap-2'}>
+        <div className={'grid grid-cols-1 gap-2 md:grid-cols-2 md:gap-4'}>
           <ManageCard title={'Cocktails'} link={`/workspaces/${workspaceId}/manage/cocktails`} />
           <ManageCard title={'Karten'} link={`/workspaces/${workspaceId}/manage/cards`} />
           <ManageCard title={'Zutaten'} link={`/workspaces/${workspaceId}/manage/ingredients`} />

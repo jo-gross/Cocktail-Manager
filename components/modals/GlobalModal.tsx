@@ -28,7 +28,7 @@ export function GlobalModal(props: GlobalModalProps) {
       <input type="checkbox" id="globalModal" className="modal-toggle" />
       <label htmlFor="globalModal" className="modal cursor-pointer">
         <label className="modal-box relative w-full md:max-w-2xl" htmlFor="">
-          <label htmlFor="globalModal" className="btn btn-sm btn-outline btn-circle absolute right-2 top-2">
+          <label htmlFor="globalModal" className="btn btn-circle btn-outline btn-sm absolute right-2 top-2">
             <FaTimes />
           </label>
           <label className={''} htmlFor="">

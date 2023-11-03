@@ -15,17 +15,17 @@ interface CompactCocktailRecipeInstructionProps {
 export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeInstructionProps) {
   return (
     <div className={'grid grid-cols-4 gap-1'}>
-      <div className={`${props.showPrice ? 'col-span-2' : 'col-span-3'} font-bold text-xl`}>
+      <div className={`${props.showPrice ? 'col-span-2' : 'col-span-3'} text-xl font-bold`}>
         {props.cocktailRecipe.name == '' ? '<Name>' : props.cocktailRecipe.name}
       </div>
       {props.showPrice == true ? (
-        <div className={'col-span-1 text-right font-bold text-xl'}>
+        <div className={'col-span-1 text-right text-xl font-bold'}>
           {props.specialPrice ?? props.cocktailRecipe.price} €
         </div>
       ) : (
         <></>
       )}
-      <div className={'row-span-2 flex justify-center items-center h-min'}>
+      <div className={'row-span-2 flex h-min items-center justify-center'}>
         <>
           {props.cocktailRecipe.glass?.image == undefined ? (
             <div className={'flex flex-col items-center justify-center'}>
@@ -42,11 +42,11 @@ export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeIns
           )}
         </>
       </div>
-      <div className={'col-span-3 font-thin flex flex-row space-x-2 justify-between'}>
+      <div className={'col-span-3 flex flex-row justify-between space-x-2 font-thin'}>
         <div>Glas: {props.cocktailRecipe.glass?.name ?? '<Glas>'}</div>
         <div>Eis: {props.cocktailRecipe?.glassWithIce ?? '<Eis>'}</div>
       </div>
-      <div className={'border-b border-base-100 col-span-4'}></div>
+      <div className={'col-span-4 border-b border-base-100'}></div>
       <div
         className={`${
           props.cocktailRecipe.image != undefined && props.showImage == true ? 'col-span-3' : 'col-span-4'
@@ -75,8 +75,8 @@ export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeIns
           ))}
       </div>
       {props.cocktailRecipe.image != undefined && props.showImage == true ? (
-        <div className={'row-span-3 justify-self-center self-center h-full pt-2'}>
-          <img src={props.cocktailRecipe.image} className={'object-cover h-full w-fit rounded-xl'} alt={''} />
+        <div className={'row-span-3 h-full self-center justify-self-center pt-2'}>
+          <img src={props.cocktailRecipe.image} className={'h-full w-fit rounded-xl object-cover'} alt={''} />
         </div>
       ) : (
         <></>

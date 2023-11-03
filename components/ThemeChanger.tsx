@@ -1,5 +1,5 @@
-import React, { useCallback, useEffect, useState } from "react";
-import Checkbox from "react-three-state-checkbox";
+import React, { useCallback, useEffect, useState } from 'react';
+import Checkbox from 'react-three-state-checkbox';
 
 /**
  * This component helps to decide between browser theme and custom light/dark theme mode

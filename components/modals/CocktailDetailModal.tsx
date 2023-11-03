@@ -28,7 +28,7 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
             {userContext.isUserPermitted(Role.MANAGER) && (
               <Link href={`/workspaces/${workspaceId}/manage/cocktails/${props.cocktail.id}`}>
                 <div
-                  className={'btn btn-sm btn-secondary btn-outline btn-square'}
+                  className={'btn btn-square btn-secondary btn-outline btn-sm'}
                   onClick={() => modalContext.closeModal()}
                 >
                   <FaPencilAlt />
@@ -43,7 +43,7 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
         <div className={'grid grid-cols-2 gap-4'}>
           <div className={'col-span-2 flex'}>
             {props.cocktail.tags.map((tag) => (
-              <div key={`cocktail-details-${props.cocktail.id}-tag-` + tag} className={'m-1 badge badge-primary'}>
+              <div key={`cocktail-details-${props.cocktail.id}-tag-` + tag} className={'badge badge-primary m-1'}>
                 {tag}
               </div>
             ))}
@@ -51,7 +51,7 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
           <div className={'col-span-2 flex flex-row space-x-2'}>
             {props.cocktail.image != undefined ? (
               <img
-                className={'flex-none rounded-lg shadow-md w-36 h-full object-cover object-center'}
+                className={'h-full w-36 flex-none rounded-lg object-cover object-center shadow-md'}
                 src={props.cocktail.image}
                 alt={'Cocktail'}
               />
@@ -65,13 +65,13 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
               <textarea
                 readOnly={true}
                 value={props.cocktail.description ?? ''}
-                className={'flex-1 w-full textarea textarea-bordered'}
+                className={'textarea textarea-bordered w-full flex-1'}
               />
             </div>
           </div>
           <div className={'col-span-1'}>
             Glas: {props.cocktail.glass?.name}
-            <div className={'w-16 h-16'}>
+            <div className={'h-16 w-16'}>
               {props.cocktail.glass?.image != undefined ? (
                 <Image src={props.cocktail.glass.image} alt={'Glas'} width={300} height={300} />
               ) : (
@@ -81,14 +81,14 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
           </div>
           <div className={'col-span-1'}>Eis: {props.cocktail.glassWithIce}</div>
           <div className={'col-span-2 space-y-2'}>
-            {props.cocktail.steps.length == 0 ? <></> : <div className={'font-bold text-2xl'}>Zubereitung</div>}
+            {props.cocktail.steps.length == 0 ? <></> : <div className={'text-2xl font-bold'}>Zubereitung</div>}
             <div className={'grid grid-cols-2 gap-4'}>
               {props.cocktail.steps.map((step) => (
                 <div
                   key={'cocktail-details-step-' + step.id}
-                  className={'col-span-2 border-2 border-base-300 rounded-lg p-2 space-y-2'}
+                  className={'col-span-2 space-y-2 rounded-lg border-2 border-base-300 p-2'}
                 >
-                  <span className={'font-bold text-xl'}>
+                  <span className={'text-xl font-bold'}>
                     {step.mixing ? (CocktailUtensil as any)[step.tool] : (CocktailTool as any)[step.tool]}
                   </span>
                   {step.ingredients.map((ingredient) => (
@@ -100,7 +100,7 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                           </div>
                           <span>{ingredient.ingredient?.name}</span>
                           {ingredient.ingredient?.image != undefined ? (
-                            <img src={ingredient.ingredient.image} alt={''} className={'object-cover h-16 avatar'} />
+                            <img src={ingredient.ingredient.image} alt={''} className={'avatar h-16 object-cover'} />
                           ) : (
                             <></>
                           )}
@@ -110,7 +110,7 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                         {ingredient.ingredient?.tags?.map((tag) => (
                           <div
                             key={`cocktail-details-${props.cocktail.id}-ingredients-${ingredient.id}-tags-${tag}`}
-                            className={'m-1 badge badge-primary'}
+                            className={'badge badge-primary m-1'}
                           >
                             {tag}
                           </div>
@@ -121,15 +121,15 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                 </div>
               ))}
             </div>
-            {props.cocktail?.garnishes.length == 0 ? <></> : <div className={'font-bold text-2xl'}>Deko</div>}
+            {props.cocktail?.garnishes.length == 0 ? <></> : <div className={'text-2xl font-bold'}>Deko</div>}
             {props.cocktail?.garnishes
               .sort((a, b) => a.garnishNumber - b.garnishNumber)
               .map((garnish) => (
                 <div
                   key={'cocktail-details-garnish-' + garnish.garnishNumber + '-' + garnish.garnish?.id}
-                  className={'col-span-2 border-2 border-base-300 rounded-lg p-2 space-y-2 flex flex-col'}
+                  className={'col-span-2 flex flex-col space-y-2 rounded-lg border-2 border-base-300 p-2'}
                 >
-                  <div className={'font-bold text-xl'}>{garnish?.garnish?.name ?? 'Keine'}</div>
+                  <div className={'text-xl font-bold'}>{garnish?.garnish?.name ?? 'Keine'}</div>
                   {garnish.description == undefined || garnish.description.trim() == '' ? (
                     <></>
                   ) : (
@@ -149,7 +149,7 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                           <></>
                         )}
                         {garnish?.garnish?.image != undefined ? (
-                          <img src={garnish.garnish?.image} alt={'Deko'} className={'object-cover h-16 avatar'} />
+                          <img src={garnish.garnish?.image} alt={'Deko'} className={'avatar h-16 object-cover'} />
                         ) : (
                           <></>
                         )}

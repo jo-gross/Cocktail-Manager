@@ -48,7 +48,7 @@ export default function IngredientsOverviewPage() {
       actions={
         userContext.isUserPermitted(Role.MANAGER) ? (
           <Link href={`/workspaces/${workspaceId}/manage/ingredients/create`}>
-            <div className={'btn btn-primary btn-square md:btn-md btn-sm'}>
+            <div className={'btn btn-square btn-primary btn-sm md:btn-md'}>
               <FaPlus />
             </div>
           </Link>
@@ -58,7 +58,7 @@ export default function IngredientsOverviewPage() {
       <div className={'card'}>
         <div className={'card-body'}>
           <div className="overflow-x-auto">
-            <table className="table table-compact w-full">
+            <table className="table-compact table w-full">
               <thead>
                 <tr>
                   <th className="w-1/2">Name</th>
@@ -93,7 +93,7 @@ export default function IngredientsOverviewPage() {
                         <td className={''}>
                           {ingredient.image ? (
                             <div className="flex items-center space-x-3">
-                              <div className="w-12 h-12">
+                              <div className="h-12 w-12">
                                 <AvatarImage src={ingredient.image} alt={'Cocktail'} />
                               </div>
                               <div>{ingredient.name}</div>

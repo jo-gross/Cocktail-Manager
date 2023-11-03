@@ -14,7 +14,7 @@ export function NotSavedConfirmation(props: NotSavedConfirmationProps) {
   return (
     <div className="flex flex-col space-y-4">
       <div className="text-2xl font-bold">Änderungen nicht gespeichert</div>
-      <div className="text-justify max-w-xl">
+      <div className="max-w-xl text-justify">
         Du scheinst Änderungen gemacht zu haben, die noch nicht gespeichert wurden. Möchtest du ohne Speichern
         fortfahren?
       </div>

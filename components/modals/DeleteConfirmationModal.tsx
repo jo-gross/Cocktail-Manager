@@ -15,7 +15,7 @@ export function DeleteConfirmationModal(props: DeleteConfirmationModalProps) {
   return (
     <div className="flex flex-col space-y-4">
       <div className="text-2xl font-bold">{props.spelling == 'DELETE' ? 'Löschen' : 'Entfernen'}</div>
-      <div className="text-justify max-w-xl">{`Möchtest du ${props.entityName ?? 'diesen Eintrag'} wirklich ${
+      <div className="max-w-xl text-justify">{`Möchtest du ${props.entityName ?? 'diesen Eintrag'} wirklich ${
         props.spelling == 'DELETE' ? 'löschen' : 'entfernen'
       }?`}</div>
       <div className="flex flex-row space-x-4">
@@ -30,7 +30,7 @@ export function DeleteConfirmationModal(props: DeleteConfirmationModalProps) {
           Abbrechen
         </div>
         <div
-          className={`btn btn-red ${props.isDeleting == true ? 'loading' : ''}`}
+          className={`btn-red btn ${props.isDeleting == true ? 'loading' : ''}`}
           onClick={() => {
             props.onApprove();
             modalContext.closeModal();

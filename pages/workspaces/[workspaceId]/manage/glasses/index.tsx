@@ -49,7 +49,7 @@ export default function ManageGlassesOverviewPage() {
       actions={
         userContext.isUserPermitted(Role.MANAGER) ? (
           <Link href={`/workspaces/${workspaceId}/manage/glasses/create`}>
-            <div className={'btn btn-primary btn-square md:btn-md btn-sm'}>
+            <div className={'btn btn-square btn-primary btn-sm md:btn-md'}>
               <FaPlus />
             </div>
           </Link>
@@ -59,7 +59,7 @@ export default function ManageGlassesOverviewPage() {
       <div className={'card'}>
         <div className={'card-body'}>
           <div className="overflow-x-auto">
-            <table className="table table-compact w-full">
+            <table className="table-compact table w-full">
               <thead>
                 <tr>
                   <th className="">Name</th>
@@ -85,12 +85,12 @@ export default function ManageGlassesOverviewPage() {
                     <tr className={'p-4'} key={glass.id}>
                       <td>
                         <div className="flex items-center space-x-3">
-                          <div className="w-12 h-12 mask-squircle mask">
+                          <div className="mask mask-squircle h-12 w-12">
                             <>
                               {glass.image ? (
                                 <Image
                                   src={glass.image}
-                                  className={'w-fit h-full mr-2 object-contain bg-white'}
+                                  className={'mr-2 h-full w-fit bg-white object-contain'}
                                   alt="Glass"
                                   width={300}
                                   height={300}
