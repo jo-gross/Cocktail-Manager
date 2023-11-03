@@ -337,8 +337,8 @@ export default function CalculationPage() {
                             onClick={() =>
                               modalContext.openModal(
                                 <SearchModal
-                                  onCocktailSelected={(id) => {
-                                    addCocktailToSelection(id);
+                                  onCocktailSelectedObject={(cocktail) => {
+                                    addCocktailToSelection(cocktail.id);
                                   }}
                                 ></SearchModal>,
                               )
