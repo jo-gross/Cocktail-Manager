@@ -20,6 +20,7 @@ import { DeleteConfirmationModal } from '../modals/DeleteConfirmationModal';
 import { ModalContext } from '../../lib/context/ModalContextProvider';
 import _ from 'lodash';
 import { compressFile } from '../../lib/ImageCompressor';
+import WebcamImage from '../WebcamImage';
 
 interface CocktailRecipeFormProps {
   cocktailRecipe?: CocktailRecipeFull;
@@ -507,20 +508,45 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                       <></>
                     )}
                     {values.image == undefined ? (
-                      <UploadDropZone
-                        onSelectedFilesChanged={async (file) => {
-                          if (file != undefined) {
-                            const compressedImageFile = await compressFile(file);
-                            await setFieldValue('image', await convertToBase64(compressedImageFile));
-                          } else {
-                            alertService.error('Datei konnte nicht ausgewählt werden.');
-                          }
-                        }}
-                      />
+                      <div className="tabs tabs-bordered">
+                        <input
+                          type="radio"
+                          name="my_tabs_1"
+                          className="tab"
+                          aria-label="Datei wählen"
+                          checked={true}
+                          defaultChecked={true}
+                          readOnly={true}
+                        />
+                        <div className={'tab-content'}>
+                          <UploadDropZone
+                            onSelectedFilesChanged={async (file) => {
+                              if (file != undefined) {
+                                const compressedImageFile = await compressFile(file);
+                                await setFieldValue('image', await convertToBase64(compressedImageFile));
+                              } else {
+                                alertService.error('Datei konnte nicht ausgewählt werden.');
+                              }
+                            }}
+                          />
+                        </div>
+                        <input type="radio" name="my_tabs_1" className="tab" aria-label="Kamera" />
+                        <div className="tab-content p-10">
+                          <WebcamImage
+                            onCapture={async (file) => {
+                              if (file != undefined) {
+                                await setFieldValue('image', file);
+                              } else {
+                                alertService.error('Datei konnte nicht ausgewählt werden.');
+                              }
+                            }}
+                          />
+                        </div>
+                      </div>
                     ) : (
                       <div className={'relative'}>
                         <div
-                          className={'btn btn-square btn-error btn-outline btn-sm absolute right-2 top-2'}
+                          className={'btn btn-square btn-outline btn-error btn-sm absolute right-2 top-2'}
                           onClick={() =>
                             modalContext.openModal(
                               <DeleteConfirmationModal
@@ -960,7 +986,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                     <div className={'flex w-full justify-end'}>
                                       <button
                                         type={'button'}
-                                        className={'btn btn-secondary btn-outline btn-sm space-x-2'}
+                                        className={'btn btn-outline btn-secondary btn-sm space-x-2'}
                                         onClick={() =>
                                           pushIngredient({
                                             amount: 0,

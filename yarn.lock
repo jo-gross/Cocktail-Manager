@@ -1130,6 +1130,7 @@ __metadata:
     react-markdown: 9.0.0
     react-tag-input-component: 2.0.2
     react-three-state-checkbox: 3.0.0
+    react-webcam: ^7.2.0
     rxjs: 7.8.1
     sharp: 0.32.6
     tailwindcss: 3.3.5
@@ -4555,6 +4556,16 @@ __metadata:
     react: 16 || 17 || 18
     react-dom: 16 || 17 || 18
   checksum: 1b85e8ead651aae363550f2e414344852a40f9992ed225eeda03dd765dedda42d17235ac2a5ad5d78b7a6c0c929ec34bb1a6e4323884ebd4c5ad3ab836100f08
+  languageName: node
+  linkType: hard
+
+"react-webcam@npm:^7.2.0":
+  version: 7.2.0
+  resolution: "react-webcam@npm:7.2.0"
+  peerDependencies:
+    react: ">=16.2.0"
+    react-dom: ">=16.2.0"
+  checksum: 55aecc9e33ea711525f9b68a7c14c9cf4089777b9edd6d9c93813568d701a101f3da09ffd7df04b64eca8c9783a37830522376049589699c6015555ec8d7ccd8
   languageName: node
   linkType: hard
 
