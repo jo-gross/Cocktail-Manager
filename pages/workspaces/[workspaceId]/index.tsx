@@ -175,7 +175,7 @@ export default function OverviewPage() {
                   >
                     <div className={'p-2 text-center text-2xl font-bold'}>
                       {group.name}
-                      {group.groupPrice && ` - Special Preis: ${group.groupPrice}€`}
+                      {group.groupPrice != undefined ? ` - Special Preis: ${group.groupPrice}€` : ''}
                     </div>
                     <div
                       className={`grid 
@@ -224,58 +224,56 @@ export default function OverviewPage() {
         </div>
 
         <div className={'fixed bottom-2 right-2 flex flex-col space-y-2 md:bottom-5 md:right-5 print:hidden'}>
-          <div className="dropdown-end dropdown dropdown-top pt-2">
+          <div className="dropdown dropdown-end dropdown-top pt-2">
             <label tabIndex={0} className={'btn btn-square btn-primary rounded-xl md:btn-lg'}>
               <FaEye />
             </label>
-            <div tabIndex={0} className="dropdown-content rounded-box w-52 bg-base-100 p-2 shadow">
+            <div tabIndex={0} className="dropdown-content w-52 rounded-box bg-base-100 p-2 shadow">
               <div className={'flex flex-col space-x-2'}>
                 <div className={'divider'}>Karte</div>
-                <div className={'flex flex-col'}>
-                  {loading ? (
-                    <Loading />
-                  ) : cocktailCards.length == 0 ? (
-                    <div>Keine Karten vorhanden</div>
-                  ) : (
-                    cocktailCards.sort(sortCards).map((card) => (
-                      <div key={'card-' + card.id} className="form-control">
-                        <label className="label">
-                          <div className={'label-text'}>
-                            {card.name}
-                            {card.date != undefined ? (
-                              <span>
-                                {' '}
-                                - (
-                                {new Date().toISOString().split('T')[0] ==
-                                new Date(card.date).toISOString().split('T')[0]
-                                  ? 'Heute'
-                                  : new Date(card.date).toLocaleDateString('de')}
-                                )
-                              </span>
-                            ) : (
-                              ''
-                            )}
-                          </div>
-                          <input
-                            name={'card-radio'}
-                            type={'radio'}
-                            className={'radio'}
-                            value={card.id}
-                            checked={selectedCard?.id == card.id}
-                            readOnly={true}
-                            onClick={() => {
-                              setSelectedCardId(card.id);
-                              router.replace({
-                                pathname: '/workspaces/[workspaceId]',
-                                query: { card: card.id, workspaceId: workspaceId },
-                              });
-                            }}
-                          />
-                        </label>
-                      </div>
-                    ))
-                  )}
-                </div>
+                {loading ? (
+                  <Loading />
+                ) : cocktailCards.length == 0 ? (
+                  <div>Keine Karten vorhanden</div>
+                ) : (
+                  cocktailCards.sort(sortCards).map((card) => (
+                    <div key={'card-' + card.id} className="form-control">
+                      <label className="label">
+                        <div className={'label-text'}>
+                          {card.name}
+                          {card.date != undefined ? (
+                            <span>
+                              {' '}
+                              - (
+                              {new Date().toISOString().split('T')[0] == new Date(card.date).toISOString().split('T')[0]
+                                ? 'Heute'
+                                : new Date(card.date).toLocaleDateString('de')}
+                              )
+                            </span>
+                          ) : (
+                            ''
+                          )}
+                        </div>
+                        <input
+                          name={'card-radio'}
+                          type={'radio'}
+                          className={'radio'}
+                          value={card.id}
+                          checked={selectedCard?.id == card.id}
+                          readOnly={true}
+                          onClick={() => {
+                            setSelectedCardId(card.id);
+                            router.replace({
+                              pathname: '/workspaces/[workspaceId]',
+                              query: { card: card.id, workspaceId: workspaceId },
+                            });
+                          }}
+                        />
+                      </label>
+                    </div>
+                  ))
+                )}
+
                 <div className={'divider'}>Anzeige</div>
                 <label className="label">
                   <div className={'label-text'}>Suche</div>

@@ -168,9 +168,9 @@ model CocktailRecipe {
 
 model CocktailRecipeGarnish {
   cocktailRecipeId String
-  cocktailRecipe   CocktailRecipe @relation(fields: [cocktailRecipeId], references: [id])
+  cocktailRecipe   CocktailRecipe @relation(fields: [cocktailRecipeId], references: [id], onDelete: Cascade)
   garnishId        String
-  garnish          Garnish        @relation(fields: [garnishId], references: [id])
+  garnish          Garnish        @relation(fields: [garnishId], references: [id], onDelete: Cascade)
 
   description   String?
   garnishNumber Int
@@ -189,7 +189,7 @@ model CocktailRecipeStep {
 
   ingredients CocktailRecipeIngredient[]
 
-  cocktailRecipe   CocktailRecipe @relation(fields: [cocktailRecipeId], references: [id])
+  cocktailRecipe   CocktailRecipe @relation(fields: [cocktailRecipeId], references: [id], onDelete: Cascade)
   cocktailRecipeId String
 }
 
@@ -199,9 +199,9 @@ model CocktailRecipeIngredient {
   amount           Float?
   unit             String?
   ingredientId     String?
-  ingredient       Ingredient? @relation(fields: [ingredientId], references: [id])
+  ingredient       Ingredient? @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
 
-  cocktailRecipeStep   CocktailRecipeStep @relation(fields: [cocktailRecipeStepId], references: [id])
+  cocktailRecipeStep   CocktailRecipeStep @relation(fields: [cocktailRecipeStepId], references: [id], onDelete: Cascade)
   cocktailRecipeStepId String
 }
 
@@ -237,16 +237,16 @@ model CocktailCardGroup {
   name           String
   cocktailCardId String
   groupPrice     Float?
-  cocktailCard   CocktailCard            @relation(fields: [cocktailCardId], references: [id])
+  cocktailCard   CocktailCard            @relation(fields: [cocktailCardId], references: [id], onDelete: Cascade)
   items          CocktailCardGroupItem[]
 }
 
 model CocktailCardGroupItem {
   itemNumber          Int               @default(autoincrement())
   cocktailCardGroupId String
-  cocktailCardGroup   CocktailCardGroup @relation(fields: [cocktailCardGroupId], references: [id])
+  cocktailCardGroup   CocktailCardGroup @relation(fields: [cocktailCardGroupId], references: [id], onDelete: Cascade)
   cocktailId          String
-  cocktail            CocktailRecipe    @relation(fields: [cocktailId], references: [id])
+  cocktail            CocktailRecipe    @relation(fields: [cocktailId], references: [id], onDelete: Cascade)
   specialPrice        Float?
 
   @@id([cocktailCardGroupId, cocktailId])
@@ -257,9 +257,9 @@ model CocktailCalculation {
   name String
 
   workspaceId              String
-  workspace                Workspace                  @relation(fields: [workspaceId], references: [id])
+  workspace                Workspace                  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   updatedByUserId          String
-  updatedByUser            User                       @relation(fields: [updatedByUserId], references: [id])
+  updatedByUser            User                       @relation(fields: [updatedByUserId], references: [id], onDelete: Cascade)
   cocktailCalculationItems CocktailCalculationItems[]
 }
 
