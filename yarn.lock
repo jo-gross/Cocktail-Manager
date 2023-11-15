@@ -320,10 +320,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@prisma/engines@npm:5.5.2":
-  version: 5.5.2
-  resolution: "@prisma/engines@npm:5.5.2"
-  checksum: 45c74bd3db7ae3c6544e0d5303d7750a59b2fbc6cd9b33898ef3680fdbcfdb112a3058c2dfda03b0605156b8051624c2b85de8ccad25b7d859043ecf51a7cac3
+"@prisma/engines@npm:5.6.0":
+  version: 5.6.0
+  resolution: "@prisma/engines@npm:5.6.0"
+  checksum: 52688e2f59715479f8d531b1ce755578b069f05b0e3735a564f487a2cb8fa19b5f10a21b22e3fbba206190ece0f5a033952b3c78da6545ee798a186daa5b2e73
   languageName: node
   linkType: hard
 
@@ -1123,7 +1123,7 @@ __metadata:
     postcss: 8.4.31
     prettier: 3.1.0
     prettier-plugin-tailwindcss: ^0.5.7
-    prisma: 5.5.2
+    prisma: 5.6.0
     react: 18.2.0
     react-dom: 18.2.0
     react-icons: 4.11.0
@@ -4397,14 +4397,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"prisma@npm:5.5.2":
-  version: 5.5.2
-  resolution: "prisma@npm:5.5.2"
+"prisma@npm:5.6.0":
+  version: 5.6.0
+  resolution: "prisma@npm:5.6.0"
   dependencies:
-    "@prisma/engines": 5.5.2
+    "@prisma/engines": 5.6.0
   bin:
     prisma: build/index.js
-  checksum: 0f728d5953f8acb136708021da909ae9b22068bd19952378b545520ce6ce4e43f38db53fc3002866ff44dd0372b19460cc7b8c8558664492b26de6687da8680b
+  checksum: 77b80b89a771c6c218172cfc5b692e65755ba76ec5b6487ea3ac5b5fa05aea47c48a11cb9449517c4bc4770c3737d02fe3db576bd54c6e32fcf39f08607b546e
   languageName: node
   linkType: hard
 
