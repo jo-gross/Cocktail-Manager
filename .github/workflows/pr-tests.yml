@@ -3,7 +3,7 @@ name: Tests
 on:
   pull_request:
     branches:
-      - development
+      - master
 
 jobs:
   Linting:
