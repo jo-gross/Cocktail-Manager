@@ -6,7 +6,7 @@ RUN yarn
 
 RUN yarn playwright install --with-deps chromium
 
-FROM node:18-alpine AS build
+FROM node:21-alpine AS build
 
 WORKDIR /app
 COPY --from=dependencies /app/node_modules ./node_modules
@@ -15,7 +15,7 @@ COPY . .
 RUN yarn prisma generate
 RUN yarn build
 
-FROM node:18-alpine AS deploy
+FROM node:21-alpine AS deploy
 
 WORKDIR /app
 

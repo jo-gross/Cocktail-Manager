@@ -1,0 +1,67 @@
+name: Tests
+
+on:
+  pull_request:
+    branches:
+      - development
+
+jobs:
+  Linting:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: "Node.js setup"
+        uses: actions/setup-node@v3
+        with:
+          node-version: 21
+
+      - name: "Install dependencies"
+        run: yarn install
+
+      - name: "Run Prettier"
+        run: yarn lint
+
+  Build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: "Node.js setup"
+        uses: actions/setup-node@v3
+        with:
+          node-version: 19
+
+      - name: "Install dependencies"
+        run: yarn install
+
+      - name: "Build"
+        run: |
+          yarn run build
+
+  Licenses:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: 'Node.js setup'
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      - name: 'Install license-checker'
+        run: npm install -g license-checker
+
+      - name: 'Check licenses'
+        run: license-checker --production --onlyAllow "MIT;ISC;BSD-2-Clause;BSD-3-Clause;Apache-2.0;(MIT OR WTFPL);Apache*;0BSD" --excludePrivatePackages
