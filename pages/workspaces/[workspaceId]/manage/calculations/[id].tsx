@@ -277,7 +277,7 @@ export default function CalculationPage() {
             <span>{calculationName}</span>
             <div
               className={
-                'btn btn-circle btn-info btn-outline btn-xs flex items-center justify-center border print:hidden'
+                'btn btn-circle btn-outline btn-info btn-xs flex items-center justify-center border print:hidden'
               }
               onClick={openNameModal}
             >

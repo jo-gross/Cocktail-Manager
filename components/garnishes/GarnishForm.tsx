@@ -187,7 +187,7 @@ export function GarnishForm(props: GarnishFormProps) {
               ) : (
                 <div className={'relative'}>
                   <div
-                    className={'btn btn-square btn-error btn-outline btn-sm absolute right-2 top-2'}
+                    className={'btn btn-square btn-outline btn-error btn-sm absolute right-2 top-2'}
                     onClick={() => {
                       modalContext.openModal(
                         <DeleteConfirmationModal

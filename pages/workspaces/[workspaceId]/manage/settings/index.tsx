@@ -133,7 +133,7 @@ export default function WorkspaceSettingPage() {
                   <th className={'flex justify-end'}>
                     {userContext.isUserPermitted(Role.ADMIN) && (
                       <button
-                        className={'btn btn-primary btn-outline btn-sm'}
+                        className={'btn btn-outline btn-primary btn-sm'}
                         onClick={() => {
                           navigator.clipboard.writeText(workspaceId as string);
                           alertService.info('Erfolgreich kopiert');
@@ -284,7 +284,7 @@ export default function WorkspaceSettingPage() {
                     onChange={(event) => setNewWorkspaceName(event.target.value)}
                   />
                   <button
-                    className={'btn btn-error btn-outline'}
+                    className={'btn btn-outline btn-error'}
                     disabled={newWorkspaceName.length < 3 || newWorkspaceName.length > 50}
                     onClick={handleRenameWorkspace}
                   >
@@ -293,7 +293,7 @@ export default function WorkspaceSettingPage() {
                 </div>
                 <div className={'divider'}></div>
                 <button
-                  className={'btn btn-error btn-outline'}
+                  className={'btn btn-outline btn-error'}
                   onClick={() =>
                     modalContext.openModal(
                       <DeleteConfirmationModal onApprove={handleDeleteWorkspace} spelling={'DELETE'} />,
