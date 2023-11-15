@@ -520,7 +520,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                     ) : (
                       <div className={'relative'}>
                         <div
-                          className={'btn btn-square btn-error btn-outline btn-sm absolute right-2 top-2'}
+                          className={'btn btn-square btn-outline btn-error btn-sm absolute right-2 top-2'}
                           onClick={() =>
                             modalContext.openModal(
                               <DeleteConfirmationModal
@@ -960,7 +960,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                     <div className={'flex w-full justify-end'}>
                                       <button
                                         type={'button'}
-                                        className={'btn btn-secondary btn-outline btn-sm space-x-2'}
+                                        className={'btn btn-outline btn-secondary btn-sm space-x-2'}
                                         onClick={() =>
                                           pushIngredient({
                                             amount: 0,
