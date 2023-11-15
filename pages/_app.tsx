@@ -1,17 +1,20 @@
 import { AppProps } from 'next/app';
 import '../styles/global.css';
-import { useReducer, useState } from 'react';
+import React, { useReducer, useState } from 'react';
 import { ModalContext } from '../lib/context/ModalContextProvider';
 import { AlertBoundary } from '../components/layout/AlertBoundary';
 import { SessionProvider } from 'next-auth/react';
 import { AuthBoundary } from '../components/layout/AuthBoundary';
 import { GlobalModal } from '../components/modals/GlobalModal';
 import Head from 'next/head';
+import ThemeBoundary from '../components/layout/ThemeBoundary';
 
 const App = ({ Component, pageProps: { session, ...pageProps } }: AppProps) => {
   const [modalContent, setModalContent] = useState(<></>);
 
   const [, forceUpdate] = useReducer((x) => x + 1, 0);
+
+  const [isDark, setIsDark] = useState(false);
 
   return (
     <SessionProvider session={session}>
@@ -36,14 +39,24 @@ const App = ({ Component, pageProps: { session, ...pageProps } }: AppProps) => {
           }}
         >
           <AuthBoundary>
-            <GlobalModal>
-              <>
-                <Head>
-                  <title>The Cocktail-Manager</title>
-                </Head>
-                <Component {...pageProps} />
-              </>
-            </GlobalModal>
+            <ThemeBoundary>
+              <GlobalModal>
+                <>
+                  <Head>
+                    <title>The Cocktail-Manager</title>
+                  </Head>
+                  <input
+                    type="checkbox"
+                    hidden={true}
+                    checked={isDark}
+                    readOnly={true}
+                    value="halloween"
+                    className="theme-controller toggle"
+                  />
+                  <Component {...pageProps} />
+                </>
+              </GlobalModal>
+            </ThemeBoundary>
           </AuthBoundary>
         </ModalContext.Provider>
       </AlertBoundary>

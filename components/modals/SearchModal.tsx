@@ -73,9 +73,9 @@ export function SearchModal(props: SearchModalProps) {
   return (
     <div className={'grid w-full grid-cols-1 gap-2 p-2'}>
       <div className={'w-max text-2xl font-bold'}>Cocktail suchen</div>
-      <div className={'input-group pb-2'}>
+      <div className={'join pb-2'}>
         <input
-          className={'input input-bordered w-full'}
+          className={'input join-item input-bordered w-full'}
           value={search}
           autoFocus={true}
           onChange={(e) => {
@@ -85,7 +85,7 @@ export function SearchModal(props: SearchModalProps) {
             }
           }}
         />
-        <span className={'btn btn-square btn-primary btn-outline'}>
+        <span className={'btn btn-square btn-outline btn-primary join-item'}>
           <BsSearch />
         </span>
       </div>

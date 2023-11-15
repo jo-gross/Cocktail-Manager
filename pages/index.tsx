@@ -121,7 +121,7 @@ export default function WorkspacesPage() {
                       <div className={'h-full'}></div>
                       <div className={'card-actions justify-center'}>
                         <Link href={'/workspaces/' + workspace.id}>
-                          <span className={'btn btn-primary btn-outline w-3/4'}>Öffnen</span>
+                          <span className={'btn btn-outline btn-primary'}>Öffnen</span>
                         </Link>
                       </div>
                     </div>
@@ -129,30 +129,30 @@ export default function WorkspacesPage() {
                 ))}
                 <div className={'card h-40'}>
                   <div className={'card-body flex h-full flex-col items-center justify-center space-y-2'}>
-                    <div className={'input-group'}>
+                    <div className={'join'}>
                       <input
-                        className={'input input-bordered w-full'}
+                        className={'input join-item input-bordered'}
                         placeholder={'Neue Workspace erstellen'}
                         value={newWorkspaceName}
                         onChange={(event) => setNewWorkspaceName(event.target.value)}
                       />
                       <button
-                        className={'btn btn-square btn-outline'}
+                        className={'btn btn-square btn-outline join-item'}
                         disabled={newWorkspaceName.trim().length == 0}
                         onClick={createNewWorkspace}
                       >
                         <FaArrowRight />
                       </button>
                     </div>
-                    <div className={'input-group'}>
+                    <div className={'join'}>
                       <input
-                        className={'input input-bordered w-full'}
+                        className={'input join-item input-bordered'}
                         placeholder={'Mit Code beitreten'}
                         value={joinWorkspaceId}
                         onChange={(event) => setJoinWorkspaceId(event.target.value)}
                       />
                       <button
-                        className={'btn btn-square btn-outline'}
+                        className={'btn btn-square btn-outline join-item'}
                         disabled={joinWorkspaceId.trim().length == 0}
                         onClick={joinWorkspace}
                       >

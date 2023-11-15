@@ -1,4 +1,6 @@
 import {
+  CocktailCalculation,
+  CocktailCalculationItems,
   CocktailCard,
   CocktailCardGroup,
   CocktailCardGroupItem,
@@ -22,4 +24,6 @@ export interface BackupStructure {
   cocktailCard: CocktailCard[];
   cocktailCardGroup: CocktailCardGroup[];
   cocktailCardGroupItem: CocktailCardGroupItem[];
+  calculation: CocktailCalculation[];
+  calculationItems: CocktailCalculationItems[];
 }

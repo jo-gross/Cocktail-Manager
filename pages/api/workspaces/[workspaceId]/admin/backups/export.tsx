@@ -15,6 +15,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       cocktailCard: await prisma.cocktailCard.findMany(),
       cocktailCardGroup: await prisma.cocktailCardGroup.findMany(),
       cocktailCardGroupItem: await prisma.cocktailCardGroupItem.findMany(),
+      calculation: await prisma.cocktailCalculation.findMany(),
     };
 
     return res.json(backup);
