@@ -108,7 +108,7 @@ export function SearchModal(props: SearchModalProps) {
               {showRecipe ? <input type="checkbox" /> : <></>}
               <div className={`${showRecipe ? 'collapse-title' : 'p-2'} flex justify-between text-xl font-medium`}>
                 {cocktail.name}{' '}
-                {props.showRecipe && !showRecipe && props.onCocktailSelectedObject != undefined && (
+                {!showRecipe && props.onCocktailSelectedObject != undefined && (
                   <button
                     type="button"
                     disabled={props.selectedCocktails?.includes(cocktail.id) ?? false}

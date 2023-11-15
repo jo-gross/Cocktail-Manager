@@ -35,7 +35,7 @@ export default function ManagePage() {
         actions={[
           <div
             key={'profile'}
-            className="dropdown-end dropdown rounded-xl border border-none border-base-200 md:border-solid"
+            className="dropdown dropdown-end rounded-xl border border-none border-base-200 md:border-solid"
           >
             <label tabIndex={0} className="btn btn-ghost">
               <>
@@ -47,7 +47,7 @@ export default function ManagePage() {
                   </div>
                 ) : (
                   <div className="avatar placeholder">
-                    <div className="w-8 rounded-full bg-neutral-focus text-neutral-content">
+                    <div className="bg-neutral-focus w-8 rounded-full text-neutral-content">
                       <span className="text-xs">
                         {userContext.user?.name
                           ?.split(' ')
@@ -62,7 +62,7 @@ export default function ManagePage() {
             </label>
             <ul
               tabIndex={0}
-              className="menu dropdown-content rounded-box menu-sm z-[1] mt-2 w-52 gap-2 border border-base-200 bg-base-100 p-2 shadow"
+              className="menu dropdown-content menu-sm z-[1] mt-2 w-52 gap-2 rounded-box border border-base-200 bg-base-100 p-2 shadow"
             >
               <div className={'pt-1 text-center text-lg font-bold md:hidden'}>{userContext.user?.name}</div>
               <div className={'divider-sm md:hidden'}></div>
@@ -71,7 +71,7 @@ export default function ManagePage() {
               </li>
               <div className={'divider-sm'}></div>
               <button
-                className={'btn btn-error btn-outline btn-sm'}
+                className={'btn btn-outline btn-error btn-sm'}
                 onClick={async () => {
                   await router.replace('/');
                   await signOut();
