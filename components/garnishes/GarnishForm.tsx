@@ -152,17 +152,17 @@ export function GarnishForm(props: GarnishFormProps) {
                   <span>*</span>
                 </span>
               </label>
-              <div className={'input-group'}>
+              <div className={'join'}>
                 <input
                   type={'number'}
                   placeholder={'Preis'}
-                  className={`input input-bordered ${errors.price && touched.price && 'input-error'} w-full`}
+                  className={`input join-item input-bordered ${errors.price && touched.price && 'input-error'} w-full`}
                   value={values.price}
                   onChange={handleChange}
                   onBlur={handleBlur}
                   name={'price'}
                 />
-                <span className={'btn-secondary'}>€</span>
+                <span className={'btn btn-secondary join-item'}>€</span>
               </div>
             </div>
             <div className={'col-span-2'}>

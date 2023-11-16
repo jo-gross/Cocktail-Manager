@@ -276,15 +276,15 @@ export default function WorkspaceSettingPage() {
                 <label className={'label cursor-pointer'}>
                   <span className={'label-text'}>Gefahrenbereich verlassen</span>
                 </label>
-                <div className={'input-group'}>
+                <div className={'join'}>
                   <input
                     type={'text'}
-                    className={'input input-bordered w-full'}
+                    className={'input join-item input-bordered w-full'}
                     value={newWorkspaceName}
                     onChange={(event) => setNewWorkspaceName(event.target.value)}
                   />
                   <button
-                    className={'btn btn-outline btn-error'}
+                    className={'btn btn-outline btn-error join-item'}
                     disabled={newWorkspaceName.length < 3 || newWorkspaceName.length > 50}
                     onClick={handleRenameWorkspace}
                   >

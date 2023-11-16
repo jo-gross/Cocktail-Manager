@@ -61,13 +61,14 @@ export default function IngredientsOverviewPage() {
             <table className="table-compact table w-full">
               <thead>
                 <tr>
+                  <th className="w-1/12"></th>
                   <th className="w-1/2">Name</th>
                   <th className="w-1/4">Abkürzung</th>
                   <th className="w-1/8">Preis</th>
                   <th className="w-1/8">Menge</th>
                   <th className="w-1/8">Preis/Menge</th>
                   <th className="w-1/8">Tags</th>
-                  <th className="w-1/8">Link</th>
+                  <th className="w-1/12">Link</th>
                   <th className="w-1/8">Seite</th>
                   <th className="w-1/8"></th>
                 </tr>
@@ -75,13 +76,13 @@ export default function IngredientsOverviewPage() {
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={8}>
+                    <td colSpan={9}>
                       <Loading />
                     </td>
                   </tr>
                 ) : ingredients.length == 0 ? (
                   <tr>
-                    <td colSpan={8} className="{'text-center'}">
+                    <td colSpan={9} className="{'text-center'}">
                       Keine Einträge gefunden
                     </td>
                   </tr>
@@ -96,12 +97,12 @@ export default function IngredientsOverviewPage() {
                               <div className="h-12 w-12">
                                 <AvatarImage src={ingredient.image} alt={'Cocktail'} />
                               </div>
-                              <div>{ingredient.name}</div>
                             </div>
                           ) : (
-                            <>{ingredient.name}</>
+                            <></>
                           )}
                         </td>
+                        <td className={''}>{ingredient.name}</td>
                         <td>{ingredient.shortName}</td>
                         <td className={'whitespace-nowrap'}>{ingredient.price} €</td>
                         <td className={'whitespace-nowrap'}>

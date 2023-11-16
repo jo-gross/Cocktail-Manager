@@ -61,6 +61,7 @@ export default function CocktailsOverviewPage() {
             <table className="table-compact table w-full">
               <thead>
                 <tr>
+                  <th className=""></th>
                   <th className="">Name</th>
                   <th className="">Preis</th>
                   <th className="">Tags</th>
@@ -70,13 +71,13 @@ export default function CocktailsOverviewPage() {
               <tbody>
                 {loading ? (
                   <tr className={'w-full'}>
-                    <td colSpan={4}>
+                    <td colSpan={5}>
                       <Loading />
                     </td>
                   </tr>
                 ) : cocktailRecipes.length == 0 ? (
                   <tr>
-                    <td colSpan={4} className={'text-center'}>
+                    <td colSpan={5} className={'text-center'}>
                       Keine Einträge gefunden
                     </td>
                   </tr>
@@ -91,12 +92,12 @@ export default function CocktailsOverviewPage() {
                               <div className="h-12 w-12">
                                 <AvatarImage src={cocktailRecipe.image} alt={'Cocktail'} />
                               </div>
-                              <div>{cocktailRecipe.name}</div>
                             </div>
                           ) : (
-                            <>{cocktailRecipe.name}</>
+                            <></>
                           )}
                         </td>
+                        <td>{cocktailRecipe.name}</td>
                         <td className={''}>
                           <span className={'whitespace-nowrap'}>{cocktailRecipe.price} €</span>
                         </td>
