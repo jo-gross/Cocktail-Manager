@@ -62,6 +62,7 @@ export default function ManageGlassesOverviewPage() {
             <table className="table-compact table w-full">
               <thead>
                 <tr>
+                  <th className=""></th>
                   <th className="">Name</th>
                   <th className="">Pfand</th>
                   <th className="flex justify-end"></th>
@@ -70,13 +71,13 @@ export default function ManageGlassesOverviewPage() {
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={3}>
+                    <td colSpan={4}>
                       <Loading />
                     </td>
                   </tr>
                 ) : glasses.length == 0 ? (
                   <tr>
-                    <td colSpan={3} className={'text-center'}>
+                    <td colSpan={4} className={'text-center'}>
                       Keine Einträge gefunden
                     </td>
                   </tr>
@@ -90,7 +91,7 @@ export default function ManageGlassesOverviewPage() {
                               {glass.image ? (
                                 <Image
                                   src={glass.image}
-                                  className={'mr-2 h-full w-fit bg-white object-contain'}
+                                  className={'h-12 w-12 bg-white object-contain'}
                                   alt="Glass"
                                   width={300}
                                   height={300}
@@ -100,8 +101,10 @@ export default function ManageGlassesOverviewPage() {
                               )}
                             </>
                           </div>
-                          <div className="font-bold">{glass.name}</div>
                         </div>
+                      </td>
+                      <td>
+                        <div className="font-bold">{glass.name}</div>
                       </td>
                       <td>{glass.deposit} €</td>
                       <ManageColumn entity={'glasses'} id={glass.id} onRefresh={refreshGlasses} />

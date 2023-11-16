@@ -182,17 +182,19 @@ export function IngredientForm(props: IngredientFormProps) {
                       <span>*</span>
                     </span>
                   </label>
-                  <div className={'input-group'}>
+                  <div className={'join'}>
                     <input
                       type={'number'}
                       placeholder={'price'}
-                      className={`input input-bordered w-full ${errors.price && touched.price && 'input-error'}`}
+                      className={`input join-item input-bordered w-full ${
+                        errors.price && touched.price && 'input-error'
+                      }`}
                       value={values.price}
                       onChange={handleChange}
                       onBlur={handleBlur}
                       name={'price'}
                     />
-                    <span className={'btn-secondary'}>€</span>
+                    <span className={'btn btn-secondary join-item'}>€</span>
                   </div>
                 </div>
                 <div className={'form-control'}>
@@ -205,18 +207,20 @@ export function IngredientForm(props: IngredientFormProps) {
                       <span>*</span>
                     </span>
                   </label>
-                  <div className={'input-group'}>
+                  <div className={'join'}>
                     <input
                       type={'number'}
                       placeholder={'38cl'}
-                      className={`input input-bordered w-full ${errors.volume && touched.volume && 'input-error'}`}
+                      className={`input join-item input-bordered w-full ${
+                        errors.volume && touched.volume && 'input-error'
+                      }`}
                       value={values.volume}
                       onChange={handleChange}
                       onBlur={handleBlur}
                       name={'volume'}
                     />
                     <select
-                      className={`select select-bordered ${errors.unit && 'select-error'}`}
+                      className={`join-item select select-bordered ${errors.unit && 'select-error'}`}
                       onChange={handleChange}
                       onBlur={handleBlur}
                       name={'unit'}
@@ -231,7 +235,7 @@ export function IngredientForm(props: IngredientFormProps) {
                   </div>
                 </div>
                 <div>
-                  Preis/{values.unit}: {(values.price / values.volume).toFixed(2)}€
+                  Preis/{values.unit}: {(values.price ?? 0 / values.volume ?? 0).toFixed(2)}€
                 </div>
                 <div>
                   <label className={'label'}>
@@ -303,18 +307,20 @@ export function IngredientForm(props: IngredientFormProps) {
                       </span>
                     </span>
                   </label>
-                  <div className={'input-group'}>
+                  <div className={'join'}>
                     <input
                       type={'text'}
                       placeholder={''}
-                      className={`input input-bordered w-full ${errors.link && touched.link && 'input-error'}`}
+                      className={`input join-item input-bordered w-full ${
+                        errors.link && touched.link && 'input-error'
+                      }`}
                       onChange={handleChange}
                       onBlur={handleBlur}
                       value={values.link}
                       name={'link'}
                     />
                     <button
-                      className={`btn btn-primary ${values.fetchingExternalData ? 'loading' : ''}`}
+                      className={`btn btn-primary join-item ${values.fetchingExternalData ? 'loading' : ''}`}
                       type={'button'}
                       disabled={
                         !(

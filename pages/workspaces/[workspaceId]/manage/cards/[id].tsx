@@ -199,8 +199,8 @@ function EditCocktailCard() {
         {({ values, setFieldValue, errors, touched, handleChange, handleBlur, handleSubmit, isSubmitting }) => (
           <form onSubmit={handleSubmit}>
             <div className={'flex flex-col space-y-2'}>
-              <div className={'flex flex-col space-x-2 rounded-2xl border border-base-300 p-2 md:flex-row'}>
-                <div>
+              <div className={'flex flex-col gap-2 rounded-2xl border border-base-300 p-2 md:flex-row'}>
+                <div className={'form-control'}>
                   <label className={'label'}>
                     <div className={'label-text'}>Karte</div>
                     <div className={'label-text-alt text-error'}>
@@ -279,10 +279,10 @@ function EditCocktailCard() {
                                   </span>
                                 </div>
                               </label>
-                              <div className={'input-group'}>
+                              <div className={'join'}>
                                 <input
                                   type="number"
-                                  className={`input input-bordered w-full ${
+                                  className={`input join-item input-bordered w-full ${
                                     (errors?.groups?.[groupIndex] as any)?.groupPrice &&
                                     touched?.groups?.[groupIndex].groupPrice
                                       ? 'input-error'
@@ -293,7 +293,7 @@ function EditCocktailCard() {
                                   onBlur={handleBlur}
                                   value={values.groups[groupIndex].groupPrice ?? undefined}
                                 />
-                                <span className={'btn-primary'}>
+                                <span className={'btn btn-primary join-item'}>
                                   <FaEuroSign />
                                 </span>
                               </div>
@@ -362,91 +362,89 @@ function EditCocktailCard() {
                                   {values.groups[groupIndex].items
                                     .sort((a, b) => a.itemNumber - b.itemNumber)
                                     .map((item, itemIndex) => (
-                                      <div key={`card-group-${groupIndex}-item-${itemIndex}`} className={'col-span-1'}>
-                                        <div className={'card'}>
-                                          <div className={'card-body'}>
-                                            <div>
-                                              <div className={'flex justify-end space-x-2'}>
-                                                <button
-                                                  type={'button'}
-                                                  disabled={itemIndex == 0}
-                                                  className={'btn btn-square btn-outline btn-sm'}
-                                                  onClick={() => {
-                                                    const value = values.groups[groupIndex].items[itemIndex];
-                                                    const reorderedItems = values.groups[groupIndex].items.filter(
-                                                      (_, i) => i != itemIndex,
-                                                    );
-                                                    reorderedItems.splice(itemIndex - 1, 0, value);
-                                                    setFieldValue(
-                                                      `groups.${groupIndex}.items`,
-                                                      reorderedItems.map((item, itemIndex) => ({
-                                                        ...item,
-                                                        itemNumber: itemIndex,
-                                                      })),
-                                                    );
-                                                  }}
-                                                >
-                                                  <FaAngleLeft />
-                                                </button>
-                                                <button
-                                                  type={'button'}
-                                                  disabled={
-                                                    !(values.groups[groupIndex].items.length > 1) ||
-                                                    itemIndex == values.groups[groupIndex].items.length - 1
-                                                  }
-                                                  className={'btn btn-square btn-outline btn-sm'}
-                                                  onClick={() => {
-                                                    const value = values.groups[groupIndex].items[itemIndex];
-                                                    const reorderedItems = values.groups[groupIndex].items.filter(
-                                                      (_, i) => i != itemIndex,
-                                                    );
-                                                    reorderedItems.splice(itemIndex + 1, 0, value);
-                                                    setFieldValue(
-                                                      `groups.${groupIndex}.items`,
-                                                      reorderedItems.map((item, itemIndex) => ({
-                                                        ...item,
-                                                        itemNumber: itemIndex,
-                                                      })),
-                                                    );
-                                                  }}
-                                                >
-                                                  <FaAngleRight />
-                                                </button>
-                                                <div
-                                                  className={'btn btn-square btn-outline btn-error btn-sm'}
-                                                  onClick={() =>
-                                                    modalContext.openModal(
-                                                      <DeleteConfirmationModal
-                                                        spelling={'REMOVE'}
-                                                        entityName={'den Cocktail von der Gruppe'}
-                                                        onApprove={() => removeItem(itemIndex)}
-                                                      />,
-                                                    )
-                                                  }
-                                                >
-                                                  <FaTrashAlt />
-                                                </div>
-                                              </div>
-
-                                              {cocktails.find((cocktail) => cocktail.id == item.cocktailId) !=
-                                              undefined ? (
-                                                <CompactCocktailRecipeInstruction
-                                                  showPrice={true}
-                                                  cocktailRecipe={
-                                                    cocktails.find((cocktail) => cocktail.id == item.cocktailId)!
-                                                  }
-                                                />
-                                              ) : loadingCocktails ? (
-                                                <Loading />
-                                              ) : (
-                                                <div>Unbekannt</div>
-                                              )}
+                                      <div
+                                        key={`card-group-${groupIndex}-item-${itemIndex}`}
+                                        className={'card col-span-1'}
+                                      >
+                                        <div className={'card-body'}>
+                                          <div className={'flex justify-end space-x-2'}>
+                                            <button
+                                              type={'button'}
+                                              disabled={itemIndex == 0}
+                                              className={'btn btn-square btn-outline btn-sm'}
+                                              onClick={() => {
+                                                const value = values.groups[groupIndex].items[itemIndex];
+                                                const reorderedItems = values.groups[groupIndex].items.filter(
+                                                  (_, i) => i != itemIndex,
+                                                );
+                                                reorderedItems.splice(itemIndex - 1, 0, value);
+                                                setFieldValue(
+                                                  `groups.${groupIndex}.items`,
+                                                  reorderedItems.map((item, itemIndex) => ({
+                                                    ...item,
+                                                    itemNumber: itemIndex,
+                                                  })),
+                                                );
+                                              }}
+                                            >
+                                              <FaAngleLeft />
+                                            </button>
+                                            <button
+                                              type={'button'}
+                                              disabled={
+                                                !(values.groups[groupIndex].items.length > 1) ||
+                                                itemIndex == values.groups[groupIndex].items.length - 1
+                                              }
+                                              className={'btn btn-square btn-outline btn-sm'}
+                                              onClick={() => {
+                                                const value = values.groups[groupIndex].items[itemIndex];
+                                                const reorderedItems = values.groups[groupIndex].items.filter(
+                                                  (_, i) => i != itemIndex,
+                                                );
+                                                reorderedItems.splice(itemIndex + 1, 0, value);
+                                                setFieldValue(
+                                                  `groups.${groupIndex}.items`,
+                                                  reorderedItems.map((item, itemIndex) => ({
+                                                    ...item,
+                                                    itemNumber: itemIndex,
+                                                  })),
+                                                );
+                                              }}
+                                            >
+                                              <FaAngleRight />
+                                            </button>
+                                            <div
+                                              className={'btn btn-square btn-outline btn-error btn-sm'}
+                                              onClick={() =>
+                                                modalContext.openModal(
+                                                  <DeleteConfirmationModal
+                                                    spelling={'REMOVE'}
+                                                    entityName={'den Cocktail von der Gruppe'}
+                                                    onApprove={() => removeItem(itemIndex)}
+                                                  />,
+                                                )
+                                              }
+                                            >
+                                              <FaTrashAlt />
                                             </div>
                                           </div>
+
+                                          {cocktails.find((cocktail) => cocktail.id == item.cocktailId) != undefined ? (
+                                            <CompactCocktailRecipeInstruction
+                                              showPrice={true}
+                                              cocktailRecipe={
+                                                cocktails.find((cocktail) => cocktail.id == item.cocktailId)!
+                                              }
+                                            />
+                                          ) : loadingCocktails ? (
+                                            <Loading />
+                                          ) : (
+                                            <div>Unbekannt</div>
+                                          )}
                                         </div>
                                       </div>
                                     ))}
-                                  <div className={'col-span-3 flex flex-row justify-end'}>
+                                  <div className={'col-span-1 flex flex-row justify-end md:col-span-3'}>
                                     <button
                                       type="button"
                                       className={'btn btn-outline btn-secondary btn-sm'}
