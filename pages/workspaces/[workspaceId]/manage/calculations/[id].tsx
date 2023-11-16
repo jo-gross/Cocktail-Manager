@@ -29,6 +29,12 @@ interface GarnishCalculationItem {
   amount: number;
 }
 
+interface CalculationData {
+  name: string;
+  showSalesStuff: boolean;
+  cocktailCalculationItems: CocktailCalculationItem[];
+}
+
 export default function CalculationPage() {
   const modalContext = useContext(ModalContext);
 
@@ -47,6 +53,8 @@ export default function CalculationPage() {
 
   const [loading, setLoading] = useState(false);
 
+  const [showSalesStuff, setShowSalesStuff] = useState<boolean>(true);
+
   const [unsavedChanges, setUnsavedChanges] = useState(false);
   useEffect(() => {
     if (originalItems != JSON.stringify(cocktailCalculationItems)) {
@@ -64,9 +72,11 @@ export default function CalculationPage() {
       .then(async (response) => {
         const body = await response.json();
         if (response.ok) {
-          setCalculationName(body.data.name);
-          setCocktailCalculationItems(body.data.cocktailCalculationItems);
-          setOriginalItems(JSON.stringify(body.data.cocktailCalculationItems));
+          const data: CalculationData = body.data;
+          setCalculationName(data.name);
+          setCocktailCalculationItems(data.cocktailCalculationItems);
+          setOriginalItems(JSON.stringify(data.cocktailCalculationItems));
+          setShowSalesStuff(data.showSalesStuff ?? true);
         } else {
           console.log('CocktailCalculation -> useEffect[init, id != create]', response, body);
           alertService.error(body.message, response.status, response.statusText);
@@ -174,6 +184,7 @@ export default function CalculationPage() {
       if (id == 'create') {
         const body = {
           name: calculationName,
+          showSalesStuff: showSalesStuff,
           calculationItems: cocktailCalculationItems.map((item) => {
             return {
               plannedAmount: item.plannedAmount,
@@ -205,6 +216,7 @@ export default function CalculationPage() {
       } else {
         const body = {
           name: calculationName,
+          showSalesStuff: showSalesStuff,
           calculationItems: cocktailCalculationItems.map((item) => {
             return {
               plannedAmount: item.plannedAmount,
@@ -319,8 +331,8 @@ export default function CalculationPage() {
           <Loading />
         </PageCenter>
       ) : (
-        <div className={'grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-3 xl:gap-4 print:grid-cols-1'}>
-          <div className={'col-span-1 row-span-3 w-full md:col-span-2 print:col-span-1'}>
+        <div className={'grid grid-cols-1 gap-2 md:grid-cols-2 xl:gap-4 print:grid-cols-1'}>
+          <div className={'col-span-1 row-span-3 w-full'}>
             <div className={'card'}>
               <div className={'card-body'}>
                 <div className={'text-center text-2xl font-bold print:text-xl'}>Getränke Übersicht</div>
@@ -333,8 +345,14 @@ export default function CalculationPage() {
                       <tr>
                         <th className={'w-20'}>Geplante Menge</th>
                         <th className={'w-full'}>Name</th>
-                        <th className={'w-min'}>Preis</th>
-                        <th>Sonderpreis</th>
+                        {showSalesStuff ? (
+                          <>
+                            <th className={'w-min'}>Preis</th>
+                            <th>Sonderpreis</th>
+                          </>
+                        ) : (
+                          <></>
+                        )}
                         <th className={'flex justify-end print:hidden'}>
                           <div
                             className={'btn btn-primary btn-sm'}
@@ -376,32 +394,38 @@ export default function CalculationPage() {
                             <div className={'hidden print:flex'}>{cocktail.plannedAmount}</div>
                           </td>
                           <td>{cocktail.cocktail.name}</td>
-                          <td>{cocktail.cocktail.price}</td>
-                          <td>
-                            <div className={'join print:hidden'}>
-                              <input
-                                type={'number'}
-                                className={'input join-item input-bordered input-sm w-20'}
-                                step={0.01}
-                                value={cocktail.customPrice ?? ''}
-                                onChange={(event) => {
-                                  const updatedItems = cocktailCalculationItems.map((item) => {
-                                    if (item.cocktail.id == cocktail.cocktail.id) {
-                                      if (event.target.value == '') {
-                                        item.customPrice = undefined;
-                                      } else {
-                                        item.customPrice = Number(event.target.value);
-                                      }
-                                    }
-                                    return item;
-                                  });
-                                  setCocktailCalculationItems(updatedItems);
-                                }}
-                              />
-                              <span className={'btn btn-secondary join-item btn-sm'}> €</span>
-                            </div>
-                            <div className={'hidden print:flex'}>{cocktail.customPrice ?? '-'} €</div>
-                          </td>
+                          {showSalesStuff ? (
+                            <>
+                              <td>{cocktail.cocktail.price}</td>
+                              <td>
+                                <div className={'join print:hidden'}>
+                                  <input
+                                    type={'number'}
+                                    className={'input join-item input-bordered input-sm w-20'}
+                                    step={0.01}
+                                    value={cocktail.customPrice ?? ''}
+                                    onChange={(event) => {
+                                      const updatedItems = cocktailCalculationItems.map((item) => {
+                                        if (item.cocktail.id == cocktail.cocktail.id) {
+                                          if (event.target.value == '') {
+                                            item.customPrice = undefined;
+                                          } else {
+                                            item.customPrice = Number(event.target.value);
+                                          }
+                                        }
+                                        return item;
+                                      });
+                                      setCocktailCalculationItems(updatedItems);
+                                    }}
+                                  />
+                                  <span className={'btn btn-secondary join-item btn-sm'}> €</span>
+                                </div>
+                                <div className={'hidden print:flex'}>{cocktail.customPrice ?? '-'} €</div>
+                              </td>
+                            </>
+                          ) : (
+                            <></>
+                          )}
                           <td className={'print:hidden'}>
                             <div className={'flex items-center justify-end'}>
                               <div
@@ -439,6 +463,17 @@ export default function CalculationPage() {
                 <div className={'text-center text-2xl font-bold print:text-xl'}>Finanzen</div>
                 <div className={'print:hidden'}>
                   <div className={'divider-sm'}></div>
+                  <div className={'form-control'}>
+                    <label className={'label'}>
+                      <span className={'label-text'}>Betriebswirtschaftliche Ansicht</span>
+                    </label>
+                    <input
+                      checked={showSalesStuff}
+                      onChange={(event) => setShowSalesStuff(event.target.checked)}
+                      className={'toggle toggle-primary'}
+                      type={'checkbox'}
+                    />
+                  </div>
                 </div>
                 <div className={'overflow-x-auto'}>
                   <table className={'table-compact table w-full'}>
@@ -448,8 +483,14 @@ export default function CalculationPage() {
                         <th>Menge</th>
                         <th>Produktions-Preis</th>
                         <th>Produktion-Summe</th>
-                        <th>Erwarteter Umsatz</th>
-                        <th>Erwarteter Gewinn</th>
+                        {showSalesStuff ? (
+                          <>
+                            <th>Erwarteter Umsatz</th>
+                            <th>Erwarteter Gewinn</th>
+                          </>
+                        ) : (
+                          <></>
+                        )}
                       </tr>
                     </thead>
                     <tbody>
@@ -461,19 +502,25 @@ export default function CalculationPage() {
                             <td>{cocktail.plannedAmount} x</td>
                             <td>{calcCocktailTotalPrice(cocktail.cocktail).toFixed(2)} €</td>
                             <td>{(cocktail.plannedAmount * calcCocktailTotalPrice(cocktail.cocktail)).toFixed(2)} €</td>
-                            <td>
-                              {(
-                                cocktail.plannedAmount * (cocktail.customPrice ?? cocktail.cocktail.price ?? 0)
-                              ).toFixed(2)}{' '}
-                              €
-                            </td>
-                            <td>
-                              {(
-                                cocktail.plannedAmount * (cocktail.customPrice ?? cocktail.cocktail.price ?? 0) -
-                                cocktail.plannedAmount * calcCocktailTotalPrice(cocktail.cocktail)
-                              ).toFixed(2)}{' '}
-                              €
-                            </td>
+                            {showSalesStuff ? (
+                              <>
+                                <td>
+                                  {(
+                                    cocktail.plannedAmount * (cocktail.customPrice ?? cocktail.cocktail.price ?? 0)
+                                  ).toFixed(2)}{' '}
+                                  €
+                                </td>
+                                <td>
+                                  {(
+                                    cocktail.plannedAmount * (cocktail.customPrice ?? cocktail.cocktail.price ?? 0) -
+                                    cocktail.plannedAmount * calcCocktailTotalPrice(cocktail.cocktail)
+                                  ).toFixed(2)}{' '}
+                                  €
+                                </td>
+                              </>
+                            ) : (
+                              <></>
+                            )}
                           </tr>
                         ))}
                       <tr className={''}></tr>
@@ -488,27 +535,33 @@ export default function CalculationPage() {
                             .toFixed(2)}{' '}
                           €
                         </td>
-                        <td>
-                          {cocktailCalculationItems
-                            .map(
-                              (cocktail) =>
-                                cocktail.plannedAmount * (cocktail.customPrice ?? cocktail.cocktail.price ?? 0),
-                            )
-                            .reduce((acc, curr) => acc + curr, 0)
-                            .toFixed(2)}{' '}
-                          €
-                        </td>
-                        <td>
-                          {cocktailCalculationItems
-                            .map(
-                              (cocktail) =>
-                                cocktail.plannedAmount * (cocktail.customPrice ?? cocktail.cocktail.price ?? 0) -
-                                cocktail.plannedAmount * calcCocktailTotalPrice(cocktail.cocktail),
-                            )
-                            .reduce((acc, curr) => acc + curr, 0)
-                            .toFixed(2)}{' '}
-                          €
-                        </td>
+                        {showSalesStuff ? (
+                          <>
+                            <td>
+                              {cocktailCalculationItems
+                                .map(
+                                  (cocktail) =>
+                                    cocktail.plannedAmount * (cocktail.customPrice ?? cocktail.cocktail.price ?? 0),
+                                )
+                                .reduce((acc, curr) => acc + curr, 0)
+                                .toFixed(2)}{' '}
+                              €
+                            </td>
+                            <td>
+                              {cocktailCalculationItems
+                                .map(
+                                  (cocktail) =>
+                                    cocktail.plannedAmount * (cocktail.customPrice ?? cocktail.cocktail.price ?? 0) -
+                                    cocktail.plannedAmount * calcCocktailTotalPrice(cocktail.cocktail),
+                                )
+                                .reduce((acc, curr) => acc + curr, 0)
+                                .toFixed(2)}{' '}
+                              €
+                            </td>
+                          </>
+                        ) : (
+                          <></>
+                        )}
                       </tr>
                     </tbody>
                   </table>
