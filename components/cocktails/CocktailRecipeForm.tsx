@@ -401,16 +401,18 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                         <>{errors.price && touched.price && errors.price}</> *
                       </span>
                     </label>
-                    <div className={'input-group w-full'}>
+                    <div className={'join w-full'}>
                       <input
                         type="number"
-                        className={`input input-bordered w-full ${errors.price && touched.price && 'input-error'}`}
+                        className={`input join-item input-bordered w-full ${
+                          errors.price && touched.price && 'input-error'
+                        }`}
                         name="price"
                         onChange={handleChange}
                         onBlur={handleBlur}
                         value={values.price ?? undefined}
                       />
-                      <span className={'btn-secondary'}>
+                      <span className={'btn btn-secondary join-item'}>
                         <FaEuroSign />
                       </span>
                     </div>
@@ -815,11 +817,11 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                           key={`form-recipe-step-${step.id}-ingredient-${ingredient.id}`}
                                           className={'flex flex-row space-x-2'}
                                         >
-                                          <div className={'input-group input-group-vertical w-min'}>
+                                          <div className={'join join-vertical w-min'}>
                                             <button
                                               type={'button'}
                                               disabled={indexIngredient == 0}
-                                              className={'btn btn-square btn-outline btn-xs'}
+                                              className={'btn btn-square btn-outline join-item btn-xs'}
                                               onClick={() => {
                                                 const value = values.steps[indexStep].ingredients[indexIngredient];
                                                 const reorderedGroups = (values.steps as CocktailRecipeStepFull[])[
@@ -843,7 +845,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                                 !(values.steps[indexStep].ingredients.length > 1) ||
                                                 indexIngredient == values.steps[indexStep].ingredients.length - 1
                                               }
-                                              className={'btn btn-square btn-outline btn-xs'}
+                                              className={'btn btn-square btn-outline join-item btn-xs'}
                                               onClick={() => {
                                                 const value = values.steps[indexStep].ingredients[indexIngredient];
                                                 const reorderedGroups = (values.steps as CocktailRecipeStepFull[])[
@@ -864,11 +866,11 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                           </div>
                                           <div
                                             key={`form-recipe-step${step.id}-ingredient-${ingredient.id}`}
-                                            className={'input-group flex w-full flex-row'}
+                                            className={'join flex w-full flex-row'}
                                           >
                                             <select
                                               name={`steps.${indexStep}.ingredients.${indexIngredient}.ingredientId`}
-                                              className={`flex-8 select select-bordered w-full min-w-[20%] ${
+                                              className={`flex-8 join-item select select-bordered w-full min-w-[20%] ${
                                                 ((errors.steps as StepError[])?.[indexStep] as any)?.ingredients?.[
                                                   indexIngredient
                                                 ]?.ingredientId && 'select-error'
@@ -909,14 +911,14 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                             <input
                                               type="number"
                                               name={`steps.${indexStep}.ingredients.${indexIngredient}.amount`}
-                                              className={'input input-bordered w-20 flex-auto md:w-40'}
+                                              className={'input join-item input-bordered w-20 flex-auto md:w-40'}
                                               onChange={handleChange}
                                               onBlur={handleBlur}
                                               value={values.steps[indexStep].ingredients[indexIngredient].amount}
                                             />
                                             <select
                                               name={`steps.${indexStep}.ingredients.${indexIngredient}.unit`}
-                                              className={`select select-bordered max-w-[20%] md:max-w-none ${
+                                              className={`join-item select select-bordered max-w-[20%] md:max-w-none ${
                                                 ((errors.steps as StepError[])?.[indexStep] as any)?.ingredients?.[
                                                   indexIngredient
                                                 ]?.unit
@@ -939,7 +941,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                             </select>
                                             <button
                                               type={'button'}
-                                              className={'btn btn-square btn-error w-8'}
+                                              className={'btn btn-square btn-error join-item w-8'}
                                               disabled={values.steps[indexStep].ingredients.length == 1}
                                               onClick={() =>
                                                 modalContext.openModal(
@@ -1041,11 +1043,11 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                           className={'flex flex-row space-x-2 rounded-xl border border-neutral p-4'}
                         >
                           <div className={'flex flex-none items-center'}>
-                            <div className={'input-group input-group-vertical'}>
+                            <div className={'join join-vertical'}>
                               <button
                                 type={'button'}
                                 disabled={indexGarnish == 0}
-                                className={'btn btn-square btn-outline btn-xs'}
+                                className={'btn btn-square btn-outline join-item btn-xs'}
                                 onClick={() => {
                                   const value = values.garnishes[indexGarnish];
                                   const reorderedGroups = (values.garnishes as CocktailRecipeGarnishFull[]).filter(
@@ -1066,7 +1068,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                               <button
                                 type={'button'}
                                 disabled={!(values.garnishes.length > 1) || indexGarnish == values.garnishes.length - 1}
-                                className={'btn btn-square btn-outline btn-xs'}
+                                className={'btn btn-square btn-outline join-item btn-xs'}
                                 onClick={() => {
                                   const value = values.garnishes[indexGarnish];
                                   const reorderedGroups = (values.garnishes as CocktailRecipeGarnishFull[]).filter(
@@ -1086,8 +1088,8 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                               </button>
                             </div>
                           </div>
-                          <div className={'flex flex-col'}>
-                            <div className={'flex-1'}>
+                          <div className={'flex-2 grid w-full grid-cols-1 md:grid-cols-2'}>
+                            <div className={''}>
                               <label className={'label'}>
                                 <span className={'label-text'}>Garnitur</span>
                                 <span className={'label-text-alt text-error'}>
@@ -1146,40 +1148,42 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                 />
                               </label>
                             </div>
+                            <div className={''}>
+                              <label className={'label'}>
+                                <span className={'label-text'}>Zusätzliche Beschreibung</span>
+                                <span className={'label-text-alt text-error'}>
+                                  {/*{errors.garnishDescription && touched.garnishDescription && errors.garnishDescription}*/}
+                                </span>
+                              </label>
+                              <textarea
+                                value={values.garnishes[indexGarnish].description}
+                                name={`garnishes.${indexGarnish}.description`}
+                                className={
+                                  'textarea textarea-bordered h-24 w-full'
+                                  // ${
+                                  // errors.garnishDescription && touched.garnishDescription && 'textarea-error'
+                                  // }`
+                                }
+                                onChange={handleChange}
+                                onBlur={handleBlur}
+                              />
+                            </div>
                           </div>
                           <div className={'flex-1'}>
-                            <label className={'label'}>
-                              <span className={'label-text'}>Zusätzliche Beschreibung</span>
-                              <span className={'label-text-alt text-error'}>
-                                {/*{errors.garnishDescription && touched.garnishDescription && errors.garnishDescription}*/}
-                              </span>
-                            </label>
-                            <textarea
-                              value={values.garnishes[indexGarnish].description}
-                              name={`garnishes.${indexGarnish}.description`}
-                              className={
-                                'textarea textarea-bordered h-24 w-full'
-                                // ${
-                                // errors.garnishDescription && touched.garnishDescription && 'textarea-error'
-                                // }`
+                            <div
+                              className={'btn btn-square btn-error btn-sm'}
+                              onClick={() =>
+                                modalContext.openModal(
+                                  <DeleteConfirmationModal
+                                    spelling={'REMOVE'}
+                                    entityName={'die Garnitur'}
+                                    onApprove={() => removeGarnish(indexGarnish)}
+                                  />,
+                                )
                               }
-                              onChange={handleChange}
-                              onBlur={handleBlur}
-                            />
-                          </div>
-                          <div
-                            className={'btn btn-square btn-error btn-sm'}
-                            onClick={() =>
-                              modalContext.openModal(
-                                <DeleteConfirmationModal
-                                  spelling={'REMOVE'}
-                                  entityName={'die Garnitur'}
-                                  onApprove={() => removeGarnish(indexGarnish)}
-                                />,
-                              )
-                            }
-                          >
-                            <FaTrashAlt />
+                            >
+                              <FaTrashAlt />
+                            </div>
                           </div>
                         </div>
                       ))}

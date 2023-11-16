@@ -132,34 +132,36 @@ export function GlassForm(props: GlassFormProps) {
                   <span>*</span>
                 </span>
               </label>
-              <div className={'input-group'}>
+              <div className={'join'}>
                 <input
                   type={'number'}
                   placeholder={'Deposit'}
-                  className={`input input-bordered w-full ${errors.deposit && touched.deposit && 'input-error'}}`}
+                  className={`input join-item input-bordered w-full ${
+                    errors.deposit && touched.deposit && 'input-error'
+                  }}`}
                   value={values.deposit}
                   onChange={handleChange}
                   onBlur={handleBlur}
                   name={'deposit'}
                 />
-                <span className={'btn-secondary'}>€</span>
+                <span className={'btn btn-secondary join-item'}>€</span>
               </div>
             </div>
             <div className={'form-control'}>
               <label className={'label'}>
                 <span className={'label-text'}>Volumen</span>
               </label>
-              <div className={'input-group'}>
+              <div className={'join'}>
                 <input
                   type={'number'}
                   placeholder={'38cl'}
-                  className={'input input-bordered w-full'}
+                  className={'input join-item input-bordered w-full'}
                   value={values.volume}
                   onChange={handleChange}
                   onBlur={handleBlur}
                   name={'volume'}
                 />
-                <span className={'btn-secondary'}>cl</span>
+                <span className={'btn btn-secondary join-item'}>cl</span>
               </div>
             </div>
             <div className={'form-control'}>

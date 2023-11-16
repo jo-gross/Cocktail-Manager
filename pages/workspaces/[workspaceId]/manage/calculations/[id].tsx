@@ -273,17 +273,21 @@ export default function CalculationPage() {
         calculationName.trim() == '' ? (
           'Kalkulation'
         ) : (
-          <div className={'flex flex-row'}>
-            <span>{calculationName}</span>
-            <div
-              className={
-                'btn btn-circle btn-outline btn-info btn-xs flex items-center justify-center border print:hidden'
-              }
-              onClick={openNameModal}
-            >
-              <FaPencilAlt />
+          <div className={'flex flex-col items-center justify-center md:flex-row md:gap-2'}>
+            <div className={'flex'}>
+              <div>{calculationName}</div>
+              <div
+                className={
+                  'btn btn-circle btn-outline btn-info btn-xs flex items-center justify-center border print:hidden'
+                }
+                onClick={openNameModal}
+              >
+                <FaPencilAlt />
+              </div>
             </div>
-            <span> - Kalkulation</span>
+
+            <span>{'-'}</span>
+            <span>Kalkulation</span>
           </div>
         )
       }
@@ -374,10 +378,10 @@ export default function CalculationPage() {
                           <td>{cocktail.cocktail.name}</td>
                           <td>{cocktail.cocktail.price}</td>
                           <td>
-                            <div className={'input-group print:hidden'}>
+                            <div className={'join print:hidden'}>
                               <input
                                 type={'number'}
-                                className={'input input-bordered input-sm w-20'}
+                                className={'input join-item input-bordered input-sm w-20'}
                                 step={0.01}
                                 value={cocktail.customPrice ?? ''}
                                 onChange={(event) => {
@@ -394,29 +398,31 @@ export default function CalculationPage() {
                                   setCocktailCalculationItems(updatedItems);
                                 }}
                               />
-                              <span className={'input-group-text border border-secondary bg-secondary'}> €</span>
+                              <span className={'btn btn-secondary join-item btn-sm'}> €</span>
                             </div>
                             <div className={'hidden print:flex'}>{cocktail.customPrice ?? '-'} €</div>
                           </td>
-                          <td className={'flex items-center justify-end print:hidden'}>
-                            <div
-                              className={'btn btn-error btn-sm'}
-                              onClick={() => {
-                                modalContext.openModal(
-                                  <DeleteConfirmationModal
-                                    spelling={'REMOVE'}
-                                    onApprove={() => {
-                                      setCocktailCalculationItems(
-                                        cocktailCalculationItems.filter(
-                                          (item) => item.cocktail.id != cocktail.cocktail.id,
-                                        ),
-                                      );
-                                    }}
-                                  />,
-                                );
-                              }}
-                            >
-                              <FaTrashAlt />
+                          <td className={'print:hidden'}>
+                            <div className={'flex items-center justify-end'}>
+                              <div
+                                className={'btn btn-square btn-error btn-sm'}
+                                onClick={() => {
+                                  modalContext.openModal(
+                                    <DeleteConfirmationModal
+                                      spelling={'REMOVE'}
+                                      onApprove={() => {
+                                        setCocktailCalculationItems(
+                                          cocktailCalculationItems.filter(
+                                            (item) => item.cocktail.id != cocktail.cocktail.id,
+                                          ),
+                                        );
+                                      }}
+                                    />,
+                                  );
+                                }}
+                              >
+                                <FaTrashAlt />
+                              </div>
                             </div>
                           </td>
                         </tr>
@@ -523,7 +529,7 @@ export default function CalculationPage() {
                     <thead>
                       <tr>
                         <th>Zutat</th>
-                        <th>Menge</th>
+                        <th>Gesamt Menge</th>
                         <th>Ganze Flaschen</th>
                       </tr>
                     </thead>

@@ -15,18 +15,18 @@ export default function InputModal(props: InputModalProps) {
   const [inputValue, setInputValue] = useState(props.defaultValue || '');
 
   return (
-    <div className={'flex w-fit flex-col space-y-2'}>
+    <div className={'flex w-full flex-col space-y-2'}>
       <div className={'text-2xl font-bold'}>{props.title}</div>
       <div>{props.description}</div>
-      <div className={'input-group'}>
+      <div className={'join'}>
         <input
           value={inputValue}
           autoFocus={true}
-          className={'input input-bordered w-full'}
+          className={'input join-item input-bordered w-full'}
           onChange={(event) => setInputValue(event.target.value)}
         />
         <button
-          className={'btn btn-primary'}
+          className={'btn btn-primary join-item'}
           onClick={() => {
             if (props.allowEmpty || inputValue.trim().length > 0) {
               props.onInputChange(inputValue);
