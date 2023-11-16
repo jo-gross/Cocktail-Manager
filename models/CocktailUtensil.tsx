@@ -4,4 +4,5 @@ export enum CocktailUtensil {
   POUR = 'Einschenken',
   FLOAT = 'Floaten',
   BUILD_IN_GLASS = 'Im Glas',
+  BLENDER = 'Blender',
 }

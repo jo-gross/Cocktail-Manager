@@ -10,11 +10,11 @@ export function calcCocktailTotalPrice(cocktail: CocktailRecipeFull): number {
           (ingredient) =>
             ((ingredient.ingredient?.price ?? 0) / (ingredient.ingredient?.volume ?? 1)) * (ingredient.amount ?? 0),
         )
-        .reduce((summ, sum) => summ + sum) +
+        .reduce((summ, sum) => summ + sum, 0) +
         cocktail.garnishes
           .filter((garnish) => garnish.garnish != undefined)
           .flat()
           .map((garnish) => garnish.garnish?.price ?? 0)
-          .reduce((summ, sum) => summ + sum)
+          .reduce((summ, sum) => summ + sum, 0)
     : 0;
 }

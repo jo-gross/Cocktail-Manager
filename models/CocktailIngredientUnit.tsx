@@ -5,4 +5,5 @@ export enum CocktailIngredientUnit {
   DROPPER_CM = 'Pin. cm',
   DROPPER_DROPS = 'Pin. Tropfen',
   SPRAY = 'Sprühen',
+  GRAMM = 'g',
 }
