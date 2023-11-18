@@ -47,6 +47,8 @@ export default function CalculationPage() {
   const [cocktailCalculationItems, setCocktailCalculationItems] = useState<CocktailCalculationItem[]>([]);
 
   const [originalItems, setOriginalItems] = useState<string>('[]');
+  const [originalName, setOriginalName] = useState<string>('');
+  const [originalShowSalesStuff, setOriginalShowSalesStuff] = useState<boolean>(true);
 
   const [ingredientCalculationItems, setIngredientCalculationItems] = useState<IngredientCalculationItem[]>([]);
   const [garnishCalculationItems, setGarnishCalculationItems] = useState<GarnishCalculationItem[]>([]);
@@ -56,6 +58,10 @@ export default function CalculationPage() {
   const [showSalesStuff, setShowSalesStuff] = useState<boolean>(true);
 
   const [unsavedChanges, setUnsavedChanges] = useState(false);
+
+  /**
+   * check for unsaved changes start
+   */
   useEffect(() => {
     if (originalItems != JSON.stringify(cocktailCalculationItems)) {
       setUnsavedChanges(true);
@@ -64,6 +70,27 @@ export default function CalculationPage() {
     }
   }, [cocktailCalculationItems, originalItems]);
 
+  useEffect(() => {
+    if (originalName != calculationName) {
+      setUnsavedChanges(true);
+    } else {
+      setUnsavedChanges(false);
+    }
+  }, [calculationName, originalName]);
+
+  useEffect(() => {
+    if (originalShowSalesStuff != showSalesStuff) {
+      setUnsavedChanges(true);
+    } else {
+      setUnsavedChanges(false);
+    }
+  }, [originalShowSalesStuff, showSalesStuff]);
+
+  /**
+   * check for unsaved changes end
+   */
+
+  // Fetch Calculation
   useEffect(() => {
     if (!id) return;
     if (id == 'create') return;
@@ -75,8 +102,10 @@ export default function CalculationPage() {
           const data: CalculationData = body.data;
           setCalculationName(data.name);
           setCocktailCalculationItems(data.cocktailCalculationItems);
+          setShowSalesStuff(data.showSalesStuff ?? false);
+          setOriginalName(data.name);
           setOriginalItems(JSON.stringify(data.cocktailCalculationItems));
-          setShowSalesStuff(data.showSalesStuff ?? true);
+          setOriginalShowSalesStuff(data.showSalesStuff ?? false);
         } else {
           console.log('CocktailCalculation -> useEffect[init, id != create]', response, body);
           alertService.error(body.message, response.status, response.statusText);
@@ -202,6 +231,8 @@ export default function CalculationPage() {
             const body = await response.json();
             if (response.ok) {
               setOriginalItems(JSON.stringify(cocktailCalculationItems));
+              setOriginalShowSalesStuff(showSalesStuff);
+              setOriginalName(calculationName);
               if (redirect) {
                 await router.push(`/workspaces/${workspaceId}/manage/calculations/${body.data.id}`);
               }
@@ -234,6 +265,8 @@ export default function CalculationPage() {
             const body = await response.json();
             if (response.ok) {
               setOriginalItems(JSON.stringify(cocktailCalculationItems));
+              setOriginalShowSalesStuff(showSalesStuff);
+              setOriginalName(calculationName);
               if (redirect) {
                 await router.push(`/workspaces/${workspaceId}/manage/calculations/${body.data.id}`);
               }
@@ -247,7 +280,7 @@ export default function CalculationPage() {
           .finally(() => {});
       }
     },
-    [id, calculationName, cocktailCalculationItems, workspaceId, router],
+    [id, calculationName, showSalesStuff, cocktailCalculationItems, workspaceId, router],
   );
 
   useEffect(() => {
