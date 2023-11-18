@@ -613,6 +613,7 @@ export default function CalculationPage() {
                       <tr>
                         <th>Zutat</th>
                         <th>Gesamt Menge</th>
+                        <th>Benötigte Menge</th>
                         <th>Ganze Flaschen</th>
                       </tr>
                     </thead>
@@ -634,6 +635,11 @@ export default function CalculationPage() {
                               </td>
                               <td>
                                 {(ingredientCalculation.amount / (ingredientCalculation.ingredient.volume ?? 0)).toFixed(2)}
+                              {' (á '}
+                              {ingredientCalculation.ingredient.volume} {ingredientCalculation.ingredient.unit})
+                            </td>
+                            <td>
+                              {Math.ceil(ingredientCalculation.amount / (ingredientCalculation.ingredient.volume ?? 0))}
                                 {' (á '}
                                 {ingredientCalculation.ingredient.volume} {ingredientCalculation.ingredient.unit})
                               </td>
