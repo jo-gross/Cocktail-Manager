@@ -1107,7 +1107,7 @@ __metadata:
     "@types/react-is": 18.2.4
     autoprefixer: 10.4.16
     browser-image-compression: ^2.0.2
-    daisyui: 4.0.7
+    daisyui: 4.4.2
     eslint: 8.53.0
     eslint-config-next: 14.0.2
     eslint-config-prettier: ^9.0.0
@@ -1281,15 +1281,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"daisyui@npm:4.0.7":
-  version: 4.0.7
-  resolution: "daisyui@npm:4.0.7"
+"daisyui@npm:4.4.2":
+  version: 4.4.2
+  resolution: "daisyui@npm:4.4.2"
   dependencies:
     css-selector-tokenizer: ^0.8
     culori: ^3
     picocolors: ^1
     postcss-js: ^4
-  checksum: 356dd7658f310fc86e7dc9c4c750fe86867039b4b2a1cabfcf59be401758d4b18335a38261c51438e63a5fd93a523872ab285baf9062bfd532fe1561ae2d374d
+  checksum: d5aeeb5fe62fae0bf87aa7d21a315b9ba0b9eb71d94a93c640d64cd6665529a7354b4cb219cf40190d17e3ecfb2b4815079e53ba0a62759feb38cb390fad7a80
   languageName: node
   linkType: hard
 
