@@ -8,7 +8,8 @@
     "build": "prisma generate && next build",
     "start": "next start",
     "format:check": "prettier --check --ignore-path .gitignore .",
-    "format:fix": "prettier --write --ignore-path .gitignore ."
+    "format:fix": "prettier --write --ignore-path .gitignore .",
+    "migrate": "prisma migrate reset && prisma migrate deploy"
   },
   "keywords": [],
   "author": "",
