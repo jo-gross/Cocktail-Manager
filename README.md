@@ -15,6 +15,12 @@ Start the database:
 docker-compose up postgres -d
 ```
 
+After [node](https://github.com/nodesource/distributions#installation-instructions) is installed, enable `corepack` to use `yarn`: [yarn](https://yarnpkg.com/getting-started/install)
+
+```bash
+sudo corepack enable
+```
+
 Install all dependencies:
 
 ```bash
