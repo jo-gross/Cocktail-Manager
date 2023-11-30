@@ -11,16 +11,18 @@ export default function Document() {
         <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon/favicon-32x32.png" />
         <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon/favicon-16x16.png" />
         <link rel="manifest" href="/images/favicon/site.webmanifest" />
-        <link rel="mask-icon" href="/images/favicon/safari-pinned-tab.svg" color="#4f4c4c" />
-        <meta name="msapplication-TileColor" content="#da532c" />
-        <meta name="theme-color" content="#4f4c4c" />
+        <link rel="mask-icon" href="/images/favicon/safari-pinned-tab.svg" color="#3e3e3e" />
+        <link rel="shortcut icon" href="/images/favicon/favicon.ico" />
+        <meta name="msapplication-TileColor" content="#ffffff" />
+        <meta name="msapplication-config" content="/images/favicon/browserconfig.xml" />
+        <meta name="theme-color" content="#ffffff" />
       </Head>
 
       <body>
         <noscript
           id="google-tag-manager-noscript"
           dangerouslySetInnerHTML={{
-            __html: `<iframe src="https://www.googletagmanager.com/ns.html?id=GTM-TQLT765" height="0" width="0" style="display:none;visibility:hidden"></iframe>`,
+            __html: `<iframe src='https://www.googletagmanager.com/ns.html?id=GTM-TQLT765' height='0' width='0' style='display:none;visibility:hidden'></iframe>`,
           }}
         />
 
