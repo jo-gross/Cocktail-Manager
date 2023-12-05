@@ -132,6 +132,8 @@ export default function OverviewPage() {
           },
         })
         .then();
+    } else {
+      setSelectedCardId('search');
     }
   }, [cocktailCards, router, selectedCardId, sortCards, workspaceId]);
 
@@ -358,12 +360,18 @@ export default function OverviewPage() {
             </div>
           </div>
 
-          <div
-            className={'btn btn-square btn-primary rounded-xl md:btn-lg'}
-            onClick={() => modalContext.openModal(<SearchModal />)}
-          >
-            <FaSearch />
-          </div>
+          <>
+            {selectedCardId != 'search' ? (
+              <div
+                className={'btn btn-square btn-primary rounded-xl md:btn-lg'}
+                onClick={() => modalContext.openModal(<SearchModal />)}
+              >
+                <FaSearch />
+              </div>
+            ) : (
+              <></>
+            )}
+          </>
           <Link href={`/workspaces/${workspaceId}/manage`}>
             <div className={' btn btn-square btn-primary rounded-xl md:btn-lg'}>
               <BsFillGearFill />
