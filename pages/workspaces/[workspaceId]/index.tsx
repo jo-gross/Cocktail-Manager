@@ -28,17 +28,19 @@ export default function OverviewPage() {
   const [lessItems, setLessItems] = useState(false);
 
   const [cocktailCards, setCocktailCards] = useState<CocktailCardFull[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loadingCards, setLoadingCards] = useState(true);
+  const [loadingCardsGroups, setLoadingGroups] = useState(false);
 
+  // fetch cards initially
   useEffect(() => {
     if (!workspaceId) return;
+    setLoadingCards(true);
     fetch(`/api/workspaces/${workspaceId}/cards`)
       .then(async (response) => {
         const body = await response.json();
         if (response.ok) {
           setCocktailCards(body.data);
           if (body.data.length === 0) {
-            setLoading(false);
           }
         } else {
           console.log('WorkspaceIndex -> fetchCards', response, body);
@@ -48,7 +50,8 @@ export default function OverviewPage() {
       .catch((error) => {
         console.error(error);
         alertService.error(error.message);
-      });
+      })
+      .finally(() => setLoadingCards(false));
   }, [userContext.user, workspaceId]);
 
   const [selectedCardId, setSelectedCardId] = useState<string | undefined>(
@@ -59,8 +62,8 @@ export default function OverviewPage() {
   );
 
   useEffect(() => {
-    if (selectedCardId != undefined) {
-      setLoading(true);
+    if (selectedCardId != undefined && selectedCardId != 'search') {
+      setLoadingGroups(true);
       fetch(`/api/workspaces/${workspaceId}/cards/` + selectedCardId)
         .then((response) => {
           if (response.ok) {
@@ -74,7 +77,7 @@ export default function OverviewPage() {
           console.error(error);
           alertService.error(error.message);
         })
-        .finally(() => setLoading(false));
+        .finally(() => setLoadingGroups(false));
     }
   }, [selectedCardId, workspaceId]);
 
@@ -122,18 +125,22 @@ export default function OverviewPage() {
 
   useEffect(() => {
     if (selectedCardId == undefined && cocktailCards.length > 0) {
-      setSelectedCardId(cocktailCards.sort(sortCards)[0].id);
-      router
-        .replace({
-          pathname: '/workspaces/[workspaceId]',
-          query: {
-            card: cocktailCards[0].id,
-            workspaceId: workspaceId,
-          },
-        })
-        .then();
-    } else {
-      setSelectedCardId('search');
+      const todayCardId = cocktailCards
+        .filter((card) => card.date != undefined)
+        .find((card) => card.date?.withoutTime == new Date().withoutTime)?.id;
+      console.log('todayCardId', todayCardId);
+      if (todayCardId) {
+        setSelectedCardId(todayCardId);
+        router
+          .replace({
+            pathname: '/workspaces/[workspaceId]',
+            query: {
+              card: todayCardId,
+              workspaceId: workspaceId,
+            },
+          })
+          .then();
+      }
     }
   }, [cocktailCards, router, selectedCardId, sortCards, workspaceId]);
 
@@ -157,15 +164,15 @@ export default function OverviewPage() {
           <div
             className={'flex flex-col space-y-2 overflow-y-auto rounded-xl p-0 md:p-2 print:overflow-clip print:p-0'}
           >
-            {loading ? (
+            {selectedCardId == 'search' || selectedCardId == undefined ? (
+              <SearchPage />
+            ) : loadingCardsGroups ? (
               <PageCenter>
                 <Loading />
               </PageCenter>
-            ) : selectedCardId == 'search' ? (
-              <SearchPage />
             ) : (selectedCard?.groups ?? []).length == 0 ? (
               <PageCenter>
-                <div className={'text-center'}>Keine Karte gefunden</div>
+                <div className={'text-center'}>Keine Gruppen in der Karte vorhanden</div>
               </PageCenter>
             ) : (
               selectedCard?.groups
@@ -233,7 +240,7 @@ export default function OverviewPage() {
             <div tabIndex={0} className="dropdown-content w-52 rounded-box bg-base-100 p-2 shadow">
               <div className={'flex flex-col space-x-2'}>
                 <div className={'divider'}>Karte</div>
-                {loading ? (
+                {loadingCards ? (
                   <Loading />
                 ) : cocktailCards.length == 0 ? (
                   <div>Keine Karten vorhanden</div>
@@ -265,10 +272,12 @@ export default function OverviewPage() {
                           readOnly={true}
                           onClick={() => {
                             setSelectedCardId(card.id);
-                            router.replace({
-                              pathname: '/workspaces/[workspaceId]',
-                              query: { card: card.id, workspaceId: workspaceId },
-                            });
+                            router
+                              .replace({
+                                pathname: '/workspaces/[workspaceId]',
+                                query: { card: card.id, workspaceId: workspaceId },
+                              })
+                              .then();
                           }}
                         />
                       </label>
@@ -284,14 +293,16 @@ export default function OverviewPage() {
                     type={'radio'}
                     className={'radio'}
                     value={'search'}
-                    checked={selectedCardId == 'search'}
+                    checked={selectedCardId == 'search' || selectedCardId == undefined}
                     readOnly={true}
                     onClick={() => {
                       setSelectedCardId('search');
-                      router.replace({
-                        pathname: '/workspaces/[workspaceId]',
-                        query: { card: 'search', workspaceId: workspaceId },
-                      });
+                      router
+                        .replace({
+                          pathname: '/workspaces/[workspaceId]',
+                          query: { card: 'search', workspaceId: workspaceId },
+                        })
+                        .then();
                     }}
                   />
                 </label>
