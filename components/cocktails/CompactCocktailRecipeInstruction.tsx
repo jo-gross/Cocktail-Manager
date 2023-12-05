@@ -55,7 +55,12 @@ export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeIns
       </div>
       {props.cocktailRecipe.image != undefined && props.showImage == true ? (
         <div className={'row-span-3 h-full self-center justify-self-center pt-2'}>
-          <img src={props.cocktailRecipe.image} className={'h-full w-fit rounded-xl object-cover'} alt={''} />
+          <img
+            // src={props.cocktailRecipe.image}
+            src={`/api/workspaces/${props.cocktailRecipe.workspaceId}/cocktails/${props.cocktailRecipe.id}/image`}
+            className={'h-full w-fit rounded-xl object-cover'}
+            alt={''}
+          />
         </div>
       ) : (
         <></>
