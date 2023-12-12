@@ -5,13 +5,12 @@ import { TagsInput } from 'react-tag-input-component';
 import { Field, FieldArray, Formik, FormikProps } from 'formik';
 import React, { useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import { Garnish, Glass, Ingredient } from '@prisma/client';
+import { Garnish, Glass, Ingredient, IngredientUnit } from '@prisma/client';
 import { updateTags, validateTag } from '../../models/tags/TagUtils';
 import { UploadDropZone } from '../UploadDropZone';
 import { convertToBase64 } from '../../lib/Base64Converter';
 import { CocktailUtensil } from '../../models/CocktailUtensil';
 import { CocktailTool } from '../../models/CocktailTool';
-import { CocktailIngredientUnit } from '../../models/CocktailIngredientUnit';
 import { CocktailRecipeStepFull } from '../../models/CocktailRecipeStepFull';
 import CocktailRecipeOverviewItem from './CocktailRecipeOverviewItem';
 import { alertService } from '../../lib/alertService';
@@ -228,7 +227,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
               if (ingredient.amount && isNaN(ingredient.amount)) {
                 ingredientErrors.amount = 'Required';
               }
-              if (!ingredient.unit || ingredient.unit == '') {
+              if (!ingredient.unit) {
                 ingredientErrors.unit = 'Required';
               }
               if (!ingredient.ingredientId || ingredient.ingredientId == '') {
@@ -930,7 +929,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                               value={values.steps[indexStep].ingredients[indexIngredient].unit}
                                             >
                                               <option value={''}>Auswählen</option>
-                                              {Object.values(CocktailIngredientUnit).map((value) => (
+                                              {Object.values(IngredientUnit).map((value) => (
                                                 <option
                                                   key={`steps.${indexStep}.ingredients.${indexIngredient}.units-${value}`}
                                                   value={value}
@@ -966,7 +965,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                         onClick={() =>
                                           pushIngredient({
                                             amount: 0,
-                                            unit: CocktailIngredientUnit.CL,
+                                            unit: IngredientUnit.CL,
                                             ingredient: undefined,
                                           })
                                         }
@@ -1018,7 +1017,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                   amount: 0,
                                   ingredientId: '',
                                   cocktailRecipeStepId: '',
-                                  unit: CocktailIngredientUnit.CL,
+                                  unit: IngredientUnit.CL,
                                   ingredient: null,
                                   ingredientNumber: 0,
                                 },

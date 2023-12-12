@@ -2,6 +2,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { BackupStructure } from './backupStructure';
 import prisma from '../../../../../../lib/prisma';
 import { randomUUID } from 'crypto';
+import { convertStringToUnit } from '../../../../../../lib/UnitConverter';
 
 export const config = {
   api: {
@@ -40,6 +41,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           const ingredientMappingItem = { id: g.id, newId: randomUUID() };
           g.id = ingredientMappingItem.newId;
           g.workspaceId = workspaceId;
+          g.unit = convertStringToUnit(g.unit);
           ingredientMapping.push(ingredientMappingItem);
         });
         await prisma.ingredient.createMany({ data: data.ingredient, skipDuplicates: true });
@@ -95,6 +97,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           g.id = randomUUID();
           g.cocktailRecipeStepId = cocktailRecipeStepMapping.find((gm) => gm.id === g.cocktailRecipeStepId)?.newId!;
           g.ingredientId = ingredientMapping.find((gm) => gm.id === g.ingredientId)?.newId!;
+          g.unit = convertStringToUnit(g.unit);
         });
         await prisma.cocktailRecipeIngredient.createMany({ data: data.cocktailRecipeIngredient, skipDuplicates: true });
       }

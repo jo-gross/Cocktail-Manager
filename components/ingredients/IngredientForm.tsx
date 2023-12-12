@@ -1,8 +1,7 @@
 import { Formik, FormikProps } from 'formik';
-import { Ingredient } from '@prisma/client';
+import { Ingredient, IngredientUnit } from '@prisma/client';
 import { useRouter } from 'next/router';
 import React, { useContext, useEffect, useState } from 'react';
-import { CocktailIngredientUnit } from '../../models/CocktailIngredientUnit';
 import { TagsInput } from 'react-tag-input-component';
 import { updateTags, validateTag } from '../../models/tags/TagUtils';
 import { UploadDropZone } from '../UploadDropZone';
@@ -43,7 +42,7 @@ export function IngredientForm(props: IngredientFormProps) {
         shortName: props.ingredient?.shortName ?? '',
         price: props.ingredient?.price ?? 0,
         volume: props.ingredient?.volume ?? 0,
-        unit: props.ingredient?.unit ?? CocktailIngredientUnit.CL,
+        unit: props.ingredient?.unit ?? IngredientUnit.CL,
         link: props.ingredient?.link ?? '',
         tags: props.ingredient?.tags ?? [],
         image: props.ingredient?.image ?? undefined,
@@ -226,7 +225,7 @@ export function IngredientForm(props: IngredientFormProps) {
                       name={'unit'}
                       value={values.unit}
                     >
-                      {Object.values(CocktailIngredientUnit).map((unit) => (
+                      {Object.values(IngredientUnit).map((unit) => (
                         <option key={unit} value={unit}>
                           {unit}
                         </option>

@@ -193,15 +193,25 @@ model CocktailRecipeStep {
 }
 
 model CocktailRecipeIngredient {
-  id               String      @id @default(cuid())
+  id               String          @id @default(cuid())
   ingredientNumber Int
   amount           Float?
-  unit             String?
+  unit             IngredientUnit?
   ingredientId     String?
-  ingredient       Ingredient? @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+  ingredient       Ingredient?     @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
 
   cocktailRecipeStep   CocktailRecipeStep @relation(fields: [cocktailRecipeStepId], references: [id], onDelete: Cascade)
   cocktailRecipeStepId String
+}
+
+enum IngredientUnit {
+  CL
+  DASH
+  PIECE
+  DROPPER_CM
+  DROPPER_DROPS
+  SPRAY
+  GRAMM
 }
 
 model Ingredient {
@@ -210,14 +220,22 @@ model Ingredient {
   shortName                String?
   price                    Float?
   volume                   Float?
-  unit                     String?
+  unit                     IngredientUnit?
   link                     String?
   image                    String?
   tags                     String[]
   CocktailRecipeIngredient CocktailRecipeIngredient[]
 
-  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  workspaceId String
+  workspace                      Workspace                        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspaceId                    String
+  CustomIngredientUnitConversion CustomIngredientUnitConversion[]
+}
+
+model CustomIngredientUnitConversion {
+  id           String     @id @default(cuid())
+  ingredientId String
+  ingredient   Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+  value        Float
 }
 
 model CocktailCard {
