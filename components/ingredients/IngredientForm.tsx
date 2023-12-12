@@ -12,6 +12,7 @@ import { DeleteConfirmationModal } from '../modals/DeleteConfirmationModal';
 import { ModalContext } from '../../lib/context/ModalContextProvider';
 import _ from 'lodash';
 import { compressFile } from '../../lib/ImageCompressor';
+import { convertUnitToString } from '../../lib/UnitConverter';
 
 interface IngredientFormProps {
   ingredient?: Ingredient;
@@ -227,14 +228,14 @@ export function IngredientForm(props: IngredientFormProps) {
                     >
                       {Object.values(IngredientUnit).map((unit) => (
                         <option key={unit} value={unit}>
-                          {unit}
+                          {convertUnitToString(unit)}
                         </option>
                       ))}
                     </select>
                   </div>
                 </div>
                 <div>
-                  Preis/{values.unit}: {(values.price ?? 0 / values.volume ?? 0).toFixed(2)}€
+                  Preis/{convertUnitToString(values.unit)}: {(values.price ?? 0 / values.volume ?? 0).toFixed(2)}€
                 </div>
                 <div>
                   <label className={'label'}>

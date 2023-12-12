@@ -10,6 +10,7 @@ import { UserContext } from '../../lib/context/UserContextProvider';
 import Image from 'next/image';
 import DefaultGlassIcon from '../DefaultGlassIcon';
 import { Role } from '@prisma/client';
+import { convertUnitToString } from '../../lib/UnitConverter';
 
 interface CocktailDetailModalProps {
   cocktail: CocktailRecipeFull;
@@ -96,7 +97,7 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                       <div className={'flex-1'}>
                         <div className={'flex flex-row space-x-2'}>
                           <div className={'font-bold'}>
-                            {ingredient.amount} {ingredient.unit}
+                            {ingredient.amount} {convertUnitToString(ingredient.unit)}
                           </div>
                           <span>{ingredient.ingredient?.name}</span>
                           {ingredient.ingredient?.image != undefined ? (

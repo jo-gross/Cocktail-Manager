@@ -1,6 +1,6 @@
 import { IngredientUnit } from '@prisma/client';
 
-export function convertUnitToString(unit: IngredientUnit): string {
+export function convertUnitToString(unit: IngredientUnit | null): string | null {
   switch (unit) {
     case IngredientUnit.CL:
       return 'cl';
@@ -16,24 +16,26 @@ export function convertUnitToString(unit: IngredientUnit): string {
       return 'Sprühen';
     case IngredientUnit.GRAMM:
       return 'g';
+    default:
+      return null;
   }
 }
 
 export function convertStringToUnit(unit: string | null): IngredientUnit | null {
   switch (unit) {
-    case 'cl':
+    case 'cl' || IngredientUnit.CL.toString():
       return IngredientUnit.CL;
-    case 'Dash':
+    case 'Dash' || IngredientUnit.DASH.toString():
       return IngredientUnit.DASH;
-    case 'Stück':
+    case 'Stück' || IngredientUnit.PIECE.toString():
       return IngredientUnit.PIECE;
-    case 'Pin. cm':
+    case 'Pin. cm' || IngredientUnit.DROPPER_CM.toString():
       return IngredientUnit.DROPPER_CM;
-    case 'Pin. Tropfen':
+    case 'Pin. Tropfen' || IngredientUnit.DROPPER_DROPS.toString():
       return IngredientUnit.DROPPER_DROPS;
-    case 'Sprühen':
+    case 'Sprühen' || IngredientUnit.SPRAY.toString():
       return IngredientUnit.SPRAY;
-    case 'g':
+    case 'g' || IngredientUnit.GRAMM.toString():
       return IngredientUnit.GRAMM;
     default:
       return null;

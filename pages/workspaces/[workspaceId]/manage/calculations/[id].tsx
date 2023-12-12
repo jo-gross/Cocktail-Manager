@@ -12,6 +12,7 @@ import InputModal from '../../../../../components/modals/InputModal';
 import { PageCenter } from '../../../../../components/layout/PageCenter';
 import { Loading } from '../../../../../components/Loading';
 import { DeleteConfirmationModal } from '../../../../../components/modals/DeleteConfirmationModal';
+import { convertUnitToString } from '../../../../../lib/UnitConverter';
 
 interface CocktailCalculationItem {
   cocktail: CocktailRecipeFull;
@@ -540,14 +541,16 @@ export default function CalculationPage() {
                           <tr key={'ingredientCalculation-' + ingredientCalculation.ingredient.id}>
                             <td>{ingredientCalculation.ingredient.name}</td>
                             <td>
-                              {ingredientCalculation.amount.toFixed(2)} {ingredientCalculation.ingredient.unit}
+                              {ingredientCalculation.amount.toFixed(2)}{' '}
+                              {convertUnitToString(ingredientCalculation.ingredient.unit)}
                             </td>
                             <td>
                               {(ingredientCalculation.amount / (ingredientCalculation.ingredient.volume ?? 0)).toFixed(
                                 2,
                               )}
                               {' (á '}
-                              {ingredientCalculation.ingredient.volume} {ingredientCalculation.ingredient.unit})
+                              {ingredientCalculation.ingredient.volume}{' '}
+                              {convertUnitToString(ingredientCalculation.ingredient.unit)})
                             </td>
                           </tr>
                         ))}

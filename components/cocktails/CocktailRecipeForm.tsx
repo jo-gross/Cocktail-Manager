@@ -19,6 +19,7 @@ import { DeleteConfirmationModal } from '../modals/DeleteConfirmationModal';
 import { ModalContext } from '../../lib/context/ModalContextProvider';
 import _ from 'lodash';
 import { compressFile } from '../../lib/ImageCompressor';
+import { convertUnitToString } from '../../lib/UnitConverter';
 
 interface CocktailRecipeFormProps {
   cocktailRecipe?: CocktailRecipeFull;
@@ -934,7 +935,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                                   key={`steps.${indexStep}.ingredients.${indexIngredient}.units-${value}`}
                                                   value={value}
                                                 >
-                                                  {value}
+                                                  {convertUnitToString(value)}
                                                 </option>
                                               ))}
                                             </select>
