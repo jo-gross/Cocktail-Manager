@@ -1,5 +1,9 @@
-declare interface Date {
-  withoutTime(): Date;
+import 'react';
+
+declare global {
+  interface Date {
+    withoutTime(): Date;
+  }
 }
 
 Date.prototype.withoutTime = function () {
