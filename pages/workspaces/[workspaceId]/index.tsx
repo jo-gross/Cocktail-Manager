@@ -402,7 +402,7 @@ export default function OverviewPage() {
           </div>
 
           <>
-            {selectedCardId != 'search' ? (
+            {selectedCardId != 'search' && selectedCardId != undefined ? (
               <div
                 className={'btn btn-square btn-primary rounded-xl md:btn-lg'}
                 onClick={() => modalContext.openModal(<SearchModal />)}
