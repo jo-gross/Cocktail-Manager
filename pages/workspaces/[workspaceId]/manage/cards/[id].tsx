@@ -160,7 +160,6 @@ function EditCocktailCard() {
               items: group.items.map((item, itemIndex) => ({
                 itemNumber: itemIndex,
                 cocktailId: item.cocktailId,
-                specialPrice: item.specialPrice,
               })),
             })),
           };
@@ -247,7 +246,7 @@ function EditCocktailCard() {
                                 <div className={'label-text'}>Gruppe</div>
                                 <div className={'label-text-alt text-error'}>
                                   <span>
-                                    {(errors?.groups?.[groupIndex] as any)?.name && touched?.groups?.[groupIndex].name
+                                    {(errors?.groups?.[groupIndex] as any)?.name && touched?.groups?.[groupIndex]?.name
                                       ? (errors?.groups?.[groupIndex] as any)?.name
                                       : ''}
                                   </span>
@@ -282,6 +281,8 @@ function EditCocktailCard() {
                               <div className={'join'}>
                                 <input
                                   type="number"
+                                  min={0}
+                                  step={0.01}
                                   className={`input join-item input-bordered w-full ${
                                     (errors?.groups?.[groupIndex] as any)?.groupPrice &&
                                     touched?.groups?.[groupIndex].groupPrice
@@ -475,7 +476,7 @@ function EditCocktailCard() {
                       <button
                         type="button"
                         className={'btn btn-secondary btn-sm'}
-                        onClick={() => pushGroup({ name: '', items: [], specialPrice: undefined })}
+                        onClick={() => pushGroup({ name: '', items: [] })}
                       >
                         Gruppe hinzufügen
                       </button>

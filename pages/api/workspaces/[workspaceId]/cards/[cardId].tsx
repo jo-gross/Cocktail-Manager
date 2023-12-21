@@ -98,7 +98,7 @@ export default withHttpMethods({
               id: group.id,
               name: group.name,
               groupNumber: group.groupNumber,
-              groupPrice: group.groupPrice,
+              groupPrice: group.groupPrice == '' ? null : group.groupPrice,
               cocktailCard: { connect: { id: cocktailCardResult.id } },
             },
           });
