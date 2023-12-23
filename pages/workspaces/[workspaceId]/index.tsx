@@ -15,6 +15,7 @@ import ThemeChanger from '../../../components/ThemeChanger';
 import Head from 'next/head';
 import { UserContext } from '../../../lib/context/UserContextProvider';
 import SearchPage from './search';
+import '../../../lib/DateUtils';
 
 export default function OverviewPage() {
   const modalContext = useContext(ModalContext);
@@ -124,10 +125,28 @@ export default function OverviewPage() {
   }, []);
 
   useEffect(() => {
+    console.log('selectedCardId', selectedCardId);
     if (selectedCardId == undefined && cocktailCards.length > 0) {
       const todayCardId = cocktailCards
         .filter((card) => card.date != undefined)
         .find((card) => card.date?.withoutTime == new Date().withoutTime)?.id;
+
+      console.log(
+        'cocktailCards',
+        cocktailCards.map((c) => {
+          return {
+            name: c.name,
+            date: c.date,
+            dateWithoutTime: c.date?.withoutTime,
+          };
+        }),
+      );
+
+      const date = new Date();
+      date.setHours(0, 0, 0, 0);
+      console.log('today-date', date.toISOString());
+      console.log('today-withouttime', new Date().withoutTime);
+
       console.log('todayCardId', todayCardId);
       if (todayCardId) {
         setSelectedCardId(todayCardId);
@@ -136,6 +155,17 @@ export default function OverviewPage() {
             pathname: '/workspaces/[workspaceId]',
             query: {
               card: todayCardId,
+              workspaceId: workspaceId,
+            },
+          })
+          .then();
+      } else {
+        setSelectedCardId(cocktailCards[0].id);
+        router
+          .replace({
+            pathname: '/workspaces/[workspaceId]',
+            query: {
+              card: cocktailCards[0].id,
               workspaceId: workspaceId,
             },
           })
@@ -372,7 +402,7 @@ export default function OverviewPage() {
           </div>
 
           <>
-            {selectedCardId != 'search' ? (
+            {selectedCardId != 'search' && selectedCardId != undefined ? (
               <div
                 className={'btn btn-square btn-primary rounded-xl md:btn-lg'}
                 onClick={() => modalContext.openModal(<SearchModal />)}
