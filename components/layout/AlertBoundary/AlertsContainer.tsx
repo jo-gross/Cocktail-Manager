@@ -98,9 +98,13 @@ function AlertsContainer(props: AlertsContainerProps) {
   return (
     <div className="space-y-2">
       {alerts.reverse().map((alert, index) => (
-        <div key={index} className={`alert shadow-lg ${cssClasses(alert)}`}>
-          {icon(alert)}
-          <div>
+        <div
+          role={'alert'}
+          key={index}
+          className={`alert flex flex-row justify-between shadow-lg ${cssClasses(alert)}`}
+        >
+          <div className={'w-10 p-2'}>{icon(alert)}</div>
+          <div className={''}>
             <>
               {alert.status != undefined ? (
                 <span className={'font-bold'}>
@@ -112,7 +116,7 @@ function AlertsContainer(props: AlertsContainerProps) {
               <span>{alert.message}</span>
             </>
           </div>
-          <div className="text-md btn btn-ghost btn-sm" onClick={() => removeAlert(alert)}>
+          <div className="text-md btn btn-square btn-ghost btn-sm justify-self-end" onClick={() => removeAlert(alert)}>
             <FaTimes />
           </div>
         </div>
