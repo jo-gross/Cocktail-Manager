@@ -3,7 +3,7 @@ import prisma from '../../../../../lib/prisma';
 import { NextApiRequest, NextApiResponse } from 'next';
 import HTTPMethod from 'http-method-enum';
 import { withWorkspacePermission } from '../../../../../middleware/api/authenticationMiddleware';
-import { Prisma, Role, Workspace } from '@prisma/client';
+import { CustomIngredientUnitConversion, IngredientUnit, Prisma, Role, Workspace } from '@prisma/client';
 import { withHttpMethods } from '../../../../../middleware/api/handleMethods';
 import IngredientUpdateInput = Prisma.IngredientUpdateInput;
 
@@ -26,7 +26,7 @@ export default withHttpMethods({
   [HTTPMethod.PUT]: withWorkspacePermission(
     [Role.MANAGER],
     async (req: NextApiRequest, res: NextApiResponse, user, workspace: Workspace) => {
-      const { name, price, volume, unit, id, shortName, link, tags, image } = req.body;
+      const { name, price, volume, unit, id, shortName, link, tags, image, customUnitConversions } = req.body;
 
       const input: IngredientUpdateInput = {
         id: id,
@@ -50,7 +50,28 @@ export default withHttpMethods({
         },
         data: input,
       });
-      return res.json({ data: result });
+
+      await prisma.customIngredientUnitConversion.deleteMany({
+        where: {
+          ingredientId: id,
+        },
+      });
+
+      const customUnitConversionResults: CustomIngredientUnitConversion[] = [];
+      for (let customUnitConversion of customUnitConversions as { value: any; unit: IngredientUnit }[]) {
+        if (customUnitConversion.value != '') {
+          const customUnit = await prisma.customIngredientUnitConversion.create({
+            data: {
+              ingredientId: result.id,
+              value: customUnitConversion.value,
+              unit: Object.values(IngredientUnit).find((unit) => unit == customUnitConversion.unit)!,
+            },
+          });
+          customUnitConversionResults.push(customUnit);
+        }
+      }
+
+      return res.json({ data: { ...result, customUnitConversions: customUnitConversionResults } });
     },
   ),
   [HTTPMethod.DELETE]: withWorkspacePermission([Role.ADMIN], async (req: NextApiRequest, res: NextApiResponse) => {

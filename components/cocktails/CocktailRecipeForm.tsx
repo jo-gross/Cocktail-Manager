@@ -5,7 +5,7 @@ import { TagsInput } from 'react-tag-input-component';
 import { Field, FieldArray, Formik, FormikProps } from 'formik';
 import React, { useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import { Garnish, Glass, Ingredient, IngredientUnit } from '@prisma/client';
+import { Garnish, Glass, IngredientUnit } from '@prisma/client';
 import { updateTags, validateTag } from '../../models/tags/TagUtils';
 import { UploadDropZone } from '../UploadDropZone';
 import { convertToBase64 } from '../../lib/Base64Converter';
@@ -19,7 +19,8 @@ import { DeleteConfirmationModal } from '../modals/DeleteConfirmationModal';
 import { ModalContext } from '../../lib/context/ModalContextProvider';
 import _ from 'lodash';
 import { compressFile } from '../../lib/ImageCompressor';
-import { convertUnitToString } from '../../lib/UnitConverter';
+import { convertUnitToString, unitFromClConversion } from '../../lib/UnitConverter';
+import { IngredientFull } from '../../models/IngredientFull';
 
 interface CocktailRecipeFormProps {
   cocktailRecipe?: CocktailRecipeFull;
@@ -49,7 +50,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
   const workspaceId = router.query.workspaceId as string | undefined;
   const modalContext = useContext(ModalContext);
 
-  const [ingredients, setIngredients] = useState<Ingredient[]>([]);
+  const [ingredients, setIngredients] = useState<IngredientFull[]>([]);
   const [ingredientsLoading, setIngredientsLoading] = useState(false);
 
   const formRef = props.formRef;
@@ -71,6 +72,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
         const body = await response.json();
         if (response.ok) {
           setIngredients(body.data);
+          console.log(body.data);
         } else {
           console.log('CocktailRecipeForm -> fetchIngredients', response, body);
           alertService.error(body.message, response.status, response.statusText);
@@ -630,14 +632,22 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                               >
                                 <div>
                                   {ingredient.amount} x{' '}
-                                  {((ingredient.ingredient?.price ?? 0) / (ingredient.ingredient?.volume ?? 1)).toFixed(
-                                    2,
-                                  )}
+                                  {(
+                                    (ingredient.ingredient?.price ?? 0) /
+                                    ((ingredient.ingredient?.volume ?? 1) *
+                                      (ingredient.ingredient?.CustomIngredientUnitConversion?.find(
+                                        (customUnit) => customUnit.unit == ingredient.unit,
+                                      )?.value ?? unitFromClConversion(ingredient.unit)))
+                                  ).toFixed(2)}
                                 </div>
                                 <div className={'text-end'}>
                                   {indexIngredient > 0 ? '+ ' : ''}
                                   {(
-                                    ((ingredient.ingredient?.price ?? 0) / (ingredient.ingredient?.volume ?? 1)) *
+                                    ((ingredient.ingredient?.price ?? 0) /
+                                      ((ingredient.ingredient?.volume ?? 1) *
+                                        (ingredient.ingredient?.CustomIngredientUnitConversion?.find(
+                                          (customUnit) => customUnit.unit == ingredient.unit,
+                                        )?.value ?? unitFromClConversion(ingredient.unit)))) *
                                     (ingredient.amount ?? 0)
                                   ).toFixed(2)}
                                   €
@@ -682,7 +692,11 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                 .flat()
                                 .map(
                                   (ingredient) =>
-                                    ((ingredient.ingredient?.price ?? 0) / (ingredient.ingredient?.volume ?? 1)) *
+                                    ((ingredient.ingredient?.price ?? 0) /
+                                      ((ingredient.ingredient?.volume ?? 1) *
+                                        (ingredient.ingredient?.CustomIngredientUnitConversion?.find(
+                                          (customUnit) => customUnit.unit.toString() == ingredient.unit?.toString(),
+                                        )?.value ?? unitFromClConversion(ingredient.unit)))) *
                                     (ingredient.amount ?? 0),
                                 )
                                 .reduce((summ, sum) => summ + sum) + (values.garnish?.price ?? 0)

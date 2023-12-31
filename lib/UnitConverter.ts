@@ -42,7 +42,8 @@ export function convertStringToUnit(unit: string | null): IngredientUnit | null 
   }
 }
 
-export function unitFromClConversion(unit: IngredientUnit): number {
+export function unitFromClConversion(unit: IngredientUnit | null): number {
+  if (unit == null) return 1;
   switch (unit) {
     case IngredientUnit.CL:
       return 1;

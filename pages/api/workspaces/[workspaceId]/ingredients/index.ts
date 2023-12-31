@@ -17,6 +17,9 @@ export default withHttpMethods({
         where: {
           workspaceId: workspace.id,
         },
+        include: {
+          CustomIngredientUnitConversion: true,
+        },
       });
       return res.json({ data: ingredients });
     },
@@ -47,16 +50,17 @@ export default withHttpMethods({
       });
 
       const customUnitConversionResults: CustomIngredientUnitConversion[] = [];
-      console.log(customUnitConversions);
-      for (let customUnitConversion of customUnitConversions as { value: number; unit: IngredientUnit }[]) {
-        const customUnit = await prisma.customIngredientUnitConversion.create({
-          data: {
-            ingredientId: result.id,
-            value: customUnitConversion.value,
-            unit: Object.values(IngredientUnit).find((unit) => unit == customUnitConversion.unit)!,
-          },
-        });
-        customUnitConversionResults.push(customUnit);
+      for (let customUnitConversion of customUnitConversions as { value: any; unit: IngredientUnit }[]) {
+        if (customUnitConversion.value != '') {
+          const customUnit = await prisma.customIngredientUnitConversion.create({
+            data: {
+              ingredientId: result.id,
+              value: customUnitConversion.value,
+              unit: Object.values(IngredientUnit).find((unit) => unit == customUnitConversion.unit)!,
+            },
+          });
+          customUnitConversionResults.push(customUnit);
+        }
       }
 
       return res.json({ data: { ...result, customUnitConversions: customUnitConversionResults } });

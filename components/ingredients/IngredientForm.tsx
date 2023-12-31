@@ -39,24 +39,38 @@ export function IngredientForm(props: IngredientFormProps) {
   return (
     <Formik
       innerRef={formRef}
-      initialValues={props.ingredient?.CustomIngredientUnitConversion?.reduce(
-        (acc, unit) => {
-          // @ts-ignore
-          acc[`volume_${unit.unit}`] = unit.value;
-          return acc;
-        },
-        {
-          name: props.ingredient?.name ?? '',
-          shortName: props.ingredient?.shortName ?? '',
-          price: props.ingredient?.price ?? 0,
-          volume_CL: props.ingredient?.volume ?? 0,
-          unit: props.ingredient?.unit ?? IngredientUnit.CL,
-          link: props.ingredient?.link ?? '',
-          tags: props.ingredient?.tags ?? [],
-          image: props.ingredient?.image ?? undefined,
-          advanced_units: (props.ingredient?.CustomIngredientUnitConversion ?? []).length != 0,
-        },
-      )}
+      initialValues={
+        props.ingredient != null
+          ? props.ingredient?.CustomIngredientUnitConversion?.reduce(
+              (acc, unit) => {
+                // @ts-ignore
+                acc[`volume_${unit.unit}`] = unit.value;
+                return acc;
+              },
+              {
+                name: props.ingredient?.name ?? '',
+                shortName: props.ingredient?.shortName ?? '',
+                price: props.ingredient?.price ?? 0,
+                volume_CL: props.ingredient?.volume ?? 0,
+                unit: props.ingredient?.unit ?? IngredientUnit.CL,
+                link: props.ingredient?.link ?? '',
+                tags: props.ingredient?.tags ?? [],
+                image: props.ingredient?.image ?? undefined,
+                advanced_units: (props.ingredient?.CustomIngredientUnitConversion ?? []).length != 0,
+              },
+            )
+          : {
+              name: '',
+              shortName: '',
+              price: 0,
+              volume_CL: 0,
+              unit: IngredientUnit.CL,
+              link: '',
+              tags: [],
+              image: undefined,
+              advanced_units: false,
+            }
+      }
       onSubmit={async (values) => {
         try {
           const customConversions = [];
