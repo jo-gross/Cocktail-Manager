@@ -4,7 +4,7 @@ import prisma from '../../../../../lib/prisma';
 import { Prisma } from '.prisma/client';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { withWorkspacePermission } from '../../../../../middleware/api/authenticationMiddleware';
-import { Role, Workspace } from '@prisma/client';
+import { CustomIngredientUnitConversion, IngredientUnit, Role, Workspace } from '@prisma/client';
 import { withHttpMethods } from '../../../../../middleware/api/handleMethods';
 import HTTPMethod from 'http-method-enum';
 import IngredientCreateInput = Prisma.IngredientCreateInput;
@@ -24,7 +24,7 @@ export default withHttpMethods({
   [HTTPMethod.POST]: withWorkspacePermission(
     [Role.MANAGER],
     async (req: NextApiRequest, res: NextApiResponse, user, workspace: Workspace) => {
-      const { name, price, volume, unit, shortName, link, tags, image } = req.body;
+      const { name, price, volume, unit, shortName, link, tags, image, customUnitConversions } = req.body;
 
       const input: IngredientCreateInput = {
         name: name,
@@ -45,7 +45,21 @@ export default withHttpMethods({
       const result = await prisma.ingredient.create({
         data: input,
       });
-      return res.json({ data: result });
+
+      const customUnitConversionResults: CustomIngredientUnitConversion[] = [];
+      console.log(customUnitConversions);
+      for (let customUnitConversion of customUnitConversions as { value: number; unit: IngredientUnit }[]) {
+        const customUnit = await prisma.customIngredientUnitConversion.create({
+          data: {
+            ingredientId: result.id,
+            value: customUnitConversion.value,
+            unit: Object.values(IngredientUnit).find((unit) => unit == customUnitConversion.unit)!,
+          },
+        });
+        customUnitConversionResults.push(customUnit);
+      }
+
+      return res.json({ data: { ...result, customUnitConversions: customUnitConversionResults } });
     },
   ),
 });

@@ -1,5 +1,5 @@
 import { Formik, FormikProps } from 'formik';
-import { Ingredient, IngredientUnit } from '@prisma/client';
+import { IngredientUnit } from '@prisma/client';
 import { useRouter } from 'next/router';
 import React, { useContext, useEffect, useState } from 'react';
 import { TagsInput } from 'react-tag-input-component';
@@ -12,10 +12,11 @@ import { DeleteConfirmationModal } from '../modals/DeleteConfirmationModal';
 import { ModalContext } from '../../lib/context/ModalContextProvider';
 import _ from 'lodash';
 import { compressFile } from '../../lib/ImageCompressor';
-import { convertUnitToString } from '../../lib/UnitConverter';
+import { convertUnitToString, unitFromClConversion } from '../../lib/UnitConverter';
+import { IngredientFull } from '../../models/IngredientFull';
 
 interface IngredientFormProps {
-  ingredient?: Ingredient;
+  ingredient?: IngredientFull;
   setUnsavedChanges?: (unsavedChanges: boolean) => void;
   formRef?: React.RefObject<FormikProps<any>>;
 }
@@ -38,29 +39,51 @@ export function IngredientForm(props: IngredientFormProps) {
   return (
     <Formik
       innerRef={formRef}
-      initialValues={{
-        name: props.ingredient?.name ?? '',
-        shortName: props.ingredient?.shortName ?? '',
-        price: props.ingredient?.price ?? 0,
-        volume: props.ingredient?.volume ?? 0,
-        unit: props.ingredient?.unit ?? IngredientUnit.CL,
-        link: props.ingredient?.link ?? '',
-        tags: props.ingredient?.tags ?? [],
-        image: props.ingredient?.image ?? undefined,
-      }}
+      initialValues={props.ingredient?.CustomIngredientUnitConversion?.reduce(
+        (acc, unit) => {
+          // @ts-ignore
+          acc[`volume_${unit.unit}`] = unit.value;
+          return acc;
+        },
+        {
+          name: props.ingredient?.name ?? '',
+          shortName: props.ingredient?.shortName ?? '',
+          price: props.ingredient?.price ?? 0,
+          volume_CL: props.ingredient?.volume ?? 0,
+          unit: props.ingredient?.unit ?? IngredientUnit.CL,
+          link: props.ingredient?.link ?? '',
+          tags: props.ingredient?.tags ?? [],
+          image: props.ingredient?.image ?? undefined,
+          advanced_units: (props.ingredient?.CustomIngredientUnitConversion ?? []).length != 0,
+        },
+      )}
       onSubmit={async (values) => {
         try {
+          const customConversions = [];
+          for (const unit of Object.values(IngredientUnit)) {
+            if (unit != IngredientUnit.CL) {
+              if (values[`volume_${unit}`] != undefined) {
+                customConversions.push({
+                  unit: unit,
+                  value: values[`volume_${unit}`],
+                });
+              }
+            }
+          }
+
           const body = {
             id: props.ingredient == undefined ? undefined : props.ingredient.id,
             name: values.name.trim(),
             shortName: values.shortName?.trim() == '' ? undefined : values.shortName?.trim(),
             price: values.price,
             unit: values.unit,
-            volume: values.volume == 0 ? undefined : values.volume,
+            volume: values.volume == 0 ? undefined : values.volume_CL,
             link: values.link?.trim() == '' ? undefined : values.link?.trim(),
             tags: values.tags,
             image: values.image?.trim() == '' ? undefined : values.image?.trim(),
+            customUnitConversions: customConversions,
           };
+
           if (props.ingredient == undefined) {
             const result = await fetch(`/api/workspaces/${workspaceId}/ingredients`, {
               method: 'POST',
@@ -104,8 +127,8 @@ export function IngredientForm(props: IngredientFormProps) {
         if (values.price.toString() == '' || isNaN(values.price)) {
           errors.price = 'Required';
         }
-        if (values.volume.toString() == '' || isNaN(values.volume)) {
-          errors.volume = 'Required';
+        if (values.volume_CL.toString() == '' || isNaN(values.volume_CL)) {
+          errors.volume_CL = 'Required';
         }
         if (!values.unit) {
           errors.unit = 'Required';
@@ -197,46 +220,93 @@ export function IngredientForm(props: IngredientFormProps) {
                     <span className={'btn btn-secondary join-item'}>€</span>
                   </div>
                 </div>
-                <div className={'form-control'}>
-                  <label className={'label'}>
-                    <span className={'label-text'}>Menge</span>
-                    <span className={'label-text-alt space-x-2 text-error'}>
-                      <span>
-                        <>{errors.volume && touched.volume && errors.volume}</>
-                      </span>
-                      <span>*</span>
-                    </span>
-                  </label>
-                  <div className={'join'}>
-                    <input
-                      type={'number'}
-                      placeholder={'38cl'}
-                      className={`input join-item input-bordered w-full ${
-                        errors.volume && touched.volume && 'input-error'
-                      }`}
-                      value={values.volume}
-                      onChange={handleChange}
-                      onBlur={handleBlur}
-                      name={'volume'}
-                    />
-                    <select
-                      className={`join-item select select-bordered ${errors.unit && 'select-error'}`}
-                      onChange={handleChange}
-                      onBlur={handleBlur}
-                      name={'unit'}
-                      value={values.unit}
-                    >
-                      {Object.values(IngredientUnit).map((unit) => (
-                        <option key={unit} value={unit}>
-                          {convertUnitToString(unit)}
-                        </option>
-                      ))}
-                    </select>
+                <div role="tablist" className="tabs tabs-bordered w-full grid-cols-2">
+                  <input
+                    type="radio"
+                    name="my_tabs_1"
+                    role="tab"
+                    className="tab"
+                    aria-label="Einfache Einheit"
+                    defaultChecked={!values.advanced_units}
+                    onClick={() => setFieldValue('advanced_units', false)}
+                  />
+                  <div role="tabpanel" className="tab-content">
+                    <div className={'form-control'}>
+                      <label className={'label'}>
+                        <span className={'label-text'}>Menge</span>
+                        <span className={'label-text-alt space-x-2 text-error'}>
+                          <span>
+                            <>{errors.volume_CL && touched.volume_CL && errors.volume_CL}</>
+                          </span>
+                          <span>*</span>
+                        </span>
+                      </label>
+                      <div className={'join'}>
+                        <input
+                          type={'number'}
+                          className={`input join-item input-bordered w-full ${
+                            errors.volume_CL && touched.volume_CL && 'input-error'
+                          }`}
+                          value={values[`volume_${values.unit}`]}
+                          onChange={handleChange}
+                          onBlur={handleBlur}
+                          name={`volume_${values.unit}`}
+                        />
+                        <select
+                          className={`join-item select select-bordered ${errors.unit && 'select-error'}`}
+                          onChange={handleChange}
+                          onBlur={handleBlur}
+                          name={'unit'}
+                          value={values.unit}
+                        >
+                          {Object.values(IngredientUnit).map((unit) => (
+                            <option key={unit} value={unit}>
+                              {convertUnitToString(unit)}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                    <div>
+                      Preis/{convertUnitToString(values.unit)}:{' '}
+                      {((values.price ?? 0) / (values.volume_CL ?? 0)).toFixed(2)}€
+                    </div>
+                  </div>
+
+                  <input
+                    type="radio"
+                    name="my_tabs_1"
+                    role="tab"
+                    className="tab"
+                    aria-label="Einheiten anpassen"
+                    defaultChecked={values.advanced_units}
+                    onClick={() => setFieldValue('advanced_units', true)}
+                  />
+                  <div role="tabpanel" className="tab-content">
+                    {Object.values(IngredientUnit).map((unit) => (
+                      <div key={unit} className={'form-control'}>
+                        <label className={'label'}>
+                          <span className={'label-text'}>Menge</span>
+                        </label>
+                        <div className={'join'}>
+                          <input
+                            type={'number'}
+                            className={`input join-item input-bordered w-full ${
+                              errors.volume && touched.volume && 'input-error'
+                            }`}
+                            placeholder={`${unitFromClConversion(unit) * values.volume_CL}`}
+                            onChange={handleChange}
+                            onBlur={handleBlur}
+                            value={values[`volume_${unit}`]}
+                            name={`volume_${unit}`}
+                          />
+                          <span className={'btn btn-secondary join-item'}>{convertUnitToString(unit)}</span>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
-                <div>
-                  Preis/{convertUnitToString(values.unit)}: {(values.price ?? 0 / values.volume ?? 0).toFixed(2)}€
-                </div>
+
                 <div>
                   <label className={'label'}>
                     <span className={'label-text'}>Tags</span>
@@ -334,14 +404,14 @@ export function IngredientForm(props: IngredientFormProps) {
                         fetch(`/api/scraper/ingredient?url=${values.link}`)
                           .then((response) => {
                             if (response.ok) {
-                              response.json().then((data) => {
+                              return response.json().then((data) => {
                                 setFieldValue('name', data.name);
                                 if (data.price != 0) {
                                   setFieldValue('price', data.price);
                                 }
                                 setFieldValue('image', data.image);
                                 if (data.volume != 0) {
-                                  setFieldValue('volume', data.volume);
+                                  setFieldValue('volume_CL', data.volume);
                                 }
                               });
                             } else {

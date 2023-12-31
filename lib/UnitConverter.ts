@@ -9,9 +9,9 @@ export function convertUnitToString(unit: IngredientUnit | null): string | null 
     case IngredientUnit.PIECE:
       return 'Stück';
     case IngredientUnit.DROPPER_CM:
-      return 'Pin. cm';
+      return 'Pip. cm';
     case IngredientUnit.DROPPER_DROPS:
-      return 'Pin. Tropfen';
+      return 'Pip. Tropfen';
     case IngredientUnit.SPRAY:
       return 'Sprühen';
     case IngredientUnit.GRAMM:
@@ -29,9 +29,9 @@ export function convertStringToUnit(unit: string | null): IngredientUnit | null 
       return IngredientUnit.DASH;
     case 'Stück' || IngredientUnit.PIECE.toString():
       return IngredientUnit.PIECE;
-    case 'Pin. cm' || IngredientUnit.DROPPER_CM.toString():
+    case 'Pip. cm' || IngredientUnit.DROPPER_CM.toString():
       return IngredientUnit.DROPPER_CM;
-    case 'Pin. Tropfen' || IngredientUnit.DROPPER_DROPS.toString():
+    case 'Pip. Tropfen' || IngredientUnit.DROPPER_DROPS.toString():
       return IngredientUnit.DROPPER_DROPS;
     case 'Sprühen' || IngredientUnit.SPRAY.toString():
       return IngredientUnit.SPRAY;
@@ -39,5 +39,26 @@ export function convertStringToUnit(unit: string | null): IngredientUnit | null 
       return IngredientUnit.GRAMM;
     default:
       return null;
+  }
+}
+
+export function unitFromClConversion(unit: IngredientUnit): number {
+  switch (unit) {
+    case IngredientUnit.CL:
+      return 1;
+    case IngredientUnit.DASH:
+      return 10;
+    case IngredientUnit.PIECE:
+      return 1;
+    case IngredientUnit.DROPPER_CM:
+      return 10 / 6;
+    case IngredientUnit.DROPPER_DROPS:
+      return 500;
+    case IngredientUnit.SPRAY:
+      return 100;
+    case IngredientUnit.GRAMM:
+      return 10;
+    default:
+      throw new Error(`Unknown unit "${unit}"`);
   }
 }

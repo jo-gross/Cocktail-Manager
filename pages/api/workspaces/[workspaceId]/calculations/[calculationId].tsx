@@ -25,7 +25,15 @@ export default withHttpMethods({
               include: {
                 steps: {
                   include: {
-                    ingredients: { include: { ingredient: true } },
+                    ingredients: {
+                      include: {
+                        ingredient: {
+                          include: {
+                            CustomIngredientUnitConversion: true,
+                          },
+                        },
+                      },
+                    },
                   },
                 },
                 garnishes: {

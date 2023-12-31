@@ -232,10 +232,12 @@ model Ingredient {
 }
 
 model CustomIngredientUnitConversion {
-  id           String     @id @default(cuid())
   ingredientId String
-  ingredient   Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+  ingredient   Ingredient     @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
   value        Float
+  unit         IngredientUnit
+
+  @@id([ingredientId, unit])
 }
 
 model CocktailCard {

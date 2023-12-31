@@ -4,7 +4,11 @@ export type CocktailRecipeStepFull = Prisma.CocktailRecipeStepGetPayload<{
   include: {
     ingredients: {
       include: {
-        ingredient: true;
+        ingredient: {
+          include: {
+            CustomIngredientUnitConversion: true;
+          };
+        };
       };
     };
   };

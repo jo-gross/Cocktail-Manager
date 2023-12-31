@@ -17,6 +17,9 @@ export default withHttpMethods({
         where: {
           id: ingredientId,
         },
+        include: {
+          CustomIngredientUnitConversion: true,
+        },
       }),
     });
   }),

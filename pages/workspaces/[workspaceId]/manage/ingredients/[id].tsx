@@ -1,5 +1,5 @@
 import { ManageEntityLayout } from '../../../../../components/layout/ManageEntityLayout';
-import { Ingredient, Role } from '@prisma/client';
+import { Role } from '@prisma/client';
 import { useRouter } from 'next/router';
 import { useEffect, useRef, useState } from 'react';
 import { Loading } from '../../../../../components/Loading';
@@ -7,13 +7,14 @@ import { IngredientForm } from '../../../../../components/ingredients/Ingredient
 import { alertService } from '../../../../../lib/alertService';
 import { withPagePermission } from '../../../../../middleware/ui/withPagePermission';
 import { FormikProps } from 'formik';
+import { IngredientFull } from '../../../../../models/IngredientFull';
 
 function EditCocktailRecipe() {
   const router = useRouter();
   const { id, workspaceId } = router.query;
 
   const [loading, setLoading] = useState(true);
-  const [ingredient, setIngredient] = useState<Ingredient | undefined>(undefined);
+  const [ingredient, setIngredient] = useState<IngredientFull | undefined>(undefined);
 
   const [unsavedChanges, setUnsavedChanges] = useState(false);
   const formRef: any = useRef<FormikProps<any>>(null);

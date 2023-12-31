@@ -7,6 +7,8 @@ BEGIN
         WHEN inputData = 'cl' THEN RETURN 'CL'::"IngredientUnit";
         WHEN inputData = 'Dash' THEN RETURN 'DASH'::"IngredientUnit";
         WHEN inputData = 'Stück' THEN RETURN 'PIECE'::"IngredientUnit";
+        WHEN inputData = 'Pip. cm' THEN RETURN 'DROPPER_CM'::"IngredientUnit";
+        WHEN inputData = 'Pip. Tropfen' THEN RETURN 'DROPPER_DROPS'::"IngredientUnit";
         WHEN inputData = 'Pin. cm' THEN RETURN 'DROPPER_CM'::"IngredientUnit";
         WHEN inputData = 'Pin. Tropfen' THEN RETURN 'DROPPER_DROPS'::"IngredientUnit";
         WHEN inputData = 'Sprühen' THEN RETURN 'SPRAY'::"IngredientUnit";

@@ -33,7 +33,11 @@ export default withHttpMethods({
             include: {
               ingredients: {
                 include: {
-                  ingredient: true,
+                  ingredient: {
+                    include: {
+                      CustomIngredientUnitConversion: true,
+                    },
+                  },
                 },
               },
             },
