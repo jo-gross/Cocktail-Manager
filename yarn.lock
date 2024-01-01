@@ -311,10 +311,49 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@prisma/engines@npm:5.6.0":
-  version: 5.6.0
-  resolution: "@prisma/engines@npm:5.6.0"
-  checksum: 52688e2f59715479f8d531b1ce755578b069f05b0e3735a564f487a2cb8fa19b5f10a21b22e3fbba206190ece0f5a033952b3c78da6545ee798a186daa5b2e73
+"@prisma/debug@npm:5.7.1":
+  version: 5.7.1
+  resolution: "@prisma/debug@npm:5.7.1"
+  checksum: 7c3134416836ff8a2d1172a71a1d063d7520cbed445d967f495cdb62295730ec8e779157b744e1afac423b6cf36cba11a643c32b85a975119c78e52f977a80db
+  languageName: node
+  linkType: hard
+
+"@prisma/engines-version@npm:5.7.1-1.0ca5ccbcfa6bdc81c003cf549abe4269f59c41e5":
+  version: 5.7.1-1.0ca5ccbcfa6bdc81c003cf549abe4269f59c41e5
+  resolution: "@prisma/engines-version@npm:5.7.1-1.0ca5ccbcfa6bdc81c003cf549abe4269f59c41e5"
+  checksum: 8a6b3d48976cd7a3db4e05012054f2a0693ee08c56a398020b326760d2edb6a2211c316ee7d10e827126f25451238775780a83645ab3a402fc0aa9b40fe4827d
+  languageName: node
+  linkType: hard
+
+"@prisma/engines@npm:5.7.1":
+  version: 5.7.1
+  resolution: "@prisma/engines@npm:5.7.1"
+  dependencies:
+    "@prisma/debug": 5.7.1
+    "@prisma/engines-version": 5.7.1-1.0ca5ccbcfa6bdc81c003cf549abe4269f59c41e5
+    "@prisma/fetch-engine": 5.7.1
+    "@prisma/get-platform": 5.7.1
+  checksum: 54e237554581296dd5838c8d59e54ca9e993760e5f78ac8ebe4af148c11b717838095d8bc75d63ce78bd064b974e2bfea23e01543ffb83e0853da9fdfdb94c38
+  languageName: node
+  linkType: hard
+
+"@prisma/fetch-engine@npm:5.7.1":
+  version: 5.7.1
+  resolution: "@prisma/fetch-engine@npm:5.7.1"
+  dependencies:
+    "@prisma/debug": 5.7.1
+    "@prisma/engines-version": 5.7.1-1.0ca5ccbcfa6bdc81c003cf549abe4269f59c41e5
+    "@prisma/get-platform": 5.7.1
+  checksum: 47ac298759ed3088452ac9b0da853c63a2ac72bbc37bdbd5a2c669974c88983349bc66a4afd44c415d175d7780799f0f8cb757cb25e8b298cb6b5bcd764d6f10
+  languageName: node
+  linkType: hard
+
+"@prisma/get-platform@npm:5.7.1":
+  version: 5.7.1
+  resolution: "@prisma/get-platform@npm:5.7.1"
+  dependencies:
+    "@prisma/debug": 5.7.1
+  checksum: 8cc2c08d165a3843acdec25884e51432151b5a6c8787d0434f6d4e539c95ff3d2feed5cf691d440627a803d119d8600979287e0ee6b43145351d572cbef62c20
   languageName: node
   linkType: hard
 
@@ -1114,7 +1153,7 @@ __metadata:
     postcss: 8.4.32
     prettier: 3.1.1
     prettier-plugin-tailwindcss: ^0.5.7
-    prisma: 5.6.0
+    prisma: 5.7.1
     react: 18.2.0
     react-device-detect: ^2.2.3
     react-dom: 18.2.0
@@ -4410,14 +4449,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"prisma@npm:5.6.0":
-  version: 5.6.0
-  resolution: "prisma@npm:5.6.0"
+"prisma@npm:5.7.1":
+  version: 5.7.1
+  resolution: "prisma@npm:5.7.1"
   dependencies:
-    "@prisma/engines": 5.6.0
+    "@prisma/engines": 5.7.1
   bin:
     prisma: build/index.js
-  checksum: 77b80b89a771c6c218172cfc5b692e65755ba76ec5b6487ea3ac5b5fa05aea47c48a11cb9449517c4bc4770c3737d02fe3db576bd54c6e32fcf39f08607b546e
+  checksum: 4a6a89b32c3747d79a9d90b5761687ce33f8b99a86ab9e0fe4e76aff86104187a771facf665702a7d1e047dbe17d2627c4d01ed02a117067e1189e5447e1e230
   languageName: node
   linkType: hard
 
