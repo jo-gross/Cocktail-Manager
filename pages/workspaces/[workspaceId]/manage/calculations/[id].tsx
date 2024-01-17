@@ -7,12 +7,20 @@ import { ModalContext } from '../../../../../lib/context/ModalContextProvider';
 import { SearchModal } from '../../../../../components/modals/SearchModal';
 import { alertService } from '../../../../../lib/alertService';
 import { calcCocktailTotalPrice } from '../../../../../lib/CocktailRecipeCalculation';
-import { Garnish, Ingredient } from '@prisma/client';
+import { Garnish, IngredientUnit } from '@prisma/client';
 import InputModal from '../../../../../components/modals/InputModal';
 import { PageCenter } from '../../../../../components/layout/PageCenter';
 import { Loading } from '../../../../../components/Loading';
 import { DeleteConfirmationModal } from '../../../../../components/modals/DeleteConfirmationModal';
-import { convertUnitToString } from '../../../../../lib/UnitConverter';
+import _ from 'lodash';
+import {
+  convertStringToUnit,
+  convertUnitToDisplayString,
+  unitFromClConversion,
+} from '../../../../../lib/UnitConverter';
+import { IngredientFull } from '../../../../../models/IngredientFull';
+import { ShowCocktailInfoButton } from '../../../../../components/cocktails/ShowCocktailInfoButton';
+import { FaCircleInfo } from 'react-icons/fa6';
 
 interface CocktailCalculationItem {
   cocktail: CocktailRecipeFull;
@@ -21,7 +29,8 @@ interface CocktailCalculationItem {
 }
 
 interface IngredientCalculationItem {
-  ingredient: Ingredient;
+  ingredient: IngredientFull;
+  unit: IngredientUnit;
   amount: number;
 }
 
@@ -57,7 +66,9 @@ export default function CalculationPage() {
     }
   }, [cocktailCalculationItems, originalItems]);
 
+  // Loading calculation if exists
   useEffect(() => {
+    console.debug('Loading calculation if exists');
     if (!id) return;
     if (id == 'create') return;
     setLoading(true);
@@ -79,6 +90,7 @@ export default function CalculationPage() {
       });
   }, [id, workspaceId]);
 
+  // Adds a new cocktail, if a cocktail already exists, the amount is increased
   const addCocktailToSelection = useCallback(
     (cocktailId: string) => {
       if (cocktailCalculationItems.find((item) => item.cocktail.id == cocktailId)) {
@@ -119,21 +131,21 @@ export default function CalculationPage() {
 
     cocktailCalculationItems.forEach((item) => {
       item.cocktail.steps.forEach((step) => {
-        step.ingredients.forEach((ingredient) => {
-          if (ingredient.ingredient != null) {
-            let existingItem = calculationItems.find(
-              (calculationItem) => calculationItem.ingredient.id == ingredient.ingredientId,
+        step.ingredients.forEach((ingredientFromStep) => {
+          if (ingredientFromStep.ingredient != null) {
+            let existingItemIndex = calculationItems.findIndex(
+              (calculationItem) =>
+                calculationItem.ingredient.id == ingredientFromStep.ingredientId &&
+                calculationItem.unit == ingredientFromStep.unit,
             );
-            if (existingItem) {
-              existingItem.amount += (ingredient.amount ?? 0) * item.plannedAmount;
-              calculationItems = [
-                ...calculationItems.filter((item) => item.ingredient.id != existingItem?.ingredient.id),
-                existingItem,
-              ];
+
+            if (existingItemIndex != -1) {
+              calculationItems[existingItemIndex].amount += (ingredientFromStep.amount ?? 0) * item.plannedAmount;
             } else {
               calculationItems.push({
-                ingredient: ingredient.ingredient,
-                amount: (ingredient.amount ?? 0) * item.plannedAmount,
+                ingredient: ingredientFromStep.ingredient,
+                amount: (ingredientFromStep.amount ?? 0) * item.plannedAmount,
+                unit: ingredientFromStep.unit ?? IngredientUnit.PIECE,
               });
             }
           }
@@ -143,7 +155,7 @@ export default function CalculationPage() {
     setIngredientCalculationItems(calculationItems);
   }, [cocktailCalculationItems]);
 
-  //Garnish Calculation
+  // //Garnish Calculation
   useEffect(() => {
     let calculationItems: GarnishCalculationItem[] = [];
 
@@ -252,6 +264,7 @@ export default function CalculationPage() {
     modalContext.openModal(
       <InputModal
         title={'Kalkulation speichern'}
+        placeholder={'Name'}
         onInputChange={(value) => setCalculationName(value)}
         defaultValue={calculationName}
       />,
@@ -334,8 +347,8 @@ export default function CalculationPage() {
                       <tr>
                         <th className={'w-20'}>Geplante Menge</th>
                         <th className={'w-full'}>Name</th>
-                        <th className={'w-min'}>Preis</th>
-                        <th>Sonderpreis</th>
+                        <th className={'min-w-[10rem]'}>Preis</th>
+                        <th className={''}>Sonderpreis</th>
                         <th className={'flex justify-end print:hidden'}>
                           <div
                             className={'btn btn-primary btn-sm'}
@@ -355,18 +368,18 @@ export default function CalculationPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {cocktailCalculationItems.map((cocktail) => (
-                        <tr key={'cocktail-' + cocktail.cocktail.id}>
+                      {cocktailCalculationItems.map((cocktailCalculationItem) => (
+                        <tr key={'cocktailCalculationItem-' + cocktailCalculationItem.cocktail.id}>
                           <td>
                             <input
                               className={'input input-bordered input-sm w-full print:hidden'}
                               type={'number'}
                               min={1}
                               step={1}
-                              value={cocktail.plannedAmount}
+                              value={cocktailCalculationItem.plannedAmount}
                               onChange={(event) => {
                                 const updatedItems = cocktailCalculationItems.map((item) => {
-                                  if (item.cocktail.id == cocktail.cocktail.id) {
+                                  if (item.cocktail.id == cocktailCalculationItem.cocktail.id) {
                                     item.plannedAmount = Number(event.target.value);
                                   }
                                   return item;
@@ -374,20 +387,34 @@ export default function CalculationPage() {
                                 setCocktailCalculationItems(updatedItems);
                               }}
                             />
-                            <div className={'hidden print:flex'}>{cocktail.plannedAmount}</div>
+                            <div className={'hidden print:flex'}>{cocktailCalculationItem.plannedAmount}</div>
                           </td>
-                          <td>{cocktail.cocktail.name}</td>
-                          <td>{cocktail.cocktail.price}</td>
+                          <td className={''}>
+                            <div className={'relative flex gap-2'}>
+                              <span>{cocktailCalculationItem.cocktail.name}</span>
+                              <ShowCocktailInfoButton
+                                cocktailRecipe={cocktailCalculationItem.cocktail}
+                                customButton={
+                                  <div className={'btn btn-circle btn-ghost btn-xs'}>
+                                    <FaCircleInfo />
+                                  </div>
+                                }
+                              />
+                            </div>
+                          </td>
+                          <td className={''}>
+                            <span>{cocktailCalculationItem.cocktail.price} €</span>
+                          </td>
                           <td>
                             <div className={'join print:hidden'}>
                               <input
                                 type={'number'}
                                 className={'input join-item input-bordered input-sm w-20'}
                                 step={0.01}
-                                value={cocktail.customPrice ?? ''}
+                                value={cocktailCalculationItem.customPrice ?? ''}
                                 onChange={(event) => {
                                   const updatedItems = cocktailCalculationItems.map((item) => {
-                                    if (item.cocktail.id == cocktail.cocktail.id) {
+                                    if (item.cocktail.id == cocktailCalculationItem.cocktail.id) {
                                       if (event.target.value == '') {
                                         item.customPrice = undefined;
                                       } else {
@@ -401,7 +428,7 @@ export default function CalculationPage() {
                               />
                               <span className={'btn btn-secondary join-item btn-sm'}> €</span>
                             </div>
-                            <div className={'hidden print:flex'}>{cocktail.customPrice ?? '-'} €</div>
+                            <div className={'hidden print:flex'}>{cocktailCalculationItem.customPrice ?? '-'} €</div>
                           </td>
                           <td className={'print:hidden'}>
                             <div className={'flex items-center justify-end'}>
@@ -414,7 +441,7 @@ export default function CalculationPage() {
                                       onApprove={() => {
                                         setCocktailCalculationItems(
                                           cocktailCalculationItems.filter(
-                                            (item) => item.cocktail.id != cocktail.cocktail.id,
+                                            (item) => item.cocktail.id != cocktailCalculationItem.cocktail.id,
                                           ),
                                         );
                                       }}
@@ -531,26 +558,71 @@ export default function CalculationPage() {
                       <tr>
                         <th>Zutat</th>
                         <th>Gesamt Menge</th>
-                        <th>Ganze Flaschen</th>
+                        <th>Anzahl</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {ingredientCalculationItems
+                      {_(ingredientCalculationItems)
+                        .map((item) => {
+                          return { ...item, ingredientId: item.ingredient.id };
+                        })
+                        .groupBy('ingredientId')
+                        .map((value) => {
+                          return {
+                            ingredient: value[0].ingredient,
+                            amounts: value.map((item) => {
+                              return {
+                                amount: item.amount,
+                                unit: item.unit,
+                              };
+                            }),
+                          };
+                        })
+                        .value()
                         .sort((a, b) => a.ingredient.name.localeCompare(b.ingredient.name))
                         .map((ingredientCalculation) => (
-                          <tr key={'ingredientCalculation-' + ingredientCalculation.ingredient.id}>
+                          <tr key={`ingredients-${ingredientCalculation.ingredient.id}`}>
                             <td>{ingredientCalculation.ingredient.name}</td>
                             <td>
-                              {ingredientCalculation.amount.toFixed(2)}{' '}
-                              {convertUnitToString(ingredientCalculation.ingredient.unit)}
+                              {Object.entries(
+                                ingredientCalculation.amounts.reduce(
+                                  (accumulation, item) => {
+                                    accumulation[item.unit] = (accumulation[item.unit] || 0) + item.amount;
+                                    return accumulation;
+                                  },
+                                  {} as Record<IngredientUnit, number>,
+                                ),
+                              ).map(([unit, amount]) => (
+                                <div key={unit}>
+                                  {amount} {convertUnitToDisplayString(convertStringToUnit(unit))}
+                                </div>
+                              ))}
                             </td>
                             <td>
-                              {(ingredientCalculation.amount / (ingredientCalculation.ingredient.volume ?? 0)).toFixed(
-                                2,
-                              )}
+                              {Object.entries(
+                                ingredientCalculation.amounts.reduce(
+                                  (accumulation, item) => {
+                                    accumulation[item.unit] = (accumulation[item.unit] || 0) + item.amount;
+                                    return accumulation;
+                                  },
+                                  {} as Record<IngredientUnit, number>,
+                                ),
+                              )
+                                .map(
+                                  ([unit, amount]) =>
+                                    amount /
+                                    (ingredientCalculation.ingredient?.CustomIngredientUnitConversion?.find(
+                                      (customUnit) => customUnit.unit == unit,
+                                    )?.value ??
+                                      unitFromClConversion(convertStringToUnit(unit)) *
+                                        (ingredientCalculation.ingredient.volume ?? 0)),
+                                )
+                                .reduce((accumulation, item) => accumulation + item, 0)
+                                .toFixed(2)}
                               {' (á '}
                               {ingredientCalculation.ingredient.volume}{' '}
-                              {convertUnitToString(ingredientCalculation.ingredient.unit)})
+                              {convertUnitToDisplayString(convertStringToUnit(ingredientCalculation.ingredient.unit))}
+                              {')'}
                             </td>
                           </tr>
                         ))}

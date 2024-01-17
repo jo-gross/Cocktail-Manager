@@ -127,7 +127,7 @@ export function SearchModal(props: SearchModalProps) {
                 <div className="collapse-content">
                   <div className={'card'}>
                     <div className={'card-body'}>
-                      <ShowCocktailInfoButton showInfo={true} cocktailRecipe={cocktail} />
+                      <ShowCocktailInfoButton showInfo={true} cocktailRecipe={cocktail} absolutePosition={true} />
                       <CompactCocktailRecipeInstruction showPrice={true} cocktailRecipe={cocktail} />
                     </div>
                   </div>

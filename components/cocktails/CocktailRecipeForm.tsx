@@ -19,7 +19,7 @@ import { DeleteConfirmationModal } from '../modals/DeleteConfirmationModal';
 import { ModalContext } from '../../lib/context/ModalContextProvider';
 import _ from 'lodash';
 import { compressFile } from '../../lib/ImageCompressor';
-import { convertUnitToString, unitFromClConversion } from '../../lib/UnitConverter';
+import { convertUnitToDisplayString, unitFromClConversion } from '../../lib/UnitConverter';
 import { IngredientFull } from '../../models/IngredientFull';
 
 interface CocktailRecipeFormProps {
@@ -631,7 +631,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                 className={'grid grid-cols-2'}
                               >
                                 <div>
-                                  {ingredient.amount} x{' '}
+                                  {ingredient.amount} {convertUnitToDisplayString(ingredient.unit)} x{' '}
                                   {(
                                     (ingredient.ingredient?.price ?? 0) /
                                     ((ingredient.ingredient?.volume ?? 1) *
@@ -639,6 +639,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                         (customUnit) => customUnit.unit == ingredient.unit,
                                       )?.value ?? unitFromClConversion(ingredient.unit)))
                                   ).toFixed(2)}
+                                  {` €/${convertUnitToDisplayString(ingredient.unit)}`}
                                 </div>
                                 <div className={'text-end'}>
                                   {indexIngredient > 0 ? '+ ' : ''}
@@ -949,7 +950,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                                   key={`steps.${indexStep}.ingredients.${indexIngredient}.units-${value}`}
                                                   value={value}
                                                 >
-                                                  {convertUnitToString(value)}
+                                                  {convertUnitToDisplayString(value)}
                                                 </option>
                                               ))}
                                             </select>

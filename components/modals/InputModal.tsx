@@ -4,6 +4,7 @@ import { useContext, useState } from 'react';
 interface InputModalProps {
   title: string;
   description?: string;
+  placeholder?: string;
   defaultValue?: string;
   onInputChange: (value: string) => void;
   allowEmpty?: boolean;
@@ -21,6 +22,7 @@ export default function InputModal(props: InputModalProps) {
       <div className={'join'}>
         <input
           value={inputValue}
+          placeholder={props.placeholder}
           autoFocus={true}
           className={'input join-item input-bordered w-full'}
           onChange={(event) => setInputValue(event.target.value)}

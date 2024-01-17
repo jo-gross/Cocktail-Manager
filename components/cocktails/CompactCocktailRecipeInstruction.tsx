@@ -4,7 +4,7 @@ import { CocktailUtensil } from '../../models/CocktailUtensil';
 import { CocktailTool } from '../../models/CocktailTool';
 import DefaultGlassIcon from '../DefaultGlassIcon';
 import Image from 'next/image';
-import { convertUnitToString } from '../../lib/UnitConverter';
+import { convertUnitToDisplayString } from '../../lib/UnitConverter';
 
 interface CompactCocktailRecipeInstructionProps {
   cocktailRecipe: CocktailRecipeFull;
@@ -67,7 +67,7 @@ export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeIns
                     <div
                       key={`cocktail-${props.cocktailRecipe.id}-step-${step.id}-ingredient-${ingredient.id}-index-${indexIngredient}`}
                     >
-                      {ingredient.amount ?? ''} {convertUnitToString(ingredient.unit) ?? ''}{' '}
+                      {ingredient.amount ?? ''} {convertUnitToDisplayString(ingredient.unit) ?? ''}{' '}
                       {ingredient.ingredient?.shortName ?? ingredient.ingredient?.name ?? ''}{' '}
                       {indexIngredient < step.ingredients.length - 1 ? <></> : <></>}
                     </div>

@@ -5,16 +5,20 @@ import { ModalContext } from '../../lib/context/ModalContextProvider';
 import { CocktailRecipeFull } from '../../models/CocktailRecipeFull';
 
 interface ShowCocktailInfoButtonProps {
-  showInfo: boolean;
+  showInfo?: boolean;
+  absolutePosition?: boolean;
   cocktailRecipe: CocktailRecipeFull;
+  customButton?: JSX.Element;
 }
 
 export function ShowCocktailInfoButton(props: ShowCocktailInfoButtonProps) {
   const modalContext = useContext(ModalContext);
 
-  return props.showInfo ? (
+  return props.showInfo ?? true ? (
     <div
-      className={'btn btn-circle btn-ghost btn-sm absolute right-1 top-1 bg-info/50 print:hidden'}
+      className={`
+      ${props.customButton ? '' : 'btn btn-circle btn-ghost btn-sm bg-info/50'}
+       ${props.absolutePosition == true ? ' absolute right-1 top-1 ' : ''} print:hidden`}
       onClick={async () => {
         await modalContext.closeModal();
         //Strange bug, otherwise the modal is closed after setting the content
@@ -22,7 +26,7 @@ export function ShowCocktailInfoButton(props: ShowCocktailInfoButtonProps) {
         await modalContext.openModal(<CocktailDetailModal cocktail={props.cocktailRecipe} />);
       }}
     >
-      <FaInfoCircle />
+      {props.customButton ?? <FaInfoCircle />}
     </div>
   ) : (
     <></>

@@ -9,7 +9,7 @@ import { ManageColumn } from '../../../../../components/ManageColumn';
 import { alertService } from '../../../../../lib/alertService';
 import { UserContext } from '../../../../../lib/context/UserContextProvider';
 import AvatarImage from '../../../../../components/AvatarImage';
-import { convertUnitToString } from '../../../../../lib/UnitConverter';
+import { convertUnitToDisplayString } from '../../../../../lib/UnitConverter';
 
 export default function IngredientsOverviewPage() {
   const router = useRouter();
@@ -107,7 +107,7 @@ export default function IngredientsOverviewPage() {
                         <td>{ingredient.shortName}</td>
                         <td className={'whitespace-nowrap'}>{ingredient.price} €</td>
                         <td className={'whitespace-nowrap'}>
-                          {ingredient.volume} {convertUnitToString(ingredient.unit)}
+                          {ingredient.volume} {convertUnitToDisplayString(ingredient.unit)}
                         </td>
                         <td className={'whitespace-nowrap'}>
                           {((ingredient.price ?? 0) / (ingredient.volume ?? 1)).toFixed(2)} €

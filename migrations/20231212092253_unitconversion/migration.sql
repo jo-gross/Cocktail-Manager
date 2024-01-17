@@ -22,3 +22,17 @@ ALTER TABLE "Ingredient"
     ALTER COLUMN "unit" TYPE "IngredientUnit" USING convertUnit("unit");
 ALTER TABLE "CocktailRecipeIngredient"
     ALTER COLUMN "unit" TYPE "IngredientUnit" USING convertUnit("unit");
+
+-- CreateTable
+CREATE TABLE "CustomIngredientUnitConversion"
+(
+    "ingredientId" TEXT             NOT NULL,
+    "value"        DOUBLE PRECISION NOT NULL,
+    "unit"         "IngredientUnit" NOT NULL,
+
+    CONSTRAINT "CustomIngredientUnitConversion_pkey" PRIMARY KEY ("ingredientId", "unit")
+);
+
+-- AddForeignKey
+ALTER TABLE "CustomIngredientUnitConversion"
+    ADD CONSTRAINT "CustomIngredientUnitConversion_ingredientId_fkey" FOREIGN KEY ("ingredientId") REFERENCES "Ingredient" ("id") ON DELETE CASCADE ON UPDATE CASCADE;

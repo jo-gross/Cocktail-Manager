@@ -12,7 +12,7 @@ import { DeleteConfirmationModal } from '../modals/DeleteConfirmationModal';
 import { ModalContext } from '../../lib/context/ModalContextProvider';
 import _ from 'lodash';
 import { compressFile } from '../../lib/ImageCompressor';
-import { convertUnitToString, unitFromClConversion } from '../../lib/UnitConverter';
+import { convertUnitToDisplayString, unitFromClConversion } from '../../lib/UnitConverter';
 import { IngredientFull } from '../../models/IngredientFull';
 
 interface IngredientFormProps {
@@ -31,10 +31,10 @@ export function IngredientForm(props: IngredientFormProps) {
 
   //Filling original values
   useEffect(() => {
-    if (Object.keys(formRef?.current?.touched ?? {}).length == 0) {
+    if (props.ingredient != null && Object.keys(formRef?.current?.touched ?? {}).length == 0) {
       setOriginalValues(formRef?.current?.values);
     }
-  }, [formRef, formRef?.current?.values]);
+  }, [formRef, formRef?.current?.values, props.ingredient]);
 
   return (
     <Formik
@@ -91,7 +91,7 @@ export function IngredientForm(props: IngredientFormProps) {
             shortName: values.shortName?.trim() == '' ? undefined : values.shortName?.trim(),
             price: values.price,
             unit: values.unit,
-            volume: values.volume == 0 ? undefined : values.volume_CL,
+            volume: values.volume == 0 ? undefined : values.volume_CL ?? unitFromClConversion(values.unit),
             link: values.link?.trim() == '' ? undefined : values.link?.trim(),
             tags: values.tags,
             image: values.image?.trim() == '' ? undefined : values.image?.trim(),
@@ -141,8 +141,20 @@ export function IngredientForm(props: IngredientFormProps) {
         if (values.price.toString() == '' || isNaN(values.price)) {
           errors.price = 'Required';
         }
-        if (values.volume_CL.toString() == '' || isNaN(values.volume_CL)) {
-          errors.volume_CL = 'Required';
+        if (values.advanced_units) {
+          let anyUnitFilled = false;
+          for (const unit of Object.values(IngredientUnit)) {
+            if (!isNaN(values[`volume_${unit}`]) && values[`volume_${unit}`] != '') {
+              anyUnitFilled = true;
+            }
+          }
+          if (!anyUnitFilled) {
+            errors.volume = 'Required';
+          }
+        } else {
+          if (values.volume_CL.toString() == '' || isNaN(values.volume_CL)) {
+            errors.volume_CL = 'Required';
+          }
         }
         if (!values.unit) {
           errors.unit = 'Required';
@@ -181,7 +193,6 @@ export function IngredientForm(props: IngredientFormProps) {
                   </label>
                   <input
                     type={'text'}
-                    placeholder={'Buffalo Trace 80 Proof Kentucky Straight Bourbon'}
                     className={`input input-bordered ${errors.name && touched.name && 'input-error'}`}
                     onChange={handleChange}
                     onBlur={handleBlur}
@@ -200,7 +211,6 @@ export function IngredientForm(props: IngredientFormProps) {
                   </label>
                   <input
                     type={'text'}
-                    placeholder={'Buffalo Trace'}
                     className={`input input-bordered ${errors.shortName && touched.shortName && 'input-error'}`}
                     onChange={handleChange}
                     onBlur={handleBlur}
@@ -222,7 +232,6 @@ export function IngredientForm(props: IngredientFormProps) {
                   <div className={'join'}>
                     <input
                       type={'number'}
-                      placeholder={'price'}
                       className={`input join-item input-bordered w-full ${
                         errors.price && touched.price && 'input-error'
                       }`}
@@ -275,14 +284,14 @@ export function IngredientForm(props: IngredientFormProps) {
                         >
                           {Object.values(IngredientUnit).map((unit) => (
                             <option key={unit} value={unit}>
-                              {convertUnitToString(unit)}
+                              {convertUnitToDisplayString(unit)}
                             </option>
                           ))}
                         </select>
                       </div>
                     </div>
                     <div>
-                      Preis/{convertUnitToString(values.unit)}:{' '}
+                      Preis/{convertUnitToDisplayString(values.unit)}:{' '}
                       {((values.price ?? 0) / (values.volume_CL ?? 0)).toFixed(2)}€
                     </div>
                   </div>
@@ -305,19 +314,22 @@ export function IngredientForm(props: IngredientFormProps) {
                         <div className={'join'}>
                           <input
                             type={'number'}
-                            className={`input join-item input-bordered w-full ${
-                              errors.volume && touched.volume && 'input-error'
-                            }`}
+                            className={`input join-item input-bordered w-full`}
                             placeholder={`${unitFromClConversion(unit) * values.volume_CL}`}
                             onChange={handleChange}
                             onBlur={handleBlur}
                             value={values[`volume_${unit}`]}
                             name={`volume_${unit}`}
                           />
-                          <span className={'btn btn-secondary join-item'}>{convertUnitToString(unit)}</span>
+                          <span className={'btn btn-secondary join-item'}>{convertUnitToDisplayString(unit)}</span>
                         </div>
                       </div>
                     ))}
+                    {errors.volume ? (
+                      <div className={'text-center text-error'}>Mindestens 1 Einheit muss angegeben werden</div>
+                    ) : (
+                      <></>
+                    )}
                   </div>
                 </div>
 

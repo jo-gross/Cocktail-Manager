@@ -17,7 +17,11 @@ export default function CocktailRecipeOverviewItem(props: CocktailRecipeOverview
   return (
     <div className={'col-span-1'}>
       <div className={'card card-side h-full'}>
-        <ShowCocktailInfoButton showInfo={props.showInfo ?? false} cocktailRecipe={props.cocktailRecipe} />
+        <ShowCocktailInfoButton
+          showInfo={props.showInfo ?? false}
+          cocktailRecipe={props.cocktailRecipe}
+          absolutePosition={true}
+        />
         <div className={'card-body'}>
           <CompactCocktailRecipeInstruction
             specialPrice={props.specialPrice}
