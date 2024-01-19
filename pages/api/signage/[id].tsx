@@ -12,7 +12,7 @@ export default withHttpMethods({
         workspaceId: id as string,
       },
     });
-
+    if (format === undefined) return res.status(200).json({ content: signages });
     res.status(200).json({ content: signages.find((s) => s.format === format) ?? signages[0] });
   },
 });

@@ -11,7 +11,6 @@ export default withHttpMethods({
     [Role.MANAGER],
     async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
       const { verticalContent, horizontalContent, verticalBgColor, horizontalBgColor } = JSON.parse(req.body);
-      console.log('Updating signage', verticalContent, horizontalContent, verticalBgColor, horizontalBgColor);
 
       await prisma.signage.deleteMany({
         where: {

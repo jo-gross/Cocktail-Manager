@@ -125,7 +125,7 @@ model Workspace {
   Ingredient          Ingredient[]
   CocktailCard        CocktailCard[]
   CocktailCalculation CocktailCalculation[]
-  Signage Signage[]
+  Signage             Signage[]
 }
 
 model Signage {
