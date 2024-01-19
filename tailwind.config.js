@@ -5,6 +5,10 @@ module.exports = {
       screens: {
         print: { raw: 'print' },
       },
+      aspectRatio: {
+        '9/16': '9 / 16',
+        '16/9': '16 / 9',
+      },
     },
   },
   plugins: [require('daisyui')],
