@@ -98,6 +98,11 @@ enum Role {
   USER
 }
 
+enum MonitorFormat {
+  LANDSCAPE
+  PORTRAIT
+}
+
 model WorkspaceUser {
   workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   workspaceId String // relation scalar field (used in the `@relation` attribute above)
@@ -120,6 +125,17 @@ model Workspace {
   Ingredient          Ingredient[]
   CocktailCard        CocktailCard[]
   CocktailCalculation CocktailCalculation[]
+  Signage Signage[]
+}
+
+model Signage {
+  workspace       Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspaceId     String
+  format          MonitorFormat
+  content         String
+  backgroundColor String?
+
+  @@id([workspaceId, format])
 }
 
 model Glass {

@@ -5,9 +5,12 @@ import { BackupStructure } from '../../../../api/workspaces/[workspaceId]/admin/
 import { ManageEntityLayout } from '../../../../../components/layout/ManageEntityLayout';
 import { Role, User, WorkspaceUser } from '@prisma/client';
 import { UserContext } from '../../../../../lib/context/UserContextProvider';
-import { FaShareAlt } from 'react-icons/fa';
+import { FaShareAlt, FaTrashAlt } from 'react-icons/fa';
 import { DeleteConfirmationModal } from '../../../../../components/modals/DeleteConfirmationModal';
 import { ModalContext } from '../../../../../lib/context/ModalContextProvider';
+import { UploadDropZone } from '../../../../../components/UploadDropZone';
+import { compressFile } from '../../../../../lib/ImageCompressor';
+import { convertToBase64 } from '../../../../../lib/Base64Converter';
 
 export default function WorkspaceSettingPage() {
   const router = useRouter();
@@ -23,6 +26,12 @@ export default function WorkspaceSettingPage() {
   const [importing, setImporting] = useState<boolean>(false);
 
   const [selectedFile, setSelectedFile] = useState<File>();
+
+  const [updatingSignage, setUpdatingSignage] = useState<boolean>(false);
+  const [verticalImage, setVerticalImage] = useState<string>();
+  const [verticalImageColor, setVerticalImageColor] = useState<string>('#000000');
+  const [horizontalImage, setHorizontalImage] = useState<string>();
+  const [horizontalImageColor, setHorizontalImageColor] = useState<string>('#000000');
 
   const exportAll = useCallback(async () => {
     setExporting(true);
@@ -99,6 +108,31 @@ export default function WorkspaceSettingPage() {
       }
     });
   }, [newWorkspaceName, workspaceId]);
+
+  const handleUpdateSignage = useCallback(async () => {
+    setUpdatingSignage(true);
+    fetch(`/api/workspaces/${workspaceId}/admin/signage`, {
+      method: 'PUT',
+      body: JSON.stringify({
+        verticalContent: verticalImage,
+        horizontalContent: horizontalImage,
+        verticalBgColor: verticalImageColor,
+        horizontalBgColor: horizontalImageColor,
+      }),
+    })
+      .then(async (response) => {
+        const body = await response.json();
+        if (response.ok) {
+          alertService.success(`Update erfolgreich`);
+        } else {
+          console.log('Admin -> UpdateSignage', response, body);
+          alertService.error(body.message, response.status, response.statusText);
+        }
+      })
+      .finally(() => {
+        setUpdatingSignage(false);
+      });
+  }, [horizontalImage, horizontalImageColor, verticalImage, verticalImageColor, workspaceId]);
 
   const fetchWorkspaceUsers = useCallback(() => {
     if (workspaceId == undefined) return;
@@ -308,6 +342,111 @@ export default function WorkspaceSettingPage() {
         ) : (
           <></>
         )}
+        <div className={'card'}>
+          <div className={'card-body'}>
+            <div className={'card-title'}>Monitor</div>
+            <div className={'grid grid-cols-2 gap-2'}>
+              <div className={'flex flex-col gap-2'}>
+                <div>Horizontal</div>
+                {horizontalImage == undefined ? (
+                  <UploadDropZone
+                    onSelectedFilesChanged={async (file) => {
+                      if (file) {
+                        const compressedImageFile = await compressFile(file);
+                        const base = await convertToBase64(compressedImageFile);
+                        setHorizontalImage(base);
+                      } else {
+                        alertService.error('Datei konnte nicht ausgewählt werden.');
+                      }
+                    }}
+                  />
+                ) : (
+                  <div className={'relative h-full'}>
+                    <div
+                      className={'btn btn-square btn-outline btn-error btn-sm absolute right-2 top-2'}
+                      onClick={() =>
+                        modalContext.openModal(
+                          <DeleteConfirmationModal
+                            spelling={'REMOVE'}
+                            entityName={'das Bild'}
+                            onApprove={() => setHorizontalImage(undefined)}
+                          />,
+                        )
+                      }
+                    >
+                      <FaTrashAlt />
+                    </div>
+                    <img className={'rounded-lg'} src={horizontalImage} alt={'Fehler beim darstellen der Karte'} />
+                  </div>
+                )}
+                <div className={'form-control'}>
+                  <label className={'label'}>
+                    <span className={'label-text'}>Hintergrundfarbe</span>
+                  </label>
+                  <input
+                    type={'color'}
+                    value={horizontalImageColor}
+                    onChange={(e) => {
+                      setHorizontalImageColor(e.target.value);
+                    }}
+                    className={'input w-full'}
+                  />
+                </div>
+              </div>
+
+              <div className={'flex flex-col gap-2'}>
+                <div>Vertikal</div>
+                {verticalImage == undefined ? (
+                  <UploadDropZone
+                    onSelectedFilesChanged={async (file) => {
+                      if (file) {
+                        const compressedImageFile = await compressFile(file);
+                        const base = await convertToBase64(compressedImageFile);
+                        setVerticalImage(base);
+                      } else {
+                        alertService.error('Datei konnte nicht ausgewählt werden.');
+                      }
+                    }}
+                  />
+                ) : (
+                  <div className={'relative h-full'}>
+                    <div
+                      className={'btn btn-square btn-outline btn-error btn-sm absolute right-2 top-2'}
+                      onClick={() =>
+                        modalContext.openModal(
+                          <DeleteConfirmationModal
+                            spelling={'REMOVE'}
+                            entityName={'das Bild'}
+                            onApprove={() => setVerticalImage(undefined)}
+                          />,
+                        )
+                      }
+                    >
+                      <FaTrashAlt />
+                    </div>
+                    <img className={'rounded-lg'} src={verticalImage} alt={'Fehler beim darstellen der Karte'} />
+                  </div>
+                )}
+                <div className={'form-control'}>
+                  <label className={'label'}>
+                    <span className={'label-text'}>Hintergrundfarbe</span>
+                  </label>
+                  <input
+                    type={'color'}
+                    value={verticalImageColor}
+                    onChange={(e) => {
+                      setVerticalImageColor(e.target.value);
+                    }}
+                    className={'input w-full'}
+                  />
+                </div>
+              </div>
+            </div>
+            <button className={`btn btn-primary ${updatingSignage ? 'btn-loading' : ''}`} onClick={handleUpdateSignage}>
+              Speichern
+            </button>
+          </div>
+        </div>
       </div>
     </ManageEntityLayout>
   );
