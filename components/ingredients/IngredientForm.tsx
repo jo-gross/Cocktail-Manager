@@ -144,7 +144,6 @@ export function IngredientForm(props: IngredientFormProps) {
                   </label>
                   <input
                     type={'text'}
-                    placeholder={'Buffalo Trace 80 Proof Kentucky Straight Bourbon'}
                     className={`input input-bordered ${errors.name && touched.name && 'input-error'}`}
                     onChange={handleChange}
                     onBlur={handleBlur}
@@ -163,7 +162,6 @@ export function IngredientForm(props: IngredientFormProps) {
                   </label>
                   <input
                     type={'text'}
-                    placeholder={'Buffalo Trace'}
                     className={`input input-bordered ${errors.shortName && touched.shortName && 'input-error'}`}
                     onChange={handleChange}
                     onBlur={handleBlur}
@@ -185,7 +183,6 @@ export function IngredientForm(props: IngredientFormProps) {
                   <div className={'join'}>
                     <input
                       type={'number'}
-                      placeholder={'price'}
                       className={`input join-item input-bordered w-full ${
                         errors.price && touched.price && 'input-error'
                       }`}
@@ -210,7 +207,6 @@ export function IngredientForm(props: IngredientFormProps) {
                   <div className={'join'}>
                     <input
                       type={'number'}
-                      placeholder={'38cl'}
                       className={`input join-item input-bordered w-full ${
                         errors.volume && touched.volume && 'input-error'
                       }`}
@@ -235,7 +231,7 @@ export function IngredientForm(props: IngredientFormProps) {
                   </div>
                 </div>
                 <div>
-                  Preis/{values.unit}: {(values.price ?? 0 / values.volume ?? 0).toFixed(2)}€
+                  Preis/{values.unit}: {((values.price ?? 0) / (values.volume ?? 1)).toFixed(2)} €
                 </div>
                 <div>
                   <label className={'label'}>
@@ -326,7 +322,8 @@ export function IngredientForm(props: IngredientFormProps) {
                         !(
                           values.link.includes('expert24.com') ||
                           values.link.includes('conalco.de') ||
-                          values.link.includes('metro.de')
+                          values.link.includes('metro.de') ||
+                          values.link.includes('rumundco.de')
                         )
                       }
                       onClick={async () => {

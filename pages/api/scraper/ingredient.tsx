@@ -134,6 +134,39 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         price: Number(price),
         volume: Number(volume),
       });
+    } else if (req.query?.url?.includes('rumundco.de')) {
+      const response = await fetch(req.query.url as string);
+      const body = await response.text();
+      const soup = new JSSoup(body);
+
+      const imageResponse = await fetch(soup.find('meta', { property: 'og:image' }).attrs.content).catch((error) => {
+        console.log(error);
+        return undefined;
+      });
+
+      const image =
+        imageResponse != undefined
+          ? 'data:image/jpg;base64,' + Buffer.from(await imageResponse.arrayBuffer()).toString('base64')
+          : undefined;
+
+      const name = soup.find('meta', { property: 'og:title' }).attrs.content;
+      const price = soup.find('meta', { itemprop: 'price' }).attrs.content;
+
+      console.log(soup.find('span', 'price-unit-content').text.replace('\n', '').replace(',', '.').trim().split(' '));
+
+      const volume =
+        Number(
+          soup.find('span', 'price-unit-content').text.replace('\n', '').replace(',', '.').trim().split(' ')[0].trim(),
+        ) * 100;
+
+      const result: ResponseBody = {
+        name: name,
+        image: image,
+        price: Number(price),
+        volume: Number(volume),
+      };
+
+      return res.json(result);
     }
   }
 
