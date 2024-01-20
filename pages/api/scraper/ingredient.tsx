@@ -152,8 +152,6 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       const name = soup.find('meta', { property: 'og:title' }).attrs.content;
       const price = soup.find('meta', { itemprop: 'price' }).attrs.content;
 
-      console.log(soup.find('span', 'price-unit-content').text.replace('\n', '').replace(',', '.').trim().split(' '));
-
       const volume =
         Number(
           soup.find('span', 'price-unit-content').text.replace('\n', '').replace(',', '.').trim().split(' ')[0].trim(),
