@@ -283,7 +283,7 @@ export function IngredientForm(props: IngredientFormProps) {
                           value={values.unit}
                         >
                           {Object.values(IngredientUnit).map((unit) => (
-                            <option key={unit} value={unit}>
+                            <option key={`single-unit-${unit}`} value={unit}>
                               {convertUnitToDisplayString(unit)}
                             </option>
                           ))}
@@ -307,7 +307,7 @@ export function IngredientForm(props: IngredientFormProps) {
                   />
                   <div role="tabpanel" className="tab-content">
                     {Object.values(IngredientUnit).map((unit) => (
-                      <div key={unit} className={'form-control'}>
+                      <div key={`advanced-unit-${unit}`} className={'form-control'}>
                         <label className={'label'}>
                           <span className={'label-text'}>Menge</span>
                         </label>
