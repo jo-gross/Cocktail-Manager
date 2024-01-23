@@ -292,7 +292,7 @@ export function IngredientForm(props: IngredientFormProps) {
                     </div>
                     <div>
                       Preis/{convertUnitToDisplayString(values.unit)}:{' '}
-                      {((values.price ?? 0) / (values.volume_CL ?? 0)).toFixed(2)}€
+                      {((values.price ?? 0) / (values.volume_CL ?? 1)).toFixed(2)}€
                     </div>
                   </div>
 
@@ -422,7 +422,8 @@ export function IngredientForm(props: IngredientFormProps) {
                         !(
                           values.link.includes('expert24.com') ||
                           values.link.includes('conalco.de') ||
-                          values.link.includes('metro.de')
+                          values.link.includes('metro.de') ||
+                          values.link.includes('rumundco.de')
                         )
                       }
                       onClick={async () => {

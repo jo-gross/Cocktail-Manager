@@ -3,6 +3,7 @@ import { FaCamera, FaFileAlt } from 'react-icons/fa';
 
 interface UploadDropZoneProps {
   onSelectedFilesChanged: (file: File | undefined) => void;
+  maxUploadSize?: string;
 }
 
 export function UploadDropZone(props: UploadDropZoneProps) {
@@ -85,6 +86,13 @@ export function UploadDropZone(props: UploadDropZoneProps) {
             </p>
 
             <p className="text-xs text-base-content">(z.B. SVG, PNG, JPG or GIF)</p>
+            {props.maxUploadSize ? (
+              <p className="text-xs text-base-content">
+                Maximale Datei-Größe: <strong>{props.maxUploadSize}</strong>
+              </p>
+            ) : (
+              <></>
+            )}
           </div>
           <input
             id="dropzone-file"

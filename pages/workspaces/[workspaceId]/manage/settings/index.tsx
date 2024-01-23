@@ -3,11 +3,15 @@ import { alertService } from '../../../../../lib/alertService';
 import { useRouter } from 'next/router';
 import { BackupStructure } from '../../../../api/workspaces/[workspaceId]/admin/backups/backupStructure';
 import { ManageEntityLayout } from '../../../../../components/layout/ManageEntityLayout';
-import { Role, User, WorkspaceUser } from '@prisma/client';
+import { $Enums, Role, Signage, User, WorkspaceUser } from '@prisma/client';
 import { UserContext } from '../../../../../lib/context/UserContextProvider';
-import { FaShareAlt } from 'react-icons/fa';
+import { FaShareAlt, FaTrashAlt } from 'react-icons/fa';
 import { DeleteConfirmationModal } from '../../../../../components/modals/DeleteConfirmationModal';
 import { ModalContext } from '../../../../../lib/context/ModalContextProvider';
+import { UploadDropZone } from '../../../../../components/UploadDropZone';
+import { compressFile } from '../../../../../lib/ImageCompressor';
+import { convertToBase64 } from '../../../../../lib/Base64Converter';
+import MonitorFormat = $Enums.MonitorFormat;
 
 export default function WorkspaceSettingPage() {
   const router = useRouter();
@@ -23,6 +27,14 @@ export default function WorkspaceSettingPage() {
   const [importing, setImporting] = useState<boolean>(false);
 
   const [selectedFile, setSelectedFile] = useState<File>();
+
+  const [verticalImageLoading, setVerticalImageLoading] = useState<boolean>(false);
+  const [verticalImage, setVerticalImage] = useState<string>();
+  const [verticalImageColor, setVerticalImageColor] = useState<string>();
+  const [horizontalImageLoading, setHorizontalImageLoading] = useState<boolean>(false);
+  const [horizontalImage, setHorizontalImage] = useState<string>();
+  const [horizontalImageColor, setHorizontalImageColor] = useState<string>();
+  const [updatingSignage, setUpdatingSignage] = useState<boolean>(false);
 
   const exportAll = useCallback(async () => {
     setExporting(true);
@@ -100,6 +112,35 @@ export default function WorkspaceSettingPage() {
     });
   }, [newWorkspaceName, workspaceId]);
 
+  const handleUpdateSignage = useCallback(async () => {
+    setUpdatingSignage(true);
+    fetch(`/api/workspaces/${workspaceId}/admin/signage`, {
+      method: 'PUT',
+      body: JSON.stringify({
+        verticalContent: verticalImage,
+        horizontalContent: horizontalImage,
+        verticalBgColor: verticalImageColor,
+        horizontalBgColor: horizontalImageColor,
+      }),
+    })
+      .then(async (response) => {
+        const body = await response.json();
+        if (response.ok) {
+          alertService.success(`Update erfolgreich`);
+        } else {
+          console.log('Admin -> UpdateSignage', response, body);
+          alertService.error(body.message, response.status, response.statusText);
+        }
+      })
+      .catch((e) => {
+        console.log(e);
+        alertService.error('Fehler beim Update, z.B. zu große Datei');
+      })
+      .finally(() => {
+        setUpdatingSignage(false);
+      });
+  }, [horizontalImage, horizontalImageColor, verticalImage, verticalImageColor, workspaceId]);
+
   const fetchWorkspaceUsers = useCallback(() => {
     if (workspaceId == undefined) return;
     fetch(`/api/workspaces/${workspaceId}/users`)
@@ -114,9 +155,30 @@ export default function WorkspaceSettingPage() {
       });
   }, [workspaceId]);
 
+  const fetchSignage = useCallback(() => {
+    fetch(`/api/signage/${workspaceId}`)
+      .then(async (response) => {
+        return response.json();
+      })
+      .then((data) => {
+        data.content.forEach((signage: Signage) => {
+          if (signage.format == MonitorFormat.PORTRAIT) {
+            setVerticalImage(signage.content);
+            setVerticalImageColor(signage.backgroundColor ?? undefined);
+          } else {
+            setHorizontalImage(signage.content);
+            setHorizontalImageColor(signage.backgroundColor ?? undefined);
+          }
+        });
+      })
+      .finally();
+  }, []);
+
   useEffect(() => {
     fetchWorkspaceUsers();
-  }, [fetchWorkspaceUsers]);
+
+    fetchSignage();
+  }, [fetchSignage, fetchWorkspaceUsers]);
 
   return (
     <ManageEntityLayout backLink={`/workspaces/${workspaceId}/manage`} title={'Workspace-Einstellungen'}>
@@ -303,6 +365,133 @@ export default function WorkspaceSettingPage() {
                   Workspace löschen
                 </button>
               </div>
+            </div>
+          </div>
+        ) : (
+          <></>
+        )}
+        {userContext.isUserPermitted(Role.MANAGER) ? (
+          <div className={'card'}>
+            <div className={'card-body'}>
+              <div className={'card-title w-full justify-between'}>
+                <div>Monitor</div>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(`${window.location.origin}/signage?id=${workspaceId}`);
+                    alertService.info('In Zwischenablage kopiert');
+                  }}
+                  className={'btn btn-square btn-ghost'}
+                >
+                  <FaShareAlt />
+                </button>
+              </div>
+              <div className={'grid grid-cols-2 gap-2'}>
+                <div className={'flex flex-col gap-2'}>
+                  <div>Horizontal</div>
+                  {horizontalImage == undefined ? (
+                    <UploadDropZone
+                      maxUploadSize={'1MB'}
+                      onSelectedFilesChanged={async (file) => {
+                        if (file) {
+                          const compressedImageFile = await compressFile(file);
+                          const base = await convertToBase64(compressedImageFile);
+                          setHorizontalImage(base);
+                        } else {
+                          alertService.error('Datei konnte nicht ausgewählt werden.');
+                        }
+                      }}
+                    />
+                  ) : (
+                    <div className={'relative h-full'}>
+                      <div
+                        className={'btn btn-square btn-outline btn-error btn-sm absolute right-2 top-2'}
+                        onClick={() =>
+                          modalContext.openModal(
+                            <DeleteConfirmationModal
+                              spelling={'REMOVE'}
+                              entityName={'das Bild'}
+                              onApprove={() => setHorizontalImage(undefined)}
+                            />,
+                          )
+                        }
+                      >
+                        <FaTrashAlt />
+                      </div>
+                      <img className={'rounded-lg'} src={horizontalImage} alt={'Fehler beim darstellen der Karte'} />
+                    </div>
+                  )}
+                  <div className={'form-control'}>
+                    <label className={'label'}>
+                      <span className={'label-text'}>Hintergrundfarbe</span>
+                    </label>
+                    <input
+                      type={'color'}
+                      disabled={horizontalImage == undefined}
+                      value={horizontalImageColor}
+                      onChange={(e) => {
+                        setHorizontalImageColor(e.target.value);
+                      }}
+                      className={'input w-full'}
+                    />
+                  </div>
+                </div>
+
+                <div className={'flex flex-col gap-2'}>
+                  <div>Vertikal</div>
+                  {verticalImage == undefined ? (
+                    <UploadDropZone
+                      maxUploadSize={'1MB'}
+                      onSelectedFilesChanged={async (file) => {
+                        if (file) {
+                          const compressedImageFile = await compressFile(file);
+                          const base = await convertToBase64(compressedImageFile);
+                          setVerticalImage(base);
+                        } else {
+                          alertService.error('Datei konnte nicht ausgewählt werden.');
+                        }
+                      }}
+                    />
+                  ) : (
+                    <div className={'relative h-full'}>
+                      <div
+                        className={'btn btn-square btn-outline btn-error btn-sm absolute right-2 top-2'}
+                        onClick={() =>
+                          modalContext.openModal(
+                            <DeleteConfirmationModal
+                              spelling={'REMOVE'}
+                              entityName={'das Bild'}
+                              onApprove={() => setVerticalImage(undefined)}
+                            />,
+                          )
+                        }
+                      >
+                        <FaTrashAlt />
+                      </div>
+                      <img className={'rounded-lg'} src={verticalImage} alt={'Fehler beim darstellen der Karte'} />
+                    </div>
+                  )}
+                  <div className={'form-control'}>
+                    <label className={'label'}>
+                      <span className={'label-text'}>Hintergrundfarbe</span>
+                    </label>
+                    <input
+                      type={'color'}
+                      disabled={verticalImage == undefined}
+                      value={verticalImageColor}
+                      onChange={(e) => {
+                        setVerticalImageColor(e.target.value);
+                      }}
+                      className={'input w-full'}
+                    />
+                  </div>
+                </div>
+              </div>
+              <button
+                className={`btn btn-primary ${updatingSignage ? 'btn-loading' : ''}`}
+                onClick={handleUpdateSignage}
+              >
+                Speichern
+              </button>
             </div>
           </div>
         ) : (

@@ -71,7 +71,7 @@ export function SearchModal(props: SearchModalProps) {
   }, [fetchCocktails, workspaceId]);
 
   return (
-    <div className={'grid w-full grid-cols-1 gap-2 p-2'}>
+    <div className={'grid w-full grid-cols-1 gap-2 p-0.5 md:p-2'}>
       <div className={'w-max text-2xl font-bold'}>Cocktail suchen</div>
       <div className={'join pb-2'}>
         <input
@@ -97,61 +97,71 @@ export function SearchModal(props: SearchModalProps) {
             <></>
           )
         ) : (
-          cocktails.map((cocktail, index) => (
-            <div
-              key={'search-modal-' + cocktail.id}
-              tabIndex={index}
-              className={` ${
-                showRecipe ? 'collapse collapse-arrow' : ''
-              } rounded-box border border-base-300 bg-base-100`}
-            >
-              {showRecipe ? <input type="checkbox" /> : <></>}
-              <div className={`${showRecipe ? 'collapse-title' : 'p-2'} flex justify-between text-xl font-medium`}>
-                {cocktail.name}{' '}
-                {!showRecipe && props.onCocktailSelectedObject != undefined && (
-                  <button
-                    type="button"
-                    disabled={props.selectedCocktails?.includes(cocktail.id) ?? false}
-                    className={'btn btn-primary btn-sm'}
-                    onClick={() => {
-                      props.onCocktailSelectedObject?.(cocktail);
-                      setSearch('');
-                      modalContext.closeModal();
-                    }}
-                  >
-                    {props.selectionLabel ?? 'Hinzufügen'}
-                  </button>
-                )}
-              </div>
-              {showRecipe && (
-                <div className="collapse-content">
-                  <div className={'card'}>
-                    <div className={'card-body'}>
-                      <ShowCocktailInfoButton showInfo={true} cocktailRecipe={cocktail} absolutePosition={true} />
-                      <CompactCocktailRecipeInstruction showPrice={true} cocktailRecipe={cocktail} />
-                    </div>
-                  </div>
-
-                  {(showRecipe || props.onCocktailSelectedObject) && (
-                    <div className={'card-actions flex flex-row justify-end pt-2'}>
-                      <button
-                        type="button"
-                        disabled={props.selectedCocktails?.includes(cocktail.id) ?? false}
-                        className={'btn btn-primary btn-sm'}
-                        onClick={() => {
-                          props.onCocktailSelectedObject?.(cocktail);
-                          setSearch('');
-                          modalContext.closeModal();
-                        }}
-                      >
-                        {props.selectionLabel ?? 'Hinzufügen'}
-                      </button>
-                    </div>
+          cocktails
+            .sort((a, b) => a.name.localeCompare(b.name))
+            .map((cocktail, index) => (
+              <div
+                key={'search-modal-' + cocktail.id}
+                tabIndex={index}
+                className={` ${
+                  showRecipe ? 'collapse collapse-arrow' : ''
+                } rounded-box border border-base-300 bg-base-100`}
+              >
+                {showRecipe ? <input type="checkbox" /> : <></>}
+                <div
+                  className={`${
+                    showRecipe ? 'collapse-title ' : 'p-2 md:p-3'
+                  } flex justify-between text-xl font-medium`}
+                >
+                  {cocktail.name}{' '}
+                  {!showRecipe && props.onCocktailSelectedObject != undefined ? (
+                    <button
+                      type="button"
+                      disabled={props.selectedCocktails?.includes(cocktail.id) ?? false}
+                      className={'btn btn-primary btn-sm'}
+                      onClick={() => {
+                        props.onCocktailSelectedObject?.(cocktail);
+                        setSearch('');
+                        modalContext.closeModal();
+                      }}
+                    >
+                      {props.selectionLabel ?? 'Hinzufügen'}
+                    </button>
+                  ) : (
+                    <></>
                   )}
                 </div>
-              )}
-            </div>
-          )) ?? <></>
+                {showRecipe && (
+                  <div className="collapse-content pl-2 pr-2 md:pl-3">
+                    <div className={'card'}>
+                      <div className={'card-body'}>
+                        <ShowCocktailInfoButton showInfo={true} cocktailRecipe={cocktail} absolutePosition={true} />
+                        <CompactCocktailRecipeInstruction showPrice={true} cocktailRecipe={cocktail} showImage={true} />
+                      </div>
+                    </div>
+
+                    {props.onCocktailSelectedObject != undefined ? (
+                      <div className={'card-actions flex flex-row justify-end pt-2'}>
+                        <button
+                          type="button"
+                          disabled={props.selectedCocktails?.includes(cocktail.id) ?? false}
+                          className={'btn btn-primary btn-sm'}
+                          onClick={() => {
+                            props.onCocktailSelectedObject?.(cocktail);
+                            setSearch('');
+                            modalContext.closeModal();
+                          }}
+                        >
+                          {props.selectionLabel ?? 'Hinzufügen'}
+                        </button>
+                      </div>
+                    ) : (
+                      <></>
+                    )}
+                  </div>
+                )}
+              </div>
+            )) ?? <></>
         )}
         {isLoading ? <Loading /> : <></>}
       </>
