@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useEffect, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { alertService } from '../../../../../lib/alertService';
 import { useRouter } from 'next/router';
 import { BackupStructure } from '../../../../api/workspaces/[workspaceId]/admin/backups/backupStructure';
@@ -26,7 +26,8 @@ export default function WorkspaceSettingPage() {
   const [exporting, setExporting] = useState<boolean>(false);
   const [importing, setImporting] = useState<boolean>(false);
 
-  const [selectedFile, setSelectedFile] = useState<File>();
+  const [uploadImportFile, setUploadImportFile] = useState<File>();
+  const uploadImportFileRef = useRef<HTMLInputElement>(null);
 
   const [verticalImageLoading, setVerticalImageLoading] = useState<boolean>(false);
   const [verticalImage, setVerticalImage] = useState<string>();
@@ -57,10 +58,12 @@ export default function WorkspaceSettingPage() {
 
   const importBackup = useCallback(async () => {
     try {
-      if (selectedFile == undefined) return;
+      if (uploadImportFile == undefined) return;
+      if (importing) return;
+
       setImporting(true);
 
-      const data: BackupStructure = JSON.parse(await selectedFile.text());
+      const data: BackupStructure = JSON.parse(await uploadImportFile.text());
 
       const response = await fetch(`/api/workspaces/${workspaceId}/admin/backups/import`, {
         method: 'POST',
@@ -68,6 +71,10 @@ export default function WorkspaceSettingPage() {
       });
       if (response.ok) {
         alertService.success(`Import erfolgreich`);
+        setUploadImportFile(undefined);
+        if (uploadImportFileRef.current) {
+          uploadImportFileRef.current.value = '';
+        }
       } else {
         const body = await response.json();
         console.log('Admin -> ImportBackup', response, body);
@@ -78,7 +85,7 @@ export default function WorkspaceSettingPage() {
     } finally {
       setImporting(false);
     }
-  }, [selectedFile, workspaceId]);
+  }, [importing, uploadImportFile, workspaceId]);
 
   const handleDeleteWorkspace = useCallback(async () => {
     if (!confirm('Workspace inkl. aller Zutaten und Rezepte wirklich löschen?')) return;
@@ -309,12 +316,13 @@ export default function WorkspaceSettingPage() {
                   type={'file'}
                   disabled={importing}
                   className={'file-input file-input-bordered'}
-                  onChange={(e) => setSelectedFile(e.target.files?.[0])}
+                  ref={uploadImportFileRef}
+                  onChange={(e) => setUploadImportFile(e.target.files?.[0])}
                 />
               </div>
               <button
                 className={`btn btn-primary`}
-                disabled={selectedFile == undefined || importing}
+                disabled={uploadImportFile == undefined || importing}
                 type={'button'}
                 onClick={importBackup}
               >
