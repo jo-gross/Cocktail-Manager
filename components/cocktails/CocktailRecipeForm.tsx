@@ -1122,11 +1122,13 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                 ) : (
                                   <>
                                     <option value={''}>Auswählen</option>
-                                    {garnishes.map((garnish) => (
-                                      <option key={`form-recipe-garnish-${garnish.id}`} value={garnish.id}>
-                                        {garnish.name}
-                                      </option>
-                                    ))}
+                                    {garnishes
+                                      .sort((a, b) => a.name.localeCompare(b.name))
+                                      .map((garnish) => (
+                                        <option key={`form-recipe-garnish-${garnish.id}`} value={garnish.id}>
+                                          {garnish.name}
+                                        </option>
+                                      ))}
                                   </>
                                 )}
                               </select>
