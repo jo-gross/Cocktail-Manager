@@ -9,8 +9,8 @@ import { Garnish, Glass, Ingredient } from '@prisma/client';
 import { updateTags, validateTag } from '../../models/tags/TagUtils';
 import { UploadDropZone } from '../UploadDropZone';
 import { convertToBase64 } from '../../lib/Base64Converter';
-import { CocktailUtensil } from '../../models/CocktailUtensil';
-import { CocktailTool } from '../../models/CocktailTool';
+import { CocktailMixingTechnique } from '../../models/CocktailMixingTechnique';
+import { CocktailPouringTechnique } from '../../models/CocktailPouringTechnique';
 import { CocktailIngredientUnit } from '../../models/CocktailIngredientUnit';
 import { CocktailRecipeStepFull } from '../../models/CocktailRecipeStepFull';
 import CocktailRecipeOverviewItem from './CocktailRecipeOverviewItem';
@@ -789,7 +789,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                           {step.mixing ? (
                             <>
                               <div className={'flex w-full flex-row items-center justify-center space-x-2'}>
-                                {Object.entries(CocktailUtensil).map(([key, value]) => (
+                                {Object.entries(CocktailMixingTechnique).map(([key, value]) => (
                                   <div
                                     key={`form-recipe-step-${step.id}-tool-${key}`}
                                     className={'flex flex-col items-center justify-end space-y-2'}
@@ -981,7 +981,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                             </>
                           ) : (
                             <div className={'flex flex-row items-center justify-center space-x-2'}>
-                              {Object.entries(CocktailTool).map(([key, value]) => (
+                              {Object.entries(CocktailPouringTechnique).map(([key, value]) => (
                                 <div
                                   key={`form-recipe-step${step.id}-no-mixing-${key}`}
                                   className={'flex flex-col items-center justify-center space-y-2'}
@@ -1122,11 +1122,13 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                 ) : (
                                   <>
                                     <option value={''}>Auswählen</option>
-                                    {garnishes.map((garnish) => (
-                                      <option key={`form-recipe-garnish-${garnish.id}`} value={garnish.id}>
-                                        {garnish.name}
-                                      </option>
-                                    ))}
+                                    {garnishes
+                                      .sort((a, b) => a.name.localeCompare(b.name))
+                                      .map((garnish) => (
+                                        <option key={`form-recipe-garnish-${garnish.id}`} value={garnish.id}>
+                                          {garnish.name}
+                                        </option>
+                                      ))}
                                   </>
                                 )}
                               </select>
