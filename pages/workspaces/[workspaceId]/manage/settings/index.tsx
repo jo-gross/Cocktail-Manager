@@ -78,14 +78,14 @@ export default function WorkspaceSettingPage() {
       } else {
         const body = await response.json();
         console.log('Admin -> ImportBackup', response, body);
-        alertService.error(body.message, response.status, response.statusText);
+        alertService.error(body.message ?? 'Fehler beim importieren', response.status, response.statusText);
       }
     } catch (e) {
       alertService.error(`Fehler beim importieren`);
     } finally {
       setImporting(false);
     }
-  }, [importing, uploadImportFile, workspaceId]);
+  }, [uploadImportFile, workspaceId]);
 
   const handleDeleteWorkspace = useCallback(async () => {
     if (!confirm('Workspace inkl. aller Zutaten und Rezepte wirklich löschen?')) return;

@@ -2,6 +2,8 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { BackupStructure } from './backupStructure';
 import prisma from '../../../../../../lib/prisma';
 import { randomUUID } from 'crypto';
+import { withWorkspacePermission } from '../../../../../../middleware/api/authenticationMiddleware';
+import { Role } from '@prisma/client';
 
 export const config = {
   api: {
@@ -11,7 +13,7 @@ export const config = {
   },
 };
 
-export default async function handle(req: NextApiRequest, res: NextApiResponse) {
+export default withWorkspacePermission([Role.USER], async (req: NextApiRequest, res: NextApiResponse, user) => {
   const workspaceId = req.query.workspaceId as string | undefined;
   if (!workspaceId) return res.status(400).json({ message: 'No workspace id' });
 
@@ -139,6 +141,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           const cocktailCalculationMappingItem = { id: g.id, newId: randomUUID() };
           g.id = cocktailCalculationMappingItem.newId;
           g.workspaceId = workspaceId;
+          g.updatedByUserId = user.id;
           cocktailCalculationMapping.push(cocktailCalculationMappingItem);
         });
         await prisma.cocktailCalculation.createMany({ data: data.calculation, skipDuplicates: true });
@@ -160,4 +163,4 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       return res.status(500).json({ msg: 'Error' });
     }
   }
-}
+});
