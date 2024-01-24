@@ -1,10 +1,10 @@
 import { CocktailRecipeFull } from '../../models/CocktailRecipeFull';
-import { CocktailUtensil } from '../../models/CocktailUtensil';
+import { CocktailMixingTechnique } from '../../models/CocktailMixingTechnique';
 import Link from 'next/link';
 import { FaPencilAlt } from 'react-icons/fa';
 import { ModalContext } from '../../lib/context/ModalContextProvider';
 import { useContext } from 'react';
-import { CocktailTool } from '../../models/CocktailTool';
+import { CocktailPouringTechnique } from '../../models/CocktailPouringTechnique';
 import { useRouter } from 'next/router';
 import { UserContext } from '../../lib/context/UserContextProvider';
 import Image from 'next/image';
@@ -89,7 +89,9 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                   className={'col-span-2 space-y-2 rounded-lg border-2 border-base-300 p-2'}
                 >
                   <span className={'text-xl font-bold'}>
-                    {step.mixing ? (CocktailUtensil as any)[step.tool] : (CocktailTool as any)[step.tool]}
+                    {step.mixing
+                      ? (CocktailMixingTechnique as any)[step.tool]
+                      : (CocktailPouringTechnique as any)[step.tool]}
                   </span>
                   {step.ingredients.map((ingredient) => (
                     <div key={'cocktail-details-step-ingredient-' + ingredient.id} className={'pl-2'}>

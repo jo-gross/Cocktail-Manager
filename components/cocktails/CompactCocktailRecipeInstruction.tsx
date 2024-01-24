@@ -1,7 +1,7 @@
 import { CocktailRecipeFull } from '../../models/CocktailRecipeFull';
 import React from 'react';
-import { CocktailUtensil } from '../../models/CocktailUtensil';
-import { CocktailTool } from '../../models/CocktailTool';
+import { CocktailMixingTechnique } from '../../models/CocktailMixingTechnique';
+import { CocktailPouringTechnique } from '../../models/CocktailPouringTechnique';
 import DefaultGlassIcon from '../DefaultGlassIcon';
 import Image from 'next/image';
 
@@ -57,7 +57,9 @@ export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeIns
           .map((step, index) => (
             <div key={`step-${step.id}`} className={'break-words pb-2'}>
               <span className={'font-bold'}>
-                {step.mixing ? (CocktailUtensil as any)[step.tool] : (CocktailTool as any)[step.tool]}
+                {step.mixing
+                  ? (CocktailMixingTechnique as any)[step.tool]
+                  : (CocktailPouringTechnique as any)[step.tool]}
               </span>
               {step.mixing &&
                 step.ingredients
