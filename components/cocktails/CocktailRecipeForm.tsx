@@ -97,7 +97,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
             if (search == undefined || search == '') {
               return ingredients;
             } else {
-              return ingredients.filter((ingredient) => ingredient.name.includes(search));
+              return ingredients.filter((ingredient) => ingredient.name.toLowerCase().includes(search.toLowerCase()));
             }
           }}
           elementComponent={(ingredient) => {
@@ -173,7 +173,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
             if (search == undefined || search == '') {
               return garnishes;
             } else {
-              return garnishes.filter((garnish) => garnish.name.includes(search));
+              return garnishes.filter((garnish) => garnish.name.toLowerCase().includes(search.toLowerCase()));
             }
           }}
           elementComponent={(garnish) => {
