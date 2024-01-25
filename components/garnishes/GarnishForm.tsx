@@ -2,7 +2,6 @@ import { Formik, FormikProps } from 'formik';
 import { Garnish } from '@prisma/client';
 import { useRouter } from 'next/router';
 import React, { useContext, useEffect, useState } from 'react';
-import { SingleFormLayout } from '../layout/SingleFormLayout';
 import { UploadDropZone } from '../UploadDropZone';
 import { convertToBase64 } from '../../lib/Base64Converter';
 import { FaTrashAlt } from 'react-icons/fa';
@@ -16,6 +15,8 @@ interface GarnishFormProps {
   garnish?: Garnish;
   setUnsavedChanges?: (unsavedChanges: boolean) => void;
   formRef?: React.RefObject<FormikProps<any>>;
+
+  onSaved?: () => void;
 }
 
 export function GarnishForm(props: GarnishFormProps) {
@@ -58,9 +59,11 @@ export function GarnishForm(props: GarnishFormProps) {
               body: JSON.stringify(body),
             });
             if (response.status.toString().startsWith('2')) {
-              router
-                .push(`/workspaces/${workspaceId}/manage/garnishes`)
-                .then(() => alertService.success('Garnitur erfolgreich erstellt'));
+              if (props.onSaved != undefined) {
+                props.onSaved();
+              } else {
+                router.push(`/workspaces/${workspaceId}/manage/garnishes`).then(() => alertService.success('Garnitur erfolgreich erstellt'));
+              }
             } else {
               const body = await response.json();
               console.log('GarnishForm -> createGarnish', response, body);
@@ -73,9 +76,11 @@ export function GarnishForm(props: GarnishFormProps) {
               body: JSON.stringify(body),
             });
             if (result.status.toString().startsWith('2')) {
-              router
-                .push(`/workspaces/${workspaceId}/manage/garnishes`)
-                .then(() => alertService.success('Garnitur erfolgreich gespeichert'));
+              if (props.onSaved != undefined) {
+                props.onSaved();
+              } else {
+                router.push(`/workspaces/${workspaceId}/manage/garnishes`).then(() => alertService.success('Garnitur erfolgreich gespeichert'));
+              }
             } else {
               const body = await result.json();
               alertService.error(body.message, result.status, result.statusText);
@@ -99,119 +104,115 @@ export function GarnishForm(props: GarnishFormProps) {
       }}
     >
       {({ values, setFieldValue, errors, touched, handleChange, handleBlur, handleSubmit, isSubmitting }) => (
-        <form onSubmit={handleSubmit}>
-          <SingleFormLayout title={'Garnitur erfassen'}>
-            <div className={'form-control'}>
-              <label className={'label'}>
-                <span className={'label-text'}>Name</span>
-                <span className={'label-text-alt space-x-2 text-error'}>
-                  <span>
-                    <>{errors.name && touched.name && errors.name}</>
-                  </span>
-                  <span>*</span>
+        <form onSubmit={handleSubmit} className={'flex flex-col gap-2 md:gap-4'}>
+          <div className={'form-control'}>
+            <label className={'label'}>
+              <span className={'label-text'}>Name</span>
+              <span className={'label-text-alt space-x-2 text-error'}>
+                <span>
+                  <>{errors.name && touched.name && errors.name}</>
                 </span>
-              </label>
+                <span>*</span>
+              </span>
+            </label>
+            <input
+              type={'text'}
+              placeholder={'Name'}
+              className={`input input-bordered ${errors.name && touched.name && 'input-error'} w-full`}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              value={values.name}
+              name={'name'}
+            />
+          </div>
+
+          <div className={'form-control'}>
+            <label className={'label'}>
+              <span className={'label-text'}>Zubereitungsbeschreibung</span>
+              <span className={'label-text-alt space-x-2 text-error'}>
+                <span>
+                  <>{errors.description && touched.description && errors.description}</>
+                </span>
+              </span>
+            </label>
+            <textarea
+              className={`textarea textarea-bordered ${errors.description && touched.description && 'textarea-error'} w-full`}
+              value={values.description}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              name={'description'}
+            />
+          </div>
+
+          <div className={'form-control'}>
+            <label className={'label'}>
+              <span className={'label-text'}>Preis</span>
+              <span className={'label-text-alt space-x-2 text-error'}>
+                <span>
+                  <>{errors.price && touched.price && errors.price}</>
+                </span>
+                <span>*</span>
+              </span>
+            </label>
+            <div className={'join'}>
               <input
-                type={'text'}
-                placeholder={'Name'}
-                className={`input input-bordered ${errors.name && touched.name && 'input-error'} w-full`}
+                type={'number'}
+                placeholder={'Preis'}
+                className={`input join-item input-bordered ${errors.price && touched.price && 'input-error'} w-full`}
+                value={values.price}
                 onChange={handleChange}
                 onBlur={handleBlur}
-                value={values.name}
-                name={'name'}
+                name={'price'}
               />
+              <span className={'btn btn-secondary join-item'}>€</span>
             </div>
-
-            <div className={'form-control'}>
+          </div>
+          <div className={'col-span-2'}>
+            {values.image != undefined ? (
               <label className={'label'}>
-                <span className={'label-text'}>Zubereitungsbeschreibung</span>
-                <span className={'label-text-alt space-x-2 text-error'}>
-                  <span>
-                    <>{errors.description && touched.description && errors.description}</>
-                  </span>
-                </span>
+                <span className={'label-text'}>Zutaten Bild</span>
               </label>
-              <textarea
-                className={`textarea textarea-bordered ${
-                  errors.description && touched.description && 'textarea-error'
-                } w-full`}
-                value={values.description}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                name={'description'}
+            ) : (
+              <></>
+            )}
+            {values.image == undefined ? (
+              <UploadDropZone
+                onSelectedFilesChanged={async (file) => {
+                  if (file != undefined) {
+                    const compressedImageFile = await compressFile(file);
+                    await setFieldValue('image', await convertToBase64(compressedImageFile));
+                  } else {
+                    alertService.error('Datei konnte nicht ausgewählt werden.');
+                  }
+                }}
               />
-            </div>
-
-            <div className={'form-control'}>
-              <label className={'label'}>
-                <span className={'label-text'}>Preis</span>
-                <span className={'label-text-alt space-x-2 text-error'}>
-                  <span>
-                    <>{errors.price && touched.price && errors.price}</>
-                  </span>
-                  <span>*</span>
-                </span>
-              </label>
-              <div className={'join'}>
-                <input
-                  type={'number'}
-                  placeholder={'Preis'}
-                  className={`input join-item input-bordered ${errors.price && touched.price && 'input-error'} w-full`}
-                  value={values.price}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  name={'price'}
-                />
-                <span className={'btn btn-secondary join-item'}>€</span>
-              </div>
-            </div>
-            <div className={'col-span-2'}>
-              {values.image != undefined ? (
-                <label className={'label'}>
-                  <span className={'label-text'}>Zutaten Bild</span>
-                </label>
-              ) : (
-                <></>
-              )}
-              {values.image == undefined ? (
-                <UploadDropZone
-                  onSelectedFilesChanged={async (file) => {
-                    if (file != undefined) {
-                      const compressedImageFile = await compressFile(file);
-                      await setFieldValue('image', await convertToBase64(compressedImageFile));
-                    } else {
-                      alertService.error('Datei konnte nicht ausgewählt werden.');
-                    }
+            ) : (
+              <div className={'relative'}>
+                <div
+                  className={'btn btn-square btn-outline btn-error btn-sm absolute right-2 top-2'}
+                  onClick={() => {
+                    modalContext.openModal(
+                      <DeleteConfirmationModal
+                        spelling={'REMOVE'}
+                        entityName={'das Bild'}
+                        onApprove={async () => {
+                          await setFieldValue('image', undefined);
+                        }}
+                      />,
+                    );
                   }}
-                />
-              ) : (
-                <div className={'relative'}>
-                  <div
-                    className={'btn btn-square btn-outline btn-error btn-sm absolute right-2 top-2'}
-                    onClick={() => {
-                      modalContext.openModal(
-                        <DeleteConfirmationModal
-                          spelling={'REMOVE'}
-                          entityName={'das Bild'}
-                          onApprove={async () => {
-                            await setFieldValue('image', undefined);
-                          }}
-                        />,
-                      );
-                    }}
-                  >
-                    <FaTrashAlt />
-                  </div>
-                  <img className={'h-32 rounded-lg'} src={values.image} alt={'Cocktail Image'} />
+                >
+                  <FaTrashAlt />
                 </div>
-              )}
-            </div>
-            <div className={'form-control'}>
-              <button type={'submit'} className={`btn btn-primary ${isSubmitting ?? 'loading'}`}>
-                Speichern
-              </button>
-            </div>
-          </SingleFormLayout>
+                <img className={'h-32 rounded-lg'} src={values.image} alt={'Cocktail Image'} />
+              </div>
+            )}
+          </div>
+          <div className={'form-control'}>
+            <button type={'submit'} className={`btn btn-primary ${isSubmitting ?? 'loading'}`}>
+              Speichern
+            </button>
+          </div>
         </form>
       )}
     </Formik>
