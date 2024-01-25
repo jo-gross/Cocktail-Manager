@@ -540,7 +540,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                   </div>
                   <div>
                     <label className={'label'}>
-                      <span className={'label-text'}>Glas mit Eis</span>
+                      <span className={'label-text'}>Eis</span>
                       <span className={'label-text-alt text-error'}>
                         <>{errors.glassWithIce && touched.glassWithIce && errors.glassWithIce}</>
                       </span>
