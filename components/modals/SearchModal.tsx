@@ -103,16 +103,10 @@ export function SearchModal(props: SearchModalProps) {
               <div
                 key={'search-modal-' + cocktail.id}
                 tabIndex={index}
-                className={` ${
-                  showRecipe ? 'collapse collapse-arrow' : ''
-                } rounded-box border border-base-300 bg-base-100`}
+                className={` ${showRecipe ? 'collapse collapse-arrow' : ''} rounded-box border border-base-300 bg-base-100`}
               >
                 {showRecipe ? <input type="checkbox" /> : <></>}
-                <div
-                  className={`${
-                    showRecipe ? 'collapse-title ' : 'p-2 md:p-3'
-                  } flex justify-between text-xl font-medium`}
-                >
+                <div className={`${showRecipe ? 'collapse-title ' : 'p-2 md:p-3'} flex justify-between text-xl font-medium`}>
                   {cocktail.name}{' '}
                   {!showRecipe && props.onCocktailSelectedObject != undefined ? (
                     <button

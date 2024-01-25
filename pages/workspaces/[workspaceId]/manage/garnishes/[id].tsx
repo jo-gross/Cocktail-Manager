@@ -7,6 +7,7 @@ import { Loading } from '../../../../../components/Loading';
 import { alertService } from '../../../../../lib/alertService';
 import { withPagePermission } from '../../../../../middleware/ui/withPagePermission';
 import { FormikProps } from 'formik';
+import { SingleFormLayout } from '../../../../../components/layout/SingleFormLayout';
 
 function EditGarnishPage() {
   const router = useRouter();
@@ -41,13 +42,10 @@ function EditGarnishPage() {
   return loading ? (
     <Loading />
   ) : (
-    <ManageEntityLayout
-      backLink={`/workspaces/${workspaceId}/manage/garnishes`}
-      title={'Garnitur'}
-      unsavedChanges={unsavedChanges}
-      formRef={formRef}
-    >
-      <GarnishForm garnish={garnish} setUnsavedChanges={setUnsavedChanges} formRef={formRef} />
+    <ManageEntityLayout backLink={`/workspaces/${workspaceId}/manage/garnishes`} title={'Garnitur'} unsavedChanges={unsavedChanges} formRef={formRef}>
+      <SingleFormLayout title={'Garnitur erfassen'}>
+        <GarnishForm garnish={garnish} setUnsavedChanges={setUnsavedChanges} formRef={formRef} />
+      </SingleFormLayout>
     </ManageEntityLayout>
   );
 }

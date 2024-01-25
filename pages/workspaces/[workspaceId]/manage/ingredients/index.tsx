@@ -108,15 +108,10 @@ export default function IngredientsOverviewPage() {
                         <td className={'whitespace-nowrap'}>
                           {ingredient.volume} {ingredient.unit}
                         </td>
-                        <td className={'whitespace-nowrap'}>
-                          {((ingredient.price ?? 0) / (ingredient.volume ?? 1)).toFixed(2)} €
-                        </td>
+                        <td className={'whitespace-nowrap'}>{((ingredient.price ?? 0) / (ingredient.volume ?? 1)).toFixed(2)} €</td>
                         <td>
                           {ingredient.tags.map((tag) => (
-                            <div
-                              key={`ingredient-${ingredient.id}-tags-${tag}`}
-                              className={'badge badge-primary badge-outline m-1'}
-                            >
+                            <div key={`ingredient-${ingredient.id}-tags-${tag}`} className={'badge badge-primary badge-outline m-1'}>
                               {tag}
                             </div>
                           ))}
@@ -126,14 +121,7 @@ export default function IngredientsOverviewPage() {
                             ?.replace('https://', '')
                             .replace('http://', '')
                             .replace('www.', '')
-                            .substring(
-                              0,
-                              ingredient.link
-                                ?.replace('https://', '')
-                                .replace('http://', '')
-                                .replace('www.', '')
-                                .indexOf('/'),
-                            ) ?? ''}
+                            .substring(0, ingredient.link?.replace('https://', '').replace('http://', '').replace('www.', '').indexOf('/')) ?? ''}
                         </td>
                         <td>
                           {ingredient.link == undefined ? (

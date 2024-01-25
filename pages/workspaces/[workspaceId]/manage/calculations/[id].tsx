@@ -96,10 +96,7 @@ export default function CalculationPage() {
           .then(async (response) => {
             const body = await response.json();
             if (response.ok) {
-              setCocktailCalculationItems([
-                ...cocktailCalculationItems,
-                { cocktail: body.data, plannedAmount: 1, customPrice: undefined },
-              ]);
+              setCocktailCalculationItems([...cocktailCalculationItems, { cocktail: body.data, plannedAmount: 1, customPrice: undefined }]);
             } else {
               console.log('CocktailId -> fetchRecipe', response, body);
               alertService.error(body.message, response.status, response.statusText);
@@ -120,15 +117,10 @@ export default function CalculationPage() {
       item.cocktail.steps.forEach((step) => {
         step.ingredients.forEach((ingredient) => {
           if (ingredient.ingredient != null) {
-            let existingItem = calculationItems.find(
-              (calculationItem) => calculationItem.ingredient.id == ingredient.ingredientId,
-            );
+            let existingItem = calculationItems.find((calculationItem) => calculationItem.ingredient.id == ingredient.ingredientId);
             if (existingItem) {
               existingItem.amount += (ingredient.amount ?? 0) * item.plannedAmount;
-              calculationItems = [
-                ...calculationItems.filter((item) => item.ingredient.id != existingItem?.ingredient.id),
-                existingItem,
-              ];
+              calculationItems = [...calculationItems.filter((item) => item.ingredient.id != existingItem?.ingredient.id), existingItem];
             } else {
               calculationItems.push({
                 ingredient: ingredient.ingredient,
@@ -151,10 +143,7 @@ export default function CalculationPage() {
         let existingItem = calculationItems.find((calculationItem) => calculationItem.garnish.id == garnish.garnishId);
         if (existingItem) {
           existingItem.amount += item.plannedAmount;
-          calculationItems = [
-            ...calculationItems.filter((item) => item.garnish.id != existingItem?.garnish.id),
-            existingItem,
-          ];
+          calculationItems = [...calculationItems.filter((item) => item.garnish.id != existingItem?.garnish.id), existingItem];
         } else {
           calculationItems.push({
             garnish: garnish.garnish,
@@ -248,13 +237,7 @@ export default function CalculationPage() {
   }, [calculationName, id, saveCalculationBackend]);
 
   const openNameModal = useCallback(() => {
-    modalContext.openModal(
-      <InputModal
-        title={'Kalkulation speichern'}
-        onInputChange={(value) => setCalculationName(value)}
-        defaultValue={calculationName}
-      />,
-    );
+    modalContext.openModal(<InputModal title={'Kalkulation speichern'} onInputChange={(value) => setCalculationName(value)} defaultValue={calculationName} />);
   }, [calculationName, modalContext]);
 
   return (
@@ -276,12 +259,7 @@ export default function CalculationPage() {
           <div className={'flex flex-col items-center justify-center md:flex-row md:gap-2'}>
             <div className={'flex'}>
               <div>{calculationName}</div>
-              <div
-                className={
-                  'btn btn-circle btn-outline btn-info btn-xs flex items-center justify-center border print:hidden'
-                }
-                onClick={openNameModal}
-              >
+              <div className={'btn btn-circle btn-outline btn-info btn-xs flex items-center justify-center border print:hidden'} onClick={openNameModal}>
                 <FaPencilAlt />
               </div>
             </div>
@@ -292,11 +270,7 @@ export default function CalculationPage() {
         )
       }
       actions={[
-        <div
-          key={'print-calculation'}
-          className={'btn btn-square btn-outline btn-sm md:btn-md'}
-          onClick={() => window.print()}
-        >
+        <div key={'print-calculation'} className={'btn btn-square btn-outline btn-sm md:btn-md'} onClick={() => window.print()}>
           <FaPrint />
         </div>,
         <div
@@ -411,11 +385,7 @@ export default function CalculationPage() {
                                     <DeleteConfirmationModal
                                       spelling={'REMOVE'}
                                       onApprove={() => {
-                                        setCocktailCalculationItems(
-                                          cocktailCalculationItems.filter(
-                                            (item) => item.cocktail.id != cocktail.cocktail.id,
-                                          ),
-                                        );
+                                        setCocktailCalculationItems(cocktailCalculationItems.filter((item) => item.cocktail.id != cocktail.cocktail.id));
                                       }}
                                     />,
                                   );
@@ -461,12 +431,7 @@ export default function CalculationPage() {
                             <td>{cocktail.plannedAmount} x</td>
                             <td>{calcCocktailTotalPrice(cocktail.cocktail).toFixed(2)} €</td>
                             <td>{(cocktail.plannedAmount * calcCocktailTotalPrice(cocktail.cocktail)).toFixed(2)} €</td>
-                            <td>
-                              {(
-                                cocktail.plannedAmount * (cocktail.customPrice ?? cocktail.cocktail.price ?? 0)
-                              ).toFixed(2)}{' '}
-                              €
-                            </td>
+                            <td>{(cocktail.plannedAmount * (cocktail.customPrice ?? cocktail.cocktail.price ?? 0)).toFixed(2)} €</td>
                             <td>
                               {(
                                 cocktail.plannedAmount * (cocktail.customPrice ?? cocktail.cocktail.price ?? 0) -
@@ -490,10 +455,7 @@ export default function CalculationPage() {
                         </td>
                         <td>
                           {cocktailCalculationItems
-                            .map(
-                              (cocktail) =>
-                                cocktail.plannedAmount * (cocktail.customPrice ?? cocktail.cocktail.price ?? 0),
-                            )
+                            .map((cocktail) => cocktail.plannedAmount * (cocktail.customPrice ?? cocktail.cocktail.price ?? 0))
                             .reduce((acc, curr) => acc + curr, 0)
                             .toFixed(2)}{' '}
                           €
@@ -543,9 +505,7 @@ export default function CalculationPage() {
                               {ingredientCalculation.amount.toFixed(2)} {ingredientCalculation.ingredient.unit}
                             </td>
                             <td>
-                              {(ingredientCalculation.amount / (ingredientCalculation.ingredient.volume ?? 0)).toFixed(
-                                2,
-                              )}
+                              {(ingredientCalculation.amount / (ingredientCalculation.ingredient.volume ?? 0)).toFixed(2)}
                               {' (á '}
                               {ingredientCalculation.ingredient.volume} {ingredientCalculation.ingredient.unit})
                             </td>

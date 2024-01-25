@@ -27,10 +27,7 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
           <>
             {userContext.isUserPermitted(Role.MANAGER) && (
               <Link href={`/workspaces/${workspaceId}/manage/cocktails/${props.cocktail.id}`}>
-                <div
-                  className={'btn btn-square btn-outline btn-secondary btn-sm'}
-                  onClick={() => modalContext.closeModal()}
-                >
+                <div className={'btn btn-square btn-outline btn-secondary btn-sm'} onClick={() => modalContext.closeModal()}>
                   <FaPencilAlt />
                 </div>
               </Link>
@@ -50,11 +47,7 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
           </div>
           <div className={'col-span-2 flex flex-row space-x-2'}>
             {props.cocktail.image != undefined ? (
-              <img
-                className={'h-full w-36 flex-none rounded-lg object-cover object-center shadow-md'}
-                src={props.cocktail.image}
-                alt={'Cocktail'}
-              />
+              <img className={'h-full w-36 flex-none rounded-lg object-cover object-center shadow-md'} src={props.cocktail.image} alt={'Cocktail'} />
             ) : (
               <></>
             )}
@@ -62,11 +55,7 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
               <label className={'label'}>
                 <span className={'label-text'}>Beschreibung</span>
               </label>
-              <textarea
-                readOnly={true}
-                value={props.cocktail.description ?? ''}
-                className={'textarea textarea-bordered w-full flex-1'}
-              />
+              <textarea readOnly={true} value={props.cocktail.description ?? ''} className={'textarea textarea-bordered w-full flex-1'} />
             </div>
           </div>
           <div className={'col-span-1'}>
@@ -84,14 +73,9 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
             {props.cocktail.steps.length == 0 ? <></> : <div className={'text-2xl font-bold'}>Zubereitung</div>}
             <div className={'grid grid-cols-2 gap-4'}>
               {props.cocktail.steps.map((step) => (
-                <div
-                  key={'cocktail-details-step-' + step.id}
-                  className={'col-span-2 space-y-2 rounded-lg border-2 border-base-300 p-2'}
-                >
+                <div key={'cocktail-details-step-' + step.id} className={'col-span-2 space-y-2 rounded-lg border-2 border-base-300 p-2'}>
                   <span className={'text-xl font-bold'}>
-                    {step.mixing
-                      ? (CocktailMixingTechnique as any)[step.tool]
-                      : (CocktailPouringTechnique as any)[step.tool]}
+                    {step.mixing ? (CocktailMixingTechnique as any)[step.tool] : (CocktailPouringTechnique as any)[step.tool]}
                   </span>
                   {step.ingredients.map((ingredient) => (
                     <div key={'cocktail-details-step-ingredient-' + ingredient.id} className={'pl-2'}>
@@ -110,10 +94,7 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                       </div>
                       <div>
                         {ingredient.ingredient?.tags?.map((tag) => (
-                          <div
-                            key={`cocktail-details-${props.cocktail.id}-ingredients-${ingredient.id}-tags-${tag}`}
-                            className={'badge badge-primary m-1'}
-                          >
+                          <div key={`cocktail-details-${props.cocktail.id}-ingredients-${ingredient.id}-tags-${tag}`} className={'badge badge-primary m-1'}>
                             {tag}
                           </div>
                         ))}
@@ -132,11 +113,7 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                   className={'col-span-2 flex flex-col space-y-2 rounded-lg border-2 border-base-300 p-2'}
                 >
                   <div className={'text-xl font-bold'}>{garnish?.garnish?.name ?? 'Keine'}</div>
-                  {garnish.description == undefined || garnish.description.trim() == '' ? (
-                    <></>
-                  ) : (
-                    <div>{garnish.description}</div>
-                  )}
+                  {garnish.description == undefined || garnish.description.trim() == '' ? <></> : <div>{garnish.description}</div>}
 
                   {garnish?.garnish?.description == undefined && garnish?.garnish?.image == undefined ? (
                     <></>
@@ -145,11 +122,7 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                       <div className={'divider'}>Allgemeine Infos</div>
 
                       <div className={'flex flex-row'}>
-                        {garnish?.garnish?.description != undefined ? (
-                          <span className={'flex-1'}>{garnish?.garnish?.description}</span>
-                        ) : (
-                          <></>
-                        )}
+                        {garnish?.garnish?.description != undefined ? <span className={'flex-1'}>{garnish?.garnish?.description}</span> : <></>}
                         {garnish?.garnish?.image != undefined ? (
                           <img src={garnish.garnish?.image} alt={'Deko'} className={'avatar h-16 object-cover'} />
                         ) : (

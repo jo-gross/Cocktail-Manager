@@ -320,12 +320,7 @@ export default function WorkspaceSettingPage() {
                   onChange={(e) => setUploadImportFile(e.target.files?.[0])}
                 />
               </div>
-              <button
-                className={`btn btn-primary`}
-                disabled={uploadImportFile == undefined || importing}
-                type={'button'}
-                onClick={importBackup}
-              >
+              <button className={`btn btn-primary`} disabled={uploadImportFile == undefined || importing} type={'button'} onClick={importBackup}>
                 <>{importing ? <span className="loading loading-spinner"></span> : <></>}</>
                 Import
               </button>
@@ -364,11 +359,7 @@ export default function WorkspaceSettingPage() {
                 <div className={'divider'}></div>
                 <button
                   className={'btn btn-outline btn-error'}
-                  onClick={() =>
-                    modalContext.openModal(
-                      <DeleteConfirmationModal onApprove={handleDeleteWorkspace} spelling={'DELETE'} />,
-                    )
-                  }
+                  onClick={() => modalContext.openModal(<DeleteConfirmationModal onApprove={handleDeleteWorkspace} spelling={'DELETE'} />)}
                 >
                   Workspace löschen
                 </button>
@@ -415,11 +406,7 @@ export default function WorkspaceSettingPage() {
                         className={'btn btn-square btn-outline btn-error btn-sm absolute right-2 top-2'}
                         onClick={() =>
                           modalContext.openModal(
-                            <DeleteConfirmationModal
-                              spelling={'REMOVE'}
-                              entityName={'das Bild'}
-                              onApprove={() => setHorizontalImage(undefined)}
-                            />,
+                            <DeleteConfirmationModal spelling={'REMOVE'} entityName={'das Bild'} onApprove={() => setHorizontalImage(undefined)} />,
                           )
                         }
                       >
@@ -465,11 +452,7 @@ export default function WorkspaceSettingPage() {
                         className={'btn btn-square btn-outline btn-error btn-sm absolute right-2 top-2'}
                         onClick={() =>
                           modalContext.openModal(
-                            <DeleteConfirmationModal
-                              spelling={'REMOVE'}
-                              entityName={'das Bild'}
-                              onApprove={() => setVerticalImage(undefined)}
-                            />,
+                            <DeleteConfirmationModal spelling={'REMOVE'} entityName={'das Bild'} onApprove={() => setVerticalImage(undefined)} />,
                           )
                         }
                       >
@@ -494,10 +477,7 @@ export default function WorkspaceSettingPage() {
                   </div>
                 </div>
               </div>
-              <button
-                className={`btn btn-primary ${updatingSignage ? 'btn-loading' : ''}`}
-                onClick={handleUpdateSignage}
-              >
+              <button className={`btn btn-primary ${updatingSignage ? 'btn-loading' : ''}`} onClick={handleUpdateSignage}>
                 Speichern
               </button>
             </div>

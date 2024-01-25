@@ -7,6 +7,7 @@ import { IngredientForm } from '../../../../../components/ingredients/Ingredient
 import { alertService } from '../../../../../lib/alertService';
 import { withPagePermission } from '../../../../../middleware/ui/withPagePermission';
 import { FormikProps } from 'formik';
+import { SingleFormLayout } from '../../../../../components/layout/SingleFormLayout';
 
 function EditCocktailRecipe() {
   const router = useRouter();
@@ -41,13 +42,10 @@ function EditCocktailRecipe() {
   return loading ? (
     <Loading />
   ) : (
-    <ManageEntityLayout
-      backLink={`/workspaces/${workspaceId}/manage/ingredients`}
-      title={'Zutaten'}
-      unsavedChanges={unsavedChanges}
-      formRef={formRef}
-    >
-      <IngredientForm ingredient={ingredient} setUnsavedChanges={setUnsavedChanges} formRef={formRef} />
+    <ManageEntityLayout backLink={`/workspaces/${workspaceId}/manage/ingredients`} title={'Zutaten'} unsavedChanges={unsavedChanges} formRef={formRef}>
+      <SingleFormLayout title={'Zutat erfassen'}>
+        <IngredientForm ingredient={ingredient} setUnsavedChanges={setUnsavedChanges} formRef={formRef} />
+      </SingleFormLayout>
     </ManageEntityLayout>
   );
 }

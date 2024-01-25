@@ -7,40 +7,37 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import MonitorFormat = $Enums.MonitorFormat;
 
 export default withHttpMethods({
-  [HTTPMethod.PUT]: withWorkspacePermission(
-    [Role.MANAGER],
-    async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
-      const { verticalContent, horizontalContent, verticalBgColor, horizontalBgColor } = JSON.parse(req.body);
+  [HTTPMethod.PUT]: withWorkspacePermission([Role.MANAGER], async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
+    const { verticalContent, horizontalContent, verticalBgColor, horizontalBgColor } = JSON.parse(req.body);
 
-      await prisma.signage.deleteMany({
-        where: {
+    await prisma.signage.deleteMany({
+      where: {
+        workspaceId: workspace.id,
+      },
+    });
+
+    if (verticalContent != undefined && verticalContent != '') {
+      const verticalSignage = await prisma.signage.create({
+        data: {
           workspaceId: workspace.id,
+          format: MonitorFormat.PORTRAIT,
+          content: verticalContent,
+          backgroundColor: verticalBgColor == '' ? undefined : verticalBgColor,
         },
       });
+    }
 
-      if (verticalContent != undefined && verticalContent != '') {
-        const verticalSignage = await prisma.signage.create({
-          data: {
-            workspaceId: workspace.id,
-            format: MonitorFormat.PORTRAIT,
-            content: verticalContent,
-            backgroundColor: verticalBgColor == '' ? undefined : verticalBgColor,
-          },
-        });
-      }
+    if (horizontalContent != undefined && horizontalContent != '') {
+      const horizontalSignage = await prisma.signage.create({
+        data: {
+          workspaceId: workspace.id,
+          format: MonitorFormat.LANDSCAPE,
+          content: horizontalContent,
+          backgroundColor: horizontalBgColor == '' ? undefined : horizontalBgColor,
+        },
+      });
+    }
 
-      if (horizontalContent != undefined && horizontalContent != '') {
-        const horizontalSignage = await prisma.signage.create({
-          data: {
-            workspaceId: workspace.id,
-            format: MonitorFormat.LANDSCAPE,
-            content: horizontalContent,
-            backgroundColor: horizontalBgColor == '' ? undefined : horizontalBgColor,
-          },
-        });
-      }
-
-      res.status(200).json({ message: 'Signage updated' });
-    },
-  ),
+    res.status(200).json({ message: 'Signage updated' });
+  }),
 });

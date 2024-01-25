@@ -10,39 +10,33 @@ import { Role } from '@prisma/client';
 import GarnishCreateInput = Prisma.GarnishCreateInput;
 
 export default withHttpMethods({
-  [HTTPMethod.GET]: withWorkspacePermission(
-    [Role.USER],
-    async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
-      const garnishes = await prisma.garnish.findMany({
-        where: {
-          workspaceId: workspace.id,
-        },
-      });
-      return res.json({ data: garnishes });
-    },
-  ),
-  [HTTPMethod.POST]: withWorkspacePermission(
-    [Role.MANAGER],
-    async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
-      const { name, price, id, image, description } = req.body;
+  [HTTPMethod.GET]: withWorkspacePermission([Role.USER], async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
+    const garnishes = await prisma.garnish.findMany({
+      where: {
+        workspaceId: workspace.id,
+      },
+    });
+    return res.json({ data: garnishes });
+  }),
+  [HTTPMethod.POST]: withWorkspacePermission([Role.MANAGER], async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
+    const { name, price, id, image, description } = req.body;
 
-      const input: GarnishCreateInput = {
-        id: id,
-        name: name,
-        price: price,
-        image: image,
-        description: description,
-        workspace: {
-          connect: {
-            id: workspace.id,
-          },
+    const input: GarnishCreateInput = {
+      id: id,
+      name: name,
+      price: price,
+      image: image,
+      description: description,
+      workspace: {
+        connect: {
+          id: workspace.id,
         },
-      };
+      },
+    };
 
-      const result = await prisma.garnish.create({
-        data: input,
-      });
-      return res.json(result);
-    },
-  ),
+    const result = await prisma.garnish.create({
+      data: input,
+    });
+    return res.json(result);
+  }),
 });

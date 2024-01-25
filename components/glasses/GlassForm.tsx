@@ -4,7 +4,6 @@ import { convertToBase64 } from '../../lib/Base64Converter';
 import { useRouter } from 'next/router';
 import { FaTrashAlt } from 'react-icons/fa';
 import React, { useContext, useEffect, useState } from 'react';
-import { SingleFormLayout } from '../layout/SingleFormLayout';
 import { alertService } from '../../lib/alertService';
 import { Glass } from '@prisma/client';
 import { DeleteConfirmationModal } from '../modals/DeleteConfirmationModal';
@@ -16,6 +15,7 @@ interface GlassFormProps {
   glass?: Glass;
   setUnsavedChanges?: (unsavedChanges: boolean) => void;
   formRef?: React.RefObject<FormikProps<any>>;
+  onSaved?: () => void;
 }
 
 export function GlassForm(props: GlassFormProps) {
@@ -59,9 +59,11 @@ export function GlassForm(props: GlassFormProps) {
               body: JSON.stringify(body),
             });
             if (result.status.toString().startsWith('2')) {
-              router
-                .push(`/workspaces/${workspaceId}/manage/glasses`)
-                .then(() => alertService.success('Glas erfolgreich erstellt'));
+              if (props.onSaved) {
+                props.onSaved();
+              } else {
+                router.push(`/workspaces/${workspaceId}/manage/glasses`).then(() => alertService.success('Glas erfolgreich erstellt'));
+              }
             } else {
               const body = await result.json();
               alertService.error(body.message, result.status, result.statusText);
@@ -73,9 +75,11 @@ export function GlassForm(props: GlassFormProps) {
               body: JSON.stringify(body),
             });
             if (result.status.toString().startsWith('2')) {
-              router
-                .push(`/workspaces/${workspaceId}/manage/glasses`)
-                .then(() => alertService.success('Glas erfolgreich gespeichert'));
+              if (props.onSaved) {
+                props.onSaved();
+              } else {
+                router.push(`/workspaces/${workspaceId}/manage/glasses`).then(() => alertService.success('Glas erfolgreich gespeichert'));
+              }
             } else {
               const body = await result.json();
               alertService.error(body.message, result.status, result.statusText);
@@ -99,116 +103,108 @@ export function GlassForm(props: GlassFormProps) {
       }}
     >
       {({ values, setFieldValue, errors, touched, handleChange, handleBlur, handleSubmit, isSubmitting }) => (
-        <form onSubmit={handleSubmit}>
-          <SingleFormLayout title={'Glas erfassen'}>
-            <div className={'form-control'}>
-              <label className={'label'}>
-                <span className={'label-text'}>Name</span>
-                <span className={'label-text-alt space-x-2 text-error'}>
-                  <span>
-                    <>{errors.name && touched.name && errors.name}</>
-                  </span>
-                  <span>*</span>
+        <form onSubmit={handleSubmit} className={'flex flex-col gap-2 md:gap-4'}>
+          <div className={'form-control'}>
+            <label className={'label'}>
+              <span className={'label-text'}>Name</span>
+              <span className={'label-text-alt space-x-2 text-error'}>
+                <span>
+                  <>{errors.name && touched.name && errors.name}</>
                 </span>
-              </label>
+                <span>*</span>
+              </span>
+            </label>
+            <input
+              type={'text'}
+              placeholder={'Name'}
+              className={`input input-bordered w-full ${errors.name && touched.name && 'input-error'}`}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              value={values.name}
+              name={'name'}
+            />
+          </div>
+
+          <div className={'form-control'}>
+            <label className={'label'}>
+              <span className={'label-text'}>Pfand</span>
+              <span className={'label-text-alt space-x-2 text-error'}>
+                <span>
+                  <>{errors.deposit && touched.deposit && errors.deposit}</>
+                </span>
+                <span>*</span>
+              </span>
+            </label>
+            <div className={'join'}>
               <input
-                type={'text'}
-                placeholder={'Name'}
-                className={`input input-bordered w-full ${errors.name && touched.name && 'input-error'}`}
+                type={'number'}
+                placeholder={'Deposit'}
+                className={`input join-item input-bordered w-full ${errors.deposit && touched.deposit && 'input-error'}}`}
+                value={values.deposit}
                 onChange={handleChange}
                 onBlur={handleBlur}
-                value={values.name}
-                name={'name'}
+                name={'deposit'}
               />
+              <span className={'btn btn-secondary join-item'}>€</span>
             </div>
-
-            <div className={'form-control'}>
+          </div>
+          <div className={'form-control'}>
+            <label className={'label'}>
+              <span className={'label-text'}>Volumen</span>
+            </label>
+            <div className={'join'}>
+              <input
+                type={'number'}
+                placeholder={'38cl'}
+                className={'input join-item input-bordered w-full'}
+                value={values.volume}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                name={'volume'}
+              />
+              <span className={'btn btn-secondary join-item'}>cl</span>
+            </div>
+          </div>
+          <div className={'form-control'}>
+            {values.image != undefined ? (
               <label className={'label'}>
-                <span className={'label-text'}>Pfand</span>
-                <span className={'label-text-alt space-x-2 text-error'}>
-                  <span>
-                    <>{errors.deposit && touched.deposit && errors.deposit}</>
-                  </span>
-                  <span>*</span>
-                </span>
+                <span className={'label-text'}>Vorschau Bild</span>
               </label>
-              <div className={'join'}>
-                <input
-                  type={'number'}
-                  placeholder={'Deposit'}
-                  className={`input join-item input-bordered w-full ${
-                    errors.deposit && touched.deposit && 'input-error'
-                  }}`}
-                  value={values.deposit}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  name={'deposit'}
-                />
-                <span className={'btn btn-secondary join-item'}>€</span>
-              </div>
-            </div>
-            <div className={'form-control'}>
-              <label className={'label'}>
-                <span className={'label-text'}>Volumen</span>
-              </label>
-              <div className={'join'}>
-                <input
-                  type={'number'}
-                  placeholder={'38cl'}
-                  className={'input join-item input-bordered w-full'}
-                  value={values.volume}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  name={'volume'}
-                />
-                <span className={'btn btn-secondary join-item'}>cl</span>
-              </div>
-            </div>
-            <div className={'form-control'}>
-              {values.image != undefined ? (
-                <label className={'label'}>
-                  <span className={'label-text'}>Vorschau Bild</span>
-                </label>
-              ) : (
-                <></>
-              )}
-              {values.image == undefined ? (
-                <UploadDropZone
-                  onSelectedFilesChanged={async (file) => {
-                    if (file) {
-                      const compressedImageFile = await compressFile(file);
-                      await setFieldValue('image', await convertToBase64(compressedImageFile));
-                    } else {
-                      alertService.error('Datei konnte nicht ausgewählt werden.');
-                    }
-                  }}
-                />
-              ) : (
-                <div className={'relative'}>
-                  <div
-                    className={'btn btn-square btn-outline btn-error btn-sm absolute right-2 top-2'}
-                    onClick={() =>
-                      modalContext.openModal(
-                        <DeleteConfirmationModal
-                          spelling={'REMOVE'}
-                          entityName={'das Bild'}
-                          onApprove={() => setFieldValue('image', undefined)}
-                        />,
-                      )
-                    }
-                  >
-                    <FaTrashAlt />
-                  </div>
-                  <img className={'max-h-20 rounded-lg'} src={values.image} alt={'Cocktail Image'} />
+            ) : (
+              <></>
+            )}
+            {values.image == undefined ? (
+              <UploadDropZone
+                onSelectedFilesChanged={async (file) => {
+                  if (file) {
+                    const compressedImageFile = await compressFile(file);
+                    await setFieldValue('image', await convertToBase64(compressedImageFile));
+                  } else {
+                    alertService.error('Datei konnte nicht ausgewählt werden.');
+                  }
+                }}
+              />
+            ) : (
+              <div className={'relative'}>
+                <div
+                  className={'btn btn-square btn-outline btn-error btn-sm absolute right-2 top-2'}
+                  onClick={() =>
+                    modalContext.openModal(
+                      <DeleteConfirmationModal spelling={'REMOVE'} entityName={'das Bild'} onApprove={() => setFieldValue('image', undefined)} />,
+                    )
+                  }
+                >
+                  <FaTrashAlt />
                 </div>
-              )}
-            </div>
-            <div className={'form-control'}>
-              <button type={'submit'} className={`btn btn-primary ${isSubmitting ?? 'loading'}`}>
-                Speichern
-              </button>
-            </div>
-          </SingleFormLayout>
+                <img className={'max-h-20 rounded-lg'} src={values.image} alt={'Cocktail Image'} />
+              </div>
+            )}
+          </div>
+          <div className={'form-control'}>
+            <button type={'submit'} className={`btn btn-primary ${isSubmitting ?? 'loading'}`}>
+              Speichern
+            </button>
+          </div>
         </form>
       )}
     </Formik>

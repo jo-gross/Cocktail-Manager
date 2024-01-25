@@ -2,9 +2,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import HTTPMethod from 'http-method-enum';
 import { constants as HttpStatus } from 'http2';
 
-export const withHttpMethods = (
-  handlers: Partial<Record<HTTPMethod, (req: NextApiRequest, res: NextApiResponse) => Promise<unknown> | undefined>>,
-) => {
+export const withHttpMethods = (handlers: Partial<Record<HTTPMethod, (req: NextApiRequest, res: NextApiResponse) => Promise<unknown> | undefined>>) => {
   return async (req: NextApiRequest, res: NextApiResponse) => {
     const method = req.method as HTTPMethod | undefined;
     if (!method) {
@@ -13,9 +11,7 @@ export const withHttpMethods = (
 
     const handler = handlers[method];
     if (!handler) {
-      return res
-        .status(HttpStatus.HTTP_STATUS_METHOD_NOT_ALLOWED)
-        .json({ message: 'No handler specified for HTTP method' });
+      return res.status(HttpStatus.HTTP_STATUS_METHOD_NOT_ALLOWED).json({ message: 'No handler specified for HTTP method' });
     }
 
     try {

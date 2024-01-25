@@ -9,9 +9,7 @@ import MonitorFormat = $Enums.MonitorFormat;
 
 export default function SignagePage() {
   const format: MonitorFormat =
-    typeof window !== 'undefined' && window.matchMedia('(orientation: portrait)').matches
-      ? MonitorFormat.PORTRAIT
-      : MonitorFormat.LANDSCAPE;
+    typeof window !== 'undefined' && window.matchMedia('(orientation: portrait)').matches ? MonitorFormat.PORTRAIT : MonitorFormat.LANDSCAPE;
   const router = useRouter();
 
   const { id } = router.query;
@@ -40,10 +38,7 @@ export default function SignagePage() {
   }, [id, format]);
 
   return (
-    <div
-      style={content?.backgroundColor ? { backgroundColor: content.backgroundColor } : {}}
-      className={'h-screen w-screen'}
-    >
+    <div style={content?.backgroundColor ? { backgroundColor: content.backgroundColor } : {}} className={'h-screen w-screen'}>
       <PageCenter>
         {imageLoading ? (
           <Loading />

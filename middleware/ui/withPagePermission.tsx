@@ -4,11 +4,7 @@ import { useRouter } from 'next/router';
 import { UserContext } from '../../lib/context/UserContextProvider';
 import { alertService } from '../../lib/alertService';
 
-export const withPagePermission = <P extends object>(
-  roles: Role[],
-  Component: React.ComponentType<P>,
-  fallbackUrl: string,
-) =>
+export const withPagePermission = <P extends object>(roles: Role[], Component: React.ComponentType<P>, fallbackUrl: string) =>
   function WithPagePermission({ ...props }: P) {
     const router = useRouter();
     const userContext = useContext(UserContext);

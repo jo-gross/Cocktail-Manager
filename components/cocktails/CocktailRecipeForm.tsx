@@ -1,9 +1,9 @@
 import { CocktailRecipeFull, CocktailRecipeFullSchema } from '../../models/CocktailRecipeFull';
 import { IceType } from '../../models/IceType';
-import { FaAngleDown, FaAngleUp, FaEuroSign, FaPlus, FaTrashAlt } from 'react-icons/fa';
+import { FaAngleDown, FaAngleUp, FaEuroSign, FaPlus, FaSearch, FaTrashAlt } from 'react-icons/fa';
 import { TagsInput } from 'react-tag-input-component';
 import { Field, FieldArray, Formik, FormikProps } from 'formik';
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { Garnish, Glass, Ingredient } from '@prisma/client';
 import { updateTags, validateTag } from '../../models/tags/TagUtils';
@@ -20,6 +20,11 @@ import { DeleteConfirmationModal } from '../modals/DeleteConfirmationModal';
 import { ModalContext } from '../../lib/context/ModalContextProvider';
 import _ from 'lodash';
 import { compressFile } from '../../lib/ImageCompressor';
+import { SelectModal } from '../modals/SelectModal';
+import FormModal from '../modals/FormModal';
+import { GarnishForm } from '../garnishes/GarnishForm';
+import { IngredientForm } from '../ingredients/IngredientForm';
+import { GlassForm } from '../glasses/GlassForm';
 
 interface CocktailRecipeFormProps {
   cocktailRecipe?: CocktailRecipeFull;
@@ -62,7 +67,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
     }
   }, [formRef, formRef?.current?.values]);
 
-  useEffect(() => {
+  const fetchIngredients = useCallback(async () => {
     if (!workspaceId) return;
 
     setIngredientsLoading(true);
@@ -82,10 +87,36 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
       });
   }, [workspaceId]);
 
+  const openIngredientSelectModal = useCallback(
+    (setFieldValue: any, indexStep: number, indexIngredient: number) => {
+      modalContext.openModal(
+        <SelectModal<Ingredient>
+          title={'Zutat auswählen'}
+          compareFunction={(a, b) => a.name.localeCompare(b.name)}
+          fetchElements={async (search) => {
+            if (search == undefined || search == '') {
+              return ingredients;
+            } else {
+              return ingredients.filter((ingredient) => ingredient.name.toLowerCase().includes(search.toLowerCase()));
+            }
+          }}
+          elementComponent={(ingredient) => {
+            return <div>{ingredient.name}</div>;
+          }}
+          onElementSelected={async (ingredient) => {
+            await setFieldValue(`steps.${indexStep}.ingredients.${indexIngredient}.ingredientId`, ingredient.id);
+            await setFieldValue(`steps.${indexStep}.ingredients.${indexIngredient}.ingredient`, ingredient);
+          }}
+        />,
+      );
+    },
+    [ingredients, modalContext],
+  );
+
   const [glasses, setGlasses] = useState<Glass[]>([]);
   const [glassesLoading, setGlassesLoading] = useState(false);
 
-  useEffect(() => {
+  const fetchGlasses = useCallback(async () => {
     if (!workspaceId) return;
     setGlassesLoading(true);
     fetch(`/api/workspaces/${workspaceId}/glasses`)
@@ -107,7 +138,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
   const [garnishes, setGarnishes] = useState<Garnish[]>([]);
   const [garnishesLoading, setGarnishesLoading] = useState(false);
 
-  useEffect(() => {
+  const fetchGarnishes = useCallback(async () => {
     if (!workspaceId) return;
     setGarnishesLoading(true);
     fetch(`/api/workspaces/${workspaceId}/garnishes`)
@@ -125,6 +156,38 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
         setGarnishesLoading(false);
       });
   }, [workspaceId]);
+
+  useEffect(() => {
+    fetchGarnishes();
+    fetchIngredients();
+    fetchGlasses();
+  }, [fetchGarnishes, fetchGlasses, fetchIngredients]);
+
+  const openGarnishSelectModal = useCallback(
+    (setFieldValue: any, indexGarnish: number) => {
+      modalContext.openModal(
+        <SelectModal<Garnish>
+          title={'Garnitur auswählen'}
+          compareFunction={(a, b) => a.name.localeCompare(b.name)}
+          fetchElements={async (search) => {
+            if (search == undefined || search == '') {
+              return garnishes;
+            } else {
+              return garnishes.filter((garnish) => garnish.name.toLowerCase().includes(search.toLowerCase()));
+            }
+          }}
+          elementComponent={(garnish) => {
+            return <div>{garnish.name}</div>;
+          }}
+          onElementSelected={async (garnish) => {
+            await setFieldValue(`garnishes.${indexGarnish}.garnishId`, garnish.id);
+            await setFieldValue(`garnishes.${indexGarnish}.garnish`, garnish);
+          }}
+        />,
+      );
+    },
+    [garnishes, modalContext],
+  );
 
   useEffect(() => {
     if (props.cocktailRecipe?.glassId && glasses.length > 0) {
@@ -148,10 +211,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
   }, [garnishes, props.cocktailRecipe, props.cocktailRecipe?.garnishes]);
 
   useEffect(() => {
-    if (
-      props.cocktailRecipe?.steps.some((step) => step.ingredients.map((ingredient) => ingredient).length > 0) &&
-      ingredients.length > 0
-    ) {
+    if (props.cocktailRecipe?.steps.some((step) => step.ingredients.map((ingredient) => ingredient).length > 0) && ingredients.length > 0) {
       formRef.current?.setFieldValue(
         'steps',
         props.cocktailRecipe?.steps.map((step) => {
@@ -314,9 +374,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
               body: JSON.stringify(body),
             });
             if (response.status.toString().startsWith('2')) {
-              router
-                .replace(`/workspaces/${workspaceId}/manage/cocktails`)
-                .then(() => alertService.success('Erfolgreich erstellt'));
+              router.replace(`/workspaces/${workspaceId}/manage/cocktails`).then(() => alertService.success('Erfolgreich erstellt'));
             } else {
               const body = await response.json();
               console.log('CocktailRecipeForm -> createRecipe', response, body);
@@ -329,9 +387,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
               body: JSON.stringify(body),
             });
             if (response.status.toString().startsWith('2')) {
-              router
-                .replace(`/workspaces/${workspaceId}/manage/cocktails`)
-                .then(() => alertService.success('Erfolgreich gespeichert'));
+              router.replace(`/workspaces/${workspaceId}/manage/cocktails`).then(() => alertService.success('Erfolgreich gespeichert'));
             } else {
               const body = await response.json();
               console.log('CocktailRecipeForm -> updateRecipe', response, body);
@@ -343,17 +399,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
         }
       }}
     >
-      {({
-        values,
-        setFieldValue,
-        setFieldError,
-        errors,
-        touched,
-        handleChange,
-        handleBlur,
-        handleSubmit,
-        isSubmitting,
-      }) => (
+      {({ values, setFieldValue, setFieldError, errors, touched, handleChange, handleBlur, handleSubmit, isSubmitting }) => (
         <form onSubmit={handleSubmit}>
           <div className={'grid grid-cols-1 gap-4 md:grid-cols-3'}>
             <div className={'card grid-cols-1 md:col-span-2'}>
@@ -386,9 +432,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                     </label>
                     <textarea
                       name="description"
-                      className={`textarea textarea-bordered w-full ${
-                        errors.description && touched.description && 'textarea-error'
-                      }`}
+                      className={`textarea textarea-bordered w-full ${errors.description && touched.description && 'textarea-error'}`}
                       onChange={handleChange}
                       onBlur={handleBlur}
                       value={values.description}
@@ -404,9 +448,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                     <div className={'join w-full'}>
                       <input
                         type="number"
-                        className={`input join-item input-bordered w-full ${
-                          errors.price && touched.price && 'input-error'
-                        }`}
+                        className={`input join-item input-bordered w-full ${errors.price && touched.price && 'input-error'}`}
                         name="price"
                         onChange={handleChange}
                         onBlur={handleBlur}
@@ -433,9 +475,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                         )
                       }
                       name="tags"
-                      beforeAddValidate={(tag, _) =>
-                        validateTag(tag, (text) => setFieldError('tags', text ?? 'Tag fehlerhaft'))
-                      }
+                      beforeAddValidate={(tag, _) => validateTag(tag, (text) => setFieldError('tags', text ?? 'Tag fehlerhaft'))}
                       onBlur={handleBlur}
                     />
                   </div>
@@ -446,34 +486,57 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                         <>{errors.glassId && touched.glassId && errors.glassId}</> *
                       </span>
                     </label>
-                    <select
-                      name="glassId"
-                      className={`select select-bordered w-full ${errors.glassId && touched.glassId && 'select-error'}`}
-                      onChange={(event) => {
-                        handleChange(event);
-                        setFieldValue(
-                          'glass',
-                          glasses.find((glass) => glass.id == event.target.value),
-                        );
-                      }}
-                      onBlur={handleBlur}
-                      value={values.glassId}
-                    >
-                      {glassesLoading ? (
-                        <option disabled={true} defaultChecked={true}>
-                          Laden...
-                        </option>
-                      ) : (
-                        <>
-                          <option value={undefined}>Auswählen</option>
-                          {glasses.map((glass) => (
-                            <option key={`form-recipe-glasses${glass.id}`} value={glass.id}>
-                              {glass.name}
-                            </option>
-                          ))}
-                        </>
-                      )}
-                    </select>
+                    <div className={'join w-full'}>
+                      <select
+                        name="glassId"
+                        className={`join-item select select-bordered w-full ${errors.glassId && touched.glassId && 'select-error'}`}
+                        onChange={(event) => {
+                          handleChange(event);
+                          setFieldValue(
+                            'glass',
+                            glasses.find((glass) => glass.id == event.target.value),
+                          );
+                        }}
+                        onBlur={handleBlur}
+                        value={values.glassId}
+                      >
+                        {glassesLoading ? (
+                          <option disabled={true} defaultChecked={true}>
+                            Laden...
+                          </option>
+                        ) : (
+                          <>
+                            <option value={undefined}>Auswählen</option>
+                            {glasses.map((glass) => (
+                              <option key={`form-recipe-glasses${glass.id}`} value={glass.id}>
+                                {glass.name}
+                              </option>
+                            ))}
+                          </>
+                        )}
+                      </select>
+                      <button
+                        type={'button'}
+                        className={'btn btn-square btn-outline btn-secondary join-item'}
+                        onClick={() =>
+                          modalContext.openModal(
+                            <FormModal<Glass>
+                              form={
+                                <GlassForm
+                                  onSaved={async () => {
+                                    modalContext.closeModal();
+                                    await fetchGlasses();
+                                  }}
+                                />
+                              }
+                              title={'Glas erfassen'}
+                            />,
+                          )
+                        }
+                      >
+                        <FaPlus />
+                      </button>
+                    </div>
                   </div>
                   <div>
                     <label className={'label'}>
@@ -484,9 +547,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                     </label>
                     <select
                       name="glassWithIce"
-                      className={`select select-bordered w-full ${
-                        errors.glassWithIce && touched.glassWithIce && 'select-error'
-                      }`}
+                      className={`select select-bordered w-full ${errors.glassWithIce && touched.glassWithIce && 'select-error'}`}
                       onChange={handleChange}
                       onBlur={handleBlur}
                       value={values.glassWithIce}
@@ -525,11 +586,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                           className={'btn btn-square btn-outline btn-error btn-sm absolute right-2 top-2'}
                           onClick={() =>
                             modalContext.openModal(
-                              <DeleteConfirmationModal
-                                spelling={'REMOVE'}
-                                entityName={'das Bild'}
-                                onApprove={() => setFieldValue('image', undefined)}
-                              />,
+                              <DeleteConfirmationModal spelling={'REMOVE'} entityName={'das Bild'} onApprove={() => setFieldValue('image', undefined)} />,
                             )
                           }
                         >
@@ -613,9 +670,8 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                   <div className={'divider'}></div>
                   <div className={'grid grid-cols-2 gap-1'}>
                     <>
-                      {(values.steps as CocktailRecipeStepFull[]).filter((step) =>
-                        step.ingredients.some((ingredient) => ingredient.ingredient != undefined),
-                      ).length > 0 ? (
+                      {(values.steps as CocktailRecipeStepFull[]).filter((step) => step.ingredients.some((ingredient) => ingredient.ingredient != undefined))
+                        .length > 0 ? (
                         (values.steps as CocktailRecipeStepFull[])
                           .map((step) => step.ingredients.filter((ingredient) => ingredient.ingredient != undefined))
                           .flat()
@@ -624,23 +680,13 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                               <div key={`price-calculation-step-${indexIngredient}-name`}>
                                 {ingredient.ingredient?.shortName ?? ingredient.ingredient?.name}
                               </div>
-                              <div
-                                key={`price-calculation-step-${indexIngredient}-price`}
-                                className={'grid grid-cols-2'}
-                              >
+                              <div key={`price-calculation-step-${indexIngredient}-price`} className={'grid grid-cols-2'}>
                                 <div>
-                                  {ingredient.amount} x{' '}
-                                  {((ingredient.ingredient?.price ?? 0) / (ingredient.ingredient?.volume ?? 1)).toFixed(
-                                    2,
-                                  )}
+                                  {ingredient.amount} x {((ingredient.ingredient?.price ?? 0) / (ingredient.ingredient?.volume ?? 1)).toFixed(2)}
                                 </div>
                                 <div className={'text-end'}>
                                   {indexIngredient > 0 ? '+ ' : ''}
-                                  {(
-                                    ((ingredient.ingredient?.price ?? 0) / (ingredient.ingredient?.volume ?? 1)) *
-                                    (ingredient.amount ?? 0)
-                                  ).toFixed(2)}
-                                  €
+                                  {(((ingredient.ingredient?.price ?? 0) / (ingredient.ingredient?.volume ?? 1)) * (ingredient.amount ?? 0)).toFixed(2)}€
                                 </div>
                               </div>
                             </>
@@ -654,9 +700,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                           <div key={`price-calculation-step-garnish-price`} className={'grid grid-cols-2'}>
                             <div>1 x {values.garnish.price.toFixed(2)}</div>
                             <div className={'text-end'}>
-                              {(values.steps as CocktailRecipeStepFull[]).some((step) => step.ingredients.length > 0)
-                                ? '+ '
-                                : ''}
+                              {(values.steps as CocktailRecipeStepFull[]).some((step) => step.ingredients.length > 0) ? '+ ' : ''}
                               {(values.garnish?.price ?? 0).toFixed(2)}€
                             </div>
                           </div>
@@ -671,20 +715,13 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                       <div></div>
                       <div></div>
                       <div className={'text-end font-bold'}>
-                        {(values.steps as CocktailRecipeStepFull[]).filter((step) =>
-                          step.ingredients.some((ingredient) => ingredient.ingredient != undefined),
-                        ).length > 0
+                        {(values.steps as CocktailRecipeStepFull[]).filter((step) => step.ingredients.some((ingredient) => ingredient.ingredient != undefined))
+                          .length > 0
                           ? (
                               (values.steps as CocktailRecipeStepFull[])
-                                .map((step) =>
-                                  step.ingredients.filter((ingredient) => ingredient.ingredient != undefined),
-                                )
+                                .map((step) => step.ingredients.filter((ingredient) => ingredient.ingredient != undefined))
                                 .flat()
-                                .map(
-                                  (ingredient) =>
-                                    ((ingredient.ingredient?.price ?? 0) / (ingredient.ingredient?.volume ?? 1)) *
-                                    (ingredient.amount ?? 0),
-                                )
+                                .map((ingredient) => ((ingredient.ingredient?.price ?? 0) / (ingredient.ingredient?.volume ?? 1)) * (ingredient.amount ?? 0))
                                 .reduce((summ, sum) => summ + sum) + (values.garnish?.price ?? 0)
                             ).toFixed(2) + ' €'
                           : '0.00 €'}
@@ -705,9 +742,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                       {(values.steps as CocktailRecipeStepFull[]).map((step, indexStep) => (
                         <div
                           key={`form-recipe-step-${step.id}`}
-                          className={
-                            'flex w-full flex-col justify-between space-y-2 rounded-xl border border-neutral p-4'
-                          }
+                          className={'flex w-full flex-col justify-between space-y-2 rounded-xl border border-neutral p-4'}
                         >
                           <div className={'grid grid-cols-2 gap-2 md:grid-cols-3 md:gap-4 '}>
                             <div className={'font-bold'}>Schritt {indexStep + 1}</div>
@@ -739,9 +774,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                 className={'btn btn-square btn-outline btn-sm'}
                                 onClick={() => {
                                   const value = values.steps[indexStep];
-                                  const reorderedSteps = (values.steps as CocktailRecipeStepFull[]).filter(
-                                    (_, i) => i != indexStep,
-                                  );
+                                  const reorderedSteps = (values.steps as CocktailRecipeStepFull[]).filter((_, i) => i != indexStep);
                                   reorderedSteps.splice(indexStep - 1, 0, value);
                                   setFieldValue(
                                     'steps',
@@ -757,9 +790,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                 className={'btn btn-square btn-outline btn-sm'}
                                 onClick={() => {
                                   const value = values.steps[indexStep];
-                                  const reorderedSteps = (values.steps as CocktailRecipeStepFull[]).filter(
-                                    (_, i) => i != indexStep,
-                                  );
+                                  const reorderedSteps = (values.steps as CocktailRecipeStepFull[]).filter((_, i) => i != indexStep);
                                   reorderedSteps.splice(indexStep + 1, 0, value);
                                   setFieldValue(
                                     'steps',
@@ -774,11 +805,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                 className={'btn btn-square btn-error btn-sm'}
                                 onClick={() =>
                                   modalContext.openModal(
-                                    <DeleteConfirmationModal
-                                      spelling={'REMOVE'}
-                                      entityName={'den Schritt'}
-                                      onApprove={() => removeStep(indexStep)}
-                                    />,
+                                    <DeleteConfirmationModal spelling={'REMOVE'} entityName={'den Schritt'} onApprove={() => removeStep(indexStep)} />,
                                   )
                                 }
                               >
@@ -790,20 +817,11 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                             <>
                               <div className={'flex w-full flex-row items-center justify-center space-x-2'}>
                                 {Object.entries(CocktailMixingTechnique).map(([key, value]) => (
-                                  <div
-                                    key={`form-recipe-step-${step.id}-tool-${key}`}
-                                    className={'flex flex-col items-center justify-end space-y-2'}
-                                  >
+                                  <div key={`form-recipe-step-${step.id}-tool-${key}`} className={'flex flex-col items-center justify-end space-y-2'}>
                                     {/*<img className={"h-20"}*/}
                                     {/*     src={"https://res.cloudinary.com/lusini/w_1500,h_1500,q_80,c_pad,f_auto/pim/7f30f8/bf7939/ff5def/23f663/419537/65/7f30f8bf7939ff5def23f66341953765.jpeg"} />*/}
                                     <div>{value}</div>
-                                    <Field
-                                      type="radio"
-                                      name={`steps.${indexStep}.tool`}
-                                      value={key}
-                                      className={'radio-primary radio'}
-                                      onBlur={handleBlur}
-                                    />
+                                    <Field type="radio" name={`steps.${indexStep}.tool`} value={key} className={'radio-primary radio'} onBlur={handleBlur} />
                                   </div>
                                 ))}
                               </div>
@@ -813,10 +831,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                     {step.ingredients
                                       .sort((a, b) => a.ingredientNumber - b.ingredientNumber)
                                       .map((ingredient, indexIngredient) => (
-                                        <div
-                                          key={`form-recipe-step-${step.id}-ingredient-${ingredient.id}`}
-                                          className={'flex flex-row space-x-2'}
-                                        >
+                                        <div key={`form-recipe-step-${step.id}-ingredient-${ingredient.id}`} className={'flex flex-row space-x-2'}>
                                           <div className={'join join-vertical w-min'}>
                                             <button
                                               type={'button'}
@@ -824,9 +839,9 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                               className={'btn btn-square btn-outline join-item btn-xs'}
                                               onClick={() => {
                                                 const value = values.steps[indexStep].ingredients[indexIngredient];
-                                                const reorderedGroups = (values.steps as CocktailRecipeStepFull[])[
-                                                  indexStep
-                                                ].ingredients.filter((_, i) => i != indexIngredient);
+                                                const reorderedGroups = (values.steps as CocktailRecipeStepFull[])[indexStep].ingredients.filter(
+                                                  (_, i) => i != indexIngredient,
+                                                );
                                                 reorderedGroups.splice(indexIngredient - 1, 0, value);
                                                 setFieldValue(
                                                   `steps.${indexStep}.ingredients`,
@@ -848,9 +863,9 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                               className={'btn btn-square btn-outline join-item btn-xs'}
                                               onClick={() => {
                                                 const value = values.steps[indexStep].ingredients[indexIngredient];
-                                                const reorderedGroups = (values.steps as CocktailRecipeStepFull[])[
-                                                  indexStep
-                                                ].ingredients.filter((_, i) => i != indexIngredient);
+                                                const reorderedGroups = (values.steps as CocktailRecipeStepFull[])[indexStep].ingredients.filter(
+                                                  (_, i) => i != indexIngredient,
+                                                );
                                                 reorderedGroups.splice(indexIngredient + 1, 0, value);
                                                 setFieldValue(
                                                   `steps.${indexStep}.ingredients`,
@@ -864,50 +879,55 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                               <FaAngleDown />
                                             </button>
                                           </div>
-                                          <div
-                                            key={`form-recipe-step${step.id}-ingredient-${ingredient.id}`}
-                                            className={'join flex w-full flex-row'}
-                                          >
-                                            <select
-                                              name={`steps.${indexStep}.ingredients.${indexIngredient}.ingredientId`}
-                                              className={`flex-8 join-item select select-bordered w-full min-w-[20%] ${
-                                                ((errors.steps as StepError[])?.[indexStep] as any)?.ingredients?.[
-                                                  indexIngredient
-                                                ]?.ingredientId && 'select-error'
-                                              } `}
-                                              onChange={(e) => {
-                                                handleChange(e);
-                                                const ingredient = ingredients.find(
-                                                  (ingredient) => ingredient.id == e.target.value,
-                                                );
-                                                setFieldValue(
-                                                  `steps.${indexStep}.ingredients.${indexIngredient}.ingredient`,
-                                                  ingredient,
+                                          <div key={`form-recipe-step${step.id}-ingredient-${ingredient.id}`} className={'join flex w-full flex-row'}>
+                                            <input
+                                              className={`input join-item input-bordered w-full cursor-pointer 
+                                                ${
+                                                  ((errors.steps as StepError[])?.[indexStep] as any)?.ingredients?.[indexIngredient]?.ingredientId &&
+                                                  ' input-error'
+                                                }`}
+                                              value={
+                                                ingredientsLoading
+                                                  ? 'Lade...'
+                                                  : values.steps[indexStep].ingredients?.[indexIngredient].ingredient?.name ?? 'Wähle eine Zutat aus...'
+                                              }
+                                              readOnly={true}
+                                              onClick={() => {
+                                                openIngredientSelectModal(setFieldValue, indexStep, indexIngredient);
+                                              }}
+                                            />
+                                            <button
+                                              type={'button'}
+                                              className={'btn btn-outline btn-primary join-item'}
+                                              onClick={() => {
+                                                openIngredientSelectModal(setFieldValue, indexStep, indexIngredient);
+                                              }}
+                                            >
+                                              <FaSearch />
+                                            </button>
+                                            <button
+                                              type={'button'}
+                                              className={'btn btn-outline btn-secondary join-item'}
+                                              onClick={() => {
+                                                modalContext.openModal(
+                                                  <FormModal<Ingredient>
+                                                    form={
+                                                      <IngredientForm
+                                                        onSaved={async () => {
+                                                          modalContext.closeModal();
+                                                          await fetchIngredients();
+                                                        }}
+                                                      />
+                                                    }
+                                                    title={'Zutat erfassen'}
+                                                  />,
                                                 );
                                               }}
-                                              onBlur={handleBlur}
-                                              value={values.steps[indexStep].ingredients[indexIngredient].ingredientId}
                                             >
-                                              {ingredientsLoading ? (
-                                                <option disabled={true} defaultChecked={true}>
-                                                  Lädt...
-                                                </option>
-                                              ) : (
-                                                <>
-                                                  <option value={''}>Auswählen</option>
-                                                  {ingredients
-                                                    .sort((a, b) => a.name.localeCompare(b.name))
-                                                    .map((ingredient) => (
-                                                      <option
-                                                        key={`form-recipe-step${step.id}-ingredients-${ingredient.id}`}
-                                                        value={ingredient.id}
-                                                      >
-                                                        {ingredient.name}
-                                                      </option>
-                                                    ))}
-                                                </>
-                                              )}
-                                            </select>
+                                              <FaPlus />
+                                            </button>
+                                          </div>
+                                          <div className={'join'}>
                                             <input
                                               type="number"
                                               name={`steps.${indexStep}.ingredients.${indexIngredient}.amount`}
@@ -919,11 +939,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                             <select
                                               name={`steps.${indexStep}.ingredients.${indexIngredient}.unit`}
                                               className={`join-item select select-bordered max-w-[20%] md:max-w-none ${
-                                                ((errors.steps as StepError[])?.[indexStep] as any)?.ingredients?.[
-                                                  indexIngredient
-                                                ]?.unit
-                                                  ? 'select-error'
-                                                  : ''
+                                                ((errors.steps as StepError[])?.[indexStep] as any)?.ingredients?.[indexIngredient]?.unit ? 'select-error' : ''
                                               }`}
                                               onChange={handleChange}
                                               onBlur={handleBlur}
@@ -931,30 +947,31 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                             >
                                               <option value={''}>Auswählen</option>
                                               {Object.values(CocktailIngredientUnit).map((value) => (
-                                                <option
-                                                  key={`steps.${indexStep}.ingredients.${indexIngredient}.units-${value}`}
-                                                  value={value}
-                                                >
+                                                <option key={`steps.${indexStep}.ingredients.${indexIngredient}.units-${value}`} value={value}>
                                                   {value}
                                                 </option>
                                               ))}
                                             </select>
-                                            <button
-                                              type={'button'}
-                                              className={'btn btn-square btn-error join-item w-8'}
-                                              disabled={values.steps[indexStep].ingredients.length == 1}
-                                              onClick={() =>
-                                                modalContext.openModal(
-                                                  <DeleteConfirmationModal
-                                                    spelling={'REMOVE'}
-                                                    entityName={'die Zutat'}
-                                                    onApprove={() => removeIngredient(indexIngredient)}
-                                                  />,
-                                                )
-                                              }
-                                            >
-                                              <FaTrashAlt />
-                                            </button>
+                                            {values.steps[indexStep].ingredients.length != 1 ? (
+                                              <button
+                                                type={'button'}
+                                                className={'btn btn-square btn-error join-item w-8'}
+                                                disabled={values.steps[indexStep].ingredients.length == 1}
+                                                onClick={() =>
+                                                  modalContext.openModal(
+                                                    <DeleteConfirmationModal
+                                                      spelling={'REMOVE'}
+                                                      entityName={'die Zutat'}
+                                                      onApprove={() => removeIngredient(indexIngredient)}
+                                                    />,
+                                                  )
+                                                }
+                                              >
+                                                <FaTrashAlt />
+                                              </button>
+                                            ) : (
+                                              <></>
+                                            )}
                                           </div>
                                         </div>
                                       ))}
@@ -982,20 +999,11 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                           ) : (
                             <div className={'flex flex-row items-center justify-center space-x-2'}>
                               {Object.entries(CocktailPouringTechnique).map(([key, value]) => (
-                                <div
-                                  key={`form-recipe-step${step.id}-no-mixing-${key}`}
-                                  className={'flex flex-col items-center justify-center space-y-2'}
-                                >
+                                <div key={`form-recipe-step${step.id}-no-mixing-${key}`} className={'flex flex-col items-center justify-center space-y-2'}>
                                   {/*<img className={"h-20"}*/}
                                   {/*     src={"https://res.cloudinary.com/lusini/w_1500,h_1500,q_80,c_pad,f_auto/pim/7f30f8/bf7939/ff5def/23f663/419537/65/7f30f8bf7939ff5def23f66341953765.jpeg"} />*/}
                                   <div>{value}</div>
-                                  <Field
-                                    type="radio"
-                                    name={`steps.${indexStep}.tool`}
-                                    value={key}
-                                    className="radio-primary radio"
-                                    onBlur={handleBlur}
-                                  />
+                                  <Field type="radio" name={`steps.${indexStep}.tool`} value={key} className="radio-primary radio" onBlur={handleBlur} />
                                 </div>
                               ))}
                             </div>
@@ -1038,10 +1046,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                   {({ push: pushGarnish, remove: removeGarnish }) => (
                     <div className={'col-span-2 space-y-2'}>
                       {values.garnishes.map((garnish: CocktailRecipeGarnishFull, indexGarnish: number) => (
-                        <div
-                          key={`form-recipe-garnish-${indexGarnish}`}
-                          className={'flex flex-row space-x-2 rounded-xl border border-neutral p-4'}
-                        >
+                        <div key={`form-recipe-garnish-${indexGarnish}`} className={'flex flex-row space-x-2 rounded-xl border border-neutral p-4'}>
                           <div className={'flex flex-none items-center'}>
                             <div className={'join join-vertical'}>
                               <button
@@ -1050,9 +1055,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                 className={'btn btn-square btn-outline join-item btn-xs'}
                                 onClick={() => {
                                   const value = values.garnishes[indexGarnish];
-                                  const reorderedGroups = (values.garnishes as CocktailRecipeGarnishFull[]).filter(
-                                    (_, i) => i != indexGarnish,
-                                  );
+                                  const reorderedGroups = (values.garnishes as CocktailRecipeGarnishFull[]).filter((_, i) => i != indexGarnish);
                                   reorderedGroups.splice(indexGarnish - 1, 0, value);
                                   setFieldValue(
                                     `garnishes`,
@@ -1071,9 +1074,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                 className={'btn btn-square btn-outline join-item btn-xs'}
                                 onClick={() => {
                                   const value = values.garnishes[indexGarnish];
-                                  const reorderedGroups = (values.garnishes as CocktailRecipeGarnishFull[]).filter(
-                                    (_, i) => i != indexGarnish,
-                                  );
+                                  const reorderedGroups = (values.garnishes as CocktailRecipeGarnishFull[]).filter((_, i) => i != indexGarnish);
                                   reorderedGroups.splice(indexGarnish + 1, 0, value);
                                   setFieldValue(
                                     `garnishes`,
@@ -1098,40 +1099,50 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                     (errors.garnishes as GarnishError[])?.[indexGarnish]?.garnishId}
                                 </span>
                               </label>
-                              <select
-                                name={`garnishes.${indexGarnish}.garnishId`}
-                                value={values.garnishes[indexGarnish].garnishId}
-                                className={`select select-bordered w-full ${
-                                  (errors.garnishes as GarnishError[])?.[indexGarnish]?.garnishId &&
-                                  (touched.garnishes as any)?.[indexGarnish]?.garnishId &&
-                                  'select-error'
-                                }`}
-                                onChange={(event) => {
-                                  handleChange(event);
-                                  setFieldValue(
-                                    `garnishes.${indexGarnish}.garnish`,
-                                    garnishes.find((garnish) => garnish.id == event.target.value),
-                                  );
-                                }}
-                                onBlur={handleBlur}
-                              >
-                                {garnishesLoading ? (
-                                  <option disabled={true} defaultChecked={true} value={undefined}>
-                                    Lädt...
-                                  </option>
-                                ) : (
-                                  <>
-                                    <option value={''}>Auswählen</option>
-                                    {garnishes
-                                      .sort((a, b) => a.name.localeCompare(b.name))
-                                      .map((garnish) => (
-                                        <option key={`form-recipe-garnish-${garnish.id}`} value={garnish.id}>
-                                          {garnish.name}
-                                        </option>
-                                      ))}
-                                  </>
-                                )}
-                              </select>
+                              <div className={'join w-full'}>
+                                <input
+                                  className={`input join-item input-bordered w-full cursor-pointer ${
+                                    (errors.garnishes as GarnishError[])?.[indexGarnish]?.garnishId &&
+                                    (touched.garnishes as any)?.[indexGarnish]?.garnishId &&
+                                    'input-error'
+                                  }`}
+                                  value={garnishesLoading ? 'Lade...' : values.garnishes[indexGarnish].garnish?.name ?? 'Wähle eine Garnitur aus...'}
+                                  readOnly={true}
+                                  onClick={() => {
+                                    openGarnishSelectModal(setFieldValue, indexGarnish);
+                                  }}
+                                />
+                                <button
+                                  type={'button'}
+                                  className={'btn btn-outline btn-primary join-item'}
+                                  onClick={() => {
+                                    openGarnishSelectModal(setFieldValue, indexGarnish);
+                                  }}
+                                >
+                                  <FaSearch />
+                                </button>
+                                <button
+                                  type={'button'}
+                                  className={'btn btn-outline btn-secondary join-item'}
+                                  onClick={() => {
+                                    modalContext.openModal(
+                                      <FormModal<Garnish>
+                                        form={
+                                          <GarnishForm
+                                            onSaved={async () => {
+                                              modalContext.closeModal();
+                                              await fetchGarnishes();
+                                            }}
+                                          />
+                                        }
+                                        title={'Garnitur erfassen'}
+                                      />,
+                                    );
+                                  }}
+                                >
+                                  <FaPlus />
+                                </button>
+                              </div>
                             </div>
                             <div className={'form-control'}>
                               <label className={'label'}>
@@ -1176,11 +1187,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                               className={'btn btn-square btn-error btn-sm'}
                               onClick={() =>
                                 modalContext.openModal(
-                                  <DeleteConfirmationModal
-                                    spelling={'REMOVE'}
-                                    entityName={'die Garnitur'}
-                                    onApprove={() => removeGarnish(indexGarnish)}
-                                  />,
+                                  <DeleteConfirmationModal spelling={'REMOVE'} entityName={'die Garnitur'} onApprove={() => removeGarnish(indexGarnish)} />,
                                 )
                               }
                             >

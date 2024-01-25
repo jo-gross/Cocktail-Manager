@@ -24,13 +24,7 @@ export function ManageEntityLayout(props: ManageEntityLayoutProps) {
   return (
     <>
       <Head>
-        <>
-          {typeof props.title === 'string' ? (
-            <title>{`${props.title} - The Cocktail-Manager`}</title>
-          ) : (
-            <title>The Cocktail-Manager</title>
-          )}
-        </>
+        <>{typeof props.title === 'string' ? <title>{`${props.title} - The Cocktail-Manager`}</title> : <title>The Cocktail-Manager</title>}</>
       </Head>
       <div className={'flex flex-col p-1 md:p-4 print:p-1'}>
         <div className={'grid w-full grid-cols-3 items-center justify-center justify-items-center print:grid-cols-1'}>
@@ -57,9 +51,7 @@ export function ManageEntityLayout(props: ManageEntityLayoutProps) {
           </div>
           <div className={'justify-items-center text-3xl font-bold print:text-2xl'}>{props.title}</div>
           <div className={'flex flex-col-reverse items-center gap-2 justify-self-end md:flex-row print:hidden'}>
-            {props.unsavedChanges && (
-              <div className={'text-center italic print:hidden'}>Nicht gespeicherte Änderungen</div>
-            )}
+            {props.unsavedChanges && <div className={'text-center italic print:hidden'}>Nicht gespeicherte Änderungen</div>}
             {props.actions}
           </div>
         </div>

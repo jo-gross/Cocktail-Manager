@@ -33,10 +33,7 @@ export default function ManagePage() {
           )
         }
         actions={[
-          <div
-            key={'profile'}
-            className="dropdown dropdown-end rounded-xl border border-none border-base-200 md:border-solid"
-          >
+          <div key={'profile'} className="dropdown dropdown-end rounded-xl border border-none border-base-200 md:border-solid">
             <label tabIndex={0} className="btn btn-ghost">
               <>
                 {userContext.user?.image ? (
@@ -60,10 +57,7 @@ export default function ManagePage() {
               </>
               <div className={'hidden md:inline'}>{userContext.user?.name}</div>
             </label>
-            <ul
-              tabIndex={0}
-              className="menu dropdown-content menu-sm z-[1] mt-2 w-52 gap-2 rounded-box border border-base-200 bg-base-100 p-2 shadow"
-            >
+            <ul tabIndex={0} className="menu dropdown-content menu-sm z-[1] mt-2 w-52 gap-2 rounded-box border border-base-200 bg-base-100 p-2 shadow">
               <div className={'pt-1 text-center text-lg font-bold md:hidden'}>{userContext.user?.name}</div>
               <div className={'divider-sm md:hidden'}></div>
               <li className={'btn btn-outline btn-sm'}>
@@ -90,9 +84,7 @@ export default function ManagePage() {
           <ManageCard title={'Garnituren'} link={`/workspaces/${workspaceId}/manage/garnishes`} />
           <ManageCard title={'Gläser'} link={`/workspaces/${workspaceId}/manage/glasses`} />
           <>
-            {userContext.isUserPermitted(Role.MANAGER) && (
-              <ManageCard title={'Workspace-Einstellungen'} link={`/workspaces/${workspaceId}/manage/settings`} />
-            )}
+            {userContext.isUserPermitted(Role.MANAGER) && <ManageCard title={'Workspace-Einstellungen'} link={`/workspaces/${workspaceId}/manage/settings`} />}
           </>
           <ManageCard title={'Kalkulation'} link={`/workspaces/${workspaceId}/manage/calculations`} />
         </div>

@@ -51,47 +51,44 @@ export default withHttpMethods({
     });
     return res.json({ data: result });
   }),
-  [HTTPMethod.PUT]: withWorkspacePermission(
-    [Role.USER],
-    async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
-      const calculationId = req.query.calculationId as string | undefined;
-      if (!calculationId) return res.status(400).json({ message: 'No calculationId id' });
+  [HTTPMethod.PUT]: withWorkspacePermission([Role.USER], async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
+    const calculationId = req.query.calculationId as string | undefined;
+    if (!calculationId) return res.status(400).json({ message: 'No calculationId id' });
 
-      const { name, calculationItems } = req.body;
-      const input: CocktailCalculationUpdateInput = {
-        id: calculationId,
-        name: name,
-        updatedByUser: {
-          connect: {
-            id: user.id,
-          },
+    const { name, calculationItems } = req.body;
+    const input: CocktailCalculationUpdateInput = {
+      id: calculationId,
+      name: name,
+      updatedByUser: {
+        connect: {
+          id: user.id,
         },
-        cocktailCalculationItems: {
-          create: calculationItems.map((item: any) => ({
-            plannedAmount: item.plannedAmount,
-            customPrice: item.customPrice,
-            cocktail: {
-              connect: {
-                id: item.cocktailId,
-              },
+      },
+      cocktailCalculationItems: {
+        create: calculationItems.map((item: any) => ({
+          plannedAmount: item.plannedAmount,
+          customPrice: item.customPrice,
+          cocktail: {
+            connect: {
+              id: item.cocktailId,
             },
-          })),
-        },
-      };
+          },
+        })),
+      },
+    };
 
-      await prisma.cocktailCalculationItems.deleteMany({
-        where: {
-          calculationId: calculationId,
-        },
-      });
+    await prisma.cocktailCalculationItems.deleteMany({
+      where: {
+        calculationId: calculationId,
+      },
+    });
 
-      const result = await prisma.cocktailCalculation.update({
-        where: {
-          id: calculationId,
-        },
-        data: input,
-      });
-      return res.json({ data: result });
-    },
-  ),
+    const result = await prisma.cocktailCalculation.update({
+      where: {
+        id: calculationId,
+      },
+      data: input,
+    });
+    return res.json({ data: result });
+  }),
 });

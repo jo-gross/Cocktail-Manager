@@ -10,22 +10,12 @@ export default function SearchPage() {
     <div className={'flex flex-col-reverse gap-2 p-2 md:flex-row'}>
       <div className={'card w-full flex-1'}>
         <div className={'card-body '}>
-          <SearchModal
-            onCocktailSelectedObject={(cocktail) => setSelectedCocktail(cocktail)}
-            selectionLabel={'Ansehen'}
-            showRecipe={false}
-          />
+          <SearchModal onCocktailSelectedObject={(cocktail) => setSelectedCocktail(cocktail)} selectionLabel={'Ansehen'} showRecipe={false} />
         </div>
       </div>
       <div className={'h-min w-full flex-1'}>
         {selectedCocktail ? (
-          <CocktailRecipeOverviewItem
-            cocktailRecipe={selectedCocktail}
-            showImage={true}
-            showInfo={true}
-            showPrice={true}
-            showTags={true}
-          />
+          <CocktailRecipeOverviewItem cocktailRecipe={selectedCocktail} showImage={true} showInfo={true} showPrice={true} showTags={true} />
         ) : (
           <></>
         )}

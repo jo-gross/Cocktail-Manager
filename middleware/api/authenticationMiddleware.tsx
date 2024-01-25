@@ -26,10 +26,7 @@ export function withAuthentication(fn: (fnReq: NextApiRequest, fnRes: NextApiRes
   };
 }
 
-export function withWorkspacePermission(
-  permissions: Role[],
-  fn: (req: NextApiRequest, res: NextApiResponse, user: User, workspace: Workspace) => void,
-) {
+export function withWorkspacePermission(permissions: Role[], fn: (req: NextApiRequest, res: NextApiResponse, user: User, workspace: Workspace) => void) {
   return withAuthentication(async (req: NextApiRequest, res: NextApiResponse, user: User) => {
     const workspaceId = req.query.workspaceId as string | undefined;
     if (workspaceId == undefined) {
