@@ -312,8 +312,13 @@ export default function WorkspaceSettingPage() {
             <div className={'card-body'}>
               <div className={'card-title'}>Daten Transfer</div>
               <div className={'form-control'}>
-                <input type={'file'} disabled={importing} className={'file-input file-input-bordered'}ref={uploadImportFileRef}
-                  onChange={(e) => setUploadImportFile(e.target.files?.[0])} />
+                <input
+                  type={'file'}
+                  disabled={importing}
+                  className={'file-input file-input-bordered'}
+                  ref={uploadImportFileRef}
+                  onChange={(e) => setUploadImportFile(e.target.files?.[0])}
+                />
               </div>
               <button className={`btn btn-primary`} disabled={uploadImportFile == undefined || importing} type={'button'} onClick={importBackup}>
                 <>{importing ? <span className="loading loading-spinner"></span> : <></>}</>
