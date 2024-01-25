@@ -7,6 +7,7 @@ import { Loading } from '../../../../../components/Loading';
 import { alertService } from '../../../../../lib/alertService';
 import { withPagePermission } from '../../../../../middleware/ui/withPagePermission';
 import { FormikProps } from 'formik';
+import { SingleFormLayout } from '../../../../../components/layout/SingleFormLayout';
 
 function EditGlassPage() {
   const router = useRouter();
@@ -41,13 +42,10 @@ function EditGlassPage() {
   return loading ? (
     <Loading />
   ) : (
-    <ManageEntityLayout
-      backLink={`/workspaces/${workspaceId}/manage/glasses`}
-      title={'Gläser'}
-      unsavedChanges={unsavedChanges}
-      formRef={formRef}
-    >
-      <GlassForm glass={glass} setUnsavedChanges={setUnsavedChanges} formRef={formRef} />
+    <ManageEntityLayout backLink={`/workspaces/${workspaceId}/manage/glasses`} title={'Gläser'} unsavedChanges={unsavedChanges} formRef={formRef}>
+      <SingleFormLayout title={'Glas erfassen'}>
+        <GlassForm glass={glass} setUnsavedChanges={setUnsavedChanges} formRef={formRef} />
+      </SingleFormLayout>
     </ManageEntityLayout>
   );
 }

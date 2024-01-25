@@ -24,6 +24,7 @@ import { SelectModal } from '../modals/SelectModal';
 import FormModal from '../modals/FormModal';
 import { GarnishForm } from '../garnishes/GarnishForm';
 import { IngredientForm } from '../ingredients/IngredientForm';
+import { GlassForm } from '../glasses/GlassForm';
 
 interface CocktailRecipeFormProps {
   cocktailRecipe?: CocktailRecipeFull;
@@ -46,37 +47,6 @@ interface StepError {
 interface GarnishError {
   garnishId?: string;
   optional?: string;
-}
-
-function isObject(obj: any): obj is { [key: string]: any } {
-  return typeof obj === 'object' && obj !== null && !Array.isArray(obj);
-}
-
-function findDifferences(obj1: any, obj2: any, path: string = ''): void {
-  if (isObject(obj1) && isObject(obj2)) {
-    const keys = new Set([...Object.keys(obj1), ...Object.keys(obj2)]);
-    keys.forEach((key) => {
-      const newPath = path ? `${path}.${key}` : key;
-      if (key in obj1 && key in obj2) {
-        findDifferences(obj1[key], obj2[key], newPath);
-      } else {
-        console.log(`Key ${key} found only in one object at path ${path}`);
-      }
-    });
-  } else if (Array.isArray(obj1) && Array.isArray(obj2)) {
-    obj1.forEach((item, index) => {
-      if (!obj2.includes(item)) {
-        console.log(`Array difference at path ${path}: ${item}`);
-      }
-    });
-    obj2.forEach((item, index) => {
-      if (!obj1.includes(item)) {
-        console.log(`Array difference at path ${path}: ${item}`);
-      }
-    });
-  } else if (obj1 !== obj2) {
-    console.log(`Different values at path ${path}: ${JSON.stringify(obj1)} vs ${obj2}`);
-  }
 }
 
 export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
@@ -146,7 +116,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
   const [glasses, setGlasses] = useState<Glass[]>([]);
   const [glassesLoading, setGlassesLoading] = useState(false);
 
-  useEffect(() => {
+  const fetchGlasses = useCallback(async () => {
     if (!workspaceId) return;
     setGlassesLoading(true);
     fetch(`/api/workspaces/${workspaceId}/glasses`)
@@ -190,7 +160,8 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
   useEffect(() => {
     fetchGarnishes();
     fetchIngredients();
-  }, [fetchGarnishes, fetchIngredients]);
+    fetchGlasses();
+  }, [fetchGarnishes, fetchGlasses, fetchIngredients]);
 
   const openGarnishSelectModal = useCallback(
     (setFieldValue: any, indexGarnish: number) => {
@@ -285,7 +256,6 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
       }}
       validate={(values) => {
         props.setUnsavedChanges?.(originalValues && !_.isEqual(originalValues, formRef?.current?.values));
-        findDifferences(originalValues, formRef?.current?.values);
         const errors: any = {};
         if (!values.name || values.name.trim() == '') {
           errors.name = 'Required';
@@ -516,34 +486,57 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                         <>{errors.glassId && touched.glassId && errors.glassId}</> *
                       </span>
                     </label>
-                    <select
-                      name="glassId"
-                      className={`select select-bordered w-full ${errors.glassId && touched.glassId && 'select-error'}`}
-                      onChange={(event) => {
-                        handleChange(event);
-                        setFieldValue(
-                          'glass',
-                          glasses.find((glass) => glass.id == event.target.value),
-                        );
-                      }}
-                      onBlur={handleBlur}
-                      value={values.glassId}
-                    >
-                      {glassesLoading ? (
-                        <option disabled={true} defaultChecked={true}>
-                          Laden...
-                        </option>
-                      ) : (
-                        <>
-                          <option value={undefined}>Auswählen</option>
-                          {glasses.map((glass) => (
-                            <option key={`form-recipe-glasses${glass.id}`} value={glass.id}>
-                              {glass.name}
-                            </option>
-                          ))}
-                        </>
-                      )}
-                    </select>
+                    <div className={'join w-full'}>
+                      <select
+                        name="glassId"
+                        className={`join-item select select-bordered w-full ${errors.glassId && touched.glassId && 'select-error'}`}
+                        onChange={(event) => {
+                          handleChange(event);
+                          setFieldValue(
+                            'glass',
+                            glasses.find((glass) => glass.id == event.target.value),
+                          );
+                        }}
+                        onBlur={handleBlur}
+                        value={values.glassId}
+                      >
+                        {glassesLoading ? (
+                          <option disabled={true} defaultChecked={true}>
+                            Laden...
+                          </option>
+                        ) : (
+                          <>
+                            <option value={undefined}>Auswählen</option>
+                            {glasses.map((glass) => (
+                              <option key={`form-recipe-glasses${glass.id}`} value={glass.id}>
+                                {glass.name}
+                              </option>
+                            ))}
+                          </>
+                        )}
+                      </select>
+                      <button
+                        type={'button'}
+                        className={'btn btn-square btn-outline btn-secondary join-item'}
+                        onClick={() =>
+                          modalContext.openModal(
+                            <FormModal<Glass>
+                              form={
+                                <GlassForm
+                                  onSaved={async () => {
+                                    modalContext.closeModal();
+                                    await fetchGlasses();
+                                  }}
+                                />
+                              }
+                              title={'Glas erfassen'}
+                            />,
+                          )
+                        }
+                      >
+                        <FaPlus />
+                      </button>
+                    </div>
                   </div>
                   <div>
                     <label className={'label'}>
@@ -904,6 +897,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                               }}
                                             />
                                             <button
+                                              type={'button'}
                                               className={'btn btn-outline btn-primary join-item'}
                                               onClick={() => {
                                                 openIngredientSelectModal(setFieldValue, indexStep, indexIngredient);
@@ -912,6 +906,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                               <FaSearch />
                                             </button>
                                             <button
+                                              type={'button'}
                                               className={'btn btn-outline btn-secondary join-item'}
                                               onClick={() => {
                                                 modalContext.openModal(
@@ -1118,6 +1113,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                   }}
                                 />
                                 <button
+                                  type={'button'}
                                   className={'btn btn-outline btn-primary join-item'}
                                   onClick={() => {
                                     openGarnishSelectModal(setFieldValue, indexGarnish);
@@ -1126,6 +1122,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                   <FaSearch />
                                 </button>
                                 <button
+                                  type={'button'}
                                   className={'btn btn-outline btn-secondary join-item'}
                                   onClick={() => {
                                     modalContext.openModal(
