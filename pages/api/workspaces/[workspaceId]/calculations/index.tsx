@@ -10,57 +10,51 @@ import HTTPMethod from 'http-method-enum';
 import CocktailCalculationCreateInput = Prisma.CocktailCalculationCreateInput;
 
 export default withHttpMethods({
-  [HTTPMethod.GET]: withWorkspacePermission(
-    [Role.USER],
-    async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
-      const cocktailCalculations = await prisma.cocktailCalculation.findMany({
-        where: {
-          workspaceId: workspace.id,
-        },
-        include: {
-          updatedByUser: true,
-          cocktailCalculationItems: {
-            include: {
-              cocktail: true,
-            },
-          },
-        },
-      });
-      return res.json({ data: cocktailCalculations });
-    },
-  ),
-  [HTTPMethod.POST]: withWorkspacePermission(
-    [Role.USER],
-    async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
-      const { name, calculationItems } = req.body;
-      const input: CocktailCalculationCreateInput = {
-        name: name,
+  [HTTPMethod.GET]: withWorkspacePermission([Role.USER], async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
+    const cocktailCalculations = await prisma.cocktailCalculation.findMany({
+      where: {
+        workspaceId: workspace.id,
+      },
+      include: {
+        updatedByUser: true,
         cocktailCalculationItems: {
-          create: calculationItems.map((item: any) => ({
-            plannedAmount: item.plannedAmount,
-            customPrice: item.customPrice,
-            cocktail: {
-              connect: {
-                id: item.cocktailId,
-              },
+          include: {
+            cocktail: true,
+          },
+        },
+      },
+    });
+    return res.json({ data: cocktailCalculations });
+  }),
+  [HTTPMethod.POST]: withWorkspacePermission([Role.USER], async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
+    const { name, calculationItems } = req.body;
+    const input: CocktailCalculationCreateInput = {
+      name: name,
+      cocktailCalculationItems: {
+        create: calculationItems.map((item: any) => ({
+          plannedAmount: item.plannedAmount,
+          customPrice: item.customPrice,
+          cocktail: {
+            connect: {
+              id: item.cocktailId,
             },
-          })),
-        },
-        workspace: {
-          connect: {
-            id: workspace.id,
           },
+        })),
+      },
+      workspace: {
+        connect: {
+          id: workspace.id,
         },
-        updatedByUser: {
-          connect: {
-            id: user.id,
-          },
+      },
+      updatedByUser: {
+        connect: {
+          id: user.id,
         },
-      };
-      const result = await prisma.cocktailCalculation.create({
-        data: input,
-      });
-      return res.json({ data: result });
-    },
-  ),
+      },
+    };
+    const result = await prisma.cocktailCalculation.create({
+      data: input,
+    });
+    return res.json({ data: result });
+  }),
 });

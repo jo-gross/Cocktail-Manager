@@ -45,14 +45,7 @@ const App = ({ Component, pageProps: { session, ...pageProps } }: AppProps) => {
                   <Head>
                     <title>The Cocktail-Manager</title>
                   </Head>
-                  <input
-                    type="checkbox"
-                    hidden={true}
-                    checked={isDark}
-                    readOnly={true}
-                    value="halloween"
-                    className="theme-controller toggle"
-                  />
+                  <input type="checkbox" hidden={true} checked={isDark} readOnly={true} value="halloween" className="theme-controller toggle" />
                   <Component {...pageProps} />
                 </>
               </GlobalModal>

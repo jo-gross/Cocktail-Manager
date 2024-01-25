@@ -98,11 +98,7 @@ function AlertsContainer(props: AlertsContainerProps) {
   return (
     <div className="space-y-2">
       {alerts.reverse().map((alert, index) => (
-        <div
-          role={'alert'}
-          key={index}
-          className={`alert flex flex-row justify-between shadow-lg ${cssClasses(alert)}`}
-        >
+        <div role={'alert'} key={index} className={`alert flex flex-row justify-between shadow-lg ${cssClasses(alert)}`}>
           <div className={'w-10 p-2'}>{icon(alert)}</div>
           <div className={''}>
             <>

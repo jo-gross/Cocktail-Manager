@@ -55,12 +55,8 @@ export default function OverviewPage() {
       .finally(() => setLoadingCards(false));
   }, [userContext.user, workspaceId]);
 
-  const [selectedCardId, setSelectedCardId] = useState<string | undefined>(
-    cocktailCards.length > 0 ? cocktailCards[0].id : undefined,
-  );
-  const [selectedCard, setSelectedCard] = useState<CocktailCardFull | undefined>(
-    cocktailCards.length > 0 ? cocktailCards[0] : undefined,
-  );
+  const [selectedCardId, setSelectedCardId] = useState<string | undefined>(cocktailCards.length > 0 ? cocktailCards[0].id : undefined);
+  const [selectedCard, setSelectedCard] = useState<CocktailCardFull | undefined>(cocktailCards.length > 0 ? cocktailCards[0] : undefined);
 
   useEffect(() => {
     if (selectedCardId != undefined && selectedCardId != 'search') {
@@ -108,16 +104,10 @@ export default function OverviewPage() {
       return 1; // b (Datum Null) kommt vor a
     }
 
-    if (
-      new Date(a.date ?? new Date()).toISOString().slice(0, 10) > today &&
-      new Date(b.date ?? new Date()).toISOString().slice(0, 10) <= today
-    ) {
+    if (new Date(a.date ?? new Date()).toISOString().slice(0, 10) > today && new Date(b.date ?? new Date()).toISOString().slice(0, 10) <= today) {
       return -1; // a (zukünftiges Datum) kommt vor b
     }
-    if (
-      new Date(a.date ?? new Date()).toISOString().slice(0, 10) <= today &&
-      new Date(b.date ?? new Date()).toISOString().slice(0, 10) > today
-    ) {
+    if (new Date(a.date ?? new Date()).toISOString().slice(0, 10) <= today && new Date(b.date ?? new Date()).toISOString().slice(0, 10) > today) {
       return 1; // b (zukünftiges Datum) kommt vor a
     }
 
@@ -127,9 +117,7 @@ export default function OverviewPage() {
   useEffect(() => {
     console.log('selectedCardId', selectedCardId);
     if (selectedCardId == undefined && cocktailCards.length > 0) {
-      const todayCardId = cocktailCards
-        .filter((card) => card.date != undefined)
-        .find((card) => card.date?.withoutTime == new Date().withoutTime)?.id;
+      const todayCardId = cocktailCards.filter((card) => card.date != undefined).find((card) => card.date?.withoutTime == new Date().withoutTime)?.id;
 
       console.log(
         'cocktailCards',
@@ -176,9 +164,7 @@ export default function OverviewPage() {
 
   useEffect(() => {
     setShowImage(userContext.user?.settings?.find((s) => s.setting == Setting.showImage)?.value == 'true' ?? false);
-    setShowImageSide(
-      userContext.user?.settings?.find((s) => s.setting == Setting.showImageSide)?.value == 'true' ?? false,
-    );
+    setShowImageSide(userContext.user?.settings?.find((s) => s.setting == Setting.showImageSide)?.value == 'true' ?? false);
     setShowTags(userContext.user?.settings?.find((s) => s.setting == Setting.showTags)?.value == 'true' ?? false);
     setLessItems(userContext.user?.settings?.find((s) => s.setting == Setting.lessItems)?.value == 'true' ?? false);
   }, [userContext.user?.settings]);
@@ -191,9 +177,7 @@ export default function OverviewPage() {
 
       <div className={'static h-screen'}>
         <div className={''}>
-          <div
-            className={'flex flex-col space-y-2 overflow-y-auto rounded-xl p-0 md:p-2 print:overflow-clip print:p-0'}
-          >
+          <div className={'flex flex-col space-y-2 overflow-y-auto rounded-xl p-0 md:p-2 print:overflow-clip print:p-0'}>
             {selectedCardId == 'search' || selectedCardId == undefined ? (
               <SearchPage />
             ) : loadingCardsGroups ? (
@@ -208,10 +192,7 @@ export default function OverviewPage() {
               selectedCard?.groups
                 ?.sort((a, b) => a.groupNumber - b.groupNumber)
                 .map((group) => (
-                  <div
-                    key={`card-${selectedCard.id}-group-${group.id}`}
-                    className={'rounded-none p-1 md:rounded-xl md:border md:border-base-200 print:p-1'}
-                  >
+                  <div key={`card-${selectedCard.id}-group-${group.id}`} className={'rounded-none p-1 md:rounded-xl md:border md:border-base-200 print:p-1'}>
                     <div className={'p-2 text-center text-2xl font-bold'}>
                       {group.name}
                       {group.groupPrice != undefined ? ` - Special Preis: ${group.groupPrice}€` : ''}
@@ -246,9 +227,7 @@ export default function OverviewPage() {
                               );
                             } else {
                               return (
-                                <div
-                                  key={`card-${selectedCard.id}-group-${group.id}-cocktail-${groupItem.cocktailId}-${index}`}
-                                >
+                                <div key={`card-${selectedCard.id}-group-${group.id}-cocktail-${groupItem.cocktailId}-${index}`}>
                                   <Loading />
                                 </div>
                               );
@@ -403,10 +382,7 @@ export default function OverviewPage() {
 
           <>
             {selectedCardId != 'search' && selectedCardId != undefined ? (
-              <div
-                className={'btn btn-square btn-primary rounded-xl md:btn-lg'}
-                onClick={() => modalContext.openModal(<SearchModal />)}
-              >
+              <div className={'btn btn-square btn-primary rounded-xl md:btn-lg'} onClick={() => modalContext.openModal(<SearchModal />)}>
                 <FaSearch />
               </div>
             ) : (

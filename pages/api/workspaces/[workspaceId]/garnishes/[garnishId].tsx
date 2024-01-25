@@ -31,32 +31,29 @@ export default withHttpMethods({
     });
     return res.json({ data: result });
   }),
-  [HTTPMethod.PUT]: withWorkspacePermission(
-    [Role.MANAGER],
-    async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
-      const garnishId = req.query.garnishId as string | undefined;
-      if (!garnishId) return res.status(400).json({ message: 'No garnish id' });
+  [HTTPMethod.PUT]: withWorkspacePermission([Role.MANAGER], async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
+    const garnishId = req.query.garnishId as string | undefined;
+    if (!garnishId) return res.status(400).json({ message: 'No garnish id' });
 
-      const { name, price, image, description } = req.body;
+    const { name, price, image, description } = req.body;
 
-      const input: GarnishUpdateInput = {
-        name: name,
-        price: price,
-        image: image,
-        description: description,
-        workspace: {
-          connect: {
-            id: workspace.id,
-          },
+    const input: GarnishUpdateInput = {
+      name: name,
+      price: price,
+      image: image,
+      description: description,
+      workspace: {
+        connect: {
+          id: workspace.id,
         },
-      };
-      const result = await prisma.garnish.update({
-        where: {
-          id: garnishId,
-        },
-        data: input,
-      });
-      return res.json({ dat: result });
-    },
-  ),
+      },
+    };
+    const result = await prisma.garnish.update({
+      where: {
+        id: garnishId,
+      },
+      data: input,
+    });
+    return res.json({ dat: result });
+  }),
 });

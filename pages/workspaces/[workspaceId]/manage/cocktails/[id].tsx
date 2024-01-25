@@ -42,12 +42,7 @@ function EditCocktailRecipe() {
   return loading ? (
     <Loading />
   ) : (
-    <ManageEntityLayout
-      backLink={`/workspaces/${workspaceId}/manage/cocktails`}
-      title={'Cocktail'}
-      unsavedChanges={unsavedChanges}
-      formRef={formRef}
-    >
+    <ManageEntityLayout backLink={`/workspaces/${workspaceId}/manage/cocktails`} title={'Cocktail'} unsavedChanges={unsavedChanges} formRef={formRef}>
       <CocktailRecipeForm cocktailRecipe={cocktailRecipe} setUnsavedChanges={setUnsavedChanges} formRef={formRef} />
     </ManageEntityLayout>
   );

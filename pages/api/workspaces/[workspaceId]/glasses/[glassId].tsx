@@ -30,32 +30,29 @@ export default withHttpMethods({
     });
     return res.json({ data: result });
   }),
-  [HTTPMethod.PUT]: withWorkspacePermission(
-    [Role.MANAGER],
-    async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
-      const glassId = req.query.glassId as string | undefined;
-      if (!glassId) return res.status(400).json({ message: 'No glass id' });
+  [HTTPMethod.PUT]: withWorkspacePermission([Role.MANAGER], async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
+    const glassId = req.query.glassId as string | undefined;
+    if (!glassId) return res.status(400).json({ message: 'No glass id' });
 
-      const { name, image, deposit, volume } = req.body;
-      const input: GlassUpdateInput = {
+    const { name, image, deposit, volume } = req.body;
+    const input: GlassUpdateInput = {
+      id: glassId,
+      name: name,
+      volume: volume,
+      image: image,
+      deposit: deposit,
+      workspace: {
+        connect: {
+          id: workspace.id,
+        },
+      },
+    };
+    const result = await prisma.glass.update({
+      where: {
         id: glassId,
-        name: name,
-        volume: volume,
-        image: image,
-        deposit: deposit,
-        workspace: {
-          connect: {
-            id: workspace.id,
-          },
-        },
-      };
-      const result = await prisma.glass.update({
-        where: {
-          id: glassId,
-        },
-        data: input,
-      });
-      return res.json({ data: result });
-    },
-  ),
+      },
+      data: input,
+    });
+    return res.json({ data: result });
+  }),
 });

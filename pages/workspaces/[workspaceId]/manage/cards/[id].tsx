@@ -93,9 +93,7 @@ function EditCocktailCard() {
                     }).then(async (response) => {
                       const body = await response.json();
                       if (response.ok) {
-                        router
-                          .replace(`/workspaces/${workspaceId}/manage/cards`)
-                          .then(() => alertService.success('Karte gelöscht'));
+                        router.replace(`/workspaces/${workspaceId}/manage/cards`).then(() => alertService.success('Karte gelöscht'));
                       } else {
                         console.log('CardId -> deleteCard', response, body);
                         alertService.error(body.message, response.status, response.statusText);
@@ -172,9 +170,7 @@ function EditCocktailCard() {
             });
 
             if (storeResult.ok) {
-              router
-                .replace(`/workspaces/${workspaceId}/manage/cards`)
-                .then(() => alertService.success('Karte erfolgreich erstellt'));
+              router.replace(`/workspaces/${workspaceId}/manage/cards`).then(() => alertService.success('Karte erfolgreich erstellt'));
             } else {
               alertService.error(storeResult.statusText, storeResult.status, storeResult.statusText);
             }
@@ -186,9 +182,7 @@ function EditCocktailCard() {
             });
 
             if (storeResult.ok) {
-              router
-                .replace(`/workspaces/${workspaceId}/manage/cards`)
-                .then(() => alertService.success('Karte erfolgreich gespeichert'));
+              router.replace(`/workspaces/${workspaceId}/manage/cards`).then(() => alertService.success('Karte erfolgreich gespeichert'));
             } else {
               alertService.error(storeResult.statusText, storeResult.status, storeResult.statusText);
             }
@@ -256,9 +250,7 @@ function EditCocktailCard() {
                               <input
                                 type="text"
                                 className={`input input-bordered w-full ${
-                                  (errors?.groups?.[groupIndex] as any)?.name && touched?.groups?.[groupIndex].name
-                                    ? 'input-error'
-                                    : ''
+                                  (errors?.groups?.[groupIndex] as any)?.name && touched?.groups?.[groupIndex].name ? 'input-error' : ''
                                 }`}
                                 name={`groups.${groupIndex}.name`}
                                 onChange={handleChange}
@@ -271,8 +263,7 @@ function EditCocktailCard() {
                                 <div className={'label-text'}>Gruppen Preis</div>
                                 <div className={'label-text-alt text-error'}>
                                   <span>
-                                    {(errors?.groups?.[groupIndex] as any)?.groupPrice &&
-                                    touched?.groups?.[groupIndex].groupPrice
+                                    {(errors?.groups?.[groupIndex] as any)?.groupPrice && touched?.groups?.[groupIndex].groupPrice
                                       ? (errors?.groups?.[groupIndex] as any)?.groupPrice
                                       : ''}
                                   </span>
@@ -284,10 +275,7 @@ function EditCocktailCard() {
                                   min={0}
                                   step={0.01}
                                   className={`input join-item input-bordered w-full ${
-                                    (errors?.groups?.[groupIndex] as any)?.groupPrice &&
-                                    touched?.groups?.[groupIndex].groupPrice
-                                      ? 'input-error'
-                                      : ''
+                                    (errors?.groups?.[groupIndex] as any)?.groupPrice && touched?.groups?.[groupIndex].groupPrice ? 'input-error' : ''
                                   }`}
                                   name={`groups.${groupIndex}.groupPrice`}
                                   onChange={handleChange}
@@ -343,11 +331,7 @@ function EditCocktailCard() {
                                 className={'btn btn-square btn-outline btn-error btn-sm'}
                                 onClick={() =>
                                   modalContext.openModal(
-                                    <DeleteConfirmationModal
-                                      spelling={'REMOVE'}
-                                      entityName={'die Gruppe'}
-                                      onApprove={() => removeGroup(groupIndex)}
-                                    />,
+                                    <DeleteConfirmationModal spelling={'REMOVE'} entityName={'die Gruppe'} onApprove={() => removeGroup(groupIndex)} />,
                                   )
                                 }
                               >
@@ -363,10 +347,7 @@ function EditCocktailCard() {
                                   {values.groups[groupIndex].items
                                     .sort((a, b) => a.itemNumber - b.itemNumber)
                                     .map((item, itemIndex) => (
-                                      <div
-                                        key={`card-group-${groupIndex}-item-${itemIndex}`}
-                                        className={'card col-span-1'}
-                                      >
+                                      <div key={`card-group-${groupIndex}-item-${itemIndex}`} className={'card col-span-1'}>
                                         <div className={'card-body'}>
                                           <div className={'flex justify-end space-x-2'}>
                                             <button
@@ -375,9 +356,7 @@ function EditCocktailCard() {
                                               className={'btn btn-square btn-outline btn-sm'}
                                               onClick={() => {
                                                 const value = values.groups[groupIndex].items[itemIndex];
-                                                const reorderedItems = values.groups[groupIndex].items.filter(
-                                                  (_, i) => i != itemIndex,
-                                                );
+                                                const reorderedItems = values.groups[groupIndex].items.filter((_, i) => i != itemIndex);
                                                 reorderedItems.splice(itemIndex - 1, 0, value);
                                                 setFieldValue(
                                                   `groups.${groupIndex}.items`,
@@ -393,15 +372,12 @@ function EditCocktailCard() {
                                             <button
                                               type={'button'}
                                               disabled={
-                                                !(values.groups[groupIndex].items.length > 1) ||
-                                                itemIndex == values.groups[groupIndex].items.length - 1
+                                                !(values.groups[groupIndex].items.length > 1) || itemIndex == values.groups[groupIndex].items.length - 1
                                               }
                                               className={'btn btn-square btn-outline btn-sm'}
                                               onClick={() => {
                                                 const value = values.groups[groupIndex].items[itemIndex];
-                                                const reorderedItems = values.groups[groupIndex].items.filter(
-                                                  (_, i) => i != itemIndex,
-                                                );
+                                                const reorderedItems = values.groups[groupIndex].items.filter((_, i) => i != itemIndex);
                                                 reorderedItems.splice(itemIndex + 1, 0, value);
                                                 setFieldValue(
                                                   `groups.${groupIndex}.items`,
@@ -433,9 +409,7 @@ function EditCocktailCard() {
                                           {cocktails.find((cocktail) => cocktail.id == item.cocktailId) != undefined ? (
                                             <CompactCocktailRecipeInstruction
                                               showPrice={true}
-                                              cocktailRecipe={
-                                                cocktails.find((cocktail) => cocktail.id == item.cocktailId)!
-                                              }
+                                              cocktailRecipe={cocktails.find((cocktail) => cocktail.id == item.cocktailId)!}
                                             />
                                           ) : loadingCocktails ? (
                                             <Loading />
@@ -452,9 +426,7 @@ function EditCocktailCard() {
                                       onClick={() =>
                                         modalContext.openModal(
                                           <SearchModal
-                                            selectedCocktails={values.groups[groupIndex].items.map(
-                                              (item) => item.cocktailId,
-                                            )}
+                                            selectedCocktails={values.groups[groupIndex].items.map((item) => item.cocktailId)}
                                             onCocktailSelectedObject={(cocktail) => {
                                               pushItem({ cocktailId: cocktail.id });
                                             }}
@@ -473,11 +445,7 @@ function EditCocktailCard() {
                         </div>
                       ))}
                     <div className={'flex flex-row items-center justify-end space-x-2'}>
-                      <button
-                        type="button"
-                        className={'btn btn-secondary btn-sm'}
-                        onClick={() => pushGroup({ name: '', items: [] })}
-                      >
+                      <button type="button" className={'btn btn-secondary btn-sm'} onClick={() => pushGroup({ name: '', items: [] })}>
                         Gruppe hinzufügen
                       </button>
                       <button type="submit" className={`btn btn-primary btn-sm ${isSubmitting ? 'loading' : ''}`}>

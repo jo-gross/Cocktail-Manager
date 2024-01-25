@@ -80,13 +80,7 @@ export default function WorkspacesPage() {
       <div className={'grid grid-cols-1 md:grid-cols-3'}>
         <div className={'col-span-3 items-center'}>
           <div className={'flex flex-col items-center justify-center space-y-2'}>
-            <Image
-              src={'/images/The Cocktail Manager Logo.png'}
-              alt="The Cocktail Manager"
-              className={'pt-4 invert dark:invert-0'}
-              height={211}
-              width={247}
-            />
+            <Image src={'/images/The Cocktail Manager Logo.png'} alt="The Cocktail Manager" className={'pt-4 invert dark:invert-0'} height={211} width={247} />
             <h1 className={'text-center text-4xl font-bold'}>Cocktail-Manager</h1>
             <div className={'flex items-center space-x-2'}>
               <>
@@ -136,11 +130,7 @@ export default function WorkspacesPage() {
                         value={newWorkspaceName}
                         onChange={(event) => setNewWorkspaceName(event.target.value)}
                       />
-                      <button
-                        className={'btn btn-square btn-outline join-item'}
-                        disabled={newWorkspaceName.trim().length == 0}
-                        onClick={createNewWorkspace}
-                      >
+                      <button className={'btn btn-square btn-outline join-item'} disabled={newWorkspaceName.trim().length == 0} onClick={createNewWorkspace}>
                         <FaArrowRight />
                       </button>
                     </div>
@@ -151,11 +141,7 @@ export default function WorkspacesPage() {
                         value={joinWorkspaceId}
                         onChange={(event) => setJoinWorkspaceId(event.target.value)}
                       />
-                      <button
-                        className={'btn btn-square btn-outline join-item'}
-                        disabled={joinWorkspaceId.trim().length == 0}
-                        onClick={joinWorkspace}
-                      >
+                      <button className={'btn btn-square btn-outline join-item'} disabled={joinWorkspaceId.trim().length == 0} onClick={joinWorkspace}>
                         <FaArrowRight />
                       </button>
                     </div>

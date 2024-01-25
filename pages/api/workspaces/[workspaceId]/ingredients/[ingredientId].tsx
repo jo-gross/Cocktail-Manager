@@ -20,36 +20,33 @@ export default withHttpMethods({
       }),
     });
   }),
-  [HTTPMethod.PUT]: withWorkspacePermission(
-    [Role.MANAGER],
-    async (req: NextApiRequest, res: NextApiResponse, user, workspace: Workspace) => {
-      const { name, price, volume, unit, id, shortName, link, tags, image } = req.body;
+  [HTTPMethod.PUT]: withWorkspacePermission([Role.MANAGER], async (req: NextApiRequest, res: NextApiResponse, user, workspace: Workspace) => {
+    const { name, price, volume, unit, id, shortName, link, tags, image } = req.body;
 
-      const input: IngredientUpdateInput = {
+    const input: IngredientUpdateInput = {
+      id: id,
+      name: name,
+      volume: volume,
+      shortName: shortName,
+      unit: unit,
+      price: price,
+      link: link,
+      tags: tags,
+      image: image,
+      workspace: {
+        connect: {
+          id: workspace.id,
+        },
+      },
+    };
+    const result = await prisma.ingredient.update({
+      where: {
         id: id,
-        name: name,
-        volume: volume,
-        shortName: shortName,
-        unit: unit,
-        price: price,
-        link: link,
-        tags: tags,
-        image: image,
-        workspace: {
-          connect: {
-            id: workspace.id,
-          },
-        },
-      };
-      const result = await prisma.ingredient.update({
-        where: {
-          id: id,
-        },
-        data: input,
-      });
-      return res.json({ data: result });
-    },
-  ),
+      },
+      data: input,
+    });
+    return res.json({ data: result });
+  }),
   [HTTPMethod.DELETE]: withWorkspacePermission([Role.ADMIN], async (req: NextApiRequest, res: NextApiResponse) => {
     const ingredientId = req.query.ingredientId as string | undefined;
     if (!ingredientId) return res.status(400).json({ message: 'No ingredient id' });

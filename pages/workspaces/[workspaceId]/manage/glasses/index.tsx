@@ -89,13 +89,7 @@ export default function ManageGlassesOverviewPage() {
                           <div className="mask mask-squircle h-12 w-12">
                             <>
                               {glass.image ? (
-                                <Image
-                                  src={glass.image}
-                                  className={'h-12 w-12 bg-white object-contain'}
-                                  alt="Glass"
-                                  width={300}
-                                  height={300}
-                                />
+                                <Image src={glass.image} className={'h-12 w-12 bg-white object-contain'} alt="Glass" width={300} height={300} />
                               ) : (
                                 <DefaultGlassIcon />
                               )}
