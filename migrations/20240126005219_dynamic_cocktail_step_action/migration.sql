@@ -53,7 +53,7 @@ $$
                 INSERT INTO "WorkspaceCocktailRecipeStepAction" (id, name, "actionGroup", "workspaceId")
                 VALUES (gen_random_uuid(), 'MUDDLE', 'MIXING', workspace_id);
                 INSERT INTO "WorkspaceCocktailRecipeStepAction" (id, name, "actionGroup", "workspaceId")
-                VALUES (gen_random_uuid(), 'FOAM_UP', 'MIXING', workspace_id);
+                VALUES (gen_random_uuid(), 'FOAM', 'MIXING', workspace_id);
 
 
                 INSERT INTO "WorkspaceCocktailRecipeStepAction" (id, name, "actionGroup", "workspaceId")

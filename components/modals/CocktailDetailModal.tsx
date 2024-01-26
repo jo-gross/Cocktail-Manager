@@ -7,8 +7,8 @@ import { useRouter } from 'next/router';
 import { UserContext } from '../../lib/context/UserContextProvider';
 import Image from 'next/image';
 import DefaultGlassIcon from '../DefaultGlassIcon';
-import { $Enums, Role } from '@prisma/client';
-import WorkspaceSettingKey = $Enums.WorkspaceSettingKey;
+import { Role } from '@prisma/client';
+import { WorkspaceSettingKey } from '.prisma/client';
 
 interface CocktailDetailModalProps {
   cocktail: CocktailRecipeFull;

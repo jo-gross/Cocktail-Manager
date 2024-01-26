@@ -25,6 +25,7 @@ export default withHttpMethods({
               include: {
                 steps: {
                   include: {
+                    action: true,
                     ingredients: { include: { ingredient: true } },
                   },
                 },
