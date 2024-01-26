@@ -7,7 +7,12 @@ import WorkspaceUpdateInput = Prisma.WorkspaceUpdateInput;
 
 export default withHttpMethods({
   [HTTPMethod.GET]: withWorkspacePermission([Role.USER], async (req, res, user, workspace) => {
-    return res.json({ data: workspace });
+    const settings = await prisma.workspaceSetting.findMany({ where: { workspaceId: workspace.id } });
+    const settingsObject = settings.reduce((acc: any, setting) => {
+      acc[setting.setting] = setting.value;
+      return acc;
+    }, {});
+    return res.json({ data: { ...workspace, WorkspaceSetting: settingsObject } });
   }),
   [HTTPMethod.DELETE]: withWorkspacePermission([Role.ADMIN], async (req, res, user, workspace) => {
     const result = await prisma.workspace.delete({

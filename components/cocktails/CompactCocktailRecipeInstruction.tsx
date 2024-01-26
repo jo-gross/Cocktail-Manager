@@ -1,9 +1,9 @@
 import { CocktailRecipeFull } from '../../models/CocktailRecipeFull';
-import React from 'react';
-import { CocktailMixingTechnique } from '../../models/CocktailMixingTechnique';
-import { CocktailPouringTechnique } from '../../models/CocktailPouringTechnique';
+import React, { useContext } from 'react';
 import DefaultGlassIcon from '../DefaultGlassIcon';
 import Image from 'next/image';
+import { WorkspaceSettingKey } from '.prisma/client';
+import { UserContext } from '../../lib/context/UserContextProvider';
 
 interface CompactCocktailRecipeInstructionProps {
   cocktailRecipe: CocktailRecipeFull;
@@ -13,6 +13,8 @@ interface CompactCocktailRecipeInstructionProps {
 }
 
 export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeInstructionProps) {
+  const userContext = useContext(UserContext);
+
   return (
     <div className={'grid grid-cols-4 gap-1'}>
       <div className={`${props.showPrice ? 'col-span-2' : 'col-span-3'} text-xl font-bold`}>
@@ -38,18 +40,19 @@ export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeIns
       <div className={`${props.cocktailRecipe.image != undefined && props.showImage == true ? 'col-span-3' : 'col-span-4'}`}>
         {props.cocktailRecipe.steps
           ?.sort((a, b) => a.stepNumber - b.stepNumber)
-          .map((step, index) => (
+          ?.map((step, index) => (
             <div key={`step-${step.id}`} className={'break-words pb-2'}>
-              <span className={'font-bold'}>{step.mixing ? (CocktailMixingTechnique as any)[step.tool] : (CocktailPouringTechnique as any)[step.tool]}</span>
-              {step.mixing &&
-                step.ingredients
-                  ?.sort((a, b) => a.ingredientNumber - b.ingredientNumber)
-                  .map((ingredient, indexIngredient) => (
-                    <div key={`cocktail-${props.cocktailRecipe.id}-step-${step.id}-ingredient-${ingredient.id}-index-${indexIngredient}`}>
-                      {ingredient.amount ?? ''} {ingredient.unit ?? ''} {ingredient.ingredient?.shortName ?? ingredient.ingredient?.name ?? ''}{' '}
-                      {indexIngredient < step.ingredients.length - 1 ? <></> : <></>}
-                    </div>
-                  ))}
+              <span className={'font-bold'}>
+                {JSON.parse(userContext.workspace?.WorkspaceSetting[WorkspaceSettingKey.translations] ?? '{}')?.['de'][step.action?.name] ?? step.action?.name}
+              </span>
+              {step.ingredients
+                ?.sort((a, b) => a.ingredientNumber - b.ingredientNumber)
+                .map((ingredient, indexIngredient) => (
+                  <div key={`cocktail-${props.cocktailRecipe.id}-step-${step.id}-ingredient-${ingredient.id}-index-${indexIngredient}`}>
+                    {ingredient.amount ?? ''} {ingredient.unit ?? ''} {ingredient.ingredient?.shortName ?? ingredient.ingredient?.name ?? ''}{' '}
+                    {indexIngredient < step.ingredients.length - 1 ? <></> : <></>}
+                  </div>
+                ))}
             </div>
           ))}
       </div>

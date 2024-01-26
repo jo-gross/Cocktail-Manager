@@ -67,6 +67,11 @@ enum Setting {
   theme
 }
 
+enum WorkspaceSettingKey {
+  translations
+  usePrices
+}
+
 model UserSetting {
   userId String
 
@@ -77,6 +82,18 @@ model UserSetting {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([userId, setting])
+}
+
+model WorkspaceSetting {
+  workspaceId String
+
+  setting WorkspaceSettingKey
+
+  value String?
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@id([workspaceId, setting])
 }
 
 model VerificationToken {
@@ -114,18 +131,20 @@ model WorkspaceUser {
 }
 
 model Workspace {
-  id                  String                @id @default(cuid())
-  name                String
-  description         String?
-  image               String?
-  users               WorkspaceUser[]
-  Glass               Glass[]
-  Garnish             Garnish[]
-  CocktailRecipe      CocktailRecipe[]
-  Ingredient          Ingredient[]
-  CocktailCard        CocktailCard[]
-  CocktailCalculation CocktailCalculation[]
-  Signage             Signage[]
+  id                                String                              @id @default(cuid())
+  name                              String
+  description                       String?
+  image                             String?
+  users                             WorkspaceUser[]
+  Glass                             Glass[]
+  Garnish                           Garnish[]
+  CocktailRecipe                    CocktailRecipe[]
+  Ingredient                        Ingredient[]
+  CocktailCard                      CocktailCard[]
+  CocktailCalculation               CocktailCalculation[]
+  Signage                           Signage[]
+  WorkspaceCocktailRecipeStepAction WorkspaceCocktailRecipeStepAction[]
+  WorkspaceSetting                  WorkspaceSetting[]
 }
 
 model Signage {
@@ -194,13 +213,23 @@ model CocktailRecipeGarnish {
   @@id([garnishId, cocktailRecipeId])
 }
 
+model WorkspaceCocktailRecipeStepAction {
+  id                 String               @id @default(cuid())
+  name               String
+  actionGroup        String
+  workspaceId        String
+  workspace          Workspace            @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  CocktailRecipeStep CocktailRecipeStep[]
+
+  @@unique([workspaceId, name, actionGroup])
+}
+
 model CocktailRecipeStep {
   id         String @id @default(cuid())
   stepNumber Int
 
-  mixing Boolean
-
-  tool String
+  actionId String
+  action   WorkspaceCocktailRecipeStepAction @relation(fields: [actionId], references: [id], onDelete: Cascade)
 
   ingredients CocktailRecipeIngredient[]
 
