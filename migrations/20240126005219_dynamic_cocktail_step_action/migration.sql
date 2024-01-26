@@ -74,7 +74,7 @@ $$
 
                 INSERT INTO "WorkspaceSetting" ("workspaceId", "setting", "value")
                 VALUES (workspace_id, 'translations',
-                        '{"de": {"SHAKE": "Shaken", "STIR": "Rühren", "FLOAT": "Floaten", "BUILD_IN_GLASS": "Im Glas bauen", "BLENDER": "Im Blender", "MUDDLE": "Muddlen", "FOAM": "Aufschäumen", "SINGLE_STRAIN": "Single Strain", "DOUBLE_STRAIN": "Double Strain", "WITHOUT": "Einschänken", "DIRTY_ICE": "Dirty Ice", "MIXING": "Mixen", "POURING": "Einschenken"}}');
+                        '{"de": {"SHAKE": "Shaken", "STIR": "Rühren", "FLOAT": "Floaten", "BUILD_IN_GLASS": "Im Glas bauen", "BLENDER": "Im Blender", "MUDDLE": "Muddlen", "FOAM": "Aufschäumen", "SINGLE_STRAIN": "Single Strain", "DOUBLE_STRAIN": "Double Strain", "WITHOUT": "Einschenken", "DIRTY_ICE": "Dirty Ice", "MIXING": "Mixen", "POURING": "Einschenken"}}');
 
             END LOOP;
     END

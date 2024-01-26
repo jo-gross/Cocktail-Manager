@@ -94,7 +94,7 @@ export default withHttpMethods({
                 FOAM: 'Aufschäumen',
                 SINGLE_STRAIN: 'Single Strain',
                 DOUBLE_STRAIN: 'Double Strain',
-                WITHOUT: 'Einschänken',
+                WITHOUT: 'Einschenken',
                 DIRTY_ICE: 'Dirty Ice',
                 POURING: 'Einschenken',
                 MIXING: 'Mixen',
