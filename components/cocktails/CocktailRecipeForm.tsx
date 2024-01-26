@@ -670,61 +670,72 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                   <div className={'divider'}></div>
                   <div className={'grid grid-cols-2 gap-1'}>
                     <>
+                      <div className={'divider-sm col-span-2'}>Zutaten</div>
                       {(values.steps as CocktailRecipeStepFull[]).filter((step) => step.ingredients.some((ingredient) => ingredient.ingredient != undefined))
                         .length > 0 ? (
-                        (values.steps as CocktailRecipeStepFull[])
-                          .map((step) => step.ingredients.filter((ingredient) => ingredient.ingredient != undefined))
-                          .flat()
-                          ?.map((ingredient, indexIngredient) => (
-                            <>
-                              <div key={`price-calculation-step-${indexIngredient}-name`}>
-                                {ingredient.ingredient?.shortName ?? ingredient.ingredient?.name}
-                              </div>
-                              <div key={`price-calculation-step-${indexIngredient}-price`} className={'grid grid-cols-2'}>
-                                <div>
-                                  {ingredient.amount} x {((ingredient.ingredient?.price ?? 0) / (ingredient.ingredient?.volume ?? 1)).toFixed(2)}
-                                </div>
-                                <div className={'text-end'}>
-                                  {indexIngredient > 0 ? '+ ' : ''}
-                                  {(((ingredient.ingredient?.price ?? 0) / (ingredient.ingredient?.volume ?? 1)) * (ingredient.amount ?? 0)).toFixed(2)}€
-                                </div>
-                              </div>
-                            </>
-                          ))
+                        (values.garnishes as CocktailRecipeGarnishFull[]).length > 0 ? (
+                          <>
+                            {(values.steps as CocktailRecipeStepFull[])
+                              .map((step) => step.ingredients.filter((ingredient) => ingredient.ingredient != undefined))
+                              .flat()
+                              ?.map((ingredient, indexIngredient) => (
+                                <>
+                                  <div key={`price-calculation-step-${indexIngredient}-name`}>
+                                    {ingredient.ingredient?.shortName ?? ingredient.ingredient?.name}
+                                  </div>
+                                  <div key={`price-calculation-step-${indexIngredient}-price`} className={'grid grid-cols-2'}>
+                                    <div>
+                                      {ingredient.amount} x {((ingredient.ingredient?.price ?? 0) / (ingredient.ingredient?.volume ?? 1)).toFixed(2)}
+                                    </div>
+                                    <div className={'text-end'}>
+                                      {indexIngredient > 0 ? '+ ' : ''}
+                                      {(((ingredient.ingredient?.price ?? 0) / (ingredient.ingredient?.volume ?? 1)) * (ingredient.amount ?? 0)).toFixed(2)}€
+                                    </div>
+                                  </div>
+                                </>
+                              ))}
+                          </>
+                        ) : (
+                          <></>
+                        )
                       ) : (
-                        <></>
+                        <div className={'col-span-2 text-center font-thin italic'}>Keine Zutaten</div>
                       )}
-                      {values.garnish != null ? (
+
+                      <div className={'divider-sm col-span-2'}>Garnituren</div>
+                      {(values.garnishes as CocktailRecipeGarnishFull[]).length > 0 ? (
+                        <></>
+                      ) : (
+                        <div className={'col-span-2 text-center font-thin italic'}>Keine Garnituren</div>
+                      )}
+                      {(values.garnishes as CocktailRecipeGarnishFull[]).map((garnish) => (
                         <>
-                          <div key={`price-calculation-step-garnish-name`}>Garnitur: {values.garnish.name}</div>
+                          <div key={`price-calculation-step-garnish-name`}>{garnish.garnish.name}</div>
                           <div key={`price-calculation-step-garnish-price`} className={'grid grid-cols-2'}>
-                            <div>1 x {values.garnish.price.toFixed(2)}</div>
+                            <div>1 x {(garnish.garnish.price ?? 0).toFixed(2)}</div>
                             <div className={'text-end'}>
                               {(values.steps as CocktailRecipeStepFull[]).some((step) => step.ingredients.length > 0) ? '+ ' : ''}
-                              {(values.garnish?.price ?? 0).toFixed(2)}€
+                              {(garnish?.garnish.price ?? 0).toFixed(2)}€
                             </div>
                           </div>
                         </>
-                      ) : (
-                        <></>
-                      )}
+                      ))}
                     </>
+                    <div className={'divider-sm col-span-2'}></div>
                     <div className={'col-span-2 border-b border-base-200'}></div>
                     <div>Summe</div>
                     <div className={'grid grid-cols-3'}>
                       <div></div>
                       <div></div>
                       <div className={'text-end font-bold'}>
-                        {(values.steps as CocktailRecipeStepFull[]).filter((step) => step.ingredients.some((ingredient) => ingredient.ingredient != undefined))
-                          .length > 0
-                          ? (
-                              (values.steps as CocktailRecipeStepFull[])
-                                .map((step) => step.ingredients.filter((ingredient) => ingredient.ingredient != undefined))
-                                .flat()
-                                .map((ingredient) => ((ingredient.ingredient?.price ?? 0) / (ingredient.ingredient?.volume ?? 1)) * (ingredient.amount ?? 0))
-                                .reduce((summ, sum) => summ + sum) + (values.garnish?.price ?? 0)
-                            ).toFixed(2) + ' €'
-                          : '0.00 €'}
+                        {(
+                          (values.steps as CocktailRecipeStepFull[])
+                            .map((step) => step.ingredients.filter((ingredient) => ingredient.ingredient != undefined))
+                            .flat()
+                            .map((ingredient) => ((ingredient.ingredient?.price ?? 0) / (ingredient.ingredient?.volume ?? 1)) * (ingredient.amount ?? 0))
+                            .reduce((summ, sum) => summ + sum, 0) +
+                          (values.garnishes as CocktailRecipeGarnishFull[]).map((garnish) => garnish.garnish.price ?? 0).reduce((summ, sum) => summ + sum, 0)
+                        ).toFixed(2) + ' €'}
                       </div>
                     </div>
                   </div>
