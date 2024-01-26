@@ -31,6 +31,13 @@ CREATE TABLE "WorkspaceCocktailRecipeStepAction"
 -- CreateIndex
 CREATE UNIQUE INDEX "WorkspaceCocktailRecipeStepAction_workspaceId_name_actionGr_key" ON "WorkspaceCocktailRecipeStepAction" ("workspaceId", "name", "actionGroup");
 
+UPDATE "CocktailRecipeStep"
+SET tool = 'WITHOUT'
+WHERE tool = 'POUR';
+UPDATE "CocktailRecipeStep"
+SET tool = 'MUDDLE'
+WHERE tool = 'PESTLE';
+
 -- Create default actions for existing workspaces
 DO
 $$
