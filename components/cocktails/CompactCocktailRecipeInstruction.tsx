@@ -4,6 +4,7 @@ import DefaultGlassIcon from '../DefaultGlassIcon';
 import Image from 'next/image';
 import { WorkspaceSettingKey } from '.prisma/client';
 import { UserContext } from '../../lib/context/UserContextProvider';
+import { WorkspaceSetting } from '@prisma/client';
 
 interface CompactCocktailRecipeInstructionProps {
   cocktailRecipe: CocktailRecipeFull;
@@ -43,7 +44,10 @@ export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeIns
           ?.map((step, index) => (
             <div key={`step-${step.id}`} className={'break-words pb-2'}>
               <span className={'font-bold'}>
-                {JSON.parse(userContext.workspace?.WorkspaceSetting[WorkspaceSettingKey.translations] ?? '{}')?.['de'][step.action?.name] ?? step.action?.name}
+                {JSON.parse(
+                  (userContext.workspace?.WorkspaceSetting as WorkspaceSetting[]).find((setting) => setting.setting == WorkspaceSettingKey.translations)
+                    ?.value ?? '{}',
+                )['de'][step.action?.name] ?? step.action?.name}
               </span>
               {step.ingredients
                 ?.sort((a, b) => a.ingredientNumber - b.ingredientNumber)

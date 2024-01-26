@@ -5,7 +5,7 @@ import { TagsInput } from 'react-tag-input-component';
 import { Field, FieldArray, Formik, FormikProps } from 'formik';
 import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import { $Enums, Garnish, Glass, Ingredient, WorkspaceCocktailRecipeStepAction } from '@prisma/client';
+import { $Enums, Garnish, Glass, Ingredient, WorkspaceCocktailRecipeStepAction, WorkspaceSetting } from '@prisma/client';
 import { updateTags, validateTag } from '../../models/tags/TagUtils';
 import { UploadDropZone } from '../UploadDropZone';
 import { convertToBase64 } from '../../lib/Base64Converter';
@@ -794,17 +794,22 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                     <optgroup
                                       key={`form-recipe-step-${step.id}-action-group-${group}`}
                                       label={
-                                        JSON.parse(userContext.workspace?.WorkspaceSetting[WorkspaceSettingKey.translations])?.['de']?.[group] ??
-                                        `Test-${group}`
+                                        JSON.parse(
+                                          (userContext.workspace?.WorkspaceSetting as WorkspaceSetting[]).find(
+                                            (setting) => setting.setting == WorkspaceSettingKey.translations,
+                                          )?.value ?? '{}',
+                                        )['de'][step.action?.name] ?? step.action?.name
                                       }
                                     >
                                       {groupActions
                                         .sort((a, b) => a.name.localeCompare(b.name))
                                         .map((action) => (
                                           <option key={`form-recipe-step-${step.id}-action-${action.id}`} value={action.id}>
-                                            {JSON.parse(userContext.workspace?.WorkspaceSetting[WorkspaceSettingKey.translations] ?? '{}')?.['de'][
-                                              action.name
-                                            ] ?? action.name}
+                                            {JSON.parse(
+                                              (userContext.workspace?.WorkspaceSetting as WorkspaceSetting[]).find(
+                                                (setting) => setting.setting == WorkspaceSettingKey.translations,
+                                              )?.value ?? '{}',
+                                            )['de'][action.name] ?? action.name}
                                           </option>
                                         ))}
                                       )
