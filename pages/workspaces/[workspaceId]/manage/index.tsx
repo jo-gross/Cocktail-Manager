@@ -8,6 +8,10 @@ import LoadingText from '../../../../components/LoadingText';
 import Link from 'next/link';
 import AvatarImage from '../../../../components/AvatarImage';
 import { Role } from '@prisma/client';
+import { FaCalculator, FaCocktail, FaGlassMartiniAlt } from 'react-icons/fa';
+import { LuCitrus } from 'react-icons/lu';
+import { PiBeerBottleBold, PiCards } from 'react-icons/pi';
+import { FaGear } from 'react-icons/fa6';
 
 export default function ManagePage() {
   const router = useRouter();
@@ -78,15 +82,17 @@ export default function ManagePage() {
         ]}
       >
         <div className={'grid grid-cols-1 gap-2 md:grid-cols-2 md:gap-4'}>
-          <ManageCard title={'Cocktails'} link={`/workspaces/${workspaceId}/manage/cocktails`} />
-          <ManageCard title={'Karten'} link={`/workspaces/${workspaceId}/manage/cards`} />
-          <ManageCard title={'Zutaten'} link={`/workspaces/${workspaceId}/manage/ingredients`} />
-          <ManageCard title={'Garnituren'} link={`/workspaces/${workspaceId}/manage/garnishes`} />
-          <ManageCard title={'Gläser'} link={`/workspaces/${workspaceId}/manage/glasses`} />
+          <ManageCard icon={<FaCocktail />} title={'Cocktails'} link={`/workspaces/${workspaceId}/manage/cocktails`} />
+          <ManageCard icon={<PiCards />} title={'Karten'} link={`/workspaces/${workspaceId}/manage/cards`} />
+          <ManageCard icon={<PiBeerBottleBold />} title={'Zutaten'} link={`/workspaces/${workspaceId}/manage/ingredients`} />
+          <ManageCard icon={<LuCitrus />} title={'Garnituren'} link={`/workspaces/${workspaceId}/manage/garnishes`} />
+          <ManageCard icon={<FaGlassMartiniAlt />} title={'Gläser'} link={`/workspaces/${workspaceId}/manage/glasses`} />
           <>
-            {userContext.isUserPermitted(Role.MANAGER) && <ManageCard title={'Workspace-Einstellungen'} link={`/workspaces/${workspaceId}/manage/settings`} />}
+            {userContext.isUserPermitted(Role.MANAGER) && (
+              <ManageCard icon={<FaGear />} title={'Workspace-Einstellungen'} link={`/workspaces/${workspaceId}/manage/settings`} />
+            )}
           </>
-          <ManageCard title={'Kalkulation'} link={`/workspaces/${workspaceId}/manage/calculations`} />
+          <ManageCard icon={<FaCalculator />} title={'Kalkulation'} link={`/workspaces/${workspaceId}/manage/calculations`} />
         </div>
       </ManageEntityLayout>
     </>
