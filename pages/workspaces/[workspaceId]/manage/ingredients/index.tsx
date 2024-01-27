@@ -92,15 +92,15 @@ export default function IngredientsOverviewPage() {
                     .map((ingredient) => (
                       <tr key={ingredient.id}>
                         <td className={''}>
-                          {ingredient.image ? (
-                            <div className="flex items-center space-x-3">
-                              <div className="h-12 w-12">
-                                <AvatarImage src={ingredient.image} alt={'Cocktail'} />
-                              </div>
+                          <div className="flex items-center space-x-3">
+                            <div className="h-12 w-12">
+                              <AvatarImage
+                                src={`/api/workspaces/${ingredient.workspaceId}/ingredients/${ingredient.id}/image`}
+                                alt={'Zutat'}
+                                altComponent={<></>}
+                              />
                             </div>
-                          ) : (
-                            <></>
-                          )}
+                          </div>
                         </td>
                         <td className={''}>{ingredient.name}</td>
                         <td>{ingredient.shortName}</td>

@@ -7,9 +7,10 @@ import { useContext } from 'react';
 import { CocktailPouringTechnique } from '../../models/CocktailPouringTechnique';
 import { useRouter } from 'next/router';
 import { UserContext } from '../../lib/context/UserContextProvider';
-import Image from 'next/image';
 import DefaultGlassIcon from '../DefaultGlassIcon';
 import { Role } from '@prisma/client';
+import CustomImage from '../CustomImage';
+import NextImage from '../NextImage';
 
 interface CocktailDetailModalProps {
   cocktail: CocktailRecipeFull;
@@ -46,11 +47,13 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
             ))}
           </div>
           <div className={'col-span-2 flex flex-row space-x-2'}>
-            {props.cocktail.image != undefined ? (
-              <img className={'h-full w-36 flex-none rounded-lg object-cover object-center shadow-md'} src={props.cocktail.image} alt={'Cocktail'} />
-            ) : (
-              <></>
-            )}
+            <CustomImage
+              className={'h-full w-36 flex-none rounded-lg object-cover object-center shadow-md'}
+              src={`/api/workspaces/${props.cocktail.workspaceId}/cocktails/${props.cocktail.id}/image`}
+              alt={'Cocktail'}
+              altComponent={<></>}
+            />
+
             <div className={'form-control w-full'}>
               <label className={'label'}>
                 <span className={'label-text'}>Beschreibung</span>
@@ -61,11 +64,13 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
           <div className={'col-span-1'}>
             Glas: {props.cocktail.glass?.name}
             <div className={'h-16 w-16'}>
-              {props.cocktail.glass?.image != undefined ? (
-                <Image src={props.cocktail.glass.image} alt={'Glas'} width={300} height={300} />
-              ) : (
-                <DefaultGlassIcon />
-              )}
+              <NextImage
+                src={`/api/workspaces/${props.cocktail.workspaceId}/glasses/${props.cocktail.glass?.id}/image`}
+                alt={'Glas'}
+                width={300}
+                height={300}
+                altComponent={<DefaultGlassIcon />}
+              />
             </div>
           </div>
           <div className={'col-span-1'}>Eis: {props.cocktail.glassWithIce}</div>
@@ -85,11 +90,12 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                             {ingredient.amount} {ingredient.unit}
                           </div>
                           <span>{ingredient.ingredient?.name}</span>
-                          {ingredient.ingredient?.image != undefined ? (
-                            <img src={ingredient.ingredient.image} alt={''} className={'avatar h-16 object-cover'} />
-                          ) : (
-                            <></>
-                          )}
+                          <CustomImage
+                            src={`/api/workspaces/${props.cocktail.workspaceId}/ingredients/${ingredient.ingredient?.id}/image`}
+                            altComponent={<></>}
+                            className={'h-16 rounded-full object-cover'}
+                            alt={''}
+                          />
                         </div>
                       </div>
                       <div>
@@ -113,21 +119,22 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                   className={'col-span-2 flex flex-col space-y-2 rounded-lg border-2 border-base-300 p-2'}
                 >
                   <div className={'text-xl font-bold'}>{garnish?.garnish?.name ?? 'Keine'}</div>
-                  {garnish.description == undefined || garnish.description.trim() == '' ? <></> : <div>{garnish.description}</div>}
-
-                  {garnish?.garnish?.description == undefined && garnish?.garnish?.image == undefined ? (
+                  <div className={'flex flex-row items-center'}>
+                    <CustomImage
+                      alt={'Deko'}
+                      className={'avatar h-16 object-contain'}
+                      src={`/api/workspaces/${garnish.garnish.workspaceId}/garnishes/${garnish.garnish.id}/image`}
+                    />
+                    {garnish.description == undefined || garnish.description.trim() == '' ? <></> : <div>{garnish.description}</div>}
+                  </div>
+                  {garnish?.garnish?.description == undefined ? (
                     <></>
                   ) : (
                     <>
                       <div className={'divider'}>Allgemeine Infos</div>
 
                       <div className={'flex flex-row'}>
-                        {garnish?.garnish?.description != undefined ? <span className={'flex-1'}>{garnish?.garnish?.description}</span> : <></>}
-                        {garnish?.garnish?.image != undefined ? (
-                          <img src={garnish.garnish?.image} alt={'Deko'} className={'avatar h-16 object-cover'} />
-                        ) : (
-                          <></>
-                        )}
+                        <span className={'flex-1'}>{garnish?.garnish?.description}</span>
                       </div>
                     </>
                   )}

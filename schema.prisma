@@ -142,12 +142,18 @@ model Glass {
   id             String           @id @default(cuid())
   name           String
   volume         Float?
-  image          String?
   deposit        Float
   CocktailRecipe CocktailRecipe[]
 
-  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspace  Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   workspaceId String
+  GlassImage GlassImage[]
+}
+
+model GlassImage {
+  image   String
+  glass   Glass  @relation(fields: [glassId], references: [id], onDelete: Cascade)
+  glassId String @id
 }
 
 model Garnish {
@@ -155,11 +161,17 @@ model Garnish {
   name                    String
   description             String?
   price                   Float?
-  image                   String?
   CocktailRecipeGarnishes CocktailRecipeGarnish[]
 
-  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  workspaceId String
+  workspace    Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspaceId  String
+  GarnishImage GarnishImage[]
+}
+
+model GarnishImage {
+  image     String
+  garnish   Garnish @relation(fields: [garnishId], references: [id], onDelete: Cascade)
+  garnishId String  @id
 }
 
 model CocktailRecipe {
@@ -167,7 +179,6 @@ model CocktailRecipe {
   name                  String
   description           String?
   tags                  String[]
-  image                 String?
   price                 Float?
   glassWithIce          String
   glassId               String?
@@ -179,6 +190,13 @@ model CocktailRecipe {
   workspace                Workspace                  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   workspaceId              String
   CocktailCalculationItems CocktailCalculationItems[]
+  CocktailRecipeImage CocktailRecipeImage[]
+}
+
+model CocktailRecipeImage {
+  image            String
+  cocktailRecipe   CocktailRecipe @relation(fields: [cocktailRecipeId], references: [id], onDelete: Cascade)
+  cocktailRecipeId String         @id
 }
 
 model CocktailRecipeGarnish {
@@ -228,12 +246,18 @@ model Ingredient {
   volume                   Float?
   unit                     String?
   link                     String?
-  image                    String?
   tags                     String[]
   CocktailRecipeIngredient CocktailRecipeIngredient[]
 
-  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  workspaceId String
+  workspace       Workspace         @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspaceId     String
+  IngredientImage IngredientImage[]
+}
+
+model IngredientImage {
+  image        String
+  ingredient   Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+  ingredientId String     @id
 }
 
 model CocktailCard {

@@ -1,6 +1,5 @@
 import { CocktailRecipeForm } from '../../../../../components/cocktails/CocktailRecipeForm';
 import { ManageEntityLayout } from '../../../../../components/layout/ManageEntityLayout';
-import { CocktailRecipeFull } from '../../../../../models/CocktailRecipeFull';
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
 import { Loading } from '../../../../../components/Loading';
@@ -8,12 +7,13 @@ import { alertService } from '../../../../../lib/alertService';
 import { withPagePermission } from '../../../../../middleware/ui/withPagePermission';
 import { Role } from '@prisma/client';
 import { FormikProps } from 'formik';
+import { CocktailRecipeFullWithImage } from '../../../../../models/CocktailRecipeFullWithImage';
 
 function EditCocktailRecipe() {
   const router = useRouter();
   const { id, workspaceId } = router.query;
 
-  const [cocktailRecipe, setCocktailRecipe] = useState<CocktailRecipeFull | undefined>(undefined);
+  const [cocktailRecipe, setCocktailRecipe] = useState<CocktailRecipeFullWithImage | undefined>(undefined);
   const [loading, setLoading] = useState(true);
 
   const [unsavedChanges, setUnsavedChanges] = useState(false);

@@ -1,10 +1,10 @@
-import prisma from '../../../../../lib/prisma';
+import prisma from '../../../../../../lib/prisma';
 
 import { NextApiRequest, NextApiResponse } from 'next';
 import HTTPMethod from 'http-method-enum';
-import { withWorkspacePermission } from '../../../../../middleware/api/authenticationMiddleware';
+import { withWorkspacePermission } from '../../../../../../middleware/api/authenticationMiddleware';
 import { Prisma, Role, Workspace } from '@prisma/client';
-import { withHttpMethods } from '../../../../../middleware/api/handleMethods';
+import { withHttpMethods } from '../../../../../../middleware/api/handleMethods';
 import IngredientUpdateInput = Prisma.IngredientUpdateInput;
 
 export default withHttpMethods({
@@ -16,6 +16,13 @@ export default withHttpMethods({
       data: await prisma.ingredient.findUnique({
         where: {
           id: ingredientId,
+        },
+        include: {
+          IngredientImage: {
+            select: {
+              image: true,
+            },
+          },
         },
       }),
     });
@@ -32,19 +39,35 @@ export default withHttpMethods({
       price: price,
       link: link,
       tags: tags,
-      image: image,
       workspace: {
         connect: {
           id: workspace.id,
         },
       },
     };
+
     const result = await prisma.ingredient.update({
       where: {
         id: id,
       },
       data: input,
     });
+
+    await prisma.ingredientImage.deleteMany({
+      where: {
+        ingredientId: id,
+      },
+    });
+
+    if (image) {
+      await prisma.ingredientImage.create({
+        data: {
+          ingredientId: id,
+          image: image,
+        },
+      });
+    }
+
     return res.json({ data: result });
   }),
   [HTTPMethod.DELETE]: withWorkspacePermission([Role.ADMIN], async (req: NextApiRequest, res: NextApiResponse) => {

@@ -42,7 +42,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       };
 
       return res.json(result);
-    } else if (req.query?.url?.includes('expert24.com')) {
+    } else if (req.query?.url?.includes('expert24.com') || req.query?.url?.includes('delicando.com')) {
       console.log(req.query.url);
       const response = await fetch(req.query.url as string);
       console.log(response.status + ' ' + response.statusText);

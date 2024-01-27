@@ -7,19 +7,19 @@ import prisma from '../../../../../../lib/prisma';
 
 export default withHttpMethods({
   [HTTPMethod.GET]: withWorkspacePermission([Role.USER], async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
-    const cocktailId = req.query.cocktailId as string | undefined;
-    if (!cocktailId) return res.status(400).json({ message: 'No cocktail id' });
+    const garnishId = req.query.garnishId as string | undefined;
+    if (!garnishId) return res.status(400).json({ message: 'No garnish id' });
 
-    const result = await prisma.cocktailRecipeImage.findFirst({
+    const result = await prisma.garnishImage.findFirst({
       where: {
-        cocktailRecipeId: cocktailId,
+        garnishId: garnishId,
       },
       select: {
         image: true,
       },
     });
 
-    if (result?.image == null) return res.status(404).json({ message: 'No cocktail image found' });
+    if (result?.image == null) return res.status(404).json({ message: 'No garnish image found' });
 
     const type = result.image.split(';')[0].split(':')[1];
     const decoded = result.image.split(',')[1];

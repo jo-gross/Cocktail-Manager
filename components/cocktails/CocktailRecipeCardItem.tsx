@@ -2,6 +2,7 @@ import { CocktailRecipeFull } from '../../models/CocktailRecipeFull';
 import React from 'react';
 import { CompactCocktailRecipeInstruction } from './CompactCocktailRecipeInstruction';
 import { ShowCocktailInfoButton } from './ShowCocktailInfoButton';
+import CustomImage from '../CustomImage';
 
 interface CocktailRecipeOverviewItemProps {
   cocktailRecipe: CocktailRecipeFull;
@@ -11,9 +12,10 @@ interface CocktailRecipeOverviewItemProps {
   showInfo?: boolean;
   showTags?: boolean;
   showImageSide?: boolean;
+  image?: string;
 }
 
-export default function CocktailRecipeOverviewItem(props: CocktailRecipeOverviewItemProps) {
+export default function CocktailRecipeCardItem(props: CocktailRecipeOverviewItemProps) {
   return (
     <div className={'col-span-1'}>
       <div className={'card card-side h-full'}>
@@ -24,6 +26,7 @@ export default function CocktailRecipeOverviewItem(props: CocktailRecipeOverview
             showImage={!(props.showImageSide == true) && (props.showImage ?? false)}
             showPrice={props.showPrice ?? true}
             cocktailRecipe={props.cocktailRecipe}
+            image={props.image}
           />
           <div className={'h-full'}></div>
           <div className={'bottom-0'}>
@@ -38,10 +41,13 @@ export default function CocktailRecipeOverviewItem(props: CocktailRecipeOverview
             )}
           </div>
         </div>
-        {props.showImageSide && props.showImage && props.cocktailRecipe.image != '' && props.cocktailRecipe.image != undefined ? (
-          <figure>
-            <img className={' object-fit h-full w-36 object-center shadow-md'} src={props.cocktailRecipe.image} alt={'Cocktail'} />
-          </figure>
+        {props.showImageSide && props.showImage ? (
+          <CustomImage
+            className={' object-fit h-full w-36 object-center shadow-md'}
+            src={`/api/workspaces/${props.cocktailRecipe.workspaceId}/cocktails/${props.cocktailRecipe.id}/image`}
+            alt={'Cocktail'}
+            imageWrapper={(children) => <figure>{children}</figure>}
+          />
         ) : (
           <></>
         )}

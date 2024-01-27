@@ -1,4 +1,3 @@
-import { CocktailRecipeFull, CocktailRecipeFullSchema } from '../../models/CocktailRecipeFull';
 import { IceType } from '../../models/IceType';
 import { FaAngleDown, FaAngleUp, FaEuroSign, FaPlus, FaSearch, FaTrashAlt } from 'react-icons/fa';
 import { TagsInput } from 'react-tag-input-component';
@@ -13,7 +12,7 @@ import { CocktailMixingTechnique } from '../../models/CocktailMixingTechnique';
 import { CocktailPouringTechnique } from '../../models/CocktailPouringTechnique';
 import { CocktailIngredientUnit } from '../../models/CocktailIngredientUnit';
 import { CocktailRecipeStepFull } from '../../models/CocktailRecipeStepFull';
-import CocktailRecipeOverviewItem from './CocktailRecipeOverviewItem';
+import CocktailRecipeCardItem from './CocktailRecipeCardItem';
 import { alertService } from '../../lib/alertService';
 import { CocktailRecipeGarnishFull } from '../../models/CocktailRecipeGarnishFull';
 import { DeleteConfirmationModal } from '../modals/DeleteConfirmationModal';
@@ -25,9 +24,10 @@ import FormModal from '../modals/FormModal';
 import { GarnishForm } from '../garnishes/GarnishForm';
 import { IngredientForm } from '../ingredients/IngredientForm';
 import { GlassForm } from '../glasses/GlassForm';
+import { CocktailRecipeFullWithImage } from '../../models/CocktailRecipeFullWithImage';
 
 interface CocktailRecipeFormProps {
-  cocktailRecipe?: CocktailRecipeFull;
+  cocktailRecipe?: CocktailRecipeFullWithImage;
   setUnsavedChanges?: (unsavedChanges: boolean) => void;
   formRef: React.RefObject<FormikProps<any>>;
 }
@@ -231,14 +231,14 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
 
   const initSteps: CocktailRecipeStepFull[] = props.cocktailRecipe?.steps ?? [];
 
-  const initValue: CocktailRecipeFullSchema = {
+  const initValue = {
     id: props.cocktailRecipe?.id ?? '',
     name: props.cocktailRecipe?.name ?? '',
     description: props.cocktailRecipe?.description ?? '',
     price: props.cocktailRecipe?.price ?? 0,
     tags: props.cocktailRecipe?.tags ?? [],
     glassWithIce: props.cocktailRecipe?.glassWithIce ?? IceType.Without,
-    image: props.cocktailRecipe?.image ?? null,
+    image: props.cocktailRecipe?.CocktailRecipeImage[0]?.image ?? undefined,
     glassId: props.cocktailRecipe?.glassId ?? null,
     glass: glasses.find((g) => g.id == props.cocktailRecipe?.glassId) ?? null,
     garnishes: props.cocktailRecipe?.garnishes ?? [],
@@ -634,10 +634,10 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                       />
                     </label>
                   </div>
-                  <CocktailRecipeOverviewItem
+                  <CocktailRecipeCardItem
+                    image={values.image}
                     cocktailRecipe={{
                       id: values.id,
-                      image: values.image ?? null,
                       name: values.name,
                       description: values.description,
                       tags: values.tags,

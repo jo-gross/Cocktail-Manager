@@ -2,18 +2,19 @@ import { GarnishForm } from '../../../../../components/garnishes/GarnishForm';
 import { ManageEntityLayout } from '../../../../../components/layout/ManageEntityLayout';
 import { useRouter } from 'next/router';
 import { useEffect, useRef, useState } from 'react';
-import { Garnish, Role } from '@prisma/client';
+import { Role } from '@prisma/client';
 import { Loading } from '../../../../../components/Loading';
 import { alertService } from '../../../../../lib/alertService';
 import { withPagePermission } from '../../../../../middleware/ui/withPagePermission';
 import { FormikProps } from 'formik';
 import { SingleFormLayout } from '../../../../../components/layout/SingleFormLayout';
+import { GarnishWithImage } from '../../../../../models/GarnishWithImage';
 
 function EditGarnishPage() {
   const router = useRouter();
   const { id, workspaceId } = router.query;
 
-  const [garnish, setGarnish] = useState<Garnish | undefined>(undefined);
+  const [garnish, setGarnish] = useState<GarnishWithImage | undefined>(undefined);
   const [loading, setLoading] = useState(true);
 
   const [unsavedChanges, setUnsavedChanges] = useState(false);
