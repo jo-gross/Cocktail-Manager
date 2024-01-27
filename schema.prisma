@@ -145,9 +145,9 @@ model Glass {
   deposit        Float
   CocktailRecipe CocktailRecipe[]
 
-  workspace  Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspace   Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   workspaceId String
-  GlassImage GlassImage[]
+  GlassImage  GlassImage[]
 }
 
 model GlassImage {
@@ -190,7 +190,7 @@ model CocktailRecipe {
   workspace                Workspace                  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   workspaceId              String
   CocktailCalculationItems CocktailCalculationItems[]
-  CocktailRecipeImage CocktailRecipeImage[]
+  CocktailRecipeImage      CocktailRecipeImage[]
 }
 
 model CocktailRecipeImage {
