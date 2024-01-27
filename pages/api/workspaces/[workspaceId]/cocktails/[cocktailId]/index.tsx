@@ -67,70 +67,71 @@ export default withHttpMethods({
       },
     });
 
-    await prisma.cocktailRecipeGarnish.deleteMany({
-      where: {
-        cocktailRecipe: {
+      await prisma.cocktailRecipeGarnish.deleteMany({
+        where: {
+          cocktailRecipe: {
+            id: cocktailId,
+          },
+        },
+      });
+
+      await prisma.cocktailRecipeStep.deleteMany({
+        where: {
+          cocktailRecipe: {
+            id: cocktailId,
+          },
+        },
+      });
+
+      const result = await prisma.cocktailRecipe.update({
+        where: {
           id: cocktailId,
         },
-      },
-    });
-
-    await prisma.cocktailRecipeStep.deleteMany({
-      where: {
-        cocktailRecipe: {
-          id: cocktailId,
-        },
-      },
-    });
-
-    const result = await prisma.cocktailRecipe.update({
-      where: {
-        id: cocktailId,
-      },
-      data: input,
-    });
-
-    if (steps.length > 0 && result != undefined) {
-      await steps.forEach(async (step: CocktailRecipeStepFull) => {
-        await prisma.cocktailRecipeStep.create({
-          data: {
-            mixing: step.mixing,
-            tool: step.tool,
-            stepNumber: step.stepNumber,
-            cocktailRecipe: { connect: { id: result!.id } },
-            ingredients: step.mixing
-              ? {
-                  create: step.ingredients.map((ingredient) => {
-                    return {
-                      amount: ingredient.amount,
-                      ingredientNumber: ingredient.ingredientNumber,
-                      unit: ingredient.unit,
-                      ingredient: { connect: { id: ingredient.ingredientId } },
-                    };
-                  }),
-                }
-              : undefined,
-          },
-        });
+        data: input,
       });
-    }
-    console.log(garnishes);
-    if (garnishes.length > 0 && result != undefined) {
-      await garnishes.forEach(async (garnish: CocktailRecipeGarnishFull) => {
-        await prisma.cocktailRecipeGarnish.create({
-          data: {
-            cocktailRecipe: { connect: { id: result!.id } },
-            garnish: { connect: { id: garnish.garnishId } },
-            garnishNumber: garnish.garnishNumber,
-            description: garnish.description,
-            optional: garnish.optional,
-          },
-        });
-      });
-    }
 
-    return res.json(result);
-  }),
+      if (steps.length > 0 && result != undefined) {
+        await steps.forEach(async (step: CocktailRecipeStepFull) => {
+          await prisma.cocktailRecipeStep.create({
+            data: {
+              mixing: step.mixing,
+              tool: step.tool,
+              stepNumber: step.stepNumber,
+              cocktailRecipe: { connect: { id: result!.id } },
+              ingredients: step.mixing
+                ? {
+                    create: step.ingredients.map((ingredient) => {
+                      return {
+                        amount: ingredient.amount,
+                        ingredientNumber: ingredient.ingredientNumber,
+                        unit: ingredient.unit,
+                        ingredient: { connect: { id: ingredient.ingredientId } },
+                      };
+                    }),
+                  }
+                : undefined,
+            },
+          });
+        });
+      }
+      console.log(garnishes);
+      if (garnishes.length > 0 && result != undefined) {
+        await garnishes.forEach(async (garnish: CocktailRecipeGarnishFull) => {
+          await prisma.cocktailRecipeGarnish.create({
+            data: {
+              cocktailRecipe: { connect: { id: result!.id } },
+              garnish: { connect: { id: garnish.garnishId } },
+              garnishNumber: garnish.garnishNumber,
+              description: garnish.description,
+              optional: garnish.optional,
+            },
+          });
+        });
+      }
+
+      return res.json(result);
+    },
+  ),
   [HTTPMethod.DELETE]: withWorkspacePermission([Role.ADMIN], async (req: NextApiRequest, res: NextApiResponse) => {
     const cocktailId = req.query.cocktailId as string | undefined;
     if (!cocktailId) return res.status(400).json({ message: 'No cocktail id' });
