@@ -26,7 +26,7 @@
     "next": "14.0.4",
     "next-auth": "4.24.5",
     "node-html-parser": "6.1.12",
-    "playwright": "1.40.1",
+    "playwright": "1.41.1",
     "react": "18.2.0",
     "react-device-detect": "^2.2.3",
     "react-dom": "18.2.0",
