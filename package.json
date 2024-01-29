@@ -44,7 +44,7 @@
     "@types/react-is": "18.2.4",
     "autoprefixer": "10.4.16",
     "daisyui": "4.6.0",
-    "eslint": "8.55.0",
+    "eslint": "8.56.0",
     "eslint-config-next": "14.0.4",
     "eslint-config-prettier": "^9.1.0",
     "postcss": "8.4.32",
