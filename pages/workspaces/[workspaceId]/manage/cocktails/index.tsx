@@ -58,7 +58,7 @@ export default function CocktailsOverviewPage() {
       <div className={'card'}>
         <div className={'card-body'}>
           <div className="overflow-x-auto">
-            <table className="table-compact table w-full">
+            <table className="table-compact table table-zebra w-full">
               <thead>
                 <tr>
                   <th className=""></th>
