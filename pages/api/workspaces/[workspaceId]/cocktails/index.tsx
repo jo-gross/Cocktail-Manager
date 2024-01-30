@@ -23,6 +23,7 @@ export default withHttpMethods({
         garnishes: { include: { garnish: true } },
         steps: {
           include: {
+            action: true,
             ingredients: {
               include: {
                 ingredient: true,
@@ -90,22 +91,19 @@ export default withHttpMethods({
       await steps.forEach(async (step: CocktailRecipeStepFull) => {
         await prisma.cocktailRecipeStep.create({
           data: {
-            mixing: step.mixing,
-            tool: step.tool,
+            action: { connect: { id: step.actionId } },
             stepNumber: step.stepNumber,
             cocktailRecipe: { connect: { id: result!.id } },
-            ingredients: step.mixing
-              ? {
-                  create: step.ingredients.map((ingredient) => {
-                    return {
-                      amount: ingredient.amount,
-                      ingredientNumber: ingredient.ingredientNumber,
-                      unit: ingredient.unit,
-                      ingredient: { connect: { id: ingredient.ingredientId } },
-                    };
-                  }),
-                }
-              : undefined,
+            ingredients: {
+              create: step.ingredients.map((ingredient) => {
+                return {
+                  amount: ingredient.amount,
+                  ingredientNumber: ingredient.ingredientNumber,
+                  unit: ingredient.unit,
+                  ingredient: { connect: { id: ingredient.ingredientId } },
+                };
+              }),
+            },
           },
         });
       });

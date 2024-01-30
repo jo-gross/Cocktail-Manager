@@ -24,6 +24,8 @@ export default withWorkspacePermission([Role.USER], async (req: NextApiRequest, 
       await prisma.$transaction(async (transaction) => {
         const data: BackupStructure = JSON.parse(await req.body);
 
+        const actions = await transaction.workspaceCocktailRecipeStepAction.findMany({ where: { workspaceId } });
+
         const garnishMapping: { id: string; newId: string }[] = [];
         const garnishImageMapping: { garnishId: string; image: string }[] = [];
         if (data.garnish?.length > 0) {
@@ -118,7 +120,19 @@ export default withWorkspacePermission([Role.USER], async (req: NextApiRequest, 
             g.cocktailRecipeId = cocktailRecipeMapping.find((gm) => gm.id === g.cocktailRecipeId)?.newId!;
             cocktailRecipeStepMapping.push(cocktailRecipeStepMappingItem);
           });
-          await transaction.cocktailRecipeStep.createMany({ data: data.cocktailRecipeStep, skipDuplicates: true });
+          const cocktailRecipeSteps = data.cocktailRecipeStep?.map((step) => {
+            if (step.actionId == undefined) {
+              return {
+                id: step.id,
+                stepNumber: step.stepNumber,
+                cocktailRecipeId: step.cocktailRecipeId,
+                // @ts-ignore - For old versions, where the actionId does not exist
+                actionId: actions.find((action) => action.name == (step.tool == 'PESTLE' ? 'MUDDLE' : step.tool == 'POUR' ? 'WITHOUT' : step.tool))?.id!,
+              };
+            }
+            return step;
+          });
+          await transaction.cocktailRecipeStep.createMany({ data: cocktailRecipeSteps, skipDuplicates: true });
         }
 
         if (data.cocktailRecipeGarnish?.length > 0) {

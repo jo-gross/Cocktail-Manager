@@ -34,6 +34,7 @@ export default withHttpMethods({
                     },
                     steps: {
                       include: {
+                        action: true,
                         ingredients: {
                           include: {
                             ingredient: true,

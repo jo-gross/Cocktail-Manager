@@ -1,9 +1,10 @@
 import { createContext } from 'react';
-import { Role, User, UserSetting, Workspace } from '@prisma/client';
+import { Role, User, UserSetting } from '@prisma/client';
+import { WorkspaceFull } from '../../models/WorkspaceFull';
 
 interface UserContextProps {
   user: (User & { settings: UserSetting[] }) | undefined;
-  workspace: Workspace | undefined;
+  workspace: WorkspaceFull | undefined;
 
   refreshUser: () => void;
   workspaceRefreshing: boolean;

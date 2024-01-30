@@ -16,6 +16,7 @@ export type CocktailCardFull = Prisma.CocktailCardGetPayload<{
                 };
                 steps: {
                   include: {
+                    action: true;
                     ingredients: {
                       include: {
                         ingredient: true;

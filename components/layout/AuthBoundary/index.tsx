@@ -1,11 +1,12 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { signOut, useSession } from 'next-auth/react';
-import { Role, User, UserSetting, Workspace, WorkspaceUser } from '@prisma/client';
+import { Role, User, UserSetting, WorkspaceUser } from '@prisma/client';
 import { PageCenter } from '../PageCenter';
 import { Loading } from '../../Loading';
 import { UserContext } from '../../../lib/context/UserContextProvider';
 import { alertService } from '../../../lib/alertService';
 import { useRouter } from 'next/router';
+import { WorkspaceFull } from '../../../models/WorkspaceFull';
 
 interface AlertBoundaryProps {
   children: React.ReactNode;
@@ -16,7 +17,7 @@ export function AuthBoundary(props: AlertBoundaryProps) {
   const [user, setUser] = useState<(User & { settings: UserSetting[] }) | undefined>();
   const [userLoading, setUserLoading] = useState<boolean>(false);
 
-  const [workspace, setWorkspace] = useState<(Workspace & { users: WorkspaceUser[] }) | undefined>();
+  const [workspace, setWorkspace] = useState<(WorkspaceFull & { users: WorkspaceUser[] }) | undefined>();
   const [workspaceLoading, setWorkspaceLoading] = useState<boolean>(false);
 
   const router = useRouter();

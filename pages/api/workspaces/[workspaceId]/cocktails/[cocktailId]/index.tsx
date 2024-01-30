@@ -6,6 +6,7 @@ import HTTPMethod from 'http-method-enum';
 import { withHttpMethods } from '../../../../../../middleware/api/handleMethods';
 import { CocktailRecipeStepFull } from '../../../../../../models/CocktailRecipeStepFull';
 import { CocktailRecipeGarnishFull } from '../../../../../../models/CocktailRecipeGarnishFull';
+import { CocktailRecipeFullWithImage } from '../../../../../../models/CocktailRecipeFullWithImage';
 import CocktailRecipeUpdateInput = Prisma.CocktailRecipeUpdateInput;
 
 export default withHttpMethods({
@@ -13,7 +14,7 @@ export default withHttpMethods({
     const cocktailId = req.query.cocktailId as string | undefined;
     if (!cocktailId) return res.status(400).json({ message: 'No cocktail id' });
 
-    const result = await prisma.cocktailRecipe.findFirst({
+    const result: CocktailRecipeFullWithImage | null = await prisma.cocktailRecipe.findFirst({
       where: {
         id: cocktailId,
         workspaceId: workspace.id,
@@ -32,6 +33,7 @@ export default withHttpMethods({
         },
         steps: {
           include: {
+            action: true,
             ingredients: {
               include: {
                 ingredient: true,
@@ -113,22 +115,19 @@ export default withHttpMethods({
       await steps.forEach(async (step: CocktailRecipeStepFull) => {
         await prisma.cocktailRecipeStep.create({
           data: {
-            mixing: step.mixing,
-            tool: step.tool,
+            action: { connect: { id: step.actionId } },
             stepNumber: step.stepNumber,
             cocktailRecipe: { connect: { id: result!.id } },
-            ingredients: step.mixing
-              ? {
-                  create: step.ingredients.map((ingredient) => {
-                    return {
-                      amount: ingredient.amount,
-                      ingredientNumber: ingredient.ingredientNumber,
-                      unit: ingredient.unit,
-                      ingredient: { connect: { id: ingredient.ingredientId } },
-                    };
-                  }),
-                }
-              : undefined,
+            ingredients: {
+              create: step.ingredients.map((ingredient) => {
+                return {
+                  amount: ingredient.amount,
+                  ingredientNumber: ingredient.ingredientNumber,
+                  unit: ingredient.unit,
+                  ingredient: { connect: { id: ingredient.ingredientId } },
+                };
+              }),
+            },
           },
         });
       });

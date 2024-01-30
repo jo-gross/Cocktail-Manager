@@ -1,14 +1,13 @@
 import { CocktailRecipeFull } from '../../models/CocktailRecipeFull';
-import { CocktailMixingTechnique } from '../../models/CocktailMixingTechnique';
 import Link from 'next/link';
 import { FaPencilAlt } from 'react-icons/fa';
 import { ModalContext } from '../../lib/context/ModalContextProvider';
 import { useContext } from 'react';
-import { CocktailPouringTechnique } from '../../models/CocktailPouringTechnique';
 import { useRouter } from 'next/router';
 import { UserContext } from '../../lib/context/UserContextProvider';
 import DefaultGlassIcon from '../DefaultGlassIcon';
-import { Role } from '@prisma/client';
+import { Role, WorkspaceSetting } from '@prisma/client';
+import { WorkspaceSettingKey } from '.prisma/client';
 import CustomImage from '../CustomImage';
 import NextImage from '../NextImage';
 
@@ -21,6 +20,7 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
   const workspaceId = router.query.workspaceId as string | undefined;
   const modalContext = useContext(ModalContext);
   const userContext = useContext(UserContext);
+
   return (
     <div className={''}>
       <div className={'card-body bg-base-100'}>
@@ -80,7 +80,10 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
               {props.cocktail.steps.map((step) => (
                 <div key={'cocktail-details-step-' + step.id} className={'col-span-2 space-y-2 rounded-lg border-2 border-base-300 p-2'}>
                   <span className={'text-xl font-bold'}>
-                    {step.mixing ? (CocktailMixingTechnique as any)[step.tool] : (CocktailPouringTechnique as any)[step.tool]}
+                    {JSON.parse(
+                      (userContext.workspace?.WorkspaceSetting as WorkspaceSetting[]).find((setting) => setting.setting == WorkspaceSettingKey.translations)
+                        ?.value ?? '{}',
+                    )['de'][step.action?.name] ?? step.action?.name}
                   </span>
                   {step.ingredients.map((ingredient) => (
                     <div key={'cocktail-details-step-ingredient-' + ingredient.id} className={'pl-2'}>
