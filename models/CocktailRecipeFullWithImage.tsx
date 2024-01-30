@@ -15,6 +15,7 @@ export type CocktailRecipeFullWithImage = Prisma.CocktailRecipeGetPayload<{
     };
     steps: {
       include: {
+        action: true;
         ingredients: {
           include: {
             ingredient: true;

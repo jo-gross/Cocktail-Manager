@@ -4,7 +4,7 @@ import { TagsInput } from 'react-tag-input-component';
 import { Field, FieldArray, Formik, FormikProps } from 'formik';
 import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import { $Enums, Garnish, Glass, Ingredient, WorkspaceCocktailRecipeStepAction, WorkspaceSetting } from '@prisma/client';
+import { Garnish, Glass, Ingredient, WorkspaceCocktailRecipeStepAction, WorkspaceSetting } from '@prisma/client';
 import { updateTags, validateTag } from '../../models/tags/TagUtils';
 import { UploadDropZone } from '../UploadDropZone';
 import { convertToBase64 } from '../../lib/Base64Converter';
@@ -24,7 +24,7 @@ import { IngredientForm } from '../ingredients/IngredientForm';
 import { GlassForm } from '../glasses/GlassForm';
 import { CocktailRecipeFullWithImage } from '../../models/CocktailRecipeFullWithImage';
 import { UserContext } from '../../lib/context/UserContextProvider';
-import WorkspaceSettingKey = $Enums.WorkspaceSettingKey;
+import { WorkspaceSettingKey } from '.prisma/client';
 
 interface CocktailRecipeFormProps {
   cocktailRecipe?: CocktailRecipeFullWithImage;
