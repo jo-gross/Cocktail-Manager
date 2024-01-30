@@ -809,7 +809,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                           (userContext.workspace?.WorkspaceSetting as WorkspaceSetting[]).find(
                                             (setting) => setting.setting == WorkspaceSettingKey.translations,
                                           )?.value ?? '{}',
-                                        )['de'][step.action?.name] ?? step.action?.name
+                                        )['de'][group] ?? group
                                       }
                                     >
                                       {groupActions
