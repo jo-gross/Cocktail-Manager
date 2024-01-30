@@ -8,6 +8,7 @@ import { useRouter } from 'next/router';
 import { alertService } from '../../../../../lib/alertService';
 import { UserContext } from '../../../../../lib/context/UserContextProvider';
 import { FaPlus } from 'react-icons/fa';
+import NextImage from '../../../../../components/NextImage';
 
 export default function ManageGlassesOverviewPage() {
   const router = useRouter();
@@ -60,6 +61,7 @@ export default function ManageGlassesOverviewPage() {
             <table className="table-compact table table-zebra w-full">
               <thead>
                 <tr>
+                  <th className=""></th>
                   <th className="">Name</th>
                   <th className="">Preis</th>
                   <th className="flex justify-end"></th>
@@ -83,6 +85,20 @@ export default function ManageGlassesOverviewPage() {
                     .sort((a, b) => a.name.localeCompare(b.name))
                     .map((garnish) => (
                       <tr className={'p-4'} key={garnish.id}>
+                        <td>
+                          <div className="flex items-center space-x-3">
+                            <div className="mask mask-squircle h-12 w-12">
+                              <NextImage
+                                src={`/api/workspaces/${garnish.workspaceId}/garnishes/${garnish.id}/image`}
+                                className={'h-12 w-12 bg-white object-contain'}
+                                alt="Garnitur"
+                                width={300}
+                                height={300}
+                                altComponent={<></>}
+                              />
+                            </div>
+                          </div>
+                        </td>
                         <td>
                           <div className="font-bold">{garnish.name}</div>
                         </td>

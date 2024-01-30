@@ -64,7 +64,6 @@ export default withHttpMethods({
       tags: tags,
       price: price,
       glassWithIce: glassWithIce,
-      image: image ?? null,
       glass: { connect: { id: glassId } },
       // garnish: garnishId == undefined ? undefined : { connect: { id: garnishId } },
       workspace: { connect: { id: workspace.id } },
@@ -73,6 +72,19 @@ export default withHttpMethods({
     const result = await prisma.cocktailRecipe.create({
       data: input,
     });
+
+    if (image) {
+      const imageResult = await prisma.cocktailRecipeImage.create({
+        data: {
+          image: image,
+          cocktailRecipe: {
+            connect: {
+              id: result.id,
+            },
+          },
+        },
+      });
+    }
 
     if (steps.length > 0 && result != undefined) {
       await steps.forEach(async (step: CocktailRecipeStepFull) => {

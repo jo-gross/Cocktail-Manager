@@ -1,9 +1,9 @@
-import prisma from '../../../../../lib/prisma';
+import prisma from '../../../../../../lib/prisma';
 import { NextApiRequest, NextApiResponse } from 'next';
 import HTTPMethod from 'http-method-enum';
-import { withWorkspacePermission } from '../../../../../middleware/api/authenticationMiddleware';
+import { withWorkspacePermission } from '../../../../../../middleware/api/authenticationMiddleware';
 import { Prisma, Role } from '@prisma/client';
-import { withHttpMethods } from '../../../../../middleware/api/handleMethods';
+import { withHttpMethods } from '../../../../../../middleware/api/handleMethods';
 import GlassUpdateInput = Prisma.GlassUpdateInput;
 
 // DELETE /api/glasses/:id
@@ -16,6 +16,13 @@ export default withHttpMethods({
     const result = await prisma.glass.findUnique({
       where: {
         id: glassId,
+      },
+      include: {
+        GlassImage: {
+          select: {
+            image: true,
+          },
+        },
       },
     });
     return res.json({ data: result });
@@ -39,7 +46,6 @@ export default withHttpMethods({
       id: glassId,
       name: name,
       volume: volume,
-      image: image,
       deposit: deposit,
       workspace: {
         connect: {
@@ -53,6 +59,21 @@ export default withHttpMethods({
       },
       data: input,
     });
+
+    await prisma.glassImage.deleteMany({
+      where: {
+        glassId: glassId,
+      },
+    });
+    if (image) {
+      await prisma.glassImage.create({
+        data: {
+          glassId: glassId,
+          image: image,
+        },
+      });
+    }
+
     return res.json({ data: result });
   }),
 });

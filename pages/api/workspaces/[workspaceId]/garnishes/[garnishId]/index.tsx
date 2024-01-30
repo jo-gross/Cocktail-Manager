@@ -1,9 +1,9 @@
-import prisma from '../../../../../lib/prisma';
+import prisma from '../../../../../../lib/prisma';
 import { NextApiRequest, NextApiResponse } from 'next';
 import HTTPMethod from 'http-method-enum';
-import { withWorkspacePermission } from '../../../../../middleware/api/authenticationMiddleware';
+import { withWorkspacePermission } from '../../../../../../middleware/api/authenticationMiddleware';
 import { Prisma, Role } from '@prisma/client';
-import { withHttpMethods } from '../../../../../middleware/api/handleMethods';
+import { withHttpMethods } from '../../../../../../middleware/api/handleMethods';
 import GarnishUpdateInput = Prisma.GarnishUpdateInput;
 
 // DELETE /api/garnish/:id
@@ -16,6 +16,13 @@ export default withHttpMethods({
     const result = await prisma.garnish.findUnique({
       where: {
         id: garnishId,
+      },
+      include: {
+        GarnishImage: {
+          select: {
+            image: true,
+          },
+        },
       },
     });
     return res.json({ data: result });
@@ -40,7 +47,6 @@ export default withHttpMethods({
     const input: GarnishUpdateInput = {
       name: name,
       price: price,
-      image: image,
       description: description,
       workspace: {
         connect: {
@@ -54,6 +60,22 @@ export default withHttpMethods({
       },
       data: input,
     });
+
+    await prisma.garnishImage.deleteMany({
+      where: {
+        garnishId: garnishId,
+      },
+    });
+
+    if (image) {
+      await prisma.garnishImage.create({
+        data: {
+          garnishId: garnishId,
+          image: image,
+        },
+      });
+    }
+
     return res.json({ dat: result });
   }),
 });

@@ -20,7 +20,6 @@ export default withHttpMethods({
       id: id,
       name: name,
       volume: volume,
-      image: image,
       deposit: deposit,
       workspace: {
         connect: {
@@ -31,6 +30,20 @@ export default withHttpMethods({
     const result = await prisma.glass.create({
       data: input,
     });
+
+    if (image) {
+      const imageResult = await prisma.glassImage.create({
+        data: {
+          image: image,
+          glass: {
+            connect: {
+              id: result.id,
+            },
+          },
+        },
+      });
+    }
+
     return res.json({ data: result });
   }),
 });

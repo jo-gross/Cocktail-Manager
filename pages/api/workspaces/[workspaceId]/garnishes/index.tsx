@@ -25,7 +25,6 @@ export default withHttpMethods({
       id: id,
       name: name,
       price: price,
-      image: image,
       description: description,
       workspace: {
         connect: {
@@ -37,6 +36,20 @@ export default withHttpMethods({
     const result = await prisma.garnish.create({
       data: input,
     });
+
+    if (image) {
+      const imageResult = await prisma.garnishImage.create({
+        data: {
+          image: image,
+          garnish: {
+            connect: {
+              id: result.id,
+            },
+          },
+        },
+      });
+    }
+
     return res.json(result);
   }),
 });

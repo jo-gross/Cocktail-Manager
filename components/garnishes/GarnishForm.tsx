@@ -1,5 +1,4 @@
 import { Formik, FormikProps } from 'formik';
-import { Garnish } from '@prisma/client';
 import { useRouter } from 'next/router';
 import React, { useContext, useEffect, useState } from 'react';
 import { UploadDropZone } from '../UploadDropZone';
@@ -10,9 +9,10 @@ import { DeleteConfirmationModal } from '../modals/DeleteConfirmationModal';
 import { ModalContext } from '../../lib/context/ModalContextProvider';
 import _ from 'lodash';
 import { compressFile } from '../../lib/ImageCompressor';
+import { GarnishWithImage } from '../../models/GarnishWithImage';
 
 interface GarnishFormProps {
-  garnish?: Garnish;
+  garnish?: GarnishWithImage;
   setUnsavedChanges?: (unsavedChanges: boolean) => void;
   formRef?: React.RefObject<FormikProps<any>>;
 
@@ -41,7 +41,7 @@ export function GarnishForm(props: GarnishFormProps) {
         name: props.garnish?.name ?? '',
         price: props.garnish?.price ?? 0,
         description: props.garnish?.description ?? '',
-        image: props.garnish?.image ?? undefined,
+        image: props.garnish?.GarnishImage[0].image ?? undefined,
       }}
       onSubmit={async (values) => {
         try {
