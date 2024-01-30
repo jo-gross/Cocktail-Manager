@@ -6,7 +6,7 @@ import HTTPMethod from 'http-method-enum';
 import { withHttpMethods } from '../../../../../../middleware/api/handleMethods';
 import { CocktailRecipeStepFull } from '../../../../../../models/CocktailRecipeStepFull';
 import { CocktailRecipeGarnishFull } from '../../../../../../models/CocktailRecipeGarnishFull';
-import { CocktailRecipeFull } from '../../../../../models/CocktailRecipeFull';
+import { CocktailRecipeFullWithImage } from '../../../../../../models/CocktailRecipeFullWithImage';
 import CocktailRecipeUpdateInput = Prisma.CocktailRecipeUpdateInput;
 
 export default withHttpMethods({
@@ -14,7 +14,7 @@ export default withHttpMethods({
     const cocktailId = req.query.cocktailId as string | undefined;
     if (!cocktailId) return res.status(400).json({ message: 'No cocktail id' });
 
-    const result: CocktailRecipeFull | null = await prisma.cocktailRecipe.findFirst({
+    const result: CocktailRecipeFullWithImage | null = await prisma.cocktailRecipe.findFirst({
       where: {
         id: cocktailId,
         workspaceId: workspace.id,
