@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { CocktailRecipeFull } from '../../../models/CocktailRecipeFull';
-import CocktailRecipeOverviewItem from '../../../components/cocktails/CocktailRecipeOverviewItem';
+import CocktailRecipeCardItem from '../../../components/cocktails/CocktailRecipeCardItem';
 import { SearchModal } from '../../../components/modals/SearchModal';
 
 export default function SearchPage() {
@@ -15,7 +15,7 @@ export default function SearchPage() {
       </div>
       <div className={'h-min w-full flex-1'}>
         {selectedCocktail ? (
-          <CocktailRecipeOverviewItem cocktailRecipe={selectedCocktail} showImage={true} showInfo={true} showPrice={true} showTags={true} />
+          <CocktailRecipeCardItem cocktailRecipe={selectedCocktail} showImage={true} showInfo={true} showPrice={true} showTags={true} />
         ) : (
           <></>
         )}

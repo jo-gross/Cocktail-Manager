@@ -1,15 +1,13 @@
-import prisma from '../../../../../lib/prisma';
+import prisma from '../../../../../../lib/prisma';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { Prisma, Role } from '@prisma/client';
-import { withWorkspacePermission } from '../../../../../middleware/api/authenticationMiddleware';
+import { withWorkspacePermission } from '../../../../../../middleware/api/authenticationMiddleware';
 import HTTPMethod from 'http-method-enum';
-import { withHttpMethods } from '../../../../../middleware/api/handleMethods';
-import { CocktailRecipeStepFull } from '../../../../../models/CocktailRecipeStepFull';
-import { CocktailRecipeGarnishFull } from '../../../../../models/CocktailRecipeGarnishFull';
+import { withHttpMethods } from '../../../../../../middleware/api/handleMethods';
+import { CocktailRecipeStepFull } from '../../../../../../models/CocktailRecipeStepFull';
+import { CocktailRecipeGarnishFull } from '../../../../../../models/CocktailRecipeGarnishFull';
 import { CocktailRecipeFull } from '../../../../../models/CocktailRecipeFull';
 import CocktailRecipeUpdateInput = Prisma.CocktailRecipeUpdateInput;
-
-// DELETE /api/cocktails/:id
 
 export default withHttpMethods({
   [HTTPMethod.GET]: withWorkspacePermission([Role.USER], async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
@@ -23,6 +21,11 @@ export default withHttpMethods({
       },
       include: {
         glass: true,
+        CocktailRecipeImage: {
+          select: {
+            image: true,
+          },
+        },
         garnishes: {
           include: {
             garnish: true,
@@ -40,6 +43,7 @@ export default withHttpMethods({
         },
       },
     });
+
     return res.json({ data: result });
   }),
   [HTTPMethod.PUT]: withWorkspacePermission([Role.MANAGER], async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
@@ -54,11 +58,25 @@ export default withHttpMethods({
       tags: tags,
       price: price,
       glassWithIce: glassWithIce,
-      image: image ?? null,
       glass: { connect: { id: glassId } },
       // garnish: garnishId == undefined ? undefined : { connect: { id: garnishId } },
       workspace: { connect: { id: workspace.id } },
     };
+
+    await prisma.cocktailRecipeImage.deleteMany({
+      where: {
+        cocktailRecipeId: cocktailId,
+      },
+    });
+
+    if (image != undefined) {
+      await prisma.cocktailRecipeImage.create({
+        data: {
+          cocktailRecipe: { connect: { id: cocktailId } },
+          image: image,
+        },
+      });
+    }
 
     await prisma.cocktailRecipeIngredient.deleteMany({
       where: {

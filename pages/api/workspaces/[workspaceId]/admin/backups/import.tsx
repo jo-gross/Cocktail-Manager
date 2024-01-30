@@ -27,52 +27,90 @@ export default withWorkspacePermission([Role.USER], async (req: NextApiRequest, 
         const actions = await transaction.workspaceCocktailRecipeStepAction.findMany({ where: { workspaceId } });
 
         const garnishMapping: { id: string; newId: string }[] = [];
+        const garnishImageMapping: { garnishId: string; image: string }[] = [];
         if (data.garnish?.length > 0) {
           console.log('Importing garnishes', data.garnish?.length);
           data.garnish?.forEach((g) => {
             const garnishMappingItem = { id: g.id, newId: randomUUID() };
+            // @ts-ignore causing older backup version support
+            if (g.image != undefined) {
+              // @ts-ignore causing older backup version support
+              garnishImageMapping.push({ garnishId: garnishMappingItem.newId, image: g.image });
+            }
             g.id = garnishMappingItem.newId;
             g.workspaceId = workspaceId;
+            // @ts-ignore causing older backup version support
+            g.image = undefined;
             garnishMapping.push(garnishMappingItem);
           });
           await transaction.garnish.createMany({ data: data.garnish, skipDuplicates: true });
         }
+        await transaction.garnishImage.createMany({ data: garnishImageMapping, skipDuplicates: true });
 
         const ingredientMapping: { id: string; newId: string }[] = [];
+        const ingredientImageMapping: { ingredientId: string; image: string }[] = [];
         if (data.ingredient?.length > 0) {
           console.log('Importing ingredients', data.ingredient?.length);
           data.ingredient?.forEach((g) => {
             const ingredientMappingItem = { id: g.id, newId: randomUUID() };
+            // @ts-ignore causing older backup version support
+            if (g.image != undefined) {
+              // @ts-ignore causing older backup version support
+              ingredientImageMapping.push({ ingredientId: ingredientMappingItem.newId, image: g.image });
+            }
             g.id = ingredientMappingItem.newId;
             g.workspaceId = workspaceId;
+            // @ts-ignore causing older backup version support
+            g.image = undefined;
             ingredientMapping.push(ingredientMappingItem);
           });
           await transaction.ingredient.createMany({ data: data.ingredient, skipDuplicates: true });
         }
+        await transaction.ingredientImage.createMany({ data: ingredientImageMapping, skipDuplicates: true });
+
         const glassMapping: { id: string; newId: string }[] = [];
+        const glassImageMapping: { glassId: string; image: string }[] = [];
         if (data.glass?.length > 0) {
           console.log('Importing glasses', data.glass?.length);
           data.glass?.forEach((g) => {
             const glassMappingItem = { id: g.id, newId: randomUUID() };
+            // @ts-ignore causing older backup version support
+            if (g.image != undefined) {
+              // @ts-ignore causing older backup version support
+              glassImageMapping.push({ glassId: glassMappingItem.newId, image: g.image });
+            }
             g.id = glassMappingItem.newId;
             g.workspaceId = workspaceId;
+            // @ts-ignore causing older backup version support
+            g.image = undefined;
             glassMapping.push(glassMappingItem);
           });
           await transaction.glass.createMany({ data: data.glass, skipDuplicates: true });
         }
+        await transaction.glassImage.createMany({ data: glassImageMapping, skipDuplicates: true });
 
         const cocktailRecipeMapping: { id: string; newId: string }[] = [];
+        const cocktailRecipeImageMapping: { cocktailRecipeId: string; image: string }[] = [];
         if (data.cocktailRecipe?.length > 0) {
           console.log('Importing cocktailRecipes', data.cocktailRecipe?.length);
           data.cocktailRecipe?.forEach((g) => {
             const cocktailRecipeMappingItem = { id: g.id, newId: randomUUID() };
+            // @ts-ignore causing older backup version support
+            if (g.image != undefined) {
+              // @ts-ignore causing older backup version support
+              cocktailRecipeImageMapping.push({ cocktailRecipeId: cocktailRecipeMappingItem.newId, image: g.image });
+            }
             g.id = cocktailRecipeMappingItem.newId;
             g.glassId = glassMapping.find((gm) => gm.id === g.glassId)?.newId!;
             g.workspaceId = workspaceId;
+            // @ts-ignore causing older backup version support
+            g.image = undefined;
             cocktailRecipeMapping.push(cocktailRecipeMappingItem);
           });
           await transaction.cocktailRecipe.createMany({ data: data.cocktailRecipe, skipDuplicates: true });
         }
+        await transaction.cocktailRecipeImage.createMany({ data: cocktailRecipeImageMapping, skipDuplicates: true });
+
         const cocktailRecipeStepMapping: { id: string; newId: string }[] = [];
         if (data.cocktailRecipeStep?.length > 0) {
           console.log('Importing cocktailRecipeSteps', data.cocktailRecipeStep?.length);

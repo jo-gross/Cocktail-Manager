@@ -87,15 +87,15 @@ export default function CocktailsOverviewPage() {
                     .map((cocktailRecipe) => (
                       <tr key={cocktailRecipe.id} className={''}>
                         <td>
-                          {cocktailRecipe.image ? (
-                            <div className="flex items-center space-x-3">
-                              <div className="h-12 w-12">
-                                <AvatarImage src={cocktailRecipe.image} alt={'Cocktail'} />
-                              </div>
+                          <div className="flex items-center space-x-3">
+                            <div className="h-12 w-12">
+                              <AvatarImage
+                                src={`/api/workspaces/${cocktailRecipe.workspaceId}/cocktails/${cocktailRecipe.id}/image`}
+                                alt={'Cocktail'}
+                                altComponent={<></>}
+                              />
                             </div>
-                          ) : (
-                            <></>
-                          )}
+                          </div>
                         </td>
                         <td>{cocktailRecipe.name}</td>
                         <td className={''}>

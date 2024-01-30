@@ -3,7 +3,7 @@ import { FaEye, FaSearch } from 'react-icons/fa';
 import Link from 'next/link';
 import { BsFillGearFill } from 'react-icons/bs';
 import { CocktailCardFull } from '../../../models/CocktailCardFull';
-import CocktailRecipeOverviewItem from '../../../components/cocktails/CocktailRecipeOverviewItem';
+import CocktailRecipeCardItem from '../../../components/cocktails/CocktailRecipeCardItem';
 import { CocktailCard, Setting } from '@prisma/client';
 import { useRouter } from 'next/router';
 import { ModalContext } from '../../../lib/context/ModalContextProvider';
@@ -214,7 +214,7 @@ export default function OverviewPage() {
                           .map((groupItem, index) => {
                             if (groupItem.cocktail != undefined) {
                               return (
-                                <CocktailRecipeOverviewItem
+                                <CocktailRecipeCardItem
                                   key={`card-${selectedCard.id}-group-${group.id}-cocktail-${groupItem.cocktailId}-${index}`}
                                   showImage={showImage}
                                   showImageSide={showImageSide}

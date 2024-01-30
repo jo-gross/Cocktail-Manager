@@ -1,5 +1,4 @@
 import { Formik, FormikProps } from 'formik';
-import { Ingredient } from '@prisma/client';
 import { useRouter } from 'next/router';
 import React, { useContext, useEffect, useState } from 'react';
 import { CocktailIngredientUnit } from '../../models/CocktailIngredientUnit';
@@ -13,9 +12,10 @@ import { DeleteConfirmationModal } from '../modals/DeleteConfirmationModal';
 import { ModalContext } from '../../lib/context/ModalContextProvider';
 import _ from 'lodash';
 import { compressFile } from '../../lib/ImageCompressor';
+import { IngredientWithImage } from '../../models/IngredientWithImage';
 
 interface IngredientFormProps {
-  ingredient?: Ingredient;
+  ingredient?: IngredientWithImage;
   setUnsavedChanges?: (unsavedChanges: boolean) => void;
   formRef?: React.RefObject<FormikProps<any>>;
   onSaved?: () => void;
@@ -47,7 +47,7 @@ export function IngredientForm(props: IngredientFormProps) {
         unit: props.ingredient?.unit ?? CocktailIngredientUnit.CL,
         link: props.ingredient?.link ?? '',
         tags: props.ingredient?.tags ?? [],
-        image: props.ingredient?.image ?? undefined,
+        image: props.ingredient?.IngredientImage?.[0]?.image ?? undefined,
       }}
       onSubmit={async (values) => {
         try {
@@ -300,7 +300,8 @@ export function IngredientForm(props: IngredientFormProps) {
                     values.link.includes('expert24.com') ||
                     values.link.includes('conalco.de') ||
                     values.link.includes('metro.de') ||
-                    values.link.includes('rumundco.de')
+                    values.link.includes('rumundco.de') ||
+                    values.link.includes('delicando.com')
                   )
                 }
                 onClick={async () => {

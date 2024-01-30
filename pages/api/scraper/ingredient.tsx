@@ -42,12 +42,14 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       };
 
       return res.json(result);
-    } else if (req.query?.url?.includes('expert24.com')) {
+    } else if (req.query?.url?.includes('expert24.com') || req.query?.url?.includes('delicando.com')) {
       console.log(req.query.url);
       const response = await fetch(req.query.url as string);
       console.log(response.status + ' ' + response.statusText);
       const body = await response.text();
       const soup = new JSSoup(body);
+
+      console.log(soup.find('div', 'activeImage'));
 
       const imageResponse = await fetch(soup.find('div', 'activeImage').contents[0].attrs.href).catch((error) => {
         console.log(error);
@@ -58,7 +60,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 
       const name = soup.find('h1', 'item-detail__headline').text.replace('\n', '').trim();
 
-      let price = soup.find('div', 'normalPrice').contents[0].contents[0]._text.trim().replace(',', '.').replace('€', '').trim();
+      let price = soup.find('div', 'undiscountedPrice').contents[0]._text.trim().replace(',', '.').replace('€', '').trim();
       if (price == undefined) {
         price = 0;
       }

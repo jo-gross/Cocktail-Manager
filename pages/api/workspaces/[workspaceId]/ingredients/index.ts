@@ -29,7 +29,6 @@ export default withHttpMethods({
       price: price,
       link: link,
       tags: tags,
-      image: image,
       workspace: {
         connect: {
           id: workspace.id,
@@ -40,6 +39,19 @@ export default withHttpMethods({
     const result = await prisma.ingredient.create({
       data: input,
     });
+
+    if (image) {
+      const imageResult = await prisma.ingredientImage.create({
+        data: {
+          image: image,
+          ingredient: {
+            connect: {
+              id: result.id,
+            },
+          },
+        },
+      });
+    }
     return res.json({ data: result });
   }),
 });

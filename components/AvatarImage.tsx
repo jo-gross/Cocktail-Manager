@@ -4,16 +4,39 @@ import React from 'react';
 interface AvatarImageProps {
   src: string;
   alt: string;
+  altComponent?: React.ReactNode;
 }
 
 export default function AvatarImage(props: AvatarImageProps) {
-  return (
+  const [error, setError] = React.useState(false);
+
+  return error ? (
+    props.altComponent
+  ) : (
     <div className="mask mask-squircle relative h-full w-full">
       <div className={'z-1000 absolute h-full w-full'}>
-        <Image className={'h-full w-full object-cover blur-sm'} src={props.src} alt={props.alt} width={300} height={300} />
+        <Image
+          onError={() => {
+            setError(true);
+          }}
+          className={'h-full w-full object-cover blur-sm'}
+          src={props.src}
+          alt={props.alt}
+          width={300}
+          height={300}
+        />
       </div>
       <div className={'z-100 absolute h-full w-full'}>
-        <Image className={'h-full w-min object-contain'} src={props.src} alt={props.alt} width={300} height={300} />
+        <Image
+          className={'h-full w-min object-contain'}
+          src={props.src}
+          alt={props.alt}
+          width={300}
+          height={300}
+          onError={() => {
+            setError(true);
+          }}
+        />
       </div>
     </div>
   );

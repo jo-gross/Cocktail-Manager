@@ -7,9 +7,9 @@ import { Loading } from '../../../../../components/Loading';
 import { useRouter } from 'next/router';
 import { alertService } from '../../../../../lib/alertService';
 import { UserContext } from '../../../../../lib/context/UserContextProvider';
-import Image from 'next/image';
 import DefaultGlassIcon from '../../../../../components/DefaultGlassIcon';
 import { FaPlus } from 'react-icons/fa';
+import NextImage from '../../../../../components/NextImage';
 
 export default function ManageGlassesOverviewPage() {
   const router = useRouter();
@@ -59,7 +59,7 @@ export default function ManageGlassesOverviewPage() {
       <div className={'card'}>
         <div className={'card-body'}>
           <div className="overflow-x-auto">
-            <table className="table-compact table w-full">
+            <table className="table-compact table table-zebra w-full">
               <thead>
                 <tr>
                   <th className=""></th>
@@ -87,13 +87,14 @@ export default function ManageGlassesOverviewPage() {
                       <td>
                         <div className="flex items-center space-x-3">
                           <div className="mask mask-squircle h-12 w-12">
-                            <>
-                              {glass.image ? (
-                                <Image src={glass.image} className={'h-12 w-12 bg-white object-contain'} alt="Glass" width={300} height={300} />
-                              ) : (
-                                <DefaultGlassIcon />
-                              )}
-                            </>
+                            <NextImage
+                              src={`/api/workspaces/${glass.workspaceId}/glasses/${glass.id}/image`}
+                              className={'h-12 w-12 bg-white object-contain'}
+                              alt="Glass"
+                              width={300}
+                              height={300}
+                              altComponent={<DefaultGlassIcon />}
+                            />
                           </div>
                         </div>
                       </td>

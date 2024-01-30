@@ -5,14 +5,14 @@ import { useRouter } from 'next/router';
 import { FaTrashAlt } from 'react-icons/fa';
 import React, { useContext, useEffect, useState } from 'react';
 import { alertService } from '../../lib/alertService';
-import { Glass } from '@prisma/client';
 import { DeleteConfirmationModal } from '../modals/DeleteConfirmationModal';
 import { ModalContext } from '../../lib/context/ModalContextProvider';
 import _ from 'lodash';
 import { compressFile } from '../../lib/ImageCompressor';
+import { GlassWithImage } from '../../models/GlassWithImage';
 
 interface GlassFormProps {
-  glass?: Glass;
+  glass?: GlassWithImage;
   setUnsavedChanges?: (unsavedChanges: boolean) => void;
   formRef?: React.RefObject<FormikProps<any>>;
   onSaved?: () => void;
@@ -40,7 +40,7 @@ export function GlassForm(props: GlassFormProps) {
       initialValues={{
         name: props.glass?.name ?? '',
         deposit: props.glass?.deposit ?? 0,
-        image: props.glass?.image ?? undefined,
+        image: props.glass?.GlassImage[0].image ?? undefined,
         volume: props.glass?.volume ?? 0,
       }}
       onSubmit={async (values) => {
