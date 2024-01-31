@@ -7,7 +7,6 @@ import { signOut } from 'next-auth/react';
 import LoadingText from '../../../../components/LoadingText';
 import Link from 'next/link';
 import AvatarImage from '../../../../components/AvatarImage';
-import { Role } from '@prisma/client';
 import { FaCalculator, FaCocktail, FaGlassMartiniAlt } from 'react-icons/fa';
 import { LuCitrus } from 'react-icons/lu';
 import { PiBeerBottleBold, PiCards } from 'react-icons/pi';
@@ -87,12 +86,8 @@ export default function ManagePage() {
           <ManageCard icon={<PiBeerBottleBold />} title={'Zutaten'} link={`/workspaces/${workspaceId}/manage/ingredients`} />
           <ManageCard icon={<LuCitrus />} title={'Garnituren'} link={`/workspaces/${workspaceId}/manage/garnishes`} />
           <ManageCard icon={<FaGlassMartiniAlt />} title={'Gläser'} link={`/workspaces/${workspaceId}/manage/glasses`} />
-          <>
-            {userContext.isUserPermitted(Role.MANAGER) && (
-              <ManageCard icon={<FaGear />} title={'Workspace-Einstellungen'} link={`/workspaces/${workspaceId}/manage/settings`} />
-            )}
-          </>
           <ManageCard icon={<FaCalculator />} title={'Kalkulation'} link={`/workspaces/${workspaceId}/manage/calculations`} />
+          <ManageCard icon={<FaGear />} title={'Einstellungen'} link={`/workspaces/${workspaceId}/manage/settings`} />
         </div>
       </ManageEntityLayout>
     </>
