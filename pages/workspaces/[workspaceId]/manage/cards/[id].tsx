@@ -13,6 +13,7 @@ import { alertService } from '../../../../../lib/alertService';
 import { withPagePermission } from '../../../../../middleware/ui/withPagePermission';
 import { Role } from '@prisma/client';
 import { DeleteConfirmationModal } from '../../../../../components/modals/DeleteConfirmationModal';
+import _ from 'lodash';
 
 interface CocktailCardGroupError {
   name?: string;
@@ -35,6 +36,8 @@ function EditCocktailCard() {
 
   const [cocktails, setCocktails] = useState<CocktailRecipeFull[]>([]);
   const [loadingCocktails, setLoadingCocktails] = useState<boolean>(false);
+
+  const [unsavedChanges, setUnsavedChanges] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -77,6 +80,7 @@ function EditCocktailCard() {
     <ManageEntityLayout
       backLink={`/workspaces/${workspaceId}/manage/cards`}
       title={'Karte'}
+      unsavedChanges={unsavedChanges}
       actions={
         card != undefined ? (
           <button
@@ -118,6 +122,12 @@ function EditCocktailCard() {
           date: card?.date != undefined ? new Date(card.date).toISOString().split('T')[0] : '',
         }}
         validate={(values) => {
+          var reducedCard: any = _.omit(card, ['workspaceId', 'id', 'groups[*].items[*].cocktail']);
+          if (reducedCard.date == null) {
+            reducedCard.date = '';
+          }
+          setUnsavedChanges(!_.isEqual(values, reducedCard));
+
           const errors: CocktailCardError = {};
           if (!values.name || values.name.trim() == '') {
             errors.name = 'Required';
