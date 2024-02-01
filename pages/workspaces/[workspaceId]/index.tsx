@@ -192,48 +192,54 @@ export default function OverviewPage() {
               selectedCard?.groups
                 ?.sort((a, b) => a.groupNumber - b.groupNumber)
                 .map((group) => (
-                  <div key={`card-${selectedCard.id}-group-${group.id}`} className={'rounded-none p-1 md:rounded-xl md:border md:border-base-200 print:p-1'}>
-                    <div className={'p-2 text-center text-2xl font-bold'}>
+                  <div
+                    key={`card-${selectedCard.id}-group-${group.id}`}
+                    className={'collapse collapse-arrow rounded-none p-1 md:rounded-xl md:border md:border-base-200 print:p-1'}
+                  >
+                    <input type={'checkbox'} defaultChecked={true} />
+                    <div className={'collapse-title text-center text-2xl font-bold'}>
                       {group.name}
                       {group.groupPrice != undefined ? ` - Special Preis: ${group.groupPrice}€` : ''}
                     </div>
-                    <div
-                      className={`grid 
+                    <div className={'collapse-content'}>
+                      <div
+                        className={`grid 
                       ${lessItems ? '2xl:grid-cols-5 ' : '2xl:grid-cols-6 '}
                       ${lessItems ? 'xl:grid-cols-3 ' : 'xl:grid-cols-4 '}
                       ${lessItems ? 'md:grid-cols-2 ' : 'md:grid-cols-3 '}
                       ${lessItems ? 'xs:grid-cols-1 ' : ' xs:grid-cols-2 '}
                        grid-cols-1
                        gap-2 p-1 md:p-2`}
-                    >
-                      {group.items.length == 0 ? (
-                        <div className={'col-span-full text-center'}>Keine Einträge vorhanden</div>
-                      ) : (
-                        group.items
-                          ?.sort((a, b) => a.itemNumber - b.itemNumber)
-                          .map((groupItem, index) => {
-                            if (groupItem.cocktail != undefined) {
-                              return (
-                                <CocktailRecipeCardItem
-                                  key={`card-${selectedCard.id}-group-${group.id}-cocktail-${groupItem.cocktailId}-${index}`}
-                                  showImage={showImage}
-                                  showImageSide={showImageSide}
-                                  showTags={showTags}
-                                  showInfo={true}
-                                  showPrice={groupItem.specialPrice == undefined && group.groupPrice == undefined}
-                                  specialPrice={groupItem.specialPrice ?? group.groupPrice ?? undefined}
-                                  cocktailRecipe={groupItem.cocktail}
-                                />
-                              );
-                            } else {
-                              return (
-                                <div key={`card-${selectedCard.id}-group-${group.id}-cocktail-${groupItem.cocktailId}-${index}`}>
-                                  <Loading />
-                                </div>
-                              );
-                            }
-                          })
-                      )}
+                      >
+                        {group.items.length == 0 ? (
+                          <div className={'col-span-full text-center'}>Keine Einträge vorhanden</div>
+                        ) : (
+                          group.items
+                            ?.sort((a, b) => a.itemNumber - b.itemNumber)
+                            .map((groupItem, index) => {
+                              if (groupItem.cocktail != undefined) {
+                                return (
+                                  <CocktailRecipeCardItem
+                                    key={`card-${selectedCard.id}-group-${group.id}-cocktail-${groupItem.cocktailId}-${index}`}
+                                    showImage={showImage}
+                                    showImageSide={showImageSide}
+                                    showTags={showTags}
+                                    showInfo={true}
+                                    showPrice={groupItem.specialPrice == undefined && group.groupPrice == undefined}
+                                    specialPrice={groupItem.specialPrice ?? group.groupPrice ?? undefined}
+                                    cocktailRecipe={groupItem.cocktail}
+                                  />
+                                );
+                              } else {
+                                return (
+                                  <div key={`card-${selectedCard.id}-group-${group.id}-cocktail-${groupItem.cocktailId}-${index}`}>
+                                    <Loading />
+                                  </div>
+                                );
+                              }
+                            })
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))
