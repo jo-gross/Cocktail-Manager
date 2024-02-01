@@ -15,7 +15,7 @@ import { alertService } from '../../lib/alertService';
 import { CocktailRecipeGarnishFull } from '../../models/CocktailRecipeGarnishFull';
 import { DeleteConfirmationModal } from '../modals/DeleteConfirmationModal';
 import { ModalContext } from '../../lib/context/ModalContextProvider';
-import _ from 'lodash';
+import _, { orderBy } from 'lodash';
 import { compressFile } from '../../lib/ImageCompressor';
 import { SelectModal } from '../modals/SelectModal';
 import FormModal from '../modals/FormModal';
@@ -25,6 +25,7 @@ import { GlassForm } from '../glasses/GlassForm';
 import { CocktailRecipeFullWithImage } from '../../models/CocktailRecipeFullWithImage';
 import { UserContext } from '../../lib/context/UserContextProvider';
 import { WorkspaceSettingKey } from '.prisma/client';
+import DeepDiff from 'deep-diff';
 
 interface CocktailRecipeFormProps {
   cocktailRecipe?: CocktailRecipeFullWithImage;
@@ -158,7 +159,6 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
   }, [workspaceId]);
 
   const [actions, setActions] = useState<WorkspaceCocktailRecipeStepAction[]>([]);
-  const [actionGroups, setActionGroups] = useState<string[]>([]);
   const [actionsLoading, setActionsLoading] = useState(false);
   const fetchActions = useCallback(async () => {
     if (!workspaceId) return;
@@ -168,14 +168,6 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
         const body = await response.json();
         if (response.ok) {
           setActions(body.data);
-          const newActionGroups: string[] = [];
-          body.data.forEach((action: WorkspaceCocktailRecipeStepAction) => {
-            if (!newActionGroups.includes(action.actionGroup)) {
-              newActionGroups.push(action.actionGroup);
-            }
-          });
-          console.log('CocktailRecipeForm -> newActionGroups', newActionGroups);
-          setActionGroups(newActionGroups);
         } else {
           console.log('CocktailRecipeForm -> fetchActions', response, body);
           alertService.error(body.message, response.status, response.statusText);
@@ -286,7 +278,30 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
         showTags: false,
       }}
       validate={(values) => {
-        props.setUnsavedChanges?.(originalValues && !_.isEqual(originalValues, formRef?.current?.values));
+        values = _.omit(values, ['showImage', 'showTags', 'image']);
+        const reducedCocktailRecipe = _.omit(props.cocktailRecipe, ['CocktailRecipeImage']);
+        if (reducedCocktailRecipe.description == null) {
+          reducedCocktailRecipe.description = '';
+        }
+        if (reducedCocktailRecipe.steps != undefined) {
+          reducedCocktailRecipe.steps = orderBy(reducedCocktailRecipe.steps, ['stepNumber'], ['asc']);
+          reducedCocktailRecipe.steps.forEach((step) => {
+            step.ingredients = orderBy(step.ingredients, ['ingredientNumber'], ['asc']);
+          });
+        }
+        if (values.steps != undefined) {
+          values.steps = orderBy(values.steps, ['stepNumber'], ['asc']);
+          (values.steps as any[]).forEach((step) => {
+            step.ingredients = orderBy(step.ingredients, ['ingredientNumber'], ['asc']);
+          });
+        }
+        props.setUnsavedChanges?.(!_.isEqual(reducedCocktailRecipe, values));
+
+        // console.log('CocktailRecipe', reducedCocktailRecipe);
+        // console.log('Values', values);
+        console.log('Difference', DeepDiff.diff(reducedCocktailRecipe, values));
+        // console.log('Differs', !_.isEqual(reducedCocktailRecipe, values));
+
         const errors: any = {};
         if (!values.name || values.name.trim() == '') {
           errors.name = 'Required';

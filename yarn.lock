@@ -573,6 +573,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/deep-diff@npm:^1.0.5":
+  version: 1.0.5
+  resolution: "@types/deep-diff@npm:1.0.5"
+  checksum: 84504a725a3e79fc5410184d4d94fd8fae05b673e03fc4250998ea48c1f5c862dfedb9a227200b495b5979ed90288b291d739b65cea5792de9e47caff6630cc2
+  languageName: node
+  linkType: hard
+
 "@types/hast@npm:^3.0.0":
   version: 3.0.2
   resolution: "@types/hast@npm:3.0.2"
@@ -1273,6 +1280,7 @@ __metadata:
   dependencies:
     "@next-auth/prisma-adapter": 1.0.7
     "@prisma/client": 5.8.1
+    "@types/deep-diff": ^1.0.5
     "@types/lodash": ^4.14.202
     "@types/node": 20.9.2
     "@types/react": 18.2.48
@@ -1280,6 +1288,7 @@ __metadata:
     autoprefixer: 10.4.16
     browser-image-compression: ^2.0.2
     daisyui: 4.6.0
+    deep-diff: ^1.0.2
     eslint: 8.56.0
     eslint-config-next: 14.0.4
     eslint-config-prettier: ^9.1.0
@@ -1500,6 +1509,13 @@ __metadata:
   dependencies:
     character-entities: ^2.0.0
   checksum: f4c71d3b93105f20076052f9cb1523a22a9c796b8296cd35eef1ca54239c78d182c136a848b83ff8da2071e3ae2b1d300bf29d00650a6d6e675438cc31b11d78
+  languageName: node
+  linkType: hard
+
+"deep-diff@npm:^1.0.2":
+  version: 1.0.2
+  resolution: "deep-diff@npm:1.0.2"
+  checksum: 9de8b5eedc1957116e1b47e4c3c4e3dbe23cb741abefc5ec8829a12e77958c689ac46888a3c35320f976cf42fb6de2b016e158facdb24d894ab5b5fdabad9b34
   languageName: node
   linkType: hard
 
