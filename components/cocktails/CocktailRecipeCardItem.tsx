@@ -39,6 +39,7 @@ export default function CocktailRecipeCardItem(props: CocktailRecipeOverviewItem
             ) : (
               <></>
             )}
+            <div className={'btn btn-outline btn-primary w-full'}>Gemacht</div>
           </div>
         </div>
         {props.showImageSide && props.showImage ? (

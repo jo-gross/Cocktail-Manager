@@ -54,9 +54,10 @@ model User {
 
   sessions Session[]
 
-  workspaces          WorkspaceUser[]
-  settings            UserSetting[]
-  CocktailCalculation CocktailCalculation[]
+  workspaces           WorkspaceUser[]
+  settings             UserSetting[]
+  CocktailCalculation  CocktailCalculation[]
+  CocktailTrackingItem CocktailTrackingItem[]
 }
 
 enum Setting {
@@ -210,6 +211,7 @@ model CocktailRecipe {
   workspaceId              String
   CocktailCalculationItems CocktailCalculationItems[]
   CocktailRecipeImage      CocktailRecipeImage[]
+  CocktailTrackingItem     CocktailTrackingItem[]
 }
 
 model CocktailRecipeImage {
@@ -295,8 +297,9 @@ model CocktailCard {
   date   DateTime?
   groups CocktailCardGroup[]
 
-  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  workspaceId String
+  workspace            Workspace              @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspaceId          String
+  CocktailTrackingItem CocktailTrackingItem[]
 }
 
 model CocktailCardGroup {
@@ -329,6 +332,17 @@ model CocktailCalculation {
   updatedByUserId          String
   updatedByUser            User                       @relation(fields: [updatedByUserId], references: [id], onDelete: Cascade)
   cocktailCalculationItems CocktailCalculationItems[]
+}
+
+model CocktailTrackingItem {
+  id             String         @id @default(cuid())
+  cocktailId     String
+  cocktail       CocktailRecipe @relation(fields: [cocktailId], references: [id], onDelete: Cascade)
+  cocktailCardId String?
+  cocktailCard   CocktailCard?  @relation(fields: [cocktailCardId], references: [id], onDelete: Cascade)
+  date           DateTime
+  userId         String
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model CocktailCalculationItems {
