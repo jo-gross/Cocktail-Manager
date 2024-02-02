@@ -1,14 +1,16 @@
 import { ManageEntityLayout } from '../../../../../components/layout/ManageEntityLayout';
 import { useRouter } from 'next/router';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useContext, useEffect, useState } from 'react';
 import { CocktailStatisticItemFull } from '../../../../../models/CocktailStatisticItemFull';
 import { alertService } from '../../../../../lib/alertService';
 import { FaSyncAlt, FaTrashAlt } from 'react-icons/fa';
 import _ from 'lodash';
+import { UserContext } from '../../../../../lib/context/UserContextProvider';
 
 export default function StatisticsPage() {
   const router = useRouter();
   const { workspaceId } = router.query;
+  const userContext = useContext(UserContext);
 
   const [startDate, setStartDate] = useState<Date>(new Date());
   const [endDate, setEndDate] = useState<Date>(new Date());
@@ -141,9 +143,30 @@ export default function StatisticsPage() {
                         <td>{item.cocktailCard?.name}</td>
                         <td>{item.user?.name}</td>
                         <td className={'flex items-center justify-end space-x-2'}>
-                          <div className={'btn btn-square btn-error btn-sm'}>
+                          <button
+                            disabled={!userContext.isUserPermitted('MANAGER')}
+                            className={'btn btn-square btn-error btn-sm'}
+                            onClick={async () => {
+                              try {
+                                const response = await fetch(`/api/workspaces/${workspaceId}/statistics/cocktails/${item.id}`, {
+                                  method: 'DELETE',
+                                });
+                                if (response.ok) {
+                                  alertService.success('Statistik Eintrag gelöscht');
+                                  refreshStatistics();
+                                } else {
+                                  console.error('StatisticsPage -> refreshStatistics', response);
+                                  const body = await response.json();
+                                  alertService.error(body.message, response.status, response.statusText);
+                                }
+                              } catch (error) {
+                                console.error('StatisticsPage -> refreshStatistics', error);
+                                alertService.error('Fehler beim Löschen des Statistik Eintrags');
+                              }
+                            }}
+                          >
                             <FaTrashAlt />
-                          </div>
+                          </button>
                         </td>
                       </tr>
                     ))

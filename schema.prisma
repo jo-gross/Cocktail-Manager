@@ -299,7 +299,7 @@ model CocktailCard {
   date   DateTime?
   groups CocktailCardGroup[]
 
-  workspace             Workspace              @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   workspaceId           String
   CocktailStatisticItem CocktailStatisticItem[]
 }
@@ -343,10 +343,10 @@ model CocktailStatisticItem {
   userId         String
   user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   workspaceId    String
-  workspace      Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspace    Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   date           DateTime
   cocktailCardId String?
-  cocktailCard   CocktailCard? @relation(fields: [cocktailCardId], references: [id], onDelete: Cascade)
+  cocktailCard CocktailCard? @relation(fields: [cocktailCardId], references: [id], onDelete: Cascade)
   actionSource   String?
 }
 
