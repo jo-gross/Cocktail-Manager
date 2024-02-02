@@ -45,6 +45,14 @@ export default withWorkspacePermission([Role.USER], async (req: NextApiRequest, 
           });
           await transaction.garnish.createMany({ data: data.garnish, skipDuplicates: true });
         }
+        if (data.garnishImages?.length > 0) {
+          for (const image of data.garnishImages) {
+            const garnish = garnishMapping.find((gm) => gm.id === image.garnishId);
+            if (garnish) {
+              garnishImageMapping.push({ garnishId: garnish.newId, image: image.image });
+            }
+          }
+        }
         await transaction.garnishImage.createMany({ data: garnishImageMapping, skipDuplicates: true });
 
         const ingredientMapping: { id: string; newId: string }[] = [];
@@ -65,6 +73,14 @@ export default withWorkspacePermission([Role.USER], async (req: NextApiRequest, 
             ingredientMapping.push(ingredientMappingItem);
           });
           await transaction.ingredient.createMany({ data: data.ingredient, skipDuplicates: true });
+        }
+        if (data.ingredientImages?.length > 0) {
+          for (const image of data.ingredientImages) {
+            const ingredient = ingredientMapping.find((gm) => gm.id === image.ingredientId);
+            if (ingredient) {
+              ingredientImageMapping.push({ ingredientId: ingredient.newId, image: image.image });
+            }
+          }
         }
         await transaction.ingredientImage.createMany({ data: ingredientImageMapping, skipDuplicates: true });
 
@@ -87,6 +103,14 @@ export default withWorkspacePermission([Role.USER], async (req: NextApiRequest, 
           });
           await transaction.glass.createMany({ data: data.glass, skipDuplicates: true });
         }
+        if (data.glassImages?.length > 0) {
+          for (const image of data.glassImages) {
+            const glass = glassMapping.find((gm) => gm.id === image.glassId);
+            if (glass) {
+              glassImageMapping.push({ glassId: glass.newId, image: image.image });
+            }
+          }
+        }
         await transaction.glassImage.createMany({ data: glassImageMapping, skipDuplicates: true });
 
         const cocktailRecipeMapping: { id: string; newId: string }[] = [];
@@ -108,6 +132,14 @@ export default withWorkspacePermission([Role.USER], async (req: NextApiRequest, 
             cocktailRecipeMapping.push(cocktailRecipeMappingItem);
           });
           await transaction.cocktailRecipe.createMany({ data: data.cocktailRecipe, skipDuplicates: true });
+        }
+        if (data.cocktailRecipeImage?.length > 0) {
+          for (const image of data.cocktailRecipeImage) {
+            const cocktail = cocktailRecipeMapping.find((gm) => gm.id === image.cocktailRecipeId);
+            if (cocktail) {
+              cocktailRecipeImageMapping.push({ cocktailRecipeId: cocktail.newId, image: image.image });
+            }
+          }
         }
         await transaction.cocktailRecipeImage.createMany({ data: cocktailRecipeImageMapping, skipDuplicates: true });
 
