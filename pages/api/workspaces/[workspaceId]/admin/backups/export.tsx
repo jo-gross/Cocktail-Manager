@@ -28,9 +28,37 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 
     const backup: BackupStructure = {
       garnish: await prisma.garnish.findMany({ where: { workspaceId } }),
+      garnishImages: await prisma.garnishImage.findMany({
+        where: {
+          garnishId: {
+            in: (await prisma.garnish.findMany({ where: { workspaceId } })).map((garnish) => garnish.id),
+          },
+        },
+      }),
       ingredient: await prisma.ingredient.findMany({ where: { workspaceId } }),
+      ingredientImages: await prisma.ingredientImage.findMany({
+        where: {
+          ingredientId: {
+            in: (await prisma.ingredient.findMany({ where: { workspaceId } })).map((ingredient) => ingredient.id),
+          },
+        },
+      }),
       glass: await prisma.glass.findMany({ where: { workspaceId } }),
+      glassImages: await prisma.glassImage.findMany({
+        where: {
+          glassId: {
+            in: (await prisma.glass.findMany({ where: { workspaceId } })).map((glass) => glass.id),
+          },
+        },
+      }),
       cocktailRecipe: cocktailRecipes,
+      cocktailRecipeImage: await prisma.cocktailRecipeImage.findMany({
+        where: {
+          cocktailRecipeId: {
+            in: cocktailRecipes.map((recipe) => recipe.id),
+          },
+        },
+      }),
       cocktailRecipeStep: cocktailRecipeSteps,
       cocktailRecipeGarnish: await prisma.cocktailRecipeGarnish.findMany({
         where: {
