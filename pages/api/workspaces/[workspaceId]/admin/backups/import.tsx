@@ -24,6 +24,34 @@ export default withWorkspacePermission([Role.USER], async (req: NextApiRequest, 
       await prisma.$transaction(async (transaction) => {
         const data: BackupStructure = JSON.parse(await req.body);
 
+        if (data.workspaceSettings?.length > 0) {
+          console.log('Importing workspaceSettings', data.workspaceSettings?.length);
+          data.workspaceSettings?.forEach((g) => {
+            g.workspaceId = workspaceId;
+          });
+          await transaction.workspaceSetting.createMany({ data: data.workspaceSettings, skipDuplicates: true });
+        }
+
+        const actionMapping: { id: string; newId: string }[] = [];
+        if (data.stepActions?.length > 0) {
+          console.log('Importing stepActions', data.stepActions?.length);
+          data.stepActions?.forEach(async (g) => {
+            const existingAction = await transaction.workspaceCocktailRecipeStepAction.findFirst({
+              where: { name: g.name, workspaceId: workspaceId, actionGroup: g.actionGroup },
+            });
+            if (existingAction == null) {
+              const newId = randomUUID();
+              actionMapping.push({ id: g.id, newId: newId });
+              g.id = newId;
+              g.workspaceId = workspaceId;
+
+              await transaction.workspaceCocktailRecipeStepAction.create({ data: g });
+            } else {
+              actionMapping.push({ id: g.id, newId: existingAction.id });
+            }
+          });
+        }
+
         const actions = await transaction.workspaceCocktailRecipeStepAction.findMany({ where: { workspaceId } });
 
         const garnishMapping: { id: string; newId: string }[] = [];
@@ -158,9 +186,13 @@ export default withWorkspacePermission([Role.USER], async (req: NextApiRequest, 
                 id: step.id,
                 stepNumber: step.stepNumber,
                 cocktailRecipeId: step.cocktailRecipeId,
-                // @ts-ignore - For old versions, where the actionId does not exist
-                actionId: actions.find((action) => action.name == (step.tool == 'PESTLE' ? 'MUDDLE' : step.tool == 'POUR' ? 'WITHOUT' : step.tool))?.id!,
+                actionId: actions.find(
+                  // @ts-ignore - For old versions, where the actionId does not exist
+                  (action) => action.name == (step.tool == 'PESTLE' ? 'MUDDLE' : step.tool == 'POUR' ? 'WITHOUT' : step.tool),
+                )?.id!,
               };
+            } else {
+              step.actionId = actionMapping.find((gm) => gm.id === step.actionId)?.newId!;
             }
             return step;
           });

@@ -90,7 +90,7 @@ export default function StatisticsPage() {
     const datasets = Array.from(cocktailNames).map((cocktailName) => ({
       label: cocktailName,
       data: labels.map((hour) => hourlyCocktails[hour][cocktailName] || 0),
-      backgroundColor: '#' + Math.floor(Math.random() * 16777215).toString(16), // Zufällige Farbe
+      backgroundColor: cocktailName.string2color(), // Zufällige Farbe
     }));
 
     return { labels, datasets };
