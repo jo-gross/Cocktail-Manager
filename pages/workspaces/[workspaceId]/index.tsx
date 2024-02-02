@@ -27,6 +27,7 @@ export default function OverviewPage() {
   const [showImageSide, setShowImageSide] = useState(false);
   const [showTags, setShowTags] = useState(false);
   const [lessItems, setLessItems] = useState(false);
+  const [showStatisticActions, setShowStatisticActions] = useState(false);
 
   const [cocktailCards, setCocktailCards] = useState<CocktailCardFull[]>([]);
   const [loadingCards, setLoadingCards] = useState(true);
@@ -167,6 +168,7 @@ export default function OverviewPage() {
     setShowImageSide(userContext.user?.settings?.find((s) => s.setting == Setting.showImageSide)?.value == 'true' ?? false);
     setShowTags(userContext.user?.settings?.find((s) => s.setting == Setting.showTags)?.value == 'true' ?? false);
     setLessItems(userContext.user?.settings?.find((s) => s.setting == Setting.lessItems)?.value == 'true' ?? false);
+    setShowStatisticActions(userContext.user?.settings?.find((s) => s.setting == Setting.showStatisticActions)?.value == 'true' ?? false);
   }, [userContext.user?.settings]);
 
   return (
@@ -228,6 +230,7 @@ export default function OverviewPage() {
                                     showPrice={groupItem.specialPrice == undefined && group.groupPrice == undefined}
                                     specialPrice={groupItem.specialPrice ?? group.groupPrice ?? undefined}
                                     cocktailRecipe={groupItem.cocktail}
+                                    showStatisticActions={showStatisticActions}
                                   />
                                 );
                               } else {
@@ -377,6 +380,21 @@ export default function OverviewPage() {
                       onClick={() => {
                         userContext.updateUserSetting(Setting.lessItems, !lessItems ? 'true' : 'false');
                         setLessItems(!lessItems);
+                      }}
+                    />
+                  </label>
+                </div>
+                <div className="form-control">
+                  <label className="label">
+                    Statistik aktivieren
+                    <input
+                      type={'checkbox'}
+                      className={'toggle toggle-primary'}
+                      checked={showStatisticActions}
+                      readOnly={true}
+                      onClick={() => {
+                        userContext.updateUserSetting(Setting.showStatisticActions, !showStatisticActions ? 'true' : 'false');
+                        setShowStatisticActions(!showStatisticActions);
                       }}
                     />
                   </label>

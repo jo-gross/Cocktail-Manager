@@ -54,10 +54,10 @@ model User {
 
   sessions Session[]
 
-  workspaces           WorkspaceUser[]
-  settings             UserSetting[]
-  CocktailCalculation  CocktailCalculation[]
-  CocktailTrackingItem CocktailTrackingItem[]
+  workspaces            WorkspaceUser[]
+  settings              UserSetting[]
+  CocktailCalculation   CocktailCalculation[]
+  CocktailStatisticItem CocktailStatisticItem[]
 }
 
 enum Setting {
@@ -66,6 +66,7 @@ enum Setting {
   showTags
   lessItems
   theme
+  showStatisticActions
 }
 
 enum WorkspaceSettingKey {
@@ -146,6 +147,7 @@ model Workspace {
   Signage                           Signage[]
   WorkspaceCocktailRecipeStepAction WorkspaceCocktailRecipeStepAction[]
   WorkspaceSetting                  WorkspaceSetting[]
+  CocktailStatisticItem CocktailStatisticItem[]
 }
 
 model Signage {
@@ -211,7 +213,7 @@ model CocktailRecipe {
   workspaceId              String
   CocktailCalculationItems CocktailCalculationItems[]
   CocktailRecipeImage      CocktailRecipeImage[]
-  CocktailTrackingItem     CocktailTrackingItem[]
+  CocktailStatisticItem CocktailStatisticItem[]
 }
 
 model CocktailRecipeImage {
@@ -297,9 +299,9 @@ model CocktailCard {
   date   DateTime?
   groups CocktailCardGroup[]
 
-  workspace            Workspace              @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  workspaceId          String
-  CocktailTrackingItem CocktailTrackingItem[]
+  workspace             Workspace              @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspaceId           String
+  CocktailStatisticItem CocktailStatisticItem[]
 }
 
 model CocktailCardGroup {
@@ -334,15 +336,18 @@ model CocktailCalculation {
   cocktailCalculationItems CocktailCalculationItems[]
 }
 
-model CocktailTrackingItem {
+model CocktailStatisticItem {
   id             String         @id @default(cuid())
   cocktailId     String
   cocktail       CocktailRecipe @relation(fields: [cocktailId], references: [id], onDelete: Cascade)
-  cocktailCardId String?
-  cocktailCard   CocktailCard?  @relation(fields: [cocktailCardId], references: [id], onDelete: Cascade)
-  date           DateTime
   userId         String
   user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspaceId    String
+  workspace      Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  date           DateTime
+  cocktailCardId String?
+  cocktailCard   CocktailCard? @relation(fields: [cocktailCardId], references: [id], onDelete: Cascade)
+  actionSource   String?
 }
 
 model CocktailCalculationItems {

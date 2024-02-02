@@ -15,7 +15,14 @@ export default function SearchPage() {
       </div>
       <div className={'h-min w-full flex-1'}>
         {selectedCocktail ? (
-          <CocktailRecipeCardItem cocktailRecipe={selectedCocktail} showImage={true} showInfo={true} showPrice={true} showTags={true} />
+          <CocktailRecipeCardItem
+            cocktailRecipe={selectedCocktail}
+            showImage={true}
+            showInfo={true}
+            showPrice={true}
+            showTags={true}
+            showStatisticActions={true}
+          />
         ) : (
           <></>
         )}

@@ -1,8 +1,11 @@
 import { CocktailRecipeFull } from '../../models/CocktailRecipeFull';
-import React from 'react';
+import React, { useCallback, useState } from 'react';
 import { CompactCocktailRecipeInstruction } from './CompactCocktailRecipeInstruction';
 import { ShowCocktailInfoButton } from './ShowCocktailInfoButton';
 import CustomImage from '../CustomImage';
+import { useRouter } from 'next/router';
+import { alertService } from '../../lib/alertService';
+import { FaPlus } from 'react-icons/fa';
 
 interface CocktailRecipeOverviewItemProps {
   cocktailRecipe: CocktailRecipeFull;
@@ -12,10 +15,43 @@ interface CocktailRecipeOverviewItemProps {
   showInfo?: boolean;
   showTags?: boolean;
   showImageSide?: boolean;
+  showStatisticActions?: boolean;
   image?: string;
 }
 
 export default function CocktailRecipeCardItem(props: CocktailRecipeOverviewItemProps) {
+  const router = useRouter();
+
+  const [submittingStatistic, setSubmittingStatistic] = useState(false);
+
+  const addCocktailToStatistic = useCallback(async () => {
+    if (submittingStatistic) return;
+    try {
+      setSubmittingStatistic(true);
+      const response = await fetch(`/api/workspaces/${router.query.workspaceId}/statistics/cocktails/add`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          cocktailId: props.cocktailRecipe.id,
+          cocktailCardId: router.query.card,
+          actionSource: router.query.card ? (router.query.card == 'search' ? 'SEARCH' : 'CARD') : undefined,
+        }),
+      });
+      if (response.ok) {
+        alertService.success('Cocktail zur Statistik hinzugefügt');
+      } else {
+        alertService.error('Fehler beim Hinzufügen des Cocktails zur Statistik', response.status, response.statusText);
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alertService.error('Fehler beim Hinzufügen des Cocktails zur Statistik');
+    } finally {
+      setSubmittingStatistic(false);
+    }
+  }, [props.cocktailRecipe.id, router.query.cocktailCardId, router.query.workspaceId, submittingStatistic]);
+
   return (
     <div className={'col-span-1'}>
       <div className={'card card-side h-full'}>
@@ -39,7 +75,15 @@ export default function CocktailRecipeCardItem(props: CocktailRecipeOverviewItem
             ) : (
               <></>
             )}
-            <div className={'btn btn-outline btn-primary w-full'}>Gemacht</div>
+            {props.showStatisticActions ? (
+              <button className={'btn btn-outline btn-primary w-full'} onClick={addCocktailToStatistic} disabled={submittingStatistic}>
+                <FaPlus />
+                Gemacht
+                {submittingStatistic ? <div className={'spinner spinner-primary'}></div> : <></>}
+              </button>
+            ) : (
+              <></>
+            )}
           </div>
         </div>
         {props.showImageSide && props.showImage ? (
