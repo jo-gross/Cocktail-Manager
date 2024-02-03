@@ -752,12 +752,12 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                       )}
                       {(values.garnishes as CocktailRecipeGarnishFull[]).map((garnish) => (
                         <>
-                          <div key={`price-calculation-step-garnish-name`}>{garnish.garnish.name}</div>
+                          <div key={`price-calculation-step-garnish-name`}>{garnish?.garnish?.name}</div>
                           <div key={`price-calculation-step-garnish-price`} className={'grid grid-cols-2'}>
-                            <div>1 x {(garnish.garnish.price ?? 0).toFixed(2)}</div>
+                            <div>1 x {(garnish?.garnish?.price ?? 0).toFixed(2)}</div>
                             <div className={'text-end'}>
                               {(values.steps as CocktailRecipeStepFull[]).some((step) => step.ingredients.length > 0) ? '+ ' : ''}
-                              {(garnish?.garnish.price ?? 0).toFixed(2)}€
+                              {(garnish?.garnish?.price ?? 0).toFixed(2)}€
                             </div>
                           </div>
                         </>
@@ -776,7 +776,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                             .flat()
                             .map((ingredient) => ((ingredient.ingredient?.price ?? 0) / (ingredient.ingredient?.volume ?? 1)) * (ingredient.amount ?? 0))
                             .reduce((summ, sum) => summ + sum, 0) +
-                          (values.garnishes as CocktailRecipeGarnishFull[]).map((garnish) => garnish.garnish.price ?? 0).reduce((summ, sum) => summ + sum, 0)
+                          (values.garnishes as CocktailRecipeGarnishFull[]).map((garnish) => garnish?.garnish?.price ?? 0).reduce((summ, sum) => summ + sum, 0)
                         ).toFixed(2) + ' €'}
                       </div>
                     </div>
@@ -1238,10 +1238,10 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                         <div
                           className={'btn btn-primary btn-sm space-x-2'}
                           onClick={() => {
-                            const cocktailRecipeGarnish: CocktailRecipeGarnishFull = {
+                            const cocktailRecipeGarnish = {
                               cocktailRecipeId: '',
                               garnishId: '',
-                              garnish: garnishes[0],
+                              garnish: undefined,
                               optional: false,
                               garnishNumber: values.garnishes.length - 1,
                               description: '',
