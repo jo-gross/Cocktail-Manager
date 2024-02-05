@@ -47,7 +47,7 @@
     "autoprefixer": "10.4.17",
     "daisyui": "4.6.1",
     "eslint": "8.56.0",
-    "eslint-config-next": "14.0.4",
+    "eslint-config-next": "14.1.0",
     "eslint-config-prettier": "^9.1.0",
     "postcss": "8.4.32",
     "prettier": "3.1.1",
