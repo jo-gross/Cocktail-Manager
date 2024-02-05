@@ -1287,7 +1287,7 @@ __metadata:
     "@types/react-is": 18.2.4
     autoprefixer: 10.4.16
     browser-image-compression: ^2.0.2
-    daisyui: 4.6.0
+    daisyui: 4.6.1
     deep-diff: ^1.0.2
     eslint: 8.56.0
     eslint-config-next: 14.0.4
@@ -1463,15 +1463,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"daisyui@npm:4.6.0":
-  version: 4.6.0
-  resolution: "daisyui@npm:4.6.0"
+"daisyui@npm:4.6.1":
+  version: 4.6.1
+  resolution: "daisyui@npm:4.6.1"
   dependencies:
     css-selector-tokenizer: ^0.8
     culori: ^3
     picocolors: ^1
     postcss-js: ^4
-  checksum: 9d9af02f5d1e4368d8d9bdd423a1b3bf02e1c6bca11d108b699becdf88892ea98ba1370b10ed2a9ef87e4a9176342d971daaa859dc265f66238dcbb9fdb4c0a6
+  checksum: dee80ed1f32f2574d20443151b06fc2e20e5f052cc3e169389f4f41433ae72e59e5daa0a2d67b6c1c9d2826f3b46c290a9aced8999a17afa8e468adc534372e4
   languageName: node
   linkType: hard
 
@@ -5545,11 +5545,11 @@ __metadata:
 
 "typescript@patch:typescript@5.3.3#~builtin<compat/typescript>":
   version: 5.3.3
-  resolution: "typescript@patch:typescript@npm%3A5.3.3#~builtin<compat/typescript>::version=5.3.3&hash=1f5320"
+  resolution: "typescript@patch:typescript@npm%3A5.3.3#~builtin<compat/typescript>::version=5.3.3&hash=e012d7"
   bin:
     tsc: bin/tsc
     tsserver: bin/tsserver
-  checksum: f61375590b3162599f0f0d5b8737877ac0a7bc52761dbb585d67e7b8753a3a4c42d9a554c4cc929f591ffcf3a2b0602f65ae3ce74714fd5652623a816862b610
+  checksum: 4e604a9e107ce0c23b16a2f8d79d0531d4d8fe9ebbb7a8c395c66998c39892f0e0a071ef0b0d4e66420a8ec2b8d6cfd9cdb29ba24f25b37cba072e9282376df9
   languageName: node
   linkType: hard
 
