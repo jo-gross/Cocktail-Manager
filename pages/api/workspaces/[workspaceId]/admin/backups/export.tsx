@@ -27,6 +27,8 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     const calculations = await prisma.cocktailCalculation.findMany({ where: { workspaceId } });
 
     const backup: BackupStructure = {
+      workspaceSettings: await prisma.workspaceSetting.findMany({ where: { workspaceId } }),
+      stepActions: await prisma.workspaceCocktailRecipeStepAction.findMany({ where: { workspaceId } }),
       garnish: await prisma.garnish.findMany({ where: { workspaceId } }),
       garnishImages: await prisma.garnishImage.findMany({
         where: {

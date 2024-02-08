@@ -11,6 +11,7 @@ import { FaCalculator, FaCocktail, FaGlassMartiniAlt } from 'react-icons/fa';
 import { LuCitrus } from 'react-icons/lu';
 import { PiBeerBottleBold, PiCards } from 'react-icons/pi';
 import { FaGear } from 'react-icons/fa6';
+import { IoMdStats } from 'react-icons/io';
 
 export default function ManagePage() {
   const router = useRouter();
@@ -87,6 +88,7 @@ export default function ManagePage() {
           <ManageCard icon={<LuCitrus />} title={'Garnituren'} link={`/workspaces/${workspaceId}/manage/garnishes`} />
           <ManageCard icon={<FaGlassMartiniAlt />} title={'Gläser'} link={`/workspaces/${workspaceId}/manage/glasses`} />
           <ManageCard icon={<FaCalculator />} title={'Kalkulation'} link={`/workspaces/${workspaceId}/manage/calculations`} />
+          <ManageCard icon={<IoMdStats />} title={'Statistiken'} link={`/workspaces/${workspaceId}/manage/statistics`} />
           <ManageCard icon={<FaGear />} title={'Einstellungen'} link={`/workspaces/${workspaceId}/manage/settings`} />
         </div>
       </ManageEntityLayout>
