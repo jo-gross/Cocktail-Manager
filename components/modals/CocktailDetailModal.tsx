@@ -1,8 +1,8 @@
 import { CocktailRecipeFull } from '../../models/CocktailRecipeFull';
 import Link from 'next/link';
-import { FaPencilAlt } from 'react-icons/fa';
+import { FaPencilAlt, FaPlus } from 'react-icons/fa';
 import { ModalContext } from '../../lib/context/ModalContextProvider';
-import { useContext } from 'react';
+import React, { useCallback, useContext, useState } from 'react';
 import { useRouter } from 'next/router';
 import { UserContext } from '../../lib/context/UserContextProvider';
 import DefaultGlassIcon from '../DefaultGlassIcon';
@@ -10,6 +10,7 @@ import { Role, WorkspaceSetting } from '@prisma/client';
 import { WorkspaceSettingKey } from '.prisma/client';
 import CustomImage from '../CustomImage';
 import NextImage from '../NextImage';
+import { alertService } from '../../lib/alertService';
 
 interface CocktailDetailModalProps {
   cocktail: CocktailRecipeFull;
@@ -20,6 +21,38 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
   const workspaceId = router.query.workspaceId as string | undefined;
   const modalContext = useContext(ModalContext);
   const userContext = useContext(UserContext);
+
+  const [submittingStatistic, setSubmittingStatistic] = useState(false);
+  const addCocktailToStatistic = useCallback(
+    async (cocktailId: string) => {
+      if (submittingStatistic) return;
+      try {
+        setSubmittingStatistic(true);
+        const response = await fetch(`/api/workspaces/${router.query.workspaceId}/statistics/cocktails/add`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            cocktailId: cocktailId,
+            cocktailCardId: router.query.card,
+            actionSource: router.query.card ? (router.query.card == 'search' ? 'SEARCH' : 'CARD') : undefined,
+          }),
+        });
+        if (response.ok) {
+          alertService.success('Cocktail zur Statistik hinzugefügt');
+        } else {
+          alertService.error('Fehler beim Hinzufügen des Cocktails zur Statistik', response.status, response.statusText);
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alertService.error('Fehler beim Hinzufügen des Cocktails zur Statistik');
+      } finally {
+        setSubmittingStatistic(false);
+      }
+    },
+    [router.query.cocktailCardId, router.query.workspaceId, submittingStatistic],
+  );
 
   return (
     <div className={''}>
@@ -143,6 +176,13 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                   )}
                 </div>
               ))}
+          </div>
+          <div className={'col-span-2'}>
+            <button className={'btn btn-outline btn-primary w-full'} onClick={() => addCocktailToStatistic(props.cocktail.id)} disabled={submittingStatistic}>
+              <FaPlus />
+              Gemacht
+              {submittingStatistic ? <div className={'spinner spinner-primary'}></div> : <></>}
+            </button>
           </div>
         </div>
       </div>

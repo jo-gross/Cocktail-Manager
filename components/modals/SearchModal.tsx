@@ -7,12 +7,14 @@ import { ModalContext } from '../../lib/context/ModalContextProvider';
 import { ShowCocktailInfoButton } from '../cocktails/ShowCocktailInfoButton';
 import { useRouter } from 'next/router';
 import { alertService } from '../../lib/alertService';
+import { FaPlus } from 'react-icons/fa';
 
 interface SearchModalProps {
   onCocktailSelectedObject?: (cocktail: CocktailRecipeFull) => void;
   selectedCocktails?: string[];
   selectionLabel?: string;
   showRecipe?: boolean;
+  showStatisticActions?: boolean;
 }
 
 export function SearchModal(props: SearchModalProps) {
@@ -69,6 +71,38 @@ export function SearchModal(props: SearchModalProps) {
     if (workspaceId == undefined) return;
     fetchCocktails('');
   }, [fetchCocktails, workspaceId]);
+
+  const [submittingStatistic, setSubmittingStatistic] = useState(false);
+  const addCocktailToStatistic = useCallback(
+    async (cocktailId: string) => {
+      if (submittingStatistic) return;
+      try {
+        setSubmittingStatistic(true);
+        const response = await fetch(`/api/workspaces/${router.query.workspaceId}/statistics/cocktails/add`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            cocktailId: cocktailId,
+            cocktailCardId: router.query.card,
+            actionSource: router.query.card ? (router.query.card == 'search' ? 'SEARCH' : 'CARD') : undefined,
+          }),
+        });
+        if (response.ok) {
+          alertService.success('Cocktail zur Statistik hinzugefügt');
+        } else {
+          alertService.error('Fehler beim Hinzufügen des Cocktails zur Statistik', response.status, response.statusText);
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alertService.error('Fehler beim Hinzufügen des Cocktails zur Statistik');
+      } finally {
+        setSubmittingStatistic(false);
+      }
+    },
+    [router.query.cocktailCardId, router.query.workspaceId, submittingStatistic],
+  );
 
   return (
     <div className={'grid w-full grid-cols-1 gap-2 p-0.5 md:p-2'}>
@@ -149,6 +183,20 @@ export function SearchModal(props: SearchModalProps) {
                           {props.selectionLabel ?? 'Hinzufügen'}
                         </button>
                       </div>
+                    ) : (
+                      <></>
+                    )}
+
+                    {props.showStatisticActions ? (
+                      <button
+                        className={'btn btn-outline btn-primary w-full'}
+                        onClick={() => addCocktailToStatistic(cocktail.id)}
+                        disabled={submittingStatistic}
+                      >
+                        <FaPlus />
+                        Gemacht
+                        {submittingStatistic ? <div className={'spinner spinner-primary'}></div> : <></>}
+                      </button>
                     ) : (
                       <></>
                     )}
