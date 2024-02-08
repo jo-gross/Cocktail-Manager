@@ -88,7 +88,7 @@ export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeIns
             ?.sort((a, b) => a.garnishNumber - b.garnishNumber)
             .map((garnish) => (
               <div key={`cocktail-${props.cocktailRecipe.id}-garnish-${garnish.garnishNumber}-garnishId-${garnish.garnishId}`}>
-                {garnish.garnish.name}
+                {garnish?.garnish?.name}
                 {garnish.optional ? ' (optional)' : ''}
               </div>
             )) ?? 'Keine'}
