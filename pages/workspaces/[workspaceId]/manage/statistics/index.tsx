@@ -104,7 +104,7 @@ export default function StatisticsPage() {
         <div key={'startDate'} className={'form-control'}>
           <label className={'lable'}>Startdatum</label>
           <input
-            className={'input'}
+            className={'input input-bordered'}
             type={'date'}
             value={startDate.toISOString().split('T')[0]}
             onChange={(event) => {
@@ -121,7 +121,7 @@ export default function StatisticsPage() {
             <span className={'lable-text'}>Enddatum</span>
           </label>
           <input
-            className={`input`}
+            className={`input input-bordered`}
             type={'date'}
             value={endDate.toISOString().split('T')[0]}
             onChange={(event) => {
@@ -135,13 +135,13 @@ export default function StatisticsPage() {
         </div>,
       ]}
     >
-      <div className={'grid grid-cols-1 gap-2 md:grid-cols-2'}>
+      <div className={'grid grid-cols-1 gap-2 xl:grid-cols-2'}>
         <div className={'card'}>
           <div className={'card-body'}>
             <div className={'card-title'}>
               Übersicht ({startDate.toFormatDateString()} - {endDate.toFormatDateString()})
             </div>
-            <div className={'grid grid-cols-2 gap-2'}>
+            <div className={'gird-cols-1 grid gap-2 md:grid-cols-2'}>
               <div>
                 <div>
                   {_.chain(cocktailStatisticItems)
@@ -149,7 +149,7 @@ export default function StatisticsPage() {
                     .map((cocktailStatisticItems, cocktailId) => ({ name: cocktailStatisticItems[0].cocktail.name, count: cocktailStatisticItems.length }))
                     .orderBy('count', 'desc')
                     .map((cocktailStatisticItem) => (
-                      <div key={''}>
+                      <div key={`cocktail-items-${cocktailStatisticItem.name}`}>
                         <span className={'font-bold'}>{cocktailStatisticItem.name}: </span>
                         <span>{cocktailStatisticItem.count}</span>
                       </div>
@@ -196,6 +196,14 @@ export default function StatisticsPage() {
                       },
                     ],
                   }}
+                  options={{
+                    responsive: true,
+                    plugins: {
+                      legend: {
+                        position: 'right',
+                      },
+                    },
+                  }}
                 />
               </div>
             </div>
@@ -206,25 +214,33 @@ export default function StatisticsPage() {
             <div className={'card-title'}>
               Übersicht ({startDate.toFormatDateString()} - {endDate.toFormatDateString()})
             </div>
-            <Bar
-              data={processData(cocktailStatisticItems)}
-              options={{
-                responsive: true,
-                scales: {
-                  x: {
-                    stacked: true,
-                    // type: 'time',
+            <div>
+              <Bar
+                className={'w'}
+                data={processData(cocktailStatisticItems)}
+                options={{
+                  responsive: true,
+                  scales: {
+                    x: {
+                      stacked: true,
+                      // type: 'time',
+                    },
+                    y: {
+                      beginAtZero: true,
+                      stacked: true,
+                    },
                   },
-                  y: {
-                    beginAtZero: true,
-                    stacked: true,
+                  plugins: {
+                    legend: {
+                      position: 'right',
+                    },
                   },
-                },
-              }}
-            />
+                }}
+              />
+            </div>
           </div>
         </div>
-        <div className={'card col-span-12'}>
+        <div className={'card col-span-full'}>
           <div className={'card-body'}>
             <div className={'card-title flex w-full justify-between'}>
               Logs
@@ -232,71 +248,73 @@ export default function StatisticsPage() {
                 {loading ? <span className="loading loading-spinner"></span> : <FaSyncAlt />}
               </button>
             </div>
-            <table className={'table-compact overflow-x table'}>
-              <thead>
-                <tr>
-                  <td>Zeitpunkt</td>
-                  <td>Cocktail</td>
-                  <td>Cocktail Karte</td>
-                  <td>Hinzugefügt von</td>
-                  <td></td>
-                </tr>
-              </thead>
-              <tbody>
-                {loading ? (
+            <div className="overflow-x-auto">
+              <table className="table-compact table table-zebra w-full">
+                <thead>
                   <tr>
-                    <td colSpan={5} className={'text-center'}>
-                      Lade...
-                    </td>
+                    <td>Zeitpunkt</td>
+                    <td>Cocktail</td>
+                    <td>Cocktail Karte</td>
+                    <td>Hinzugefügt von</td>
+                    <td></td>
                   </tr>
-                ) : cocktailStatisticItems.length == 0 ? (
-                  <tr>
-                    <td colSpan={5} className={'text-center'}>
-                      Keine Einträge gefunden
-                    </td>
-                  </tr>
-                ) : (
-                  cocktailStatisticItems
-                    .sort((a, b) => {
-                      return new Date(b.date).getTime() - new Date(a.date).getTime();
-                    })
-                    .map((item) => (
-                      <tr key={item.id}>
-                        <td>{new Date(item.date).toFormatDateTimeString()}</td>
-                        <td>{item.cocktail.name}</td>
-                        <td>{item.cocktailCard?.name}</td>
-                        <td>{item.user?.name}</td>
-                        <td className={'flex items-center justify-end space-x-2'}>
-                          <button
-                            disabled={!userContext.isUserPermitted('MANAGER')}
-                            className={'btn btn-square btn-error btn-sm'}
-                            onClick={async () => {
-                              try {
-                                const response = await fetch(`/api/workspaces/${workspaceId}/statistics/cocktails/${item.id}`, {
-                                  method: 'DELETE',
-                                });
-                                if (response.ok) {
-                                  alertService.success('Statistik Eintrag gelöscht');
-                                  refreshStatistics();
-                                } else {
-                                  console.error('StatisticsPage -> refreshStatistics', response);
-                                  const body = await response.json();
-                                  alertService.error(body.message, response.status, response.statusText);
+                </thead>
+                <tbody>
+                  {loading ? (
+                    <tr>
+                      <td colSpan={5} className={'text-center'}>
+                        Lade...
+                      </td>
+                    </tr>
+                  ) : cocktailStatisticItems.length == 0 ? (
+                    <tr>
+                      <td colSpan={5} className={'text-center'}>
+                        Keine Einträge gefunden
+                      </td>
+                    </tr>
+                  ) : (
+                    cocktailStatisticItems
+                      .sort((a, b) => {
+                        return new Date(b.date).getTime() - new Date(a.date).getTime();
+                      })
+                      .map((item) => (
+                        <tr key={'statistic-item-' + item.id}>
+                          <td>{new Date(item.date).toFormatDateTimeString()}</td>
+                          <td>{item.cocktail.name}</td>
+                          <td>{item.cocktailCard?.name}</td>
+                          <td>{item.user?.name}</td>
+                          <td className={'flex items-center justify-end space-x-2'}>
+                            <button
+                              disabled={!userContext.isUserPermitted('MANAGER')}
+                              className={'btn btn-square btn-error btn-sm'}
+                              onClick={async () => {
+                                try {
+                                  const response = await fetch(`/api/workspaces/${workspaceId}/statistics/cocktails/${item.id}`, {
+                                    method: 'DELETE',
+                                  });
+                                  if (response.ok) {
+                                    alertService.success('Statistik Eintrag gelöscht');
+                                    refreshStatistics();
+                                  } else {
+                                    console.error('StatisticsPage -> refreshStatistics', response);
+                                    const body = await response.json();
+                                    alertService.error(body.message, response.status, response.statusText);
+                                  }
+                                } catch (error) {
+                                  console.error('StatisticsPage -> refreshStatistics', error);
+                                  alertService.error('Fehler beim Löschen des Statistik Eintrags');
                                 }
-                              } catch (error) {
-                                console.error('StatisticsPage -> refreshStatistics', error);
-                                alertService.error('Fehler beim Löschen des Statistik Eintrags');
-                              }
-                            }}
-                          >
-                            <FaTrashAlt />
-                          </button>
-                        </td>
-                      </tr>
-                    ))
-                )}
-              </tbody>
-            </table>
+                              }}
+                            >
+                              <FaTrashAlt />
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>
