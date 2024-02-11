@@ -12,6 +12,7 @@ import { LuCitrus } from 'react-icons/lu';
 import { PiBeerBottleBold, PiCards } from 'react-icons/pi';
 import { FaGear } from 'react-icons/fa6';
 import { IoMdStats } from 'react-icons/io';
+import { version } from '../../../../package.json';
 
 export default function ManagePage() {
   const router = useRouter();
@@ -77,6 +78,13 @@ export default function ManagePage() {
               >
                 Abmelden
               </button>
+              <div className={'divider-sm'}></div>
+              <div className={'text-center'}>
+                v{version} -{' '}
+                <Link className={'link'} href={'https://github.com/jo-gross/Cocktail-Manager/blob/master/docs/CHANGELOG.md'} target={'_blank'}>
+                  Changelog
+                </Link>{' '}
+              </div>
             </ul>
           </div>,
         ]}

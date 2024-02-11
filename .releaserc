@@ -1,0 +1,68 @@
+{
+  "branches": [
+    "main",
+    "master"
+  ],
+  "plugins": [
+    [
+      "@semantic-release/commit-analyzer",
+      {
+        "preset": "angular",
+        "releaseRules": [
+          {
+            "type": "docs",
+            "scope": "README",
+            "release": "patch"
+          },
+          {
+            "type": "refactor",
+            "release": "patch"
+          },
+          {
+            "type": "style",
+            "release": "patch"
+          }
+        ],
+        "parserOpts": {
+          "noteKeywords": [
+            "BREAKING CHANGE",
+            "BREAKING CHANGES"
+          ]
+        }
+      }
+    ],
+    "@semantic-release/release-notes-generator",
+    [
+      "@semantic-release/changelog",
+      {
+        "changelogFile": "docs/CHANGELOG.md"
+      }
+    ],
+    "@semantic-release/npm",
+    [
+      "@semantic-release/git",
+      {
+        "assets": [
+          "dist/**/*.{js,css}",
+          "docs",
+          "package.json",
+          "docs/CHANGELOG.md"
+        ],
+        "message": "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
+      }
+    ],
+    "@semantic-release/github",
+    [
+      "@codedependant/semantic-release-docker",
+      {
+        "dockerRegistry": "ghcr.io",
+        "dockerImage": "jo-gross/daisyui-debugging",
+        "dockerTags": [
+          "latest",
+          "{{version}}",
+          "{{major}}.{{minor}}"
+        ]
+      }
+    ]
+  ]
+}

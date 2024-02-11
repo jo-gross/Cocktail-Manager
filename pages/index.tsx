@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { UserContext } from '../lib/context/UserContextProvider';
 import { alertService } from '../lib/alertService';
 import Head from 'next/head';
+import { version } from '../package.json';
 
 export default function WorkspacesPage() {
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
@@ -82,6 +83,7 @@ export default function WorkspacesPage() {
           <div className={'flex flex-col items-center justify-center space-y-2'}>
             <Image src={'/images/The Cocktail Manager Logo.png'} alt="The Cocktail Manager" className={'pt-4 invert dark:invert-0'} height={211} width={247} />
             <h1 className={'text-center text-4xl font-bold'}>Cocktail-Manager</h1>
+            <div>v{version}</div>
             <div className={'flex items-center space-x-2'}>
               <>
                 {userContext.user ? (
