@@ -250,7 +250,7 @@ export default function OverviewPage() {
           </div>
         </div>
 
-        <div className={'fixed bottom-2 right-2 flex flex-col space-y-2 md:bottom-5 md:right-5 print:hidden'}>
+        <div className={'fixed bottom-2 right-2 z-10 flex flex-col space-y-2 md:bottom-5 md:right-5 print:hidden'}>
           <div className="dropdown dropdown-end dropdown-top pt-2">
             <label tabIndex={0} className={'btn btn-square btn-primary rounded-xl md:btn-lg'}>
               <FaEye />
