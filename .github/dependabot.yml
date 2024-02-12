@@ -12,7 +12,7 @@ updates:
     labels:
       - dependencies
     commit-message:
-      prefix: "build :package: [skip ci]"
+      prefix: "build"
       include: "scope"
   - package-ecosystem: 'npm' # See documentation for possible values
     directory: '/' # Location of package manifests
@@ -21,5 +21,5 @@ updates:
     labels:
       - dependencies
     commit-message:
-      prefix: "build :package: [skip ci]"
+      prefix: "build"
       include: "scope"
