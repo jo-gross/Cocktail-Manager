@@ -23,7 +23,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       const soup = new JSSoup(body);
 
       const imageResponse = await fetch(soup.find('div', 'image-slider--container').contents[0].find('img').attrs.src).catch((error) => {
-        console.error(error);
+        console.log(error);
         return undefined;
       });
 
