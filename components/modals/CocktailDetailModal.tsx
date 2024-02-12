@@ -181,7 +181,7 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
             <button className={'btn btn-outline btn-primary w-full'} onClick={() => addCocktailToStatistic(props.cocktail.id)} disabled={submittingStatistic}>
               <FaPlus />
               Gemacht
-              {submittingStatistic ? <div className={'spinner spinner-primary'}></div> : <></>}
+              {submittingStatistic ? <span className={'loading loading-spinner'}></span> : <></>}
             </button>
           </div>
         </div>

@@ -21,17 +21,21 @@ export default function CocktailsOverviewPage() {
 
   const refreshCocktails = useCallback(() => {
     if (!workspaceId) return;
+    setLoading(true);
     fetch(`/api/workspaces/${workspaceId}/cocktails`)
       .then(async (response) => {
         const body = await response.json();
         if (response.ok) {
           setCocktailRecipes(body.data);
         } else {
-          console.log('Cocktails -> fetchRecipes', response, body);
-          alertService.error(body.message, response.status, response.statusText);
+          console.error('Cocktails -> fetchCocktails', response);
+          alertService.error(body.message ?? 'Fehler beim Laden der Cocktails', response.status, response.statusText);
         }
       })
-      .catch((err) => alertService.error(err.message))
+      .catch((error) => {
+        console.error('Cocktails -> fetchCocktails', error);
+        alertService.error('Fehler beim Laden der Cocktails');
+      })
       .finally(() => {
         setLoading(false);
       });

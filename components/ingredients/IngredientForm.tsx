@@ -115,7 +115,7 @@ export function IngredientForm(props: IngredientFormProps) {
         if (!values.unit) {
           errors.unit = 'Required';
         }
-        console.log('Form errors', errors);
+        console.debug('Form errors', errors);
         return errors;
       }}
     >

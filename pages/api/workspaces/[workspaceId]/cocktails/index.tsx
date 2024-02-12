@@ -75,7 +75,7 @@ export default withHttpMethods({
     });
 
     if (image) {
-      const imageResult = await prisma.cocktailRecipeImage.create({
+      await prisma.cocktailRecipeImage.create({
         data: {
           image: image,
           cocktailRecipe: {
@@ -108,7 +108,6 @@ export default withHttpMethods({
         });
       });
     }
-    console.log(garnishes);
     if (garnishes.length > 0 && result != undefined) {
       await garnishes.forEach(async (garnish: CocktailRecipeGarnishFull) => {
         await prisma.cocktailRecipeGarnish.create({

@@ -12,7 +12,7 @@ export default function ThemeBoundary(props: ThemeBoundaryProps) {
   const userContext = useContext(UserContext);
 
   useEffect(() => {
-    console.log('Settings changed', userContext.user?.settings);
+    console.debug('Settings changed', userContext.user?.settings);
     userContext.user?.settings?.forEach((setting) => {
       if (setting.setting === 'theme' && setting.value != null) {
         setIsDark(JSON.parse(setting.value));

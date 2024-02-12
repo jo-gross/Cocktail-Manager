@@ -31,7 +31,7 @@ export default function OverviewPage() {
 
   const [cocktailCards, setCocktailCards] = useState<CocktailCardFull[]>([]);
   const [loadingCards, setLoadingCards] = useState(true);
-  const [loadingCardsGroups, setLoadingGroups] = useState(false);
+  const [loadingGroups, setLoadingGroups] = useState(false);
 
   // fetch cards initially
   useEffect(() => {
@@ -42,16 +42,14 @@ export default function OverviewPage() {
         const body = await response.json();
         if (response.ok) {
           setCocktailCards(body.data);
-          if (body.data.length === 0) {
-          }
         } else {
-          console.log('WorkspaceIndex -> fetchCards', response, body);
-          alertService.error(body.message, response.status, response.statusText);
+          console.error('CocktailCardPage -> fetchCards', response);
+          alertService.error(body.message ?? 'Fehler beim Laden der Karten', response.status, response.statusText);
         }
       })
       .catch((error) => {
-        console.error(error);
-        alertService.error(error.message);
+        console.error('CocktailCardPage -> fetchCards', error);
+        alertService.error('Fehler beim Laden der Karten');
       })
       .finally(() => setLoadingCards(false));
   }, [userContext.user, workspaceId]);
@@ -63,17 +61,18 @@ export default function OverviewPage() {
     if (selectedCardId != undefined && selectedCardId != 'search') {
       setLoadingGroups(true);
       fetch(`/api/workspaces/${workspaceId}/cards/` + selectedCardId)
-        .then((response) => {
+        .then(async (response) => {
+          const body = await response.json();
           if (response.ok) {
-            return response.json();
+            setSelectedCard(body.data);
           } else {
-            throw new Error('Error while loading data');
+            console.error('CocktailCardPage -> fetchCard', response);
+            alertService.error(body.message ?? 'Fehler beim Laden der Karte', response.status, response.statusText);
           }
         })
-        .then((json) => setSelectedCard(json.data))
         .catch((error) => {
-          console.error(error);
-          alertService.error(error.message);
+          console.error('CocktailCardPage -> fetchCard', error);
+          alertService.error('Fehler beim Laden der Karte');
         })
         .finally(() => setLoadingGroups(false));
     }
@@ -116,11 +115,11 @@ export default function OverviewPage() {
   }, []);
 
   useEffect(() => {
-    console.log('selectedCardId', selectedCardId);
+    console.debug('selectedCardId', selectedCardId);
     if (selectedCardId == undefined && cocktailCards.length > 0) {
       const todayCardId = cocktailCards.filter((card) => card.date != undefined).find((card) => card.date?.withoutTime == new Date().withoutTime)?.id;
 
-      console.log(
+      console.debug(
         'cocktailCards',
         cocktailCards.map((c) => {
           return {
@@ -133,10 +132,10 @@ export default function OverviewPage() {
 
       const date = new Date();
       date.setHours(0, 0, 0, 0);
-      console.log('today-date', date.toISOString());
-      console.log('today-withouttime', new Date().withoutTime);
+      console.debug('today-date', date.toISOString());
+      console.debug('today-withouttime', new Date().withoutTime);
 
-      console.log('todayCardId', todayCardId);
+      console.debug('todayCardId', todayCardId);
       if (todayCardId) {
         setSelectedCardId(todayCardId);
         router
@@ -182,7 +181,7 @@ export default function OverviewPage() {
           <div className={'flex flex-col space-y-2 overflow-y-auto rounded-xl p-0 md:p-2 print:overflow-clip print:p-0'}>
             {selectedCardId == 'search' || selectedCardId == undefined ? (
               <SearchPage />
-            ) : loadingCardsGroups ? (
+            ) : loadingGroups ? (
               <PageCenter>
                 <Loading />
               </PageCenter>

@@ -79,7 +79,7 @@ export default function CocktailRecipeCardItem(props: CocktailRecipeOverviewItem
               <button className={'btn btn-outline btn-primary w-full'} onClick={addCocktailToStatistic} disabled={submittingStatistic}>
                 <FaPlus />
                 Gemacht
-                {submittingStatistic ? <div className={'spinner spinner-primary'}></div> : <></>}
+                {submittingStatistic ? <span className={'loading loading-spinner'}></span> : <></>}
               </button>
             ) : (
               <></>

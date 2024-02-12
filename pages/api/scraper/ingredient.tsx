@@ -15,14 +15,15 @@ interface ResponseBody {
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'GET') {
     if (req.query?.url?.includes('conalco.de')) {
-      console.log(req.query.url);
+      console.debug(req.query.url);
       const response = await fetch(req.query.url as string);
-      console.log(response.status + ' ' + response.statusText);
+      console.debug(response.status + ' ' + response.statusText);
+
       const body = await response.text();
       const soup = new JSSoup(body);
 
       const imageResponse = await fetch(soup.find('div', 'image-slider--container').contents[0].find('img').attrs.src).catch((error) => {
-        console.log(error);
+        console.error(error);
         return undefined;
       });
 
@@ -43,16 +44,16 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 
       return res.json(result);
     } else if (req.query?.url?.includes('expert24.com') || req.query?.url?.includes('delicando.com')) {
-      console.log(req.query.url);
+      console.debug(req.query.url);
       const response = await fetch(req.query.url as string);
-      console.log(response.status + ' ' + response.statusText);
+      console.debug(response.status + ' ' + response.statusText);
       const body = await response.text();
       const soup = new JSSoup(body);
 
-      console.log(soup.find('div', 'activeImage'));
+      console.debug(soup.find('div', 'activeImage'));
 
       const imageResponse = await fetch(soup.find('div', 'activeImage').contents[0].attrs.href).catch((error) => {
-        console.log(error);
+        console.error(error);
         return undefined;
       });
 
@@ -73,7 +74,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         volume: Number(volume),
       });
     } else if (req.query?.url?.includes('metro.de')) {
-      console.log(req.query.url);
+      console.debug(req.query.url);
 
       const playwright = require('playwright');
       const browser = await playwright['chromium'].launch();
@@ -92,7 +93,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 
       const imageResponse = imageUrl
         ? await fetch(imageUrl).catch((error) => {
-            console.log(error);
+          console.error(error);
             return undefined;
           })
         : undefined;
@@ -112,12 +113,15 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         volume: Number(volume),
       });
     } else if (req.query?.url?.includes('rumundco.de')) {
+      console.debug(req.query.url);
       const response = await fetch(req.query.url as string);
+      console.debug(response.status + ' ' + response.statusText);
+
       const body = await response.text();
       const soup = new JSSoup(body);
 
       const imageResponse = await fetch(soup.find('meta', { property: 'og:image' }).attrs.content).catch((error) => {
-        console.log(error);
+        console.error(error);
         return undefined;
       });
 

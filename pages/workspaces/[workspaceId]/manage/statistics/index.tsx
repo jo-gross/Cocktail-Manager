@@ -1,6 +1,6 @@
 import { ManageEntityLayout } from '../../../../../components/layout/ManageEntityLayout';
 import { useRouter } from 'next/router';
-import { useCallback, useContext, useEffect, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { CocktailStatisticItemFull } from '../../../../../models/CocktailStatisticItemFull';
 import { alertService } from '../../../../../lib/alertService';
 import { FaSyncAlt, FaTrashAlt } from 'react-icons/fa';
@@ -11,6 +11,7 @@ import { Chart as ChartJS } from 'chart.js/auto';
 import { Bar, Doughnut } from 'react-chartjs-2';
 import '../../../../../lib/DateUtils';
 import '../../../../../lib/StringUtils';
+import { Loading } from '../../../../../components/Loading';
 
 ChartJS.register(ArcElement, Tooltip, Legend, TimeScale, CategoryScale, LinearScale);
 
@@ -25,6 +26,8 @@ export default function StatisticsPage() {
   const [cocktailStatisticItems, setCocktailStatisticItems] = useState<CocktailStatisticItemFull[]>([]);
   const [loading, setLoading] = useState(false);
 
+  const [itemDeleting, setItemDeleting] = useState<Record<string, boolean>>({});
+
   const refreshStatistics = useCallback(async () => {
     if (!workspaceId) return;
     if (loading) return;
@@ -35,12 +38,13 @@ export default function StatisticsPage() {
         const body = await response.json();
         setCocktailStatisticItems(body.data);
       } else {
-        console.error('StatisticsPage -> refreshStatistics', response);
         const body = await response.json();
-        alertService.error(body.message, response.status, response.statusText);
+        console.error('StatisticsPage -> refreshStatistics', response);
+        alertService.error(body.message ?? 'Fehler beim aktualisieren der Statistik', response.status, response.statusText);
       }
     } catch (error) {
       console.error('StatisticsPage -> refreshStatistics', error);
+      alertService.error('Fehler beim aktualisieren der Statistik');
     } finally {
       setLoading(false);
     }
@@ -146,7 +150,7 @@ export default function StatisticsPage() {
                 <div>
                   {_.chain(cocktailStatisticItems)
                     .groupBy('cocktailId')
-                    .map((cocktailStatisticItems, cocktailId) => ({ name: cocktailStatisticItems[0].cocktail.name, count: cocktailStatisticItems.length }))
+                    .map((cocktailStatisticItems) => ({ name: cocktailStatisticItems[0].cocktail.name, count: cocktailStatisticItems.length }))
                     .orderBy('count', 'desc')
                     .map((cocktailStatisticItem) => (
                       <div key={`cocktail-items-${cocktailStatisticItem.name}`}>
@@ -167,7 +171,7 @@ export default function StatisticsPage() {
                   data={{
                     labels: _.chain(cocktailStatisticItems)
                       .groupBy('cocktailId')
-                      .map((cocktailStatisticItems, cocktailId) => ({ name: cocktailStatisticItems[0].cocktail.name, count: cocktailStatisticItems.length }))
+                      .map((cocktailStatisticItems) => ({ name: cocktailStatisticItems[0].cocktail.name, count: cocktailStatisticItems.length }))
                       .orderBy('count', 'desc')
                       .map((cocktailStatisticItem) => cocktailStatisticItem.name)
                       .value(),
@@ -176,7 +180,7 @@ export default function StatisticsPage() {
                         label: 'Anzahl',
                         data: _.chain(cocktailStatisticItems)
                           .groupBy('cocktailId')
-                          .map((cocktailStatisticItems, cocktailId) => ({
+                          .map((cocktailStatisticItems) => ({
                             name: cocktailStatisticItems[0].cocktail.name,
                             count: cocktailStatisticItems.length,
                           }))
@@ -185,7 +189,7 @@ export default function StatisticsPage() {
                           .value(),
                         backgroundColor: _.chain(cocktailStatisticItems)
                           .groupBy('cocktailId')
-                          .map((cocktailStatisticItems, cocktailId) => ({
+                          .map((cocktailStatisticItems) => ({
                             name: cocktailStatisticItems[0].cocktail.name,
                             count: cocktailStatisticItems.length,
                           }))
@@ -263,7 +267,7 @@ export default function StatisticsPage() {
                   {loading ? (
                     <tr>
                       <td colSpan={5} className={'text-center'}>
-                        Lade...
+                        <Loading />
                       </td>
                     </tr>
                   ) : cocktailStatisticItems.length == 0 ? (
@@ -286,27 +290,31 @@ export default function StatisticsPage() {
                           <td className={'flex items-center justify-end space-x-2'}>
                             <button
                               disabled={!userContext.isUserPermitted('MANAGER')}
-                              className={'btn btn-square btn-error btn-sm'}
+                              className={`btn ${itemDeleting[item.id] ? '' : 'btn-square'} btn-error btn-sm`}
                               onClick={async () => {
+                                setItemDeleting({ ...itemDeleting, [item.id]: true });
                                 try {
                                   const response = await fetch(`/api/workspaces/${workspaceId}/statistics/cocktails/${item.id}`, {
                                     method: 'DELETE',
                                   });
                                   if (response.ok) {
-                                    alertService.success('Statistik Eintrag gelöscht');
+                                    alertService.success('Statistik-Eintrag gelöscht');
                                     refreshStatistics();
                                   } else {
-                                    console.error('StatisticsPage -> refreshStatistics', response);
                                     const body = await response.json();
-                                    alertService.error(body.message, response.status, response.statusText);
+                                    console.error('StatisticsPage -> deleteStatisticItem', response);
+                                    alertService.error(body.message ?? 'Fehler beim Löschen des Statistik-Eintrags', response.status, response.statusText);
                                   }
                                 } catch (error) {
-                                  console.error('StatisticsPage -> refreshStatistics', error);
-                                  alertService.error('Fehler beim Löschen des Statistik Eintrags');
+                                  console.error('StatisticsPage -> deleteStatisticItem', error);
+                                  alertService.error('Fehler beim Löschen des Statistik-Eintrags');
+                                } finally {
+                                  setItemDeleting({ ...itemDeleting, [item.id]: false });
                                 }
                               }}
                             >
                               <FaTrashAlt />
+                              {itemDeleting[item.id] ? <span className="loading loading-spinner"></span> : <></>}
                             </button>
                           </td>
                         </tr>

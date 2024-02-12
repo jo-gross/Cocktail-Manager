@@ -19,19 +19,23 @@ export default function IngredientsOverviewPage() {
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const refreshIngredients = useCallback(() => {
+  const refreshIngredients = useCallback(async () => {
     if (!workspaceId) return;
+    setLoading(true);
     fetch(`/api/workspaces/${workspaceId}/ingredients`)
       .then(async (response) => {
         const body = await response.json();
         if (response.ok) {
           setIngredients(body.data);
         } else {
-          console.log('Ingredients -> fetchIngredients', response, body);
-          alertService.error(body.message, response.status, response.statusText);
+          console.error('Ingredients -> fetchIngredients', response);
+          alertService.error(body.message ?? 'Fehler beim Laden der Zutaten', response.status, response.statusText);
         }
       })
-      .catch((err) => alertService.error(err.message))
+      .catch((error) => {
+        console.error('Ingredients -> fetchIngredients', error);
+        alertService.error('Fehler beim Laden der Zutaten');
+      })
       .finally(() => {
         setLoading(false);
       });
@@ -76,13 +80,13 @@ export default function IngredientsOverviewPage() {
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={9}>
+                    <td colSpan={10}>
                       <Loading />
                     </td>
                   </tr>
                 ) : ingredients.length == 0 ? (
                   <tr>
-                    <td colSpan={9} className="{'text-center'}">
+                    <td colSpan={10} className="{'text-center'}">
                       Keine Einträge gefunden
                     </td>
                   </tr>

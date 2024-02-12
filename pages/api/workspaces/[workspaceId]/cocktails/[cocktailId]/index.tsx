@@ -132,7 +132,6 @@ export default withHttpMethods({
         });
       });
     }
-    console.log(garnishes);
     if (garnishes.length > 0 && result != undefined) {
       await garnishes.forEach(async (garnish: CocktailRecipeGarnishFull) => {
         await prisma.cocktailRecipeGarnish.create({

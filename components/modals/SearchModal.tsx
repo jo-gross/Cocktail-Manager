@@ -51,13 +51,14 @@ export function SearchModal(props: SearchModalProps) {
           if (response.ok) {
             setCocktails(body.data);
           } else {
-            console.log('SearchModal -> search', response, body);
-            alertService.error(body.message, response.status, response.statusText);
+            console.error('SearchModal -> search', response);
+            alertService.error(body.message ?? 'Fehler beim Suchen der Cocktails', response.status, response.statusText);
           }
         })
-        .catch((err) => {
-          if (err.name != 'AbortError') {
-            alertService.error(err.message);
+        .catch((error) => {
+          if (error.name != 'AbortError') {
+            console.error('SearchModal -> search', error);
+            alertService.error('Fehler beim Suchen der Cocktails');
           }
         })
         .finally(() => {
@@ -86,16 +87,18 @@ export function SearchModal(props: SearchModalProps) {
           body: JSON.stringify({
             cocktailId: cocktailId,
             cocktailCardId: router.query.card,
-            actionSource: router.query.card ? (router.query.card == 'search' ? 'SEARCH' : 'CARD') : undefined,
+            actionSource: 'SEARCH_MODAL',
           }),
         });
         if (response.ok) {
           alertService.success('Cocktail zur Statistik hinzugefügt');
         } else {
-          alertService.error('Fehler beim Hinzufügen des Cocktails zur Statistik', response.status, response.statusText);
+          const body = await response.json();
+          console.error('SearchModal -> addCocktailToStatistic', response);
+          alertService.error(body.message ?? 'Fehler beim Hinzufügen des Cocktails zur Statistik', response.status, response.statusText);
         }
       } catch (error) {
-        console.error('Error:', error);
+        console.error('SearchModal -> addCocktailToStatistic', error);
         alertService.error('Fehler beim Hinzufügen des Cocktails zur Statistik');
       } finally {
         setSubmittingStatistic(false);
@@ -195,7 +198,7 @@ export function SearchModal(props: SearchModalProps) {
                       >
                         <FaPlus />
                         Gemacht
-                        {submittingStatistic ? <div className={'spinner spinner-primary'}></div> : <></>}
+                        {submittingStatistic ? <span className={'loading loading-spinner'}></span> : <></>}
                       </button>
                     ) : (
                       <></>

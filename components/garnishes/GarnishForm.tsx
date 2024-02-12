@@ -66,7 +66,7 @@ export function GarnishForm(props: GarnishFormProps) {
               }
             } else {
               const body = await response.json();
-              console.log('GarnishForm -> createGarnish', response, body);
+              console.error('GarnishForm -> createGarnish', response);
               alertService.error(body.message, response.status, response.statusText);
             }
           } else {

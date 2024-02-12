@@ -39,6 +39,8 @@ function EditCocktailCard() {
 
   const [unsavedChanges, setUnsavedChanges] = useState(false);
 
+  const [deleting, setDeleting] = useState(false);
+
   useEffect(() => {
     if (!id) return;
     if (!workspaceId) return;
@@ -49,14 +51,18 @@ function EditCocktailCard() {
         if (response.ok) {
           setCard(body.data);
         } else {
-          console.log('CardId -> fetchCard', response, body);
-          alertService.error(body.message, response.status, response.statusText);
+          console.error('CardId -> fetchCard', response);
+          alertService.error(body.message ?? 'Fehler beim Laden der Karte', response.status, response.statusText);
         }
       })
-      .catch((err) => alertService.error(err.message))
+      .catch((error) => {
+        console.error('CardId -> fetchCard', error);
+        alertService.error('Fehler beim Laden der Karte');
+      })
       .finally(() => {
         setLoadingCard(false);
       });
+
     setLoadingCocktails(true);
     fetch(`/api/workspaces/${workspaceId}/cocktails`)
       .then(async (response) => {
@@ -64,11 +70,14 @@ function EditCocktailCard() {
         if (response.ok) {
           setCocktails(body.data);
         } else {
-          console.log('CardId -> fetchRecipes', response, body);
-          alertService.error(body.message, response.status, response.statusText);
+          console.error('CardId -> fetchCocktails', response);
+          alertService.error(body.message ?? 'Fehler beim Laden der Cocktails', response.status, response.statusText);
         }
       })
-      .catch((err) => alertService.error(err.message))
+      .catch((err) => {
+        console.error('CardId -> fetchCocktails', err);
+        alertService.error('Fehler beim Laden der Cocktails');
+      })
       .finally(() => {
         setLoadingCocktails(false);
       });
@@ -85,30 +94,43 @@ function EditCocktailCard() {
         card != undefined ? (
           <button
             type={'button'}
-            className={'btn btn-square btn-outline btn-error btn-sm'}
+            className={`btn ${deleting ? '' : 'btn-square'} btn-outline btn-error btn-sm`}
+            disabled={deleting}
             onClick={() =>
               modalContext.openModal(
                 <DeleteConfirmationModal
                   spelling={'DELETE'}
                   entityName={'die Karte'}
                   onApprove={async () => {
+                    if (!workspaceId) return;
+                    if (deleting) return;
+                    setDeleting(true);
                     fetch(`/api/workspaces/${workspaceId}/cards/${card.id}`, {
                       method: 'DELETE',
-                    }).then(async (response) => {
-                      const body = await response.json();
-                      if (response.ok) {
-                        router.replace(`/workspaces/${workspaceId}/manage/cards`).then(() => alertService.success('Karte gelöscht'));
-                      } else {
-                        console.log('CardId -> deleteCard', response, body);
-                        alertService.error(body.message, response.status, response.statusText);
-                      }
-                    });
+                    })
+                      .then(async (response) => {
+                        const body = await response.json();
+                        if (response.ok) {
+                          router.replace(`/workspaces/${workspaceId}/manage/cards`).then(() => alertService.success('Karte gelöscht'));
+                        } else {
+                          console.error('CardId -> deleteCard', response);
+                          alertService.error(body.message ?? 'Fehler beim Löschen der Karte', response.status, response.statusText);
+                        }
+                      })
+                      .catch((error) => {
+                        console.error('CardId -> deleteCard', error);
+                        alertService.error('Fehler beim Löschen der Karte');
+                      })
+                      .finally(() => {
+                        setDeleting(false);
+                      });
                   }}
                 />,
               )
             }
           >
             <FaTrashAlt />
+            {deleting ? <span className={'loading loading-spinner'}></span> : <></>}
           </button>
         ) : (
           <></>

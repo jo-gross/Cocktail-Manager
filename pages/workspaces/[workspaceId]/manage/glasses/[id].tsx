@@ -30,11 +30,14 @@ function EditGlassPage() {
         if (response.ok) {
           setGlass(body.data);
         } else {
-          console.log('GlassId -> fetchGlass', response, body);
-          alertService.error(body.message, response.status, response.statusText);
+          console.error('GlassId -> fetchGlass', response);
+          alertService.error(body.message ?? 'Fehler beim Laden des Glases', response.status, response.statusText);
         }
       })
-      .catch((err) => alertService.error(err.message))
+      .catch((error) => {
+        console.error('GlassId -> fetchGlass', error);
+        alertService.error('Fehler beim Laden des Glases');
+      })
       .finally(() => {
         setLoading(false);
       });

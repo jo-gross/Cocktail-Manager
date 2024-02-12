@@ -22,17 +22,21 @@ export default function ManageGlassesOverviewPage() {
 
   const refreshGlasses = useCallback(() => {
     if (!workspaceId) return;
+    setLoading(true);
     fetch(`/api/workspaces/${workspaceId}/glasses`)
       .then(async (response) => {
         const body = await response.json();
         if (response.ok) {
           setGlasses(body.data);
         } else {
-          console.log('Glasses -> fetchGlasses', response, body);
-          alertService.error(body.message, response.status, response.statusText);
+          console.error('Glasses -> fetchGlasses', response);
+          alertService.error(body.message ?? 'Fehler beim Laden der Gläser', response.status, response.statusText);
         }
       })
-      .catch((err) => alertService.error(err.message))
+      .catch((error) => {
+        console.error('Glasses -> fetchGlasses', error);
+        alertService.error('Fehler beim Laden der Gläser');
+      })
       .finally(() => {
         setLoading(false);
       });
