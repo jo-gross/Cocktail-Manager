@@ -21,6 +21,11 @@
           {
             "type": "style",
             "release": "patch"
+          },
+          {
+            "type": "build",
+            "scope": "deps",
+            "release": "patch"
           }
         ],
         "parserOpts": {
@@ -31,7 +36,21 @@
         }
       }
     ],
-    "@semantic-release/release-notes-generator",
+    [
+      "@semantic-release/release-notes-generator",
+      {
+        "preset": "conventionalcommits",
+        "presetConfig": {
+          "types": [
+            {
+              "type": "build",
+              "section": "Dependencies and Other Build Updates",
+              "hidden": false
+            }
+          ]
+        }
+      }
+    ],
     [
       "@semantic-release/changelog",
       {
