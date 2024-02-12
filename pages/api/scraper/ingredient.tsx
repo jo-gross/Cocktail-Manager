@@ -93,7 +93,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 
       const imageResponse = imageUrl
         ? await fetch(imageUrl).catch((error) => {
-          console.error(error);
+          console.log(error);
             return undefined;
           })
         : undefined;
