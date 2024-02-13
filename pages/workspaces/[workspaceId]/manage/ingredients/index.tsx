@@ -9,6 +9,7 @@ import { ManageColumn } from '../../../../../components/ManageColumn';
 import { alertService } from '../../../../../lib/alertService';
 import { UserContext } from '../../../../../lib/context/UserContextProvider';
 import AvatarImage from '../../../../../components/AvatarImage';
+import ListSearchField from '../../../../../components/ListSearchField';
 
 export default function IngredientsOverviewPage() {
   const router = useRouter();
@@ -18,6 +19,8 @@ export default function IngredientsOverviewPage() {
 
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const [filterString, setFilterString] = useState('');
 
   const refreshIngredients = useCallback(() => {
     if (!workspaceId) return;
@@ -57,6 +60,7 @@ export default function IngredientsOverviewPage() {
     >
       <div className={'card'}>
         <div className={'card-body'}>
+          <ListSearchField onFilterChange={(filterString) => setFilterString(filterString)} />
           <div className="overflow-x-auto">
             <table className="table-compact table table-zebra w-full">
               <thead>
@@ -80,7 +84,11 @@ export default function IngredientsOverviewPage() {
                       <Loading />
                     </td>
                   </tr>
-                ) : ingredients.length == 0 ? (
+                ) : ingredients.filter(
+                    (ingredient) =>
+                      ingredient.name.toLowerCase().includes(filterString.toLowerCase()) ||
+                      ingredient.tags.some((tag) => tag.toLowerCase().includes(filterString.toLowerCase())),
+                  ).length == 0 ? (
                   <tr>
                     <td colSpan={9} className="{'text-center'}">
                       Keine Einträge gefunden
@@ -88,6 +96,11 @@ export default function IngredientsOverviewPage() {
                   </tr>
                 ) : (
                   ingredients
+                    .filter(
+                      (ingredient) =>
+                        ingredient.name.toLowerCase().includes(filterString.toLowerCase()) ||
+                        ingredient.tags.some((tag) => tag.toLowerCase().includes(filterString.toLowerCase())),
+                    )
                     .sort((a, b) => a.name.localeCompare(b.name))
                     .map((ingredient) => (
                       <tr key={ingredient.id}>

@@ -9,6 +9,7 @@ import { alertService } from '../../../../../lib/alertService';
 import { UserContext } from '../../../../../lib/context/UserContextProvider';
 import AvatarImage from '../../../../../components/AvatarImage';
 import { FaPlus } from 'react-icons/fa';
+import ListSearchField from '../../../../../components/ListSearchField';
 
 export default function CocktailsOverviewPage() {
   const router = useRouter();
@@ -18,6 +19,8 @@ export default function CocktailsOverviewPage() {
 
   const [cocktailRecipes, setCocktailRecipes] = useState<CocktailRecipe[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const [filterString, setFilterString] = useState('');
 
   const refreshCocktails = useCallback(() => {
     if (!workspaceId) return;
@@ -57,6 +60,7 @@ export default function CocktailsOverviewPage() {
     >
       <div className={'card'}>
         <div className={'card-body'}>
+          <ListSearchField onFilterChange={(filterString) => setFilterString(filterString)} />
           <div className="overflow-x-auto">
             <table className="table-compact table table-zebra w-full">
               <thead>
@@ -75,7 +79,11 @@ export default function CocktailsOverviewPage() {
                       <Loading />
                     </td>
                   </tr>
-                ) : cocktailRecipes.length == 0 ? (
+                ) : cocktailRecipes.filter(
+                    (cocktailRecipe) =>
+                      cocktailRecipe.name.toLowerCase().includes(filterString.toLowerCase()) ||
+                      cocktailRecipe.tags.some((tag) => tag.toLowerCase().includes(filterString.toLowerCase())),
+                  ).length == 0 ? (
                   <tr>
                     <td colSpan={5} className={'text-center'}>
                       Keine Einträge gefunden
@@ -83,6 +91,11 @@ export default function CocktailsOverviewPage() {
                   </tr>
                 ) : (
                   cocktailRecipes
+                    .filter(
+                      (cocktailRecipe) =>
+                        cocktailRecipe.name.toLowerCase().includes(filterString.toLowerCase()) ||
+                        cocktailRecipe.tags.some((tag) => tag.toLowerCase().includes(filterString.toLowerCase())),
+                    )
                     .sort((a, b) => a.name.localeCompare(b.name))
                     .map((cocktailRecipe) => (
                       <tr key={cocktailRecipe.id} className={''}>

@@ -9,6 +9,7 @@ import { UserContext } from '../../../../../lib/context/UserContextProvider';
 import { CocktailCalculationOverview } from '../../../../../models/CocktailCalculationOverview';
 import { Role } from '@prisma/client';
 import { FaPlus } from 'react-icons/fa';
+import ListSearchField from '../../../../../components/ListSearchField';
 
 export default function CocktailCalculationOverviewPage() {
   const router = useRouter();
@@ -18,6 +19,8 @@ export default function CocktailCalculationOverviewPage() {
 
   const [cocktailCalculations, setCocktailCalculations] = useState<CocktailCalculationOverview[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const [filterString, setFilterString] = useState('');
 
   const refreshCocktailCalculations = useCallback(() => {
     if (!workspaceId) return;
@@ -55,6 +58,7 @@ export default function CocktailCalculationOverviewPage() {
     >
       <div className={'card'}>
         <div className={'card-body'}>
+          <ListSearchField onFilterChange={(filterString) => setFilterString(filterString)} />
           <div className="overflow-x-auto">
             <table className="table-compact table table-zebra w-full">
               <thead>
@@ -72,7 +76,8 @@ export default function CocktailCalculationOverviewPage() {
                       <Loading />
                     </td>
                   </tr>
-                ) : cocktailCalculations.length == 0 ? (
+                ) : cocktailCalculations.filter((cocktailCalculation) => cocktailCalculation.name.toLowerCase().includes(filterString.toLowerCase())).length ==
+                  0 ? (
                   <tr>
                     <td colSpan={4} className={'text-center'}>
                       Keine Einträge gefunden
@@ -80,6 +85,7 @@ export default function CocktailCalculationOverviewPage() {
                   </tr>
                 ) : (
                   cocktailCalculations
+                    .filter((cocktailCalculation) => cocktailCalculation.name.toLowerCase().includes(filterString.toLowerCase()))
                     .sort((a, b) => a.name.localeCompare(b.name))
                     .map((cocktailCalculation) => (
                       <tr key={cocktailCalculation.id}>
