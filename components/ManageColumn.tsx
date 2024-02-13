@@ -54,7 +54,7 @@ export function ManageColumn(props: ManageColumnProps) {
                         })
                         .catch((error) => {
                           console.error(`ManageColumn[${props.entity}] -> delete`, error);
-                          alertService.error('Fehler beim Löschen');
+                          alertService.error('Es ist ein Fehler aufgetreten');
                         });
                     }}
                   />,

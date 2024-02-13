@@ -25,8 +25,8 @@ export function SelectModal<T>(props: SelectModalProps<T>) {
       setLoading(true);
       const elements = await props.fetchElements(search);
       setElements(elements);
-    } catch (e) {
-      console.error('SelectModal -> fetchElements', e);
+    } catch (error) {
+      console.error('SelectModal -> fetchElements', error);
       alertService.error('Fehler beim Laden der Daten');
     } finally {
       setLoading(false);

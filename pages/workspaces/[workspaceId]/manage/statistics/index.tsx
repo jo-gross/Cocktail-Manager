@@ -47,7 +47,7 @@ export default function StatisticsPage() {
       }
     } catch (error) {
       console.error('StatisticsPage -> refreshStatistics', error);
-      alertService.error('Fehler beim aktualisieren der Statistik');
+      alertService.error('Es ist ein Fehler aufgetreten');
     } finally {
       setLoading(false);
     }
@@ -321,7 +321,7 @@ export default function StatisticsPage() {
                                   }
                                 } catch (error) {
                                   console.error('StatisticsPage -> deleteStatisticItem', error);
-                                  alertService.error('Fehler beim Löschen des Statistik-Eintrags');
+                                  alertService.error('Es ist ein Fehler aufgetreten');
                                 } finally {
                                   setItemDeleting({ ...itemDeleting, [item.id]: false });
                                 }

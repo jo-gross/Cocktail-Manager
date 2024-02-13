@@ -89,7 +89,7 @@ export function GlassForm(props: GlassFormProps) {
           }
         } catch (error) {
           console.error('GarnishForm -> onSubmit', error);
-          alertService.error('Es ist ein fehler aufgetreten');
+          alertService.error('Es ist ein Fehler aufgetreten');
         }
       }}
       validate={(values) => {

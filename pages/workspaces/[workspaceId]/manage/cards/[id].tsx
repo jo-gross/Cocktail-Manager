@@ -74,8 +74,8 @@ function EditCocktailCard() {
           alertService.error(body.message ?? 'Fehler beim Laden der Cocktails', response.status, response.statusText);
         }
       })
-      .catch((err) => {
-        console.error('CardId -> fetchCocktails', err);
+      .catch((error) => {
+        console.error('CardId -> fetchCocktails', error);
         alertService.error('Fehler beim Laden der Cocktails');
       })
       .finally(() => {
@@ -119,7 +119,7 @@ function EditCocktailCard() {
                       })
                       .catch((error) => {
                         console.error('CardId -> deleteCard', error);
-                        alertService.error('Fehler beim Löschen der Karte');
+                        alertService.error('Es ist ein Fehler aufgetreten');
                       })
                       .finally(() => {
                         setDeleting(false);

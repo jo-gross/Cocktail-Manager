@@ -16,8 +16,8 @@ export const withHttpMethods = (handlers: Partial<Record<HTTPMethod, (req: NextA
 
     try {
       return handler(req, res);
-    } catch (err) {
-      console.error(err);
+    } catch (error) {
+      console.error(error);
       return res.status(HttpStatus.HTTP_STATUS_INTERNAL_SERVER_ERROR).json({ message: 'Internal error occurred!' });
     }
   };

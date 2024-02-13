@@ -127,7 +127,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
       })
       .catch((error) => {
         console.error('CocktailRecipeForm -> fetchGlasses', error);
-        alertService.error('Fehler beim Laden der Gläser');
+        alertService.error('Fehler beim laden der Gläser');
       })
       .finally(() => {
         setGlassesLoading(false);
@@ -176,7 +176,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
       })
       .catch((error) => {
         console.error('CocktailRecipeForm -> fetchActions', error);
-        alertService.error('Fehler beim Laden der Zubereitungsmöglichkeiten');
+        alertService.error('Fehler beim laden der Zubereitungsmöglichkeiten');
       })
       .finally(() => {
         setActionsLoading(false);

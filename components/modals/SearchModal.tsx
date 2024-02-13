@@ -58,7 +58,7 @@ export function SearchModal(props: SearchModalProps) {
         .catch((error) => {
           if (error.name != 'AbortError') {
             console.error('SearchModal -> search', error);
-            alertService.error('Fehler beim Suchen der Cocktails');
+            alertService.error('Es ist ein Fehler aufgetreten');
           }
         })
         .finally(() => {
@@ -99,7 +99,7 @@ export function SearchModal(props: SearchModalProps) {
         }
       } catch (error) {
         console.error('SearchModal -> addCocktailToStatistic', error);
-        alertService.error('Fehler beim Hinzufügen des Cocktails zur Statistik');
+        alertService.error('Es ist ein Fehler aufgetreten');
       } finally {
         setSubmittingStatistic(false);
       }

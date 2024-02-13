@@ -74,9 +74,9 @@ export default function CalculationPage() {
           alertService.error(body.message ?? 'Fehler beim Laden der Kalkulation', response.status, response.statusText);
         }
       })
-      .catch((err) => {
-        console.error('CocktailCalculation -> useEffect[init, id != create]', err);
-        alertService.error('Fehler beim Laden der Kalkulation');
+      .catch((error) => {
+        console.error('CocktailCalculation -> useEffect[init, id != create]', error);
+        alertService.error('Es ist ein Fehler aufgetreten');
       })
       .finally(() => {
         setLoading(false);
@@ -199,7 +199,7 @@ export default function CalculationPage() {
           })
           .catch((error) => {
             console.error('CalculationId -> saveCalculation[create]', error);
-            alertService.error('Fehler beim Erstellen der Kalkulation');
+            alertService.error('Es ist ein Fehler aufgetreten');
           })
           .finally(() => {
             setSaving(false);
@@ -236,7 +236,7 @@ export default function CalculationPage() {
           })
           .catch((error) => {
             console.error('CalculationId -> saveCalculation[update]', error);
-            alertService.error('Fehler beim Aktualisieren der Kalkulation');
+            alertService.error('Es ist ein Fehler aufgetreten');
           })
           .finally(() => {
             setSaving(false);

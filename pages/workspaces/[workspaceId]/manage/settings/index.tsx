@@ -86,7 +86,7 @@ export default function WorkspaceSettingPage() {
       }
     } catch (error) {
       console.error('SettingsPage -> importBackup', error);
-      alertService.error(`Fehler beim importieren`);
+      alertService.error(`Fehler beim Importieren`);
     } finally {
       setImporting(false);
     }
@@ -109,7 +109,7 @@ export default function WorkspaceSettingPage() {
       })
       .catch((error) => {
         console.error('SettingsPage -> handleDeleteWorkspace', error);
-        alertService.error('Fehler beim Löschen der Workspace');
+        alertService.error('Es ist ein Fehler aufgetreten');
       })
       .finally(() => {
         setWorkspaceDeleting(false);
@@ -135,7 +135,7 @@ export default function WorkspaceSettingPage() {
       })
       .catch((error) => {
         console.error('SettingsPage -> handleRenameWorkspace', error);
-        alertService.error('Fehler beim Umbenennen der Workspace');
+        alertService.error('Es ist ein Fehler aufgetreten');
       })
       .finally(() => {
         setWorkspaceRenaming(false);
@@ -164,7 +164,7 @@ export default function WorkspaceSettingPage() {
       })
       .catch((error) => {
         console.error('SettingsPage -> handleUpdateSignage', error);
-        alertService.error('Fehler beim Update, z.B. zu große Datei');
+        alertService.error('Es ist ein Fehler Aufgetreten, z.B. zu große Datei');
       })
       .finally(() => {
         setUpdatingSignage(false);

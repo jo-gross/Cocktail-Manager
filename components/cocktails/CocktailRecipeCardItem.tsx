@@ -48,7 +48,7 @@ export default function CocktailRecipeCardItem(props: CocktailRecipeOverviewItem
       }
     } catch (error) {
       console.error('CocktailRecipeCardItem -> addCocktailToStatistic', error);
-      alertService.error('Fehler beim Hinzufügen des Cocktails zur Statistik');
+      alertService.error('Es ist ein Fehler aufgetreten');
     } finally {
       setSubmittingStatistic(false);
     }

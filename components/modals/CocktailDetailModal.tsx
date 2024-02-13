@@ -48,7 +48,7 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
         }
       } catch (error) {
         console.log('CocktailDetailModal -> addCocktailToStatistic', error);
-        alertService.error('Fehler beim Hinzufügen des Cocktails zur Statistik');
+        alertService.error('Es ist ein Fehler aufgetreten');
       } finally {
         setSubmittingStatistic(false);
       }

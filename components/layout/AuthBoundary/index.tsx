@@ -138,7 +138,7 @@ export function AuthBoundary(props: AlertBoundaryProps) {
               })
               .catch((error) => {
                 console.error('AuthBoundary -> updateUserSetting', error);
-                alertService.error('Fehler beim Aktualisieren der Nutzer-Einstellungen');
+                alertService.error('Es ist ein Fehler aufgetreten');
               });
           },
         }}

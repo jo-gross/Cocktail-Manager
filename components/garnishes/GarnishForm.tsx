@@ -89,7 +89,7 @@ export function GarnishForm(props: GarnishFormProps) {
           }
         } catch (error) {
           console.error('GarnishForm -> onSubmit', error);
-          alertService.error('Es ist ein Fehler aufgetreten.');
+          alertService.error('Es ist ein Fehler aufgetreten');
         }
       }}
       validate={(values) => {
