@@ -36,21 +36,7 @@
         }
       }
     ],
-    [
-      "@semantic-release/release-notes-generator",
-      {
-        "preset": "conventionalcommits",
-        "presetConfig": {
-          "types": [
-            {
-              "type": "build",
-              "section": "Dependencies and Other Build Updates",
-              "hidden": false
-            }
-          ]
-        }
-      }
-    ],
+    "@semantic-release/release-notes-generator",
     [
       "@semantic-release/changelog",
       {
