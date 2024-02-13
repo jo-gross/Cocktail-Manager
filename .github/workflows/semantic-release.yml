@@ -1,10 +1,10 @@
 name: Release
 
-on:
-  push:
-    branches:
-      - main
-      - master
+on: workflow_dispatch
+#  push:
+#    branches:
+#      - main
+#      - master
 
 jobs:
   release:
@@ -28,7 +28,7 @@ jobs:
         with:
           fetch-depth: 0
           token: ${{ steps.generate_token.outputs.token }}
-      
+
       - uses: actions/setup-node@v2
         with:
           node-version: 20

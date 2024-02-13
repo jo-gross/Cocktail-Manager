@@ -2,7 +2,7 @@ import { Glass, Role } from '@prisma/client';
 import Link from 'next/link';
 import { ManageEntityLayout } from '../../../../../components/layout/ManageEntityLayout';
 import { ManageColumn } from '../../../../../components/ManageColumn';
-import { useCallback, useContext, useEffect, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { Loading } from '../../../../../components/Loading';
 import { useRouter } from 'next/router';
 import { alertService } from '../../../../../lib/alertService';
@@ -10,6 +10,7 @@ import { UserContext } from '../../../../../lib/context/UserContextProvider';
 import DefaultGlassIcon from '../../../../../components/DefaultGlassIcon';
 import { FaPlus } from 'react-icons/fa';
 import NextImage from '../../../../../components/NextImage';
+import ListSearchField from '../../../../../components/ListSearchField';
 
 export default function ManageGlassesOverviewPage() {
   const router = useRouter();
@@ -19,6 +20,8 @@ export default function ManageGlassesOverviewPage() {
 
   const [glasses, setGlasses] = useState<Glass[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const [filterString, setFilterString] = useState('');
 
   const refreshGlasses = useCallback(() => {
     if (!workspaceId) return;
@@ -62,6 +65,7 @@ export default function ManageGlassesOverviewPage() {
     >
       <div className={'card'}>
         <div className={'card-body'}>
+          <ListSearchField onFilterChange={(filterString) => setFilterString(filterString)} />
           <div className="overflow-x-auto">
             <table className="table-compact table table-zebra w-full">
               <thead>
@@ -79,36 +83,39 @@ export default function ManageGlassesOverviewPage() {
                       <Loading />
                     </td>
                   </tr>
-                ) : glasses.length == 0 ? (
+                ) : glasses.filter((glass) => glass.name.toLowerCase().includes(filterString.toLowerCase())).length == 0 ? (
                   <tr>
                     <td colSpan={4} className={'text-center'}>
                       Keine Einträge gefunden
                     </td>
                   </tr>
                 ) : (
-                  glasses.map((glass) => (
-                    <tr className={'p-4'} key={glass.id}>
-                      <td>
-                        <div className="flex items-center space-x-3">
-                          <div className="mask mask-squircle h-12 w-12">
-                            <NextImage
-                              src={`/api/workspaces/${glass.workspaceId}/glasses/${glass.id}/image`}
-                              className={'h-12 w-12 bg-white object-contain'}
-                              alt="Glass"
-                              width={300}
-                              height={300}
-                              altComponent={<DefaultGlassIcon />}
-                            />
+                  glasses
+                    .filter((glass) => glass.name.toLowerCase().includes(filterString.toLowerCase()))
+                    .sort((a, b) => a.name.localeCompare(b.name))
+                    .map((glass) => (
+                      <tr className={'p-4'} key={glass.id}>
+                        <td>
+                          <div className="flex items-center space-x-3">
+                            <div className="mask mask-squircle h-12 w-12">
+                              <NextImage
+                                src={`/api/workspaces/${glass.workspaceId}/glasses/${glass.id}/image`}
+                                className={'h-12 w-12 bg-white object-contain'}
+                                alt="Glass"
+                                width={300}
+                                height={300}
+                                altComponent={<DefaultGlassIcon />}
+                              />
+                            </div>
                           </div>
-                        </div>
-                      </td>
-                      <td>
-                        <div className="font-bold">{glass.name}</div>
-                      </td>
-                      <td>{glass.deposit} €</td>
-                      <ManageColumn entity={'glasses'} id={glass.id} onRefresh={refreshGlasses} />
-                    </tr>
-                  ))
+                        </td>
+                        <td>
+                          <div className="font-bold">{glass.name}</div>
+                        </td>
+                        <td>{glass.deposit} €</td>
+                        <ManageColumn entity={'glasses'} id={glass.id} onRefresh={refreshGlasses} />
+                      </tr>
+                    ))
                 )}
               </tbody>
             </table>
