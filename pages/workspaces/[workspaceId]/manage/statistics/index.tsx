@@ -11,6 +11,7 @@ import { Chart as ChartJS } from 'chart.js/auto';
 import { Bar, Doughnut } from 'react-chartjs-2';
 import '../../../../../lib/DateUtils';
 import '../../../../../lib/StringUtils';
+import ListSearchField from '../../../../../components/ListSearchField';
 
 ChartJS.register(ArcElement, Tooltip, Legend, TimeScale, CategoryScale, LinearScale);
 
@@ -24,6 +25,8 @@ export default function StatisticsPage() {
 
   const [cocktailStatisticItems, setCocktailStatisticItems] = useState<CocktailStatisticItemFull[]>([]);
   const [loading, setLoading] = useState(false);
+
+  const [filterString, setFilterString] = useState('');
 
   const refreshStatistics = useCallback(async () => {
     if (!workspaceId) return;
@@ -248,6 +251,8 @@ export default function StatisticsPage() {
                 {loading ? <span className="loading loading-spinner"></span> : <FaSyncAlt />}
               </button>
             </div>
+            <ListSearchField onFilterChange={(filterString) => setFilterString(filterString)} />
+
             <div className="overflow-x-auto">
               <table className="table-compact table table-zebra w-full">
                 <thead>
@@ -266,7 +271,11 @@ export default function StatisticsPage() {
                         Lade...
                       </td>
                     </tr>
-                  ) : cocktailStatisticItems.length == 0 ? (
+                  ) : cocktailStatisticItems.filter(
+                      (item) =>
+                        item.cocktail.name.toLowerCase().includes(filterString.toLowerCase()) ||
+                        item.cocktailCard?.name.toLowerCase().includes(filterString.toLowerCase()),
+                    ).length == 0 ? (
                     <tr>
                       <td colSpan={5} className={'text-center'}>
                         Keine Einträge gefunden
@@ -274,6 +283,11 @@ export default function StatisticsPage() {
                     </tr>
                   ) : (
                     cocktailStatisticItems
+                      .filter(
+                        (item) =>
+                          item.cocktail.name.toLowerCase().includes(filterString.toLowerCase()) ||
+                          item.cocktailCard?.name.toLowerCase().includes(filterString.toLowerCase()),
+                      )
                       .sort((a, b) => {
                         return new Date(b.date).getTime() - new Date(a.date).getTime();
                       })
