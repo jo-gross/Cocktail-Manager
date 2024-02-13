@@ -19,7 +19,7 @@ export default function ListSearchField(props: ListSearchFieldProps) {
         }}
       />
       <span className={'join-item'}>
-        <FaSearch className={'h-full w-fit rounded-r-md bg-primary pl-4 pr-4 text-neutral'} />
+        <FaSearch className={'h-full w-fit rounded-r-md bg-primary pl-4 pr-4 text-base-200'} />
       </span>
     </div>
   );
