@@ -42,10 +42,12 @@ export default function CocktailRecipeCardItem(props: CocktailRecipeOverviewItem
       if (response.ok) {
         alertService.success('Cocktail zur Statistik hinzugefügt');
       } else {
-        alertService.error('Fehler beim Hinzufügen des Cocktails zur Statistik', response.status, response.statusText);
+        const body = await response.json();
+        console.error('CocktailRecipeCardItem -> addCocktailToStatistic', response);
+        alertService.error(body.message ?? 'Fehler beim Hinzufügen des Cocktails zur Statistik', response.status, response.statusText);
       }
     } catch (error) {
-      console.error('Error:', error);
+      console.error('CocktailRecipeCardItem -> addCocktailToStatistic', error);
       alertService.error('Fehler beim Hinzufügen des Cocktails zur Statistik');
     } finally {
       setSubmittingStatistic(false);

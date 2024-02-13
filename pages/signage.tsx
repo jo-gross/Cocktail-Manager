@@ -28,7 +28,7 @@ export default function SignagePage() {
           setImageLoading(false);
         })
         .catch((error) => {
-          console.error(error);
+          console.error('Signage', error);
           alertService.error('Fehler beim Laden der Karte.');
         })
         .finally(() => {

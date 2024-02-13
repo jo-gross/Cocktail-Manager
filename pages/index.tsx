@@ -78,9 +78,9 @@ export default function WorkspacesPage() {
       })
       .then(() => setJoinWorkspaceId(''))
       .then(() => fetchWorkspaces())
-      .catch((err) => {
-        console.error('WorkspacesOverview -> joinWorkspace', err);
-        alertService.error(err.message ?? 'Fehler beim Beitreten');
+      .catch((error) => {
+        console.error('WorkspacesOverview -> joinWorkspace', error);
+        alertService.error('Fehler beim Beitreten');
       })
       .finally(() => setJoiningWorkspace(false));
   }, [fetchWorkspaces, joinWorkspaceId, userContext.user]);

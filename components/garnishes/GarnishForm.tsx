@@ -66,28 +66,29 @@ export function GarnishForm(props: GarnishFormProps) {
               }
             } else {
               const body = await response.json();
-              console.error('GarnishForm -> createGarnish', response);
-              alertService.error(body.message, response.status, response.statusText);
+              console.error('GarnishForm -> onSubmit[create]', response);
+              alertService.error(body.message ?? 'Fehler beim Erstellen der Garnitur', response.status, response.statusText);
             }
           } else {
-            const result = await fetch(`/api/workspaces/${workspaceId}/garnishes/${props.garnish.id}`, {
+            const response = await fetch(`/api/workspaces/${workspaceId}/garnishes/${props.garnish.id}`, {
               method: 'PUT',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(body),
             });
-            if (result.status.toString().startsWith('2')) {
+            if (response.status.toString().startsWith('2')) {
               if (props.onSaved != undefined) {
                 props.onSaved();
               } else {
                 router.push(`/workspaces/${workspaceId}/manage/garnishes`).then(() => alertService.success('Garnitur erfolgreich gespeichert'));
               }
             } else {
-              const body = await result.json();
-              alertService.error(body.message, result.status, result.statusText);
+              const body = await response.json();
+              console.error('GarnishForm -> onSubmit[update]', response);
+              alertService.error(body.message ?? 'Fehler beim Speichern der Garnitur', response.status, response.statusText);
             }
           }
         } catch (error) {
-          console.error(error);
+          console.error('GarnishForm -> onSubmit', error);
           alertService.error('Es ist ein Fehler aufgetreten.');
         }
       }}

@@ -179,45 +179,54 @@ function EditCocktailCard() {
           return errors;
         }}
         onSubmit={async (values) => {
-          const input = {
-            id: card?.id,
-            name: values.name,
-            date: values.date != '' ? new Date(values.date).toISOString() : null,
-            groups: values.groups.map((group, index) => ({
-              name: group.name,
-              groupNumber: index,
-              groupPrice: group.groupPrice,
-              items: group.items.map((item, itemIndex) => ({
-                itemNumber: itemIndex,
-                cocktailId: item.cocktailId,
+          try {
+            const input = {
+              id: card?.id,
+              name: values.name,
+              date: values.date != '' ? new Date(values.date).toISOString() : null,
+              groups: values.groups.map((group, index) => ({
+                name: group.name,
+                groupNumber: index,
+                groupPrice: group.groupPrice,
+                items: group.items.map((item, itemIndex) => ({
+                  itemNumber: itemIndex,
+                  cocktailId: item.cocktailId,
+                })),
               })),
-            })),
-          };
+            };
 
-          if (card == undefined) {
-            const storeResult = await fetch(`/api/workspaces/${workspaceId}/cards`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(input),
-            });
+            if (card == undefined) {
+              const response = await fetch(`/api/workspaces/${workspaceId}/cards`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(input),
+              });
 
-            if (storeResult.ok) {
-              router.replace(`/workspaces/${workspaceId}/manage/cards`).then(() => alertService.success('Karte erfolgreich erstellt'));
+              if (response.ok) {
+                router.replace(`/workspaces/${workspaceId}/manage/cards`).then(() => alertService.success('Karte erfolgreich erstellt'));
+              } else {
+                const body = await response.json();
+                console.error('CardId -> onSubmit[create]', response);
+                alertService.error(body.message ?? 'Fehler beim Erstellen der Karte', response.status, response.statusText);
+              }
             } else {
-              alertService.error(storeResult.statusText, storeResult.status, storeResult.statusText);
-            }
-          } else {
-            const storeResult = await fetch(`/api/workspaces/${workspaceId}/cards/${card.id}`, {
-              method: 'PUT',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(input),
-            });
+              const response = await fetch(`/api/workspaces/${workspaceId}/cards/${card.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(input),
+              });
 
-            if (storeResult.ok) {
-              router.replace(`/workspaces/${workspaceId}/manage/cards`).then(() => alertService.success('Karte erfolgreich gespeichert'));
-            } else {
-              alertService.error(storeResult.statusText, storeResult.status, storeResult.statusText);
+              if (response.ok) {
+                router.replace(`/workspaces/${workspaceId}/manage/cards`).then(() => alertService.success('Karte erfolgreich gespeichert'));
+              } else {
+                const body = await response.json();
+                console.error('CardId -> onSubmit[update]', response);
+                alertService.error(body.message ?? 'Fehler beim Speichern der Karte', response.status, response.statusText);
+              }
             }
+          } catch (error) {
+            console.error('CardId -> onSubmit', error);
+            alertService.error('Es ist ein Fehler aufgetreten');
           }
         }}
       >

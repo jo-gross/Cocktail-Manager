@@ -159,7 +159,7 @@ export default function WorkspaceSettingPage() {
           alertService.success(`Update erfolgreich`);
         } else {
           console.error('Admin -> UpdateSignage', response);
-          alertService.error(body.message, response.status, response.statusText);
+          alertService.error(body.message ?? 'Fehler beim Speichern', response.status, response.statusText);
         }
       })
       .catch((error) => {
@@ -232,8 +232,9 @@ export default function WorkspaceSettingPage() {
                       <button
                         className={'btn btn-outline btn-primary btn-sm'}
                         onClick={() => {
-                          navigator.clipboard.writeText(workspaceId as string);
-                          alertService.info('Erfolgreich kopiert');
+                          navigator.clipboard.writeText(workspaceId as string).then(() => {
+                            alertService.info('Erfolgreich kopiert');
+                          });
                         }}
                       >
                         <FaShareAlt />
@@ -263,15 +264,20 @@ export default function WorkspaceSettingPage() {
                               headers: { 'Content-Type': 'application/json' },
                               body: JSON.stringify({ userId: workspaceUser.userId, role: event.target.value }),
                             })
-                              .then((response) => {
+                              .then(async (response) => {
                                 if (response.ok) {
                                   fetchWorkspaceUsers();
+                                  alertService.success('Erfolgreich aktualisiert');
                                 } else {
-                                  throw new Error('Fehler beim aktualisieren');
+                                  const body = await response.json();
+                                  console.error('SettingsPage -> updateUserRole', response);
+                                  alertService.error(body.message ?? 'Fehler beim aktualisieren', response.status, response.statusText);
                                 }
                               })
-                              .then(() => alertService.success('Erfolgreich aktualisiert'))
-                              .catch((error) => alertService.error(error.message));
+                              .catch((error) => {
+                                console.error('SettingsPage -> updateUserRole', error);
+                                alertService.error('Es ist ein Fehler aufgetreten');
+                              });
                           }}
                         >
                           {Object.values(Role)
@@ -293,15 +299,20 @@ export default function WorkspaceSettingPage() {
                             fetch(`/api/workspaces/${workspaceId}/users/${workspaceUser.userId}`, {
                               method: 'DELETE',
                             })
-                              .then((response) => {
+                              .then(async (response) => {
                                 if (response.ok) {
                                   fetchWorkspaceUsers();
+                                  alertService.success('Erfolgreich entfernt');
                                 } else {
-                                  throw new Error('Fehler beim entfernen');
+                                  const body = await response.json();
+                                  console.error('SettingsPage -> removeUser', response);
+                                  alertService.error(body.message ?? 'Fehler beim Entfernen', response.status, response.statusText);
                                 }
                               })
-                              .then(() => alertService.success('Erfolgreich entfernt'))
-                              .catch((error) => alertService.error(error.message));
+                              .catch((error) => {
+                                console.error('SettingsPage -> removeUser', error);
+                                alertService.error('Es ist ein Fehler aufgetreten');
+                              });
                           }}
                         >
                           <>{workspaceUser.user.id == userContext.user?.id ? 'Verlassen' : 'Entfernen'}</>

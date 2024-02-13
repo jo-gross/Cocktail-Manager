@@ -42,10 +42,12 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
         if (response.ok) {
           alertService.success('Cocktail zur Statistik hinzugefügt');
         } else {
-          alertService.error('Fehler beim Hinzufügen des Cocktails zur Statistik', response.status, response.statusText);
+          const body = await response.json();
+          console.log('CocktailDetailModal -> addCocktailToStatistic', response);
+          alertService.error(body.message ?? 'Fehler beim Hinzufügen des Cocktails zur Statistik', response.status, response.statusText);
         }
       } catch (error) {
-        console.error('Error:', error);
+        console.log('CocktailDetailModal -> addCocktailToStatistic', error);
         alertService.error('Fehler beim Hinzufügen des Cocktails zur Statistik');
       } finally {
         setSubmittingStatistic(false);

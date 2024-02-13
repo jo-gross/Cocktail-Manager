@@ -423,8 +423,8 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
               router.replace(`/workspaces/${workspaceId}/manage/cocktails`).then(() => alertService.success('Erfolgreich erstellt'));
             } else {
               const body = await response.json();
-              console.error('CocktailRecipeForm -> createRecipe', response);
-              alertService.error(body.message, response.status, response.statusText);
+              console.error('CocktailRecipeForm -> onSubmit[create]', response);
+              alertService.error(body.message ?? 'Fehler beim Erstellen des Cocktails', response.status, response.statusText);
             }
           } else {
             const response = await fetch(`/api/workspaces/${workspaceId}/cocktails/${props.cocktailRecipe.id}`, {
@@ -436,12 +436,13 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
               router.replace(`/workspaces/${workspaceId}/manage/cocktails`).then(() => alertService.success('Erfolgreich gespeichert'));
             } else {
               const body = await response.json();
-              console.error('CocktailRecipeForm -> updateRecipe', response);
-              alertService.error(body.message, response.status, response.statusText);
+              console.error('CocktailRecipeForm -> onSubmit[update]', response);
+              alertService.error(body.message ?? 'Fehler beim Speichern des Cocktails', response.status, response.statusText);
             }
           }
         } catch (error) {
-          console.error(error);
+          console.error('CocktailRecipeForm -> onSubmit', error);
+          alertService.error('Es ist ein Fehler aufgetreten');
         }
       }}
     >
