@@ -2190,7 +2190,7 @@ __metadata:
     autoprefixer: 10.4.17
     browser-image-compression: ^2.0.2
     chart.js: ^4.4.1
-    daisyui: 4.6.3
+    daisyui: 4.7.2
     deep-diff: ^1.0.2
     eslint: 8.56.0
     eslint-config-next: 14.1.0
@@ -2500,15 +2500,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"daisyui@npm:4.6.3":
-  version: 4.6.3
-  resolution: "daisyui@npm:4.6.3"
+"daisyui@npm:4.7.2":
+  version: 4.7.2
+  resolution: "daisyui@npm:4.7.2"
   dependencies:
     css-selector-tokenizer: ^0.8
     culori: ^3
     picocolors: ^1
     postcss-js: ^4
-  checksum: 8e102e159b32b26df3396655dedb3b33d5080274ef595cc7995ce5d6532e46fcc4aef2090f9e6efc2e2034bd0ebb99e51dd5b82713431abf6824b4a6c9eb75d6
+  checksum: 46470b40905f768c7adbfe7ddecf967a7a91fe2012cbb387f79f4babe4a1a126c8a6196c1b2171b3a8afd775d1ac386986b3b50fe8c917eaecf9fb9d4782376a
   languageName: node
   linkType: hard
 
