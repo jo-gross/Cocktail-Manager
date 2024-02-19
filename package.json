@@ -46,7 +46,7 @@
     "@semantic-release/git": "^10.0.1",
     "@types/deep-diff": "^1.0.5",
     "@types/lodash": "^4.14.202",
-    "@types/node": "20.9.2",
+    "@types/node": "20.11.19",
     "@types/react": "18.2.55",
     "@types/react-is": "18.2.4",
     "autoprefixer": "10.4.17",
