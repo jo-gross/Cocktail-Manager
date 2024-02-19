@@ -262,7 +262,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
     id: props.cocktailRecipe?.id ?? '',
     name: props.cocktailRecipe?.name ?? '',
     description: props.cocktailRecipe?.description ?? '',
-    price: props.cocktailRecipe?.price ?? 0,
+    price: props.cocktailRecipe?.price ?? undefined,
     tags: props.cocktailRecipe?.tags ?? [],
     glassWithIce: props.cocktailRecipe?.glassWithIce ?? IceType.Without,
     image: props.cocktailRecipe?.CocktailRecipeImage[0]?.image ?? undefined,
@@ -309,9 +309,6 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
         const errors: any = {};
         if (!values.name || values.name.trim() == '') {
           errors.name = 'Required';
-        }
-        if (!values.price) {
-          errors.price = 'Required';
         }
         if (!values.glassId || values.glassId == '') {
           errors.glassId = 'Required';
@@ -387,8 +384,8 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
           const body = {
             id: props.cocktailRecipe?.id,
             name: values.name,
-            description: values.description.trim() === '' ? undefined : values.description,
-            price: values.price,
+            description: values.description.trim() === '' ? null : values.description,
+            price: values.price == '' ? null : values.price,
             glassId: values.glassId,
             garnishId: values.garnishId,
             image: values.image == '' ? null : values.image,
@@ -489,7 +486,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                     <label className={'label'}>
                       <span className={'label-text'}>Preis</span>
                       <span className={'label-text-alt text-error'}>
-                        <>{errors.price && touched.price && errors.price}</> *
+                        <>{errors.price && touched.price && errors.price}</>
                       </span>
                     </label>
                     <div className={'join w-full'}>
@@ -499,7 +496,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                         name="price"
                         onChange={handleChange}
                         onBlur={handleBlur}
-                        value={values.price ?? undefined}
+                        value={values.price}
                       />
                       <span className={'btn btn-secondary join-item'}>
                         <FaEuroSign />
@@ -688,7 +685,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                       name: values.name,
                       description: values.description,
                       tags: values.tags,
-                      price: values.price,
+                      price: !values.price && values.price == '' ? null : values.price,
                       glassWithIce: values.glassWithIce,
                       glassId: values.glassID ?? null,
                       glass: glasses.find((glass) => glass.id === values.glassId) ?? null,

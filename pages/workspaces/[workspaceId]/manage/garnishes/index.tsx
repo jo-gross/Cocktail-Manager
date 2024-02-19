@@ -111,7 +111,7 @@ export default function ManageGlassesOverviewPage() {
                         <td>
                           <div className="font-bold">{garnish.name}</div>
                         </td>
-                        <td>{garnish.price} €</td>
+                        <td>{garnish.price ?? '-'} €</td>
                         <ManageColumn entity={'garnishes'} id={garnish.id} onRefresh={refreshGarnishes} />
                       </tr>
                     ))

@@ -23,7 +23,11 @@ export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeIns
       <div className={`${props.showPrice ? 'col-span-2' : 'col-span-3'} text-xl font-bold`}>
         {props.cocktailRecipe.name == '' ? '<Name>' : props.cocktailRecipe.name}
       </div>
-      {props.showPrice == true ? <div className={'col-span-1 text-right text-xl font-bold'}>{props.specialPrice ?? props.cocktailRecipe.price} €</div> : <></>}
+      {props.showPrice == true ? (
+        <div className={'col-span-1 text-right text-xl font-bold'}>{props.specialPrice ?? props.cocktailRecipe.price ?? '-'} €</div>
+      ) : (
+        <></>
+      )}
       <div className={'row-span-2 flex h-min items-center justify-center'}>
         <NextImage
           className={'h-12 object-contain'}
