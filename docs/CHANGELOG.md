@@ -1,3 +1,12 @@
+## [1.1.1](https://github.com/jo-gross/Cocktail-Manager/compare/v1.1.0...v1.1.1) (2024-02-19)
+
+
+### Bug Fixes
+
+* Added missing message rework ([4faf346](https://github.com/jo-gross/Cocktail-Manager/commit/4faf34606879697dc11c61955ff5f8897bf01b1d))
+* Changed spelling of all catches to the same (where necessary) ([b5e695b](https://github.com/jo-gross/Cocktail-Manager/commit/b5e695b5994120ffb709a1065c823c7d762b2497))
+* Search icon text color ([6308332](https://github.com/jo-gross/Cocktail-Manager/commit/63083324846277b10b8eaf69885a289e5d8da5d9))
+
 ## [1.1.0](https://github.com/jo-gross/Cocktail-Manager/compare/v1.0.1...v1.1.0) (2024-02-13)
 
 ## [1.0.1](https://github.com/jo-gross/Cocktail-Manager/compare/v1.0.0...v1.0.1) (2024-02-11)
