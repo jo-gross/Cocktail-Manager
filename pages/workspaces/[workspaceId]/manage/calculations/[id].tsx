@@ -635,6 +635,11 @@ export default function CalculationPage() {
                               </td>
                               <td>
                                 {Math.ceil(ingredientCalculation.amount / (ingredientCalculation.ingredient.volume ?? 0))}
+                              {' (á '}
+                              {ingredientCalculation.ingredient.volume} {ingredientCalculation.ingredient.unit})
+                            </td>
+                            <td>
+                              {Math.ceil(ingredientCalculation.amount / (ingredientCalculation.ingredient.volume ?? 0))}
                                 {' (á '}
                                 {ingredientCalculation.ingredient.volume} {ingredientCalculation.ingredient.unit})
                               </td>
