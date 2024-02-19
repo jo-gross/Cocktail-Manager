@@ -30,7 +30,7 @@ export default withHttpMethods({
     const { name, calculationItems, showSalesStuff } = req.body;
     const input: CocktailCalculationCreateInput = {
       name: name,
-        showSalesStuff: showSalesStuff,
+      showSalesStuff: showSalesStuff,
       cocktailCalculationItems: {
         create: calculationItems.map((item: any) => ({
           plannedAmount: item.plannedAmount,

@@ -430,7 +430,7 @@ export default function CalculationPage() {
                                 <div className={'join print:hidden'}>
                                   <input
                                     type={'number'}
-                                className={'input input-sm join-item input-bordered w-20'}
+                                    className={'input input-sm join-item input-bordered w-20'}
                                     step={0.01}
                                     value={cocktail.customPrice ?? ''}
                                     onChange={(event) => {
@@ -535,24 +535,19 @@ export default function CalculationPage() {
                               <td>{calcCocktailTotalPrice(cocktail.cocktail).toFixed(2)} €</td>
                               <td>{(cocktail.plannedAmount * calcCocktailTotalPrice(cocktail.cocktail)).toFixed(2)} €</td>
                               {showSalesStuff ? (
-                              <>
-                                <td>
-                                  {(
-                                    cocktail.plannedAmount * (cocktail.customPrice ?? cocktail.cocktail.price ?? 0)
-                                  ).toFixed(2)}
-                                  €
-                                </td>
-                              <td>
-                                {(
-                                  cocktail.plannedAmount * (cocktail.customPrice ?? cocktail.cocktail.price ?? 0) -
-                                  cocktail.plannedAmount * calcCocktailTotalPrice(cocktail.cocktail)
-                                ).toFixed(2)}{' '}
-                                €
-                              </td>
-                              </>
-                            ) : (
-                              <></>
-                            )}
+                                <>
+                                  <td>{(cocktail.plannedAmount * (cocktail.customPrice ?? cocktail.cocktail.price ?? 0)).toFixed(2)}€</td>
+                                  <td>
+                                    {(
+                                      cocktail.plannedAmount * (cocktail.customPrice ?? cocktail.cocktail.price ?? 0) -
+                                      cocktail.plannedAmount * calcCocktailTotalPrice(cocktail.cocktail)
+                                    ).toFixed(2)}{' '}
+                                    €
+                                  </td>
+                                </>
+                              ) : (
+                                <></>
+                              )}
                             </tr>
                           ))
                       )}
@@ -572,7 +567,7 @@ export default function CalculationPage() {
                           <>
                             <td>
                               {cocktailCalculationItems
-                            .map((cocktail) => cocktail.plannedAmount * (cocktail.customPrice ?? cocktail.cocktail.price ?? 0))
+                                .map((cocktail) => cocktail.plannedAmount * (cocktail.customPrice ?? cocktail.cocktail.price ?? 0))
                                 .reduce((acc, curr) => acc + curr, 0)
                                 .toFixed(2)}{' '}
                               €
@@ -635,11 +630,11 @@ export default function CalculationPage() {
                               </td>
                               <td>
                                 {(ingredientCalculation.amount / (ingredientCalculation.ingredient.volume ?? 0)).toFixed(2)}
-                              {' (á '}
-                              {ingredientCalculation.ingredient.volume} {ingredientCalculation.ingredient.unit})
-                            </td>
-                            <td>
-                              {Math.ceil(ingredientCalculation.amount / (ingredientCalculation.ingredient.volume ?? 0))}
+                                {' (á '}
+                                {ingredientCalculation.ingredient.volume} {ingredientCalculation.ingredient.unit})
+                              </td>
+                              <td>
+                                {Math.ceil(ingredientCalculation.amount / (ingredientCalculation.ingredient.volume ?? 0))}
                                 {' (á '}
                                 {ingredientCalculation.ingredient.volume} {ingredientCalculation.ingredient.unit})
                               </td>
