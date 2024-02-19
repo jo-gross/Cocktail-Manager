@@ -29,11 +29,14 @@ function EditCocktailRecipe() {
         if (response.ok) {
           setCocktailRecipe(body.data);
         } else {
-          console.log('CocktailId -> fetchRecipe', response, body);
-          alertService.error(body.message, response.status, response.statusText);
+          console.error('CocktailId -> fetchCocktail', response);
+          alertService.error(body.message ?? 'Fehler beim Laden des Cocktails', response.status, response.statusText);
         }
       })
-      .catch((err) => alertService.error(err.message))
+      .catch((error) => {
+        console.error('CocktailId -> fetchCocktail', error);
+        alertService.error('Fehler beim Laden des Cocktails');
+      })
       .finally(() => {
         setLoading(false);
       });

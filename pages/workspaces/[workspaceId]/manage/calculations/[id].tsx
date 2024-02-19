@@ -47,6 +47,8 @@ export default function CalculationPage() {
 
   const [loading, setLoading] = useState(false);
 
+  const [saving, setSaving] = useState(false);
+
   const [unsavedChanges, setUnsavedChanges] = useState(false);
   useEffect(() => {
     if (originalItems != JSON.stringify(cocktailCalculationItems)) {
@@ -68,11 +70,14 @@ export default function CalculationPage() {
           setCocktailCalculationItems(body.data.cocktailCalculationItems);
           setOriginalItems(JSON.stringify(body.data.cocktailCalculationItems));
         } else {
-          console.log('CocktailCalculation -> useEffect[init, id != create]', response, body);
-          alertService.error(body.message, response.status, response.statusText);
+          console.error('CocktailCalculation -> useEffect[init, id != create]', response);
+          alertService.error(body.message ?? 'Fehler beim Laden der Kalkulation', response.status, response.statusText);
         }
       })
-      .catch((err) => alertService.error(err.message))
+      .catch((error) => {
+        console.error('CocktailCalculation -> useEffect[init, id != create]', error);
+        alertService.error('Es ist ein Fehler aufgetreten');
+      })
       .finally(() => {
         setLoading(false);
       });
@@ -98,11 +103,14 @@ export default function CalculationPage() {
             if (response.ok) {
               setCocktailCalculationItems([...cocktailCalculationItems, { cocktail: body.data, plannedAmount: 1, customPrice: undefined }]);
             } else {
-              console.log('CocktailId -> fetchRecipe', response, body);
-              alertService.error(body.message, response.status, response.statusText);
+              console.error('CalculationId -> addCocktailToSelection (not already exists) -> fetchCocktail', response);
+              alertService.error(body.message ?? 'Fehler beim Laden des Cocktails', response.status, response.statusText);
             }
           })
-          .catch((err) => alertService.error(err.message))
+          .catch((error) => {
+            console.error('CalculationId -> addCocktailToSelection (not already exists) -> fetchCocktail', error);
+            alertService.error('Fehler beim Laden des Cocktails');
+          })
           .finally(() => {});
       }
     },
@@ -159,7 +167,7 @@ export default function CalculationPage() {
     (redirect: boolean = true) => {
       if (!id) return;
       if (!calculationName) return;
-
+      setSaving(true);
       if (id == 'create') {
         const body = {
           name: calculationName,
@@ -185,13 +193,19 @@ export default function CalculationPage() {
               }
               alertService.success('Kalkulation erfolgreich erstellt');
             } else {
-              console.log('CocktailCalculation -> useEffect[create, name]', response, body);
-              alertService.error(body.message, response.status, response.statusText);
+              console.error('CalculationId -> saveCalculation[create]', response);
+              alertService.error(body.message ?? 'Fehler beim Erstellen der Kalkulation', response.status, response.statusText);
             }
           })
-          .catch((err) => alertService.error(err.message))
-          .finally(() => {});
+          .catch((error) => {
+            console.error('CalculationId -> saveCalculation[create]', error);
+            alertService.error('Es ist ein Fehler aufgetreten');
+          })
+          .finally(() => {
+            setSaving(false);
+          });
       } else {
+        // Update
         const body = {
           name: calculationName,
           calculationItems: cocktailCalculationItems.map((item) => {
@@ -216,12 +230,17 @@ export default function CalculationPage() {
               }
               alertService.success('Kalkulation erfolgreich gespeichert');
             } else {
-              console.log('CocktailCalculation -> useEffect[create, name]', response, body);
-              alertService.error(body.message, response.status, response.statusText);
+              console.error('CalculationId -> saveCalculation[update]', response);
+              alertService.error(body.message ?? 'Fehler beim Aktualisieren der Kalkulation', response.status, response.statusText);
             }
           })
-          .catch((err) => alertService.error(err.message))
-          .finally(() => {});
+          .catch((error) => {
+            console.error('CalculationId -> saveCalculation[update]', error);
+            alertService.error('Es ist ein Fehler aufgetreten');
+          })
+          .finally(() => {
+            setSaving(false);
+          });
       }
     },
     [id, calculationName, cocktailCalculationItems, workspaceId, router],
@@ -273,10 +292,12 @@ export default function CalculationPage() {
         <div key={'print-calculation'} className={'btn btn-square btn-outline btn-sm md:btn-md'} onClick={() => window.print()}>
           <FaPrint />
         </div>,
-        <div
+        <button
           key={'save-calculation'}
+          disabled={saving}
           className={'btn btn-primary btn-sm md:btn-md'}
           onClick={() => {
+            if (saving) return;
             if (id == 'create' && calculationName.trim() == '') {
               openNameModal();
             } else {
@@ -284,8 +305,9 @@ export default function CalculationPage() {
             }
           }}
         >
+          {saving ? <span className={'loading loading-spinner'} /> : <></>}
           Speichern
-        </div>,
+        </button>,
       ]}
     >
       {loading ? (
@@ -318,7 +340,7 @@ export default function CalculationPage() {
                                   onCocktailSelectedObject={(cocktail) => {
                                     addCocktailToSelection(cocktail.id);
                                   }}
-                                ></SearchModal>,
+                                />,
                               )
                             }
                           >
@@ -423,24 +445,32 @@ export default function CalculationPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {cocktailCalculationItems
-                        .sort((a, b) => a.cocktail.name.localeCompare(b.cocktail.name))
-                        .map((cocktail) => (
-                          <tr key={'cocktail-' + cocktail.cocktail.id}>
-                            <td>{cocktail.cocktail.name}</td>
-                            <td>{cocktail.plannedAmount} x</td>
-                            <td>{calcCocktailTotalPrice(cocktail.cocktail).toFixed(2)} €</td>
-                            <td>{(cocktail.plannedAmount * calcCocktailTotalPrice(cocktail.cocktail)).toFixed(2)} €</td>
-                            <td>{(cocktail.plannedAmount * (cocktail.customPrice ?? cocktail.cocktail.price ?? 0)).toFixed(2)} €</td>
-                            <td>
-                              {(
-                                cocktail.plannedAmount * (cocktail.customPrice ?? cocktail.cocktail.price ?? 0) -
-                                cocktail.plannedAmount * calcCocktailTotalPrice(cocktail.cocktail)
-                              ).toFixed(2)}{' '}
-                              €
-                            </td>
-                          </tr>
-                        ))}
+                      {cocktailCalculationItems.length == 0 ? (
+                        <tr>
+                          <td className={'text-center'} colSpan={6}>
+                            -
+                          </td>
+                        </tr>
+                      ) : (
+                        cocktailCalculationItems
+                          .sort((a, b) => a.cocktail.name.localeCompare(b.cocktail.name))
+                          .map((cocktail) => (
+                            <tr key={'cocktail-' + cocktail.cocktail.id}>
+                              <td>{cocktail.cocktail.name}</td>
+                              <td>{cocktail.plannedAmount} x</td>
+                              <td>{calcCocktailTotalPrice(cocktail.cocktail).toFixed(2)} €</td>
+                              <td>{(cocktail.plannedAmount * calcCocktailTotalPrice(cocktail.cocktail)).toFixed(2)} €</td>
+                              <td>{(cocktail.plannedAmount * (cocktail.customPrice ?? cocktail.cocktail.price ?? 0)).toFixed(2)} €</td>
+                              <td>
+                                {(
+                                  cocktail.plannedAmount * (cocktail.customPrice ?? cocktail.cocktail.price ?? 0) -
+                                  cocktail.plannedAmount * calcCocktailTotalPrice(cocktail.cocktail)
+                                ).toFixed(2)}{' '}
+                                €
+                              </td>
+                            </tr>
+                          ))
+                      )}
                       <tr className={''}></tr>
                       <tr className="bg-base-200">
                         <td className={'font-bold'}>Gesamt</td>
@@ -496,21 +526,29 @@ export default function CalculationPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {ingredientCalculationItems
-                        .sort((a, b) => a.ingredient.name.localeCompare(b.ingredient.name))
-                        .map((ingredientCalculation) => (
-                          <tr key={'ingredientCalculation-' + ingredientCalculation.ingredient.id}>
-                            <td>{ingredientCalculation.ingredient.name}</td>
-                            <td>
-                              {ingredientCalculation.amount.toFixed(2)} {ingredientCalculation.ingredient.unit}
-                            </td>
-                            <td>
-                              {(ingredientCalculation.amount / (ingredientCalculation.ingredient.volume ?? 0)).toFixed(2)}
-                              {' (á '}
-                              {ingredientCalculation.ingredient.volume} {ingredientCalculation.ingredient.unit})
-                            </td>
-                          </tr>
-                        ))}
+                      {ingredientCalculationItems.length == 0 ? (
+                        <tr>
+                          <td colSpan={3} className={'text-center'}>
+                            Keine Zutaten benötigt
+                          </td>
+                        </tr>
+                      ) : (
+                        ingredientCalculationItems
+                          .sort((a, b) => a.ingredient.name.localeCompare(b.ingredient.name))
+                          .map((ingredientCalculation) => (
+                            <tr key={'ingredientCalculation-' + ingredientCalculation.ingredient.id}>
+                              <td>{ingredientCalculation.ingredient.name}</td>
+                              <td>
+                                {ingredientCalculation.amount.toFixed(2)} {ingredientCalculation.ingredient.unit}
+                              </td>
+                              <td>
+                                {(ingredientCalculation.amount / (ingredientCalculation.ingredient.volume ?? 0)).toFixed(2)}
+                                {' (á '}
+                                {ingredientCalculation.ingredient.volume} {ingredientCalculation.ingredient.unit})
+                              </td>
+                            </tr>
+                          ))
+                      )}
                     </tbody>
                   </table>
                 </div>
@@ -524,14 +562,22 @@ export default function CalculationPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {garnishCalculationItems
-                        .sort((a, b) => a.garnish.name.localeCompare(b.garnish.name))
-                        .map((garnishCalculationItem) => (
-                          <tr key={'garnishCalculation-' + garnishCalculationItem.garnish.id}>
-                            <td>{garnishCalculationItem.garnish.name}</td>
-                            <td>{garnishCalculationItem.amount.toFixed(0)}</td>
-                          </tr>
-                        ))}
+                      {ingredientCalculationItems.length == 0 ? (
+                        <tr>
+                          <td colSpan={2} className={'text-center'}>
+                            Keine Garnituren benötigt
+                          </td>
+                        </tr>
+                      ) : (
+                        garnishCalculationItems
+                          .sort((a, b) => a.garnish.name.localeCompare(b.garnish.name))
+                          .map((garnishCalculationItem) => (
+                            <tr key={'garnishCalculation-' + garnishCalculationItem.garnish.id}>
+                              <td>{garnishCalculationItem.garnish.name}</td>
+                              <td>{garnishCalculationItem.amount.toFixed(0)}</td>
+                            </tr>
+                          ))
+                      )}
                     </tbody>
                   </table>
                 </div>

@@ -17,7 +17,7 @@ export default withWorkspacePermission([Role.USER], async (req: NextApiRequest, 
   const workspaceId = req.query.workspaceId as string | undefined;
   if (!workspaceId) return res.status(400).json({ message: 'No workspace id' });
 
-  console.log('Importing workspace', workspaceId);
+  console.debug('Importing workspace', workspaceId);
 
   if (req.method === 'POST') {
     try {
@@ -25,7 +25,7 @@ export default withWorkspacePermission([Role.USER], async (req: NextApiRequest, 
         const data: BackupStructure = JSON.parse(await req.body);
 
         if (data.workspaceSettings?.length > 0) {
-          console.log('Importing workspaceSettings', data.workspaceSettings?.length);
+          console.debug('Importing workspaceSettings', data.workspaceSettings?.length);
           data.workspaceSettings?.forEach((g) => {
             g.workspaceId = workspaceId;
           });
@@ -34,7 +34,7 @@ export default withWorkspacePermission([Role.USER], async (req: NextApiRequest, 
 
         const actionMapping: { id: string; newId: string }[] = [];
         if (data.stepActions?.length > 0) {
-          console.log('Importing stepActions', data.stepActions?.length);
+          console.debug('Importing stepActions', data.stepActions?.length);
           data.stepActions?.forEach(async (g) => {
             const existingAction = await transaction.workspaceCocktailRecipeStepAction.findFirst({
               where: { name: g.name, workspaceId: workspaceId, actionGroup: g.actionGroup },
@@ -57,7 +57,7 @@ export default withWorkspacePermission([Role.USER], async (req: NextApiRequest, 
         const garnishMapping: { id: string; newId: string }[] = [];
         const garnishImageMapping: { garnishId: string; image: string }[] = [];
         if (data.garnish?.length > 0) {
-          console.log('Importing garnishes', data.garnish?.length);
+          console.debug('Importing garnishes', data.garnish?.length);
           data.garnish?.forEach((g) => {
             const garnishMappingItem = { id: g.id, newId: randomUUID() };
             // @ts-ignore causing older backup version support
@@ -86,7 +86,7 @@ export default withWorkspacePermission([Role.USER], async (req: NextApiRequest, 
         const ingredientMapping: { id: string; newId: string }[] = [];
         const ingredientImageMapping: { ingredientId: string; image: string }[] = [];
         if (data.ingredient?.length > 0) {
-          console.log('Importing ingredients', data.ingredient?.length);
+          console.debug('Importing ingredients', data.ingredient?.length);
           data.ingredient?.forEach((g) => {
             const ingredientMappingItem = { id: g.id, newId: randomUUID() };
             // @ts-ignore causing older backup version support
@@ -115,7 +115,7 @@ export default withWorkspacePermission([Role.USER], async (req: NextApiRequest, 
         const glassMapping: { id: string; newId: string }[] = [];
         const glassImageMapping: { glassId: string; image: string }[] = [];
         if (data.glass?.length > 0) {
-          console.log('Importing glasses', data.glass?.length);
+          console.debug('Importing glasses', data.glass?.length);
           data.glass?.forEach((g) => {
             const glassMappingItem = { id: g.id, newId: randomUUID() };
             // @ts-ignore causing older backup version support
@@ -144,7 +144,7 @@ export default withWorkspacePermission([Role.USER], async (req: NextApiRequest, 
         const cocktailRecipeMapping: { id: string; newId: string }[] = [];
         const cocktailRecipeImageMapping: { cocktailRecipeId: string; image: string }[] = [];
         if (data.cocktailRecipe?.length > 0) {
-          console.log('Importing cocktailRecipes', data.cocktailRecipe?.length);
+          console.debug('Importing cocktailRecipes', data.cocktailRecipe?.length);
           data.cocktailRecipe?.forEach((g) => {
             const cocktailRecipeMappingItem = { id: g.id, newId: randomUUID() };
             // @ts-ignore causing older backup version support
@@ -173,7 +173,7 @@ export default withWorkspacePermission([Role.USER], async (req: NextApiRequest, 
 
         const cocktailRecipeStepMapping: { id: string; newId: string }[] = [];
         if (data.cocktailRecipeStep?.length > 0) {
-          console.log('Importing cocktailRecipeSteps', data.cocktailRecipeStep?.length);
+          console.debug('Importing cocktailRecipeSteps', data.cocktailRecipeStep?.length);
           data.cocktailRecipeStep?.forEach((g) => {
             const cocktailRecipeStepMappingItem = { id: g.id, newId: randomUUID() };
             g.id = cocktailRecipeStepMappingItem.newId;
@@ -200,7 +200,7 @@ export default withWorkspacePermission([Role.USER], async (req: NextApiRequest, 
         }
 
         if (data.cocktailRecipeGarnish?.length > 0) {
-          console.log('Importing cocktailRecipeGarnish', data.cocktailRecipeGarnish?.length);
+          console.debug('Importing cocktailRecipeGarnish', data.cocktailRecipeGarnish?.length);
           data.cocktailRecipeGarnish?.forEach((g) => {
             g.cocktailRecipeId = cocktailRecipeMapping.find((gm) => gm.id === g.cocktailRecipeId)?.newId!;
             g.garnishId = garnishMapping.find((gm) => gm.id === g.garnishId)?.newId!;
@@ -212,7 +212,7 @@ export default withWorkspacePermission([Role.USER], async (req: NextApiRequest, 
           });
         }
         if (data.cocktailRecipeIngredient?.length > 0) {
-          console.log('Importing cocktailRecipeIngredient', data.cocktailRecipeIngredient?.length);
+          console.debug('Importing cocktailRecipeIngredient', data.cocktailRecipeIngredient?.length);
           data.cocktailRecipeIngredient.forEach((g) => {
             g.id = randomUUID();
             g.cocktailRecipeStepId = cocktailRecipeStepMapping.find((gm) => gm.id === g.cocktailRecipeStepId)?.newId!;
@@ -226,7 +226,7 @@ export default withWorkspacePermission([Role.USER], async (req: NextApiRequest, 
 
         const cocktailCardMapping: { id: string; newId: string }[] = [];
         if (data.cocktailCard?.length > 0) {
-          console.log('Importing cocktailCard', data.cocktailCard?.length);
+          console.debug('Importing cocktailCard', data.cocktailCard?.length);
           data.cocktailCard?.forEach((g) => {
             const cocktailCardMappingItem = { id: g.id, newId: randomUUID() };
             g.id = cocktailCardMappingItem.newId;
@@ -238,7 +238,7 @@ export default withWorkspacePermission([Role.USER], async (req: NextApiRequest, 
 
         const cocktailCardGroupMapping: { id: string; newId: string }[] = [];
         if (data.cocktailCardGroup?.length > 0) {
-          console.log('Importing cocktailCardGroup', data.cocktailCardGroup?.length);
+          console.debug('Importing cocktailCardGroup', data.cocktailCardGroup?.length);
           data.cocktailCardGroup?.forEach((g) => {
             const cocktailCardGroupMappingItem = { id: g.id, newId: randomUUID() };
             g.id = cocktailCardGroupMappingItem.newId;
@@ -249,7 +249,7 @@ export default withWorkspacePermission([Role.USER], async (req: NextApiRequest, 
         }
 
         if (data.cocktailCardGroupItem?.length > 0) {
-          console.log('Importing cocktailCardGroupItem', data.cocktailCardGroupItem?.length);
+          console.debug('Importing cocktailCardGroupItem', data.cocktailCardGroupItem?.length);
           data.cocktailCardGroupItem?.forEach((g) => {
             g.cocktailId = cocktailRecipeMapping.find((gm) => gm.id === g.cocktailId)?.newId!;
             g.cocktailCardGroupId = cocktailCardGroupMapping.find((gm) => gm.id === g.cocktailCardGroupId)?.newId!;
@@ -262,7 +262,7 @@ export default withWorkspacePermission([Role.USER], async (req: NextApiRequest, 
 
         const cocktailCalculationMapping: { id: string; newId: string }[] = [];
         if (data.calculation?.length > 0) {
-          console.log('Importing cocktailCardGroupItem', data.calculation?.length);
+          console.debug('Importing cocktailCardGroupItem', data.calculation?.length);
           data.calculation?.forEach((g) => {
             const cocktailCalculationMappingItem = { id: g.id, newId: randomUUID() };
             g.id = cocktailCalculationMappingItem.newId;
@@ -274,7 +274,7 @@ export default withWorkspacePermission([Role.USER], async (req: NextApiRequest, 
         }
 
         if (data.calculationItems?.length > 0) {
-          console.log('Importing cocktailCardGroupItem', data.cocktailCardGroupItem?.length);
+          console.debug('Importing cocktailCardGroupItem', data.cocktailCardGroupItem?.length);
           data.calculationItems?.forEach((g) => {
             g.cocktailId = cocktailRecipeMapping.find((gm) => gm.id === g.cocktailId)?.newId!;
             g.calculationId = cocktailCalculationMapping.find((gm) => gm.id === g.calculationId)?.newId!;
@@ -282,11 +282,11 @@ export default withWorkspacePermission([Role.USER], async (req: NextApiRequest, 
           await transaction.cocktailCalculationItems.createMany({ data: data.calculationItems, skipDuplicates: true });
         }
 
-        console.log('Import finished');
+        console.info('Import finished');
       });
       return res.status(200).json({ msg: 'Success' });
-    } catch (e) {
-      console.log(e);
+    } catch (error) {
+      console.error(error);
       return res.status(500).json({ msg: 'Error' });
     }
   }

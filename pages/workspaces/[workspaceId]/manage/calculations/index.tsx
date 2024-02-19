@@ -1,11 +1,10 @@
 import Link from 'next/link';
 import { ManageEntityLayout } from '../../../../../components/layout/ManageEntityLayout';
 import { ManageColumn } from '../../../../../components/ManageColumn';
-import React, { useCallback, useContext, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Loading } from '../../../../../components/Loading';
 import { useRouter } from 'next/router';
 import { alertService } from '../../../../../lib/alertService';
-import { UserContext } from '../../../../../lib/context/UserContextProvider';
 import { CocktailCalculationOverview } from '../../../../../models/CocktailCalculationOverview';
 import { Role } from '@prisma/client';
 import { FaPlus } from 'react-icons/fa';
@@ -15,8 +14,6 @@ export default function CocktailCalculationOverviewPage() {
   const router = useRouter();
   const { workspaceId } = router.query;
 
-  const userContext = useContext(UserContext);
-
   const [cocktailCalculations, setCocktailCalculations] = useState<CocktailCalculationOverview[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -24,17 +21,21 @@ export default function CocktailCalculationOverviewPage() {
 
   const refreshCocktailCalculations = useCallback(() => {
     if (!workspaceId) return;
+    setLoading(true);
     fetch(`/api/workspaces/${workspaceId}/calculations`)
       .then(async (response) => {
         const body = await response.json();
         if (response.ok) {
           setCocktailCalculations(body.data);
         } else {
-          console.log('Calculation -> refreshCocktailCalculations', response, body);
-          alertService.error(body.message, response.status, response.statusText);
+          console.error('Calculation -> refreshCocktailCalculations', response);
+          alertService.error(body.message ?? 'Fehler beim Laden der Kalkulationen', response.status, response.statusText);
         }
       })
-      .catch((err) => alertService.error(err.message))
+      .catch((error) => {
+        console.error('Calculation -> refreshCocktailCalculations', error);
+        alertService.error('Fehler beim Laden der Kalkulationen');
+      })
       .finally(() => {
         setLoading(false);
       });

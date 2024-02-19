@@ -48,11 +48,14 @@ export function ManageColumn(props: ManageColumnProps) {
                             props.onRefresh();
                             alertService.success('Erfolgreich gelöscht');
                           } else {
-                            console.log(`ManageColumn[${props.entity}] -> delete`, response, body);
-                            alertService.error(body.message, response.status, response.statusText);
+                            console.error(`ManageColumn[${props.entity}] -> delete`, response);
+                            alertService.error(body.message ?? 'Fehler beim Löschen', response.status, response.statusText);
                           }
                         })
-                        .catch((error) => alert(error.message));
+                        .catch((error) => {
+                          console.error(`ManageColumn[${props.entity}] -> delete`, error);
+                          alertService.error('Es ist ein Fehler aufgetreten');
+                        });
                     }}
                   />,
                 );

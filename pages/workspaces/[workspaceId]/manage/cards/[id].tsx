@@ -39,6 +39,8 @@ function EditCocktailCard() {
 
   const [unsavedChanges, setUnsavedChanges] = useState(false);
 
+  const [deleting, setDeleting] = useState(false);
+
   useEffect(() => {
     if (!id) return;
     if (!workspaceId) return;
@@ -49,14 +51,18 @@ function EditCocktailCard() {
         if (response.ok) {
           setCard(body.data);
         } else {
-          console.log('CardId -> fetchCard', response, body);
-          alertService.error(body.message, response.status, response.statusText);
+          console.error('CardId -> fetchCard', response);
+          alertService.error(body.message ?? 'Fehler beim Laden der Karte', response.status, response.statusText);
         }
       })
-      .catch((err) => alertService.error(err.message))
+      .catch((error) => {
+        console.error('CardId -> fetchCard', error);
+        alertService.error('Fehler beim Laden der Karte');
+      })
       .finally(() => {
         setLoadingCard(false);
       });
+
     setLoadingCocktails(true);
     fetch(`/api/workspaces/${workspaceId}/cocktails`)
       .then(async (response) => {
@@ -64,11 +70,14 @@ function EditCocktailCard() {
         if (response.ok) {
           setCocktails(body.data);
         } else {
-          console.log('CardId -> fetchRecipes', response, body);
-          alertService.error(body.message, response.status, response.statusText);
+          console.error('CardId -> fetchCocktails', response);
+          alertService.error(body.message ?? 'Fehler beim Laden der Cocktails', response.status, response.statusText);
         }
       })
-      .catch((err) => alertService.error(err.message))
+      .catch((error) => {
+        console.error('CardId -> fetchCocktails', error);
+        alertService.error('Fehler beim Laden der Cocktails');
+      })
       .finally(() => {
         setLoadingCocktails(false);
       });
@@ -85,30 +94,43 @@ function EditCocktailCard() {
         card != undefined ? (
           <button
             type={'button'}
-            className={'btn btn-square btn-outline btn-error btn-sm'}
+            className={`btn ${deleting ? '' : 'btn-square'} btn-outline btn-error btn-sm`}
+            disabled={deleting}
             onClick={() =>
               modalContext.openModal(
                 <DeleteConfirmationModal
                   spelling={'DELETE'}
                   entityName={'die Karte'}
                   onApprove={async () => {
+                    if (!workspaceId) return;
+                    if (deleting) return;
+                    setDeleting(true);
                     fetch(`/api/workspaces/${workspaceId}/cards/${card.id}`, {
                       method: 'DELETE',
-                    }).then(async (response) => {
-                      const body = await response.json();
-                      if (response.ok) {
-                        router.replace(`/workspaces/${workspaceId}/manage/cards`).then(() => alertService.success('Karte gelöscht'));
-                      } else {
-                        console.log('CardId -> deleteCard', response, body);
-                        alertService.error(body.message, response.status, response.statusText);
-                      }
-                    });
+                    })
+                      .then(async (response) => {
+                        const body = await response.json();
+                        if (response.ok) {
+                          router.replace(`/workspaces/${workspaceId}/manage/cards`).then(() => alertService.success('Karte gelöscht'));
+                        } else {
+                          console.error('CardId -> deleteCard', response);
+                          alertService.error(body.message ?? 'Fehler beim Löschen der Karte', response.status, response.statusText);
+                        }
+                      })
+                      .catch((error) => {
+                        console.error('CardId -> deleteCard', error);
+                        alertService.error('Es ist ein Fehler aufgetreten');
+                      })
+                      .finally(() => {
+                        setDeleting(false);
+                      });
                   }}
                 />,
               )
             }
           >
             <FaTrashAlt />
+            {deleting ? <span className={'loading loading-spinner'}></span> : <></>}
           </button>
         ) : (
           <></>
@@ -157,45 +179,54 @@ function EditCocktailCard() {
           return errors;
         }}
         onSubmit={async (values) => {
-          const input = {
-            id: card?.id,
-            name: values.name,
-            date: values.date != '' ? new Date(values.date).toISOString() : null,
-            groups: values.groups.map((group, index) => ({
-              name: group.name,
-              groupNumber: index,
-              groupPrice: group.groupPrice,
-              items: group.items.map((item, itemIndex) => ({
-                itemNumber: itemIndex,
-                cocktailId: item.cocktailId,
+          try {
+            const input = {
+              id: card?.id,
+              name: values.name,
+              date: values.date != '' ? new Date(values.date).toISOString() : null,
+              groups: values.groups.map((group, index) => ({
+                name: group.name,
+                groupNumber: index,
+                groupPrice: group.groupPrice,
+                items: group.items.map((item, itemIndex) => ({
+                  itemNumber: itemIndex,
+                  cocktailId: item.cocktailId,
+                })),
               })),
-            })),
-          };
+            };
 
-          if (card == undefined) {
-            const storeResult = await fetch(`/api/workspaces/${workspaceId}/cards`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(input),
-            });
+            if (card == undefined) {
+              const response = await fetch(`/api/workspaces/${workspaceId}/cards`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(input),
+              });
 
-            if (storeResult.ok) {
-              router.replace(`/workspaces/${workspaceId}/manage/cards`).then(() => alertService.success('Karte erfolgreich erstellt'));
+              if (response.ok) {
+                router.replace(`/workspaces/${workspaceId}/manage/cards`).then(() => alertService.success('Karte erfolgreich erstellt'));
+              } else {
+                const body = await response.json();
+                console.error('CardId -> onSubmit[create]', response);
+                alertService.error(body.message ?? 'Fehler beim Erstellen der Karte', response.status, response.statusText);
+              }
             } else {
-              alertService.error(storeResult.statusText, storeResult.status, storeResult.statusText);
-            }
-          } else {
-            const storeResult = await fetch(`/api/workspaces/${workspaceId}/cards/${card.id}`, {
-              method: 'PUT',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(input),
-            });
+              const response = await fetch(`/api/workspaces/${workspaceId}/cards/${card.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(input),
+              });
 
-            if (storeResult.ok) {
-              router.replace(`/workspaces/${workspaceId}/manage/cards`).then(() => alertService.success('Karte erfolgreich gespeichert'));
-            } else {
-              alertService.error(storeResult.statusText, storeResult.status, storeResult.statusText);
+              if (response.ok) {
+                router.replace(`/workspaces/${workspaceId}/manage/cards`).then(() => alertService.success('Karte erfolgreich gespeichert'));
+              } else {
+                const body = await response.json();
+                console.error('CardId -> onSubmit[update]', response);
+                alertService.error(body.message ?? 'Fehler beim Speichern der Karte', response.status, response.statusText);
+              }
             }
+          } catch (error) {
+            console.error('CardId -> onSubmit', error);
+            alertService.error('Es ist ein Fehler aufgetreten');
           }
         }}
       >

@@ -59,14 +59,6 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
   const [ingredientsLoading, setIngredientsLoading] = useState(false);
 
   const formRef = props.formRef;
-  const [originalValues, setOriginalValues] = useState<any>();
-
-  //Filling original values
-  useEffect(() => {
-    if (Object.keys(formRef?.current?.touched ?? {}).length == 0) {
-      setOriginalValues(formRef?.current?.values);
-    }
-  }, [formRef, formRef?.current?.values]);
 
   const fetchIngredients = useCallback(async () => {
     if (!workspaceId) return;
@@ -78,11 +70,14 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
         if (response.ok) {
           setIngredients(body.data);
         } else {
-          console.log('CocktailRecipeForm -> fetchIngredients', response, body);
-          alertService.error(body.message, response.status, response.statusText);
+          console.error('CocktailRecipeForm -> fetchIngredients', response);
+          alertService.error(body.message ?? 'Fehler beim Laden der Zutaten', response.status, response.statusText);
         }
       })
-      .catch((err) => alertService.error(err.message))
+      .catch((error) => {
+        console.error('CocktailRecipeForm -> fetchIngredients', error);
+        alertService.error('Fehler beim Laden der Zutaten');
+      })
       .finally(() => {
         setIngredientsLoading(false);
       });
@@ -126,11 +121,14 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
         if (response.ok) {
           setGlasses(body.data);
         } else {
-          console.log('CocktailRecipeForm -> fetchGlasses', response, body);
-          alertService.error(body.message, response.status, response.statusText);
+          console.error('CocktailRecipeForm -> fetchGlasses', response);
+          alertService.error(body.message ?? 'Fehler beim Laden der Gläser', response.status, response.statusText);
         }
       })
-      .catch((err) => alertService.error(err.message))
+      .catch((error) => {
+        console.error('CocktailRecipeForm -> fetchGlasses', error);
+        alertService.error('Fehler beim laden der Gläser');
+      })
       .finally(() => {
         setGlassesLoading(false);
       });
@@ -148,11 +146,14 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
         if (response.ok) {
           setGarnishes(body.data);
         } else {
-          console.log('CocktailRecipeForm -> fetchGarnishes', response, body);
-          alertService.error(body.message, response.status, response.statusText);
+          console.error('CocktailRecipeForm -> fetchGarnishes', response);
+          alertService.error(body.message ?? 'Fehler beim Laden der Garnituren', response.status, response.statusText);
         }
       })
-      .catch((err) => alertService.error(err.message))
+      .catch((error) => {
+        console.error('CocktailRecipeForm -> fetchGarnishes', error);
+        alertService.error('Fehler beim Laden der Garnituren');
+      })
       .finally(() => {
         setGarnishesLoading(false);
       });
@@ -169,11 +170,14 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
         if (response.ok) {
           setActions(body.data);
         } else {
-          console.log('CocktailRecipeForm -> fetchActions', response, body);
-          alertService.error(body.message, response.status, response.statusText);
+          console.error('CocktailRecipeForm -> fetchActions', response);
+          alertService.error(body.message ?? 'Fehler beim Laden der Zubereitungsmöglichkeiten', response.status, response.statusText);
         }
       })
-      .catch((err) => alertService.error(err.message))
+      .catch((error) => {
+        console.error('CocktailRecipeForm -> fetchActions', error);
+        alertService.error('Fehler beim laden der Zubereitungsmöglichkeiten');
+      })
       .finally(() => {
         setActionsLoading(false);
       });
@@ -297,10 +301,10 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
         }
         props.setUnsavedChanges?.(!_.isEqual(reducedCocktailRecipe, values));
 
-        // console.log('CocktailRecipe', reducedCocktailRecipe);
-        // console.log('Values', values);
-        console.log('Difference', DeepDiff.diff(reducedCocktailRecipe, values));
-        // console.log('Differs', !_.isEqual(reducedCocktailRecipe, values));
+        // console.debug('CocktailRecipe', reducedCocktailRecipe);
+        // console.debug('Values', values);
+        console.debug('Difference', DeepDiff.diff(reducedCocktailRecipe, values));
+        // console.debug('Differs', !_.isEqual(reducedCocktailRecipe, values));
 
         const errors: any = {};
         if (!values.name || values.name.trim() == '') {
@@ -375,7 +379,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
           errors.garnishes = garnishErrors;
         }
 
-        console.log('Cocktail Form Errors: ', errors);
+        console.debug('Cocktail Form Errors: ', errors);
         return errors;
       }}
       onSubmit={async (values) => {
@@ -419,8 +423,8 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
               router.replace(`/workspaces/${workspaceId}/manage/cocktails`).then(() => alertService.success('Erfolgreich erstellt'));
             } else {
               const body = await response.json();
-              console.log('CocktailRecipeForm -> createRecipe', response, body);
-              alertService.error(body.message, response.status, response.statusText);
+              console.error('CocktailRecipeForm -> onSubmit[create]', response);
+              alertService.error(body.message ?? 'Fehler beim Erstellen des Cocktails', response.status, response.statusText);
             }
           } else {
             const response = await fetch(`/api/workspaces/${workspaceId}/cocktails/${props.cocktailRecipe.id}`, {
@@ -432,12 +436,13 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
               router.replace(`/workspaces/${workspaceId}/manage/cocktails`).then(() => alertService.success('Erfolgreich gespeichert'));
             } else {
               const body = await response.json();
-              console.log('CocktailRecipeForm -> updateRecipe', response, body);
-              alertService.error(body.message, response.status, response.statusText);
+              console.error('CocktailRecipeForm -> onSubmit[update]', response);
+              alertService.error(body.message ?? 'Fehler beim Speichern des Cocktails', response.status, response.statusText);
             }
           }
         } catch (error) {
-          console.error(error);
+          console.error('CocktailRecipeForm -> onSubmit', error);
+          alertService.error('Es ist ein Fehler aufgetreten');
         }
       }}
     >

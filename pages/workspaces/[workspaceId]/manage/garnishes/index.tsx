@@ -24,17 +24,21 @@ export default function ManageGlassesOverviewPage() {
 
   const refreshGarnishes = useCallback(() => {
     if (!workspaceId) return;
+    setLoading(true);
     fetch(`/api/workspaces/${workspaceId}/garnishes`)
       .then(async (response) => {
         const body = await response.json();
         if (response.ok) {
           setGarnishes(body.data);
         } else {
-          console.log('Garnishes -> fetchGarnishes', response, body);
-          alertService.error(body.message, response.status, response.statusText);
+          console.error('Garnishes -> fetchGarnishes', response);
+          alertService.error(body.message ?? 'Fehler beim Laden der Garnituren', response.status, response.statusText);
         }
       })
-      .catch((err) => alertService.error(err.message))
+      .catch((error) => {
+        console.error('Garnishes -> fetchGarnishes', error);
+        alertService.error('Fehler beim Laden der Garnituren');
+      })
       .finally(() => {
         setLoading(false);
       });
@@ -74,13 +78,13 @@ export default function ManageGlassesOverviewPage() {
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={3}>
+                    <td colSpan={4}>
                       <Loading />
                     </td>
                   </tr>
                 ) : garnishes.filter((garnish) => garnish.name.toLowerCase().includes(filterString.toLowerCase())).length == 0 ? (
                   <tr>
-                    <td colSpan={3} className={'text-center'}>
+                    <td colSpan={4} className={'text-center'}>
                       Keine Einträge gefunden
                     </td>
                   </tr>

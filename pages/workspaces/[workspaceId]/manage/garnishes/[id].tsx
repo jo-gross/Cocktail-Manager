@@ -30,11 +30,14 @@ function EditGarnishPage() {
         if (response.ok) {
           setGarnish(body.data);
         } else {
-          console.log('GarnishId -> fetchGarnish', response, body);
-          alertService.error(body.message, response.status, response.statusText);
+          console.error('GarnishId -> fetchGarnish', response);
+          alertService.error(body.message ?? 'Fehler beim Laden der Garnitur', response.status, response.statusText);
         }
       })
-      .catch((err) => alertService.error(err.message))
+      .catch((error) => {
+        console.error('GarnishId -> fetchGarnish', error);
+        alertService.error('Fehler beim Laden der Garnitur');
+      })
       .finally(() => {
         setLoading(false);
       });

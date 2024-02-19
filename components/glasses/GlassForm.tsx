@@ -53,41 +53,43 @@ export function GlassForm(props: GlassFormProps) {
             volume: values.volume == 0 ? undefined : values.volume,
           };
           if (props.glass == undefined) {
-            const result = await fetch(`/api/workspaces/${workspaceId}/glasses`, {
+            const response = await fetch(`/api/workspaces/${workspaceId}/glasses`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(body),
             });
-            if (result.status.toString().startsWith('2')) {
+            if (response.status.toString().startsWith('2')) {
               if (props.onSaved) {
                 props.onSaved();
               } else {
                 router.push(`/workspaces/${workspaceId}/manage/glasses`).then(() => alertService.success('Glas erfolgreich erstellt'));
               }
             } else {
-              const body = await result.json();
-              alertService.error(body.message, result.status, result.statusText);
+              const body = await response.json();
+              console.error('GlassForm -> onSubmit[create]', response);
+              alertService.error(body.message ?? 'Fehler beim Erstellen des Glases', response.status, response.statusText);
             }
           } else {
-            const result = await fetch(`/api/workspaces/${workspaceId}/glasses/${props.glass.id}`, {
+            const response = await fetch(`/api/workspaces/${workspaceId}/glasses/${props.glass.id}`, {
               method: 'PUT',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(body),
             });
-            if (result.status.toString().startsWith('2')) {
+            if (response.status.toString().startsWith('2')) {
               if (props.onSaved) {
                 props.onSaved();
               } else {
                 router.push(`/workspaces/${workspaceId}/manage/glasses`).then(() => alertService.success('Glas erfolgreich gespeichert'));
               }
             } else {
-              const body = await result.json();
-              alertService.error(body.message, result.status, result.statusText);
+              const body = await response.json();
+              console.error('GlassForm -> onSubmit[update]', response);
+              alertService.error(body.message ?? 'Fehler beim Speichern des Glases', response.status, response.statusText);
             }
           }
         } catch (error) {
-          console.error(error);
-          alertService.error('Es ist ein fehler aufgetreten.');
+          console.error('GarnishForm -> onSubmit', error);
+          alertService.error('Es ist ein Fehler aufgetreten');
         }
       }}
       validate={(values) => {

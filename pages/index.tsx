@@ -8,7 +8,7 @@ import Link from 'next/link';
 import { UserContext } from '../lib/context/UserContextProvider';
 import { alertService } from '../lib/alertService';
 import Head from 'next/head';
-import { version } from '../package.json';
+import packageInfo from '../package.json';
 
 export default function WorkspacesPage() {
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
@@ -19,6 +19,9 @@ export default function WorkspacesPage() {
 
   const userContext = useContext(UserContext);
 
+  const [joiningWorkspace, setJoiningWorkspace] = useState(false);
+  const [creatingWorkspace, setCreatingWorkspace] = useState(false);
+
   const fetchWorkspaces = useCallback(() => {
     if (!userContext.user) return;
     setWorkspacesLoading(true);
@@ -28,16 +31,20 @@ export default function WorkspacesPage() {
         if (response.ok) {
           setWorkspaces(body.data);
         } else {
-          console.log('index -> fetchWorkspaces', response, body);
-          alertService.error(body.message, response.status, response.statusText);
+          console.error('WorkspacesOverview -> fetchWorkspaces', response);
+          alertService.error(body.message ?? 'Fehler beim Laden der Workspaces', response.status, response.statusText);
         }
       })
-      .catch((err) => alertService.error(err.message))
+      .catch((error) => {
+        console.error('WorkspacesOverview -> fetchWorkspaces', error);
+        alertService.error('Fehler beim Laden der Workspaces');
+      })
       .finally(() => setWorkspacesLoading(false));
   }, [userContext.user]);
 
   const createNewWorkspace = useCallback(() => {
     if (!userContext.user) return;
+    setCreatingWorkspace(true);
     fetch('/api/workspaces', {
       method: 'POST',
       headers: {
@@ -48,11 +55,16 @@ export default function WorkspacesPage() {
       .then((results) => results.json())
       .then(() => setNewWorkspaceName(''))
       .then(() => fetchWorkspaces())
-      .catch((err) => alertService.error(err.message));
+      .catch((error) => {
+        console.error('WorkspacesOverview -> createNewWorkspace', error);
+        alertService.error('Fehler beim Erstellen der Workspace');
+      })
+      .finally(() => setCreatingWorkspace(false));
   }, [userContext.user, newWorkspaceName, fetchWorkspaces]);
 
   const joinWorkspace = useCallback(() => {
     if (!userContext.user) return;
+    setJoiningWorkspace(true);
     fetch(`/api/workspaces/${joinWorkspaceId}/join`, {
       method: 'POST',
       headers: {
@@ -66,7 +78,11 @@ export default function WorkspacesPage() {
       })
       .then(() => setJoinWorkspaceId(''))
       .then(() => fetchWorkspaces())
-      .catch((err) => alertService.error(err.message));
+      .catch((error) => {
+        console.error('WorkspacesOverview -> joinWorkspace', error);
+        alertService.error('Fehler beim Beitreten');
+      })
+      .finally(() => setJoiningWorkspace(false));
   }, [fetchWorkspaces, joinWorkspaceId, userContext.user]);
 
   useEffect(() => {
@@ -83,7 +99,7 @@ export default function WorkspacesPage() {
           <div className={'flex flex-col items-center justify-center space-y-2'}>
             <Image src={'/images/The Cocktail Manager Logo.png'} alt="The Cocktail Manager" className={'pt-4 invert dark:invert-0'} height={211} width={247} />
             <h1 className={'text-center text-4xl font-bold'}>Cocktail-Manager</h1>
-            <div>v{version}</div>
+            <div>v{packageInfo.version}</div>
             <div className={'flex items-center space-x-2'}>
               <>
                 {userContext.user ? (
@@ -132,7 +148,12 @@ export default function WorkspacesPage() {
                         value={newWorkspaceName}
                         onChange={(event) => setNewWorkspaceName(event.target.value)}
                       />
-                      <button className={'btn btn-square btn-outline join-item'} disabled={newWorkspaceName.trim().length == 0} onClick={createNewWorkspace}>
+                      <button
+                        className={`btn ${creatingWorkspace ? '' : 'btn-square'} btn-outline join-item`}
+                        disabled={newWorkspaceName.trim().length == 0 || creatingWorkspace}
+                        onClick={createNewWorkspace}
+                      >
+                        {creatingWorkspace ? <span className={'loading loading-spinner'} /> : <></>}
                         <FaArrowRight />
                       </button>
                     </div>
@@ -143,7 +164,11 @@ export default function WorkspacesPage() {
                         value={joinWorkspaceId}
                         onChange={(event) => setJoinWorkspaceId(event.target.value)}
                       />
-                      <button className={'btn btn-square btn-outline join-item'} disabled={joinWorkspaceId.trim().length == 0} onClick={joinWorkspace}>
+                      <button
+                        className={`btn ${joiningWorkspace ? '' : 'btn-square'} btn-outline join-item`}
+                        disabled={joinWorkspaceId.trim().length == 0 || joiningWorkspace}
+                        onClick={joinWorkspace}
+                      >
                         <FaArrowRight />
                       </button>
                     </div>

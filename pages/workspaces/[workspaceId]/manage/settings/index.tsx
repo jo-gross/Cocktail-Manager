@@ -11,6 +11,7 @@ import { ModalContext } from '../../../../../lib/context/ModalContextProvider';
 import { UploadDropZone } from '../../../../../components/UploadDropZone';
 import { compressFile } from '../../../../../lib/ImageCompressor';
 import { convertToBase64 } from '../../../../../lib/Base64Converter';
+import '../../../../../lib/DateUtils';
 import MonitorFormat = $Enums.MonitorFormat;
 
 export default function WorkspaceSettingPage() {
@@ -29,13 +30,16 @@ export default function WorkspaceSettingPage() {
   const [uploadImportFile, setUploadImportFile] = useState<File>();
   const uploadImportFileRef = useRef<HTMLInputElement>(null);
 
-  const [verticalImageLoading, setVerticalImageLoading] = useState<boolean>(false);
   const [verticalImage, setVerticalImage] = useState<string>();
   const [verticalImageColor, setVerticalImageColor] = useState<string>();
-  const [horizontalImageLoading, setHorizontalImageLoading] = useState<boolean>(false);
   const [horizontalImage, setHorizontalImage] = useState<string>();
   const [horizontalImageColor, setHorizontalImageColor] = useState<string>();
   const [updatingSignage, setUpdatingSignage] = useState<boolean>(false);
+
+  const [copyToClipboardLoading, setCopyToClipboardLoading] = useState<boolean>(false);
+  const [leaveLoading, setLeaveLoading] = useState<boolean>(false);
+  const [workspaceDeleting, setWorkspaceDeleting] = useState<boolean>(false);
+  const [workspaceRenaming, setWorkspaceRenaming] = useState<boolean>(false);
 
   const exportAll = useCallback(async () => {
     setExporting(true);
@@ -45,12 +49,12 @@ export default function WorkspaceSettingPage() {
         const element = document.createElement('a');
         const file = new Blob([content], { type: 'application/json' });
         element.href = URL.createObjectURL(file);
-        element.download = 'backup.json';
+        element.download = `Cocktail-Manager ${userContext.workspace?.name} Backup ${new Date().toFormatDateString()}.json`;
         document.body.appendChild(element); // Required for this to work in FireFox
         element.click();
       })
-      .catch((e) => {
-        console.log(e);
+      .catch((error) => {
+        console.error('Settings-Page -> exportAll', error);
         alertService.error('Fehler beim Exportieren');
       })
       .finally(() => setExporting(false));
@@ -77,11 +81,12 @@ export default function WorkspaceSettingPage() {
         }
       } else {
         const body = await response.json();
-        console.log('Admin -> ImportBackup', response, body);
-        alertService.error(body.message ?? 'Fehler beim importieren', response.status, response.statusText);
+        console.error('Admin -> ImportBackup', response);
+        alertService.error(body.message ?? 'Fehler beim Importieren', response.status, response.statusText);
       }
-    } catch (e) {
-      alertService.error(`Fehler beim importieren`);
+    } catch (error) {
+      console.error('SettingsPage -> importBackup', error);
+      alertService.error(`Fehler beim Importieren`);
     } finally {
       setImporting(false);
     }
@@ -89,34 +94,52 @@ export default function WorkspaceSettingPage() {
 
   const handleDeleteWorkspace = useCallback(async () => {
     if (!confirm('Workspace inkl. aller Zutaten und Rezepte wirklich löschen?')) return;
-
+    setWorkspaceDeleting(true);
     fetch(`/api/workspaces/${workspaceId}`, {
       method: 'DELETE',
-    }).then(async (response) => {
-      const body = await response.json();
-      if (response.ok) {
-        router.replace('/').then(() => alertService.success('Erfolgreich gelöscht'));
-      } else {
-        console.log('Admin -> DeleteWorkspace', response, body);
-        alertService.error(body.message, response.status, response.statusText);
-      }
-    });
+    })
+      .then(async (response) => {
+        const body = await response.json();
+        if (response.ok) {
+          router.replace('/').then(() => alertService.success('Erfolgreich gelöscht'));
+        } else {
+          console.error('SettingsPage -> DeleteWorkspace', response);
+          alertService.error(body.message ?? 'Fehler beim Löschen der Workspace', response.status, response.statusText);
+        }
+      })
+      .catch((error) => {
+        console.error('SettingsPage -> handleDeleteWorkspace', error);
+        alertService.error('Es ist ein Fehler aufgetreten');
+      })
+      .finally(() => {
+        setWorkspaceDeleting(false);
+      });
   }, [router, workspaceId]);
 
   const handleRenameWorkspace = useCallback(async () => {
+    setWorkspaceRenaming(true);
     fetch(`/api/workspaces/${workspaceId}`, {
       method: 'PUT',
       body: JSON.stringify({ name: newWorkspaceName }),
-    }).then(async (response) => {
-      const body = await response.json();
-      if (response.ok) {
-        setNewWorkspaceName('');
-        alertService.success(`Umbenennen erfolgreich`);
-      } else {
-        console.log('Admin -> RenameWorkspace', response, body);
-        alertService.error(body.message, response.status, response.statusText);
-      }
-    });
+    })
+      .then(async (response) => {
+        const body = await response.json();
+        if (response.ok) {
+          userContext.refreshWorkspace();
+          setNewWorkspaceName('');
+          alertService.success(`Umbenennen erfolgreich`);
+        } else {
+          console.error('Admin -> RenameWorkspace', response);
+          alertService.error(body.message ?? 'Fehler beim Umbenennen der Workspace', response.status, response.statusText);
+        }
+      })
+      .catch((error) => {
+        console.error('SettingsPage -> handleRenameWorkspace', error);
+        alertService.error('Es ist ein Fehler aufgetreten');
+      })
+      .finally(() => {
+        setWorkspaceRenaming(false);
+      });
   }, [newWorkspaceName, workspaceId]);
 
   const handleUpdateSignage = useCallback(async () => {
@@ -135,13 +158,13 @@ export default function WorkspaceSettingPage() {
         if (response.ok) {
           alertService.success(`Update erfolgreich`);
         } else {
-          console.log('Admin -> UpdateSignage', response, body);
-          alertService.error(body.message, response.status, response.statusText);
+          console.error('Admin -> UpdateSignage', response);
+          alertService.error(body.message ?? 'Fehler beim Speichern', response.status, response.statusText);
         }
       })
-      .catch((e) => {
-        console.log(e);
-        alertService.error('Fehler beim Update, z.B. zu große Datei');
+      .catch((error) => {
+        console.error('SettingsPage -> handleUpdateSignage', error);
+        alertService.error('Es ist ein Fehler Aufgetreten, z.B. zu große Datei');
       })
       .finally(() => {
         setUpdatingSignage(false);
@@ -156,13 +179,15 @@ export default function WorkspaceSettingPage() {
         return response.json();
       })
       .then((data) => setWorkspaceUsers(data.data))
-      .catch((e) => {
-        console.log(e);
+      .catch((error) => {
+        console.error('SettingsPage -> fetchWorkspaceUsers', error);
         alertService.error('Fehler beim Laden der Benutzer');
       });
   }, [workspaceId]);
 
   const fetchSignage = useCallback(() => {
+    if (workspaceId == undefined) return;
+
     fetch(`/api/signage/${workspaceId}`)
       .then(async (response) => {
         return response.json();
@@ -178,8 +203,11 @@ export default function WorkspaceSettingPage() {
           }
         });
       })
-      .finally();
-  }, []);
+      .catch((error) => {
+        console.error('SettingsPage -> fetchSignage', error);
+        alertService.error('Fehler beim Laden der Monitor-Einstellungen');
+      });
+  }, [workspaceId]);
 
   useEffect(() => {
     fetchWorkspaceUsers();
@@ -204,8 +232,9 @@ export default function WorkspaceSettingPage() {
                       <button
                         className={'btn btn-outline btn-primary btn-sm'}
                         onClick={() => {
-                          navigator.clipboard.writeText(workspaceId as string);
-                          alertService.info('Erfolgreich kopiert');
+                          navigator.clipboard.writeText(workspaceId as string).then(() => {
+                            alertService.info('Erfolgreich kopiert');
+                          });
                         }}
                       >
                         <FaShareAlt />
@@ -235,15 +264,20 @@ export default function WorkspaceSettingPage() {
                               headers: { 'Content-Type': 'application/json' },
                               body: JSON.stringify({ userId: workspaceUser.userId, role: event.target.value }),
                             })
-                              .then((response) => {
+                              .then(async (response) => {
                                 if (response.ok) {
                                   fetchWorkspaceUsers();
+                                  alertService.success('Erfolgreich aktualisiert');
                                 } else {
-                                  throw new Error('Fehler beim aktualisieren');
+                                  const body = await response.json();
+                                  console.error('SettingsPage -> updateUserRole', response);
+                                  alertService.error(body.message ?? 'Fehler beim aktualisieren', response.status, response.statusText);
                                 }
                               })
-                              .then(() => alertService.success('Erfolgreich aktualisiert'))
-                              .catch((error) => alertService.error(error.message));
+                              .catch((error) => {
+                                console.error('SettingsPage -> updateUserRole', error);
+                                alertService.error('Es ist ein Fehler aufgetreten');
+                              });
                           }}
                         >
                           {Object.values(Role)
@@ -265,15 +299,20 @@ export default function WorkspaceSettingPage() {
                             fetch(`/api/workspaces/${workspaceId}/users/${workspaceUser.userId}`, {
                               method: 'DELETE',
                             })
-                              .then((response) => {
+                              .then(async (response) => {
                                 if (response.ok) {
                                   fetchWorkspaceUsers();
+                                  alertService.success('Erfolgreich entfernt');
                                 } else {
-                                  throw new Error('Fehler beim entfernen');
+                                  const body = await response.json();
+                                  console.error('SettingsPage -> removeUser', response);
+                                  alertService.error(body.message ?? 'Fehler beim Entfernen', response.status, response.statusText);
                                 }
                               })
-                              .then(() => alertService.success('Erfolgreich entfernt'))
-                              .catch((error) => alertService.error(error.message));
+                              .catch((error) => {
+                                console.error('SettingsPage -> removeUser', error);
+                                alertService.error('Es ist ein Fehler aufgetreten');
+                              });
                           }}
                         >
                           <>{workspaceUser.user.id == userContext.user?.id ? 'Verlassen' : 'Entfernen'}</>
@@ -281,8 +320,9 @@ export default function WorkspaceSettingPage() {
                       ) : (
                         <button
                           className={'btn btn-error btn-sm ml-2'}
-                          disabled={workspaceUser.role == Role.OWNER}
+                          disabled={workspaceUser.role == Role.OWNER || leaveLoading}
                           onClick={() => {
+                            setLeaveLoading(true);
                             fetch(`/api/workspaces/${workspaceId}/leave`, {
                               method: 'POST',
                             })
@@ -291,12 +331,20 @@ export default function WorkspaceSettingPage() {
                                   router.replace('/').then(() => alertService.success('Erfolgreich verlassen'));
                                 } else {
                                   const body = await response.json();
-                                  alertService.error(body.message, response.status, response.statusText);
+                                  console.error('SettingsPage -> leaveWorkspace', response);
+                                  alertService.error(body.message ?? 'Fehler beim Verlassen der Workspace', response.status, response.statusText);
                                 }
                               })
-                              .catch((error) => alertService.error(error.message));
+                              .catch((error) => {
+                                console.error('SettingsPage -> leaveWorkspace', error);
+                                alertService.error('Fehler beim Verlassen der Workspace');
+                              })
+                              .finally(() => {
+                                setLeaveLoading(false);
+                              });
                           }}
                         >
+                          <span className={leaveLoading ? 'loading loading-spinner' : ''} />
                           Verlassen
                         </button>
                       )}
@@ -317,15 +365,15 @@ export default function WorkspaceSettingPage() {
                   disabled={importing}
                   className={'file-input file-input-bordered'}
                   ref={uploadImportFileRef}
-                  onChange={(e) => setUploadImportFile(e.target.files?.[0])}
+                  onChange={(event) => setUploadImportFile(event.target.files?.[0])}
                 />
               </div>
               <button className={`btn btn-primary`} disabled={uploadImportFile == undefined || importing} type={'button'} onClick={importBackup}>
-                <>{importing ? <span className="loading loading-spinner"></span> : <></>}</>
+                {importing ? <span className="loading loading-spinner"></span> : <></>}
                 Import
               </button>
               <button className={`btn btn-primary`} onClick={exportAll} disabled={exporting}>
-                <>{exporting ? <span className="loading loading-spinner"></span> : <></>}</>
+                {exporting ? <span className="loading loading-spinner"></span> : <></>}
                 Export All
               </button>
             </div>
@@ -353,6 +401,7 @@ export default function WorkspaceSettingPage() {
                     disabled={newWorkspaceName.length < 3 || newWorkspaceName.length > 50}
                     onClick={handleRenameWorkspace}
                   >
+                    {workspaceRenaming ? <span className={'loading loading-spinner'} /> : <></>}
                     Umbenennen
                   </button>
                 </div>
@@ -361,6 +410,7 @@ export default function WorkspaceSettingPage() {
                   className={'btn btn-outline btn-error'}
                   onClick={() => modalContext.openModal(<DeleteConfirmationModal onApprove={handleDeleteWorkspace} spelling={'DELETE'} />)}
                 >
+                  {workspaceDeleting ? <span className={'loading loading-spinner'} /> : <></>}
                   Workspace löschen
                 </button>
               </div>
@@ -375,12 +425,15 @@ export default function WorkspaceSettingPage() {
               <div className={'card-title w-full justify-between'}>
                 <div>Monitor</div>
                 <button
-                  onClick={() => {
-                    navigator.clipboard.writeText(`${window.location.origin}/signage?id=${workspaceId}`);
+                  onClick={async () => {
+                    setCopyToClipboardLoading(true);
+                    await navigator.clipboard.writeText(`${window.location.origin}/signage?id=${workspaceId}`);
+                    setCopyToClipboardLoading(false);
                     alertService.info('In Zwischenablage kopiert');
                   }}
                   className={'btn btn-square btn-ghost'}
                 >
+                  {copyToClipboardLoading ? <span className={'loading loading-spinner'} /> : <></>}
                   <FaShareAlt />
                 </button>
               </div>
@@ -423,8 +476,8 @@ export default function WorkspaceSettingPage() {
                       type={'color'}
                       disabled={horizontalImage == undefined}
                       value={horizontalImageColor}
-                      onChange={(e) => {
-                        setHorizontalImageColor(e.target.value);
+                      onChange={(event) => {
+                        setHorizontalImageColor(event.target.value);
                       }}
                       className={'input w-full'}
                     />
@@ -469,15 +522,16 @@ export default function WorkspaceSettingPage() {
                       type={'color'}
                       disabled={verticalImage == undefined}
                       value={verticalImageColor}
-                      onChange={(e) => {
-                        setVerticalImageColor(e.target.value);
+                      onChange={(event) => {
+                        setVerticalImageColor(event.target.value);
                       }}
                       className={'input w-full'}
                     />
                   </div>
                 </div>
               </div>
-              <button className={`btn btn-primary ${updatingSignage ? 'btn-loading' : ''}`} onClick={handleUpdateSignage}>
+              <button className={`btn btn-primary`} onClick={handleUpdateSignage}>
+                {updatingSignage ? <span className={'loading loading-spinner'} /> : <></>}
                 Speichern
               </button>
             </div>

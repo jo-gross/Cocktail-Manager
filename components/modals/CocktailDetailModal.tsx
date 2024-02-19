@@ -42,11 +42,13 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
         if (response.ok) {
           alertService.success('Cocktail zur Statistik hinzugefügt');
         } else {
-          alertService.error('Fehler beim Hinzufügen des Cocktails zur Statistik', response.status, response.statusText);
+          const body = await response.json();
+          console.log('CocktailDetailModal -> addCocktailToStatistic', response);
+          alertService.error(body.message ?? 'Fehler beim Hinzufügen des Cocktails zur Statistik', response.status, response.statusText);
         }
       } catch (error) {
-        console.error('Error:', error);
-        alertService.error('Fehler beim Hinzufügen des Cocktails zur Statistik');
+        console.log('CocktailDetailModal -> addCocktailToStatistic', error);
+        alertService.error('Es ist ein Fehler aufgetreten');
       } finally {
         setSubmittingStatistic(false);
       }
@@ -181,7 +183,7 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
             <button className={'btn btn-outline btn-primary w-full'} onClick={() => addCocktailToStatistic(props.cocktail.id)} disabled={submittingStatistic}>
               <FaPlus />
               Gemacht
-              {submittingStatistic ? <div className={'spinner spinner-primary'}></div> : <></>}
+              {submittingStatistic ? <span className={'loading loading-spinner'}></span> : <></>}
             </button>
           </div>
         </div>

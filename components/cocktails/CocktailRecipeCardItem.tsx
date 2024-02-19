@@ -42,11 +42,13 @@ export default function CocktailRecipeCardItem(props: CocktailRecipeOverviewItem
       if (response.ok) {
         alertService.success('Cocktail zur Statistik hinzugefügt');
       } else {
-        alertService.error('Fehler beim Hinzufügen des Cocktails zur Statistik', response.status, response.statusText);
+        const body = await response.json();
+        console.error('CocktailRecipeCardItem -> addCocktailToStatistic', response);
+        alertService.error(body.message ?? 'Fehler beim Hinzufügen des Cocktails zur Statistik', response.status, response.statusText);
       }
     } catch (error) {
-      console.error('Error:', error);
-      alertService.error('Fehler beim Hinzufügen des Cocktails zur Statistik');
+      console.error('CocktailRecipeCardItem -> addCocktailToStatistic', error);
+      alertService.error('Es ist ein Fehler aufgetreten');
     } finally {
       setSubmittingStatistic(false);
     }
@@ -79,7 +81,7 @@ export default function CocktailRecipeCardItem(props: CocktailRecipeOverviewItem
               <button className={'btn btn-outline btn-primary w-full'} onClick={addCocktailToStatistic} disabled={submittingStatistic}>
                 <FaPlus />
                 Gemacht
-                {submittingStatistic ? <div className={'spinner spinner-primary'}></div> : <></>}
+                {submittingStatistic ? <span className={'loading loading-spinner'}></span> : <></>}
               </button>
             ) : (
               <></>

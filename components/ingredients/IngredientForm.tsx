@@ -63,40 +63,42 @@ export function IngredientForm(props: IngredientFormProps) {
             image: values.image?.trim() == '' ? undefined : values.image?.trim(),
           };
           if (props.ingredient == undefined) {
-            const result = await fetch(`/api/workspaces/${workspaceId}/ingredients`, {
+            const response = await fetch(`/api/workspaces/${workspaceId}/ingredients`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(body),
             });
-            if (result.status.toString().startsWith('2')) {
+            if (response.status.toString().startsWith('2')) {
               if (props.onSaved != undefined) {
                 props.onSaved();
               } else {
                 router.replace(`/workspaces/${workspaceId}/manage/ingredients`).then(() => alertService.success('Zutat erfolgreich erstellt'));
               }
             } else {
-              const body = await result.json();
-              alertService.error(body.message, result.status, result.statusText);
+              const body = await response.json();
+              console.error('IngredientForm -> onSubmit[create]', response);
+              alertService.error(body.message ?? 'Fehler beim Erstellen der Zutat', response.status, response.statusText);
             }
           } else {
-            const result = await fetch(`/api/workspaces/${workspaceId}/ingredients/${props.ingredient.id}`, {
+            const response = await fetch(`/api/workspaces/${workspaceId}/ingredients/${props.ingredient.id}`, {
               method: 'PUT',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(body),
             });
-            if (result.status.toString().startsWith('2')) {
+            if (response.status.toString().startsWith('2')) {
               if (props.onSaved != undefined) {
                 props.onSaved();
               } else {
                 router.replace(`/workspaces/${workspaceId}/manage/ingredients`).then(() => alertService.success('Zutat erfolgreich gespeichert'));
               }
             } else {
-              const body = await result.json();
-              alertService.error(body.message, result.status, result.statusText);
+              const body = await response.json();
+              console.error('IngredientForm -> onSubmit[update]', response);
+              alertService.error(body.message ?? 'Fehler beim Speichern der Zutat', response.status, response.statusText);
             }
           }
         } catch (error) {
-          console.error(error);
+          console.error('IngredientForm -> onSubmit', error);
           alertService.error('Es ist ein Fehler aufgetreten');
         }
       }}
@@ -115,7 +117,7 @@ export function IngredientForm(props: IngredientFormProps) {
         if (!values.unit) {
           errors.unit = 'Required';
         }
-        console.log('Form errors', errors);
+        console.debug('Form errors', errors);
         return errors;
       }}
     >

@@ -34,12 +34,14 @@ export function AuthBoundary(props: AlertBoundaryProps) {
         if (response.ok) {
           setUser(body.data);
         } else {
-          alertService.error(body.message, response.status, response.statusText);
+          console.error('AuthBoundary -> fetchUser', response);
+          alertService.error(body.message ?? 'Fehler beim Laden des Nutzers', response.status, response.statusText);
           await signOut();
         }
       })
-      .catch(async (err) => {
-        alertService.error(err.message);
+      .catch(async (error) => {
+        console.error('AuthBoundary -> fetchUser', error);
+        alertService.error('Fehler beim Laden des Nutzers');
         await signOut();
       })
       .finally(async () => {
@@ -63,11 +65,15 @@ export function AuthBoundary(props: AlertBoundaryProps) {
           if (response.ok) {
             setWorkspace(body.data);
           } else {
-            router.replace('/').then(() => alertService.error(body.message, response.status, response.statusText));
+            router.replace('/').then(() => {
+              console.error('AuthBoundary -> fetchWorkspace', response);
+              alertService.error(body.message ?? 'Fehler beim Laden der Workspace', response.status, response.statusText);
+            });
           }
         })
-        .catch((err) => {
-          alertService.error(err.message);
+        .catch((error) => {
+          console.error('AuthBoundary -> fetchWorkspace', error);
+          alertService.error('Fehler beim Laden der Workspace');
         })
         .finally(() => {
           setWorkspaceLoading(false);
@@ -126,13 +132,13 @@ export function AuthBoundary(props: AlertBoundaryProps) {
                   fetchUser();
                 } else {
                   const body = await response.json();
-                  console.log('AuthBoundary -> updateUserSetting', response, body);
-                  alertService.error(body.message, response.status, response.statusText);
+                  console.error('AuthBoundary -> updateUserSetting', response);
+                  alertService.error(body.message ?? 'Fehler beim Aktualisieren der Nutzer-Einstellungen', response.status, response.statusText);
                 }
               })
               .catch((error) => {
-                console.error(error);
-                alertService.error(error.message);
+                console.error('AuthBoundary -> updateUserSetting', error);
+                alertService.error('Es ist ein Fehler aufgetreten');
               });
           },
         }}
