@@ -11,7 +11,7 @@ support services related to the Software), a product or service whose value deri
 functionality of the Software. Any license notice or attribution required by the License must also include this Commons
 Clause License Condition notice.
 
-Software: Cocktail-Manager
+Software: [Cocktail-Manager](https://github.com/jo-gross/cocktail-manager)
 
 License: GNU AFFERO GENERAL PUBLIC LICENSE v3
 
