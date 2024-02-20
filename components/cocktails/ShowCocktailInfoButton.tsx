@@ -19,7 +19,7 @@ export function ShowCocktailInfoButton(props: ShowCocktailInfoButtonProps) {
         await modalContext.closeModal();
         //Strange bug, otherwise the modal is closed after setting the content
         await new Promise((r) => setTimeout(r, 1));
-        await modalContext.openModal(<CocktailDetailModal cocktail={props.cocktailRecipe} />);
+        await modalContext.openModal(<CocktailDetailModal cocktailId={props.cocktailRecipe.id} />);
       }}
     >
       <FaInfoCircle />

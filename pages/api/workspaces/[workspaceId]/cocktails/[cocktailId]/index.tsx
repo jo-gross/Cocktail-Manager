@@ -20,7 +20,8 @@ export default withHttpMethods({
         workspaceId: workspace.id,
       },
       include: {
-        glass: true,
+        _count: { select: { CocktailRecipeImage: true } },
+        glass: { include: { _count: { select: { GlassImage: true } } } },
         CocktailRecipeImage: {
           select: {
             image: true,
@@ -28,7 +29,7 @@ export default withHttpMethods({
         },
         garnishes: {
           include: {
-            garnish: true,
+            garnish: { include: { _count: { select: { GarnishImage: true } } } },
           },
         },
         steps: {
@@ -36,7 +37,7 @@ export default withHttpMethods({
             action: true,
             ingredients: {
               include: {
-                ingredient: true,
+                ingredient: { include: { _count: { select: { IngredientImage: true } } } },
               },
             },
           },

@@ -1,4 +1,4 @@
-import { Glass, Role } from '@prisma/client';
+import { Role } from '@prisma/client';
 import Link from 'next/link';
 import { ManageEntityLayout } from '../../../../../components/layout/ManageEntityLayout';
 import { ManageColumn } from '../../../../../components/ManageColumn';
@@ -9,8 +9,9 @@ import { alertService } from '../../../../../lib/alertService';
 import { UserContext } from '../../../../../lib/context/UserContextProvider';
 import DefaultGlassIcon from '../../../../../components/DefaultGlassIcon';
 import { FaPlus } from 'react-icons/fa';
-import NextImage from '../../../../../components/NextImage';
 import ListSearchField from '../../../../../components/ListSearchField';
+import { GlassModel } from '../../../../../models/GlassModel';
+import AvatarImage from '../../../../../components/AvatarImage';
 
 export default function ManageGlassesOverviewPage() {
   const router = useRouter();
@@ -18,7 +19,7 @@ export default function ManageGlassesOverviewPage() {
 
   const userContext = useContext(UserContext);
 
-  const [glasses, setGlasses] = useState<Glass[]>([]);
+  const [glasses, setGlasses] = useState<GlassModel[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [filterString, setFilterString] = useState('');
@@ -98,14 +99,15 @@ export default function ManageGlassesOverviewPage() {
                         <td>
                           <div className="flex items-center space-x-3">
                             <div className="mask mask-squircle h-12 w-12">
-                              <NextImage
-                                src={`/api/workspaces/${glass.workspaceId}/glasses/${glass.id}/image`}
-                                className={'h-12 w-12 bg-white object-contain'}
-                                alt="Glass"
-                                width={300}
-                                height={300}
-                                altComponent={<DefaultGlassIcon />}
-                              />
+                              {glass._count?.GlassImage == 0 ? (
+                                <DefaultGlassIcon />
+                              ) : (
+                                <AvatarImage
+                                  src={`/api/workspaces/${glass.workspaceId}/glasses/${glass.id}/image`}
+                                  alt="Glass"
+                                  altComponent={<DefaultGlassIcon />}
+                                />
+                              )}
                             </div>
                           </div>
                         </td>

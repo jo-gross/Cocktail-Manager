@@ -19,14 +19,19 @@ export default withHttpMethods({
         workspaceId: workspace.id,
       },
       include: {
-        glass: true,
-        garnishes: { include: { garnish: true } },
+        _count: { select: { CocktailRecipeImage: true } },
+        glass: { include: { _count: { select: { GlassImage: true } } } },
+        garnishes: {
+          include: {
+            garnish: { include: { _count: { select: { GarnishImage: true } } } },
+          },
+        },
         steps: {
           include: {
             action: true,
             ingredients: {
               include: {
-                ingredient: true,
+                ingredient: { include: { _count: { select: { IngredientImage: true } } } },
               },
             },
           },
