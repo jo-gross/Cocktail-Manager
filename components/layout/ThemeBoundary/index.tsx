@@ -4,10 +4,11 @@ import { UserContext } from '../../../lib/context/UserContextProvider';
 
 interface ThemeBoundaryProps {
   children: React.ReactNode;
+  onThemeChange: (isDark: 'dark' | 'auto' | 'light') => void;
 }
 
 export default function ThemeBoundary(props: ThemeBoundaryProps) {
-  const [isDark, setIsDark] = useState(false);
+  const [theme, setTheme] = useState<'dark' | 'auto' | 'light'>('auto');
 
   const userContext = useContext(UserContext);
 
@@ -15,18 +16,22 @@ export default function ThemeBoundary(props: ThemeBoundaryProps) {
     console.debug('Settings changed', userContext.user?.settings);
     userContext.user?.settings?.forEach((setting) => {
       if (setting.setting === 'theme' && setting.value != null) {
-        setIsDark(JSON.parse(setting.value));
+        setTheme(JSON.parse(setting.value));
       }
     });
   }, [userContext.user?.settings]);
+
+  useEffect(() => {
+    props.onThemeChange(theme);
+  }, [theme, props]);
 
   return (
     <>
       <ThemeContext.Provider
         value={{
-          isDark,
-          toggleTheme: () => {
-            userContext.updateUserSetting('theme', JSON.stringify(!isDark));
+          theme: theme,
+          setTheme: (theme) => {
+            userContext.updateUserSetting('theme', JSON.stringify(theme));
           },
         }}
       >
