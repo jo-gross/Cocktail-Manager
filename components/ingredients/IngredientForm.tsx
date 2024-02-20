@@ -301,7 +301,7 @@ export function IngredientForm(props: IngredientFormProps) {
                   !(
                     values.link.includes('expert24.com') ||
                     values.link.includes('conalco.de') ||
-                    values.link.includes('metro.de') ||
+                    // values.link.includes('metro.de') ||
                     values.link.includes('rumundco.de') ||
                     values.link.includes('delicando.com')
                   ) || values.fetchingExternalData
