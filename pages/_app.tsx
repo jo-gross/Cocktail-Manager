@@ -50,7 +50,10 @@ const App = ({ Component, pageProps: { session, ...pageProps } }: AppProps) => {
                     <title>The Cocktail-Manager</title>
                   </Head>
                   {theme != 'auto' ? (
-                    <input type="checkbox" hidden={true} checked={theme == 'dark'} readOnly={true} value="halloween" className="theme-controller toggle" />
+                    <>
+                      <input type="checkbox" hidden={true} checked={theme == 'dark'} readOnly={true} value="halloween" className="theme-controller toggle" />
+                      <input type="checkbox" hidden={true} checked={theme == 'light'} readOnly={true} value="autumn" className="theme-controller toggle" />
+                    </>
                   ) : (
                     <></>
                   )}
