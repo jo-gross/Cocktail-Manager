@@ -26,6 +26,7 @@ import { CocktailRecipeFullWithImage } from '../../models/CocktailRecipeFullWith
 import { UserContext } from '../../lib/context/UserContextProvider';
 import { WorkspaceSettingKey } from '.prisma/client';
 import DeepDiff from 'deep-diff';
+import { GlassModel } from '../../models/GlassModel';
 
 interface CocktailRecipeFormProps {
   cocktailRecipe?: CocktailRecipeFullWithImage;
@@ -109,7 +110,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
     [ingredients, modalContext],
   );
 
-  const [glasses, setGlasses] = useState<Glass[]>([]);
+  const [glasses, setGlasses] = useState<GlassModel[]>([]);
   const [glassesLoading, setGlassesLoading] = useState(false);
 
   const fetchGlasses = useCallback(async () => {
@@ -276,13 +277,9 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
   return (
     <Formik
       innerRef={formRef}
-      initialValues={{
-        ...initValue,
-        showImage: false,
-        showTags: false,
-      }}
+      initialValues={initValue}
       validate={(values) => {
-        values = _.omit(values, ['showImage', 'showTags', 'image']);
+        values = _.omit(values, ['image']);
         const reducedCocktailRecipe = _.omit(props.cocktailRecipe, ['CocktailRecipeImage']);
         if (reducedCocktailRecipe.description == null) {
           reducedCocktailRecipe.description = '';
@@ -651,39 +648,11 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                 <div className={'card-body'}>
                   <div className={'text-center text-2xl font-bold'}>Vorschau</div>
                   <div className={'divider'}></div>
-                  <div className={'form-control'}>
-                    <label className={'label'}>
-                      <span className={'label-text'}>Zeige Bilder</span>
-                      <span className={'label-text-alt text-error'}></span>
-                      <input
-                        type={'checkbox'}
-                        className={'toggle toggle-primary'}
-                        name={'showImage'}
-                        onChange={handleChange}
-                        defaultChecked={false}
-                        checked={values.showImage}
-                        onBlur={handleBlur}
-                      />
-                    </label>
-                  </div>
-                  <div className={'form-control'}>
-                    <label className={'label'}>
-                      <span className={'label-text'}>Zeige Tags</span>
-                      <span className={'label-text-alt text-error'}></span>
-                      <input
-                        type={'checkbox'}
-                        className={'toggle toggle-primary'}
-                        name={'showTags'}
-                        onChange={handleChange}
-                        defaultChecked={false}
-                        checked={values.showTags}
-                        onBlur={handleBlur}
-                      />
-                    </label>
-                  </div>
+
                   <CocktailRecipeCardItem
                     image={values.image}
                     cocktailRecipe={{
+                      _count: { CocktailRecipeImage: values.image != undefined ? 1 : 0 },
                       id: values.id,
                       name: values.name,
                       description: values.description,
@@ -692,16 +661,13 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                       glassWithIce: values.glassWithIce,
                       glassId: values.glassID ?? null,
                       glass: glasses.find((glass) => glass.id === values.glassId) ?? null,
-                      // garnishId: values.garnishId ?? null,
-                      // garnish: garnishes.find((garnish) => garnish.id === values.garnishId) ?? null,
                       garnishes: values.garnishes,
-                      //@ts-ignore
                       steps: values.steps,
                       workspaceId: workspaceId!,
                     }}
-                    showInfo={true}
-                    showTags={values.showTags}
-                    showImage={values.showImage}
+                    showInfo={false}
+                    showTags={true}
+                    showImage={true}
                   />
                 </div>
               </div>

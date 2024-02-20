@@ -62,7 +62,6 @@ model User {
 
 enum Setting {
   showImage
-  showImageSide
   showTags
   lessItems
   theme
@@ -147,7 +146,7 @@ model Workspace {
   Signage                           Signage[]
   WorkspaceCocktailRecipeStepAction WorkspaceCocktailRecipeStepAction[]
   WorkspaceSetting                  WorkspaceSetting[]
-  CocktailStatisticItem CocktailStatisticItem[]
+  CocktailStatisticItem             CocktailStatisticItem[]
 }
 
 model Signage {
@@ -213,7 +212,7 @@ model CocktailRecipe {
   workspaceId              String
   CocktailCalculationItems CocktailCalculationItems[]
   CocktailRecipeImage      CocktailRecipeImage[]
-  CocktailStatisticItem CocktailStatisticItem[]
+  CocktailStatisticItem    CocktailStatisticItem[]
 }
 
 model CocktailRecipeImage {
@@ -299,7 +298,7 @@ model CocktailCard {
   date   DateTime?
   groups CocktailCardGroup[]
 
-  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspace             Workspace               @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   workspaceId           String
   CocktailStatisticItem CocktailStatisticItem[]
 }
@@ -343,10 +342,10 @@ model CocktailStatisticItem {
   userId         String
   user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   workspaceId    String
-  workspace    Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspace      Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   date           DateTime
   cocktailCardId String?
-  cocktailCard CocktailCard? @relation(fields: [cocktailCardId], references: [id], onDelete: Cascade)
+  cocktailCard   CocktailCard?  @relation(fields: [cocktailCardId], references: [id], onDelete: Cascade)
   actionSource   String?
 }
 

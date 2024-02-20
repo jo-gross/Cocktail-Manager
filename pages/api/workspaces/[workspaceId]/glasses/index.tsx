@@ -11,7 +11,12 @@ import GlassCreateInput = Prisma.GlassCreateInput;
 
 export default withHttpMethods({
   [HTTPMethod.GET]: withWorkspacePermission([Role.USER], async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
-    const glasses = await prisma.glass.findMany({ where: { workspaceId: workspace.id } });
+    const glasses = await prisma.glass.findMany({
+      where: { workspaceId: workspace.id },
+      include: {
+        _count: { select: { GlassImage: true } },
+      },
+    });
     return res.json({ data: glasses });
   }),
   [HTTPMethod.POST]: withWorkspacePermission([Role.MANAGER], async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {

@@ -8,18 +8,19 @@ export type CocktailCardFull = Prisma.CocktailCardGetPayload<{
           include: {
             cocktail: {
               include: {
-                glass: true;
+                glass: { include: { _count: { select: { GlassImage: true } } } };
                 garnishes: {
                   include: {
-                    garnish: true;
+                    garnish: { include: { _count: { select: { GarnishImage: true } } } };
                   };
                 };
+                _count: { select: { CocktailRecipeImage: true } };
                 steps: {
                   include: {
                     action: true;
                     ingredients: {
                       include: {
-                        ingredient: true;
+                        ingredient: { include: { _count: { select: { IngredientImage: true } } } };
                       };
                     };
                   };
