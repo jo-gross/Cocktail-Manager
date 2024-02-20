@@ -295,7 +295,7 @@ export function IngredientForm(props: IngredientFormProps) {
                 name={'link'}
               />
               <button
-                className={`btn btn-primary join-item ${values.fetchingExternalData ? 'loading' : ''}`}
+                className={`btn btn-primary join-item`}
                 type={'button'}
                 disabled={
                   !(
@@ -304,7 +304,7 @@ export function IngredientForm(props: IngredientFormProps) {
                     values.link.includes('metro.de') ||
                     values.link.includes('rumundco.de') ||
                     values.link.includes('delicando.com')
-                  )
+                  ) || values.fetchingExternalData
                 }
                 onClick={async () => {
                   await setFieldValue('fetchingExternalData', true);
@@ -330,6 +330,7 @@ export function IngredientForm(props: IngredientFormProps) {
                     });
                 }}
               >
+                {values.fetchingExternalData ? <span className={'loading loading-spinner'}></span> : <></>}
                 <FaSyncAlt />
               </button>
             </div>

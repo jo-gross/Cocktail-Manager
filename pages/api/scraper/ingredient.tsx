@@ -28,12 +28,9 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       });
 
       const image = imageResponse != undefined ? 'data:image/jpg;base64,' + Buffer.from(await imageResponse.arrayBuffer()).toString('base64') : undefined;
-      const name = soup.find('h1', 'product--title').text.replace('\n', '').trim();
-      const price = soup.find('meta', { itemprop: 'price' }).attrs.content;
-
-      const volume =
-        Number(soup.find('div', 'conheadtabel').contents[0].contents[1].contents[1].contents[1].text.replace('\n', '').replace(',', '.').split(' ')[0].trim()) *
-        100;
+      const name = soup.find('h1', 'product--title')?.text?.replace('\n', '')?.trim() ?? '';
+      const price = soup.find('meta', { itemprop: 'price' })?.attrs?.content ?? 0;
+      const volume = (soup.find('div', ['product--price', 'price--unit'])?.contents?.[1]?.['_text']?.split(' ')?.[0] ?? 0) * 1000;
 
       const result: ResponseBody = {
         name: name,
@@ -59,13 +56,9 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 
       const image = imageResponse != undefined ? 'data:image/jpg;base64,' + Buffer.from(await imageResponse.arrayBuffer()).toString('base64') : undefined;
 
-      const name = soup.find('h1', 'item-detail__headline').text.replace('\n', '').trim();
-
-      let price = soup.find('div', 'undiscountedPrice').contents[0]._text.trim().replace(',', '.').replace('€', '').trim();
-      if (price == undefined) {
-        price = 0;
-      }
-      const volume = Number(name.split('Vol. ')[1].split(' ')[0].replace(',', '.').replace('l', '').replace('ml', '')) * 100;
+      const name = soup.find('h1', 'item-detail__headline')?.text?.replace('\n', '')?.trim() ?? '';
+      const price = soup.find('div', 'undiscountedPrice')?.contents?.[0]?._text?.trim()?.replace(',', '.')?.replace('€', '')?.trim() ?? 0;
+      const volume = (name.split('Vol. ')?.[1]?.split(' ')?.[0]?.replace(',', '.')?.replace('l', '')?.replace('ml', '') ?? 0) * 100;
 
       return res.json({
         name: name,
@@ -83,11 +76,16 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       await page.goto(req.query.url);
 
       const imageUrl = await page.locator('#mainImage').first().getAttribute('src');
-      const name = await page.locator('div.mfcss_article-detail--title > h2 > span').first().innerText();
-      let price = await page
-        .locator('div.mfcss_article-detail--price-container > div.row > div.text-right > div > span.mfcss_article-detail--price-breakdown > span > span')
-        .allInnerTexts();
-      price = price[1].replace(',', '.').replace('€', '').trim();
+      const name = (await page.locator('div.mfcss_article-detail--title > h2 > span')?.first()?.innerText()) ?? '';
+      const price =
+        (
+          await page
+            .locator('div.mfcss_article-detail--price-container > div.row > div.text-right > div > span.mfcss_article-detail--price-breakdown > span > span')
+            ?.allInnerTexts()
+        )?.[1]
+          ?.replace(',', '.')
+          ?.replace('€', '')
+          ?.trim() ?? 0;
 
       await browser.close();
 
@@ -99,12 +97,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 
       const image = imageResponse != undefined ? 'data:image/jpg;base64,' + Buffer.from(await imageResponse.arrayBuffer()).toString('base64') : undefined;
 
-      if (price == undefined) {
-        price = 0;
-      }
       const volume = 0;
-      // // Number(name.split('Vol. ')[1].split(' ')[0].replace(',', '.').replace('l', '').replace('ml', '')) * 100;
-      //
       return res.json({
         name: name,
         image: image,
