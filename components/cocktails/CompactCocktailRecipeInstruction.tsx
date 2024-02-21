@@ -1,11 +1,10 @@
 import { CocktailRecipeFull } from '../../models/CocktailRecipeFull';
 import React, { useContext } from 'react';
 import DefaultGlassIcon from '../DefaultGlassIcon';
-import NextImage from '../NextImage';
-import CustomImage from '../CustomImage';
 import { WorkspaceSettingKey } from '.prisma/client';
 import { UserContext } from '../../lib/context/UserContextProvider';
 import { WorkspaceSetting } from '@prisma/client';
+import Image from 'next/image';
 
 interface CompactCocktailRecipeInstructionProps {
   cocktailRecipe: CocktailRecipeFull;
@@ -31,18 +30,19 @@ export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeIns
         <></>
       )}
       <div className={'row-span-2 flex h-min items-center justify-center'}>
-        <NextImage
-          className={'h-12 object-contain'}
-          src={`/api/workspaces/${props.cocktailRecipe.workspaceId}/glasses/${props.cocktailRecipe.glass?.id}/image`}
-          altComponent={
-            <div className={'flex flex-col items-center justify-center'}>
-              <DefaultGlassIcon />
-            </div>
-          }
-          alt={props.cocktailRecipe.glass?.name ?? 'Cocktail-Glas'}
-          width={60}
-          height={60}
-        />
+        {props.cocktailRecipe.glass && props.cocktailRecipe.glass._count.GlassImage != 0 ? (
+          <Image
+            className={'h-16 object-contain'}
+            src={`/api/workspaces/${props.cocktailRecipe.workspaceId}/glasses/${props.cocktailRecipe.glass?.id}/image`}
+            alt={props.cocktailRecipe.glass?.name ?? 'Cocktail-Glas'}
+            width={200}
+            height={200}
+          />
+        ) : (
+          <div className={'flex flex-col items-center justify-center'}>
+            <DefaultGlassIcon />
+          </div>
+        )}
       </div>
       <div className={'col-span-3 flex flex-row justify-between space-x-2 font-thin'}>
         <div>Glas: {props.cocktailRecipe.glass?.name ?? '<Glas>'}</div>
@@ -72,13 +72,19 @@ export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeIns
           ))}
       </div>
       {props.showImage == true ? (
-        <CustomImage
-          imageWrapper={(children) => <div className={'row-span-3 h-full self-center justify-self-center pt-2'}>{children}</div>}
-          src={props.image ?? `/api/workspaces/${props.cocktailRecipe.workspaceId}/cocktails/${props.cocktailRecipe.id}/image`}
-          className={'h-full w-fit rounded-xl object-cover'}
-          altComponent={<></>}
-          alt={''}
-        />
+        props.cocktailRecipe._count.CocktailRecipeImage == 0 ? (
+          <></>
+        ) : (
+          <div className={'row-span-3 h-full self-center justify-self-center pt-2'}>
+            <Image
+              src={props.image ?? `/api/workspaces/${props.cocktailRecipe.workspaceId}/cocktails/${props.cocktailRecipe.id}/image`}
+              className={'h-full w-fit rounded-xl object-cover'}
+              alt={''}
+              width={300}
+              height={300}
+            />
+          </div>
+        )
       ) : (
         <></>
       )}

@@ -24,7 +24,6 @@ export default function OverviewPage() {
   const { workspaceId } = router.query;
 
   const [showImage, setShowImage] = useState(false);
-  const [showImageSide, setShowImageSide] = useState(false);
   const [showTags, setShowTags] = useState(false);
   const [lessItems, setLessItems] = useState(false);
   const [showStatisticActions, setShowStatisticActions] = useState(false);
@@ -164,7 +163,6 @@ export default function OverviewPage() {
 
   useEffect(() => {
     setShowImage(userContext.user?.settings?.find((s) => s.setting == Setting.showImage)?.value == 'true' ?? false);
-    setShowImageSide(userContext.user?.settings?.find((s) => s.setting == Setting.showImageSide)?.value == 'true' ?? false);
     setShowTags(userContext.user?.settings?.find((s) => s.setting == Setting.showTags)?.value == 'true' ?? false);
     setLessItems(userContext.user?.settings?.find((s) => s.setting == Setting.lessItems)?.value == 'true' ?? false);
     setShowStatisticActions(userContext.user?.settings?.find((s) => s.setting == Setting.showStatisticActions)?.value == 'true' ?? false);
@@ -223,7 +221,6 @@ export default function OverviewPage() {
                                   <CocktailRecipeCardItem
                                     key={`card-${selectedCard.id}-group-${group.id}-cocktail-${groupItem.cocktailId}-${index}`}
                                     showImage={showImage}
-                                    showImageSide={showImageSide}
                                     showTags={showTags}
                                     showInfo={true}
                                     showPrice={groupItem.specialPrice == undefined && group.groupPrice == undefined}
@@ -334,21 +331,6 @@ export default function OverviewPage() {
                       onClick={() => {
                         userContext.updateUserSetting(Setting.showImage, !showImage ? 'true' : 'false');
                         setShowImage(!showImage);
-                      }}
-                    />
-                  </label>
-                </div>
-                <div className="form-control">
-                  <label className="label">
-                    Bilder seitlich
-                    <input
-                      type={'checkbox'}
-                      className={'toggle toggle-primary'}
-                      checked={showImageSide}
-                      readOnly={true}
-                      onClick={() => {
-                        userContext.updateUserSetting(Setting.showImageSide, !showImageSide ? 'true' : 'false');
-                        setShowImageSide(!showImage);
                       }}
                     />
                   </label>

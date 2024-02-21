@@ -26,7 +26,8 @@ export default withHttpMethods({
               include: {
                 cocktail: {
                   include: {
-                    glass: true,
+                    _count: { select: { CocktailRecipeImage: true } },
+                    glass: { include: { _count: { select: { GlassImage: true } } } },
                     garnishes: {
                       include: {
                         garnish: true,

@@ -2,7 +2,6 @@ import { CocktailRecipeFull } from '../../models/CocktailRecipeFull';
 import React, { useCallback, useState } from 'react';
 import { CompactCocktailRecipeInstruction } from './CompactCocktailRecipeInstruction';
 import { ShowCocktailInfoButton } from './ShowCocktailInfoButton';
-import CustomImage from '../CustomImage';
 import { useRouter } from 'next/router';
 import { alertService } from '../../lib/alertService';
 import { FaPlus } from 'react-icons/fa';
@@ -14,7 +13,6 @@ interface CocktailRecipeOverviewItemProps {
   showPrice?: boolean;
   showInfo?: boolean;
   showTags?: boolean;
-  showImageSide?: boolean;
   showStatisticActions?: boolean;
   image?: string;
 }
@@ -61,7 +59,7 @@ export default function CocktailRecipeCardItem(props: CocktailRecipeOverviewItem
         <div className={'card-body'}>
           <CompactCocktailRecipeInstruction
             specialPrice={props.specialPrice}
-            showImage={!(props.showImageSide == true) && (props.showImage ?? false)}
+            showImage={props.showImage ?? false}
             showPrice={props.showPrice ?? true}
             cocktailRecipe={props.cocktailRecipe}
             image={props.image}
@@ -88,16 +86,6 @@ export default function CocktailRecipeCardItem(props: CocktailRecipeOverviewItem
             )}
           </div>
         </div>
-        {props.showImageSide && props.showImage ? (
-          <CustomImage
-            className={' object-fit h-full w-36 object-center shadow-md'}
-            src={`/api/workspaces/${props.cocktailRecipe.workspaceId}/cocktails/${props.cocktailRecipe.id}/image`}
-            alt={'Cocktail'}
-            imageWrapper={(children) => <figure>{children}</figure>}
-          />
-        ) : (
-          <></>
-        )}
       </div>
     </div>
   );

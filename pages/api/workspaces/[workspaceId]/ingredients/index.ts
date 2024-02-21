@@ -15,6 +15,13 @@ export default withHttpMethods({
       where: {
         workspaceId: workspace.id,
       },
+      include: {
+        _count: {
+          select: {
+            IngredientImage: true,
+          },
+        },
+      },
     });
     return res.json({ data: ingredients });
   }),
