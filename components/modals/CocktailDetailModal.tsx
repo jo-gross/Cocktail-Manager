@@ -70,7 +70,15 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
             )}
           </>
           <h2 className={'card-title flex-1'}>
-            {props.cocktail.name} - <span className={'font-bold'}>{props.cocktail.price ?? '-'} €</span>
+            {props.cocktail.name}
+            {props.cocktail.price != undefined ? (
+              <>
+                {' - '}
+                <span className={'font-bold'}>{props.cocktail.price + ' €'}</span>
+              </>
+            ) : (
+              <></>
+            )}
           </h2>
         </div>
         <div className={'grid grid-cols-2 gap-4'}>
