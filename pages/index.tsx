@@ -9,8 +9,10 @@ import { UserContext } from '../lib/context/UserContextProvider';
 import { alertService } from '../lib/alertService';
 import Head from 'next/head';
 import packageInfo from '../package.json';
+import { ThemeContext } from '../lib/context/ThemeContextProvider';
 
 export default function WorkspacesPage() {
+  const themeContext = useContext(ThemeContext);
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [workspacesLoading, setWorkspacesLoading] = useState(false);
 
@@ -97,7 +99,13 @@ export default function WorkspacesPage() {
       <div className={'grid grid-cols-1 md:grid-cols-3'}>
         <div className={'col-span-3 items-center'}>
           <div className={'flex flex-col items-center justify-center space-y-2'}>
-            <Image src={'/images/The Cocktail Manager Logo.png'} alt="The Cocktail Manager" className={'pt-4 invert dark:invert-0'} height={211} width={247} />
+            <Image
+              src={'/images/The Cocktail Manager Logo.png'}
+              alt="The Cocktail Manager"
+              className={`pt-4 ${themeContext.theme == 'light' ? 'invert' : ''}`}
+              height={211}
+              width={247}
+            />
             <h1 className={'text-center text-4xl font-bold'}>Cocktail-Manager</h1>
             <div>v{packageInfo.version}</div>
             <div className={'flex items-center space-x-2'}>
