@@ -41,7 +41,7 @@ export function GarnishForm(props: GarnishFormProps) {
         name: props.garnish?.name ?? '',
         price: props.garnish?.price ?? 0,
         description: props.garnish?.description ?? '',
-        image: props.garnish?.GarnishImage[0].image ?? undefined,
+        image: props.garnish?.GarnishImage?.[0]?.image ?? undefined,
       }}
       onSubmit={async (values) => {
         try {

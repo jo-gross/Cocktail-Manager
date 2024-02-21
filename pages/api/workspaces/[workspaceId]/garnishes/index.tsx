@@ -15,6 +15,9 @@ export default withHttpMethods({
       where: {
         workspaceId: workspace.id,
       },
+      include: {
+        _count: { select: { GarnishImage: true } },
+      },
     });
     return res.json({ data: garnishes });
   }),
