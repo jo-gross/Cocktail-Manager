@@ -117,7 +117,7 @@ export default function CocktailsOverviewPage() {
                         </td>
                         <td>{cocktailRecipe.name}</td>
                         <td className={''}>
-                          <span className={'whitespace-nowrap'}>{cocktailRecipe.price} €</span>
+                          <span className={'whitespace-nowrap'}>{cocktailRecipe.price ?? '-'} €</span>
                         </td>
                         <td className={'flex items-center gap-1'}>
                           {cocktailRecipe.tags.map((tag) => (

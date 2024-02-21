@@ -122,7 +122,7 @@ export default function IngredientsOverviewPage() {
                         </td>
                         <td className={''}>{ingredient.name}</td>
                         <td>{ingredient.shortName}</td>
-                        <td className={'whitespace-nowrap'}>{ingredient.price} €</td>
+                        <td className={'whitespace-nowrap'}>{ingredient.price ?? '-'} €</td>
                         <td className={'whitespace-nowrap'}>
                           {ingredient.volume} {ingredient.unit}
                         </td>

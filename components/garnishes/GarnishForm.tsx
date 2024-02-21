@@ -39,7 +39,7 @@ export function GarnishForm(props: GarnishFormProps) {
       innerRef={formRef}
       initialValues={{
         name: props.garnish?.name ?? '',
-        price: props.garnish?.price ?? 0,
+        price: props.garnish?.price ?? undefined,
         description: props.garnish?.description ?? '',
         image: props.garnish?.GarnishImage?.[0]?.image ?? undefined,
       }}
@@ -48,7 +48,7 @@ export function GarnishForm(props: GarnishFormProps) {
           const body = {
             id: props.garnish == undefined ? undefined : props.garnish.id,
             name: values.name,
-            price: values.price,
+            price: values.price == '' ? null : values.price,
             description: values.description?.trim() == '' ? null : values.description?.trim(),
             image: values.image == '' ? null : values.image,
           };
@@ -98,9 +98,6 @@ export function GarnishForm(props: GarnishFormProps) {
         if (!values.name) {
           errors.name = 'Required';
         }
-        if (values.price.toString() == '' || isNaN(values.price)) {
-          errors.price = 'Required';
-        }
         return errors;
       }}
     >
@@ -149,10 +146,7 @@ export function GarnishForm(props: GarnishFormProps) {
             <label className={'label'}>
               <span className={'label-text'}>Preis</span>
               <span className={'label-text-alt space-x-2 text-error'}>
-                <span>
-                  <>{errors.price && touched.price && errors.price}</>
-                </span>
-                <span>*</span>
+                <>{errors.price && touched.price && errors.price}</>
               </span>
             </label>
             <div className={'join'}>
