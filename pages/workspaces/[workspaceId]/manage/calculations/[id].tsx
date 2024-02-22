@@ -305,9 +305,6 @@ export default function CalculationPage() {
   }, [calculationName, modalContext]);
 
   const calculateRecommendedAmount = useCallback((calculationItem: CocktailCalculationItem) => {
-    const more: number[] = [];
-    const less: number[] = [];
-
     // Calculate the sum of all used ingredients
     const tempIngredients: { ingredient: any; amount: number }[] = [];
     calculationItem.cocktail.steps
@@ -320,15 +317,19 @@ export default function CalculationPage() {
           tempIngredients.push({ ingredient: ingredient.ingredient, amount: ingredient.amount ?? 0 });
         }
       });
-    // tempIngredients holds all ingredients with their total amount, used in the cocktail -> testet and working
 
-    tempIngredients.forEach((ingredient) => {
-      const bottles = Math.ceil(((ingredient.amount ?? 0) * calculationItem.plannedAmount) / (ingredient.ingredient?.volume ?? 0));
-      more.push(bottles / (ingredient.amount ?? 0) - calculationItem.plannedAmount);
-      less.push((bottles - 1) / (ingredient.amount ?? 0) - calculationItem.plannedAmount);
+    return tempIngredients.map((tempIngredient) => {
+      let amount = tempIngredient.amount;
+      let count = calculationItem.plannedAmount;
+      let ingredient = tempIngredient.ingredient;
+      let bottles: number = Math.ceil((amount * count) / ingredient.volume);
+
+      return {
+        ingredient: ingredient,
+        more: Math.floor((bottles * ingredient.volume) / amount - count),
+        less: Math.ceil(((bottles - 1) * ingredient.volume) / amount - count),
+      };
     });
-
-    return { more: Math.min(...more), less: Math.min(...less) };
   }, []);
 
   const calculateIngredientAmount = useCallback(() => {}, []);
@@ -403,6 +404,7 @@ export default function CalculationPage() {
                       <tr>
                         <th className={'w-20'}>Geplante Menge</th>
                         <th className={'w-full'}>Name</th>
+                        <th className={''}>Mengenvorschläge</th>
                         {showSalesStuff ? (
                           <>
                             <th className={'w-min'}>Preis</th>
@@ -430,94 +432,152 @@ export default function CalculationPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {cocktailCalculationItems.map((cocktail) => (
-                        <tr key={'cocktail-' + cocktail.cocktail.id}>
-                          <td>
-                            <input
-                              className={'input input-sm input-bordered w-full print:hidden'}
-                              type={'number'}
-                              min={1}
-                              step={1}
-                              value={cocktail.plannedAmount}
-                              onChange={(event) => {
-                                const updatedItems = cocktailCalculationItems.map((item) => {
-                                  if (item.cocktail.id == cocktail.cocktail.id) {
-                                    item.plannedAmount = Number(event.target.value);
-                                  }
-                                  return item;
-                                });
-                                setCocktailCalculationItems(updatedItems);
-                              }}
-                            />
-                            <div className={'hidden print:flex'}>{cocktail.plannedAmount}</div>
-                          </td>
-                          <td className={'flex flex-row gap-2'}>
-                            {cocktail.cocktail.name}{' '}
-                            <div
-                              className={'tooltip'}
-                              data-tip={'Wie viele mehr/weniger gemacht werden müssten, um eine der Zutaten vollständig aufzubrauchen'}
-                            >
-                              <div className={'flex flex-row gap-2'}>
-                                <span className={'text-green-500'}>+ {Math.floor(calculateRecommendedAmount(cocktail).more)}</span>
-                                <span>/</span>
-                                <span className={'text-red-500'}>- {Math.floor(calculateRecommendedAmount(cocktail).less)}</span>
-                                <FaInfoCircle />
-                              </div>
-                            </div>
-                          </td>
-                          {showSalesStuff ? (
-                            <>
-                              <td>{cocktail.cocktail.price}</td>
-                              <td>
-                                <div className={'join print:hidden'}>
-                                  <input
-                                    type={'number'}
-                                    className={'input input-sm join-item input-bordered w-20'}
-                                    step={0.01}
-                                    value={cocktail.customPrice ?? ''}
-                                    onChange={(event) => {
-                                      const updatedItems = cocktailCalculationItems.map((item) => {
-                                        if (item.cocktail.id == cocktail.cocktail.id) {
-                                          if (event.target.value == '') {
-                                            item.customPrice = undefined;
-                                          } else {
-                                            item.customPrice = Number(event.target.value);
-                                          }
-                                        }
-                                        return item;
-                                      });
-                                      setCocktailCalculationItems(updatedItems);
-                                    }}
-                                  />
-                                  <span className={'btn btn-secondary join-item btn-sm'}> €</span>
-                                </div>
-                                <div className={'hidden print:flex'}>{cocktail.customPrice ?? '-'} €</div>
-                              </td>
-                            </>
-                          ) : (
-                            <></>
-                          )}
-                          <td className={'print:hidden'}>
-                            <div className={'flex items-center justify-end'}>
-                              <div
-                                className={'btn btn-square btn-error btn-sm'}
+                      {cocktailCalculationItems.length == 0 ? (
+                        <tr className={'text-center'}>
+                          <td colSpan={4 + (showSalesStuff ? 1 : 0)}>Keine Einträge vorhanden</td>
+                        </tr>
+                      ) : (
+                        cocktailCalculationItems.map((cocktail) => (
+                          <tr key={'cocktail-' + cocktail.cocktail.id}>
+                            <td>
+                              <input
+                                className={'input input-sm input-bordered w-full print:hidden'}
+                                type={'number'}
+                                min={1}
+                                step={1}
+                                value={cocktail.plannedAmount}
+                                onChange={(event) => {
+                                  const updatedItems = cocktailCalculationItems.map((item) => {
+                                    if (item.cocktail.id == cocktail.cocktail.id) {
+                                      item.plannedAmount = Number(event.target.value);
+                                    }
+                                    return item;
+                                  });
+                                  setCocktailCalculationItems(updatedItems);
+                                }}
+                              />
+                              <div className={'hidden print:flex'}>{cocktail.plannedAmount}</div>
+                            </td>
+                            <td className={'items-center'}>
+                              <span className={'font-bold'}>{cocktail.cocktail.name}</span>
+                            </td>
+                            <td>
+                              <button
                                 onClick={() => {
                                   modalContext.openModal(
-                                    <DeleteConfirmationModal
-                                      spelling={'REMOVE'}
-                                      onApprove={() => {
-                                        setCocktailCalculationItems(cocktailCalculationItems.filter((item) => item.cocktail.id != cocktail.cocktail.id));
-                                      }}
-                                    />,
+                                    <div className={'flex flex-col gap-2'}>
+                                      <div className={'card-title'}>Mengenvorschläge</div>
+                                      <div>
+                                        Wie viel Einheiten noch benötigt werden, um die Zutat vollständig zu benutzen (links, in grün) und (rechts, in rot) wie
+                                        viel weniger Einheiten, um die angebrochene Auszugleichen.
+                                      </div>
+                                      <div className={'divider font-bold'}>Zutaten</div>
+                                      <div className={'grid grid-cols-3 items-center gap-2'}>
+                                        {calculateRecommendedAmount(cocktail)
+                                          .sort((a, b) => a.ingredient.name.localeCompare(b.ingredient.name))
+                                          .map((item, index) => (
+                                            <>
+                                              <span key={`cocktail-${cocktail.cocktail.id}-ingredient-${index}-name`}>{item.ingredient.name}</span>
+                                              <span
+                                                key={`cocktail-${cocktail.cocktail.id}-ingredient-${index}-more`}
+                                                className={'btn btn-outline btn-sm text-green-500'}
+                                                onClick={() => {
+                                                  const temp = cocktailCalculationItems.map((calcItem) => {
+                                                    if (calcItem.cocktail.id == cocktail.cocktail.id) {
+                                                      calcItem.plannedAmount += Math.floor(item.more);
+                                                    }
+                                                    return calcItem;
+                                                  });
+                                                  setCocktailCalculationItems(temp);
+
+                                                  modalContext.closeModal();
+                                                }}
+                                              >
+                                                + {Math.floor(item.more)} Anpassen
+                                              </span>
+                                              <span
+                                                key={`cocktail-${cocktail.cocktail.id}-ingredient-${index}-less`}
+                                                className={'btn btn-outline btn-sm text-red-500'}
+                                                onClick={() => {
+                                                  const temp = cocktailCalculationItems.map((calcItem) => {
+                                                    if (calcItem.cocktail.id == cocktail.cocktail.id) {
+                                                      calcItem.plannedAmount += Math.floor(item.less);
+                                                    }
+                                                    return calcItem;
+                                                  });
+                                                  setCocktailCalculationItems(temp);
+
+                                                  modalContext.closeModal();
+                                                }}
+                                              >
+                                                {Math.floor(item.less)} Anpassen
+                                              </span>
+                                            </>
+                                          ))}
+                                      </div>
+                                    </div>,
                                   );
                                 }}
+                                className={'btn-ghoast btn btn-sm'}
                               >
-                                <FaTrashAlt />
+                                <FaInfoCircle />
+                                <span>Anzeigen</span>
+                              </button>
+                            </td>
+                            {showSalesStuff ? (
+                              <>
+                                <td>{cocktail.cocktail.price}</td>
+                                <td>
+                                  <div className={'join print:hidden'}>
+                                    <input
+                                      type={'number'}
+                                      className={'input input-sm join-item input-bordered w-20'}
+                                      step={0.01}
+                                      value={cocktail.customPrice ?? ''}
+                                      onChange={(event) => {
+                                        const updatedItems = cocktailCalculationItems.map((item) => {
+                                          if (item.cocktail.id == cocktail.cocktail.id) {
+                                            if (event.target.value == '') {
+                                              item.customPrice = undefined;
+                                            } else {
+                                              item.customPrice = Number(event.target.value);
+                                            }
+                                          }
+                                          return item;
+                                        });
+                                        setCocktailCalculationItems(updatedItems);
+                                      }}
+                                    />
+                                    <span className={'btn btn-secondary join-item btn-sm'}> €</span>
+                                  </div>
+                                  <div className={'hidden print:flex'}>{cocktail.customPrice ?? '-'} €</div>
+                                </td>
+                              </>
+                            ) : (
+                              <></>
+                            )}
+                            <td className={'print:hidden'}>
+                              <div className={'flex items-center justify-end'}>
+                                <div
+                                  className={'btn btn-square btn-error btn-sm'}
+                                  onClick={() => {
+                                    modalContext.openModal(
+                                      <DeleteConfirmationModal
+                                        spelling={'REMOVE'}
+                                        onApprove={() => {
+                                          setCocktailCalculationItems(cocktailCalculationItems.filter((item) => item.cocktail.id != cocktail.cocktail.id));
+                                        }}
+                                      />,
+                                    );
+                                  }}
+                                >
+                                  <FaTrashAlt />
+                                </div>
                               </div>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
+                            </td>
+                          </tr>
+                        ))
+                      )}
                     </tbody>
                   </table>
                 </div>
@@ -657,7 +717,7 @@ export default function CalculationPage() {
                     <tbody>
                       {ingredientCalculationItems.length == 0 ? (
                         <tr>
-                          <td colSpan={3} className={'text-center'}>
+                          <td colSpan={4} className={'text-center'}>
                             Keine Zutaten benötigt
                           </td>
                         </tr>
@@ -672,11 +732,6 @@ export default function CalculationPage() {
                               </td>
                               <td>
                                 {(ingredientCalculation.amount / (ingredientCalculation.ingredient.volume ?? 0)).toFixed(2)}
-                                {' (á '}
-                                {ingredientCalculation.ingredient.volume} {ingredientCalculation.ingredient.unit})
-                              </td>
-                              <td>
-                                {Math.ceil(ingredientCalculation.amount / (ingredientCalculation.ingredient.volume ?? 0))}
                                 {' (á '}
                                 {ingredientCalculation.ingredient.volume} {ingredientCalculation.ingredient.unit})
                               </td>
@@ -701,7 +756,7 @@ export default function CalculationPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {ingredientCalculationItems.length == 0 ? (
+                      {garnishCalculationItems.length == 0 ? (
                         <tr>
                           <td colSpan={2} className={'text-center'}>
                             Keine Garnituren benötigt
