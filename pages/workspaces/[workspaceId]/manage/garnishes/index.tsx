@@ -1,4 +1,4 @@
-import { Garnish, Role } from '@prisma/client';
+import { Role } from '@prisma/client';
 import Link from 'next/link';
 import { ManageEntityLayout } from '../../../../../components/layout/ManageEntityLayout';
 import { ManageColumn } from '../../../../../components/ManageColumn';
@@ -8,8 +8,9 @@ import { useRouter } from 'next/router';
 import { alertService } from '../../../../../lib/alertService';
 import { UserContext } from '../../../../../lib/context/UserContextProvider';
 import { FaPlus } from 'react-icons/fa';
-import NextImage from '../../../../../components/NextImage';
 import ListSearchField from '../../../../../components/ListSearchField';
+import { GarnishModel } from '../../../../../models/GarnishModel';
+import AvatarImage from '../../../../../components/AvatarImage';
 
 export default function ManageGlassesOverviewPage() {
   const router = useRouter();
@@ -17,7 +18,7 @@ export default function ManageGlassesOverviewPage() {
 
   const userContext = useContext(UserContext);
 
-  const [garnishes, setGarnishes] = useState<Garnish[]>([]);
+  const [garnishes, setGarnishes] = useState<GarnishModel[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [filterString, setFilterString] = useState('');
@@ -97,21 +98,18 @@ export default function ManageGlassesOverviewPage() {
                         <td>
                           <div className="flex items-center space-x-3">
                             <div className="mask mask-squircle h-12 w-12">
-                              <NextImage
-                                src={`/api/workspaces/${garnish.workspaceId}/garnishes/${garnish.id}/image`}
-                                className={'h-12 w-12 bg-white object-contain'}
-                                alt="Garnitur"
-                                width={300}
-                                height={300}
-                                altComponent={<></>}
-                              />
+                              {garnish._count.GarnishImage == 0 ? (
+                                <></>
+                              ) : (
+                                <AvatarImage src={`/api/workspaces/${garnish.workspaceId}/garnishes/${garnish.id}/image`} alt="Garnitur" />
+                              )}
                             </div>
                           </div>
                         </td>
                         <td>
                           <div className="font-bold">{garnish.name}</div>
                         </td>
-                        <td>{garnish.price} €</td>
+                        <td>{garnish.price ?? '-'} €</td>
                         <ManageColumn entity={'garnishes'} id={garnish.id} onRefresh={refreshGarnishes} />
                       </tr>
                     ))

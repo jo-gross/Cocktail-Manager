@@ -42,7 +42,7 @@ export function IngredientForm(props: IngredientFormProps) {
       initialValues={{
         name: props.ingredient?.name ?? '',
         shortName: props.ingredient?.shortName ?? '',
-        price: props.ingredient?.price ?? 0,
+        price: props.ingredient?.price ?? undefined,
         volume: props.ingredient?.volume ?? 0,
         unit: props.ingredient?.unit ?? CocktailIngredientUnit.CL,
         link: props.ingredient?.link ?? '',
@@ -54,13 +54,13 @@ export function IngredientForm(props: IngredientFormProps) {
           const body = {
             id: props.ingredient == undefined ? undefined : props.ingredient.id,
             name: values.name.trim(),
-            shortName: values.shortName?.trim() == '' ? undefined : values.shortName?.trim(),
-            price: values.price,
+            shortName: values.shortName?.trim() == '' ? null : values.shortName?.trim(),
+            price: values.price == '' ? null : values.price,
             unit: values.unit,
-            volume: values.volume == 0 ? undefined : values.volume,
-            link: values.link?.trim() == '' ? undefined : values.link?.trim(),
+            volume: values.volume,
+            link: values.link?.trim() == '' ? null : values.link?.trim(),
             tags: values.tags,
-            image: values.image?.trim() == '' ? undefined : values.image?.trim(),
+            image: values.image?.trim() == '' ? null : values.image?.trim(),
           };
           if (props.ingredient == undefined) {
             const response = await fetch(`/api/workspaces/${workspaceId}/ingredients`, {
@@ -107,9 +107,6 @@ export function IngredientForm(props: IngredientFormProps) {
         const errors: any = {};
         if (!values.name) {
           errors.name = 'Required';
-        }
-        if (values.price.toString() == '' || isNaN(values.price)) {
-          errors.price = 'Required';
         }
         if (values.volume.toString() == '' || isNaN(values.volume)) {
           errors.volume = 'Required';
@@ -168,7 +165,6 @@ export function IngredientForm(props: IngredientFormProps) {
                 <span>
                   <>{errors.price && touched.price && errors.price}</>
                 </span>
-                <span>*</span>
               </span>
             </label>
             <div className={'join'}>
@@ -295,16 +291,16 @@ export function IngredientForm(props: IngredientFormProps) {
                 name={'link'}
               />
               <button
-                className={`btn btn-primary join-item ${values.fetchingExternalData ? 'loading' : ''}`}
+                className={`btn btn-primary join-item`}
                 type={'button'}
                 disabled={
                   !(
                     values.link.includes('expert24.com') ||
                     values.link.includes('conalco.de') ||
-                    values.link.includes('metro.de') ||
+                    // values.link.includes('metro.de') ||
                     values.link.includes('rumundco.de') ||
                     values.link.includes('delicando.com')
-                  )
+                  ) || values.fetchingExternalData
                 }
                 onClick={async () => {
                   await setFieldValue('fetchingExternalData', true);
@@ -330,6 +326,7 @@ export function IngredientForm(props: IngredientFormProps) {
                     });
                 }}
               >
+                {values.fetchingExternalData ? <span className={'loading loading-spinner'}></span> : <></>}
                 <FaSyncAlt />
               </button>
             </div>

@@ -14,7 +14,7 @@ const App = ({ Component, pageProps: { session, ...pageProps } }: AppProps) => {
 
   const [, forceUpdate] = useReducer((x) => x + 1, 0);
 
-  const [isDark, setIsDark] = useState(false);
+  const [theme, setTheme] = useState<'dark' | 'auto' | 'light'>('auto');
 
   return (
     <SessionProvider session={session}>
@@ -39,13 +39,24 @@ const App = ({ Component, pageProps: { session, ...pageProps } }: AppProps) => {
           }}
         >
           <AuthBoundary>
-            <ThemeBoundary>
+            <ThemeBoundary
+              onThemeChange={(theme) => {
+                setTheme(theme);
+              }}
+            >
               <GlobalModal>
                 <>
                   <Head>
                     <title>The Cocktail-Manager</title>
                   </Head>
-                  <input type="checkbox" hidden={true} checked={isDark} readOnly={true} value="halloween" className="theme-controller toggle" />
+                  {theme != 'auto' ? (
+                    <>
+                      <input type="checkbox" hidden={true} checked={theme == 'dark'} readOnly={true} value="halloween" className="theme-controller toggle" />
+                      <input type="checkbox" hidden={true} checked={theme == 'light'} readOnly={true} value="autumn" className="theme-controller toggle" />
+                    </>
+                  ) : (
+                    <></>
+                  )}
                   <Component {...pageProps} />
                 </>
               </GlobalModal>

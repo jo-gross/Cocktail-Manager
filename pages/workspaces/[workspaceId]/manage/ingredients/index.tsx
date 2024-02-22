@@ -1,4 +1,4 @@
-import { Ingredient, Role } from '@prisma/client';
+import { Role } from '@prisma/client';
 import Link from 'next/link';
 import { ManageEntityLayout } from '../../../../../components/layout/ManageEntityLayout';
 import React, { useCallback, useContext, useEffect, useState } from 'react';
@@ -10,6 +10,7 @@ import { alertService } from '../../../../../lib/alertService';
 import { UserContext } from '../../../../../lib/context/UserContextProvider';
 import AvatarImage from '../../../../../components/AvatarImage';
 import ListSearchField from '../../../../../components/ListSearchField';
+import { IngredientModel } from '../../../../../models/IngredientModel';
 
 export default function IngredientsOverviewPage() {
   const router = useRouter();
@@ -17,7 +18,7 @@ export default function IngredientsOverviewPage() {
 
   const userContext = useContext(UserContext);
 
-  const [ingredients, setIngredients] = useState<Ingredient[]>([]);
+  const [ingredients, setIngredients] = useState<IngredientModel[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [filterString, setFilterString] = useState('');
@@ -111,17 +112,17 @@ export default function IngredientsOverviewPage() {
                         <td className={''}>
                           <div className="flex items-center space-x-3">
                             <div className="h-12 w-12">
-                              <AvatarImage
-                                src={`/api/workspaces/${ingredient.workspaceId}/ingredients/${ingredient.id}/image`}
-                                alt={'Zutat'}
-                                altComponent={<></>}
-                              />
+                              {ingredient._count.IngredientImage == 0 ? (
+                                <></>
+                              ) : (
+                                <AvatarImage src={`/api/workspaces/${ingredient.workspaceId}/ingredients/${ingredient.id}/image`} alt={'Zutat'} />
+                              )}
                             </div>
                           </div>
                         </td>
                         <td className={''}>{ingredient.name}</td>
                         <td>{ingredient.shortName}</td>
-                        <td className={'whitespace-nowrap'}>{ingredient.price} €</td>
+                        <td className={'whitespace-nowrap'}>{ingredient.price ?? '-'} €</td>
                         <td className={'whitespace-nowrap'}>
                           {ingredient.volume} {ingredient.unit}
                         </td>

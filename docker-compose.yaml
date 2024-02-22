@@ -15,20 +15,21 @@ services:
       - cocktail-recipe-network
 
   cocktails:
-    platform: linux/amd64
     depends_on:
       - postgres
     links:
       - postgres
-    image: 10.200.16.1:8881/cocktails/cocktail-recipe-cocktails:latest
-    container_name: cocktail-recipe-cocktails
+    image: cocktail-manager:latest
+    container_name: cocktail-manager
     build:
       context: .
       dockerfile: Dockerfile
     ports:
-      - '3003:3000'
+      - '3000:3000'
     environment:
       DATABASE_URL: 'postgres://postgres:postgres@postgres:5432/cocktail_recipe'
+    env_file:
+      - .env
     networks:
       - cocktail-recipe-network
 

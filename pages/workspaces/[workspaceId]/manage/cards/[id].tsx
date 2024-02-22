@@ -450,6 +450,7 @@ function EditCocktailCard() {
                                           {cocktails.find((cocktail) => cocktail.id == item.cocktailId) != undefined ? (
                                             <CompactCocktailRecipeInstruction
                                               showPrice={true}
+                                              showImage={true}
                                               cocktailRecipe={cocktails.find((cocktail) => cocktail.id == item.cocktailId)!}
                                             />
                                           ) : loadingCocktails ? (

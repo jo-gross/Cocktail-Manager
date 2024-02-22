@@ -1,4 +1,4 @@
-import { CocktailRecipe, Role } from '@prisma/client';
+import { Role } from '@prisma/client';
 import Link from 'next/link';
 import { ManageEntityLayout } from '../../../../../components/layout/ManageEntityLayout';
 import { ManageColumn } from '../../../../../components/ManageColumn';
@@ -10,6 +10,7 @@ import { UserContext } from '../../../../../lib/context/UserContextProvider';
 import AvatarImage from '../../../../../components/AvatarImage';
 import { FaPlus } from 'react-icons/fa';
 import ListSearchField from '../../../../../components/ListSearchField';
+import { CocktailRecipeModel } from '../../../../../models/CocktailRecipeModel';
 
 export default function CocktailsOverviewPage() {
   const router = useRouter();
@@ -17,7 +18,7 @@ export default function CocktailsOverviewPage() {
 
   const userContext = useContext(UserContext);
 
-  const [cocktailRecipes, setCocktailRecipes] = useState<CocktailRecipe[]>([]);
+  const [cocktailRecipes, setCocktailRecipes] = useState<CocktailRecipeModel[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [filterString, setFilterString] = useState('');
@@ -105,18 +106,18 @@ export default function CocktailsOverviewPage() {
                       <tr key={cocktailRecipe.id} className={''}>
                         <td>
                           <div className="flex items-center space-x-3">
-                            <div className="h-12 w-12">
-                              <AvatarImage
-                                src={`/api/workspaces/${cocktailRecipe.workspaceId}/cocktails/${cocktailRecipe.id}/image`}
-                                alt={'Cocktail'}
-                                altComponent={<></>}
-                              />
-                            </div>
+                            {cocktailRecipe._count.CocktailRecipeImage == 0 ? (
+                              <></>
+                            ) : (
+                              <div className="h-12 w-12">
+                                <AvatarImage src={`/api/workspaces/${cocktailRecipe.workspaceId}/cocktails/${cocktailRecipe.id}/image`} alt={'Cocktail'} />
+                              </div>
+                            )}
                           </div>
                         </td>
                         <td>{cocktailRecipe.name}</td>
                         <td className={''}>
-                          <span className={'whitespace-nowrap'}>{cocktailRecipe.price} €</span>
+                          <span className={'whitespace-nowrap'}>{cocktailRecipe.price ?? '-'} €</span>
                         </td>
                         <td className={'flex items-center gap-1'}>
                           {cocktailRecipe.tags.map((tag) => (

@@ -1,16 +1,12 @@
 import { Prisma } from '@prisma/client';
-import { CocktailRecipeStepFull } from './CocktailRecipeStepFull';
-
-export interface CocktailRecipeFullSchema extends CocktailRecipeFull {
-  steps: CocktailRecipeStepFull[];
-}
 
 export type CocktailRecipeFull = Prisma.CocktailRecipeGetPayload<{
   include: {
-    glass: true;
+    _count: { select: { CocktailRecipeImage: true } };
+    glass: { include: { _count: { select: { GlassImage: true } } } };
     garnishes: {
       include: {
-        garnish: true;
+        garnish: { include: { _count: { select: { GarnishImage: true } } } };
       };
     };
     steps: {
@@ -18,7 +14,7 @@ export type CocktailRecipeFull = Prisma.CocktailRecipeGetPayload<{
         action: true;
         ingredients: {
           include: {
-            ingredient: true;
+            ingredient: { include: { _count: { select: { IngredientImage: true } } } };
           };
         };
       };
