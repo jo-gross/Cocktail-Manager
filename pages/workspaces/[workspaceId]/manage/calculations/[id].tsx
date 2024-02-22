@@ -2,7 +2,7 @@ import { ManageEntityLayout } from '../../../../../components/layout/ManageEntit
 import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { CocktailRecipeFull } from '../../../../../models/CocktailRecipeFull';
-import { FaPencilAlt, FaPrint, FaTrashAlt } from 'react-icons/fa';
+import { FaInfoCircle, FaPencilAlt, FaPrint, FaTrashAlt } from 'react-icons/fa';
 import { ModalContext } from '../../../../../lib/context/ModalContextProvider';
 import { SearchModal } from '../../../../../components/modals/SearchModal';
 import { alertService } from '../../../../../lib/alertService';
@@ -304,6 +304,35 @@ export default function CalculationPage() {
     modalContext.openModal(<InputModal title={'Kalkulation speichern'} onInputChange={(value) => setCalculationName(value)} defaultValue={calculationName} />);
   }, [calculationName, modalContext]);
 
+  const calculateRecommendedAmount = useCallback((calculationItem: CocktailCalculationItem) => {
+    const more: number[] = [];
+    const less: number[] = [];
+
+    // Calculate the sum of all used ingredients
+    const tempIngredients: { ingredient: any; amount: number }[] = [];
+    calculationItem.cocktail.steps
+      .flatMap((step) => step.ingredients)
+      .forEach((ingredient) => {
+        const existingItem = tempIngredients.find((item) => item.ingredient.id == ingredient.ingredientId);
+        if (existingItem) {
+          existingItem.amount += ingredient.amount ?? 0;
+        } else {
+          tempIngredients.push({ ingredient: ingredient.ingredient, amount: ingredient.amount ?? 0 });
+        }
+      });
+    // tempIngredients holds all ingredients with their total amount, used in the cocktail -> testet and working
+
+    tempIngredients.forEach((ingredient) => {
+      const bottles = Math.ceil(((ingredient.amount ?? 0) * calculationItem.plannedAmount) / (ingredient.ingredient?.volume ?? 0));
+      more.push(bottles / (ingredient.amount ?? 0) - calculationItem.plannedAmount);
+      less.push((bottles - 1) / (ingredient.amount ?? 0) - calculationItem.plannedAmount);
+    });
+
+    return { more: Math.min(...more), less: Math.min(...less) };
+  }, []);
+
+  const calculateIngredientAmount = useCallback(() => {}, []);
+
   return (
     <ManageEntityLayout
       backLink={`/workspaces/${workspaceId}/manage/calculations`}
@@ -422,7 +451,20 @@ export default function CalculationPage() {
                             />
                             <div className={'hidden print:flex'}>{cocktail.plannedAmount}</div>
                           </td>
-                          <td>{cocktail.cocktail.name}</td>
+                          <td className={'flex flex-row gap-2'}>
+                            {cocktail.cocktail.name}{' '}
+                            <div
+                              className={'tooltip'}
+                              data-tip={'Wie viele mehr/weniger gemacht werden müssten, um eine der Zutaten vollständig aufzubrauchen'}
+                            >
+                              <div className={'flex flex-row gap-2'}>
+                                <span className={'text-green-500'}>+ {Math.floor(calculateRecommendedAmount(cocktail).more)}</span>
+                                <span>/</span>
+                                <span className={'text-red-500'}>- {Math.floor(calculateRecommendedAmount(cocktail).less)}</span>
+                                <FaInfoCircle />
+                              </div>
+                            </div>
+                          </td>
                           {showSalesStuff ? (
                             <>
                               <td>{cocktail.cocktail.price}</td>
@@ -635,11 +677,11 @@ export default function CalculationPage() {
                               </td>
                               <td>
                                 {Math.ceil(ingredientCalculation.amount / (ingredientCalculation.ingredient.volume ?? 0))}
-                              {' (á '}
-                              {ingredientCalculation.ingredient.volume} {ingredientCalculation.ingredient.unit})
-                            </td>
-                            <td>
-                              {Math.ceil(ingredientCalculation.amount / (ingredientCalculation.ingredient.volume ?? 0))}
+                                {' (á '}
+                                {ingredientCalculation.ingredient.volume} {ingredientCalculation.ingredient.unit})
+                              </td>
+                              <td>
+                                {Math.ceil(ingredientCalculation.amount / (ingredientCalculation.ingredient.volume ?? 0))}
                                 {' (á '}
                                 {ingredientCalculation.ingredient.volume} {ingredientCalculation.ingredient.unit})
                               </td>
