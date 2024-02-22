@@ -28,12 +28,13 @@ export default withHttpMethods({
     });
   }),
   [HTTPMethod.PUT]: withWorkspacePermission([Role.MANAGER], async (req: NextApiRequest, res: NextApiResponse, user, workspace: Workspace) => {
-    const { name, price, volume, unit, id, shortName, link, tags, image } = req.body;
+    const { name, price, volume, unit, id, shortName, link, tags, image, notes } = req.body;
 
     const input: IngredientUpdateInput = {
       id: id,
       name: name,
       volume: volume,
+      notes: notes,
       shortName: shortName,
       unit: unit,
       price: price,

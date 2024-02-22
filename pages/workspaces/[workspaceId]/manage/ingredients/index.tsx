@@ -4,19 +4,21 @@ import { ManageEntityLayout } from '../../../../../components/layout/ManageEntit
 import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { Loading } from '../../../../../components/Loading';
-import { FaCheck, FaPlus, FaTimes } from 'react-icons/fa';
+import { FaCheck, FaInfoCircle, FaPlus, FaTimes } from 'react-icons/fa';
 import { ManageColumn } from '../../../../../components/ManageColumn';
 import { alertService } from '../../../../../lib/alertService';
 import { UserContext } from '../../../../../lib/context/UserContextProvider';
 import AvatarImage from '../../../../../components/AvatarImage';
 import ListSearchField from '../../../../../components/ListSearchField';
 import { IngredientModel } from '../../../../../models/IngredientModel';
+import { ModalContext } from '../../../../../lib/context/ModalContextProvider';
 
 export default function IngredientsOverviewPage() {
   const router = useRouter();
   const { workspaceId } = router.query;
 
   const userContext = useContext(UserContext);
+  const modalContext = useContext(ModalContext);
 
   const [ingredients, setIngredients] = useState<IngredientModel[]>([]);
   const [loading, setLoading] = useState(true);
@@ -73,6 +75,7 @@ export default function IngredientsOverviewPage() {
                   <th className="w-1/12"></th>
                   <th className="w-1/2">Name</th>
                   <th className="w-1/4">Abkürzung</th>
+                  <th className={'w-1/12'}>Notizen</th>
                   <th className="w-1/8">Preis</th>
                   <th className="w-1/8">Menge</th>
                   <th className="w-1/8">Preis/Menge</th>
@@ -122,6 +125,22 @@ export default function IngredientsOverviewPage() {
                         </td>
                         <td className={''}>{ingredient.name}</td>
                         <td>{ingredient.shortName}</td>
+                        <td>
+                          <button
+                            className={'btn btn-ghost btn-sm flex flex-row items-center'}
+                            onClick={() => {
+                              modalContext.openModal(
+                                <div className={'flex flex-col gap-2'}>
+                                  <div className={'text-2xl font-bold'}>{ingredient.name} - Notizen</div>
+                                  <div className={'whitespace-pre-wrap text-justify'}>{ingredient.notes}</div>
+                                </div>,
+                              );
+                            }}
+                          >
+                            <FaInfoCircle />
+                            Anzeigen
+                          </button>
+                        </td>
                         <td className={'whitespace-nowrap'}>{ingredient.price ?? '-'} €</td>
                         <td className={'whitespace-nowrap'}>
                           {ingredient.volume} {ingredient.unit}

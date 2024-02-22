@@ -274,6 +274,7 @@ model Ingredient {
   id                       String                     @id @default(cuid())
   name                     String
   shortName                String?
+  notes                    String?
   price                    Float?
   volume                   Float?
   unit                     String?

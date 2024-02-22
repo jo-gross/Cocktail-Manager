@@ -215,7 +215,11 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                         />
                       </div>
                     )}
-                    {garnish.description == undefined || garnish.description.trim() == '' ? <></> : <div>{garnish.description}</div>}
+                    {garnish.description == undefined || garnish.description.trim() == '' ? (
+                      <></>
+                    ) : (
+                      <div className={'whitespace-pre-wrap'}>{garnish.description}</div>
+                    )}
                   </div>
                   {garnish?.garnish?.description == undefined ? (
                     <></>
@@ -224,7 +228,7 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                       <div className={'divider'}>Allgemeine Infos</div>
 
                       <div className={'flex flex-row'}>
-                        <span className={'flex-1'}>{garnish?.garnish?.description}</span>
+                        <span className={'flex-1 whitespace-pre-wrap'}>{garnish?.garnish?.description}</span>
                       </div>
                     </>
                   )}

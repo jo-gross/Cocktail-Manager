@@ -1,6 +1,6 @@
 import { Formik, FormikProps } from 'formik';
 import { useRouter } from 'next/router';
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext } from 'react';
 import { CocktailIngredientUnit } from '../../models/CocktailIngredientUnit';
 import { TagsInput } from 'react-tag-input-component';
 import { updateTags, validateTag } from '../../models/tags/TagUtils';
@@ -27,14 +27,6 @@ export function IngredientForm(props: IngredientFormProps) {
   const modalContext = useContext(ModalContext);
 
   const formRef = props.formRef;
-  const [originalValues, setOriginalValues] = useState<any>();
-
-  //Filling original values
-  useEffect(() => {
-    if (Object.keys(formRef?.current?.touched ?? {}).length == 0) {
-      setOriginalValues(formRef?.current?.values);
-    }
-  }, [formRef, formRef?.current?.values]);
 
   return (
     <Formik
@@ -42,6 +34,7 @@ export function IngredientForm(props: IngredientFormProps) {
       initialValues={{
         name: props.ingredient?.name ?? '',
         shortName: props.ingredient?.shortName ?? '',
+        notes: props.ingredient?.notes ?? '',
         price: props.ingredient?.price ?? undefined,
         volume: props.ingredient?.volume ?? 0,
         unit: props.ingredient?.unit ?? CocktailIngredientUnit.CL,
@@ -55,6 +48,8 @@ export function IngredientForm(props: IngredientFormProps) {
             id: props.ingredient == undefined ? undefined : props.ingredient.id,
             name: values.name.trim(),
             shortName: values.shortName?.trim() == '' ? null : values.shortName?.trim(),
+            notes: values.notes?.trim() == '' ? null : values.notes?.trim(),
+
             price: values.price == '' ? null : values.price,
             unit: values.unit,
             volume: values.volume,
@@ -103,7 +98,18 @@ export function IngredientForm(props: IngredientFormProps) {
         }
       }}
       validate={(values) => {
-        props.setUnsavedChanges?.(originalValues && !_.isEqual(originalValues, formRef?.current?.values));
+        if (props.ingredient == undefined) {
+          props.setUnsavedChanges?.(true);
+        } else {
+          const tempIngredient = _.omit(props.ingredient, ['IngredientImage', 'id', 'workspaceId']);
+          if (tempIngredient.link == null) {
+            tempIngredient.link = '';
+          }
+          const tempValues = _.omit(values, ['image']);
+          console.log('tempIngredient', tempIngredient);
+          console.log('tempValues', tempValues);
+          props.setUnsavedChanges?.(!_.isEqual(tempIngredient, tempValues));
+        }
         const errors: any = {};
         if (!values.name) {
           errors.name = 'Required';
@@ -155,6 +161,24 @@ export function IngredientForm(props: IngredientFormProps) {
               onBlur={handleBlur}
               value={values.shortName}
               name={'shortName'}
+            />
+          </div>
+
+          <div className={'form-control'}>
+            <label className={'label'}>
+              <span className={'label-text'}>Notizen</span>
+              <span className={'label-text-alt space-x-2 text-error'}>
+                <span>
+                  <>{errors.notes && touched.notes && errors.notes}</>
+                </span>
+              </span>
+            </label>
+            <textarea
+              className={`textarea textarea-bordered ${errors.notes && touched.notes && 'textarea-error'} w-full`}
+              value={values.notes}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              name={'notes'}
             />
           </div>
 
