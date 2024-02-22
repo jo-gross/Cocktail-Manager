@@ -35,6 +35,7 @@ export function IngredientForm(props: IngredientFormProps) {
         name: props.ingredient?.name ?? '',
         shortName: props.ingredient?.shortName ?? '',
         notes: props.ingredient?.notes ?? '',
+        description: props.ingredient?.description ?? '',
         price: props.ingredient?.price ?? undefined,
         volume: props.ingredient?.volume ?? 0,
         unit: props.ingredient?.unit ?? CocktailIngredientUnit.CL,
@@ -49,7 +50,7 @@ export function IngredientForm(props: IngredientFormProps) {
             name: values.name.trim(),
             shortName: values.shortName?.trim() == '' ? null : values.shortName?.trim(),
             notes: values.notes?.trim() == '' ? null : values.notes?.trim(),
-
+            description: values.description?.trim() == '' ? null : values.description?.trim(),
             price: values.price == '' ? null : values.price,
             unit: values.unit,
             volume: values.volume,
@@ -105,9 +106,16 @@ export function IngredientForm(props: IngredientFormProps) {
           if (tempIngredient.link == null) {
             tempIngredient.link = '';
           }
+          if (tempIngredient.description == null) {
+            tempIngredient.description = '';
+          }
+          if (tempIngredient.notes == null) {
+            tempIngredient.notes = '';
+          }
+          if (tempIngredient.shortName == null) {
+            tempIngredient.shortName = '';
+          }
           const tempValues = _.omit(values, ['image']);
-          console.log('tempIngredient', tempIngredient);
-          console.log('tempValues', tempValues);
           props.setUnsavedChanges?.(!_.isEqual(tempIngredient, tempValues));
         }
         const errors: any = {};
@@ -161,6 +169,24 @@ export function IngredientForm(props: IngredientFormProps) {
               onBlur={handleBlur}
               value={values.shortName}
               name={'shortName'}
+            />
+          </div>
+
+          <div className={'form-control'}>
+            <label className={'label'}>
+              <span className={'label-text'}>Allg. Beschreibung</span>
+              <span className={'label-text-alt space-x-2 text-error'}>
+                <span>
+                  <>{errors.description && touched.description && errors.description}</>
+                </span>
+              </span>
+            </label>
+            <textarea
+              className={`textarea textarea-bordered ${errors.description && touched.description && 'textarea-error'} w-full`}
+              value={values.description}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              name={'description'}
             />
           </div>
 

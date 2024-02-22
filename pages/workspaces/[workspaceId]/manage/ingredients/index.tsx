@@ -72,17 +72,17 @@ export default function IngredientsOverviewPage() {
             <table className="table-compact table table-zebra w-full">
               <thead>
                 <tr>
-                  <th className="w-1/12"></th>
-                  <th className="w-1/2">Name</th>
-                  <th className="w-1/4">Abkürzung</th>
-                  <th className={'w-1/12'}>Notizen</th>
-                  <th className="w-1/8">Preis</th>
-                  <th className="w-1/8">Menge</th>
-                  <th className="w-1/8">Preis/Menge</th>
-                  <th className="w-1/8">Tags</th>
-                  <th className="w-1/12">Link</th>
-                  <th className="w-1/8">Seite</th>
-                  <th className="w-1/8"></th>
+                  <th></th>
+                  <th>Name</th>
+                  <th>Abkürzung</th>
+                  <th>Notizen</th>
+                  <th>Preis</th>
+                  <th>Menge</th>
+                  <th>Preis/Menge</th>
+                  <th>Tags</th>
+                  <th>Link</th>
+                  <th>Seite</th>
+                  <th></th>
                 </tr>
               </thead>
               <tbody>
@@ -127,18 +127,21 @@ export default function IngredientsOverviewPage() {
                         <td>{ingredient.shortName}</td>
                         <td>
                           <button
-                            className={'btn btn-ghost btn-sm flex flex-row items-center'}
+                            className={'btn btn-ghost btn-sm flex flex-row items-center gap-2'}
                             onClick={() => {
                               modalContext.openModal(
                                 <div className={'flex flex-col gap-2'}>
-                                  <div className={'text-2xl font-bold'}>{ingredient.name} - Notizen</div>
-                                  <div className={'whitespace-pre-wrap text-justify'}>{ingredient.notes}</div>
+                                  <div className={'text-2xl font-bold'}>{ingredient.name}</div>
+                                  <div className={'text-lg font-bold'}>Allgemeine Beschreibung</div>
+                                  <div className={'whitespace-pre-wrap text-justify'}>{ingredient.description ?? '-'}</div>
+                                  <div className={'text-lg font-bold'}>Notizen</div>
+                                  <div className={'whitespace-pre-wrap text-justify'}>{ingredient.notes ?? '-'}</div>
                                 </div>,
                               );
                             }}
                           >
                             <FaInfoCircle />
-                            Anzeigen
+                            <span>Anzeigen</span>
                           </button>
                         </td>
                         <td className={'whitespace-nowrap'}>{ingredient.price ?? '-'} €</td>
