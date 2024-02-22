@@ -102,7 +102,7 @@ export default function WorkspacesPage() {
             <Image
               src={'/images/The Cocktail Manager Logo.png'}
               alt="The Cocktail Manager"
-              className={`pt-4 ${themeContext.theme == 'light' ? 'invert' : ''}`}
+              className={`pt-4 ${themeContext.theme == 'light' ? 'invert' : themeContext.theme == 'auto' ? 'invert dark:invert-0' : ''}`}
               height={211}
               width={247}
             />
