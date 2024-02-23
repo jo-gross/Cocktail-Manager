@@ -2,7 +2,7 @@ import { ManageEntityLayout } from '../../../../../components/layout/ManageEntit
 import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { CocktailRecipeFull } from '../../../../../models/CocktailRecipeFull';
-import { FaPencilAlt, FaPrint, FaTrashAlt } from 'react-icons/fa';
+import { FaInfoCircle, FaPencilAlt, FaPrint, FaTrashAlt } from 'react-icons/fa';
 import { ModalContext } from '../../../../../lib/context/ModalContextProvider';
 import { SearchModal } from '../../../../../components/modals/SearchModal';
 import { alertService } from '../../../../../lib/alertService';
@@ -29,6 +29,12 @@ interface GarnishCalculationItem {
   amount: number;
 }
 
+interface CalculationData {
+  name: string;
+  showSalesStuff: boolean;
+  cocktailCalculationItems: CocktailCalculationItem[];
+}
+
 export default function CalculationPage() {
   const modalContext = useContext(ModalContext);
 
@@ -41,6 +47,8 @@ export default function CalculationPage() {
   const [cocktailCalculationItems, setCocktailCalculationItems] = useState<CocktailCalculationItem[]>([]);
 
   const [originalItems, setOriginalItems] = useState<string>('[]');
+  const [originalName, setOriginalName] = useState<string>('');
+  const [originalShowSalesStuff, setOriginalShowSalesStuff] = useState<boolean>(true);
 
   const [ingredientCalculationItems, setIngredientCalculationItems] = useState<IngredientCalculationItem[]>([]);
   const [garnishCalculationItems, setGarnishCalculationItems] = useState<GarnishCalculationItem[]>([]);
@@ -49,7 +57,13 @@ export default function CalculationPage() {
 
   const [saving, setSaving] = useState(false);
 
+  const [showSalesStuff, setShowSalesStuff] = useState<boolean>(true);
+
   const [unsavedChanges, setUnsavedChanges] = useState(false);
+
+  /**
+   * check for unsaved changes start
+   */
   useEffect(() => {
     if (originalItems != JSON.stringify(cocktailCalculationItems)) {
       setUnsavedChanges(true);
@@ -59,6 +73,27 @@ export default function CalculationPage() {
   }, [cocktailCalculationItems, originalItems]);
 
   useEffect(() => {
+    if (originalName != calculationName) {
+      setUnsavedChanges(true);
+    } else {
+      setUnsavedChanges(false);
+    }
+  }, [calculationName, originalName]);
+
+  useEffect(() => {
+    if (originalShowSalesStuff != showSalesStuff) {
+      setUnsavedChanges(true);
+    } else {
+      setUnsavedChanges(false);
+    }
+  }, [originalShowSalesStuff, showSalesStuff]);
+
+  /**
+   * check for unsaved changes end
+   */
+
+  // Fetch Calculation
+  useEffect(() => {
     if (!id) return;
     if (id == 'create') return;
     setLoading(true);
@@ -66,9 +101,13 @@ export default function CalculationPage() {
       .then(async (response) => {
         const body = await response.json();
         if (response.ok) {
-          setCalculationName(body.data.name);
-          setCocktailCalculationItems(body.data.cocktailCalculationItems);
-          setOriginalItems(JSON.stringify(body.data.cocktailCalculationItems));
+          const data: CalculationData = body.data;
+          setCalculationName(data.name);
+          setCocktailCalculationItems(data.cocktailCalculationItems);
+          setShowSalesStuff(data.showSalesStuff ?? false);
+          setOriginalName(data.name);
+          setOriginalItems(JSON.stringify(data.cocktailCalculationItems));
+          setOriginalShowSalesStuff(data.showSalesStuff ?? false);
         } else {
           console.error('CocktailCalculation -> useEffect[init, id != create]', response);
           alertService.error(body.message ?? 'Fehler beim Laden der Kalkulation', response.status, response.statusText);
@@ -171,6 +210,7 @@ export default function CalculationPage() {
       if (id == 'create') {
         const body = {
           name: calculationName,
+          showSalesStuff: showSalesStuff,
           calculationItems: cocktailCalculationItems.map((item) => {
             return {
               plannedAmount: item.plannedAmount,
@@ -188,6 +228,8 @@ export default function CalculationPage() {
             const body = await response.json();
             if (response.ok) {
               setOriginalItems(JSON.stringify(cocktailCalculationItems));
+              setOriginalShowSalesStuff(showSalesStuff);
+              setOriginalName(calculationName);
               if (redirect) {
                 await router.push(`/workspaces/${workspaceId}/manage/calculations/${body.data.id}`);
               }
@@ -208,6 +250,7 @@ export default function CalculationPage() {
         // Update
         const body = {
           name: calculationName,
+          showSalesStuff: showSalesStuff,
           calculationItems: cocktailCalculationItems.map((item) => {
             return {
               plannedAmount: item.plannedAmount,
@@ -225,6 +268,8 @@ export default function CalculationPage() {
             const body = await response.json();
             if (response.ok) {
               setOriginalItems(JSON.stringify(cocktailCalculationItems));
+              setOriginalShowSalesStuff(showSalesStuff);
+              setOriginalName(calculationName);
               if (redirect) {
                 await router.push(`/workspaces/${workspaceId}/manage/calculations/${body.data.id}`);
               }
@@ -243,7 +288,7 @@ export default function CalculationPage() {
           });
       }
     },
-    [id, calculationName, cocktailCalculationItems, workspaceId, router],
+    [id, calculationName, showSalesStuff, cocktailCalculationItems, workspaceId, router],
   );
 
   useEffect(() => {
@@ -258,6 +303,50 @@ export default function CalculationPage() {
   const openNameModal = useCallback(() => {
     modalContext.openModal(<InputModal title={'Kalkulation speichern'} onInputChange={(value) => setCalculationName(value)} defaultValue={calculationName} />);
   }, [calculationName, modalContext]);
+
+  const calculateRecommendedAmount = useCallback(
+    (calculationItem: CocktailCalculationItem) => {
+      // Calculate the sum of all used ingredients
+      const summedIngredientPerCocktails: { ingredient: any; amount: number }[] = [];
+      calculationItem.cocktail.steps
+        .flatMap((step) => step.ingredients)
+        .forEach((ingredient) => {
+          const existingItem = summedIngredientPerCocktails.find((item) => item.ingredient.id == ingredient.ingredientId);
+          if (existingItem) {
+            existingItem.amount += ingredient.amount ?? 0;
+          } else {
+            summedIngredientPerCocktails.push({ ingredient: ingredient.ingredient, amount: ingredient.amount ?? 0 });
+          }
+        });
+
+      //
+
+      return summedIngredientPerCocktails.map((summedIngredientPerCocktail) => {
+        let ingredient = summedIngredientPerCocktail.ingredient;
+
+        const totalNeededBottles = Math.ceil(
+          (ingredientCalculationItems.find((item) => item.ingredient.id == ingredient.id)?.amount ?? 0) / (ingredient.volume ?? 0),
+        );
+        const totalNeededAmount = ingredientCalculationItems.find((item) => item.ingredient.id == ingredient.id)?.amount ?? 0;
+        if (ingredient.name.includes('Buffalo')) {
+          console.log(`(${calculationItem.cocktail.name}) - Gesamt Summe (Buffalo) in Flaschen`, totalNeededBottles);
+          console.log(`(${calculationItem.cocktail.name}) - Gesamt Menge (Buffalo) in CL`, totalNeededAmount);
+        }
+
+        let cocktailIngredientAmount = summedIngredientPerCocktail.amount;
+        if (ingredient.name.includes('Buffalo')) {
+          console.log(`(${calculationItem.cocktail.name}) - Menge (Buffalo) für Cocktail Benötigt`, cocktailIngredientAmount);
+        }
+
+        return {
+          ingredient: ingredient,
+          more: Math.floor((totalNeededBottles * ingredient.volume - totalNeededAmount) / cocktailIngredientAmount),
+          less: Math.ceil(((totalNeededBottles - 1) * ingredient.volume - totalNeededAmount) / cocktailIngredientAmount),
+        };
+      });
+    },
+    [ingredientCalculationItems],
+  );
 
   return (
     <ManageEntityLayout
@@ -315,8 +404,8 @@ export default function CalculationPage() {
           <Loading />
         </PageCenter>
       ) : (
-        <div className={'grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-3 xl:gap-4 print:grid-cols-1'}>
-          <div className={'col-span-1 row-span-3 w-full md:col-span-2 print:col-span-1'}>
+        <div className={'grid grid-cols-1 gap-2 md:grid-cols-2 xl:gap-4 print:grid-cols-1'}>
+          <div className={'col-span-1 row-span-3 w-full'}>
             <div className={'card'}>
               <div className={'card-body'}>
                 <div className={'text-center text-2xl font-bold print:text-xl'}>Getränke Übersicht</div>
@@ -329,8 +418,15 @@ export default function CalculationPage() {
                       <tr>
                         <th className={'w-20'}>Geplante Menge</th>
                         <th className={'w-full'}>Name</th>
-                        <th className={'w-min'}>Preis</th>
-                        <th>Sonderpreis</th>
+                        <th className={''}>Mengenvorschläge</th>
+                        {showSalesStuff ? (
+                          <>
+                            <th className={'min-w-20'}>Preis</th>
+                            <th>Sonderpreis</th>
+                          </>
+                        ) : (
+                          <></>
+                        )}
                         <th className={'flex justify-end print:hidden'}>
                           <div
                             className={'btn btn-primary btn-sm'}
@@ -350,43 +446,27 @@ export default function CalculationPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {cocktailCalculationItems.map((cocktail) => (
-                        <tr key={'cocktail-' + cocktail.cocktail.id}>
-                          <td>
-                            <input
-                              className={'input input-sm input-bordered w-full print:hidden'}
-                              type={'number'}
-                              min={1}
-                              step={1}
-                              value={cocktail.plannedAmount}
-                              onChange={(event) => {
-                                const updatedItems = cocktailCalculationItems.map((item) => {
-                                  if (item.cocktail.id == cocktail.cocktail.id) {
-                                    item.plannedAmount = Number(event.target.value);
-                                  }
-                                  return item;
-                                });
-                                setCocktailCalculationItems(updatedItems);
-                              }}
-                            />
-                            <div className={'hidden print:flex'}>{cocktail.plannedAmount}</div>
-                          </td>
-                          <td>{cocktail.cocktail.name}</td>
-                          <td>{cocktail.cocktail.price}</td>
-                          <td>
-                            <div className={'join print:hidden'}>
+                      {cocktailCalculationItems.length == 0 ? (
+                        <tr className={'text-center'}>
+                          <td colSpan={4 + (showSalesStuff ? 1 : 0)}>Keine Einträge vorhanden</td>
+                        </tr>
+                      ) : (
+                        cocktailCalculationItems.map((cocktail) => (
+                          <tr key={'cocktail-' + cocktail.cocktail.id}>
+                            <td>
                               <input
+                                className={'input input-sm input-bordered w-full print:hidden'}
                                 type={'number'}
-                                className={'input input-sm join-item input-bordered w-20'}
-                                step={0.01}
-                                value={cocktail.customPrice ?? ''}
+                                min={1}
+                                step={1}
+                                value={cocktail.plannedAmount}
                                 onChange={(event) => {
                                   const updatedItems = cocktailCalculationItems.map((item) => {
                                     if (item.cocktail.id == cocktail.cocktail.id) {
-                                      if (event.target.value == '') {
-                                        item.customPrice = undefined;
+                                      if (Number(event.target.value) < 0) {
+                                        item.plannedAmount = 0;
                                       } else {
-                                        item.customPrice = Number(event.target.value);
+                                        item.plannedAmount = Number(event.target.value);
                                       }
                                     }
                                     return item;
@@ -394,31 +474,136 @@ export default function CalculationPage() {
                                   setCocktailCalculationItems(updatedItems);
                                 }}
                               />
-                              <span className={'btn btn-secondary join-item btn-sm'}> €</span>
-                            </div>
-                            <div className={'hidden print:flex'}>{cocktail.customPrice ?? '-'} €</div>
-                          </td>
-                          <td className={'print:hidden'}>
-                            <div className={'flex items-center justify-end'}>
-                              <div
-                                className={'btn btn-square btn-error btn-sm'}
+                              <div className={'hidden print:flex'}>{cocktail.plannedAmount}</div>
+                            </td>
+                            <td className={'items-center'}>
+                              <span className={'font-bold'}>{cocktail.cocktail.name}</span>
+                            </td>
+                            <td>
+                              <button
                                 onClick={() => {
                                   modalContext.openModal(
-                                    <DeleteConfirmationModal
-                                      spelling={'REMOVE'}
-                                      onApprove={() => {
-                                        setCocktailCalculationItems(cocktailCalculationItems.filter((item) => item.cocktail.id != cocktail.cocktail.id));
-                                      }}
-                                    />,
+                                    <div className={'flex flex-col gap-2'}>
+                                      <div className={'card-title'}>Mengenvorschläge</div>
+                                      <div>
+                                        Wie viel Einheiten noch benötigt werden, um die Zutat vollständig zu benutzen (links, in grün) und (rechts, in rot) wie
+                                        viel weniger Einheiten, um die angebrochene Auszugleichen.
+                                      </div>
+                                      <div className={'divider font-bold'}>Zutaten</div>
+                                      <div className={'grid grid-cols-3 items-center gap-2'}>
+                                        {calculateRecommendedAmount(cocktail)
+                                          .sort((a, b) => a.ingredient.name.localeCompare(b.ingredient.name))
+                                          .map((item, index) => (
+                                            <>
+                                              <span key={`cocktail-${cocktail.cocktail.id}-ingredient-${index}-name`}>{item.ingredient.name}</span>
+                                              <span
+                                                key={`cocktail-${cocktail.cocktail.id}-ingredient-${index}-more`}
+                                                className={'btn btn-outline btn-sm text-green-500'}
+                                                onClick={() => {
+                                                  const temp = cocktailCalculationItems.map((calcItem) => {
+                                                    if (calcItem.cocktail.id == cocktail.cocktail.id) {
+                                                      calcItem.plannedAmount += Math.floor(item.more);
+                                                    }
+                                                    return calcItem;
+                                                  });
+                                                  setCocktailCalculationItems(temp);
+
+                                                  modalContext.closeModal();
+                                                }}
+                                              >
+                                                + {Math.floor(item.more)} Anpassen
+                                              </span>
+                                              <button
+                                                key={`cocktail-${cocktail.cocktail.id}-ingredient-${index}-less`}
+                                                className={'btn btn-outline btn-sm text-red-500'}
+                                                disabled={
+                                                  (cocktailCalculationItems.find((cocktailItem) => cocktailItem.cocktail.id == cocktail.cocktail.id)
+                                                    ?.plannedAmount ?? 0) +
+                                                    Math.floor(item.less) <
+                                                  0
+                                                }
+                                                onClick={() => {
+                                                  const temp = cocktailCalculationItems.map((calcItem) => {
+                                                    if (calcItem.cocktail.id == cocktail.cocktail.id) {
+                                                      calcItem.plannedAmount += Math.floor(item.less);
+                                                    }
+                                                    return calcItem;
+                                                  });
+                                                  setCocktailCalculationItems(temp);
+
+                                                  modalContext.closeModal();
+                                                }}
+                                              >
+                                                {Math.floor(item.less)} Anpassen
+                                              </button>
+                                            </>
+                                          ))}
+                                      </div>
+                                    </div>,
                                   );
                                 }}
+                                className={'btn-ghoast btn btn-sm'}
                               >
-                                <FaTrashAlt />
+                                <FaInfoCircle />
+                                <span>Anzeigen</span>
+                              </button>
+                            </td>
+                            {showSalesStuff ? (
+                              <>
+                                <td>
+                                  <span>{`${cocktail.cocktail.price} €`}</span>
+                                </td>
+                                <td>
+                                  <div className={'join print:hidden'}>
+                                    <input
+                                      type={'number'}
+                                      className={'input input-sm join-item input-bordered w-20'}
+                                      step={0.01}
+                                      value={cocktail.customPrice ?? ''}
+                                      onChange={(event) => {
+                                        const updatedItems = cocktailCalculationItems.map((item) => {
+                                          if (item.cocktail.id == cocktail.cocktail.id) {
+                                            if (event.target.value == '') {
+                                              item.customPrice = undefined;
+                                            } else {
+                                              item.customPrice = Number(event.target.value);
+                                            }
+                                          }
+                                          return item;
+                                        });
+                                        setCocktailCalculationItems(updatedItems);
+                                      }}
+                                    />
+                                    <span className={'btn btn-secondary join-item btn-sm'}> €</span>
+                                  </div>
+                                  <div className={'hidden print:flex'}>{cocktail.customPrice ?? '-'} €</div>
+                                </td>
+                              </>
+                            ) : (
+                              <></>
+                            )}
+                            <td className={'print:hidden'}>
+                              <div className={'flex items-center justify-end'}>
+                                <div
+                                  className={'btn btn-square btn-error btn-sm'}
+                                  onClick={() => {
+                                    modalContext.openModal(
+                                      <DeleteConfirmationModal
+                                        spelling={'REMOVE'}
+                                        onApprove={() => {
+                                          setCocktailCalculationItems(cocktailCalculationItems.filter((item) => item.cocktail.id != cocktail.cocktail.id));
+                                        }}
+                                      />,
+                                    );
+                                  }}
+                                >
+                                  <FaTrashAlt />
+                                </div>
                               </div>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
+                            </td>
+                          </tr>
+                        ))
+                      )}
                     </tbody>
                   </table>
                 </div>
@@ -431,6 +616,17 @@ export default function CalculationPage() {
                 <div className={'text-center text-2xl font-bold print:text-xl'}>Finanzen</div>
                 <div className={'print:hidden'}>
                   <div className={'divider-sm'}></div>
+                  <div className={'form-control'}>
+                    <label className={'label'}>
+                      <span className={'label-text'}>Betriebswirtschaftliche Ansicht</span>
+                    </label>
+                    <input
+                      checked={showSalesStuff}
+                      onChange={(event) => setShowSalesStuff(event.target.checked)}
+                      className={'toggle toggle-primary'}
+                      type={'checkbox'}
+                    />
+                  </div>
                 </div>
                 <div className={'overflow-x-auto'}>
                   <table className={'table-compact table w-full'}>
@@ -440,8 +636,14 @@ export default function CalculationPage() {
                         <th>Menge</th>
                         <th>Produktions-Preis</th>
                         <th>Produktion-Summe</th>
-                        <th>Erwarteter Umsatz</th>
-                        <th>Erwarteter Gewinn</th>
+                        {showSalesStuff ? (
+                          <>
+                            <th>Erwarteter Umsatz</th>
+                            <th>Erwarteter Gewinn</th>
+                          </>
+                        ) : (
+                          <></>
+                        )}
                       </tr>
                     </thead>
                     <tbody>
@@ -460,14 +662,20 @@ export default function CalculationPage() {
                               <td>{cocktail.plannedAmount} x</td>
                               <td>{calcCocktailTotalPrice(cocktail.cocktail).toFixed(2)} €</td>
                               <td>{(cocktail.plannedAmount * calcCocktailTotalPrice(cocktail.cocktail)).toFixed(2)} €</td>
-                              <td>{(cocktail.plannedAmount * (cocktail.customPrice ?? cocktail.cocktail.price ?? 0)).toFixed(2)} €</td>
-                              <td>
-                                {(
-                                  cocktail.plannedAmount * (cocktail.customPrice ?? cocktail.cocktail.price ?? 0) -
-                                  cocktail.plannedAmount * calcCocktailTotalPrice(cocktail.cocktail)
-                                ).toFixed(2)}{' '}
-                                €
-                              </td>
+                              {showSalesStuff ? (
+                                <>
+                                  <td>{(cocktail.plannedAmount * (cocktail.customPrice ?? cocktail.cocktail.price ?? 0)).toFixed(2)}€</td>
+                                  <td>
+                                    {(
+                                      cocktail.plannedAmount * (cocktail.customPrice ?? cocktail.cocktail.price ?? 0) -
+                                      cocktail.plannedAmount * calcCocktailTotalPrice(cocktail.cocktail)
+                                    ).toFixed(2)}{' '}
+                                    €
+                                  </td>
+                                </>
+                              ) : (
+                                <></>
+                              )}
                             </tr>
                           ))
                       )}
@@ -483,24 +691,30 @@ export default function CalculationPage() {
                             .toFixed(2)}{' '}
                           €
                         </td>
-                        <td>
-                          {cocktailCalculationItems
-                            .map((cocktail) => cocktail.plannedAmount * (cocktail.customPrice ?? cocktail.cocktail.price ?? 0))
-                            .reduce((acc, curr) => acc + curr, 0)
-                            .toFixed(2)}{' '}
-                          €
-                        </td>
-                        <td>
-                          {cocktailCalculationItems
-                            .map(
-                              (cocktail) =>
-                                cocktail.plannedAmount * (cocktail.customPrice ?? cocktail.cocktail.price ?? 0) -
-                                cocktail.plannedAmount * calcCocktailTotalPrice(cocktail.cocktail),
-                            )
-                            .reduce((acc, curr) => acc + curr, 0)
-                            .toFixed(2)}{' '}
-                          €
-                        </td>
+                        {showSalesStuff ? (
+                          <>
+                            <td>
+                              {cocktailCalculationItems
+                                .map((cocktail) => cocktail.plannedAmount * (cocktail.customPrice ?? cocktail.cocktail.price ?? 0))
+                                .reduce((acc, curr) => acc + curr, 0)
+                                .toFixed(2)}{' '}
+                              €
+                            </td>
+                            <td>
+                              {cocktailCalculationItems
+                                .map(
+                                  (cocktail) =>
+                                    cocktail.plannedAmount * (cocktail.customPrice ?? cocktail.cocktail.price ?? 0) -
+                                    cocktail.plannedAmount * calcCocktailTotalPrice(cocktail.cocktail),
+                                )
+                                .reduce((acc, curr) => acc + curr, 0)
+                                .toFixed(2)}{' '}
+                              €
+                            </td>
+                          </>
+                        ) : (
+                          <></>
+                        )}
                       </tr>
                     </tbody>
                   </table>
@@ -522,13 +736,14 @@ export default function CalculationPage() {
                       <tr>
                         <th>Zutat</th>
                         <th>Gesamt Menge</th>
+                        <th>Benötigte Menge</th>
                         <th>Ganze Flaschen</th>
                       </tr>
                     </thead>
                     <tbody>
                       {ingredientCalculationItems.length == 0 ? (
                         <tr>
-                          <td colSpan={3} className={'text-center'}>
+                          <td colSpan={4} className={'text-center'}>
                             Keine Zutaten benötigt
                           </td>
                         </tr>
@@ -543,6 +758,11 @@ export default function CalculationPage() {
                               </td>
                               <td>
                                 {(ingredientCalculation.amount / (ingredientCalculation.ingredient.volume ?? 0)).toFixed(2)}
+                                {' (á '}
+                                {ingredientCalculation.ingredient.volume} {ingredientCalculation.ingredient.unit})
+                              </td>
+                              <td>
+                                {Math.ceil(ingredientCalculation.amount / (ingredientCalculation.ingredient.volume ?? 0))}
                                 {' (á '}
                                 {ingredientCalculation.ingredient.volume} {ingredientCalculation.ingredient.unit})
                               </td>
@@ -562,7 +782,7 @@ export default function CalculationPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {ingredientCalculationItems.length == 0 ? (
+                      {garnishCalculationItems.length == 0 ? (
                         <tr>
                           <td colSpan={2} className={'text-center'}>
                             Keine Garnituren benötigt

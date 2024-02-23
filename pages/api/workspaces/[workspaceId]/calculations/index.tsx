@@ -27,9 +27,10 @@ export default withHttpMethods({
     return res.json({ data: cocktailCalculations });
   }),
   [HTTPMethod.POST]: withWorkspacePermission([Role.USER], async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
-    const { name, calculationItems } = req.body;
+    const { name, calculationItems, showSalesStuff } = req.body;
     const input: CocktailCalculationCreateInput = {
       name: name,
+      showSalesStuff: showSalesStuff,
       cocktailCalculationItems: {
         create: calculationItems.map((item: any) => ({
           plannedAmount: item.plannedAmount,

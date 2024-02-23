@@ -38,8 +38,8 @@ export default function ManagePage() {
           )
         }
         actions={[
-          <div key={'profile'} className="dropdown dropdown-end rounded-xl border border-none border-base-200 md:border-solid">
-            <label tabIndex={0} className="btn btn-ghost">
+          <div key={'profile'} className="dropdown dropdown-end">
+            <label tabIndex={0} className="btn btn-outline">
               <>
                 {userContext.user?.image ? (
                   <div className="avatar">
@@ -49,7 +49,7 @@ export default function ManagePage() {
                   </div>
                 ) : (
                   <div className="avatar placeholder">
-                    <div className="bg-neutral-focus w-8 rounded-full text-neutral-content">
+                    <div className="rounded-full border bg-neutral p-2 text-neutral-content">
                       <span className="text-xs">
                         {userContext.user?.name
                           ?.split(' ')
@@ -65,9 +65,10 @@ export default function ManagePage() {
             <ul tabIndex={0} className="menu dropdown-content menu-sm z-[1] mt-2 w-52 gap-2 rounded-box border border-base-200 bg-base-100 p-2 shadow">
               <div className={'pt-1 text-center text-lg font-bold md:hidden'}>{userContext.user?.name}</div>
               <div className={'divider-sm md:hidden'}></div>
-              <li className={'btn btn-outline btn-sm'}>
-                <Link href={'/'}>Workspaces</Link>
-              </li>
+              <Link href={'/'} className={'btn btn-outline btn-sm'}>
+                Workspaces
+              </Link>
+
               <div className={'divider-sm'}></div>
               <button
                 className={'btn btn-outline btn-error btn-sm'}

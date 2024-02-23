@@ -330,6 +330,8 @@ model CocktailCalculation {
   id   String @id @default(cuid())
   name String
 
+  showSalesStuff Boolean @default(true)
+
   workspaceId              String
   workspace                Workspace                  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   updatedByUserId          String

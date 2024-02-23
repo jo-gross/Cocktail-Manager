@@ -55,11 +55,11 @@ export default withHttpMethods({
   [HTTPMethod.PUT]: withWorkspacePermission([Role.USER], async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
     const calculationId = req.query.calculationId as string | undefined;
     if (!calculationId) return res.status(400).json({ message: 'No calculationId id' });
-
-    const { name, calculationItems } = req.body;
+    const { name, calculationItems, showSalesStuff } = req.body;
     const input: CocktailCalculationUpdateInput = {
       id: calculationId,
       name: name,
+      showSalesStuff: showSalesStuff,
       updatedByUser: {
         connect: {
           id: user.id,
