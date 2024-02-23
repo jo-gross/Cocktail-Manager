@@ -26,11 +26,13 @@ export default withHttpMethods({
     return res.json({ data: ingredients });
   }),
   [HTTPMethod.POST]: withWorkspacePermission([Role.MANAGER], async (req: NextApiRequest, res: NextApiResponse, user, workspace: Workspace) => {
-    const { name, price, volume, unit, shortName, link, tags, image } = req.body;
+    const { name, price, volume, unit, shortName, link, tags, image, notes, description } = req.body;
 
     const input: IngredientCreateInput = {
       name: name,
       volume: volume,
+      notes: notes,
+      description: description,
       shortName: shortName,
       unit: unit,
       price: price,
