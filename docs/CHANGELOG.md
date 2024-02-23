@@ -1,3 +1,16 @@
+# [1.3.0](https://github.com/jo-gross/Cocktail-Manager/compare/v1.2.0...v1.3.0) (2024-02-23)
+
+
+### Bug Fixes
+
+* Fixed incorrect inverted logo on "auto" theme at start page ([75a979d](https://github.com/jo-gross/Cocktail-Manager/commit/75a979d5bccf79e32294c39dad5c96b0dbb9ca9a))
+
+
+### Features
+
+* Improved the calculation page, added recommandations for ingredients, made prices optional ([#163](https://github.com/jo-gross/Cocktail-Manager/issues/163)) ([78194eb](https://github.com/jo-gross/Cocktail-Manager/commit/78194eb321fd637eff9717b2f61a62f2a331d6fa))
+* Ingredient description and notes ([#167](https://github.com/jo-gross/Cocktail-Manager/issues/167)) ([6638820](https://github.com/jo-gross/Cocktail-Manager/commit/663882091d1de8ee75f9e9c3597ceef188784002))
+
 # [1.2.0](https://github.com/jo-gross/Cocktail-Manager/compare/v1.1.1...v1.2.0) (2024-02-21)
 
 
