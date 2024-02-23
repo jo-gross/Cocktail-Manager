@@ -304,35 +304,49 @@ export default function CalculationPage() {
     modalContext.openModal(<InputModal title={'Kalkulation speichern'} onInputChange={(value) => setCalculationName(value)} defaultValue={calculationName} />);
   }, [calculationName, modalContext]);
 
-  const calculateRecommendedAmount = useCallback((calculationItem: CocktailCalculationItem) => {
-    // Calculate the sum of all used ingredients
-    const tempIngredients: { ingredient: any; amount: number }[] = [];
-    calculationItem.cocktail.steps
-      .flatMap((step) => step.ingredients)
-      .forEach((ingredient) => {
-        const existingItem = tempIngredients.find((item) => item.ingredient.id == ingredient.ingredientId);
-        if (existingItem) {
-          existingItem.amount += ingredient.amount ?? 0;
-        } else {
-          tempIngredients.push({ ingredient: ingredient.ingredient, amount: ingredient.amount ?? 0 });
+  const calculateRecommendedAmount = useCallback(
+    (calculationItem: CocktailCalculationItem) => {
+      // Calculate the sum of all used ingredients
+      const summedIngredientPerCocktails: { ingredient: any; amount: number }[] = [];
+      calculationItem.cocktail.steps
+        .flatMap((step) => step.ingredients)
+        .forEach((ingredient) => {
+          const existingItem = summedIngredientPerCocktails.find((item) => item.ingredient.id == ingredient.ingredientId);
+          if (existingItem) {
+            existingItem.amount += ingredient.amount ?? 0;
+          } else {
+            summedIngredientPerCocktails.push({ ingredient: ingredient.ingredient, amount: ingredient.amount ?? 0 });
+          }
+        });
+
+      //
+
+      return summedIngredientPerCocktails.map((summedIngredientPerCocktail) => {
+        let ingredient = summedIngredientPerCocktail.ingredient;
+
+        const totalNeededBottles = Math.ceil(
+          (ingredientCalculationItems.find((item) => item.ingredient.id == ingredient.id)?.amount ?? 0) / (ingredient.volume ?? 0),
+        );
+        const totalNeededAmount = ingredientCalculationItems.find((item) => item.ingredient.id == ingredient.id)?.amount ?? 0;
+        if (ingredient.name.includes('Buffalo')) {
+          console.log(`(${calculationItem.cocktail.name}) - Gesamt Summe (Buffalo) in Flaschen`, totalNeededBottles);
+          console.log(`(${calculationItem.cocktail.name}) - Gesamt Menge (Buffalo) in CL`, totalNeededAmount);
         }
+
+        let cocktailIngredientAmount = summedIngredientPerCocktail.amount;
+        if (ingredient.name.includes('Buffalo')) {
+          console.log(`(${calculationItem.cocktail.name}) - Menge (Buffalo) für Cocktail Benötigt`, cocktailIngredientAmount);
+        }
+
+        return {
+          ingredient: ingredient,
+          more: Math.floor((totalNeededBottles * ingredient.volume - totalNeededAmount) / cocktailIngredientAmount),
+          less: Math.ceil(((totalNeededBottles - 1) * ingredient.volume - totalNeededAmount) / cocktailIngredientAmount),
+        };
       });
-
-    return tempIngredients.map((tempIngredient) => {
-      let amount = tempIngredient.amount;
-      let count = calculationItem.plannedAmount;
-      let ingredient = tempIngredient.ingredient;
-      let bottles: number = Math.ceil((amount * count) / ingredient.volume);
-
-      return {
-        ingredient: ingredient,
-        more: Math.floor((bottles * ingredient.volume) / amount - count),
-        less: Math.ceil(((bottles - 1) * ingredient.volume) / amount - count),
-      };
-    });
-  }, []);
-
-  const calculateIngredientAmount = useCallback(() => {}, []);
+    },
+    [ingredientCalculationItems],
+  );
 
   return (
     <ManageEntityLayout
@@ -407,7 +421,7 @@ export default function CalculationPage() {
                         <th className={''}>Mengenvorschläge</th>
                         {showSalesStuff ? (
                           <>
-                            <th className={'w-min'}>Preis</th>
+                            <th className={'min-w-20'}>Preis</th>
                             <th>Sonderpreis</th>
                           </>
                         ) : (
@@ -449,7 +463,11 @@ export default function CalculationPage() {
                                 onChange={(event) => {
                                   const updatedItems = cocktailCalculationItems.map((item) => {
                                     if (item.cocktail.id == cocktail.cocktail.id) {
-                                      item.plannedAmount = Number(event.target.value);
+                                      if (Number(event.target.value) < 0) {
+                                        item.plannedAmount = 0;
+                                      } else {
+                                        item.plannedAmount = Number(event.target.value);
+                                      }
                                     }
                                     return item;
                                   });
@@ -495,9 +513,15 @@ export default function CalculationPage() {
                                               >
                                                 + {Math.floor(item.more)} Anpassen
                                               </span>
-                                              <span
+                                              <button
                                                 key={`cocktail-${cocktail.cocktail.id}-ingredient-${index}-less`}
                                                 className={'btn btn-outline btn-sm text-red-500'}
+                                                disabled={
+                                                  (cocktailCalculationItems.find((cocktailItem) => cocktailItem.cocktail.id == cocktail.cocktail.id)
+                                                    ?.plannedAmount ?? 0) +
+                                                    Math.floor(item.less) <
+                                                  0
+                                                }
                                                 onClick={() => {
                                                   const temp = cocktailCalculationItems.map((calcItem) => {
                                                     if (calcItem.cocktail.id == cocktail.cocktail.id) {
@@ -511,7 +535,7 @@ export default function CalculationPage() {
                                                 }}
                                               >
                                                 {Math.floor(item.less)} Anpassen
-                                              </span>
+                                              </button>
                                             </>
                                           ))}
                                       </div>
@@ -526,7 +550,9 @@ export default function CalculationPage() {
                             </td>
                             {showSalesStuff ? (
                               <>
-                                <td>{cocktail.cocktail.price}</td>
+                                <td>
+                                  <span>{`${cocktail.cocktail.price} €`}</span>
+                                </td>
                                 <td>
                                   <div className={'join print:hidden'}>
                                     <input
