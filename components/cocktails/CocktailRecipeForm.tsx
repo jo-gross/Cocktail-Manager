@@ -4,7 +4,7 @@ import { TagsInput } from 'react-tag-input-component';
 import { Field, FieldArray, Formik, FormikProps } from 'formik';
 import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import { Garnish, Glass, Ingredient, WorkspaceCocktailRecipeStepAction, WorkspaceSetting } from '@prisma/client';
+import { Garnish, Glass, Ingredient, WorkspaceCocktailRecipeStepAction } from '@prisma/client';
 import { updateTags, validateTag } from '../../models/tags/TagUtils';
 import { UploadDropZone } from '../UploadDropZone';
 import { convertToBase64 } from '../../lib/Base64Converter';
@@ -24,7 +24,6 @@ import { IngredientForm } from '../ingredients/IngredientForm';
 import { GlassForm } from '../glasses/GlassForm';
 import { CocktailRecipeFullWithImage } from '../../models/CocktailRecipeFullWithImage';
 import { UserContext } from '../../lib/context/UserContextProvider';
-import { WorkspaceSettingKey } from '.prisma/client';
 import DeepDiff from 'deep-diff';
 import { GlassModel } from '../../models/GlassModel';
 
@@ -785,25 +784,12 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                   <option disabled={true}>Lade...</option>
                                 ) : (
                                   Object.entries(_.groupBy(actions, 'actionGroup')).map(([group, groupActions]) => (
-                                    <optgroup
-                                      key={`form-recipe-step-${step.id}-action-group-${group}`}
-                                      label={
-                                        JSON.parse(
-                                          (userContext.workspace?.WorkspaceSetting as WorkspaceSetting[]).find(
-                                            (setting) => setting.setting == WorkspaceSettingKey.translations,
-                                          )?.value ?? '{}',
-                                        )['de'][group] ?? group
-                                      }
-                                    >
+                                    <optgroup key={`form-recipe-step-${step.id}-action-group-${group}`} label={userContext.getTranslation(group, 'de')}>
                                       {groupActions
                                         .sort((a, b) => a.name.localeCompare(b.name))
                                         .map((action) => (
                                           <option key={`form-recipe-step-${step.id}-action-${action.id}`} value={action.id}>
-                                            {JSON.parse(
-                                              (userContext.workspace?.WorkspaceSetting as WorkspaceSetting[]).find(
-                                                (setting) => setting.setting == WorkspaceSettingKey.translations,
-                                              )?.value ?? '{}',
-                                            )['de'][action.name] ?? action.name}
+                                            {userContext.getTranslation(action.name, 'de')}
                                           </option>
                                         ))}
                                       )

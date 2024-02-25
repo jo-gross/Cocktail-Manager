@@ -1,9 +1,7 @@
 import { CocktailRecipeFull } from '../../models/CocktailRecipeFull';
 import React, { useContext } from 'react';
 import DefaultGlassIcon from '../DefaultGlassIcon';
-import { WorkspaceSettingKey } from '.prisma/client';
 import { UserContext } from '../../lib/context/UserContextProvider';
-import { WorkspaceSetting } from '@prisma/client';
 import Image from 'next/image';
 
 interface CompactCocktailRecipeInstructionProps {
@@ -54,12 +52,7 @@ export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeIns
           ?.sort((a, b) => a.stepNumber - b.stepNumber)
           ?.map((step, index) => (
             <div key={`step-${step.id}`} className={'break-words pb-2'}>
-              <span className={'font-bold'}>
-                {JSON.parse(
-                  (userContext.workspace?.WorkspaceSetting as WorkspaceSetting[]).find((setting) => setting.setting == WorkspaceSettingKey.translations)
-                    ?.value ?? '{}',
-                )['de'][step.action?.name] ?? step.action?.name}
-              </span>
+              <span className={'font-bold'}>{userContext.getTranslation(step.action.name, 'de')}</span>
               {step.ingredients
                 ?.sort((a, b) => a.ingredientNumber - b.ingredientNumber)
                 .map((ingredient, indexIngredient) => (

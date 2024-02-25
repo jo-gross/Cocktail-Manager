@@ -1,12 +1,13 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { signOut, useSession } from 'next-auth/react';
-import { Role, User, UserSetting, WorkspaceUser } from '@prisma/client';
+import { Role, User, UserSetting, WorkspaceSetting, WorkspaceUser } from '@prisma/client';
 import { PageCenter } from '../PageCenter';
 import { Loading } from '../../Loading';
 import { UserContext } from '../../../lib/context/UserContextProvider';
 import { alertService } from '../../../lib/alertService';
 import { useRouter } from 'next/router';
 import { WorkspaceFull } from '../../../models/WorkspaceFull';
+import { WorkspaceSettingKey } from '.prisma/client';
 
 interface AlertBoundaryProps {
   children: React.ReactNode;
@@ -85,6 +86,17 @@ export function AuthBoundary(props: AlertBoundaryProps) {
     fetchWorkspace();
   }, [fetchWorkspace]);
 
+  const getTranslation = useCallback(
+    (key: string, language: 'de') => {
+      return (
+        JSON.parse((workspace?.WorkspaceSetting as WorkspaceSetting[]).find((setting) => setting.setting == WorkspaceSettingKey.translations)?.value ?? '{}')[
+          language
+        ][key] ?? key
+      );
+    },
+    [workspace],
+  );
+
   return (
     <>
       <UserContext.Provider
@@ -141,6 +153,7 @@ export function AuthBoundary(props: AlertBoundaryProps) {
                 alertService.error('Es ist ein Fehler aufgetreten');
               });
           },
+          getTranslation: getTranslation,
         }}
       >
         {userLoading ? (

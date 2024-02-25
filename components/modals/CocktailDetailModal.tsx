@@ -6,8 +6,7 @@ import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { UserContext } from '../../lib/context/UserContextProvider';
 import DefaultGlassIcon from '../DefaultGlassIcon';
-import { Role, WorkspaceSetting } from '@prisma/client';
-import { WorkspaceSettingKey } from '.prisma/client';
+import { Role } from '@prisma/client';
 import { alertService } from '../../lib/alertService';
 import Image from 'next/image';
 import AvatarImage from '../AvatarImage';
@@ -157,12 +156,7 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
             <div className={'grid grid-cols-2 gap-4'}>
               {loadedCocktail.steps.map((step) => (
                 <div key={'cocktail-details-step-' + step.id} className={'col-span-2 space-y-2 rounded-lg border-2 border-base-300 p-2'}>
-                  <span className={'text-xl font-bold'}>
-                    {JSON.parse(
-                      (userContext.workspace?.WorkspaceSetting as WorkspaceSetting[]).find((setting) => setting.setting == WorkspaceSettingKey.translations)
-                        ?.value ?? '{}',
-                    )['de'][step.action?.name] ?? step.action?.name}
-                  </span>
+                  <span className={'text-xl font-bold'}>{userContext.getTranslation(step.action.name, 'de')}</span>
                   {step.ingredients.map((ingredient) => (
                     <div key={'cocktail-details-step-ingredient-' + ingredient.id} className={'pl-2'}>
                       <div className={'flex-1'}>
