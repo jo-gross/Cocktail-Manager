@@ -80,6 +80,7 @@ export default function WorkspaceSettingPage() {
         body: JSON.stringify(data),
       });
       if (response.ok) {
+        fetchCocktailRecipeActions();
         alertService.success(`Import erfolgreich`);
         setUploadImportFile(undefined);
         if (uploadImportFileRef.current) {
@@ -235,9 +236,39 @@ export default function WorkspaceSettingPage() {
       .finally(() => setWorkspaceActionLoading(false));
   }, [workspaceId]);
 
+  const [actionDeleting, setActionDeleting] = useState<{ [key: string]: boolean }>({});
+
+  const deleteCocktailRecipeAction = useCallback(
+    async (actionId: string) => {
+      if (workspaceId == undefined) return;
+      if (actionDeleting[actionId] ?? false) return;
+      setActionDeleting({ ...actionDeleting, [actionId]: true });
+      fetch(`/api/workspaces/${workspaceId}/actions/${actionId}`, {
+        method: 'DELETE',
+      })
+        .then(async (response) => {
+          if (response.ok) {
+            fetchCocktailRecipeActions();
+            alertService.success('Erfolgreich gelöscht');
+          } else {
+            const body = await response.json();
+            console.error('SettingsPage -> deleteCocktailRecipeAction', response);
+            alertService.error(body.message ?? 'Fehler beim Löschen', response.status, response.statusText);
+          }
+        })
+        .catch((error) => {
+          console.error('SettingsPage -> deleteCocktailRecipeAction', error);
+          alertService.error('Fehler beim Löschen');
+        })
+        .finally(() => {
+          setActionDeleting({ ...actionDeleting, [actionId]: false });
+        });
+    },
+    [actionDeleting, fetchCocktailRecipeActions, workspaceId],
+  );
+
   useEffect(() => {
     fetchWorkspaceUsers();
-
     fetchSignage();
     fetchCocktailRecipeActions();
   }, [fetchCocktailRecipeActions, fetchSignage, fetchWorkspaceUsers]);
@@ -590,13 +621,12 @@ export default function WorkspaceSettingPage() {
                         <td>Gruppenbezeichner</td>
                         <td className={'flex flex-row justify-end'}>
                           <button
-                            className={'btn btn-outline btn-secondary btn-sm'}
+                            className={'btn btn-primary btn-sm'}
                             onClick={() => {
                               modalContext.openModal(
                                 <CocktailStepActionModal
                                   cocktailStepAction={undefined}
                                   cocktailStepActionGroups={Object.keys(_.groupBy(workspaceActions, 'actionGroup'))}
-                                  onSaved={fetchCocktailRecipeActions}
                                 />,
                               );
                             }}
@@ -624,14 +654,26 @@ export default function WorkspaceSettingPage() {
                                   <CocktailStepActionModal
                                     cocktailStepAction={action}
                                     cocktailStepActionGroups={Object.keys(_.groupBy(workspaceActions, 'actionGroup'))}
-                                    onSaved={fetchCocktailRecipeActions}
                                   />,
                                 );
                               }}
                             >
                               Edit
                             </button>
-                            <button disabled={true} className={'btn-red btn btn-outline btn-sm '}>
+                            <button
+                              disabled={actionDeleting[action.id] ?? false}
+                              className={'btn-red btn btn-outline btn-sm '}
+                              onClick={() =>
+                                modalContext.openModal(
+                                  <DeleteConfirmationModal
+                                    onApprove={() => deleteCocktailRecipeAction(action.id)}
+                                    spelling={'DELETE'}
+                                    entityName={userContext.getTranslation(action.name, 'de')}
+                                  />,
+                                )
+                              }
+                            >
+                              {actionDeleting[action.id] ?? false ? <span className={'loading loading-spinner'} /> : <></>}
                               <FaTrashAlt />
                             </button>
                           </td>

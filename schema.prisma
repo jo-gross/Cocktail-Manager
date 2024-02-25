@@ -236,7 +236,7 @@ model CocktailRecipeGarnish {
 
 model WorkspaceCocktailRecipeStepAction {
   id                 String               @id @default(cuid())
-  name               String
+  name               String               @unique
   actionGroup        String
   workspaceId        String
   workspace          Workspace            @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
@@ -250,7 +250,7 @@ model CocktailRecipeStep {
   stepNumber Int
 
   actionId String
-  action   WorkspaceCocktailRecipeStepAction @relation(fields: [actionId], references: [id], onDelete: Cascade)
+  action   WorkspaceCocktailRecipeStepAction @relation(fields: [actionId], references: [id], onDelete: NoAction)
 
   ingredients CocktailRecipeIngredient[]
 

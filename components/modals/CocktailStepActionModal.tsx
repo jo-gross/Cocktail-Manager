@@ -3,16 +3,21 @@ import { Field, Formik } from 'formik';
 import React, { useContext } from 'react';
 import { UserContext } from '../../lib/context/UserContextProvider';
 import { ModalContext } from '../../lib/context/ModalContextProvider';
+import { alertService } from '../../lib/alertService';
+import { useRouter } from 'next/router';
 
 interface CocktailStepActionModalProps {
   cocktailStepAction?: WorkspaceCocktailRecipeStepAction;
   cocktailStepActionGroups?: string[];
-  onSaved: () => void;
 }
 
 export default function CocktailStepActionModal(props: CocktailStepActionModalProps) {
   const userContext = useContext(UserContext);
   const modalContext = useContext(ModalContext);
+
+  const router = useRouter();
+
+  const { workspaceId } = router.query;
 
   return (
     <div className={'flex flex-col gap-2'}>
@@ -25,8 +30,50 @@ export default function CocktailStepActionModal(props: CocktailStepActionModalPr
           newActionGroup: '',
           lableDE: props.cocktailStepAction != undefined ? userContext.getTranslation(props.cocktailStepAction.name, 'de') : '',
         }}
-        onSubmit={(values) => {
-          alert(JSON.stringify(values));
+        onSubmit={async (values) => {
+          try {
+            const body = {
+              name: values.action,
+              actionGroup: values.actionGroup?.trim() == '' ? null : values.actionGroup?.trim(),
+              translations: {
+                de: values.lableDE,
+              },
+            };
+            if (props.cocktailStepAction == undefined) {
+              const response = await fetch(`/api/workspaces/${workspaceId}/actions`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body),
+              });
+              if (response.status.toString().startsWith('2')) {
+                router.reload();
+                modalContext.closeModal();
+                alertService.success('Zubereitungsmethode erfolgreich erstellt');
+              } else {
+                const body = await response.json();
+                console.error('CocktailStepActionModal -> onSubmit[create]', response);
+                alertService.error(body.message ?? 'Fehler beim Erstellen der Zubereitungsmethode', response.status, response.statusText);
+              }
+            } else {
+              const response = await fetch(`/api/workspaces/${workspaceId}/actions/${props.cocktailStepAction.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body),
+              });
+              if (response.status.toString().startsWith('2')) {
+                router.reload();
+                modalContext.closeModal();
+                alertService.success('Zubereitungsmethode erfolgreich gespeichert');
+              } else {
+                const body = await response.json();
+                console.error('CocktailStepActionModal -> onSubmit[update]', response);
+                alertService.error(body.message ?? 'Fehler beim Speichern der Zubereitungsmethode', response.status, response.statusText);
+              }
+            }
+          } catch (error) {
+            console.error('CocktailStepActionModal -> onSubmit', error);
+            alertService.error('Es ist ein Fehler aufgetreten');
+          }
         }}
         validate={(values) => {
           const errors: { [key: string]: string } = {};
@@ -35,6 +82,8 @@ export default function CocktailStepActionModal(props: CocktailStepActionModalPr
             if (!/^[A-Z_]+$/.test(values.actionGroup)) {
               errors.newActionGroup = 'Nur A-Z und _ erlaubt';
             }
+          } else {
+            errors.newActionGroup = 'Ungültiger Identifier';
           }
 
           if (!values.action || values.action.trim() == '') {
@@ -98,7 +147,14 @@ export default function CocktailStepActionModal(props: CocktailStepActionModalPr
                     <span>*</span>
                   </div>
                 </label>
-                <input id={'action'} name={'action'} value={values.action} onChange={handleChange} className={'input input-bordered'} />
+                <input
+                  id={'action'}
+                  readOnly={props.cocktailStepAction != undefined}
+                  name={'action'}
+                  value={values.action}
+                  onChange={handleChange}
+                  className={`input input-bordered ${props.cocktailStepAction != undefined ? 'input-disabled' : ''}`}
+                />
               </div>
               <div className={'form-control'}>
                 <label className={'label'}>
@@ -113,7 +169,7 @@ export default function CocktailStepActionModal(props: CocktailStepActionModalPr
             </div>
             <div className={'flex justify-end gap-2'}>
               <button
-                className={'btn btn-error'}
+                className={'btn btn-outline btn-error'}
                 type={'button'}
                 onClick={() => {
                   modalContext.closeModal();
