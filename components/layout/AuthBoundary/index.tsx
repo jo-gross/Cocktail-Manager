@@ -86,15 +86,22 @@ export function AuthBoundary(props: AlertBoundaryProps) {
     fetchWorkspace();
   }, [fetchWorkspace]);
 
-  const getTranslation = useCallback(
+  const getTranslationOrNull = useCallback(
     (key: string, language: 'de') => {
       return (
         JSON.parse((workspace?.WorkspaceSetting as WorkspaceSetting[]).find((setting) => setting.setting == WorkspaceSettingKey.translations)?.value ?? '{}')[
           language
-        ][key] ?? key
+        ][key] ?? null
       );
     },
     [workspace],
+  );
+
+  const getTranslation = useCallback(
+    (key: string, language: 'de') => {
+      return getTranslationOrNull(key, language) ?? key;
+    },
+    [getTranslationOrNull],
   );
 
   return (
@@ -154,6 +161,7 @@ export function AuthBoundary(props: AlertBoundaryProps) {
               });
           },
           getTranslation: getTranslation,
+          getTranslationOrNull: getTranslationOrNull,
         }}
       >
         {userLoading ? (

@@ -22,7 +22,7 @@ export default function CocktailStepActionGroupModal(props: CocktailStepActionGr
       <div className={'text-2xl font-bold'}>Zubereitungsgruppe Anpassen</div>
       <Formik
         initialValues={{
-          lableDE: userContext.getTranslation(props.actionGroup, 'de'),
+          lableDE: userContext.getTranslationOrNull(props.actionGroup, 'de') ?? '',
         }}
         onSubmit={async (values) => {
           try {
