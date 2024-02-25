@@ -15,6 +15,7 @@ import '../../../../../lib/DateUtils';
 import { Loading } from '../../../../../components/Loading';
 import _ from 'lodash';
 import CocktailStepActionModal from '../../../../../components/modals/CocktailStepActionModal';
+import CocktailStepActionGroupModal from '../../../../../components/modals/CocktailStepActionGroupModal';
 import MonitorFormat = $Enums.MonitorFormat;
 
 export default function WorkspaceSettingPage() {
@@ -701,7 +702,14 @@ export default function WorkspaceSettingPage() {
                           <td>{group}</td>
                           <td>{userContext.getTranslation(group, 'de')}</td>
                           <td className={'flex flex-row justify-end gap-2'}>
-                            <button className={'btn btn-outline btn-primary btn-sm'}>Edit</button>
+                            <button
+                              className={'btn btn-outline btn-primary btn-sm'}
+                              onClick={() => {
+                                modalContext.openModal(<CocktailStepActionGroupModal actionGroup={group} />);
+                              }}
+                            >
+                              Edit
+                            </button>
                           </td>
                         </tr>
                       ))

@@ -98,8 +98,6 @@ export default function CocktailStepActionModal(props: CocktailStepActionModalPr
             errors.lableDE = 'Ungültiger Bezeichner';
           }
 
-          console.log(errors);
-
           return errors;
         }}
       >

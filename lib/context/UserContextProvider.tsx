@@ -15,6 +15,7 @@ interface UserContextProps {
   updateUserSetting(setting: string, value: string | null): void;
 
   getTranslation: (key: string, language: 'de') => string;
+  getTranslationOrNull: (key: string, language: 'de') => string | undefined;
 }
 
 export const UserContext = createContext<UserContextProps>({
@@ -26,4 +27,5 @@ export const UserContext = createContext<UserContextProps>({
   updateUserSetting: () => {},
   isUserPermitted: () => false,
   getTranslation: () => '',
+  getTranslationOrNull: () => '',
 });
