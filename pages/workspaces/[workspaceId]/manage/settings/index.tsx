@@ -276,7 +276,7 @@ export default function WorkspaceSettingPage() {
 
   return (
     <ManageEntityLayout backLink={`/workspaces/${workspaceId}/manage`} title={'Workspace-Einstellungen'}>
-      <div className={'grid grid-cols-1 gap-2 md:grid-cols-2 md:gap-4'}>
+      <div className={'grid grid-flow-row-dense grid-cols-1 gap-2 md:grid-cols-2 md:gap-4'}>
         <div className={'card overflow-y-auto md:col-span-2'}>
           <div className={'card-body'}>
             <div className={'card-title'}>Workspace Nutzer verwalten</div>
@@ -440,44 +440,8 @@ export default function WorkspaceSettingPage() {
         ) : (
           <></>
         )}
-        {userContext.isUserPermitted(Role.ADMIN) ? (
-          <div className={'col-span-1'}>
-            <div className={'card'}>
-              <div className={'card-body'}>
-                <div className={'card-title'}>Gefahrenbereich</div>
-                <label className={'label cursor-pointer'}>
-                  <span className={'label-text'}>Gefahrenbereich verlassen</span>
-                </label>
-                <div className={'join'}>
-                  <input
-                    type={'text'}
-                    className={'input join-item input-bordered w-full'}
-                    value={newWorkspaceName}
-                    onChange={(event) => setNewWorkspaceName(event.target.value)}
-                  />
-                  <button
-                    className={'btn btn-outline btn-error join-item'}
-                    disabled={newWorkspaceName.length < 3 || newWorkspaceName.length > 50}
-                    onClick={handleRenameWorkspace}
-                  >
-                    {workspaceRenaming ? <span className={'loading loading-spinner'} /> : <></>}
-                    Umbenennen
-                  </button>
-                </div>
-                <div className={'divider'}></div>
-                <button
-                  className={'btn btn-outline btn-error'}
-                  onClick={() => modalContext.openModal(<DeleteConfirmationModal onApprove={handleDeleteWorkspace} spelling={'DELETE'} />)}
-                >
-                  {workspaceDeleting ? <span className={'loading loading-spinner'} /> : <></>}
-                  Workspace löschen
-                </button>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <></>
-        )}
+
+        {/*Signage*/}
         {userContext.isUserPermitted(Role.MANAGER) ? (
           <div className={'card'}>
             <div className={'card-body'}>
@@ -598,7 +562,7 @@ export default function WorkspaceSettingPage() {
         ) : (
           <></>
         )}
-
+        {/*Cocktail Recipe Actions*/}
         {userContext.isUserPermitted(Role.ADMIN) ? (
           <div className={'card'}>
             <div className={'card-body'}>
@@ -717,6 +681,46 @@ export default function WorkspaceSettingPage() {
                   </table>
                 </>
               )}
+            </div>
+          </div>
+        ) : (
+          <></>
+        )}
+        {/*Workspace Dangerous Actions*/}
+        {userContext.isUserPermitted(Role.ADMIN) ? (
+          <div className={'col-span-full'}>
+            <div className={'divider'}>Gefahrenbereich</div>
+            <div className={'card'}>
+              <div className={'card-body'}>
+                <div className={'card-title'}>Gefahrenbereich</div>
+                <label className={'label cursor-pointer'}>
+                  <span className={'label-text'}>Gefahrenbereich verlassen</span>
+                </label>
+                <div className={'join'}>
+                  <input
+                    type={'text'}
+                    className={'input join-item input-bordered w-full'}
+                    value={newWorkspaceName}
+                    onChange={(event) => setNewWorkspaceName(event.target.value)}
+                  />
+                  <button
+                    className={'btn btn-outline btn-error join-item'}
+                    disabled={newWorkspaceName.length < 3 || newWorkspaceName.length > 50}
+                    onClick={handleRenameWorkspace}
+                  >
+                    {workspaceRenaming ? <span className={'loading loading-spinner'} /> : <></>}
+                    Umbenennen
+                  </button>
+                </div>
+                <div className={'divider'}></div>
+                <button
+                  className={'btn btn-outline btn-error'}
+                  onClick={() => modalContext.openModal(<DeleteConfirmationModal onApprove={handleDeleteWorkspace} spelling={'DELETE'} />)}
+                >
+                  {workspaceDeleting ? <span className={'loading loading-spinner'} /> : <></>}
+                  Workspace löschen
+                </button>
+              </div>
             </div>
           </div>
         ) : (
