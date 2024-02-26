@@ -53,6 +53,6 @@ export default withHttpMethods({
       });
     }
 
-    return res.json(result);
+    return res.json({ data: result });
   }),
 });

@@ -15,7 +15,7 @@ interface GlassFormProps {
   glass?: GlassWithImage;
   setUnsavedChanges?: (unsavedChanges: boolean) => void;
   formRef?: React.RefObject<FormikProps<any>>;
-  onSaved?: () => void;
+  onSaved?: (id: string) => void;
 }
 
 export function GlassForm(props: GlassFormProps) {
@@ -60,7 +60,7 @@ export function GlassForm(props: GlassFormProps) {
             });
             if (response.status.toString().startsWith('2')) {
               if (props.onSaved) {
-                props.onSaved();
+                props.onSaved((await response.json()).data.id);
               } else {
                 router.push(`/workspaces/${workspaceId}/manage/glasses`).then(() => alertService.success('Glas erfolgreich erstellt'));
               }
@@ -77,7 +77,7 @@ export function GlassForm(props: GlassFormProps) {
             });
             if (response.status.toString().startsWith('2')) {
               if (props.onSaved) {
-                props.onSaved();
+                props.onSaved(props.glass.id);
               } else {
                 router.push(`/workspaces/${workspaceId}/manage/glasses`).then(() => alertService.success('Glas erfolgreich gespeichert'));
               }
