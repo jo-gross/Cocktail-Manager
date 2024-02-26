@@ -1,0 +1,57 @@
+name: Bug report
+description: Create a bug report you've found.
+title: "bug: "
+labels: [ bug ]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report! Please fill the form in English!
+  - type: checkboxes
+    attributes:
+      label: Have you checked, if there already is any existing issue mentioning the same problem?
+      options:
+        - label: I have searched the existing issues and nothing seems to be related to my problem.
+          required: true
+
+  - type: input
+    attributes:
+      label: Environment and Version
+      description: |
+        Please enter the version you seeing this problem within the following format "vX.Y.Z (Production)" or "vX.Y.Z (Local)":
+    validations:
+      required: true
+
+  - type: dropdown
+    attributes:
+      label: What browsers are you seeing the problem on?
+      multiple: true
+      options:
+        - Firefox
+        - Chrome
+        - Safari
+
+  - type: textarea
+    attributes:
+      label: Current Behavior
+      description: Describe the current behavior. Including how to reproduce this.
+      placeholder: |
+        When <X1>, <X2>, ... then <Y> happens...
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Expected Behavior
+      description: A concise description of what you expected to happen.
+      placeholder: <Z> should happen ...
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Anything else?
+      description: |
+        Links? References? Anything that will give us more context about the issue you are encountering!
+    validations:
+      required: false
