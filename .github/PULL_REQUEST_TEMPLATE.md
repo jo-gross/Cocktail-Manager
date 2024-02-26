@@ -24,6 +24,5 @@ merging your code._
 
 ## Further comments
 
-If this is a relatively large or complex change, kick off the discussion by explaining why you chose the solution you
-did and what alternatives you considered, etc...
+...
 
