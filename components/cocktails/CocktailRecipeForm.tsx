@@ -64,23 +64,22 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
     if (!workspaceId) return;
 
     setIngredientsLoading(true);
-    fetch(`/api/workspaces/${workspaceId}/ingredients`)
-      .then(async (response) => {
-        const body = await response.json();
-        if (response.ok) {
-          setIngredients(body.data);
-        } else {
-          console.error('CocktailRecipeForm -> fetchIngredients', response);
-          alertService.error(body.message ?? 'Fehler beim Laden der Zutaten', response.status, response.statusText);
-        }
-      })
-      .catch((error) => {
-        console.error('CocktailRecipeForm -> fetchIngredients', error);
-        alertService.error('Fehler beim Laden der Zutaten');
-      })
-      .finally(() => {
-        setIngredientsLoading(false);
-      });
+    try {
+      const response = await fetch(`/api/workspaces/${workspaceId}/ingredients`);
+
+      const body = await response.json();
+      if (response.ok) {
+        setIngredients(body.data);
+      } else {
+        console.error('CocktailRecipeForm -> fetchIngredients', response);
+        alertService.error(body.message ?? 'Fehler beim Laden der Zutaten', response.status, response.statusText);
+      }
+    } catch (error) {
+      console.error('CocktailRecipeForm -> fetchIngredients', error);
+      alertService.error('Fehler beim Laden der Zutaten');
+    } finally {
+      setIngredientsLoading(false);
+    }
   }, [workspaceId]);
 
   const openIngredientSelectModal = useCallback(
@@ -183,13 +182,6 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
       });
   }, [workspaceId]);
 
-  useEffect(() => {
-    fetchActions();
-    fetchGarnishes();
-    fetchIngredients();
-    fetchGlasses();
-  }, [fetchGarnishes, fetchGlasses, fetchIngredients]);
-
   const openGarnishSelectModal = useCallback(
     (setFieldValue: any, indexGarnish: number) => {
       modalContext.openModal(
@@ -223,13 +215,26 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
   }, [glasses, props.cocktailRecipe?.glassId]);
 
   useEffect(() => {
-    if (props.cocktailRecipe != undefined && props.cocktailRecipe.garnishes?.length > 0 && garnishes.length > 0) {
+    // Otherwise not saved changes will be overwritten
+    if (formRef.current?.values.garnishes == undefined) {
+      if (props.cocktailRecipe != undefined && props.cocktailRecipe.garnishes?.length > 0 && garnishes.length > 0) {
+        formRef.current?.setFieldValue(
+          'garnishes',
+          props.cocktailRecipe?.garnishes.map((garnish) => {
+            return {
+              ...garnish,
+              garnishId: garnish.garnishId ?? '',
+              garnish: garnishes.find((g) => g.id == garnish.garnishId) ?? undefined,
+            };
+          }),
+        );
+      }
+    } else {
       formRef.current?.setFieldValue(
         'garnishes',
-        props.cocktailRecipe?.garnishes.map((garnish) => {
+        formRef.current?.values.garnishes.map((garnish: any) => {
           return {
             ...garnish,
-            garnishId: garnish.garnishId ?? '',
             garnish: garnishes.find((g) => g.id == garnish.garnishId) ?? undefined,
           };
         }),
@@ -238,13 +243,31 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
   }, [garnishes, props.cocktailRecipe, props.cocktailRecipe?.garnishes]);
 
   useEffect(() => {
-    if (props.cocktailRecipe?.steps.some((step) => step.ingredients.map((ingredient) => ingredient).length > 0) && ingredients.length > 0) {
+    // Otherwise not saved changes will be overwritten
+    if (formRef.current?.values.steps == undefined) {
+      if (props.cocktailRecipe?.steps.some((step) => step.ingredients.map((ingredient) => ingredient).length > 0) && ingredients.length > 0) {
+        formRef.current?.setFieldValue(
+          'steps',
+          props.cocktailRecipe?.steps.map((step) => {
+            return {
+              ...step,
+              ingredients: step.ingredients.map((ingredient) => {
+                return {
+                  ...ingredient,
+                  ingredient: ingredients.find((i) => i.id == ingredient.ingredientId) ?? undefined,
+                };
+              }),
+            };
+          }),
+        );
+      }
+    } else {
       formRef.current?.setFieldValue(
         'steps',
-        props.cocktailRecipe?.steps.map((step) => {
+        formRef.current?.values.steps.map((step: any) => {
           return {
             ...step,
-            ingredients: step.ingredients.map((ingredient) => {
+            ingredients: step.ingredients.map((ingredient: any) => {
               return {
                 ...ingredient,
                 ingredient: ingredients.find((i) => i.id == ingredient.ingredientId) ?? undefined,
@@ -255,6 +278,13 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
       );
     }
   }, [ingredients, props.cocktailRecipe?.steps]);
+
+  useEffect(() => {
+    fetchActions();
+    fetchGarnishes();
+    fetchIngredients();
+    fetchGlasses();
+  }, [fetchActions, fetchGarnishes, fetchGlasses, fetchIngredients]);
 
   const initSteps: CocktailRecipeStepFull[] = props.cocktailRecipe?.steps ?? [];
 
@@ -563,8 +593,9 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                             <FormModal<Glass>
                               form={
                                 <GlassForm
-                                  onSaved={async () => {
+                                  onSaved={async (id) => {
                                     modalContext.closeModal();
+                                    await setFieldValue('glassId', id);
                                     await fetchGlasses();
                                   }}
                                 />
@@ -932,8 +963,9 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                               <FormModal<Ingredient>
                                                 form={
                                                   <IngredientForm
-                                                    onSaved={async () => {
+                                                    onSaved={async (id) => {
                                                       modalContext.closeModal();
+                                                      await setFieldValue(`steps.${indexStep}.ingredients.${indexIngredient}.ingredientId`, id);
                                                       await fetchIngredients();
                                                     }}
                                                   />
@@ -1120,8 +1152,9 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                       <FormModal<Garnish>
                                         form={
                                           <GarnishForm
-                                            onSaved={async () => {
+                                            onSaved={async (id) => {
                                               modalContext.closeModal();
+                                              await setFieldValue(`garnishes.${indexGarnish}.garnishId`, id);
                                               await fetchGarnishes();
                                             }}
                                           />

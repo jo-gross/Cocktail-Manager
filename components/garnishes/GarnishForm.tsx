@@ -16,7 +16,7 @@ interface GarnishFormProps {
   setUnsavedChanges?: (unsavedChanges: boolean) => void;
   formRef?: React.RefObject<FormikProps<any>>;
 
-  onSaved?: () => void;
+  onSaved?: (id: string) => void;
 }
 
 export function GarnishForm(props: GarnishFormProps) {
@@ -60,7 +60,7 @@ export function GarnishForm(props: GarnishFormProps) {
             });
             if (response.status.toString().startsWith('2')) {
               if (props.onSaved != undefined) {
-                props.onSaved();
+                props.onSaved((await response.json()).data.id);
               } else {
                 router.push(`/workspaces/${workspaceId}/manage/garnishes`).then(() => alertService.success('Garnitur erfolgreich erstellt'));
               }
@@ -77,7 +77,7 @@ export function GarnishForm(props: GarnishFormProps) {
             });
             if (response.status.toString().startsWith('2')) {
               if (props.onSaved != undefined) {
-                props.onSaved();
+                props.onSaved(props.garnish.id);
               } else {
                 router.push(`/workspaces/${workspaceId}/manage/garnishes`).then(() => alertService.success('Garnitur erfolgreich gespeichert'));
               }

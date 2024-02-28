@@ -18,7 +18,7 @@ interface IngredientFormProps {
   ingredient?: IngredientWithImage;
   setUnsavedChanges?: (unsavedChanges: boolean) => void;
   formRef?: React.RefObject<FormikProps<any>>;
-  onSaved?: () => void;
+  onSaved?: (id: string) => void;
 }
 
 export function IngredientForm(props: IngredientFormProps) {
@@ -66,7 +66,7 @@ export function IngredientForm(props: IngredientFormProps) {
             });
             if (response.status.toString().startsWith('2')) {
               if (props.onSaved != undefined) {
-                props.onSaved();
+                props.onSaved((await response.json()).data.id);
               } else {
                 router.replace(`/workspaces/${workspaceId}/manage/ingredients`).then(() => alertService.success('Zutat erfolgreich erstellt'));
               }
@@ -83,7 +83,7 @@ export function IngredientForm(props: IngredientFormProps) {
             });
             if (response.status.toString().startsWith('2')) {
               if (props.onSaved != undefined) {
-                props.onSaved();
+                props.onSaved(props.ingredient.id);
               } else {
                 router.replace(`/workspaces/${workspaceId}/manage/ingredients`).then(() => alertService.success('Zutat erfolgreich gespeichert'));
               }
