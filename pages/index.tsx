@@ -107,7 +107,15 @@ export default function WorkspacesPage() {
               width={247}
             />
             <h1 className={'text-center text-4xl font-bold'}>Cocktail-Manager</h1>
-            <div>v{packageInfo.version}</div>
+            <div>
+              <Link href={'https://github.com/jo-gross/Cocktail-Manager/'} target={'_blank'} className={'link'}>
+                v{packageInfo.version}
+              </Link>
+              {` ${process.env.NODE_ENV == 'development' ? '(DEV)' : ''} - by `}
+              <Link className={'link'} target={'_blank'} href={'https://github.com/jo-gross'}>
+                Johannes Groß
+              </Link>
+            </div>
             <div className={'flex items-center space-x-2'}>
               <>
                 {userContext.user ? (

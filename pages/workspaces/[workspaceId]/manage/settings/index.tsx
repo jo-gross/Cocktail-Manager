@@ -3,7 +3,7 @@ import { alertService } from '../../../../../lib/alertService';
 import { useRouter } from 'next/router';
 import { BackupStructure } from '../../../../api/workspaces/[workspaceId]/admin/backups/backupStructure';
 import { ManageEntityLayout } from '../../../../../components/layout/ManageEntityLayout';
-import { $Enums, Role, Signage, User, WorkspaceUser } from '@prisma/client';
+import { $Enums, Role, Signage, User, WorkspaceCocktailRecipeStepAction, WorkspaceUser } from '@prisma/client';
 import { UserContext } from '../../../../../lib/context/UserContextProvider';
 import { FaShareAlt, FaTrashAlt } from 'react-icons/fa';
 import { DeleteConfirmationModal } from '../../../../../components/modals/DeleteConfirmationModal';
@@ -12,6 +12,10 @@ import { UploadDropZone } from '../../../../../components/UploadDropZone';
 import { compressFile } from '../../../../../lib/ImageCompressor';
 import { convertToBase64 } from '../../../../../lib/Base64Converter';
 import '../../../../../lib/DateUtils';
+import { Loading } from '../../../../../components/Loading';
+import _ from 'lodash';
+import CocktailStepActionModal from '../../../../../components/modals/CocktailStepActionModal';
+import CocktailStepActionGroupModal from '../../../../../components/modals/CocktailStepActionGroupModal';
 import MonitorFormat = $Enums.MonitorFormat;
 
 export default function WorkspaceSettingPage() {
@@ -40,6 +44,9 @@ export default function WorkspaceSettingPage() {
   const [leaveLoading, setLeaveLoading] = useState<boolean>(false);
   const [workspaceDeleting, setWorkspaceDeleting] = useState<boolean>(false);
   const [workspaceRenaming, setWorkspaceRenaming] = useState<boolean>(false);
+
+  const [workspaceActions, setWorkspaceActions] = useState<WorkspaceCocktailRecipeStepAction[]>([]);
+  const [workspaceActionLoading, setWorkspaceActionLoading] = useState<boolean>(false);
 
   const exportAll = useCallback(async () => {
     setExporting(true);
@@ -74,6 +81,7 @@ export default function WorkspaceSettingPage() {
         body: JSON.stringify(data),
       });
       if (response.ok) {
+        fetchCocktailRecipeActions();
         alertService.success(`Import erfolgreich`);
         setUploadImportFile(undefined);
         if (uploadImportFileRef.current) {
@@ -209,15 +217,66 @@ export default function WorkspaceSettingPage() {
       });
   }, [workspaceId]);
 
+  const fetchCocktailRecipeActions = useCallback(() => {
+    if (workspaceId == undefined) return;
+    setWorkspaceActionLoading(true);
+    fetch(`/api/workspaces/${workspaceId}/actions`)
+      .then(async (response) => {
+        const body = await response.json();
+        if (response.ok) {
+          setWorkspaceActions(body.data);
+        } else {
+          console.error('SettingsPage -> fetchCocktailRecipeActions', response);
+          alertService.error(body.message ?? 'Fehler beim Laden der Cocktail-Rezept-Aktionen', response.status, response.statusText);
+        }
+      })
+      .catch((error) => {
+        console.error('SettingsPage -> fetchCocktailRecipeActions', error);
+        alertService.error('Fehler beim Laden der Cocktail-Rezept-Aktionen');
+      })
+      .finally(() => setWorkspaceActionLoading(false));
+  }, [workspaceId]);
+
+  const [actionDeleting, setActionDeleting] = useState<{ [key: string]: boolean }>({});
+
+  const deleteCocktailRecipeAction = useCallback(
+    async (actionId: string) => {
+      if (workspaceId == undefined) return;
+      if (actionDeleting[actionId] ?? false) return;
+      setActionDeleting({ ...actionDeleting, [actionId]: true });
+      fetch(`/api/workspaces/${workspaceId}/actions/${actionId}`, {
+        method: 'DELETE',
+      })
+        .then(async (response) => {
+          if (response.ok) {
+            fetchCocktailRecipeActions();
+            alertService.success('Erfolgreich gelöscht');
+          } else {
+            const body = await response.json();
+            console.error('SettingsPage -> deleteCocktailRecipeAction', response);
+            alertService.error(body.message ?? 'Fehler beim Löschen', response.status, response.statusText);
+          }
+        })
+        .catch((error) => {
+          console.error('SettingsPage -> deleteCocktailRecipeAction', error);
+          alertService.error('Fehler beim Löschen');
+        })
+        .finally(() => {
+          setActionDeleting({ ...actionDeleting, [actionId]: false });
+        });
+    },
+    [actionDeleting, fetchCocktailRecipeActions, workspaceId],
+  );
+
   useEffect(() => {
     fetchWorkspaceUsers();
-
     fetchSignage();
-  }, [fetchSignage, fetchWorkspaceUsers]);
+    fetchCocktailRecipeActions();
+  }, [fetchCocktailRecipeActions, fetchSignage, fetchWorkspaceUsers]);
 
   return (
     <ManageEntityLayout backLink={`/workspaces/${workspaceId}/manage`} title={'Workspace-Einstellungen'}>
-      <div className={'grid grid-cols-1 gap-2 md:grid-cols-2 md:gap-4'}>
+      <div className={'grid grid-flow-row-dense grid-cols-1 gap-2 md:grid-cols-2 md:gap-4'}>
         <div className={'card overflow-y-auto md:col-span-2'}>
           <div className={'card-body'}>
             <div className={'card-title'}>Workspace Nutzer verwalten</div>
@@ -381,44 +440,8 @@ export default function WorkspaceSettingPage() {
         ) : (
           <></>
         )}
-        {userContext.isUserPermitted(Role.ADMIN) ? (
-          <div className={'col-span-1'}>
-            <div className={'card'}>
-              <div className={'card-body'}>
-                <div className={'card-title'}>Gefahrenbereich</div>
-                <label className={'label cursor-pointer'}>
-                  <span className={'label-text'}>Gefahrenbereich verlassen</span>
-                </label>
-                <div className={'join'}>
-                  <input
-                    type={'text'}
-                    className={'input join-item input-bordered w-full'}
-                    value={newWorkspaceName}
-                    onChange={(event) => setNewWorkspaceName(event.target.value)}
-                  />
-                  <button
-                    className={'btn btn-outline btn-error join-item'}
-                    disabled={newWorkspaceName.length < 3 || newWorkspaceName.length > 50}
-                    onClick={handleRenameWorkspace}
-                  >
-                    {workspaceRenaming ? <span className={'loading loading-spinner'} /> : <></>}
-                    Umbenennen
-                  </button>
-                </div>
-                <div className={'divider'}></div>
-                <button
-                  className={'btn btn-outline btn-error'}
-                  onClick={() => modalContext.openModal(<DeleteConfirmationModal onApprove={handleDeleteWorkspace} spelling={'DELETE'} />)}
-                >
-                  {workspaceDeleting ? <span className={'loading loading-spinner'} /> : <></>}
-                  Workspace löschen
-                </button>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <></>
-        )}
+
+        {/*Signage*/}
         {userContext.isUserPermitted(Role.MANAGER) ? (
           <div className={'card'}>
             <div className={'card-body'}>
@@ -534,6 +557,170 @@ export default function WorkspaceSettingPage() {
                 {updatingSignage ? <span className={'loading loading-spinner'} /> : <></>}
                 Speichern
               </button>
+            </div>
+          </div>
+        ) : (
+          <></>
+        )}
+        {/*Cocktail Recipe Actions*/}
+        {userContext.isUserPermitted(Role.ADMIN) ? (
+          <div className={'card'}>
+            <div className={'card-body'}>
+              <div className={'card-title'}>Zubereitung</div>
+              <div>
+                Bei der Zubereitung von Cocktails können unterschiedliche Aktionen durchgeführt werden. Hier lassen sich diese Anpassen und erstellen. Beachte,
+                dass das Löschen erst dann funktioniert, wenn eine Aktion nicht mehr verwendet wird.
+              </div>
+              {workspaceActionLoading ? (
+                <div>
+                  <Loading />
+                </div>
+              ) : (
+                <>
+                  <div className={'text-lg font-bold'}>Methoden</div>
+                  <table className={'table-compact grid-col-full table w-full'}>
+                    <thead>
+                      <tr>
+                        <td>Key</td>
+                        <td>Deutsch</td>
+                        <td>Gruppenbezeichner</td>
+                        <td className={'flex flex-row justify-end'}>
+                          <button
+                            className={'btn btn-primary btn-sm'}
+                            onClick={() => {
+                              modalContext.openModal(
+                                <CocktailStepActionModal
+                                  cocktailStepAction={undefined}
+                                  cocktailStepActionGroups={Object.keys(_.groupBy(workspaceActions, 'actionGroup'))}
+                                />,
+                              );
+                            }}
+                          >
+                            Hinzufügen
+                          </button>
+                        </td>
+                      </tr>
+                    </thead>
+                    {workspaceActions.length == 0 ? (
+                      <tr>
+                        <td colSpan={4}>Keine Einträge vorhanden</td>
+                      </tr>
+                    ) : (
+                      workspaceActions.map((action) => (
+                        <tr key={`action-${action.id}`}>
+                          <td>{action.name}</td>
+                          <td>{userContext.getTranslation(action.name, 'de')}</td>
+                          <td>{userContext.getTranslation(action.actionGroup, 'de')}</td>
+                          <td className={'flex flex-row justify-end gap-2'}>
+                            <button
+                              className={'btn btn-outline btn-primary btn-sm'}
+                              onClick={() => {
+                                modalContext.openModal(
+                                  <CocktailStepActionModal
+                                    cocktailStepAction={action}
+                                    cocktailStepActionGroups={Object.keys(_.groupBy(workspaceActions, 'actionGroup'))}
+                                  />,
+                                );
+                              }}
+                            >
+                              Edit
+                            </button>
+                            <button
+                              disabled={actionDeleting[action.id] ?? false}
+                              className={'btn-red btn btn-outline btn-sm '}
+                              onClick={() =>
+                                modalContext.openModal(
+                                  <DeleteConfirmationModal
+                                    onApprove={() => deleteCocktailRecipeAction(action.id)}
+                                    spelling={'DELETE'}
+                                    entityName={userContext.getTranslation(action.name, 'de')}
+                                  />,
+                                )
+                              }
+                            >
+                              {actionDeleting[action.id] ?? false ? <span className={'loading loading-spinner'} /> : <></>}
+                              <FaTrashAlt />
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </table>
+                  <div className={'text-lg font-bold'}>Gruppen</div>
+                  <div>Diese können bei den Methoden erstellt werden, hier kannst du die passende Anzeige einstellen</div>
+                  <table className={'table-compact grid-col-full table w-full'}>
+                    <thead>
+                      <tr>
+                        <td>Key</td>
+                        <td>Deutsch</td>
+                        <td></td>
+                      </tr>
+                    </thead>
+                    {Object.entries(_.groupBy(workspaceActions, 'actionGroup')).length == 0 ? (
+                      <tr>
+                        <td colSpan={3}>Keine Einträge vorhanden</td>
+                      </tr>
+                    ) : (
+                      Object.entries(_.groupBy(workspaceActions, 'actionGroup')).map(([group, groupActions]) => (
+                        <tr key={`action-group-${group}`}>
+                          <td>{group}</td>
+                          <td>{userContext.getTranslation(group, 'de')}</td>
+                          <td className={'flex flex-row justify-end gap-2'}>
+                            <button
+                              className={'btn btn-outline btn-primary btn-sm'}
+                              onClick={() => {
+                                modalContext.openModal(<CocktailStepActionGroupModal actionGroup={group} />);
+                              }}
+                            >
+                              Edit
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </table>
+                </>
+              )}
+            </div>
+          </div>
+        ) : (
+          <></>
+        )}
+        {/*Workspace Dangerous Actions*/}
+        {userContext.isUserPermitted(Role.ADMIN) ? (
+          <div className={'col-span-full'}>
+            <div className={'divider'}>Gefahrenbereich</div>
+            <div className={'card'}>
+              <div className={'card-body'}>
+                <div className={'card-title'}>Gefahrenbereich</div>
+                <label className={'label cursor-pointer'}>
+                  <span className={'label-text'}>Gefahrenbereich verlassen</span>
+                </label>
+                <div className={'join'}>
+                  <input
+                    type={'text'}
+                    className={'input join-item input-bordered w-full'}
+                    value={newWorkspaceName}
+                    onChange={(event) => setNewWorkspaceName(event.target.value)}
+                  />
+                  <button
+                    className={'btn btn-outline btn-error join-item'}
+                    disabled={newWorkspaceName.length < 3 || newWorkspaceName.length > 50}
+                    onClick={handleRenameWorkspace}
+                  >
+                    {workspaceRenaming ? <span className={'loading loading-spinner'} /> : <></>}
+                    Umbenennen
+                  </button>
+                </div>
+                <div className={'divider'}></div>
+                <button
+                  className={'btn btn-outline btn-error'}
+                  onClick={() => modalContext.openModal(<DeleteConfirmationModal onApprove={handleDeleteWorkspace} spelling={'DELETE'} />)}
+                >
+                  {workspaceDeleting ? <span className={'loading loading-spinner'} /> : <></>}
+                  Workspace löschen
+                </button>
+              </div>
             </div>
           </div>
         ) : (

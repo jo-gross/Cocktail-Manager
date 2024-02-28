@@ -15,9 +15,10 @@ export function DeleteConfirmationModal(props: DeleteConfirmationModalProps) {
   return (
     <div className="flex flex-col space-y-4">
       <div className="text-2xl font-bold">{props.spelling == 'DELETE' ? 'Löschen' : 'Entfernen'}</div>
-      <div className="max-w-xl text-justify">{`Möchtest du ${props.entityName ?? 'diesen Eintrag'} wirklich ${
-        props.spelling == 'DELETE' ? 'löschen' : 'entfernen'
-      }?`}</div>
+      <div className="max-w-xl text-justify">
+        Möchtest du <span className={'font-bold italic'}>{props.entityName ?? 'diesen Eintrag'}</span> wirklich{' '}
+        {props.spelling == 'DELETE' ? 'löschen' : 'entfernen'}?
+      </div>
       <div className="flex flex-row space-x-4">
         <div className={'flex-1'}></div>
         <div
