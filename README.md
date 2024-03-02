@@ -76,11 +76,13 @@ with the following settings:
 - Redirect URIs: http://localhost:3000/api/auth/callback/google
 
 > Getting started with cloning the repository and copy the .env.example to .env
+>
 > ```sh
 > git clone https://github.com/jo-gross/Cocktail-Manager.git
 > cd Cocktail-Manager
 > cp .env.example .env
 > ```
+>
 > Enter your Google Client ID and Secret in the .env file and set the other environment variables.
 
 When the application is running, you should be able to access it at [http://localhost:3000](http://localhost:3000)
@@ -95,6 +97,7 @@ with `read:packages` scope
 #### Using `docker-compose`
 
 > ![docker-compose](https://img.shields.io/badge/Docker-2496ED.svg?style=flat&logo=Docker&logoColor=white)
+>
 > ```sh
 > docker-compose up -d
 > ```
@@ -102,52 +105,66 @@ with `read:packages` scope
 #### Using `locally build`
 
 > ![docker-compose](https://img.shields.io/badge/Docker-2496ED.svg?style=flat&logo=Docker&logoColor=white)
+>
 > ```sh
 > docker-compose up -d --build
 > ```
-
 
 ---
 
 ### ⚙️ Local development
 
 One-time setup:
+
 > Enable `corepack` to use [`yarn`](https://yarnpkg.com/getting-started/install)
+>
 > ```sh
 > sudo corepack enable
 > ```
 
 Starting development:
+
 > Start the database
+>
 > ```sh
 > docker-compose up postgres -d
 > ```
+>
 > Install all dependencies
+>
 > ```sh
 > yarn install
 > ```
+>
 > Apply migrations (WARNING: this could drop all of your local data, pay attention)
+>
 > ```sh
 > yarn prisma migrate dev
 > ```
+>
 > Start the application
+>
 > ```sh
 > yarn dev
 > ```
+>
 > All ui changes are automatically reloaded, but you need to restart the server when changing the api
 
 Developing changes that include database schema changes:
+
 > Push your changes without creating a migration
+>
 > ```sh
 > yarn prisma db push
 > ```
 >
 > When you are done with your changes, create a migration
+>
 > ```sh
 > yarn prisma migrate dev
 > ```
->All other help can be found in the [Prisma Documentation](https://www.prisma.io/docs/orm/prisma-migrate)
-
+>
+> All other help can be found in the [Prisma Documentation](https://www.prisma.io/docs/orm/prisma-migrate)
 
 ---
 
@@ -167,11 +184,11 @@ To grow the project, we need your help! See the links below to get started.
 - [👋 Start a Discussion][2]
 - [🐛 Open an Issue][3]
 
-[1]: https://github.com/jo-gross/cocktail-manager/blob/main/CONTRIBUTING.md "🔰 Contributing Guide"
+[1]: https://github.com/jo-gross/cocktail-manager/blob/main/CONTRIBUTING.md '🔰 Contributing Guide'
 
-[2]: https://github.com/jo-gross/cocktail-manager/discussions "👋 Start a Discussion"
+[2]: https://github.com/jo-gross/cocktail-manager/discussions '👋 Start a Discussion'
 
-[3]: https://github.com/jo-gross/cocktail-manager/issues "🐛 Open an Issue"
+[3]: https://github.com/jo-gross/cocktail-manager/issues '🐛 Open an Issue'
 
 <p align="left">
   <a href="https://github.com/jo-gross/cocktail-manager/graphs/contributors">
