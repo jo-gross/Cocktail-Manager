@@ -1,3 +1,15 @@
+# [1.4.0](https://github.com/jo-gross/Cocktail-Manager/compare/v1.3.0...v1.4.0) (2024-03-02)
+
+
+### Bug Fixes
+
+* Fixed loosing changes after updating the ingredients or garnishes in cocktail form ([#177](https://github.com/jo-gross/Cocktail-Manager/issues/177)) ([54c6b89](https://github.com/jo-gross/Cocktail-Manager/commit/54c6b89835ca5366a318cc8c321c46865306e522))
+
+
+### Features
+
+* Add options to customize cocktail step actions in the settings ([#171](https://github.com/jo-gross/Cocktail-Manager/issues/171)) ([5c91163](https://github.com/jo-gross/Cocktail-Manager/commit/5c9116354636d5bbc5bbdbc961fa1bfb6418a965))
+
 # [1.3.0](https://github.com/jo-gross/Cocktail-Manager/compare/v1.2.0...v1.3.0) (2024-02-23)
 
 
