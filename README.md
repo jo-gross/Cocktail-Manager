@@ -34,6 +34,13 @@
 
 ## 📍 Overview
 
+The Cocktail-Manager is a web application for managing cocktail recipes and ingredients. It is designed to be used in a
+bar with several users, with different roles and permissions.
+Originally a main goal was to create a compact view with all relevant infos from a high detailed cocktail recipes. Step
+by step the application grew and now it is a full-featured cocktail management tool. It combines the background
+management like financial/price calculation overview for partys or events, as well as the total production price of a
+cocktail, with the detailed recipe making and the compact view for the bar tenders during the evening.
+
 ---
 
 ## 🧩 Features
@@ -183,7 +190,8 @@ Thank you for your support!
 
 ## 📄 License
 
-[GNU AGPL v3 license with a Common Clause v1.0 selling exception](https://github.com/jo-gross/cocktail-manager/blob/main/LICENSE)
+This project is licensed under
+the [GNU AGPL v3 license with a Common Clause v1.0 selling exception](https://github.com/jo-gross/cocktail-manager/blob/main/LICENSE).
 
 ---
 
@@ -194,6 +202,10 @@ Thank you for your support!
 - [saadeghi/daisyui](https://github.com/saadeghi/daisyui) - An awesome component library for Tailwind CSS
 - [TandoorRecipes/recipes](https://github.com/TandoorRecipes/recipes) - Nice recipe book and a huge inspiration for the
   licence and a possible payment model
+- [eli64s/readme-ai](https://github.com/eli64s/readme-ai/) - Inspiration for the README.md
+- [medium.com/@brandonlostboy](https://medium.com/@brandonlostboy/build-it-better-next-js-api-handler-75070dd1826f) -
+  Inspiration for
+  the API-Handling middleware
 
 <p align="right">
   <a href="#-overview"><b>Return</b></a>
