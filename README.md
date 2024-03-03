@@ -39,7 +39,7 @@ bar with several users, with different roles and permissions.
 Originally a main goal was to create a compact view with all relevant infos from a high detailed cocktail recipes. Step
 by step the application grew and now it is a full-featured cocktail management tool. It combines the background
 management like financial/price calculation overview for partys or events, as well as the total production price of a
-cocktail, with the detailed recipe making and the compact view for the bar tenders during the evening.
+cocktail, with the detailed recipe making and the compact view for the bartenders during the evening.
 
 ---
 
@@ -49,7 +49,7 @@ cocktail, with the detailed recipe making and the compact view for the bar tende
   between them.
 - **User management** - Invite and manage users with different roles
 - **Cocktail recipe management** - Add, edit and delete cocktail recipes - in very detailed form.
-- **Optimal and optimized for bar tenders** - Option for easy search and compact view with the necessary steps for an
+- **Optimal and optimized for bartenders** - Option for easy search and compact view with the necessary steps for an
   cocktail
 - **Party/Event appraisal** - Calculate the amount of ingredients for a specific event or party, based on the cocktails
   you want to serve
@@ -96,7 +96,7 @@ with `read:packages` scope
 
 #### Using `docker-compose`
 
-> ![docker-compose](https://img.shields.io/badge/Docker-2496ED.svg?style=flat&logo=Docker&logoColor=white)
+> Run with prebuild images from ghcr.io
 >
 > ```sh
 > docker-compose up -d
@@ -104,7 +104,7 @@ with `read:packages` scope
 
 #### Using `locally build`
 
-> ![docker-compose](https://img.shields.io/badge/Docker-2496ED.svg?style=flat&logo=Docker&logoColor=white)
+> Build the images
 >
 > ```sh
 > docker-compose up -d --build
