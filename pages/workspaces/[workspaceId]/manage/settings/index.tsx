@@ -3,7 +3,7 @@ import { alertService } from '../../../../../lib/alertService';
 import { useRouter } from 'next/router';
 import { BackupStructure } from '../../../../api/workspaces/[workspaceId]/admin/backups/backupStructure';
 import { ManageEntityLayout } from '../../../../../components/layout/ManageEntityLayout';
-import { $Enums, Role, Signage, User, WorkspaceCocktailRecipeStepAction, WorkspaceUser } from '@prisma/client';
+import { $Enums, Role, Signage, Unit, User, WorkspaceCocktailRecipeStepAction, WorkspaceUser } from '@prisma/client';
 import { UserContext } from '../../../../../lib/context/UserContextProvider';
 import { FaShareAlt, FaTrashAlt } from 'react-icons/fa';
 import { DeleteConfirmationModal } from '../../../../../components/modals/DeleteConfirmationModal';
@@ -47,6 +47,9 @@ export default function WorkspaceSettingPage() {
 
   const [workspaceActions, setWorkspaceActions] = useState<WorkspaceCocktailRecipeStepAction[]>([]);
   const [workspaceActionLoading, setWorkspaceActionLoading] = useState<boolean>(false);
+
+  const [units, setUnits] = useState<Unit[]>([]);
+  const [unitsLoading, setUnitsLoading] = useState<boolean>(false);
 
   const exportAll = useCallback(async () => {
     setExporting(true);
@@ -237,6 +240,26 @@ export default function WorkspaceSettingPage() {
       .finally(() => setWorkspaceActionLoading(false));
   }, [workspaceId]);
 
+  const fetchUnits = useCallback(() => {
+    if (workspaceId == undefined) return;
+    setUnitsLoading(true);
+    fetch(`/api/workspaces/${workspaceId}/units`)
+      .then(async (response) => {
+        const body = await response.json();
+        if (response.ok) {
+          setUnits(body.data);
+        } else {
+          console.error('SettingsPage -> fetchUnits', response);
+          alertService.error(body.message ?? 'Fehler beim Laden der Einheiten', response.status, response.statusText);
+        }
+      })
+      .catch((error) => {
+        console.error('SettingsPage -> fetchUnits', error);
+        alertService.error('Fehler beim Laden der Einheiten');
+      })
+      .finally(() => setUnitsLoading(false));
+  }, [workspaceId]);
+
   const [actionDeleting, setActionDeleting] = useState<{ [key: string]: boolean }>({});
 
   const deleteCocktailRecipeAction = useCallback(
@@ -272,7 +295,8 @@ export default function WorkspaceSettingPage() {
     fetchWorkspaceUsers();
     fetchSignage();
     fetchCocktailRecipeActions();
-  }, [fetchCocktailRecipeActions, fetchSignage, fetchWorkspaceUsers]);
+    fetchUnits();
+  }, [fetchCocktailRecipeActions, fetchSignage, fetchUnits, fetchWorkspaceUsers]);
 
   return (
     <ManageEntityLayout backLink={`/workspaces/${workspaceId}/manage`} title={'Workspace-Einstellungen'}>
@@ -673,6 +697,92 @@ export default function WorkspaceSettingPage() {
                               }}
                             >
                               Edit
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </table>
+                </>
+              )}
+            </div>
+          </div>
+        ) : (
+          <></>
+        )}
+        {/*Workspace Units*/}
+        {userContext.isUserPermitted(Role.ADMIN) ? (
+          <div className={'card'}>
+            <div className={'card-body'}>
+              <div className={'card-title'}>Einheiten</div>
+              <div>Hier lassen sich alle Einheiten, die bei der Zubereitung eines Cocktails ausgewählt werden können angepasst werden.</div>
+              {unitsLoading ? (
+                <div>
+                  <Loading />
+                </div>
+              ) : (
+                <>
+                  <div className={'text-lg font-bold'}>Einheiten</div>
+                  <table className={'table-compact grid-col-full table w-full'}>
+                    <thead>
+                      <tr>
+                        <td>Key</td>
+                        <td>Deutsch</td>
+                        <td className={'flex flex-row justify-end'}>
+                          <button
+                            className={'btn btn-primary btn-sm'}
+                            onClick={() => {
+                              // modalContext.openModal(
+                              //   <CocktailStepActionModal
+                              //     cocktailStepAction={undefined}
+                              //     cocktailStepActionGroups={Object.keys(_.groupBy(workspaceActions, 'actionGroup'))}
+                              //   />,
+                              // );
+                            }}
+                          >
+                            Hinzufügen
+                          </button>
+                        </td>
+                      </tr>
+                    </thead>
+                    {units.length == 0 ? (
+                      <tr>
+                        <td colSpan={3}>Keine Einträge vorhanden</td>
+                      </tr>
+                    ) : (
+                      units.map((unit) => (
+                        <tr key={`action-${unit.id}`}>
+                          <td>{unit.name}</td>
+                          <td>{userContext.getTranslation(unit.name, 'de')}</td>
+                          <td className={'flex flex-row justify-end gap-2'}>
+                            <button
+                              className={'btn btn-outline btn-primary btn-sm'}
+                              onClick={() => {
+                                // modalContext.openModal(
+                                //   <CocktailStepActionModal
+                                //     cocktailStepAction={unit}
+                                //     cocktailStepActionGroups={Object.keys(_.groupBy(workspaceActions, 'actionGroup'))}
+                                //   />,
+                                // );
+                              }}
+                            >
+                              Edit
+                            </button>
+                            <button
+                              disabled={actionDeleting[unit.id] ?? false}
+                              className={'btn-red btn btn-outline btn-sm '}
+                              onClick={() =>
+                                modalContext.openModal(
+                                  <DeleteConfirmationModal
+                                    onApprove={() => deleteCocktailRecipeAction(unit.id)}
+                                    spelling={'DELETE'}
+                                    entityName={userContext.getTranslation(unit.name, 'de')}
+                                  />,
+                                )
+                              }
+                            >
+                              {actionDeleting[unit.id] ?? false ? <span className={'loading loading-spinner'} /> : <></>}
+                              <FaTrashAlt />
                             </button>
                           </td>
                         </tr>

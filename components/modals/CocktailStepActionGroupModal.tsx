@@ -27,12 +27,12 @@ export default function CocktailStepActionGroupModal(props: CocktailStepActionGr
         onSubmit={async (values) => {
           try {
             const body = {
-              actionGroup: props.actionGroup,
+              key: props.actionGroup,
               translations: {
                 de: values.lableDE,
               },
             };
-            const response = await fetch(`/api/workspaces/${workspaceId}/actions/group`, {
+            const response = await fetch(`/api/workspaces/${workspaceId}/admin/translation`, {
               method: 'PUT',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(body),

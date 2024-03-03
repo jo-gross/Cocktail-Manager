@@ -6,13 +6,13 @@ import prisma from '../../../../../lib/prisma';
 
 export default withHttpMethods({
   [HTTPMethod.PUT]: withWorkspacePermission([Role.ADMIN], async (req, res, user, workspace) => {
-    const { actionGroup, translations } = req.body;
+    const { key, translations } = req.body;
 
     const existingTranslations = await prisma.workspaceSetting.findFirst({ where: { workspaceId: workspace.id, setting: 'translations' } });
     const parsedExistingTranslations = JSON.parse(existingTranslations?.value ?? '{}');
 
     for (const lang in translations) {
-      parsedExistingTranslations[lang][actionGroup] = translations[lang];
+      parsedExistingTranslations[lang][key] = translations[lang];
     }
 
     const response = await prisma.workspaceSetting.update({

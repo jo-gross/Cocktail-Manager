@@ -147,6 +147,7 @@ model Workspace {
   WorkspaceCocktailRecipeStepAction WorkspaceCocktailRecipeStepAction[]
   WorkspaceSetting                  WorkspaceSetting[]
   CocktailStatisticItem             CocktailStatisticItem[]
+  Unit                              Unit[]
 }
 
 model Signage {
@@ -362,4 +363,26 @@ model CocktailCalculationItems {
   calculation   CocktailCalculation @relation(fields: [calculationId], references: [id], onDelete: Cascade)
 
   @@id([calculationId, cocktailId])
+}
+
+model Unit {
+  id                        String                  @id @default(cuid())
+  name                      String
+  workspaceId               String
+  workspace                 Workspace               @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  defaultUnitConversionFrom DefaultUnitConversion[] @relation(name: "FK_Unit_fromUnit")
+  defaultUnitConversionTo   DefaultUnitConversion[] @relation(name: "FK_Unit_toUnit")
+
+  @@unique([name, workspaceId])
+}
+
+model DefaultUnitConversion {
+  fromUnitId String
+  fromUnit   Unit   @relation(name: "FK_Unit_fromUnit", fields: [fromUnitId], references: [id], onDelete: Cascade)
+  toUnitId   String
+  toUnit     Unit   @relation(name: "FK_Unit_toUnit", fields: [toUnitId], references: [id], onDelete: Cascade)
+
+  factor Float
+
+  @@id([toUnitId, fromUnitId])
 }
