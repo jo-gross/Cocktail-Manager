@@ -713,31 +713,27 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                       <div className={'divider-sm col-span-2'}>Zutaten</div>
                       {(values.steps as CocktailRecipeStepFull[]).filter((step) => step.ingredients.some((ingredient) => ingredient.ingredient != undefined))
                         .length > 0 ? (
-                        (values.garnishes as CocktailRecipeGarnishFull[]).length > 0 ? (
-                          <>
-                            {(values.steps as CocktailRecipeStepFull[])
-                              .map((step) => step.ingredients.filter((ingredient) => ingredient.ingredient != undefined))
-                              .flat()
-                              ?.map((ingredient, indexIngredient) => (
-                                <>
-                                  <div key={`price-calculation-step-${indexIngredient}-name`}>
-                                    {ingredient.ingredient?.shortName ?? ingredient.ingredient?.name}
+                        <>
+                          {(values.steps as CocktailRecipeStepFull[])
+                            .map((step) => step.ingredients.filter((ingredient) => ingredient.ingredient != undefined))
+                            .flat()
+                            ?.map((ingredient, indexIngredient) => (
+                              <>
+                                <div key={`price-calculation-step-${indexIngredient}-name`}>
+                                  {ingredient.ingredient?.shortName ?? ingredient.ingredient?.name}
+                                </div>
+                                <div key={`price-calculation-step-${indexIngredient}-price`} className={'grid grid-cols-2'}>
+                                  <div>
+                                    {ingredient.amount} x {((ingredient.ingredient?.price ?? 0) / (ingredient.ingredient?.volume ?? 1)).toFixed(2)}
                                   </div>
-                                  <div key={`price-calculation-step-${indexIngredient}-price`} className={'grid grid-cols-2'}>
-                                    <div>
-                                      {ingredient.amount} x {((ingredient.ingredient?.price ?? 0) / (ingredient.ingredient?.volume ?? 1)).toFixed(2)}
-                                    </div>
-                                    <div className={'text-end'}>
-                                      {indexIngredient > 0 ? '+ ' : ''}
-                                      {(((ingredient.ingredient?.price ?? 0) / (ingredient.ingredient?.volume ?? 1)) * (ingredient.amount ?? 0)).toFixed(2)}€
-                                    </div>
+                                  <div className={'text-end'}>
+                                    {indexIngredient > 0 ? '+ ' : ''}
+                                    {(((ingredient.ingredient?.price ?? 0) / (ingredient.ingredient?.volume ?? 1)) * (ingredient.amount ?? 0)).toFixed(2)}€
                                   </div>
-                                </>
-                              ))}
-                          </>
-                        ) : (
-                          <></>
-                        )
+                                </div>
+                              </>
+                            ))}
+                        </>
                       ) : (
                         <div className={'col-span-2 text-center font-thin italic'}>Keine Zutaten</div>
                       )}
