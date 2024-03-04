@@ -111,9 +111,6 @@ When the application is running, you should be able to access it at [http://loca
 
 ### 🐳 Docker
 
-You may have to login to Github Package Regirty first with `docker login ghcr.io` and a personal access token
-with `read:packages` scope
-
 #### Using `docker-compose`
 
 > Run with prebuild images from ghcr.io
