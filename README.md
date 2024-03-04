@@ -60,7 +60,7 @@ cocktail, with the detailed recipe making and the compact view for the bartender
 ## 🖼️ Screenshots
 
 <details>
-  <summary>Bartenders view - Pre-configured overview card</summary>
+  <summary>Bartenders view / Pre-configured overview card</summary>
   <img src="https://raw.githubusercontent.com/jo-gross/Cocktail-Manager/main/docs/images/Main%20page%20in%20card%20mode.png">
 </details>
 <details>
