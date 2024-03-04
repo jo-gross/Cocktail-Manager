@@ -61,20 +61,20 @@ cocktail, with the detailed recipe making and the compact view for the bartender
 
 <details>
   <summary>Bartenders view - Pre-configured overview card</summary>
-
+  <img src="https://raw.githubusercontent.com/jo-gross/Cocktail-Manager/main/docs/images/Main%20page%20in%20card%20mode.png">
 </details>
 <details>
   <summary>Bartenders view / With search card</summary>
-
+  <img src="https://raw.githubusercontent.com/jo-gross/Cocktail-Manager/main/docs/images/Main%20page%20in%20search%20mode.png">
 </details>
 <details>
   <summary>Cocktail form</summary>
-
+  <img src="https://raw.githubusercontent.com/jo-gross/Cocktail-Manager/main/docs/images/Example%20cocktail%20form.png">
 </details>
 
 <details>
   <summary>Statistics</summary>
-
+  <img src="https://raw.githubusercontent.com/jo-gross/Cocktail-Manager/main/docs/images/Statistic%20page.png">
 </details>
 
 ---
