@@ -7,6 +7,8 @@ interface UploadDropZoneProps {
 }
 
 export function UploadDropZone(props: UploadDropZoneProps) {
+  const identifier = Math.floor(Math.random() * 1000000);
+
   return (
     <div className="flex h-full w-full items-center justify-center">
       {isMobile ? (
@@ -61,7 +63,7 @@ export function UploadDropZone(props: UploadDropZoneProps) {
         </>
       ) : (
         <label
-          htmlFor="dropzone-file"
+          htmlFor={'dropzone-file-' + identifier}
           className="flex h-full w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-base-300 bg-base-200 hover:border-base-300 hover:bg-base-100 dark:bg-base-200 dark:hover:bg-base-100"
         >
           <div className="font-bo text-2xl">Bild wählen</div>
@@ -95,9 +97,9 @@ export function UploadDropZone(props: UploadDropZoneProps) {
             )}
           </div>
           <input
-            id="dropzone-file"
+            id={'dropzone-file-' + identifier}
             type="file"
-            name="file"
+            name={`file-${identifier}`}
             className="hidden"
             capture="environment"
             accept={'image/*'}
