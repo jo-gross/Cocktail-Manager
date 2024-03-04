@@ -192,7 +192,13 @@ export function GlassForm(props: GlassFormProps) {
                   className={'btn btn-square btn-outline btn-error btn-sm absolute right-2 top-2'}
                   onClick={() =>
                     modalContext.openModal(
-                      <DeleteConfirmationModal spelling={'REMOVE'} entityName={'das Bild'} onApprove={() => setFieldValue('image', undefined)} />,
+                      <DeleteConfirmationModal
+                        spelling={'REMOVE'}
+                        entityName={'das Bild'}
+                        onApprove={async () => {
+                          await setFieldValue('image', undefined);
+                        }}
+                      />,
                     )
                   }
                 >
@@ -203,7 +209,8 @@ export function GlassForm(props: GlassFormProps) {
             )}
           </div>
           <div className={'form-control'}>
-            <button type={'submit'} className={`btn btn-primary ${isSubmitting ?? 'loading'}`}>
+            <button disabled={isSubmitting} type={'submit'} className={`btn btn-primary`}>
+              {isSubmitting ? <span className={'loading loading-spinner'} /> : <></>}
               Speichern
             </button>
           </div>

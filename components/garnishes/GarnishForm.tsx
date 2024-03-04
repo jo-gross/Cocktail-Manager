@@ -204,7 +204,8 @@ export function GarnishForm(props: GarnishFormProps) {
             )}
           </div>
           <div className={'form-control'}>
-            <button type={'submit'} className={`btn btn-primary ${isSubmitting ?? 'loading'}`}>
+            <button disabled={isSubmitting} type={'submit'} className={`btn btn-primary`}>
+              {isSubmitting ? <span className={'loading loading-spinner'} /> : <></>}
               Speichern
             </button>
           </div>

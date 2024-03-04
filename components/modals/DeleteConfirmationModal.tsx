@@ -1,16 +1,18 @@
-import { useContext } from 'react';
+import { useContext, useState } from 'react';
 import { ModalContext } from '../../lib/context/ModalContextProvider';
+import { alertService } from '../../lib/alertService';
 
 interface DeleteConfirmationModalProps {
-  onApprove: () => void;
+  onApprove: () => Promise<void>;
   onCancel?: () => void;
-  isDeleting?: boolean;
   spelling: 'DELETE' | 'REMOVE';
   entityName?: string;
 }
 
 export function DeleteConfirmationModal(props: DeleteConfirmationModalProps) {
   const modalContext = useContext(ModalContext);
+
+  const [isDeleting, setIsDeleting] = useState(false);
 
   return (
     <div className="flex flex-col space-y-4">
@@ -21,24 +23,34 @@ export function DeleteConfirmationModal(props: DeleteConfirmationModalProps) {
       </div>
       <div className="flex flex-row space-x-4">
         <div className={'flex-1'}></div>
-        <div
-          className={`btn btn-outline ${props.isDeleting == true ? 'btn-disabled' : ''}`}
+        <button
+          disabled={isDeleting}
+          className={`btn btn-outline`}
           onClick={() => {
             props.onCancel?.();
             modalContext.closeModal();
           }}
         >
           Abbrechen
-        </div>
-        <div
-          className={`btn-red btn ${props.isDeleting == true ? 'loading' : ''}`}
-          onClick={() => {
-            props.onApprove();
-            modalContext.closeModal();
+        </button>
+        <button
+          className={`btn-red btn`}
+          onClick={async () => {
+            setIsDeleting(true);
+            try {
+              await props.onApprove();
+              modalContext.closeModal();
+            } catch (error) {
+              console.error('DeleteConfirmationModal -> onApprove', error);
+              alertService.error('Fehler beim Löschen');
+            } finally {
+              setIsDeleting(false);
+            }
           }}
         >
+          {isDeleting ? <span className={'loading loading-spinner'} /> : <></>}
           {props.spelling == 'DELETE' ? 'Löschen' : 'Entfernen'}
-        </div>
+        </button>
       </div>
     </div>
   );
