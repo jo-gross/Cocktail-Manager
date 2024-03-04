@@ -1,3 +1,12 @@
+## [1.4.1](https://github.com/jo-gross/Cocktail-Manager/compare/v1.4.0...v1.4.1) (2024-03-04)
+
+
+### Bug Fixes
+
+* Cocktail forms calculation was not shown properly, changed volume validation at ingredients form ([#188](https://github.com/jo-gross/Cocktail-Manager/issues/188)) ([f3ef485](https://github.com/jo-gross/Cocktail-Manager/commit/f3ef485b39b325d26c91b28f40d6065d4f6f27eb))
+* Fixed chrome ui bug (icon was not correctly displayed) ([#191](https://github.com/jo-gross/Cocktail-Manager/issues/191)) ([1a669bd](https://github.com/jo-gross/Cocktail-Manager/commit/1a669bd1192e9902ea36e94bdcae3e1688c6643f))
+* Glass form was not accessable if the glass had no image ([#189](https://github.com/jo-gross/Cocktail-Manager/issues/189)) ([96cc360](https://github.com/jo-gross/Cocktail-Manager/commit/96cc360d57ca2d0e29a48bed49684361393448db))
+
 # [1.4.0](https://github.com/jo-gross/Cocktail-Manager/compare/v1.3.0...v1.4.0) (2024-03-02)
 
 
