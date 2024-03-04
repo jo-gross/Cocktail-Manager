@@ -57,6 +57,26 @@ cocktail, with the detailed recipe making and the compact view for the bartender
 - **Ingredient importer** - Ingredients from some websites (like conalco.de or rumundco.de) can be imported with a
   single click
 
+## 🖼️ Screenshots
+
+<details>
+  <summary>Bartenders view - Pre-configured overview card</summary>
+
+</details>
+<details>
+  <summary>Bartenders view / With search card</summary>
+
+</details>
+<details>
+  <summary>Cocktail form</summary>
+
+</details>
+
+<details>
+  <summary>Statistics</summary>
+
+</details>
+
 ---
 
 ## 🚀 Getting Started
