@@ -18,8 +18,8 @@ export default function ListSearchField(props: ListSearchFieldProps) {
           props.onFilterChange(e.target.value);
         }}
       />
-      <span className={'join-item'}>
-        <FaSearch className={'h-full w-fit rounded-r-md bg-primary pl-4 pr-4 text-base-200'} />
+      <span className={'btn btn-primary join-item'}>
+        <FaSearch />
       </span>
     </div>
   );
