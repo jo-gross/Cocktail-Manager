@@ -216,13 +216,6 @@ To grow the project, we need your help! See the links below to get started.
   </a>
 </p>
 
-As some asked, you´re also welcome to support financial to reduce costs, like hosting and domain fees, by donating.
-Thank you for your support!
-
-<p align='center'>
-  <a href="https://www.buymeacoffee.com/jogross" target="_blank"><img src="https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png" alt="Buy Me A Coffee"></a>
-</p>
-
 ---
 
 ## 📄 License
