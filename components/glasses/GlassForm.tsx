@@ -40,7 +40,7 @@ export function GlassForm(props: GlassFormProps) {
       initialValues={{
         name: props.glass?.name ?? '',
         deposit: props.glass?.deposit ?? 0,
-        image: props.glass?.GlassImage[0].image ?? undefined,
+        image: props.glass?.GlassImage?.[0]?.image ?? undefined,
         volume: props.glass?.volume ?? 0,
       }}
       onSubmit={async (values) => {
