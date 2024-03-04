@@ -657,7 +657,13 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                           className={'btn btn-square btn-outline btn-error btn-sm absolute right-2 top-2'}
                           onClick={() =>
                             modalContext.openModal(
-                              <DeleteConfirmationModal spelling={'REMOVE'} entityName={'das Bild'} onApprove={() => setFieldValue('image', undefined)} />,
+                              <DeleteConfirmationModal
+                                spelling={'REMOVE'}
+                                entityName={'das Bild'}
+                                onApprove={async () => {
+                                  await setFieldValue('image', undefined);
+                                }}
+                              />,
                             )
                           }
                         >
@@ -699,7 +705,8 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                 </div>
               </div>
               <div className={'hidden md:flex'}>
-                <button type="submit" className={`btn btn-primary w-full ${isSubmitting ?? 'loading'}`}>
+                <button type="submit" className={`btn btn-primary w-full`} disabled={isSubmitting}>
+                  {isSubmitting ? <span className={'loading loading-spinner'} /> : <></>}
                   {props.cocktailRecipe == undefined ? 'Erstellen' : 'Aktualisieren'}
                 </button>
               </div>
@@ -863,7 +870,13 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                 className={'btn btn-square btn-error btn-sm'}
                                 onClick={() =>
                                   modalContext.openModal(
-                                    <DeleteConfirmationModal spelling={'REMOVE'} entityName={'den Schritt'} onApprove={() => removeStep(indexStep)} />,
+                                    <DeleteConfirmationModal
+                                      spelling={'REMOVE'}
+                                      entityName={'den Schritt'}
+                                      onApprove={async () => {
+                                        removeStep(indexStep);
+                                      }}
+                                    />,
                                   )
                                 }
                               >
@@ -1007,7 +1020,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                               <DeleteConfirmationModal
                                                 spelling={'REMOVE'}
                                                 entityName={'die Zutat'}
-                                                onApprove={() => removeIngredient(indexIngredient)}
+                                                onApprove={async () => removeIngredient(indexIngredient)}
                                               />,
                                             )
                                           }
@@ -1207,7 +1220,11 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                               className={'btn btn-square btn-error btn-sm'}
                               onClick={() =>
                                 modalContext.openModal(
-                                  <DeleteConfirmationModal spelling={'REMOVE'} entityName={'die Garnitur'} onApprove={() => removeGarnish(indexGarnish)} />,
+                                  <DeleteConfirmationModal
+                                    spelling={'REMOVE'}
+                                    entityName={'die Garnitur'}
+                                    onApprove={async () => removeGarnish(indexGarnish)}
+                                  />,
                                 )
                               }
                             >
@@ -1241,7 +1258,8 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
               </div>
             </div>
             <div className={'md:hidden'}>
-              <button type="submit" className={`btn btn-primary w-full ${isSubmitting ?? 'loading'}`}>
+              <button type="submit" className={`btn btn-primary w-full`} disabled={isSubmitting}>
+                {isSubmitting ? <span className={'loading loading-spinner'} /> : <></>}
                 {props.cocktailRecipe == undefined ? 'Erstellen' : 'Aktualisieren'}
               </button>
             </div>

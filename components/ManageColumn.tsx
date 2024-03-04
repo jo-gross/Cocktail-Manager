@@ -39,23 +39,19 @@ export function ManageColumn(props: ManageColumnProps) {
                   <DeleteConfirmationModal
                     spelling={'DELETE'}
                     onApprove={async () => {
-                      fetch(`/api/workspaces/${workspaceId}/${props.entity}/${props.id}`, {
+                      await new Promise((resolve) => setTimeout(resolve, 1000));
+                      const response = await fetch(`/api/workspaces/${workspaceId}/${props.entity}/${props.id}`, {
                         method: 'DELETE',
-                      })
-                        .then(async (response) => {
-                          const body = await response.json();
-                          if (response.ok) {
-                            props.onRefresh();
-                            alertService.success('Erfolgreich gelöscht');
-                          } else {
-                            console.error(`ManageColumn[${props.entity}] -> delete`, response);
-                            alertService.error(body.message ?? 'Fehler beim Löschen', response.status, response.statusText);
-                          }
-                        })
-                        .catch((error) => {
-                          console.error(`ManageColumn[${props.entity}] -> delete`, error);
-                          alertService.error('Es ist ein Fehler aufgetreten');
-                        });
+                      });
+
+                      const body = await response.json();
+                      if (response.ok) {
+                        props.onRefresh();
+                        alertService.success('Erfolgreich gelöscht');
+                      } else {
+                        console.error(`ManageColumn[${props.entity}] -> delete`, response);
+                        alertService.error(body.message ?? 'Fehler beim Löschen', response.status, response.statusText);
+                      }
                     }}
                   />,
                 );
