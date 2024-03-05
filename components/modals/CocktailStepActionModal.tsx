@@ -21,7 +21,7 @@ export default function CocktailStepActionModal(props: CocktailStepActionModalPr
 
   return (
     <div className={'flex flex-col gap-2'}>
-      <div className={'text-2xl font-bold'}>Zubereitungsschritt Anpassen</div>
+      <div className={'text-2xl font-bold'}>Zubereitungsschritt {props.cocktailStepAction == undefined ? 'Erstellen' : 'Anpassen'}</div>
       <Formik
         initialValues={{
           actionGroup: props.cocktailStepAction?.actionGroup || '',

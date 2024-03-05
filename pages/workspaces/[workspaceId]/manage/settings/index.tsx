@@ -16,6 +16,7 @@ import { Loading } from '../../../../../components/Loading';
 import _ from 'lodash';
 import CocktailStepActionModal from '../../../../../components/modals/CocktailStepActionModal';
 import CocktailStepActionGroupModal from '../../../../../components/modals/CocktailStepActionGroupModal';
+import UnitModal from '../../../../../components/modals/UnitModal';
 import MonitorFormat = $Enums.MonitorFormat;
 
 export default function WorkspaceSettingPage() {
@@ -289,6 +290,37 @@ export default function WorkspaceSettingPage() {
         });
     },
     [actionDeleting, fetchCocktailRecipeActions, workspaceId],
+  );
+
+  const [unitDeleting, setUnitDeleting] = useState<{ [key: string]: boolean }>({});
+
+  const deleteUnit = useCallback(
+    async (unitId: string) => {
+      if (workspaceId == undefined) return;
+      if (unitDeleting[unitId] ?? false) return;
+      setUnitDeleting({ ...unitDeleting, [unitId]: true });
+      fetch(`/api/workspaces/${workspaceId}/units/${unitId}`, {
+        method: 'DELETE',
+      })
+        .then(async (response) => {
+          if (response.ok) {
+            fetchUnits();
+            alertService.success('Erfolgreich gelöscht');
+          } else {
+            const body = await response.json();
+            console.error('SettingsPage -> deleteUnit', response);
+            alertService.error(body.message ?? 'Fehler beim Löschen', response.status, response.statusText);
+          }
+        })
+        .catch((error) => {
+          console.error('SettingsPage -> deleteUnit', error);
+          alertService.error('Fehler beim Löschen');
+        })
+        .finally(() => {
+          setUnitDeleting({ ...unitDeleting, [unitId]: false });
+        });
+    },
+    [unitDeleting, fetchUnits, workspaceId],
   );
 
   useEffect(() => {
@@ -738,12 +770,7 @@ export default function WorkspaceSettingPage() {
                           <button
                             className={'btn btn-primary btn-sm'}
                             onClick={() => {
-                              // modalContext.openModal(
-                              //   <CocktailStepActionModal
-                              //     cocktailStepAction={undefined}
-                              //     cocktailStepActionGroups={Object.keys(_.groupBy(workspaceActions, 'actionGroup'))}
-                              //   />,
-                              // );
+                              modalContext.openModal(<UnitModal unit={undefined} />);
                             }}
                           >
                             Hinzufügen
@@ -753,41 +780,38 @@ export default function WorkspaceSettingPage() {
                     </thead>
                     {units.length == 0 ? (
                       <tr>
-                        <td colSpan={3}>Keine Einträge vorhanden</td>
+                        <td colSpan={3} className={'text-center'}>
+                          Keine Einträge vorhanden
+                        </td>
                       </tr>
                     ) : (
                       units.map((unit) => (
-                        <tr key={`action-${unit.id}`}>
+                        <tr key={`unit-${unit.id}`}>
                           <td>{unit.name}</td>
                           <td>{userContext.getTranslation(unit.name, 'de')}</td>
                           <td className={'flex flex-row justify-end gap-2'}>
                             <button
                               className={'btn btn-outline btn-primary btn-sm'}
                               onClick={() => {
-                                // modalContext.openModal(
-                                //   <CocktailStepActionModal
-                                //     cocktailStepAction={unit}
-                                //     cocktailStepActionGroups={Object.keys(_.groupBy(workspaceActions, 'actionGroup'))}
-                                //   />,
-                                // );
+                                modalContext.openModal(<UnitModal unit={unit} />);
                               }}
                             >
                               Edit
                             </button>
                             <button
-                              disabled={actionDeleting[unit.id] ?? false}
+                              disabled={unitDeleting[unit.id] ?? false}
                               className={'btn-red btn btn-outline btn-sm '}
                               onClick={() =>
                                 modalContext.openModal(
                                   <DeleteConfirmationModal
-                                    onApprove={() => deleteCocktailRecipeAction(unit.id)}
+                                    onApprove={() => deleteUnit(unit.id)}
                                     spelling={'DELETE'}
                                     entityName={userContext.getTranslation(unit.name, 'de')}
                                   />,
                                 )
                               }
                             >
-                              {actionDeleting[unit.id] ?? false ? <span className={'loading loading-spinner'} /> : <></>}
+                              {unitDeleting[unit.id] ?? false ? <span className={'loading loading-spinner'} /> : <></>}
                               <FaTrashAlt />
                             </button>
                           </td>
