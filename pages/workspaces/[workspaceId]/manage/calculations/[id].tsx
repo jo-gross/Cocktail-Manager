@@ -590,7 +590,7 @@ export default function CalculationPage() {
                                     modalContext.openModal(
                                       <DeleteConfirmationModal
                                         spelling={'REMOVE'}
-                                        onApprove={() => {
+                                        onApprove={async () => {
                                           setCocktailCalculationItems(cocktailCalculationItems.filter((item) => item.cocktail.id != cocktail.cocktail.id));
                                         }}
                                       />,

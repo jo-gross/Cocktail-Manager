@@ -41,7 +41,7 @@ export default function WorkspaceSettingPage() {
   const [updatingSignage, setUpdatingSignage] = useState<boolean>(false);
 
   const [copyToClipboardLoading, setCopyToClipboardLoading] = useState<boolean>(false);
-  const [leaveLoading, setLeaveLoading] = useState<boolean>(false);
+  const [leaveLoading, setLeaveLoading] = useState<Record<string, boolean>>({});
   const [workspaceDeleting, setWorkspaceDeleting] = useState<boolean>(false);
   const [workspaceRenaming, setWorkspaceRenaming] = useState<boolean>(false);
 
@@ -379,6 +379,7 @@ export default function WorkspaceSettingPage() {
                           className={'btn btn-error btn-sm ml-2'}
                           disabled={workspaceUser.role == Role.OWNER}
                           onClick={() => {
+                            setLeaveLoading({ ...leaveLoading, [workspaceUser.userId]: true });
                             fetch(`/api/workspaces/${workspaceId}/users/${workspaceUser.userId}`, {
                               method: 'DELETE',
                             })
@@ -395,17 +396,22 @@ export default function WorkspaceSettingPage() {
                               .catch((error) => {
                                 console.error('SettingsPage -> removeUser', error);
                                 alertService.error('Es ist ein Fehler aufgetreten');
+                              })
+                              .finally(() => {
+                                setLeaveLoading({ ...leaveLoading, [workspaceUser.userId]: false });
                               });
                           }}
                         >
+                          {leaveLoading[workspaceUser.userId] ? <span className={'loading loading-spinner'} /> : <></>}
                           <>{workspaceUser.user.id == userContext.user?.id ? 'Verlassen' : 'Entfernen'}</>
                         </button>
                       ) : (
                         <button
                           className={'btn btn-error btn-sm ml-2'}
-                          disabled={workspaceUser.role == Role.OWNER || leaveLoading}
+                          disabled={workspaceUser.role == Role.OWNER || leaveLoading[workspaceUser.user.id]}
                           onClick={() => {
-                            setLeaveLoading(true);
+                            setLeaveLoading({ ...leaveLoading, [workspaceUser.user.id]: true });
+
                             fetch(`/api/workspaces/${workspaceId}/leave`, {
                               method: 'POST',
                             })
@@ -423,11 +429,11 @@ export default function WorkspaceSettingPage() {
                                 alertService.error('Fehler beim Verlassen der Workspace');
                               })
                               .finally(() => {
-                                setLeaveLoading(false);
+                                setLeaveLoading({ ...leaveLoading, [workspaceUser.user.id]: false });
                               });
                           }}
                         >
-                          <span className={leaveLoading ? 'loading loading-spinner' : ''} />
+                          {leaveLoading[workspaceUser.user.id] ? <span className={'loading loading-spinner'} /> : <></>}
                           Verlassen
                         </button>
                       )}
@@ -506,7 +512,7 @@ export default function WorkspaceSettingPage() {
                         className={'btn btn-square btn-outline btn-error btn-sm absolute right-2 top-2'}
                         onClick={() =>
                           modalContext.openModal(
-                            <DeleteConfirmationModal spelling={'REMOVE'} entityName={'das Bild'} onApprove={() => setHorizontalImage(undefined)} />,
+                            <DeleteConfirmationModal spelling={'REMOVE'} entityName={'das Bild'} onApprove={async () => setHorizontalImage(undefined)} />,
                           )
                         }
                       >
@@ -552,7 +558,7 @@ export default function WorkspaceSettingPage() {
                         className={'btn btn-square btn-outline btn-error btn-sm absolute right-2 top-2'}
                         onClick={() =>
                           modalContext.openModal(
-                            <DeleteConfirmationModal spelling={'REMOVE'} entityName={'das Bild'} onApprove={() => setVerticalImage(undefined)} />,
+                            <DeleteConfirmationModal spelling={'REMOVE'} entityName={'das Bild'} onApprove={async () => setVerticalImage(undefined)} />,
                           )
                         }
                       >

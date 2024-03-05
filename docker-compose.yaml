@@ -1,4 +1,4 @@
-version: '3.1'
+version: '3.8'
 services:
   postgres:
     image: postgres:latest
@@ -14,20 +14,18 @@ services:
     networks:
       - cocktail-recipe-network
 
-  cocktails:
+  cocktail-manager:
     depends_on:
       - postgres
     links:
       - postgres
-    image: cocktail-manager:latest
+    image: ghcr.io/jo-gross/cocktail-manager:1.3.0
     container_name: cocktail-manager
     build:
       context: .
       dockerfile: Dockerfile
     ports:
       - '3000:3000'
-    environment:
-      DATABASE_URL: 'postgres://postgres:postgres@postgres:5432/cocktail_recipe'
     env_file:
       - .env
     networks:

@@ -39,8 +39,6 @@ function EditCocktailCard() {
 
   const [unsavedChanges, setUnsavedChanges] = useState(false);
 
-  const [deleting, setDeleting] = useState(false);
-
   useEffect(() => {
     if (!id) return;
     if (!workspaceId) return;
@@ -94,8 +92,7 @@ function EditCocktailCard() {
         card != undefined ? (
           <button
             type={'button'}
-            className={`btn ${deleting ? '' : 'btn-square'} btn-outline btn-error btn-sm`}
-            disabled={deleting}
+            className={`btn btn-square btn-outline btn-error btn-sm`}
             onClick={() =>
               modalContext.openModal(
                 <DeleteConfirmationModal
@@ -103,34 +100,23 @@ function EditCocktailCard() {
                   entityName={'die Karte'}
                   onApprove={async () => {
                     if (!workspaceId) return;
-                    if (deleting) return;
-                    setDeleting(true);
-                    fetch(`/api/workspaces/${workspaceId}/cards/${card.id}`, {
+                    const response = await fetch(`/api/workspaces/${workspaceId}/cards/${card.id}`, {
                       method: 'DELETE',
-                    })
-                      .then(async (response) => {
-                        const body = await response.json();
-                        if (response.ok) {
-                          router.replace(`/workspaces/${workspaceId}/manage/cards`).then(() => alertService.success('Karte gelöscht'));
-                        } else {
-                          console.error('CardId -> deleteCard', response);
-                          alertService.error(body.message ?? 'Fehler beim Löschen der Karte', response.status, response.statusText);
-                        }
-                      })
-                      .catch((error) => {
-                        console.error('CardId -> deleteCard', error);
-                        alertService.error('Es ist ein Fehler aufgetreten');
-                      })
-                      .finally(() => {
-                        setDeleting(false);
-                      });
+                    });
+
+                    const body = await response.json();
+                    if (response.ok) {
+                      router.replace(`/workspaces/${workspaceId}/manage/cards`).then(() => alertService.success('Karte gelöscht'));
+                    } else {
+                      console.error('CardId -> deleteCard', response);
+                      alertService.error(body.message ?? 'Fehler beim Löschen der Karte', response.status, response.statusText);
+                    }
                   }}
                 />,
               )
             }
           >
             <FaTrashAlt />
-            {deleting ? <span className={'loading loading-spinner'}></span> : <></>}
           </button>
         ) : (
           <></>
@@ -372,7 +358,7 @@ function EditCocktailCard() {
                                 className={'btn btn-square btn-outline btn-error btn-sm'}
                                 onClick={() =>
                                   modalContext.openModal(
-                                    <DeleteConfirmationModal spelling={'REMOVE'} entityName={'die Gruppe'} onApprove={() => removeGroup(groupIndex)} />,
+                                    <DeleteConfirmationModal spelling={'REMOVE'} entityName={'die Gruppe'} onApprove={async () => removeGroup(groupIndex)} />,
                                   )
                                 }
                               >
@@ -438,7 +424,7 @@ function EditCocktailCard() {
                                                   <DeleteConfirmationModal
                                                     spelling={'REMOVE'}
                                                     entityName={'den Cocktail von der Gruppe'}
-                                                    onApprove={() => removeItem(itemIndex)}
+                                                    onApprove={async () => removeItem(itemIndex)}
                                                   />,
                                                 )
                                               }
@@ -490,7 +476,8 @@ function EditCocktailCard() {
                       <button type="button" className={'btn btn-secondary btn-sm'} onClick={() => pushGroup({ name: '', items: [] })}>
                         Gruppe hinzufügen
                       </button>
-                      <button type="submit" className={`btn btn-primary btn-sm ${isSubmitting ? 'loading' : ''}`}>
+                      <button type="submit" className={`btn btn-primary btn-sm`} disabled={isSubmitting}>
+                        {isSubmitting ? <span className={'loading loading-spinner'} /> : <></>}
                         Speichern
                       </button>
                     </div>

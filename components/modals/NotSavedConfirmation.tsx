@@ -1,8 +1,9 @@
-import { useContext } from 'react';
+import { useContext, useState } from 'react';
 import { ModalContext } from '../../lib/context/ModalContextProvider';
+import { alertService } from '../../lib/alertService';
 
 interface NotSavedConfirmationProps {
-  onSave: () => void;
+  onSave: () => Promise<void>;
   onNotSave?: () => void;
   onCancel?: () => void;
   isSaving?: boolean;
@@ -10,6 +11,8 @@ interface NotSavedConfirmationProps {
 
 export function NotSavedConfirmation(props: NotSavedConfirmationProps) {
   const modalContext = useContext(ModalContext);
+
+  const [isSaving, setIsSaving] = useState(false);
 
   return (
     <div className="flex flex-col space-y-4">
@@ -37,15 +40,25 @@ export function NotSavedConfirmation(props: NotSavedConfirmationProps) {
         >
           Nicht speichern
         </div>
-        <div
-          className={`btn btn-primary ${props.isSaving == true ? 'loading' : ''}`}
-          onClick={() => {
-            props.onSave();
-            modalContext.closeModal();
+        <button
+          disabled={isSaving || props.isSaving}
+          className={`btn btn-primary`}
+          onClick={async () => {
+            setIsSaving(true);
+            try {
+              await props.onSave();
+              modalContext.closeModal();
+            } catch (error) {
+              console.error('NotSavedConfirmation -> onSave', error);
+              alertService.error('Fehler beim Speichern');
+            } finally {
+              setIsSaving(false);
+            }
           }}
         >
+          {isSaving || props.isSaving ? <span className={'loading loading-spinner'} /> : <></>}
           Speichern
-        </div>
+        </button>
       </div>
     </div>
   );
