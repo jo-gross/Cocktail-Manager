@@ -2204,6 +2204,7 @@ __metadata:
     eslint-config-prettier: ^9.1.0
     express-validator: 7.0.1
     formik: 2.4.5
+    graph-data-structure: ^3.5.0
     http-method-enum: 1.0.0
     jssoup: 0.0.15
     lodash: ^4.17.21
@@ -3958,6 +3959,13 @@ __metadata:
   version: 4.2.11
   resolution: "graceful-fs@npm:4.2.11"
   checksum: ac85f94da92d8eb6b7f5a8b20ce65e43d66761c55ce85ac96df6865308390da45a8d3f0296dd3a663de65d30ba497bd46c696cc1e248c72b13d6d567138a4fc7
+  languageName: node
+  linkType: hard
+
+"graph-data-structure@npm:^3.5.0":
+  version: 3.5.0
+  resolution: "graph-data-structure@npm:3.5.0"
+  checksum: 80ce8fe5e8bb2191120839e76c40f03a2f83ebafa631d9f8f1d119651067775e5d2f0688b15b9e53a745a4e15d83565fd176c5f9bea258805a5ead6eb7c2cf02
   languageName: node
   linkType: hard
 

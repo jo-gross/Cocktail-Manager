@@ -67,7 +67,7 @@ export default function CocktailsOverviewPage() {
         <div className={'card-body'}>
           <ListSearchField onFilterChange={(filterString) => setFilterString(filterString)} />
           <div className="overflow-x-auto">
-            <table className="table-compact table table-zebra w-full">
+            <table className="table table-zebra w-full">
               <thead>
                 <tr>
                   <th className=""></th>
