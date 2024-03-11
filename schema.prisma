@@ -148,7 +148,7 @@ model Workspace {
   WorkspaceSetting                  WorkspaceSetting[]
   CocktailStatisticItem             CocktailStatisticItem[]
   Unit                              Unit[]
-  UnitConversion UnitConversion[]
+  UnitConversion                    UnitConversion[]
 }
 
 model Signage {
@@ -378,7 +378,7 @@ model Unit {
 }
 
 model UnitConversion {
-  id String @id @default(cuid())
+  id         String @id @default(cuid())
   fromUnitId String
   fromUnit   Unit   @relation(name: "FK_Unit_fromUnit", fields: [fromUnitId], references: [id], onDelete: Cascade)
   toUnitId   String
