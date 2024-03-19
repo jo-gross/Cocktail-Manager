@@ -149,7 +149,7 @@ model Workspace {
   CocktailStatisticItem             CocktailStatisticItem[]
   Unit                              Unit[]
   UnitConversion                    UnitConversion[]
-  IngredientVolume IngredientVolume[]
+  IngredientVolume                  IngredientVolume[]
 }
 
 model Signage {
@@ -239,7 +239,7 @@ model CocktailRecipeGarnish {
 
 model WorkspaceCocktailRecipeStepAction {
   id                 String               @id @default(cuid())
-  name String
+  name               String
   actionGroup        String
   workspaceId        String
   workspace          Workspace            @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
@@ -262,7 +262,7 @@ model CocktailRecipeStep {
 }
 
 model CocktailRecipeIngredient {
-  id String @id @default(cuid())
+  id               String  @id @default(cuid())
   ingredientNumber Int
   amount           Float?
   unit             String?
@@ -291,7 +291,7 @@ model Ingredient {
   CocktailRecipeIngredient CocktailRecipeIngredient[]
 
   workspaceId      String
-  workspace        Workspace         @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspace        Workspace          @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   IngredientImage  IngredientImage[]
   IngredientVolume IngredientVolume[]
 }
@@ -373,12 +373,12 @@ model CocktailCalculationItems {
 }
 
 model Unit {
-  id                        String                    @id @default(cuid())
+  id                        String                     @id @default(cuid())
   name                      String
   workspaceId               String
-  workspace                 Workspace                 @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  defaultUnitConversionFrom UnitConversion[]          @relation(name: "FK_Unit_fromUnit")
-  defaultUnitConversionTo   UnitConversion[]          @relation(name: "FK_Unit_toUnit")
+  workspace                 Workspace                  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  defaultUnitConversionFrom UnitConversion[]           @relation(name: "FK_Unit_fromUnit")
+  defaultUnitConversionTo   UnitConversion[]           @relation(name: "FK_Unit_toUnit")
   IngredientVolume          IngredientVolume[]
   CocktailRecipeIngredient  CocktailRecipeIngredient[]
 
