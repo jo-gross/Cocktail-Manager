@@ -38,6 +38,7 @@ export default withHttpMethods({
             ingredients: {
               include: {
                 ingredient: { include: { _count: { select: { IngredientImage: true } } } },
+                unitUnit: true,
               },
             },
           },
@@ -60,7 +61,6 @@ export default withHttpMethods({
       price: price,
       glassWithIce: glassWithIce,
       glass: { connect: { id: glassId } },
-      // garnish: garnishId == undefined ? undefined : { connect: { id: garnishId } },
       workspace: { connect: { id: workspace.id } },
     };
 
@@ -125,6 +125,7 @@ export default withHttpMethods({
                   amount: ingredient.amount,
                   ingredientNumber: ingredient.ingredientNumber,
                   unit: ingredient.unit,
+                  unitUnit: { connect: { id: ingredient.unitId } },
                   ingredient: { connect: { id: ingredient.ingredientId } },
                 };
               }),

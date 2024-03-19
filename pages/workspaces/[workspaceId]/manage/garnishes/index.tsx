@@ -2,15 +2,15 @@ import { Role } from '@prisma/client';
 import Link from 'next/link';
 import { ManageEntityLayout } from '../../../../../components/layout/ManageEntityLayout';
 import { ManageColumn } from '../../../../../components/ManageColumn';
-import React, { useCallback, useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { Loading } from '../../../../../components/Loading';
 import { useRouter } from 'next/router';
-import { alertService } from '../../../../../lib/alertService';
 import { UserContext } from '../../../../../lib/context/UserContextProvider';
 import { FaPlus } from 'react-icons/fa';
 import ListSearchField from '../../../../../components/ListSearchField';
 import { GarnishModel } from '../../../../../models/GarnishModel';
 import AvatarImage from '../../../../../components/AvatarImage';
+import { fetchGarnishes } from '../../../../../lib/network/garnishes';
 
 export default function ManageGlassesOverviewPage() {
   const router = useRouter();
@@ -23,31 +23,9 @@ export default function ManageGlassesOverviewPage() {
 
   const [filterString, setFilterString] = useState('');
 
-  const refreshGarnishes = useCallback(() => {
-    if (!workspaceId) return;
-    setLoading(true);
-    fetch(`/api/workspaces/${workspaceId}/garnishes`)
-      .then(async (response) => {
-        const body = await response.json();
-        if (response.ok) {
-          setGarnishes(body.data);
-        } else {
-          console.error('Garnishes -> fetchGarnishes', response);
-          alertService.error(body.message ?? 'Fehler beim Laden der Garnituren', response.status, response.statusText);
-        }
-      })
-      .catch((error) => {
-        console.error('Garnishes -> fetchGarnishes', error);
-        alertService.error('Fehler beim Laden der Garnituren');
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  }, [workspaceId]);
-
   useEffect(() => {
-    refreshGarnishes();
-  }, [refreshGarnishes]);
+    fetchGarnishes(workspaceId, setGarnishes, setLoading);
+  }, [workspaceId]);
 
   return (
     <ManageEntityLayout
@@ -110,7 +88,7 @@ export default function ManageGlassesOverviewPage() {
                           <div className="font-bold">{garnish.name}</div>
                         </td>
                         <td>{garnish.price ?? '-'} €</td>
-                        <ManageColumn entity={'garnishes'} id={garnish.id} onRefresh={refreshGarnishes} />
+                        <ManageColumn entity={'garnishes'} id={garnish.id} onRefresh={() => fetchGarnishes(workspaceId, setGarnishes, setLoading)} />
                       </tr>
                     ))
                 )}

@@ -18,6 +18,11 @@ export default withHttpMethods({
           id: ingredientId,
         },
         include: {
+          IngredientVolume: {
+            include: {
+              unit: true,
+            },
+          },
           IngredientImage: {
             select: {
               image: true,
@@ -28,49 +33,83 @@ export default withHttpMethods({
     });
   }),
   [HTTPMethod.PUT]: withWorkspacePermission([Role.MANAGER], async (req: NextApiRequest, res: NextApiResponse, user, workspace: Workspace) => {
-    const { name, price, volume, unit, id, shortName, link, tags, image, notes, description } = req.body;
+    try {
+      await prisma.$transaction(async (transaction) => {
+        const { name, price, volume, id, shortName, link, tags, image, notes, description, units } = req.body;
 
-    const input: IngredientUpdateInput = {
-      id: id,
-      name: name,
-      volume: volume,
-      shortName: shortName,
-      notes: notes,
-      description: description,
-      unit: unit,
-      price: price,
-      link: link,
-      tags: tags,
-      workspace: {
-        connect: {
-          id: workspace.id,
-        },
-      },
-    };
+        const input: IngredientUpdateInput = {
+          id: id,
+          name: name,
+          volume: volume,
+          shortName: shortName,
+          notes: notes,
+          description: description,
+          unit: '-',
+          price: price,
+          link: link,
+          tags: tags,
+          workspace: {
+            connect: {
+              id: workspace.id,
+            },
+          },
+        };
 
-    const result = await prisma.ingredient.update({
-      where: {
-        id: id,
-      },
-      data: input,
-    });
+        const result = await transaction.ingredient.update({
+          where: {
+            id: id,
+          },
+          data: input,
+        });
 
-    await prisma.ingredientImage.deleteMany({
-      where: {
-        ingredientId: id,
-      },
-    });
+        await transaction.ingredientVolume.deleteMany({
+          where: {
+            ingredientId: id,
+          },
+        });
 
-    if (image) {
-      await prisma.ingredientImage.create({
-        data: {
-          ingredientId: id,
-          image: image,
-        },
+        await transaction.ingredientImage.deleteMany({
+          where: {
+            ingredientId: id,
+          },
+        });
+
+        if (image) {
+          await transaction.ingredientImage.create({
+            data: {
+              ingredientId: id,
+              image: image,
+            },
+          });
+        }
+
+        if (units) {
+          for (const unit of units) {
+            await transaction.ingredientVolume.create({
+              data: {
+                unit: { connect: { id: unit.unitId } },
+                ingredient: {
+                  connect: {
+                    id: result.id,
+                  },
+                },
+                volume: unit.volume,
+                workspace: {
+                  connect: {
+                    id: workspace.id,
+                  },
+                },
+              },
+            });
+          }
+        }
+
+        return res.json({ data: result });
       });
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ msg: 'Error' });
     }
-
-    return res.json({ data: result });
   }),
   [HTTPMethod.DELETE]: withWorkspacePermission([Role.ADMIN], async (req: NextApiRequest, res: NextApiResponse) => {
     const ingredientId = req.query.ingredientId as string | undefined;

@@ -18,6 +18,8 @@ import CocktailStepActionModal from '../../../../../components/modals/CocktailSt
 import CocktailStepActionGroupModal from '../../../../../components/modals/CocktailStepActionGroupModal';
 import UnitModal from '../../../../../components/modals/UnitModal';
 import UnitConversionModal from '../../../../../components/modals/UnitConversionModal';
+import { fetchUnitConversions, fetchUnits } from '../../../../../lib/network/units';
+import { fetchActions } from '../../../../../lib/network/actions';
 import MonitorFormat = $Enums.MonitorFormat;
 
 export default function WorkspaceSettingPage() {
@@ -93,7 +95,7 @@ export default function WorkspaceSettingPage() {
         body: JSON.stringify(data),
       });
       if (response.ok) {
-        fetchCocktailRecipeActions();
+        fetchActions(workspaceId, setWorkspaceActions, setWorkspaceActionLoading);
         alertService.success(`Import erfolgreich`);
         setUploadImportFile(undefined);
         if (uploadImportFileRef.current) {
@@ -229,66 +231,6 @@ export default function WorkspaceSettingPage() {
       });
   }, [workspaceId]);
 
-  const fetchCocktailRecipeActions = useCallback(() => {
-    if (workspaceId == undefined) return;
-    setWorkspaceActionLoading(true);
-    fetch(`/api/workspaces/${workspaceId}/actions`)
-      .then(async (response) => {
-        const body = await response.json();
-        if (response.ok) {
-          setWorkspaceActions(body.data);
-        } else {
-          console.error('SettingsPage -> fetchCocktailRecipeActions', response);
-          alertService.error(body.message ?? 'Fehler beim Laden der Cocktail-Rezept-Aktionen', response.status, response.statusText);
-        }
-      })
-      .catch((error) => {
-        console.error('SettingsPage -> fetchCocktailRecipeActions', error);
-        alertService.error('Fehler beim Laden der Cocktail-Rezept-Aktionen');
-      })
-      .finally(() => setWorkspaceActionLoading(false));
-  }, [workspaceId]);
-
-  const fetchUnits = useCallback(() => {
-    if (workspaceId == undefined) return;
-    setUnitsLoading(true);
-    fetch(`/api/workspaces/${workspaceId}/units`)
-      .then(async (response) => {
-        const body = await response.json();
-        if (response.ok) {
-          setUnits(body.data);
-        } else {
-          console.error('SettingsPage -> fetchUnits', response);
-          alertService.error(body.message ?? 'Fehler beim Laden der Einheiten', response.status, response.statusText);
-        }
-      })
-      .catch((error) => {
-        console.error('SettingsPage -> fetchUnits', error);
-        alertService.error('Fehler beim Laden der Einheiten');
-      })
-      .finally(() => setUnitsLoading(false));
-  }, [workspaceId]);
-
-  const fetchUnitConversions = useCallback(() => {
-    if (workspaceId == undefined) return;
-    setUnitConversionsLoading(true);
-    fetch(`/api/workspaces/${workspaceId}/units/conversions`)
-      .then(async (response) => {
-        const body = await response.json();
-        if (response.ok) {
-          setUnitConversions(body.data);
-        } else {
-          console.error('SettingsPage -> fetchUnitConversions', response);
-          alertService.error(body.message ?? 'Fehler beim Laden der Einheiten', response.status, response.statusText);
-        }
-      })
-      .catch((error) => {
-        console.error('SettingsPage -> fetchUnitConversions', error);
-        alertService.error('Fehler beim Laden der Einheiten');
-      })
-      .finally(() => setUnitConversionsLoading(false));
-  }, [workspaceId]);
-
   const deleteCocktailRecipeAction = useCallback(
     async (actionId: string) => {
       if (workspaceId == undefined) return;
@@ -299,7 +241,7 @@ export default function WorkspaceSettingPage() {
       })
         .then(async (response) => {
           if (response.ok) {
-            fetchCocktailRecipeActions();
+            fetchActions(workspaceId, setWorkspaceActions, setWorkspaceActionLoading);
             alertService.success('Erfolgreich gelöscht');
           } else {
             const body = await response.json();
@@ -315,7 +257,7 @@ export default function WorkspaceSettingPage() {
           setDeleting({ ...deleting, [actionId]: false });
         });
     },
-    [deleting, fetchCocktailRecipeActions, workspaceId],
+    [deleting, workspaceId],
   );
 
   const deleteUnit = useCallback(
@@ -328,8 +270,8 @@ export default function WorkspaceSettingPage() {
       })
         .then(async (response) => {
           if (response.ok) {
-            fetchUnits();
-            fetchUnitConversions();
+            fetchUnits(workspaceId, setUnits, setUnitsLoading);
+            fetchUnitConversions(workspaceId, setUnitConversionsLoading, setUnitConversions);
             alertService.success('Erfolgreich gelöscht');
           } else {
             const body = await response.json();
@@ -345,7 +287,7 @@ export default function WorkspaceSettingPage() {
           setDeleting({ ...deleting, [unitId]: false });
         });
     },
-    [deleting, fetchUnits, workspaceId],
+    [deleting, workspaceId],
   );
 
   const deleteUnitConversion = useCallback(
@@ -358,7 +300,7 @@ export default function WorkspaceSettingPage() {
       })
         .then(async (response) => {
           if (response.ok) {
-            fetchUnitConversions();
+            fetchUnitConversions(workspaceId, setUnitConversionsLoading, setUnitConversions);
             alertService.success('Erfolgreich gelöscht');
           } else {
             const body = await response.json();
@@ -380,10 +322,10 @@ export default function WorkspaceSettingPage() {
   useEffect(() => {
     fetchWorkspaceUsers();
     fetchSignage();
-    fetchCocktailRecipeActions();
-    fetchUnits();
-    fetchUnitConversions();
-  }, [fetchCocktailRecipeActions, fetchSignage, fetchUnits, fetchWorkspaceUsers]);
+    fetchActions(workspaceId, setWorkspaceActions, setWorkspaceActionLoading);
+    fetchUnits(workspaceId, setUnits, setUnitsLoading);
+    fetchUnitConversions(workspaceId, setUnitConversionsLoading, setUnitConversions);
+  }, [fetchSignage, fetchWorkspaceUsers, workspaceId]);
 
   return (
     <ManageEntityLayout backLink={`/workspaces/${workspaceId}/manage`} title={'Workspace-Einstellungen'}>
@@ -894,7 +836,11 @@ export default function WorkspaceSettingPage() {
                             className={'btn btn-primary btn-sm'}
                             onClick={() => {
                               modalContext.openModal(
-                                <UnitConversionModal units={units} existingConversions={unitConversions} onSaved={fetchUnitConversions} />,
+                                <UnitConversionModal
+                                  units={units}
+                                  existingConversions={unitConversions}
+                                  onSaved={() => fetchUnitConversions(workspaceId, setUnitConversionsLoading, setUnitConversions)}
+                                />,
                               );
                             }}
                           >
@@ -942,7 +888,7 @@ export default function WorkspaceSettingPage() {
                                         <UnitConversionModal
                                           units={units}
                                           existingConversions={[conversion]}
-                                          onSaved={fetchUnitConversions}
+                                          onSaved={() => fetchUnitConversions(workspaceId, setUnitConversionsLoading, setUnitConversions)}
                                           unitConversion={conversion}
                                         />,
                                       );

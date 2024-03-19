@@ -4,11 +4,10 @@ import { TagsInput } from 'react-tag-input-component';
 import { Field, FieldArray, Formik, FormikProps } from 'formik';
 import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import { Garnish, Glass, Ingredient, WorkspaceCocktailRecipeStepAction } from '@prisma/client';
+import { Garnish, Glass, Ingredient, Unit, WorkspaceCocktailRecipeStepAction } from '@prisma/client';
 import { updateTags, validateTag } from '../../models/tags/TagUtils';
 import { UploadDropZone } from '../UploadDropZone';
 import { convertToBase64 } from '../../lib/Base64Converter';
-import { CocktailIngredientUnit } from '../../models/CocktailIngredientUnit';
 import { CocktailRecipeStepFull } from '../../models/CocktailRecipeStepFull';
 import CocktailRecipeCardItem from './CocktailRecipeCardItem';
 import { alertService } from '../../lib/alertService';
@@ -26,6 +25,12 @@ import { CocktailRecipeFullWithImage } from '../../models/CocktailRecipeFullWith
 import { UserContext } from '../../lib/context/UserContextProvider';
 import DeepDiff from 'deep-diff';
 import { GlassModel } from '../../models/GlassModel';
+import { IngredientModel } from '../../models/IngredientModel';
+import { fetchGlasses } from '../../lib/network/glasses';
+import { fetchGarnishes } from '../../lib/network/garnishes';
+import { fetchIngredients } from '../../lib/network/ingredients';
+import { fetchActions } from '../../lib/network/actions';
+import { fetchUnits } from '../../lib/network/units';
 
 interface CocktailRecipeFormProps {
   cocktailRecipe?: CocktailRecipeFullWithImage;
@@ -50,37 +55,26 @@ interface GarnishError {
 }
 
 export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
+  const formRef = props.formRef;
   const router = useRouter();
   const workspaceId = router.query.workspaceId as string | undefined;
   const modalContext = useContext(ModalContext);
   const userContext = useContext(UserContext);
 
-  const [ingredients, setIngredients] = useState<Ingredient[]>([]);
+  const [ingredients, setIngredients] = useState<IngredientModel[]>([]);
   const [ingredientsLoading, setIngredientsLoading] = useState(false);
 
-  const formRef = props.formRef;
+  const [glasses, setGlasses] = useState<GlassModel[]>([]);
+  const [glassesLoading, setGlassesLoading] = useState(false);
 
-  const fetchIngredients = useCallback(async () => {
-    if (!workspaceId) return;
+  const [garnishes, setGarnishes] = useState<Garnish[]>([]);
+  const [garnishesLoading, setGarnishesLoading] = useState(false);
 
-    setIngredientsLoading(true);
-    try {
-      const response = await fetch(`/api/workspaces/${workspaceId}/ingredients`);
+  const [actions, setActions] = useState<WorkspaceCocktailRecipeStepAction[]>([]);
+  const [actionsLoading, setActionsLoading] = useState(false);
 
-      const body = await response.json();
-      if (response.ok) {
-        setIngredients(body.data);
-      } else {
-        console.error('CocktailRecipeForm -> fetchIngredients', response);
-        alertService.error(body.message ?? 'Fehler beim Laden der Zutaten', response.status, response.statusText);
-      }
-    } catch (error) {
-      console.error('CocktailRecipeForm -> fetchIngredients', error);
-      alertService.error('Fehler beim Laden der Zutaten');
-    } finally {
-      setIngredientsLoading(false);
-    }
-  }, [workspaceId]);
+  const [units, setUnits] = useState<Unit[]>([]);
+  const [unitsLoading, setUnitsLoading] = useState(false);
 
   const openIngredientSelectModal = useCallback(
     (setFieldValue: any, indexStep: number, indexIngredient: number) => {
@@ -107,80 +101,6 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
     },
     [ingredients, modalContext],
   );
-
-  const [glasses, setGlasses] = useState<GlassModel[]>([]);
-  const [glassesLoading, setGlassesLoading] = useState(false);
-
-  const fetchGlasses = useCallback(async () => {
-    if (!workspaceId) return;
-    setGlassesLoading(true);
-    fetch(`/api/workspaces/${workspaceId}/glasses`)
-      .then(async (response) => {
-        const body = await response.json();
-        if (response.ok) {
-          setGlasses(body.data);
-        } else {
-          console.error('CocktailRecipeForm -> fetchGlasses', response);
-          alertService.error(body.message ?? 'Fehler beim Laden der Gläser', response.status, response.statusText);
-        }
-      })
-      .catch((error) => {
-        console.error('CocktailRecipeForm -> fetchGlasses', error);
-        alertService.error('Fehler beim laden der Gläser');
-      })
-      .finally(() => {
-        setGlassesLoading(false);
-      });
-  }, [workspaceId]);
-
-  const [garnishes, setGarnishes] = useState<Garnish[]>([]);
-  const [garnishesLoading, setGarnishesLoading] = useState(false);
-
-  const fetchGarnishes = useCallback(async () => {
-    if (!workspaceId) return;
-    setGarnishesLoading(true);
-    fetch(`/api/workspaces/${workspaceId}/garnishes`)
-      .then(async (response) => {
-        const body = await response.json();
-        if (response.ok) {
-          setGarnishes(body.data);
-        } else {
-          console.error('CocktailRecipeForm -> fetchGarnishes', response);
-          alertService.error(body.message ?? 'Fehler beim Laden der Garnituren', response.status, response.statusText);
-        }
-      })
-      .catch((error) => {
-        console.error('CocktailRecipeForm -> fetchGarnishes', error);
-        alertService.error('Fehler beim Laden der Garnituren');
-      })
-      .finally(() => {
-        setGarnishesLoading(false);
-      });
-  }, [workspaceId]);
-
-  const [actions, setActions] = useState<WorkspaceCocktailRecipeStepAction[]>([]);
-  const [actionsLoading, setActionsLoading] = useState(false);
-  const fetchActions = useCallback(async () => {
-    if (!workspaceId) return;
-    setActionsLoading(true);
-    fetch(`/api/workspaces/${workspaceId}/actions`)
-      .then(async (response) => {
-        const body = await response.json();
-        if (response.ok) {
-          setActions(body.data);
-        } else {
-          console.error('CocktailRecipeForm -> fetchActions', response);
-          alertService.error(body.message ?? 'Fehler beim Laden der Zubereitungsmöglichkeiten', response.status, response.statusText);
-        }
-      })
-      .catch((error) => {
-        console.error('CocktailRecipeForm -> fetchActions', error);
-        alertService.error('Fehler beim laden der Zubereitungsmöglichkeiten');
-      })
-      .finally(() => {
-        setActionsLoading(false);
-      });
-  }, [workspaceId]);
 
   const openGarnishSelectModal = useCallback(
     (setFieldValue: any, indexGarnish: number) => {
@@ -280,11 +200,12 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
   }, [ingredients, props.cocktailRecipe?.steps]);
 
   useEffect(() => {
-    fetchActions();
-    fetchGarnishes();
-    fetchIngredients();
-    fetchGlasses();
-  }, [fetchActions, fetchGarnishes, fetchGlasses, fetchIngredients]);
+    fetchActions(workspaceId, setActions, setActionsLoading);
+    fetchIngredients(workspaceId, setIngredients, setIngredientsLoading);
+    fetchGarnishes(workspaceId, setGarnishes, setGarnishesLoading);
+    fetchGlasses(workspaceId, setGlasses, setGlassesLoading);
+    fetchUnits(workspaceId, setUnits, setUnitsLoading);
+  }, [workspaceId]);
 
   const initSteps: CocktailRecipeStepFull[] = props.cocktailRecipe?.steps ?? [];
 
@@ -357,7 +278,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
             if (ingredient.amount && isNaN(ingredient.amount)) {
               ingredientErrors.amount = 'Required';
             }
-            if (!ingredient.unit || ingredient.unit == '') {
+            if (!ingredient.unitId || ingredient.unitId == '') {
               ingredientErrors.unit = 'Required';
             }
             if (!ingredient.ingredientId || ingredient.ingredientId == '') {
@@ -596,7 +517,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                   onSaved={async (id) => {
                                     modalContext.closeModal();
                                     await setFieldValue('glassId', id);
-                                    await fetchGlasses();
+                                    fetchGlasses(workspaceId, setGlasses, setGlassesLoading);
                                   }}
                                 />
                               }
@@ -724,18 +645,32 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                           {(values.steps as CocktailRecipeStepFull[])
                             .map((step) => step.ingredients.filter((ingredient) => ingredient.ingredient != undefined))
                             .flat()
-                            ?.map((ingredient, indexIngredient) => (
+                            ?.map((stepIngredient, indexIngredient) => (
                               <>
                                 <div key={`price-calculation-step-${indexIngredient}-name`}>
-                                  {ingredient.ingredient?.shortName ?? ingredient.ingredient?.name}
+                                  {stepIngredient.ingredient?.shortName ?? stepIngredient.ingredient?.name}
                                 </div>
                                 <div key={`price-calculation-step-${indexIngredient}-price`} className={'grid grid-cols-2'}>
                                   <div>
-                                    {ingredient.amount} x {((ingredient.ingredient?.price ?? 0) / (ingredient.ingredient?.volume ?? 1)).toFixed(2)}
+                                    {stepIngredient.amount} {userContext.getTranslation(stepIngredient?.unitUnit?.name ?? '', 'de')} x{' '}
+                                    {(
+                                      (stepIngredient.ingredient?.price ?? 0) /
+                                      (ingredients
+                                        .find((ingredient) => ingredient.id == stepIngredient.ingredientId)
+                                        ?.IngredientVolume.find((volumeUnits) => volumeUnits.unitId == stepIngredient.unitId)?.volume ?? 1)
+                                    ).toFixed(2)}{' '}
+                                    €/{userContext.getTranslation(stepIngredient?.unitUnit?.name ?? '', 'de')}
                                   </div>
                                   <div className={'text-end'}>
                                     {indexIngredient > 0 ? '+ ' : ''}
-                                    {(((ingredient.ingredient?.price ?? 0) / (ingredient.ingredient?.volume ?? 1)) * (ingredient.amount ?? 0)).toFixed(2)}€
+                                    {(
+                                      ((stepIngredient.ingredient?.price ?? 0) /
+                                        (ingredients
+                                          .find((ingredient) => ingredient.id == stepIngredient.ingredientId)
+                                          ?.IngredientVolume.find((volumeUnits) => volumeUnits.unitId == stepIngredient.unitId)?.volume ?? 1)) *
+                                      (stepIngredient.amount ?? 0)
+                                    ).toFixed(2)}
+                                    €
                                   </div>
                                 </div>
                               </>
@@ -775,7 +710,14 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                           (values.steps as CocktailRecipeStepFull[])
                             .map((step) => step.ingredients.filter((ingredient) => ingredient.ingredient != undefined))
                             .flat()
-                            .map((ingredient) => ((ingredient.ingredient?.price ?? 0) / (ingredient.ingredient?.volume ?? 1)) * (ingredient.amount ?? 0))
+                            .map(
+                              (stepIngredient) =>
+                                ((stepIngredient.ingredient?.price ?? 0) /
+                                  (ingredients
+                                    .find((ingredient) => ingredient.id == stepIngredient.ingredientId)
+                                    ?.IngredientVolume.find((volumeUnits) => volumeUnits.unitId == stepIngredient.unitId)?.volume ?? 1)) *
+                                (stepIngredient.amount ?? 0),
+                            )
                             .reduce((summ, sum) => summ + sum, 0) +
                           (values.garnishes as CocktailRecipeGarnishFull[]).map((garnish) => garnish?.garnish?.price ?? 0).reduce((summ, sum) => summ + sum, 0)
                         ).toFixed(2) + ' €'}
@@ -975,7 +917,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                                     onSaved={async (id) => {
                                                       modalContext.closeModal();
                                                       await setFieldValue(`steps.${indexStep}.ingredients.${indexIngredient}.ingredientId`, id);
-                                                      await fetchIngredients();
+                                                      fetchIngredients(workspaceId, setIngredients, setIngredientsLoading);
                                                     }}
                                                   />
                                                 }
@@ -997,20 +939,30 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                           value={values.steps[indexStep].ingredients[indexIngredient].amount}
                                         />
                                         <select
-                                          name={`steps.${indexStep}.ingredients.${indexIngredient}.unit`}
+                                          name={`steps.${indexStep}.ingredients.${indexIngredient}.unitId`}
                                           className={`join-item select select-bordered max-w-[20%] md:max-w-none ${
                                             ((errors.steps as StepError[])?.[indexStep] as any)?.ingredients?.[indexIngredient]?.unit ? 'select-error' : ''
                                           }`}
-                                          onChange={handleChange}
+                                          onChange={async (e) => {
+                                            handleChange(e);
+                                            await setFieldValue(
+                                              `steps.${indexStep}.ingredients.${indexIngredient}.unitUnit`,
+                                              units.find((u) => u.id == e.target.value),
+                                            );
+                                          }}
                                           onBlur={handleBlur}
-                                          value={values.steps[indexStep].ingredients[indexIngredient].unit}
+                                          value={values.steps[indexStep].ingredients[indexIngredient].unitId}
                                         >
-                                          <option value={''}>Auswählen</option>
-                                          {Object.values(CocktailIngredientUnit).map((value) => (
-                                            <option key={`steps.${indexStep}.ingredients.${indexIngredient}.units-${value}`} value={value}>
-                                              {value}
-                                            </option>
-                                          ))}
+                                          <option value={''} disabled>
+                                            Auswählen
+                                          </option>
+                                          {ingredients
+                                            .find((ingredient) => ingredient.id == values.steps[indexStep].ingredients[indexIngredient]?.ingredientId)
+                                            ?.IngredientVolume?.map((value) => (
+                                              <option key={`steps.${indexStep}.ingredients.${indexIngredient}.units-${value.unitId}`} value={value.unitId}>
+                                                {userContext.getTranslation(value.unit.name, 'de')}
+                                              </option>
+                                            ))}
                                         </select>
                                         <button
                                           type={'button'}
@@ -1038,7 +990,8 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                     onClick={() =>
                                       pushIngredient({
                                         amount: 0,
-                                        unit: CocktailIngredientUnit.CL,
+                                        unitId: '',
+                                        unitUnit: undefined,
                                         ingredient: undefined,
                                       })
                                     }
@@ -1164,7 +1117,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                             onSaved={async (id) => {
                                               modalContext.closeModal();
                                               await setFieldValue(`garnishes.${indexGarnish}.garnishId`, id);
-                                              await fetchGarnishes();
+                                              fetchGarnishes(workspaceId, setGarnishes, setGarnishesLoading);
                                             }}
                                           />
                                         }

@@ -16,6 +16,11 @@ export default withHttpMethods({
         workspaceId: workspace.id,
       },
       include: {
+        IngredientVolume: {
+          include: {
+            unit: true,
+          },
+        },
         _count: {
           select: {
             IngredientImage: true,
@@ -26,41 +31,75 @@ export default withHttpMethods({
     return res.json({ data: ingredients });
   }),
   [HTTPMethod.POST]: withWorkspacePermission([Role.MANAGER], async (req: NextApiRequest, res: NextApiResponse, user, workspace: Workspace) => {
-    const { name, price, volume, unit, shortName, link, tags, image, notes, description } = req.body;
+    try {
+      await prisma.$transaction(async (transaction) => {
+        const { name, price, volume, shortName, link, tags, image, notes, description, units } = req.body;
 
-    const input: IngredientCreateInput = {
-      name: name,
-      volume: volume,
-      notes: notes,
-      description: description,
-      shortName: shortName,
-      unit: unit,
-      price: price,
-      link: link,
-      tags: tags,
-      workspace: {
-        connect: {
-          id: workspace.id,
-        },
-      },
-    };
-
-    const result = await prisma.ingredient.create({
-      data: input,
-    });
-
-    if (image) {
-      const imageResult = await prisma.ingredientImage.create({
-        data: {
-          image: image,
-          ingredient: {
+        const input: IngredientCreateInput = {
+          name: name,
+          volume: volume,
+          notes: notes,
+          description: description,
+          shortName: shortName,
+          unit: '-',
+          price: price,
+          link: link,
+          tags: tags,
+          workspace: {
             connect: {
-              id: result.id,
+              id: workspace.id,
             },
           },
-        },
+        };
+
+        const result = await transaction.ingredient.create({
+          data: input,
+        });
+
+        if (units) {
+          console.log(units);
+          for (const unit of units) {
+            await transaction.ingredientVolume.create({
+              data: {
+                volume: unit.volume,
+                unit: {
+                  connect: {
+                    id: unit.unitId,
+                  },
+                },
+                ingredient: {
+                  connect: {
+                    id: result.id,
+                  },
+                },
+                workspace: {
+                  connect: {
+                    id: workspace.id,
+                  },
+                },
+              },
+            });
+          }
+        }
+
+        if (image) {
+          const imageResult = await transaction.ingredientImage.create({
+            data: {
+              image: image,
+              ingredient: {
+                connect: {
+                  id: result.id,
+                },
+              },
+            },
+          });
+        }
+
+        return res.json({ data: result });
       });
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ msg: 'Error' });
     }
-    return res.json({ data: result });
   }),
 });

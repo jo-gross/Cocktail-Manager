@@ -1,17 +1,17 @@
 import { Role } from '@prisma/client';
 import Link from 'next/link';
 import { ManageEntityLayout } from '../../../../../components/layout/ManageEntityLayout';
-import React, { useCallback, useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { Loading } from '../../../../../components/Loading';
 import { FaCheck, FaInfoCircle, FaPlus, FaTimes } from 'react-icons/fa';
 import { ManageColumn } from '../../../../../components/ManageColumn';
-import { alertService } from '../../../../../lib/alertService';
 import { UserContext } from '../../../../../lib/context/UserContextProvider';
 import AvatarImage from '../../../../../components/AvatarImage';
 import ListSearchField from '../../../../../components/ListSearchField';
 import { IngredientModel } from '../../../../../models/IngredientModel';
 import { ModalContext } from '../../../../../lib/context/ModalContextProvider';
+import { fetchIngredients } from '../../../../../lib/network/ingredients';
 
 export default function IngredientsOverviewPage() {
   const router = useRouter();
@@ -25,31 +25,9 @@ export default function IngredientsOverviewPage() {
 
   const [filterString, setFilterString] = useState('');
 
-  const refreshIngredients = useCallback(async () => {
-    if (!workspaceId) return;
-    setLoading(true);
-    fetch(`/api/workspaces/${workspaceId}/ingredients`)
-      .then(async (response) => {
-        const body = await response.json();
-        if (response.ok) {
-          setIngredients(body.data);
-        } else {
-          console.error('Ingredients -> fetchIngredients', response);
-          alertService.error(body.message ?? 'Fehler beim Laden der Zutaten', response.status, response.statusText);
-        }
-      })
-      .catch((error) => {
-        console.error('Ingredients -> fetchIngredients', error);
-        alertService.error('Fehler beim Laden der Zutaten');
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  }, [workspaceId]);
-
   useEffect(() => {
-    refreshIngredients();
-  }, [refreshIngredients]);
+    fetchIngredients(workspaceId, setIngredients, setLoading);
+  }, [workspaceId]);
 
   return (
     <ManageEntityLayout
@@ -174,7 +152,7 @@ export default function IngredientsOverviewPage() {
                             </div>
                           )}
                         </td>
-                        <ManageColumn entity={'ingredients'} id={ingredient.id} onRefresh={refreshIngredients} />
+                        <ManageColumn entity={'ingredients'} id={ingredient.id} onRefresh={() => fetchIngredients(workspaceId, setIngredients, setLoading)} />
                       </tr>
                     ))
                 )}
