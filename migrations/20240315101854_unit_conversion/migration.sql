@@ -77,3 +77,170 @@ ALTER TABLE "IngredientVolume"
 -- AddForeignKey
 ALTER TABLE "IngredientVolume"
     ADD CONSTRAINT "IngredientVolume_workspaceId_fkey" FOREIGN KEY ("workspaceId") REFERENCES "Workspace" ("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+CREATE OR REPLACE FUNCTION convertUnit(inputData text) RETURNS text AS
+$$
+BEGIN
+    CASE
+        WHEN inputData = 'cl' THEN RETURN 'CL';
+        WHEN inputData = 'Dash' THEN RETURN 'DASH';
+        WHEN inputData = 'Stück' THEN RETURN 'PIECE';
+        WHEN inputData = 'Pip. cm' THEN RETURN 'DROPPER_CM';
+        WHEN inputData = 'Pip. Tropfen' THEN RETURN 'DROPPER_DROPS';
+        WHEN inputData = 'Pin. cm' THEN RETURN 'DROPPER_CM';
+        WHEN inputData = 'Pin. Tropfen' THEN RETURN 'DROPPER_DROPS';
+        WHEN inputData = 'Sprühen' THEN RETURN 'SPRAY';
+        WHEN inputData = 'g' THEN RETURN 'GRAMM';
+        ELSE RETURN inputData; -- If the unit is not recognized
+        END CASE;
+END
+$$ LANGUAGE plpgsql;
+
+
+
+CREATE OR REPLACE FUNCTION convertUnitLiteralsToIdentifier_CocktailIngredient()
+    RETURNS VOID
+AS
+$$
+DECLARE
+    t_curs cursor for
+        select *
+        from "CocktailRecipeIngredient";
+BEGIN
+    FOR t_row in t_curs
+        LOOP
+            update "CocktailRecipeIngredient"
+            set unit = convertUnit(unit)
+            where current of t_curs;
+        END LOOP;
+END;
+$$
+    LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION convertUnitLiteralsToIdentifier_Ingredient()
+    RETURNS VOID
+AS
+$$
+DECLARE
+    t_curs cursor for
+        select *
+        from "Ingredient";
+BEGIN
+    FOR t_row in t_curs
+        LOOP
+            update "Ingredient"
+            set unit = convertUnit(unit)
+            where current of t_curs;
+        END LOOP;
+END;
+$$
+    LANGUAGE plpgsql;
+
+SELECT convertUnitLiteralsToIdentifier_CocktailIngredient();
+SELECT convertUnitLiteralsToIdentifier_Ingredient();
+
+-- Create all units in DB
+
+CREATE OR REPLACE FUNCTION convertUnitLiteralsToIdentifier_CocktailIngredient()
+    RETURNS VOID
+AS
+$$
+DECLARE
+    t_curs cursor for
+        select *
+        from "CocktailRecipeIngredient";
+BEGIN
+    FOR t_row in t_curs
+        LOOP
+            update "CocktailRecipeIngredient"
+            set unit = convertUnit(unit)
+            where current of t_curs;
+        END LOOP;
+END;
+$$
+    LANGUAGE plpgsql;
+
+
+CREATE OR REPLACE FUNCTION createUnitsAndLink()
+    RETURNS VOID
+AS
+$$
+DECLARE
+    workspace_id text;
+    unitName     text;
+    ingredient   "Ingredient"%rowtype;
+BEGIN
+    -- iterate through every workspace, to don´t mix them up
+    FOR workspace_id in SELECT id FROM "Workspace"
+        LOOP
+            -- select all existing units from a workspace and create an entity
+            FOR unitName in (SELECT DISTINCT unit
+                             FROM "Ingredient"
+                             where "workspaceId" = workspace_id
+                             union
+                             distinct
+                             SELECT DISTINCT unit
+                             FROM "CocktailRecipeIngredient" ci
+                                      inner join public."CocktailRecipeStep" CRS on CRS.id = ci."cocktailRecipeStepId"
+                                      INNER JOIN public."CocktailRecipe" CR on CR.id = CRS."cocktailRecipeId"
+                             where CR."workspaceId" = workspace_id)
+                LOOP
+                    -- create an unit entry for each unit literal
+                    INSERT INTO "Unit" (id, name, "workspaceId")
+                    SELECT gen_random_uuid(), unitName, workspace_id
+                    WHERE NOT EXISTS(SELECT id FROM "Unit" WHERE name = unitName);
+                END LOOP;
+
+            -- insert all default units
+
+            INSERT INTO "Unit" (id, name, "workspaceId")
+            SELECT gen_random_uuid(), 'CL', workspace_id
+            WHERE NOT EXISTS(SELECT id FROM "Unit" WHERE name = 'CL');
+            INSERT INTO "Unit" (id, name, "workspaceId")
+            SELECT gen_random_uuid(), 'DASH', workspace_id
+            WHERE NOT EXISTS(SELECT id FROM "Unit" WHERE name = 'DASH');
+            INSERT INTO "Unit" (id, name, "workspaceId")
+            SELECT gen_random_uuid(), 'PIECE', workspace_id
+            WHERE NOT EXISTS(SELECT id FROM "Unit" WHERE name = 'PIECE');
+            INSERT INTO "Unit" (id, name, "workspaceId")
+            SELECT gen_random_uuid(), 'DROPPER_CM', workspace_id
+            WHERE NOT EXISTS(SELECT id FROM "Unit" WHERE name = 'DROPPER_CM');
+            INSERT INTO "Unit" (id, name, "workspaceId")
+            SELECT gen_random_uuid(), 'DROPPER_DROPS', workspace_id
+            WHERE NOT EXISTS(SELECT id FROM "Unit" WHERE name = 'DROPPER_DROPS');
+            INSERT INTO "Unit" (id, name, "workspaceId")
+            SELECT gen_random_uuid(), 'GRAMM', workspace_id
+            WHERE NOT EXISTS(SELECT id FROM "Unit" WHERE name = 'GRAMM');
+            INSERT INTO "Unit" (id, name, "workspaceId")
+            SELECT gen_random_uuid(), 'SPRAY', workspace_id
+            WHERE NOT EXISTS(SELECT id FROM "Unit" WHERE name = 'SPRAY');
+
+
+            FOR ingredient IN SELECT * FROM "Ingredient"
+                LOOP
+                    -- insert direct link - no conversions made yet
+                    INSERT INTO "IngredientVolume" (id, volume, "ingredientId", "unitId", "workspaceId")
+                    VALUES (gen_random_uuid(), ingredient.volume, ingredient.id, (SELECT id
+                                                                                  FROM "Unit"
+                                                                                  where "Unit"."workspaceId" = workspace_id
+                                                                                    and "Unit".name = ingredient.unit),
+                            workspace_id);
+                END LOOP;
+        END LOOP;
+END;
+$$ LANGUAGE plpgsql;
+
+SELECT createUnitsAndLink();
+
+DROP FUNCTION convertUnit();
+DROP FUNCTION convertUnitLiteralsToIdentifier_CocktailIngredient();
+DROP FUNCTION convertUnitLiteralsToIdentifier_Ingredient();
+DROP FUNCTION createUnitsAndLink();
+
+ALTER TABLE "Ingredient"
+    DROP COLUMN unit;
+ALTER TABLE "Ingredient"
+    DROP COLUMN volume;
+
+ALTER TABLE "CocktailRecipeIngredient"
+    DROP COLUMN unit;

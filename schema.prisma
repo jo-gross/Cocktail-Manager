@@ -262,10 +262,9 @@ model CocktailRecipeStep {
 }
 
 model CocktailRecipeIngredient {
-  id               String  @id @default(cuid())
+  id               String @id @default(cuid())
   ingredientNumber Int
   amount           Float?
-  unit             String?
 
   unitId   String?
   unitUnit Unit?   @relation(fields: [unitId], references: [id], onDelete: Restrict)
@@ -284,8 +283,6 @@ model Ingredient {
   description              String?
   notes                    String?
   price                    Float?
-  volume                   Float?
-  unit                     String?
   link                     String?
   tags                     String[]
   CocktailRecipeIngredient CocktailRecipeIngredient[]
