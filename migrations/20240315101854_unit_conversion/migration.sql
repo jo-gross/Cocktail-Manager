@@ -136,29 +136,8 @@ END;
 $$
     LANGUAGE plpgsql;
 
-SELECT convertUnitLiteralsToIdentifier_CocktailIngredient();
 SELECT convertUnitLiteralsToIdentifier_Ingredient();
-
--- Create all units in DB
-
-CREATE OR REPLACE FUNCTION convertUnitLiteralsToIdentifier_CocktailIngredient()
-    RETURNS VOID
-AS
-$$
-DECLARE
-    t_curs cursor for
-        select *
-        from "CocktailRecipeIngredient";
-BEGIN
-    FOR t_row in t_curs
-        LOOP
-            update "CocktailRecipeIngredient"
-            set unit = convertUnit(unit)
-            where current of t_curs;
-        END LOOP;
-END;
-$$
-    LANGUAGE plpgsql;
+SELECT convertUnitLiteralsToIdentifier_CocktailIngredient();
 
 
 CREATE OR REPLACE FUNCTION createUnitsAndLink()
@@ -166,9 +145,11 @@ CREATE OR REPLACE FUNCTION createUnitsAndLink()
 AS
 $$
 DECLARE
-    workspace_id text;
-    unitName     text;
-    ingredient   "Ingredient"%rowtype;
+    workspace_id                 text;
+    unitName                     text;
+    ingredient                   "Ingredient"%rowtype;
+    cocktailRecipeStepIngredient "CocktailRecipeIngredient"%rowtype;
+
 BEGIN
     -- iterate through every workspace, to don´t mix them up
     FOR workspace_id in SELECT id FROM "Workspace"
@@ -216,7 +197,7 @@ BEGIN
             WHERE NOT EXISTS(SELECT id FROM "Unit" WHERE name = 'SPRAY');
 
 
-            FOR ingredient IN SELECT * FROM "Ingredient" WHERE volume IS NOT NULL AND unit IS NOT NULL
+            FOR ingredient IN SELECT * FROM "Ingredient" WHERE unit IS NOT NULL AND volume IS NOT NULL
                 LOOP
                     -- insert direct link - no conversions made yet
                     INSERT INTO "IngredientVolume" (id, volume, "ingredientId", "unitId", "workspaceId")
@@ -227,30 +208,21 @@ BEGIN
                             workspace_id);
                 END LOOP;
 
-            -- insert all default unit conversions
-            INSERT INTO "UnitConversion" (id, "fromUnitId", "toUnitId", factor, "workspaceId")
-            VALUES (gen_random_uuid(), (SELECT id FROM "Unit" where name = 'CL' and "workspaceId" = workspace_id),
-                    (SELECT id FROM "Unit" where name = 'DASH' and "workspaceId" = workspace_id), 0.1, workspace_id);
+            FOR cocktailRecipeStepIngredient IN SELECT "CocktailRecipeIngredient".*
+                                                FROM "CocktailRecipeIngredient"
+                                                         INNER JOIN public."Ingredient" I
+                                                                    on I.id = "CocktailRecipeIngredient"."ingredientId"
+                                                WHERE I."workspaceId" = workspace_id
+                                                  AND "CocktailRecipeIngredient".unit IS NOT NULL
+                LOOP
+                    UPDATE "CocktailRecipeIngredient"
+                    SET "unitId" = (SELECT id
+                                    FROM "Unit"
+                                    WHERE "Unit".name = cocktailRecipeStepIngredient.unit
+                                      AND "Unit"."workspaceId" = workspace_id)
+                    WHERE "CocktailRecipeIngredient".id = cocktailRecipeStepIngredient.id;
 
-
-            INSERT INTO "UnitConversion" (id, "fromUnitId", "toUnitId", factor, "workspaceId")
-            VALUES (gen_random_uuid(), (SELECT id FROM "Unit" where name = 'CL' and "workspaceId" = workspace_id),
-                    (SELECT id FROM "Unit" where name = 'DROPPER_CM' and "workspaceId" = workspace_id), 0.6,
-                    workspace_id);
-
-            INSERT INTO "UnitConversion" (id, "fromUnitId", "toUnitId", factor, "workspaceId")
-            VALUES (gen_random_uuid(), (SELECT id FROM "Unit" where name = 'CL' and "workspaceId" = workspace_id),
-                    (SELECT id FROM "Unit" where name = 'DROPPER_DROPS' and "workspaceId" = workspace_id), 0.002,
-                    workspace_id);
-
-            INSERT INTO "UnitConversion" (id, "fromUnitId", "toUnitId", factor, "workspaceId")
-            VALUES (gen_random_uuid(), (SELECT id FROM "Unit" where name = 'CL' and "workspaceId" = workspace_id),
-                    (SELECT id FROM "Unit" where name = 'SPRAY' and "workspaceId" = workspace_id), 0.01, workspace_id);
-
-            INSERT INTO "UnitConversion" (id, "fromUnitId", "toUnitId", factor, "workspaceId")
-            VALUES (gen_random_uuid(), (SELECT id FROM "Unit" where name = 'CL' and "workspaceId" = workspace_id),
-                    (SELECT id FROM "Unit" where name = 'GRAMM' and "workspaceId" = workspace_id), 0.1, workspace_id);
-
+                END LOOP;
 
         END LOOP;
 END;

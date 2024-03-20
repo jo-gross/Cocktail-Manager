@@ -938,6 +938,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                           onBlur={handleBlur}
                                           value={values.steps[indexStep].ingredients[indexIngredient].amount}
                                         />
+                                        <div className={'tooltip'}></div>
                                         <select
                                           name={`steps.${indexStep}.ingredients.${indexIngredient}.unitId`}
                                           className={`join-item select select-bordered max-w-[20%] md:max-w-none ${
@@ -956,6 +957,21 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                           <option value={''} disabled>
                                             Auswählen
                                           </option>
+
+                                          {ingredients
+                                            .find((ingredient) => ingredient.id == values.steps[indexStep].ingredients[indexIngredient]?.ingredientId)
+                                            ?.IngredientVolume.find((unit) => unit.unitId == values.steps[indexStep].ingredients[indexIngredient].unitId) ==
+                                          undefined ? (
+                                            <option value={values.steps[indexStep].ingredients[indexIngredient]?.unitId} disabled={true}>
+                                              {userContext.getTranslation(
+                                                units.find((unit) => unit.id == values.steps[indexStep].ingredients[indexIngredient]?.unitId)?.name ?? '',
+                                                'de',
+                                              )}{' '}
+                                              (nicht in der Zutat verfügbar)
+                                            </option>
+                                          ) : (
+                                            <></>
+                                          )}
                                           {ingredients
                                             .find((ingredient) => ingredient.id == values.steps[indexStep].ingredients[indexIngredient]?.ingredientId)
                                             ?.IngredientVolume?.map((value) => (
