@@ -266,8 +266,8 @@ model CocktailRecipeIngredient {
   ingredientNumber Int
   amount           Float?
 
-  unitId   String?
-  unitUnit Unit?   @relation(fields: [unitId], references: [id], onDelete: Restrict)
+  unitId String?
+  unit   Unit?   @relation(fields: [unitId], references: [id], onDelete: Restrict)
 
   ingredientId String?
   ingredient   Ingredient? @relation(fields: [ingredientId], references: [id], onDelete: Cascade)

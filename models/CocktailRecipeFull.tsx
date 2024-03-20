@@ -17,7 +17,7 @@ export type CocktailRecipeFull = Prisma.CocktailRecipeGetPayload<{
             ingredient: {
               include: { _count: { select: { IngredientImage: true } } };
             };
-            unitUnit: true;
+            unit: true;
           };
         };
       };

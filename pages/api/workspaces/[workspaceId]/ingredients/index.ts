@@ -33,15 +33,13 @@ export default withHttpMethods({
   [HTTPMethod.POST]: withWorkspacePermission([Role.MANAGER], async (req: NextApiRequest, res: NextApiResponse, user, workspace: Workspace) => {
     try {
       await prisma.$transaction(async (transaction) => {
-        const { name, price, volume, shortName, link, tags, image, notes, description, units } = req.body;
+        const { name, price, shortName, link, tags, image, notes, description, units } = req.body;
 
         const input: IngredientCreateInput = {
           name: name,
-          volume: volume,
           notes: notes,
           description: description,
           shortName: shortName,
-          unit: '-',
           price: price,
           link: link,
           tags: tags,

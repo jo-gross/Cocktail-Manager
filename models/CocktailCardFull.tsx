@@ -22,7 +22,7 @@ export type CocktailCardFull = Prisma.CocktailCardGetPayload<{
                       include: {
                         ingredient: {
                           include: { _count: { select: { IngredientImage: true } } };
-                          unitUnit: true;
+                          unit: true;
                         };
                       };
                     };

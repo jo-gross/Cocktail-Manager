@@ -34,7 +34,6 @@ interface FormValue {
   notes: string;
   description: string;
   price: number | undefined;
-  volume: number;
   units: FormUnitValue[];
   link: string;
   tags: string[];
@@ -66,7 +65,6 @@ export function IngredientForm(props: IngredientFormProps) {
     notes: props.ingredient?.notes ?? '',
     description: props.ingredient?.description ?? '',
     price: props.ingredient?.price ?? undefined,
-    volume: props.ingredient?.volume ?? 0,
     units: props.ingredient?.IngredientVolume ?? [],
     link: props.ingredient?.link ?? '',
     tags: props.ingredient?.tags ?? [],
@@ -86,7 +84,6 @@ export function IngredientForm(props: IngredientFormProps) {
             notes: values.notes?.trim() == '' ? null : values.notes?.trim(),
             description: values.description?.trim() == '' ? null : values.description?.trim(),
             price: values.price == '' ? null : values.price,
-            volume: values.volume,
             units: values.units || [],
             link: values.link?.trim() == '' ? null : values.link?.trim(),
             tags: values.tags,
@@ -289,7 +286,7 @@ export function IngredientForm(props: IngredientFormProps) {
                           <td>{unit.volume}</td>
                           <td>{userContext.getTranslation(allUnits.find((availableUnit) => availableUnit.id == unit.unitId)?.name ?? 'N/A', 'de')}</td>
                           <td>
-                            {values.price != undefined ? values.price / unit.volume : '-'} €/
+                            {values.price != undefined ? (values.price / unit.volume).toFixed(2).replace(/\D00(?=\D*$)/, '') : '-'} €/
                             {userContext.getTranslation(allUnits.find((availableUnit) => availableUnit.id == unit.unitId)?.name ?? 'N/A', 'de')}
                           </td>
                           <td className={'flex flex-row items-center justify-center'}>
@@ -386,7 +383,7 @@ export function IngredientForm(props: IngredientFormProps) {
                       _.isEqual,
                     ).map((suggestion, suggestionIndex) => (
                       <li key={`unit-conversion-suggestion-${suggestionIndex}`} className={'space-x-2 italic'}>
-                        <span className={'p-2'}>{suggestion.volume}</span>
+                        <span className={'p-2'}>{suggestion.volume.toFixed(2).replace(/\D00(?=\D*$)/, '')}</span>
                         <span className={'p-2'}>{userContext.getTranslation(allUnits.find((unit) => unit.id == suggestion.unitId)?.name ?? 'N/A', 'de')}</span>
                         <span
                           className={'btn btn-ghost btn-sm'}

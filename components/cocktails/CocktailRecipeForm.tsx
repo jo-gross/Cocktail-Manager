@@ -652,14 +652,14 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                 </div>
                                 <div key={`price-calculation-step-${indexIngredient}-price`} className={'grid grid-cols-2'}>
                                   <div>
-                                    {stepIngredient.amount} {userContext.getTranslation(stepIngredient?.unitUnit?.name ?? '', 'de')} x{' '}
+                                    {stepIngredient.amount} {userContext.getTranslation(stepIngredient?.unit?.name ?? '', 'de')} x{' '}
                                     {(
                                       (stepIngredient.ingredient?.price ?? 0) /
                                       (ingredients
                                         .find((ingredient) => ingredient.id == stepIngredient.ingredientId)
                                         ?.IngredientVolume.find((volumeUnits) => volumeUnits.unitId == stepIngredient.unitId)?.volume ?? 1)
                                     ).toFixed(2)}{' '}
-                                    €/{userContext.getTranslation(stepIngredient?.unitUnit?.name ?? '', 'de')}
+                                    €/{userContext.getTranslation(stepIngredient?.unit?.name ?? '', 'de')}
                                   </div>
                                   <div className={'text-end'}>
                                     {indexIngredient > 0 ? '+ ' : ''}
@@ -946,7 +946,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                           onChange={async (e) => {
                                             handleChange(e);
                                             await setFieldValue(
-                                              `steps.${indexStep}.ingredients.${indexIngredient}.unitUnit`,
+                                              `steps.${indexStep}.ingredients.${indexIngredient}.unit`,
                                               units.find((u) => u.id == e.target.value),
                                             );
                                           }}
@@ -991,7 +991,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                       pushIngredient({
                                         amount: 0,
                                         unitId: '',
-                                        unitUnit: undefined,
+                                        unit: undefined,
                                         ingredient: undefined,
                                       })
                                     }

@@ -38,7 +38,7 @@ export default withHttpMethods({
             ingredients: {
               include: {
                 ingredient: { include: { _count: { select: { IngredientImage: true } } } },
-                unitUnit: true,
+                unit: true,
               },
             },
           },
@@ -124,8 +124,7 @@ export default withHttpMethods({
                 return {
                   amount: ingredient.amount,
                   ingredientNumber: ingredient.ingredientNumber,
-                  unit: ingredient.unit,
-                  unitUnit: { connect: { id: ingredient.unitId } },
+                  unit: { connect: { id: ingredient.unitId } },
                   ingredient: { connect: { id: ingredient.ingredientId } },
                 };
               }),

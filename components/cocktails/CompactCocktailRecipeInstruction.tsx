@@ -57,7 +57,7 @@ export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeIns
                 ?.sort((a, b) => a.ingredientNumber - b.ingredientNumber)
                 .map((stepIngredient, indexIngredient) => (
                   <div key={`cocktail-${props.cocktailRecipe.id}-step-${step.id}-ingredient-${stepIngredient.id}-index-${indexIngredient}`}>
-                    {stepIngredient.amount ?? ''} {userContext.getTranslationOrNull(stepIngredient?.unitUnit?.name ?? '', 'de') ?? ''}{' '}
+                    {stepIngredient.amount ?? ''} {userContext.getTranslation(stepIngredient?.unit?.name ?? '', 'de')}{' '}
                     {stepIngredient.ingredient?.shortName ?? stepIngredient.ingredient?.name ?? ''}{' '}
                     {indexIngredient < step.ingredients.length - 1 ? <></> : <></>}
                   </div>

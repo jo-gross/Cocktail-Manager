@@ -232,9 +232,6 @@ BEGIN
             VALUES (gen_random_uuid(), (SELECT id FROM "Unit" where name = 'CL' and "workspaceId" = workspace_id),
                     (SELECT id FROM "Unit" where name = 'DASH' and "workspaceId" = workspace_id), 0.1, workspace_id);
 
-            INSERT INTO "UnitConversion" (id, "fromUnitId", "toUnitId", factor, "workspaceId")
-            VALUES (gen_random_uuid(), (SELECT id FROM "Unit" where name = 'CL' and "workspaceId" = workspace_id),
-                    (SELECT id FROM "Unit" where name = 'DASH' and "workspaceId" = workspace_id), 0.1, workspace_id);
 
             INSERT INTO "UnitConversion" (id, "fromUnitId", "toUnitId", factor, "workspaceId")
             VALUES (gen_random_uuid(), (SELECT id FROM "Unit" where name = 'CL' and "workspaceId" = workspace_id),

@@ -55,7 +55,7 @@ export default function IngredientsOverviewPage() {
                   <th>Abkürzung</th>
                   <th>Notizen</th>
                   <th>Preis</th>
-                  <th>Menge</th>
+                  <th>Verfügbare Menge(n)</th>
                   <th>Preis/Menge</th>
                   <th>Tags</th>
                   <th>Link</th>
@@ -123,10 +123,20 @@ export default function IngredientsOverviewPage() {
                           </button>
                         </td>
                         <td className={'whitespace-nowrap'}>{ingredient.price ?? '-'} €</td>
-                        <td className={'whitespace-nowrap'}>
-                          {ingredient.volume} {ingredient.unit}
+                        <td className={''}>
+                          {ingredient.IngredientVolume.map((volume) => (
+                            <div key={`ingredient-${ingredient.id}-volume-unit-${volume.id}`} className={'whitespace-nowrap'}>
+                              {volume.volume.toFixed(2).replace(/\D00(?=\D*$)/, '')} {userContext.getTranslation(volume.unit.name, 'de')}
+                            </div>
+                          ))}
                         </td>
-                        <td className={'whitespace-nowrap'}>{((ingredient.price ?? 0) / (ingredient.volume ?? 1)).toFixed(2)} €</td>
+                        <td>
+                          {ingredient.IngredientVolume.map((volume) => (
+                            <div key={`ingredient-${ingredient.id}-volume-unit-price-${volume.id}`} className={'whitespace-nowrap'}>
+                              {((ingredient.price ?? 0) / volume.volume).toFixed(2)} €/{userContext.getTranslation(volume.unit.name, 'de')}
+                            </div>
+                          ))}
+                        </td>
                         <td>
                           {ingredient.tags.map((tag) => (
                             <div key={`ingredient-${ingredient.id}-tags-${tag}`} className={'badge badge-primary badge-outline m-1'}>
