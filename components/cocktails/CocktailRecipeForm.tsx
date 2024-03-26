@@ -31,6 +31,7 @@ import { fetchGarnishes } from '../../lib/network/garnishes';
 import { fetchIngredients } from '../../lib/network/ingredients';
 import { fetchActions } from '../../lib/network/actions';
 import { fetchUnits } from '../../lib/network/units';
+import { calcCocktailTotalPrice } from '../../lib/CocktailRecipeCalculation';
 
 interface CocktailRecipeFormProps {
   cocktailRecipe?: CocktailRecipeFullWithImage;
@@ -651,27 +652,38 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                   {stepIngredient.ingredient?.shortName ?? stepIngredient.ingredient?.name}
                                 </div>
                                 <div key={`price-calculation-step-${indexIngredient}-price`} className={'grid grid-cols-2'}>
-                                  <div>
-                                    {stepIngredient.amount} {userContext.getTranslation(stepIngredient?.unit?.name ?? '', 'de')} x{' '}
-                                    {(
-                                      (stepIngredient.ingredient?.price ?? 0) /
-                                      (ingredients
-                                        .find((ingredient) => ingredient.id == stepIngredient.ingredientId)
-                                        ?.IngredientVolume.find((volumeUnits) => volumeUnits.unitId == stepIngredient.unitId)?.volume ?? 1)
-                                    ).toFixed(2)}{' '}
-                                    €/{userContext.getTranslation(stepIngredient?.unit?.name ?? '', 'de')}
-                                  </div>
-                                  <div className={'text-end'}>
-                                    {indexIngredient > 0 ? '+ ' : ''}
-                                    {(
-                                      ((stepIngredient.ingredient?.price ?? 0) /
-                                        (ingredients
-                                          .find((ingredient) => ingredient.id == stepIngredient.ingredientId)
-                                          ?.IngredientVolume.find((volumeUnits) => volumeUnits.unitId == stepIngredient.unitId)?.volume ?? 1)) *
-                                      (stepIngredient.amount ?? 0)
-                                    ).toFixed(2)}
-                                    €
-                                  </div>
+                                  {ingredients
+                                    .find((ingredient) => ingredient.id == stepIngredient.ingredientId)
+                                    ?.IngredientVolume.find((volumeUnits) => volumeUnits.unitId == stepIngredient.unitId) != undefined ? (
+                                    <>
+                                      <div>
+                                        {stepIngredient.amount ?? 0} {userContext.getTranslation(stepIngredient?.unit?.name ?? '', 'de')} x{' '}
+                                        {(
+                                          (stepIngredient.ingredient?.price ?? 0) /
+                                          (ingredients
+                                            .find((ingredient) => ingredient.id == stepIngredient.ingredientId)
+                                            ?.IngredientVolume.find((volumeUnits) => volumeUnits.unitId == stepIngredient.unitId)?.volume ?? 1)
+                                        ).toFixed(2)}{' '}
+                                        €/{userContext.getTranslation(stepIngredient?.unit?.name ?? '', 'de')}
+                                      </div>
+                                      <div className={'text-end'}>
+                                        {indexIngredient > 0 ? '+ ' : ''}
+                                        {(
+                                          ((stepIngredient.ingredient?.price ?? 0) /
+                                            (ingredients
+                                              .find((ingredient) => ingredient.id == stepIngredient.ingredientId)
+                                              ?.IngredientVolume.find((volumeUnits) => volumeUnits.unitId == stepIngredient.unitId)?.volume ?? 1)) *
+                                          (stepIngredient.amount ?? 0)
+                                        ).toFixed(2)}
+                                        €
+                                      </div>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <div>-</div>
+                                      <div>-</div>
+                                    </>
+                                  )}
                                 </div>
                               </>
                             ))}
@@ -705,23 +717,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                     <div className={'grid grid-cols-3'}>
                       <div></div>
                       <div></div>
-                      <div className={'text-end font-bold'}>
-                        {(
-                          (values.steps as CocktailRecipeStepFull[])
-                            .map((step) => step.ingredients.filter((ingredient) => ingredient.ingredient != undefined))
-                            .flat()
-                            .map(
-                              (stepIngredient) =>
-                                ((stepIngredient.ingredient?.price ?? 0) /
-                                  (ingredients
-                                    .find((ingredient) => ingredient.id == stepIngredient.ingredientId)
-                                    ?.IngredientVolume.find((volumeUnits) => volumeUnits.unitId == stepIngredient.unitId)?.volume ?? 1)) *
-                                (stepIngredient.amount ?? 0),
-                            )
-                            .reduce((summ, sum) => summ + sum, 0) +
-                          (values.garnishes as CocktailRecipeGarnishFull[]).map((garnish) => garnish?.garnish?.price ?? 0).reduce((summ, sum) => summ + sum, 0)
-                        ).toFixed(2) + ' €'}
-                      </div>
+                      <div className={'text-end font-bold'}>{calcCocktailTotalPrice(values, ingredients).toFixed(2) + ' €'}</div>
                     </div>
                   </div>
                 </div>
@@ -958,16 +954,23 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                             Auswählen
                                           </option>
 
-                                          {ingredients
+                                          {values.steps[indexStep].ingredients[indexIngredient].unitId &&
+                                          ingredients
                                             .find((ingredient) => ingredient.id == values.steps[indexStep].ingredients[indexIngredient]?.ingredientId)
                                             ?.IngredientVolume.find((unit) => unit.unitId == values.steps[indexStep].ingredients[indexIngredient].unitId) ==
-                                          undefined ? (
-                                            <option value={values.steps[indexStep].ingredients[indexIngredient]?.unitId} disabled={true}>
+                                            undefined ? (
+                                            <option
+                                              className="tooltip"
+                                              data-tip="hello"
+                                              value={values.steps[indexStep].ingredients[indexIngredient]?.unitId}
+                                              disabled={true}
+                                            >
+                                              !!!
                                               {userContext.getTranslation(
                                                 units.find((unit) => unit.id == values.steps[indexStep].ingredients[indexIngredient]?.unitId)?.name ?? '',
                                                 'de',
-                                              )}{' '}
-                                              (nicht in der Zutat verfügbar)
+                                              )}
+                                              !!!
                                             </option>
                                           ) : (
                                             <></>

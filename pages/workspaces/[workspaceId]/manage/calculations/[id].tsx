@@ -7,11 +7,16 @@ import { ModalContext } from '../../../../../lib/context/ModalContextProvider';
 import { SearchModal } from '../../../../../components/modals/SearchModal';
 import { alertService } from '../../../../../lib/alertService';
 import { calcCocktailTotalPrice } from '../../../../../lib/CocktailRecipeCalculation';
-import { Garnish, Ingredient } from '@prisma/client';
+import { Garnish, Ingredient, Unit } from '@prisma/client';
 import InputModal from '../../../../../components/modals/InputModal';
 import { PageCenter } from '../../../../../components/layout/PageCenter';
 import { Loading } from '../../../../../components/Loading';
 import { DeleteConfirmationModal } from '../../../../../components/modals/DeleteConfirmationModal';
+import { UserContext } from '../../../../../lib/context/UserContextProvider';
+import { IngredientModel } from '../../../../../models/IngredientModel';
+import { fetchIngredients } from '../../../../../lib/network/ingredients';
+import _ from 'lodash';
+import { fetchUnits } from '../../../../../lib/network/units';
 
 interface CocktailCalculationItem {
   cocktail: CocktailRecipeFull;
@@ -22,6 +27,7 @@ interface CocktailCalculationItem {
 interface IngredientCalculationItem {
   ingredient: Ingredient;
   amount: number;
+  unit: Unit;
 }
 
 interface GarnishCalculationItem {
@@ -29,14 +35,21 @@ interface GarnishCalculationItem {
   amount: number;
 }
 
+interface IngredientShoppingUnit {
+  ingredientId: string;
+  unitId: string;
+}
+
 interface CalculationData {
   name: string;
   showSalesStuff: boolean;
   cocktailCalculationItems: CocktailCalculationItem[];
+  ingredientShoppingUnits: IngredientShoppingUnit[];
 }
 
 export default function CalculationPage() {
   const modalContext = useContext(ModalContext);
+  const userContext = useContext(UserContext);
 
   const router = useRouter();
   const { id } = router.query;
@@ -53,6 +66,8 @@ export default function CalculationPage() {
   const [ingredientCalculationItems, setIngredientCalculationItems] = useState<IngredientCalculationItem[]>([]);
   const [garnishCalculationItems, setGarnishCalculationItems] = useState<GarnishCalculationItem[]>([]);
 
+  const [ingredientShoppingUnits, setIngredientShoppingUnits] = useState<IngredientShoppingUnit[]>([]);
+
   const [loading, setLoading] = useState(false);
 
   const [saving, setSaving] = useState(false);
@@ -60,6 +75,17 @@ export default function CalculationPage() {
   const [showSalesStuff, setShowSalesStuff] = useState<boolean>(true);
 
   const [unsavedChanges, setUnsavedChanges] = useState(false);
+
+  const [ingredients, setIngredients] = useState<IngredientModel[]>([]);
+  const [ingredientsLoading, setIngredientsLoading] = useState(false);
+
+  const [units, setUnits] = useState<Unit[]>([]);
+  const [unitsLoading, setUnitsLoading] = useState(false);
+
+  useEffect(() => {
+    fetchIngredients(workspaceId, setIngredients, setIngredientsLoading);
+    fetchUnits(workspaceId, setUnits, setUnitsLoading);
+  }, [workspaceId]);
 
   /**
    * check for unsaved changes start
@@ -162,16 +188,19 @@ export default function CalculationPage() {
 
     cocktailCalculationItems.forEach((item) => {
       item.cocktail.steps.forEach((step) => {
-        step.ingredients.forEach((ingredient) => {
-          if (ingredient.ingredient != null) {
-            let existingItem = calculationItems.find((calculationItem) => calculationItem.ingredient.id == ingredient.ingredientId);
+        step.ingredients.forEach((stepIngredient) => {
+          if (stepIngredient.ingredient != null) {
+            let existingItem = calculationItems.find(
+              (calculationItem) => calculationItem.ingredient.id == stepIngredient.ingredientId && calculationItem.unit.id == stepIngredient.unitId,
+            );
             if (existingItem) {
-              existingItem.amount += (ingredient.amount ?? 0) * item.plannedAmount;
+              existingItem.amount += (stepIngredient.amount ?? 0) * item.plannedAmount;
               calculationItems = [...calculationItems.filter((item) => item.ingredient.id != existingItem?.ingredient.id), existingItem];
             } else {
               calculationItems.push({
-                ingredient: ingredient.ingredient,
-                amount: (ingredient.amount ?? 0) * item.plannedAmount,
+                ingredient: stepIngredient.ingredient,
+                amount: (stepIngredient.amount ?? 0) * item.plannedAmount,
+                unit: stepIngredient.unit!,
               });
             }
           }
@@ -399,7 +428,7 @@ export default function CalculationPage() {
         </button>,
       ]}
     >
-      {loading ? (
+      {loading || ingredientsLoading || unitsLoading ? (
         <PageCenter>
           <Loading />
         </PageCenter>
@@ -660,15 +689,15 @@ export default function CalculationPage() {
                             <tr key={'cocktail-' + cocktail.cocktail.id}>
                               <td>{cocktail.cocktail.name}</td>
                               <td>{cocktail.plannedAmount} x</td>
-                              <td>{calcCocktailTotalPrice(cocktail.cocktail).toFixed(2)} €</td>
-                              <td>{(cocktail.plannedAmount * calcCocktailTotalPrice(cocktail.cocktail)).toFixed(2)} €</td>
+                              <td>{calcCocktailTotalPrice(cocktail.cocktail, ingredients).toFixed(2)} €</td>
+                              <td>{(cocktail.plannedAmount * calcCocktailTotalPrice(cocktail.cocktail, ingredients)).toFixed(2)} €</td>
                               {showSalesStuff ? (
                                 <>
                                   <td>{(cocktail.plannedAmount * (cocktail.customPrice ?? cocktail.cocktail.price ?? 0)).toFixed(2)}€</td>
                                   <td>
                                     {(
                                       cocktail.plannedAmount * (cocktail.customPrice ?? cocktail.cocktail.price ?? 0) -
-                                      cocktail.plannedAmount * calcCocktailTotalPrice(cocktail.cocktail)
+                                      cocktail.plannedAmount * calcCocktailTotalPrice(cocktail.cocktail, ingredients)
                                     ).toFixed(2)}{' '}
                                     €
                                   </td>
@@ -686,7 +715,7 @@ export default function CalculationPage() {
                         <td></td>
                         <td>
                           {cocktailCalculationItems
-                            .map((cocktail) => cocktail.plannedAmount * calcCocktailTotalPrice(cocktail.cocktail))
+                            .map((cocktail) => cocktail.plannedAmount * calcCocktailTotalPrice(cocktail.cocktail, ingredients))
                             .reduce((acc, curr) => acc + curr, 0)
                             .toFixed(2)}{' '}
                           €
@@ -705,7 +734,7 @@ export default function CalculationPage() {
                                 .map(
                                   (cocktail) =>
                                     cocktail.plannedAmount * (cocktail.customPrice ?? cocktail.cocktail.price ?? 0) -
-                                    cocktail.plannedAmount * calcCocktailTotalPrice(cocktail.cocktail),
+                                    cocktail.plannedAmount * calcCocktailTotalPrice(cocktail.cocktail, ingredients),
                                 )
                                 .reduce((acc, curr) => acc + curr, 0)
                                 .toFixed(2)}{' '}
@@ -736,8 +765,10 @@ export default function CalculationPage() {
                       <tr>
                         <th>Zutat</th>
                         <th>Gesamt Menge</th>
-                        <th>Benötigte Menge</th>
-                        <th>Ganze Flaschen</th>
+                        <th className={'print:hidden'}>Ausgabe Einheit</th>
+                        <th>Anzahl</th>
+                        {/*<th>Benötigte Menge</th>*/}
+                        {/*<th>Ganze Flaschen</th>*/}
                       </tr>
                     </thead>
                     <tbody>
@@ -748,26 +779,105 @@ export default function CalculationPage() {
                           </td>
                         </tr>
                       ) : (
-                        ingredientCalculationItems
-                          .sort((a, b) => a.ingredient.name.localeCompare(b.ingredient.name))
-                          .map((ingredientCalculation) => (
-                            <tr key={'ingredientCalculation-' + ingredientCalculation.ingredient.id}>
-                              <td>{ingredientCalculation.ingredient.name}</td>
-                              <td>
-                                {ingredientCalculation.amount.toFixed(2)} {ingredientCalculation.ingredient.unit}
+                        _.chain(ingredientCalculationItems)
+                          .groupBy('ingredient.id')
+                          .sortBy((group) => group[0].ingredient.name)
+                          .map((items, key) => (
+                            <tr key={`shopping-ingredient-${key}`}>
+                              <td>{items[0].ingredient.name}</td>
+                              <td className={'flex flex-col'}>
+                                {items.map((item) => (
+                                  <div key={`shopping-ingredient-${key}-unit-${item.unit.id}`}>
+                                    {item.amount} {userContext.getTranslation(item.unit.name ?? 'N/A', 'de')}
+                                  </div>
+                                ))}
+                              </td>
+                              <td className={'print:hidden'}>
+                                <select
+                                  className={'select select-sm'}
+                                  value={ingredientShoppingUnits.find((ingredient) => ingredient.ingredientId == items[0].ingredient.id)?.unitId}
+                                  onChange={(event) => {
+                                    const updatedItems = ingredientShoppingUnits.filter((item) => item.ingredientId != items[0].ingredient.id);
+                                    updatedItems.push({ ingredientId: items[0].ingredient.id, unitId: event.target.value });
+                                    setIngredientShoppingUnits(updatedItems);
+                                  }}
+                                >
+                                  <option value={''} disabled={true}>
+                                    Auswählen
+                                  </option>
+                                  {ingredients
+                                    .find((ingredient) => ingredient.id == items[0].ingredient.id)
+                                    ?.IngredientVolume.map((unit) => (
+                                      <option key={`ingredientCalculation-${items[0].ingredient.id}-output-unit-${unit.unitId}`} value={unit.unit.id}>
+                                        {userContext.getTranslation(unit.unit.name ?? 'NA', 'de')}
+                                      </option>
+                                    ))}
+                                </select>
                               </td>
                               <td>
-                                {(ingredientCalculation.amount / (ingredientCalculation.ingredient.volume ?? 0)).toFixed(2)}
-                                {' (á '}
-                                {ingredientCalculation.ingredient.volume} {ingredientCalculation.ingredient.unit})
-                              </td>
-                              <td>
-                                {Math.ceil(ingredientCalculation.amount / (ingredientCalculation.ingredient.volume ?? 0))}
-                                {' (á '}
-                                {ingredientCalculation.ingredient.volume} {ingredientCalculation.ingredient.unit})
+                                {(
+                                  items.reduce(
+                                    (acc, curr) =>
+                                      acc +
+                                      curr.amount /
+                                        (ingredients
+                                          .find((ingredient) => ingredient.id == curr.ingredient.id)
+                                          ?.IngredientVolume?.find((volume) => volume.unitId == curr.unit.id)?.volume ?? 0),
+                                    0,
+                                  ) *
+                                  (ingredients
+                                    .find((ingredient) => ingredient.id == items[0].ingredient.id)
+                                    ?.IngredientVolume?.find(
+                                      (volume) =>
+                                        volume.unitId ==
+                                        ingredientShoppingUnits.find((ingredient) => ingredient.ingredientId == items[0].ingredient.id)?.unitId,
+                                    )?.volume ?? 0)
+                                ).toFixed(2)}{' '}
+                                {userContext.getTranslation(
+                                  units.find(
+                                    (unit) =>
+                                      unit.id == ingredientShoppingUnits.find((ingredient) => ingredient.ingredientId == items[0].ingredient.id)?.unitId,
+                                  )?.name ?? 'N/A',
+                                  'de',
+                                )}
                               </td>
                             </tr>
                           ))
+                          .value()
+
+                        // ingredientCalculationItems.sort((a, b) => a.ingredient.name.localeCompare(b.ingredient.name))
+                        //   .map((ingredientCalculation) => (
+                        //     <tr key={'ingredientCalculation-' + ingredientCalculation.ingredient.id}>
+                        //       <td>{ingredientCalculation.ingredient.name}</td>
+                        //       <td>
+                        //         {ingredientCalculation.amount.toFixed(2)} {userContext.getTranslation(ingredientCalculation.unit.name ?? 'N/A', 'de')}
+                        //       </td>
+                        //       <td>
+                        //         <select className={'select select-sm'}>
+                        //           {ingredients
+                        //             .find((ingredient) => ingredient.id == ingredientCalculation.ingredient.id)
+                        //             ?.IngredientVolume.map((unit) => (
+                        //               <option
+                        //                 key={`ingredientCalculation-${ingredientCalculation.ingredient.id}-output-unit-${unit.unitId}`}
+                        //                 value={unit.unit.id}
+                        //               >
+                        //                 {userContext.getTranslation(unit.unit.name ?? 'N/A', 'de')}
+                        //               </option>
+                        //             ))}
+                        //         </select>
+                        //       </td>
+                        //       {/*<td>*/}
+                        //       {/*  {(ingredientCalculation.amount / (ingredientCalculation.ingredient.volume ?? 0)).toFixed(2)}*/}
+                        //       {/*  {' (á '}*/}
+                        //       {/*  {ingredientCalculation.ingredient.volume} {ingredientCalculation.ingredient.unit})*/}
+                        //       {/*</td>*/}
+                        //       {/*<td>*/}
+                        //       {/*  {Math.ceil(ingredientCalculation.amount / (ingredientCalculation.ingredient.volume ?? 0))}*/}
+                        //       {/*  {' (á '}*/}
+                        //       {/*  {ingredientCalculation.ingredient.volume} {ingredientCalculation.ingredient.unit})*/}
+                        //       {/*</td>*/}
+                        //     </tr>
+                        //   ))
                       )}
                     </tbody>
                   </table>

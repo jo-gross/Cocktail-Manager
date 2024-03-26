@@ -869,7 +869,7 @@ export default function WorkspaceSettingPage() {
                             .map((conversion) => (
                               <tr key={`unit-conversion-${conversion.id}`}>
                                 <td>{userContext.getTranslation(units.find((unit) => unit.id == conversion.fromUnitId)?.name ?? '', 'de')}</td>
-                                <td>{(1 / conversion.factor).toFixed(2)}</td>
+                                <td>{conversion.factor.toFixed(2)}</td>
                                 <td>{userContext.getTranslation(units.find((unit) => unit.id == conversion.toUnitId)?.name ?? '', 'de')}</td>
                                 <td>
                                   1 {userContext.getTranslation(units.find((unit) => unit.id == conversion.toUnitId)?.name ?? '', 'de')} = {conversion.factor}{' '}
@@ -927,17 +927,13 @@ export default function WorkspaceSettingPage() {
                               .sort((a, b) => a.fromUnitId.localeCompare(b.fromUnitId) || a.toUnitId.localeCompare(b.toUnitId))
                               .map((conversion) => (
                                 <tr key={`unit-conversion-${conversion.id}`}>
+                                  <td>{userContext.getTranslation(units.find((unit) => unit.id == conversion.fromUnitId)?.name ?? 'N/A', 'de')}</td>
+                                  <td>{conversion.factor.toFixed(2)}</td>
+                                  <td>{userContext.getTranslation(units.find((unit) => unit.id == conversion.toUnitId)?.name ?? 'N/A', 'de')}</td>
                                   <td>
-                                    {userContext.getTranslationOrNull(units.find((unit) => unit.id == conversion.fromUnitId)?.name ?? '', 'de') ?? 'Lade ...'}
-                                  </td>
-                                  <td>{(1 / conversion.factor).toFixed(2)}</td>
-                                  <td>
-                                    {userContext.getTranslationOrNull(units.find((unit) => unit.id == conversion.toUnitId)?.name ?? '', 'de') ?? 'Lade ...'}
-                                  </td>
-                                  <td>
-                                    1 {userContext.getTranslationOrNull(units.find((unit) => unit.id == conversion.toUnitId)?.name ?? '', 'de') ?? 'Lade ...'} ={' '}
+                                    1 {userContext.getTranslation(units.find((unit) => unit.id == conversion.toUnitId)?.name ?? 'N/A', 'de')} ={' '}
                                     {conversion.factor.toFixed(2)}{' '}
-                                    {userContext.getTranslationOrNull(units.find((unit) => unit.id == conversion.fromUnitId)?.name ?? '', 'de') ?? 'Lade ...'}
+                                    {userContext.getTranslation(units.find((unit) => unit.id == conversion.fromUnitId)?.name ?? 'N/A', 'de')}
                                   </td>
                                   <td className={''}></td>
                                 </tr>

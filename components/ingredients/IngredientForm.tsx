@@ -153,12 +153,6 @@ export function IngredientForm(props: IngredientFormProps) {
         if (!values.name) {
           errors.name = 'Required';
         }
-        if (values.volume.toString() == '' || isNaN(values.volume)) {
-          errors.volume = 'Required';
-        }
-        if (values.volume <= 0) {
-          errors.volume = 'Muss größer 0 sein';
-        }
         console.debug('Form errors', errors);
         return errors;
       }}

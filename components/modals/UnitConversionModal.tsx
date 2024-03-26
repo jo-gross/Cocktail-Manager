@@ -29,7 +29,7 @@ export default function UnitConversionModal(props: UnitConversionModalProps) {
         initialValues={{
           fromUnitId: props.unitConversion?.fromUnitId || '',
           toUnitId: props.unitConversion?.toUnitId || '',
-          factor: 1 / (props.unitConversion?.factor || 1),
+          factor: props.unitConversion?.factor || 1,
         }}
         onSubmit={async (values) => {
           try {
