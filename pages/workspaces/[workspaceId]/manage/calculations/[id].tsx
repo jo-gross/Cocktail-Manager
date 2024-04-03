@@ -134,6 +134,7 @@ export default function CalculationPage() {
           setOriginalName(data.name);
           setOriginalItems(JSON.stringify(data.cocktailCalculationItems));
           setOriginalShowSalesStuff(data.showSalesStuff ?? false);
+          setIngredientShoppingUnits(data.ingredientShoppingUnits ?? []);
         } else {
           console.error('CocktailCalculation -> useEffect[init, id != create]', response);
           alertService.error(body.message ?? 'Fehler beim Laden der Kalkulation', response.status, response.statusText);
@@ -247,6 +248,7 @@ export default function CalculationPage() {
               cocktailId: item.cocktail.id,
             };
           }),
+          ingredientShoppingUnits: ingredientShoppingUnits,
         };
         fetch(`/api/workspaces/${workspaceId}/calculations`, {
           method: 'POST',
@@ -287,6 +289,7 @@ export default function CalculationPage() {
               cocktailId: item.cocktail.id,
             };
           }),
+          ingredientShoppingUnits: ingredientShoppingUnits,
         };
         fetch(`/api/workspaces/${workspaceId}/calculations/${id}`, {
           method: 'PUT',
@@ -317,7 +320,7 @@ export default function CalculationPage() {
           });
       }
     },
-    [id, calculationName, showSalesStuff, cocktailCalculationItems, workspaceId, router],
+    [ingredientShoppingUnits, id, calculationName, showSalesStuff, cocktailCalculationItems, workspaceId, router],
   );
 
   useEffect(() => {
@@ -795,10 +798,16 @@ export default function CalculationPage() {
                               <td className={'print:hidden'}>
                                 <select
                                   className={'select select-sm'}
-                                  value={ingredientShoppingUnits.find((ingredient) => ingredient.ingredientId == items[0].ingredient.id)?.unitId}
+                                  value={
+                                    ingredientShoppingUnits.find((ingredientShoppingUnit) => ingredientShoppingUnit.ingredientId == items[0].ingredient.id)
+                                      ?.unitId ?? ''
+                                  }
                                   onChange={(event) => {
                                     const updatedItems = ingredientShoppingUnits.filter((item) => item.ingredientId != items[0].ingredient.id);
-                                    updatedItems.push({ ingredientId: items[0].ingredient.id, unitId: event.target.value });
+                                    updatedItems.push({
+                                      ingredientId: items[0].ingredient.id,
+                                      unitId: event.target.value,
+                                    });
                                     setIngredientShoppingUnits(updatedItems);
                                   }}
                                 >
@@ -808,8 +817,8 @@ export default function CalculationPage() {
                                   {ingredients
                                     .find((ingredient) => ingredient.id == items[0].ingredient.id)
                                     ?.IngredientVolume.map((unit) => (
-                                      <option key={`ingredientCalculation-${items[0].ingredient.id}-output-unit-${unit.unitId}`} value={unit.unit.id}>
-                                        {userContext.getTranslation(unit.unit.name ?? 'NA', 'de')}
+                                      <option key={`ingredientCalculation-${items[0].ingredient.id}-output-unit-${unit.unitId}`} value={unit.unitId}>
+                                        {userContext.getTranslation(unit.unit.name ?? 'N/A', 'de')}
                                       </option>
                                     ))}
                                 </select>
