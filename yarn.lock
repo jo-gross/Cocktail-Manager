@@ -8510,7 +8510,7 @@ __metadata:
 
 "typescript@patch:typescript@5.4.3#~builtin<compat/typescript>":
   version: 5.4.3
-  resolution: "typescript@patch:typescript@npm%3A5.4.3#~builtin<compat/typescript>::version=5.4.3&hash=e012d7"
+  resolution: "typescript@patch:typescript@npm%3A5.4.3#~builtin<compat/typescript>::version=5.4.3&hash=1f5320"
   bin:
     tsc: bin/tsc
     tsserver: bin/tsserver

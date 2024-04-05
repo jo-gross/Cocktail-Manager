@@ -351,8 +351,6 @@ export default function CalculationPage() {
           }
         });
 
-      //
-
       return summedIngredientPerCocktails.map((summedIngredientPerCocktail) => {
         let ingredient = summedIngredientPerCocktail.ingredient;
 
@@ -360,10 +358,6 @@ export default function CalculationPage() {
           (ingredientCalculationItems.find((item) => item.ingredient.id == ingredient.id)?.amount ?? 0) / (ingredient.volume ?? 0),
         );
         const totalNeededAmount = ingredientCalculationItems.find((item) => item.ingredient.id == ingredient.id)?.amount ?? 0;
-        if (ingredient.name.includes('Buffalo')) {
-          console.log(`(${calculationItem.cocktail.name}) - Gesamt Summe (Buffalo) in Flaschen`, totalNeededBottles);
-          console.log(`(${calculationItem.cocktail.name}) - Gesamt Menge (Buffalo) in CL`, totalNeededAmount);
-        }
 
         let cocktailIngredientAmount = summedIngredientPerCocktail.amount;
         if (ingredient.name.includes('Buffalo')) {
@@ -583,7 +577,7 @@ export default function CalculationPage() {
                             {showSalesStuff ? (
                               <>
                                 <td>
-                                  <span>{`${cocktail.cocktail.price} €`}</span>
+                                  <span>{`${cocktail.cocktail.price ?? '-'} €`}</span>
                                 </td>
                                 <td>
                                   <div className={'join print:hidden'}>
