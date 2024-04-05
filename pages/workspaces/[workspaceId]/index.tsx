@@ -400,11 +400,13 @@ export default function OverviewPage() {
 
           <>
             {selectedCardId != 'search' && selectedCardId != undefined ? (
-              <div
-                className={'btn btn-square btn-primary rounded-xl md:btn-lg'}
-                onClick={() => modalContext.openModal(<SearchModal showStatisticActions={showStatisticActions} />)}
-              >
-                <FaSearch />
+              <div className={'tooltip'} data-tip={'Suche (Shift + F)'}>
+                <div
+                  className={'btn btn-square btn-primary rounded-xl md:btn-lg'}
+                  onClick={() => modalContext.openModal(<SearchModal showStatisticActions={showStatisticActions} />)}
+                >
+                  <FaSearch />
+                </div>
               </div>
             ) : (
               <></>
