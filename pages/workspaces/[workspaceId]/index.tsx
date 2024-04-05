@@ -32,6 +32,19 @@ export default function OverviewPage() {
   const [loadingCards, setLoadingCards] = useState(true);
   const [loadingGroups, setLoadingGroups] = useState(false);
 
+  useEffect(() => {
+    const handleSearchShortCut = (event: any) => {
+      if (event.shiftKey && event.key === 'F') {
+        modalContext.openModal(<SearchModal showStatisticActions={showStatisticActions} />);
+      }
+    };
+    window.addEventListener('keypress', handleSearchShortCut);
+
+    return () => {
+      window.removeEventListener('keypress', handleSearchShortCut);
+    };
+  }, [modalContext, showStatisticActions]);
+
   // fetch cards initially
   useEffect(() => {
     if (!workspaceId) return;
