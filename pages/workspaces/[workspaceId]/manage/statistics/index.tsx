@@ -21,8 +21,8 @@ export default function StatisticsPage() {
   const { workspaceId } = router.query;
   const userContext = useContext(UserContext);
 
-  const [startDate, setStartDate] = useState<Date>(new Date());
-  const [endDate, setEndDate] = useState<Date>(new Date());
+  const [startDate, setStartDate] = useState<Date>(typeof router.query.startDate === 'string' ? new Date(router.query.startDate) : new Date());
+  const [endDate, setEndDate] = useState<Date>(typeof router.query.endDate === 'string' ? new Date(router.query.endDate) : new Date());
 
   const [cocktailStatisticItems, setCocktailStatisticItems] = useState<CocktailStatisticItemFull[]>([]);
   const [loading, setLoading] = useState(false);
@@ -69,25 +69,27 @@ export default function StatisticsPage() {
   function processData(data: CocktailStatisticItemFull[]): ProcessedData {
     const hourlyCocktails: Record<string, Record<string, number>> = {};
 
-    data.forEach((entry) => {
-      const date = new Date(entry.date);
-      // Runden der Stunden für den Zeitslot
-      const hour = date.getHours();
-      const dateString = date.toFormatDateString();
-      const formattedHour = `${dateString} ${hour}:00 - ${hour + 1}:00`;
-      const cocktailName = entry.cocktail.name;
+    data
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+      .forEach((entry) => {
+        const date = new Date(entry.date);
+        // Runden der Stunden für den Zeitslot
+        const hour = date.getHours();
+        const dateString = date.toFormatDateString();
+        const formattedHour = `${dateString} ${hour}:00 - ${hour + 1}:00`;
+        const cocktailName = entry.cocktail.name;
 
-      if (!hourlyCocktails[formattedHour]) {
-        hourlyCocktails[formattedHour] = {};
-      }
-      if (!hourlyCocktails[formattedHour][cocktailName]) {
-        hourlyCocktails[formattedHour][cocktailName] = 0;
-      }
+        if (!hourlyCocktails[formattedHour]) {
+          hourlyCocktails[formattedHour] = {};
+        }
+        if (!hourlyCocktails[formattedHour][cocktailName]) {
+          hourlyCocktails[formattedHour][cocktailName] = 0;
+        }
 
-      hourlyCocktails[formattedHour][cocktailName]++;
-    });
+        hourlyCocktails[formattedHour][cocktailName]++;
+      });
 
-    const labels = Object.keys(hourlyCocktails).sort();
+    const labels = Object.keys(hourlyCocktails);
     const cocktailNames = new Set<string>();
 
     Object.values(hourlyCocktails).forEach((cocktails) => {
@@ -108,22 +110,33 @@ export default function StatisticsPage() {
       title={'Statistiken'}
       backLink={`/workspaces/${workspaceId}/manage`}
       actions={[
-        <div key={'startDate'} className={'form-control'}>
+        <div key={'startDate'} className={'form-control hidden md:flex'}>
           <label className={'lable'}>Startdatum</label>
           <input
             className={'input input-bordered'}
             type={'date'}
             value={startDate.toISOString().split('T')[0]}
-            onChange={(event) => {
-              const startDate = new Date(event.target.value);
-              if (startDate.getTime() > endDate.getTime()) {
-                setEndDate(startDate);
+            onChange={async (event) => {
+              const start = new Date(event.target.value);
+              let end = endDate;
+              if (start.getTime() > end.getTime()) {
+                end = start;
+                setEndDate(start);
               }
-              setStartDate(startDate);
+              setStartDate(start);
+
+              await router.replace({
+                pathname: router.pathname,
+                query: {
+                  ...router.query,
+                  startDate: start.toISOString().split('T')[0],
+                  endDate: end.toISOString().split('T')[0],
+                },
+              });
             }}
           />
         </div>,
-        <div key={'endDate'} className={'form-control'}>
+        <div key={'endDate'} className={'form-control hidden md:flex'}>
           <label className={'lable'}>
             <span className={'lable-text'}>Enddatum</span>
           </label>
@@ -131,18 +144,83 @@ export default function StatisticsPage() {
             className={`input input-bordered`}
             type={'date'}
             value={endDate.toISOString().split('T')[0]}
-            onChange={(event) => {
-              const date = new Date(event.target.value);
-              if (date.getTime() < startDate.getTime()) {
-                setStartDate(date);
+            onChange={async (event) => {
+              const end = new Date(event.target.value);
+              let start = startDate;
+              if (end.getTime() < startDate.getTime()) {
+                start = end;
+                setStartDate(end);
               }
-              setEndDate(date);
+              setEndDate(end);
+
+              await router.replace({
+                pathname: router.pathname,
+                query: {
+                  ...router.query,
+                  startDate: start.toISOString().split('T')[0],
+                  endDate: end.toISOString().split('T')[0],
+                },
+              });
             }}
           />
         </div>,
       ]}
     >
       <div className={'grid grid-cols-1 gap-2 xl:grid-cols-2'}>
+        <div key={'startDate-mobile'} className={'form-control md:hidden'}>
+          <label className={'lable'}>Startdatum</label>
+          <input
+            className={'input input-bordered'}
+            type={'date'}
+            value={startDate.toISOString().split('T')[0]}
+            onChange={async (event) => {
+              const start = new Date(event.target.value);
+              let end = endDate;
+              if (start.getTime() > end.getTime()) {
+                end = start;
+                setEndDate(start);
+              }
+              setStartDate(start);
+
+              await router.replace({
+                pathname: router.pathname,
+                query: {
+                  ...router.query,
+                  startDate: start.toISOString().split('T')[0],
+                  endDate: end.toISOString().split('T')[0],
+                },
+              });
+            }}
+          />
+        </div>
+        <div key={'endDate-mobile'} className={'form-control md:hidden'}>
+          <label className={'lable'}>
+            <span className={'lable-text'}>Enddatum</span>
+          </label>
+          <input
+            className={`input input-bordered`}
+            type={'date'}
+            value={endDate.toISOString().split('T')[0]}
+            onChange={async (event) => {
+              const end = new Date(event.target.value);
+              let start = startDate;
+              if (end.getTime() < startDate.getTime()) {
+                start = end;
+                setStartDate(end);
+              }
+              setEndDate(end);
+
+              await router.replace({
+                pathname: router.pathname,
+                query: {
+                  ...router.query,
+                  startDate: start.toISOString().split('T')[0],
+                  endDate: end.toISOString().split('T')[0],
+                },
+              });
+            }}
+          />
+        </div>
         <div className={'card'}>
           <div className={'card-body'}>
             <div className={'card-title'}>
@@ -230,7 +308,6 @@ export default function StatisticsPage() {
                   scales: {
                     x: {
                       stacked: true,
-                      // type: 'time',
                     },
                     y: {
                       beginAtZero: true,

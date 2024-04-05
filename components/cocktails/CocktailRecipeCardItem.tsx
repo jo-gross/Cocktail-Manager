@@ -76,7 +76,7 @@ export default function CocktailRecipeCardItem(props: CocktailRecipeOverviewItem
               <></>
             )}
             {props.showStatisticActions ? (
-              <button className={'btn btn-outline btn-primary w-full'} onClick={addCocktailToStatistic} disabled={submittingStatistic}>
+              <button className={'btn btn-outline btn-primary mt-1 w-full'} onClick={addCocktailToStatistic} disabled={submittingStatistic}>
                 <FaPlus />
                 Gemacht
                 {submittingStatistic ? <span className={'loading loading-spinner'}></span> : <></>}
