@@ -1,3 +1,11 @@
+## [1.4.2](https://github.com/jo-gross/Cocktail-Manager/compare/v1.4.1...v1.4.2) (2024-03-05)
+
+
+### Bug Fixes
+
+* Fixed incomplete loading ui behavior ([#194](https://github.com/jo-gross/Cocktail-Manager/issues/194)) ([5e90798](https://github.com/jo-gross/Cocktail-Manager/commit/5e9079876b1b8e9eb85c5e7e133eed671dd0029a))
+* Image selector set the wrong when field when creating ingredient/glass/garnish (with image) from the cocktail edit view ([#195](https://github.com/jo-gross/Cocktail-Manager/issues/195)) ([0dc680f](https://github.com/jo-gross/Cocktail-Manager/commit/0dc680f7b44eec03f96e66267b3d4c05e345b170))
+
 ## [1.4.1](https://github.com/jo-gross/Cocktail-Manager/compare/v1.4.0...v1.4.1) (2024-03-04)
 
 
