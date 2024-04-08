@@ -827,9 +827,9 @@ export default function WorkspaceSettingPage() {
                   <table className={'grid-col-full table table-zebra w-full'}>
                     <thead>
                       <tr>
-                        <td>Von Einheit ...</td>
-                        <td>* Faktor</td>
-                        <td>... zu Einheit</td>
+                        <td>1 Einheit A</td>
+                        <td className={'text-right'}>= X</td>
+                        <td>Einheit B</td>
                         <td></td>
                         <td className={'flex justify-end'}>
                           <button
@@ -852,13 +852,13 @@ export default function WorkspaceSettingPage() {
                     <tbody>
                       {unitConversionsLoading ? (
                         <tr>
-                          <td colSpan={4} className={'text-center'}>
+                          <td colSpan={5} className={'text-center'}>
                             <Loading />
                           </td>
                         </tr>
                       ) : unitConversions.length == 0 ? (
                         <tr>
-                          <td colSpan={4} className={'text-center'}>
+                          <td colSpan={5} className={'text-center'}>
                             Keine Einträge vorhanden
                           </td>
                         </tr>
@@ -869,10 +869,11 @@ export default function WorkspaceSettingPage() {
                             .map((conversion) => (
                               <tr key={`unit-conversion-${conversion.id}`}>
                                 <td>{userContext.getTranslation(units.find((unit) => unit.id == conversion.fromUnitId)?.name ?? '', 'de')}</td>
-                                <td>{conversion.factor.toFixed(2)}</td>
+                                <td className={'text-right'}>{conversion.factor.toFixed(2)}</td>
                                 <td>{userContext.getTranslation(units.find((unit) => unit.id == conversion.toUnitId)?.name ?? '', 'de')}</td>
                                 <td>
-                                  1 {userContext.getTranslation(units.find((unit) => unit.id == conversion.toUnitId)?.name ?? '', 'de')} = {conversion.factor}{' '}
+                                  1 {userContext.getTranslation(units.find((unit) => unit.id == conversion.toUnitId)?.name ?? '', 'de')} ={' '}
+                                  {(1 / conversion.factor).toFixed(2)}{' '}
                                   {userContext.getTranslation(units.find((unit) => unit.id == conversion.fromUnitId)?.name ?? '', 'de')}
                                 </td>
                                 <td className={'flex flex-row justify-end gap-2'}>
@@ -928,11 +929,11 @@ export default function WorkspaceSettingPage() {
                               .map((conversion) => (
                                 <tr key={`unit-conversion-${conversion.id}`}>
                                   <td>{userContext.getTranslation(units.find((unit) => unit.id == conversion.fromUnitId)?.name ?? 'N/A', 'de')}</td>
-                                  <td>{conversion.factor.toFixed(2)}</td>
+                                  <td className={'text-right'}>{conversion.factor.toFixed(2)}</td>
                                   <td>{userContext.getTranslation(units.find((unit) => unit.id == conversion.toUnitId)?.name ?? 'N/A', 'de')}</td>
                                   <td>
                                     1 {userContext.getTranslation(units.find((unit) => unit.id == conversion.toUnitId)?.name ?? 'N/A', 'de')} ={' '}
-                                    {conversion.factor.toFixed(2)}{' '}
+                                    {(1 / conversion.factor).toFixed(2)}{' '}
                                     {userContext.getTranslation(units.find((unit) => unit.id == conversion.fromUnitId)?.name ?? 'N/A', 'de')}
                                   </td>
                                   <td className={''}></td>

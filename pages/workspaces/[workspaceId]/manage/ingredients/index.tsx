@@ -66,7 +66,7 @@ export default function IngredientsOverviewPage() {
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={10}>
+                    <td colSpan={11}>
                       <Loading />
                     </td>
                   </tr>
@@ -76,7 +76,7 @@ export default function IngredientsOverviewPage() {
                       ingredient.tags.some((tag) => tag.toLowerCase().includes(filterString.toLowerCase())),
                   ).length == 0 ? (
                   <tr>
-                    <td colSpan={10} className="{'text-center'}">
+                    <td colSpan={11} className="text-center">
                       Keine Einträge gefunden
                     </td>
                   </tr>

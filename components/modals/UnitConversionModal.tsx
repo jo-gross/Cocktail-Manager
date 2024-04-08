@@ -37,7 +37,7 @@ export default function UnitConversionModal(props: UnitConversionModalProps) {
               const body = {
                 fromUnitId: values.fromUnitId,
                 toUnitId: values.toUnitId,
-                factor: 1 / values.factor,
+                factor: values.factor,
               };
               const response = await fetch(`/api/workspaces/${workspaceId}/units/conversions`, {
                 method: 'POST',
@@ -122,7 +122,7 @@ export default function UnitConversionModal(props: UnitConversionModalProps) {
                     {props.units.map((unit) => {
                       return (
                         <option key={unit.id} value={unit.id}>
-                          {unit.name}
+                          {userContext.getTranslation(unit.name, 'de')}
                         </option>
                       );
                     })}
@@ -175,7 +175,7 @@ export default function UnitConversionModal(props: UnitConversionModalProps) {
                             ) != undefined
                           }
                         >
-                          {unit.name}
+                          {userContext.getTranslation(unit.name, 'de')}
                         </option>
                       );
                     })}

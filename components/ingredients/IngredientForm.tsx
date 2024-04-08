@@ -371,8 +371,7 @@ export function IngredientForm(props: IngredientFormProps) {
                         .map((suggestion) => ({
                           unitId: suggestion.toUnitId,
                           volume:
-                            (1 / suggestion.factor) *
-                            (formRef?.current?.values.units as FormUnitValue[]).find((u) => u.unitId == suggestion.fromUnitId)!.volume,
+                            suggestion.factor * (formRef?.current?.values.units as FormUnitValue[]).find((u) => u.unitId == suggestion.fromUnitId)!.volume,
                         })),
                       _.isEqual,
                     ).map((suggestion, suggestionIndex) => (
