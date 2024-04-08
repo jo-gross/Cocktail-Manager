@@ -364,7 +364,7 @@ export function IngredientForm(props: IngredientFormProps) {
                 <div>
                   <div className={'label-text'}>Mengen vorschläge</div>
                   <ul className={'list-inside list-disc'}>
-                    {_.uniqWith(
+                    {_.uniqBy(
                       defaultConversions
                         .filter((conversion) => (formRef?.current?.values.units as FormUnitValue[]).map((u) => u.unitId).includes(conversion.fromUnitId))
                         .filter((conversion) => !(formRef?.current?.values.units as FormUnitValue[]).map((u) => u.unitId).includes(conversion.toUnitId))
@@ -373,7 +373,9 @@ export function IngredientForm(props: IngredientFormProps) {
                           volume:
                             suggestion.factor * (formRef?.current?.values.units as FormUnitValue[]).find((u) => u.unitId == suggestion.fromUnitId)!.volume,
                         })),
-                      _.isEqual,
+                      function (e) {
+                        return e.unitId;
+                      },
                     ).map((suggestion, suggestionIndex) => (
                       <li key={`unit-conversion-suggestion-${suggestionIndex}`} className={'space-x-2 italic'}>
                         <span className={'p-2'}>{suggestion.volume.toFixed(2).replace(/\D00(?=\D*$)/, '')}</span>
