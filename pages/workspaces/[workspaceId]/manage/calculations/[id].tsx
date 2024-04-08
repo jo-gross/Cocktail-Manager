@@ -336,42 +336,89 @@ export default function CalculationPage() {
     modalContext.openModal(<InputModal title={'Kalkulation speichern'} onInputChange={(value) => setCalculationName(value)} defaultValue={calculationName} />);
   }, [calculationName, modalContext]);
 
+  // All must have the same ingredient
+  const calculateTotalIngredientAmount = useCallback(
+    (items: IngredientCalculationItem[]) => {
+      return (
+        items.reduce(
+          (acc, curr) =>
+            acc +
+            curr.amount /
+              (ingredients.find((ingredient) => ingredient.id == curr.ingredient.id)?.IngredientVolume?.find((volume) => volume.unitId == curr.unit.id)
+                ?.volume ?? 0),
+          0,
+        ) *
+        (ingredients
+          .find((ingredient) => ingredient.id == items[0].ingredient.id)
+          ?.IngredientVolume?.find(
+            (volume) => volume.unitId == ingredientShoppingUnits.find((ingredient) => ingredient.ingredientId == items[0].ingredient.id)?.unitId,
+          )?.volume ?? 0)
+      );
+    },
+    [ingredientShoppingUnits, ingredients],
+  );
+
+  const calculateTotalIngredientAmountByUnit = useCallback(
+    (ingredientId: string): number | undefined => {
+      return _.chain(ingredientCalculationItems)
+        .groupBy('ingredient.id')
+        .filter((items, key) => key == ingredientId)
+        .map((items) =>
+          items.reduce(
+            (acc, curr) =>
+              acc +
+              curr.amount /
+                (ingredients.find((ingredient) => ingredient.id == curr.ingredient.id)?.IngredientVolume?.find((volume) => volume.unitId == curr.unit.id)
+                  ?.volume ?? 0),
+            0,
+          ),
+        )
+        .value()
+        .at(0);
+    },
+    [ingredientCalculationItems, ingredients],
+  );
+
   const calculateRecommendedAmount = useCallback(
     (calculationItem: CocktailCalculationItem) => {
-      // Calculate the sum of all used ingredients
-      const summedIngredientPerCocktails: { ingredient: any; amount: number }[] = [];
+      const summedIngredientPerCocktails: { ingredient: any; amountInPercent: number }[] = [];
       calculationItem.cocktail.steps
         .flatMap((step) => step.ingredients)
-        .forEach((ingredient) => {
-          const existingItem = summedIngredientPerCocktails.find((item) => item.ingredient.id == ingredient.ingredientId);
+        .forEach((stepIngredient) => {
+          const existingItem = summedIngredientPerCocktails.find((item) => item.ingredient.id == stepIngredient.ingredientId);
           if (existingItem) {
-            existingItem.amount += ingredient.amount ?? 0;
+            existingItem.amountInPercent +=
+              (stepIngredient.amount ?? 0) /
+              (ingredients
+                .find((ingredient) => ingredient.id == stepIngredient.ingredientId)
+                ?.IngredientVolume.find((volume) => volume.unitId == stepIngredient.unitId)?.volume ?? 1);
           } else {
-            summedIngredientPerCocktails.push({ ingredient: ingredient.ingredient, amount: ingredient.amount ?? 0 });
+            summedIngredientPerCocktails.push({
+              ingredient: stepIngredient.ingredient,
+              amountInPercent:
+                (stepIngredient.amount ?? 0) /
+                (ingredients
+                  .find((ingredient) => ingredient.id == stepIngredient.ingredientId)
+                  ?.IngredientVolume.find((volume) => volume.unitId == stepIngredient.unitId)?.volume ?? 1),
+            });
           }
         });
 
       return summedIngredientPerCocktails.map((summedIngredientPerCocktail) => {
         let ingredient = summedIngredientPerCocktail.ingredient;
 
-        const totalNeededBottles = Math.ceil(
-          (ingredientCalculationItems.find((item) => item.ingredient.id == ingredient.id)?.amount ?? 0) / (ingredient.volume ?? 0),
-        );
-        const totalNeededAmount = ingredientCalculationItems.find((item) => item.ingredient.id == ingredient.id)?.amount ?? 0;
-
-        let cocktailIngredientAmount = summedIngredientPerCocktail.amount;
-        if (ingredient.name.includes('Buffalo')) {
-          console.log(`(${calculationItem.cocktail.name}) - Menge (Buffalo) für Cocktail Benötigt`, cocktailIngredientAmount);
-        }
+        const totalNeededBottles = Math.ceil(calculateTotalIngredientAmountByUnit(ingredient.id) ?? 0);
+        const totalNeededAmount = calculateTotalIngredientAmountByUnit(ingredient.id) ?? 0;
+        let cocktailIngredientAmount = summedIngredientPerCocktail.amountInPercent;
 
         return {
           ingredient: ingredient,
-          more: Math.floor((totalNeededBottles * ingredient.volume - totalNeededAmount) / cocktailIngredientAmount),
-          less: Math.ceil(((totalNeededBottles - 1) * ingredient.volume - totalNeededAmount) / cocktailIngredientAmount),
+          more: Math.floor((totalNeededBottles - totalNeededAmount) / cocktailIngredientAmount),
+          less: Math.ceil((totalNeededBottles - 1 - totalNeededAmount) / cocktailIngredientAmount),
         };
       });
     },
-    [ingredientCalculationItems],
+    [calculateTotalIngredientAmountByUnit, ingredients],
   );
 
   return (
@@ -390,7 +437,7 @@ export default function CalculationPage() {
         calculationName.trim() == '' ? (
           'Kalkulation'
         ) : (
-          <div className={'flex flex-col items-center justify-center md:flex-row md:gap-2'}>
+          <div className={'flex flex-col items-center justify-center md:flex-row md:gap-2 print:flex-row'}>
             <div className={'flex'}>
               <div>{calculationName}</div>
               <div className={'btn btn-circle btn-outline btn-info btn-xs flex items-center justify-center border print:hidden'} onClick={openNameModal}>
@@ -400,6 +447,7 @@ export default function CalculationPage() {
 
             <span>{'-'}</span>
             <span>Kalkulation</span>
+            <div className={'hidden print:flex'}>({new Date().toFormatDateString()})</div>
           </div>
         )
       }
@@ -430,7 +478,7 @@ export default function CalculationPage() {
           <Loading />
         </PageCenter>
       ) : (
-        <div className={'grid grid-cols-1 gap-2 md:grid-cols-2 xl:gap-4 print:grid-cols-1'}>
+        <div className={'grid grid-cols-1 gap-2 md:grid-cols-2 xl:gap-4 print:grid-cols-1 print:gap-1'}>
           <div className={'col-span-1 row-span-3 w-full'}>
             <div className={'card'}>
               <div className={'card-body'}>
@@ -444,7 +492,7 @@ export default function CalculationPage() {
                       <tr>
                         <th className={'w-20'}>Geplante Menge</th>
                         <th className={'w-full'}>Name</th>
-                        <th className={''}>Mengenvorschläge</th>
+                        <th className={'print:hidden'}>Mengenvorschläge</th>
                         {showSalesStuff ? (
                           <>
                             <th className={'min-w-20'}>Preis</th>
@@ -505,7 +553,7 @@ export default function CalculationPage() {
                             <td className={'items-center'}>
                               <span className={'font-bold'}>{cocktail.cocktail.name}</span>
                             </td>
-                            <td>
+                            <td className={'print:hidden'}>
                               <button
                                 onClick={() => {
                                   modalContext.openModal(
@@ -764,8 +812,6 @@ export default function CalculationPage() {
                         <th>Gesamt Menge</th>
                         <th className={'print:hidden'}>Ausgabe Einheit</th>
                         <th>Anzahl</th>
-                        {/*<th>Benötigte Menge</th>*/}
-                        {/*<th>Ganze Flaschen</th>*/}
                       </tr>
                     </thead>
                     <tbody>
@@ -818,24 +864,7 @@ export default function CalculationPage() {
                                 </select>
                               </td>
                               <td>
-                                {(
-                                  items.reduce(
-                                    (acc, curr) =>
-                                      acc +
-                                      curr.amount /
-                                        (ingredients
-                                          .find((ingredient) => ingredient.id == curr.ingredient.id)
-                                          ?.IngredientVolume?.find((volume) => volume.unitId == curr.unit.id)?.volume ?? 0),
-                                    0,
-                                  ) *
-                                  (ingredients
-                                    .find((ingredient) => ingredient.id == items[0].ingredient.id)
-                                    ?.IngredientVolume?.find(
-                                      (volume) =>
-                                        volume.unitId ==
-                                        ingredientShoppingUnits.find((ingredient) => ingredient.ingredientId == items[0].ingredient.id)?.unitId,
-                                    )?.volume ?? 0)
-                                ).toFixed(2)}{' '}
+                                {calculateTotalIngredientAmount(items).toFixed(2)}{' '}
                                 {userContext.getTranslation(
                                   units.find(
                                     (unit) =>
@@ -847,40 +876,6 @@ export default function CalculationPage() {
                             </tr>
                           ))
                           .value()
-
-                        // ingredientCalculationItems.sort((a, b) => a.ingredient.name.localeCompare(b.ingredient.name))
-                        //   .map((ingredientCalculation) => (
-                        //     <tr key={'ingredientCalculation-' + ingredientCalculation.ingredient.id}>
-                        //       <td>{ingredientCalculation.ingredient.name}</td>
-                        //       <td>
-                        //         {ingredientCalculation.amount.toFixed(2)} {userContext.getTranslation(ingredientCalculation.unit.name ?? 'N/A', 'de')}
-                        //       </td>
-                        //       <td>
-                        //         <select className={'select select-sm'}>
-                        //           {ingredients
-                        //             .find((ingredient) => ingredient.id == ingredientCalculation.ingredient.id)
-                        //             ?.IngredientVolume.map((unit) => (
-                        //               <option
-                        //                 key={`ingredientCalculation-${ingredientCalculation.ingredient.id}-output-unit-${unit.unitId}`}
-                        //                 value={unit.unit.id}
-                        //               >
-                        //                 {userContext.getTranslation(unit.unit.name ?? 'N/A', 'de')}
-                        //               </option>
-                        //             ))}
-                        //         </select>
-                        //       </td>
-                        //       {/*<td>*/}
-                        //       {/*  {(ingredientCalculation.amount / (ingredientCalculation.ingredient.volume ?? 0)).toFixed(2)}*/}
-                        //       {/*  {' (á '}*/}
-                        //       {/*  {ingredientCalculation.ingredient.volume} {ingredientCalculation.ingredient.unit})*/}
-                        //       {/*</td>*/}
-                        //       {/*<td>*/}
-                        //       {/*  {Math.ceil(ingredientCalculation.amount / (ingredientCalculation.ingredient.volume ?? 0))}*/}
-                        //       {/*  {' (á '}*/}
-                        //       {/*  {ingredientCalculation.ingredient.volume} {ingredientCalculation.ingredient.unit})*/}
-                        //       {/*</td>*/}
-                        //     </tr>
-                        //   ))
                       )}
                     </tbody>
                   </table>
