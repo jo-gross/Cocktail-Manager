@@ -1050,9 +1050,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@semantic-release/release-notes-generator@npm:^12.0.0":
-  version: 12.1.0
-  resolution: "@semantic-release/release-notes-generator@npm:12.1.0"
+"@semantic-release/release-notes-generator@npm:^13.0.0":
+  version: 13.0.0
+  resolution: "@semantic-release/release-notes-generator@npm:13.0.0"
   dependencies:
     conventional-changelog-angular: ^7.0.0
     conventional-changelog-writer: ^7.0.0
@@ -1066,7 +1066,7 @@ __metadata:
     read-pkg-up: ^11.0.0
   peerDependencies:
     semantic-release: ">=20.1.0"
-  checksum: 7e177c77a66091364ffc419ba5deba0d8e1b58857da40fbd34712e8dbe5a8b18def19eba5c5cbefc396402573c334de789683ee276eee82edb9b347d6c17f71c
+  checksum: 9b764aa35829a645716bd4358d56a03f4f82a7c5fdd7ea694c7d9aef36a2a7be6650eb8f76950848e97bb335ae8f895e627510a45084842dfaf60a9fdd8cbf5f
   languageName: node
   linkType: hard
 
@@ -2211,7 +2211,7 @@ __metadata:
     react-tag-input-component: 2.0.2
     react-three-state-checkbox: 3.0.0
     rxjs: 7.8.1
-    semantic-release: ^23.0.4
+    semantic-release: ^23.0.7
     sharp: 0.33.3
     tailwindcss: 3.4.1
     typescript: 5.4.3
@@ -2387,6 +2387,13 @@ __metadata:
   bin:
     conventional-commits-parser: cli.mjs
   checksum: bb92a0bfe41802330d2d14ddb0f912fd65dd355f1aa294e708f4891aac95c580919a70580b9f26563c24c3335baaed2ce003104394a8fa5ba61eeb3889e45df0
+  languageName: node
+  linkType: hard
+
+"convert-hrtime@npm:^5.0.0":
+  version: 5.0.0
+  resolution: "convert-hrtime@npm:5.0.0"
+  checksum: 5245ad1ac6dd57b2d87624ae0eeac1d2a74812a6631208c09368bef787a28e7dbfa736cddaa9c8a0c425cb240437ea506afec7b9684ff617004d06a551f26c87
   languageName: node
   linkType: hard
 
@@ -3499,12 +3506,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"find-versions@npm:^5.1.0":
-  version: 5.1.0
-  resolution: "find-versions@npm:5.1.0"
+"find-versions@npm:^6.0.0":
+  version: 6.0.0
+  resolution: "find-versions@npm:6.0.0"
   dependencies:
     semver-regex: ^4.0.5
-  checksum: 680bdb0081f631f7bfb6f0f8edcfa0b74ab8cabc82097a4527a37b0d042aabc56685bf459ff27991eab0baddc04eb8e3bba8a2869f5004ecf7cdd2779b6e51de
+    super-regex: ^1.0.0
+  checksum: d622e711bd17099015506bafd18b13e51fcc54f80ad073cf819ce4598d6b485774f55708ca356235770bed0148ae55a7daf3ef6deb72730c5b1e2f32b432fed5
   languageName: node
   linkType: hard
 
@@ -3658,6 +3666,13 @@ __metadata:
   version: 1.1.2
   resolution: "function-bind@npm:1.1.2"
   checksum: 2b0ff4ce708d99715ad14a6d1f894e2a83242e4a52ccfcefaee5e40050562e5f6dafc1adbb4ce2d4ab47279a45dc736ab91ea5042d843c3c092820dfe032efb1
+  languageName: node
+  linkType: hard
+
+"function-timeout@npm:^1.0.1":
+  version: 1.0.1
+  resolution: "function-timeout@npm:1.0.1"
+  checksum: 7933ff6590018364482e9db28952dae8f24b6af69ed88b5f2cb34da0a5669c27991fdf6bc89acaea04bc0a9b60904735413d0d609ce0544ecbc9ea4363cdcbc7
   languageName: node
   linkType: hard
 
@@ -7536,22 +7551,22 @@ __metadata:
   languageName: node
   linkType: hard
 
-"semantic-release@npm:^23.0.4":
-  version: 23.0.5
-  resolution: "semantic-release@npm:23.0.5"
+"semantic-release@npm:^23.0.7":
+  version: 23.0.7
+  resolution: "semantic-release@npm:23.0.7"
   dependencies:
     "@semantic-release/commit-analyzer": ^12.0.0
     "@semantic-release/error": ^4.0.0
     "@semantic-release/github": ^10.0.0
     "@semantic-release/npm": ^12.0.0
-    "@semantic-release/release-notes-generator": ^12.0.0
+    "@semantic-release/release-notes-generator": ^13.0.0
     aggregate-error: ^5.0.0
     cosmiconfig: ^9.0.0
     debug: ^4.0.0
     env-ci: ^11.0.0
     execa: ^8.0.0
     figures: ^6.0.0
-    find-versions: ^5.1.0
+    find-versions: ^6.0.0
     get-stream: ^6.0.0
     git-log-parser: ^1.2.0
     hook-std: ^3.0.0
@@ -7571,7 +7586,7 @@ __metadata:
     yargs: ^17.5.1
   bin:
     semantic-release: bin/semantic-release.js
-  checksum: ee2c0fb6dd1cf3821f3f36495ee999f937a524f927c7f1450579b2eedc0d2d2a935359f4ee62d3cb32344e2708d750255b0c84f0f4ff9291876c5926c3ead1cc
+  checksum: b466be299b6931ad8dd58968200520c87a2756376938cb032ebd546147b20cdbc995e3dafada97a1846cc5a692a917eb2c0107e9ddcd41b8e4a0d81533af1036
   languageName: node
   linkType: hard
 
@@ -8139,6 +8154,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"super-regex@npm:^1.0.0":
+  version: 1.0.0
+  resolution: "super-regex@npm:1.0.0"
+  dependencies:
+    function-timeout: ^1.0.1
+    time-span: ^5.1.0
+  checksum: d99e90ee0950356b86b01ad327605080e72ee0712c7e5c66335e7e4e3bd2919206caea929fa2d5ca97c2afc1d1ab91466d09eadcf1101196edcfb94bebfea388
+  languageName: node
+  linkType: hard
+
 "supports-color@npm:^5.3.0":
   version: 5.5.0
   resolution: "supports-color@npm:5.5.0"
@@ -8300,6 +8325,15 @@ __metadata:
   version: 2.3.8
   resolution: "through@npm:2.3.8"
   checksum: a38c3e059853c494af95d50c072b83f8b676a9ba2818dcc5b108ef252230735c54e0185437618596c790bbba8fcdaef5b290405981ffa09dce67b1f1bf190cbd
+  languageName: node
+  linkType: hard
+
+"time-span@npm:^5.1.0":
+  version: 5.1.0
+  resolution: "time-span@npm:5.1.0"
+  dependencies:
+    convert-hrtime: ^5.0.0
+  checksum: 949c45fcb873f2d26fda3db1b7f7161ce65206f6e94a7c6c9bf3a5a07a373570dba57ca5c1f816efa6326adbc3f9e93bb6ef19a7a220f4259a917e1192d49418
   languageName: node
   linkType: hard
 
