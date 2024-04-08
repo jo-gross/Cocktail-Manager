@@ -1290,14 +1290,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react@npm:18.2.64":
-  version: 18.2.64
-  resolution: "@types/react@npm:18.2.64"
+"@types/react@npm:18.2.74":
+  version: 18.2.74
+  resolution: "@types/react@npm:18.2.74"
   dependencies:
     "@types/prop-types": "*"
-    "@types/scheduler": "*"
     csstype: ^3.0.2
-  checksum: 1fd28dc5e5d191619e0b001485f428a070bad11f55683a212d3bd937bdc979335913f90f4ca4f0510871e5f35d8f46b169a23276fb048d06584623d3652cc0f3
+  checksum: 093c0e350552e61393e2ba30169aa620e2e64c1e2d0ff38efd2a7549ded689b6ab6bffb65fe0f7ef9e143174de54442d942bd70c014649f464c52465701208d8
   languageName: node
   linkType: hard
 
@@ -2173,7 +2172,7 @@ __metadata:
     "@types/deep-diff": ^1.0.5
     "@types/lodash": ^4.17.0
     "@types/node": 20.11.28
-    "@types/react": 18.2.64
+    "@types/react": 18.2.74
     "@types/react-is": 18.2.4
     autoprefixer: 10.4.18
     browser-image-compression: ^2.0.2
