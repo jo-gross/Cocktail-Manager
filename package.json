@@ -27,7 +27,7 @@
     "lodash": "^4.17.21",
     "next": "14.1.4",
     "next-auth": "4.24.7",
-    "node-html-parser": "6.1.12",
+    "node-html-parser": "6.1.13",
     "playwright": "1.43.0",
     "react": "18.2.0",
     "react-chartjs-2": "^5.2.0",
