@@ -56,6 +56,8 @@ cocktail, with the detailed recipe making and the compact view for the bartender
 - **Financial and statistics** - See the costs of your cocktails and create statistics of the shaked cocktails easily
 - **Ingredient importer** - Ingredients from some websites (like conalco.de or rumundco.de) can be imported with a
   single click
+- **Unit sensitive** - You can define available units for your ingredients and the application will use them for the
+  calculations
 
 ## 🖼️ Screenshots
 

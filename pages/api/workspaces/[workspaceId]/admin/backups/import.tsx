@@ -32,6 +32,51 @@ export default withWorkspacePermission([Role.USER], async (req: NextApiRequest, 
           await transaction.workspaceSetting.createMany({ data: data.workspaceSettings, skipDuplicates: true });
         }
 
+        const unitMapping: { id: string; newId: string }[] = [];
+        if (data.units?.length > 0) {
+          console.debug('Importing units', data.units?.length);
+
+          data.units?.forEach(async (g) => {
+            const existingUnit = await transaction.unit.findFirst({
+              where: { name: g.name, workspaceId: workspaceId },
+            });
+            if (existingUnit == null) {
+              const newId = randomUUID();
+              unitMapping.push({ id: g.id, newId: newId });
+              g.id = newId;
+              g.workspaceId = workspaceId;
+              await transaction.unit.create({ data: g });
+            } else {
+              unitMapping.push({ id: g.id, newId: existingUnit.id });
+            }
+          });
+        }
+
+        if (data.unitConversions?.length > 0) {
+          console.debug('Importing unitConversions', data.unitConversions?.length);
+
+          for (const g of data.unitConversions) {
+            const newFromId = unitMapping.find((gm) => gm.id === g.fromUnitId)?.newId;
+            const newToId = unitMapping.find((gm) => gm.id === g.toUnitId)?.newId;
+
+            if (newFromId != undefined && newToId != undefined) {
+              const existingUnitConversion = await transaction.unitConversion.findFirst({
+                where: {
+                  workspaceId: workspaceId,
+                  fromUnitId: newFromId,
+                  toUnitId: newToId,
+                },
+              });
+              if (existingUnitConversion == null) {
+                g.fromUnitId = newFromId;
+                g.toUnitId = newToId;
+                g.workspaceId = workspaceId;
+                await transaction.unitConversion.create({ data: g });
+              }
+            }
+          }
+        }
+
         const actionMapping: { id: string; newId: string }[] = [];
         if (data.stepActions?.length > 0) {
           console.debug('Importing stepActions', data.stepActions?.length);
@@ -98,6 +143,7 @@ export default withWorkspacePermission([Role.USER], async (req: NextApiRequest, 
             g.workspaceId = workspaceId;
             // @ts-ignore causing older backup version support
             g.image = undefined;
+
             ingredientMapping.push(ingredientMappingItem);
           });
           await transaction.ingredient.createMany({ data: data.ingredient, skipDuplicates: true });
@@ -107,6 +153,26 @@ export default withWorkspacePermission([Role.USER], async (req: NextApiRequest, 
             const ingredient = ingredientMapping.find((gm) => gm.id === image.ingredientId);
             if (ingredient) {
               ingredientImageMapping.push({ ingredientId: ingredient.newId, image: image.image });
+            }
+          }
+        }
+        if (data.ingredientVolumes?.length > 0) {
+          for (const volume of data.ingredientVolumes) {
+            const newIngredientId = ingredientMapping.find((gm) => gm.id === volume.ingredientId)?.newId;
+            const newUnitId = unitMapping.find((gm) => gm.id === volume.unitId)?.newId;
+
+            if (newIngredientId != undefined && newUnitId != undefined) {
+              const existingVolume = await transaction.ingredientVolume.findFirst({
+                where: {
+                  ingredientId: newIngredientId,
+                  unitId: newUnitId,
+                },
+              });
+              if (existingVolume == null) {
+                volume.ingredientId = newIngredientId;
+                volume.unitId = newUnitId;
+                await transaction.ingredientVolume.create({ data: volume });
+              }
             }
           }
         }

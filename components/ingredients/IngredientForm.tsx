@@ -261,10 +261,7 @@ export function IngredientForm(props: IngredientFormProps) {
                 <table className={'table table-zebra'}>
                   <thead>
                     <tr>
-                      <td>Verfügbare Einheiten</td>
-                      <td></td>
-                      <td></td>
-                      <td></td>
+                      <td colSpan={4}>Verfügbare Einheiten</td>
                     </tr>
                   </thead>
                   <tbody>
