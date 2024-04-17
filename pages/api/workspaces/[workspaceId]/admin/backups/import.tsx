@@ -36,20 +36,19 @@ export default withWorkspacePermission([Role.USER], async (req: NextApiRequest, 
         if (data.units?.length > 0) {
           console.debug('Importing units', data.units?.length);
 
-          data.units?.forEach(async (g) => {
+          for (const g of data.units) {
             const existingUnit = await transaction.unit.findFirst({
               where: { name: g.name, workspaceId: workspaceId },
             });
             if (existingUnit == null) {
-              const newId = randomUUID();
-              unitMapping.push({ id: g.id, newId: newId });
-              g.id = newId;
+              g.id = randomUUID();
               g.workspaceId = workspaceId;
               await transaction.unit.create({ data: g });
+              unitMapping.push({ id: g.id, newId: g.id });
             } else {
               unitMapping.push({ id: g.id, newId: existingUnit.id });
             }
-          });
+          }
         }
 
         if (data.unitConversions?.length > 0) {
@@ -58,7 +57,6 @@ export default withWorkspacePermission([Role.USER], async (req: NextApiRequest, 
           for (const g of data.unitConversions) {
             const newFromId = unitMapping.find((gm) => gm.id === g.fromUnitId)?.newId;
             const newToId = unitMapping.find((gm) => gm.id === g.toUnitId)?.newId;
-
             if (newFromId != undefined && newToId != undefined) {
               const existingUnitConversion = await transaction.unitConversion.findFirst({
                 where: {
@@ -80,7 +78,7 @@ export default withWorkspacePermission([Role.USER], async (req: NextApiRequest, 
         const actionMapping: { id: string; newId: string }[] = [];
         if (data.stepActions?.length > 0) {
           console.debug('Importing stepActions', data.stepActions?.length);
-          data.stepActions?.forEach(async (g) => {
+          for (const g of data.stepActions) {
             const existingAction = await transaction.workspaceCocktailRecipeStepAction.findFirst({
               where: { name: g.name, workspaceId: workspaceId, actionGroup: g.actionGroup },
             });
@@ -94,7 +92,7 @@ export default withWorkspacePermission([Role.USER], async (req: NextApiRequest, 
             } else {
               actionMapping.push({ id: g.id, newId: existingAction.id });
             }
-          });
+          }
         }
 
         const actions = await transaction.workspaceCocktailRecipeStepAction.findMany({ where: { workspaceId } });
@@ -132,7 +130,8 @@ export default withWorkspacePermission([Role.USER], async (req: NextApiRequest, 
         const ingredientImageMapping: { ingredientId: string; image: string }[] = [];
         if (data.ingredient?.length > 0) {
           console.debug('Importing ingredients', data.ingredient?.length);
-          data.ingredient?.forEach((g) => {
+
+          for (const g of data.ingredient) {
             const ingredientMappingItem = { id: g.id, newId: randomUUID() };
             // @ts-ignore causing older backup version support
             if (g.image != undefined) {
@@ -145,7 +144,7 @@ export default withWorkspacePermission([Role.USER], async (req: NextApiRequest, 
             g.image = undefined;
 
             ingredientMapping.push(ingredientMappingItem);
-          });
+          }
           await transaction.ingredient.createMany({ data: data.ingredient, skipDuplicates: true });
         }
         if (data.ingredientImages?.length > 0) {
@@ -169,6 +168,7 @@ export default withWorkspacePermission([Role.USER], async (req: NextApiRequest, 
                 },
               });
               if (existingVolume == null) {
+                volume.id = randomUUID();
                 volume.ingredientId = newIngredientId;
                 volume.unitId = newUnitId;
                 await transaction.ingredientVolume.create({ data: volume });
@@ -208,6 +208,7 @@ export default withWorkspacePermission([Role.USER], async (req: NextApiRequest, 
         await transaction.glassImage.createMany({ data: glassImageMapping, skipDuplicates: true });
 
         const cocktailRecipeMapping: { id: string; newId: string }[] = [];
+
         const cocktailRecipeImageMapping: { cocktailRecipeId: string; image: string }[] = [];
         if (data.cocktailRecipe?.length > 0) {
           console.debug('Importing cocktailRecipes', data.cocktailRecipe?.length);
@@ -283,6 +284,7 @@ export default withWorkspacePermission([Role.USER], async (req: NextApiRequest, 
             g.id = randomUUID();
             g.cocktailRecipeStepId = cocktailRecipeStepMapping.find((gm) => gm.id === g.cocktailRecipeStepId)?.newId!;
             g.ingredientId = ingredientMapping.find((gm) => gm.id === g.ingredientId)?.newId!;
+            g.unitId = unitMapping.find((gm) => gm.id === g.unitId)?.newId!;
           });
           await transaction.cocktailRecipeIngredient.createMany({
             data: data.cocktailRecipeIngredient,
