@@ -13,6 +13,31 @@ export const config = {
   },
 };
 
+function convertUnit(unit: string): string {
+  switch (unit) {
+    case 'cl':
+      return 'CL';
+    case 'Dash':
+      return 'DASH';
+    case 'Stück':
+      return 'PIECE';
+    case 'Pip. cm':
+      return 'DROPPER_CM';
+    case 'Pip. Tropfen':
+      return 'DROPPER_DROPS';
+    case 'Pin. cm':
+      return 'DROPPER_CM';
+    case 'Pin. Tropfen':
+      return 'DROPPER_DROPS';
+    case 'Sprühen':
+      return 'SPRAY';
+    case 'g':
+      return 'GRAMM';
+    default:
+      return 'Unknown';
+  }
+}
+
 export default withWorkspacePermission([Role.USER], async (req: NextApiRequest, res: NextApiResponse, user) => {
   const workspaceId = req.query.workspaceId as string | undefined;
   if (!workspaceId) return res.status(400).json({ message: 'No workspace id' });
@@ -149,24 +174,33 @@ export default withWorkspacePermission([Role.USER], async (req: NextApiRequest, 
             // @ts-ignore causing older backup version support
             if (g.volume != undefined && g.unit != undefined) {
               // @ts-ignore causing older backup version support
-              const unitId = await transaction.unit.findFirst({ where: { name: g.unit, workspaceId: workspaceId } })?.id;
-              if (unitId != undefined) {
-                oldVolumes.push({
-                  ingredientId: g.id,
-                  // @ts-ignore causing older backup version support
-                  volume: g.volume,
-                  unitId: unitId,
-                });
+              const unitIdentifier = convertUnit(g.unit);
+              // @ts-ignore causing older backup version support
+              console.log('Unit identifier', unitIdentifier, g.unit, g.volume, g.name);
+              // @ts-ignore causing older backup version support
+              const unit = await transaction.unit.findFirst({ where: { name: unitIdentifier, workspaceId: workspaceId } });
+              let unitId = unit?.id;
+              if (unitId == undefined) {
+                unitId = randomUUID();
+                console.log('unitId', unitId, unitIdentifier, workspaceId);
+                await transaction.unit.create({ data: { id: unitId, name: unitIdentifier, workspaceId: workspaceId } });
               }
-              // @ts-ignore causing older backup version support
-              g.volume = undefined;
-              // @ts-ignore causing older backup version support
-              g.unit = undefined;
+              oldVolumes.push({
+                ingredientId: g.id,
+                // @ts-ignore causing older backup version support
+                volume: g.volume,
+                unitId: unitId,
+              });
             }
+            // @ts-ignore causing older backup version support
+            g.volume = undefined;
+            // @ts-ignore causing older backup version support
+            g.unit = undefined;
             ingredientMapping.push(ingredientMappingItem);
           }
           await transaction.ingredient.createMany({ data: data.ingredient, skipDuplicates: true });
         }
+        console.log('Old ingredients volumes', oldVolumes);
         if (data.ingredientImages?.length > 0) {
           for (const image of data.ingredientImages) {
             const ingredient = ingredientMapping.find((gm) => gm.id === image.ingredientId);
@@ -176,15 +210,17 @@ export default withWorkspacePermission([Role.USER], async (req: NextApiRequest, 
           }
         }
         for (const volume of oldVolumes) {
-          await transaction.ingredientVolume.create({
-            data: {
-              id: randomUUID(),
-              ingredientId: volume.ingredientId,
-              unitId: volume.unitId,
-              volume: volume.volume,
-              workspaceId: workspaceId,
-            },
-          });
+          if (volume.unitId != undefined) {
+            await transaction.ingredientVolume.create({
+              data: {
+                id: randomUUID(),
+                ingredientId: volume.ingredientId,
+                unitId: volume.unitId,
+                volume: volume.volume,
+                workspaceId: workspaceId,
+              },
+            });
+          }
         }
         if (data.ingredientVolumes?.length > 0) {
           for (const volume of data.ingredientVolumes) {
@@ -313,12 +349,29 @@ export default withWorkspacePermission([Role.USER], async (req: NextApiRequest, 
         }
         if (data.cocktailRecipeIngredient?.length > 0) {
           console.debug('Importing cocktailRecipeIngredient', data.cocktailRecipeIngredient?.length);
-          data.cocktailRecipeIngredient.forEach((g) => {
+          for (const g of data.cocktailRecipeIngredient) {
             g.id = randomUUID();
             g.cocktailRecipeStepId = cocktailRecipeStepMapping.find((gm) => gm.id === g.cocktailRecipeStepId)?.newId!;
             g.ingredientId = ingredientMapping.find((gm) => gm.id === g.ingredientId)?.newId!;
-            g.unitId = unitMapping.find((gm) => gm.id === g.unitId)?.newId!;
-          });
+            if (g.unitId != undefined) {
+              g.unitId = unitMapping.find((gm) => gm.id === g.unitId)?.newId!;
+            }
+            // @ts-ignore causing older backup version support
+            if (g.unit != undefined) {
+              // @ts-ignore causing older backup version support
+              const unitIdentifier = convertUnit(g.unit);
+              const unit = await transaction.unit.findFirst({ where: { name: unitIdentifier, workspaceId: workspaceId } });
+              let unitId = unit?.id;
+              if (unitId == undefined) {
+                unitId = randomUUID();
+                console.log('unitId', unitId, unitIdentifier, workspaceId);
+                await transaction.unit.create({ data: { id: unitId, name: unitIdentifier, workspaceId: workspaceId } });
+              }
+              g.unitId = unitId;
+            }
+            // @ts-ignore causing older backup version support
+            g.unit = undefined;
+          }
           await transaction.cocktailRecipeIngredient.createMany({
             data: data.cocktailRecipeIngredient,
             skipDuplicates: true,
