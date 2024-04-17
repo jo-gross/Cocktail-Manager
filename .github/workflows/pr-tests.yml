@@ -19,7 +19,9 @@ jobs:
           node-version: 21
 
       - name: 'Install dependencies'
-        run: yarn install
+        uses: borales/actions-yarn@v4
+        with:
+          cmd: install
 
       - name: 'Run Prettier'
         run: yarn format:check
@@ -42,7 +44,9 @@ jobs:
           node-version: 21
 
       - name: 'Install dependencies'
-        run: yarn install
+        uses: borales/actions-yarn@v4
+        with:
+          cmd: install
 
       - name: 'Build'
         run: |
