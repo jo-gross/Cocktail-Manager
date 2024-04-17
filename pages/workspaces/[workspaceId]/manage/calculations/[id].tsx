@@ -831,7 +831,7 @@ export default function CalculationPage() {
                               <td className={'flex flex-col'}>
                                 {items.map((item) => (
                                   <div key={`shopping-ingredient-${key}-unit-${item.unit.id}`}>
-                                    {item.amount} {userContext.getTranslation(item.unit.name ?? 'N/A', 'de')}
+                                    {item.amount.toFixed(2)} {userContext.getTranslation(item.unit.name ?? 'N/A', 'de')}
                                   </div>
                                 ))}
                               </td>
