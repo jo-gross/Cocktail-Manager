@@ -27,6 +27,8 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     const calculations = await prisma.cocktailCalculation.findMany({ where: { workspaceId } });
 
     const backup: BackupStructure = {
+      units: await prisma.unit.findMany({ where: { workspaceId } }),
+      unitConversions: await prisma.unitConversion.findMany({ where: { workspaceId } }),
       workspaceSettings: await prisma.workspaceSetting.findMany({ where: { workspaceId } }),
       stepActions: await prisma.workspaceCocktailRecipeStepAction.findMany({ where: { workspaceId } }),
       garnish: await prisma.garnish.findMany({ where: { workspaceId } }),
@@ -38,6 +40,13 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         },
       }),
       ingredient: await prisma.ingredient.findMany({ where: { workspaceId } }),
+      ingredientVolumes: await prisma.ingredientVolume.findMany({
+        where: {
+          ingredientId: {
+            in: (await prisma.ingredient.findMany({ where: { workspaceId } })).map((ingredient) => ingredient.id),
+          },
+        },
+      }),
       ingredientImages: await prisma.ingredientImage.findMany({
         where: {
           ingredientId: {

@@ -1,7 +1,6 @@
-import { Formik, FormikProps } from 'formik';
+import { FieldArray, Formik, FormikProps } from 'formik';
 import { useRouter } from 'next/router';
-import React, { useContext } from 'react';
-import { CocktailIngredientUnit } from '../../models/CocktailIngredientUnit';
+import React, { useContext, useEffect, useState } from 'react';
 import { TagsInput } from 'react-tag-input-component';
 import { updateTags, validateTag } from '../../models/tags/TagUtils';
 import { UploadDropZone } from '../UploadDropZone';
@@ -13,6 +12,9 @@ import { ModalContext } from '../../lib/context/ModalContextProvider';
 import _ from 'lodash';
 import { compressFile } from '../../lib/ImageCompressor';
 import { IngredientWithImage } from '../../models/IngredientWithImage';
+import { Unit, UnitConversion } from '@prisma/client';
+import { UserContext } from '../../lib/context/UserContextProvider';
+import { fetchUnitConversions, fetchUnits } from '../../lib/network/units';
 
 interface IngredientFormProps {
   ingredient?: IngredientWithImage;
@@ -21,28 +23,58 @@ interface IngredientFormProps {
   onSaved?: (id: string) => void;
 }
 
+interface FormUnitValue {
+  unitId: string;
+  volume: number;
+}
+
+interface FormValue {
+  name: string;
+  shortName: string;
+  notes: string;
+  description: string;
+  price: number | undefined;
+  units: FormUnitValue[];
+  link: string;
+  tags: string[];
+  image: string | undefined;
+}
+
 export function IngredientForm(props: IngredientFormProps) {
   const router = useRouter();
   const workspaceId = router.query.workspaceId as string | undefined;
   const modalContext = useContext(ModalContext);
+  const userContext = useContext(UserContext);
 
   const formRef = props.formRef;
+
+  const [loadingUnits, setUnitsLoading] = useState(false);
+  const [allUnits, setAllUnits] = useState<Unit[]>([]);
+
+  const [loadingDefaultConversions, setLoadingDefaultConversions] = useState(false);
+  const [defaultConversions, setDefaultConversions] = useState<UnitConversion[]>([]);
+
+  useEffect(() => {
+    fetchUnits(workspaceId, setAllUnits, setUnitsLoading);
+    fetchUnitConversions(workspaceId, setLoadingDefaultConversions, setDefaultConversions);
+  }, [workspaceId]);
+
+  const initialValues: FormValue = {
+    name: props.ingredient?.name ?? '',
+    shortName: props.ingredient?.shortName ?? '',
+    notes: props.ingredient?.notes ?? '',
+    description: props.ingredient?.description ?? '',
+    price: props.ingredient?.price ?? undefined,
+    units: props.ingredient?.IngredientVolume ?? [],
+    link: props.ingredient?.link ?? '',
+    tags: props.ingredient?.tags ?? [],
+    image: props.ingredient?.IngredientImage?.[0]?.image ?? undefined,
+  };
 
   return (
     <Formik
       innerRef={formRef}
-      initialValues={{
-        name: props.ingredient?.name ?? '',
-        shortName: props.ingredient?.shortName ?? '',
-        notes: props.ingredient?.notes ?? '',
-        description: props.ingredient?.description ?? '',
-        price: props.ingredient?.price ?? undefined,
-        volume: props.ingredient?.volume ?? 0,
-        unit: props.ingredient?.unit ?? CocktailIngredientUnit.CL,
-        link: props.ingredient?.link ?? '',
-        tags: props.ingredient?.tags ?? [],
-        image: props.ingredient?.IngredientImage?.[0]?.image ?? undefined,
-      }}
+      initialValues={initialValues}
       onSubmit={async (values) => {
         try {
           const body = {
@@ -52,8 +84,7 @@ export function IngredientForm(props: IngredientFormProps) {
             notes: values.notes?.trim() == '' ? null : values.notes?.trim(),
             description: values.description?.trim() == '' ? null : values.description?.trim(),
             price: values.price == '' ? null : values.price,
-            unit: values.unit,
-            volume: values.volume,
+            units: values.units || [],
             link: values.link?.trim() == '' ? null : values.link?.trim(),
             tags: values.tags,
             image: values.image?.trim() == '' ? null : values.image?.trim(),
@@ -121,15 +152,6 @@ export function IngredientForm(props: IngredientFormProps) {
         const errors: any = {};
         if (!values.name) {
           errors.name = 'Required';
-        }
-        if (values.volume.toString() == '' || isNaN(values.volume)) {
-          errors.volume = 'Required';
-        }
-        if (values.volume <= 0) {
-          errors.volume = 'Muss größer 0 sein';
-        }
-        if (!values.unit) {
-          errors.unit = 'Required';
         }
         console.debug('Form errors', errors);
         return errors;
@@ -232,43 +254,145 @@ export function IngredientForm(props: IngredientFormProps) {
               <span className={'btn btn-secondary join-item'}>€</span>
             </div>
           </div>
-          <div className={'form-control'}>
-            <label className={'label'}>
-              <span className={'label-text'}>Menge</span>
-              <span className={'label-text-alt space-x-2 text-error'}>
-                <span>
-                  <>{errors.volume && touched.volume && errors.volume}</>
-                </span>
-                <span>*</span>
-              </span>
-            </label>
-            <div className={'join'}>
-              <input
-                type={'number'}
-                className={`input join-item input-bordered w-full ${errors.volume && touched.volume && 'input-error'}`}
-                value={values.volume}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                name={'volume'}
-              />
-              <select
-                className={`join-item select select-bordered ${errors.unit && 'select-error'}`}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                name={'unit'}
-                value={values.unit}
-              >
-                {Object.values(CocktailIngredientUnit).map((unit) => (
-                  <option key={unit} value={unit}>
-                    {unit}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-          <div>
-            Preis/{values.unit}: {((values.price ?? 0) / (values.volume ?? 1)).toFixed(2)} €
-          </div>
+          <FieldArray name={'units'}>
+            {({ push: pushUnit, remove: removeUnit }) => (
+              <>
+                <div className={'label-text'}>Mengen</div>
+                <table className={'table table-zebra'}>
+                  <thead>
+                    <tr>
+                      <td colSpan={4}>Verfügbare Einheiten</td>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {values.units.length == 0 ? (
+                      <tr>
+                        <td colSpan={4} className={'text-center'}>
+                          Keine Einheiten hinzugefügt
+                        </td>
+                      </tr>
+                    ) : (
+                      (values.units as FormUnitValue[]).map((unit, index) => (
+                        <tr key={`selected-units-${unit.unitId}`}>
+                          <td>{unit.volume}</td>
+                          <td>{userContext.getTranslation(allUnits.find((availableUnit) => availableUnit.id == unit.unitId)?.name ?? 'N/A', 'de')}</td>
+                          <td>
+                            {values.price != undefined ? (values.price / unit.volume).toFixed(2).replace(/\D00(?=\D*$)/, '') : '-'} €/
+                            {userContext.getTranslation(allUnits.find((availableUnit) => availableUnit.id == unit.unitId)?.name ?? 'N/A', 'de')}
+                          </td>
+                          <td className={'flex flex-row items-center justify-center'}>
+                            <button
+                              className={'btn btn-square btn-error btn-sm'}
+                              type={'button'}
+                              onClick={() => {
+                                removeUnit(index);
+                              }}
+                            >
+                              <FaTrashAlt />
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+                <div className={'form-control'}>
+                  <label className={'label'}>
+                    <span className={'label-text'}>Weitere Menge hinzufügen</span>
+                    <span className={'label-text-alt space-x-2 text-error'}>
+                      <span>
+                        <>{errors.volume && touched.volume && errors.volume}</>
+                      </span>
+                      <span>*</span>
+                    </span>
+                  </label>
+                  <div className={'join'}>
+                    <input
+                      type={'number'}
+                      className={`input input-sm join-item input-bordered w-full ${errors.volume && touched.volume && 'input-error'}`}
+                      value={values.volume}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      name={'volume'}
+                    />
+                    <select
+                      className={`join-item select select-bordered select-sm ${errors.selectedUnit && 'select-error'}`}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      name={'selectedUnit'}
+                      value={values.selectedUnit}
+                    >
+                      {loadingUnits ? (
+                        <option value={''} disabled={true}>
+                          Lade...
+                        </option>
+                      ) : allUnits.length == 0 ? (
+                        <option value={''}>Keine Einheiten verfügbar</option>
+                      ) : (
+                        <>
+                          <option value={''} disabled>
+                            Auswählen...
+                          </option>
+                          {allUnits.map((unit) => (
+                            <option
+                              key={`unit-option-${unit.id}`}
+                              value={unit.id}
+                              disabled={(values.units as FormUnitValue[]).find((u) => u.unitId == unit.id) != undefined}
+                            >
+                              {userContext.getTranslation(unit.name, 'de')}
+                            </option>
+                          ))}
+                        </>
+                      )}
+                    </select>
+                    <button
+                      className={'btn btn-primary join-item btn-sm'}
+                      type={'button'}
+                      disabled={loadingUnits || values.volume == 0 || values.selectedUnit == '' || isNaN(values.volume) || values.selectedUnit == undefined}
+                      onClick={async () => {
+                        pushUnit({ unitId: values.selectedUnit, volume: values.volume });
+                        await setFieldValue('selectedUnit', '');
+                      }}
+                    >
+                      Hinzufügen
+                    </button>
+                  </div>
+                </div>
+                <div>
+                  <div className={'label-text'}>Mengen vorschläge</div>
+                  <ul className={'list-inside list-disc'}>
+                    {_.uniqBy(
+                      defaultConversions
+                        .filter((conversion) => (formRef?.current?.values.units as FormUnitValue[]).map((u) => u.unitId).includes(conversion.fromUnitId))
+                        .filter((conversion) => !(formRef?.current?.values.units as FormUnitValue[]).map((u) => u.unitId).includes(conversion.toUnitId))
+                        .map((suggestion) => ({
+                          unitId: suggestion.toUnitId,
+                          volume:
+                            suggestion.factor * (formRef?.current?.values.units as FormUnitValue[]).find((u) => u.unitId == suggestion.fromUnitId)!.volume,
+                        })),
+                      function (e) {
+                        return e.unitId;
+                      },
+                    ).map((suggestion, suggestionIndex) => (
+                      <li key={`unit-conversion-suggestion-${suggestionIndex}`} className={'space-x-2 italic'}>
+                        <span className={'p-2'}>{suggestion.volume.toFixed(2).replace(/\D00(?=\D*$)/, '')}</span>
+                        <span className={'p-2'}>{userContext.getTranslation(allUnits.find((unit) => unit.id == suggestion.unitId)?.name ?? 'N/A', 'de')}</span>
+                        <span
+                          className={'btn btn-ghost btn-sm'}
+                          onClick={async () => {
+                            pushUnit(suggestion);
+                          }}
+                        >
+                          Hinzufügen
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </>
+            )}
+          </FieldArray>
+
           <div>
             <label className={'label'}>
               <span className={'label-text'}>Tags</span>

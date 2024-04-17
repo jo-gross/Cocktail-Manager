@@ -3,6 +3,7 @@ import HTTPMethod from 'http-method-enum';
 import { withWorkspacePermission } from '../../../../../middleware/api/authenticationMiddleware';
 import { Role } from '@prisma/client';
 import prisma from '../../../../../lib/prisma';
+import { updateTranslation } from '../admin/translation';
 
 export default withHttpMethods({
   [HTTPMethod.PUT]: withWorkspacePermission([Role.ADMIN], async (req, res, user, workspace) => {
@@ -15,22 +16,7 @@ export default withHttpMethods({
 
     const actions = await prisma.workspaceCocktailRecipeStepAction.update({ where: { id: actionId }, data: { actionGroup: actionGroup } });
 
-    const existingTranslations = await prisma.workspaceSetting.findFirst({ where: { workspaceId: workspace.id, setting: 'translations' } });
-    const parsedExistingTranslations = JSON.parse(existingTranslations?.value ?? '{}');
-
-    for (const lang in translations) {
-      parsedExistingTranslations[lang][action.name] = translations[lang];
-    }
-
-    await prisma.workspaceSetting.update({
-      where: {
-        workspaceId_setting: {
-          setting: 'translations',
-          workspaceId: workspace.id,
-        },
-      },
-      data: { value: JSON.stringify(parsedExistingTranslations) },
-    });
+    await updateTranslation(workspace.id, action.name, translations);
 
     return res.json({ data: actions });
   }),

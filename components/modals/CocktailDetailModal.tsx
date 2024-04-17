@@ -157,29 +157,29 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
               {loadedCocktail.steps.map((step) => (
                 <div key={'cocktail-details-step-' + step.id} className={'col-span-2 space-y-2 rounded-lg border-2 border-base-300 p-2'}>
                   <span className={'text-xl font-bold'}>{userContext.getTranslation(step.action.name, 'de')}</span>
-                  {step.ingredients.map((ingredient) => (
-                    <div key={'cocktail-details-step-ingredient-' + ingredient.id} className={'pl-2'}>
+                  {step.ingredients.map((stepIngredient) => (
+                    <div key={'cocktail-details-step-ingredient-' + stepIngredient.id} className={'pl-2'}>
                       <div className={'flex-1'}>
                         <div className={'flex flex-row items-center space-x-2'}>
                           <div className={'h-12 w-12'}>
-                            {ingredient.ingredient?._count?.IngredientImage != 0 ? (
+                            {stepIngredient.ingredient?._count?.IngredientImage != 0 ? (
                               <AvatarImage
-                                src={`/api/workspaces/${loadedCocktail.workspaceId}/ingredients/${ingredient.ingredient?.id}/image`}
-                                alt={`Cocktail Zutat ${ingredient.ingredient?.name}`}
+                                src={`/api/workspaces/${loadedCocktail.workspaceId}/ingredients/${stepIngredient.ingredient?.id}/image`}
+                                alt={`Cocktail Zutat ${stepIngredient.ingredient?.name}`}
                               />
                             ) : (
                               <></>
                             )}
                           </div>
                           <div className={'font-bold'}>
-                            {ingredient.amount} {ingredient.unit}
+                            {stepIngredient.amount} {userContext.getTranslation(stepIngredient.unit?.name ?? '', 'de')}
                           </div>
-                          <span>{ingredient.ingredient?.name}</span>
+                          <span>{stepIngredient.ingredient?.name}</span>
                         </div>
                       </div>
                       <div>
-                        {ingredient.ingredient?.tags?.map((tag) => (
-                          <div key={`cocktail-details-${loadedCocktail.id}-ingredients-${ingredient.id}-tags-${tag}`} className={'badge badge-primary m-1'}>
+                        {stepIngredient.ingredient?.tags?.map((tag) => (
+                          <div key={`cocktail-details-${loadedCocktail.id}-ingredients-${stepIngredient.id}-tags-${tag}`} className={'badge badge-primary m-1'}>
                             {tag}
                           </div>
                         ))}

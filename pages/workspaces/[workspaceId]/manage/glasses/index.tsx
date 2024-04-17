@@ -2,16 +2,16 @@ import { Role } from '@prisma/client';
 import Link from 'next/link';
 import { ManageEntityLayout } from '../../../../../components/layout/ManageEntityLayout';
 import { ManageColumn } from '../../../../../components/ManageColumn';
-import React, { useCallback, useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { Loading } from '../../../../../components/Loading';
 import { useRouter } from 'next/router';
-import { alertService } from '../../../../../lib/alertService';
 import { UserContext } from '../../../../../lib/context/UserContextProvider';
 import DefaultGlassIcon from '../../../../../components/DefaultGlassIcon';
 import { FaPlus } from 'react-icons/fa';
 import ListSearchField from '../../../../../components/ListSearchField';
 import { GlassModel } from '../../../../../models/GlassModel';
 import AvatarImage from '../../../../../components/AvatarImage';
+import { fetchGlasses } from '../../../../../lib/network/glasses';
 
 export default function ManageGlassesOverviewPage() {
   const router = useRouter();
@@ -24,31 +24,9 @@ export default function ManageGlassesOverviewPage() {
 
   const [filterString, setFilterString] = useState('');
 
-  const refreshGlasses = useCallback(() => {
-    if (!workspaceId) return;
-    setLoading(true);
-    fetch(`/api/workspaces/${workspaceId}/glasses`)
-      .then(async (response) => {
-        const body = await response.json();
-        if (response.ok) {
-          setGlasses(body.data);
-        } else {
-          console.error('Glasses -> fetchGlasses', response);
-          alertService.error(body.message ?? 'Fehler beim Laden der Gläser', response.status, response.statusText);
-        }
-      })
-      .catch((error) => {
-        console.error('Glasses -> fetchGlasses', error);
-        alertService.error('Fehler beim Laden der Gläser');
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  }, [workspaceId]);
-
   useEffect(() => {
-    refreshGlasses();
-  }, [refreshGlasses]);
+    fetchGlasses(workspaceId, setGlasses, setLoading);
+  }, [workspaceId]);
 
   return (
     <ManageEntityLayout
@@ -115,7 +93,7 @@ export default function ManageGlassesOverviewPage() {
                           <div className="font-bold">{glass.name}</div>
                         </td>
                         <td>{glass.deposit} €</td>
-                        <ManageColumn entity={'glasses'} id={glass.id} onRefresh={refreshGlasses} />
+                        <ManageColumn entity={'glasses'} id={glass.id} onRefresh={() => fetchGlasses(workspaceId, setGlasses, setLoading)} />
                       </tr>
                     ))
                 )}

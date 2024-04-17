@@ -55,9 +55,10 @@ export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeIns
               <span className={'font-bold'}>{userContext.getTranslation(step.action.name, 'de')}</span>
               {step.ingredients
                 ?.sort((a, b) => a.ingredientNumber - b.ingredientNumber)
-                .map((ingredient, indexIngredient) => (
-                  <div key={`cocktail-${props.cocktailRecipe.id}-step-${step.id}-ingredient-${ingredient.id}-index-${indexIngredient}`}>
-                    {ingredient.amount ?? ''} {ingredient.unit ?? ''} {ingredient.ingredient?.shortName ?? ingredient.ingredient?.name ?? ''}{' '}
+                .map((stepIngredient, indexIngredient) => (
+                  <div key={`cocktail-${props.cocktailRecipe.id}-step-${step.id}-ingredient-${stepIngredient.id}-index-${indexIngredient}`}>
+                    {stepIngredient.amount ?? ''} {userContext.getTranslation(stepIngredient?.unit?.name ?? '', 'de')}{' '}
+                    {stepIngredient.ingredient?.shortName ?? stepIngredient.ingredient?.name ?? ''}{' '}
                     {indexIngredient < step.ingredients.length - 1 ? <></> : <></>}
                   </div>
                 ))}

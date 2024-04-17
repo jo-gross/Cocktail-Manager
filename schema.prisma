@@ -147,6 +147,9 @@ model Workspace {
   WorkspaceCocktailRecipeStepAction WorkspaceCocktailRecipeStepAction[]
   WorkspaceSetting                  WorkspaceSetting[]
   CocktailStatisticItem             CocktailStatisticItem[]
+  Unit                              Unit[]
+  UnitConversion                    UnitConversion[]
+  IngredientVolume                  IngredientVolume[]
 }
 
 model Signage {
@@ -236,7 +239,7 @@ model CocktailRecipeGarnish {
 
 model WorkspaceCocktailRecipeStepAction {
   id                 String               @id @default(cuid())
-  name               String               @unique
+  name               String
   actionGroup        String
   workspaceId        String
   workspace          Workspace            @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
@@ -259,12 +262,15 @@ model CocktailRecipeStep {
 }
 
 model CocktailRecipeIngredient {
-  id               String      @id @default(cuid())
+  id               String @id @default(cuid())
   ingredientNumber Int
   amount           Float?
-  unit             String?
-  ingredientId     String?
-  ingredient       Ingredient? @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+
+  unitId String?
+  unit   Unit?   @relation(fields: [unitId], references: [id], onDelete: Restrict)
+
+  ingredientId String?
+  ingredient   Ingredient? @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
 
   cocktailRecipeStep   CocktailRecipeStep @relation(fields: [cocktailRecipeStepId], references: [id], onDelete: Cascade)
   cocktailRecipeStepId String
@@ -277,15 +283,15 @@ model Ingredient {
   description              String?
   notes                    String?
   price                    Float?
-  volume                   Float?
-  unit                     String?
   link                     String?
   tags                     String[]
   CocktailRecipeIngredient CocktailRecipeIngredient[]
 
-  workspace       Workspace         @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  workspaceId     String
-  IngredientImage IngredientImage[]
+  workspaceId                       String
+  workspace                         Workspace                           @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  IngredientImage                   IngredientImage[]
+  IngredientVolume                  IngredientVolume[]
+  CalculationIngredientShoppingUnit CalculationIngredientShoppingUnit[]
 }
 
 model IngredientImage {
@@ -334,10 +340,11 @@ model CocktailCalculation {
   showSalesStuff Boolean @default(true)
 
   workspaceId              String
-  workspace                Workspace                  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspace                Workspace                           @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   updatedByUserId          String
-  updatedByUser            User                       @relation(fields: [updatedByUserId], references: [id], onDelete: Cascade)
+  updatedByUser            User                                @relation(fields: [updatedByUserId], references: [id], onDelete: Cascade)
   cocktailCalculationItems CocktailCalculationItems[]
+  ingredientShoppingUnits  CalculationIngredientShoppingUnit[]
 }
 
 model CocktailStatisticItem {
@@ -363,4 +370,60 @@ model CocktailCalculationItems {
   calculation   CocktailCalculation @relation(fields: [calculationId], references: [id], onDelete: Cascade)
 
   @@id([calculationId, cocktailId])
+}
+
+model CalculationIngredientShoppingUnit {
+  ingredientId String
+  ingredient   Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+  unitId       String
+  unit         Unit       @relation(fields: [unitId], references: [id], onDelete: Cascade)
+
+  CocktailCalculation   CocktailCalculation @relation(fields: [cocktailCalculationId], references: [id])
+  cocktailCalculationId String
+
+  @@id([ingredientId, unitId, cocktailCalculationId])
+}
+
+model Unit {
+  id                                String                              @id @default(cuid())
+  name                              String
+  workspaceId                       String
+  workspace                         Workspace                           @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  defaultUnitConversionFrom         UnitConversion[]                    @relation(name: "FK_Unit_fromUnit")
+  defaultUnitConversionTo           UnitConversion[]                    @relation(name: "FK_Unit_toUnit")
+  IngredientVolume                  IngredientVolume[]
+  CocktailRecipeIngredient          CocktailRecipeIngredient[]
+  CalculationIngredientShoppingUnit CalculationIngredientShoppingUnit[]
+
+  @@unique([name, workspaceId])
+}
+
+model UnitConversion {
+  id         String @id @default(cuid())
+  fromUnitId String
+  fromUnit   Unit   @relation(name: "FK_Unit_fromUnit", fields: [fromUnitId], references: [id], onDelete: Cascade)
+  toUnitId   String
+  toUnit     Unit   @relation(name: "FK_Unit_toUnit", fields: [toUnitId], references: [id], onDelete: Cascade)
+
+  factor Float
+
+  autoGenerated Boolean @default(false)
+
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([toUnitId, fromUnitId, workspaceId])
+}
+
+model IngredientVolume {
+  id           String     @id @default(cuid())
+  volume       Float
+  ingredientId String
+  ingredient   Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+  unitId       String
+  unit         Unit       @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  workspaceId  String
+  workspace    Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([ingredientId, workspaceId, unitId])
 }

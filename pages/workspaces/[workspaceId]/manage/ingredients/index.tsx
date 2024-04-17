@@ -1,17 +1,17 @@
 import { Role } from '@prisma/client';
 import Link from 'next/link';
 import { ManageEntityLayout } from '../../../../../components/layout/ManageEntityLayout';
-import React, { useCallback, useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { Loading } from '../../../../../components/Loading';
 import { FaCheck, FaInfoCircle, FaPlus, FaTimes } from 'react-icons/fa';
 import { ManageColumn } from '../../../../../components/ManageColumn';
-import { alertService } from '../../../../../lib/alertService';
 import { UserContext } from '../../../../../lib/context/UserContextProvider';
 import AvatarImage from '../../../../../components/AvatarImage';
 import ListSearchField from '../../../../../components/ListSearchField';
 import { IngredientModel } from '../../../../../models/IngredientModel';
 import { ModalContext } from '../../../../../lib/context/ModalContextProvider';
+import { fetchIngredients } from '../../../../../lib/network/ingredients';
 
 export default function IngredientsOverviewPage() {
   const router = useRouter();
@@ -25,31 +25,9 @@ export default function IngredientsOverviewPage() {
 
   const [filterString, setFilterString] = useState('');
 
-  const refreshIngredients = useCallback(async () => {
-    if (!workspaceId) return;
-    setLoading(true);
-    fetch(`/api/workspaces/${workspaceId}/ingredients`)
-      .then(async (response) => {
-        const body = await response.json();
-        if (response.ok) {
-          setIngredients(body.data);
-        } else {
-          console.error('Ingredients -> fetchIngredients', response);
-          alertService.error(body.message ?? 'Fehler beim Laden der Zutaten', response.status, response.statusText);
-        }
-      })
-      .catch((error) => {
-        console.error('Ingredients -> fetchIngredients', error);
-        alertService.error('Fehler beim Laden der Zutaten');
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  }, [workspaceId]);
-
   useEffect(() => {
-    refreshIngredients();
-  }, [refreshIngredients]);
+    fetchIngredients(workspaceId, setIngredients, setLoading);
+  }, [workspaceId]);
 
   return (
     <ManageEntityLayout
@@ -77,7 +55,7 @@ export default function IngredientsOverviewPage() {
                   <th>Abkürzung</th>
                   <th>Notizen</th>
                   <th>Preis</th>
-                  <th>Menge</th>
+                  <th>Verfügbare Menge(n)</th>
                   <th>Preis/Menge</th>
                   <th>Tags</th>
                   <th>Link</th>
@@ -88,7 +66,7 @@ export default function IngredientsOverviewPage() {
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={10}>
+                    <td colSpan={11}>
                       <Loading />
                     </td>
                   </tr>
@@ -98,7 +76,7 @@ export default function IngredientsOverviewPage() {
                       ingredient.tags.some((tag) => tag.toLowerCase().includes(filterString.toLowerCase())),
                   ).length == 0 ? (
                   <tr>
-                    <td colSpan={10} className="{'text-center'}">
+                    <td colSpan={11} className="text-center">
                       Keine Einträge gefunden
                     </td>
                   </tr>
@@ -145,10 +123,20 @@ export default function IngredientsOverviewPage() {
                           </button>
                         </td>
                         <td className={'whitespace-nowrap'}>{ingredient.price ?? '-'} €</td>
-                        <td className={'whitespace-nowrap'}>
-                          {ingredient.volume} {ingredient.unit}
+                        <td className={''}>
+                          {ingredient.IngredientVolume.map((volume) => (
+                            <div key={`ingredient-${ingredient.id}-volume-unit-${volume.id}`} className={'whitespace-nowrap'}>
+                              {volume.volume.toFixed(2).replace(/\D00(?=\D*$)/, '')} {userContext.getTranslation(volume.unit.name, 'de')}
+                            </div>
+                          ))}
                         </td>
-                        <td className={'whitespace-nowrap'}>{((ingredient.price ?? 0) / (ingredient.volume ?? 1)).toFixed(2)} €</td>
+                        <td>
+                          {ingredient.IngredientVolume.map((volume) => (
+                            <div key={`ingredient-${ingredient.id}-volume-unit-price-${volume.id}`} className={'whitespace-nowrap'}>
+                              {((ingredient.price ?? 0) / volume.volume).toFixed(2)} €/{userContext.getTranslation(volume.unit.name, 'de')}
+                            </div>
+                          ))}
+                        </td>
                         <td>
                           {ingredient.tags.map((tag) => (
                             <div key={`ingredient-${ingredient.id}-tags-${tag}`} className={'badge badge-primary badge-outline m-1'}>
@@ -174,7 +162,7 @@ export default function IngredientsOverviewPage() {
                             </div>
                           )}
                         </td>
-                        <ManageColumn entity={'ingredients'} id={ingredient.id} onRefresh={refreshIngredients} />
+                        <ManageColumn entity={'ingredients'} id={ingredient.id} onRefresh={() => fetchIngredients(workspaceId, setIngredients, setLoading)} />
                       </tr>
                     ))
                 )}

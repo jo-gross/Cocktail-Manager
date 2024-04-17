@@ -15,16 +15,22 @@ import {
   GlassImage,
   Ingredient,
   IngredientImage,
+  IngredientVolume,
+  Unit,
+  UnitConversion,
   WorkspaceCocktailRecipeStepAction,
   WorkspaceSetting,
 } from '@prisma/client';
 
 export interface BackupStructure {
+  units: Unit[];
+  unitConversions: UnitConversion[];
   workspaceSettings: WorkspaceSetting[];
   stepActions: WorkspaceCocktailRecipeStepAction[];
   garnish: Garnish[];
   garnishImages: GarnishImage[];
   ingredient: Ingredient[];
+  ingredientVolumes: IngredientVolume[];
   ingredientImages: IngredientImage[];
   glass: Glass[];
   glassImages: GlassImage[];

@@ -28,6 +28,8 @@ services:
       - '3000:3000'
     env_file:
       - .env
+    environment:
+      - DATABASE_URL=postgres://postgres:postgres@postgres:5432/cocktail_recipe
     networks:
       - cocktail-recipe-network
 

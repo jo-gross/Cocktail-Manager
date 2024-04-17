@@ -26,7 +26,12 @@ export default withHttpMethods({
                 steps: {
                   include: {
                     action: true,
-                    ingredients: { include: { ingredient: true } },
+                    ingredients: {
+                      include: {
+                        ingredient: true,
+                        unit: true,
+                      },
+                    },
                   },
                 },
                 garnishes: {
@@ -38,6 +43,7 @@ export default withHttpMethods({
             },
           },
         },
+        ingredientShoppingUnits: true,
       },
     });
     return res.json({ data: result });
@@ -55,7 +61,8 @@ export default withHttpMethods({
   [HTTPMethod.PUT]: withWorkspacePermission([Role.USER], async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
     const calculationId = req.query.calculationId as string | undefined;
     if (!calculationId) return res.status(400).json({ message: 'No calculationId id' });
-    const { name, calculationItems, showSalesStuff } = req.body;
+    const { name, calculationItems, showSalesStuff, ingredientShoppingUnits } = req.body;
+
     const input: CocktailCalculationUpdateInput = {
       id: calculationId,
       name: name,
@@ -76,11 +83,23 @@ export default withHttpMethods({
           },
         })),
       },
+      ingredientShoppingUnits: {
+        create: ingredientShoppingUnits.map((ingredientShoppingUnit: any) => ({
+          ingredient: { connect: { id: ingredientShoppingUnit.ingredientId } },
+          unit: { connect: { id: ingredientShoppingUnit.unitId } },
+        })),
+      },
     };
 
     await prisma.cocktailCalculationItems.deleteMany({
       where: {
         calculationId: calculationId,
+      },
+    });
+
+    await prisma.calculationIngredientShoppingUnit.deleteMany({
+      where: {
+        cocktailCalculationId: calculationId,
       },
     });
 

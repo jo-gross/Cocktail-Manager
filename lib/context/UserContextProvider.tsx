@@ -11,11 +11,10 @@ interface UserContextProps {
   refreshWorkspace: () => void;
 
   isUserPermitted: (role: Role) => boolean;
-
-  updateUserSetting(setting: string, value: string | null): void;
-
   getTranslation: (key: string, language: 'de') => string;
   getTranslationOrNull: (key: string, language: 'de') => string | undefined;
+
+  updateUserSetting(setting: string, value: string | null): void;
 }
 
 export const UserContext = createContext<UserContextProps>({

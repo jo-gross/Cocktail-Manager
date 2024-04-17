@@ -20,6 +20,7 @@ export type CocktailRecipeFullWithImage = Prisma.CocktailRecipeGetPayload<{
         ingredients: {
           include: {
             ingredient: true;
+            unit: true;
           };
         };
       };

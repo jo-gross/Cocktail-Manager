@@ -5,11 +5,21 @@ import { withAuthentication } from '../../../middleware/api/authenticationMiddle
 import HTTPMethod from 'http-method-enum';
 import { withHttpMethods } from '../../../middleware/api/handleMethods';
 import { randomUUID } from 'crypto';
+import { regenerateUnitConversions } from './[workspaceId]/units/conversions';
 import WorkspaceSettingKey = $Enums.WorkspaceSettingKey;
 
 export default withHttpMethods({
   [HTTPMethod.POST]: withAuthentication(async (req: NextApiRequest, res: NextApiResponse, user: User) => {
     const { name } = req.body;
+
+    const grammId = randomUUID();
+    const clId = randomUUID();
+    const spoonId = randomUUID();
+    const sprayId = randomUUID();
+    const dropperDropId = randomUUID();
+    const dropperCmId = randomUUID();
+    const dashId = randomUUID();
+
     const result = await prisma.workspace.create({
       data: {
         name: name,
@@ -80,6 +90,86 @@ export default withHttpMethods({
             ],
           },
         },
+        Unit: {
+          createMany: {
+            data: [
+              {
+                id: clId,
+                name: 'CL',
+              },
+              {
+                id: randomUUID(),
+                name: 'PIECE',
+              },
+              {
+                id: grammId,
+                name: 'GRAMM',
+              },
+              {
+                id: dropperDropId,
+                name: 'DROPPER_DROP',
+              },
+              {
+                id: dropperCmId,
+                name: 'DROPPER_CM',
+              },
+              {
+                id: dashId,
+                name: 'DASH',
+              },
+              {
+                id: spoonId,
+                name: 'BAR_SPOON',
+              },
+              {
+                id: sprayId,
+                name: 'SPRAY',
+              },
+            ],
+          },
+        },
+        UnitConversion: {
+          createMany: {
+            data: [
+              {
+                id: randomUUID(),
+                fromUnitId: grammId,
+                toUnitId: sprayId,
+                factor: 10,
+              },
+              {
+                id: randomUUID(),
+                fromUnitId: clId,
+                toUnitId: grammId,
+                factor: 10,
+              },
+              {
+                id: randomUUID(),
+                fromUnitId: clId,
+                toUnitId: spoonId,
+                factor: 2,
+              },
+              {
+                id: randomUUID(),
+                fromUnitId: grammId,
+                toUnitId: dashId,
+                factor: 1,
+              },
+              {
+                id: randomUUID(),
+                fromUnitId: grammId,
+                toUnitId: dropperCmId,
+                factor: 6,
+              },
+              {
+                id: randomUUID(),
+                fromUnitId: grammId,
+                toUnitId: dropperDropId,
+                factor: 50,
+              },
+            ],
+          },
+        },
         WorkspaceSetting: {
           create: {
             setting: WorkspaceSettingKey.translations,
@@ -98,12 +188,23 @@ export default withHttpMethods({
                 DIRTY_ICE: 'Dirty Ice',
                 POURING: 'Einschenken',
                 MIXING: 'Mixen',
+                CL: 'cl',
+                PIECE: 'Stück',
+                GRAMM: 'Gramm',
+                DROPPER_DROP: 'Pip. Tropfen',
+                DROPPER_CM: 'Pip. cm',
+                DASH: 'Dash',
+                BAR_SPOON: 'Barlöffel',
+                SPRAY: 'Sprüher',
               },
             }),
           },
         },
       },
     });
+
+    await regenerateUnitConversions(result.id);
+
     return res.json({ data: result });
   }),
   [HTTPMethod.GET]: withAuthentication(async (req: NextApiRequest, res: NextApiResponse, user: User) => {

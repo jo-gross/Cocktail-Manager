@@ -3,9 +3,9 @@ import { alertService } from '../../../../../lib/alertService';
 import { useRouter } from 'next/router';
 import { BackupStructure } from '../../../../api/workspaces/[workspaceId]/admin/backups/backupStructure';
 import { ManageEntityLayout } from '../../../../../components/layout/ManageEntityLayout';
-import { $Enums, Role, Signage, User, WorkspaceCocktailRecipeStepAction, WorkspaceUser } from '@prisma/client';
+import { $Enums, Role, Signage, Unit, UnitConversion, User, WorkspaceCocktailRecipeStepAction, WorkspaceUser } from '@prisma/client';
 import { UserContext } from '../../../../../lib/context/UserContextProvider';
-import { FaShareAlt, FaTrashAlt } from 'react-icons/fa';
+import { FaArrowDown, FaArrowUp, FaShareAlt, FaTrashAlt } from 'react-icons/fa';
 import { DeleteConfirmationModal } from '../../../../../components/modals/DeleteConfirmationModal';
 import { ModalContext } from '../../../../../lib/context/ModalContextProvider';
 import { UploadDropZone } from '../../../../../components/UploadDropZone';
@@ -16,6 +16,10 @@ import { Loading } from '../../../../../components/Loading';
 import _ from 'lodash';
 import CocktailStepActionModal from '../../../../../components/modals/CocktailStepActionModal';
 import CocktailStepActionGroupModal from '../../../../../components/modals/CocktailStepActionGroupModal';
+import UnitModal from '../../../../../components/modals/UnitModal';
+import UnitConversionModal from '../../../../../components/modals/UnitConversionModal';
+import { fetchUnitConversions, fetchUnits } from '../../../../../lib/network/units';
+import { fetchActions } from '../../../../../lib/network/actions';
 import MonitorFormat = $Enums.MonitorFormat;
 
 export default function WorkspaceSettingPage() {
@@ -47,6 +51,16 @@ export default function WorkspaceSettingPage() {
 
   const [workspaceActions, setWorkspaceActions] = useState<WorkspaceCocktailRecipeStepAction[]>([]);
   const [workspaceActionLoading, setWorkspaceActionLoading] = useState<boolean>(false);
+
+  const [units, setUnits] = useState<Unit[]>([]);
+  const [unitsLoading, setUnitsLoading] = useState<boolean>(false);
+
+  const [unitConversions, setUnitConversions] = useState<UnitConversion[]>([]);
+  const [unitConversionsLoading, setUnitConversionsLoading] = useState<boolean>(false);
+
+  const [deleting, setDeleting] = useState<{ [key: string]: boolean }>({});
+
+  const [collapsedGeneratedUnits, setCollapsedGeneratedUnits] = useState<boolean>(true);
 
   const exportAll = useCallback(async () => {
     setExporting(true);
@@ -81,7 +95,7 @@ export default function WorkspaceSettingPage() {
         body: JSON.stringify(data),
       });
       if (response.ok) {
-        fetchCocktailRecipeActions();
+        fetchActions(workspaceId, setWorkspaceActions, setWorkspaceActionLoading);
         alertService.success(`Import erfolgreich`);
         setUploadImportFile(undefined);
         if (uploadImportFileRef.current) {
@@ -217,39 +231,17 @@ export default function WorkspaceSettingPage() {
       });
   }, [workspaceId]);
 
-  const fetchCocktailRecipeActions = useCallback(() => {
-    if (workspaceId == undefined) return;
-    setWorkspaceActionLoading(true);
-    fetch(`/api/workspaces/${workspaceId}/actions`)
-      .then(async (response) => {
-        const body = await response.json();
-        if (response.ok) {
-          setWorkspaceActions(body.data);
-        } else {
-          console.error('SettingsPage -> fetchCocktailRecipeActions', response);
-          alertService.error(body.message ?? 'Fehler beim Laden der Cocktail-Rezept-Aktionen', response.status, response.statusText);
-        }
-      })
-      .catch((error) => {
-        console.error('SettingsPage -> fetchCocktailRecipeActions', error);
-        alertService.error('Fehler beim Laden der Cocktail-Rezept-Aktionen');
-      })
-      .finally(() => setWorkspaceActionLoading(false));
-  }, [workspaceId]);
-
-  const [actionDeleting, setActionDeleting] = useState<{ [key: string]: boolean }>({});
-
   const deleteCocktailRecipeAction = useCallback(
     async (actionId: string) => {
       if (workspaceId == undefined) return;
-      if (actionDeleting[actionId] ?? false) return;
-      setActionDeleting({ ...actionDeleting, [actionId]: true });
+      if (deleting[actionId] ?? false) return;
+      setDeleting({ ...deleting, [actionId]: true });
       fetch(`/api/workspaces/${workspaceId}/actions/${actionId}`, {
         method: 'DELETE',
       })
         .then(async (response) => {
           if (response.ok) {
-            fetchCocktailRecipeActions();
+            fetchActions(workspaceId, setWorkspaceActions, setWorkspaceActionLoading);
             alertService.success('Erfolgreich gelöscht');
           } else {
             const body = await response.json();
@@ -262,17 +254,78 @@ export default function WorkspaceSettingPage() {
           alertService.error('Fehler beim Löschen');
         })
         .finally(() => {
-          setActionDeleting({ ...actionDeleting, [actionId]: false });
+          setDeleting({ ...deleting, [actionId]: false });
         });
     },
-    [actionDeleting, fetchCocktailRecipeActions, workspaceId],
+    [deleting, workspaceId],
+  );
+
+  const deleteUnit = useCallback(
+    async (unitId: string) => {
+      if (workspaceId == undefined) return;
+      if (deleting[unitId] ?? false) return;
+      setDeleting({ ...deleting, [unitId]: true });
+      fetch(`/api/workspaces/${workspaceId}/units/${unitId}`, {
+        method: 'DELETE',
+      })
+        .then(async (response) => {
+          if (response.ok) {
+            fetchUnits(workspaceId, setUnits, setUnitsLoading);
+            fetchUnitConversions(workspaceId, setUnitConversionsLoading, setUnitConversions);
+            alertService.success('Erfolgreich gelöscht');
+          } else {
+            const body = await response.json();
+            console.error('SettingsPage -> deleteUnit', response);
+            alertService.error(body.message ?? 'Fehler beim Löschen', response.status, response.statusText);
+          }
+        })
+        .catch((error) => {
+          console.error('SettingsPage -> deleteUnit', error);
+          alertService.error('Fehler beim Löschen');
+        })
+        .finally(() => {
+          setDeleting({ ...deleting, [unitId]: false });
+        });
+    },
+    [deleting, workspaceId],
+  );
+
+  const deleteUnitConversion = useCallback(
+    async (unitConversionId: string) => {
+      if (workspaceId == undefined) return;
+      if (deleting[unitConversionId] ?? false) return;
+      setDeleting({ ...deleting, [unitConversionId]: true });
+      fetch(`/api/workspaces/${workspaceId}/units/conversions/${unitConversionId}`, {
+        method: 'DELETE',
+      })
+        .then(async (response) => {
+          if (response.ok) {
+            fetchUnitConversions(workspaceId, setUnitConversionsLoading, setUnitConversions);
+            alertService.success('Erfolgreich gelöscht');
+          } else {
+            const body = await response.json();
+            console.error('SettingsPage -> deleteUnitConversion', response);
+            alertService.error(body.message ?? 'Fehler beim Löschen', response.status, response.statusText);
+          }
+        })
+        .catch((error) => {
+          console.error('SettingsPage -> deleteUnitConversion', error);
+          alertService.error('Fehler beim Löschen');
+        })
+        .finally(() => {
+          setDeleting({ ...deleting, [unitConversionId]: false });
+        });
+    },
+    [deleting, fetchUnitConversions, workspaceId],
   );
 
   useEffect(() => {
     fetchWorkspaceUsers();
     fetchSignage();
-    fetchCocktailRecipeActions();
-  }, [fetchCocktailRecipeActions, fetchSignage, fetchWorkspaceUsers]);
+    fetchActions(workspaceId, setWorkspaceActions, setWorkspaceActionLoading);
+    fetchUnits(workspaceId, setUnits, setUnitsLoading);
+    fetchUnitConversions(workspaceId, setUnitConversionsLoading, setUnitConversions);
+  }, [fetchSignage, fetchWorkspaceUsers, workspaceId]);
 
   return (
     <ManageEntityLayout backLink={`/workspaces/${workspaceId}/manage`} title={'Workspace-Einstellungen'}>
@@ -584,7 +637,7 @@ export default function WorkspaceSettingPage() {
               ) : (
                 <>
                   <div className={'text-lg font-bold'}>Methoden</div>
-                  <table className={'table-compact grid-col-full table w-full'}>
+                  <table className={'grid-col-full table table-zebra w-full'}>
                     <thead>
                       <tr>
                         <td>Key</td>
@@ -607,54 +660,56 @@ export default function WorkspaceSettingPage() {
                         </td>
                       </tr>
                     </thead>
-                    {workspaceActions.length == 0 ? (
-                      <tr>
-                        <td colSpan={4}>Keine Einträge vorhanden</td>
-                      </tr>
-                    ) : (
-                      workspaceActions.map((action) => (
-                        <tr key={`action-${action.id}`}>
-                          <td>{action.name}</td>
-                          <td>{userContext.getTranslation(action.name, 'de')}</td>
-                          <td>{userContext.getTranslation(action.actionGroup, 'de')}</td>
-                          <td className={'flex flex-row justify-end gap-2'}>
-                            <button
-                              className={'btn btn-outline btn-primary btn-sm'}
-                              onClick={() => {
-                                modalContext.openModal(
-                                  <CocktailStepActionModal
-                                    cocktailStepAction={action}
-                                    cocktailStepActionGroups={Object.keys(_.groupBy(workspaceActions, 'actionGroup'))}
-                                  />,
-                                );
-                              }}
-                            >
-                              Edit
-                            </button>
-                            <button
-                              disabled={actionDeleting[action.id] ?? false}
-                              className={'btn-red btn btn-outline btn-sm '}
-                              onClick={() =>
-                                modalContext.openModal(
-                                  <DeleteConfirmationModal
-                                    onApprove={() => deleteCocktailRecipeAction(action.id)}
-                                    spelling={'DELETE'}
-                                    entityName={userContext.getTranslation(action.name, 'de')}
-                                  />,
-                                )
-                              }
-                            >
-                              {actionDeleting[action.id] ?? false ? <span className={'loading loading-spinner'} /> : <></>}
-                              <FaTrashAlt />
-                            </button>
-                          </td>
+                    <tbody>
+                      {workspaceActions.length == 0 ? (
+                        <tr>
+                          <td colSpan={4}>Keine Einträge vorhanden</td>
                         </tr>
-                      ))
-                    )}
+                      ) : (
+                        workspaceActions.map((action) => (
+                          <tr key={`action-${action.id}`}>
+                            <td>{action.name}</td>
+                            <td>{userContext.getTranslation(action.name, 'de')}</td>
+                            <td>{userContext.getTranslation(action.actionGroup, 'de')}</td>
+                            <td className={'flex flex-row justify-end gap-2'}>
+                              <button
+                                className={'btn btn-outline btn-primary btn-sm'}
+                                onClick={() => {
+                                  modalContext.openModal(
+                                    <CocktailStepActionModal
+                                      cocktailStepAction={action}
+                                      cocktailStepActionGroups={Object.keys(_.groupBy(workspaceActions, 'actionGroup'))}
+                                    />,
+                                  );
+                                }}
+                              >
+                                Edit
+                              </button>
+                              <button
+                                disabled={deleting[action.id] ?? false}
+                                className={'btn-red btn btn-outline btn-sm '}
+                                onClick={() =>
+                                  modalContext.openModal(
+                                    <DeleteConfirmationModal
+                                      onApprove={() => deleteCocktailRecipeAction(action.id)}
+                                      spelling={'DELETE'}
+                                      entityName={userContext.getTranslation(action.name, 'de')}
+                                    />,
+                                  )
+                                }
+                              >
+                                {deleting[action.id] ?? false ? <span className={'loading loading-spinner'} /> : <></>}
+                                <FaTrashAlt />
+                              </button>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
                   </table>
                   <div className={'text-lg font-bold'}>Gruppen</div>
                   <div>Diese können bei den Methoden erstellt werden, hier kannst du die passende Anzeige einstellen</div>
-                  <table className={'table-compact grid-col-full table w-full'}>
+                  <table className={'grid-col-full table table-zebra w-full'}>
                     <thead>
                       <tr>
                         <td>Key</td>
@@ -662,28 +717,234 @@ export default function WorkspaceSettingPage() {
                         <td></td>
                       </tr>
                     </thead>
-                    {Object.entries(_.groupBy(workspaceActions, 'actionGroup')).length == 0 ? (
+                    <tbody>
+                      {Object.entries(_.groupBy(workspaceActions, 'actionGroup')).length == 0 ? (
+                        <tr>
+                          <td colSpan={3}>Keine Einträge vorhanden</td>
+                        </tr>
+                      ) : (
+                        Object.entries(_.groupBy(workspaceActions, 'actionGroup')).map(([group, groupActions]) => (
+                          <tr key={`action-group-${group}`}>
+                            <td>{group}</td>
+                            <td>{userContext.getTranslation(group, 'de')}</td>
+                            <td className={'flex flex-row justify-end gap-2'}>
+                              <button
+                                className={'btn btn-outline btn-primary btn-sm'}
+                                onClick={() => {
+                                  modalContext.openModal(<CocktailStepActionGroupModal actionGroup={group} />);
+                                }}
+                              >
+                                Edit
+                              </button>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </>
+              )}
+            </div>
+          </div>
+        ) : (
+          <></>
+        )}
+        {/*Workspace Units*/}
+        {userContext.isUserPermitted(Role.ADMIN) ? (
+          <div className={'card'}>
+            <div className={'card-body'}>
+              <div className={'card-title'}>Einheiten</div>
+              <div>Hier lassen sich alle Einheiten, die bei der Zubereitung eines Cocktails ausgewählt werden können angepasst werden.</div>
+              {unitsLoading ? (
+                <div>
+                  <Loading />
+                </div>
+              ) : (
+                <>
+                  <div className={'text-lg font-bold'}>Einheiten</div>
+                  <table className={'grid-col-full table table-zebra w-full'}>
+                    <thead>
                       <tr>
-                        <td colSpan={3}>Keine Einträge vorhanden</td>
+                        <td>Key</td>
+                        <td>Deutsch</td>
+                        <td className={'flex flex-row justify-end'}>
+                          <button
+                            className={'btn btn-primary btn-sm'}
+                            onClick={() => {
+                              modalContext.openModal(<UnitModal unit={undefined} />);
+                            }}
+                          >
+                            Hinzufügen
+                          </button>
+                        </td>
                       </tr>
-                    ) : (
-                      Object.entries(_.groupBy(workspaceActions, 'actionGroup')).map(([group, groupActions]) => (
-                        <tr key={`action-group-${group}`}>
-                          <td>{group}</td>
-                          <td>{userContext.getTranslation(group, 'de')}</td>
-                          <td className={'flex flex-row justify-end gap-2'}>
-                            <button
-                              className={'btn btn-outline btn-primary btn-sm'}
-                              onClick={() => {
-                                modalContext.openModal(<CocktailStepActionGroupModal actionGroup={group} />);
-                              }}
-                            >
-                              Edit
-                            </button>
+                    </thead>
+                    <tbody>
+                      {units.length == 0 ? (
+                        <tr>
+                          <td colSpan={3} className={'text-center'}>
+                            Keine Einträge vorhanden
                           </td>
                         </tr>
-                      ))
-                    )}
+                      ) : (
+                        units.map((unit) => (
+                          <tr key={`unit-${unit.id}`}>
+                            <td>{unit.name}</td>
+                            <td>{userContext.getTranslation(unit.name, 'de')}</td>
+                            <td className={'flex flex-row justify-end gap-2'}>
+                              <button
+                                className={'btn btn-outline btn-primary btn-sm'}
+                                onClick={() => {
+                                  modalContext.openModal(<UnitModal unit={unit} />);
+                                }}
+                              >
+                                Edit
+                              </button>
+                              <button
+                                disabled={deleting[unit.id] ?? false}
+                                className={'btn-red btn btn-outline btn-sm '}
+                                onClick={() =>
+                                  modalContext.openModal(
+                                    <DeleteConfirmationModal
+                                      onApprove={() => deleteUnit(unit.id)}
+                                      spelling={'DELETE'}
+                                      entityName={userContext.getTranslation(unit.name, 'de')}
+                                    />,
+                                  )
+                                }
+                              >
+                                {deleting[unit.id] ?? false ? <span className={'loading loading-spinner'} /> : <></>}
+                                <FaTrashAlt />
+                              </button>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                  <div className={'text-lg font-bold'}>Umrechnungen</div>
+                  <div>Hier können die standardmäßigen Umrechnungen der Einheiten angepasst werden.</div>
+                  <table className={'grid-col-full table table-zebra w-full'}>
+                    <thead>
+                      <tr>
+                        <td>1 Einheit A</td>
+                        <td className={'text-right'}>= X</td>
+                        <td>Einheit B</td>
+                        <td></td>
+                        <td className={'flex justify-end'}>
+                          <button
+                            className={'btn btn-primary btn-sm'}
+                            onClick={() => {
+                              modalContext.openModal(
+                                <UnitConversionModal
+                                  units={units}
+                                  existingConversions={unitConversions}
+                                  onSaved={() => fetchUnitConversions(workspaceId, setUnitConversionsLoading, setUnitConversions)}
+                                />,
+                              );
+                            }}
+                          >
+                            Hinzufügen
+                          </button>
+                        </td>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {unitConversionsLoading ? (
+                        <tr>
+                          <td colSpan={5} className={'text-center'}>
+                            <Loading />
+                          </td>
+                        </tr>
+                      ) : unitConversions.length == 0 ? (
+                        <tr>
+                          <td colSpan={5} className={'text-center'}>
+                            Keine Einträge vorhanden
+                          </td>
+                        </tr>
+                      ) : (
+                        <>
+                          {unitConversions
+                            .filter((conversion) => !conversion.autoGenerated)
+                            .map((conversion) => (
+                              <tr key={`unit-conversion-${conversion.id}`}>
+                                <td>{userContext.getTranslation(units.find((unit) => unit.id == conversion.fromUnitId)?.name ?? '', 'de')}</td>
+                                <td className={'text-right'}>{conversion.factor.toFixed(2)}</td>
+                                <td>{userContext.getTranslation(units.find((unit) => unit.id == conversion.toUnitId)?.name ?? '', 'de')}</td>
+                                <td>
+                                  1 {userContext.getTranslation(units.find((unit) => unit.id == conversion.toUnitId)?.name ?? '', 'de')} ={' '}
+                                  {(1 / conversion.factor).toFixed(2)}{' '}
+                                  {userContext.getTranslation(units.find((unit) => unit.id == conversion.fromUnitId)?.name ?? '', 'de')}
+                                </td>
+                                <td className={'flex flex-row justify-end gap-2'}>
+                                  <button
+                                    className={'btn btn-outline btn-primary btn-sm'}
+                                    onClick={() => {
+                                      modalContext.openModal(
+                                        <UnitConversionModal
+                                          units={units}
+                                          existingConversions={[conversion]}
+                                          onSaved={() => fetchUnitConversions(workspaceId, setUnitConversionsLoading, setUnitConversions)}
+                                          unitConversion={conversion}
+                                        />,
+                                      );
+                                    }}
+                                  >
+                                    Edit
+                                  </button>
+                                  <button
+                                    disabled={deleting[conversion.id] ?? false}
+                                    className={'btn-red btn btn-outline btn-sm '}
+                                    onClick={() =>
+                                      modalContext.openModal(
+                                        <DeleteConfirmationModal
+                                          onApprove={() => deleteUnitConversion(conversion.id)}
+                                          spelling={'DELETE'}
+                                          entityName={
+                                            userContext.getTranslation(units.find((unit) => unit.id == conversion.fromUnitId)?.name ?? 'N/A', 'de') +
+                                            ' zu ' +
+                                            userContext.getTranslation(units.find((unit) => unit.id == conversion.toUnitId)?.name ?? 'N/A', 'de')
+                                          }
+                                        />,
+                                      )
+                                    }
+                                  >
+                                    {deleting[conversion.id] ?? false ? <span className={'loading loading-spinner'} /> : <></>}
+                                    <FaTrashAlt />
+                                  </button>
+                                </td>
+                              </tr>
+                            ))}
+                          <tr onClick={() => setCollapsedGeneratedUnits(!collapsedGeneratedUnits)}>
+                            <td colSpan={4}>Automatisch generierte Umrechnungen</td>
+                            <td className={'flex items-center justify-end'}>
+                              <div className={'p-2'}>{collapsedGeneratedUnits ? <FaArrowUp /> : <FaArrowDown />}</div>
+                            </td>
+                          </tr>
+
+                          {collapsedGeneratedUnits ? (
+                            unitConversions
+                              .filter((conversion) => conversion.autoGenerated)
+                              .sort((a, b) => a.fromUnitId.localeCompare(b.fromUnitId) || a.toUnitId.localeCompare(b.toUnitId))
+                              .map((conversion) => (
+                                <tr key={`unit-conversion-${conversion.id}`}>
+                                  <td>{userContext.getTranslation(units.find((unit) => unit.id == conversion.fromUnitId)?.name ?? 'N/A', 'de')}</td>
+                                  <td className={'text-right'}>{conversion.factor.toFixed(2)}</td>
+                                  <td>{userContext.getTranslation(units.find((unit) => unit.id == conversion.toUnitId)?.name ?? 'N/A', 'de')}</td>
+                                  <td>
+                                    1 {userContext.getTranslation(units.find((unit) => unit.id == conversion.toUnitId)?.name ?? 'N/A', 'de')} ={' '}
+                                    {(1 / conversion.factor).toFixed(2)}{' '}
+                                    {userContext.getTranslation(units.find((unit) => unit.id == conversion.fromUnitId)?.name ?? 'N/A', 'de')}
+                                  </td>
+                                  <td className={''}></td>
+                                </tr>
+                              ))
+                          ) : (
+                            <></>
+                          )}
+                        </>
+                      )}
+                    </tbody>
                   </table>
                 </>
               )}

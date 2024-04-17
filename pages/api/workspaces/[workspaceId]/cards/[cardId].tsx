@@ -39,6 +39,7 @@ export default withHttpMethods({
                         ingredients: {
                           include: {
                             ingredient: true,
+                            unit: true,
                           },
                         },
                       },
