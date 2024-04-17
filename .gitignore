@@ -2,7 +2,8 @@ node_modules/
 .next/
 .DS_STORE
 .env!/
-.yarn/
+!.yarn/releases/yarn-1.22.21.cjs
+.yarn/cache
 # dependencies
 /node_modules
 /.pnp

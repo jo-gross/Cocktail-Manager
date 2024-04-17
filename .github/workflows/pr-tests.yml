@@ -19,7 +19,7 @@ jobs:
           node-version: 21
 
       - name: 'Install dependencies'
-        uses: borales/actions-yarn@v1
+        uses: borales/actions-yarn@v4
         with:
           cmd: install
 
