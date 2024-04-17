@@ -8,8 +8,7 @@
     "build": "prisma generate && next build",
     "start": "next start",
     "format:check": "prettier --check .",
-    "format:fix": "prettier --write .",
-    "migrate": "prisma migrate reset && prisma migrate deploy"
+    "format:fix": "prettier --write ."
   },
   "keywords": [],
   "author": "",

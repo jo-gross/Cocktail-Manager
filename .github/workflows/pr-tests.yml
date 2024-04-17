@@ -24,6 +24,9 @@ jobs:
       - name: 'Run Prettier'
         run: yarn format:check
 
+      - name: 'Run ESlint'
+        run: yarn next lint
+
   Build:
     runs-on: ubuntu-latest
 
