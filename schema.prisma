@@ -295,10 +295,11 @@ model IngredientImage {
 }
 
 model CocktailCard {
-  id     String              @id @default(cuid())
-  name   String
-  date   DateTime?
-  groups CocktailCardGroup[]
+  id       String              @id @default(cuid())
+  name     String
+  date     DateTime?
+  groups   CocktailCardGroup[]
+  showTime Boolean             @default(false)
 
   workspace             Workspace               @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   workspaceId           String
@@ -343,13 +344,13 @@ model CocktailStatisticItem {
   id             String         @id @default(cuid())
   cocktailId     String
   cocktail       CocktailRecipe @relation(fields: [cocktailId], references: [id], onDelete: Cascade)
-  userId         String
-  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId         String?
+  user           User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
   workspaceId    String
   workspace      Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   date           DateTime
   cocktailCardId String?
-  cocktailCard   CocktailCard?  @relation(fields: [cocktailCardId], references: [id], onDelete: Cascade)
+  cocktailCard   CocktailCard?  @relation(fields: [cocktailCardId], references: [id], onDelete: SetNull)
   actionSource   String?
 }
 
