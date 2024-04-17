@@ -6,6 +6,8 @@ declare global {
 
     toFormatDateTimeString(): String;
 
+    toFormatTimeString(): String;
+
     toFormatDateString(): String;
   }
 }
@@ -34,4 +36,12 @@ Date.prototype.toFormatDateString = function () {
   const month = (d.getMonth() + 1).toString().padStart(2, '0');
   const year = d.getFullYear();
   return `${day}.${month}.${year}`;
+};
+
+Date.prototype.toFormatTimeString = function () {
+  // format date to hh:mm
+  const d = new Date(this);
+  const hours = d.getHours().toString().padStart(2, '0');
+  const minutes = d.getMinutes().toString().padStart(2, '0');
+  return `${hours}:${minutes}`;
 };

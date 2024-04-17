@@ -32,6 +32,19 @@ export default function OverviewPage() {
   const [loadingCards, setLoadingCards] = useState(true);
   const [loadingGroups, setLoadingGroups] = useState(false);
 
+  useEffect(() => {
+    const handleSearchShortCut = (event: any) => {
+      if (event.shiftKey && event.key === 'F') {
+        modalContext.openModal(<SearchModal showStatisticActions={showStatisticActions} />);
+      }
+    };
+    window.addEventListener('keypress', handleSearchShortCut);
+
+    return () => {
+      window.removeEventListener('keypress', handleSearchShortCut);
+    };
+  }, [modalContext, showStatisticActions]);
+
   // fetch cards initially
   useEffect(() => {
     if (!workspaceId) return;
@@ -168,6 +181,15 @@ export default function OverviewPage() {
     setShowStatisticActions(userContext.user?.settings?.find((s) => s.setting == Setting.showStatisticActions)?.value == 'true' ?? false);
   }, [userContext.user?.settings]);
 
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 10 * 1000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <>
       <Head>
@@ -175,6 +197,13 @@ export default function OverviewPage() {
       </Head>
 
       <div className={'static h-screen'}>
+        {selectedCard?.showTime ? (
+          <div className={'w-full pt-2 text-center'}>
+            {currentTime.toFormatTimeString()} {currentTime.toFormatDateString()}
+          </div>
+        ) : (
+          <></>
+        )}
         <div className={''}>
           <div className={'flex flex-col space-y-2 overflow-y-auto rounded-xl p-0 md:p-2 print:overflow-clip print:p-0'}>
             {selectedCardId == 'search' || selectedCardId == undefined ? (
@@ -200,7 +229,7 @@ export default function OverviewPage() {
                       {group.name}
                       {group.groupPrice != undefined ? ` - Special Preis: ${group.groupPrice}€` : ''}
                     </div>
-                    <div className={'collapse-content'}>
+                    <div className={'collapse-content pl-0 pr-0'}>
                       <div
                         className={`grid 
                       ${lessItems ? '2xl:grid-cols-5 ' : '2xl:grid-cols-6 '}
@@ -208,7 +237,7 @@ export default function OverviewPage() {
                       ${lessItems ? 'md:grid-cols-2 ' : 'md:grid-cols-3 '}
                       ${lessItems ? 'xs:grid-cols-1 ' : ' xs:grid-cols-2 '}
                        grid-cols-1
-                       gap-2 p-1 md:p-2`}
+                       gap-2 p-1`}
                       >
                         {group.items.length == 0 ? (
                           <div className={'col-span-full text-center'}>Keine Einträge vorhanden</div>
@@ -245,6 +274,14 @@ export default function OverviewPage() {
             )}
           </div>
         </div>
+
+        {selectedCard?.showTime ? (
+          <div className={'w-full pb-2 text-center'}>
+            {currentTime.toFormatTimeString()} {currentTime.toFormatDateString()}
+          </div>
+        ) : (
+          <></>
+        )}
 
         <div className={'fixed bottom-2 right-2 z-10 flex flex-col space-y-2 md:bottom-5 md:right-5 print:hidden'}>
           <div className="dropdown dropdown-end dropdown-top pt-2">
@@ -387,11 +424,13 @@ export default function OverviewPage() {
 
           <>
             {selectedCardId != 'search' && selectedCardId != undefined ? (
-              <div
-                className={'btn btn-square btn-primary rounded-xl md:btn-lg'}
-                onClick={() => modalContext.openModal(<SearchModal showStatisticActions={showStatisticActions} />)}
-              >
-                <FaSearch />
+              <div className={'tooltip'} data-tip={'Suche (Shift + F)'}>
+                <div
+                  className={'btn btn-square btn-primary rounded-xl md:btn-lg'}
+                  onClick={() => modalContext.openModal(<SearchModal showStatisticActions={showStatisticActions} />)}
+                >
+                  <FaSearch />
+                </div>
               </div>
             ) : (
               <></>
