@@ -192,7 +192,7 @@ export function SearchModal(props: SearchModalProps) {
 
                     {props.showStatisticActions ? (
                       <button
-                        className={'btn btn-outline btn-primary w-full'}
+                        className={'btn btn-outline btn-primary mt-2 w-full'}
                         onClick={() => addCocktailToStatistic(cocktail.id)}
                         disabled={submittingStatistic}
                       >
