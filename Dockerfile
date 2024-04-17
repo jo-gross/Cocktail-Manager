@@ -2,7 +2,7 @@ FROM mcr.microsoft.com/playwright:v1.43.1-jammy AS dependencies
 
 WORKDIR /app
 COPY package.json yarn.lock ./
-RUN yarn
+RUN yarn --frozen-lockfile
 
 RUN yarn playwright install --with-deps chromium
 
@@ -11,6 +11,8 @@ FROM node:21-alpine AS build
 WORKDIR /app
 COPY --from=dependencies /app/node_modules ./node_modules
 COPY . .
+
+ENV NEXT_SHARP_PATH=/app/node_modules/sharp
 
 RUN yarn prisma generate
 RUN yarn build
@@ -21,7 +23,6 @@ WORKDIR /app
 
 ENV NODE_ENV production
 
-RUN yarn add sharp
 RUN yarn add prisma
 
 COPY --from=build /app/public ./public

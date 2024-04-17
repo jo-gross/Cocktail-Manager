@@ -128,6 +128,9 @@ export default withWorkspacePermission([Role.USER], async (req: NextApiRequest, 
 
         const ingredientMapping: { id: string; newId: string }[] = [];
         const ingredientImageMapping: { ingredientId: string; image: string }[] = [];
+
+        const oldVolumes: { ingredientId: string; unitId: string; volume: number }[] = [];
+
         if (data.ingredient?.length > 0) {
           console.debug('Importing ingredients', data.ingredient?.length);
 
@@ -142,7 +145,24 @@ export default withWorkspacePermission([Role.USER], async (req: NextApiRequest, 
             g.workspaceId = workspaceId;
             // @ts-ignore causing older backup version support
             g.image = undefined;
-
+            // Enable older backup imports
+            // @ts-ignore causing older backup version support
+            if (g.volume != undefined && g.unit != undefined) {
+              // @ts-ignore causing older backup version support
+              const unitId = await transaction.unit.findFirst({ where: { name: g.unit, workspaceId: workspaceId } })?.id;
+              if (unitId != undefined) {
+                oldVolumes.push({
+                  ingredientId: g.id,
+                  // @ts-ignore causing older backup version support
+                  volume: g.volume,
+                  unitId: unitId,
+                });
+              }
+              // @ts-ignore causing older backup version support
+              g.volume = undefined;
+              // @ts-ignore causing older backup version support
+              g.unit = undefined;
+            }
             ingredientMapping.push(ingredientMappingItem);
           }
           await transaction.ingredient.createMany({ data: data.ingredient, skipDuplicates: true });
@@ -155,6 +175,17 @@ export default withWorkspacePermission([Role.USER], async (req: NextApiRequest, 
             }
           }
         }
+        for (const volume of oldVolumes) {
+          await transaction.ingredientVolume.create({
+            data: {
+              id: randomUUID(),
+              ingredientId: volume.ingredientId,
+              unitId: volume.unitId,
+              volume: volume.volume,
+              workspaceId: workspaceId,
+            },
+          });
+        }
         if (data.ingredientVolumes?.length > 0) {
           for (const volume of data.ingredientVolumes) {
             const newIngredientId = ingredientMapping.find((gm) => gm.id === volume.ingredientId)?.newId;
@@ -165,12 +196,14 @@ export default withWorkspacePermission([Role.USER], async (req: NextApiRequest, 
                 where: {
                   ingredientId: newIngredientId,
                   unitId: newUnitId,
+                  workspaceId: workspaceId,
                 },
               });
               if (existingVolume == null) {
                 volume.id = randomUUID();
                 volume.ingredientId = newIngredientId;
                 volume.unitId = newUnitId;
+                volume.workspaceId = workspaceId;
                 await transaction.ingredientVolume.create({ data: volume });
               }
             }
@@ -352,6 +385,7 @@ export default withWorkspacePermission([Role.USER], async (req: NextApiRequest, 
 
         console.info('Import finished');
       });
+
       return res.status(200).json({ msg: 'Success' });
     } catch (error) {
       console.error(error);
