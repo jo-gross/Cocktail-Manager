@@ -295,10 +295,11 @@ model IngredientImage {
 }
 
 model CocktailCard {
-  id     String              @id @default(cuid())
-  name   String
-  date   DateTime?
-  groups CocktailCardGroup[]
+  id       String              @id @default(cuid())
+  name     String
+  date     DateTime?
+  groups   CocktailCardGroup[]
+  showTime Boolean             @default(false)
 
   workspace             Workspace               @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   workspaceId           String
