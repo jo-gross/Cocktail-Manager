@@ -770,7 +770,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                 )}
                               </select>
                             </div>
-                            <div className={'space-x-2 justify-self-end'}>
+                            <div className={'space-x-2 md:justify-self-end'}>
                               <button
                                 type={'button'}
                                 disabled={indexStep == 0}
@@ -828,8 +828,8 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                 {step.ingredients
                                   .sort((a, b) => a.ingredientNumber - b.ingredientNumber)
                                   .map((ingredient, indexIngredient) => (
-                                    <div key={`form-recipe-step-${step.id}-ingredient-${ingredient.id}`} className={'flex flex-row space-x-2'}>
-                                      <div className={'join join-vertical w-min'}>
+                                    <div key={`form-recipe-step-${step.id}-ingredient-${ingredient.id}`} className={'flex flex-row gap-2 pt-2'}>
+                                      <div className={'join join-vertical w-min items-center justify-center'}>
                                         <button
                                           type={'button'}
                                           disabled={indexIngredient == 0}
@@ -876,128 +876,130 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                           <FaAngleDown />
                                         </button>
                                       </div>
-                                      <div key={`form-recipe-step${step.id}-ingredient-${ingredient.id}`} className={'join flex w-full flex-row'}>
-                                        <input
-                                          className={`input join-item input-bordered w-full cursor-pointer 
+                                      <div className={'grid w-full grid-cols-2 gap-1 md:grid-cols-3'}>
+                                        <div key={`form-recipe-step${step.id}-ingredient-${ingredient.id}`} className={'join col-span-2 flex w-full flex-row'}>
+                                          <input
+                                            className={`input join-item input-bordered w-full cursor-pointer 
                                                 ${
                                                   ((errors.steps as StepError[])?.[indexStep] as any)?.ingredients?.[indexIngredient]?.ingredientId &&
                                                   ' input-error'
                                                 }`}
-                                          value={
-                                            ingredientsLoading
-                                              ? 'Lade...'
-                                              : values.steps[indexStep].ingredients?.[indexIngredient].ingredient?.name ?? 'Wähle eine Zutat aus...'
-                                          }
-                                          readOnly={true}
-                                          onClick={() => {
-                                            openIngredientSelectModal(setFieldValue, indexStep, indexIngredient);
-                                          }}
-                                        />
-                                        <button
-                                          type={'button'}
-                                          className={'btn btn-outline btn-primary join-item'}
-                                          onClick={() => {
-                                            openIngredientSelectModal(setFieldValue, indexStep, indexIngredient);
-                                          }}
-                                        >
-                                          <FaSearch />
-                                        </button>
-                                        <button
-                                          type={'button'}
-                                          className={'btn btn-outline btn-secondary join-item'}
-                                          onClick={() => {
-                                            modalContext.openModal(
-                                              <FormModal<Ingredient>
-                                                form={
-                                                  <IngredientForm
-                                                    onSaved={async (id) => {
-                                                      modalContext.closeModal();
-                                                      await setFieldValue(`steps.${indexStep}.ingredients.${indexIngredient}.ingredientId`, id);
-                                                      fetchIngredients(workspaceId, setIngredients, setIngredientsLoading);
-                                                    }}
-                                                  />
-                                                }
-                                                title={'Zutat erfassen'}
-                                              />,
-                                            );
-                                          }}
-                                        >
-                                          <FaPlus />
-                                        </button>
-                                      </div>
-                                      <div className={'join'}>
-                                        <input
-                                          type="number"
-                                          name={`steps.${indexStep}.ingredients.${indexIngredient}.amount`}
-                                          className={'input join-item input-bordered w-20 flex-auto md:w-40'}
-                                          onChange={handleChange}
-                                          onBlur={handleBlur}
-                                          value={values.steps[indexStep].ingredients[indexIngredient].amount}
-                                        />
-                                        <div className={'tooltip'}></div>
-                                        <select
-                                          name={`steps.${indexStep}.ingredients.${indexIngredient}.unitId`}
-                                          className={`join-item select select-bordered max-w-[20%] md:max-w-none ${
-                                            ((errors.steps as StepError[])?.[indexStep] as any)?.ingredients?.[indexIngredient]?.unit ? 'select-error' : ''
-                                          }`}
-                                          onChange={async (e) => {
-                                            handleChange(e);
-                                            await setFieldValue(
-                                              `steps.${indexStep}.ingredients.${indexIngredient}.unit`,
-                                              units.find((u) => u.id == e.target.value),
-                                            );
-                                          }}
-                                          onBlur={handleBlur}
-                                          value={values.steps[indexStep].ingredients[indexIngredient].unitId}
-                                        >
-                                          <option value={''} disabled>
-                                            Auswählen
-                                          </option>
-
-                                          {values.steps[indexStep].ingredients[indexIngredient].unitId &&
-                                          ingredients
-                                            .find((ingredient) => ingredient.id == values.steps[indexStep].ingredients[indexIngredient]?.ingredientId)
-                                            ?.IngredientVolume.find((unit) => unit.unitId == values.steps[indexStep].ingredients[indexIngredient].unitId) ==
-                                            undefined ? (
-                                            <option
-                                              className="tooltip"
-                                              data-tip="hello"
-                                              value={values.steps[indexStep].ingredients[indexIngredient]?.unitId}
-                                              disabled={true}
-                                            >
-                                              !!!
-                                              {userContext.getTranslation(
-                                                units.find((unit) => unit.id == values.steps[indexStep].ingredients[indexIngredient]?.unitId)?.name ?? '',
-                                                'de',
-                                              )}
-                                              !!!
+                                            value={
+                                              ingredientsLoading
+                                                ? 'Lade...'
+                                                : values.steps[indexStep].ingredients?.[indexIngredient].ingredient?.name ?? 'Wähle eine Zutat aus...'
+                                            }
+                                            readOnly={true}
+                                            onClick={() => {
+                                              openIngredientSelectModal(setFieldValue, indexStep, indexIngredient);
+                                            }}
+                                          />
+                                          <button
+                                            type={'button'}
+                                            className={'btn btn-outline btn-primary join-item'}
+                                            onClick={() => {
+                                              openIngredientSelectModal(setFieldValue, indexStep, indexIngredient);
+                                            }}
+                                          >
+                                            <FaSearch />
+                                          </button>
+                                          <button
+                                            type={'button'}
+                                            className={'btn btn-outline btn-secondary join-item'}
+                                            onClick={() => {
+                                              modalContext.openModal(
+                                                <FormModal<Ingredient>
+                                                  form={
+                                                    <IngredientForm
+                                                      onSaved={async (id) => {
+                                                        modalContext.closeModal();
+                                                        await setFieldValue(`steps.${indexStep}.ingredients.${indexIngredient}.ingredientId`, id);
+                                                        fetchIngredients(workspaceId, setIngredients, setIngredientsLoading);
+                                                      }}
+                                                    />
+                                                  }
+                                                  title={'Zutat erfassen'}
+                                                />,
+                                              );
+                                            }}
+                                          >
+                                            <FaPlus />
+                                          </button>
+                                        </div>
+                                        <div className={'join col-span-2 flex w-full md:col-span-1'}>
+                                          <input
+                                            type="number"
+                                            name={`steps.${indexStep}.ingredients.${indexIngredient}.amount`}
+                                            className={'input join-item input-bordered w-20 md:w-40'}
+                                            onChange={handleChange}
+                                            onBlur={handleBlur}
+                                            value={values.steps[indexStep].ingredients[indexIngredient].amount}
+                                          />
+                                          <div className={'tooltip'}></div>
+                                          <select
+                                            name={`steps.${indexStep}.ingredients.${indexIngredient}.unitId`}
+                                            className={`join-item select select-bordered w-full ${
+                                              ((errors.steps as StepError[])?.[indexStep] as any)?.ingredients?.[indexIngredient]?.unit ? 'select-error' : ''
+                                            }`}
+                                            onChange={async (e) => {
+                                              handleChange(e);
+                                              await setFieldValue(
+                                                `steps.${indexStep}.ingredients.${indexIngredient}.unit`,
+                                                units.find((u) => u.id == e.target.value),
+                                              );
+                                            }}
+                                            onBlur={handleBlur}
+                                            value={values.steps[indexStep].ingredients[indexIngredient].unitId}
+                                          >
+                                            <option value={''} disabled>
+                                              Auswählen
                                             </option>
-                                          ) : (
-                                            <></>
-                                          )}
-                                          {ingredients
-                                            .find((ingredient) => ingredient.id == values.steps[indexStep].ingredients[indexIngredient]?.ingredientId)
-                                            ?.IngredientVolume?.map((value) => (
-                                              <option key={`steps.${indexStep}.ingredients.${indexIngredient}.units-${value.unitId}`} value={value.unitId}>
-                                                {userContext.getTranslation(value.unit.name, 'de')}
+
+                                            {values.steps[indexStep].ingredients[indexIngredient].unitId &&
+                                            ingredients
+                                              .find((ingredient) => ingredient.id == values.steps[indexStep].ingredients[indexIngredient]?.ingredientId)
+                                              ?.IngredientVolume.find((unit) => unit.unitId == values.steps[indexStep].ingredients[indexIngredient].unitId) ==
+                                              undefined ? (
+                                              <option
+                                                className="tooltip"
+                                                data-tip="hello"
+                                                value={values.steps[indexStep].ingredients[indexIngredient]?.unitId}
+                                                disabled={true}
+                                              >
+                                                !!!
+                                                {userContext.getTranslation(
+                                                  units.find((unit) => unit.id == values.steps[indexStep].ingredients[indexIngredient]?.unitId)?.name ?? '',
+                                                  'de',
+                                                )}
+                                                !!!
                                               </option>
-                                            ))}
-                                        </select>
-                                        <button
-                                          type={'button'}
-                                          className={'btn btn-square btn-error join-item w-8'}
-                                          onClick={() =>
-                                            modalContext.openModal(
-                                              <DeleteConfirmationModal
-                                                spelling={'REMOVE'}
-                                                entityName={'die Zutat'}
-                                                onApprove={async () => removeIngredient(indexIngredient)}
-                                              />,
-                                            )
-                                          }
-                                        >
-                                          <FaTrashAlt />
-                                        </button>
+                                            ) : (
+                                              <></>
+                                            )}
+                                            {ingredients
+                                              .find((ingredient) => ingredient.id == values.steps[indexStep].ingredients[indexIngredient]?.ingredientId)
+                                              ?.IngredientVolume?.map((value) => (
+                                                <option key={`steps.${indexStep}.ingredients.${indexIngredient}.units-${value.unitId}`} value={value.unitId}>
+                                                  {userContext.getTranslation(value.unit.name, 'de')}
+                                                </option>
+                                              ))}
+                                          </select>
+                                          <button
+                                            type={'button'}
+                                            className={'btn btn-square btn-error join-item'}
+                                            onClick={() =>
+                                              modalContext.openModal(
+                                                <DeleteConfirmationModal
+                                                  spelling={'REMOVE'}
+                                                  entityName={'die Zutat'}
+                                                  onApprove={async () => removeIngredient(indexIngredient)}
+                                                />,
+                                              )
+                                            }
+                                          >
+                                            <FaTrashAlt />
+                                          </button>
+                                        </div>
                                       </div>
                                     </div>
                                   ))}
