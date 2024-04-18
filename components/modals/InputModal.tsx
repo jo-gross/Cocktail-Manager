@@ -1,11 +1,11 @@
 import { ModalContext } from '../../lib/context/ModalContextProvider';
-import { useContext, useState } from 'react';
+import React, { useContext, useState } from 'react';
 
 interface InputModalProps {
   title: string;
   description?: string;
   defaultValue?: string;
-  onInputChange: (value: string) => void;
+  onInputSubmit: (value: string) => Promise<void>;
   allowEmpty?: boolean;
 }
 
@@ -13,6 +13,8 @@ export default function InputModal(props: InputModalProps) {
   const modalContext = useContext(ModalContext);
 
   const [inputValue, setInputValue] = useState(props.defaultValue || '');
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   return (
     <div className={'flex w-full flex-col space-y-2'}>
@@ -27,13 +29,22 @@ export default function InputModal(props: InputModalProps) {
         />
         <button
           className={'btn btn-primary join-item'}
-          onClick={() => {
-            if (props.allowEmpty || inputValue.trim().length > 0) {
-              props.onInputChange(inputValue);
-              modalContext.closeModal();
+          disabled={isSubmitting || (!props.allowEmpty && inputValue.trim().length == 0)}
+          onClick={async () => {
+            try {
+              if (props.allowEmpty || inputValue.trim().length > 0) {
+                setIsSubmitting(true);
+                await props.onInputSubmit(inputValue);
+                modalContext.closeModal();
+              }
+            } catch (error) {
+              console.error('InputModal -> onInputSubmit', error);
+            } finally {
+              setIsSubmitting(false);
             }
           }}
         >
+          {isSubmitting ? <span className={'loading loading-spinner'} /> : <></>}
           Speichern
         </button>
       </div>

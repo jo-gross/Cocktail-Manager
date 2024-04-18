@@ -531,7 +531,7 @@ function EditCocktailCard() {
                 modalContext.openModal(
                   <DeleteConfirmationModal
                     spelling={'DELETE'}
-                    entityName={'die Karte'}
+                    entityName={`'${card.name}'`}
                     onApprove={async () => {
                       if (!workspaceId) return;
                       const response = await fetch(`/api/workspaces/${workspaceId}/cards/${card.id}`, {
