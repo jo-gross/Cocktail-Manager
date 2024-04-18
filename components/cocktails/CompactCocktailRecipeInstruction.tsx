@@ -3,6 +3,7 @@ import React, { useContext } from 'react';
 import DefaultGlassIcon from '../DefaultGlassIcon';
 import { UserContext } from '../../lib/context/UserContextProvider';
 import Image from 'next/image';
+import { ModalContext } from '../../lib/context/ModalContextProvider';
 
 interface CompactCocktailRecipeInstructionProps {
   cocktailRecipe: CocktailRecipeFull;
@@ -14,6 +15,7 @@ interface CompactCocktailRecipeInstructionProps {
 
 export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeInstructionProps) {
   const userContext = useContext(UserContext);
+  const modalContext = useContext(ModalContext);
 
   return (
     <div className={'grid grid-cols-4 gap-1'}>
@@ -71,8 +73,21 @@ export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeIns
         ) : (
           <div className={'row-span-3 h-full self-center justify-self-center pt-2'}>
             <Image
+              onClick={() =>
+                modalContext.openModal(
+                  <div className={'flex h-[60vh] w-full items-center justify-center'}>
+                    <Image
+                      src={props.image ?? `/api/workspaces/${props.cocktailRecipe.workspaceId}/cocktails/${props.cocktailRecipe.id}/image`}
+                      className={'h-full w-full rounded-xl object-contain'}
+                      alt={'Cocktail-Bild'}
+                      width={400}
+                      height={400}
+                    />
+                  </div>,
+                )
+              }
               src={props.image ?? `/api/workspaces/${props.cocktailRecipe.workspaceId}/cocktails/${props.cocktailRecipe.id}/image`}
-              className={'h-full w-fit rounded-xl object-cover'}
+              className={'h-full w-fit cursor-pointer rounded-xl object-cover'}
               alt={''}
               width={300}
               height={300}
