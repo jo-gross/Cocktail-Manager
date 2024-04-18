@@ -306,10 +306,14 @@ model CocktailCard {
   date     DateTime?
   groups   CocktailCardGroup[]
   showTime Boolean             @default(false)
+  archived Boolean             @default(false)
 
   workspace             Workspace               @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   workspaceId           String
   CocktailStatisticItem CocktailStatisticItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
 }
 
 model CocktailCardGroup {

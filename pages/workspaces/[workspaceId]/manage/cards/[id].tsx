@@ -86,42 +86,8 @@ function EditCocktailCard() {
   ) : (
     <ManageEntityLayout
       backLink={`/workspaces/${workspaceId}/manage/cards`}
-      title={'Karte'}
+      title={card?.archived ? <span className={'italic'}>Karte (archiviert)</span> : 'Karte'}
       unsavedChanges={unsavedChanges}
-      actions={
-        card != undefined ? (
-          <button
-            type={'button'}
-            className={`btn btn-square btn-outline btn-error btn-sm`}
-            onClick={() =>
-              modalContext.openModal(
-                <DeleteConfirmationModal
-                  spelling={'DELETE'}
-                  entityName={'die Karte'}
-                  onApprove={async () => {
-                    if (!workspaceId) return;
-                    const response = await fetch(`/api/workspaces/${workspaceId}/cards/${card.id}`, {
-                      method: 'DELETE',
-                    });
-
-                    const body = await response.json();
-                    if (response.ok) {
-                      router.replace(`/workspaces/${workspaceId}/manage/cards`).then(() => alertService.success('Karte gelöscht'));
-                    } else {
-                      console.error('CardId -> deleteCard', response);
-                      alertService.error(body.message ?? 'Fehler beim Löschen der Karte', response.status, response.statusText);
-                    }
-                  }}
-                />,
-              )
-            }
-          >
-            <FaTrashAlt />
-          </button>
-        ) : (
-          <></>
-        )
-      }
     >
       <Formik
         initialValues={{
@@ -232,6 +198,7 @@ function EditCocktailCard() {
                   </label>
                   <input
                     type="text"
+                    disabled={card?.archived}
                     className={`input input-bordered ${errors.name && touched.name ? 'input-error' : ''}`}
                     name={`name`}
                     onChange={handleChange}
@@ -248,6 +215,7 @@ function EditCocktailCard() {
                   </label>
                   <input
                     type={'date'}
+                    disabled={card?.archived}
                     className={`input input-bordered ${errors.date && touched.date ? 'input-error' : ''}}`}
                     name={`date`}
                     onChange={handleChange}
@@ -264,6 +232,7 @@ function EditCocktailCard() {
                   </label>
                   <input
                     type={'checkbox'}
+                    disabled={card?.archived}
                     className={`toggle-bordered toggle ${errors.showTime && touched.showTime ? 'toggle-error' : ''}}`}
                     name={`showTime`}
                     onChange={handleChange}
@@ -294,6 +263,7 @@ function EditCocktailCard() {
                               </label>
                               <input
                                 type="text"
+                                disabled={card?.archived}
                                 className={`input input-bordered w-full ${
                                   (errors?.groups?.[groupIndex] as any)?.name && touched?.groups?.[groupIndex]?.name ? 'input-error' : ''
                                 }`}
@@ -317,6 +287,7 @@ function EditCocktailCard() {
                               <div className={'join'}>
                                 <input
                                   type="number"
+                                  disabled={card?.archived}
                                   min={0}
                                   step={0.01}
                                   className={`input join-item input-bordered w-full ${
@@ -332,57 +303,61 @@ function EditCocktailCard() {
                                 </span>
                               </div>
                             </div>
-                            <div className={'space-x-2 justify-self-end'}>
-                              <button
-                                type={'button'}
-                                disabled={groupIndex == 0}
-                                className={'btn btn-square btn-outline btn-sm'}
-                                onClick={() => {
-                                  const value = values.groups[groupIndex];
-                                  const reorderedGroups = values.groups.filter((_, i) => i != groupIndex);
-                                  reorderedGroups.splice(groupIndex - 1, 0, value);
-                                  setFieldValue(
-                                    'groups',
-                                    reorderedGroups.map((group, groupIndex) => ({
-                                      ...group,
-                                      groupNumber: groupIndex,
-                                    })),
-                                  );
-                                }}
-                              >
-                                <FaAngleUp />
-                              </button>
-                              <button
-                                type={'button'}
-                                disabled={!(values.groups.length > 1) || groupIndex == values.groups.length - 1}
-                                className={'btn btn-square btn-outline btn-sm'}
-                                onClick={() => {
-                                  const value = values.groups[groupIndex];
-                                  const reorderedGroups = values.groups.filter((_, i) => i != groupIndex);
-                                  reorderedGroups.splice(groupIndex + 1, 0, value);
-                                  setFieldValue(
-                                    'groups',
-                                    reorderedGroups.map((group, groupIndex) => ({
-                                      ...group,
-                                      groupNumber: groupIndex,
-                                    })),
-                                  );
-                                }}
-                              >
-                                <FaAngleDown />
-                              </button>
-                              <button
-                                type="button"
-                                className={'btn btn-square btn-outline btn-error btn-sm'}
-                                onClick={() =>
-                                  modalContext.openModal(
-                                    <DeleteConfirmationModal spelling={'REMOVE'} entityName={'die Gruppe'} onApprove={async () => removeGroup(groupIndex)} />,
-                                  )
-                                }
-                              >
-                                <FaTrashAlt />
-                              </button>
-                            </div>
+                            {!card?.archived ? (
+                              <div className={'space-x-2 justify-self-end'}>
+                                <button
+                                  type={'button'}
+                                  disabled={groupIndex == 0}
+                                  className={'btn btn-square btn-outline btn-sm'}
+                                  onClick={() => {
+                                    const value = values.groups[groupIndex];
+                                    const reorderedGroups = values.groups.filter((_, i) => i != groupIndex);
+                                    reorderedGroups.splice(groupIndex - 1, 0, value);
+                                    setFieldValue(
+                                      'groups',
+                                      reorderedGroups.map((group, groupIndex) => ({
+                                        ...group,
+                                        groupNumber: groupIndex,
+                                      })),
+                                    );
+                                  }}
+                                >
+                                  <FaAngleUp />
+                                </button>
+                                <button
+                                  type={'button'}
+                                  disabled={!(values.groups.length > 1) || groupIndex == values.groups.length - 1}
+                                  className={'btn btn-square btn-outline btn-sm'}
+                                  onClick={() => {
+                                    const value = values.groups[groupIndex];
+                                    const reorderedGroups = values.groups.filter((_, i) => i != groupIndex);
+                                    reorderedGroups.splice(groupIndex + 1, 0, value);
+                                    setFieldValue(
+                                      'groups',
+                                      reorderedGroups.map((group, groupIndex) => ({
+                                        ...group,
+                                        groupNumber: groupIndex,
+                                      })),
+                                    );
+                                  }}
+                                >
+                                  <FaAngleDown />
+                                </button>
+                                <button
+                                  type="button"
+                                  className={'btn btn-square btn-outline btn-error btn-sm'}
+                                  onClick={() =>
+                                    modalContext.openModal(
+                                      <DeleteConfirmationModal spelling={'REMOVE'} entityName={'die Gruppe'} onApprove={async () => removeGroup(groupIndex)} />,
+                                    )
+                                  }
+                                >
+                                  <FaTrashAlt />
+                                </button>
+                              </div>
+                            ) : (
+                              <></>
+                            )}
                           </div>
                           <div className={'border-b border-base-300 p-1'}></div>
                           <div className={'pt-2'}>
@@ -394,62 +369,66 @@ function EditCocktailCard() {
                                     .map((item, itemIndex) => (
                                       <div key={`card-group-${groupIndex}-item-${itemIndex}`} className={'card col-span-1'}>
                                         <div className={'card-body'}>
-                                          <div className={'flex justify-end space-x-2'}>
-                                            <button
-                                              type={'button'}
-                                              disabled={itemIndex == 0}
-                                              className={'btn btn-square btn-outline btn-sm'}
-                                              onClick={() => {
-                                                const value = values.groups[groupIndex].items[itemIndex];
-                                                const reorderedItems = values.groups[groupIndex].items.filter((_, i) => i != itemIndex);
-                                                reorderedItems.splice(itemIndex - 1, 0, value);
-                                                setFieldValue(
-                                                  `groups.${groupIndex}.items`,
-                                                  reorderedItems.map((item, itemIndex) => ({
-                                                    ...item,
-                                                    itemNumber: itemIndex,
-                                                  })),
-                                                );
-                                              }}
-                                            >
-                                              <FaAngleLeft />
-                                            </button>
-                                            <button
-                                              type={'button'}
-                                              disabled={
-                                                !(values.groups[groupIndex].items.length > 1) || itemIndex == values.groups[groupIndex].items.length - 1
-                                              }
-                                              className={'btn btn-square btn-outline btn-sm'}
-                                              onClick={() => {
-                                                const value = values.groups[groupIndex].items[itemIndex];
-                                                const reorderedItems = values.groups[groupIndex].items.filter((_, i) => i != itemIndex);
-                                                reorderedItems.splice(itemIndex + 1, 0, value);
-                                                setFieldValue(
-                                                  `groups.${groupIndex}.items`,
-                                                  reorderedItems.map((item, itemIndex) => ({
-                                                    ...item,
-                                                    itemNumber: itemIndex,
-                                                  })),
-                                                );
-                                              }}
-                                            >
-                                              <FaAngleRight />
-                                            </button>
-                                            <div
-                                              className={'btn btn-square btn-outline btn-error btn-sm'}
-                                              onClick={() =>
-                                                modalContext.openModal(
-                                                  <DeleteConfirmationModal
-                                                    spelling={'REMOVE'}
-                                                    entityName={'den Cocktail von der Gruppe'}
-                                                    onApprove={async () => removeItem(itemIndex)}
-                                                  />,
-                                                )
-                                              }
-                                            >
-                                              <FaTrashAlt />
+                                          {!card?.archived ? (
+                                            <div className={'flex justify-end space-x-2'}>
+                                              <button
+                                                type={'button'}
+                                                disabled={itemIndex == 0}
+                                                className={'btn btn-square btn-outline btn-sm'}
+                                                onClick={() => {
+                                                  const value = values.groups[groupIndex].items[itemIndex];
+                                                  const reorderedItems = values.groups[groupIndex].items.filter((_, i) => i != itemIndex);
+                                                  reorderedItems.splice(itemIndex - 1, 0, value);
+                                                  setFieldValue(
+                                                    `groups.${groupIndex}.items`,
+                                                    reorderedItems.map((item, itemIndex) => ({
+                                                      ...item,
+                                                      itemNumber: itemIndex,
+                                                    })),
+                                                  );
+                                                }}
+                                              >
+                                                <FaAngleLeft />
+                                              </button>
+                                              <button
+                                                type={'button'}
+                                                disabled={
+                                                  !(values.groups[groupIndex].items.length > 1) || itemIndex == values.groups[groupIndex].items.length - 1
+                                                }
+                                                className={'btn btn-square btn-outline btn-sm'}
+                                                onClick={() => {
+                                                  const value = values.groups[groupIndex].items[itemIndex];
+                                                  const reorderedItems = values.groups[groupIndex].items.filter((_, i) => i != itemIndex);
+                                                  reorderedItems.splice(itemIndex + 1, 0, value);
+                                                  setFieldValue(
+                                                    `groups.${groupIndex}.items`,
+                                                    reorderedItems.map((item, itemIndex) => ({
+                                                      ...item,
+                                                      itemNumber: itemIndex,
+                                                    })),
+                                                  );
+                                                }}
+                                              >
+                                                <FaAngleRight />
+                                              </button>
+                                              <div
+                                                className={'btn btn-square btn-outline btn-error btn-sm'}
+                                                onClick={() =>
+                                                  modalContext.openModal(
+                                                    <DeleteConfirmationModal
+                                                      spelling={'REMOVE'}
+                                                      entityName={'den Cocktail von der Gruppe'}
+                                                      onApprove={async () => removeItem(itemIndex)}
+                                                    />,
+                                                  )
+                                                }
+                                              >
+                                                <FaTrashAlt />
+                                              </div>
                                             </div>
-                                          </div>
+                                          ) : (
+                                            <></>
+                                          )}
 
                                           {cocktails.find((cocktail) => cocktail.id == item.cocktailId) != undefined ? (
                                             <CompactCocktailRecipeInstruction
@@ -466,23 +445,27 @@ function EditCocktailCard() {
                                       </div>
                                     ))}
                                   <div className={'col-span-1 flex flex-row justify-end md:col-span-3'}>
-                                    <button
-                                      type="button"
-                                      className={'btn btn-outline btn-secondary btn-sm'}
-                                      onClick={() =>
-                                        modalContext.openModal(
-                                          <SearchModal
-                                            selectedCocktails={values.groups[groupIndex].items.map((item) => item.cocktailId)}
-                                            onCocktailSelectedObject={(cocktail) => {
-                                              pushItem({ cocktailId: cocktail.id });
-                                            }}
-                                            selectionLabel={'Hinzufügen'}
-                                          />,
-                                        )
-                                      }
-                                    >
-                                      Cocktail hinzufügen
-                                    </button>
+                                    {!card?.archived ? (
+                                      <button
+                                        type="button"
+                                        className={'btn btn-outline btn-secondary btn-sm'}
+                                        onClick={() =>
+                                          modalContext.openModal(
+                                            <SearchModal
+                                              selectedCocktails={values.groups[groupIndex].items.map((item) => item.cocktailId)}
+                                              onCocktailSelectedObject={(cocktail) => {
+                                                pushItem({ cocktailId: cocktail.id });
+                                              }}
+                                              selectionLabel={'Hinzufügen'}
+                                            />,
+                                          )
+                                        }
+                                      >
+                                        Cocktail hinzufügen
+                                      </button>
+                                    ) : (
+                                      <></>
+                                    )}
                                   </div>
                                 </div>
                               )}
@@ -491,13 +474,19 @@ function EditCocktailCard() {
                         </div>
                       ))}
                     <div className={'flex flex-row items-center justify-end space-x-2'}>
-                      <button type="button" className={'btn btn-secondary btn-sm'} onClick={() => pushGroup({ name: '', items: [] })}>
-                        Gruppe hinzufügen
-                      </button>
-                      <button type="submit" className={`btn btn-primary btn-sm`} disabled={isSubmitting}>
-                        {isSubmitting ? <span className={'loading loading-spinner'} /> : <></>}
-                        Speichern
-                      </button>
+                      {!card?.archived ? (
+                        <>
+                          <button type="button" className={'btn btn-secondary btn-sm md:btn-md'} onClick={() => pushGroup({ name: '', items: [] })}>
+                            Gruppe hinzufügen
+                          </button>
+                          <button type="submit" className={`btn btn-primary btn-sm md:btn-md`} disabled={isSubmitting}>
+                            {isSubmitting ? <span className={'loading loading-spinner'} /> : <></>}
+                            Speichern
+                          </button>
+                        </>
+                      ) : (
+                        <></>
+                      )}
                     </div>
                   </>
                 )}
@@ -506,6 +495,69 @@ function EditCocktailCard() {
           </form>
         )}
       </Formik>
+      {card != undefined ? (
+        <>
+          <div className={'divider'}></div>
+          <div className={'flex items-center justify-end gap-2'}>
+            <button
+              type={'button'}
+              className={'btn btn-outline btn-sm'}
+              onClick={async () => {
+                const response = await fetch(`/api/workspaces/${workspaceId}/cards/${card?.id}/${card?.archived ? 'unarchive' : 'archive'}`, {
+                  method: 'PUT',
+                });
+
+                const body = await response.json();
+                if (response.ok) {
+                  router
+                    .replace(`/workspaces/${workspaceId}/manage/cards`)
+                    .then(() => alertService.success(`Karte ${card?.archived ? 'entarchiviert' : 'Archiviert'}`));
+                } else {
+                  console.error('CardId -> (un)archive', response);
+                  alertService.error(
+                    body.message ?? `Fehler beim ${card?.archived ? 'Entarchivieren' : 'Archivieren'} der Karte`,
+                    response.status,
+                    response.statusText,
+                  );
+                }
+              }}
+            >
+              {card?.archived ? 'Karte entarchivieren' : 'Karte archivieren'}
+            </button>
+            <button
+              type={'button'}
+              className={`btn btn-outline btn-error btn-sm`}
+              onClick={() =>
+                modalContext.openModal(
+                  <DeleteConfirmationModal
+                    spelling={'DELETE'}
+                    entityName={'die Karte'}
+                    onApprove={async () => {
+                      if (!workspaceId) return;
+                      const response = await fetch(`/api/workspaces/${workspaceId}/cards/${card.id}`, {
+                        method: 'DELETE',
+                      });
+
+                      const body = await response.json();
+                      if (response.ok) {
+                        router.replace(`/workspaces/${workspaceId}/manage/cards`).then(() => alertService.success('Karte gelöscht'));
+                      } else {
+                        console.error('CardId -> deleteCard', response);
+                        alertService.error(body.message ?? 'Fehler beim Löschen der Karte', response.status, response.statusText);
+                      }
+                    }}
+                  />,
+                )
+              }
+            >
+              <FaTrashAlt />
+              Karte löschen
+            </button>
+          </div>
+        </>
+      ) : (
+        <></>
+      )}
     </ManageEntityLayout>
   );
 }

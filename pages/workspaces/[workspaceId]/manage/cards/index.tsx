@@ -1,5 +1,5 @@
 import { ManageEntityLayout } from '../../../../../components/layout/ManageEntityLayout';
-import { FaPlus, FaRegEdit } from 'react-icons/fa';
+import { FaPlus } from 'react-icons/fa';
 import Link from 'next/link';
 import { CocktailCardFull } from '../../../../../models/CocktailCardFull';
 import React, { useContext, useEffect, useState } from 'react';
@@ -8,6 +8,7 @@ import { useRouter } from 'next/router';
 import { alertService } from '../../../../../lib/alertService';
 import { UserContext } from '../../../../../lib/context/UserContextProvider';
 import { Role } from '@prisma/client';
+import CardOverviewItem from '../../../../../components/cards/CardOverviewItem';
 
 export default function CardsOverviewPage() {
   const router = useRouter();
@@ -21,7 +22,7 @@ export default function CardsOverviewPage() {
   useEffect(() => {
     if (!workspaceId) return;
     setLoading(true);
-    fetch(`/api/workspaces/${workspaceId}/cards`)
+    fetch(`/api/workspaces/${workspaceId}/cards?withArchived=true`)
       .then(async (response) => {
         const body = await response.json();
         if (response.ok) {
@@ -62,29 +63,17 @@ export default function CardsOverviewPage() {
         <div className={'grid grid-cols-1 gap-2 md:grid-cols-2 md:gap-4'}>
           {cards
             .sort((a, b) => a.name.localeCompare(b.name))
+            .filter((card) => !card.archived)
             .map((card) => (
-              <div key={'card-' + card.id} className={'card'}>
-                <div className={'card-body'}>
-                  <div className={'card-title'}>
-                    {card.name} {card.date != undefined ? `(${new Date(card.date).toLocaleDateString()})` : ''}
-                  </div>
-                  <div className={'grid grid-cols-2'}>
-                    <div>{card.groups?.length} Gruppen</div>
-                    <div>{card.groups?.reduce((acc, group) => acc + group.items.length, 0)} Cocktails</div>
-                  </div>
-                  <>
-                    {userContext.isUserPermitted(Role.MANAGER) && (
-                      <div className="card-actions justify-end">
-                        <Link href={`/workspaces/${workspaceId}/manage/cards/${card.id}`}>
-                          <div className="btn btn-primary">
-                            <FaRegEdit />
-                          </div>
-                        </Link>
-                      </div>
-                    )}
-                  </>
-                </div>
-              </div>
+              <CardOverviewItem key={'card-' + card.id} card={card} workspaceId={workspaceId as string} />
+            ))}
+
+          <div className={'divider col-span-full'}>Achiviert</div>
+          {cards
+            .sort((a, b) => a.name.localeCompare(b.name))
+            .filter((card) => card.archived)
+            .map((card) => (
+              <CardOverviewItem key={'card-' + card.id} card={card} workspaceId={workspaceId as string} />
             ))}
         </div>
       )}
