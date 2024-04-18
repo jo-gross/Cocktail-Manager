@@ -169,32 +169,32 @@ BEGIN
                     -- create an unit entry for each unit literal
                     INSERT INTO "Unit" (id, name, "workspaceId")
                     SELECT gen_random_uuid(), unitName, workspace_id
-                    WHERE NOT EXISTS(SELECT id FROM "Unit" WHERE name = unitName);
+                    WHERE NOT EXISTS(SELECT id FROM "Unit" WHERE name = unitName AND workspace_id = "workspaceId");
                 END LOOP;
 
             -- insert all default units
 
             INSERT INTO "Unit" (id, name, "workspaceId")
             SELECT gen_random_uuid(), 'CL', workspace_id
-            WHERE NOT EXISTS(SELECT id FROM "Unit" WHERE name = 'CL');
+            WHERE NOT EXISTS(SELECT id FROM "Unit" WHERE name = 'CL' AND workspace_id = "workspaceId");
             INSERT INTO "Unit" (id, name, "workspaceId")
             SELECT gen_random_uuid(), 'DASH', workspace_id
-            WHERE NOT EXISTS(SELECT id FROM "Unit" WHERE name = 'DASH');
+            WHERE NOT EXISTS(SELECT id FROM "Unit" WHERE name = 'DASH' AND workspace_id = "workspaceId");
             INSERT INTO "Unit" (id, name, "workspaceId")
             SELECT gen_random_uuid(), 'PIECE', workspace_id
-            WHERE NOT EXISTS(SELECT id FROM "Unit" WHERE name = 'PIECE');
+            WHERE NOT EXISTS(SELECT id FROM "Unit" WHERE name = 'PIECE' AND workspace_id = "workspaceId");
             INSERT INTO "Unit" (id, name, "workspaceId")
             SELECT gen_random_uuid(), 'DROPPER_CM', workspace_id
-            WHERE NOT EXISTS(SELECT id FROM "Unit" WHERE name = 'DROPPER_CM');
+            WHERE NOT EXISTS(SELECT id FROM "Unit" WHERE name = 'DROPPER_CM' AND workspace_id = "workspaceId");
             INSERT INTO "Unit" (id, name, "workspaceId")
             SELECT gen_random_uuid(), 'DROPPER_DROPS', workspace_id
-            WHERE NOT EXISTS(SELECT id FROM "Unit" WHERE name = 'DROPPER_DROPS');
+            WHERE NOT EXISTS(SELECT id FROM "Unit" WHERE name = 'DROPPER_DROPS' AND workspace_id = "workspaceId");
             INSERT INTO "Unit" (id, name, "workspaceId")
             SELECT gen_random_uuid(), 'GRAMM', workspace_id
-            WHERE NOT EXISTS(SELECT id FROM "Unit" WHERE name = 'GRAMM');
+            WHERE NOT EXISTS(SELECT id FROM "Unit" WHERE name = 'GRAMM' AND workspace_id = "workspaceId");
             INSERT INTO "Unit" (id, name, "workspaceId")
             SELECT gen_random_uuid(), 'SPRAY', workspace_id
-            WHERE NOT EXISTS(SELECT id FROM "Unit" WHERE name = 'SPRAY');
+            WHERE NOT EXISTS(SELECT id FROM "Unit" WHERE name = 'SPRAY' AND workspace_id = "workspaceId");
 
 
             FOR ingredient IN SELECT * FROM "Ingredient" WHERE unit IS NOT NULL AND volume IS NOT NULL
@@ -204,7 +204,7 @@ BEGIN
                     VALUES (gen_random_uuid(), ingredient.volume, ingredient.id, (SELECT id
                                                                                   FROM "Unit"
                                                                                   where "Unit"."workspaceId" = workspace_id
-                                                                                    and "Unit".name = ingredient.unit),
+                                                                                    and "Unit".name = convertUnit(ingredient.unit)),
                             workspace_id);
                 END LOOP;
 
