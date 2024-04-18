@@ -1,3 +1,20 @@
+# [1.5.0](https://github.com/jo-gross/Cocktail-Manager/compare/v1.4.2...v1.5.0) (2024-04-18)
+
+
+### Bug Fixes
+
+* Broken mobile layout at cocktail form ([#244](https://github.com/jo-gross/Cocktail-Manager/issues/244)) ([80e2c5b](https://github.com/jo-gross/Cocktail-Manager/commit/80e2c5b154a9c5731f1124d0b25fcb7db324cc05))
+* Fixed incorrect bar orders at statistics and coresponding ui ([#219](https://github.com/jo-gross/Cocktail-Manager/issues/219)) ([f2a169b](https://github.com/jo-gross/Cocktail-Manager/commit/f2a169b3924634f66be6a18b8844b34b8c06fdb1))
+
+
+### Features
+
+* Added clock to cocktail card view ([#218](https://github.com/jo-gross/Cocktail-Manager/issues/218)) ([d2caae8](https://github.com/jo-gross/Cocktail-Manager/commit/d2caae8fa072a5dab5fb978b3786fc5e6617576f))
+* Added cocktail card archiving feature ([#242](https://github.com/jo-gross/Cocktail-Manager/issues/242)) ([6bc0d96](https://github.com/jo-gross/Cocktail-Manager/commit/6bc0d9680154eeb76ffcf368189cb15a25859e3f))
+* Added search shortcut to card page ([#220](https://github.com/jo-gross/Cocktail-Manager/issues/220)) ([dfa35f7](https://github.com/jo-gross/Cocktail-Manager/commit/dfa35f75c0d6e0c2ee16890260db8bebd31ec065))
+* Clone a cocktail card ([#243](https://github.com/jo-gross/Cocktail-Manager/issues/243)) ([2af1792](https://github.com/jo-gross/Cocktail-Manager/commit/2af1792856433bb056f20ecf75faaea953699ec3))
+* Fully customizable units and considered in calculations ([#239](https://github.com/jo-gross/Cocktail-Manager/issues/239)) ([405707d](https://github.com/jo-gross/Cocktail-Manager/commit/405707d24f2b300d57065ea3d9e67b145df973ec))
+
 ## [1.4.2](https://github.com/jo-gross/Cocktail-Manager/compare/v1.4.1...v1.4.2) (2024-03-05)
 
 ### Bug Fixes
