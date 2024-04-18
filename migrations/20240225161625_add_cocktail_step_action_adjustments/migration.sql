@@ -8,9 +8,6 @@
 ALTER TABLE "CocktailRecipeStep"
     DROP CONSTRAINT "CocktailRecipeStep_actionId_fkey";
 
--- CreateIndex
-CREATE UNIQUE INDEX "WorkspaceCocktailRecipeStepAction_name_key" ON "WorkspaceCocktailRecipeStepAction" ("name");
-
 -- AddForeignKey
 ALTER TABLE "CocktailRecipeStep"
     ADD CONSTRAINT "CocktailRecipeStep_actionId_fkey" FOREIGN KEY ("actionId") REFERENCES "WorkspaceCocktailRecipeStepAction" ("id") ON DELETE NO ACTION ON UPDATE CASCADE;

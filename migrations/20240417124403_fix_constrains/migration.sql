@@ -38,9 +38,6 @@ ALTER TABLE "CocktailRecipeIngredient"
 ALTER TABLE "CocktailRecipeStep"
     DROP CONSTRAINT "CocktailRecipeStep_cocktailRecipeId_fkey";
 
--- DropIndex
-DROP INDEX "WorkspaceCocktailRecipeStepAction_name_key";
-
 -- CreateTable
 CREATE TABLE "CalculationIngredientShoppingUnit"
 (
