@@ -333,7 +333,9 @@ export default function CalculationPage() {
   }, [calculationName, id, saveCalculationBackend]);
 
   const openNameModal = useCallback(() => {
-    modalContext.openModal(<InputModal title={'Kalkulation speichern'} onInputChange={(value) => setCalculationName(value)} defaultValue={calculationName} />);
+    modalContext.openModal(
+      <InputModal title={'Kalkulation speichern'} onInputSubmit={async (value) => setCalculationName(value)} defaultValue={calculationName} />,
+    );
   }, [calculationName, modalContext]);
 
   // All must have the same ingredient
