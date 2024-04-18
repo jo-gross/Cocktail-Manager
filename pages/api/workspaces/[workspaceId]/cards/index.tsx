@@ -12,9 +12,23 @@ import CocktailCardGroupItemCreateInput = Prisma.CocktailCardGroupItemCreateInpu
 
 export default withHttpMethods({
   [HTTPMethod.GET]: withWorkspacePermission([Role.USER], async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
+    const { withArchived } = req.query;
+
+    let archiveFilter;
+    if (withArchived === 'true') {
+      archiveFilter = {
+        archived: {},
+      };
+    } else {
+      archiveFilter = {
+        archived: false,
+      };
+    }
+
     const result = await prisma.cocktailCard.findMany({
       where: {
         workspaceId: workspace.id,
+        AND: archiveFilter,
       },
       include: {
         groups: {
