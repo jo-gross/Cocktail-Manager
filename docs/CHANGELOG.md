@@ -1,3 +1,10 @@
+## [1.5.1](https://github.com/jo-gross/Cocktail-Manager/compare/v1.5.0...v1.5.1) (2024-04-18)
+
+
+### Bug Fixes
+
+* Image size on bartender´s view ([#246](https://github.com/jo-gross/Cocktail-Manager/issues/246)) ([12f590c](https://github.com/jo-gross/Cocktail-Manager/commit/12f590c6ce28f402f6d08208d150e541ee9c1e59))
+
 # [1.5.0](https://github.com/jo-gross/Cocktail-Manager/compare/v1.4.2...v1.5.0) (2024-04-18)
 
 
