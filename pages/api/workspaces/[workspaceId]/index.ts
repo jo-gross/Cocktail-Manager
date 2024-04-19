@@ -8,6 +8,19 @@ import WorkspaceUpdateInput = Prisma.WorkspaceUpdateInput;
 export default withHttpMethods({
   [HTTPMethod.GET]: withWorkspacePermission([Role.USER], async (req, res, user, workspace) => {
     const settings = await prisma.workspaceSetting.findMany({ where: { workspaceId: workspace.id } });
+
+    await prisma.workspaceUser.update({
+      where: {
+        workspaceId_userId: {
+          workspaceId: workspace.id,
+          userId: user.id,
+        },
+      },
+      data: {
+        lastOpened: new Date(),
+      },
+    });
+
     return res.json({ data: { ...workspace, WorkspaceSetting: settings } });
   }),
   [HTTPMethod.DELETE]: withWorkspacePermission([Role.ADMIN], async (req, res, user, workspace) => {

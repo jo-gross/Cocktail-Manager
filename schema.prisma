@@ -128,6 +128,8 @@ model WorkspaceUser {
   userId      String // relation scalar field (used in the `@relation` attribute above)
   role        Role
 
+  lastOpened DateTime?
+
   @@id([workspaceId, userId])
 }
 
