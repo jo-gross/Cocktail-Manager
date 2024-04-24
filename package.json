@@ -25,7 +25,7 @@
     "http-method-enum": "1.0.0",
     "jssoup": "0.0.15",
     "lodash": "4.17.21",
-    "next": "14.2.2",
+    "next": "14.2.3",
     "next-auth": "4.24.7",
     "node-html-parser": "6.1.13",
     "playwright": "1.43.1",
