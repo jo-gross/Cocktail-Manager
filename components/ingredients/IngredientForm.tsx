@@ -46,7 +46,7 @@ export function IngredientForm(props: IngredientFormProps) {
   const modalContext = useContext(ModalContext);
   const userContext = useContext(UserContext);
 
-  const formRef = props.formRef;
+  const formRef = props.formRef || React.createRef<FormikProps<any>>();
 
   const [loadingUnits, setUnitsLoading] = useState(false);
   const [allUnits, setAllUnits] = useState<Unit[]>([]);
