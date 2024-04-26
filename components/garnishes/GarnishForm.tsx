@@ -24,7 +24,7 @@ export function GarnishForm(props: GarnishFormProps) {
   const { workspaceId } = router.query;
   const modalContext = useContext(ModalContext);
 
-  const formRef = props.formRef;
+  const formRef = props.formRef || React.createRef<FormikProps<any>>();
   const [originalValues, setOriginalValues] = useState<any>();
 
   //Filling original values

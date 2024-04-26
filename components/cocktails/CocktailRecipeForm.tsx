@@ -2,7 +2,7 @@ import { IceType } from '../../models/IceType';
 import { FaAngleDown, FaAngleUp, FaEuroSign, FaPlus, FaSearch, FaTrashAlt } from 'react-icons/fa';
 import { TagsInput } from 'react-tag-input-component';
 import { Field, FieldArray, Formik, FormikProps } from 'formik';
-import React, { useCallback, useContext, useEffect, useState } from 'react';
+import React, { createRef, useCallback, useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { Garnish, Glass, Ingredient, Unit, WorkspaceCocktailRecipeStepAction } from '@prisma/client';
 import { updateTags, validateTag } from '../../models/tags/TagUtils';
@@ -57,6 +57,7 @@ interface GarnishError {
 
 export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
   const formRef = props.formRef;
+
   const router = useRouter();
   const workspaceId = router.query.workspaceId as string | undefined;
   const modalContext = useContext(ModalContext);
@@ -911,6 +912,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                                 <FormModal<Ingredient>
                                                   form={
                                                     <IngredientForm
+                                                      formRef={createRef<FormikProps<any>>()}
                                                       onSaved={async (id) => {
                                                         modalContext.closeModal();
                                                         await setFieldValue(`steps.${indexStep}.ingredients.${indexIngredient}.ingredientId`, id);
@@ -1135,6 +1137,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                       <FormModal<Garnish>
                                         form={
                                           <GarnishForm
+                                            formRef={createRef<FormikProps<any>>()}
                                             onSaved={async (id) => {
                                               modalContext.closeModal();
                                               await setFieldValue(`garnishes.${indexGarnish}.garnishId`, id);
