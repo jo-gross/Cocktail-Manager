@@ -216,8 +216,17 @@ export default withHttpMethods({
           },
         },
       },
+      include: {
+        users: true,
+      },
     });
 
-    return res.json({ data: result });
+    const sortedResult = result.sort(
+      (a, b) =>
+        (b.users?.find((u) => u.userId == user.id)?.lastOpened || new Date(1970, 1, 1)).getTime() -
+        (a.users?.find((u) => u.userId == user.id)?.lastOpened || new Date(1970, 1, 1)).getTime(),
+    );
+
+    return res.json({ data: sortedResult });
   }),
 });
