@@ -1,3 +1,12 @@
+## [1.5.2](https://github.com/jo-gross/Cocktail-Manager/compare/v1.5.1...v1.5.2) (2024-04-26)
+
+
+### Bug Fixes
+
+* Bug in migration causes failure on deployment ([d1b43a0](https://github.com/jo-gross/Cocktail-Manager/commit/d1b43a0a856f6c6555bf7c076c69dbae8934d970))
+* Internal error when creating an ingredient from the cocktail form ([#253](https://github.com/jo-gross/Cocktail-Manager/issues/253)) ([61a8354](https://github.com/jo-gross/Cocktail-Manager/commit/61a835452e24a3e0ad2c97285a22917d751cd665))
+* Ordered workspaces by last opened ([#247](https://github.com/jo-gross/Cocktail-Manager/issues/247)) ([abf039a](https://github.com/jo-gross/Cocktail-Manager/commit/abf039a2c07a41eabdbba7dc19f18d58de048d92))
+
 ## [1.5.1](https://github.com/jo-gross/Cocktail-Manager/compare/v1.5.0...v1.5.1) (2024-04-18)
 
 
