@@ -20,7 +20,7 @@
     "chart.js": "4.4.2",
     "deep-diff": "1.0.2",
     "express-validator": "7.0.1",
-    "formik": "2.4.5",
+    "formik": "2.4.6",
     "graph-data-structure": "3.5.0",
     "http-method-enum": "1.0.0",
     "jssoup": "0.0.15",
