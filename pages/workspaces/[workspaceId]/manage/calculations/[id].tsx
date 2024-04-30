@@ -2,7 +2,7 @@ import { ManageEntityLayout } from '../../../../../components/layout/ManageEntit
 import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { CocktailRecipeFull } from '../../../../../models/CocktailRecipeFull';
-import { FaInfoCircle, FaPencilAlt, FaPrint, FaTrashAlt } from 'react-icons/fa';
+import { FaInfoCircle, FaPencilAlt, FaPrint, FaSave, FaTrashAlt } from 'react-icons/fa';
 import { ModalContext } from '../../../../../lib/context/ModalContextProvider';
 import { SearchModal } from '../../../../../components/modals/SearchModal';
 import { alertService } from '../../../../../lib/alertService';
@@ -17,6 +17,7 @@ import { IngredientModel } from '../../../../../models/IngredientModel';
 import { fetchIngredients } from '../../../../../lib/network/ingredients';
 import _ from 'lodash';
 import { fetchUnits } from '../../../../../lib/network/units';
+import '../../../../../lib/DateUtils';
 
 interface CocktailCalculationItem {
   cocktail: CocktailRecipeFull;
@@ -182,6 +183,32 @@ export default function CalculationPage() {
     },
     [cocktailCalculationItems, workspaceId],
   );
+
+  const handleCSVExport = useCallback(() => {
+    const csvContent =
+      'data:text/csv;charset=utf-8,' +
+      'Name,Geplante Menge,Einheit\n' +
+      _.chain(ingredientCalculationItems)
+        .groupBy('ingredient.id')
+        .sortBy((group) => group[0].ingredient.name)
+        .map(
+          (items, key) =>
+            `${items[0].ingredient.name},${calculateTotalIngredientAmount(items).toFixed(2)},${userContext.getTranslation(
+              units.find((unit) => unit.id == ingredientShoppingUnits.find((ingredient) => ingredient.ingredientId == items[0].ingredient.id)?.unitId)?.name ??
+                'N/A',
+              'de',
+            )}`,
+        )
+        .value()
+        .join('\n');
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', 'cocktail-calculation.csv');
+    document.body.appendChild(link);
+    link.click();
+  }, [ingredientCalculationItems]);
 
   //Ingredient Calculation
   useEffect(() => {
@@ -805,7 +832,13 @@ export default function CalculationPage() {
                 <div className={'print:hidden'}>
                   <div className={'divider-sm'}></div>
                 </div>
-                <div className={'text-lg font-bold'}>Zutaten</div>
+                <div className={'flex items-center justify-between'}>
+                  <div className={'text-lg font-bold'}>Zutaten</div>
+                  <div className={'btn btn-outline btn-sm'} onClick={handleCSVExport}>
+                    <FaSave />
+                    Als CSV exportieren
+                  </div>
+                </div>
                 <div className={'overflow-x-auto'}>
                   <table className={'table-compact table w-full'}>
                     <thead>
