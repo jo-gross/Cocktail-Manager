@@ -86,6 +86,7 @@ export default function CalculationPage() {
   const [unitsLoading, setUnitsLoading] = useState(false);
 
   const [shouldSave, triggerSave] = useState(false);
+  const [shouldRecalculate, triggerRecalculate] = useState(false);
 
   useEffect(() => {
     fetchIngredients(workspaceId, setIngredients, setIngredientsLoading);
@@ -163,6 +164,14 @@ export default function CalculationPage() {
       });
   }, [id, workspaceId]);
 
+  // ShoppingList Cleanup
+  const recalculateIngredientShoppingUnits = useCallback(() => {
+    const cleanedIngredientShoppingUnits = ingredientShoppingUnits.filter((unit) =>
+      ingredientCalculationItems.find((item) => item.ingredient.id == unit.ingredientId),
+    );
+    setIngredientShoppingUnits(cleanedIngredientShoppingUnits);
+  }, [ingredientCalculationItems, ingredientShoppingUnits]);
+
   const addCocktailToSelection = useCallback(
     (cocktailId: string) => {
       if (cocktailCalculationItems.find((item) => item.cocktail.id == cocktailId)) {
@@ -191,37 +200,13 @@ export default function CalculationPage() {
             console.error('CalculationId -> addCocktailToSelection (not already exists) -> fetchCocktail', error);
             alertService.error('Fehler beim Laden des Cocktails');
           })
-          .finally(() => {});
+          .finally(() => {
+            triggerRecalculate(true);
+          });
       }
     },
     [cocktailCalculationItems, workspaceId],
   );
-
-  const handleCSVExport = useCallback(() => {
-    const csvContent =
-      'data:text/csv;charset=utf-8,' +
-      'Markiert,Name,Geplante Menge,Einheit\n' +
-      _.chain(ingredientCalculationItems)
-        .groupBy('ingredient.id')
-        .sortBy((group) => group[0].ingredient.name)
-        .map(
-          (items, key) =>
-            `${ingredientShoppingUnits.find((ingredient) => ingredient.ingredientId == items[0].ingredient.id)?.checked ? 'true' : 'false'},${items[0].ingredient.name},${calculateTotalIngredientAmount(items).toFixed(2)},${userContext.getTranslation(
-              units.find((unit) => unit.id == ingredientShoppingUnits.find((ingredient) => ingredient.ingredientId == items[0].ingredient.id)?.unitId)?.name ??
-                'N/A',
-              'de',
-            )}`,
-        )
-        .value()
-        .join('\n');
-
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute('download', 'cocktail-calculation.csv');
-    document.body.appendChild(link);
-    link.click();
-  }, [ingredientCalculationItems]);
 
   //Ingredient Calculation
   useEffect(() => {
@@ -379,6 +364,13 @@ export default function CalculationPage() {
   }, [shouldSave, saveCalculationBackend]);
 
   useEffect(() => {
+    if (shouldRecalculate) {
+      recalculateIngredientShoppingUnits();
+      triggerRecalculate(false);
+    }
+  }, [shouldRecalculate, recalculateIngredientShoppingUnits]);
+
+  useEffect(() => {
     if (!id) return;
     if (!calculationName) return;
 
@@ -477,6 +469,32 @@ export default function CalculationPage() {
     },
     [calculateTotalIngredientAmountByUnit, ingredients],
   );
+
+  const handleCSVExport = useCallback(() => {
+    const csvContent =
+      'data:text/csv;charset=utf-8,' +
+      'Markiert,Name,Geplante Menge,Einheit\n' +
+      _.chain(ingredientCalculationItems)
+        .groupBy('ingredient.id')
+        .sortBy((group) => group[0].ingredient.name)
+        .map(
+          (items, key) =>
+            `${ingredientShoppingUnits.find((ingredient) => ingredient.ingredientId == items[0].ingredient.id)?.checked ? 'true' : 'false'},${items[0].ingredient.name},${calculateTotalIngredientAmount(items).toFixed(2)},${userContext.getTranslation(
+              units.find((unit) => unit.id == ingredientShoppingUnits.find((ingredient) => ingredient.ingredientId == items[0].ingredient.id)?.unitId)?.name ??
+                'N/A',
+              'de',
+            )}`,
+        )
+        .value()
+        .join('\n');
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', 'cocktail-calculation.csv');
+    document.body.appendChild(link);
+    link.click();
+  }, [calculateTotalIngredientAmount, ingredientCalculationItems, ingredientShoppingUnits, units, userContext]);
 
   return (
     <ManageEntityLayout
@@ -723,6 +741,7 @@ export default function CalculationPage() {
                                         spelling={'REMOVE'}
                                         onApprove={async () => {
                                           setCocktailCalculationItems(cocktailCalculationItems.filter((item) => item.cocktail.id != cocktail.cocktail.id));
+                                          triggerRecalculate(true);
                                         }}
                                       />,
                                     );
