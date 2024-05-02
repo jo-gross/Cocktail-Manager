@@ -276,6 +276,9 @@ export default function CalculationPage() {
     (redirect: boolean = true) => {
       if (!id) return;
       if (!calculationName) return;
+
+      const currentScrollTop = window.scrollY;
+
       setSaving(true);
       if (id == 'create') {
         const body = {
@@ -317,6 +320,7 @@ export default function CalculationPage() {
           })
           .finally(() => {
             setSaving(false);
+            window.scrollTo(0, currentScrollTop);
           });
       } else {
         // Update
@@ -360,6 +364,7 @@ export default function CalculationPage() {
           })
           .finally(() => {
             setSaving(false);
+            window.scrollTo(0, currentScrollTop);
           });
       }
     },
