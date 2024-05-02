@@ -871,7 +871,11 @@ export default function CalculationPage() {
                   <table className={'table-compact table w-full'}>
                     <thead>
                       <tr>
-                        <th className={'w-6'}></th>
+                        <th className={'w-6'}>
+                          <div className="tooltip tooltip-right tooltip-info before:max-w-fit" data-tip={'Diese Kästchen sollen z.B. beim Einkaufen helfen'}>
+                            <FaInfoCircle />
+                          </div>
+                        </th>
                         <th>Zutat</th>
                         <th>Gesamt Menge</th>
                         <th className={'print:hidden'}>Ausgabe Einheit</th>
