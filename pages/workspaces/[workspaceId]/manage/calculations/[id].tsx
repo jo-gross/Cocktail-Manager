@@ -39,6 +39,7 @@ interface GarnishCalculationItem {
 interface IngredientShoppingUnit {
   ingredientId: string;
   unitId: string;
+  checked: boolean;
 }
 
 interface CalculationData {
@@ -62,6 +63,7 @@ export default function CalculationPage() {
 
   const [originalItems, setOriginalItems] = useState<string>('[]');
   const [originalName, setOriginalName] = useState<string>('');
+  const [originalIngredientShoppingUnits, setOriginalIngredientShoppingUnits] = useState<string>('[]');
   const [originalShowSalesStuff, setOriginalShowSalesStuff] = useState<boolean>(true);
 
   const [ingredientCalculationItems, setIngredientCalculationItems] = useState<IngredientCalculationItem[]>([]);
@@ -82,6 +84,8 @@ export default function CalculationPage() {
 
   const [units, setUnits] = useState<Unit[]>([]);
   const [unitsLoading, setUnitsLoading] = useState(false);
+
+  const [shouldSave, triggerSave] = useState(false);
 
   useEffect(() => {
     fetchIngredients(workspaceId, setIngredients, setIngredientsLoading);
@@ -115,6 +119,14 @@ export default function CalculationPage() {
     }
   }, [originalShowSalesStuff, showSalesStuff]);
 
+  useEffect(() => {
+    if (originalIngredientShoppingUnits != JSON.stringify(ingredientShoppingUnits)) {
+      setUnsavedChanges(true);
+    } else {
+      setUnsavedChanges(false);
+    }
+  }, [ingredientShoppingUnits, originalIngredientShoppingUnits]);
+
   /**
    * check for unsaved changes end
    */
@@ -132,10 +144,11 @@ export default function CalculationPage() {
           setCalculationName(data.name);
           setCocktailCalculationItems(data.cocktailCalculationItems);
           setShowSalesStuff(data.showSalesStuff ?? false);
+          setIngredientShoppingUnits(data.ingredientShoppingUnits ?? []);
           setOriginalName(data.name);
           setOriginalItems(JSON.stringify(data.cocktailCalculationItems));
           setOriginalShowSalesStuff(data.showSalesStuff ?? false);
-          setIngredientShoppingUnits(data.ingredientShoppingUnits ?? []);
+          setOriginalIngredientShoppingUnits(JSON.stringify(data.ingredientShoppingUnits ?? []));
         } else {
           console.error('CocktailCalculation -> useEffect[init, id != create]', response);
           alertService.error(body.message ?? 'Fehler beim Laden der Kalkulation', response.status, response.statusText);
@@ -187,13 +200,13 @@ export default function CalculationPage() {
   const handleCSVExport = useCallback(() => {
     const csvContent =
       'data:text/csv;charset=utf-8,' +
-      'Name,Geplante Menge,Einheit\n' +
+      'Markiert,Name,Geplante Menge,Einheit\n' +
       _.chain(ingredientCalculationItems)
         .groupBy('ingredient.id')
         .sortBy((group) => group[0].ingredient.name)
         .map(
           (items, key) =>
-            `${items[0].ingredient.name},${calculateTotalIngredientAmount(items).toFixed(2)},${userContext.getTranslation(
+            `${ingredientShoppingUnits.find((ingredient) => ingredient.ingredientId == items[0].ingredient.id)?.checked ? 'true' : 'false'},${items[0].ingredient.name},${calculateTotalIngredientAmount(items).toFixed(2)},${userContext.getTranslation(
               units.find((unit) => unit.id == ingredientShoppingUnits.find((ingredient) => ingredient.ingredientId == items[0].ingredient.id)?.unitId)?.name ??
                 'N/A',
               'de',
@@ -288,6 +301,7 @@ export default function CalculationPage() {
               setOriginalItems(JSON.stringify(cocktailCalculationItems));
               setOriginalShowSalesStuff(showSalesStuff);
               setOriginalName(calculationName);
+              setOriginalIngredientShoppingUnits(JSON.stringify(ingredientShoppingUnits));
               if (redirect) {
                 await router.push(`/workspaces/${workspaceId}/manage/calculations/${body.data.id}`);
               }
@@ -318,6 +332,7 @@ export default function CalculationPage() {
           }),
           ingredientShoppingUnits: ingredientShoppingUnits,
         };
+
         fetch(`/api/workspaces/${workspaceId}/calculations/${id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
@@ -329,6 +344,7 @@ export default function CalculationPage() {
               setOriginalItems(JSON.stringify(cocktailCalculationItems));
               setOriginalShowSalesStuff(showSalesStuff);
               setOriginalName(calculationName);
+              setOriginalIngredientShoppingUnits(JSON.stringify(ingredientShoppingUnits));
               if (redirect) {
                 await router.push(`/workspaces/${workspaceId}/manage/calculations/${body.data.id}`);
               }
@@ -349,6 +365,13 @@ export default function CalculationPage() {
     },
     [ingredientShoppingUnits, id, calculationName, showSalesStuff, cocktailCalculationItems, workspaceId, router],
   );
+
+  useEffect(() => {
+    if (shouldSave) {
+      saveCalculationBackend();
+      triggerSave(false);
+    }
+  }, [shouldSave, saveCalculationBackend]);
 
   useEffect(() => {
     if (!id) return;
@@ -843,6 +866,7 @@ export default function CalculationPage() {
                   <table className={'table-compact table w-full'}>
                     <thead>
                       <tr>
+                        <th className={'w-6'}></th>
                         <th>Zutat</th>
                         <th>Gesamt Menge</th>
                         <th className={'print:hidden'}>Ausgabe Einheit</th>
@@ -852,7 +876,7 @@ export default function CalculationPage() {
                     <tbody>
                       {ingredientCalculationItems.length == 0 ? (
                         <tr>
-                          <td colSpan={4} className={'text-center'}>
+                          <td colSpan={5} className={'text-center'}>
                             Keine Zutaten benötigt
                           </td>
                         </tr>
@@ -862,6 +886,35 @@ export default function CalculationPage() {
                           .sortBy((group) => group[0].ingredient.name)
                           .map((items, key) => (
                             <tr key={`shopping-ingredient-${key}`}>
+                              <td>
+                                <input
+                                  key={`shopping-ingredient-${key}-checkbox-${items[0].ingredient.id}`}
+                                  type="checkbox"
+                                  className={'checkbox checkbox-sm w-min justify-self-center'}
+                                  disabled={
+                                    ingredientShoppingUnits.find((item) => item.ingredientId == items[0].ingredient.id) == undefined ||
+                                    ingredientShoppingUnits.find((item) => item.ingredientId == items[0].ingredient.id)?.unitId == ''
+                                  }
+                                  onChange={(event) => {
+                                    const updatedItems = ingredientShoppingUnits.filter((item) => item.ingredientId != items[0].ingredient.id);
+                                    updatedItems.push({
+                                      ingredientId: items[0].ingredient.id,
+                                      unitId: ingredientShoppingUnits.find((item) => item.ingredientId == items[0].ingredient.id)?.unitId ?? '',
+                                      checked: event.target.checked,
+                                    });
+                                    setIngredientShoppingUnits(updatedItems);
+                                    if (id != 'create') {
+                                      triggerSave(true);
+                                    }
+                                  }}
+                                  defaultChecked={
+                                    ingredientShoppingUnits.find((item) => item.ingredientId == items[0].ingredient.id) == undefined ||
+                                    ingredientShoppingUnits.find((item) => item.ingredientId == items[0].ingredient.id)?.unitId == ''
+                                      ? false
+                                      : ingredientShoppingUnits.find((item) => item.ingredientId == items[0].ingredient.id)?.checked
+                                  }
+                                />
+                              </td>
                               <td>{items[0].ingredient.name}</td>
                               <td className={'flex flex-col'}>
                                 {items.map((item) => (
@@ -882,6 +935,7 @@ export default function CalculationPage() {
                                     updatedItems.push({
                                       ingredientId: items[0].ingredient.id,
                                       unitId: event.target.value,
+                                      checked: ingredientShoppingUnits.find((item) => item.ingredientId == items[0].ingredient.id)?.checked ?? false,
                                     });
                                     setIngredientShoppingUnits(updatedItems);
                                   }}
