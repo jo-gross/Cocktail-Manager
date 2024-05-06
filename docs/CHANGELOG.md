@@ -1,3 +1,10 @@
+# [1.6.0](https://github.com/jo-gross/Cocktail-Manager/compare/v1.5.2...v1.6.0) (2024-05-06)
+
+
+### Features
+
+* Calculations shopping list got more functions  ([#260](https://github.com/jo-gross/Cocktail-Manager/issues/260)) ([e09a05b](https://github.com/jo-gross/Cocktail-Manager/commit/e09a05b507daa3ca394baf8fba1211ff0bb1ffe8))
+
 ## [1.5.2](https://github.com/jo-gross/Cocktail-Manager/compare/v1.5.1...v1.5.2) (2024-04-26)
 
 
