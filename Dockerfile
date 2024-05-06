@@ -6,7 +6,7 @@ RUN yarn --frozen-lockfile
 
 RUN yarn playwright install --with-deps chromium
 
-FROM node:21-alpine AS build
+FROM node:22-alpine AS build
 
 WORKDIR /app
 COPY --from=dependencies /app/node_modules ./node_modules
@@ -17,7 +17,7 @@ ENV NEXT_SHARP_PATH=/app/node_modules/sharp
 RUN yarn prisma generate
 RUN yarn build
 
-FROM node:21-alpine AS deploy
+FROM node:22-alpine AS deploy
 
 WORKDIR /app
 
