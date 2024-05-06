@@ -2,7 +2,7 @@ import { ManageEntityLayout } from '../../../../../components/layout/ManageEntit
 import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { CocktailRecipeFull } from '../../../../../models/CocktailRecipeFull';
-import { FaInfoCircle, FaPencilAlt, FaPrint, FaTrashAlt } from 'react-icons/fa';
+import { FaInfoCircle, FaPencilAlt, FaPrint, FaSave, FaTrashAlt } from 'react-icons/fa';
 import { ModalContext } from '../../../../../lib/context/ModalContextProvider';
 import { SearchModal } from '../../../../../components/modals/SearchModal';
 import { alertService } from '../../../../../lib/alertService';
@@ -17,6 +17,7 @@ import { IngredientModel } from '../../../../../models/IngredientModel';
 import { fetchIngredients } from '../../../../../lib/network/ingredients';
 import _ from 'lodash';
 import { fetchUnits } from '../../../../../lib/network/units';
+import '../../../../../lib/DateUtils';
 
 interface CocktailCalculationItem {
   cocktail: CocktailRecipeFull;
@@ -38,6 +39,7 @@ interface GarnishCalculationItem {
 interface IngredientShoppingUnit {
   ingredientId: string;
   unitId: string;
+  checked: boolean;
 }
 
 interface CalculationData {
@@ -61,6 +63,7 @@ export default function CalculationPage() {
 
   const [originalItems, setOriginalItems] = useState<string>('[]');
   const [originalName, setOriginalName] = useState<string>('');
+  const [originalIngredientShoppingUnits, setOriginalIngredientShoppingUnits] = useState<string>('[]');
   const [originalShowSalesStuff, setOriginalShowSalesStuff] = useState<boolean>(true);
 
   const [ingredientCalculationItems, setIngredientCalculationItems] = useState<IngredientCalculationItem[]>([]);
@@ -81,6 +84,9 @@ export default function CalculationPage() {
 
   const [units, setUnits] = useState<Unit[]>([]);
   const [unitsLoading, setUnitsLoading] = useState(false);
+
+  const [shouldSave, triggerSave] = useState(false);
+  const [shouldRecalculate, triggerRecalculate] = useState(false);
 
   useEffect(() => {
     fetchIngredients(workspaceId, setIngredients, setIngredientsLoading);
@@ -114,6 +120,14 @@ export default function CalculationPage() {
     }
   }, [originalShowSalesStuff, showSalesStuff]);
 
+  useEffect(() => {
+    if (originalIngredientShoppingUnits != JSON.stringify(ingredientShoppingUnits)) {
+      setUnsavedChanges(true);
+    } else {
+      setUnsavedChanges(false);
+    }
+  }, [ingredientShoppingUnits, originalIngredientShoppingUnits]);
+
   /**
    * check for unsaved changes end
    */
@@ -131,10 +145,11 @@ export default function CalculationPage() {
           setCalculationName(data.name);
           setCocktailCalculationItems(data.cocktailCalculationItems);
           setShowSalesStuff(data.showSalesStuff ?? false);
+          setIngredientShoppingUnits(data.ingredientShoppingUnits ?? []);
           setOriginalName(data.name);
           setOriginalItems(JSON.stringify(data.cocktailCalculationItems));
           setOriginalShowSalesStuff(data.showSalesStuff ?? false);
-          setIngredientShoppingUnits(data.ingredientShoppingUnits ?? []);
+          setOriginalIngredientShoppingUnits(JSON.stringify(data.ingredientShoppingUnits ?? []));
         } else {
           console.error('CocktailCalculation -> useEffect[init, id != create]', response);
           alertService.error(body.message ?? 'Fehler beim Laden der Kalkulation', response.status, response.statusText);
@@ -148,6 +163,14 @@ export default function CalculationPage() {
         setLoading(false);
       });
   }, [id, workspaceId]);
+
+  // ShoppingList Cleanup
+  const recalculateIngredientShoppingUnits = useCallback(() => {
+    const cleanedIngredientShoppingUnits = ingredientShoppingUnits.filter((unit) =>
+      ingredientCalculationItems.find((item) => item.ingredient.id == unit.ingredientId),
+    );
+    setIngredientShoppingUnits(cleanedIngredientShoppingUnits);
+  }, [ingredientCalculationItems, ingredientShoppingUnits]);
 
   const addCocktailToSelection = useCallback(
     (cocktailId: string) => {
@@ -177,7 +200,9 @@ export default function CalculationPage() {
             console.error('CalculationId -> addCocktailToSelection (not already exists) -> fetchCocktail', error);
             alertService.error('Fehler beim Laden des Cocktails');
           })
-          .finally(() => {});
+          .finally(() => {
+            triggerRecalculate(true);
+          });
       }
     },
     [cocktailCalculationItems, workspaceId],
@@ -236,6 +261,9 @@ export default function CalculationPage() {
     (redirect: boolean = true) => {
       if (!id) return;
       if (!calculationName) return;
+
+      const currentScrollTop = window.scrollY;
+
       setSaving(true);
       if (id == 'create') {
         const body = {
@@ -261,6 +289,7 @@ export default function CalculationPage() {
               setOriginalItems(JSON.stringify(cocktailCalculationItems));
               setOriginalShowSalesStuff(showSalesStuff);
               setOriginalName(calculationName);
+              setOriginalIngredientShoppingUnits(JSON.stringify(ingredientShoppingUnits));
               if (redirect) {
                 await router.push(`/workspaces/${workspaceId}/manage/calculations/${body.data.id}`);
               }
@@ -276,6 +305,7 @@ export default function CalculationPage() {
           })
           .finally(() => {
             setSaving(false);
+            window.scrollTo(0, currentScrollTop);
           });
       } else {
         // Update
@@ -291,6 +321,7 @@ export default function CalculationPage() {
           }),
           ingredientShoppingUnits: ingredientShoppingUnits,
         };
+
         fetch(`/api/workspaces/${workspaceId}/calculations/${id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
@@ -302,6 +333,7 @@ export default function CalculationPage() {
               setOriginalItems(JSON.stringify(cocktailCalculationItems));
               setOriginalShowSalesStuff(showSalesStuff);
               setOriginalName(calculationName);
+              setOriginalIngredientShoppingUnits(JSON.stringify(ingredientShoppingUnits));
               if (redirect) {
                 await router.push(`/workspaces/${workspaceId}/manage/calculations/${body.data.id}`);
               }
@@ -317,11 +349,26 @@ export default function CalculationPage() {
           })
           .finally(() => {
             setSaving(false);
+            window.scrollTo(0, currentScrollTop);
           });
       }
     },
     [ingredientShoppingUnits, id, calculationName, showSalesStuff, cocktailCalculationItems, workspaceId, router],
   );
+
+  useEffect(() => {
+    if (shouldSave) {
+      saveCalculationBackend();
+      triggerSave(false);
+    }
+  }, [shouldSave, saveCalculationBackend]);
+
+  useEffect(() => {
+    if (shouldRecalculate) {
+      recalculateIngredientShoppingUnits();
+      triggerRecalculate(false);
+    }
+  }, [shouldRecalculate, recalculateIngredientShoppingUnits]);
 
   useEffect(() => {
     if (!id) return;
@@ -422,6 +469,32 @@ export default function CalculationPage() {
     },
     [calculateTotalIngredientAmountByUnit, ingredients],
   );
+
+  const handleCSVExport = useCallback(() => {
+    const csvContent =
+      'data:text/csv;charset=utf-8,' +
+      'Markiert,Name,Geplante Menge,Einheit\n' +
+      _.chain(ingredientCalculationItems)
+        .groupBy('ingredient.id')
+        .sortBy((group) => group[0].ingredient.name)
+        .map(
+          (items, key) =>
+            `${ingredientShoppingUnits.find((ingredient) => ingredient.ingredientId == items[0].ingredient.id)?.checked ? 'true' : 'false'},${items[0].ingredient.name},${calculateTotalIngredientAmount(items).toFixed(2)},${userContext.getTranslation(
+              units.find((unit) => unit.id == ingredientShoppingUnits.find((ingredient) => ingredient.ingredientId == items[0].ingredient.id)?.unitId)?.name ??
+                'N/A',
+              'de',
+            )}`,
+        )
+        .value()
+        .join('\n');
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', 'cocktail-calculation.csv');
+    document.body.appendChild(link);
+    link.click();
+  }, [calculateTotalIngredientAmount, ingredientCalculationItems, ingredientShoppingUnits, units, userContext]);
 
   return (
     <ManageEntityLayout
@@ -668,6 +741,7 @@ export default function CalculationPage() {
                                         spelling={'REMOVE'}
                                         onApprove={async () => {
                                           setCocktailCalculationItems(cocktailCalculationItems.filter((item) => item.cocktail.id != cocktail.cocktail.id));
+                                          triggerRecalculate(true);
                                         }}
                                       />,
                                     );
@@ -805,11 +879,22 @@ export default function CalculationPage() {
                 <div className={'print:hidden'}>
                   <div className={'divider-sm'}></div>
                 </div>
-                <div className={'text-lg font-bold'}>Zutaten</div>
+                <div className={'flex items-center justify-between'}>
+                  <div className={'text-lg font-bold'}>Zutaten</div>
+                  <div className={'btn btn-outline btn-sm'} onClick={handleCSVExport}>
+                    <FaSave />
+                    Als CSV exportieren
+                  </div>
+                </div>
                 <div className={'overflow-x-auto'}>
                   <table className={'table-compact table w-full'}>
                     <thead>
                       <tr>
+                        <th className={'w-6'}>
+                          <div className="tooltip tooltip-right tooltip-info before:max-w-fit" data-tip={'Diese Kästchen sollen z.B. beim Einkaufen helfen'}>
+                            <FaInfoCircle />
+                          </div>
+                        </th>
                         <th>Zutat</th>
                         <th>Gesamt Menge</th>
                         <th className={'print:hidden'}>Ausgabe Einheit</th>
@@ -819,7 +904,7 @@ export default function CalculationPage() {
                     <tbody>
                       {ingredientCalculationItems.length == 0 ? (
                         <tr>
-                          <td colSpan={4} className={'text-center'}>
+                          <td colSpan={5} className={'text-center'}>
                             Keine Zutaten benötigt
                           </td>
                         </tr>
@@ -829,6 +914,35 @@ export default function CalculationPage() {
                           .sortBy((group) => group[0].ingredient.name)
                           .map((items, key) => (
                             <tr key={`shopping-ingredient-${key}`}>
+                              <td>
+                                <input
+                                  key={`shopping-ingredient-${key}-checkbox-${items[0].ingredient.id}`}
+                                  type="checkbox"
+                                  className={'checkbox checkbox-sm w-min justify-self-center'}
+                                  disabled={
+                                    ingredientShoppingUnits.find((item) => item.ingredientId == items[0].ingredient.id) == undefined ||
+                                    ingredientShoppingUnits.find((item) => item.ingredientId == items[0].ingredient.id)?.unitId == ''
+                                  }
+                                  onChange={(event) => {
+                                    const updatedItems = ingredientShoppingUnits.filter((item) => item.ingredientId != items[0].ingredient.id);
+                                    updatedItems.push({
+                                      ingredientId: items[0].ingredient.id,
+                                      unitId: ingredientShoppingUnits.find((item) => item.ingredientId == items[0].ingredient.id)?.unitId ?? '',
+                                      checked: event.target.checked,
+                                    });
+                                    setIngredientShoppingUnits(updatedItems);
+                                    if (id != 'create') {
+                                      triggerSave(true);
+                                    }
+                                  }}
+                                  defaultChecked={
+                                    ingredientShoppingUnits.find((item) => item.ingredientId == items[0].ingredient.id) == undefined ||
+                                    ingredientShoppingUnits.find((item) => item.ingredientId == items[0].ingredient.id)?.unitId == ''
+                                      ? false
+                                      : ingredientShoppingUnits.find((item) => item.ingredientId == items[0].ingredient.id)?.checked
+                                  }
+                                />
+                              </td>
                               <td>{items[0].ingredient.name}</td>
                               <td className={'flex flex-col'}>
                                 {items.map((item) => (
@@ -849,6 +963,7 @@ export default function CalculationPage() {
                                     updatedItems.push({
                                       ingredientId: items[0].ingredient.id,
                                       unitId: event.target.value,
+                                      checked: ingredientShoppingUnits.find((item) => item.ingredientId == items[0].ingredient.id)?.checked ?? false,
                                     });
                                     setIngredientShoppingUnits(updatedItems);
                                   }}

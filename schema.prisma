@@ -384,6 +384,8 @@ model CalculationIngredientShoppingUnit {
   unitId       String
   unit         Unit       @relation(fields: [unitId], references: [id], onDelete: Cascade)
 
+  checked Boolean @default(false)
+
   CocktailCalculation   CocktailCalculation @relation(fields: [cocktailCalculationId], references: [id])
   cocktailCalculationId String
 

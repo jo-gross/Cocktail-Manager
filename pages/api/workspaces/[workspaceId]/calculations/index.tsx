@@ -51,6 +51,7 @@ export default withHttpMethods({
         create: ingredientShoppingUnits.map((ingredientShoppingUnit: any) => ({
           ingredient: { connect: { id: ingredientShoppingUnit.ingredientId } },
           unitId: { connect: { id: ingredientShoppingUnit.unitId } },
+          checked: ingredientShoppingUnit.checked,
         })),
       },
       updatedByUser: {

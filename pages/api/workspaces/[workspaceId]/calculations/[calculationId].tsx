@@ -87,6 +87,7 @@ export default withHttpMethods({
         create: ingredientShoppingUnits.map((ingredientShoppingUnit: any) => ({
           ingredient: { connect: { id: ingredientShoppingUnit.ingredientId } },
           unit: { connect: { id: ingredientShoppingUnit.unitId } },
+          checked: ingredientShoppingUnit.checked,
         })),
       },
     };
