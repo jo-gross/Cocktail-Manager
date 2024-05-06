@@ -35,7 +35,9 @@ export default function OverviewPage() {
   useEffect(() => {
     const handleSearchShortCut = (event: any) => {
       if (event.shiftKey && event.key === 'F') {
-        modalContext.openModal(<SearchModal showStatisticActions={showStatisticActions} />);
+        if (!(document.querySelector('#globalModal') as any)?.checked) {
+          modalContext.openModal(<SearchModal showStatisticActions={showStatisticActions} />);
+        }
       }
     };
     window.addEventListener('keypress', handleSearchShortCut);
