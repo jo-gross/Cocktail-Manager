@@ -1,4 +1,4 @@
-import prisma from '../../../../../../lib/prisma';
+import prisma from '../../../../../../prisma/prisma';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { CocktailCardGroupItem, Prisma, Role } from '@prisma/client';
 import { withWorkspacePermission } from '../../../../../../middleware/api/authenticationMiddleware';

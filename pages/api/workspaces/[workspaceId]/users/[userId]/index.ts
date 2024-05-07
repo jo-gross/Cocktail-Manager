@@ -2,7 +2,7 @@ import HTTPMethod from 'http-method-enum';
 import { withWorkspacePermission } from '../../../../../../middleware/api/authenticationMiddleware';
 import { Role } from '@prisma/client';
 import { constants as HttpStatus } from 'http2';
-import prisma from '../../../../../../lib/prisma';
+import prisma from '../../../../../../prisma/prisma';
 import { withHttpMethods } from '../../../../../../middleware/api/handleMethods';
 
 export default withHttpMethods({

@@ -1,10 +1,9 @@
 // pages/api/post/index.ts
 
-import prisma from '../../../../../lib/prisma';
-import { Prisma } from '.prisma/client';
+import prisma from '../../../../../prisma/prisma';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { withWorkspacePermission } from '../../../../../middleware/api/authenticationMiddleware';
-import { Role, Workspace } from '@prisma/client';
+import { Prisma, Role, Workspace } from '@prisma/client';
 import { withHttpMethods } from '../../../../../middleware/api/handleMethods';
 import HTTPMethod from 'http-method-enum';
 import IngredientCreateInput = Prisma.IngredientCreateInput;

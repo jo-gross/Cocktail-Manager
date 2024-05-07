@@ -1,4 +1,4 @@
-import prisma from '../../../lib/prisma';
+import prisma from '../../../prisma/prisma';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { $Enums, Role, User } from '@prisma/client';
 import { withAuthentication } from '../../../middleware/api/authenticationMiddleware';

@@ -2,7 +2,7 @@ import { Prisma, Role } from '@prisma/client';
 import { withHttpMethods } from '../../../../middleware/api/handleMethods';
 import { withWorkspacePermission } from '../../../../middleware/api/authenticationMiddleware';
 import HTTPMethod from 'http-method-enum';
-import prisma from '../../../../lib/prisma';
+import prisma from '../../../../prisma/prisma';
 import WorkspaceUpdateInput = Prisma.WorkspaceUpdateInput;
 
 export default withHttpMethods({

@@ -1,13 +1,12 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { signOut, useSession } from 'next-auth/react';
-import { Role, User, UserSetting, WorkspaceSetting, WorkspaceUser } from '@prisma/client';
+import { Role, User, UserSetting, WorkspaceSetting, WorkspaceSettingKey, WorkspaceUser } from '@prisma/client';
 import { PageCenter } from '../PageCenter';
 import { Loading } from '../../Loading';
 import { UserContext } from '../../../lib/context/UserContextProvider';
 import { alertService } from '../../../lib/alertService';
 import { useRouter } from 'next/router';
 import { WorkspaceFull } from '../../../models/WorkspaceFull';
-import { WorkspaceSettingKey } from '.prisma/client';
 
 interface AlertBoundaryProps {
   children: React.ReactNode;
