@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/playwright:v1.43.1-jammy AS dependencies
+FROM mcr.microsoft.com/playwright:v1.44.1-jammy AS dependencies
 
 WORKDIR /app
 COPY package.json yarn.lock ./
