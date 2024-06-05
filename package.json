@@ -48,7 +48,7 @@
     "@semantic-release/git": "10.0.1",
     "@types/deep-diff": "1.0.5",
     "@types/lodash": "4.17.1",
-    "@types/node": "20.12.12",
+    "@types/node": "20.14.2",
     "@types/prop-types": "^15.7.12",
     "@types/react": "18.3.3",
     "@types/react-is": "18.3.0",
