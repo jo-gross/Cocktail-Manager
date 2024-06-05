@@ -1,10 +1,11 @@
 import { CocktailRecipeFull } from '../../models/CocktailRecipeFull';
-import React, { useCallback, useState } from 'react';
+import React, { useState } from 'react';
 import { CompactCocktailRecipeInstruction } from './CompactCocktailRecipeInstruction';
 import { ShowCocktailInfoButton } from './ShowCocktailInfoButton';
 import { useRouter } from 'next/router';
-import { alertService } from '../../lib/alertService';
 import { FaPlus } from 'react-icons/fa';
+import { MdPlaylistAdd } from 'react-icons/md';
+import { addCocktailToQueue, addCocktailToStatistic } from '../../lib/network/cocktailTracking';
 
 interface CocktailRecipeOverviewItemProps {
   cocktailRecipe: CocktailRecipeFull;
@@ -21,36 +22,7 @@ export default function CocktailRecipeCardItem(props: CocktailRecipeOverviewItem
   const router = useRouter();
 
   const [submittingStatistic, setSubmittingStatistic] = useState(false);
-
-  const addCocktailToStatistic = useCallback(async () => {
-    if (submittingStatistic) return;
-    try {
-      setSubmittingStatistic(true);
-      const response = await fetch(`/api/workspaces/${router.query.workspaceId}/statistics/cocktails/add`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          cocktailId: props.cocktailRecipe.id,
-          cocktailCardId: router.query.card,
-          actionSource: router.query.card ? (router.query.card == 'search' ? 'SEARCH' : 'CARD') : undefined,
-        }),
-      });
-      if (response.ok) {
-        alertService.success('Cocktail zur Statistik hinzugefügt');
-      } else {
-        const body = await response.json();
-        console.error('CocktailRecipeCardItem -> addCocktailToStatistic', response);
-        alertService.error(body.message ?? 'Fehler beim Hinzufügen des Cocktails zur Statistik', response.status, response.statusText);
-      }
-    } catch (error) {
-      console.error('CocktailRecipeCardItem -> addCocktailToStatistic', error);
-      alertService.error('Es ist ein Fehler aufgetreten');
-    } finally {
-      setSubmittingStatistic(false);
-    }
-  }, [props.cocktailRecipe.id, router.query.cocktailCardId, router.query.workspaceId, submittingStatistic]);
+  const [submittingQueue, setSubmittingQueue] = useState(false);
 
   return (
     <div className={'col-span-1'}>
@@ -76,11 +48,40 @@ export default function CocktailRecipeCardItem(props: CocktailRecipeOverviewItem
               <></>
             )}
             {props.showStatisticActions ? (
-              <button className={'btn btn-outline btn-primary mt-1 w-full'} onClick={addCocktailToStatistic} disabled={submittingStatistic}>
-                <FaPlus />
-                Gemacht
-                {submittingStatistic ? <span className={'loading loading-spinner'}></span> : <></>}
-              </button>
+              <div className={'mt-1 flex flex-row gap-2'}>
+                <button
+                  className={'btn btn-outline flex-1'}
+                  onClick={() =>
+                    addCocktailToQueue({
+                      workspaceId: router.query.workspaceId as string,
+                      cocktailId: props.cocktailRecipe.id,
+                      setSubmitting: setSubmittingQueue,
+                    })
+                  }
+                  disabled={submittingQueue}
+                >
+                  <MdPlaylistAdd />
+                  Liste
+                  {submittingQueue ? <span className={'loading loading-spinner'}></span> : <></>}
+                </button>
+                <button
+                  className={'btn btn-outline btn-primary flex-1'}
+                  onClick={() =>
+                    addCocktailToStatistic({
+                      workspaceId: router.query.workspaceId as string,
+                      cocktailId: props.cocktailRecipe.id,
+                      cardId: router.query.cardId,
+                      actionSource: 'CARD',
+                      setSubmitting: setSubmittingStatistic,
+                    })
+                  }
+                  disabled={submittingStatistic}
+                >
+                  <FaPlus />
+                  Gemacht
+                  {submittingStatistic ? <span className={'loading loading-spinner'}></span> : <></>}
+                </button>
+              </div>
             ) : (
               <></>
             )}

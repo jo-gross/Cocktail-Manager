@@ -11,6 +11,8 @@ import { alertService } from '../../lib/alertService';
 import Image from 'next/image';
 import AvatarImage from '../AvatarImage';
 import { Loading } from '../Loading';
+import { MdPlaylistAdd } from 'react-icons/md';
+import { addCocktailToQueue, addCocktailToStatistic } from '../../lib/network/cocktailTracking';
 
 interface CocktailDetailModalProps {
   cocktailId: string;
@@ -52,38 +54,7 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
   }, [fetchCocktail]);
 
   const [submittingStatistic, setSubmittingStatistic] = useState(false);
-  const addCocktailToStatistic = useCallback(
-    async (cocktailId: string) => {
-      if (submittingStatistic) return;
-      try {
-        setSubmittingStatistic(true);
-        const response = await fetch(`/api/workspaces/${router.query.workspaceId}/statistics/cocktails/add`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            cocktailId: cocktailId,
-            cocktailCardId: router.query.card,
-            actionSource: router.query.card ? (router.query.card == 'search' ? 'SEARCH' : 'CARD') : undefined,
-          }),
-        });
-        if (response.ok) {
-          alertService.success('Cocktail zur Statistik hinzugefügt');
-        } else {
-          const body = await response.json();
-          console.log('CocktailDetailModal -> addCocktailToStatistic', response);
-          alertService.error(body.message ?? 'Fehler beim Hinzufügen des Cocktails zur Statistik', response.status, response.statusText);
-        }
-      } catch (error) {
-        console.log('CocktailDetailModal -> addCocktailToStatistic', error);
-        alertService.error('Es ist ein Fehler aufgetreten');
-      } finally {
-        setSubmittingStatistic(false);
-      }
-    },
-    [router.query.cocktailCardId, router.query.workspaceId, submittingStatistic],
-  );
+  const [submittingQueue, setSubmittingQueue] = useState(false);
 
   return loading || loadedCocktail == undefined ? (
     <Loading />
@@ -229,8 +200,34 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                 </div>
               ))}
           </div>
-          <div className={'col-span-2'}>
-            <button className={'btn btn-outline btn-primary w-full'} onClick={() => addCocktailToStatistic(loadedCocktail.id)} disabled={submittingStatistic}>
+          <div className={'col-span-2 flex w-full flex-row gap-2'}>
+            <button
+              className={'btn btn-outline w-full flex-1 '}
+              onClick={() =>
+                addCocktailToQueue({
+                  workspaceId: router.query.workspaceId as string,
+                  cocktailId: loadedCocktail.id,
+                  setSubmitting: setSubmittingQueue,
+                })
+              }
+              disabled={submittingQueue}
+            >
+              <MdPlaylistAdd />
+              Gemacht
+              {submittingQueue ? <span className={'loading loading-spinner'}></span> : <></>}
+            </button>
+            <button
+              className={'btn btn-outline btn-primary w-full flex-1'}
+              onClick={() =>
+                addCocktailToStatistic({
+                  workspaceId: router.query.workspaceId as string,
+                  cocktailId: loadedCocktail.id,
+                  actionSource: 'DETAIL_MODAL',
+                  setSubmitting: setSubmittingStatistic,
+                })
+              }
+              disabled={submittingStatistic}
+            >
               <FaPlus />
               Gemacht
               {submittingStatistic ? <span className={'loading loading-spinner'}></span> : <></>}
