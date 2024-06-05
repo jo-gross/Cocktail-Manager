@@ -1,3 +1,10 @@
+## [1.7.1](https://github.com/jo-gross/Cocktail-Manager/compare/v1.7.0...v1.7.1) (2024-06-05)
+
+
+### Bug Fixes
+
+* Moved missing migrations from merge ([0052157](https://github.com/jo-gross/Cocktail-Manager/commit/0052157b3b20b54b9941774cc108850ff73bb031))
+
 # [1.7.0](https://github.com/jo-gross/Cocktail-Manager/compare/v1.6.0...v1.7.0) (2024-06-05)
 
 
