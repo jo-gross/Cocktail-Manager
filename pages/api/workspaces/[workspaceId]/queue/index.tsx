@@ -5,7 +5,7 @@ import { withWorkspacePermission } from '../../../../../middleware/api/authentic
 import { withHttpMethods } from '../../../../../middleware/api/handleMethods';
 import { CocktailQueue, Role } from '@prisma/client';
 import HTTPMethod from 'http-method-enum';
-import prisma from '../../../../../lib/prisma';
+import prisma from '../../../../../prisma/prisma';
 
 export default withHttpMethods({
   [HTTPMethod.GET]: withWorkspacePermission([Role.USER], async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
