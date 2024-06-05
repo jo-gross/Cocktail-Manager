@@ -1,3 +1,17 @@
+# [1.7.0](https://github.com/jo-gross/Cocktail-Manager/compare/v1.6.0...v1.7.0) (2024-06-05)
+
+
+### Bug Fixes
+
+* Capital F not working at SearchModal ([#268](https://github.com/jo-gross/Cocktail-Manager/issues/268)) ([56c23e1](https://github.com/jo-gross/Cocktail-Manager/commit/56c23e1762f7110820d4080e436ad4a676b4174b))
+* Login timeout increased ([#288](https://github.com/jo-gross/Cocktail-Manager/issues/288)) ([7caa6d4](https://github.com/jo-gross/Cocktail-Manager/commit/7caa6d44bd32dce83a8004264c68c91ff09c0216))
+* Sharp error by changing yarn to pnpm ([#278](https://github.com/jo-gross/Cocktail-Manager/issues/278)) ([58a9b94](https://github.com/jo-gross/Cocktail-Manager/commit/58a9b944d3f5387fad4b057e074375849a7ffb7b))
+
+
+### Features
+
+* Added cocktail shaking queue ([#289](https://github.com/jo-gross/Cocktail-Manager/issues/289)) ([f640d77](https://github.com/jo-gross/Cocktail-Manager/commit/f640d77bf4f6e42bf277c495fe6e3e53f75aa5a0))
+
 # [1.6.0](https://github.com/jo-gross/Cocktail-Manager/compare/v1.5.2...v1.6.0) (2024-05-06)
 
 
