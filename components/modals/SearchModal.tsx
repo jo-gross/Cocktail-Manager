@@ -8,6 +8,8 @@ import { ShowCocktailInfoButton } from '../cocktails/ShowCocktailInfoButton';
 import { useRouter } from 'next/router';
 import { alertService } from '../../lib/alertService';
 import { FaPlus } from 'react-icons/fa';
+import { MdPlaylistAdd } from 'react-icons/md';
+import { addCocktailToQueue, addCocktailToStatistic } from '../../lib/network/cocktailTracking';
 
 interface SearchModalProps {
   onCocktailSelectedObject?: (cocktail: CocktailRecipeFull) => void;
@@ -74,38 +76,7 @@ export function SearchModal(props: SearchModalProps) {
   }, [fetchCocktails, workspaceId]);
 
   const [submittingStatistic, setSubmittingStatistic] = useState(false);
-  const addCocktailToStatistic = useCallback(
-    async (cocktailId: string) => {
-      if (submittingStatistic) return;
-      try {
-        setSubmittingStatistic(true);
-        const response = await fetch(`/api/workspaces/${router.query.workspaceId}/statistics/cocktails/add`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            cocktailId: cocktailId,
-            cocktailCardId: router.query.card,
-            actionSource: 'SEARCH_MODAL',
-          }),
-        });
-        if (response.ok) {
-          alertService.success('Cocktail zur Statistik hinzugefügt');
-        } else {
-          const body = await response.json();
-          console.error('SearchModal -> addCocktailToStatistic', response);
-          alertService.error(body.message ?? 'Fehler beim Hinzufügen des Cocktails zur Statistik', response.status, response.statusText);
-        }
-      } catch (error) {
-        console.error('SearchModal -> addCocktailToStatistic', error);
-        alertService.error('Es ist ein Fehler aufgetreten');
-      } finally {
-        setSubmittingStatistic(false);
-      }
-    },
-    [router.query.cocktailCardId, router.query.workspaceId, submittingStatistic],
-  );
+  const [submittingQueue, setSubmittingQueue] = useState(false);
 
   return (
     <div className={'grid w-full grid-cols-1 gap-2 p-0.5 md:p-2'}>
@@ -191,15 +162,40 @@ export function SearchModal(props: SearchModalProps) {
                     )}
 
                     {props.showStatisticActions ? (
-                      <button
-                        className={'btn btn-outline btn-primary mt-2 w-full'}
-                        onClick={() => addCocktailToStatistic(cocktail.id)}
-                        disabled={submittingStatistic}
-                      >
-                        <FaPlus />
-                        Gemacht
-                        {submittingStatistic ? <span className={'loading loading-spinner'}></span> : <></>}
-                      </button>
+                      <div className={'mt-2 flex flex-row gap-2'}>
+                        <button
+                          className={'btn btn-outline w-full flex-1'}
+                          onClick={() =>
+                            addCocktailToQueue({
+                              workspaceId: router.query.workspaceId as string,
+                              cocktailId: cocktail.id,
+                              setSubmitting: setSubmittingQueue,
+                            })
+                          }
+                          disabled={submittingQueue}
+                        >
+                          <MdPlaylistAdd />
+                          Liste
+                          {submittingQueue ? <span className={'loading loading-spinner'}></span> : <></>}
+                        </button>
+
+                        <button
+                          className={'btn btn-outline btn-primary w-full flex-1'}
+                          onClick={() =>
+                            addCocktailToStatistic({
+                              workspaceId: router.query.workspaceId as string,
+                              cocktailId: cocktail.id,
+                              actionSource: 'SEARCH_MODAL',
+                              setSubmitting: setSubmittingStatistic,
+                            })
+                          }
+                          disabled={submittingStatistic}
+                        >
+                          <FaPlus />
+                          Gemacht
+                          {submittingStatistic ? <span className={'loading loading-spinner'}></span> : <></>}
+                        </button>
+                      </div>
                     ) : (
                       <></>
                     )}

@@ -3,7 +3,13 @@ import { CocktailRecipeFull } from '../../../models/CocktailRecipeFull';
 import CocktailRecipeCardItem from '../../../components/cocktails/CocktailRecipeCardItem';
 import { SearchModal } from '../../../components/modals/SearchModal';
 
-export default function SearchPage() {
+interface SearchPageProps {
+  showImage?: boolean;
+  showTags?: boolean;
+  showStatisticActions?: boolean;
+}
+
+export default function SearchPage(props: SearchPageProps) {
   const [selectedCocktail, setSelectedCocktail] = useState<CocktailRecipeFull | undefined>(undefined);
 
   return (
@@ -17,11 +23,11 @@ export default function SearchPage() {
         {selectedCocktail ? (
           <CocktailRecipeCardItem
             cocktailRecipe={selectedCocktail}
-            showImage={true}
+            showImage={props.showImage}
             showInfo={true}
             showPrice={true}
-            showTags={true}
-            showStatisticActions={true}
+            showTags={props.showTags}
+            showStatisticActions={props.showStatisticActions}
           />
         ) : (
           <></>

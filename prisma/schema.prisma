@@ -152,6 +152,7 @@ model Workspace {
   Unit                              Unit[]
   UnitConversion                    UnitConversion[]
   IngredientVolume                  IngredientVolume[]
+  CocktailQueue                     CocktailQueue[]
 }
 
 model Signage {
@@ -218,6 +219,7 @@ model CocktailRecipe {
   CocktailCalculationItems CocktailCalculationItems[]
   CocktailRecipeImage      CocktailRecipeImage[]
   CocktailStatisticItem    CocktailStatisticItem[]
+  CocktailQueue            CocktailQueue[]
 }
 
 model CocktailRecipeImage {
@@ -434,4 +436,14 @@ model IngredientVolume {
   workspace    Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
   @@unique([ingredientId, workspaceId, unitId])
+}
+
+model CocktailQueue {
+  id          String         @id @default(cuid())
+  cocktailId  String
+  cocktail    CocktailRecipe @relation(fields: [cocktailId], references: [id], onDelete: Cascade)
+  workspaceId String
+  workspace   Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @default(now()) @updatedAt
 }

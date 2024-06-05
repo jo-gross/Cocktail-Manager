@@ -40,6 +40,17 @@ export default withHttpMethods({
         : undefined,
       actionSource: actionSource,
     };
+
+    const queueItem = await prisma.cocktailQueue.findFirst({
+      where: {
+        workspaceId: workspace.id,
+        cocktailId: cocktailId,
+      },
+    });
+    if (queueItem) {
+      await prisma.cocktailQueue.delete({ where: { id: queueItem.id } });
+    }
+
     const result = await prisma.cocktailStatisticItem.create({
       data: input,
     });

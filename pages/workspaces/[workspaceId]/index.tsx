@@ -1,10 +1,10 @@
 import React, { useCallback, useContext, useEffect, useState } from 'react';
-import { FaEye, FaSearch } from 'react-icons/fa';
+import { FaCheck, FaEye, FaSearch, FaTimes } from 'react-icons/fa';
 import Link from 'next/link';
 import { BsFillGearFill } from 'react-icons/bs';
 import { CocktailCardFull } from '../../../models/CocktailCardFull';
 import CocktailRecipeCardItem from '../../../components/cocktails/CocktailRecipeCardItem';
-import { CocktailCard, Setting } from '@prisma/client';
+import { CocktailCard, CocktailRecipe, Setting } from '@prisma/client';
 import { useRouter } from 'next/router';
 import { ModalContext } from '../../../lib/context/ModalContextProvider';
 import { SearchModal } from '../../../components/modals/SearchModal';
@@ -16,6 +16,7 @@ import Head from 'next/head';
 import { UserContext } from '../../../lib/context/UserContextProvider';
 import SearchPage from './search';
 import '../../../lib/DateUtils';
+import { addCocktailToStatistic, removeCocktailFromQueue } from '../../../lib/network/cocktailTracking';
 
 export default function OverviewPage() {
   const modalContext = useContext(ModalContext);
@@ -185,12 +186,47 @@ export default function OverviewPage() {
 
   const [currentTime, setCurrentTime] = useState(new Date());
 
+  const refreshQueue = useCallback(() => {
+    fetch(`/api/workspaces/${workspaceId}/queue`)
+      .then(async (response) => {
+        const body = await response.json();
+        if (response.ok) {
+          setCocktailQueue(body.data);
+          console.debug('queue', body.data);
+        } else {
+          console.error('CocktailCardPage -> fetchQueue', response);
+        }
+      })
+      .catch((error) => {
+        console.error('CocktailCardPage -> fetchQueue', error);
+      })
+      .finally(() => {});
+  }, [workspaceId]);
+
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentTime(new Date());
     }, 10 * 1000);
     return () => clearInterval(interval);
   }, []);
+
+  interface CocktailQueueItem {
+    cocktailRecipe: CocktailRecipe;
+    count: number;
+  }
+
+  const [cocktailQueue, setCocktailQueue] = useState<CocktailQueueItem[]>([]);
+  const [submittingQueue, setSubmittingQueue] = useState<{ cocktailId: string; mode: 'ACCEPT' | 'REJECT' }[]>([]);
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout | undefined;
+    if (showStatisticActions) {
+      interval = setInterval(() => {
+        refreshQueue();
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [refreshQueue, showStatisticActions]);
 
   return (
     <>
@@ -201,15 +237,86 @@ export default function OverviewPage() {
       <div className={'static h-screen'}>
         {selectedCard?.showTime ? (
           <div className={'w-full pt-2 text-center'}>
-            {currentTime.toFormatTimeString()} {currentTime.toFormatDateString()}
+            {currentTime?.toFormatTimeString()} {currentTime?.toFormatDateString()}
           </div>
         ) : (
           <></>
         )}
+
+        {showStatisticActions && cocktailQueue.length > 0 ? (
+          <div
+            className={`z-40 h-fit w-full p-2 pr-4 md:pl-4 ${selectedCardId == 'search' || selectedCardId == undefined ? '' : `md:fixed md:right-2 md:w-60 ${process.env.NODE_ENV == 'development' ? 'md:top-12' : 'md:top-2'}`}`}
+          >
+            <div
+              className={`flex flex-col rounded-xl bg-base-300 p-2 ${selectedCardId == 'search' || selectedCardId == undefined ? '' : 'md:bg-opacity-50'} print:hidden`}
+            >
+              <div className={'underline'}>Warteschlange</div>
+              <div className={'flex flex-col divide-y'}>
+                {cocktailQueue.map((cocktailQueueItem, index) => (
+                  <div key={`cocktailQueue-item-${index}`} className={'flex flex-row items-center justify-between pb-1 pt-1'}>
+                    <div>
+                      <strong>{cocktailQueueItem.count}x</strong> {cocktailQueueItem.cocktailRecipe.name}
+                    </div>
+                    <div className={'join '}>
+                      <button
+                        className={'btn btn-square btn-success join-item btn-sm'}
+                        disabled={!!submittingQueue.find((i) => i.cocktailId == cocktailQueueItem.cocktailRecipe.id)}
+                        onClick={() =>
+                          addCocktailToStatistic({
+                            workspaceId: router.query.workspaceId as string,
+                            cocktailId: cocktailQueueItem.cocktailRecipe.id,
+                            actionSource: 'QUEUE',
+                            setSubmitting: (submitting) => {
+                              if (submitting) {
+                                setSubmittingQueue([...submittingQueue, { cocktailId: cocktailQueueItem.cocktailRecipe.id, mode: 'ACCEPT' }]);
+                              } else {
+                                setSubmittingQueue(submittingQueue.filter((i) => i.cocktailId != cocktailQueueItem.cocktailRecipe.id));
+                              }
+                            },
+                            reload: () => {
+                              refreshQueue();
+                            },
+                          })
+                        }
+                      >
+                        <FaCheck />
+                      </button>
+                      <button
+                        className={'btn btn-square btn-error join-item btn-sm'}
+                        disabled={!!submittingQueue.find((i) => i.cocktailId == cocktailQueueItem.cocktailRecipe.id)}
+                        onClick={() =>
+                          removeCocktailFromQueue({
+                            workspaceId: router.query.workspaceId as string,
+                            cocktailId: cocktailQueueItem.cocktailRecipe.id,
+                            setSubmitting: (submitting) => {
+                              if (submitting) {
+                                setSubmittingQueue([...submittingQueue, { cocktailId: cocktailQueueItem.cocktailRecipe.id, mode: 'REJECT' }]);
+                              } else {
+                                setSubmittingQueue(submittingQueue.filter((i) => i.cocktailId != cocktailQueueItem.cocktailRecipe.id));
+                              }
+                            },
+                            reload: () => {
+                              refreshQueue();
+                            },
+                          })
+                        }
+                      >
+                        <FaTimes />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        ) : (
+          <></>
+        )}
+
         <div className={''}>
           <div className={'flex flex-col space-y-2 overflow-y-auto rounded-xl p-0 md:p-2 print:overflow-clip print:p-0'}>
             {selectedCardId == 'search' || selectedCardId == undefined ? (
-              <SearchPage />
+              <SearchPage showImage={showImage} showTags={showTags} showStatisticActions={showStatisticActions} />
             ) : loadingGroups ? (
               <PageCenter>
                 <Loading />
@@ -406,7 +513,7 @@ export default function OverviewPage() {
                 </div>
                 <div className="form-control">
                   <label className="label">
-                    Statistik aktivieren
+                    Tracking aktivieren
                     <input
                       type={'checkbox'}
                       className={'toggle toggle-primary'}
