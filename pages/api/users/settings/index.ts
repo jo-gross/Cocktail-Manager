@@ -3,7 +3,7 @@ import HTTPMethod from 'http-method-enum';
 import { withHttpMethods } from '../../../../middleware/api/handleMethods';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { User } from '@prisma/client';
-import prisma from '../../../../lib/prisma';
+import prisma from '../../../../prisma/prisma';
 
 export default withHttpMethods({
   [HTTPMethod.PUT]: withAuthentication(async (req: NextApiRequest, res: NextApiResponse, user: User) => {

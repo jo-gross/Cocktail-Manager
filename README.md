@@ -135,7 +135,7 @@ When the application is running, you should be able to access it at [http://loca
 
 One-time setup:
 
-> Enable `corepack` to use [`yarn`](https://yarnpkg.com/getting-started/install)
+> Enable `corepack` to use [`pnpm`](https://pnpm.io/)
 >
 > ```sh
 > sudo corepack enable
@@ -152,19 +152,19 @@ Starting development:
 > Install all dependencies
 >
 > ```sh
-> yarn install
+> pnpm install
 > ```
 >
 > Apply migrations (WARNING: this could drop all of your local data, pay attention)
 >
 > ```sh
-> yarn prisma migrate dev
+> pnpm prisma migrate dev
 > ```
 >
 > Start the application
 >
 > ```sh
-> yarn dev
+> pnpm dev
 > ```
 >
 > All ui changes are automatically reloaded, but you need to restart the server when changing the api
@@ -174,13 +174,13 @@ Developing changes that include database schema changes:
 > Push your changes without creating a migration
 >
 > ```sh
-> yarn prisma db push
+> pnpm prisma db push
 > ```
 >
 > When you are done with your changes, create a migration
 >
 > ```sh
-> yarn prisma migrate dev
+> pnpm prisma migrate dev
 > ```
 >
 > All other help can be found in the [Prisma Documentation](https://www.prisma.io/docs/orm/prisma-migrate)

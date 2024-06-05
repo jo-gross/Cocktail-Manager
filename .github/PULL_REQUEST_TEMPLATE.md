@@ -9,8 +9,8 @@ them, don't hesitate to ask. We're here to help! This is simply a reminder of wh
 merging your code._
 
 - [ ] I´e created all necessary migrations?
-- [ ] The format is correct (`yarn format:check`, if invalid `yarn format:fix`)
-- [ ] No build errors (`yarn build`)
+- [ ] The format is correct (`pnpm format:check`, if invalid `pnpm format:fix`)
+- [ ] No build errors (`pnpm build`)
 - [ ] I´ve tested the implemented function by my own
 - [ ] Ensure the pr title fits the [conventional commit](https://www.conventionalcommits.org/en/v1.0.0/) standard
 

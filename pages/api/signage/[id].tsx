@@ -1,6 +1,6 @@
 import { withHttpMethods } from '../../../middleware/api/handleMethods';
 import HTTPMethod from 'http-method-enum';
-import prisma from '../../../lib/prisma';
+import prisma from '../../../prisma/prisma';
 
 export default withHttpMethods({
   [HTTPMethod.GET]: async (req, res) => {
