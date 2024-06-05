@@ -2,7 +2,7 @@ import HTTPMethod from 'http-method-enum';
 import { withHttpMethods } from '../../../../../middleware/api/handleMethods';
 import { withWorkspacePermission } from '../../../../../middleware/api/authenticationMiddleware';
 import { $Enums, Role } from '@prisma/client';
-import prisma from '../../../../../lib/prisma';
+import prisma from '../../../../../prisma/prisma';
 import { NextApiRequest, NextApiResponse } from 'next';
 import MonitorFormat = $Enums.MonitorFormat;
 

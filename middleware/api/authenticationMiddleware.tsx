@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import prisma from '../../lib/prisma';
+import prisma from '../../prisma/prisma';
 import { Role, User, Workspace, WorkspaceUser } from '@prisma/client';
 import { constants as HttpStatus } from 'http2';
 import { getServerSession } from 'next-auth';

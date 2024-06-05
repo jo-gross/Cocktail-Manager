@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { BackupStructure } from './backupStructure';
-import prisma from '../../../../../../lib/prisma';
+import prisma from '../../../../../../prisma/prisma';
 import { randomUUID } from 'crypto';
 import { withWorkspacePermission } from '../../../../../../middleware/api/authenticationMiddleware';
 import { Role } from '@prisma/client';

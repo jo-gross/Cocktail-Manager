@@ -3,7 +3,7 @@ import HTTPMethod from 'http-method-enum';
 import { withWorkspacePermission } from '../../../../../../middleware/api/authenticationMiddleware';
 import { Role } from '@prisma/client';
 import { NextApiRequest, NextApiResponse } from 'next';
-import prisma from '../../../../../../lib/prisma';
+import prisma from '../../../../../../prisma/prisma';
 
 export default withHttpMethods({
   [HTTPMethod.POST]: withWorkspacePermission([Role.MANAGER], async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {

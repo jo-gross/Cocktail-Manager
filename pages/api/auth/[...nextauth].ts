@@ -1,6 +1,6 @@
 import NextAuth, { NextAuthOptions } from 'next-auth';
 import Google from 'next-auth/providers/google';
-import prisma from '../../../lib/prisma';
+import prisma from '../../../prisma/prisma';
 import { PrismaAdapter } from '@next-auth/prisma-adapter';
 
 export const authOptions: NextAuthOptions = {
@@ -8,6 +8,9 @@ export const authOptions: NextAuthOptions = {
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID as string,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
+      httpOptions: {
+        timeout: 40000,
+      },
     }),
   ],
   adapter: PrismaAdapter(prisma),

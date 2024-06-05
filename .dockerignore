@@ -5,8 +5,8 @@ node_modules
 .prettier
 README.md
 npm-debug.log
-yarn-error.log
 Dockerfile
 .dockerignore
 *.yaml
+!pnpm-lock.yaml
 .env

@@ -1,9 +1,8 @@
 // pages/api/post/index.ts
 
-import prisma from '../../../../../lib/prisma';
-import { Prisma } from '.prisma/client';
+import prisma from '../../../../../prisma/prisma';
 import { NextApiRequest, NextApiResponse } from 'next';
-import { CocktailCardGroupItem, Role } from '@prisma/client';
+import { CocktailCardGroupItem, Prisma, Role } from '@prisma/client';
 import { withWorkspacePermission } from '../../../../../middleware/api/authenticationMiddleware';
 import HTTPMethod from 'http-method-enum';
 import { withHttpMethods } from '../../../../../middleware/api/handleMethods';

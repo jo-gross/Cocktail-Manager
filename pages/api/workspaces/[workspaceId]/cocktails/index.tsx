@@ -1,10 +1,9 @@
 // pages/api/post/index.ts
 
-import prisma from '../../../../../lib/prisma';
-import { Prisma } from '.prisma/client';
+import prisma from '../../../../../prisma/prisma';
 import { CocktailRecipeFull } from '../../../../../models/CocktailRecipeFull';
 import { NextApiRequest, NextApiResponse } from 'next';
-import { Role } from '@prisma/client';
+import { Prisma, Role } from '@prisma/client';
 import { CocktailRecipeStepFull } from '../../../../../models/CocktailRecipeStepFull';
 import { CocktailRecipeGarnishFull } from '../../../../../models/CocktailRecipeGarnishFull';
 import { withWorkspacePermission } from '../../../../../middleware/api/authenticationMiddleware';

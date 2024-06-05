@@ -1,8 +1,7 @@
-import { $Enums } from '.prisma/client';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { alertService } from '../lib/alertService';
-import { Signage } from '@prisma/client';
+import { $Enums, Signage } from '@prisma/client';
 import { PageCenter } from '../components/layout/PageCenter';
 import { Loading } from '../components/Loading';
 import MonitorFormat = $Enums.MonitorFormat;

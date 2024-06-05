@@ -13,25 +13,22 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+
       - name: 'Node.js setup'
         uses: actions/setup-node@v3
         with:
           node-version: 21
 
       - name: 'Install dependencies'
-        uses: borales/actions-yarn@v4
-        with:
-          cmd: install
+        run: pnpm install
 
       - name: 'Run Prettier'
-        uses: borales/actions-yarn@v4
-        with:
-          cmd: format:check
+        run: pnpm format:check
 
       - name: 'Run ESlint'
-        uses: borales/actions-yarn@v4
-        with:
-          cmd: next lint
+        run: pnpm next lint
 
   Build:
     runs-on: ubuntu-latest
@@ -42,20 +39,19 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+
       - name: 'Node.js setup'
         uses: actions/setup-node@v3
         with:
           node-version: 21
 
       - name: 'Install dependencies'
-        uses: borales/actions-yarn@v4
-        with:
-          cmd: install
+        run: pnpm install
 
       - name: 'Build'
-        uses: borales/actions-yarn@v4
-        with:
-          cmd: build
+        run: pnpm build
 
   Licenses:
     runs-on: ubuntu-latest
