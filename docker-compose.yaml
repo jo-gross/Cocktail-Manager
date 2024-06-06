@@ -13,6 +13,32 @@ services:
     networks:
       - cocktail-recipe-network
 
+  #  Local postgres backup
+  #  Further information: https://github.com/prodrigestivill/docker-postgres-backup-local
+  #  pgbackups:
+  #    image: prodrigestivill/postgres-backup-local
+  #    restart: always
+  #    volumes:
+  #      - /your/local/path:/backups
+  #    links:
+  #      - postgres
+  #    depends_on:
+  #      - postgres
+  #    environment:
+  #      - POSTGRES_HOST=postgres
+  #      - POSTGRES_DB=cocktail_recipe
+  #      - POSTGRES_USER=postgres
+  #      - POSTGRES_PASSWORD=postgres
+  #      - POSTGRES_PORT=5432
+  #      - POSTGRES_EXTRA_OPTS=-Z1 --schema=public --blobs
+  #      - SCHEDULE=@daily
+  #      - BACKUP_KEEP_DAYS=7
+  #      - BACKUP_KEEP_WEEKS=4
+  #      - BACKUP_KEEP_MONTHS=6
+  #      - HEALTHCHECK_PORT=8080
+  #    networks:
+  #      - cocktail-recipe-network
+
   cocktail-manager:
     depends_on:
       - postgres
