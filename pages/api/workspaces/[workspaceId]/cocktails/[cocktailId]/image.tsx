@@ -23,7 +23,7 @@ export default withHttpMethods({
 
     const type = result.image.split(';')[0].split(':')[1];
     const decoded = result.image.split(',')[1];
-    const imageResp = new Buffer(decoded, 'base64');
+    const imageResp = Buffer.from(decoded, 'base64');
 
     res.writeHead(200, {
       'Content-Type': type,
