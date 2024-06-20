@@ -72,11 +72,11 @@ https://stackoverflow.com/a/74043438/12160393
 }
 
 :root {
-    --button-height: 64px; /* h-12 */
-    --button-margin: 32px; /* my-4 */
-    --max-height: calc(100vh - 3 * (var(--button-height) + var(--button-margin)));
+  --button-height: 64px; /* h-12 */
+  --button-margin: 32px; /* my-4 */
+  --max-height: calc(100vh - 3 * (var(--button-height) + var(--button-margin)));
 }
 
 .max-h-custom {
-    max-height: var(--max-height);
+  max-height: var(--max-height);
 }
