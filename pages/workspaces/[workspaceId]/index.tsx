@@ -28,6 +28,7 @@ export default function OverviewPage() {
   const [showTags, setShowTags] = useState(false);
   const [lessItems, setLessItems] = useState(false);
   const [showStatisticActions, setShowStatisticActions] = useState(false);
+  const [showQueueAsOverlay, setShowQueueAsOverlay] = useState(false);
 
   const [cocktailCards, setCocktailCards] = useState<CocktailCardFull[]>([]);
   const [loadingCards, setLoadingCards] = useState(true);
@@ -182,6 +183,7 @@ export default function OverviewPage() {
     setShowTags(userContext.user?.settings?.find((s) => s.setting == Setting.showTags)?.value == 'true' ?? false);
     setLessItems(userContext.user?.settings?.find((s) => s.setting == Setting.lessItems)?.value == 'true' ?? false);
     setShowStatisticActions(userContext.user?.settings?.find((s) => s.setting == Setting.showStatisticActions)?.value == 'true' ?? false);
+    setShowQueueAsOverlay(userContext.user?.settings?.find((s) => s.setting == Setting.showQueueAsOverlay)?.value == 'true' ?? false);
   }, [userContext.user?.settings]);
 
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -243,78 +245,94 @@ export default function OverviewPage() {
           <></>
         )}
 
-        {showStatisticActions && cocktailQueue.length > 0 ? (
-          <div
-            className={`z-40 h-fit w-full p-2 pr-4 md:pl-4 ${selectedCardId == 'search' || selectedCardId == undefined ? '' : `md:fixed md:right-2 md:w-60 ${process.env.NODE_ENV == 'development' ? 'md:top-12' : 'md:top-2'}`}`}
-          >
+        <div className={'flex flex-col gap-2 p-0 md:flex-row-reverse md:p-2 print:overflow-clip print:p-0'}>
+          {showStatisticActions && cocktailQueue.length > 0 ? (
             <div
-              className={`flex flex-col rounded-xl bg-base-300 p-2 ${selectedCardId == 'search' || selectedCardId == undefined ? '' : 'md:bg-opacity-50'} print:hidden`}
+              className={
+                showQueueAsOverlay
+                  ? `z-10 h-fit w-full p-2 md:pl-4 print:hidden ${selectedCardId == 'search' || selectedCardId == undefined ? '' : `fixed min-w-60 md:right-2 md:w-1/6 ${process.env.NODE_ENV == 'development' ? 'md:top-12' : 'md:top-2'}`}`
+                  : 'w-full min-w-60 p-2 md:w-1/6 md:p-0 print:hidden'
+              }
             >
-              <div className={'underline'}>Warteschlange</div>
-              <div className={'flex flex-col divide-y'}>
-                {cocktailQueue.map((cocktailQueueItem, index) => (
-                  <div key={`cocktailQueue-item-${index}`} className={'flex flex-row items-center justify-between pb-1 pt-1'}>
-                    <div>
-                      <strong>{cocktailQueueItem.count}x</strong> {cocktailQueueItem.cocktailRecipe.name}
-                    </div>
-                    <div className={'join '}>
-                      <button
-                        className={'btn btn-square btn-success join-item btn-sm'}
-                        disabled={!!submittingQueue.find((i) => i.cocktailId == cocktailQueueItem.cocktailRecipe.id)}
-                        onClick={() =>
-                          addCocktailToStatistic({
-                            workspaceId: router.query.workspaceId as string,
-                            cocktailId: cocktailQueueItem.cocktailRecipe.id,
-                            actionSource: 'QUEUE',
-                            setSubmitting: (submitting) => {
-                              if (submitting) {
-                                setSubmittingQueue([...submittingQueue, { cocktailId: cocktailQueueItem.cocktailRecipe.id, mode: 'ACCEPT' }]);
-                              } else {
-                                setSubmittingQueue(submittingQueue.filter((i) => i.cocktailId != cocktailQueueItem.cocktailRecipe.id));
-                              }
-                            },
-                            reload: () => {
-                              refreshQueue();
-                            },
-                          })
-                        }
-                      >
-                        <FaCheck />
-                      </button>
-                      <button
-                        className={'btn btn-square btn-error join-item btn-sm'}
-                        disabled={!!submittingQueue.find((i) => i.cocktailId == cocktailQueueItem.cocktailRecipe.id)}
-                        onClick={() =>
-                          removeCocktailFromQueue({
-                            workspaceId: router.query.workspaceId as string,
-                            cocktailId: cocktailQueueItem.cocktailRecipe.id,
-                            setSubmitting: (submitting) => {
-                              if (submitting) {
-                                setSubmittingQueue([...submittingQueue, { cocktailId: cocktailQueueItem.cocktailRecipe.id, mode: 'REJECT' }]);
-                              } else {
-                                setSubmittingQueue(submittingQueue.filter((i) => i.cocktailId != cocktailQueueItem.cocktailRecipe.id));
-                              }
-                            },
-                            reload: () => {
-                              refreshQueue();
-                            },
-                          })
-                        }
-                      >
-                        <FaTimes />
-                      </button>
-                    </div>
-                  </div>
-                ))}
+              <div
+                className={`${showQueueAsOverlay ? '' : ' md:max-h-custom md:fixed md:mr-2 md:overflow-y-auto'}  flex flex-col  rounded-xl bg-base-300 p-2 ${selectedCardId == 'search' || selectedCardId == undefined ? '' : 'md:bg-opacity-50'} print:hidden`}
+              >
+                <div className={'underline'}>Warteschlange (A-Z)</div>
+                <div className={'flex flex-col divide-y'}>
+                  {cocktailQueue
+                    .sort((a, b) => a.cocktailRecipe.name.localeCompare(b.cocktailRecipe.name))
+                    .map((cocktailQueueItem, index) => (
+                      <div key={`cocktailQueue-item-${index}`} className={'flex flex-row items-center justify-between gap-1 pb-1 pt-1'}>
+                        <div className={'flex flex-row items-center gap-1'}>
+                          <strong>{cocktailQueueItem.count}x</strong> {cocktailQueueItem.cocktailRecipe.name}
+                        </div>
+                        <div className={'join'}>
+                          <button
+                            className={'btn btn-square btn-success join-item btn-sm'}
+                            disabled={!!submittingQueue.find((i) => i.cocktailId == cocktailQueueItem.cocktailRecipe.id)}
+                            onClick={() =>
+                              addCocktailToStatistic({
+                                workspaceId: router.query.workspaceId as string,
+                                cocktailId: cocktailQueueItem.cocktailRecipe.id,
+                                actionSource: 'QUEUE',
+                                setSubmitting: (submitting) => {
+                                  if (submitting) {
+                                    setSubmittingQueue([...submittingQueue, { cocktailId: cocktailQueueItem.cocktailRecipe.id, mode: 'ACCEPT' }]);
+                                  } else {
+                                    setSubmittingQueue(submittingQueue.filter((i) => i.cocktailId != cocktailQueueItem.cocktailRecipe.id));
+                                  }
+                                },
+                                reload: () => {
+                                  refreshQueue();
+                                },
+                              })
+                            }
+                          >
+                            <FaCheck />
+                          </button>
+                          <button
+                            className={'btn btn-square btn-error join-item btn-sm'}
+                            disabled={!!submittingQueue.find((i) => i.cocktailId == cocktailQueueItem.cocktailRecipe.id)}
+                            onClick={() =>
+                              removeCocktailFromQueue({
+                                workspaceId: router.query.workspaceId as string,
+                                cocktailId: cocktailQueueItem.cocktailRecipe.id,
+                                setSubmitting: (submitting) => {
+                                  if (submitting) {
+                                    setSubmittingQueue([...submittingQueue, { cocktailId: cocktailQueueItem.cocktailRecipe.id, mode: 'REJECT' }]);
+                                  } else {
+                                    setSubmittingQueue(submittingQueue.filter((i) => i.cocktailId != cocktailQueueItem.cocktailRecipe.id));
+                                  }
+                                },
+                                reload: () => {
+                                  refreshQueue();
+                                },
+                              })
+                            }
+                          >
+                            <FaTimes />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                </div>
               </div>
             </div>
-          </div>
-        ) : (
-          <></>
-        )}
+          ) : (
+            <></>
+          )}
 
-        <div className={''}>
-          <div className={'flex flex-col space-y-2 overflow-y-auto rounded-xl p-0 md:p-2 print:overflow-clip print:p-0'}>
+          {showQueueAsOverlay ? (
+            <div className={'p-4 md:hidden'}>
+              <div key={`cocktailQueue-item-title`} className={'h-[24px]'}></div>
+              {cocktailQueue.map((cocktailQueueItem, index) => (
+                <div key={`cocktailQueue-item-${index}`} className={'h-[40px]'}></div>
+              ))}
+            </div>
+          ) : (
+            <></>
+          )}
+          <div className={`flex w-full flex-col space-y-2 overflow-y-auto rounded-xl`}>
             {selectedCardId == 'search' || selectedCardId == undefined ? (
               <SearchPage showImage={showImage} showTags={showTags} showStatisticActions={showStatisticActions} />
             ) : loadingGroups ? (
@@ -522,6 +540,21 @@ export default function OverviewPage() {
                       onClick={() => {
                         userContext.updateUserSetting(Setting.showStatisticActions, !showStatisticActions ? 'true' : 'false');
                         setShowStatisticActions(!showStatisticActions);
+                      }}
+                    />
+                  </label>
+                </div>
+                <div className="form-control">
+                  <label className="label">
+                    Warteschlange als Overlay
+                    <input
+                      type={'checkbox'}
+                      className={'toggle toggle-primary'}
+                      checked={showQueueAsOverlay}
+                      readOnly={true}
+                      onClick={() => {
+                        userContext.updateUserSetting(Setting.showQueueAsOverlay, !showQueueAsOverlay ? 'true' : 'false');
+                        setShowQueueAsOverlay(!showQueueAsOverlay);
                       }}
                     />
                   </label>
