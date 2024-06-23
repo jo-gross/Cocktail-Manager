@@ -1,3 +1,11 @@
+## [1.7.2](https://github.com/jo-gross/Cocktail-Manager/compare/v1.7.1...v1.7.2) (2024-06-23)
+
+
+### Bug Fixes
+
+* Alert container now above modals ([#314](https://github.com/jo-gross/Cocktail-Manager/issues/314)) ([9cdee75](https://github.com/jo-gross/Cocktail-Manager/commit/9cdee75cc8c7307a6326f22dab295f3f74466bf2))
+* Queue overlay layout fixes and made the overlay mode optional ([#312](https://github.com/jo-gross/Cocktail-Manager/issues/312)) ([ca5102d](https://github.com/jo-gross/Cocktail-Manager/commit/ca5102dd7fdb56598821d6ec826ed1aeb29be8b0))
+
 ## [1.7.1](https://github.com/jo-gross/Cocktail-Manager/compare/v1.7.0...v1.7.1) (2024-06-05)
 
 
