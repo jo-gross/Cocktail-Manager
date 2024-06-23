@@ -71,6 +71,10 @@ https://stackoverflow.com/a/74043438/12160393
   }
 }
 
+.modal {
+  @apply z-40;
+}
+
 :root {
   --button-height: 64px; /* h-12 */
   --button-margin: 32px; /* my-4 */
