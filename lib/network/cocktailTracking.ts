@@ -29,8 +29,8 @@ export async function addCocktailToStatistic({
       }),
     });
     if (response.ok) {
-      // alertService.success('Cocktail zur Statistik hinzugefügt');
       reload?.();
+      alertService.success('Cocktail als gemacht markiert');
     } else {
       const body = await response.json();
       console.error('addCocktailToStatistic', response);
@@ -69,6 +69,7 @@ export async function addCocktailToQueue({
     if (response.ok) {
       // alertService.success('Cocktail zur Warteschlange hinzugefügt');
       reload?.();
+      alertService.info('Cocktail zur Warteschlange hinzugefügt');
     } else {
       const body = await response.json();
       console.error('addCocktailToQueue', response);

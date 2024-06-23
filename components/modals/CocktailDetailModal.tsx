@@ -213,7 +213,7 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
               disabled={submittingQueue}
             >
               <MdPlaylistAdd />
-              Gemacht
+              Liste
               {submittingQueue ? <span className={'loading loading-spinner'}></span> : <></>}
             </button>
             <button
