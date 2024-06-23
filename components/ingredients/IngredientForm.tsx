@@ -15,6 +15,7 @@ import { IngredientWithImage } from '../../models/IngredientWithImage';
 import { Unit, UnitConversion } from '@prisma/client';
 import { UserContext } from '../../lib/context/UserContextProvider';
 import { fetchUnitConversions, fetchUnits } from '../../lib/network/units';
+import Image from 'next/image';
 
 interface IngredientFormProps {
   ingredient?: IngredientWithImage;
@@ -450,7 +451,9 @@ export function IngredientForm(props: IngredientFormProps) {
                 >
                   <FaTrashAlt />
                 </div>
-                <img className={'h-32 rounded-lg'} src={values.image} alt={'Cocktail Image'} />
+                <div className={'relative h-32 w-32 rounded-lg bg-white'}>
+                  <Image className={'w-fit rounded-lg'} src={values.image} layout={'fill'} objectFit={'contain'} alt={'Ingredient Image'} />
+                </div>
               </div>
             )}
           </div>

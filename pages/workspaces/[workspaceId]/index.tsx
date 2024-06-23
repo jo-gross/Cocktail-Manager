@@ -246,7 +246,9 @@ export default function OverviewPage() {
           <></>
         )}
 
-        <div className={`grid grid-cols-1 gap-2 p-2 ${showQueueAsOverlay ? '' : 'lg:grid-cols-6'} print:grid-cols-5 print:overflow-clip print:p-0`}>
+        <div
+          className={`grid grid-cols-1 gap-2 p-2 ${showQueueAsOverlay ? '' : showStatisticActions && cocktailQueue.length > 0 ? 'lg:grid-cols-6' : ''} print:grid-cols-5 print:overflow-clip print:p-0`}
+        >
           {showStatisticActions && cocktailQueue.length > 0 ? (
             <div
               className={
@@ -331,17 +333,6 @@ export default function OverviewPage() {
             <></>
           )}
 
-          {/*Empty spacer*/}
-          {/*{showQueueAsOverlay ? (*/}
-          {/*  <div className={'p-4 md:hidden'}>*/}
-          {/*    <div key={`cocktailQueue-item-title`} className={'h-[24px]'}></div>*/}
-          {/*    {cocktailQueue.map((cocktailQueueItem, index) => (*/}
-          {/*      <div key={`cocktailQueue-item-${index}`} className={'h-[40px]'}></div>*/}
-          {/*    ))}*/}
-          {/*  </div>*/}
-          {/*) : (*/}
-          {/*  <></>*/}
-          {/*)}*/}
           <div className={`order-1 col-span-5 flex w-full flex-col space-y-2 overflow-y-auto rounded-xl`}>
             {selectedCardId == 'search' || selectedCardId == undefined ? (
               <SearchPage showImage={showImage} showTags={showTags} showStatisticActions={showStatisticActions} />

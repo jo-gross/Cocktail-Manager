@@ -1,6 +1,6 @@
 import { BsSearch } from 'react-icons/bs';
 import { CompactCocktailRecipeInstruction } from '../cocktails/CompactCocktailRecipeInstruction';
-import React, { useCallback, useContext, useEffect, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { CocktailRecipeFull } from '../../models/CocktailRecipeFull';
 import { Loading } from '../Loading';
 import { ModalContext } from '../../lib/context/ModalContextProvider';
@@ -30,14 +30,14 @@ export function SearchModal(props: SearchModalProps) {
   const [cocktails, setCocktails] = useState<CocktailRecipeFull[]>([]);
   const [isLoading, setLoading] = useState(false);
 
-  let controller = new AbortController();
+  const controllerRef = useRef<AbortController>(new AbortController());
 
   const fetchCocktails = useCallback(
     (search: string) => {
       if (!workspaceId) return;
-      controller.abort(); // Vorherige Anfrage abbrechen
+      controllerRef.current.abort(); // Vorherige Anfrage abbrechen
       const newAbortController = new AbortController();
-      controller = newAbortController;
+      controllerRef.current = newAbortController;
 
       setLoading(true);
       fetch(

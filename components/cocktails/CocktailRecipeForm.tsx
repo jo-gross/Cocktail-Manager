@@ -32,6 +32,7 @@ import { fetchIngredients } from '../../lib/network/ingredients';
 import { fetchActions } from '../../lib/network/actions';
 import { fetchUnits } from '../../lib/network/units';
 import { calcCocktailTotalPrice } from '../../lib/CocktailRecipeCalculation';
+import Image from 'next/image';
 
 interface CocktailRecipeFormProps {
   cocktailRecipe?: CocktailRecipeFullWithImage;
@@ -134,7 +135,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
     if (props.cocktailRecipe?.glassId && glasses.length > 0) {
       formRef.current?.setFieldValue('glass', glasses.find((g) => g.id == props.cocktailRecipe?.glassId) ?? undefined);
     }
-  }, [glasses, props.cocktailRecipe?.glassId]);
+  }, [formRef, glasses, props.cocktailRecipe?.glassId]);
 
   useEffect(() => {
     // Otherwise not saved changes will be overwritten
@@ -162,7 +163,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
         }),
       );
     }
-  }, [garnishes, props.cocktailRecipe, props.cocktailRecipe?.garnishes]);
+  }, [formRef, garnishes, props.cocktailRecipe, props.cocktailRecipe?.garnishes]);
 
   useEffect(() => {
     // Otherwise not saved changes will be overwritten
@@ -199,7 +200,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
         }),
       );
     }
-  }, [ingredients, props.cocktailRecipe?.steps]);
+  }, [formRef, ingredients, props.cocktailRecipe?.steps]);
 
   useEffect(() => {
     fetchActions(workspaceId, setActions, setActionsLoading);
@@ -592,7 +593,9 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                         >
                           <FaTrashAlt />
                         </div>
-                        <img className={'h-32 rounded-lg'} src={values.image} alt={'Cocktail Image'} />
+                        <div className={'relative h-32 w-32 rounded-lg'}>
+                          <Image className={'w-fit rounded-lg'} src={values.image} layout={'fill'} objectFit={'contain'} alt={'Cocktail image'} />
+                        </div>
                       </div>
                     )}
                   </div>

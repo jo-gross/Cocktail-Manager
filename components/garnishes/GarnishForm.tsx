@@ -10,6 +10,7 @@ import { ModalContext } from '../../lib/context/ModalContextProvider';
 import _ from 'lodash';
 import { compressFile } from '../../lib/ImageCompressor';
 import { GarnishWithImage } from '../../models/GarnishWithImage';
+import Image from 'next/image';
 
 interface GarnishFormProps {
   garnish?: GarnishWithImage;
@@ -199,7 +200,9 @@ export function GarnishForm(props: GarnishFormProps) {
                 >
                   <FaTrashAlt />
                 </div>
-                <img className={'h-32 rounded-lg'} src={values.image} alt={'Cocktail Image'} />
+                <div className={'relative h-32 w-32 rounded-lg bg-white'}>
+                  <Image className={'w-fit rounded-lg'} src={values.image} layout={'fill'} objectFit={'contain'} alt={'Garnish image'} />
+                </div>
               </div>
             )}
           </div>

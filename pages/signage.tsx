@@ -1,9 +1,10 @@
 import { useRouter } from 'next/router';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { alertService } from '../lib/alertService';
 import { $Enums, Signage } from '@prisma/client';
 import { PageCenter } from '../components/layout/PageCenter';
 import { Loading } from '../components/Loading';
+import Image from 'next/image';
 import MonitorFormat = $Enums.MonitorFormat;
 
 export default function SignagePage() {
@@ -16,25 +17,29 @@ export default function SignagePage() {
   const [content, setContent] = useState<Signage>();
   const [imageLoading, setImageLoading] = useState<boolean>(false);
 
-  useEffect(() => {
+  const fetchData = useCallback(() => {
     if (!id) return;
-    if (!imageLoading) {
-      setImageLoading(true);
-      fetch(`/api/signage/${id}?format=${format}`)
-        .then((response) => response.json())
-        .then((data) => {
-          setContent(data.content);
-          setImageLoading(false);
-        })
-        .catch((error) => {
-          console.error('Signage', error);
-          alertService.error('Fehler beim Laden der Karte.');
-        })
-        .finally(() => {
-          setImageLoading(false);
-        });
-    }
+    setImageLoading(true);
+    fetch(`/api/signage/${id}?format=${format}`)
+      .then((response) => response.json())
+      .then((data) => {
+        setContent(data.content);
+        setImageLoading(false);
+      })
+      .catch((error) => {
+        console.error('Signage', error);
+        alertService.error('Fehler beim Laden der Karte.');
+      })
+      .finally(() => {
+        setImageLoading(false);
+      });
   }, [id, format]);
+
+  useEffect(() => {
+    if (!imageLoading && !content) {
+      fetchData();
+    }
+  }, [content, fetchData, imageLoading]);
 
   return (
     <div style={content?.backgroundColor ? { backgroundColor: content.backgroundColor } : {}} className={'h-screen w-screen'}>
@@ -42,7 +47,7 @@ export default function SignagePage() {
         {imageLoading ? (
           <Loading />
         ) : content?.content ? (
-          <img src={content?.content} alt={'Keine Karte gefunden.'} className={'h-full w-full object-contain'} />
+          <Image src={content.content} layout={'fill'} objectFit={'contain'} alt={'Horizontal monitor'} />
         ) : (
           <div>Keine Karte gefunden</div>
         )}

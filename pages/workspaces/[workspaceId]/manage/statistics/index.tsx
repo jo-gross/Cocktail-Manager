@@ -33,7 +33,6 @@ export default function StatisticsPage() {
 
   const refreshStatistics = useCallback(async () => {
     if (!workspaceId) return;
-    if (loading) return;
     try {
       setLoading(true);
       const response = await fetch(`/api/workspaces/${workspaceId}/statistics/cocktails?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`);
@@ -54,8 +53,8 @@ export default function StatisticsPage() {
   }, [startDate, endDate, workspaceId]);
 
   useEffect(() => {
-    refreshStatistics();
-  }, [startDate, endDate]);
+    refreshStatistics().then();
+  }, [startDate, endDate, refreshStatistics]);
 
   interface ProcessedData {
     labels: string[];

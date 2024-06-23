@@ -135,7 +135,7 @@ export default function WorkspacesPage() {
           </div>
         </div>
         {userContext.user && (
-          <div className={'col-span-3 grid grid-cols-1 gap-2 p-4 md:grid-cols-4 md:gap-4 md:p-12'}>
+          <div className={'col-span-3 grid grid-cols-1 gap-2 p-4 md:gap-4 md:p-12 lg:grid-cols-4'}>
             {workspacesLoading ? (
               <div className={'col-span-4'}>
                 <Loading />
@@ -157,9 +157,9 @@ export default function WorkspacesPage() {
                 ))}
                 <div className={'card h-40'}>
                   <div className={'card-body flex h-full flex-col items-center justify-center space-y-2'}>
-                    <div className={'join'}>
+                    <div className={'join w-full'}>
                       <input
-                        className={'input join-item input-bordered'}
+                        className={'input join-item input-bordered w-full'}
                         placeholder={'Neue Workspace erstellen'}
                         value={newWorkspaceName}
                         onChange={(event) => setNewWorkspaceName(event.target.value)}
@@ -173,9 +173,9 @@ export default function WorkspacesPage() {
                         <FaArrowRight />
                       </button>
                     </div>
-                    <div className={'join'}>
+                    <div className={'join w-full'}>
                       <input
-                        className={'input join-item input-bordered'}
+                        className={'input join-item input-bordered w-full'}
                         placeholder={'Mit Code beitreten'}
                         value={joinWorkspaceId}
                         onChange={(event) => setJoinWorkspaceId(event.target.value)}

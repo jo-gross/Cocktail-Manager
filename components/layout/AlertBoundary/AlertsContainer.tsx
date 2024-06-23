@@ -10,10 +10,6 @@ AlertsContainer.propTypes = {
   id: PropTypes.string,
 };
 
-AlertsContainer.defaultProps = {
-  id: 'default-alert',
-};
-
 interface AlertsContainerProps {
   id?: string;
   fade?: boolean;
@@ -21,8 +17,7 @@ interface AlertsContainerProps {
 
 const duration = 5000;
 
-function AlertsContainer(props: AlertsContainerProps) {
-  const { id } = props;
+function AlertsContainer({ id = 'default-alert', fade }: AlertsContainerProps) {
   const mounted = useRef(false);
   const router = useRouter();
 

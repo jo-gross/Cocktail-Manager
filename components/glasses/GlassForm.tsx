@@ -10,6 +10,7 @@ import { ModalContext } from '../../lib/context/ModalContextProvider';
 import _ from 'lodash';
 import { compressFile } from '../../lib/ImageCompressor';
 import { GlassWithImage } from '../../models/GlassWithImage';
+import Image from 'next/image';
 
 interface GlassFormProps {
   glass?: GlassWithImage;
@@ -204,7 +205,9 @@ export function GlassForm(props: GlassFormProps) {
                 >
                   <FaTrashAlt />
                 </div>
-                <img className={'max-h-20 rounded-lg'} src={values.image} alt={'Cocktail Image'} />
+                <div className={'relative h-32 w-32 rounded-lg bg-white'}>
+                  <Image className={'w-fit rounded-lg'} src={values.image} layout={'fill'} objectFit={'contain'} alt={'Glass Image'} />
+                </div>
               </div>
             )}
           </div>
