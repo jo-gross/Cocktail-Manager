@@ -1,3 +1,10 @@
+## [1.7.3](https://github.com/jo-gross/Cocktail-Manager/compare/v1.7.2...v1.7.3) (2024-06-23)
+
+
+### Bug Fixes
+
+* Layout adjustments and resolved build warnings ([67fdbd0](https://github.com/jo-gross/Cocktail-Manager/commit/67fdbd05d7aaef142025f2434c17ebac18632d90))
+
 ## [1.7.2](https://github.com/jo-gross/Cocktail-Manager/compare/v1.7.1...v1.7.2) (2024-06-23)
 
 
