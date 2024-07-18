@@ -24,7 +24,7 @@ export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeIns
       </div>
       {props.showPrice == true ? (
         <div className={'col-span-1 text-right text-xl font-bold'}>
-          {(props.specialPrice ?? props.cocktailRecipe.price) != undefined ? props.specialPrice ?? props.cocktailRecipe.price + ' €' : ''}
+          {(props.specialPrice ?? props.cocktailRecipe.price) != undefined ? (props.specialPrice ?? props.cocktailRecipe.price + ' €') : ''}
         </div>
       ) : (
         <></>

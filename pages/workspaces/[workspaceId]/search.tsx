@@ -15,7 +15,7 @@ export default function SearchPage(props: SearchPageProps) {
   return (
     <div className={'flex flex-col-reverse gap-2 md:flex-row'}>
       <div className={'card w-full flex-1'}>
-        <div className={'card-body '}>
+        <div className={'card-body'}>
           <SearchModal onCocktailSelectedObject={(cocktail) => setSelectedCocktail(cocktail)} selectionLabel={'Ansehen'} showRecipe={false} />
         </div>
       </div>
