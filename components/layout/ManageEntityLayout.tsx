@@ -30,9 +30,9 @@ export function ManageEntityLayout(props: ManageEntityLayoutProps) {
         <div className={'grid w-full grid-cols-3 items-center justify-center justify-items-center print:grid-cols-1'}>
           <div className={'col-span-1 justify-self-start print:hidden'}>
             <div
-              className={'btn btn-square btn-primary btn-sm md:btn-md '}
+              className={'btn btn-square btn-primary btn-sm md:btn-md'}
               onClick={() => {
-                props.unsavedChanges ?? false
+                (props.unsavedChanges ?? false)
                   ? modalContext.openModal(
                       <NotSavedConfirmation
                         isSaving={props.formRef?.current?.isSubmitting}

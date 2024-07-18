@@ -202,7 +202,7 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
           </div>
           <div className={'col-span-2 flex w-full flex-row gap-2'}>
             <button
-              className={'btn btn-outline w-full flex-1 '}
+              className={'btn btn-outline w-full flex-1'}
               onClick={() =>
                 addCocktailToQueue({
                   workspaceId: router.query.workspaceId as string,

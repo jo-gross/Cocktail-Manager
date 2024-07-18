@@ -740,7 +740,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                           key={`form-recipe-step-${step.id}-${indexStep}`}
                           className={'flex w-full flex-col justify-between space-y-2 rounded-xl border border-neutral p-4'}
                         >
-                          <div className={'grid grid-cols-2 gap-2 md:grid-cols-3 md:gap-4 '}>
+                          <div className={'grid grid-cols-2 gap-2 md:grid-cols-3 md:gap-4'}>
                             <div className={'font-bold'}>Schritt {indexStep + 1}</div>
                             <div className={'form-control'}>
                               <select
@@ -883,15 +883,13 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                       <div className={'grid w-full grid-cols-2 gap-1 md:grid-cols-3'}>
                                         <div key={`form-recipe-step${step.id}-ingredient-${ingredient.id}`} className={'join col-span-2 flex w-full flex-row'}>
                                           <input
-                                            className={`input join-item input-bordered w-full cursor-pointer 
-                                                ${
-                                                  ((errors.steps as StepError[])?.[indexStep] as any)?.ingredients?.[indexIngredient]?.ingredientId &&
-                                                  ' input-error'
-                                                }`}
+                                            className={`input join-item input-bordered w-full cursor-pointer ${
+                                              ((errors.steps as StepError[])?.[indexStep] as any)?.ingredients?.[indexIngredient]?.ingredientId && 'input-error'
+                                            }`}
                                             value={
                                               ingredientsLoading
                                                 ? 'Lade...'
-                                                : values.steps[indexStep].ingredients?.[indexIngredient].ingredient?.name ?? 'Wähle eine Zutat aus...'
+                                                : (values.steps[indexStep].ingredients?.[indexIngredient].ingredient?.name ?? 'Wähle eine Zutat aus...')
                                             }
                                             readOnly={true}
                                             onClick={() => {
@@ -1117,7 +1115,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                     (touched.garnishes as any)?.[indexGarnish]?.garnishId &&
                                     'input-error'
                                   }`}
-                                  value={garnishesLoading ? 'Lade...' : values.garnishes[indexGarnish].garnish?.name ?? 'Wähle eine Garnitur aus...'}
+                                  value={garnishesLoading ? 'Lade...' : (values.garnishes[indexGarnish].garnish?.name ?? 'Wähle eine Garnitur aus...')}
                                   readOnly={true}
                                   onClick={() => {
                                     openGarnishSelectModal(setFieldValue, indexGarnish);

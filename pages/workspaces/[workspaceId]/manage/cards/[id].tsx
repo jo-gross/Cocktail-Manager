@@ -273,7 +273,7 @@ function EditCocktailCard() {
                                 value={values.groups[groupIndex].name}
                               />
                             </div>
-                            <div className={' form-control flex-1'}>
+                            <div className={'form-control flex-1'}>
                               <label className={'label'}>
                                 <div className={'label-text'}>Gruppen Preis</div>
                                 <div className={'label-text-alt text-error'}>

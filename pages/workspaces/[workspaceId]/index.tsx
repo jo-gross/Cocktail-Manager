@@ -356,13 +356,7 @@ export default function OverviewPage() {
                     </div>
                     <div className={'collapse-content pl-0 pr-0'}>
                       <div
-                        className={`grid 
-                      ${lessItems ? '2xl:grid-cols-5 ' : '2xl:grid-cols-6 '}
-                      ${lessItems ? 'xl:grid-cols-3 ' : 'xl:grid-cols-4 '}
-                      ${lessItems ? 'md:grid-cols-2 ' : 'md:grid-cols-3 '}
-                      ${lessItems ? 'xs:grid-cols-1 ' : ' xs:grid-cols-2 '}
-                       grid-cols-1
-                       gap-2 p-1`}
+                        className={`grid ${lessItems ? '2xl:grid-cols-5' : '2xl:grid-cols-6'} ${lessItems ? 'xl:grid-cols-3' : 'xl:grid-cols-4'} ${lessItems ? 'md:grid-cols-2' : 'md:grid-cols-3'} ${lessItems ? 'xs:grid-cols-1' : 'xs:grid-cols-2'} grid-cols-1 gap-2 p-1`}
                       >
                         {group.items.length == 0 ? (
                           <div className={'col-span-full text-center'}>Keine Einträge vorhanden</div>
@@ -577,7 +571,7 @@ export default function OverviewPage() {
             )}
           </>
           <Link href={`/workspaces/${workspaceId}/manage`}>
-            <div className={' btn btn-square btn-primary rounded-xl md:btn-lg'}>
+            <div className={'btn btn-square btn-primary rounded-xl md:btn-lg'}>
               <BsFillGearFill />
             </div>
           </Link>

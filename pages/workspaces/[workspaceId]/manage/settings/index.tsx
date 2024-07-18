@@ -700,7 +700,7 @@ export default function WorkspaceSettingPage() {
                                 </button>
                                 <button
                                   disabled={deleting[action.id] ?? false}
-                                  className={'btn-red btn btn-outline btn-sm '}
+                                  className={'btn-red btn btn-outline btn-sm'}
                                   onClick={() =>
                                     modalContext.openModal(
                                       <DeleteConfirmationModal
@@ -711,7 +711,7 @@ export default function WorkspaceSettingPage() {
                                     )
                                   }
                                 >
-                                  {deleting[action.id] ?? false ? <span className={'loading loading-spinner'} /> : <></>}
+                                  {(deleting[action.id] ?? false) ? <span className={'loading loading-spinner'} /> : <></>}
                                   <FaTrashAlt />
                                 </button>
                               </td>
@@ -820,7 +820,7 @@ export default function WorkspaceSettingPage() {
                                 </button>
                                 <button
                                   disabled={deleting[unit.id] ?? false}
-                                  className={'btn-red btn btn-outline btn-sm '}
+                                  className={'btn-red btn btn-outline btn-sm'}
                                   onClick={() =>
                                     modalContext.openModal(
                                       <DeleteConfirmationModal
@@ -831,7 +831,7 @@ export default function WorkspaceSettingPage() {
                                     )
                                   }
                                 >
-                                  {deleting[unit.id] ?? false ? <span className={'loading loading-spinner'} /> : <></>}
+                                  {(deleting[unit.id] ?? false) ? <span className={'loading loading-spinner'} /> : <></>}
                                   <FaTrashAlt />
                                 </button>
                               </td>
@@ -914,7 +914,7 @@ export default function WorkspaceSettingPage() {
                                     </button>
                                     <button
                                       disabled={deleting[conversion.id] ?? false}
-                                      className={'btn-red btn btn-outline btn-sm '}
+                                      className={'btn-red btn btn-outline btn-sm'}
                                       onClick={() =>
                                         modalContext.openModal(
                                           <DeleteConfirmationModal
@@ -929,7 +929,7 @@ export default function WorkspaceSettingPage() {
                                         )
                                       }
                                     >
-                                      {deleting[conversion.id] ?? false ? <span className={'loading loading-spinner'} /> : <></>}
+                                      {(deleting[conversion.id] ?? false) ? <span className={'loading loading-spinner'} /> : <></>}
                                       <FaTrashAlt />
                                     </button>
                                   </td>
