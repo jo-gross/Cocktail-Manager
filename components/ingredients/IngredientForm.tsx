@@ -502,6 +502,7 @@ export function IngredientForm(props: IngredientFormProps) {
                           if (data.volume != 0) {
                             setFieldValue('volume', data.volume);
                           }
+                          setFieldValue('selectedUnit', allUnits.find((unit) => unit.name == 'CL')?.id ?? '');
                         });
                       } else {
                         alertService.warn('Es konnten keine Daten über die URL geladen werden.');
