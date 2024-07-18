@@ -30,7 +30,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       const image = imageResponse != undefined ? 'data:image/jpg;base64,' + Buffer.from(await imageResponse.arrayBuffer()).toString('base64') : undefined;
       const name = soup.find('h1', 'product--title')?.text?.replace('\n', '')?.trim() ?? '';
       const price = soup.find('meta', { itemprop: 'price' })?.attrs?.content ?? 0;
-      const volume = (soup.find('div', ['product--price', 'price--unit'])?.contents?.[1]?.['_text']?.split(' ')?.[0] ?? 0) * 1000;
+      const volume = (soup.find('div', ['product--price', 'price--unit'])?.contents?.[1]?.['_text']?.split(' ')?.[0] ?? 0) * 100;
 
       const result: ResponseBody = {
         name: name,
