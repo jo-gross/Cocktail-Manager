@@ -1,3 +1,10 @@
+## [1.7.4](https://github.com/jo-gross/Cocktail-Manager/compare/v1.7.3...v1.7.4) (2024-07-19)
+
+
+### Bug Fixes
+
+* Wrong unit conversion after conalco import ([#336](https://github.com/jo-gross/Cocktail-Manager/issues/336)) ([d9a44f2](https://github.com/jo-gross/Cocktail-Manager/commit/d9a44f27d325742d0d8682433070d65f7ac52d48))
+
 ## [1.7.3](https://github.com/jo-gross/Cocktail-Manager/compare/v1.7.2...v1.7.3) (2024-06-23)
 
 
