@@ -10,12 +10,15 @@ import { FormikProps } from 'formik';
 import { CocktailRecipeFullWithImage } from '../../../../../models/CocktailRecipeFullWithImage';
 import { PageCenter } from '../../../../../components/layout/PageCenter';
 import { UserContext } from '../../../../../lib/context/UserContextProvider';
+import { ModalContext } from '../../../../../lib/context/ModalContextProvider';
+import { NotSavedArchiveConfirmation } from '../../../../../components/modals/NotSavedArchiveConfirmation';
 
 function EditCocktailRecipe() {
   const router = useRouter();
   const { id, workspaceId } = router.query;
 
   const userContext = useContext(UserContext);
+  const modalContext = useContext(ModalContext);
 
   const [cocktailRecipe, setCocktailRecipe] = useState<CocktailRecipeFullWithImage | undefined>(undefined);
   const [loading, setLoading] = useState(true);
@@ -66,25 +69,33 @@ function EditCocktailRecipe() {
               type={'button'}
               className={'btn btn-outline btn-sm'}
               onClick={async () => {
-                const response = await fetch(
-                  `/api/workspaces/${workspaceId}/cocktails/${cocktailRecipe?.id}/${cocktailRecipe?.isArchived ? 'unarchive' : 'archive'}`,
-                  {
-                    method: 'PUT',
-                  },
-                );
-
-                const body = await response.json();
-                if (response.ok) {
-                  router
-                    .replace(`/workspaces/${workspaceId}/manage/cocktails`)
-                    .then(() => alertService.success(`Cocktail ${cocktailRecipe?.isArchived ? 'entarchiviert' : 'archiviert'}`));
-                } else {
-                  console.error('CocktailId -> (un)archive', response);
-                  alertService.error(
-                    body.message ?? `Fehler beim ${cocktailRecipe?.isArchived ? 'Entarchivieren' : 'Archivieren'} der Karte`,
-                    response.status,
-                    response.statusText,
+                const archiveFunction = async () => {
+                  const response = await fetch(
+                    `/api/workspaces/${workspaceId}/cocktails/${cocktailRecipe?.id}/${cocktailRecipe?.isArchived ? 'unarchive' : 'archive'}`,
+                    {
+                      method: 'PUT',
+                    },
                   );
+
+                  const body = await response.json();
+                  if (response.ok) {
+                    router
+                      .replace(`/workspaces/${workspaceId}/manage/cocktails`)
+                      .then(() => alertService.success(`Cocktail ${cocktailRecipe?.isArchived ? 'entarchiviert' : 'archiviert'}`));
+                  } else {
+                    console.error('CocktailId -> (un)archive', response);
+                    alertService.error(
+                      body.message ?? `Fehler beim ${cocktailRecipe?.isArchived ? 'Entarchivieren' : 'Archivieren'} der Karte`,
+                      response.status,
+                      response.statusText,
+                    );
+                  }
+                };
+
+                if (unsavedChanges) {
+                  modalContext.openModal(<NotSavedArchiveConfirmation archive={!cocktailRecipe.isArchived} onArchive={archiveFunction} />);
+                } else {
+                  await archiveFunction();
                 }
               }}
             >

@@ -32,6 +32,7 @@ import { fetchActions } from '../../lib/network/actions';
 import { fetchUnits } from '../../lib/network/units';
 import { calcCocktailTotalPrice } from '../../lib/CocktailRecipeCalculation';
 import Image from 'next/image';
+import DeepDiff from 'deep-diff';
 
 interface CocktailRecipeFormProps {
   cocktailRecipe?: CocktailRecipeFullWithImage;
@@ -232,8 +233,9 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
       innerRef={formRef}
       initialValues={initValue}
       validate={(values) => {
-        values = _.omit(values, ['image']);
-        const reducedCocktailRecipe = _.omit(props.cocktailRecipe, ['CocktailRecipeImage']);
+        values = _.omit(values, ['image', 'isArchived']);
+
+        const reducedCocktailRecipe = _.omit(props.cocktailRecipe, ['CocktailRecipeImage', 'isArchived', '_count']);
         if (reducedCocktailRecipe.description == null) {
           reducedCocktailRecipe.description = '';
         }
@@ -247,13 +249,17 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
           values.steps = orderBy(values.steps, ['stepNumber'], ['asc']);
           (values.steps as any[]).forEach((step) => {
             step.ingredients = orderBy(step.ingredients, ['ingredientNumber'], ['asc']);
+
+            step.ingredients = _.map(step.ingredients, (obj) => {
+              return _.assign({}, obj, { ingredient: _.omit(obj.ingredient, 'IngredientVolume') });
+            });
           });
         }
         props.setUnsavedChanges?.(!_.isEqual(reducedCocktailRecipe, values));
 
-        // console.debug('CocktailRecipe', reducedCocktailRecipe);
-        // console.debug('Values', values);
-        // console.debug('Difference', DeepDiff.diff(reducedCocktailRecipe, values));
+        console.debug('CocktailRecipe', reducedCocktailRecipe);
+        console.debug('Values', values);
+        console.debug('Difference', DeepDiff.diff(reducedCocktailRecipe, values));
         // console.debug('Differs', !_.isEqual(reducedCocktailRecipe, values));
 
         const errors: any = {};
