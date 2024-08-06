@@ -23,7 +23,6 @@ import { IngredientForm } from '../ingredients/IngredientForm';
 import { GlassForm } from '../glasses/GlassForm';
 import { CocktailRecipeFullWithImage } from '../../models/CocktailRecipeFullWithImage';
 import { UserContext } from '../../lib/context/UserContextProvider';
-import DeepDiff from 'deep-diff';
 import { GlassModel } from '../../models/GlassModel';
 import { IngredientModel } from '../../models/IngredientModel';
 import { fetchGlasses } from '../../lib/network/glasses';
@@ -225,6 +224,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
     garnishes: props.cocktailRecipe?.garnishes ?? [],
     steps: initSteps,
     workspaceId: workspaceId!,
+    isArchived: props.cocktailRecipe?.isArchived ?? false,
   };
 
   return (
@@ -253,7 +253,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
 
         // console.debug('CocktailRecipe', reducedCocktailRecipe);
         // console.debug('Values', values);
-        console.debug('Difference', DeepDiff.diff(reducedCocktailRecipe, values));
+        // console.debug('Difference', DeepDiff.diff(reducedCocktailRecipe, values));
         // console.debug('Differs', !_.isEqual(reducedCocktailRecipe, values));
 
         const errors: any = {};
@@ -619,6 +619,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                       price: !values.price && values.price == '' ? null : values.price,
                       glassWithIce: values.glassWithIce,
                       glassId: values.glassID ?? null,
+                      isArchived: false,
                       glass: glasses.find((glass) => glass.id === values.glassId) ?? null,
                       garnishes: values.garnishes,
                       steps: values.steps,
