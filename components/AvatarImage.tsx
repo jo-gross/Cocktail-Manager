@@ -26,7 +26,7 @@ export default function AvatarImage(props: AvatarImageProps) {
           height={300}
         />
       </div>
-      <div className={'z-100 absolute h-full w-full'}>
+      <div className={'z-100 absolute flex h-full w-full items-center justify-center'}>
         <Image
           className={'h-full w-min object-contain'}
           src={props.src}
