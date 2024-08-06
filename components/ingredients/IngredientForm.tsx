@@ -161,7 +161,7 @@ export function IngredientForm(props: IngredientFormProps) {
       {({ values, setFieldValue, errors, setFieldError, touched, handleChange, handleBlur, handleSubmit, isSubmitting }) => (
         <form onSubmit={handleSubmit} className={'flex flex-col gap-2 md:gap-4'}>
           <div className={'form-control'}>
-            <label className={'label'}>
+            <label className={'label'} htmlFor={'name'}>
               <span className={'label-text'}>Name</span>
               <span className={'label-text-alt space-x-2 text-error'}>
                 <span>
@@ -171,7 +171,9 @@ export function IngredientForm(props: IngredientFormProps) {
               </span>
             </label>
             <input
+              id={'name'}
               type={'text'}
+              autoComplete={'off'}
               className={`input input-bordered ${errors.name && touched.name && 'input-error'}`}
               onChange={handleChange}
               onBlur={handleBlur}
@@ -180,7 +182,7 @@ export function IngredientForm(props: IngredientFormProps) {
             />
           </div>
           <div className={'form-control'}>
-            <label className={'label'}>
+            <label className={'label'} htmlFor={'shortName'}>
               <span className={'label-text'}>Abkürzung</span>
               <span className={'label-text-alt space-x-2 text-error'}>
                 <span>
@@ -189,6 +191,7 @@ export function IngredientForm(props: IngredientFormProps) {
               </span>
             </label>
             <input
+              id={'shortName'}
               type={'text'}
               className={`input input-bordered ${errors.shortName && touched.shortName && 'input-error'}`}
               onChange={handleChange}
@@ -199,7 +202,7 @@ export function IngredientForm(props: IngredientFormProps) {
           </div>
 
           <div className={'form-control'}>
-            <label className={'label'}>
+            <label className={'label'} htmlFor={'description'}>
               <span className={'label-text'}>Allg. Beschreibung</span>
               <span className={'label-text-alt space-x-2 text-error'}>
                 <span>
@@ -208,6 +211,7 @@ export function IngredientForm(props: IngredientFormProps) {
               </span>
             </label>
             <textarea
+              id={'description'}
               className={`textarea textarea-bordered ${errors.description && touched.description && 'textarea-error'} w-full`}
               value={values.description}
               onChange={handleChange}
@@ -217,7 +221,7 @@ export function IngredientForm(props: IngredientFormProps) {
           </div>
 
           <div className={'form-control'}>
-            <label className={'label'}>
+            <label className={'label'} htmlFor={'notes'}>
               <span className={'label-text'}>Notizen</span>
               <span className={'label-text-alt space-x-2 text-error'}>
                 <span>
@@ -226,6 +230,7 @@ export function IngredientForm(props: IngredientFormProps) {
               </span>
             </label>
             <textarea
+              id={'notes'}
               className={`textarea textarea-bordered ${errors.notes && touched.notes && 'textarea-error'} w-full`}
               value={values.notes}
               onChange={handleChange}
@@ -235,7 +240,7 @@ export function IngredientForm(props: IngredientFormProps) {
           </div>
 
           <div className={'form-control'}>
-            <label className={'label'}>
+            <label className={'label'} htmlFor={'price'}>
               <span className={'label-text'}>Preis</span>
               <span className={'label-text-alt space-x-2 text-error'}>
                 <span>
@@ -245,6 +250,7 @@ export function IngredientForm(props: IngredientFormProps) {
             </label>
             <div className={'join'}>
               <input
+                id={'price'}
                 type={'number'}
                 className={`input join-item input-bordered w-full ${errors.price && touched.price && 'input-error'}`}
                 value={values.price}
@@ -282,15 +288,15 @@ export function IngredientForm(props: IngredientFormProps) {
                             {userContext.getTranslation(allUnits.find((availableUnit) => availableUnit.id == unit.unitId)?.name ?? 'N/A', 'de')}
                           </td>
                           <td className={'flex flex-row items-center justify-center'}>
-                            <button
+                            <div
                               className={'btn btn-square btn-error btn-sm'}
-                              type={'button'}
+                              // type={'button'}
                               onClick={() => {
                                 removeUnit(index);
                               }}
                             >
                               <FaTrashAlt />
-                            </button>
+                            </div>
                           </td>
                         </tr>
                       ))
@@ -298,7 +304,7 @@ export function IngredientForm(props: IngredientFormProps) {
                   </tbody>
                 </table>
                 <div className={'form-control'}>
-                  <label className={'label'}>
+                  <label className={'label'} htmlFor={'anotherVolume'}>
                     <span className={'label-text'}>Weitere Menge hinzufügen</span>
                     <span className={'label-text-alt space-x-2 text-error'}>
                       <span>
@@ -309,6 +315,7 @@ export function IngredientForm(props: IngredientFormProps) {
                   </label>
                   <div className={'join'}>
                     <input
+                      id={'anotherVolume'}
                       type={'number'}
                       className={`input input-sm join-item input-bordered w-full ${errors.volume && touched.volume && 'input-error'}`}
                       value={values.volume}
@@ -395,12 +402,12 @@ export function IngredientForm(props: IngredientFormProps) {
           </FieldArray>
 
           <div>
-            <label className={'label'}>
+            <div className={'label'}>
               <span className={'label-text'}>Tags</span>
               <span className={'label-text-alt text-error'}>
                 <>{errors.tags && touched.tags && errors.tags}</>
               </span>
-            </label>
+            </div>
             <TagsInput
               value={values.tags}
               onChange={(tags) =>
@@ -416,9 +423,9 @@ export function IngredientForm(props: IngredientFormProps) {
           </div>
           <div className={'col-span-2'}>
             {values.image != undefined ? (
-              <label className={'label'}>
+              <div className={'label'}>
                 <span className={'label-text'}>Zutaten Bild</span>
-              </label>
+              </div>
             ) : (
               <></>
             )}
@@ -458,7 +465,7 @@ export function IngredientForm(props: IngredientFormProps) {
             )}
           </div>
           <div className={'form-control'}>
-            <label className={'label'}>
+            <label className={'label'} htmlFor={'link'}>
               <span className={'label-text'}>Link</span>
               <span className={'label-text-alt space-x-2 text-error'}>
                 <span>
@@ -468,6 +475,7 @@ export function IngredientForm(props: IngredientFormProps) {
             </label>
             <div className={'join'}>
               <input
+                id={'link'}
                 type={'text'}
                 placeholder={''}
                 className={`input join-item input-bordered w-full ${errors.link && touched.link && 'input-error'}`}

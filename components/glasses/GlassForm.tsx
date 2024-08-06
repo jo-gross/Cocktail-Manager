@@ -108,7 +108,7 @@ export function GlassForm(props: GlassFormProps) {
       {({ values, setFieldValue, errors, touched, handleChange, handleBlur, handleSubmit, isSubmitting }) => (
         <form onSubmit={handleSubmit} className={'flex flex-col gap-2 md:gap-4'}>
           <div className={'form-control'}>
-            <label className={'label'}>
+            <label className={'label'} htmlFor={'name'}>
               <span className={'label-text'}>Name</span>
               <span className={'label-text-alt space-x-2 text-error'}>
                 <span>
@@ -118,6 +118,8 @@ export function GlassForm(props: GlassFormProps) {
               </span>
             </label>
             <input
+              id={'name'}
+              autoComplete={'off'}
               type={'text'}
               placeholder={'Name'}
               className={`input input-bordered w-full ${errors.name && touched.name && 'input-error'}`}
@@ -129,7 +131,7 @@ export function GlassForm(props: GlassFormProps) {
           </div>
 
           <div className={'form-control'}>
-            <label className={'label'}>
+            <label className={'label'} htmlFor={'deposit'}>
               <span className={'label-text'}>Pfand</span>
               <span className={'label-text-alt space-x-2 text-error'}>
                 <span>
@@ -140,6 +142,7 @@ export function GlassForm(props: GlassFormProps) {
             </label>
             <div className={'join'}>
               <input
+                id={'deposit'}
                 type={'number'}
                 placeholder={'Deposit'}
                 className={`input join-item input-bordered w-full ${errors.deposit && touched.deposit && 'input-error'}}`}
@@ -152,11 +155,12 @@ export function GlassForm(props: GlassFormProps) {
             </div>
           </div>
           <div className={'form-control'}>
-            <label className={'label'}>
+            <label className={'label'} htmlFor={'volume'}>
               <span className={'label-text'}>Volumen</span>
             </label>
             <div className={'join'}>
               <input
+                id={'volume'}
                 type={'number'}
                 placeholder={'38cl'}
                 className={'input join-item input-bordered w-full'}
@@ -170,9 +174,9 @@ export function GlassForm(props: GlassFormProps) {
           </div>
           <div className={'form-control'}>
             {values.image != undefined ? (
-              <label className={'label'}>
+              <div className={'label'}>
                 <span className={'label-text'}>Vorschau Bild</span>
-              </label>
+              </div>
             ) : (
               <></>
             )}

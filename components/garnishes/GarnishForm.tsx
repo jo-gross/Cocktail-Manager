@@ -105,7 +105,7 @@ export function GarnishForm(props: GarnishFormProps) {
       {({ values, setFieldValue, errors, touched, handleChange, handleBlur, handleSubmit, isSubmitting }) => (
         <form onSubmit={handleSubmit} className={'flex flex-col gap-2 md:gap-4'}>
           <div className={'form-control'}>
-            <label className={'label'}>
+            <label className={'label'} htmlFor={'name'}>
               <span className={'label-text'}>Name</span>
               <span className={'label-text-alt space-x-2 text-error'}>
                 <span>
@@ -115,7 +115,9 @@ export function GarnishForm(props: GarnishFormProps) {
               </span>
             </label>
             <input
+              id={'name'}
               type={'text'}
+              autoComplete={'off'}
               placeholder={'Name'}
               className={`input input-bordered ${errors.name && touched.name && 'input-error'} w-full`}
               onChange={handleChange}
@@ -126,7 +128,7 @@ export function GarnishForm(props: GarnishFormProps) {
           </div>
 
           <div className={'form-control'}>
-            <label className={'label'}>
+            <label className={'label'} htmlFor={'description'}>
               <span className={'label-text'}>Zubereitungsbeschreibung</span>
               <span className={'label-text-alt space-x-2 text-error'}>
                 <span>
@@ -135,6 +137,7 @@ export function GarnishForm(props: GarnishFormProps) {
               </span>
             </label>
             <textarea
+              id={'description'}
               className={`textarea textarea-bordered ${errors.description && touched.description && 'textarea-error'} w-full`}
               value={values.description}
               onChange={handleChange}
@@ -144,7 +147,7 @@ export function GarnishForm(props: GarnishFormProps) {
           </div>
 
           <div className={'form-control'}>
-            <label className={'label'}>
+            <label className={'label'} htmlFor={'price'}>
               <span className={'label-text'}>Preis</span>
               <span className={'label-text-alt space-x-2 text-error'}>
                 <>{errors.price && touched.price && errors.price}</>
@@ -152,6 +155,7 @@ export function GarnishForm(props: GarnishFormProps) {
             </label>
             <div className={'join'}>
               <input
+                id={'price'}
                 type={'number'}
                 placeholder={'Preis'}
                 className={`input join-item input-bordered ${errors.price && touched.price && 'input-error'} w-full`}
@@ -165,9 +169,9 @@ export function GarnishForm(props: GarnishFormProps) {
           </div>
           <div className={'col-span-2'}>
             {values.image != undefined ? (
-              <label className={'label'}>
+              <div className={'label'}>
                 <span className={'label-text'}>Zutaten Bild</span>
-              </label>
+              </div>
             ) : (
               <></>
             )}

@@ -25,17 +25,23 @@ export function GlobalModal(props: GlobalModalProps) {
   return (
     <div>
       {props.children}
-      <input type="checkbox" id="globalModal" className="modal-toggle" />
-      <label htmlFor="globalModal" className="modal cursor-pointer">
-        <label className={`modal-box relative w-full p-1.5 md:max-w-2xl md:p-4`} htmlFor="">
-          <label htmlFor="globalModal" className="btn btn-circle btn-outline btn-sm absolute right-2 top-2">
-            <FaTimes />
-          </label>
-          <label className={''} htmlFor="">
-            {modalContext.content}
-          </label>
-        </label>
-      </label>
+      <dialog id="globalModal" className="modal">
+        <div className={`modal-box relative w-full p-1.5 md:max-w-2xl md:p-4`}>
+          <form method="dialog">
+            <div onClick={() => modalContext.closeModal()} className="btn btn-circle btn-outline btn-sm absolute right-2 top-2">
+              <FaTimes />
+            </div>
+          </form>
+          {modalContext.content.map((content, index) => (
+            <div key={index} className={index == modalContext.content.length - 1 ? '' : 'hidden'}>
+              {content}
+            </div>
+          ))}
+        </div>
+        <form method="dialog" className="modal-backdrop">
+          <div onClick={() => modalContext.closeModal()}>close</div>
+        </form>
+      </dialog>
     </div>
   );
 }
