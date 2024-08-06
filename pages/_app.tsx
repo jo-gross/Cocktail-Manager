@@ -12,6 +12,8 @@ import ThemeBoundary from '../components/layout/ThemeBoundary';
 const App = ({ Component, pageProps: { session, ...pageProps } }: AppProps) => {
   const [modalContent, setModalContent] = useState(<></>);
 
+  const [modalContentStack, setModalContentStack] = useState<JSX.Element[]>([]);
+
   const [, forceUpdate] = useReducer((x) => x + 1, 0);
 
   const [theme, setTheme] = useState<'dark' | 'auto' | 'light'>('auto');
@@ -23,16 +25,24 @@ const App = ({ Component, pageProps: { session, ...pageProps } }: AppProps) => {
           value={{
             content: modalContent,
             openModal: async (content) => {
-              if ((document.getElementById('globalModal') as any)?.checked == false) {
-                (document.querySelector('#globalModal') as any).checked = true;
+              if ((document.getElementById('globalModal') as HTMLDialogElement)?.open == false) {
+                (document.getElementById('globalModal') as HTMLDialogElement).showModal();
               }
+              if (modalContent != <></>) {
+                setModalContentStack([...modalContentStack, modalContent]);
+              }
+
               // The await has the effect in chrome, that the modal was not replaces otherwise
               await setModalContent(<></>);
               setModalContent(content);
             },
             async closeModal() {
-              if ((document.getElementById('globalModal') as HTMLInputElement | null)?.checked == true) {
-                (document.querySelector('#globalModal') as any).checked = false;
+              if (modalContentStack.length > 0) {
+                setModalContent(modalContentStack.pop() as JSX.Element);
+              } else {
+                if ((document.getElementById('globalModal') as HTMLDialogElement | null)?.open == true) {
+                  (document.getElementById('globalModal') as HTMLDialogElement).close();
+                }
               }
               forceUpdate();
             },
