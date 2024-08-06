@@ -28,14 +28,18 @@ export function GlobalModal(props: GlobalModalProps) {
       <dialog id="globalModal" className="modal">
         <div className={`modal-box relative w-full p-1.5 md:max-w-2xl md:p-4`}>
           <form method="dialog">
-            <button className="btn btn-circle btn-outline btn-sm absolute right-2 top-2">
+            <div onClick={() => modalContext.closeModal()} className="btn btn-circle btn-outline btn-sm absolute right-2 top-2">
               <FaTimes />
-            </button>
+            </div>
           </form>
-          {modalContext.content}
+          {modalContext.content.map((content, index) => (
+            <div key={index} className={index == modalContext.content.length - 1 ? '' : 'hidden'}>
+              {content}
+            </div>
+          ))}
         </div>
         <form method="dialog" className="modal-backdrop">
-          <button>close</button>
+          <div onClick={() => modalContext.closeModal()}>close</div>
         </form>
       </dialog>
     </div>
