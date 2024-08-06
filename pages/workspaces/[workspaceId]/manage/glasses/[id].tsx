@@ -9,6 +9,7 @@ import { withPagePermission } from '../../../../../middleware/ui/withPagePermiss
 import { FormikProps } from 'formik';
 import { SingleFormLayout } from '../../../../../components/layout/SingleFormLayout';
 import { GlassWithImage } from '../../../../../models/GlassWithImage';
+import { PageCenter } from '../../../../../components/layout/PageCenter';
 
 function EditGlassPage() {
   const router = useRouter();
@@ -44,7 +45,9 @@ function EditGlassPage() {
   }, [id, workspaceId]);
 
   return loading ? (
-    <Loading />
+    <PageCenter>
+      <Loading />
+    </PageCenter>
   ) : (
     <ManageEntityLayout backLink={`/workspaces/${workspaceId}/manage/glasses`} title={'Gläser'} unsavedChanges={unsavedChanges} formRef={formRef}>
       <SingleFormLayout title={'Glas erfassen'}>

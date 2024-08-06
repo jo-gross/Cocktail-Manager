@@ -9,6 +9,7 @@ import { withPagePermission } from '../../../../../middleware/ui/withPagePermiss
 import { FormikProps } from 'formik';
 import { SingleFormLayout } from '../../../../../components/layout/SingleFormLayout';
 import { IngredientWithImage } from '../../../../../models/IngredientWithImage';
+import { PageCenter } from '../../../../../components/layout/PageCenter';
 
 function EditCocktailRecipe() {
   const router = useRouter();
@@ -44,7 +45,9 @@ function EditCocktailRecipe() {
   }, [id, workspaceId]);
 
   return loading ? (
-    <Loading />
+    <PageCenter>
+      <Loading />
+    </PageCenter>
   ) : (
     <ManageEntityLayout backLink={`/workspaces/${workspaceId}/manage/ingredients`} title={'Zutaten'} unsavedChanges={unsavedChanges} formRef={formRef}>
       <SingleFormLayout title={'Zutat erfassen'}>
