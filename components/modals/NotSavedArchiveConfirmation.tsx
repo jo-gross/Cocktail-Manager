@@ -3,13 +3,13 @@ import { ModalContext } from '../../lib/context/ModalContextProvider';
 import { alertService } from '../../lib/alertService';
 
 interface NotSavedConfirmationProps {
-  onSave: () => Promise<void>;
-  onNotSave?: () => void;
+  onArchive: () => void;
   onCancel?: () => void;
-  isSaving?: boolean;
+  isArchiving?: boolean;
+  archive?: boolean;
 }
 
-export function NotSavedConfirmation(props: NotSavedConfirmationProps) {
+export function NotSavedArchiveConfirmation(props: NotSavedConfirmationProps) {
   const modalContext = useContext(ModalContext);
 
   const [isSaving, setIsSaving] = useState(false);
@@ -31,22 +31,13 @@ export function NotSavedConfirmation(props: NotSavedConfirmationProps) {
         >
           Abbrechen
         </div>
-        <div
-          className={`btn btn-outline`}
-          onClick={() => {
-            props.onNotSave?.();
-            modalContext.closeModal();
-          }}
-        >
-          Nicht speichern
-        </div>
         <button
-          disabled={isSaving || props.isSaving}
+          disabled={isSaving || props.isArchiving}
           className={`btn btn-primary`}
           onClick={async () => {
             setIsSaving(true);
             try {
-              await props.onSave();
+              await props.onArchive();
               modalContext.closeModal();
             } catch (error) {
               console.error('NotSavedConfirmation -> onSave', error);
@@ -56,8 +47,8 @@ export function NotSavedConfirmation(props: NotSavedConfirmationProps) {
             }
           }}
         >
-          {isSaving || props.isSaving ? <span className={'loading loading-spinner'} /> : <></>}
-          Speichern
+          {isSaving || props.isArchiving ? <span className={'loading loading-spinner'} /> : <></>}
+          {props.archive ? 'Archivieren' : 'Entarchivieren'}
         </button>
       </div>
     </div>

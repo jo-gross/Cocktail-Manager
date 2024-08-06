@@ -514,7 +514,7 @@ function EditCocktailCard() {
                 if (response.ok) {
                   router
                     .replace(`/workspaces/${workspaceId}/manage/cards`)
-                    .then(() => alertService.success(`Karte ${card?.archived ? 'entarchiviert' : 'Archiviert'}`));
+                    .then(() => alertService.success(`Karte ${card?.archived ? 'entarchiviert' : 'archiviert'}`));
                 } else {
                   console.error('CardId -> (un)archive', response);
                   alertService.error(
