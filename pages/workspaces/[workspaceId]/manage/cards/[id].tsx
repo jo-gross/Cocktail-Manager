@@ -14,6 +14,7 @@ import { withPagePermission } from '../../../../../middleware/ui/withPagePermiss
 import { Role } from '@prisma/client';
 import { DeleteConfirmationModal } from '../../../../../components/modals/DeleteConfirmationModal';
 import _ from 'lodash';
+import { PageCenter } from '../../../../../components/layout/PageCenter';
 
 interface CocktailCardGroupError {
   name?: string;
@@ -82,7 +83,9 @@ function EditCocktailCard() {
   }, [id, workspaceId]);
 
   return loadingCard ? (
-    <Loading />
+    <PageCenter>
+      <Loading />
+    </PageCenter>
   ) : (
     <ManageEntityLayout
       backLink={`/workspaces/${workspaceId}/manage/cards`}

@@ -8,6 +8,7 @@ import { withPagePermission } from '../../../../../middleware/ui/withPagePermiss
 import { Role } from '@prisma/client';
 import { FormikProps } from 'formik';
 import { CocktailRecipeFullWithImage } from '../../../../../models/CocktailRecipeFullWithImage';
+import { PageCenter } from '../../../../../components/layout/PageCenter';
 
 function EditCocktailRecipe() {
   const router = useRouter();
@@ -43,7 +44,9 @@ function EditCocktailRecipe() {
   }, [id, workspaceId]);
 
   return loading ? (
-    <Loading />
+    <PageCenter>
+      <Loading />
+    </PageCenter>
   ) : (
     <ManageEntityLayout backLink={`/workspaces/${workspaceId}/manage/cocktails`} title={'Cocktail'} unsavedChanges={unsavedChanges} formRef={formRef}>
       <CocktailRecipeForm cocktailRecipe={cocktailRecipe} setUnsavedChanges={setUnsavedChanges} formRef={formRef} />
