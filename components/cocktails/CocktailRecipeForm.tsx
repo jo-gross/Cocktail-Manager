@@ -1,10 +1,9 @@
-import { IceType } from '../../models/IceType';
 import { FaAngleDown, FaAngleUp, FaEuroSign, FaPlus, FaSearch, FaTrashAlt } from 'react-icons/fa';
 import { TagsInput } from 'react-tag-input-component';
 import { Field, FieldArray, Formik, FormikProps } from 'formik';
 import React, { createRef, useCallback, useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import { Garnish, Glass, Ingredient, Unit, WorkspaceCocktailRecipeStepAction } from '@prisma/client';
+import { Garnish, Glass, Ice, Ingredient, Unit, WorkspaceCocktailRecipeStepAction } from '@prisma/client';
 import { updateTags, validateTag } from '../../models/tags/TagUtils';
 import { UploadDropZone } from '../UploadDropZone';
 import { convertToBase64 } from '../../lib/Base64Converter';
@@ -33,6 +32,7 @@ import { fetchActions } from '../../lib/network/actions';
 import { fetchUnits } from '../../lib/network/units';
 import { calcCocktailTotalPrice } from '../../lib/CocktailRecipeCalculation';
 import Image from 'next/image';
+import { fetchIce } from '../../lib/network/ices';
 
 interface CocktailRecipeFormProps {
   cocktailRecipe?: CocktailRecipeFullWithImage;
@@ -63,6 +63,9 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
   const workspaceId = router.query.workspaceId as string | undefined;
   const modalContext = useContext(ModalContext);
   const userContext = useContext(UserContext);
+
+  const [iceOptions, setIceOptions] = useState<Ice[]>([]);
+  const [iceOptionsLoading, setIceOptionsLoading] = useState(false);
 
   const [ingredients, setIngredients] = useState<IngredientModel[]>([]);
   const [ingredientsLoading, setIngredientsLoading] = useState(false);
@@ -204,6 +207,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
 
   useEffect(() => {
     fetchActions(workspaceId, setActions, setActionsLoading);
+    fetchIce(workspaceId, setIceOptions, setIceOptionsLoading);
     fetchIngredients(workspaceId, setIngredients, setIngredientsLoading);
     fetchGarnishes(workspaceId, setGarnishes, setGarnishesLoading);
     fetchGlasses(workspaceId, setGlasses, setGlassesLoading);
@@ -218,9 +222,10 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
     description: props.cocktailRecipe?.description ?? '',
     price: props.cocktailRecipe?.price ?? undefined,
     tags: props.cocktailRecipe?.tags ?? [],
-    glassWithIce: props.cocktailRecipe?.glassWithIce ?? IceType.Without,
+    iceId: props.cocktailRecipe?.iceId ?? null,
     image: props.cocktailRecipe?.CocktailRecipeImage[0]?.image ?? undefined,
     glassId: props.cocktailRecipe?.glassId ?? null,
+    ice: iceOptions.find((i) => i.id == props.cocktailRecipe?.iceId) ?? null,
     glass: glasses.find((g) => g.id == props.cocktailRecipe?.glassId) ?? null,
     garnishes: props.cocktailRecipe?.garnishes ?? [],
     steps: initSteps,
@@ -537,20 +542,26 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                     <label className={'label'}>
                       <span className={'label-text'}>Eis</span>
                       <span className={'label-text-alt text-error'}>
-                        <>{errors.glassWithIce && touched.glassWithIce && errors.glassWithIce}</>
+                        <>{errors.iceId && touched.iceId && errors.iceId}</>
                       </span>
                     </label>
                     <select
-                      name="glassWithIce"
-                      className={`select select-bordered w-full ${errors.glassWithIce && touched.glassWithIce && 'select-error'}`}
-                      onChange={handleChange}
+                      name="iceId"
+                      className={`select select-bordered w-full ${errors.iceId && touched.iceId && 'select-error'}`}
+                      onChange={(event) => {
+                        handleChange(event);
+                        setFieldValue(
+                          'ice',
+                          iceOptions.find((ice) => ice.id == event.target.value),
+                        );
+                      }}
                       onBlur={handleBlur}
-                      value={values.glassWithIce}
+                      value={values.iceId}
                     >
                       <option value={''}>Auswählen</option>
-                      {Object.values(IceType).map((iceType) => (
-                        <option key={`form-recipe-ice-types-${iceType}`} value={iceType}>
-                          {iceType}
+                      {Object.values(iceOptions).map((iceType) => (
+                        <option key={`form-recipe-ice-types-${iceType.id}`} value={iceType.id}>
+                          {userContext.getTranslation(iceType.name, 'de')}
                         </option>
                       ))}
                     </select>
@@ -617,7 +628,8 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                       description: values.description,
                       tags: values.tags,
                       price: !values.price && values.price == '' ? null : values.price,
-                      glassWithIce: values.glassWithIce,
+                      iceId: values.iceId,
+                      ice: iceOptions.find((ice) => ice.id === values.iceId) ?? null,
                       glassId: values.glassID ?? null,
                       glass: glasses.find((glass) => glass.id === values.glassId) ?? null,
                       garnishes: values.garnishes,

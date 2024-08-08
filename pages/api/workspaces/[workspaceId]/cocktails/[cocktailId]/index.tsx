@@ -52,14 +52,14 @@ export default withHttpMethods({
     const cocktailId = req.query.cocktailId as string | undefined;
     if (!cocktailId) return res.status(400).json({ message: 'No cocktail id' });
 
-    const { name, description, tags, price, glassWithIce, image, glassId, garnishes, steps } = req.body;
+    const { name, description, tags, price, iceId, image, glassId, garnishes, steps } = req.body;
 
     const input: CocktailRecipeUpdateInput = {
       name: name,
       description: description,
       tags: tags,
       price: price,
-      glassWithIce: glassWithIce,
+      ice: { connect: { id: iceId } },
       glass: { connect: { id: glassId } },
       workspace: { connect: { id: workspace.id } },
     };

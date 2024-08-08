@@ -92,8 +92,5 @@ SET "iceId" = (SELECT id
 WHERE TRUE;
 
 ALTER TABLE "CocktailRecipe"
-    ALTER COLUMN "iceId" SET NOT NULL;
-
-ALTER TABLE "CocktailRecipe"
     DROP COLUMN "glassWithIce";
 

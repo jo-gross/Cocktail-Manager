@@ -209,8 +209,8 @@ model CocktailRecipe {
   description           String?
   tags                  String[]
   price                 Float?
-  iceId                 String
-  ice                   Ice                     @relation(fields: [iceId], references: [id])
+  iceId                 String?
+  ice                   Ice?                    @relation(fields: [iceId], references: [id])
   glassId               String?
   glass                 Glass?                  @relation(fields: [glassId], references: [id])
   garnishes             CocktailRecipeGarnish[]
