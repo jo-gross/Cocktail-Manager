@@ -21,7 +21,8 @@ CREATE TABLE "Ice"
 
 -- AddForeignKey
 ALTER TABLE "CocktailRecipe"
-    ADD CONSTRAINT "CocktailRecipe_iceId_fkey" FOREIGN KEY ("iceId") REFERENCES "Ice" ("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    ADD CONSTRAINT "CocktailRecipe_iceId_fkey" FOREIGN KEY ("iceId") REFERENCES "Ice" ("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
 
 -- AddForeignKey
 ALTER TABLE "Ice"
