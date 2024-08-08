@@ -103,6 +103,7 @@ export default function WorkspaceSettingPage() {
       if (response.ok) {
         fetchActions(workspaceId, setWorkspaceActions, setWorkspaceActionLoading);
         alertService.success(`Import erfolgreich`);
+        router.reload();
         setUploadImportFile(undefined);
         if (uploadImportFileRef.current) {
           uploadImportFileRef.current.value = '';

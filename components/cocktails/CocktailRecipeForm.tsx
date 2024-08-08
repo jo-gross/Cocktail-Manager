@@ -237,8 +237,8 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
       innerRef={formRef}
       initialValues={initValue}
       validate={(values) => {
-        values = _.omit(values, ['image']);
-        const reducedCocktailRecipe = _.omit(props.cocktailRecipe, ['CocktailRecipeImage']);
+        values = _.omit(values, ['image', 'ice']);
+        const reducedCocktailRecipe = _.omit(props.cocktailRecipe, ['CocktailRecipeImage', 'ice']);
         if (reducedCocktailRecipe.description == null) {
           reducedCocktailRecipe.description = '';
         }
@@ -268,8 +268,8 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
         if (!values.glassId || values.glassId == '') {
           errors.glassId = 'Required';
         }
-        if (!values.glassWithIce || values.glass == '') {
-          errors.glassWithIce = 'Required';
+        if (!values.iceId || values.ice == '') {
+          errors.iceId = 'Required';
         }
 
         const stepsErrors: StepError[] = [];
@@ -341,11 +341,11 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
             name: values.name,
             description: values.description.trim() === '' ? null : values.description,
             price: values.price == '' ? null : values.price,
+            iceId: values.iceId,
             glassId: values.glassId,
             garnishId: values.garnishId,
             image: values.image == '' ? null : values.image,
             tags: values.tags,
-            glassWithIce: values.glassWithIce,
             steps: (values.steps as CocktailRecipeStepFull[]).map((step, index) => {
               return {
                 ...step,

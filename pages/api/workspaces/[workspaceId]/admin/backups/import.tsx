@@ -294,10 +294,16 @@ export default withWorkspacePermission([Role.USER], async (req: NextApiRequest, 
         const iceMapping: { id: string; newId: string }[] = [];
         if (data.ice?.length > 0) {
           console.debug('Importing ice', data.ice?.length);
-          data.ice?.forEach((ice) => {
-            const iceMappingItem = { id: ice.id, newId: randomUUID() };
-            ice.id = iceMappingItem.newId;
-            ice.workspaceId = workspaceId;
+          for (const ice of data.ice) {
+            const existing = (await transaction.ice.findFirst({ where: { workspaceId: workspaceId, name: ice.name } }))?.id;
+            if (existing) {
+              iceMapping.push({ id: ice.id, newId: existing });
+            }
+          }
+          data.ice?.forEach((i) => {
+            const iceMappingItem = { id: i.id, newId: randomUUID() };
+            i.id = iceMappingItem.newId;
+            i.workspaceId = workspaceId;
             iceMapping.push(iceMappingItem);
           });
           await transaction.ice.createMany({ data: data.ice, skipDuplicates: true });
@@ -314,8 +320,6 @@ export default withWorkspacePermission([Role.USER], async (req: NextApiRequest, 
               if (oldIceMapping.find((ice) => ice.name == iceIdentifier) == undefined) {
                 const ice = await transaction.ice.findFirst({ where: { name: iceIdentifier, workspaceId: workspaceId } });
                 if (ice == undefined) {
-                  console.log('Importing...', iceIdentifier);
-                  console.log('Ice not found', iceIdentifier, workspaceId);
                   const result = await transaction.ice.create({ data: { id: randomUUID(), name: iceIdentifier, workspaceId: workspaceId } });
                   oldIceMapping = [...oldIceMapping, { name: iceIdentifier, newId: result.id }];
                 } else {
@@ -325,12 +329,12 @@ export default withWorkspacePermission([Role.USER], async (req: NextApiRequest, 
             }
           }
         }
-        console.log('Old ice mapping', oldIceMapping);
+        console.log('Importing old ice', oldIceMapping.length);
 
         const cocktailRecipeMapping: { id: string; newId: string }[] = [];
         const cocktailRecipeImageMapping: { cocktailRecipeId: string; image: string }[] = [];
         if (data.cocktailRecipe?.length > 0) {
-          console.debug('Importing cocktailRecipes', data.cocktailRecipe?.length);
+          // console.debug('Importing cocktailRecipes', data.cocktailRecipe?.length);
           data.cocktailRecipe?.forEach((g) => {
             const cocktailRecipeMappingItem = { id: g.id, newId: randomUUID() };
             // @ts-ignore causing older backup version support
@@ -340,13 +344,15 @@ export default withWorkspacePermission([Role.USER], async (req: NextApiRequest, 
             }
             g.id = cocktailRecipeMappingItem.newId;
             // @ts-ignore causing older backup version support
-            g.iceId = (iceMapping.find((ice) => ice.id === g.iceId)?.newId || oldIceMapping.find((ice) => ice.name == convertIce(g.glassWithIce))?.newId)!;
+            g.iceId = iceMapping.find((ice) => ice.id === g.iceId)?.newId;
             if (g.iceId == undefined) {
-              console.error('IceId is undefined', g);
-              console.log('IceMapping', iceMapping);
-              console.log('OldIceMapping', oldIceMapping);
+              // @ts-ignore causing older backup version support
+              g.iceId = oldIceMapping.find((ice) => ice.name == convertIce(g.glassWithIce))?.newId;
 
-              throw new Error('IceId is undefined');
+              if (g.iceId == undefined) {
+                console.error('IceId is undefined', g);
+                throw new Error('IceId is undefined');
+              }
             }
             g.glassId = glassMapping.find((gm) => gm.id === g.glassId)?.newId!;
             g.workspaceId = workspaceId;
@@ -356,6 +362,18 @@ export default withWorkspacePermission([Role.USER], async (req: NextApiRequest, 
             g.glassWithIce = undefined;
             cocktailRecipeMapping.push(cocktailRecipeMappingItem);
           });
+
+          await Promise.all(
+            data.cocktailRecipe.map(async (g) => {
+              if ((await transaction.ice.findFirst({ where: { id: g.iceId! } })) == null) {
+                console.error('Ice not found', g.iceId);
+                const ice = (await transaction.ice.findMany({ where: { workspaceId: workspaceId } })).filter((i) => i.id == g.iceId);
+                console.log('Ice', ice);
+                console.error('Cocktail', g.name);
+              }
+            }),
+          );
+
           await transaction.cocktailRecipe.createMany({ data: data.cocktailRecipe, skipDuplicates: true });
         }
         if (data.cocktailRecipeImage?.length > 0) {
