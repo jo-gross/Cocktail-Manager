@@ -1,7 +1,6 @@
 import { FieldArray, Formik, FormikProps } from 'formik';
 import { useRouter } from 'next/router';
 import React, { useContext, useEffect, useState } from 'react';
-import { TagsInput } from 'react-tag-input-component';
 import { updateTags, validateTag } from '../../models/tags/TagUtils';
 import { UploadDropZone } from '../UploadDropZone';
 import { convertToBase64 } from '../../lib/Base64Converter';
@@ -16,6 +15,7 @@ import { Unit, UnitConversion } from '@prisma/client';
 import { UserContext } from '../../lib/context/UserContextProvider';
 import { fetchUnitConversions, fetchUnits } from '../../lib/network/units';
 import Image from 'next/image';
+import { DaisyUITagInput } from '../DaisyUITagInput';
 
 interface IngredientFormProps {
   ingredient?: IngredientWithImage;
@@ -398,10 +398,10 @@ export function IngredientForm(props: IngredientFormProps) {
             <label className={'label'}>
               <span className={'label-text'}>Tags</span>
               <span className={'label-text-alt text-error'}>
-                <>{errors.tags && touched.tags && errors.tags}</>
+                <>{errors.tags && errors.tags}</>
               </span>
             </label>
-            <TagsInput
+            <DaisyUITagInput
               value={values.tags}
               onChange={(tags) =>
                 setFieldValue(
@@ -409,9 +409,7 @@ export function IngredientForm(props: IngredientFormProps) {
                   updateTags(tags, (text) => setFieldError('tags', text ?? 'Tag fehlerhaft')),
                 )
               }
-              name="tags"
-              beforeAddValidate={(tag, _) => validateTag(tag, (text) => setFieldError('tags', text ?? 'Tag fehlerhaft'))}
-              onBlur={handleBlur}
+              validate={(tag) => validateTag(tag, (text) => setFieldError('tags', text ?? 'Tag fehlerhaft'))}
             />
           </div>
           <div className={'col-span-2'}>

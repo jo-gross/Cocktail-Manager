@@ -74,9 +74,9 @@ importers:
       react-markdown:
         specifier: 9.0.1
         version: 9.0.1(@types/react@18.3.3)(react@18.3.1)
-      react-tag-input-component:
-        specifier: 2.0.2
-        version: 2.0.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      react-tagsinput:
+        specifier: ^3.20.3
+        version: 3.20.3(react@18.3.1)
       react-three-state-checkbox:
         specifier: 3.0.0
         version: 3.0.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -114,6 +114,9 @@ importers:
       '@types/react-is':
         specifier: 18.3.0
         version: 18.3.0
+      '@types/react-tagsinput':
+        specifier: ^3.20.6
+        version: 3.20.6
       autoprefixer:
         specifier: 10.4.19
         version: 10.4.19(postcss@8.4.39)
@@ -630,6 +633,9 @@ packages:
 
   '@types/react-is@18.3.0':
     resolution: {integrity: sha512-KZJpHUkAdzyKj/kUHJDc6N7KyidftICufJfOFpiG6haL/BDQNQt5i4n1XDUL/nDZAtGLHDSWRYpLzKTAKSvX6w==}
+
+  '@types/react-tagsinput@3.20.6':
+    resolution: {integrity: sha512-Tx0jOqLSzlosxgKmGg7zNF6hwfeVSNbolWb0HgV2LsOE5nxJyfnlOTcbwQ9HKvfu2jOEKJ46OXszv1PUZHnCTw==}
 
   '@types/react@18.3.3':
     resolution: {integrity: sha512-hti/R0pS0q1/xx+TsI73XIqk26eBsISZ2R0wUijXIngRK9R/e7Xw/cXVxQK7R5JjW+SV4zGcn5hXjudkN/pLIw==}
@@ -2708,11 +2714,10 @@ packages:
       '@types/react': '>=18'
       react: '>=18'
 
-  react-tag-input-component@2.0.2:
-    resolution: {integrity: sha512-dydI9luVwwv9vrjE5u1TTnkcOVkOVL6mhFti8r6hLi78V2F2EKWQOLptURz79UYbDHLSk6tnbvGl8FE+sMpADg==}
+  react-tagsinput@3.20.3:
+    resolution: {integrity: sha512-a+7nZ9gg0SwuoPPmh2AAB98OXYduwi6WgYWgWlPts3mq1ookXGphq9Fe/XLhQcdunkiqJO4WXjWXtHE9UlFyiw==}
     peerDependencies:
-      react: ^16 || ^17 || ^18
-      react-dom: ^16 || ^17 || ^18
+      react: ^18.0.0 || ^17.0.0 || ^16.0.0 || ^15.0.0
 
   react-three-state-checkbox@3.0.0:
     resolution: {integrity: sha512-siWkrmaSTokUSgU3LISdnHbbX4Ignnvo85YhJrKtIs/9H+KnOWfsmmg4NnWnhWd+mj5Cca91gQVcDGKtH++T9Q==}
@@ -3792,6 +3797,10 @@ snapshots:
   '@types/prop-types@15.7.12': {}
 
   '@types/react-is@18.3.0':
+    dependencies:
+      '@types/react': 18.3.3
+
+  '@types/react-tagsinput@3.20.6':
     dependencies:
       '@types/react': 18.3.3
 
@@ -6084,10 +6093,9 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  react-tag-input-component@2.0.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
+  react-tagsinput@3.20.3(react@18.3.1):
     dependencies:
       react: 18.3.1
-      react-dom: 18.3.1(react@18.3.1)
 
   react-three-state-checkbox@3.0.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
     dependencies:
