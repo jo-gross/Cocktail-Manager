@@ -1,11 +1,9 @@
 import { IceType } from '../../models/IceType';
 import { FaAngleDown, FaAngleUp, FaEuroSign, FaPlus, FaSearch, FaTrashAlt } from 'react-icons/fa';
-import { TagsInput } from 'react-tag-input-component';
 import { Field, FieldArray, Formik, FormikProps } from 'formik';
 import React, { createRef, useCallback, useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { Garnish, Glass, Ingredient, Unit, WorkspaceCocktailRecipeStepAction } from '@prisma/client';
-import { updateTags, validateTag } from '../../models/tags/TagUtils';
 import { UploadDropZone } from '../UploadDropZone';
 import { convertToBase64 } from '../../lib/Base64Converter';
 import { CocktailRecipeStepFull } from '../../models/CocktailRecipeStepFull';
@@ -33,6 +31,8 @@ import { fetchActions } from '../../lib/network/actions';
 import { fetchUnits } from '../../lib/network/units';
 import { calcCocktailTotalPrice } from '../../lib/CocktailRecipeCalculation';
 import Image from 'next/image';
+import { updateTags, validateTag } from '../../models/tags/TagUtils';
+import { DaisyUITagInput } from '../DaisyUITagInput';
 
 interface CocktailRecipeFormProps {
   cocktailRecipe?: CocktailRecipeFullWithImage;
@@ -457,20 +457,18 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                     <label className={'label'}>
                       <span className={'label-text'}>Tags</span>
                       <span className={'label-text-alt text-error'}>
-                        <>{errors.tags && touched.tags && errors.tags}</>
+                        <>{errors.tags && errors.tags}</>
                       </span>
                     </label>
-                    <TagsInput
+                    <DaisyUITagInput
                       value={values.tags}
-                      onChange={(tags) =>
+                      onChange={(tags: string[]) =>
                         setFieldValue(
                           'tags',
-                          updateTags(tags, (text) => setFieldError('tags', text ?? 'Tag fehlerhaft')),
+                          updateTags(tags, (text) => setFieldError('tags', text ?? 'Tag fehlerhaft!')),
                         )
                       }
-                      name="tags"
-                      beforeAddValidate={(tag, _) => validateTag(tag, (text) => setFieldError('tags', text ?? 'Tag fehlerhaft'))}
-                      onBlur={handleBlur}
+                      validate={(tag) => validateTag(tag, (text) => setFieldError('tags', text ?? 'Tag fehlerhaft!!!'))}
                     />
                   </div>
                   <div>
@@ -537,7 +535,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                     <label className={'label'}>
                       <span className={'label-text'}>Eis</span>
                       <span className={'label-text-alt text-error'}>
-                        <>{errors.glassWithIce && touched.glassWithIce && errors.glassWithIce}</>
+                        <>{errors.glassWithIce && touched.glassWithIce && errors.glassWithIce}</> *
                       </span>
                     </label>
                     <select

@@ -11,7 +11,7 @@ export function updateTags(localTags: string[], setTagValidation: (validation: s
 export function validateTag(tag: string, setTagValidation: (validation: string | null) => void) {
   const valid = tagRegex.test(tag);
   if (!valid) {
-    setTagValidation('Tag muss aus Kleinbuchstaben und Zahlen bestehen und darf keine Leerzeichen enthalten. (z.B. "sour")');
+    setTagValidation('Tag darf nur Kleinbuchstaben haben und keine Leerzeichen (z.B. "sour")');
   } else {
     setTagValidation(null);
   }
