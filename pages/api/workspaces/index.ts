@@ -29,6 +29,24 @@ export default withHttpMethods({
             role: Role.OWNER,
           },
         },
+        Ice: {
+          createMany: {
+            data: [
+              {
+                id: randomUUID(),
+                name: 'ICE_CRUSHED',
+              },
+              {
+                id: randomUUID(),
+                name: 'ICE_CUBES',
+              },
+              {
+                id: randomUUID(),
+                name: 'WITHOUT_ICE',
+              },
+            ],
+          },
+        },
         WorkspaceCocktailRecipeStepAction: {
           createMany: {
             data: [
@@ -196,6 +214,9 @@ export default withHttpMethods({
                 DASH: 'Dash',
                 BAR_SPOON: 'Barlöffel',
                 SPRAY: 'Sprüher',
+                ICE_CUBES: 'Würfel',
+                ICE_CRUSHED: 'Crushed',
+                WITHOUT_ICE: 'Ohne Eis',
               },
             }),
           },
