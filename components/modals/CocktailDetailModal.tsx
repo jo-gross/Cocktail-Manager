@@ -121,7 +121,7 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
               )}
             </div>
           </div>
-          <div className={'col-span-1'}>Eis: {loadedCocktail.ice.name}</div>
+          <div className={'col-span-1'}>Eis: {userContext.getTranslation(loadedCocktail.ice?.name ?? '<Eis>', 'de')}</div>
           <div className={'col-span-2 space-y-2'}>
             {loadedCocktail.steps.length == 0 ? <></> : <div className={'text-2xl font-bold'}>Zubereitung</div>}
             <div className={'grid grid-cols-2 gap-4'}>

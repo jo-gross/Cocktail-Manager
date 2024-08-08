@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client';
 export type CocktailRecipeFullWithImage = Prisma.CocktailRecipeGetPayload<{
   include: {
     _count: { select: { CocktailRecipeImage: true } };
+    ice: true;
     glass: true;
     CocktailRecipeImage: {
       select: {

@@ -46,7 +46,7 @@ export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeIns
       </div>
       <div className={'col-span-3 flex flex-row justify-between space-x-2 font-thin'}>
         <div>Glas: {props.cocktailRecipe.glass?.name ?? '<Glas>'}</div>
-        <div>Eis: {props.cocktailRecipe.ice?.name ?? '<Eis>'}</div>
+        <div>Eis: {userContext.getTranslation(props.cocktailRecipe.ice?.name ?? '<Eis>', 'de')}</div>
       </div>
       <div className={'col-span-4 border-b border-base-100'}></div>
       <div className={`${props.showImage == true ? 'col-span-3' : 'col-span-4'}`}>

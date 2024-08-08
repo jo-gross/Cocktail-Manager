@@ -38,6 +38,21 @@ function convertUnit(unit: string): string {
   }
 }
 
+function convertIce(ice: string): string {
+  switch (ice) {
+    case 'Crushed':
+      return 'ICE_CRUSHED';
+    case 'Würfel':
+      return 'ICE_CUBES';
+    case 'Kugel':
+      return 'ICE_BALL';
+    case 'Ohne':
+      return 'WITHOUT_ICE';
+    default:
+      return ice;
+  }
+}
+
 export default withWorkspacePermission([Role.USER], async (req: NextApiRequest, res: NextApiResponse, user) => {
   const workspaceId = req.query.workspaceId as string | undefined;
   if (!workspaceId) return res.status(400).json({ message: 'No workspace id' });
@@ -276,8 +291,43 @@ export default withWorkspacePermission([Role.USER], async (req: NextApiRequest, 
         }
         await transaction.glassImage.createMany({ data: glassImageMapping, skipDuplicates: true });
 
-        const cocktailRecipeMapping: { id: string; newId: string }[] = [];
+        const iceMapping: { id: string; newId: string }[] = [];
+        if (data.ice?.length > 0) {
+          console.debug('Importing ice', data.ice?.length);
+          data.ice?.forEach((ice) => {
+            const iceMappingItem = { id: ice.id, newId: randomUUID() };
+            ice.id = iceMappingItem.newId;
+            ice.workspaceId = workspaceId;
+            iceMapping.push(iceMappingItem);
+          });
+          await transaction.ice.createMany({ data: data.ice, skipDuplicates: true });
+        }
 
+        // ensure that all oldIce is imported
+        let oldIceMapping: { name: string; newId: string }[] = [];
+        if (data.cocktailRecipe?.length > 0) {
+          for (const cocktail of data.cocktailRecipe) {
+            // @ts-ignore causing older backup version support
+            if (cocktail.glassWithIce != undefined) {
+              // @ts-ignore causing older backup version support
+              const iceIdentifier = convertIce(cocktail.glassWithIce);
+              if (oldIceMapping.find((ice) => ice.name == iceIdentifier) == undefined) {
+                const ice = await transaction.ice.findFirst({ where: { name: iceIdentifier, workspaceId: workspaceId } });
+                if (ice == undefined) {
+                  console.log('Importing...', iceIdentifier);
+                  console.log('Ice not found', iceIdentifier, workspaceId);
+                  const result = await transaction.ice.create({ data: { id: randomUUID(), name: iceIdentifier, workspaceId: workspaceId } });
+                  oldIceMapping = [...oldIceMapping, { name: iceIdentifier, newId: result.id }];
+                } else {
+                  oldIceMapping = [...oldIceMapping, { name: iceIdentifier, newId: ice.id }];
+                }
+              }
+            }
+          }
+        }
+        console.log('Old ice mapping', oldIceMapping);
+
+        const cocktailRecipeMapping: { id: string; newId: string }[] = [];
         const cocktailRecipeImageMapping: { cocktailRecipeId: string; image: string }[] = [];
         if (data.cocktailRecipe?.length > 0) {
           console.debug('Importing cocktailRecipes', data.cocktailRecipe?.length);
@@ -289,10 +339,21 @@ export default withWorkspacePermission([Role.USER], async (req: NextApiRequest, 
               cocktailRecipeImageMapping.push({ cocktailRecipeId: cocktailRecipeMappingItem.newId, image: g.image });
             }
             g.id = cocktailRecipeMappingItem.newId;
+            // @ts-ignore causing older backup version support
+            g.iceId = (iceMapping.find((ice) => ice.id === g.iceId)?.newId || oldIceMapping.find((ice) => ice.name == convertIce(g.glassWithIce))?.newId)!;
+            if (g.iceId == undefined) {
+              console.error('IceId is undefined', g);
+              console.log('IceMapping', iceMapping);
+              console.log('OldIceMapping', oldIceMapping);
+
+              throw new Error('IceId is undefined');
+            }
             g.glassId = glassMapping.find((gm) => gm.id === g.glassId)?.newId!;
             g.workspaceId = workspaceId;
             // @ts-ignore causing older backup version support
             g.image = undefined;
+            // @ts-ignore causing older backup version support
+            g.glassWithIce = undefined;
             cocktailRecipeMapping.push(cocktailRecipeMappingItem);
           });
           await transaction.cocktailRecipe.createMany({ data: data.cocktailRecipe, skipDuplicates: true });
