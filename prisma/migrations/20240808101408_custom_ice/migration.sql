@@ -27,6 +27,8 @@ ALTER TABLE "CocktailRecipe"
 ALTER TABLE "Ice"
     ADD CONSTRAINT "Ice_workspaceId_fkey" FOREIGN KEY ("workspaceId") REFERENCES "Workspace" ("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
+-- Add the unique constraint
+CREATE UNIQUE INDEX "Ice_name_workspaceId_key" ON "Ice" ("name", "workspaceId");
 
 -- Transform Ice Types to other names
 UPDATE "CocktailRecipe"
@@ -39,7 +41,7 @@ UPDATE "CocktailRecipe"
 SET "glassWithIce" = 'ICE_BALL'
 WHERE "glassWithIce" = 'Kugel';
 UPDATE "CocktailRecipe"
-SET "glassWithIce" = 'ICE_WITHOUT'
+SET "glassWithIce" = 'WITHOUT_ICE'
 WHERE "glassWithIce" = 'Ohne';
 
 CREATE OR REPLACE FUNCTION createIce()
@@ -67,7 +69,7 @@ BEGIN
             SELECT gen_random_uuid(), 'ICE_BALL', workspace_id
             WHERE NOT EXISTS(SELECT id FROM "Ice" WHERE name = 'ICE_BALL' AND workspace_id = "workspaceId");
 
-            INSERT INTO "Unit" (id, name, "workspaceId")
+            INSERT INTO "Ice" (id, name, "workspaceId")
             SELECT gen_random_uuid(), 'WITHOUT_ICE', workspace_id
             WHERE NOT EXISTS(SELECT id FROM "Ice" WHERE name = 'WITHOUT_ICE' AND workspace_id = "workspaceId");
 
@@ -95,4 +97,3 @@ ALTER TABLE "CocktailRecipe"
 ALTER TABLE "CocktailRecipe"
     DROP COLUMN "glassWithIce";
 
-CREATE UNIQUE INDEX "Ice_name_workspaceId_key" ON "Ice" ("name", "workspaceId");
