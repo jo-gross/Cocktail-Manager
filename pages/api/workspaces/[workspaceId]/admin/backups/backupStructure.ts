@@ -13,6 +13,7 @@ import {
   GarnishImage,
   Glass,
   GlassImage,
+  Ice,
   Ingredient,
   IngredientImage,
   IngredientVolume,
@@ -44,4 +45,5 @@ export interface BackupStructure {
   cocktailCardGroupItem: CocktailCardGroupItem[];
   calculation: CocktailCalculation[];
   calculationItems: CocktailCalculationItems[];
+  ice: Ice[];
 }

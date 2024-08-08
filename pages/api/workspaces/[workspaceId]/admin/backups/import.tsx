@@ -38,6 +38,21 @@ function convertUnit(unit: string): string {
   }
 }
 
+function convertIce(ice: string): string {
+  switch (ice) {
+    case 'Crushed':
+      return 'ICE_CRUSHED';
+    case 'Würfel':
+      return 'ICE_CUBES';
+    case 'Kugel':
+      return 'ICE_BALL';
+    case 'Ohne':
+      return 'WITHOUT_ICE';
+    default:
+      return ice;
+  }
+}
+
 export default withWorkspacePermission([Role.USER], async (req: NextApiRequest, res: NextApiResponse, user) => {
   const workspaceId = req.query.workspaceId as string | undefined;
   if (!workspaceId) return res.status(400).json({ message: 'No workspace id' });
@@ -276,11 +291,50 @@ export default withWorkspacePermission([Role.USER], async (req: NextApiRequest, 
         }
         await transaction.glassImage.createMany({ data: glassImageMapping, skipDuplicates: true });
 
-        const cocktailRecipeMapping: { id: string; newId: string }[] = [];
+        const iceMapping: { id: string; newId: string }[] = [];
+        if (data.ice?.length > 0) {
+          console.debug('Importing ice', data.ice?.length);
+          for (const ice of data.ice) {
+            const existing = (await transaction.ice.findFirst({ where: { workspaceId: workspaceId, name: ice.name } }))?.id;
+            if (existing) {
+              iceMapping.push({ id: ice.id, newId: existing });
+            }
+          }
+          data.ice?.forEach((i) => {
+            const iceMappingItem = { id: i.id, newId: randomUUID() };
+            i.id = iceMappingItem.newId;
+            i.workspaceId = workspaceId;
+            iceMapping.push(iceMappingItem);
+          });
+          await transaction.ice.createMany({ data: data.ice, skipDuplicates: true });
+        }
 
+        // ensure that all oldIce is imported
+        let oldIceMapping: { name: string; newId: string }[] = [];
+        if (data.cocktailRecipe?.length > 0) {
+          for (const cocktail of data.cocktailRecipe) {
+            // @ts-ignore causing older backup version support
+            if (cocktail.glassWithIce != undefined) {
+              // @ts-ignore causing older backup version support
+              const iceIdentifier = convertIce(cocktail.glassWithIce);
+              if (oldIceMapping.find((ice) => ice.name == iceIdentifier) == undefined) {
+                const ice = await transaction.ice.findFirst({ where: { name: iceIdentifier, workspaceId: workspaceId } });
+                if (ice == undefined) {
+                  const result = await transaction.ice.create({ data: { id: randomUUID(), name: iceIdentifier, workspaceId: workspaceId } });
+                  oldIceMapping = [...oldIceMapping, { name: iceIdentifier, newId: result.id }];
+                } else {
+                  oldIceMapping = [...oldIceMapping, { name: iceIdentifier, newId: ice.id }];
+                }
+              }
+            }
+          }
+        }
+        console.log('Importing old ice', oldIceMapping.length);
+
+        const cocktailRecipeMapping: { id: string; newId: string }[] = [];
         const cocktailRecipeImageMapping: { cocktailRecipeId: string; image: string }[] = [];
         if (data.cocktailRecipe?.length > 0) {
-          console.debug('Importing cocktailRecipes', data.cocktailRecipe?.length);
+          // console.debug('Importing cocktailRecipes', data.cocktailRecipe?.length);
           data.cocktailRecipe?.forEach((g) => {
             const cocktailRecipeMappingItem = { id: g.id, newId: randomUUID() };
             // @ts-ignore causing older backup version support
@@ -289,12 +343,37 @@ export default withWorkspacePermission([Role.USER], async (req: NextApiRequest, 
               cocktailRecipeImageMapping.push({ cocktailRecipeId: cocktailRecipeMappingItem.newId, image: g.image });
             }
             g.id = cocktailRecipeMappingItem.newId;
+            // @ts-ignore causing older backup version support
+            g.iceId = iceMapping.find((ice) => ice.id === g.iceId)?.newId;
+            if (g.iceId == undefined) {
+              // @ts-ignore causing older backup version support
+              g.iceId = oldIceMapping.find((ice) => ice.name == convertIce(g.glassWithIce))?.newId;
+
+              if (g.iceId == undefined) {
+                console.error('IceId is undefined', g);
+                throw new Error('IceId is undefined');
+              }
+            }
             g.glassId = glassMapping.find((gm) => gm.id === g.glassId)?.newId!;
             g.workspaceId = workspaceId;
             // @ts-ignore causing older backup version support
             g.image = undefined;
+            // @ts-ignore causing older backup version support
+            g.glassWithIce = undefined;
             cocktailRecipeMapping.push(cocktailRecipeMappingItem);
           });
+
+          await Promise.all(
+            data.cocktailRecipe.map(async (g) => {
+              if ((await transaction.ice.findFirst({ where: { id: g.iceId! } })) == null) {
+                console.error('Ice not found', g.iceId);
+                const ice = (await transaction.ice.findMany({ where: { workspaceId: workspaceId } })).filter((i) => i.id == g.iceId);
+                console.log('Ice', ice);
+                console.error('Cocktail', g.name);
+              }
+            }),
+          );
+
           await transaction.cocktailRecipe.createMany({ data: data.cocktailRecipe, skipDuplicates: true });
         }
         if (data.cocktailRecipeImage?.length > 0) {

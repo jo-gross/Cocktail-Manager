@@ -5,11 +5,7 @@ import { ModalContext } from '../../lib/context/ModalContextProvider';
 import { alertService } from '../../lib/alertService';
 import { useRouter } from 'next/router';
 
-interface CocktailStepActionGroupModalProps {
-  actionGroup: string;
-}
-
-export default function CocktailStepActionGroupModal(props: CocktailStepActionGroupModalProps) {
+export default function CreateIceModal() {
   const userContext = useContext(UserContext);
   const modalContext = useContext(ModalContext);
 
@@ -19,40 +15,50 @@ export default function CocktailStepActionGroupModal(props: CocktailStepActionGr
 
   return (
     <div className={'flex flex-col gap-2'}>
-      <div className={'text-2xl font-bold'}>Zubereitungsgruppe Anpassen</div>
+      <div className={'text-2xl font-bold'}>Eis erstellen</div>
       <Formik
         initialValues={{
-          lableDE: userContext.getTranslationOrNull(props.actionGroup, 'de') ?? '',
+          identifier: '',
+          lableDE: '',
         }}
         onSubmit={async (values) => {
           try {
             const body = {
-              key: props.actionGroup,
+              name: values.identifier,
               translations: {
                 de: values.lableDE,
               },
             };
-            const response = await fetch(`/api/workspaces/${workspaceId}/admin/translation`, {
-              method: 'PUT',
+
+            const response = await fetch(`/api/workspaces/${workspaceId}/ice`, {
+              method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(body),
             });
             if (response.status.toString().startsWith('2')) {
               router.reload();
               modalContext.closeModal();
-              alertService.success('Zubereitungsgruppe erfolgreich gespeichert');
+              alertService.success('Zubereitungsmethode erfolgreich erstellt');
             } else {
               const body = await response.json();
-              console.error('CocktailStepActionGroupModal -> onSubmit[update]', response);
-              alertService.error(body.message ?? 'Fehler beim Speichern der Zubereitungsgruppe', response.status, response.statusText);
+              console.error('CocktailStepActionModal -> onSubmit[create]', response);
+              alertService.error(body.message ?? 'Fehler beim Erstellen der Zubereitungsmethode', response.status, response.statusText);
             }
           } catch (error) {
-            console.error('CocktailStepActionGroupModal -> onSubmit', error);
+            console.error('CocktailStepActionModal -> onSubmit', error);
             alertService.error('Es ist ein Fehler aufgetreten');
           }
         }}
         validate={(values) => {
           const errors: { [key: string]: string } = {};
+
+          if (!values.identifier || values.identifier.trim() == '') {
+            errors.identifier = 'Ungültiger Identifier';
+          } else {
+            if (!/^[A-Z_]+$/.test(values.identifier)) {
+              errors.identifier = 'Nur A-Z und _ erlaubt';
+            }
+          }
 
           if (!values.lableDE || values.lableDE.trim() == '') {
             errors.lableDE = 'Ungültiger Bezeichner';
@@ -65,18 +71,14 @@ export default function CocktailStepActionGroupModal(props: CocktailStepActionGr
           <form onSubmit={handleSubmit} className={'flex flex-col gap-2'}>
             <div className={'grid grid-cols-2 gap-2'}>
               <div className={'form-control'}>
-                <label className={'label'}>
-                  <div className={'label-text'}>Identifier</div>
-                  <div className={'label-text-alt text-error'}></div>
+                <label className={'label'} htmlFor={'identifier'}>
+                  <div className={'label-text'}>Identifier (A-Z,_)</div>
+                  <div className={'label-text-alt text-error'}>
+                    <span>{errors.identifier && touched.identifier ? errors.identifier : ''}</span>
+                    <span>*</span>
+                  </div>
                 </label>
-                <input
-                  id={'actionGroup'}
-                  readOnly={true}
-                  name={'actionGroup'}
-                  value={props.actionGroup}
-                  onChange={handleChange}
-                  className={`input input-bordered input-disabled`}
-                />
+                <input id={'identifier'} name={'identifier'} value={values.identifier} onChange={handleChange} className={`input input-bordered`} />
               </div>
               <div className={'form-control'}>
                 <label className={'label'}>
@@ -101,7 +103,7 @@ export default function CocktailStepActionGroupModal(props: CocktailStepActionGr
               </button>
               <button className={'btn btn-primary'} type={'submit'}>
                 {isSubmitting ? <span className={'spinner loading-spinner'} /> : <></>}
-                Speichern
+                Erstellen
               </button>
             </div>
           </form>
