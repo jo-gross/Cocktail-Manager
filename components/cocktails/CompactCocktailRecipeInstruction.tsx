@@ -4,6 +4,7 @@ import DefaultGlassIcon from '../DefaultGlassIcon';
 import { UserContext } from '../../lib/context/UserContextProvider';
 import Image from 'next/image';
 import { ModalContext } from '../../lib/context/ModalContextProvider';
+import ImageModal from '../modals/ImageModal';
 
 interface CompactCocktailRecipeInstructionProps {
   cocktailRecipe: CocktailRecipeFull;
@@ -75,15 +76,7 @@ export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeIns
             <Image
               onClick={() =>
                 modalContext.openModal(
-                  <div className={'flex h-[60vh] w-full items-center justify-center'}>
-                    <Image
-                      src={props.image ?? `/api/workspaces/${props.cocktailRecipe.workspaceId}/cocktails/${props.cocktailRecipe.id}/image`}
-                      className={'h-full w-full rounded-xl object-contain'}
-                      alt={'Cocktail-Bild'}
-                      width={400}
-                      height={400}
-                    />
-                  </div>,
+                  <ImageModal image={props.image ?? `/api/workspaces/${props.cocktailRecipe.workspaceId}/cocktails/${props.cocktailRecipe.id}/image`} />,
                 )
               }
               src={props.image ?? `/api/workspaces/${props.cocktailRecipe.workspaceId}/cocktails/${props.cocktailRecipe.id}/image`}

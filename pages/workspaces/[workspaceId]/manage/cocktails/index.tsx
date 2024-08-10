@@ -11,12 +11,15 @@ import AvatarImage from '../../../../../components/AvatarImage';
 import { FaPlus } from 'react-icons/fa';
 import ListSearchField from '../../../../../components/ListSearchField';
 import { CocktailRecipeModel } from '../../../../../models/CocktailRecipeModel';
+import ImageModal from '../../../../../components/modals/ImageModal';
+import { ModalContext } from '../../../../../lib/context/ModalContextProvider';
 
 export default function CocktailsOverviewPage() {
   const router = useRouter();
   const { workspaceId } = router.query;
 
   const userContext = useContext(UserContext);
+  const modalContext = useContext(ModalContext);
 
   const [cocktailRecipes, setCocktailRecipes] = useState<CocktailRecipeModel[]>([]);
   const [loading, setLoading] = useState(true);
@@ -106,13 +109,22 @@ export default function CocktailsOverviewPage() {
                       <tr key={cocktailRecipe.id} className={''}>
                         <td>
                           <div className="flex items-center space-x-3">
-                            {cocktailRecipe._count.CocktailRecipeImage == 0 ? (
-                              <></>
-                            ) : (
-                              <div className="h-12 w-12">
-                                <AvatarImage src={`/api/workspaces/${cocktailRecipe.workspaceId}/cocktails/${cocktailRecipe.id}/image`} alt={'Cocktail'} />
-                              </div>
-                            )}
+                            <div className={'h-12 w-12'}>
+                              {cocktailRecipe._count.CocktailRecipeImage == 0 ? (
+                                <></>
+                              ) : (
+                                <div
+                                  className="h-12 w-12 cursor-pointer"
+                                  onClick={() =>
+                                    modalContext.openModal(
+                                      <ImageModal image={`/api/workspaces/${cocktailRecipe.workspaceId}/cocktails/${cocktailRecipe.id}/image`} />,
+                                    )
+                                  }
+                                >
+                                  <AvatarImage src={`/api/workspaces/${cocktailRecipe.workspaceId}/cocktails/${cocktailRecipe.id}/image`} alt={'Cocktail'} />
+                                </div>
+                              )}
+                            </div>
                           </div>
                         </td>
                         <td>{cocktailRecipe.name}</td>
