@@ -12,6 +12,7 @@ import ListSearchField from '../../../../../components/ListSearchField';
 import { IngredientModel } from '../../../../../models/IngredientModel';
 import { ModalContext } from '../../../../../lib/context/ModalContextProvider';
 import { fetchIngredients } from '../../../../../lib/network/ingredients';
+import ImageModal from '../../../../../components/modals/ImageModal';
 
 export default function IngredientsOverviewPage() {
   const router = useRouter();
@@ -90,13 +91,22 @@ export default function IngredientsOverviewPage() {
                     .sort((a, b) => a.name.localeCompare(b.name))
                     .map((ingredient) => (
                       <tr key={ingredient.id}>
-                        <td className={''}>
+                        <td>
                           <div className="flex items-center space-x-3">
                             <div className="h-12 w-12">
                               {ingredient._count.IngredientImage == 0 ? (
                                 <></>
                               ) : (
-                                <AvatarImage src={`/api/workspaces/${ingredient.workspaceId}/ingredients/${ingredient.id}/image`} alt={'Zutat'} />
+                                <div
+                                  className="h-12 w-12 cursor-pointer"
+                                  onClick={() =>
+                                    modalContext.openModal(
+                                      <ImageModal image={`/api/workspaces/${ingredient.workspaceId}/ingredients/${ingredient.id}/image`} />,
+                                    )
+                                  }
+                                >
+                                  <AvatarImage src={`/api/workspaces/${ingredient.workspaceId}/ingredients/${ingredient.id}/image`} alt={'Zutat'} />
+                                </div>
                               )}
                             </div>
                           </div>

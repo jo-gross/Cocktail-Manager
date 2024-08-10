@@ -11,12 +11,15 @@ import ListSearchField from '../../../../../components/ListSearchField';
 import { GarnishModel } from '../../../../../models/GarnishModel';
 import AvatarImage from '../../../../../components/AvatarImage';
 import { fetchGarnishes } from '../../../../../lib/network/garnishes';
+import ImageModal from '../../../../../components/modals/ImageModal';
+import { ModalContext } from '../../../../../lib/context/ModalContextProvider';
 
 export default function ManageGlassesOverviewPage() {
   const router = useRouter();
   const { workspaceId } = router.query;
 
   const userContext = useContext(UserContext);
+  const modalContext = useContext(ModalContext);
 
   const [garnishes, setGarnishes] = useState<GarnishModel[]>([]);
   const [loading, setLoading] = useState(true);
@@ -75,11 +78,18 @@ export default function ManageGlassesOverviewPage() {
                       <tr className={'p-4'} key={garnish.id}>
                         <td>
                           <div className="flex items-center space-x-3">
-                            <div className="mask mask-squircle h-12 w-12">
+                            <div className={'h-12 w-12'}>
                               {garnish._count.GarnishImage == 0 ? (
                                 <></>
                               ) : (
-                                <AvatarImage src={`/api/workspaces/${garnish.workspaceId}/garnishes/${garnish.id}/image`} alt="Garnitur" />
+                                <div
+                                  className="h-12 w-12 cursor-pointer"
+                                  onClick={() =>
+                                    modalContext.openModal(<ImageModal image={`/api/workspaces/${garnish.workspaceId}/garnishes/${garnish.id}/image`} />)
+                                  }
+                                >
+                                  <AvatarImage src={`/api/workspaces/${garnish.workspaceId}/garnishes/${garnish.id}/image`} alt="Garnitur" />
+                                </div>
                               )}
                             </div>
                           </div>
