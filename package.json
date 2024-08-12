@@ -29,7 +29,7 @@
     "next": "14.2.5",
     "next-auth": "4.24.7",
     "node-html-parser": "6.1.13",
-    "playwright": "1.45.1",
+    "playwright": "1.46.0",
     "prop-types": "^15.8.1",
     "react": "18.3.1",
     "react-chartjs-2": "^5.2.0",

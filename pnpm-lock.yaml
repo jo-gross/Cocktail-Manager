@@ -51,8 +51,8 @@ importers:
         specifier: 6.1.13
         version: 6.1.13
       playwright:
-        specifier: 1.45.1
-        version: 1.45.1
+        specifier: 1.46.0
+        version: 1.46.0
       prop-types:
         specifier: ^15.8.1
         version: 15.8.1
@@ -2508,13 +2508,13 @@ packages:
     resolution: {integrity: sha512-C+VUP+8jis7EsQZIhDYmS5qlNtjv2yP4SNtjXK9AP1ZcTRlnSfuumaTnRfYZnYgUUYVIKqL0fRvmUGDV2fmp6g==}
     engines: {node: '>=4'}
 
-  playwright-core@1.45.1:
-    resolution: {integrity: sha512-LF4CUUtrUu2TCpDw4mcrAIuYrEjVDfT1cHbJMfwnE2+1b8PZcFzPNgvZCvq2JfQ4aTjRCCHw5EJ2tmr2NSzdPg==}
+  playwright-core@1.46.0:
+    resolution: {integrity: sha512-9Y/d5UIwuJk8t3+lhmMSAJyNP1BUC/DqP3cQJDQQL/oWqAiuPTLgy7Q5dzglmTLwcBRdetzgNM/gni7ckfTr6A==}
     engines: {node: '>=18'}
     hasBin: true
 
-  playwright@1.45.1:
-    resolution: {integrity: sha512-Hjrgae4kpSQBr98nhCj3IScxVeVUixqj+5oyif8TdIn2opTCPEzqAqNMeK42i3cWDCVu9MI+ZsGWw+gVR4ISBg==}
+  playwright@1.46.0:
+    resolution: {integrity: sha512-XYJ5WvfefWONh1uPAUAi0H2xXV5S3vrtcnXe6uAOgdGi3aSpqOSXX08IAjXW34xitfuOJsvXU5anXZxPSEQiJw==}
     engines: {node: '>=18'}
     hasBin: true
 
@@ -5936,11 +5936,11 @@ snapshots:
       find-up: 2.1.0
       load-json-file: 4.0.0
 
-  playwright-core@1.45.1: {}
+  playwright-core@1.46.0: {}
 
-  playwright@1.45.1:
+  playwright@1.46.0:
     dependencies:
-      playwright-core: 1.45.1
+      playwright-core: 1.46.0
     optionalDependencies:
       fsevents: 2.3.2
 
