@@ -501,11 +501,13 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                         ) : (
                           <>
                             <option value={undefined}>Auswählen</option>
-                            {glasses.map((glass) => (
-                              <option key={`form-recipe-glasses${glass.id}`} value={glass.id}>
-                                {glass.name}
-                              </option>
-                            ))}
+                            {glasses
+                              .sort((a, b) => a.name.localeCompare(b.name))
+                              .map((glass) => (
+                                <option key={`form-recipe-glasses${glass.id}`} value={glass.id}>
+                                  {glass.name}
+                                </option>
+                              ))}
                           </>
                         )}
                       </select>
@@ -1098,7 +1100,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                               </button>
                             </div>
                           </div>
-                          <div className={'flex-2 grid w-full grid-cols-1 md:grid-cols-2'}>
+                          <div className={'flex-2 grid w-full grid-cols-1 gap-3 md:grid-cols-2'}>
                             <div className={''}>
                               <label className={'label'}>
                                 <span className={'label-text'}>Garnitur</span>
@@ -1155,24 +1157,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                 </button>
                               </div>
                             </div>
-                            <div className={'form-control'}>
-                              <label className={'label'}>
-                                <span className={'label-text'}>Optional</span>
-                                <span className={'label-text-alt text-error'}>
-                                  {(errors.garnishes as GarnishError[])?.[indexGarnish]?.optional &&
-                                    (touched.garnishes as any)?.[indexGarnish]?.optional &&
-                                    (errors.garnishes as GarnishError[])?.[indexGarnish]?.optional}
-                                </span>
-                                <Field
-                                  type={'checkbox'}
-                                  name={`garnishes.${indexGarnish}.optional`}
-                                  onChange={handleChange}
-                                  onBlur={handleBlur}
-                                  className={'toggle toggle-primary'}
-                                />
-                              </label>
-                            </div>
-                            <div className={''}>
+                            <div className={'row-span-2'}>
                               <label className={'label'}>
                                 <span className={'label-text'}>Zusätzliche Beschreibung</span>
                                 <span className={'label-text-alt text-error'}>
@@ -1191,6 +1176,23 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                 onChange={handleChange}
                                 onBlur={handleBlur}
                               />
+                            </div>
+                            <div className={'form-control'}>
+                              <label className={'label w-fit flex-col justify-start gap-1'}>
+                                <span className={'label-text'}>Optional</span>
+                                <span className={'label-text-alt text-error'}>
+                                  {(errors.garnishes as GarnishError[])?.[indexGarnish]?.optional &&
+                                    (touched.garnishes as any)?.[indexGarnish]?.optional &&
+                                    (errors.garnishes as GarnishError[])?.[indexGarnish]?.optional}
+                                </span>
+                                <Field
+                                  type={'checkbox'}
+                                  name={`garnishes.${indexGarnish}.optional`}
+                                  onChange={handleChange}
+                                  onBlur={handleBlur}
+                                  className={'toggle toggle-primary'}
+                                />
+                              </label>
                             </div>
                           </div>
                           <div className={'flex-1'}>
