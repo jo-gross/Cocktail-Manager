@@ -52,6 +52,19 @@ export default function CocktailsOverviewPage() {
     refreshCocktails();
   }, [refreshCocktails]);
 
+  const cocktailFilter = useCallback((filterString: string) => {
+    const lowerCaseFilterString = filterString.toLowerCase();
+
+    return function (cocktailRecipe: CocktailRecipeModel): boolean {
+      return (
+        cocktailRecipe.name.toLowerCase().includes(lowerCaseFilterString) ||
+        cocktailRecipe.glass?.name.toLowerCase().includes(lowerCaseFilterString) ||
+        cocktailRecipe.garnishes.some((garnish) => garnish.garnish.name.toLowerCase().includes(lowerCaseFilterString)) ||
+        cocktailRecipe.tags.some((tag) => tag.toLowerCase().includes(lowerCaseFilterString))
+      );
+    };
+  }, []);
+
   return (
     <ManageEntityLayout
       backLink={`/workspaces/${workspaceId}/manage`}
@@ -73,10 +86,12 @@ export default function CocktailsOverviewPage() {
             <table className="table table-zebra w-full">
               <thead>
                 <tr>
-                  <th className=""></th>
-                  <th className="">Name</th>
-                  <th className="">Preis</th>
-                  <th className="">Tags</th>
+                  <th></th>
+                  <th>Name</th>
+                  <th>Preis</th>
+                  <th>Tags</th>
+                  <th>Glas</th>
+                  <th>Garnitur(en)</th>
                   <th className="flex justify-end"></th>
                 </tr>
               </thead>
@@ -87,11 +102,7 @@ export default function CocktailsOverviewPage() {
                       <Loading />
                     </td>
                   </tr>
-                ) : cocktailRecipes.filter(
-                    (cocktailRecipe) =>
-                      cocktailRecipe.name.toLowerCase().includes(filterString.toLowerCase()) ||
-                      cocktailRecipe.tags.some((tag) => tag.toLowerCase().includes(filterString.toLowerCase())),
-                  ).length == 0 ? (
+                ) : cocktailRecipes.filter(cocktailFilter(filterString)).length == 0 ? (
                   <tr>
                     <td colSpan={5} className={'text-center'}>
                       Keine Einträge gefunden
@@ -99,11 +110,7 @@ export default function CocktailsOverviewPage() {
                   </tr>
                 ) : (
                   cocktailRecipes
-                    .filter(
-                      (cocktailRecipe) =>
-                        cocktailRecipe.name.toLowerCase().includes(filterString.toLowerCase()) ||
-                        cocktailRecipe.tags.some((tag) => tag.toLowerCase().includes(filterString.toLowerCase())),
-                    )
+                    .filter(cocktailFilter(filterString))
                     .sort((a, b) => a.name.localeCompare(b.name))
                     .map((cocktailRecipe) => (
                       <tr key={cocktailRecipe.id} className={''}>
@@ -138,6 +145,8 @@ export default function CocktailsOverviewPage() {
                             </div>
                           ))}
                         </td>
+                        <td>{cocktailRecipe.glass?.name}</td>
+                        <td>{cocktailRecipe.garnishes.map((garnish) => garnish.garnish.name).join(', ')}</td>
                         <ManageColumn entity={'cocktails'} id={cocktailRecipe.id} onRefresh={refreshCocktails} />
                       </tr>
                     ))
