@@ -559,11 +559,13 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                       value={values.iceId}
                     >
                       <option value={''}>Auswählen</option>
-                      {Object.values(iceOptions).map((iceType) => (
-                        <option key={`form-recipe-ice-types-${iceType.id}`} value={iceType.id}>
-                          {userContext.getTranslation(iceType.name, 'de')}
-                        </option>
-                      ))}
+                      {Object.values(iceOptions)
+                        .sort((a, b) => userContext.getTranslation(a.name, 'de').localeCompare(userContext.getTranslation(b.name, 'de')))
+                        .map((iceType) => (
+                          <option key={`form-recipe-ice-types-${iceType.id}`} value={iceType.id}>
+                            {userContext.getTranslation(iceType.name, 'de')}
+                          </option>
+                        ))}
                     </select>
                   </div>
                   <div className={'divider col-span-2'}>Darstellung</div>
