@@ -12,12 +12,15 @@ import ListSearchField from '../../../../../components/ListSearchField';
 import { GlassModel } from '../../../../../models/GlassModel';
 import AvatarImage from '../../../../../components/AvatarImage';
 import { fetchGlasses } from '../../../../../lib/network/glasses';
+import ImageModal from '../../../../../components/modals/ImageModal';
+import { ModalContext } from '../../../../../lib/context/ModalContextProvider';
 
 export default function ManageGlassesOverviewPage() {
   const router = useRouter();
   const { workspaceId } = router.query;
 
   const userContext = useContext(UserContext);
+  const modalContext = useContext(ModalContext);
 
   const [glasses, setGlasses] = useState<GlassModel[]>([]);
   const [loading, setLoading] = useState(true);
@@ -80,11 +83,18 @@ export default function ManageGlassesOverviewPage() {
                               {glass._count?.GlassImage == 0 ? (
                                 <DefaultGlassIcon />
                               ) : (
-                                <AvatarImage
-                                  src={`/api/workspaces/${glass.workspaceId}/glasses/${glass.id}/image`}
-                                  alt="Glass"
-                                  altComponent={<DefaultGlassIcon />}
-                                />
+                                <div
+                                  className="h-12 w-12 cursor-pointer"
+                                  onClick={() =>
+                                    modalContext.openModal(<ImageModal image={`/api/workspaces/${glass.workspaceId}/glasses/${glass.id}/image`} />)
+                                  }
+                                >
+                                  <AvatarImage
+                                    src={`/api/workspaces/${glass.workspaceId}/glasses/${glass.id}/image`}
+                                    alt="Glass"
+                                    altComponent={<DefaultGlassIcon />}
+                                  />
+                                </div>
                               )}
                             </div>
                           </div>

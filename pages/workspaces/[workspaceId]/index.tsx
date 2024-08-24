@@ -1,5 +1,5 @@
 import React, { useCallback, useContext, useEffect, useState } from 'react';
-import { FaCheck, FaEye, FaSearch, FaTimes } from 'react-icons/fa';
+import { FaArrowDown, FaCheck, FaEye, FaSearch, FaTimes } from 'react-icons/fa';
 import Link from 'next/link';
 import { BsFillGearFill } from 'react-icons/bs';
 import { CocktailCardFull } from '../../../models/CocktailCardFull';
@@ -231,6 +231,56 @@ export default function OverviewPage() {
     return () => clearInterval(interval);
   }, [refreshQueue, showStatisticActions]);
 
+  const [maxDropdownHeight, setMaxDropdownHeight] = useState(0);
+  const actionButtonRef = React.useRef<HTMLDivElement>(null);
+  const dropdownRef = React.useRef<HTMLDivElement>(null);
+  const [isDropdownScrollable, setIsDropdownScrollable] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (dropdownRef.current) {
+        const { scrollTop, scrollHeight, clientHeight } = dropdownRef.current;
+        setIsDropdownScrollable(scrollTop + clientHeight + 16 < scrollHeight);
+      }
+    };
+
+    if (dropdownRef.current) {
+      dropdownRef.current.addEventListener('scroll', handleScroll);
+      handleScroll(); // Initial check
+    }
+
+    return () => {
+      if (dropdownRef.current) {
+        dropdownRef.current.removeEventListener('scroll', handleScroll);
+      }
+    };
+  }, []);
+
+  const [windowSize, setWindowSize] = useState({
+    width: 0,
+    height: 0,
+  });
+  useEffect(() => {
+    function handleResize() {
+      setWindowSize({
+        width: window.innerWidth,
+        height: window.innerHeight,
+      });
+    }
+
+    window.addEventListener('resize', handleResize);
+    handleResize();
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    if (actionButtonRef.current) {
+      const rect = actionButtonRef.current.getBoundingClientRect();
+      const maxHeight = windowSize.height - (windowSize.height - rect.y) - (process.env.NODE_ENV == 'development' ? 40 : 0) - 8;
+      setMaxDropdownHeight(maxHeight);
+    }
+  }, [windowSize]);
+
   return (
     <>
       <Head>
@@ -402,157 +452,176 @@ export default function OverviewPage() {
           <></>
         )}
 
-        <div className={'fixed bottom-2 right-2 z-10 flex flex-col space-y-2 md:bottom-5 md:right-5 print:hidden'}>
+        <div ref={actionButtonRef} className={'fixed bottom-2 right-2 z-10 flex flex-col space-y-2 md:bottom-5 md:right-5 print:hidden'}>
           <div className="dropdown dropdown-end dropdown-top pt-2">
             <label tabIndex={0} className={'btn btn-square btn-primary rounded-xl md:btn-lg'}>
               <FaEye />
             </label>
-            <div tabIndex={0} className="dropdown-content w-52 rounded-box bg-base-100 p-2 shadow">
-              <div className={'flex flex-col space-x-2'}>
-                <div className={'divider'}>Karte</div>
-                {loadingCards ? (
-                  <Loading />
-                ) : cocktailCards.length == 0 ? (
-                  <div>Keine Karten vorhanden</div>
-                ) : (
-                  cocktailCards.sort(sortCards).map((card) => (
-                    <div key={'card-' + card.id} className="form-control">
-                      <label className="label">
-                        <div className={'label-text'}>
-                          {card.name}
-                          {card.date != undefined ? (
-                            <span>
-                              {' '}
-                              - (
-                              {new Date().toISOString().split('T')[0] == new Date(card.date).toISOString().split('T')[0]
-                                ? 'Heute'
-                                : new Date(card.date).toLocaleDateString('de')}
-                              )
-                            </span>
-                          ) : (
-                            ''
-                          )}
-                        </div>
-                        <input
-                          name={'card-radio'}
-                          type={'radio'}
-                          className={'radio'}
-                          value={card.id}
-                          checked={selectedCard?.id == card.id}
-                          readOnly={true}
-                          onClick={() => {
-                            setSelectedCardId(card.id);
-                            router
-                              .replace({
-                                pathname: '/workspaces/[workspaceId]',
-                                query: { card: card.id, workspaceId: workspaceId },
-                              })
-                              .then();
-                          }}
-                        />
-                      </label>
-                    </div>
-                  ))
-                )}
+            <div
+              tabIndex={0}
+              className={`dropdown-content h-min w-52 rounded-box bg-base-100 p-2 shadow`}
+              style={{
+                maxHeight: maxDropdownHeight + 'px',
+              }}
+            >
+              <div
+                ref={dropdownRef}
+                className={'overflow-y-auto'}
+                style={{
+                  maxHeight: maxDropdownHeight - 16 + 'px',
+                }}
+              >
+                <div className={'flex flex-col space-x-2'}>
+                  <div className={'divider'}>Karte</div>
+                  {loadingCards ? (
+                    <Loading />
+                  ) : cocktailCards.length == 0 ? (
+                    <div>Keine Karten vorhanden</div>
+                  ) : (
+                    cocktailCards.sort(sortCards).map((card) => (
+                      <div key={'card-' + card.id} className="form-control">
+                        <label className="label">
+                          <div className={'label-text'}>
+                            {card.name}
+                            {card.date != undefined ? (
+                              <span>
+                                {' '}
+                                - (
+                                {new Date().toISOString().split('T')[0] == new Date(card.date).toISOString().split('T')[0]
+                                  ? 'Heute'
+                                  : new Date(card.date).toLocaleDateString('de')}
+                                )
+                              </span>
+                            ) : (
+                              ''
+                            )}
+                          </div>
+                          <input
+                            name={'card-radio'}
+                            type={'radio'}
+                            className={'radio'}
+                            value={card.id}
+                            checked={selectedCard?.id == card.id}
+                            readOnly={true}
+                            onClick={() => {
+                              setSelectedCardId(card.id);
+                              router
+                                .replace({
+                                  pathname: '/workspaces/[workspaceId]',
+                                  query: { card: card.id, workspaceId: workspaceId },
+                                })
+                                .then();
+                            }}
+                          />
+                        </label>
+                      </div>
+                    ))
+                  )}
 
-                <div className={'divider'}>Anzeige</div>
-                <label className="label">
-                  <div className={'label-text'}>Suche</div>
-                  <input
-                    name={'card-radio'}
-                    type={'radio'}
-                    className={'radio'}
-                    value={'search'}
-                    checked={selectedCardId == 'search' || selectedCardId == undefined}
-                    readOnly={true}
-                    onClick={() => {
-                      setSelectedCardId('search');
-                      router
-                        .replace({
-                          pathname: '/workspaces/[workspaceId]',
-                          query: { card: 'search', workspaceId: workspaceId },
-                        })
-                        .then();
-                    }}
-                  />
-                </label>
-                <div className="form-control">
+                  <div className={'divider'}>Anzeige</div>
                   <label className="label">
-                    Bilder anzeigen
+                    <div className={'label-text'}>Suche</div>
                     <input
-                      type={'checkbox'}
-                      className={'toggle toggle-primary'}
-                      checked={showImage}
+                      name={'card-radio'}
+                      type={'radio'}
+                      className={'radio'}
+                      value={'search'}
+                      checked={selectedCardId == 'search' || selectedCardId == undefined}
                       readOnly={true}
                       onClick={() => {
-                        userContext.updateUserSetting(Setting.showImage, !showImage ? 'true' : 'false');
-                        setShowImage(!showImage);
+                        setSelectedCardId('search');
+                        router
+                          .replace({
+                            pathname: '/workspaces/[workspaceId]',
+                            query: { card: 'search', workspaceId: workspaceId },
+                          })
+                          .then();
                       }}
                     />
                   </label>
+                  <div className="form-control">
+                    <label className="label">
+                      Bilder anzeigen
+                      <input
+                        type={'checkbox'}
+                        className={'toggle toggle-primary'}
+                        checked={showImage}
+                        readOnly={true}
+                        onClick={() => {
+                          userContext.updateUserSetting(Setting.showImage, !showImage ? 'true' : 'false');
+                          setShowImage(!showImage);
+                        }}
+                      />
+                    </label>
+                  </div>
+                  <div className="form-control">
+                    <label className="label">
+                      Tags anzeigen
+                      <input
+                        type={'checkbox'}
+                        className={'toggle toggle-primary'}
+                        checked={showTags}
+                        readOnly={true}
+                        onClick={() => {
+                          userContext.updateUserSetting(Setting.showTags, !showTags ? 'true' : 'false');
+                          setShowTags(!showTags);
+                        }}
+                      />
+                    </label>
+                  </div>
+                  <div className="form-control">
+                    <label className="label">
+                      Weniger Spalten
+                      <input
+                        type={'checkbox'}
+                        className={'toggle toggle-primary'}
+                        checked={lessItems}
+                        readOnly={true}
+                        onClick={() => {
+                          userContext.updateUserSetting(Setting.lessItems, !lessItems ? 'true' : 'false');
+                          setLessItems(!lessItems);
+                        }}
+                      />
+                    </label>
+                  </div>
+                  <div className="form-control">
+                    <label className="label">
+                      Tracking aktivieren
+                      <input
+                        type={'checkbox'}
+                        className={'toggle toggle-primary'}
+                        checked={showStatisticActions}
+                        readOnly={true}
+                        onClick={() => {
+                          userContext.updateUserSetting(Setting.showStatisticActions, !showStatisticActions ? 'true' : 'false');
+                          setShowStatisticActions(!showStatisticActions);
+                        }}
+                      />
+                    </label>
+                  </div>
+                  <div className="form-control">
+                    <label className="label">
+                      Warteschlange als Overlay
+                      <input
+                        type={'checkbox'}
+                        className={'toggle toggle-primary'}
+                        checked={showQueueAsOverlay}
+                        readOnly={true}
+                        onClick={() => {
+                          userContext.updateUserSetting(Setting.showQueueAsOverlay, !showQueueAsOverlay ? 'true' : 'false');
+                          setShowQueueAsOverlay(!showQueueAsOverlay);
+                        }}
+                      />
+                    </label>
+                  </div>
+                  <ThemeChanger />
                 </div>
-                <div className="form-control">
-                  <label className="label">
-                    Tags anzeigen
-                    <input
-                      type={'checkbox'}
-                      className={'toggle toggle-primary'}
-                      checked={showTags}
-                      readOnly={true}
-                      onClick={() => {
-                        userContext.updateUserSetting(Setting.showTags, !showTags ? 'true' : 'false');
-                        setShowTags(!showTags);
-                      }}
-                    />
-                  </label>
-                </div>
-                <div className="form-control">
-                  <label className="label">
-                    Weniger Spalten
-                    <input
-                      type={'checkbox'}
-                      className={'toggle toggle-primary'}
-                      checked={lessItems}
-                      readOnly={true}
-                      onClick={() => {
-                        userContext.updateUserSetting(Setting.lessItems, !lessItems ? 'true' : 'false');
-                        setLessItems(!lessItems);
-                      }}
-                    />
-                  </label>
-                </div>
-                <div className="form-control">
-                  <label className="label">
-                    Tracking aktivieren
-                    <input
-                      type={'checkbox'}
-                      className={'toggle toggle-primary'}
-                      checked={showStatisticActions}
-                      readOnly={true}
-                      onClick={() => {
-                        userContext.updateUserSetting(Setting.showStatisticActions, !showStatisticActions ? 'true' : 'false');
-                        setShowStatisticActions(!showStatisticActions);
-                      }}
-                    />
-                  </label>
-                </div>
-                <div className="form-control">
-                  <label className="label">
-                    Warteschlange als Overlay
-                    <input
-                      type={'checkbox'}
-                      className={'toggle toggle-primary'}
-                      checked={showQueueAsOverlay}
-                      readOnly={true}
-                      onClick={() => {
-                        userContext.updateUserSetting(Setting.showQueueAsOverlay, !showQueueAsOverlay ? 'true' : 'false');
-                        setShowQueueAsOverlay(!showQueueAsOverlay);
-                      }}
-                    />
-                  </label>
-                </div>
-                <ThemeChanger />
               </div>
+              {isDropdownScrollable && (
+                <div className="absolute bottom-0 left-0 flex w-full justify-center pb-2">
+                  <FaArrowDown className="animate-bounce" />
+                </div>
+              )}
             </div>
           </div>
 

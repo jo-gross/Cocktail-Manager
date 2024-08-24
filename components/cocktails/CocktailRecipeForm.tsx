@@ -220,7 +220,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
     tags: props.cocktailRecipe?.tags ?? [],
     glassWithIce: props.cocktailRecipe?.glassWithIce ?? IceType.Without,
     image: props.cocktailRecipe?.CocktailRecipeImage[0]?.image ?? undefined,
-    glassId: props.cocktailRecipe?.glassId ?? null,
+    glassId: props.cocktailRecipe?.glassId ?? undefined,
     glass: glasses.find((g) => g.id == props.cocktailRecipe?.glassId) ?? null,
     garnishes: props.cocktailRecipe?.garnishes ?? [],
     steps: initSteps,
@@ -408,7 +408,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                 <div className={'divider'}></div>
                 <div className={'grid grid-cols-2 gap-4'}>
                   <div className={'col-span-2'}>
-                    <label className={'label'}>
+                    <label className={'label'} htmlFor={'name'}>
                       <span className={'label-text'}>Name</span>
                       <span className={'label-text-alt text-error'}>
                         <>{errors.name && touched.name && errors.name}</> *
@@ -417,6 +417,8 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                     <input
                       type="text"
                       name="name"
+                      autoComplete={'off'}
+                      id={'name'}
                       className={`input input-bordered w-full ${errors.name && touched.name && 'input-error'}`}
                       onChange={handleChange}
                       onBlur={handleBlur}
@@ -424,13 +426,14 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                     />
                   </div>
                   <div className={'col-span-2'}>
-                    <label className={'label'}>
+                    <label className={'label'} htmlFor={'description'}>
                       <span className={'label-text'}>Beschreibung</span>
                       <span className={'label-text-alt text-error'}>
                         <>{errors.description && touched.description && errors.description}</>
                       </span>
                     </label>
                     <textarea
+                      id={'description'}
                       name="description"
                       className={`textarea textarea-bordered w-full ${errors.description && touched.description && 'textarea-error'}`}
                       onChange={handleChange}
@@ -439,7 +442,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                     />
                   </div>
                   <div className={'col-span-2 md:col-span-1'}>
-                    <label className={'label'}>
+                    <label className={'label'} htmlFor={'price'}>
                       <span className={'label-text'}>Preis</span>
                       <span className={'label-text-alt text-error'}>
                         <>{errors.price && touched.price && errors.price}</>
@@ -447,6 +450,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                     </label>
                     <div className={'join w-full'}>
                       <input
+                        id={'price'}
                         type="number"
                         className={`input join-item input-bordered w-full ${errors.price && touched.price && 'input-error'}`}
                         name="price"
@@ -460,27 +464,29 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                     </div>
                   </div>
                   <div className={'col-span-2 md:col-span-1'}>
-                    <label className={'label'}>
+                    <div className={'label'}>
                       <span className={'label-text'}>Tags</span>
                       <span className={'label-text-alt text-error'}>
                         <>{errors.tags && touched.tags && errors.tags}</>
                       </span>
-                    </label>
-                    <TagsInput
-                      value={values.tags}
-                      onChange={(tags) =>
-                        setFieldValue(
-                          'tags',
-                          updateTags(tags, (text) => setFieldError('tags', text ?? 'Tag fehlerhaft')),
-                        )
-                      }
-                      name="tags"
-                      beforeAddValidate={(tag, _) => validateTag(tag, (text) => setFieldError('tags', text ?? 'Tag fehlerhaft'))}
-                      onBlur={handleBlur}
-                    />
+                    </div>
+                    <div id={'tags'}>
+                      <TagsInput
+                        value={values.tags}
+                        onChange={(tags) =>
+                          setFieldValue(
+                            'tags',
+                            updateTags(tags, (text) => setFieldError('tags', text ?? 'Tag fehlerhaft')),
+                          )
+                        }
+                        name="tags"
+                        beforeAddValidate={(tag, _) => validateTag(tag, (text) => setFieldError('tags', text ?? 'Tag fehlerhaft'))}
+                        onBlur={handleBlur}
+                      />
+                    </div>
                   </div>
                   <div>
-                    <label className={'label'}>
+                    <label className={'label'} htmlFor={'glassId'}>
                       <span className={'label-text'}>Glas</span>
                       <span className={'label-text-alt text-error'}>
                         <>{errors.glassId && touched.glassId && errors.glassId}</> *
@@ -488,6 +494,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                     </label>
                     <div className={'join w-full'}>
                       <select
+                        id={'glassId'}
                         name="glassId"
                         className={`join-item select select-bordered w-full ${errors.glassId && touched.glassId && 'select-error'}`}
                         onChange={(event) => {
@@ -507,11 +514,13 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                         ) : (
                           <>
                             <option value={undefined}>Auswählen</option>
-                            {glasses.map((glass) => (
-                              <option key={`form-recipe-glasses${glass.id}`} value={glass.id}>
-                                {glass.name}
-                              </option>
-                            ))}
+                            {glasses
+                              .sort((a, b) => a.name.localeCompare(b.name))
+                              .map((glass) => (
+                                <option key={`form-recipe-glasses${glass.id}`} value={glass.id}>
+                                  {glass.name}
+                                </option>
+                              ))}
                           </>
                         )}
                       </select>
@@ -540,13 +549,14 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                     </div>
                   </div>
                   <div>
-                    <label className={'label'}>
+                    <label className={'label'} htmlFor={'iceId'}>
                       <span className={'label-text'}>Eis</span>
                       <span className={'label-text-alt text-error'}>
                         <>{errors.glassWithIce && touched.glassWithIce && errors.glassWithIce}</>
                       </span>
                     </label>
                     <select
+                      id={'iceId'}
                       name="glassWithIce"
                       className={`select select-bordered w-full ${errors.glassWithIce && touched.glassWithIce && 'select-error'}`}
                       onChange={handleChange}
@@ -744,7 +754,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                     <div className={'col-span-2 space-y-2'}>
                       {(values.steps as CocktailRecipeStepFull[]).map((step, indexStep) => (
                         <div
-                          key={`form-recipe-step-${step.id}-${indexStep}`}
+                          key={`form-recipe-step-${indexStep}`}
                           className={'flex w-full flex-col justify-between space-y-2 rounded-xl border border-neutral p-4'}
                         >
                           <div className={'grid grid-cols-2 gap-2 md:grid-cols-3 md:gap-4'}>
@@ -767,11 +777,11 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                   <option disabled={true}>Lade...</option>
                                 ) : (
                                   Object.entries(_.groupBy(actions, 'actionGroup')).map(([group, groupActions]) => (
-                                    <optgroup key={`form-recipe-step-${step.id}-action-group-${group}`} label={userContext.getTranslation(group, 'de')}>
+                                    <optgroup key={`form-recipe-step-${indexStep}-action-group-${group}`} label={userContext.getTranslation(group, 'de')}>
                                       {groupActions
                                         .sort((a, b) => a.name.localeCompare(b.name))
-                                        .map((action) => (
-                                          <option key={`form-recipe-step-${step.id}-action-${action.id}`} value={action.id}>
+                                        .map((action, indexAction) => (
+                                          <option key={`form-recipe-step-${indexStep}-action-${indexAction}`} value={action.id}>
                                             {userContext.getTranslation(action.name, 'de')}
                                           </option>
                                         ))}
@@ -839,7 +849,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                 {step.ingredients
                                   .sort((a, b) => a.ingredientNumber - b.ingredientNumber)
                                   .map((ingredient, indexIngredient) => (
-                                    <div key={`form-recipe-step-${step.id}-ingredient-${ingredient.id}`} className={'flex flex-row gap-2 pt-2'}>
+                                    <div key={`form-recipe-step-${indexStep}-ingredient-${indexIngredient}`} className={'flex flex-row gap-2 pt-2'}>
                                       <div className={'join join-vertical w-min items-center justify-center'}>
                                         <button
                                           type={'button'}
@@ -890,6 +900,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                       <div className={'grid w-full grid-cols-2 gap-1 md:grid-cols-3'}>
                                         <div key={`form-recipe-step${step.id}-ingredient-${ingredient.id}`} className={'join col-span-2 flex w-full flex-row'}>
                                           <input
+                                            id={`ingredient-${indexIngredient}-name`}
                                             className={`input join-item input-bordered w-full cursor-pointer ${
                                               ((errors.steps as StepError[])?.[indexStep] as any)?.ingredients?.[indexIngredient]?.ingredientId && 'input-error'
                                             }`}
@@ -1105,7 +1116,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                               </button>
                             </div>
                           </div>
-                          <div className={'flex-2 grid w-full grid-cols-1 md:grid-cols-2'}>
+                          <div className={'flex-2 grid w-full grid-cols-1 gap-3 md:grid-cols-2'}>
                             <div className={''}>
                               <label className={'label'}>
                                 <span className={'label-text'}>Garnitur</span>
@@ -1162,24 +1173,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                 </button>
                               </div>
                             </div>
-                            <div className={'form-control'}>
-                              <label className={'label'}>
-                                <span className={'label-text'}>Optional</span>
-                                <span className={'label-text-alt text-error'}>
-                                  {(errors.garnishes as GarnishError[])?.[indexGarnish]?.optional &&
-                                    (touched.garnishes as any)?.[indexGarnish]?.optional &&
-                                    (errors.garnishes as GarnishError[])?.[indexGarnish]?.optional}
-                                </span>
-                                <Field
-                                  type={'checkbox'}
-                                  name={`garnishes.${indexGarnish}.optional`}
-                                  onChange={handleChange}
-                                  onBlur={handleBlur}
-                                  className={'toggle toggle-primary'}
-                                />
-                              </label>
-                            </div>
-                            <div className={''}>
+                            <div className={'row-span-2'}>
                               <label className={'label'}>
                                 <span className={'label-text'}>Zusätzliche Beschreibung</span>
                                 <span className={'label-text-alt text-error'}>
@@ -1198,6 +1192,23 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                 onChange={handleChange}
                                 onBlur={handleBlur}
                               />
+                            </div>
+                            <div className={'form-control'}>
+                              <label className={'label w-fit flex-col justify-start gap-1'}>
+                                <span className={'label-text'}>Optional</span>
+                                <span className={'label-text-alt text-error'}>
+                                  {(errors.garnishes as GarnishError[])?.[indexGarnish]?.optional &&
+                                    (touched.garnishes as any)?.[indexGarnish]?.optional &&
+                                    (errors.garnishes as GarnishError[])?.[indexGarnish]?.optional}
+                                </span>
+                                <Field
+                                  type={'checkbox'}
+                                  name={`garnishes.${indexGarnish}.optional`}
+                                  onChange={handleChange}
+                                  onBlur={handleBlur}
+                                  className={'toggle toggle-primary'}
+                                />
+                              </label>
                             </div>
                           </div>
                           <div className={'flex-1'}>

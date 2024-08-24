@@ -11,6 +11,8 @@ import AvatarImage from '../../../../../components/AvatarImage';
 import { FaArrowDown, FaArrowUp, FaPlus } from 'react-icons/fa';
 import ListSearchField from '../../../../../components/ListSearchField';
 import { CocktailRecipeModel } from '../../../../../models/CocktailRecipeModel';
+import ImageModal from '../../../../../components/modals/ImageModal';
+import { ModalContext } from '../../../../../lib/context/ModalContextProvider';
 import _ from 'lodash';
 import { cocktailFilter } from '../../../../../lib/cocktailFilter';
 
@@ -19,6 +21,7 @@ export default function CocktailsOverviewPage() {
   const { workspaceId } = router.query;
 
   const userContext = useContext(UserContext);
+  const modalContext = useContext(ModalContext);
 
   const [cocktailRecipes, setCocktailRecipes] = useState<CocktailRecipeModel[]>([]);
   const [loading, setLoading] = useState(true);
@@ -61,11 +64,22 @@ export default function CocktailsOverviewPage() {
         <tr key={cocktailRecipe.id} className={''}>
           <td>
             <div className="flex items-center space-x-3">
-              {cocktailRecipe._count.CocktailRecipeImage === 0 ? null : (
-                <div className="h-12 w-12">
-                  <AvatarImage src={`/api/workspaces/${cocktailRecipe.workspaceId}/cocktails/${cocktailRecipe.id}/image`} alt={'Cocktail'} />
-                </div>
-              )}
+              <div className={'h-12 w-12'}>
+                {cocktailRecipe._count.CocktailRecipeImage == 0 ? (
+                  <></>
+                ) : (
+                  <div
+                    className="h-12 w-12 cursor-pointer"
+                    onClick={() =>
+                      modalContext.openModal(
+                        <ImageModal image={`/api/workspaces/${cocktailRecipe.workspaceId}/cocktails/${cocktailRecipe.id}/image`} />,
+                      )
+                    }
+                  >
+                    <AvatarImage src={`/api/workspaces/${cocktailRecipe.workspaceId}/cocktails/${cocktailRecipe.id}/image`} alt={'Cocktail'} />
+                  </div>
+                )}
+              </div>
             </div>
           </td>
           <td className={isArchived ? 'italic' : ''}>
@@ -81,6 +95,8 @@ export default function CocktailsOverviewPage() {
               </div>
             ))}
           </td>
+          <td>{cocktailRecipe.glass?.name}</td>
+          <td>{cocktailRecipe.garnishes.map((garnish) => garnish.garnish.name).join(', ')}</td>
           <ManageColumn entity={'cocktails'} id={cocktailRecipe.id} onRefresh={refreshCocktails} />
         </tr>
       ));
@@ -109,10 +125,12 @@ export default function CocktailsOverviewPage() {
             <table className="table table-zebra w-full">
               <thead>
                 <tr>
-                  <th className=""></th>
-                  <th className="">Name</th>
-                  <th className="">Preis</th>
-                  <th className="">Tags</th>
+                  <th></th>
+                  <th>Name</th>
+                  <th>Preis</th>
+                  <th>Tags</th>
+                  <th>Glas</th>
+                  <th>Garnitur(en)</th>
                   <th className="flex justify-end"></th>
                 </tr>
               </thead>

@@ -1,15 +1,14 @@
 import { BsSearch } from 'react-icons/bs';
-import { CompactCocktailRecipeInstruction } from '../cocktails/CompactCocktailRecipeInstruction';
 import React, { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { CocktailRecipeFull } from '../../models/CocktailRecipeFull';
 import { Loading } from '../Loading';
 import { ModalContext } from '../../lib/context/ModalContextProvider';
-import { ShowCocktailInfoButton } from '../cocktails/ShowCocktailInfoButton';
 import { useRouter } from 'next/router';
 import { alertService } from '../../lib/alertService';
 import { FaPlus } from 'react-icons/fa';
 import { MdPlaylistAdd } from 'react-icons/md';
 import { addCocktailToQueue, addCocktailToStatistic } from '../../lib/network/cocktailTracking';
+import CocktailRecipeCardItem from '../cocktails/CocktailRecipeCardItem';
 import _ from 'lodash';
 
 interface SearchModalProps {
@@ -107,12 +106,15 @@ export function SearchModal(props: SearchModalProps) {
       </div>
       {showRecipe && (
         <div className="collapse-content pl-2 pr-2 md:pl-3">
-          <div className={'card'}>
-            <div className={'card-body'}>
-              <ShowCocktailInfoButton showInfo={true} cocktailRecipe={cocktail} />
-              <CompactCocktailRecipeInstruction showPrice={true} cocktailRecipe={cocktail} showImage={true} />
-            </div>
-          </div>
+                    <CocktailRecipeCardItem
+                      cocktailRecipe={cocktail}
+                      showImage={true}
+                      showTags={true}
+                      showDescription={true}
+                      showStatisticActions={false}
+                      showPrice={true}
+                      showInfo={true}
+                    />
 
           {props.onCocktailSelectedObject != undefined ? (
             <div className={'card-actions flex flex-row justify-end pt-2'}>

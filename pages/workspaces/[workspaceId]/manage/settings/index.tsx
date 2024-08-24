@@ -403,7 +403,7 @@ export default function WorkspaceSettingPage() {
                       )}
                     </td>
                     <td className={'flex justify-end'}>
-                      {userContext.isUserPermitted(Role.ADMIN) ? (
+                      {userContext.isUserPermitted(Role.ADMIN) && workspaceUser.user.id != userContext.user?.id ? (
                         <button
                           className={'btn btn-error btn-sm ml-2'}
                           disabled={workspaceUser.role == Role.OWNER}
@@ -437,7 +437,7 @@ export default function WorkspaceSettingPage() {
                       ) : (
                         <button
                           className={'btn btn-error btn-sm ml-2'}
-                          disabled={workspaceUser.role == Role.OWNER || leaveLoading[workspaceUser.user.id]}
+                          disabled={workspaceUser.role == Role.OWNER || workspaceUser.user.id != userContext.user?.id || leaveLoading[workspaceUser.user.id]}
                           onClick={() => {
                             setLeaveLoading({ ...leaveLoading, [workspaceUser.user.id]: true });
 
@@ -463,7 +463,7 @@ export default function WorkspaceSettingPage() {
                           }}
                         >
                           {leaveLoading[workspaceUser.user.id] ? <span className={'loading loading-spinner'} /> : <></>}
-                          Verlassen
+                          <>{workspaceUser.user.id == userContext.user?.id ? 'Verlassen' : 'Entfernen'}</>
                         </button>
                       )}
                     </td>
