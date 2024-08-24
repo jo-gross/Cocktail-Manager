@@ -41,22 +41,26 @@ export default function CocktailRecipeCardItem(props: CocktailRecipeOverviewItem
           <div className={'bottom-0'}>
             {props.showDescription && props.cocktailRecipe.description ? (
               <>
-                <div className={'col-span-4 mb-2 border-b border-base-100'}></div>
-                <div className={'pb-2 font-bold'}>Beschreibung</div>
+                <div className={'mb-2 mt-2 border-b border-base-100'}></div>
+                <div className={'font-bold'}>Beschreibung</div>
                 <div className={'whitespace-pre-line text-pretty break-normal text-justify'}>{props.cocktailRecipe.description}</div>
               </>
             ) : (
               <></>
             )}
-            {props.showTags ? (
-              props.cocktailRecipe.tags.map((tag) => (
-                <span key={`cocktail-overview-item-${props.cocktailRecipe.id}-tag-${tag}`} className={'badge badge-primary badge-outline mr-1'}>
-                  {tag}
-                </span>
-              ))
+            {props.showTags && props.cocktailRecipe.tags.length > 0 ? (
+              <div>
+                <div className={'mb-2 mt-2 border-b border-base-100'}></div>
+                {props.cocktailRecipe.tags.map((tag) => (
+                  <span key={`cocktail-overview-item-${props.cocktailRecipe.id}-tag-${tag}`} className={'badge badge-primary badge-outline mr-1'}>
+                    {tag}
+                  </span>
+                ))}
+              </div>
             ) : (
               <></>
             )}
+
             {props.showStatisticActions ? (
               <div className={'mt-1 flex flex-row gap-2'}>
                 <button
