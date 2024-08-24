@@ -65,6 +65,9 @@ EXPOSE 3000
 
 ENV PORT 3000
 
+# Ensure ensure encoding is set to UTF-8
+ENV LANG C.UTF-8
+ENV LC_ALL C.UTF-8
 
 # server.js is created by next build from the standalone output
 # https://nextjs.org/docs/pages/api-reference/next-config-js/output

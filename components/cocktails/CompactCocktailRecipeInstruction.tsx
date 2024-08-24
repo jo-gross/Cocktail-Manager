@@ -84,9 +84,7 @@ export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeIns
             </div>
           </div>
         </div>
-        {props.showImage == true && props.cocktailRecipe._count.CocktailRecipeImage == 0 ? (
-          <></>
-        ) : (
+        {props.showImage && props.cocktailRecipe._count.CocktailRecipeImage > 0 ? (
           <div className={'col-span-2 h-full w-full items-center self-center justify-self-center'}>
             <Image
               onClick={() =>
@@ -101,6 +99,8 @@ export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeIns
               height={300}
             />
           </div>
+        ) : (
+          <></>
         )}
       </div>
     </div>
