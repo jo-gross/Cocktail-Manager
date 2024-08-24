@@ -58,7 +58,7 @@ export default function CocktailsOverviewPage() {
 
   const renderTableRows = (recipes: CocktailRecipeModel[], isArchived: boolean) => {
     return recipes
-      .filter((cocktail) => cocktailFilter(cocktail, filterString))
+      .filter(cocktailFilter(filterString))
       .sort((a, b) => a.name.localeCompare(b.name))
       .map((cocktailRecipe) => (
         <tr key={cocktailRecipe.id} className={''}>
@@ -71,9 +71,7 @@ export default function CocktailsOverviewPage() {
                   <div
                     className="h-12 w-12 cursor-pointer"
                     onClick={() =>
-                      modalContext.openModal(
-                        <ImageModal image={`/api/workspaces/${cocktailRecipe.workspaceId}/cocktails/${cocktailRecipe.id}/image`} />,
-                      )
+                      modalContext.openModal(<ImageModal image={`/api/workspaces/${cocktailRecipe.workspaceId}/cocktails/${cocktailRecipe.id}/image`} />)
                     }
                   >
                     <AvatarImage src={`/api/workspaces/${cocktailRecipe.workspaceId}/cocktails/${cocktailRecipe.id}/image`} alt={'Cocktail'} />
@@ -137,25 +135,27 @@ export default function CocktailsOverviewPage() {
               <tbody>
                 {loading ? (
                   <tr className={'w-full'}>
-                    <td colSpan={5}>
+                    <td colSpan={7}>
                       <Loading />
                     </td>
                   </tr>
                 ) : (
                   <>
-                    {groupedCocktails['false'].filter((cocktail) => cocktailFilter(cocktail, filterString)).length == 0 ? (
+                    {groupedCocktails['false'].filter(cocktailFilter(filterString)).length == 0 ? (
                       <tr>
-                        <td colSpan={5}>Keine Cocktails gefunden</td>
+                        <td colSpan={7}>Keine Cocktails gefunden</td>
                       </tr>
                     ) : (
                       <>{renderTableRows(groupedCocktails['false'] || [], false)}</>
                     )}
-                    {(groupedCocktails['true'] || []).filter((cocktail) => cocktailFilter(cocktail, filterString)).length > 0 && (
+                    {(groupedCocktails['true'] || []).filter(cocktailFilter(filterString)).length > 0 && (
                       <>
-                        <tr onClick={() => setCollapsedArchived(!collapsedArchived)}>
-                          <td colSpan={4}>Archiviert</td>
-                          <td className={'flex items-center justify-end'}>
-                            <div className={'p-2'}>{collapsedArchived ? <FaArrowUp /> : <FaArrowDown />}</div>
+                        <tr className={'cursor-pointer'} onClick={() => setCollapsedArchived(!collapsedArchived)}>
+                          <td colSpan={6} className={'bg-base-100 font-bold'}>
+                            Archiviert
+                          </td>
+                          <td className={'flex items-center justify-end bg-base-100'}>
+                            <div className={'p-2'}>{!collapsedArchived ? <FaArrowUp /> : <FaArrowDown />}</div>
                           </td>
                         </tr>
                         {!collapsedArchived && renderTableRows(groupedCocktails['true'], true)}
