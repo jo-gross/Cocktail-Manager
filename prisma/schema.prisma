@@ -67,6 +67,7 @@ enum Setting {
   theme
   showStatisticActions
   showQueueAsOverlay
+  lastSeenVersion
 }
 
 enum WorkspaceSettingKey {
@@ -216,6 +217,8 @@ model CocktailRecipe {
   garnishes             CocktailRecipeGarnish[]
   steps                 CocktailRecipeStep[]
   CocktailCardGroupItem CocktailCardGroupItem[]
+
+  isArchived Boolean @default(false)
 
   workspace                Workspace                  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   workspaceId              String

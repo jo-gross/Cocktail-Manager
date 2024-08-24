@@ -1,7 +1,7 @@
 import { FaArrowLeft } from 'react-icons/fa';
 import Head from 'next/head';
 import React, { useContext } from 'react';
-import { NotSavedConfirmation } from '../modals/NotSavedConfirmation';
+import { NotSavedLeaveConfirmation } from '../modals/NotSavedLeaveConfirmation';
 import { ModalContext } from '../../lib/context/ModalContextProvider';
 import { useRouter } from 'next/router';
 import { FormikProps } from 'formik';
@@ -26,15 +26,20 @@ export function ManageEntityLayout(props: ManageEntityLayoutProps) {
       <Head>
         <>{typeof props.title === 'string' ? <title>{`${props.title} - The Cocktail-Manager`}</title> : <title>The Cocktail-Manager</title>}</>
       </Head>
-      <div className={'flex flex-col p-1 md:p-4 print:p-1'}>
-        <div className={'grid w-full grid-cols-3 items-center justify-center justify-items-center print:grid-cols-1'}>
+      <div>
+        {/*<div className={'flex flex-col p-1 md:p-4 print:p-1'}>*/}
+        <div
+          className={
+            'sticky top-0 z-10 grid w-full grid-cols-3 items-center justify-center justify-items-center bg-base-100 p-1 md:p-2 print:grid-cols-1 print:p-1'
+          }
+        >
           <div className={'col-span-1 justify-self-start print:hidden'}>
             <div
               className={'btn btn-square btn-primary btn-sm md:btn-md'}
               onClick={() => {
                 (props.unsavedChanges ?? false)
                   ? modalContext.openModal(
-                      <NotSavedConfirmation
+                      <NotSavedLeaveConfirmation
                         isSaving={props.formRef?.current?.isSubmitting}
                         onSave={async () => {
                           props.onSave?.();
@@ -55,7 +60,7 @@ export function ManageEntityLayout(props: ManageEntityLayoutProps) {
             {props.actions}
           </div>
         </div>
-        <div className={'p-2 md:p-8 print:p-2'}>{props.children}</div>
+        <div className={'p-2 md:p-4 print:p-2'}>{props.children}</div>
       </div>
     </>
   );

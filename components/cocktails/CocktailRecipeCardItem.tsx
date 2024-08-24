@@ -14,6 +14,7 @@ interface CocktailRecipeOverviewItemProps {
   showPrice?: boolean;
   showInfo?: boolean;
   showTags?: boolean;
+  showDescription?: boolean;
   showStatisticActions?: boolean;
   image?: string;
 }
@@ -38,6 +39,15 @@ export default function CocktailRecipeCardItem(props: CocktailRecipeOverviewItem
           />
           <div className={'h-full'}></div>
           <div className={'bottom-0'}>
+            {props.showDescription && props.cocktailRecipe.description ? (
+              <>
+                <div className={'col-span-4 mb-2 border-b border-base-100'}></div>
+                <div className={'pb-2 font-bold'}>Beschreibung</div>
+                <div className={'whitespace-pre-line text-pretty break-normal text-justify'}>{props.cocktailRecipe.description}</div>
+              </>
+            ) : (
+              <></>
+            )}
             {props.showTags ? (
               props.cocktailRecipe.tags.map((tag) => (
                 <span key={`cocktail-overview-item-${props.cocktailRecipe.id}-tag-${tag}`} className={'badge badge-primary badge-outline mr-1'}>
