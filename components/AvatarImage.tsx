@@ -5,6 +5,7 @@ interface AvatarImageProps {
   src: string;
   alt: string;
   altComponent?: React.ReactNode;
+  onClick?: () => void;
 }
 
 export default function AvatarImage(props: AvatarImageProps) {
@@ -13,7 +14,7 @@ export default function AvatarImage(props: AvatarImageProps) {
   return error ? (
     props.altComponent
   ) : (
-    <div className="mask mask-squircle relative h-full w-full">
+    <div className={`mask mask-squircle relative h-full w-full ${props.onClick ? 'cursor-pointer' : ''}`} onClick={props.onClick}>
       <div className={'z-1000 absolute h-full w-full'}>
         <Image
           onError={() => {

@@ -30,6 +30,7 @@ export default function OverviewPage() {
   const [lessItems, setLessItems] = useState(false);
   const [showStatisticActions, setShowStatisticActions] = useState(false);
   const [showQueueAsOverlay, setShowQueueAsOverlay] = useState(false);
+  const [showDescription, setShowDescription] = useState(false);
 
   const [cocktailCards, setCocktailCards] = useState<CocktailCardFull[]>([]);
   const [loadingCards, setLoadingCards] = useState(true);
@@ -185,6 +186,7 @@ export default function OverviewPage() {
     setLessItems(userContext.user?.settings?.find((s) => s.setting == Setting.lessItems)?.value == 'true' ?? false);
     setShowStatisticActions(userContext.user?.settings?.find((s) => s.setting == Setting.showStatisticActions)?.value == 'true' ?? false);
     setShowQueueAsOverlay(userContext.user?.settings?.find((s) => s.setting == Setting.showQueueAsOverlay)?.value == 'true' ?? false);
+    setShowDescription(userContext.user?.settings?.find((s) => s.setting == Setting.showDescription)?.value == 'true' ?? false);
   }, [userContext.user?.settings]);
 
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -425,6 +427,7 @@ export default function OverviewPage() {
                                     specialPrice={groupItem.specialPrice ?? group.groupPrice ?? undefined}
                                     cocktailRecipe={groupItem.cocktail}
                                     showStatisticActions={showStatisticActions}
+                                    showDescription={showDescription}
                                   />
                                 );
                               } else {
@@ -565,6 +568,21 @@ export default function OverviewPage() {
                         onClick={() => {
                           userContext.updateUserSetting(Setting.showTags, !showTags ? 'true' : 'false');
                           setShowTags(!showTags);
+                        }}
+                      />
+                    </label>
+                  </div>
+                  <div className="form-control">
+                    <label className="label">
+                      Beschreibung anzeigen
+                      <input
+                        type={'checkbox'}
+                        className={'toggle toggle-primary'}
+                        checked={showDescription}
+                        readOnly={true}
+                        onClick={() => {
+                          userContext.updateUserSetting(Setting.showDescription, !showDescription ? 'true' : 'false');
+                          setShowDescription(!showDescription);
                         }}
                       />
                     </label>

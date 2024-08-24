@@ -68,6 +68,7 @@ enum Setting {
   showStatisticActions
   showQueueAsOverlay
   lastSeenVersion
+  showDescription
 }
 
 enum WorkspaceSettingKey {
