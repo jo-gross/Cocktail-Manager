@@ -1,6 +1,6 @@
 import { signIn, signOut } from 'next-auth/react';
 import { useCallback, useContext, useEffect, useState } from 'react';
-import { Workspace } from '@prisma/client';
+import { Setting, Workspace } from '@prisma/client';
 import { Loading } from '../components/Loading';
 import Image from 'next/image';
 import { FaArrowRight } from 'react-icons/fa';
@@ -10,9 +10,13 @@ import { alertService } from '../lib/alertService';
 import Head from 'next/head';
 import packageInfo from '../package.json';
 import { ThemeContext } from '../lib/context/ThemeContextProvider';
+import { ModalContext } from '../lib/context/ModalContextProvider';
+import { marked } from 'marked';
 
 export default function WorkspacesPage() {
   const themeContext = useContext(ThemeContext);
+  const modalContext = useContext(ModalContext);
+
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [workspacesLoading, setWorkspacesLoading] = useState(false);
 
@@ -86,6 +90,48 @@ export default function WorkspacesPage() {
       })
       .finally(() => setJoiningWorkspace(false));
   }, [fetchWorkspaces, joinWorkspaceId, userContext.user]);
+
+  useEffect(() => {
+    if (userContext.user && (document.getElementById('changelog-modal')?.innerHTML == '' || !document.getElementById('changelog-modal'))) {
+      if (userContext.user.settings?.find((userSetting) => userSetting.setting == Setting.lastSeenVersion)?.value != packageInfo.version) {
+        fetch('https://raw.githubusercontent.com/jo-gross/Cocktail-Manager/main/docs/CHANGELOG.md')
+          .then((response) => {
+            if (response.ok) {
+              return response.text();
+            }
+          })
+          .then((text) => {
+            if (text) {
+              return marked(text);
+            }
+          })
+          .then((innerHtml) => {
+            if (innerHtml) {
+              innerHtml = innerHtml.replaceAll('<h1', '<div class="text-2xl font-bold" ');
+              innerHtml = innerHtml.replaceAll('/h1>', '/div>');
+              innerHtml = innerHtml.replaceAll('<h2', '<div class="text-xl font-bold" ');
+              innerHtml = innerHtml.replaceAll('/h2>', '/div>');
+              innerHtml = innerHtml.replaceAll('<h3', '<div class="text-lg font-bold" ');
+              innerHtml = innerHtml.replaceAll('/h3>', '/div>');
+              innerHtml = innerHtml.replaceAll('<ul>', '<ul class="list-disc pl-4">');
+              innerHtml = innerHtml.replaceAll('<a', '<a class="link"');
+
+              modalContext.openModal(
+                <div className={'flex flex-col'}>
+                  <div className={'w-full text-center text-2xl font-bold'}>Neue Version ({packageInfo.version})</div>
+                  <div id={'changelog-modal'}></div>
+                </div>,
+              );
+              if (document.getElementById('changelog-modal')) {
+                document.getElementById('changelog-modal')!.innerHTML = innerHtml;
+              }
+
+              userContext.updateUserSetting(Setting.lastSeenVersion, packageInfo.version);
+            }
+          });
+      }
+    }
+  }, [modalContext, userContext, userContext.user]);
 
   useEffect(() => {
     fetchWorkspaces();
