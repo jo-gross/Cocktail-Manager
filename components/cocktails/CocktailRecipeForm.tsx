@@ -29,7 +29,6 @@ import { fetchActions } from '../../lib/network/actions';
 import { fetchUnits } from '../../lib/network/units';
 import { calcCocktailTotalPrice } from '../../lib/CocktailRecipeCalculation';
 import Image from 'next/image';
-import DeepDiff from 'deep-diff';
 import { fetchIce } from '../../lib/network/ices';
 import { updateTags, validateTag } from '../../models/tags/TagUtils';
 import { DaisyUITagInput } from '../DaisyUITagInput';
@@ -478,13 +477,13 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                     <div id={'tags'}>
                       <DaisyUITagInput
                         value={values.tags}
-                      onChange={(tags: string[]) =>
+                        onChange={(tags: string[]) =>
                           setFieldValue(
                             'tags',
-                          updateTags(tags, (text) => setFieldError('tags', text ?? 'Tag fehlerhaft!')),
+                            updateTags(tags, (text) => setFieldError('tags', text ?? 'Tag fehlerhaft!')),
                           )
                         }
-                      validate={(tag) => validateTag(tag, (text) => setFieldError('tags', text ?? 'Tag fehlerhaft!!!'))}
+                        validate={(tag) => validateTag(tag, (text) => setFieldError('tags', text ?? 'Tag fehlerhaft!!!'))}
                       />
                     </div>
                   </div>
