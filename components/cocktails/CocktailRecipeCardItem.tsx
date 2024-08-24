@@ -61,39 +61,41 @@ export default function CocktailRecipeCardItem(props: CocktailRecipeOverviewItem
             )}
 
             {props.showStatisticActions ? (
-              <div className={'mt-1 flex flex-row gap-2'}>
-                <button
-                  className={'btn btn-outline flex-1'}
-                  onClick={() =>
-                    addCocktailToQueue({
-                      workspaceId: router.query.workspaceId as string,
-                      cocktailId: props.cocktailRecipe.id,
-                      setSubmitting: setSubmittingQueue,
-                    })
-                  }
-                  disabled={submittingQueue}
-                >
-                  <MdPlaylistAdd />
-                  Liste
-                  {submittingQueue ? <span className={'loading loading-spinner'}></span> : <></>}
-                </button>
-                <button
-                  className={'btn btn-outline btn-primary flex-1'}
-                  onClick={() =>
-                    addCocktailToStatistic({
-                      workspaceId: router.query.workspaceId as string,
-                      cocktailId: props.cocktailRecipe.id,
-                      cardId: router.query.cardId,
-                      actionSource: 'CARD',
-                      setSubmitting: setSubmittingStatistic,
-                    })
-                  }
-                  disabled={submittingStatistic}
-                >
-                  <FaPlus />
-                  Gemacht
-                  {submittingStatistic ? <span className={'loading loading-spinner'}></span> : <></>}
-                </button>
+              <div className={'h-full content-end'}>
+                <div className={'mt-1 flex flex-row gap-2'}>
+                  <button
+                    className={'btn btn-outline flex-1'}
+                    onClick={() =>
+                      addCocktailToQueue({
+                        workspaceId: router.query.workspaceId as string,
+                        cocktailId: props.cocktailRecipe.id,
+                        setSubmitting: setSubmittingQueue,
+                      })
+                    }
+                    disabled={submittingQueue}
+                  >
+                    <MdPlaylistAdd />
+                    Liste
+                    {submittingQueue ? <span className={'loading loading-spinner'}></span> : <></>}
+                  </button>
+                  <button
+                    className={'btn btn-outline btn-primary flex-1'}
+                    onClick={() =>
+                      addCocktailToStatistic({
+                        workspaceId: router.query.workspaceId as string,
+                        cocktailId: props.cocktailRecipe.id,
+                        cardId: router.query.cardId,
+                        actionSource: 'CARD',
+                        setSubmitting: setSubmittingStatistic,
+                      })
+                    }
+                    disabled={submittingStatistic}
+                  >
+                    <FaPlus />
+                    Gemacht
+                    {submittingStatistic ? <span className={'loading loading-spinner'}></span> : <></>}
+                  </button>
+                </div>
               </div>
             ) : (
               <></>
