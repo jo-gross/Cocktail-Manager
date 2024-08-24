@@ -1,3 +1,29 @@
+# [1.8.0](https://github.com/jo-gross/Cocktail-Manager/compare/v1.7.3...v1.8.0) (2024-08-24)
+
+
+### Bug Fixes
+
+* conalco ingredient import ([a4b5b41](https://github.com/jo-gross/Cocktail-Manager/commit/a4b5b4186a018efb1a812b718d5a81a2dfa064cd))
+* Fixed closing modal bug in chrome/-ium and safari and added stackable modals ([#352](https://github.com/jo-gross/Cocktail-Manager/issues/352)) ([ebba732](https://github.com/jo-gross/Cocktail-Manager/commit/ebba7328c61fc7de51c9beb8901dc692aac0e138))
+* Loading ui bug ([#349](https://github.com/jo-gross/Cocktail-Manager/issues/349)) ([be6a9ab](https://github.com/jo-gross/Cocktail-Manager/commit/be6a9abe635e11f2c3268ee937e2dea27368ea7f))
+* manage xy made image expandable ([#366](https://github.com/jo-gross/Cocktail-Manager/issues/366)) ([a4b5dca](https://github.com/jo-gross/Cocktail-Manager/commit/a4b5dcabc1cef91cc9fc7e041476b2bb886155fd))
+* mange xy head bar now sticky to the top ([#364](https://github.com/jo-gross/Cocktail-Manager/issues/364)) ([a7f0093](https://github.com/jo-gross/Cocktail-Manager/commit/a7f0093b6d5dee23c525785adbf044ab65a53f29))
+* Mobile tag input not working on chrome ([#356](https://github.com/jo-gross/Cocktail-Manager/issues/356)) ([7e80948](https://github.com/jo-gross/Cocktail-Manager/commit/7e809484edda4134a4807a76e428a6fdc6bd8ccf))
+* scroll to top on search page when cocktail gets selected ([#363](https://github.com/jo-gross/Cocktail-Manager/issues/363)) ([a883568](https://github.com/jo-gross/Cocktail-Manager/commit/a883568b67ffe4b250f7f665008b443e8a43754f))
+* Small ui stuff at cocktail form (glass sorting, garnish opt label, ...) ([#380](https://github.com/jo-gross/Cocktail-Manager/issues/380)) ([3329c27](https://github.com/jo-gross/Cocktail-Manager/commit/3329c27dd2d281a6b1573ed29685d69b2328c0fc))
+* user leave and remove buttons ([#365](https://github.com/jo-gross/Cocktail-Manager/issues/365)) ([3d67066](https://github.com/jo-gross/Cocktail-Manager/commit/3d67066c5169d054959ac2d645b750af9f631a77))
+* View settings dropdown on main page is now scrollable ([#362](https://github.com/jo-gross/Cocktail-Manager/issues/362)) ([3e2670c](https://github.com/jo-gross/Cocktail-Manager/commit/3e2670c040084f0b64f593cb96b625254a965510))
+* Wrong unit conversion after conalco import ([#336](https://github.com/jo-gross/Cocktail-Manager/issues/336)) ([d9a44f2](https://github.com/jo-gross/Cocktail-Manager/commit/d9a44f27d325742d0d8682433070d65f7ac52d48))
+
+
+### Features
+
+* 'new version' popup at workspace selection page after new release ([#372](https://github.com/jo-gross/Cocktail-Manager/issues/372)) ([6c47b29](https://github.com/jo-gross/Cocktail-Manager/commit/6c47b29fee4e6c08afe87bd139fdd0c47cde3a9f))
+* Added cocktail description to cocktail card at search modal and search page ([#351](https://github.com/jo-gross/Cocktail-Manager/issues/351)) ([6f7f0c4](https://github.com/jo-gross/Cocktail-Manager/commit/6f7f0c4f6bf51c0164708cb3829d51870444c0a5))
+* Added glass and garnish col to manage cocktail view ([#378](https://github.com/jo-gross/Cocktail-Manager/issues/378)) ([1fbf183](https://github.com/jo-gross/Cocktail-Manager/commit/1fbf183921a7a71529831791b0a6de68b5b9a448))
+* Archive cocktails and fix of the cocktail unsaved changes detection bug  ([#353](https://github.com/jo-gross/Cocktail-Manager/issues/353)) ([c3e8144](https://github.com/jo-gross/Cocktail-Manager/commit/c3e8144ea03d4c2ffe001fdf417c4a2434d2889d))
+* Custom ice ([#354](https://github.com/jo-gross/Cocktail-Manager/issues/354)) ([708a698](https://github.com/jo-gross/Cocktail-Manager/commit/708a6981aba95d5ae7a8ad850e040467f7ba74ca))
+
 ## [1.7.4](https://github.com/jo-gross/Cocktail-Manager/compare/v1.7.3...v1.7.4) (2024-07-19)
 
 
