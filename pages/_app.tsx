@@ -10,7 +10,7 @@ import Head from 'next/head';
 import ThemeBoundary from '../components/layout/ThemeBoundary';
 
 const App = ({ Component, pageProps: { session, ...pageProps } }: AppProps) => {
-  const [modalContent, setModalContent] = useState(<></>);
+  const [modalContentStack, setModalContentStack] = useState<JSX.Element[]>([]);
 
   const [, forceUpdate] = useReducer((x) => x + 1, 0);
 
@@ -21,19 +21,28 @@ const App = ({ Component, pageProps: { session, ...pageProps } }: AppProps) => {
       <AlertBoundary>
         <ModalContext.Provider
           value={{
-            content: modalContent,
+            content: modalContentStack,
             openModal: async (content) => {
-              if ((document.getElementById('globalModal') as any)?.checked == false) {
-                (document.querySelector('#globalModal') as any).checked = true;
+              if ((document.getElementById('globalModal') as HTMLDialogElement)?.open == false) {
+                (document.getElementById('globalModal') as HTMLDialogElement).showModal();
               }
+
               // The await has the effect in chrome, that the modal was not replaces otherwise
-              await setModalContent(<></>);
-              setModalContent(content);
+              setModalContentStack([...modalContentStack, content]);
             },
             async closeModal() {
-              if ((document.getElementById('globalModal') as HTMLInputElement | null)?.checked == true) {
-                (document.querySelector('#globalModal') as any).checked = false;
+              if (modalContentStack.length > 0) {
+                setModalContentStack(modalContentStack.slice(0, modalContentStack.length - 1));
+
+                if (modalContentStack.length == 1 && (document.getElementById('globalModal') as HTMLDialogElement | null)?.open == true) {
+                  (document.getElementById('globalModal') as HTMLDialogElement).close();
+                }
+              } else {
+                if (modalContentStack.length == 0 && (document.getElementById('globalModal') as HTMLDialogElement | null)?.open == true) {
+                  (document.getElementById('globalModal') as HTMLDialogElement).close();
+                }
               }
+
               forceUpdate();
             },
           }}

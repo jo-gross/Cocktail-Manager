@@ -1,9 +1,8 @@
-import { IceType } from '../../models/IceType';
 import { FaAngleDown, FaAngleUp, FaEuroSign, FaPlus, FaSearch, FaTrashAlt } from 'react-icons/fa';
 import { Field, FieldArray, Formik, FormikProps } from 'formik';
 import React, { createRef, useCallback, useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import { Garnish, Glass, Ingredient, Unit, WorkspaceCocktailRecipeStepAction } from '@prisma/client';
+import { Garnish, Glass, Ice, Ingredient, Unit, WorkspaceCocktailRecipeStepAction } from '@prisma/client';
 import { UploadDropZone } from '../UploadDropZone';
 import { convertToBase64 } from '../../lib/Base64Converter';
 import { CocktailRecipeStepFull } from '../../models/CocktailRecipeStepFull';
@@ -21,7 +20,6 @@ import { IngredientForm } from '../ingredients/IngredientForm';
 import { GlassForm } from '../glasses/GlassForm';
 import { CocktailRecipeFullWithImage } from '../../models/CocktailRecipeFullWithImage';
 import { UserContext } from '../../lib/context/UserContextProvider';
-import DeepDiff from 'deep-diff';
 import { GlassModel } from '../../models/GlassModel';
 import { IngredientModel } from '../../models/IngredientModel';
 import { fetchGlasses } from '../../lib/network/glasses';
@@ -31,6 +29,8 @@ import { fetchActions } from '../../lib/network/actions';
 import { fetchUnits } from '../../lib/network/units';
 import { calcCocktailTotalPrice } from '../../lib/CocktailRecipeCalculation';
 import Image from 'next/image';
+import DeepDiff from 'deep-diff';
+import { fetchIce } from '../../lib/network/ices';
 import { updateTags, validateTag } from '../../models/tags/TagUtils';
 import { DaisyUITagInput } from '../DaisyUITagInput';
 
@@ -63,6 +63,9 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
   const workspaceId = router.query.workspaceId as string | undefined;
   const modalContext = useContext(ModalContext);
   const userContext = useContext(UserContext);
+
+  const [iceOptions, setIceOptions] = useState<Ice[]>([]);
+  const [iceOptionsLoading, setIceOptionsLoading] = useState(false);
 
   const [ingredients, setIngredients] = useState<IngredientModel[]>([]);
   const [ingredientsLoading, setIngredientsLoading] = useState(false);
@@ -204,6 +207,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
 
   useEffect(() => {
     fetchActions(workspaceId, setActions, setActionsLoading);
+    fetchIce(workspaceId, setIceOptions, setIceOptionsLoading);
     fetchIngredients(workspaceId, setIngredients, setIngredientsLoading);
     fetchGarnishes(workspaceId, setGarnishes, setGarnishesLoading);
     fetchGlasses(workspaceId, setGlasses, setGlassesLoading);
@@ -218,13 +222,15 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
     description: props.cocktailRecipe?.description ?? '',
     price: props.cocktailRecipe?.price ?? undefined,
     tags: props.cocktailRecipe?.tags ?? [],
-    glassWithIce: props.cocktailRecipe?.glassWithIce ?? IceType.Without,
+    iceId: props.cocktailRecipe?.iceId ?? null,
     image: props.cocktailRecipe?.CocktailRecipeImage[0]?.image ?? undefined,
-    glassId: props.cocktailRecipe?.glassId ?? null,
+    glassId: props.cocktailRecipe?.glassId ?? undefined,
+    ice: iceOptions.find((i) => i.id == props.cocktailRecipe?.iceId) ?? null,
     glass: glasses.find((g) => g.id == props.cocktailRecipe?.glassId) ?? null,
     garnishes: props.cocktailRecipe?.garnishes ?? [],
     steps: initSteps,
     workspaceId: workspaceId!,
+    isArchived: props.cocktailRecipe?.isArchived ?? false,
   };
 
   return (
@@ -232,8 +238,9 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
       innerRef={formRef}
       initialValues={initValue}
       validate={(values) => {
-        values = _.omit(values, ['image']);
-        const reducedCocktailRecipe = _.omit(props.cocktailRecipe, ['CocktailRecipeImage']);
+        values = _.omit(values, ['image', 'ice', 'isArchived']);
+
+        const reducedCocktailRecipe = _.omit(props.cocktailRecipe, ['CocktailRecipeImage', 'ice', 'isArchived', '_count']);
         if (reducedCocktailRecipe.description == null) {
           reducedCocktailRecipe.description = '';
         }
@@ -247,13 +254,17 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
           values.steps = orderBy(values.steps, ['stepNumber'], ['asc']);
           (values.steps as any[]).forEach((step) => {
             step.ingredients = orderBy(step.ingredients, ['ingredientNumber'], ['asc']);
+
+            step.ingredients = _.map(step.ingredients, (obj) => {
+              return _.assign({}, obj, { ingredient: _.omit(obj.ingredient, 'IngredientVolume') });
+            });
           });
         }
         props.setUnsavedChanges?.(!_.isEqual(reducedCocktailRecipe, values));
 
         // console.debug('CocktailRecipe', reducedCocktailRecipe);
         // console.debug('Values', values);
-        console.debug('Difference', DeepDiff.diff(reducedCocktailRecipe, values));
+        // console.debug('Difference', DeepDiff.diff(reducedCocktailRecipe, values));
         // console.debug('Differs', !_.isEqual(reducedCocktailRecipe, values));
 
         const errors: any = {};
@@ -263,8 +274,8 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
         if (!values.glassId || values.glassId == '') {
           errors.glassId = 'Required';
         }
-        if (!values.glassWithIce || values.glass == '') {
-          errors.glassWithIce = 'Required';
+        if (!values.iceId || values.ice == '') {
+          errors.iceId = 'Required';
         }
 
         const stepsErrors: StepError[] = [];
@@ -336,11 +347,11 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
             name: values.name,
             description: values.description.trim() === '' ? null : values.description,
             price: values.price == '' ? null : values.price,
+            iceId: values.iceId,
             glassId: values.glassId,
             garnishId: values.garnishId,
             image: values.image == '' ? null : values.image,
             tags: values.tags,
-            glassWithIce: values.glassWithIce,
             steps: (values.steps as CocktailRecipeStepFull[]).map((step, index) => {
               return {
                 ...step,
@@ -402,7 +413,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                 <div className={'divider'}></div>
                 <div className={'grid grid-cols-2 gap-4'}>
                   <div className={'col-span-2'}>
-                    <label className={'label'}>
+                    <label className={'label'} htmlFor={'name'}>
                       <span className={'label-text'}>Name</span>
                       <span className={'label-text-alt text-error'}>
                         <>{errors.name && touched.name && errors.name}</> *
@@ -411,6 +422,8 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                     <input
                       type="text"
                       name="name"
+                      autoComplete={'off'}
+                      id={'name'}
                       className={`input input-bordered w-full ${errors.name && touched.name && 'input-error'}`}
                       onChange={handleChange}
                       onBlur={handleBlur}
@@ -418,13 +431,14 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                     />
                   </div>
                   <div className={'col-span-2'}>
-                    <label className={'label'}>
+                    <label className={'label'} htmlFor={'description'}>
                       <span className={'label-text'}>Beschreibung</span>
                       <span className={'label-text-alt text-error'}>
                         <>{errors.description && touched.description && errors.description}</>
                       </span>
                     </label>
                     <textarea
+                      id={'description'}
                       name="description"
                       className={`textarea textarea-bordered w-full ${errors.description && touched.description && 'textarea-error'}`}
                       onChange={handleChange}
@@ -433,7 +447,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                     />
                   </div>
                   <div className={'col-span-2 md:col-span-1'}>
-                    <label className={'label'}>
+                    <label className={'label'} htmlFor={'price'}>
                       <span className={'label-text'}>Preis</span>
                       <span className={'label-text-alt text-error'}>
                         <>{errors.price && touched.price && errors.price}</>
@@ -441,6 +455,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                     </label>
                     <div className={'join w-full'}>
                       <input
+                        id={'price'}
                         type="number"
                         className={`input join-item input-bordered w-full ${errors.price && touched.price && 'input-error'}`}
                         name="price"
@@ -454,25 +469,27 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                     </div>
                   </div>
                   <div className={'col-span-2 md:col-span-1'}>
-                    <label className={'label'}>
+                    <div className={'label'}>
                       <span className={'label-text'}>Tags</span>
                       <span className={'label-text-alt text-error'}>
                         <>{errors.tags && errors.tags}</>
                       </span>
-                    </label>
-                    <DaisyUITagInput
-                      value={values.tags}
+                    </div>
+                    <div id={'tags'}>
+                      <DaisyUITagInput
+                        value={values.tags}
                       onChange={(tags: string[]) =>
-                        setFieldValue(
-                          'tags',
+                          setFieldValue(
+                            'tags',
                           updateTags(tags, (text) => setFieldError('tags', text ?? 'Tag fehlerhaft!')),
-                        )
-                      }
+                          )
+                        }
                       validate={(tag) => validateTag(tag, (text) => setFieldError('tags', text ?? 'Tag fehlerhaft!!!'))}
-                    />
+                      />
+                    </div>
                   </div>
                   <div>
-                    <label className={'label'}>
+                    <label className={'label'} htmlFor={'glassId'}>
                       <span className={'label-text'}>Glas</span>
                       <span className={'label-text-alt text-error'}>
                         <>{errors.glassId && touched.glassId && errors.glassId}</> *
@@ -480,6 +497,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                     </label>
                     <div className={'join w-full'}>
                       <select
+                        id={'glassId'}
                         name="glassId"
                         className={`join-item select select-bordered w-full ${errors.glassId && touched.glassId && 'select-error'}`}
                         onChange={(event) => {
@@ -499,11 +517,13 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                         ) : (
                           <>
                             <option value={undefined}>Auswählen</option>
-                            {glasses.map((glass) => (
-                              <option key={`form-recipe-glasses${glass.id}`} value={glass.id}>
-                                {glass.name}
-                              </option>
-                            ))}
+                            {glasses
+                              .sort((a, b) => a.name.localeCompare(b.name))
+                              .map((glass) => (
+                                <option key={`form-recipe-glasses${glass.id}`} value={glass.id}>
+                                  {glass.name}
+                                </option>
+                              ))}
                           </>
                         )}
                       </select>
@@ -532,25 +552,34 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                     </div>
                   </div>
                   <div>
-                    <label className={'label'}>
+                    <label className={'label'} htmlFor={'iceId'}>
                       <span className={'label-text'}>Eis</span>
                       <span className={'label-text-alt text-error'}>
-                        <>{errors.glassWithIce && touched.glassWithIce && errors.glassWithIce}</> *
+                        <>{errors.iceId && touched.iceId && errors.iceId}</> *
                       </span>
                     </label>
                     <select
-                      name="glassWithIce"
-                      className={`select select-bordered w-full ${errors.glassWithIce && touched.glassWithIce && 'select-error'}`}
-                      onChange={handleChange}
+                      id={'iceId'}
+                      name="iceId"
+                      className={`select select-bordered w-full ${errors.iceId && touched.iceId && 'select-error'}`}
+                      onChange={(event) => {
+                        handleChange(event);
+                        setFieldValue(
+                          'ice',
+                          iceOptions.find((ice) => ice.id == event.target.value),
+                        );
+                      }}
                       onBlur={handleBlur}
-                      value={values.glassWithIce}
+                      value={values.iceId}
                     >
                       <option value={''}>Auswählen</option>
-                      {Object.values(IceType).map((iceType) => (
-                        <option key={`form-recipe-ice-types-${iceType}`} value={iceType}>
-                          {iceType}
-                        </option>
-                      ))}
+                      {Object.values(iceOptions)
+                        .sort((a, b) => userContext.getTranslation(a.name, 'de').localeCompare(userContext.getTranslation(b.name, 'de')))
+                        .map((iceType) => (
+                          <option key={`form-recipe-ice-types-${iceType.id}`} value={iceType.id}>
+                            {userContext.getTranslation(iceType.name, 'de')}
+                          </option>
+                        ))}
                     </select>
                   </div>
                   <div className={'divider col-span-2'}>Darstellung</div>
@@ -615,8 +644,10 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                       description: values.description,
                       tags: values.tags,
                       price: !values.price && values.price == '' ? null : values.price,
-                      glassWithIce: values.glassWithIce,
+                      iceId: values.iceId,
+                      ice: iceOptions.find((ice) => ice.id === values.iceId) ?? null,
                       glassId: values.glassID ?? null,
+                      isArchived: false,
                       glass: glasses.find((glass) => glass.id === values.glassId) ?? null,
                       garnishes: values.garnishes,
                       steps: values.steps,
@@ -735,7 +766,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                     <div className={'col-span-2 space-y-2'}>
                       {(values.steps as CocktailRecipeStepFull[]).map((step, indexStep) => (
                         <div
-                          key={`form-recipe-step-${step.id}-${indexStep}`}
+                          key={`form-recipe-step-${indexStep}`}
                           className={'flex w-full flex-col justify-between space-y-2 rounded-xl border border-neutral p-4'}
                         >
                           <div className={'grid grid-cols-2 gap-2 md:grid-cols-3 md:gap-4'}>
@@ -758,11 +789,11 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                   <option disabled={true}>Lade...</option>
                                 ) : (
                                   Object.entries(_.groupBy(actions, 'actionGroup')).map(([group, groupActions]) => (
-                                    <optgroup key={`form-recipe-step-${step.id}-action-group-${group}`} label={userContext.getTranslation(group, 'de')}>
+                                    <optgroup key={`form-recipe-step-${indexStep}-action-group-${group}`} label={userContext.getTranslation(group, 'de')}>
                                       {groupActions
                                         .sort((a, b) => a.name.localeCompare(b.name))
-                                        .map((action) => (
-                                          <option key={`form-recipe-step-${step.id}-action-${action.id}`} value={action.id}>
+                                        .map((action, indexAction) => (
+                                          <option key={`form-recipe-step-${indexStep}-action-${indexAction}`} value={action.id}>
                                             {userContext.getTranslation(action.name, 'de')}
                                           </option>
                                         ))}
@@ -830,7 +861,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                 {step.ingredients
                                   .sort((a, b) => a.ingredientNumber - b.ingredientNumber)
                                   .map((ingredient, indexIngredient) => (
-                                    <div key={`form-recipe-step-${step.id}-ingredient-${ingredient.id}`} className={'flex flex-row gap-2 pt-2'}>
+                                    <div key={`form-recipe-step-${indexStep}-ingredient-${indexIngredient}`} className={'flex flex-row gap-2 pt-2'}>
                                       <div className={'join join-vertical w-min items-center justify-center'}>
                                         <button
                                           type={'button'}
@@ -881,6 +912,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                       <div className={'grid w-full grid-cols-2 gap-1 md:grid-cols-3'}>
                                         <div key={`form-recipe-step${step.id}-ingredient-${ingredient.id}`} className={'join col-span-2 flex w-full flex-row'}>
                                           <input
+                                            id={`ingredient-${indexIngredient}-name`}
                                             className={`input join-item input-bordered w-full cursor-pointer ${
                                               ((errors.steps as StepError[])?.[indexStep] as any)?.ingredients?.[indexIngredient]?.ingredientId && 'input-error'
                                             }`}
@@ -1096,7 +1128,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                               </button>
                             </div>
                           </div>
-                          <div className={'flex-2 grid w-full grid-cols-1 md:grid-cols-2'}>
+                          <div className={'flex-2 grid w-full grid-cols-1 gap-3 md:grid-cols-2'}>
                             <div className={''}>
                               <label className={'label'}>
                                 <span className={'label-text'}>Garnitur</span>
@@ -1153,24 +1185,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                 </button>
                               </div>
                             </div>
-                            <div className={'form-control'}>
-                              <label className={'label'}>
-                                <span className={'label-text'}>Optional</span>
-                                <span className={'label-text-alt text-error'}>
-                                  {(errors.garnishes as GarnishError[])?.[indexGarnish]?.optional &&
-                                    (touched.garnishes as any)?.[indexGarnish]?.optional &&
-                                    (errors.garnishes as GarnishError[])?.[indexGarnish]?.optional}
-                                </span>
-                                <Field
-                                  type={'checkbox'}
-                                  name={`garnishes.${indexGarnish}.optional`}
-                                  onChange={handleChange}
-                                  onBlur={handleBlur}
-                                  className={'toggle toggle-primary'}
-                                />
-                              </label>
-                            </div>
-                            <div className={''}>
+                            <div className={'row-span-2'}>
                               <label className={'label'}>
                                 <span className={'label-text'}>Zusätzliche Beschreibung</span>
                                 <span className={'label-text-alt text-error'}>
@@ -1189,6 +1204,23 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                 onChange={handleChange}
                                 onBlur={handleBlur}
                               />
+                            </div>
+                            <div className={'form-control'}>
+                              <label className={'label w-fit flex-col justify-start gap-1'}>
+                                <span className={'label-text'}>Optional</span>
+                                <span className={'label-text-alt text-error'}>
+                                  {(errors.garnishes as GarnishError[])?.[indexGarnish]?.optional &&
+                                    (touched.garnishes as any)?.[indexGarnish]?.optional &&
+                                    (errors.garnishes as GarnishError[])?.[indexGarnish]?.optional}
+                                </span>
+                                <Field
+                                  type={'checkbox'}
+                                  name={`garnishes.${indexGarnish}.optional`}
+                                  onChange={handleChange}
+                                  onBlur={handleBlur}
+                                  className={'toggle toggle-primary'}
+                                />
+                              </label>
                             </div>
                           </div>
                           <div className={'flex-1'}>

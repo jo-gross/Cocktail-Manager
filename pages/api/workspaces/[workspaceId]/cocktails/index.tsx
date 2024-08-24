@@ -19,6 +19,7 @@ export default withHttpMethods({
       },
       include: {
         _count: { select: { CocktailRecipeImage: true } },
+        ice: true,
         glass: { include: { _count: { select: { GlassImage: true } } } },
         garnishes: {
           include: {
@@ -62,14 +63,14 @@ export default withHttpMethods({
     }
   }),
   [HTTPMethod.POST]: withWorkspacePermission([Role.MANAGER], async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
-    const { name, description, tags, price, glassWithIce, image, glassId, garnishes, steps } = req.body;
+    const { name, description, tags, price, iceId, image, glassId, garnishes, steps } = req.body;
 
     const input: CocktailRecipeCreateInput = {
       name: name,
       description: description,
       tags: tags,
       price: price,
-      glassWithIce: glassWithIce,
+      ice: { connect: { id: iceId } },
       glass: { connect: { id: glassId } },
       workspace: { connect: { id: workspace.id } },
     };

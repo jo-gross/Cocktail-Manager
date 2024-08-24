@@ -67,6 +67,7 @@ enum Setting {
   theme
   showStatisticActions
   showQueueAsOverlay
+  lastSeenVersion
 }
 
 enum WorkspaceSettingKey {
@@ -154,6 +155,7 @@ model Workspace {
   UnitConversion                    UnitConversion[]
   IngredientVolume                  IngredientVolume[]
   CocktailQueue                     CocktailQueue[]
+  Ice                               Ice[]
 }
 
 model Signage {
@@ -208,12 +210,15 @@ model CocktailRecipe {
   description           String?
   tags                  String[]
   price                 Float?
-  glassWithIce          String
+  iceId                 String?
+  ice                   Ice?                    @relation(fields: [iceId], references: [id])
   glassId               String?
   glass                 Glass?                  @relation(fields: [glassId], references: [id])
   garnishes             CocktailRecipeGarnish[]
   steps                 CocktailRecipeStep[]
   CocktailCardGroupItem CocktailCardGroupItem[]
+
+  isArchived Boolean @default(false)
 
   workspace                Workspace                  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   workspaceId              String
@@ -447,4 +452,14 @@ model CocktailQueue {
   workspace   Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @default(now()) @updatedAt
+}
+
+model Ice {
+  id             String           @id @default(cuid())
+  name           String
+  workspaceId    String
+  workspace      Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  CocktailRecipe CocktailRecipe[]
+
+  @@unique([name, workspaceId])
 }

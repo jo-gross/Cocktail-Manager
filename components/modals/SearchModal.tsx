@@ -1,15 +1,15 @@
 import { BsSearch } from 'react-icons/bs';
-import { CompactCocktailRecipeInstruction } from '../cocktails/CompactCocktailRecipeInstruction';
 import React, { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { CocktailRecipeFull } from '../../models/CocktailRecipeFull';
 import { Loading } from '../Loading';
 import { ModalContext } from '../../lib/context/ModalContextProvider';
-import { ShowCocktailInfoButton } from '../cocktails/ShowCocktailInfoButton';
 import { useRouter } from 'next/router';
 import { alertService } from '../../lib/alertService';
 import { FaPlus } from 'react-icons/fa';
 import { MdPlaylistAdd } from 'react-icons/md';
 import { addCocktailToQueue, addCocktailToStatistic } from '../../lib/network/cocktailTracking';
+import CocktailRecipeCardItem from '../cocktails/CocktailRecipeCardItem';
+import _ from 'lodash';
 
 interface SearchModalProps {
   onCocktailSelectedObject?: (cocktail: CocktailRecipeFull) => void;
@@ -78,6 +78,108 @@ export function SearchModal(props: SearchModalProps) {
   const [submittingStatistic, setSubmittingStatistic] = useState(false);
   const [submittingQueue, setSubmittingQueue] = useState(false);
 
+  const renderCocktailCard = (cocktail: CocktailRecipeFull, index: number, isArchived: boolean) => (
+    <div
+      key={'search-modal-' + cocktail.id}
+      tabIndex={index}
+      className={` ${showRecipe ? 'collapse collapse-arrow' : ''} rounded-box border border-base-300 bg-base-100`}
+    >
+      {showRecipe ? <input type="checkbox" /> : <></>}
+      <div className={`${showRecipe ? 'collapse-title' : 'p-2 md:p-3'} flex justify-between text-xl font-medium`}>
+        {cocktail.name} {isArchived && '(Archiviert)'}
+        {!showRecipe && props.onCocktailSelectedObject != undefined ? (
+          <button
+            type="button"
+            disabled={props.selectedCocktails?.includes(cocktail.id) ?? false}
+            className={'btn btn-primary btn-sm'}
+            onClick={() => {
+              props.onCocktailSelectedObject?.(cocktail);
+              setSearch('');
+              modalContext.closeModal();
+            }}
+          >
+            {props.selectionLabel ?? 'Hinzufügen'}
+          </button>
+        ) : (
+          <></>
+        )}
+      </div>
+      {showRecipe && (
+        <div className="collapse-content pl-2 pr-2 md:pl-3">
+          <CocktailRecipeCardItem
+            cocktailRecipe={cocktail}
+            showImage={true}
+            showTags={true}
+            showDescription={true}
+            showStatisticActions={false}
+            showPrice={true}
+            showInfo={true}
+          />
+
+          {props.onCocktailSelectedObject != undefined ? (
+            <div className={'card-actions flex flex-row justify-end pt-2'}>
+              <button
+                type="button"
+                disabled={props.selectedCocktails?.includes(cocktail.id) ?? false}
+                className={'btn btn-primary btn-sm'}
+                onClick={() => {
+                  props.onCocktailSelectedObject?.(cocktail);
+                  setSearch('');
+                  modalContext.closeModal();
+                }}
+              >
+                {props.selectionLabel ?? 'Hinzufügen'}
+              </button>
+            </div>
+          ) : (
+            <></>
+          )}
+
+          {props.showStatisticActions ? (
+            <div className={'mt-2 flex flex-row gap-2'}>
+              <button
+                className={'btn btn-outline w-full flex-1'}
+                onClick={() =>
+                  addCocktailToQueue({
+                    workspaceId: router.query.workspaceId as string,
+                    cocktailId: cocktail.id,
+                    setSubmitting: setSubmittingQueue,
+                  })
+                }
+                disabled={submittingQueue}
+              >
+                <MdPlaylistAdd />
+                Liste
+                {submittingQueue ? <span className={'loading loading-spinner'}></span> : <></>}
+              </button>
+
+              <button
+                className={'btn btn-outline btn-primary w-full flex-1'}
+                onClick={() =>
+                  addCocktailToStatistic({
+                    workspaceId: router.query.workspaceId as string,
+                    cocktailId: cocktail.id,
+                    actionSource: 'SEARCH_MODAL',
+                    setSubmitting: setSubmittingStatistic,
+                  })
+                }
+                disabled={submittingStatistic}
+              >
+                <FaPlus />
+                Gemacht
+                {submittingStatistic ? <span className={'loading loading-spinner'}></span> : <></>}
+              </button>
+            </div>
+          ) : (
+            <></>
+          )}
+        </div>
+      )}
+    </div>
+  );
+
+  const groupedCocktails = _.groupBy(cocktails, 'isArchived');
+
   return (
     <div className={'grid w-full grid-cols-1 gap-2 p-0.5 md:p-2'}>
       <div className={'w-max text-2xl font-bold'}>Cocktail suchen</div>
@@ -93,7 +195,12 @@ export function SearchModal(props: SearchModalProps) {
             }
           }}
         />
-        <span className={'btn btn-square btn-outline btn-primary join-item'}>
+        <span
+          className={'btn btn-square btn-outline btn-primary join-item'}
+          onClick={() => {
+            fetchCocktails(search);
+          }}
+        >
           <BsSearch />
         </span>
       </div>
@@ -105,104 +212,19 @@ export function SearchModal(props: SearchModalProps) {
             <></>
           )
         ) : (
-          (cocktails
-            .sort((a, b) => a.name.localeCompare(b.name))
-            .map((cocktail, index) => (
-              <div
-                key={'search-modal-' + cocktail.id}
-                tabIndex={index}
-                className={` ${showRecipe ? 'collapse collapse-arrow' : ''} rounded-box border border-base-300 bg-base-100`}
-              >
-                {showRecipe ? <input type="checkbox" /> : <></>}
-                <div className={`${showRecipe ? 'collapse-title' : 'p-2 md:p-3'} flex justify-between text-xl font-medium`}>
-                  {cocktail.name}{' '}
-                  {!showRecipe && props.onCocktailSelectedObject != undefined ? (
-                    <button
-                      type="button"
-                      disabled={props.selectedCocktails?.includes(cocktail.id) ?? false}
-                      className={'btn btn-primary btn-sm'}
-                      onClick={() => {
-                        props.onCocktailSelectedObject?.(cocktail);
-                        setSearch('');
-                        modalContext.closeModal();
-                      }}
-                    >
-                      {props.selectionLabel ?? 'Hinzufügen'}
-                    </button>
-                  ) : (
-                    <></>
-                  )}
+          <>
+            {groupedCocktails['false']?.length > 0 &&
+              groupedCocktails['false'].sort((a, b) => a.name.localeCompare(b.name)).map((cocktail, index) => renderCocktailCard(cocktail, index, false))}
+            {groupedCocktails['true']?.length > 0 && (
+              <div tabIndex={0} className="collapse collapse-arrow bg-base-200">
+                <input type="checkbox" />
+                <div className="collapse-title text-xl font-medium">Archiviert</div>
+                <div className="collapse-content">
+                  {groupedCocktails['true'].sort((a, b) => a.name.localeCompare(b.name)).map((cocktail, index) => renderCocktailCard(cocktail, index, true))}
                 </div>
-                {showRecipe && (
-                  <div className="collapse-content pl-2 pr-2 md:pl-3">
-                    <div className={'card'}>
-                      <div className={'card-body'}>
-                        <ShowCocktailInfoButton showInfo={true} cocktailRecipe={cocktail} />
-                        <CompactCocktailRecipeInstruction showPrice={true} cocktailRecipe={cocktail} showImage={true} />
-                      </div>
-                    </div>
-
-                    {props.onCocktailSelectedObject != undefined ? (
-                      <div className={'card-actions flex flex-row justify-end pt-2'}>
-                        <button
-                          type="button"
-                          disabled={props.selectedCocktails?.includes(cocktail.id) ?? false}
-                          className={'btn btn-primary btn-sm'}
-                          onClick={() => {
-                            props.onCocktailSelectedObject?.(cocktail);
-                            setSearch('');
-                            modalContext.closeModal();
-                          }}
-                        >
-                          {props.selectionLabel ?? 'Hinzufügen'}
-                        </button>
-                      </div>
-                    ) : (
-                      <></>
-                    )}
-
-                    {props.showStatisticActions ? (
-                      <div className={'mt-2 flex flex-row gap-2'}>
-                        <button
-                          className={'btn btn-outline w-full flex-1'}
-                          onClick={() =>
-                            addCocktailToQueue({
-                              workspaceId: router.query.workspaceId as string,
-                              cocktailId: cocktail.id,
-                              setSubmitting: setSubmittingQueue,
-                            })
-                          }
-                          disabled={submittingQueue}
-                        >
-                          <MdPlaylistAdd />
-                          Liste
-                          {submittingQueue ? <span className={'loading loading-spinner'}></span> : <></>}
-                        </button>
-
-                        <button
-                          className={'btn btn-outline btn-primary w-full flex-1'}
-                          onClick={() =>
-                            addCocktailToStatistic({
-                              workspaceId: router.query.workspaceId as string,
-                              cocktailId: cocktail.id,
-                              actionSource: 'SEARCH_MODAL',
-                              setSubmitting: setSubmittingStatistic,
-                            })
-                          }
-                          disabled={submittingStatistic}
-                        >
-                          <FaPlus />
-                          Gemacht
-                          {submittingStatistic ? <span className={'loading loading-spinner'}></span> : <></>}
-                        </button>
-                      </div>
-                    ) : (
-                      <></>
-                    )}
-                  </div>
-                )}
               </div>
-            )) ?? <></>)
+            )}
+          </>
         )}
         {isLoading ? <Loading /> : <></>}
       </>

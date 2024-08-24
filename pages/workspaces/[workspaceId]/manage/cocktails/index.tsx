@@ -8,20 +8,27 @@ import { useRouter } from 'next/router';
 import { alertService } from '../../../../../lib/alertService';
 import { UserContext } from '../../../../../lib/context/UserContextProvider';
 import AvatarImage from '../../../../../components/AvatarImage';
-import { FaPlus } from 'react-icons/fa';
+import { FaArrowDown, FaArrowUp, FaPlus } from 'react-icons/fa';
 import ListSearchField from '../../../../../components/ListSearchField';
 import { CocktailRecipeModel } from '../../../../../models/CocktailRecipeModel';
+import ImageModal from '../../../../../components/modals/ImageModal';
+import { ModalContext } from '../../../../../lib/context/ModalContextProvider';
+import _ from 'lodash';
+import { cocktailFilter } from '../../../../../lib/cocktailFilter';
 
 export default function CocktailsOverviewPage() {
   const router = useRouter();
   const { workspaceId } = router.query;
 
   const userContext = useContext(UserContext);
+  const modalContext = useContext(ModalContext);
 
   const [cocktailRecipes, setCocktailRecipes] = useState<CocktailRecipeModel[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [filterString, setFilterString] = useState('');
+
+  const [collapsedArchived, setCollapsedArchived] = useState(true);
 
   const refreshCocktails = useCallback(() => {
     if (!workspaceId) return;
@@ -49,6 +56,52 @@ export default function CocktailsOverviewPage() {
     refreshCocktails();
   }, [refreshCocktails]);
 
+  const renderTableRows = (recipes: CocktailRecipeModel[], isArchived: boolean) => {
+    return recipes
+      .filter(cocktailFilter(filterString))
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .map((cocktailRecipe) => (
+        <tr key={cocktailRecipe.id} className={''}>
+          <td>
+            <div className="flex items-center space-x-3">
+              <div className={'h-12 w-12'}>
+                {cocktailRecipe._count.CocktailRecipeImage == 0 ? (
+                  <></>
+                ) : (
+                  <div
+                    className="h-12 w-12 cursor-pointer"
+                    onClick={() =>
+                      modalContext.openModal(<ImageModal image={`/api/workspaces/${cocktailRecipe.workspaceId}/cocktails/${cocktailRecipe.id}/image`} />)
+                    }
+                  >
+                    <AvatarImage src={`/api/workspaces/${cocktailRecipe.workspaceId}/cocktails/${cocktailRecipe.id}/image`} alt={'Cocktail'} />
+                  </div>
+                )}
+              </div>
+            </div>
+          </td>
+          <td className={isArchived ? 'italic' : ''}>
+            {cocktailRecipe.name} {isArchived && '(Archiviert)'}
+          </td>
+          <td className={''}>
+            <span className={'whitespace-nowrap'}>{cocktailRecipe.price ?? '-'} €</span>
+          </td>
+          <td className={'flex items-center gap-1'}>
+            {cocktailRecipe.tags.map((tag) => (
+              <div key={`cocktail-${cocktailRecipe.id}-tags-${tag}`} className={'badge badge-primary'}>
+                {tag}
+              </div>
+            ))}
+          </td>
+          <td>{cocktailRecipe.glass?.name}</td>
+          <td>{cocktailRecipe.garnishes.map((garnish) => garnish.garnish.name).join(', ')}</td>
+          <ManageColumn entity={'cocktails'} id={cocktailRecipe.id} onRefresh={refreshCocktails} />
+        </tr>
+      ));
+  };
+
+  const groupedCocktails = _.groupBy(cocktailRecipes, 'isArchived');
+
   return (
     <ManageEntityLayout
       backLink={`/workspaces/${workspaceId}/manage`}
@@ -70,65 +123,45 @@ export default function CocktailsOverviewPage() {
             <table className="table table-zebra w-full">
               <thead>
                 <tr>
-                  <th className=""></th>
-                  <th className="">Name</th>
-                  <th className="">Preis</th>
-                  <th className="">Tags</th>
+                  <th></th>
+                  <th>Name</th>
+                  <th>Preis</th>
+                  <th>Tags</th>
+                  <th>Glas</th>
+                  <th>Garnitur(en)</th>
                   <th className="flex justify-end"></th>
                 </tr>
               </thead>
               <tbody>
                 {loading ? (
                   <tr className={'w-full'}>
-                    <td colSpan={5}>
+                    <td colSpan={7}>
                       <Loading />
                     </td>
                   </tr>
-                ) : cocktailRecipes.filter(
-                    (cocktailRecipe) =>
-                      cocktailRecipe.name.toLowerCase().includes(filterString.toLowerCase()) ||
-                      cocktailRecipe.tags.some((tag) => tag.toLowerCase().includes(filterString.toLowerCase())),
-                  ).length == 0 ? (
-                  <tr>
-                    <td colSpan={5} className={'text-center'}>
-                      Keine Einträge gefunden
-                    </td>
-                  </tr>
                 ) : (
-                  cocktailRecipes
-                    .filter(
-                      (cocktailRecipe) =>
-                        cocktailRecipe.name.toLowerCase().includes(filterString.toLowerCase()) ||
-                        cocktailRecipe.tags.some((tag) => tag.toLowerCase().includes(filterString.toLowerCase())),
-                    )
-                    .sort((a, b) => a.name.localeCompare(b.name))
-                    .map((cocktailRecipe) => (
-                      <tr key={cocktailRecipe.id} className={''}>
-                        <td>
-                          <div className="flex items-center space-x-3">
-                            {cocktailRecipe._count.CocktailRecipeImage == 0 ? (
-                              <></>
-                            ) : (
-                              <div className="h-12 w-12">
-                                <AvatarImage src={`/api/workspaces/${cocktailRecipe.workspaceId}/cocktails/${cocktailRecipe.id}/image`} alt={'Cocktail'} />
-                              </div>
-                            )}
-                          </div>
-                        </td>
-                        <td>{cocktailRecipe.name}</td>
-                        <td className={''}>
-                          <span className={'whitespace-nowrap'}>{cocktailRecipe.price ?? '-'} €</span>
-                        </td>
-                        <td className={'flex items-center gap-1'}>
-                          {cocktailRecipe.tags.map((tag) => (
-                            <div key={`cocktail-${cocktailRecipe.id}-tags-${tag}`} className={'badge badge-primary'}>
-                              {tag}
-                            </div>
-                          ))}
-                        </td>
-                        <ManageColumn entity={'cocktails'} id={cocktailRecipe.id} onRefresh={refreshCocktails} />
+                  <>
+                    {groupedCocktails['false'].filter(cocktailFilter(filterString)).length == 0 ? (
+                      <tr>
+                        <td colSpan={7}>Keine Cocktails gefunden</td>
                       </tr>
-                    ))
+                    ) : (
+                      <>{renderTableRows(groupedCocktails['false'] || [], false)}</>
+                    )}
+                    {(groupedCocktails['true'] || []).filter(cocktailFilter(filterString)).length > 0 && (
+                      <>
+                        <tr className={'cursor-pointer'} onClick={() => setCollapsedArchived(!collapsedArchived)}>
+                          <td colSpan={6} className={'bg-base-100 font-bold'}>
+                            Archiviert
+                          </td>
+                          <td className={'flex items-center justify-end bg-base-100'}>
+                            <div className={'p-2'}>{!collapsedArchived ? <FaArrowUp /> : <FaArrowDown />}</div>
+                          </td>
+                        </tr>
+                        {!collapsedArchived && renderTableRows(groupedCocktails['true'], true)}
+                      </>
+                    )}
+                  </>
                 )}
               </tbody>
             </table>
