@@ -50,29 +50,44 @@ export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeIns
         <div>Eis: {userContext.getTranslation(props.cocktailRecipe.ice?.name ?? '<Eis>', 'de')}</div>
       </div>
       <div className={'col-span-4 border-b border-base-100'}></div>
-      <div className={`${props.showImage == true ? 'col-span-3' : 'col-span-4'}`}>
-        {props.cocktailRecipe.steps
-          ?.sort((a, b) => a.stepNumber - b.stepNumber)
-          ?.map((step, index) => (
-            <div key={`step-${step.id}`} className={'break-words pb-2'}>
-              <span className={'font-bold'}>{userContext.getTranslation(step.action.name, 'de')}</span>
-              {step.ingredients
-                ?.sort((a, b) => a.ingredientNumber - b.ingredientNumber)
-                .map((stepIngredient, indexIngredient) => (
-                  <div key={`cocktail-${props.cocktailRecipe.id}-step-${step.id}-ingredient-${stepIngredient.id}-index-${indexIngredient}`}>
-                    {stepIngredient.amount ?? ''} {userContext.getTranslation(stepIngredient?.unit?.name ?? '', 'de')}{' '}
-                    {stepIngredient.ingredient?.shortName ?? stepIngredient.ingredient?.name ?? ''}{' '}
-                    {indexIngredient < step.ingredients.length - 1 ? <></> : <></>}
+      <div className={`col-span-4 grid grid-cols-6 gap-1`}>
+        <div className={`${props.showImage == true && props.cocktailRecipe._count.CocktailRecipeImage > 0 ? 'col-span-4' : 'col-span-6'}`}>
+          {props.cocktailRecipe.steps
+            ?.sort((a, b) => a.stepNumber - b.stepNumber)
+            ?.map((step, index) => (
+              <div key={`step-${step.id}`} className={'break-words pb-2'}>
+                <span className={'font-bold'}>{userContext.getTranslation(step.action.name, 'de')}</span>
+                {step.ingredients
+                  ?.sort((a, b) => a.ingredientNumber - b.ingredientNumber)
+                  .map((stepIngredient, indexIngredient) => (
+                    <div key={`cocktail-${props.cocktailRecipe.id}-step-${step.id}-ingredient-${stepIngredient.id}-index-${indexIngredient}`}>
+                      {stepIngredient.amount ?? ''} {userContext.getTranslation(stepIngredient?.unit?.name ?? '', 'de')}{' '}
+                      {stepIngredient.ingredient?.shortName ?? stepIngredient.ingredient?.name ?? ''}{' '}
+                      {indexIngredient < step.ingredients.length - 1 ? <></> : <></>}
+                    </div>
+                  ))}
+              </div>
+            ))}
+
+          {props.cocktailRecipe.garnishes.length == 0 ? <></> : <div className={`border-b border-base-100`}></div>}
+          <div>
+            {props.cocktailRecipe.garnishes.length == 0 ? <></> : <div className={'font-bold'}>Deko</div>}
+            <div>
+              {props.cocktailRecipe.garnishes
+                ?.sort((a, b) => a.garnishNumber - b.garnishNumber)
+                .map((garnish) => (
+                  <div key={`cocktail-${props.cocktailRecipe.id}-garnish-${garnish.garnishNumber}-garnishId-${garnish.garnishId}`}>
+                    {garnish?.garnish?.name}
+                    {garnish.optional ? ' (optional)' : ''}
                   </div>
-                ))}
+                )) ?? 'Keine'}
             </div>
-          ))}
-      </div>
-      {props.showImage == true ? (
-        props.cocktailRecipe._count.CocktailRecipeImage == 0 ? (
+          </div>
+        </div>
+        {props.showImage == true && props.cocktailRecipe._count.CocktailRecipeImage == 0 ? (
           <></>
         ) : (
-          <div className={'row-span-3 h-full self-center justify-self-center pt-2'}>
+          <div className={'col-span-2 h-full w-full items-center self-center justify-self-center'}>
             <Image
               onClick={() =>
                 modalContext.openModal(
@@ -80,33 +95,13 @@ export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeIns
                 )
               }
               src={props.image ?? `/api/workspaces/${props.cocktailRecipe.workspaceId}/cocktails/${props.cocktailRecipe.id}/image`}
-              className={'h-full w-fit cursor-pointer rounded-xl object-cover'}
+              className={'h-full w-full cursor-pointer rounded-xl object-cover'}
               alt={''}
               width={300}
               height={300}
             />
           </div>
-        )
-      ) : (
-        <></>
-      )}
-      {props.cocktailRecipe.garnishes.length == 0 ? (
-        <></>
-      ) : (
-        <div className={`border-b border-base-100 ${props.showImage == true && props.image ? 'col-span-3' : 'col-span-4'}`}></div>
-      )}
-      <div className={`${props.showImage == true ? 'col-span-3' : 'col-span-4'}`}>
-        {props.cocktailRecipe.garnishes.length == 0 ? <></> : <div className={'font-bold'}>Deko</div>}
-        <div>
-          {props.cocktailRecipe.garnishes
-            ?.sort((a, b) => a.garnishNumber - b.garnishNumber)
-            .map((garnish) => (
-              <div key={`cocktail-${props.cocktailRecipe.id}-garnish-${garnish.garnishNumber}-garnishId-${garnish.garnishId}`}>
-                {garnish?.garnish?.name}
-                {garnish.optional ? ' (optional)' : ''}
-              </div>
-            )) ?? 'Keine'}
-        </div>
+        )}
       </div>
     </div>
   );

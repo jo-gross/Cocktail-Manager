@@ -45,6 +45,13 @@ const App = ({ Component, pageProps: { session, ...pageProps } }: AppProps) => {
 
               forceUpdate();
             },
+            closeAllModals() {
+              setModalContentStack([]);
+              if ((document.getElementById('globalModal') as HTMLDialogElement | null)?.open == true) {
+                (document.getElementById('globalModal') as HTMLDialogElement).close();
+              }
+              forceUpdate();
+            },
           }}
         >
           <AuthBoundary>

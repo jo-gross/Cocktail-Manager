@@ -1010,7 +1010,10 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                             )}
                                             {ingredients
                                               .find((ingredient) => ingredient.id == values.steps[indexStep].ingredients[indexIngredient]?.ingredientId)
-                                              ?.IngredientVolume?.map((value) => (
+                                              ?.IngredientVolume?.sort((a, b) =>
+                                                userContext.getTranslation(a.unit.name, 'de').localeCompare(userContext.getTranslation(b.unit.name, 'de')),
+                                              )
+                                              ?.map((value) => (
                                                 <option key={`steps.${indexStep}.ingredients.${indexIngredient}.units-${value.unitId}`} value={value.unitId}>
                                                   {userContext.getTranslation(value.unit.name, 'de')}
                                                 </option>

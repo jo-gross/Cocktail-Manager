@@ -66,7 +66,7 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
           <>
             {userContext.isUserPermitted(Role.MANAGER) && (
               <Link href={`/workspaces/${workspaceId}/manage/cocktails/${loadedCocktail.id}`}>
-                <div className={'btn btn-square btn-outline btn-secondary btn-sm'} onClick={() => modalContext.closeModal()}>
+                <div className={'btn btn-square btn-outline btn-secondary btn-sm'} onClick={() => modalContext.closeAllModals()}>
                   <FaPencilAlt />
                 </div>
               </Link>

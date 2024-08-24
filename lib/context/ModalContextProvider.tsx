@@ -6,10 +6,13 @@ interface ModalContextProps {
   openModal: (content: JSX.Element) => void;
 
   closeModal(): void;
+
+  closeAllModals(): void;
 }
 
 export const ModalContext = createContext<ModalContextProps>({
   content: [],
   openModal: () => {},
   closeModal: () => {},
+  closeAllModals: () => {},
 });

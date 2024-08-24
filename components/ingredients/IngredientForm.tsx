@@ -341,15 +341,17 @@ export function IngredientForm(props: IngredientFormProps) {
                           <option value={''} disabled>
                             Auswählen...
                           </option>
-                          {allUnits.map((unit) => (
-                            <option
-                              key={`unit-option-${unit.id}`}
-                              value={unit.id}
-                              disabled={(values.units as FormUnitValue[]).find((u) => u.unitId == unit.id) != undefined}
-                            >
-                              {userContext.getTranslation(unit.name, 'de')}
-                            </option>
-                          ))}
+                          {allUnits
+                            .sort((a, b) => userContext.getTranslation(a.name, 'de').localeCompare(userContext.getTranslation(b.name, 'de')))
+                            .map((unit) => (
+                              <option
+                                key={`unit-option-${unit.id}`}
+                                value={unit.id}
+                                disabled={(values.units as FormUnitValue[]).find((u) => u.unitId == unit.id) != undefined}
+                              >
+                                {userContext.getTranslation(unit.name, 'de')}
+                              </option>
+                            ))}
                         </>
                       )}
                     </select>
