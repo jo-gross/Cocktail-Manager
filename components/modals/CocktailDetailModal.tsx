@@ -13,6 +13,7 @@ import AvatarImage from '../AvatarImage';
 import { Loading } from '../Loading';
 import { MdPlaylistAdd } from 'react-icons/md';
 import { addCocktailToQueue, addCocktailToStatistic } from '../../lib/network/cocktailTracking';
+import ImageModal from './ImageModal';
 
 interface CocktailDetailModalProps {
   cocktailId: string;
@@ -96,9 +97,12 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
               <></>
             ) : (
               <Image
-                className={'h-full w-36 flex-none rounded-lg object-cover object-center shadow-md'}
+                className={'h-full w-36 flex-none cursor-pointer rounded-lg object-cover object-center shadow-md'}
                 src={`/api/workspaces/${loadedCocktail.workspaceId}/cocktails/${loadedCocktail.id}/image`}
                 alt={'Cocktail'}
+                onClick={() =>
+                  modalContext.openModal(<ImageModal image={`/api/workspaces/${loadedCocktail.workspaceId}/cocktails/${loadedCocktail.id}/image`} />)
+                }
                 width={100}
                 height={300}
               />
@@ -115,7 +119,16 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
             Glas: {loadedCocktail.glass?.name}
             <div className={'h-16 w-16'}>
               {loadedCocktail.glass && loadedCocktail.glass._count.GlassImage != 0 ? (
-                <Image src={`/api/workspaces/${loadedCocktail.workspaceId}/glasses/${loadedCocktail.glass.id}/image`} alt={'Glas'} width={300} height={300} />
+                <Image
+                  className={'cursor-pointer'}
+                  src={`/api/workspaces/${loadedCocktail.workspaceId}/glasses/${loadedCocktail.glass.id}/image`}
+                  alt={'Glas'}
+                  onClick={() =>
+                    modalContext.openModal(<ImageModal image={`/api/workspaces/${loadedCocktail.workspaceId}/glasses/${loadedCocktail.glass?.id}/image`} />)
+                  }
+                  width={300}
+                  height={300}
+                />
               ) : (
                 <DefaultGlassIcon />
               )}
@@ -136,6 +149,11 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                             {stepIngredient.ingredient?._count?.IngredientImage != 0 ? (
                               <AvatarImage
                                 src={`/api/workspaces/${loadedCocktail.workspaceId}/ingredients/${stepIngredient.ingredient?.id}/image`}
+                                onClick={() =>
+                                  modalContext.openModal(
+                                    <ImageModal image={`/api/workspaces/${loadedCocktail.workspaceId}/ingredients/${stepIngredient.ingredient?.id}/image`} />,
+                                  )
+                                }
                                 alt={`Cocktail Zutat ${stepIngredient.ingredient?.name}`}
                               />
                             ) : (
@@ -175,8 +193,13 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                     ) : (
                       <div className={'h-12 w-12'}>
                         <AvatarImage
-                          alt={'Cocktail Garnitur ' + garnish.garnish?.name}
                           src={`/api/workspaces/${garnish.garnish.workspaceId}/garnishes/${garnish.garnish.id}/image`}
+                          alt={'Cocktail Garnitur ' + garnish.garnish?.name}
+                          onClick={() =>
+                            modalContext.openModal(
+                              <ImageModal image={`/api/workspaces/${garnish.garnish.workspaceId}/garnishes/${garnish.garnish.id}/image`} />,
+                            )
+                          }
                         />
                       </div>
                     )}
