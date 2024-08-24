@@ -93,7 +93,7 @@ export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeIns
       {props.cocktailRecipe.garnishes.length == 0 ? (
         <></>
       ) : (
-        <div className={`border-b border-base-100 ${props.showImage == true ? 'col-span-3' : 'col-span-4'}`}></div>
+        <div className={`border-b border-base-100 ${props.showImage == true && props.image ? 'col-span-3' : 'col-span-4'}`}></div>
       )}
       <div className={`${props.showImage == true ? 'col-span-3' : 'col-span-4'}`}>
         {props.cocktailRecipe.garnishes.length == 0 ? <></> : <div className={'font-bold'}>Deko</div>}
