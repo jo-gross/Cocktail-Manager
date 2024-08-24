@@ -69,7 +69,7 @@ export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeIns
               </div>
             ))}
 
-          {props.cocktailRecipe.garnishes.length == 0 ? <></> : <div className={`border-b border-base-100`}></div>}
+          {props.cocktailRecipe.garnishes.length == 0 ? <></> : <div className={`mb-1 border-b border-base-100`}></div>}
           <div>
             {props.cocktailRecipe.garnishes.length == 0 ? <></> : <div className={'font-bold'}>Deko</div>}
             <div>
