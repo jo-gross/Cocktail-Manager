@@ -71,3 +71,15 @@ jobs:
 
       - name: 'Check licenses'
         run: license-checker --production --onlyAllow "MIT;ISC;BSD-2-Clause;BSD-3-Clause;Apache-2.0;(MIT OR WTFPL);Apache*;0BSD" --excludePrivatePackages
+
+  build_docker:
+    name: Build Docker Image
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 'Build Docker Image'
+        run: docker build -t my-image .
