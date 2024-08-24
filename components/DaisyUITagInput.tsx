@@ -18,6 +18,8 @@ export function DaisyUITagInput(props: DaisyUITagInputProps) {
         onlyUnique={true}
         validate={props.validate ? (tag) => props.validate!(tag) : undefined}
         addOnBlur={true}
+        // 8 = Backspace, 46 = Delete
+        removeKeys={[]}
         renderLayout={(tagComponents, inputComponent) => (
           <>
             {tagComponents}
