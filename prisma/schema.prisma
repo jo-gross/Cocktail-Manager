@@ -216,6 +216,8 @@ model CocktailRecipe {
   steps                 CocktailRecipeStep[]
   CocktailCardGroupItem CocktailCardGroupItem[]
 
+  isArchived Boolean @default(false)
+
   workspace                Workspace                  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   workspaceId              String
   CocktailCalculationItems CocktailCalculationItems[]

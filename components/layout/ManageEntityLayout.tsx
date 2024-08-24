@@ -1,7 +1,7 @@
 import { FaArrowLeft } from 'react-icons/fa';
 import Head from 'next/head';
 import React, { useContext } from 'react';
-import { NotSavedConfirmation } from '../modals/NotSavedConfirmation';
+import { NotSavedLeaveConfirmation } from '../modals/NotSavedLeaveConfirmation';
 import { ModalContext } from '../../lib/context/ModalContextProvider';
 import { useRouter } from 'next/router';
 import { FormikProps } from 'formik';
@@ -39,7 +39,7 @@ export function ManageEntityLayout(props: ManageEntityLayoutProps) {
               onClick={() => {
                 (props.unsavedChanges ?? false)
                   ? modalContext.openModal(
-                      <NotSavedConfirmation
+                      <NotSavedLeaveConfirmation
                         isSaving={props.formRef?.current?.isSubmitting}
                         onSave={async () => {
                           props.onSave?.();
