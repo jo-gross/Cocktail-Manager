@@ -106,15 +106,15 @@ export function SearchModal(props: SearchModalProps) {
       </div>
       {showRecipe && (
         <div className="collapse-content pl-2 pr-2 md:pl-3">
-                    <CocktailRecipeCardItem
-                      cocktailRecipe={cocktail}
-                      showImage={true}
-                      showTags={true}
-                      showDescription={true}
-                      showStatisticActions={false}
-                      showPrice={true}
-                      showInfo={true}
-                    />
+          <CocktailRecipeCardItem
+            cocktailRecipe={cocktail}
+            showImage={true}
+            showTags={true}
+            showDescription={true}
+            showStatisticActions={false}
+            showPrice={true}
+            showInfo={true}
+          />
 
           {props.onCocktailSelectedObject != undefined ? (
             <div className={'card-actions flex flex-row justify-end pt-2'}>

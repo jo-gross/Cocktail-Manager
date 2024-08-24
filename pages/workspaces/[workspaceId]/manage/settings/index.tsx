@@ -3,7 +3,7 @@ import { alertService } from '../../../../../lib/alertService';
 import { useRouter } from 'next/router';
 import { BackupStructure } from '../../../../api/workspaces/[workspaceId]/admin/backups/backupStructure';
 import { ManageEntityLayout } from '../../../../../components/layout/ManageEntityLayout';
-import { $Enums, Role, Signage, Unit, UnitConversion, User, WorkspaceCocktailRecipeStepAction, WorkspaceUser } from '@prisma/client';
+import { $Enums, Ice, Role, Signage, Unit, UnitConversion, User, WorkspaceCocktailRecipeStepAction, WorkspaceUser } from '@prisma/client';
 import { UserContext } from '../../../../../lib/context/UserContextProvider';
 import { FaArrowDown, FaArrowUp, FaShareAlt, FaTrashAlt } from 'react-icons/fa';
 import { DeleteConfirmationModal } from '../../../../../components/modals/DeleteConfirmationModal';
@@ -15,12 +15,14 @@ import '../../../../../lib/DateUtils';
 import { Loading } from '../../../../../components/Loading';
 import _ from 'lodash';
 import CocktailStepActionModal from '../../../../../components/modals/CocktailStepActionModal';
-import CocktailStepActionGroupModal from '../../../../../components/modals/CocktailStepActionGroupModal';
+import EditTranslationModal from '../../../../../components/modals/EditTranslationModal';
 import UnitModal from '../../../../../components/modals/UnitModal';
 import UnitConversionModal from '../../../../../components/modals/UnitConversionModal';
 import { fetchUnitConversions, fetchUnits } from '../../../../../lib/network/units';
 import { fetchActions } from '../../../../../lib/network/actions';
 import Image from 'next/image';
+import { fetchIce } from '../../../../../lib/network/ices';
+import CreateIceModal from '../../../../../components/modals/CreateIceModal';
 import MonitorFormat = $Enums.MonitorFormat;
 
 export default function WorkspaceSettingPage() {
@@ -58,6 +60,9 @@ export default function WorkspaceSettingPage() {
 
   const [unitConversions, setUnitConversions] = useState<UnitConversion[]>([]);
   const [unitConversionsLoading, setUnitConversionsLoading] = useState<boolean>(false);
+
+  const [iceOptions, setIceOptions] = useState<Ice[]>([]);
+  const [iceOptionsLoading, setIceOptionsLoading] = useState<boolean>(false);
 
   const [deleting, setDeleting] = useState<{ [key: string]: boolean }>({});
 
@@ -98,6 +103,7 @@ export default function WorkspaceSettingPage() {
       if (response.ok) {
         fetchActions(workspaceId, setWorkspaceActions, setWorkspaceActionLoading);
         alertService.success(`Import erfolgreich`);
+        router.reload();
         setUploadImportFile(undefined);
         if (uploadImportFileRef.current) {
           uploadImportFileRef.current.value = '';
@@ -319,12 +325,42 @@ export default function WorkspaceSettingPage() {
     [deleting, workspaceId],
   );
 
+  const deleteIce = useCallback(
+    async (iceId: string) => {
+      if (workspaceId == undefined) return;
+      if (deleting[iceId] ?? false) return;
+      setDeleting({ ...deleting, [iceId]: true });
+      fetch(`/api/workspaces/${workspaceId}/ice/${iceId}`, {
+        method: 'DELETE',
+      })
+        .then(async (response) => {
+          if (response.ok) {
+            fetchIce(workspaceId, setIceOptions, setIceOptionsLoading);
+            alertService.success('Erfolgreich gelöscht');
+          } else {
+            const body = await response.json();
+            console.error('SettingsPage -> deleteIce', response);
+            alertService.error(body.message ?? 'Fehler beim Löschen', response.status, response.statusText);
+          }
+        })
+        .catch((error) => {
+          console.error('SettingsPage -> deleteIce', error);
+          alertService.error('Fehler beim Löschen');
+        })
+        .finally(() => {
+          setDeleting({ ...deleting, [iceId]: false });
+        });
+    },
+    [deleting, workspaceId],
+  );
+
   useEffect(() => {
     fetchWorkspaceUsers();
     fetchSignage();
     fetchActions(workspaceId, setWorkspaceActions, setWorkspaceActionLoading);
     fetchUnits(workspaceId, setUnits, setUnitsLoading);
     fetchUnitConversions(workspaceId, setUnitConversionsLoading, setUnitConversions);
+    fetchIce(workspaceId, setIceOptions, setIceOptionsLoading);
   }, [fetchSignage, fetchWorkspaceUsers, workspaceId]);
 
   return (
@@ -635,7 +671,7 @@ export default function WorkspaceSettingPage() {
         )}
         {/*Cocktail Recipe Actions*/}
         {userContext.isUserPermitted(Role.ADMIN) ? (
-          <div className={'card'}>
+          <div className={'card h-min'}>
             <div className={'card-body'}>
               <div className={'card-title'}>Zubereitung</div>
               <div>
@@ -747,7 +783,7 @@ export default function WorkspaceSettingPage() {
                                 <button
                                   className={'btn btn-outline btn-primary btn-sm'}
                                   onClick={() => {
-                                    modalContext.openModal(<CocktailStepActionGroupModal actionGroup={group} />);
+                                    modalContext.openModal(<EditTranslationModal identifier={group} slang={'Zubereitungsgruppe'} />);
                                   }}
                                 >
                                   Edit
@@ -768,7 +804,7 @@ export default function WorkspaceSettingPage() {
         )}
         {/*Workspace Units*/}
         {userContext.isUserPermitted(Role.ADMIN) ? (
-          <div className={'card'}>
+          <div className={`${!collapsedGeneratedUnits ? 'row-span-2' : 'row-span-6'} card h-fit`}>
             <div className={'card-body'}>
               <div className={'card-title'}>Einheiten</div>
               <div>Hier lassen sich alle Einheiten, die bei der Zubereitung eines Cocktails ausgewählt werden können angepasst werden.</div>
@@ -974,6 +1010,87 @@ export default function WorkspaceSettingPage() {
         ) : (
           <></>
         )}
+
+        {/*Ice*/}
+        {userContext.isUserPermitted(Role.ADMIN) ? (
+          <div className={'card h-min'}>
+            <div className={'card-body'}>
+              <div className={'card-title'}>Eis</div>
+              <div>Hier lassen sich die unterschiedlichen Eiswürfeltypen anpassen. Beachte, dass das Löschen alle Verweise auf das Eis löscht.</div>
+              {iceOptionsLoading ? (
+                <div>
+                  <Loading />
+                </div>
+              ) : (
+                <>
+                  <div className={'overflow-x-auto'}>
+                    <table className={'grid-col-full table table-zebra w-full table-auto'}>
+                      <thead>
+                        <tr>
+                          <td>Key</td>
+                          <td>Deutsch</td>
+                          <td className={'flex flex-row justify-end'}>
+                            <button
+                              className={'btn btn-primary btn-sm'}
+                              onClick={() => {
+                                modalContext.openModal(<CreateIceModal />);
+                              }}
+                            >
+                              Hinzufügen
+                            </button>
+                          </td>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {iceOptions.length == 0 ? (
+                          <tr>
+                            <td colSpan={3}>Keine Einträge vorhanden</td>
+                          </tr>
+                        ) : (
+                          iceOptions.map((iceOption, indexIceOption) => (
+                            <tr key={`ice-option-${indexIceOption}`}>
+                              <td>{iceOption.name}</td>
+                              <td>{userContext.getTranslation(iceOption.name, 'de')}</td>
+                              <td className={'flex flex-row justify-end gap-2'}>
+                                <button
+                                  className={'btn btn-outline btn-primary btn-sm'}
+                                  onClick={() => {
+                                    modalContext.openModal(<EditTranslationModal identifier={iceOption.name} slang={'Eis'} />);
+                                  }}
+                                >
+                                  Edit
+                                </button>
+                                <button
+                                  disabled={deleting[iceOption.id] ?? false}
+                                  className={'btn-red btn btn-outline btn-sm'}
+                                  onClick={() =>
+                                    modalContext.openModal(
+                                      <DeleteConfirmationModal
+                                        onApprove={() => deleteIce(iceOption.id)}
+                                        spelling={'DELETE'}
+                                        entityName={userContext.getTranslation(iceOption.name, 'de')}
+                                      />,
+                                    )
+                                  }
+                                >
+                                  {(deleting[iceOption.id] ?? false) ? <span className={'loading loading-spinner'} /> : <></>}
+                                  <FaTrashAlt />
+                                </button>
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        ) : (
+          <></>
+        )}
+
         {/*Workspace Dangerous Actions*/}
         {userContext.isUserPermitted(Role.ADMIN) ? (
           <div className={'col-span-full'}>
