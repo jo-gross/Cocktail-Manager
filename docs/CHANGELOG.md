@@ -1,3 +1,12 @@
+## [1.8.1](https://github.com/jo-gross/Cocktail-Manager/compare/v1.8.0...v1.8.1) (2024-08-24)
+
+
+### Bug Fixes
+
+* "New-Version" Popup display issues resolved ([39e78c2](https://github.com/jo-gross/Cocktail-Manager/commit/39e78c2aa1b623d60bca60975fc6bf770db48cd8))
+* cocktail card item ui adjustments ([9f1d655](https://github.com/jo-gross/Cocktail-Manager/commit/9f1d655d621fe9a4783ef20c8b6c6e2697a3a9db))
+* ui enhancement, tag input improvement (convert all to lowercase), modal closing bug ([da30001](https://github.com/jo-gross/Cocktail-Manager/commit/da30001ba43f3be197da8e48aee2b518d817d7ac))
+
 # [1.8.0](https://github.com/jo-gross/Cocktail-Manager/compare/v1.7.3...v1.8.0) (2024-08-24)
 
 
