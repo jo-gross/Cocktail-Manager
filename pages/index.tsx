@@ -28,6 +28,8 @@ export default function WorkspacesPage() {
   const [joiningWorkspace, setJoiningWorkspace] = useState(false);
   const [creatingWorkspace, setCreatingWorkspace] = useState(false);
 
+  const [changeLogFetch, setChangelogFetch] = useState(false);
+
   const fetchWorkspaces = useCallback(() => {
     if (!userContext.user) return;
     setWorkspacesLoading(true);
@@ -93,7 +95,8 @@ export default function WorkspacesPage() {
 
   useEffect(() => {
     if (userContext.user && (document.getElementById('changelog-modal')?.innerHTML == '' || !document.getElementById('changelog-modal'))) {
-      if (userContext.user.settings?.find((userSetting) => userSetting.setting == Setting.lastSeenVersion)?.value != packageInfo.version) {
+      if (userContext.user.settings?.find((userSetting) => userSetting.setting == Setting.lastSeenVersion)?.value != packageInfo.version && !changeLogFetch) {
+        setChangelogFetch(true);
         fetch('https://raw.githubusercontent.com/jo-gross/Cocktail-Manager/main/docs/CHANGELOG.md')
           .then((response) => {
             if (response.ok) {
@@ -119,19 +122,24 @@ export default function WorkspacesPage() {
               modalContext.openModal(
                 <div className={'flex flex-col'}>
                   <div className={'w-full text-center text-2xl font-bold'}>Neue Version ({packageInfo.version})</div>
-                  <div id={'changelog-modal'}></div>
+                  <div className={'w-full text-center italic'}>
+                    <Link href={'https://github.com/jo-gross/Cocktail-Manager/releases'} className={'link'} target={'_blank'}>
+                      Changelog ansehen
+                    </Link>
+                  </div>
+                  <div dangerouslySetInnerHTML={{ __html: innerHtml }} />{' '}
                 </div>,
               );
-              if (document.getElementById('changelog-modal')) {
-                document.getElementById('changelog-modal')!.innerHTML = innerHtml;
-              }
 
               userContext.updateUserSetting(Setting.lastSeenVersion, packageInfo.version);
             }
+          })
+          .catch((error) => {
+            console.error('WorkspacesOverview -> useEffect -> fetch', error);
           });
       }
     }
-  }, [modalContext, userContext, userContext.user]);
+  }, [changeLogFetch, modalContext, userContext, userContext.user]);
 
   useEffect(() => {
     fetchWorkspaces();
