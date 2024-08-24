@@ -22,15 +22,17 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       const body = await response.text();
       const soup = new JSSoup(body);
 
-      const imageResponse = await fetch(soup.find('div', 'image-slider--container').contents[0].find('img').attrs.src).catch((error) => {
+      const imageResponse = await fetch(soup.find('div', 'cms-element-image-gallery').contents[0].find('img').attrs.src).catch((error) => {
         console.log(error);
         return undefined;
       });
 
       const image = imageResponse != undefined ? 'data:image/jpg;base64,' + Buffer.from(await imageResponse.arrayBuffer()).toString('base64') : undefined;
-      const name = soup.find('h1', 'product--title')?.text?.replace('\n', '')?.trim() ?? '';
+      const name = soup.find('h1', 'product-detail-name')?.text?.replace('\n', '')?.trim() ?? '';
       const price = soup.find('meta', { itemprop: 'price' })?.attrs?.content ?? 0;
-      const volume = (soup.find('div', ['product--price', 'price--unit'])?.contents?.[1]?.['_text']?.split(' ')?.[0] ?? 0) * 100;
+      const volume = (soup.find('span', 'price-unit-content')?.text?.trim()?.split(' ')?.[0] ?? 0) * 100;
+
+      console.log(volume);
 
       const result: ResponseBody = {
         name: name,
