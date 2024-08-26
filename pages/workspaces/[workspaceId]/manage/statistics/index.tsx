@@ -114,10 +114,12 @@ export default function StatisticsPage() {
           <input
             className={'input input-bordered'}
             type={'date'}
-            value={startDate.toISOString().split('T')[0]}
+            value={new Date(startDate).toISOString().split('T')[0]}
             onChange={async (event) => {
+              if (!event.target.value) return;
               const start = new Date(event.target.value);
               let end = endDate;
+
               if (start.getTime() > end.getTime()) {
                 end = start;
                 setEndDate(start);
@@ -144,6 +146,7 @@ export default function StatisticsPage() {
             type={'date'}
             value={endDate.toISOString().split('T')[0]}
             onChange={async (event) => {
+              if (!event.target.value) return;
               const end = new Date(event.target.value);
               let start = startDate;
               if (end.getTime() < startDate.getTime()) {

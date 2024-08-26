@@ -23,7 +23,7 @@
 }
 
 .table > thead {
-  @apply bg-base-100;
+    /*@apply bg-base-100;*/
 }
 
 .divider-sm {
