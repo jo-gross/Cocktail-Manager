@@ -42,8 +42,8 @@ importers:
         specifier: 4.17.21
         version: 4.17.21
       marked:
-        specifier: ^14.0.0
-        version: 14.0.0
+        specifier: ^14.1.0
+        version: 14.1.0
       next:
         specifier: 14.2.5
         version: 14.2.5(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -2008,8 +2008,8 @@ packages:
     engines: {node: '>= 18'}
     hasBin: true
 
-  marked@14.0.0:
-    resolution: {integrity: sha512-uIj4+faQ+MgHgwUW1l2PsPglZLOLOT1uErt06dAPtx2kjteLAkbsd/0FiYg/MGS+i7ZKLb7w2WClxHkzOOuryQ==}
+  marked@14.1.0:
+    resolution: {integrity: sha512-P93GikH/Pde0hM5TAXEd8I4JAYi8IB03n8qzW8Bh1BIEFpEyBoYxi/XWZA53LSpTeLBiMQOoSMj0u5E/tiVYTA==}
     engines: {node: '>= 18'}
     hasBin: true
 
@@ -5406,7 +5406,7 @@ snapshots:
 
   marked@12.0.2: {}
 
-  marked@14.0.0: {}
+  marked@14.1.0: {}
 
   mdast-util-from-markdown@2.0.0:
     dependencies:
