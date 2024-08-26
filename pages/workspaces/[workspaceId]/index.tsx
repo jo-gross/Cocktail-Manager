@@ -283,6 +283,19 @@ export default function OverviewPage() {
     }
   }, [windowSize]);
 
+  const timeComponent = (
+    <div className={'w-full text-center'}>
+      {selectedCard && selectedCardId != 'search' ? (
+        <span>
+          Angezeigte Karte: <strong>{selectedCard.name}</strong> -{' '}
+        </span>
+      ) : (
+        ''
+      )}
+      {currentTime?.toFormatDateString()}, {currentTime?.toFormatTimeString()} Uhr
+    </div>
+  );
+
   return (
     <>
       <Head>
@@ -290,13 +303,7 @@ export default function OverviewPage() {
       </Head>
 
       <div className={'static h-screen'}>
-        {selectedCard?.showTime ? (
-          <div className={'w-full pt-2 text-center'}>
-            {currentTime?.toFormatTimeString()} {currentTime?.toFormatDateString()}
-          </div>
-        ) : (
-          <></>
-        )}
+        {selectedCard?.showTime ? <div className={'pt-2'}>{timeComponent}</div> : <></>}
 
         <div
           className={`grid grid-cols-1 gap-2 p-2 ${showQueueAsOverlay ? '' : showStatisticActions && cocktailQueue.length > 0 ? 'lg:grid-cols-6' : ''} print:grid-cols-5 print:overflow-clip print:p-0`}
@@ -447,13 +454,7 @@ export default function OverviewPage() {
           </div>
         </div>
 
-        {selectedCard?.showTime ? (
-          <div className={'w-full pb-2 text-center'}>
-            {currentTime.toFormatTimeString()} {currentTime.toFormatDateString()}
-          </div>
-        ) : (
-          <></>
-        )}
+        {selectedCard?.showTime ? <div className={'pb-2'}>{timeComponent}</div> : <></>}
 
         <div ref={actionButtonRef} className={'fixed bottom-2 right-2 z-10 flex flex-col space-y-2 md:bottom-5 md:right-5 print:hidden'}>
           <div className="dropdown dropdown-end dropdown-top pt-2">
