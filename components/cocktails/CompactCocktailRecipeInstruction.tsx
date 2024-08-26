@@ -50,8 +50,8 @@ export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeIns
         <div>Eis: {userContext.getTranslation(props.cocktailRecipe.ice?.name ?? '<Eis>', 'de')}</div>
       </div>
       <div className={'col-span-4 border-b border-base-100'}></div>
-      <div className={`col-span-4 grid grid-cols-6 gap-1`}>
-        <div className={`${props.showImage == true && props.cocktailRecipe._count.CocktailRecipeImage > 0 ? 'col-span-4' : 'col-span-6'}`}>
+      <div className={`col-span-4 grid grid-cols-5 gap-1`}>
+        <div className={`${props.showImage == true && props.cocktailRecipe._count.CocktailRecipeImage > 0 ? 'col-span-3' : 'col-span-5'}`}>
           {props.cocktailRecipe.steps
             ?.sort((a, b) => a.stepNumber - b.stepNumber)
             ?.map((step, index) => (
@@ -85,7 +85,7 @@ export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeIns
           </div>
         </div>
         {props.showImage && props.cocktailRecipe._count.CocktailRecipeImage > 0 ? (
-          <div className={'col-span-2 h-full w-full items-center self-center justify-self-center'}>
+          <div className={'col-span-2 h-full w-full items-start self-start justify-self-center'}>
             <Image
               onClick={() =>
                 modalContext.openModal(
