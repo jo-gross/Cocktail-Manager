@@ -956,7 +956,11 @@ export default function CalculationPage() {
                                   className={'select select-sm'}
                                   value={
                                     ingredientShoppingUnits.find((ingredientShoppingUnit) => ingredientShoppingUnit.ingredientId == items[0].ingredient.id)
-                                      ?.unitId ?? ''
+                                      ?.unitId ??
+                                    // if only one unit is available, select it
+                                    (ingredients.find((ingredient) => ingredient.id == items[0].ingredient.id)?.IngredientVolume.length == 1
+                                      ? ingredients.find((ingredient) => ingredient.id == items[0].ingredient.id)?.IngredientVolume[0].unitId
+                                      : '')
                                   }
                                   onChange={(event) => {
                                     const updatedItems = ingredientShoppingUnits.filter((item) => item.ingredientId != items[0].ingredient.id);
