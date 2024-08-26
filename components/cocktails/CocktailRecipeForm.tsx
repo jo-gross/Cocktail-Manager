@@ -655,6 +655,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                     showInfo={false}
                     showTags={true}
                     showImage={true}
+                    showDescription={true}
                   />
                 </div>
               </div>
