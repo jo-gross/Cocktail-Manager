@@ -21,6 +21,14 @@ export function ManageEntityLayout(props: ManageEntityLayoutProps) {
   const modalContext = useContext(ModalContext);
   const router = useRouter();
 
+  const routerConditionalBack = async (fallbackUrl: string) => {
+    if (document.referrer && document.referrer.includes(window.location.origin)) {
+      await router.replace(fallbackUrl);
+    } else {
+      router.back();
+    }
+  };
+
   return (
     <>
       <Head>
@@ -45,10 +53,10 @@ export function ManageEntityLayout(props: ManageEntityLayoutProps) {
                           props.onSave?.();
                           await props.formRef?.current?.submitForm();
                         }}
-                        onNotSave={() => router.push(props.backLink)}
+                        onNotSave={() => routerConditionalBack(props.backLink)}
                       />,
                     )
-                  : router.push(props.backLink);
+                  : routerConditionalBack(props.backLink);
               }}
             >
               <FaArrowLeft />
