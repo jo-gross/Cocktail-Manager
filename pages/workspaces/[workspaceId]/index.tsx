@@ -407,13 +407,16 @@ export default function OverviewPage() {
               selectedCard?.groups
                 ?.sort((a, b) => a.groupNumber - b.groupNumber)
                 .map((group) => (
-                  <div key={`card-${selectedCard.id}-group-${group.id}`} className={'collapse collapse-arrow rounded-xl border border-base-200 p-1 print:p-1'}>
+                  <div
+                    key={`card-${selectedCard.id}-group-${group.id}`}
+                    className={'collapse collapse-arrow rounded-xl border border-base-300 bg-base-200 p-1 print:p-1'}
+                  >
                     <input type={'checkbox'} defaultChecked={true} />
                     <div className={'collapse-title text-center text-2xl font-bold'}>
                       {group.name}
                       {group.groupPrice != undefined ? ` - Special Preis: ${group.groupPrice}€` : ''}
                     </div>
-                    <div className={'collapse-content pl-0 pr-0'}>
+                    <div className={'collapse-content'}>
                       <div
                         className={`grid ${lessItems ? '2xl:grid-cols-5' : '2xl:grid-cols-6'} ${lessItems ? 'xl:grid-cols-3' : 'xl:grid-cols-4'} ${lessItems ? 'md:grid-cols-2' : 'md:grid-cols-3'} ${lessItems ? 'xs:grid-cols-1' : 'xs:grid-cols-2'} grid-cols-1 gap-2 p-1`}
                       >

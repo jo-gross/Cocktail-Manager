@@ -3,35 +3,40 @@
 @tailwind utilities;
 
 .rti--tag {
-  @apply badge badge-outline space-x-2 p-4 !important;
+    @apply badge badge-outline space-x-2 p-4 !important;
 }
 
 .rti--container {
-  @apply textarea textarea-bordered !important;
+    @apply textarea textarea-bordered !important;
 }
 
 .rti--input {
-  @apply input input-bordered !important;
+    @apply input input-bordered !important;
 }
 
 .card-body {
-  @apply p-3 !important;
+    @apply p-3 !important;
 }
 
 .card {
-  @apply bg-base-300 shadow-lg !important;
+    @apply bg-base-300 shadow-lg !important;
 }
 
+.collapse-content {
+    @apply p-0 !important;
+}
+
+
 .table > thead {
-  /*@apply bg-base-100;*/
+    /*@apply bg-base-100;*/
 }
 
 .divider-sm {
-  @apply divider mb-0.5 mt-0.5 !important;
+    @apply divider mb-0.5 mt-0.5 !important;
 }
 
 .btn-red {
-  @apply border-red-800 bg-red-700 text-white hover:bg-red-800;
+    @apply border-red-800 bg-red-700 text-white hover:bg-red-800;
 }
 
 /*
@@ -39,48 +44,48 @@ Remove arrows from input field
 https://stackoverflow.com/a/74043438/12160393
 */
 @layer base {
-  input[type='number']::-webkit-outer-spin-button,
-  input[type='number']::-webkit-inner-spin-button,
-  input[type='number'] {
-    -webkit-appearance: none;
-    margin: 0;
-    -moz-appearance: textfield !important;
-  }
+    input[type='number']::-webkit-outer-spin-button,
+    input[type='number']::-webkit-inner-spin-button,
+    input[type='number'] {
+        -webkit-appearance: none;
+        margin: 0;
+        -moz-appearance: textfield !important;
+    }
 }
 
 @media print {
-  .card {
-    @apply border shadow-none !important;
-  }
-
-  .table {
-    @apply border !important;
-  }
-
-  thead > tr {
-    @apply border bg-base-200 !important;
-    print-color-adjust: exact;
-  }
-
-  @layer base {
-    input[type='number']::-webkit-inner-spin-button,
-    input[type='number']::-webkit-outer-spin-button {
-      -webkit-appearance: none;
-      margin: 0;
+    .card {
+        @apply border shadow-none !important;
     }
-  }
+
+    .table {
+        @apply border !important;
+    }
+
+    thead > tr {
+        @apply border bg-base-200 !important;
+        print-color-adjust: exact;
+    }
+
+    @layer base {
+        input[type='number']::-webkit-inner-spin-button,
+        input[type='number']::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+    }
 }
 
 .modal {
-  @apply z-40;
+    @apply z-40;
 }
 
 :root {
-  --button-height: 64px; /* h-12 */
-  --button-margin: 32px; /* my-4 */
-  --max-height: calc(100vh - 3 * (var(--button-height) + var(--button-margin)));
+    --button-height: 64px; /* h-12 */
+    --button-margin: 32px; /* my-4 */
+    --max-height: calc(100vh - 3 * (var(--button-height) + var(--button-margin)));
 }
 
 .max-h-custom {
-  max-height: var(--max-height);
+    max-height: var(--max-height);
 }
