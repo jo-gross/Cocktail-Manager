@@ -45,8 +45,10 @@ export default function CocktailRecipeCardItem(props: CocktailRecipeOverviewItem
                 <div className={'whitespace-pre-line text-pretty break-normal text-justify'}>{props.cocktailRecipe.description}</div>
               </>
             ) : (
-              <div className={'h-full'}></div>
+              <></>
             )}
+            <div className={'h-full'}></div>
+
             {props.showTags && props.cocktailRecipe.tags.length > 0 ? (
               <div className={''}>
                 <div className={'mb-2 border-b border-base-100'}></div>
