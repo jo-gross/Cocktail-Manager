@@ -1,3 +1,13 @@
+## [1.8.2](https://github.com/jo-gross/Cocktail-Manager/compare/v1.8.1...v1.8.2) (2024-08-26)
+
+
+### Bug Fixes
+
+* Calculation creation and deletion errors solved, set shopping unit preselection if only one is available  ([#399](https://github.com/jo-gross/Cocktail-Manager/issues/399)) ([5ba3e78](https://github.com/jo-gross/Cocktail-Manager/commit/5ba3e784cb91c4dff6d50866ef825203081ccaad))
+* Improved TagInput by disable remove with backspace ([62158d9](https://github.com/jo-gross/Cocktail-Manager/commit/62158d9bc1a589a5e8dc6934ba91202bf72baf58))
+* Statistic button alignment ([12a1947](https://github.com/jo-gross/Cocktail-Manager/commit/12a1947748af311ec32a56a549a764d0ce0b732d))
+* Statistic date input behavior ([#398](https://github.com/jo-gross/Cocktail-Manager/issues/398)) ([d73904f](https://github.com/jo-gross/Cocktail-Manager/commit/d73904f014a34b52e15c06b0a9997e9720a0dc54))
+
 ## [1.8.1](https://github.com/jo-gross/Cocktail-Manager/compare/v1.8.0...v1.8.1) (2024-08-24)
 
 
