@@ -437,7 +437,7 @@ export default function OverviewPage() {
                                     specialPrice={groupItem.specialPrice ?? group.groupPrice ?? undefined}
                                     cocktailRecipe={groupItem.cocktail}
                                     showStatisticActions={showStatisticActions}
-                                    showDescription={showDescription}
+                                    showNotes={showDescription}
                                   />
                                 );
                               } else {

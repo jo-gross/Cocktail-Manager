@@ -14,7 +14,7 @@ interface CocktailRecipeOverviewItemProps {
   showPrice?: boolean;
   showInfo?: boolean;
   showTags?: boolean;
-  showDescription?: boolean;
+  showNotes?: boolean;
   showStatisticActions?: boolean;
   image?: string;
 }
@@ -38,11 +38,11 @@ export default function CocktailRecipeCardItem(props: CocktailRecipeOverviewItem
             image={props.image}
           />
           <>
-            {props.showDescription && props.cocktailRecipe.description ? (
+            {props.showNotes && props.cocktailRecipe.notes ? (
               <>
                 <div className={'border-b border-base-100'}></div>
-                <div className={'font-bold'}>Beschreibung</div>
-                <div className={'whitespace-pre-line text-pretty break-normal text-justify'}>{props.cocktailRecipe.description}</div>
+                <div className={'font-bold'}>Notizen</div>
+                <div className={'whitespace-pre-line text-pretty break-normal text-justify'}>{props.cocktailRecipe.notes}</div>
               </>
             ) : (
               <></>

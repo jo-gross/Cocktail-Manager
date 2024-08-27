@@ -110,7 +110,7 @@ export function SearchModal(props: SearchModalProps) {
             cocktailRecipe={cocktail}
             showImage={true}
             showTags={true}
-            showDescription={true}
+            showNotes={true}
             showStatisticActions={false}
             showPrice={true}
             showInfo={true}

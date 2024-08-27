@@ -33,7 +33,7 @@ export default function SearchPage(props: SearchPageProps) {
             showImage={props.showImage}
             showInfo={true}
             showPrice={true}
-            showDescription={true}
+            showNotes={true}
             showTags={props.showTags}
             showStatisticActions={props.showStatisticActions}
           />
