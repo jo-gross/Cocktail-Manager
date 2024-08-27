@@ -120,7 +120,7 @@ export default function IngredientsOverviewPage() {
                               modalContext.openModal(
                                 <div className={'flex flex-col gap-2'}>
                                   <div className={'text-2xl font-bold'}>{ingredient.name}</div>
-                                  <div className={'text-lg font-bold'}>Allgemeine Beschreibung</div>
+                                  <div className={'text-lg font-bold'}>Produktbeschreibung</div>
                                   <div className={'whitespace-pre-wrap text-justify'}>{ingredient.description ?? '-'}</div>
                                   <div className={'text-lg font-bold'}>Notizen</div>
                                   <div className={'whitespace-pre-wrap text-justify'}>{ingredient.notes ?? '-'}</div>

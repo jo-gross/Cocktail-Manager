@@ -203,7 +203,7 @@ export function IngredientForm(props: IngredientFormProps) {
 
           <div className={'form-control'}>
             <label className={'label'} htmlFor={'description'}>
-              <span className={'label-text'}>Allg. Beschreibung</span>
+              <span className={'label-text'}>Produktbeschreibung</span>
               <span className={'label-text-alt space-x-2 text-error'}>
                 <span>
                   <>{errors.description && touched.description && errors.description}</>

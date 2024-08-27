@@ -395,7 +395,7 @@ model CalculationIngredientShoppingUnit {
 
   checked Boolean @default(false)
 
-  CocktailCalculation   CocktailCalculation @relation(fields: [cocktailCalculationId], references: [id])
+  CocktailCalculation   CocktailCalculation @relation(fields: [cocktailCalculationId], references: [id], onDelete: Cascade)
   cocktailCalculationId String
 
   @@id([ingredientId, unitId, cocktailCalculationId])

@@ -202,7 +202,7 @@ export default function WorkspacesPage() {
                       <div className={'text-center text-3xl font-bold'}>{workspace.name}</div>
                       <div className={'h-full'}></div>
                       <div className={'card-actions justify-center'}>
-                        <Link href={'/workspaces/' + workspace.id}>
+                        <Link href={'/workspaces/' + workspace.id} replace={true}>
                           <span className={'btn btn-outline btn-primary'}>Öffnen</span>
                         </Link>
                       </div>

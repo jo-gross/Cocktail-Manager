@@ -283,6 +283,19 @@ export default function OverviewPage() {
     }
   }, [windowSize]);
 
+  const timeComponent = (
+    <div className={'w-full text-center'}>
+      {selectedCard && selectedCardId != 'search' ? (
+        <span>
+          Angezeigte Karte: <strong>{selectedCard.name}</strong> -{' '}
+        </span>
+      ) : (
+        ''
+      )}
+      {currentTime?.toFormatDateString()}, {currentTime?.toFormatTimeString()} Uhr
+    </div>
+  );
+
   return (
     <>
       <Head>
@@ -290,13 +303,7 @@ export default function OverviewPage() {
       </Head>
 
       <div className={'static h-screen'}>
-        {selectedCard?.showTime ? (
-          <div className={'w-full pt-2 text-center'}>
-            {currentTime?.toFormatTimeString()} {currentTime?.toFormatDateString()}
-          </div>
-        ) : (
-          <></>
-        )}
+        {selectedCard?.showTime ? <div className={'pt-2'}>{timeComponent}</div> : <></>}
 
         <div
           className={`grid grid-cols-1 gap-2 p-2 ${showQueueAsOverlay ? '' : showStatisticActions && cocktailQueue.length > 0 ? 'lg:grid-cols-6' : ''} print:grid-cols-5 print:overflow-clip print:p-0`}
@@ -400,13 +407,16 @@ export default function OverviewPage() {
               selectedCard?.groups
                 ?.sort((a, b) => a.groupNumber - b.groupNumber)
                 .map((group) => (
-                  <div key={`card-${selectedCard.id}-group-${group.id}`} className={'collapse collapse-arrow rounded-xl border border-base-200 p-1 print:p-1'}>
+                  <div
+                    key={`card-${selectedCard.id}-group-${group.id}`}
+                    className={'collapse collapse-arrow rounded-xl border border-base-300 bg-base-200 p-1 print:p-1'}
+                  >
                     <input type={'checkbox'} defaultChecked={true} />
                     <div className={'collapse-title text-center text-2xl font-bold'}>
                       {group.name}
                       {group.groupPrice != undefined ? ` - Special Preis: ${group.groupPrice}€` : ''}
                     </div>
-                    <div className={'collapse-content pl-0 pr-0'}>
+                    <div className={'collapse-content'}>
                       <div
                         className={`grid ${lessItems ? '2xl:grid-cols-5' : '2xl:grid-cols-6'} ${lessItems ? 'xl:grid-cols-3' : 'xl:grid-cols-4'} ${lessItems ? 'md:grid-cols-2' : 'md:grid-cols-3'} ${lessItems ? 'xs:grid-cols-1' : 'xs:grid-cols-2'} grid-cols-1 gap-2 p-1`}
                       >
@@ -447,13 +457,7 @@ export default function OverviewPage() {
           </div>
         </div>
 
-        {selectedCard?.showTime ? (
-          <div className={'w-full pb-2 text-center'}>
-            {currentTime.toFormatTimeString()} {currentTime.toFormatDateString()}
-          </div>
-        ) : (
-          <></>
-        )}
+        {selectedCard?.showTime ? <div className={'pb-2'}>{timeComponent}</div> : <></>}
 
         <div ref={actionButtonRef} className={'fixed bottom-2 right-2 z-10 flex flex-col space-y-2 md:bottom-5 md:right-5 print:hidden'}>
           <div className="dropdown dropdown-end dropdown-top pt-2">

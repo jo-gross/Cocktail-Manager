@@ -16,8 +16,10 @@ module.exports = {
   daisyui: {
     themes: [
       'autumn',
+      'halloween',
       {
         halloween: {
+          ...require('daisyui/src/theming/themes')['halloween'],
           primary: '#f28c18',
           secondary: '#B51288',
           accent: '#51a800',
@@ -30,10 +32,6 @@ module.exports = {
         },
       },
     ],
-    darkTheme: 'halloween', // name of one of the included themes for dark mode
+    darkTheme: 'halloween',
   },
 };
-// module.exports = {
-//     content: ['./pages/**/*.{js,ts,jsx,tsx}'],
-//     plugins: [require('daisyui')],
-// };
