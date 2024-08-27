@@ -27,7 +27,7 @@
     "jssoup": "0.0.15",
     "lodash": "4.17.21",
     "marked": "^14.1.0",
-    "next": "14.2.5",
+    "next": "14.2.7",
     "next-auth": "4.24.7",
     "node-html-parser": "6.1.13",
     "playwright": "1.46.1",
