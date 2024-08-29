@@ -17,6 +17,7 @@ interface SearchModalProps {
   selectionLabel?: string;
   showRecipe?: boolean;
   showStatisticActions?: boolean;
+  customWidthClassName?: string;
 }
 
 export function SearchModal(props: SearchModalProps) {
@@ -110,7 +111,7 @@ export function SearchModal(props: SearchModalProps) {
             cocktailRecipe={cocktail}
             showImage={true}
             showTags={true}
-            showNotes={true}
+            showDescription={true}
             showStatisticActions={false}
             showPrice={true}
             showInfo={true}
@@ -181,7 +182,7 @@ export function SearchModal(props: SearchModalProps) {
   const groupedCocktails = _.groupBy(cocktails, 'isArchived');
 
   return (
-    <div className={'grid w-full grid-cols-1 gap-2 p-0.5 md:p-2'}>
+    <div className={`grid w-full grid-cols-1 gap-2 p-0.5 md:p-2 ${props.customWidthClassName ? props.customWidthClassName : 'md:max-w-2xl'}`}>
       <div className={'w-max text-2xl font-bold'}>Cocktail suchen</div>
       <div className={'join pb-2'}>
         <input

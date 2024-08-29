@@ -80,6 +80,9 @@ https://stackoverflow.com/a/74043438/12160393
     @apply z-40;
 }
 
+.modal-box {
+    max-width: unset !important;
+}
 :root {
     --button-height: 64px; /* h-12 */
     --button-margin: 32px; /* my-4 */

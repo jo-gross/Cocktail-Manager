@@ -69,6 +69,7 @@ enum Setting {
   showQueueAsOverlay
   lastSeenVersion
   showNotes
+  showDescription
 }
 
 enum WorkspaceSettingKey {

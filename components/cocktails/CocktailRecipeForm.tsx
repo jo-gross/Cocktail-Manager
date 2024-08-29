@@ -435,23 +435,6 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                     />
                   </div>
                   <div className={'col-span-2'}>
-                    <label className={'label'} htmlFor={'description'}>
-                      <span className={'label-text'}>Allgemeine Beschreibung</span>
-                      <span className={'label-text-alt text-error'}>
-                        <>{errors.description && touched.description && errors.description}</>
-                      </span>
-                    </label>
-                    <textarea
-                      id={'description'}
-                      name="description"
-                      className={`textarea textarea-bordered w-full ${errors.description && touched.description && 'textarea-error'}`}
-                      placeholder={'Geschichte, Herkunft, etc.'}
-                      onChange={handleChange}
-                      onBlur={handleBlur}
-                      value={values.description}
-                    />
-                  </div>
-                  <div className={'col-span-2'}>
                     <label className={'label'} htmlFor={'notes'}>
                       <span className={'label-text'}>Zubereitungsnotizen</span>
                       <span className={'label-text-alt text-error'}>
@@ -466,6 +449,23 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                       onChange={handleChange}
                       onBlur={handleBlur}
                       value={values.notes}
+                    />
+                  </div>
+                  <div className={'col-span-2'}>
+                    <label className={'label'} htmlFor={'description'}>
+                      <span className={'label-text'}>Allgemeine Beschreibung</span>
+                      <span className={'label-text-alt text-error'}>
+                        <>{errors.description && touched.description && errors.description}</>
+                      </span>
+                    </label>
+                    <textarea
+                      id={'description'}
+                      name="description"
+                      className={`textarea textarea-bordered w-full ${errors.description && touched.description && 'textarea-error'}`}
+                      placeholder={'Geschichte, Herkunft, etc.'}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      value={values.description}
                     />
                   </div>
                   <div className={'col-span-2 md:col-span-1'}>
@@ -679,6 +679,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                     showInfo={false}
                     showTags={true}
                     showImage={true}
+                    showDescription={true}
                     showNotes={true}
                   />
                 </div>
