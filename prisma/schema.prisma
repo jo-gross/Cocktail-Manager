@@ -173,7 +173,7 @@ model Signage {
 model Glass {
   id             String           @id @default(cuid())
   name           String
-  notes String?
+  notes          String?
   volume         Float?
   deposit        Float
   CocktailRecipe CocktailRecipe[]
@@ -193,7 +193,7 @@ model Garnish {
   id                      String                  @id @default(cuid())
   name                    String
   description             String?
-  notes String?
+  notes                   String?
   price                   Float?
   CocktailRecipeGarnishes CocktailRecipeGarnish[]
 
@@ -212,7 +212,7 @@ model CocktailRecipe {
   id                    String                  @id @default(cuid())
   name                  String
   description           String?
-  notes String?
+  notes                 String?
   tags                  String[]
   price                 Float?
   iceId                 String?

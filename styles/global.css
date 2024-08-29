@@ -80,7 +80,7 @@ https://stackoverflow.com/a/74043438/12160393
 }
 
 .modal-box {
-    max-width: unset !important;
+  max-width: unset !important;
 }
 :root {
   --button-height: 64px; /* h-12 */
