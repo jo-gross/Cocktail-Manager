@@ -62,7 +62,7 @@ export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeIns
                   .map((stepIngredient, indexIngredient) => (
                     <div
                       key={`cocktail-${props.cocktailRecipe.id}-step-${step.id}-ingredient-${stepIngredient.id}-index-${indexIngredient}`}
-                      className={`flex flex-row gap-2 ${stepIngredient.optional && 'italic'}`}
+                      className={`flex flex-row gap-2 pl-2 ${stepIngredient.optional && 'italic'}`}
                     >
                       <div className={'flex flex-row gap-1'}>
                         <div>{stepIngredient.amount ?? ''}</div>

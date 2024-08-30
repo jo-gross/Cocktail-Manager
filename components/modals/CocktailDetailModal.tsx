@@ -135,18 +135,27 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
             <div className={`grid ${loadedCocktail._count.CocktailRecipeImage > 0 ? 'grid-cols-5' : 'grid-cols-3'} gap-2`}>
               <div className={'col-span-3 flex flex-col gap-2'}>
                 <div className={'font-bold'}>Zubereitung</div>
-                {loadedCocktail.steps.map((step) => (
-                  <div key={`cocktail-details-step-${step.id}`} className={'flex flex-col gap-2 rounded border border-base-300 p-2'}>
-                    <div className={'font-bold'}>{userContext.getTranslation(step.action.name, 'de')}</div>
-                    {step.ingredients.map((stepIngredient) => (
-                      <div key={`cocktail-details-step-ingredient-${stepIngredient.id}`} className={'flex flex-row gap-2 pl-3'}>
-                        <div className={'font-bold'}>{stepIngredient.amount}</div>
-                        <div className={'font-bold'}>{userContext.getTranslation(stepIngredient.unit?.name ?? '', 'de')}</div>
-                        <div>{stepIngredient.ingredient?.name}</div>
-                      </div>
-                    ))}
-                  </div>
-                ))}
+                {loadedCocktail.steps
+                  .sort((a, b) => a.stepNumber - b.stepNumber)
+                  .map((step) => (
+                    <div key={`cocktail-details-step-${step.id}`} className={'flex flex-col gap-2 rounded border border-base-300 p-2'}>
+                      <div className={'font-bold'}>{userContext.getTranslation(step.action.name, 'de')}</div>
+                      {step.ingredients
+                        .sort((a, b) => a.ingredientNumber - b.ingredientNumber)
+                        .map((stepIngredient) => (
+                          <div
+                            key={`cocktail-details-step-ingredient-${stepIngredient.id}`}
+                            className={`flex flex-row gap-2 pl-3 ${stepIngredient.optional && 'italic'}`}
+                          >
+                            <div className={'font-bold'}>{stepIngredient.amount}</div>
+                            <div className={'font-bold'}>{userContext.getTranslation(stepIngredient.unit?.name ?? '', 'de')}</div>
+                            <div>
+                              {stepIngredient.ingredient?.name} {stepIngredient.optional ? ' (optional)' : ''}
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                  ))}
               </div>
               {loadedCocktail._count.CocktailRecipeImage > 0 && (
                 <div className={'col-span-2'}>
