@@ -139,7 +139,10 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                   .sort((a, b) => a.stepNumber - b.stepNumber)
                   .map((step) => (
                     <div key={`cocktail-details-step-${step.id}`} className={'flex flex-col gap-2 rounded border border-base-300 p-2'}>
-                      <div className={'font-bold'}>{userContext.getTranslation(step.action.name, 'de')}</div>
+                      <div className={`font-bold ${step.optional && 'italic'}`}>
+                        {userContext.getTranslation(step.action.name, 'de')}
+                        {step.optional ? ' (optional)' : ''}
+                      </div>
                       {step.ingredients
                         .sort((a, b) => a.ingredientNumber - b.ingredientNumber)
                         .map((stepIngredient) => (
@@ -184,8 +187,8 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                       className={'flex flex-col gap-2 rounded border border-base-300 p-2'}
                     >
                       <div className={'flex flex-row justify-between gap-2'}>
-                        <div className={'font-bold'}>
-                          {garnish.garnish.name} {garnish.optional ? '(Optional)' : ''}
+                        <div className={`font-bold ${garnish.optional && 'italic'}`}>
+                          {garnish.garnish.name} {garnish.optional ? '(optional)' : ''}
                         </div>
                         {garnish.garnish._count.GarnishImage > 0 && (
                           <div className={'h-12 w-12'}>

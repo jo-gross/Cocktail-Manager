@@ -796,7 +796,21 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                           className={'flex w-full flex-col justify-between space-y-2 rounded-xl border border-neutral p-4'}
                         >
                           <div className={'grid grid-cols-2 gap-2 md:grid-cols-3 md:gap-4'}>
-                            <div className={'font-bold'}>Schritt {indexStep + 1}</div>
+                            <div className={'flex flex-row items-center gap-2'}>
+                              <div className={'font-bold'}>Schritt {indexStep + 1}</div>
+                              <div className={'form-control'}>
+                                <label className={'label w-fit justify-start gap-1'}>
+                                  <span className={'label-text'}>Optional</span>
+                                  <Field
+                                    type={'checkbox'}
+                                    name={`steps.${indexStep}.optional`}
+                                    onChange={handleChange}
+                                    onBlur={handleBlur}
+                                    className={'toggle toggle-primary'}
+                                  />
+                                </label>
+                              </div>
+                            </div>
                             <div className={'form-control'}>
                               <select
                                 name={`steps.${indexStep}.actionId`}
@@ -1120,6 +1134,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                               action: actions[0],
                               stepNumber: values.steps.length,
                               ingredients: [],
+                              optional: false,
                             };
                             pushStep(step);
                           }}

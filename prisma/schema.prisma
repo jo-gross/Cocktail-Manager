@@ -267,6 +267,8 @@ model CocktailRecipeStep {
   id         String @id @default(cuid())
   stepNumber Int
 
+  optional Boolean @default(false)
+
   actionId String
   action   WorkspaceCocktailRecipeStepAction @relation(fields: [actionId], references: [id], onDelete: NoAction)
 

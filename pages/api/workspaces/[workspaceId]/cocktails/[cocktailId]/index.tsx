@@ -120,6 +120,7 @@ export default withHttpMethods({
           data: {
             action: { connect: { id: step.actionId } },
             stepNumber: step.stepNumber,
+            optional: step.optional,
             cocktailRecipe: { connect: { id: result!.id } },
             ingredients: {
               create: step.ingredients.map((stepIngredient) => {

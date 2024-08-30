@@ -56,7 +56,10 @@ export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeIns
             ?.sort((a, b) => a.stepNumber - b.stepNumber)
             ?.map((step, index) => (
               <div key={`step-${step.id}`} className={'break-words pb-2'}>
-                <span className={'font-bold'}>{userContext.getTranslation(step.action.name, 'de')}</span>
+                <span className={`font-bold ${step.optional && 'italic'}`}>
+                  {userContext.getTranslation(step.action.name, 'de')}
+                  {step.optional ? ' (optional)' : ''}
+                </span>
                 {step.ingredients
                   ?.sort((a, b) => a.ingredientNumber - b.ingredientNumber)
                   .map((stepIngredient, indexIngredient) => (
@@ -84,7 +87,10 @@ export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeIns
               {props.cocktailRecipe.garnishes
                 ?.sort((a, b) => a.garnishNumber - b.garnishNumber)
                 .map((garnish) => (
-                  <div key={`cocktail-${props.cocktailRecipe.id}-garnish-${garnish.garnishNumber}-garnishId-${garnish.garnishId}`}>
+                  <div
+                    key={`cocktail-${props.cocktailRecipe.id}-garnish-${garnish.garnishNumber}-garnishId-${garnish.garnishId}`}
+                    className={garnish.optional ? 'italic' : ''}
+                  >
                     {garnish?.garnish?.name}
                     {garnish.optional ? ' (optional)' : ''}
                   </div>
