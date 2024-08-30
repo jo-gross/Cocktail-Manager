@@ -275,7 +275,10 @@ model CocktailRecipeStep {
 model CocktailRecipeIngredient {
   id               String @id @default(cuid())
   ingredientNumber Int
-  amount           Float?
+
+  optional Boolean @default(false)
+
+  amount Float?
 
   unitId String?
   unit   Unit?   @relation(fields: [unitId], references: [id], onDelete: Restrict)

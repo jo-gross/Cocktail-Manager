@@ -62,13 +62,16 @@ export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeIns
                   .map((stepIngredient, indexIngredient) => (
                     <div
                       key={`cocktail-${props.cocktailRecipe.id}-step-${step.id}-ingredient-${stepIngredient.id}-index-${indexIngredient}`}
-                      className={'flex flex-row gap-2'}
+                      className={`flex flex-row gap-2 ${stepIngredient.optional && 'italic'}`}
                     >
                       <div className={'flex flex-row gap-1'}>
                         <div>{stepIngredient.amount ?? ''}</div>
                         <div>{userContext.getTranslation(stepIngredient?.unit?.name ?? '', 'de')}</div>
                       </div>
-                      <div>{stepIngredient.ingredient?.shortName ?? stepIngredient.ingredient?.name ?? ''} </div>
+                      <div>
+                        {stepIngredient.ingredient?.shortName ?? stepIngredient.ingredient?.name ?? ''}
+                        {stepIngredient.optional ? ' (optional)' : ''}
+                      </div>
                     </div>
                   ))}
               </div>

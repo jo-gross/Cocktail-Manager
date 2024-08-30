@@ -745,7 +745,6 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                       ))}
                     </>
                     <div className={'divider-sm col-span-2'}></div>
-                    <div className={'col-span-2 border-b border-base-200'}></div>
                     <div>Summe</div>
                     <div className={'grid grid-cols-3'}>
                       <div></div>
@@ -861,7 +860,10 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                 {step.ingredients
                                   .sort((a, b) => a.ingredientNumber - b.ingredientNumber)
                                   .map((ingredient, indexIngredient) => (
-                                    <div key={`form-recipe-step-${indexStep}-ingredient-${indexIngredient}`} className={'flex flex-row gap-2 pt-2'}>
+                                    <div
+                                      key={`form-recipe-step-${indexStep}-ingredient-${indexIngredient}`}
+                                      className={'flex flex-row items-center gap-2 pt-2'}
+                                    >
                                       <div className={'join join-vertical w-min items-center justify-center'}>
                                         <button
                                           type={'button'}
@@ -908,6 +910,23 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                         >
                                           <FaAngleDown />
                                         </button>
+                                      </div>
+                                      <div className={'form-control'}>
+                                        <label className={'label w-fit flex-col justify-start gap-1'}>
+                                          <span className={'label-text'}>Optional</span>
+                                          <span className={'label-text-alt text-error'}>
+                                            {((errors.steps as StepError[])?.[indexStep] as any)?.ingredients?.[indexIngredient]?.optional &&
+                                              (touched.steps as any)?.[indexStep]?.ingredients?.[indexIngredient]?.optional &&
+                                              ((errors.steps as StepError[])?.[indexStep] as any)?.ingredients?.[indexIngredient]?.optional}
+                                          </span>
+                                          <Field
+                                            type={'checkbox'}
+                                            name={`steps.${indexStep}.ingredients.${indexIngredient}.optional`}
+                                            onChange={handleChange}
+                                            onBlur={handleBlur}
+                                            className={'toggle toggle-primary'}
+                                          />
+                                        </label>
                                       </div>
                                       <div className={'grid w-full grid-cols-2 gap-1 md:grid-cols-3'}>
                                         <div key={`form-recipe-step${step.id}-ingredient-${ingredient.id}`} className={'join col-span-2 flex w-full flex-row'}>
@@ -1050,6 +1069,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                         unitId: '',
                                         unit: undefined,
                                         ingredient: undefined,
+                                        optional: false,
                                       })
                                     }
                                   >
