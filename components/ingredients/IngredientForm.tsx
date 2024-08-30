@@ -218,6 +218,7 @@ export function IngredientForm(props: IngredientFormProps) {
               onBlur={handleBlur}
               name={'description'}
               placeholder={'Herkunft, Geschichte, etc.'}
+              rows={5}
             />
           </div>
 
@@ -238,6 +239,7 @@ export function IngredientForm(props: IngredientFormProps) {
               onBlur={handleBlur}
               name={'notes'}
               placeholder={'Lagerort, Zubereitung, etc.'}
+              rows={5}
             />
           </div>
 

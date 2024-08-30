@@ -146,6 +146,7 @@ export function GarnishForm(props: GarnishFormProps) {
               onBlur={handleBlur}
               name={'notes'}
               placeholder={'Lagerort, Lieferant, etc.'}
+              rows={5}
             />
           </div>
 
@@ -166,6 +167,7 @@ export function GarnishForm(props: GarnishFormProps) {
               onBlur={handleBlur}
               name={'description'}
               placeholder={'Das Öl der Zeste hilft, den Geschmack des Cocktails zu intensivieren, ...'}
+              rows={5}
             />
           </div>
 

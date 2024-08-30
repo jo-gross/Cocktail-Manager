@@ -449,6 +449,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                       onChange={handleChange}
                       onBlur={handleBlur}
                       value={values.notes}
+                      rows={5}
                     />
                   </div>
                   <div className={'col-span-2'}>
@@ -466,6 +467,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                       onChange={handleChange}
                       onBlur={handleBlur}
                       value={values.description}
+                      rows={5}
                     />
                   </div>
                   <div className={'col-span-2 md:col-span-1'}>
