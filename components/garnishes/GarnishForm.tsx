@@ -42,6 +42,7 @@ export function GarnishForm(props: GarnishFormProps) {
         name: props.garnish?.name ?? '',
         price: props.garnish?.price ?? undefined,
         description: props.garnish?.description ?? '',
+        notes: props.garnish?.notes ?? '',
         image: props.garnish?.GarnishImage?.[0]?.image ?? undefined,
       }}
       onSubmit={async (values) => {
@@ -51,6 +52,7 @@ export function GarnishForm(props: GarnishFormProps) {
             name: values.name,
             price: values.price == '' ? null : values.price,
             description: values.description?.trim() == '' ? null : values.description?.trim(),
+            notes: values.notes?.trim() == '' ? null : values.notes?.trim(),
             image: values.image == '' ? null : values.image,
           };
           if (props.garnish == undefined) {
@@ -128,8 +130,29 @@ export function GarnishForm(props: GarnishFormProps) {
           </div>
 
           <div className={'form-control'}>
+            <label className={'label'} htmlFor={'notes'}>
+              <span className={'label-text'}>Notizen</span>
+              <span className={'label-text-alt space-x-2 text-error'}>
+                <span>
+                  <>{errors.notes && touched.notes && errors.notes}</>
+                </span>
+              </span>
+            </label>
+            <textarea
+              id={'notes'}
+              className={`textarea textarea-bordered ${errors.notes && touched.notes && 'textarea-error'} w-full`}
+              value={values.notes}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              name={'notes'}
+              placeholder={'Lagerort, Lieferant, etc.'}
+              rows={5}
+            />
+          </div>
+
+          <div className={'form-control'}>
             <label className={'label'} htmlFor={'description'}>
-              <span className={'label-text'}>Zubereitungsbeschreibung</span>
+              <span className={'label-text'}>Allgemeine Beschreibung</span>
               <span className={'label-text-alt space-x-2 text-error'}>
                 <span>
                   <>{errors.description && touched.description && errors.description}</>
@@ -143,6 +166,8 @@ export function GarnishForm(props: GarnishFormProps) {
               onChange={handleChange}
               onBlur={handleBlur}
               name={'description'}
+              placeholder={'Das Öl der Zeste hilft, den Geschmack des Cocktails zu intensivieren, ...'}
+              rows={5}
             />
           </div>
 

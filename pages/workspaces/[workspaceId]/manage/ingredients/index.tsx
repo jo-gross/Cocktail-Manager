@@ -52,7 +52,7 @@ export default function IngredientsOverviewPage() {
               <thead>
                 <tr>
                   <th></th>
-                  <th>Name</th>
+                  <th>Zutat</th>
                   <th>Abkürzung</th>
                   <th>Notizen</th>
                   <th>Preis</th>

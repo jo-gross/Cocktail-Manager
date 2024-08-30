@@ -31,6 +31,7 @@ export default function OverviewPage() {
   const [showStatisticActions, setShowStatisticActions] = useState(false);
   const [showQueueAsOverlay, setShowQueueAsOverlay] = useState(false);
   const [showDescription, setShowDescription] = useState(false);
+  const [showNotes, setShowNotes] = useState(false);
 
   const [cocktailCards, setCocktailCards] = useState<CocktailCardFull[]>([]);
   const [loadingCards, setLoadingCards] = useState(true);
@@ -187,6 +188,7 @@ export default function OverviewPage() {
     setShowStatisticActions(userContext.user?.settings?.find((s) => s.setting == Setting.showStatisticActions)?.value == 'true' ?? false);
     setShowQueueAsOverlay(userContext.user?.settings?.find((s) => s.setting == Setting.showQueueAsOverlay)?.value == 'true' ?? false);
     setShowDescription(userContext.user?.settings?.find((s) => s.setting == Setting.showDescription)?.value == 'true' ?? false);
+    setShowNotes(userContext.user?.settings?.find((s) => s.setting == Setting.showNotes)?.value == 'true' ?? false);
   }, [userContext.user?.settings]);
 
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -331,7 +333,7 @@ export default function OverviewPage() {
                         <div className={'space between flex flex-row gap-2'}>
                           <div
                             className={'btn btn-square btn-outline btn-sm'}
-                            onClick={() => modalContext.openModal(<CocktailDetailModal cocktailId={cocktailQueueItem.cocktailRecipe.id} />)}
+                            onClick={() => modalContext.openModal(<CocktailDetailModal cocktailId={cocktailQueueItem.cocktailRecipe.id} />, true)}
                           >
                             <FaEye />
                           </div>
@@ -438,6 +440,7 @@ export default function OverviewPage() {
                                     cocktailRecipe={groupItem.cocktail}
                                     showStatisticActions={showStatisticActions}
                                     showDescription={showDescription}
+                                    showNotes={showNotes}
                                   />
                                 );
                               } else {
@@ -587,6 +590,21 @@ export default function OverviewPage() {
                         onClick={() => {
                           userContext.updateUserSetting(Setting.showDescription, !showDescription ? 'true' : 'false');
                           setShowDescription(!showDescription);
+                        }}
+                      />
+                    </label>
+                  </div>
+                  <div className="form-control">
+                    <label className="label">
+                      Notizen anzeigen
+                      <input
+                        type={'checkbox'}
+                        className={'toggle toggle-primary'}
+                        checked={showNotes}
+                        readOnly={true}
+                        onClick={() => {
+                          userContext.updateUserSetting(Setting.showNotes, !showNotes ? 'true' : 'false');
+                          setShowNotes(!showNotes);
                         }}
                       />
                     </label>
