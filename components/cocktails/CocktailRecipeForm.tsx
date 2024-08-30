@@ -2,7 +2,7 @@ import { FaAngleDown, FaAngleUp, FaEuroSign, FaPlus, FaSearch, FaTrashAlt } from
 import { Field, FieldArray, Formik, FormikProps } from 'formik';
 import React, { createRef, useCallback, useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import { Garnish, Glass, Ice, Ingredient, Unit, WorkspaceCocktailRecipeStepAction } from '@prisma/client';
+import { CocktailRecipe, Garnish, Glass, Ice, Ingredient, Unit, WorkspaceCocktailRecipeStepAction } from '@prisma/client';
 import { UploadDropZone } from '../UploadDropZone';
 import { convertToBase64 } from '../../lib/Base64Converter';
 import { CocktailRecipeStepFull } from '../../models/CocktailRecipeStepFull';
@@ -80,6 +80,8 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
 
   const [units, setUnits] = useState<Unit[]>([]);
   const [unitsLoading, setUnitsLoading] = useState(false);
+
+  const [similarCocktailRecipe, setSimilarCocktailRecipe] = useState<CocktailRecipe | undefined>(undefined);
 
   const openIngredientSelectModal = useCallback(
     (setFieldValue: any, indexStep: number, indexIngredient: number) => {
@@ -424,10 +426,33 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                       autoComplete={'off'}
                       id={'name'}
                       className={`input input-bordered w-full ${errors.name && touched.name && 'input-error'}`}
-                      onChange={handleChange}
+                      onChange={(event) => {
+                        if (event.target.value.length > 2) {
+                          fetch(`/api/workspaces/${workspaceId}/cocktails/check?name=${event.target.value}`)
+                            .then((response) => response.json())
+                            .then((data) => {
+                              console.log(data);
+                              if (data.data != null) {
+                                setSimilarCocktailRecipe(data.data);
+                              } else {
+                                setSimilarCocktailRecipe(undefined);
+                              }
+                            });
+                        } else {
+                          setSimilarCocktailRecipe(undefined);
+                        }
+                        handleChange(event);
+                      }}
                       onBlur={handleBlur}
                       value={values.name}
                     />
+                    {similarCocktailRecipe && (
+                      <div className="label">
+                        <span className="label-text-alt text-warning">
+                          Eine Ähnliche Zutat mit dem namen <strong>{similarCocktailRecipe.name}</strong> existiert bereits.
+                        </span>
+                      </div>
+                    )}
                   </div>
                   <div className={'col-span-2'}>
                     <label className={'label'} htmlFor={'description'}>

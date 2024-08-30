@@ -11,7 +11,7 @@ import { ModalContext } from '../../lib/context/ModalContextProvider';
 import _ from 'lodash';
 import { compressFile } from '../../lib/ImageCompressor';
 import { IngredientWithImage } from '../../models/IngredientWithImage';
-import { Unit, UnitConversion } from '@prisma/client';
+import { Ingredient, Unit, UnitConversion } from '@prisma/client';
 import { UserContext } from '../../lib/context/UserContextProvider';
 import { fetchUnitConversions, fetchUnits } from '../../lib/network/units';
 import Image from 'next/image';
@@ -54,6 +54,8 @@ export function IngredientForm(props: IngredientFormProps) {
 
   const [loadingDefaultConversions, setLoadingDefaultConversions] = useState(false);
   const [defaultConversions, setDefaultConversions] = useState<UnitConversion[]>([]);
+
+  const [similarIngredient, setSimilarIngredient] = useState<Ingredient | undefined>(undefined);
 
   useEffect(() => {
     fetchUnits(workspaceId, setAllUnits, setUnitsLoading);
@@ -175,11 +177,34 @@ export function IngredientForm(props: IngredientFormProps) {
               type={'text'}
               autoComplete={'off'}
               className={`input input-bordered ${errors.name && touched.name && 'input-error'}`}
-              onChange={handleChange}
+              onChange={(event) => {
+                if (event.target.value.length > 2) {
+                  fetch(`/api/workspaces/${workspaceId}/ingredients/check?name=${event.target.value}`)
+                    .then((response) => response.json())
+                    .then((data) => {
+                      console.log(data);
+                      if (data.data != null) {
+                        setSimilarIngredient(data.data);
+                      } else {
+                        setSimilarIngredient(undefined);
+                      }
+                    });
+                } else {
+                  setSimilarIngredient(undefined);
+                }
+                handleChange(event);
+              }}
               onBlur={handleBlur}
               value={values.name}
               name={'name'}
             />
+            {similarIngredient && (
+              <div className="label">
+                <span className="label-text-alt text-warning">
+                  Eine Ähnliche Zutat mit dem namen <strong>{similarIngredient.name}</strong> existiert bereits.
+                </span>
+              </div>
+            )}
           </div>
           <div className={'form-control'}>
             <label className={'label'} htmlFor={'shortName'}>

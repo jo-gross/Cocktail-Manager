@@ -11,6 +11,7 @@ import _ from 'lodash';
 import { compressFile } from '../../lib/ImageCompressor';
 import { GlassWithImage } from '../../models/GlassWithImage';
 import Image from 'next/image';
+import { Glass } from '@prisma/client';
 
 interface GlassFormProps {
   glass?: GlassWithImage;
@@ -27,6 +28,8 @@ export function GlassForm(props: GlassFormProps) {
 
   const formRef = props.formRef;
   const [originalValues, setOriginalValues] = useState<any>();
+
+  const [similarGlass, setSimilarGlass] = useState<Glass | undefined>(undefined);
 
   //Filling original values
   useEffect(() => {
@@ -119,15 +122,38 @@ export function GlassForm(props: GlassFormProps) {
             </label>
             <input
               id={'name'}
+              name={'name'}
+              value={values.name}
               autoComplete={'off'}
               type={'text'}
               placeholder={'Name'}
               className={`input input-bordered w-full ${errors.name && touched.name && 'input-error'}`}
-              onChange={handleChange}
+              onChange={(event) => {
+                if (event.target.value.length > 2) {
+                  fetch(`/api/workspaces/${workspaceId}/glasses/check?name=${event.target.value}`)
+                    .then((response) => response.json())
+                    .then((data) => {
+                      console.log(data);
+                      if (data.data != null) {
+                        setSimilarGlass(data.data);
+                      } else {
+                        setSimilarGlass(undefined);
+                      }
+                    });
+                } else {
+                  setSimilarGlass(undefined);
+                }
+                handleChange(event);
+              }}
               onBlur={handleBlur}
-              value={values.name}
-              name={'name'}
             />
+            {similarGlass && (
+              <div className="label">
+                <span className="label-text-alt text-warning">
+                  Eine Ähnliche Zutat mit dem namen <strong>{similarGlass.name}</strong> existiert bereits.
+                </span>
+              </div>
+            )}
           </div>
 
           <div className={'form-control'}>

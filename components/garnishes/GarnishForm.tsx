@@ -28,6 +28,8 @@ export function GarnishForm(props: GarnishFormProps) {
   const formRef = props.formRef || React.createRef<FormikProps<any>>();
   const [originalValues, setOriginalValues] = useState<any>();
 
+  const [similarGarnish, setSimilarGarnish] = useState<GarnishWithImage | undefined>();
+
   //Filling original values
   useEffect(() => {
     if (Object.keys(formRef?.current?.touched ?? {}).length == 0) {
@@ -120,11 +122,34 @@ export function GarnishForm(props: GarnishFormProps) {
               autoComplete={'off'}
               placeholder={'Name'}
               className={`input input-bordered ${errors.name && touched.name && 'input-error'} w-full`}
-              onChange={handleChange}
+              onChange={(event) => {
+                if (event.target.value.length > 2) {
+                  fetch(`/api/workspaces/${workspaceId}/garnishes/check?name=${event.target.value}`)
+                    .then((response) => response.json())
+                    .then((data) => {
+                      console.log(data);
+                      if (data.data != null) {
+                        setSimilarGarnish(data.data);
+                      } else {
+                        setSimilarGarnish(undefined);
+                      }
+                    });
+                } else {
+                  setSimilarGarnish(undefined);
+                }
+                handleChange(event);
+              }}
               onBlur={handleBlur}
               value={values.name}
               name={'name'}
             />
+            {similarGarnish && (
+              <div className="label">
+                <span className="label-text-alt text-warning">
+                  Eine Ähnliche Zutat mit dem namen <strong>{similarGarnish.name}</strong> existiert bereits.
+                </span>
+              </div>
+            )}
           </div>
 
           <div className={'form-control'}>
