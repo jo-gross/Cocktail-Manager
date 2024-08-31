@@ -18,20 +18,17 @@ const withPWA = require('next-pwa')({
   runtimeCaching: [
     {
       urlPattern: /\/queue$/,
-      handler: 'NetworkOnly',
-    },
-    {
-      urlPattern: /\/statistics\/cocktails\/add$/,
-      handler: 'NetworkOnly',
+      handler: 'NetworkOnly', // don't cache queue requests, always fetch from network
     },
     {
       urlPattern: /^https?.*/,
-      handler: 'CacheFirst',
+      handler: 'StaleWhileRevalidate', // always cache first, but go to network (if available) for new data and update cache
+      method: 'GET', // only cache GET requests
       options: {
         cacheName: 'http-cache',
         expiration: {
           maxEntries: 200,
-          maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
+          maxAgeSeconds: 14 * 24 * 60 * 60, // 14 days
         },
       },
     },
