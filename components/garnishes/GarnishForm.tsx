@@ -11,6 +11,8 @@ import _ from 'lodash';
 import { compressFile } from '../../lib/ImageCompressor';
 import { GarnishWithImage } from '../../models/GarnishWithImage';
 import Image from 'next/image';
+import CropComponent from '../CropComponent';
+import { FaCropSimple } from 'react-icons/fa6';
 
 interface GarnishFormProps {
   garnish?: GarnishWithImage;
@@ -28,6 +30,8 @@ export function GarnishForm(props: GarnishFormProps) {
   const formRef = props.formRef || React.createRef<FormikProps<any>>();
   const [originalValues, setOriginalValues] = useState<any>();
 
+  const [originalImage, setOriginalImage] = useState<File | undefined>();
+
   //Filling original values
   useEffect(() => {
     if (Object.keys(formRef?.current?.touched ?? {}).length == 0) {
@@ -38,6 +42,7 @@ export function GarnishForm(props: GarnishFormProps) {
   return (
     <Formik
       innerRef={formRef}
+      validateOnChange={true}
       initialValues={{
         name: props.garnish?.name ?? '',
         price: props.garnish?.price ?? undefined,
@@ -99,10 +104,13 @@ export function GarnishForm(props: GarnishFormProps) {
         if (!values.name) {
           errors.name = 'Required';
         }
+        if (originalImage != undefined && values.image == undefined) {
+          errors.image = 'Bild ausgewählt aber nicht zugeschnitten';
+        }
         return errors;
       }}
     >
-      {({ values, setFieldValue, errors, touched, handleChange, handleBlur, handleSubmit, isSubmitting }) => (
+      {({ values, setFieldValue, errors, touched, handleChange, handleBlur, handleSubmit, isSubmitting, isValid, validateForm }) => (
         <form onSubmit={handleSubmit} className={'flex flex-col gap-2 md:gap-4'}>
           <div className={'form-control'}>
             <label className={'label'} htmlFor={'name'}>
@@ -126,7 +134,6 @@ export function GarnishForm(props: GarnishFormProps) {
               name={'name'}
             />
           </div>
-
           <div className={'form-control'}>
             <label className={'label'} htmlFor={'description'}>
               <span className={'label-text'}>Zubereitungsbeschreibung</span>
@@ -145,7 +152,6 @@ export function GarnishForm(props: GarnishFormProps) {
               name={'description'}
             />
           </div>
-
           <div className={'form-control'}>
             <label className={'label'} htmlFor={'price'}>
               <span className={'label-text'}>Preis</span>
@@ -175,34 +181,62 @@ export function GarnishForm(props: GarnishFormProps) {
             ) : (
               <></>
             )}
-            {values.image == undefined ? (
+            {values.image == undefined && originalImage == undefined ? (
               <UploadDropZone
                 onSelectedFilesChanged={async (file) => {
                   if (file != undefined) {
-                    const compressedImageFile = await compressFile(file);
-                    await setFieldValue('image', await convertToBase64(compressedImageFile));
+                    // const compressedImageFile = await compressFile(file);
+                    // await setFieldValue('image', await convertToBase64(compressedImageFile));
+                    setOriginalImage(file);
+                    await setFieldValue('image', undefined);
+                    formRef.current?.validateForm();
                   } else {
                     alertService.error('Datei konnte nicht ausgewählt werden.');
                   }
                 }}
               />
+            ) : values.image == undefined && originalImage != undefined ? (
+              <div className={'w-full'}>
+                <CropComponent
+                  aspect={1}
+                  imageToCrop={originalImage}
+                  onCroppedImageComplete={async (file) => {
+                    const compressedImageFile = await compressFile(file);
+                    await setFieldValue('image', await convertToBase64(compressedImageFile));
+                  }}
+                  onCropCancel={() => {
+                    setOriginalImage(undefined);
+                  }}
+                />
+              </div>
             ) : (
               <div className={'relative'}>
-                <div
-                  className={'btn btn-square btn-outline btn-error btn-sm absolute right-2 top-2'}
-                  onClick={() => {
-                    modalContext.openModal(
-                      <DeleteConfirmationModal
-                        spelling={'REMOVE'}
-                        entityName={'das Bild'}
-                        onApprove={async () => {
-                          await setFieldValue('image', undefined);
-                        }}
-                      />,
-                    );
-                  }}
-                >
-                  <FaTrashAlt />
+                <div className={'absolute right-2 top-2 flex flex-row gap-2'}>
+                  <div
+                    className={'btn btn-square btn-outline btn-sm'}
+                    onClick={() => {
+                      setFieldValue('image', undefined);
+                    }}
+                  >
+                    <FaCropSimple />
+                  </div>
+                  <div
+                    className={'btn btn-square btn-outline btn-error btn-sm'}
+                    onClick={() => {
+                      modalContext.openModal(
+                        <DeleteConfirmationModal
+                          spelling={'REMOVE'}
+                          entityName={'das Bild'}
+                          onApprove={async () => {
+                            await setFieldValue('image', undefined);
+                            setOriginalImage(undefined);
+                          }}
+                        />,
+                      );
+                    }}
+                  >
+                    <FaTrashAlt />
+                  </div>
                 </div>
                 <div className={'relative h-32 w-32 rounded-lg bg-white'}>
                   <Image className={'w-fit rounded-lg'} src={values.image} layout={'fill'} objectFit={'contain'} alt={'Garnish image'} />
@@ -211,7 +245,7 @@ export function GarnishForm(props: GarnishFormProps) {
             )}
           </div>
           <div className={'form-control'}>
-            <button disabled={isSubmitting} type={'submit'} className={`btn btn-primary`}>
+            <button disabled={isSubmitting || !isValid} type={'submit'} className={`btn btn-primary`}>
               {isSubmitting ? <span className={'loading loading-spinner'} /> : <></>}
               Speichern
             </button>
