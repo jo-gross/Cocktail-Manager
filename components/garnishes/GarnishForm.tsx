@@ -2,7 +2,7 @@ import { Formik, FormikProps } from 'formik';
 import { useRouter } from 'next/router';
 import React, { useContext, useEffect, useState } from 'react';
 import { UploadDropZone } from '../UploadDropZone';
-import { convertToBase64 } from '../../lib/Base64Converter';
+import { convertBase64ToFile, convertToBase64 } from '../../lib/Base64Converter';
 import { FaTrashAlt } from 'react-icons/fa';
 import { alertService } from '../../lib/alertService';
 import { DeleteConfirmationModal } from '../modals/DeleteConfirmationModal';
@@ -30,7 +30,9 @@ export function GarnishForm(props: GarnishFormProps) {
   const formRef = props.formRef || React.createRef<FormikProps<any>>();
   const [originalValues, setOriginalValues] = useState<any>();
 
-  const [originalImage, setOriginalImage] = useState<File | undefined>();
+  const [originalImage, setOriginalImage] = useState<File | undefined>(
+    (props.garnish?.GarnishImage.length ?? 0) ? convertBase64ToFile(props.garnish!.GarnishImage[0].image) : undefined,
+  );
 
   //Filling original values
   useEffect(() => {
@@ -42,7 +44,6 @@ export function GarnishForm(props: GarnishFormProps) {
   return (
     <Formik
       innerRef={formRef}
-      validateOnChange={true}
       initialValues={{
         name: props.garnish?.name ?? '',
         price: props.garnish?.price ?? undefined,
@@ -109,6 +110,7 @@ export function GarnishForm(props: GarnishFormProps) {
         }
         return errors;
       }}
+      validateOnChange={true}
     >
       {({ values, setFieldValue, errors, touched, handleChange, handleBlur, handleSubmit, isSubmitting, isValid, validateForm }) => (
         <form onSubmit={handleSubmit} className={'flex flex-col gap-2 md:gap-4'}>
@@ -185,8 +187,6 @@ export function GarnishForm(props: GarnishFormProps) {
               <UploadDropZone
                 onSelectedFilesChanged={async (file) => {
                   if (file != undefined) {
-                    // const compressedImageFile = await compressFile(file);
-                    // await setFieldValue('image', await convertToBase64(compressedImageFile));
                     setOriginalImage(file);
                     await setFieldValue('image', undefined);
                     formRef.current?.validateForm();
@@ -204,8 +204,10 @@ export function GarnishForm(props: GarnishFormProps) {
                     const compressedImageFile = await compressFile(file);
                     await setFieldValue('image', await convertToBase64(compressedImageFile));
                   }}
-                  onCropCancel={() => {
+                  onCropCancel={async () => {
                     setOriginalImage(undefined);
+                    await setFieldValue('image', undefined);
+                    formRef.current?.validateForm();
                   }}
                 />
               </div>
@@ -216,6 +218,7 @@ export function GarnishForm(props: GarnishFormProps) {
                     className={'btn btn-square btn-outline btn-sm'}
                     onClick={() => {
                       setFieldValue('image', undefined);
+                      formRef.current?.validateForm();
                     }}
                   >
                     <FaCropSimple />
@@ -230,6 +233,7 @@ export function GarnishForm(props: GarnishFormProps) {
                           onApprove={async () => {
                             await setFieldValue('image', undefined);
                             setOriginalImage(undefined);
+                            formRef.current?.validateForm();
                           }}
                         />,
                       );
@@ -240,6 +244,10 @@ export function GarnishForm(props: GarnishFormProps) {
                 </div>
                 <div className={'relative h-32 w-32 rounded-lg bg-white'}>
                   <Image className={'w-fit rounded-lg'} src={values.image} layout={'fill'} objectFit={'contain'} alt={'Garnish image'} />
+                </div>
+                <div className={'pt-2 font-thin italic'}>
+                  Info: Durch speichern des Cocktails wird das Bild dauerhaft zugeschnitten. Das Original wird nicht gespeichert. (Falls du später also doch
+                  andere Bereiche auswählen möchtest, musst du das Bild dann erneut auswählen)
                 </div>
               </div>
             )}

@@ -1,6 +1,6 @@
 import { Formik, FormikProps } from 'formik';
 import { UploadDropZone } from '../UploadDropZone';
-import { convertToBase64 } from '../../lib/Base64Converter';
+import { convertBase64ToFile, convertToBase64 } from '../../lib/Base64Converter';
 import { useRouter } from 'next/router';
 import { FaTrashAlt } from 'react-icons/fa';
 import React, { useContext, useEffect, useState } from 'react';
@@ -11,6 +11,8 @@ import _ from 'lodash';
 import { compressFile } from '../../lib/ImageCompressor';
 import { GlassWithImage } from '../../models/GlassWithImage';
 import Image from 'next/image';
+import CropComponent from '../CropComponent';
+import { FaCropSimple } from 'react-icons/fa6';
 
 interface GlassFormProps {
   glass?: GlassWithImage;
@@ -25,8 +27,12 @@ export function GlassForm(props: GlassFormProps) {
 
   const modalContext = useContext(ModalContext);
 
-  const formRef = props.formRef;
+  const formRef = props.formRef || React.createRef<FormikProps<any>>();
   const [originalValues, setOriginalValues] = useState<any>();
+
+  const [originalImage, setOriginalImage] = useState<File | undefined>(
+    (props.glass?.GlassImage?.length ?? 0) > 0 ? convertBase64ToFile(props.glass!.GlassImage[0].image) : undefined,
+  );
 
   //Filling original values
   useEffect(() => {
@@ -102,10 +108,14 @@ export function GlassForm(props: GlassFormProps) {
         if (values.deposit.toString() == '' || isNaN(values.deposit)) {
           errors.deposit = 'Required';
         }
+        if (originalImage != undefined && values.image == undefined) {
+          errors.image = 'Bild ausgewählt aber nicht zugeschnitten';
+        }
         return errors;
       }}
+      validateOnChange={true}
     >
-      {({ values, setFieldValue, errors, touched, handleChange, handleBlur, handleSubmit, isSubmitting }) => (
+      {({ values, setFieldValue, errors, touched, handleChange, handleBlur, handleSubmit, isSubmitting, isValid }) => (
         <form onSubmit={handleSubmit} className={'flex flex-col gap-2 md:gap-4'}>
           <div className={'form-control'}>
             <label className={'label'} htmlFor={'name'}>
@@ -180,43 +190,78 @@ export function GlassForm(props: GlassFormProps) {
             ) : (
               <></>
             )}
-            {values.image == undefined ? (
+            {values.image == undefined && originalImage == undefined ? (
               <UploadDropZone
                 onSelectedFilesChanged={async (file) => {
-                  if (file) {
-                    const compressedImageFile = await compressFile(file);
-                    await setFieldValue('image', await convertToBase64(compressedImageFile));
+                  if (file != undefined) {
+                    setOriginalImage(file);
+                    await setFieldValue('image', undefined);
+                    formRef.current?.validateForm();
                   } else {
                     alertService.error('Datei konnte nicht ausgewählt werden.');
                   }
                 }}
               />
+            ) : values.image == undefined && originalImage != undefined ? (
+              <div className={'w-full'}>
+                <CropComponent
+                  aspect={1}
+                  imageToCrop={originalImage}
+                  onCroppedImageComplete={async (file) => {
+                    const compressedImageFile = await compressFile(file);
+                    await setFieldValue('image', await convertToBase64(compressedImageFile));
+                    formRef.current?.validateForm();
+                  }}
+                  onCropCancel={async () => {
+                    setOriginalImage(undefined);
+                    await setFieldValue('image', undefined);
+                    formRef.current?.validateForm();
+                  }}
+                />
+              </div>
             ) : (
               <div className={'relative'}>
-                <div
-                  className={'btn btn-square btn-outline btn-error btn-sm absolute right-2 top-2'}
-                  onClick={() =>
-                    modalContext.openModal(
-                      <DeleteConfirmationModal
-                        spelling={'REMOVE'}
-                        entityName={'das Bild'}
-                        onApprove={async () => {
-                          await setFieldValue('image', undefined);
-                        }}
-                      />,
-                    )
-                  }
-                >
-                  <FaTrashAlt />
+                <div className={'absolute right-2 top-2 flex flex-row gap-2'}>
+                  <div
+                    className={'btn btn-square btn-outline btn-sm'}
+                    onClick={() => {
+                      setFieldValue('image', undefined);
+                      formRef.current?.validateForm();
+                    }}
+                  >
+                    <FaCropSimple />
+                  </div>
+                  <div
+                    className={'btn btn-square btn-outline btn-error btn-sm'}
+                    onClick={() =>
+                      modalContext.openModal(
+                        <DeleteConfirmationModal
+                          spelling={'REMOVE'}
+                          entityName={'das Bild'}
+                          onApprove={async () => {
+                            await setFieldValue('image', undefined);
+                            setOriginalImage(undefined);
+                            formRef.current?.validateForm();
+                          }}
+                        />,
+                      )
+                    }
+                  >
+                    <FaTrashAlt />
+                  </div>
                 </div>
                 <div className={'relative h-32 w-32 rounded-lg bg-white'}>
                   <Image className={'w-fit rounded-lg'} src={values.image} layout={'fill'} objectFit={'contain'} alt={'Glass Image'} />
+                </div>
+                <div className={'pt-2 font-thin italic'}>
+                  Info: Durch speichern des Cocktails wird das Bild dauerhaft zugeschnitten. Das Original wird nicht gespeichert. (Falls du später also doch
+                  andere Bereiche auswählen möchtest, musst du das Bild dann erneut auswählen)
                 </div>
               </div>
             )}
           </div>
           <div className={'form-control'}>
-            <button disabled={isSubmitting} type={'submit'} className={`btn btn-primary`}>
+            <button disabled={isSubmitting || !isValid} type={'submit'} className={`btn btn-primary`}>
               {isSubmitting ? <span className={'loading loading-spinner'} /> : <></>}
               Speichern
             </button>

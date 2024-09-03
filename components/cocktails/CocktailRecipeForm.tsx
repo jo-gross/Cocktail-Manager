@@ -4,7 +4,7 @@ import React, { createRef, useCallback, useContext, useEffect, useState } from '
 import { useRouter } from 'next/router';
 import { Garnish, Glass, Ice, Ingredient, Unit, WorkspaceCocktailRecipeStepAction } from '@prisma/client';
 import { UploadDropZone } from '../UploadDropZone';
-import { convertToBase64 } from '../../lib/Base64Converter';
+import { convertBase64ToFile, convertToBase64 } from '../../lib/Base64Converter';
 import { CocktailRecipeStepFull } from '../../models/CocktailRecipeStepFull';
 import CocktailRecipeCardItem from './CocktailRecipeCardItem';
 import { alertService } from '../../lib/alertService';
@@ -32,6 +32,8 @@ import Image from 'next/image';
 import { fetchIce } from '../../lib/network/ices';
 import { updateTags, validateTag } from '../../models/tags/TagUtils';
 import { DaisyUITagInput } from '../DaisyUITagInput';
+import CropComponent from '../CropComponent';
+import { FaCropSimple } from 'react-icons/fa6';
 
 interface CocktailRecipeFormProps {
   cocktailRecipe?: CocktailRecipeFullWithImage;
@@ -80,6 +82,10 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
 
   const [units, setUnits] = useState<Unit[]>([]);
   const [unitsLoading, setUnitsLoading] = useState(false);
+
+  const [originalImage, setOriginalImage] = useState<File | undefined>(
+    (props.cocktailRecipe?.CocktailRecipeImage?.length ?? 0) > 0 ? convertBase64ToFile(props.cocktailRecipe!.CocktailRecipeImage[0].image!) : undefined,
+  );
 
   const openIngredientSelectModal = useCallback(
     (setFieldValue: any, indexStep: number, indexIngredient: number) => {
@@ -237,6 +243,11 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
       innerRef={formRef}
       initialValues={initValue}
       validate={(values) => {
+        const errors: any = {};
+        if (originalImage != undefined && values.image == undefined) {
+          errors.image = 'Bild ausgewählt aber nicht zugeschnitten';
+        }
+
         values = _.omit(values, ['image', 'ice', 'isArchived']);
 
         const reducedCocktailRecipe = _.omit(props.cocktailRecipe, ['CocktailRecipeImage', 'ice', 'isArchived', '_count']);
@@ -266,7 +277,6 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
         // console.debug('Difference', DeepDiff.diff(reducedCocktailRecipe, values));
         // console.debug('Differs', !_.isEqual(reducedCocktailRecipe, values));
 
-        const errors: any = {};
         if (!values.name || values.name.trim() == '') {
           errors.name = 'Required';
         }
@@ -335,10 +345,9 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
         if (hasErrors) {
           errors.garnishes = garnishErrors;
         }
-
-        console.debug('Cocktail Form Errors: ', errors);
         return errors;
       }}
+      validateOnChange={true}
       onSubmit={async (values) => {
         try {
           const body = {
@@ -403,7 +412,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
         }
       }}
     >
-      {({ values, setFieldValue, setFieldError, errors, touched, handleChange, handleBlur, handleSubmit, isSubmitting }) => (
+      {({ values, setFieldValue, setFieldError, errors, touched, handleChange, handleBlur, handleSubmit, isSubmitting, isValid }) => (
         <form onSubmit={handleSubmit}>
           <div className={'grid grid-cols-1 gap-4 md:grid-cols-3'}>
             <div className={'card grid-cols-1 md:col-span-2'}>
@@ -590,37 +599,72 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                     ) : (
                       <></>
                     )}
-                    {values.image == undefined ? (
+                    {values.image == undefined && originalImage == undefined ? (
                       <UploadDropZone
                         onSelectedFilesChanged={async (file) => {
                           if (file != undefined) {
-                            const compressedImageFile = await compressFile(file);
-                            await setFieldValue('image', await convertToBase64(compressedImageFile));
+                            setOriginalImage(file);
+                            await setFieldValue('image', undefined);
+                            formRef.current?.validateForm();
                           } else {
                             alertService.error('Datei konnte nicht ausgewählt werden.');
                           }
                         }}
                       />
+                    ) : values.image == undefined && originalImage != undefined ? (
+                      <div className={'w-full'}>
+                        <CropComponent
+                          aspect={3 / 4}
+                          imageToCrop={originalImage}
+                          onCroppedImageComplete={async (file) => {
+                            const compressedImageFile = await compressFile(file);
+                            await setFieldValue('image', await convertToBase64(compressedImageFile));
+                            formRef.current?.validateForm();
+                          }}
+                          onCropCancel={async () => {
+                            setOriginalImage(undefined);
+                            await setFieldValue('image', undefined);
+                            formRef.current?.validateForm();
+                          }}
+                        />
+                      </div>
                     ) : (
                       <div className={'relative'}>
-                        <div
-                          className={'btn btn-square btn-outline btn-error btn-sm absolute right-2 top-2'}
-                          onClick={() =>
-                            modalContext.openModal(
-                              <DeleteConfirmationModal
-                                spelling={'REMOVE'}
-                                entityName={'das Bild'}
-                                onApprove={async () => {
-                                  await setFieldValue('image', undefined);
-                                }}
-                              />,
-                            )
-                          }
-                        >
-                          <FaTrashAlt />
+                        <div className={'absolute right-2 top-2 flex flex-row gap-2'}>
+                          <div
+                            className={'btn btn-square btn-outline btn-sm'}
+                            onClick={() => {
+                              setFieldValue('image', undefined);
+                              formRef.current?.validateForm();
+                            }}
+                          >
+                            <FaCropSimple />
+                          </div>
+                          <div
+                            className={'btn btn-square btn-outline btn-error btn-sm'}
+                            onClick={() =>
+                              modalContext.openModal(
+                                <DeleteConfirmationModal
+                                  spelling={'REMOVE'}
+                                  entityName={'das Bild'}
+                                  onApprove={async () => {
+                                    await setFieldValue('image', undefined);
+                                    setOriginalImage(undefined);
+                                    formRef.current?.validateForm();
+                                  }}
+                                />,
+                              )
+                            }
+                          >
+                            <FaTrashAlt />
+                          </div>
                         </div>
                         <div className={'relative h-32 w-32 rounded-lg'}>
                           <Image className={'w-fit rounded-lg'} src={values.image} layout={'fill'} objectFit={'contain'} alt={'Cocktail image'} />
+                        </div>
+                        <div className={'pt-2 font-thin italic'}>
+                          Info: Durch speichern des Cocktails wird das Bild dauerhaft zugeschnitten. Das Original wird nicht gespeichert. (Falls du später also
+                          doch andere Bereiche auswählen möchtest, musst du das Bild dann erneut auswählen)
                         </div>
                       </div>
                     )}
@@ -632,6 +676,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
               <div className={'card'}>
                 <div className={'card-body'}>
                   <div className={'text-center text-2xl font-bold'}>Vorschau</div>
+                  {JSON.stringify(errors)}
                   <div className={'divider'}></div>
 
                   <CocktailRecipeCardItem
@@ -660,7 +705,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                 </div>
               </div>
               <div className={'hidden md:flex'}>
-                <button type="submit" className={`btn btn-primary w-full`} disabled={isSubmitting}>
+                <button type="submit" className={`btn btn-primary w-full`} disabled={isSubmitting || !isValid}>
                   {isSubmitting ? <span className={'loading loading-spinner'} /> : <></>}
                   {props.cocktailRecipe == undefined ? 'Erstellen' : 'Aktualisieren'}
                 </button>
