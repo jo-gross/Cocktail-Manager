@@ -58,7 +58,7 @@ export function GarnishForm(props: GarnishFormProps) {
               if (props.onSaved != undefined) {
                 props.onSaved((await response.json()).data.id);
               } else {
-                router.push(`/workspaces/${workspaceId}/manage/garnishes`).then(() => alertService.success('Garnitur erfolgreich erstellt'));
+                router.replace(`/workspaces/${workspaceId}/manage/garnishes`).then(() => alertService.success('Garnitur erfolgreich erstellt'));
               }
             } else {
               const body = await response.json();
@@ -75,7 +75,7 @@ export function GarnishForm(props: GarnishFormProps) {
               if (props.onSaved != undefined) {
                 props.onSaved(props.garnish.id);
               } else {
-                router.push(`/workspaces/${workspaceId}/manage/garnishes`).then(() => alertService.success('Garnitur erfolgreich gespeichert'));
+                router.replace(`/workspaces/${workspaceId}/manage/garnishes`).then(() => alertService.success('Garnitur erfolgreich gespeichert'));
               }
             } else {
               const body = await response.json();
@@ -102,12 +102,11 @@ export function GarnishForm(props: GarnishFormProps) {
         if (!values.name) {
           errors.name = 'Required';
         }
-        if (values.image == undefined && values.originalImage != undefined) {
+        if (values.originalImage != undefined && values.image == undefined) {
           errors.image = 'Bild ausgewählt aber nicht zugeschnitten';
         }
         return errors;
       }}
-      validateOnChange={true}
     >
       {({ values, errors, touched, handleChange, handleBlur, handleSubmit, isSubmitting, isValid, setFieldValue }) => (
         <form onSubmit={handleSubmit} className={'flex flex-col gap-2 md:gap-4'}>

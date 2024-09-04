@@ -291,7 +291,7 @@ export default function CalculationPage() {
               setOriginalName(calculationName);
               setOriginalIngredientShoppingUnits(JSON.stringify(ingredientShoppingUnits));
               if (redirect) {
-                await router.push(`/workspaces/${workspaceId}/manage/calculations/${body.data.id}`);
+                await router.replace(`/workspaces/${workspaceId}/manage/calculations/${body.data.id}`);
               }
               alertService.success('Kalkulation erfolgreich erstellt');
             } else {
@@ -335,7 +335,7 @@ export default function CalculationPage() {
               setOriginalName(calculationName);
               setOriginalIngredientShoppingUnits(JSON.stringify(ingredientShoppingUnits));
               if (redirect) {
-                await router.push(`/workspaces/${workspaceId}/manage/calculations/${body.data.id}`);
+                await router.replace(`/workspaces/${workspaceId}/manage/calculations/${body.data.id}`);
               }
               alertService.success('Kalkulation erfolgreich gespeichert');
             } else {

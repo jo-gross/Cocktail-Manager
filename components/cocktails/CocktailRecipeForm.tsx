@@ -83,10 +83,6 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
   const [units, setUnits] = useState<Unit[]>([]);
   const [unitsLoading, setUnitsLoading] = useState(false);
 
-  const [originalImage, setOriginalImage] = useState<File | undefined>(
-    (props.cocktailRecipe?.CocktailRecipeImage?.length ?? 0) > 0 ? convertBase64ToFile(props.cocktailRecipe!.CocktailRecipeImage[0].image!) : undefined,
-  );
-
   const openIngredientSelectModal = useCallback(
     (setFieldValue: any, indexStep: number, indexIngredient: number) => {
       modalContext.openModal(
@@ -229,6 +225,8 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
     tags: props.cocktailRecipe?.tags ?? [],
     iceId: props.cocktailRecipe?.iceId ?? null,
     image: props.cocktailRecipe?.CocktailRecipeImage[0]?.image ?? undefined,
+    originalImage:
+      (props.cocktailRecipe?.CocktailRecipeImage?.length ?? 0) > 0 ? convertBase64ToFile(props.cocktailRecipe!.CocktailRecipeImage[0].image!) : undefined,
     glassId: props.cocktailRecipe?.glassId ?? undefined,
     ice: iceOptions.find((i) => i.id == props.cocktailRecipe?.iceId) ?? null,
     glass: glasses.find((g) => g.id == props.cocktailRecipe?.glassId) ?? null,
@@ -244,38 +242,42 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
       initialValues={initValue}
       validate={(values) => {
         const errors: any = {};
-        if (originalImage != undefined && values.image == undefined) {
-          errors.image = 'Bild ausgewählt aber nicht zugeschnitten';
-        }
 
-        values = _.omit(values, ['image', 'ice', 'isArchived']);
+        if (props.cocktailRecipe) {
+          const reducedOriginal = _.omit(props.cocktailRecipe, ['CocktailRecipeImage', 'ice', 'isArchived', '_count']);
+          const reducedValues = _.omit(values, ['image', 'ice', 'isArchived', 'originalImage']);
 
-        const reducedCocktailRecipe = _.omit(props.cocktailRecipe, ['CocktailRecipeImage', 'ice', 'isArchived', '_count']);
-        if (reducedCocktailRecipe.description == null) {
-          reducedCocktailRecipe.description = '';
-        }
-        if (reducedCocktailRecipe.steps != undefined) {
-          reducedCocktailRecipe.steps = orderBy(reducedCocktailRecipe.steps, ['stepNumber'], ['asc']);
-          reducedCocktailRecipe.steps.forEach((step) => {
-            step.ingredients = orderBy(step.ingredients, ['ingredientNumber'], ['asc']);
-          });
-        }
-        if (values.steps != undefined) {
-          values.steps = orderBy(values.steps, ['stepNumber'], ['asc']);
-          (values.steps as any[]).forEach((step) => {
-            step.ingredients = orderBy(step.ingredients, ['ingredientNumber'], ['asc']);
-
-            step.ingredients = _.map(step.ingredients, (obj) => {
-              return _.assign({}, obj, { ingredient: _.omit(obj.ingredient, 'IngredientVolume') });
+          if (reducedOriginal.description == null) {
+            reducedOriginal.description = '';
+          }
+          if (reducedOriginal.steps != undefined) {
+            reducedOriginal.steps = orderBy(reducedOriginal.steps, ['stepNumber'], ['asc']);
+            reducedOriginal.steps.forEach((step) => {
+              step.ingredients = orderBy(step.ingredients, ['ingredientNumber'], ['asc']);
             });
-          });
-        }
-        props.setUnsavedChanges?.(!_.isEqual(reducedCocktailRecipe, values));
+          }
+          if (values.steps != undefined) {
+            values.steps = orderBy(values.steps, ['stepNumber'], ['asc']);
+            (values.steps as any[]).forEach((step) => {
+              step.ingredients = orderBy(step.ingredients, ['ingredientNumber'], ['asc']);
 
-        // console.debug('CocktailRecipe', reducedCocktailRecipe);
-        // console.debug('Values', values);
-        // console.debug('Difference', DeepDiff.diff(reducedCocktailRecipe, values));
-        // console.debug('Differs', !_.isEqual(reducedCocktailRecipe, values));
+              step.ingredients = _.map(step.ingredients, (obj) => {
+                return _.assign({}, obj, { ingredient: _.omit(obj.ingredient, 'IngredientVolume') });
+              });
+            });
+          }
+          // console.debug('CocktailRecipe', reducedCocktailRecipe);
+          // console.debug('Values', values);
+          // console.debug('Difference', DeepDiff.diff(reducedCocktailRecipe, values));
+          // console.debug('Differs', !_.isEqual(reducedCocktailRecipe, values));
+
+          const areImageEqual =
+            (props.cocktailRecipe.CocktailRecipeImage.length > 0 ? props.cocktailRecipe.CocktailRecipeImage[0].image.toString() : undefined) == values.image;
+
+          props.setUnsavedChanges?.(!_.isEqual(reducedOriginal, reducedValues) || !areImageEqual);
+        } else {
+          props.setUnsavedChanges?.(true);
+        }
 
         if (!values.name || values.name.trim() == '') {
           errors.name = 'Required';
@@ -285,6 +287,9 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
         }
         if (!values.iceId || values.ice == '') {
           errors.iceId = 'Required';
+        }
+        if (values.originalImage != undefined && values.image == undefined) {
+          errors.image = 'Bild ausgewählt aber nicht zugeschnitten';
         }
 
         const stepsErrors: StepError[] = [];
@@ -347,7 +352,6 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
         }
         return errors;
       }}
-      validateOnChange={true}
       onSubmit={async (values) => {
         try {
           const body = {
@@ -599,32 +603,29 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                     ) : (
                       <></>
                     )}
-                    {values.image == undefined && originalImage == undefined ? (
+                    {values.image == undefined && values.originalImage == undefined ? (
                       <UploadDropZone
                         onSelectedFilesChanged={async (file) => {
                           if (file != undefined) {
-                            setOriginalImage(file);
+                            await setFieldValue('originalImage', file);
                             await setFieldValue('image', undefined);
-                            formRef.current?.validateForm();
                           } else {
                             alertService.error('Datei konnte nicht ausgewählt werden.');
                           }
                         }}
                       />
-                    ) : values.image == undefined && originalImage != undefined ? (
+                    ) : values.image == undefined && values.originalImage != undefined ? (
                       <div className={'w-full'}>
                         <CropComponent
                           aspect={3 / 4}
-                          imageToCrop={originalImage}
+                          imageToCrop={values.originalImage}
                           onCroppedImageComplete={async (file) => {
                             const compressedImageFile = await compressFile(file);
                             await setFieldValue('image', await convertToBase64(compressedImageFile));
-                            formRef.current?.validateForm();
                           }}
                           onCropCancel={async () => {
-                            setOriginalImage(undefined);
+                            await setFieldValue('originalImage', undefined);
                             await setFieldValue('image', undefined);
-                            formRef.current?.validateForm();
                           }}
                         />
                       </div>
@@ -633,9 +634,8 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                         <div className={'absolute right-2 top-2 flex flex-row gap-2'}>
                           <div
                             className={'btn btn-square btn-outline btn-sm'}
-                            onClick={() => {
-                              setFieldValue('image', undefined);
-                              formRef.current?.validateForm();
+                            onClick={async () => {
+                              await setFieldValue('image', undefined);
                             }}
                           >
                             <FaCropSimple />
@@ -649,8 +649,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                   entityName={'das Bild'}
                                   onApprove={async () => {
                                     await setFieldValue('image', undefined);
-                                    setOriginalImage(undefined);
-                                    formRef.current?.validateForm();
+                                    await setFieldValue('originalImage', undefined);
                                   }}
                                 />,
                               )
@@ -676,7 +675,6 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
               <div className={'card'}>
                 <div className={'card-body'}>
                   <div className={'text-center text-2xl font-bold'}>Vorschau</div>
-                  {JSON.stringify(errors)}
                   <div className={'divider'}></div>
 
                   <CocktailRecipeCardItem

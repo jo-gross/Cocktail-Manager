@@ -64,7 +64,7 @@ export default function CropComponent(props: CropComponentProps) {
     <div className="relative flex h-full w-full flex-col items-center justify-center gap-2">
       <ReactCrop crop={crop} onChange={(newCrop) => setCrop(newCrop)} aspect={props.aspect} className="h-auto w-fit">
         <div className={'relative h-96 max-h-96 w-96 max-w-96'} ref={containerRef} id={'image-container-ref'}>
-          <div className={'absolute h-full w-full bg-red-500'}></div>
+          <div className={'absolute h-full w-full bg-white'}></div>
           <img
             ref={imgRef}
             src={URL.createObjectURL(props.imageToCrop)}

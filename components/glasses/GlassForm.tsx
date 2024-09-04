@@ -3,7 +3,7 @@ import { UploadDropZone } from '../UploadDropZone';
 import { convertBase64ToFile, convertToBase64 } from '../../lib/Base64Converter';
 import { useRouter } from 'next/router';
 import { FaTrashAlt } from 'react-icons/fa';
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext } from 'react';
 import { alertService } from '../../lib/alertService';
 import { DeleteConfirmationModal } from '../modals/DeleteConfirmationModal';
 import { ModalContext } from '../../lib/context/ModalContextProvider';
@@ -28,18 +28,6 @@ export function GlassForm(props: GlassFormProps) {
   const modalContext = useContext(ModalContext);
 
   const formRef = props.formRef || React.createRef<FormikProps<any>>();
-  const [originalValues, setOriginalValues] = useState<any>();
-
-  const [originalImage, setOriginalImage] = useState<File | undefined>(
-    (props.glass?.GlassImage?.length ?? 0) > 0 ? convertBase64ToFile(props.glass!.GlassImage[0].image) : undefined,
-  );
-
-  //Filling original values
-  useEffect(() => {
-    if (Object.keys(formRef?.current?.touched ?? {}).length == 0) {
-      setOriginalValues(formRef?.current?.values);
-    }
-  }, [formRef, formRef?.current?.values]);
 
   return (
     <Formik
@@ -48,6 +36,7 @@ export function GlassForm(props: GlassFormProps) {
         name: props.glass?.name ?? '',
         deposit: props.glass?.deposit ?? 0,
         image: props.glass?.GlassImage?.[0]?.image ?? undefined,
+        originalImage: (props.glass?.GlassImage.length ?? 0) ? convertBase64ToFile(props.glass!.GlassImage[0].image) : undefined,
         volume: props.glass?.volume ?? 0,
       }}
       onSubmit={async (values) => {
@@ -69,7 +58,7 @@ export function GlassForm(props: GlassFormProps) {
               if (props.onSaved) {
                 props.onSaved((await response.json()).data.id);
               } else {
-                router.push(`/workspaces/${workspaceId}/manage/glasses`).then(() => alertService.success('Glas erfolgreich erstellt'));
+                router.replace(`/workspaces/${workspaceId}/manage/glasses`).then(() => alertService.success('Glas erfolgreich erstellt'));
               }
             } else {
               const body = await response.json();
@@ -86,7 +75,7 @@ export function GlassForm(props: GlassFormProps) {
               if (props.onSaved) {
                 props.onSaved(props.glass.id);
               } else {
-                router.push(`/workspaces/${workspaceId}/manage/glasses`).then(() => alertService.success('Glas erfolgreich gespeichert'));
+                router.replace(`/workspaces/${workspaceId}/manage/glasses`).then(() => alertService.success('Glas erfolgreich gespeichert'));
               }
             } else {
               const body = await response.json();
@@ -100,7 +89,16 @@ export function GlassForm(props: GlassFormProps) {
         }
       }}
       validate={(values) => {
-        props.setUnsavedChanges?.(originalValues && !_.isEqual(originalValues, formRef?.current?.values));
+        if (props.glass) {
+          const reducedOriginal = _.omit(props.glass, ['id', 'workspaceId', 'GlassImage']);
+          const reducedValues = _.omit(values, ['image', 'originalImage']);
+          const areImageEqual = (props.glass.GlassImage.length > 0 ? props.glass.GlassImage[0].image.toString() : undefined) == values.image;
+
+          props.setUnsavedChanges?.(!_.isEqual(reducedOriginal, reducedValues) || !areImageEqual);
+        } else {
+          props.setUnsavedChanges?.(true);
+        }
+
         const errors: any = {};
         if (!values.name) {
           errors.name = 'Required';
@@ -108,12 +106,11 @@ export function GlassForm(props: GlassFormProps) {
         if (values.deposit.toString() == '' || isNaN(values.deposit)) {
           errors.deposit = 'Required';
         }
-        if (originalImage != undefined && values.image == undefined) {
+        if (values.originalImage != undefined && values.image == undefined) {
           errors.image = 'Bild ausgewählt aber nicht zugeschnitten';
         }
         return errors;
       }}
-      validateOnChange={true}
     >
       {({ values, setFieldValue, errors, touched, handleChange, handleBlur, handleSubmit, isSubmitting, isValid }) => (
         <form onSubmit={handleSubmit} className={'flex flex-col gap-2 md:gap-4'}>
@@ -190,32 +187,29 @@ export function GlassForm(props: GlassFormProps) {
             ) : (
               <></>
             )}
-            {values.image == undefined && originalImage == undefined ? (
+            {values.image == undefined && values.originalImage == undefined ? (
               <UploadDropZone
                 onSelectedFilesChanged={async (file) => {
                   if (file != undefined) {
-                    setOriginalImage(file);
+                    await setFieldValue('originalImage', file);
                     await setFieldValue('image', undefined);
-                    formRef.current?.validateForm();
                   } else {
                     alertService.error('Datei konnte nicht ausgewählt werden.');
                   }
                 }}
               />
-            ) : values.image == undefined && originalImage != undefined ? (
+            ) : values.image == undefined && values.originalImage != undefined ? (
               <div className={'w-full'}>
                 <CropComponent
                   aspect={1}
-                  imageToCrop={originalImage}
+                  imageToCrop={values.originalImage}
                   onCroppedImageComplete={async (file) => {
                     const compressedImageFile = await compressFile(file);
                     await setFieldValue('image', await convertToBase64(compressedImageFile));
-                    formRef.current?.validateForm();
                   }}
                   onCropCancel={async () => {
-                    setOriginalImage(undefined);
+                    await setFieldValue('originalImage', undefined);
                     await setFieldValue('image', undefined);
-                    formRef.current?.validateForm();
                   }}
                 />
               </div>
@@ -224,9 +218,8 @@ export function GlassForm(props: GlassFormProps) {
                 <div className={'absolute right-2 top-2 flex flex-row gap-2'}>
                   <div
                     className={'btn btn-square btn-outline btn-sm'}
-                    onClick={() => {
-                      setFieldValue('image', undefined);
-                      formRef.current?.validateForm();
+                    onClick={async () => {
+                      await setFieldValue('image', undefined);
                     }}
                   >
                     <FaCropSimple />
@@ -240,8 +233,7 @@ export function GlassForm(props: GlassFormProps) {
                           entityName={'das Bild'}
                           onApprove={async () => {
                             await setFieldValue('image', undefined);
-                            setOriginalImage(undefined);
-                            formRef.current?.validateForm();
+                            await setFieldValue('originalImage', undefined);
                           }}
                         />,
                       )

@@ -135,24 +135,27 @@ export function IngredientForm(props: IngredientFormProps) {
         }
       }}
       validate={(values) => {
-        if (props.ingredient == undefined) {
-          props.setUnsavedChanges?.(true);
+        if (props.ingredient) {
+          const reducedOriginal = _.omit(props.ingredient, ['IngredientImage', 'id', 'workspaceId']);
+          if (reducedOriginal.link == null) {
+            reducedOriginal.link = '';
+          }
+          if (reducedOriginal.description == null) {
+            reducedOriginal.description = '';
+          }
+          if (reducedOriginal.notes == null) {
+            reducedOriginal.notes = '';
+          }
+          if (reducedOriginal.shortName == null) {
+            reducedOriginal.shortName = '';
+          }
+          const reducedValues = _.omit(values, ['image', 'originalImage']);
+
+          const areImageEqual =
+            (props.ingredient.IngredientImage.length > 0 ? props.ingredient.IngredientImage[0].image.toString() : undefined) == values.image;
+          props.setUnsavedChanges?.(!_.isEqual(reducedOriginal, reducedValues) || !areImageEqual);
         } else {
-          const tempIngredient = _.omit(props.ingredient, ['IngredientImage', 'id', 'workspaceId']);
-          if (tempIngredient.link == null) {
-            tempIngredient.link = '';
-          }
-          if (tempIngredient.description == null) {
-            tempIngredient.description = '';
-          }
-          if (tempIngredient.notes == null) {
-            tempIngredient.notes = '';
-          }
-          if (tempIngredient.shortName == null) {
-            tempIngredient.shortName = '';
-          }
-          const tempValues = _.omit(values, ['image']);
-          props.setUnsavedChanges?.(!_.isEqual(tempIngredient, tempValues));
+          props.setUnsavedChanges?.(true);
         }
         const errors: any = {};
         if (!values.name) {
@@ -161,10 +164,8 @@ export function IngredientForm(props: IngredientFormProps) {
         if (values.originalImage != undefined && values.image == undefined) {
           errors.image = 'Bild ausgewählt aber nicht zugeschnitten';
         }
-        console.debug('Form errors', errors);
         return errors;
       }}
-      validateOnChange={true}
     >
       {({ values, setFieldValue, errors, setFieldError, touched, handleChange, handleBlur, handleSubmit, isSubmitting, isValid }) => (
         <form onSubmit={handleSubmit} className={'flex flex-col gap-2 md:gap-4'}>
@@ -441,8 +442,8 @@ export function IngredientForm(props: IngredientFormProps) {
               <UploadDropZone
                 onSelectedFilesChanged={async (file) => {
                   if (file != undefined) {
-                    handleChange({ target: { name: 'image', value: null } });
-                    handleChange({ target: { name: 'originalImage', value: file } });
+                    await setFieldValue('image', undefined);
+                    await setFieldValue('originalImage', file);
                   } else {
                     alertService.error('Datei konnte nicht ausgewählt werden.');
                   }
@@ -456,12 +457,11 @@ export function IngredientForm(props: IngredientFormProps) {
                   onCroppedImageComplete={async (file) => {
                     const compressedImageFile = await compressFile(file);
                     const value = await convertToBase64(compressedImageFile);
-                    handleChange({ target: { name: 'image', value: value } });
+                    await setFieldValue('image', value);
                   }}
                   onCropCancel={async () => {
-                    handleChange({ target: { name: 'originalImage', value: null } });
-                    handleChange({ target: { name: 'image', value: null } });
-                    formRef.current?.validateForm(values);
+                    await setFieldValue('originalImage', undefined);
+                    await setFieldValue('image', undefined);
                   }}
                 />
               </div>
@@ -471,7 +471,7 @@ export function IngredientForm(props: IngredientFormProps) {
                   <div
                     className={'btn btn-square btn-outline btn-sm'}
                     onClick={async () => {
-                      handleChange({ target: { name: 'image', value: null } });
+                      await setFieldValue('image', undefined);
                     }}
                   >
                     <FaCropSimple />
@@ -484,9 +484,8 @@ export function IngredientForm(props: IngredientFormProps) {
                           spelling={'REMOVE'}
                           entityName={'das Bild'}
                           onApprove={async () => {
-                            handleChange({ target: { name: 'originalImage', value: null } });
-                            handleChange({ target: { name: 'image', value: null } });
-                            formRef.current?.validateForm(values);
+                            await setFieldValue('originalImage', undefined);
+                            await setFieldValue('image', undefined);
                           }}
                         />,
                       )
@@ -542,29 +541,28 @@ export function IngredientForm(props: IngredientFormProps) {
                   fetch(`/api/scraper/ingredient?url=${values.link}`)
                     .then((response) => {
                       if (response.ok) {
-                        response.json().then((data) => {
-                          setFieldValue('name', data.name);
+                        response.json().then(async (data) => {
+                          await setFieldValue('name', data.name);
                           if (data.price != 0) {
-                            setFieldValue('price', data.price);
+                            await setFieldValue('price', data.price);
                           }
 
                           if (data.image) {
-                            // setFieldValue('originalImage', convertBase64ToFile(data.image));
-                            // setFieldValue('image', undefined);
-                            handleChange({ target: { name: 'image', value: null } });
-                            handleChange({ target: { name: 'originalImage', value: convertBase64ToFile(data.image) } });
+                            await setFieldValue('image', undefined);
+                            await setFieldValue('originalImage', convertBase64ToFile(data.image));
                           }
                           if (data.volume != 0) {
-                            setFieldValue('volume', data.volume);
+                            await setFieldValue('volume', data.volume);
                           }
-                          setFieldValue('selectedUnit', allUnits.find((unit) => unit.name == 'CL')?.id ?? '');
+                          await setFieldValue('selectedUnit', allUnits.find((unit) => unit.name == 'CL')?.id ?? '');
                         });
                       } else {
                         alertService.warn('Es konnten keine Daten über die URL geladen werden.');
                       }
                     })
-                    .finally(() => {
-                      setFieldValue('fetchingExternalData', false);
+                    .finally(async () => {
+                      await setFieldValue('fetchingExternalData', false);
+                      await setFieldValue('image', undefined);
                     });
                 }}
               >
