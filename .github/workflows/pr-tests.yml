@@ -83,3 +83,10 @@ jobs:
 
       - name: 'Build Docker Image'
         run: docker build -t my-image .
+
+  check-for-cc:
+    runs-on: ubuntu-latest
+    steps:
+      - name: PR title check
+        id: check-for-cc
+        uses: agenthunt/conventional-commit-checker-action@v1.0.0
