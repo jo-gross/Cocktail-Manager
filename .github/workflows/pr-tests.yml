@@ -85,6 +85,7 @@ jobs:
         run: docker build -t my-image .
 
   check-for-cc:
+    name: Check PR title for conventional commits convention
     runs-on: ubuntu-latest
     steps:
       - name: PR title check
