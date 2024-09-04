@@ -22,8 +22,6 @@ export function ManageEntityLayout(props: ManageEntityLayoutProps) {
   const router = useRouter();
 
   const routerConditionalBack = async (fallbackUrl: string) => {
-    console.log('Referrer', document.referrer);
-    console.log('Location', window.location.origin);
     if ((document.referrer && document.referrer.includes(window.location.origin)) || document.referrer == '') {
       await router.replace(fallbackUrl);
     } else {

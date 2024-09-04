@@ -54,7 +54,6 @@ export default withHttpMethods({
         });
 
         if (units) {
-          console.log(units);
           for (const unit of units) {
             await transaction.ingredientVolume.create({
               data: {
