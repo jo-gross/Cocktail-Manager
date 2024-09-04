@@ -41,6 +41,7 @@ interface FormValue {
   link: string;
   tags: string[];
   image: string | undefined;
+  originalImage?: File | undefined;
 }
 
 export function IngredientForm(props: IngredientFormProps) {
@@ -57,10 +58,6 @@ export function IngredientForm(props: IngredientFormProps) {
   const [loadingDefaultConversions, setLoadingDefaultConversions] = useState(false);
   const [defaultConversions, setDefaultConversions] = useState<UnitConversion[]>([]);
 
-  const [originalImage, setOriginalImage] = useState<File | undefined>(
-    (props.ingredient?.IngredientImage.length ?? 0) > 0 ? convertBase64ToFile(props.ingredient!.IngredientImage?.[0]?.image) : undefined,
-  );
-
   useEffect(() => {
     fetchUnits(workspaceId, setAllUnits, setUnitsLoading);
     fetchUnitConversions(workspaceId, setLoadingDefaultConversions, setDefaultConversions);
@@ -76,6 +73,7 @@ export function IngredientForm(props: IngredientFormProps) {
     link: props.ingredient?.link ?? '',
     tags: props.ingredient?.tags ?? [],
     image: props.ingredient?.IngredientImage?.[0]?.image ?? undefined,
+    originalImage: (props.ingredient?.IngredientImage.length ?? 0) > 0 ? convertBase64ToFile(props.ingredient!.IngredientImage?.[0]?.image) : undefined,
   };
 
   return (
@@ -160,7 +158,7 @@ export function IngredientForm(props: IngredientFormProps) {
         if (!values.name) {
           errors.name = 'Required';
         }
-        if (originalImage != undefined && values.image == undefined) {
+        if (values.originalImage != undefined && values.image == undefined) {
           errors.image = 'Bild ausgewählt aber nicht zugeschnitten';
         }
         console.debug('Form errors', errors);
@@ -439,32 +437,31 @@ export function IngredientForm(props: IngredientFormProps) {
             ) : (
               <></>
             )}
-            {values.image == undefined && originalImage == undefined ? (
+            {values.image == undefined && values.originalImage == undefined ? (
               <UploadDropZone
                 onSelectedFilesChanged={async (file) => {
                   if (file != undefined) {
-                    setOriginalImage(file);
-                    await setFieldValue('image', undefined);
-                    formRef.current?.validateForm();
+                    handleChange({ target: { name: 'image', value: null } });
+                    handleChange({ target: { name: 'originalImage', value: file } });
                   } else {
                     alertService.error('Datei konnte nicht ausgewählt werden.');
                   }
                 }}
               />
-            ) : values.image == undefined && originalImage != undefined ? (
+            ) : values.image == undefined && values.originalImage != undefined ? (
               <div className={'w-full'}>
                 <CropComponent
                   aspect={1}
-                  imageToCrop={originalImage}
+                  imageToCrop={values.originalImage}
                   onCroppedImageComplete={async (file) => {
                     const compressedImageFile = await compressFile(file);
-                    await setFieldValue('image', await convertToBase64(compressedImageFile));
-                    formRef.current?.validateForm();
+                    const value = await convertToBase64(compressedImageFile);
+                    handleChange({ target: { name: 'image', value: value } });
                   }}
                   onCropCancel={async () => {
-                    setOriginalImage(undefined);
-                    await setFieldValue('image', undefined);
-                    formRef.current?.validateForm();
+                    handleChange({ target: { name: 'originalImage', value: null } });
+                    handleChange({ target: { name: 'image', value: null } });
+                    formRef.current?.validateForm(values);
                   }}
                 />
               </div>
@@ -473,9 +470,8 @@ export function IngredientForm(props: IngredientFormProps) {
                 <div className={'absolute right-2 top-2 flex flex-row gap-2'}>
                   <div
                     className={'btn btn-square btn-outline btn-sm'}
-                    onClick={() => {
-                      setFieldValue('image', undefined);
-                      formRef.current?.validateForm();
+                    onClick={async () => {
+                      handleChange({ target: { name: 'image', value: null } });
                     }}
                   >
                     <FaCropSimple />
@@ -488,9 +484,9 @@ export function IngredientForm(props: IngredientFormProps) {
                           spelling={'REMOVE'}
                           entityName={'das Bild'}
                           onApprove={async () => {
-                            await setFieldValue('image', undefined);
-                            setOriginalImage(undefined);
-                            formRef.current?.validateForm();
+                            handleChange({ target: { name: 'originalImage', value: null } });
+                            handleChange({ target: { name: 'image', value: null } });
+                            formRef.current?.validateForm(values);
                           }}
                         />,
                       )
@@ -553,8 +549,10 @@ export function IngredientForm(props: IngredientFormProps) {
                           }
 
                           if (data.image) {
-                            setOriginalImage(convertBase64ToFile(data.image));
-                            setFieldValue('image', undefined);
+                            // setFieldValue('originalImage', convertBase64ToFile(data.image));
+                            // setFieldValue('image', undefined);
+                            handleChange({ target: { name: 'image', value: null } });
+                            handleChange({ target: { name: 'originalImage', value: convertBase64ToFile(data.image) } });
                           }
                           if (data.volume != 0) {
                             setFieldValue('volume', data.volume);
