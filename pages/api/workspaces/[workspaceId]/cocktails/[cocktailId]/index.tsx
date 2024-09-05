@@ -44,6 +44,7 @@ export default withHttpMethods({
             },
           },
         },
+        ratings: true,
       },
     });
 

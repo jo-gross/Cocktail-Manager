@@ -23,5 +23,6 @@ export type CocktailRecipeFull = Prisma.CocktailRecipeGetPayload<{
         };
       };
     };
+    ratings: true;
   };
 }>;

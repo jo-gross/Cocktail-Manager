@@ -231,6 +231,7 @@ model CocktailRecipe {
   CocktailRecipeImage      CocktailRecipeImage[]
   CocktailStatisticItem    CocktailStatisticItem[]
   CocktailQueue            CocktailQueue[]
+  ratings CocktailRating[]
 }
 
 model CocktailRecipeImage {
@@ -289,6 +290,19 @@ model CocktailRecipeIngredient {
 
   cocktailRecipeStep   CocktailRecipeStep @relation(fields: [cocktailRecipeStepId], references: [id], onDelete: Cascade)
   cocktailRecipeStepId String
+}
+
+model CocktailRating {
+  id String @id @default(cuid())
+
+  cocktailId String
+  cocktail   CocktailRecipe @relation(fields: [cocktailId], references: [id], onDelete: Cascade)
+
+  name    String?
+  rating  Int     @default(0)
+  comment String?
+
+  createdAt DateTime @default(now())
 }
 
 model Ingredient {

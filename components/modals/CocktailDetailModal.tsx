@@ -1,6 +1,6 @@
 import { CocktailRecipeFull } from '../../models/CocktailRecipeFull';
 import Link from 'next/link';
-import { FaArrowLeft, FaPencilAlt, FaPlus, FaTimes } from 'react-icons/fa';
+import { FaArrowLeft, FaInfo, FaPencilAlt, FaPlus, FaTimes } from 'react-icons/fa';
 import { ModalContext } from '../../lib/context/ModalContextProvider';
 import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
@@ -16,6 +16,9 @@ import ImageModal from './ImageModal';
 import { calcCocktailTotalPrice } from '../../lib/CocktailRecipeCalculation';
 import { fetchIngredients } from '../../lib/network/ingredients';
 import { IngredientModel } from '../../models/IngredientModel';
+import AddCocktailRatingModal from './AddCocktailRatingModal';
+import CocktailRatingsModal from './CocktailRatingsModal';
+import StarsComponent from '../StarsComponent';
 
 interface CocktailDetailModalProps {
   cocktailId: string;
@@ -291,6 +294,39 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                   ))}
               </>
             )}
+
+            <div className={'w-full gap-2'}>
+              <span className={'font-bold'}>Bewertung</span>
+              <div className={'flex flex-row items-center gap-2'}>
+                {(loadedCocktail.ratings ?? []).length > 0
+                  ? (loadedCocktail.ratings.reduce((acc, rating) => acc + rating.rating, 0) / loadedCocktail.ratings.length).toFixed(1)
+                  : 'Keine Bewertungen'}
+                <StarsComponent
+                  rating={
+                    loadedCocktail.ratings.length > 0
+                      ? loadedCocktail.ratings.reduce((acc, rating) => acc + rating.rating, 0) / loadedCocktail.ratings.length
+                      : 0
+                  }
+                />
+                ({loadedCocktail.ratings.length})
+                <button
+                  type={'button'}
+                  className={'btn btn-square btn-outline btn-info btn-sm'}
+                  onClick={() => modalContext.openModal(<CocktailRatingsModal cocktail={loadedCocktail} />)}
+                >
+                  <FaInfo />
+                </button>
+                <div className={'flex-grow'}></div>
+                <button
+                  type={'button'}
+                  className={'btn btn-outline btn-sm'}
+                  onClick={() => modalContext.openModal(<AddCocktailRatingModal cocktailId={props.cocktailId} onCreated={fetchCocktail} />)}
+                >
+                  <FaPlus /> Bewertung hinzufügen
+                </button>
+              </div>
+            </div>
+
             <div className={'flex-grow'}></div>
             {userContext.isUserPermitted(Role.MANAGER) && ingredients && (
               <>
