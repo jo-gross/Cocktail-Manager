@@ -309,13 +309,22 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                   }
                 />
                 ({loadedCocktail.ratings.length})
-                <button
-                  type={'button'}
-                  className={'btn btn-square btn-outline btn-info btn-sm'}
-                  onClick={() => modalContext.openModal(<CocktailRatingsModal cocktail={loadedCocktail} />)}
-                >
-                  <FaInfo />
-                </button>
+                {loadedCocktail.ratings.length != 0 ? (
+                  <button
+                    type={'button'}
+                    className={'btn btn-square btn-outline btn-info btn-sm'}
+                    disabled={loadedCocktail.ratings.length === 0}
+                    onClick={() =>
+                      modalContext.openModal(
+                        <CocktailRatingsModal cocktailId={loadedCocktail.id} cocktailName={loadedCocktail.name} onRefresh={fetchCocktail} />,
+                      )
+                    }
+                  >
+                    <FaInfo />
+                  </button>
+                ) : (
+                  <></>
+                )}
                 <div className={'flex-grow'}></div>
                 <button
                   type={'button'}

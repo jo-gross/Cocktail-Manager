@@ -677,6 +677,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                       garnishes: values.garnishes,
                       steps: values.steps,
                       workspaceId: workspaceId!,
+                      ratings: [],
                     }}
                     showInfo={false}
                     showTags={true}

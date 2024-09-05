@@ -39,7 +39,7 @@ export default function OverviewPage() {
 
   useEffect(() => {
     const handleSearchShortCut = (event: any) => {
-      if (event.shiftKey && event.key === 'F') {
+      if (event.shiftKey && event.key === 'F' && modalContext.content.length == 0) {
         if (!(document.querySelector('#globalModal') as any)?.checked) {
           modalContext.openModal(<SearchModal showStatisticActions={showStatisticActions} />);
         }

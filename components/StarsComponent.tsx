@@ -12,7 +12,10 @@ export default function StarsComponent(props: StarsComponentProps) {
         return props.rating - 1 >= index ? (
           <FaStar key={`cocktail-rating-${index}`} className={'text-yellow-500'} />
         ) : props.rating - 1 >= index - 0.5 ? (
-          <FaStarHalf key={`cocktail-rating-${index}`} className={'text-yellow-500'} />
+          <div className="relative">
+            <FaStarHalf key={`cocktail-rating-half-${index}`} className="absolute text-yellow-500" />
+            <FaStar key={`cocktail-rating-background-${index}`} className="text-gray-400" />
+          </div>
         ) : (
           <FaStar key={`cocktail-rating-${index}`} className={'text-gray-400'} />
         );
