@@ -617,7 +617,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                     ) : values.image == undefined && values.originalImage != undefined ? (
                       <div className={'w-full'}>
                         <CropComponent
-                          aspect={3 / 4}
+                          aspect={9 / 16}
                           imageToCrop={values.originalImage}
                           onCroppedImageComplete={async (file) => {
                             const compressedImageFile = await compressFile(file);
