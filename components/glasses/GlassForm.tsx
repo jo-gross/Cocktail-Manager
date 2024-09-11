@@ -227,6 +227,7 @@ export function GlassForm(props: GlassFormProps) {
             ) : values.image == undefined && values.originalImage != undefined ? (
               <div className={'w-full'}>
                 <CropComponent
+                  isValid={isValid}
                   aspect={1}
                   imageToCrop={values.originalImage}
                   onCroppedImageComplete={async (file) => {
@@ -284,6 +285,11 @@ export function GlassForm(props: GlassFormProps) {
               Speichern
             </button>
           </div>
+          {!isValid && (
+            <div className={'font-thin italic text-error'}>
+              Nicht alle Felder sind korrekt ausgefüllt. Kontrolliere daher alle Felder. (Name gesetzt, Bild zugeschnitten, ... ?)
+            </div>
+          )}
         </form>
       )}
     </Formik>

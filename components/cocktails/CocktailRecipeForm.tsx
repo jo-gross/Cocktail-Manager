@@ -34,6 +34,7 @@ import { updateTags, validateTag } from '../../models/tags/TagUtils';
 import { DaisyUITagInput } from '../DaisyUITagInput';
 import CropComponent from '../CropComponent';
 import { FaCropSimple } from 'react-icons/fa6';
+import DeepDiff from 'deep-diff';
 
 interface CocktailRecipeFormProps {
   cocktailRecipe?: CocktailRecipeFullWithImage;
@@ -247,7 +248,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
         const errors: any = {};
 
         if (props.cocktailRecipe) {
-          const reducedCocktailRecipe = _.omit(props.cocktailRecipe, ['CocktailRecipeImage', 'ice', 'isArchived', '_count']);
+          const reducedCocktailRecipe = _.omit(props.cocktailRecipe, ['CocktailRecipeImage', 'ice', 'isArchived', '_count', 'ratings']);
           const reducedValues = _.omit(values, ['image', 'ice', 'isArchived', 'originalImage']);
 
           if (reducedCocktailRecipe.description == null) {
@@ -256,6 +257,13 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
           if (reducedCocktailRecipe.notes == null) {
             reducedCocktailRecipe.notes = '';
           }
+          if (reducedCocktailRecipe.price == null) {
+            reducedCocktailRecipe.price = undefined;
+          }
+          if (reducedValues.price == '') {
+            reducedValues.price = undefined;
+          }
+
           if (reducedCocktailRecipe.steps != undefined) {
             reducedCocktailRecipe.steps = orderBy(reducedCocktailRecipe.steps, ['stepNumber'], ['asc']);
             reducedCocktailRecipe.steps.forEach((step) => {
@@ -274,7 +282,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
           }
           // console.debug('CocktailRecipe', reducedCocktailRecipe);
           // console.debug('Values', values);
-          // console.debug('Difference', DeepDiff.diff(reducedCocktailRecipe, values));
+          console.debug('Difference', DeepDiff.diff(reducedCocktailRecipe, reducedValues));
           // console.debug('Differs', !_.isEqual(reducedCocktailRecipe, values));
 
           const areImageEqual =
@@ -356,6 +364,8 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
         if (hasErrors) {
           errors.garnishes = garnishErrors;
         }
+
+        console.log('cocktail form errors', errors);
         return errors;
       }}
       onSubmit={async (values) => {
@@ -667,6 +677,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                     ) : values.image == undefined && values.originalImage != undefined ? (
                       <div className={'w-full'}>
                         <CropComponent
+                          isValid={isValid}
                           aspect={9 / 16}
                           imageToCrop={values.originalImage}
                           onCroppedImageComplete={async (file) => {
@@ -761,6 +772,11 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                   {props.cocktailRecipe == undefined ? 'Erstellen' : 'Aktualisieren'}
                 </button>
               </div>
+              {!isValid && (
+                <div className={'font-thin italic text-error'}>
+                  Nicht alle Felder sind korrekt ausgefüllt. Kontrolliere daher alle Felder. (Name gesetzt, Bild zugeschnitten, ... ?)
+                </div>
+              )}
 
               <div className={'card'}>
                 <div className={'card-body'}>

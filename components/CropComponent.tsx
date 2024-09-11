@@ -8,6 +8,7 @@ interface CropComponentProps {
   onCroppedImageComplete: (image: File) => void;
   onCropCancel?: () => void;
   aspect?: number;
+  isValid?: boolean;
 }
 
 export default function CropComponent(props: CropComponentProps) {
@@ -62,17 +63,19 @@ export default function CropComponent(props: CropComponentProps) {
 
   return (
     <div className="relative flex h-full w-full flex-col items-center justify-center gap-2">
-      <ReactCrop crop={crop} onChange={(newCrop) => setCrop(newCrop)} aspect={props.aspect} className="h-auto w-fit">
-        <div className={'relative h-96 max-h-96 w-96 max-w-96'} ref={containerRef} id={'image-container-ref'}>
-          <div className={'absolute h-full w-full bg-white'}></div>
-          <img
-            ref={imgRef}
-            src={URL.createObjectURL(props.imageToCrop)}
-            alt="Crop"
-            className="absolute bottom-0 left-0 right-0 top-0 m-auto max-h-96 max-w-96 object-contain"
-          />
-        </div>
-      </ReactCrop>
+      <div className={`h-auto w-fit ${props.isValid == true ? '' : 'rounded-2xl border-2 border-error p-2 pb-1'}`}>
+        <ReactCrop crop={crop} onChange={(newCrop) => setCrop(newCrop)} aspect={props.aspect} className={`h-auto w-fit`}>
+          <div className={`relative h-96 max-h-96 w-96 max-w-96`} ref={containerRef} id={'image-container-ref'}>
+            <div className={'absolute h-full w-full bg-white'}></div>
+            <img
+              ref={imgRef}
+              src={URL.createObjectURL(props.imageToCrop)}
+              alt="Crop"
+              className={'absolute bottom-0 left-0 right-0 top-0 m-auto max-h-96 max-w-96 object-contain'}
+            />
+          </div>
+        </ReactCrop>
+      </div>
       <div className="flex w-full flex-row items-center justify-end gap-2">
         <button disabled={!crop || crop?.width === 0 || crop?.height === 0} type="button" onClick={generateCroppedImage} className="btn btn-primary flex-1">
           Zuschneiden und Bild übernehmen
