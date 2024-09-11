@@ -308,8 +308,8 @@ export function GarnishForm(props: GarnishFormProps) {
                   <Image className={'w-fit rounded-lg'} src={values.image} layout={'fill'} objectFit={'contain'} alt={'Garnish image'} />
                 </div>
                 <div className={'pt-2 font-thin italic'}>
-                  Info: Durch speichern des Cocktails wird das Bild dauerhaft zugeschnitten. Das Original wird nicht gespeichert. (Falls du später also doch
-                  andere Bereiche auswählen möchtest, musst du das Bild dann erneut auswählen)
+                  Info: Durch Speichern des Cocktails wird das Bild dauerhaft zugeschnitten. Das Original wird nicht gespeichert. Falls du später also doch
+                  andere Bereiche auswählen möchtest, musst du das Bild dann erneut auswählen.
                 </div>
               </div>
             )}

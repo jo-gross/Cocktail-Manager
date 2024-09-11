@@ -42,7 +42,7 @@ export default function CocktailRecipeCardItem(props: CocktailRecipeOverviewItem
             {props.showNotes && props.cocktailRecipe.notes && (
               <>
                 <div className={'border-b border-base-100'}></div>
-                <div className={'font-bold'}>Notizen</div>
+                <div className={'font-bold'}>Zubereitungsnotizen</div>
                 <div className={'long-text-format'}>{props.cocktailRecipe.notes}</div>
               </>
             )}

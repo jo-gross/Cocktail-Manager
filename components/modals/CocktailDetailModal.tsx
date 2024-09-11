@@ -154,7 +154,7 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                           >
                             <div className={'font-bold'}>{stepIngredient.amount}</div>
                             <div className={'font-bold'}>{userContext.getTranslation(stepIngredient.unit?.name ?? '', 'de')}</div>
-                            <div>{stepIngredient.ingredient?.name}</div>
+                            <div>{stepIngredient.ingredient?.shortName ?? stepIngredient.ingredient?.name}</div>
                             {stepIngredient.optional && <div>(optional)</div>}
                           </div>
                         ))}
@@ -234,19 +234,19 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
           <div className={'row-span-2 flex flex-col gap-2'}>
             {loadedCocktail.notes && (
               <>
-                <div className={'font-bold'}>Kurzhinweise // Notizen</div>
+                <div className={'font-bold'}>Zubereitungsnotizen</div>
                 <div className={'long-text-format rounded border border-base-300 p-2'}>{loadedCocktail.notes}</div>
               </>
             )}
             {loadedCocktail.description && (
               <>
-                <div className={'font-bold'}>Ausführliche Cocktailbeschreibung</div>
+                <div className={'font-bold'}>Allgemeine Beschreibung</div>
                 <div className={'long-text-format rounded border border-base-300 p-2 text-justify'}>{loadedCocktail.description}</div>
               </>
             )}
             {loadedCocktail.steps.map((step) => step.ingredients).flat().length > 0 && (
               <>
-                <div className={'font-bold'}>Produktbeschreibungen</div>
+                <div className={'font-bold'}>Zutatenbeschreibungen</div>
                 {loadedCocktail.steps
                   .map((step) => step.ingredients)
                   .flat()
@@ -281,7 +281,7 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                       </div>
                       {ingredient.ingredient?.description && (
                         <div className={'text-justify'}>
-                          <div className={'underline'}>Produktbeschreibung</div>
+                          <div className={'underline'}>Zutat Beschreibung</div>
                           <div className={'long-text-format'}>{ingredient.ingredient?.description}</div>
                         </div>
                       )}

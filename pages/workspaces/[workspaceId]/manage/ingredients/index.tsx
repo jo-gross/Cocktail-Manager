@@ -53,7 +53,7 @@ export default function IngredientsOverviewPage() {
                 <tr>
                   <th></th>
                   <th>Zutat</th>
-                  <th>Abkürzung</th>
+                  <th>Eigene Bezeichnung</th>
                   <th>Notizen</th>
                   <th>Preis</th>
                   <th>Verfügbare Menge(n)</th>
@@ -120,7 +120,7 @@ export default function IngredientsOverviewPage() {
                               modalContext.openModal(
                                 <div className={'flex flex-col gap-2'}>
                                   <div className={'mr-8 text-2xl font-bold'}>{ingredient.name}</div>
-                                  <div className={'text-lg font-bold'}>Produktbeschreibung</div>
+                                  <div className={'text-lg font-bold'}>Allgemeine Zutatenbeschreibung</div>
                                   <div className={'long-text-format'}>{ingredient.description ?? '-'}</div>
                                   <div className={'text-lg font-bold'}>Notizen</div>
                                   <div className={'long-text-format'}>{ingredient.notes ?? '-'}</div>

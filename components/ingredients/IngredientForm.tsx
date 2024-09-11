@@ -201,7 +201,7 @@ export function IngredientForm(props: IngredientFormProps) {
         <form onSubmit={handleSubmit} className={'flex flex-col gap-2 md:gap-4'}>
           <div className={'form-control'}>
             <label className={'label'} htmlFor={'name'}>
-              <span className={'label-text'}>Name</span>
+              <span className={'label-text'}>Bezeichner</span>
               <span className={'label-text-alt space-x-2 text-error'}>
                 <span>
                   <>{errors.name && touched.name && errors.name}</>
@@ -229,14 +229,14 @@ export function IngredientForm(props: IngredientFormProps) {
             {similarIngredient && (
               <div className="label">
                 <span className="label-text-alt text-warning">
-                  Eine Ähnliche Zutat mit dem namen <strong>{similarIngredient.name}</strong> existiert bereits.
+                  Eine ähnliche Zutat mit dem Namen <strong>{similarIngredient.name}</strong> existiert bereits.
                 </span>
               </div>
             )}
           </div>
           <div className={'form-control'}>
             <label className={'label'} htmlFor={'shortName'}>
-              <span className={'label-text'}>Abkürzung</span>
+              <span className={'label-text'}>Eigene Bezeichnung</span>
               <span className={'label-text-alt space-x-2 text-error'}>
                 <span>
                   <>{errors.shortName && touched.shortName && errors.shortName}</>
@@ -256,7 +256,7 @@ export function IngredientForm(props: IngredientFormProps) {
 
           <div className={'form-control'}>
             <label className={'label'} htmlFor={'description'}>
-              <span className={'label-text'}>Allgemeine Produktbeschreibung</span>
+              <span className={'label-text'}>Allgemeine Zutatenbeschreibung</span>
               <span className={'label-text-alt space-x-2 text-error'}>
                 <span>
                   <>{errors.description && touched.description && errors.description}</>
@@ -547,8 +547,8 @@ export function IngredientForm(props: IngredientFormProps) {
                   <Image className={'w-fit rounded-lg'} src={values.image} layout={'fill'} objectFit={'contain'} alt={'Ingredient Image'} />
                 </div>
                 <div className={'pt-2 font-thin italic'}>
-                  Info: Durch speichern des Cocktails wird das Bild dauerhaft zugeschnitten. Das Original wird nicht gespeichert. (Falls du später also doch
-                  andere Bereiche auswählen möchtest, musst du das Bild dann erneut auswählen)
+                  Info: Durch Speichern des Cocktails wird das Bild dauerhaft zugeschnitten. Das Original wird nicht gespeichert. Falls du später also doch
+                  andere Bereiche auswählen möchtest, musst du das Bild dann erneut auswählen.
                 </div>
               </div>
             )}
