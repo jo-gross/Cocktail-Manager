@@ -4,7 +4,7 @@ import React, { createRef, useCallback, useContext, useEffect, useState } from '
 import { useRouter } from 'next/router';
 import { Garnish, Glass, Ice, Ingredient, Unit, WorkspaceCocktailRecipeStepAction } from '@prisma/client';
 import { UploadDropZone } from '../UploadDropZone';
-import { convertToBase64 } from '../../lib/Base64Converter';
+import { convertBase64ToFile, convertToBase64 } from '../../lib/Base64Converter';
 import { CocktailRecipeStepFull } from '../../models/CocktailRecipeStepFull';
 import CocktailRecipeCardItem from './CocktailRecipeCardItem';
 import { alertService } from '../../lib/alertService';
@@ -32,6 +32,8 @@ import Image from 'next/image';
 import { fetchIce } from '../../lib/network/ices';
 import { updateTags, validateTag } from '../../models/tags/TagUtils';
 import { DaisyUITagInput } from '../DaisyUITagInput';
+import CropComponent from '../CropComponent';
+import { FaCropSimple } from 'react-icons/fa6';
 
 interface CocktailRecipeFormProps {
   cocktailRecipe?: CocktailRecipeFullWithImage;
@@ -224,6 +226,8 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
     tags: props.cocktailRecipe?.tags ?? [],
     iceId: props.cocktailRecipe?.iceId ?? null,
     image: props.cocktailRecipe?.CocktailRecipeImage[0]?.image ?? undefined,
+    originalImage:
+      (props.cocktailRecipe?.CocktailRecipeImage?.length ?? 0) > 0 ? convertBase64ToFile(props.cocktailRecipe!.CocktailRecipeImage[0].image!) : undefined,
     glassId: props.cocktailRecipe?.glassId ?? undefined,
     ice: iceOptions.find((i) => i.id == props.cocktailRecipe?.iceId) ?? null,
     glass: glasses.find((g) => g.id == props.cocktailRecipe?.glassId) ?? null,
@@ -238,39 +242,47 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
       innerRef={formRef}
       initialValues={initValue}
       validate={(values) => {
-        values = _.omit(values, ['image', 'ice', 'isArchived']);
-
-        const reducedCocktailRecipe = _.omit(props.cocktailRecipe, ['CocktailRecipeImage', 'ice', 'isArchived', '_count']);
-        if (reducedCocktailRecipe.description == null) {
-          reducedCocktailRecipe.description = '';
-        }
-        if (reducedCocktailRecipe.notes == null) {
-          reducedCocktailRecipe.notes = '';
-        }
-        if (reducedCocktailRecipe.steps != undefined) {
-          reducedCocktailRecipe.steps = orderBy(reducedCocktailRecipe.steps, ['stepNumber'], ['asc']);
-          reducedCocktailRecipe.steps.forEach((step) => {
-            step.ingredients = orderBy(step.ingredients, ['ingredientNumber'], ['asc']);
-          });
-        }
-        if (values.steps != undefined) {
-          values.steps = orderBy(values.steps, ['stepNumber'], ['asc']);
-          (values.steps as any[]).forEach((step) => {
-            step.ingredients = orderBy(step.ingredients, ['ingredientNumber'], ['asc']);
-
-            step.ingredients = _.map(step.ingredients, (obj) => {
-              return _.assign({}, obj, { ingredient: _.omit(obj.ingredient, 'IngredientVolume') });
-            });
-          });
-        }
-        props.setUnsavedChanges?.(!_.isEqual(reducedCocktailRecipe, values));
-
-        // console.debug('CocktailRecipe', reducedCocktailRecipe);
-        // console.debug('Values', values);
-        // console.debug('Difference', DeepDiff.diff(reducedCocktailRecipe, values));
-        // console.debug('Differs', !_.isEqual(reducedCocktailRecipe, values));
-
         const errors: any = {};
+
+        if (props.cocktailRecipe) {
+          const reducedCocktailRecipe = _.omit(props.cocktailRecipe, ['CocktailRecipeImage', 'ice', 'isArchived', '_count']);
+          const reducedValues = _.omit(values, ['image', 'ice', 'isArchived', 'originalImage']);
+
+          if (reducedCocktailRecipe.description == null) {
+            reducedCocktailRecipe.description = '';
+          }
+          if (reducedCocktailRecipe.notes == null) {
+            reducedCocktailRecipe.notes = '';
+          }
+          if (reducedCocktailRecipe.steps != undefined) {
+            reducedCocktailRecipe.steps = orderBy(reducedCocktailRecipe.steps, ['stepNumber'], ['asc']);
+            reducedCocktailRecipe.steps.forEach((step) => {
+              step.ingredients = orderBy(step.ingredients, ['ingredientNumber'], ['asc']);
+            });
+          }
+          if (values.steps != undefined) {
+            values.steps = orderBy(values.steps, ['stepNumber'], ['asc']);
+            (values.steps as any[]).forEach((step) => {
+              step.ingredients = orderBy(step.ingredients, ['ingredientNumber'], ['asc']);
+
+              step.ingredients = _.map(step.ingredients, (obj) => {
+                return _.assign({}, obj, { ingredient: _.omit(obj.ingredient, 'IngredientVolume') });
+              });
+            });
+          }
+          // console.debug('CocktailRecipe', reducedCocktailRecipe);
+          // console.debug('Values', values);
+          // console.debug('Difference', DeepDiff.diff(reducedCocktailRecipe, values));
+          // console.debug('Differs', !_.isEqual(reducedCocktailRecipe, values));
+
+          const areImageEqual =
+            (props.cocktailRecipe.CocktailRecipeImage.length > 0 ? props.cocktailRecipe.CocktailRecipeImage[0].image.toString() : undefined) == values.image;
+
+          props.setUnsavedChanges?.(!_.isEqual(reducedCocktailRecipe, reducedValues) || !areImageEqual);
+        } else {
+          props.setUnsavedChanges?.(true);
+        }
+
         if (!values.name || values.name.trim() == '') {
           errors.name = 'Required';
         }
@@ -279,6 +291,9 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
         }
         if (!values.iceId || values.ice == '') {
           errors.iceId = 'Required';
+        }
+        if (values.originalImage != undefined && values.image == undefined) {
+          errors.image = 'Bild ausgewählt aber nicht zugeschnitten';
         }
 
         const stepsErrors: StepError[] = [];
@@ -339,8 +354,6 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
         if (hasErrors) {
           errors.garnishes = garnishErrors;
         }
-
-        console.debug('Cocktail Form Errors: ', errors);
         return errors;
       }}
       onSubmit={async (values) => {
@@ -408,7 +421,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
         }
       }}
     >
-      {({ values, setFieldValue, setFieldError, errors, touched, handleChange, handleBlur, handleSubmit, isSubmitting }) => (
+      {({ values, setFieldValue, setFieldError, errors, touched, handleChange, handleBlur, handleSubmit, isSubmitting, isValid }) => (
         <form onSubmit={handleSubmit}>
           <div className={'grid grid-cols-1 gap-4 md:grid-cols-3'}>
             <div className={'card grid-cols-1 md:col-span-2'}>
@@ -615,37 +628,67 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                     ) : (
                       <></>
                     )}
-                    {values.image == undefined ? (
+                    {values.image == undefined && values.originalImage == undefined ? (
                       <UploadDropZone
                         onSelectedFilesChanged={async (file) => {
                           if (file != undefined) {
-                            const compressedImageFile = await compressFile(file);
-                            await setFieldValue('image', await convertToBase64(compressedImageFile));
+                            await setFieldValue('originalImage', file);
+                            await setFieldValue('image', undefined);
                           } else {
                             alertService.error('Datei konnte nicht ausgewählt werden.');
                           }
                         }}
                       />
+                    ) : values.image == undefined && values.originalImage != undefined ? (
+                      <div className={'w-full'}>
+                        <CropComponent
+                          aspect={9 / 16}
+                          imageToCrop={values.originalImage}
+                          onCroppedImageComplete={async (file) => {
+                            const compressedImageFile = await compressFile(file);
+                            await setFieldValue('image', await convertToBase64(compressedImageFile));
+                          }}
+                          onCropCancel={async () => {
+                            await setFieldValue('originalImage', undefined);
+                            await setFieldValue('image', undefined);
+                          }}
+                        />
+                      </div>
                     ) : (
                       <div className={'relative'}>
-                        <div
-                          className={'btn btn-square btn-outline btn-error btn-sm absolute right-2 top-2'}
-                          onClick={() =>
-                            modalContext.openModal(
-                              <DeleteConfirmationModal
-                                spelling={'REMOVE'}
-                                entityName={'das Bild'}
-                                onApprove={async () => {
-                                  await setFieldValue('image', undefined);
-                                }}
-                              />,
-                            )
-                          }
-                        >
-                          <FaTrashAlt />
+                        <div className={'absolute right-2 top-2 flex flex-row gap-2'}>
+                          <div
+                            className={'btn btn-square btn-outline btn-sm'}
+                            onClick={async () => {
+                              await setFieldValue('image', undefined);
+                            }}
+                          >
+                            <FaCropSimple />
+                          </div>
+                          <div
+                            className={'btn btn-square btn-outline btn-error btn-sm'}
+                            onClick={() =>
+                              modalContext.openModal(
+                                <DeleteConfirmationModal
+                                  spelling={'REMOVE'}
+                                  entityName={'das Bild'}
+                                  onApprove={async () => {
+                                    await setFieldValue('image', undefined);
+                                    await setFieldValue('originalImage', undefined);
+                                  }}
+                                />,
+                              )
+                            }
+                          >
+                            <FaTrashAlt />
+                          </div>
                         </div>
                         <div className={'relative h-32 w-32 rounded-lg'}>
                           <Image className={'w-fit rounded-lg'} src={values.image} layout={'fill'} objectFit={'contain'} alt={'Cocktail image'} />
+                        </div>
+                        <div className={'pt-2 font-thin italic'}>
+                          Info: Durch speichern des Cocktails wird das Bild dauerhaft zugeschnitten. Das Original wird nicht gespeichert. (Falls du später also
+                          doch andere Bereiche auswählen möchtest, musst du das Bild dann erneut auswählen)
                         </div>
                       </div>
                     )}
@@ -687,7 +730,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                 </div>
               </div>
               <div className={'hidden md:flex'}>
-                <button type="submit" className={`btn btn-primary w-full`} disabled={isSubmitting}>
+                <button type="submit" className={`btn btn-primary w-full`} disabled={isSubmitting || !isValid}>
                   {isSubmitting ? <span className={'loading loading-spinner'} /> : <></>}
                   {props.cocktailRecipe == undefined ? 'Erstellen' : 'Aktualisieren'}
                 </button>

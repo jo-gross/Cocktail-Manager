@@ -1,16 +1,18 @@
 import { Formik, FormikProps } from 'formik';
 import { useRouter } from 'next/router';
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext } from 'react';
 import { UploadDropZone } from '../UploadDropZone';
-import { convertToBase64 } from '../../lib/Base64Converter';
+import { convertBase64ToFile, convertToBase64 } from '../../lib/Base64Converter';
 import { FaTrashAlt } from 'react-icons/fa';
 import { alertService } from '../../lib/alertService';
 import { DeleteConfirmationModal } from '../modals/DeleteConfirmationModal';
 import { ModalContext } from '../../lib/context/ModalContextProvider';
-import _ from 'lodash';
 import { compressFile } from '../../lib/ImageCompressor';
 import { GarnishWithImage } from '../../models/GarnishWithImage';
 import Image from 'next/image';
+import CropComponent from '../CropComponent';
+import { FaCropSimple } from 'react-icons/fa6';
+import _ from 'lodash';
 
 interface GarnishFormProps {
   garnish?: GarnishWithImage;
@@ -26,14 +28,6 @@ export function GarnishForm(props: GarnishFormProps) {
   const modalContext = useContext(ModalContext);
 
   const formRef = props.formRef || React.createRef<FormikProps<any>>();
-  const [originalValues, setOriginalValues] = useState<any>();
-
-  //Filling original values
-  useEffect(() => {
-    if (Object.keys(formRef?.current?.touched ?? {}).length == 0) {
-      setOriginalValues(formRef?.current?.values);
-    }
-  }, [formRef, formRef?.current?.values]);
 
   return (
     <Formik
@@ -44,6 +38,7 @@ export function GarnishForm(props: GarnishFormProps) {
         description: props.garnish?.description ?? '',
         notes: props.garnish?.notes ?? '',
         image: props.garnish?.GarnishImage?.[0]?.image ?? undefined,
+        originalImage: (props.garnish?.GarnishImage.length ?? 0) ? convertBase64ToFile(props.garnish!.GarnishImage[0].image) : undefined,
       }}
       onSubmit={async (values) => {
         try {
@@ -65,7 +60,7 @@ export function GarnishForm(props: GarnishFormProps) {
               if (props.onSaved != undefined) {
                 props.onSaved((await response.json()).data.id);
               } else {
-                router.push(`/workspaces/${workspaceId}/manage/garnishes`).then(() => alertService.success('Garnitur erfolgreich erstellt'));
+                router.replace(`/workspaces/${workspaceId}/manage/garnishes`).then(() => alertService.success('Garnitur erfolgreich erstellt'));
               }
             } else {
               const body = await response.json();
@@ -82,7 +77,7 @@ export function GarnishForm(props: GarnishFormProps) {
               if (props.onSaved != undefined) {
                 props.onSaved(props.garnish.id);
               } else {
-                router.push(`/workspaces/${workspaceId}/manage/garnishes`).then(() => alertService.success('Garnitur erfolgreich gespeichert'));
+                router.replace(`/workspaces/${workspaceId}/manage/garnishes`).then(() => alertService.success('Garnitur erfolgreich gespeichert'));
               }
             } else {
               const body = await response.json();
@@ -96,15 +91,26 @@ export function GarnishForm(props: GarnishFormProps) {
         }
       }}
       validate={(values) => {
-        props.setUnsavedChanges?.(originalValues && !_.isEqual(originalValues, formRef?.current?.values));
+        if (props.garnish) {
+          const reducedOriginal = _.omit(props.garnish, ['id', 'workspaceId', 'GarnishImage']);
+          const reducedValues = _.omit(values, ['image', 'originalImage']);
+          const areImageEqual = (props.garnish.GarnishImage.length > 0 ? props.garnish.GarnishImage[0].image.toString() : undefined) == values.image;
+          props.setUnsavedChanges?.(!_.isEqual(reducedOriginal, reducedValues) || !areImageEqual);
+        } else {
+          props.setUnsavedChanges?.(true);
+        }
+
         const errors: any = {};
         if (!values.name) {
           errors.name = 'Required';
         }
+        if (values.originalImage != undefined && values.image == undefined) {
+          errors.image = 'Bild ausgewählt aber nicht zugeschnitten';
+        }
         return errors;
       }}
     >
-      {({ values, setFieldValue, errors, touched, handleChange, handleBlur, handleSubmit, isSubmitting }) => (
+      {({ values, errors, touched, handleChange, handleBlur, handleSubmit, isSubmitting, isValid, setFieldValue }) => (
         <form onSubmit={handleSubmit} className={'flex flex-col gap-2 md:gap-4'}>
           <div className={'form-control'}>
             <label className={'label'} htmlFor={'name'}>
@@ -128,7 +134,6 @@ export function GarnishForm(props: GarnishFormProps) {
               name={'name'}
             />
           </div>
-
           <div className={'form-control'}>
             <label className={'label'} htmlFor={'notes'}>
               <span className={'label-text'}>Notizen</span>
@@ -170,7 +175,6 @@ export function GarnishForm(props: GarnishFormProps) {
               rows={5}
             />
           </div>
-
           <div className={'form-control'}>
             <label className={'label'} htmlFor={'price'}>
               <span className={'label-text'}>Preis</span>
@@ -197,47 +201,75 @@ export function GarnishForm(props: GarnishFormProps) {
               <div className={'label'}>
                 <span className={'label-text'}>Zutaten Bild</span>
               </div>
-            ) : (
-              <></>
-            )}
-            {values.image == undefined ? (
+            ) : null}
+            {values.image == undefined && values.originalImage == undefined ? (
               <UploadDropZone
                 onSelectedFilesChanged={async (file) => {
                   if (file != undefined) {
-                    const compressedImageFile = await compressFile(file);
-                    await setFieldValue('image', await convertToBase64(compressedImageFile));
+                    await setFieldValue('originalImage', file);
+                    await setFieldValue('image', undefined);
                   } else {
                     alertService.error('Datei konnte nicht ausgewählt werden.');
                   }
                 }}
               />
+            ) : values.image == undefined && values.originalImage != undefined ? (
+              <div className={'w-full'}>
+                <CropComponent
+                  aspect={1}
+                  imageToCrop={values.originalImage}
+                  onCroppedImageComplete={async (file) => {
+                    const compressedImageFile = await compressFile(file);
+                    await setFieldValue('image', await convertToBase64(compressedImageFile));
+                  }}
+                  onCropCancel={async () => {
+                    await setFieldValue('image', undefined);
+                    await setFieldValue('originalImage', undefined);
+                  }}
+                />
+              </div>
             ) : (
               <div className={'relative'}>
-                <div
-                  className={'btn btn-square btn-outline btn-error btn-sm absolute right-2 top-2'}
-                  onClick={() => {
-                    modalContext.openModal(
-                      <DeleteConfirmationModal
-                        spelling={'REMOVE'}
-                        entityName={'das Bild'}
-                        onApprove={async () => {
-                          await setFieldValue('image', undefined);
-                        }}
-                      />,
-                    );
-                  }}
-                >
-                  <FaTrashAlt />
+                <div className={'absolute right-2 top-2 flex flex-row gap-2'}>
+                  <div
+                    className={'btn btn-square btn-outline btn-sm'}
+                    onClick={async () => {
+                      await setFieldValue('image', undefined);
+                    }}
+                  >
+                    <FaCropSimple />
+                  </div>
+                  <div
+                    className={'btn btn-square btn-outline btn-error btn-sm'}
+                    onClick={() => {
+                      modalContext.openModal(
+                        <DeleteConfirmationModal
+                          spelling={'REMOVE'}
+                          entityName={'das Bild'}
+                          onApprove={async () => {
+                            await setFieldValue('originalImage', undefined);
+                            await setFieldValue('image', undefined);
+                          }}
+                        />,
+                      );
+                    }}
+                  >
+                    <FaTrashAlt />
+                  </div>
                 </div>
                 <div className={'relative h-32 w-32 rounded-lg bg-white'}>
                   <Image className={'w-fit rounded-lg'} src={values.image} layout={'fill'} objectFit={'contain'} alt={'Garnish image'} />
+                </div>
+                <div className={'pt-2 font-thin italic'}>
+                  Info: Durch speichern des Cocktails wird das Bild dauerhaft zugeschnitten. Das Original wird nicht gespeichert. (Falls du später also doch
+                  andere Bereiche auswählen möchtest, musst du das Bild dann erneut auswählen)
                 </div>
               </div>
             )}
           </div>
           <div className={'form-control'}>
-            <button disabled={isSubmitting} type={'submit'} className={`btn btn-primary`}>
-              {isSubmitting ? <span className={'loading loading-spinner'} /> : <></>}
+            <button disabled={isSubmitting || !isValid} type={'submit'} className={`btn btn-primary`}>
+              {isSubmitting ? <span className={'loading loading-spinner'} /> : null}
               Speichern
             </button>
           </div>
