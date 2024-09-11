@@ -1,11 +1,10 @@
 import { CocktailRecipeFull } from '../../models/CocktailRecipeFull';
 import Link from 'next/link';
-import { FaPencilAlt, FaPlus } from 'react-icons/fa';
+import { FaArrowLeft, FaPencilAlt, FaPlus, FaTimes } from 'react-icons/fa';
 import { ModalContext } from '../../lib/context/ModalContextProvider';
 import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { UserContext } from '../../lib/context/UserContextProvider';
-import DefaultGlassIcon from '../DefaultGlassIcon';
 import { Role } from '@prisma/client';
 import { alertService } from '../../lib/alertService';
 import Image from 'next/image';
@@ -14,6 +13,9 @@ import { Loading } from '../Loading';
 import { MdPlaylistAdd } from 'react-icons/md';
 import { addCocktailToQueue, addCocktailToStatistic } from '../../lib/network/cocktailTracking';
 import ImageModal from './ImageModal';
+import { calcCocktailTotalPrice } from '../../lib/CocktailRecipeCalculation';
+import { fetchIngredients } from '../../lib/network/ingredients';
+import { IngredientModel } from '../../models/IngredientModel';
 
 interface CocktailDetailModalProps {
   cocktailId: string;
@@ -27,6 +29,8 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
 
   const [loading, setLoading] = useState(true);
   const [loadedCocktail, setLoadedCocktail] = useState<CocktailRecipeFull>();
+
+  const [ingredients, setIngredients] = useState<IngredientModel[] | undefined>(undefined);
 
   const fetchCocktail = useCallback(async () => {
     if (!workspaceId) return;
@@ -51,8 +55,9 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
   }, [props.cocktailId, workspaceId]);
 
   useEffect(() => {
+    fetchIngredients(workspaceId, setIngredients, () => {});
     fetchCocktail();
-  }, [fetchCocktail]);
+  }, [fetchCocktail, workspaceId]);
 
   const [submittingStatistic, setSubmittingStatistic] = useState(false);
   const [submittingQueue, setSubmittingQueue] = useState(false);
@@ -60,18 +65,15 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
   return loading || loadedCocktail == undefined ? (
     <Loading />
   ) : (
-    <div className={''}>
+    <div className={'md:max-w-5xl'}>
       <div className={'card-body bg-base-100'}>
+        {/*<div className={'font-thin'}>Ausführliche Infos zum Cocktail:</div>*/}
         <div className={'flex flex-row space-x-2'}>
-          <>
-            {userContext.isUserPermitted(Role.MANAGER) && (
-              <Link href={`/workspaces/${workspaceId}/manage/cocktails/${loadedCocktail.id}`}>
-                <div className={'btn btn-square btn-outline btn-secondary btn-sm'} onClick={() => modalContext.closeAllModals()}>
-                  <FaPencilAlt />
-                </div>
-              </Link>
-            )}
-          </>
+          {modalContext.content.length > 1 && (
+            <button className={'btn btn-square btn-outline btn-sm'} onClick={() => modalContext.closeModal()}>
+              <FaArrowLeft />
+            </button>
+          )}
           <h2 className={'card-title flex-1'}>
             {loadedCocktail.name}
             {loadedCocktail.price != undefined ? (
@@ -83,147 +85,221 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
               <></>
             )}
           </h2>
-        </div>
-        <div className={'grid grid-cols-2 gap-4'}>
-          <div className={'col-span-2 flex'}>
-            {loadedCocktail.tags.map((tag) => (
-              <div key={`cocktail-details-${loadedCocktail.id}-tag-` + tag} className={'badge badge-primary m-1'}>
-                {tag}
-              </div>
-            ))}
-          </div>
-          <div className={'col-span-2 flex flex-row space-x-2'}>
-            {loadedCocktail._count.CocktailRecipeImage == 0 ? (
-              <></>
-            ) : (
-              <Image
-                className={'h-full w-36 flex-none cursor-pointer rounded-lg object-cover object-center shadow-md'}
-                src={`/api/workspaces/${loadedCocktail.workspaceId}/cocktails/${loadedCocktail.id}/image`}
-                alt={'Cocktail'}
-                onClick={() =>
-                  modalContext.openModal(<ImageModal image={`/api/workspaces/${loadedCocktail.workspaceId}/cocktails/${loadedCocktail.id}/image`} />)
-                }
-                width={100}
-                height={300}
-              />
+          <>
+            {userContext.isUserPermitted(Role.MANAGER) && (
+              <Link href={`/workspaces/${workspaceId}/manage/cocktails/${loadedCocktail.id}`}>
+                <div className={'btn btn-square btn-outline btn-secondary btn-sm'} onClick={() => modalContext.closeAllModals()}>
+                  <FaPencilAlt />
+                </div>
+              </Link>
             )}
-
-            <div className={'form-control w-full'}>
-              <label className={'label'}>
-                <span className={'label-text'}>Beschreibung</span>
-              </label>
-              <textarea readOnly={true} value={loadedCocktail.description ?? ''} className={'textarea textarea-bordered w-full flex-1'} />
-            </div>
-          </div>
-          <div className={'col-span-1'}>
-            Glas: {loadedCocktail.glass?.name}
-            <div className={'h-16 w-16'}>
-              {loadedCocktail.glass && loadedCocktail.glass._count.GlassImage != 0 ? (
-                <Image
-                  className={'cursor-pointer'}
-                  src={`/api/workspaces/${loadedCocktail.workspaceId}/glasses/${loadedCocktail.glass.id}/image`}
-                  alt={'Glas'}
-                  onClick={() =>
-                    modalContext.openModal(<ImageModal image={`/api/workspaces/${loadedCocktail.workspaceId}/glasses/${loadedCocktail.glass?.id}/image`} />)
-                  }
-                  width={300}
-                  height={300}
-                />
-              ) : (
-                <DefaultGlassIcon />
+          </>
+          <button className={'btn btn-square btn-outline btn-sm'} onClick={() => modalContext.closeAllModals()}>
+            <FaTimes />
+          </button>
+        </div>
+        <div className={'grid grid-cols-1 gap-4 md:grid-cols-2'}>
+          {/*Left side*/}
+          <div className={'flex flex-col gap-2'}>
+            <div className={'flex flex-row justify-between gap-2 rounded border border-base-300 p-2'}>
+              <div className={'flex flex-col gap-2'}>
+                {(loadedCocktail?.tags.length ?? 0) > 0 && (
+                  <div className={'gap-2'}>
+                    {loadedCocktail?.tags.map((tag) => (
+                      <div key={`cocktail-details-${loadedCocktail.id}-tags-${tag}`} className={'badge badge-primary mr-1'}>
+                        {tag}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <div className={'flex flex-1 items-end justify-between gap-2'}>
+                  <div>Glas: {loadedCocktail.glass?.name}</div>
+                  <div>Eis: {userContext.getTranslation(loadedCocktail.ice?.name ?? '-', 'de')}</div>
+                </div>
+              </div>
+              {loadedCocktail.glass && loadedCocktail.glass._count.GlassImage > 0 && (
+                <div className={'flex-1'}>
+                  <div className={'h-16 w-16'}>
+                    <AvatarImage
+                      src={`/api/workspaces/${loadedCocktail.workspaceId}/glasses/${loadedCocktail.glass.id}/image`}
+                      onClick={() =>
+                        modalContext.openModal(<ImageModal image={`/api/workspaces/${loadedCocktail.workspaceId}/glasses/${loadedCocktail.glass?.id}/image`} />)
+                      }
+                      alt={`Glas - ${loadedCocktail.glass?.name}`}
+                    />
+                  </div>
+                </div>
               )}
             </div>
-          </div>
-          <div className={'col-span-1'}>Eis: {userContext.getTranslation(loadedCocktail.ice?.name ?? '<Eis>', 'de')}</div>
-          <div className={'col-span-2 space-y-2'}>
-            {loadedCocktail.steps.length == 0 ? <></> : <div className={'text-2xl font-bold'}>Zubereitung</div>}
-            <div className={'grid grid-cols-2 gap-4'}>
-              {loadedCocktail.steps.map((step) => (
-                <div key={'cocktail-details-step-' + step.id} className={'col-span-2 space-y-2 rounded-lg border-2 border-base-300 p-2'}>
-                  <span className={'text-xl font-bold'}>{userContext.getTranslation(step.action.name, 'de')}</span>
-                  {step.ingredients.map((stepIngredient) => (
-                    <div key={'cocktail-details-step-ingredient-' + stepIngredient.id} className={'pl-2'}>
-                      <div className={'flex-1'}>
-                        <div className={'flex flex-row items-center space-x-2'}>
-                          <div className={'h-12 w-12'}>
-                            {stepIngredient.ingredient?._count?.IngredientImage != 0 ? (
-                              <AvatarImage
-                                src={`/api/workspaces/${loadedCocktail.workspaceId}/ingredients/${stepIngredient.ingredient?.id}/image`}
-                                onClick={() =>
-                                  modalContext.openModal(
-                                    <ImageModal image={`/api/workspaces/${loadedCocktail.workspaceId}/ingredients/${stepIngredient.ingredient?.id}/image`} />,
-                                  )
-                                }
-                                alt={`Cocktail Zutat ${stepIngredient.ingredient?.name}`}
-                              />
-                            ) : (
-                              <></>
-                            )}
-                          </div>
-                          <div className={'font-bold'}>
-                            {stepIngredient.amount} {userContext.getTranslation(stepIngredient.unit?.name ?? '', 'de')}
-                          </div>
-                          <span>{stepIngredient.ingredient?.name}</span>
+
+            <div className={`grid ${loadedCocktail._count.CocktailRecipeImage > 0 ? 'grid-cols-5' : 'grid-cols-3'} gap-2`}>
+              <div className={'col-span-3 flex flex-col gap-2'}>
+                <div className={'font-bold'}>Zubereitung</div>
+                {loadedCocktail.steps.map((step) => (
+                  <div key={`cocktail-details-step-${step.id}`} className={'flex flex-col gap-2 rounded border border-base-300 p-2'}>
+                    <div className={'font-bold'}>{userContext.getTranslation(step.action.name, 'de')}</div>
+                    {step.ingredients.map((stepIngredient) => (
+                      <div key={`cocktail-details-step-ingredient-${stepIngredient.id}`} className={'flex flex-row gap-2 pl-3'}>
+                        <div className={'font-bold'}>{stepIngredient.amount}</div>
+                        <div className={'font-bold'}>{userContext.getTranslation(stepIngredient.unit?.name ?? '', 'de')}</div>
+                        <div>{stepIngredient.ingredient?.name}</div>
+                      </div>
+                    ))}
+                  </div>
+                ))}
+              </div>
+              {loadedCocktail._count.CocktailRecipeImage > 0 && (
+                <div className={'col-span-2'}>
+                  <Image
+                    className={'h-full w-full flex-none cursor-pointer rounded-lg object-cover object-center shadow-md'}
+                    src={`/api/workspaces/${loadedCocktail.workspaceId}/cocktails/${loadedCocktail.id}/image`}
+                    alt={'Cocktail'}
+                    onClick={() =>
+                      modalContext.openModal(<ImageModal image={`/api/workspaces/${loadedCocktail.workspaceId}/cocktails/${loadedCocktail.id}/image`} />)
+                    }
+                    width={100}
+                    height={300}
+                  />
+                </div>
+              )}
+            </div>
+
+            {loadedCocktail.garnishes.length > 0 && (
+              <>
+                <div className={'font-bold'}>Deko</div>
+                {loadedCocktail.garnishes
+                  .sort((a, b) => a.garnishNumber - b.garnishNumber)
+                  .map((garnish) => (
+                    <div
+                      key={`cocktail-details-garnish-${garnish.garnishNumber}-${garnish.garnish?.id}`}
+                      className={'flex flex-col gap-2 rounded border border-base-300 p-2'}
+                    >
+                      <div className={'flex flex-row justify-between gap-2'}>
+                        <div className={'font-bold'}>
+                          {garnish.garnish.name} {garnish.optional ? '(Optional)' : ''}
                         </div>
-                      </div>
-                      <div>
-                        {stepIngredient.ingredient?.tags?.map((tag) => (
-                          <div key={`cocktail-details-${loadedCocktail.id}-ingredients-${stepIngredient.id}-tags-${tag}`} className={'badge badge-primary m-1'}>
-                            {tag}
+                        {garnish.garnish._count.GarnishImage > 0 && (
+                          <div className={'h-12 w-12'}>
+                            <AvatarImage
+                              src={`/api/workspaces/${garnish.garnish.workspaceId}/garnishes/${garnish.garnish.id}/image`}
+                              alt={'Cocktail Garnitur ' + garnish.garnish?.name}
+                              onClick={() =>
+                                modalContext.openModal(
+                                  <ImageModal image={`/api/workspaces/${garnish.garnish.workspaceId}/garnishes/${garnish.garnish.id}/image`} />,
+                                )
+                              }
+                            />
                           </div>
-                        ))}
+                        )}
                       </div>
+                      {garnish.description && (
+                        <>
+                          <div className={'underline'}>Cocktailspezifische-Notizen</div>
+                          <div>{garnish.description}</div>
+                        </>
+                      )}
+                      {garnish.garnish.description && (
+                        <>
+                          <div className={'underline'}>Allgemeine Beschreibung</div>
+                          {garnish.garnish.description}
+                        </>
+                      )}
+                      {garnish.garnish.notes && (
+                        <>
+                          <div className={'underline'}>Notizen</div>
+                          {garnish.garnish.notes}
+                        </>
+                      )}
                     </div>
                   ))}
-                </div>
-              ))}
-            </div>
-            {loadedCocktail?.garnishes.length == 0 ? <></> : <div className={'text-2xl font-bold'}>Deko</div>}
-            {loadedCocktail?.garnishes
-              .sort((a, b) => a.garnishNumber - b.garnishNumber)
-              .map((garnish) => (
-                <div
-                  key={'cocktail-details-garnish-' + garnish.garnishNumber + '-' + garnish.garnish?.id}
-                  className={'col-span-2 flex flex-col space-y-2 rounded-lg border-2 border-base-300 p-2'}
-                >
-                  <div className={'text-xl font-bold'}>{garnish?.garnish?.name ?? 'Keine'}</div>
-                  <div className={'flex flex-row items-center'}>
-                    {garnish.garnish._count.GarnishImage == 0 ? (
-                      <></>
-                    ) : (
-                      <div className={'h-12 w-12'}>
-                        <AvatarImage
-                          src={`/api/workspaces/${garnish.garnish.workspaceId}/garnishes/${garnish.garnish.id}/image`}
-                          alt={'Cocktail Garnitur ' + garnish.garnish?.name}
-                          onClick={() =>
-                            modalContext.openModal(
-                              <ImageModal image={`/api/workspaces/${garnish.garnish.workspaceId}/garnishes/${garnish.garnish.id}/image`} />,
-                            )
-                          }
-                        />
-                      </div>
-                    )}
-                    {garnish.description == undefined || garnish.description.trim() == '' ? (
-                      <></>
-                    ) : (
-                      <div className={'whitespace-pre-wrap'}>{garnish.description}</div>
-                    )}
-                  </div>
-                  {garnish?.garnish?.description == undefined ? (
-                    <></>
-                  ) : (
-                    <>
-                      <div className={'divider'}>Allgemeine Infos</div>
+              </>
+            )}
 
-                      <div className={'flex flex-row'}>
-                        <span className={'flex-1 whitespace-pre-wrap'}>{garnish?.garnish?.description}</span>
-                      </div>
-                    </>
-                  )}
-                </div>
-              ))}
+            <div className={'flex-grow'}></div>
           </div>
-          <div className={'col-span-2 flex w-full flex-row gap-2'}>
+          {/*Right side*/}
+          <div className={'row-span-2 flex flex-col gap-2'}>
+            {loadedCocktail.notes && (
+              <>
+                <div className={'font-bold'}>Kurzhinweise // Notizen</div>
+                <div className={'rounded border border-base-300 p-2 text-justify'}>{loadedCocktail.notes}</div>
+              </>
+            )}
+            {loadedCocktail.description && (
+              <>
+                <div className={'font-bold'}>Ausführliche Cocktailbeschreibung</div>
+                <div className={'rounded border border-base-300 p-2 text-justify'}>{loadedCocktail.description}</div>
+              </>
+            )}
+            {loadedCocktail.steps.map((step) => step.ingredients).flat().length > 0 && (
+              <>
+                <div className={'font-bold'}>Produktbeschreibungen</div>
+                {loadedCocktail.steps
+                  .map((step) => step.ingredients)
+                  .flat()
+                  .sort((a, b) => a.ingredientNumber - b.ingredientNumber)
+                  .map((ingredient) => (
+                    <div
+                      key={`cocktail-details-${loadedCocktail.id}-ingredients-${ingredient.id}`}
+                      className={'flex flex-col gap-2 rounded border border-base-300 p-2'}
+                    >
+                      <div className={'flex flex-row items-center justify-between gap-2'}>
+                        <div className={'flex flex-col gap-2'}>
+                          <div className={'font-bold'}>{ingredient.ingredient?.name}</div>
+                          {ingredient.ingredient?.shortName && <div className={'text-sm font-thin italic'}>{ingredient.ingredient?.shortName}</div>}
+                        </div>
+                        <div>
+                          {ingredient.ingredient?._count?.IngredientImage != 0 ? (
+                            <div className={'h-16 w-16'}>
+                              <AvatarImage
+                                src={`/api/workspaces/${loadedCocktail.workspaceId}/ingredients/${ingredient.ingredient?.id}/image`}
+                                onClick={() =>
+                                  modalContext.openModal(
+                                    <ImageModal image={`/api/workspaces/${loadedCocktail.workspaceId}/ingredients/${ingredient.ingredient?.id}/image`} />,
+                                  )
+                                }
+                                alt={`Zutat Produktbild - ${ingredient.ingredient?.name}`}
+                              />
+                            </div>
+                          ) : (
+                            <></>
+                          )}
+                        </div>
+                      </div>
+                      {ingredient.ingredient?.description && (
+                        <div className={'text-justify'}>
+                          <div className={'underline'}>Produktbeschreibung</div>
+                          {ingredient.ingredient?.description}
+                        </div>
+                      )}
+                      {ingredient.ingredient?.notes && (
+                        <div className={'text-justify'}>
+                          <div className={'underline'}>Notizen</div>
+                          {ingredient.ingredient?.notes}
+                        </div>
+                      )}
+                      {(ingredient.ingredient?.tags.length ?? 0) > 0 && (
+                        <div className={'gap-2'}>
+                          {ingredient.ingredient?.tags.map((tag) => (
+                            <div key={`cocktail-details-${loadedCocktail.id}-ingredients-${ingredient.id}-tags-${tag}`} className={'badge badge-primary mr-1'}>
+                              {tag}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+              </>
+            )}
+            <div className={'flex-grow'}></div>
+            {userContext.isUserPermitted(Role.MANAGER) && ingredients && (
+              <>
+                <div className={'font-bold'}>Herstellungskosten</div>
+                <div>{calcCocktailTotalPrice(loadedCocktail, ingredients).toFixed(2) + ' €'}</div>
+              </>
+            )}
+          </div>
+          <div className={'grid grid-cols-2 gap-2 self-end'}>
             <button
               className={'btn btn-outline w-full flex-1'}
               onClick={() =>

@@ -228,7 +228,7 @@ export function IngredientForm(props: IngredientFormProps) {
 
           <div className={'form-control'}>
             <label className={'label'} htmlFor={'description'}>
-              <span className={'label-text'}>Produktbeschreibung</span>
+              <span className={'label-text'}>Allgemeine Produktbeschreibung</span>
               <span className={'label-text-alt space-x-2 text-error'}>
                 <span>
                   <>{errors.description && touched.description && errors.description}</>
@@ -242,6 +242,8 @@ export function IngredientForm(props: IngredientFormProps) {
               onChange={handleChange}
               onBlur={handleBlur}
               name={'description'}
+              placeholder={'Herkunft, Geschichte, etc.'}
+              rows={5}
             />
           </div>
 
@@ -261,6 +263,8 @@ export function IngredientForm(props: IngredientFormProps) {
               onChange={handleChange}
               onBlur={handleBlur}
               name={'notes'}
+              placeholder={'Lagerort, Zubereitung, etc.'}
+              rows={5}
             />
           </div>
 

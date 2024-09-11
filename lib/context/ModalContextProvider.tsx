@@ -2,8 +2,9 @@ import { createContext } from 'react';
 
 interface ModalContextProps {
   content: JSX.Element[];
+  hideCloseButton: boolean[];
 
-  openModal: (content: JSX.Element) => void;
+  openModal: (content: JSX.Element, hideCloseButton?: boolean) => void;
 
   closeModal(): void;
 
@@ -11,6 +12,7 @@ interface ModalContextProps {
 }
 
 export const ModalContext = createContext<ModalContextProps>({
+  hideCloseButton: [],
   content: [],
   openModal: () => {},
   closeModal: () => {},

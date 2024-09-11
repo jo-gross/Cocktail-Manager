@@ -221,6 +221,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
     id: props.cocktailRecipe?.id ?? '',
     name: props.cocktailRecipe?.name ?? '',
     description: props.cocktailRecipe?.description ?? '',
+    notes: props.cocktailRecipe?.notes ?? '',
     price: props.cocktailRecipe?.price ?? undefined,
     tags: props.cocktailRecipe?.tags ?? [],
     iceId: props.cocktailRecipe?.iceId ?? null,
@@ -244,6 +245,9 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
         const reducedCocktailRecipe = _.omit(props.cocktailRecipe, ['CocktailRecipeImage', 'ice', 'isArchived', '_count']);
         if (reducedCocktailRecipe.description == null) {
           reducedCocktailRecipe.description = '';
+        }
+        if (reducedCocktailRecipe.notes == null) {
+          reducedCocktailRecipe.notes = '';
         }
         if (reducedCocktailRecipe.steps != undefined) {
           reducedCocktailRecipe.steps = orderBy(reducedCocktailRecipe.steps, ['stepNumber'], ['asc']);
@@ -347,6 +351,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
             id: props.cocktailRecipe?.id,
             name: values.name,
             description: values.description.trim() === '' ? null : values.description,
+            notes: values.notes.trim() === '' ? null : values.notes,
             price: values.price == '' ? null : values.price,
             iceId: values.iceId,
             glassId: values.glassId,
@@ -455,8 +460,26 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                     )}
                   </div>
                   <div className={'col-span-2'}>
+                    <label className={'label'} htmlFor={'notes'}>
+                      <span className={'label-text'}>Zubereitungsnotizen</span>
+                      <span className={'label-text-alt text-error'}>
+                        <>{errors.notes && touched.notes && errors.notes}</>
+                      </span>
+                    </label>
+                    <textarea
+                      id={'notes'}
+                      name="notes"
+                      className={`textarea textarea-bordered w-full ${errors.notes && touched.notes && 'textarea-error'}`}
+                      placeholder={'Zubereitungshinweise, Tipps, etc.'}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      value={values.notes}
+                      rows={5}
+                    />
+                  </div>
+                  <div className={'col-span-2'}>
                     <label className={'label'} htmlFor={'description'}>
-                      <span className={'label-text'}>Beschreibung</span>
+                      <span className={'label-text'}>Allgemeine Beschreibung</span>
                       <span className={'label-text-alt text-error'}>
                         <>{errors.description && touched.description && errors.description}</>
                       </span>
@@ -465,9 +488,11 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                       id={'description'}
                       name="description"
                       className={`textarea textarea-bordered w-full ${errors.description && touched.description && 'textarea-error'}`}
+                      placeholder={'Geschichte, Herkunft, etc.'}
                       onChange={handleChange}
                       onBlur={handleBlur}
                       value={values.description}
+                      rows={5}
                     />
                   </div>
                   <div className={'col-span-2 md:col-span-1'}>
@@ -666,6 +691,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                       id: values.id,
                       name: values.name,
                       description: values.description,
+                      notes: values.notes,
                       tags: values.tags,
                       price: !values.price && values.price == '' ? null : values.price,
                       iceId: values.iceId,
@@ -681,6 +707,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                     showTags={true}
                     showImage={true}
                     showDescription={true}
+                    showNotes={true}
                   />
                 </div>
               </div>
