@@ -42,12 +42,13 @@ export default withHttpMethods({
     const garnishId = req.query.garnishId as string | undefined;
     if (!garnishId) return res.status(400).json({ message: 'No garnish id' });
 
-    const { name, price, image, description } = req.body;
+    const { name, price, image, description, notes } = req.body;
 
     const input: GarnishUpdateInput = {
       name: name,
       price: price,
       description: description,
+      notes: notes,
       workspace: {
         connect: {
           id: workspace.id,

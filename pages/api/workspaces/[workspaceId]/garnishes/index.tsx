@@ -21,13 +21,14 @@ export default withHttpMethods({
     return res.json({ data: garnishes });
   }),
   [HTTPMethod.POST]: withWorkspacePermission([Role.MANAGER], async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
-    const { name, price, id, image, description } = req.body;
+    const { name, price, id, image, description, notes } = req.body;
 
     const input: GarnishCreateInput = {
       id: id,
       name: name,
       price: price,
       description: description,
+      notes: notes,
       workspace: {
         connect: {
           id: workspace.id,
