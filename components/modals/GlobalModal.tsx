@@ -1,6 +1,6 @@
 import React, { useContext, useEffect } from 'react';
 import { ModalContext } from '../../lib/context/ModalContextProvider';
-import { FaTimes } from 'react-icons/fa';
+import { FaArrowLeft, FaTimes } from 'react-icons/fa';
 
 interface GlobalModalProps {
   children: React.ReactNode;
@@ -26,14 +26,34 @@ export function GlobalModal(props: GlobalModalProps) {
     <div>
       {props.children}
       <dialog id="globalModal" className="modal">
-        <div className={`modal-box relative w-full p-1.5 md:max-w-2xl md:p-4`}>
+        <div className={`modal-box relative w-fit p-1.5 md:p-4`}>
           <form method="dialog">
-            <div onClick={() => modalContext.closeModal()} className="btn btn-circle btn-outline btn-sm absolute right-2 top-2">
+            {modalContext.content.length > 1 && (
+              <div
+                onClick={() => modalContext.closeModal()}
+                className={`btn btn-circle btn-outline btn-sm absolute left-2 top-2 ${modalContext.hideCloseButton[modalContext.hideCloseButton.length - 1] ? 'hidden' : ''}`}
+              >
+                <FaArrowLeft />
+              </div>
+            )}
+            <div
+              onClick={() => modalContext.closeAllModals()}
+              className={`btn btn-circle btn-outline btn-sm absolute right-2 top-2 ${modalContext.hideCloseButton[modalContext.hideCloseButton.length - 1] ? 'hidden' : ''}`}
+            >
               <FaTimes />
             </div>
           </form>
           {modalContext.content.map((content, index) => (
-            <div key={index} className={index == modalContext.content.length - 1 ? '' : 'hidden'}>
+            <div
+              key={index}
+              className={
+                index == modalContext.content.length - 1
+                  ? modalContext.content.length > 1 && !(modalContext.hideCloseButton[index] ?? false)
+                    ? 'pt-6'
+                    : ''
+                  : 'hidden'
+              }
+            >
               {content}
             </div>
           ))}

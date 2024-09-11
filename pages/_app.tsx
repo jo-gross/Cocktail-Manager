@@ -11,6 +11,7 @@ import ThemeBoundary from '../components/layout/ThemeBoundary';
 
 const App = ({ Component, pageProps: { session, ...pageProps } }: AppProps) => {
   const [modalContentStack, setModalContentStack] = useState<JSX.Element[]>([]);
+  const [modalHideCloseButton, setModalHideCloseButton] = useState<boolean[]>([]);
 
   const [, forceUpdate] = useReducer((x) => x + 1, 0);
 
@@ -22,17 +23,20 @@ const App = ({ Component, pageProps: { session, ...pageProps } }: AppProps) => {
         <ModalContext.Provider
           value={{
             content: modalContentStack,
-            openModal: async (content) => {
+            hideCloseButton: modalHideCloseButton,
+            openModal: async (content, hideCloseButton) => {
               if ((document.getElementById('globalModal') as HTMLDialogElement)?.open == false) {
                 (document.getElementById('globalModal') as HTMLDialogElement).showModal();
               }
 
               // The await has the effect in chrome, that the modal was not replaces otherwise
               setModalContentStack([...modalContentStack, content]);
+              setModalHideCloseButton([...modalHideCloseButton, hideCloseButton ?? false]);
             },
             async closeModal() {
               if (modalContentStack.length > 0) {
                 setModalContentStack(modalContentStack.slice(0, modalContentStack.length - 1));
+                setModalHideCloseButton(modalHideCloseButton.slice(0, modalHideCloseButton.length - 1));
 
                 if (modalContentStack.length == 1 && (document.getElementById('globalModal') as HTMLDialogElement | null)?.open == true) {
                   (document.getElementById('globalModal') as HTMLDialogElement).close();
@@ -47,6 +51,7 @@ const App = ({ Component, pageProps: { session, ...pageProps } }: AppProps) => {
             },
             closeAllModals() {
               setModalContentStack([]);
+              setModalHideCloseButton([]);
               if ((document.getElementById('globalModal') as HTMLDialogElement | null)?.open == true) {
                 (document.getElementById('globalModal') as HTMLDialogElement).close();
               }

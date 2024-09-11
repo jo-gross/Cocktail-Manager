@@ -53,11 +53,12 @@ export default withHttpMethods({
     const cocktailId = req.query.cocktailId as string | undefined;
     if (!cocktailId) return res.status(400).json({ message: 'No cocktail id' });
 
-    const { name, description, tags, price, iceId, image, glassId, garnishes, steps } = req.body;
+    const { name, description, tags, price, iceId, image, glassId, garnishes, steps, notes } = req.body;
 
     const input: CocktailRecipeUpdateInput = {
       name: name,
       description: description,
+      notes: notes,
       tags: tags,
       price: price,
       ice: { connect: { id: iceId } },
@@ -119,14 +120,16 @@ export default withHttpMethods({
           data: {
             action: { connect: { id: step.actionId } },
             stepNumber: step.stepNumber,
+            optional: step.optional,
             cocktailRecipe: { connect: { id: result!.id } },
             ingredients: {
-              create: step.ingredients.map((ingredient) => {
+              create: step.ingredients.map((stepIngredient) => {
                 return {
-                  amount: ingredient.amount,
-                  ingredientNumber: ingredient.ingredientNumber,
-                  unit: { connect: { id: ingredient.unitId } },
-                  ingredient: { connect: { id: ingredient.ingredientId } },
+                  amount: stepIngredient.amount,
+                  optional: stepIngredient.optional,
+                  ingredientNumber: stepIngredient.ingredientNumber,
+                  unit: { connect: { id: stepIngredient.unitId } },
+                  ingredient: { connect: { id: stepIngredient.ingredientId } },
                 };
               }),
             },

@@ -68,6 +68,7 @@ enum Setting {
   showStatisticActions
   showQueueAsOverlay
   lastSeenVersion
+  showNotes
   showDescription
 }
 
@@ -172,6 +173,7 @@ model Signage {
 model Glass {
   id             String           @id @default(cuid())
   name           String
+  notes          String?
   volume         Float?
   deposit        Float
   CocktailRecipe CocktailRecipe[]
@@ -191,6 +193,7 @@ model Garnish {
   id                      String                  @id @default(cuid())
   name                    String
   description             String?
+  notes                   String?
   price                   Float?
   CocktailRecipeGarnishes CocktailRecipeGarnish[]
 
@@ -209,6 +212,7 @@ model CocktailRecipe {
   id                    String                  @id @default(cuid())
   name                  String
   description           String?
+  notes                 String?
   tags                  String[]
   price                 Float?
   iceId                 String?
@@ -263,6 +267,8 @@ model CocktailRecipeStep {
   id         String @id @default(cuid())
   stepNumber Int
 
+  optional Boolean @default(false)
+
   actionId String
   action   WorkspaceCocktailRecipeStepAction @relation(fields: [actionId], references: [id], onDelete: NoAction)
 
@@ -275,7 +281,10 @@ model CocktailRecipeStep {
 model CocktailRecipeIngredient {
   id               String @id @default(cuid())
   ingredientNumber Int
-  amount           Float?
+
+  optional Boolean @default(false)
+
+  amount Float?
 
   unitId String?
   unit   Unit?   @relation(fields: [unitId], references: [id], onDelete: Restrict)
