@@ -1,3 +1,21 @@
+# [1.9.0](https://github.com/jo-gross/Cocktail-Manager/compare/v1.8.2...v1.9.0) (2024-09-11)
+
+
+### Bug Fixes
+
+* Form validation and error message handling ([cdda452](https://github.com/jo-gross/Cocktail-Manager/commit/cdda452c7db58b7c3237a4d446a34f6c69f3d292))
+* Routing when updating an cocktail from the search view ([a5abba8](https://github.com/jo-gross/Cocktail-Manager/commit/a5abba8644337de61aa626d80f6a0cb85a6765cf))
+
+
+### Features
+
+* added cocktail ratings ([#415](https://github.com/jo-gross/Cocktail-Manager/issues/415)) ([850646a](https://github.com/jo-gross/Cocktail-Manager/commit/850646a80dcde8ee44715aa91761bf4dbf4b3494))
+* added image crop option when selecting images (cocktail, ingredient, glass and garnish) ([#413](https://github.com/jo-gross/Cocktail-Manager/issues/413)) ([d5ec542](https://github.com/jo-gross/Cocktail-Manager/commit/d5ec542d54cd477e9b963baac8c197eb49000e9c))
+* Added name similarity check at ingredient-, cocktail-, garnish- and glassform ([#403](https://github.com/jo-gross/Cocktail-Manager/issues/403)) ([0183a0a](https://github.com/jo-gross/Cocktail-Manager/commit/0183a0adc368d20a322bc64773e287abaa74d624))
+* Added notes to cocktails, redesigned the cocktail info popup field, general popup behavior improved ([#402](https://github.com/jo-gross/Cocktail-Manager/issues/402)) ([a57aeee](https://github.com/jo-gross/Cocktail-Manager/commit/a57aeee0d06c0ac9dc7a74e79f623ec2d2d19639))
+* Added offline availability with service workers ([#405](https://github.com/jo-gross/Cocktail-Manager/issues/405)) by [@resaki1](https://github.com/resaki1) ([43798b3](https://github.com/jo-gross/Cocktail-Manager/commit/43798b39f48dfa625e31a14b0e88ff7397bb261d))
+* Added option to make cocktail ingredients and steps optional ([#404](https://github.com/jo-gross/Cocktail-Manager/issues/404)) ([83e7f8c](https://github.com/jo-gross/Cocktail-Manager/commit/83e7f8cd3b4bfc142af7ef54dcefd4bd81ccc3fe))
+
 ## [1.8.2](https://github.com/jo-gross/Cocktail-Manager/compare/v1.8.1...v1.8.2) (2024-08-26)
 
 
