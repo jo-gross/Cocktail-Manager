@@ -141,7 +141,7 @@ export default function CocktailsOverviewPage() {
                   </tr>
                 ) : (
                   <>
-                    {groupedCocktails['false'].filter(cocktailFilter(filterString)).length == 0 ? (
+                    {groupedCocktails['false']?.filter(cocktailFilter(filterString)).length == 0 ? (
                       <tr>
                         <td colSpan={7}>Keine Cocktails gefunden</td>
                       </tr>
