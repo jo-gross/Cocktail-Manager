@@ -19,6 +19,10 @@ export default function CropComponent(props: CropComponentProps) {
     x: 0,
     y: 0,
   });
+
+  const [backgroundColor, setBackgroundColor] = useState<string>('transparent'); // Hintergrundfarbe speichern
+  const [customColor, setCustomColor] = useState<string>('#ffffff'); // Benutzerdefinierte Farbe speichern
+
   const imgRef = useRef<HTMLImageElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -44,8 +48,10 @@ export default function CropComponent(props: CropComponentProps) {
     const ctx = canvas.getContext('2d');
 
     // Setze den Hintergrund auf Weiß
-    ctx!.fillStyle = 'white';
-    ctx!.fillRect(0, 0, canvas.width, canvas.height);
+    if (backgroundColor === 'custom') {
+      ctx!.fillStyle = customColor;
+      ctx!.fillRect(0, 0, canvas.width, canvas.height);
+    }
 
     // Zeichne das Bild auf das Canvas, nur der gecroppte Bereich wird sichtbar sein
     ctx?.drawImage(imgRef.current!, (crop.x - offsetX) * scaleX, (crop.y - offsetY) * scaleY, cropWidth, cropHeight, 0, 0, canvas.width, canvas.height);
@@ -56,25 +62,67 @@ export default function CropComponent(props: CropComponentProps) {
           reject(new Error('Canvas is empty'));
           return;
         }
-        props.onCroppedImageComplete(new File([blob], 'image.jpeg', { type: 'image/jpeg' }));
-      }, 'image/jpeg');
+        props.onCroppedImageComplete(new File([blob], 'image.png', { type: 'image/png' }));
+      }, 'image/png');
     });
   };
 
   return (
     <div className="relative flex h-full w-full flex-col items-center justify-center gap-2">
-      <div className={`h-auto w-fit ${props.isValid == true ? '' : 'rounded-2xl border-2 border-error p-2 pb-1'}`}>
-        <ReactCrop crop={crop} onChange={(newCrop) => setCrop(newCrop)} aspect={props.aspect} className={`h-auto w-fit`}>
-          <div className={`relative h-96 max-h-96 w-96 max-w-96`} ref={containerRef} id={'image-container-ref'}>
-            <div className={'absolute h-full w-full bg-white'}></div>
-            <img
-              ref={imgRef}
-              src={URL.createObjectURL(props.imageToCrop)}
-              alt="Crop"
-              className={'absolute bottom-0 left-0 right-0 top-0 m-auto max-h-96 max-w-96 object-contain'}
+      <div className={'flex h-full w-full flex-row gap-2'}>
+        <div className={`h-auto w-fit ${props.isValid == true ? '' : 'rounded-2xl border-2 border-error p-2 pb-1'}`}>
+          <ReactCrop crop={crop} onChange={(newCrop) => setCrop(newCrop)} aspect={props.aspect} className={`h-auto w-fit`}>
+            <div className={`relative h-96 max-h-96 w-96 max-w-96`} ref={containerRef} id={'image-container-ref'}>
+              {/*<div className={'bg-transparent-pattern absolute h-full w-full'}></div>*/}
+              <div
+                className={`absolute h-full w-full ${backgroundColor === 'transparent' ? 'bg-transparent-pattern' : `bg-[${customColor.toLowerCase()}]`}`}
+                style={{ backgroundColor: backgroundColor === 'custom' ? customColor : '' }}
+              ></div>
+              <img
+                ref={imgRef}
+                src={URL.createObjectURL(props.imageToCrop)}
+                alt="Crop"
+                className={'absolute bottom-0 left-0 right-0 top-0 m-auto max-h-96 max-w-96 object-contain'}
+              />
+            </div>
+          </ReactCrop>
+        </div>
+        <div>
+          <div className={'font-bold'}>Hintergrundfarbe</div>
+          <div className={'form-control'}>
+            <label className={'label'}>
+              Transparent
+              <input
+                type={'radio'}
+                className={'radio'}
+                name={'bg-color'}
+                value={'transparent'}
+                checked={backgroundColor === 'transparent'}
+                onChange={() => setBackgroundColor('transparent')}
+              />
+            </label>
+          </div>
+          <div className={'form-control'}>
+            <label className={'label'}>
+              Eigene Farbe
+              <input
+                type={'radio'}
+                className={'radio'}
+                name={'bg-color'}
+                value={'custom'}
+                checked={backgroundColor === 'custom'}
+                onChange={() => setBackgroundColor('custom')}
+              />
+            </label>
+            <input
+              className={`input ${backgroundColor === 'custom' ? '' : 'hidden'} w-full`}
+              type={'color'}
+              value={customColor}
+              onChange={(e) => setCustomColor(e.target.value)}
+              disabled={backgroundColor !== 'custom'}
             />
           </div>
-        </ReactCrop>
+        </div>
       </div>
       <div className="flex w-full flex-row items-center justify-end gap-2">
         <button disabled={!crop || crop?.width === 0 || crop?.height === 0} type="button" onClick={generateCroppedImage} className="btn btn-primary flex-1">

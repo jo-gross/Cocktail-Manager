@@ -247,7 +247,7 @@ export function GarnishForm(props: GarnishFormProps) {
                     <FaTrashAlt />
                   </div>
                 </div>
-                <div className={'relative h-32 w-32 rounded-lg bg-white'}>
+                <div className={'bg-transparent-pattern relative h-32 w-32 rounded-lg'}>
                   <Image className={'w-fit rounded-lg'} src={values.image} layout={'fill'} objectFit={'contain'} alt={'Garnish image'} />
                 </div>
                 <div className={'pt-2 font-thin italic'}>

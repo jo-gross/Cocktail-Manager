@@ -1,6 +1,5 @@
 import { CocktailRecipeFull } from '../../models/CocktailRecipeFull';
 import React, { useContext } from 'react';
-import DefaultGlassIcon from '../DefaultGlassIcon';
 import { UserContext } from '../../lib/context/UserContextProvider';
 import Image from 'next/image';
 import { ModalContext } from '../../lib/context/ModalContextProvider';
@@ -30,21 +29,22 @@ export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeIns
       ) : (
         <></>
       )}
-      <div className={'row-span-2 flex h-min items-center justify-center'}>
-        {props.cocktailRecipe.glass && props.cocktailRecipe.glass._count.GlassImage != 0 ? (
+      {props.cocktailRecipe.glass && props.cocktailRecipe.glass._count.GlassImage != 0 && (
+        <div className={'row-span-2 flex h-min items-center justify-center'}>
           <Image
-            className={'h-16 object-contain'}
+            className={'h-16 w-fit cursor-pointer rounded-lg object-contain'}
             src={`/api/workspaces/${props.cocktailRecipe.workspaceId}/glasses/${props.cocktailRecipe.glass?.id}/image`}
             alt={props.cocktailRecipe.glass?.name ?? 'Cocktail-Glas'}
+            onClick={() =>
+              modalContext.openModal(
+                <ImageModal image={`/api/workspaces/${props.cocktailRecipe.workspaceId}/glasses/${props.cocktailRecipe.glass?.id}/image`} />,
+              )
+            }
             width={200}
             height={200}
           />
-        ) : (
-          <div className={'flex flex-col items-center justify-center'}>
-            <DefaultGlassIcon />
-          </div>
-        )}
-      </div>
+        </div>
+      )}
       <div className={'col-span-3 flex flex-row justify-between space-x-2 font-thin'}>
         <div>Glas: {props.cocktailRecipe.glass?.name ?? '<Glas>'}</div>
         <div>Eis: {userContext.getTranslation(props.cocktailRecipe.ice?.name ?? '<Eis>', 'de')}</div>
