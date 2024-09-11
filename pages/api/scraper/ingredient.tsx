@@ -32,8 +32,6 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       const price = soup.find('meta', { itemprop: 'price' })?.attrs?.content ?? 0;
       const volume = (soup.find('span', 'price-unit-content')?.text?.trim()?.split(' ')?.[0] ?? 0) * 100;
 
-      console.log(volume);
-
       const result: ResponseBody = {
         name: name,
         image: image,
