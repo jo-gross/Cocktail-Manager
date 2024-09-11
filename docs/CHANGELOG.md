@@ -1,3 +1,13 @@
+## [1.9.1](https://github.com/jo-gross/Cocktail-Manager/compare/v1.9.0...v1.9.1) (2024-09-11)
+
+
+### Bug Fixes
+
+* invalid redirects after saving and on navigation ([#424](https://github.com/jo-gross/Cocktail-Manager/issues/424)) ([f1d2bd1](https://github.com/jo-gross/Cocktail-Manager/commit/f1d2bd1632a0049678e8f305b525ecdac59da188))
+* not forcing background color on crop image ([92f077d](https://github.com/jo-gross/Cocktail-Manager/commit/92f077dfb47a49d966dfc60983c1f42080c51b05))
+* Notes and description formating, new lines now displayed correctly ([b12fa7c](https://github.com/jo-gross/Cocktail-Manager/commit/b12fa7c7ee46f0e31eb9ebd85b9ebb09c191d7a5))
+* restructured form layouts ([419cb7b](https://github.com/jo-gross/Cocktail-Manager/commit/419cb7be67e42bc75cd8552693a41a94a8a3a1bc))
+
 # [1.9.0](https://github.com/jo-gross/Cocktail-Manager/compare/v1.8.2...v1.9.0) (2024-09-11)
 
 
