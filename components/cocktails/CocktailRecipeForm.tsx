@@ -245,18 +245,18 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
         const errors: any = {};
 
         if (props.cocktailRecipe) {
-          const reducedOriginal = _.omit(props.cocktailRecipe, ['CocktailRecipeImage', 'ice', 'isArchived', '_count']);
+          const reducedCocktailRecipe = _.omit(props.cocktailRecipe, ['CocktailRecipeImage', 'ice', 'isArchived', '_count']);
           const reducedValues = _.omit(values, ['image', 'ice', 'isArchived', 'originalImage']);
 
-          if (reducedOriginal.description == null) {
-            reducedOriginal.description = '';
+          if (reducedCocktailRecipe.description == null) {
+            reducedCocktailRecipe.description = '';
           }
           if (reducedCocktailRecipe.notes == null) {
-          reducedCocktailRecipe.notes = '';
-        }
-        if (reducedOriginal.steps != undefined) {
-            reducedOriginal.steps = orderBy(reducedOriginal.steps, ['stepNumber'], ['asc']);
-            reducedOriginal.steps.forEach((step) => {
+            reducedCocktailRecipe.notes = '';
+          }
+          if (reducedCocktailRecipe.steps != undefined) {
+            reducedCocktailRecipe.steps = orderBy(reducedCocktailRecipe.steps, ['stepNumber'], ['asc']);
+            reducedCocktailRecipe.steps.forEach((step) => {
               step.ingredients = orderBy(step.ingredients, ['ingredientNumber'], ['asc']);
             });
           }
@@ -278,7 +278,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
           const areImageEqual =
             (props.cocktailRecipe.CocktailRecipeImage.length > 0 ? props.cocktailRecipe.CocktailRecipeImage[0].image.toString() : undefined) == values.image;
 
-          props.setUnsavedChanges?.(!_.isEqual(reducedOriginal, reducedValues) || !areImageEqual);
+          props.setUnsavedChanges?.(!_.isEqual(reducedCocktailRecipe, reducedValues) || !areImageEqual);
         } else {
           props.setUnsavedChanges?.(true);
         }
