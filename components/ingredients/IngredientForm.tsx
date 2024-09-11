@@ -57,6 +57,8 @@ export function IngredientForm(props: IngredientFormProps) {
 
   const [similarIngredient, setSimilarIngredient] = useState<Ingredient | undefined>(undefined);
 
+  const [similarLinkIngredient, setSimilarLinkIngredient] = useState<Ingredient | undefined>(undefined);
+
   useEffect(() => {
     fetchUnits(workspaceId, setAllUnits, setUnitsLoading);
     fetchUnitConversions(workspaceId, setLoadingDefaultConversions, setDefaultConversions);
@@ -82,6 +84,19 @@ export function IngredientForm(props: IngredientFormProps) {
         setSimilarIngredient(data.data);
       } else {
         setSimilarIngredient(undefined);
+      }
+    },
+    [workspaceId],
+  );
+
+  const checkSimilarLink = useCallback(
+    async (url: string) => {
+      const response = await fetch(`/api/workspaces/${workspaceId}/ingredients/check?link=${encodeURI(url)}`);
+      const data = await response.json();
+      if (data.data != null) {
+        setSimilarLinkIngredient(data.data);
+      } else {
+        setSimilarLinkIngredient(undefined);
       }
     },
     [workspaceId],
@@ -512,7 +527,10 @@ export function IngredientForm(props: IngredientFormProps) {
                 type={'text'}
                 placeholder={''}
                 className={`input join-item input-bordered w-full ${errors.link && touched.link && 'input-error'}`}
-                onChange={handleChange}
+                onChange={async (event) => {
+                  checkSimilarLink(event.target.value);
+                  handleChange(event);
+                }}
                 onBlur={handleBlur}
                 value={values.link}
                 name={'link'}
@@ -559,6 +577,13 @@ export function IngredientForm(props: IngredientFormProps) {
                 <FaSyncAlt />
               </button>
             </div>
+            {similarLinkIngredient && (
+              <div className="label">
+                <span className="label-text-alt text-warning">
+                  Eine Zutat mit ähnlicher Url existiert bereits unter dem Namen <strong>{similarLinkIngredient.name}</strong>.
+                </span>
+              </div>
+            )}
           </div>
           <div className={'form-control'}>
             <button type={'submit'} className={`btn btn-primary`} disabled={isSubmitting}>
