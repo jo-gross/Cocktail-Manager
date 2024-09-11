@@ -128,9 +128,9 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                       alt={`Glas - ${loadedCocktail.glass?.name}`}
                     />
                   </div>
-                  </div>
-              )}
                 </div>
+              )}
+            </div>
 
             <div className={`grid ${loadedCocktail._count.CocktailRecipeImage > 0 ? 'grid-cols-5' : 'grid-cols-3'} gap-2`}>
               <div className={'col-span-3 flex flex-col gap-2'}>
@@ -143,11 +143,11 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                         <div className={'font-bold'}>{stepIngredient.amount}</div>
                         <div className={'font-bold'}>{userContext.getTranslation(stepIngredient.unit?.name ?? '', 'de')}</div>
                         <div>{stepIngredient.ingredient?.name}</div>
-            </div>
-                    ))}
                       </div>
+                    ))}
+                  </div>
                 ))}
-                            </div>
+              </div>
               {loadedCocktail._count.CocktailRecipeImage > 0 && (
                 <div className={'col-span-2'}>
                   <Image
@@ -260,7 +260,7 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                                 }
                                 alt={`Zutat Produktbild - ${ingredient.ingredient?.name}`}
                               />
-                        </div>
+                            </div>
                           ) : (
                             <></>
                           )}
@@ -283,11 +283,11 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                           {ingredient.ingredient?.tags.map((tag) => (
                             <div key={`cocktail-details-${loadedCocktail.id}-ingredients-${ingredient.id}-tags-${tag}`} className={'badge badge-primary mr-1'}>
                               {tag}
-                        </div>
+                            </div>
                           ))}
                         </div>
                       )}
-                            </div>
+                    </div>
                   ))}
               </>
             )}
