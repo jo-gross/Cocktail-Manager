@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { updateTags, validateTag } from '../../models/tags/TagUtils';
 import { UploadDropZone } from '../UploadDropZone';
-import { convertToBase64 } from '../../lib/Base64Converter';
+import { convertBase64ToFile, convertToBase64 } from '../../lib/Base64Converter';
 import { FaSyncAlt, FaTrashAlt } from 'react-icons/fa';
 import { alertService } from '../../lib/alertService';
 import { DeleteConfirmationModal } from '../modals/DeleteConfirmationModal';
@@ -16,6 +16,8 @@ import { UserContext } from '../../lib/context/UserContextProvider';
 import { fetchUnitConversions, fetchUnits } from '../../lib/network/units';
 import Image from 'next/image';
 import { DaisyUITagInput } from '../DaisyUITagInput';
+import CropComponent from '../CropComponent';
+import { FaCropSimple } from 'react-icons/fa6';
 
 interface IngredientFormProps {
   ingredient?: IngredientWithImage;
@@ -39,6 +41,7 @@ interface FormValue {
   link: string;
   tags: string[];
   image: string | undefined;
+  originalImage?: File | undefined;
 }
 
 export function IngredientForm(props: IngredientFormProps) {
@@ -74,6 +77,7 @@ export function IngredientForm(props: IngredientFormProps) {
     link: props.ingredient?.link ?? '',
     tags: props.ingredient?.tags ?? [],
     image: props.ingredient?.IngredientImage?.[0]?.image ?? undefined,
+    originalImage: (props.ingredient?.IngredientImage.length ?? 0) > 0 ? convertBase64ToFile(props.ingredient!.IngredientImage?.[0]?.image) : undefined,
   };
 
   const checkSimilarName = useCallback(
@@ -161,34 +165,39 @@ export function IngredientForm(props: IngredientFormProps) {
         }
       }}
       validate={(values) => {
-        if (props.ingredient == undefined) {
-          props.setUnsavedChanges?.(true);
+        if (props.ingredient) {
+          const reducedOriginal = _.omit(props.ingredient, ['IngredientImage', 'id', 'workspaceId']);
+          if (reducedOriginal.link == null) {
+            reducedOriginal.link = '';
+          }
+          if (reducedOriginal.description == null) {
+            reducedOriginal.description = '';
+          }
+          if (reducedOriginal.notes == null) {
+            reducedOriginal.notes = '';
+          }
+          if (reducedOriginal.shortName == null) {
+            reducedOriginal.shortName = '';
+          }
+          const reducedValues = _.omit(values, ['image', 'originalImage']);
+
+          const areImageEqual =
+            (props.ingredient.IngredientImage.length > 0 ? props.ingredient.IngredientImage[0].image.toString() : undefined) == values.image;
+          props.setUnsavedChanges?.(!_.isEqual(reducedOriginal, reducedValues) || !areImageEqual);
         } else {
-          const tempIngredient = _.omit(props.ingredient, ['IngredientImage', 'id', 'workspaceId']);
-          if (tempIngredient.link == null) {
-            tempIngredient.link = '';
-          }
-          if (tempIngredient.description == null) {
-            tempIngredient.description = '';
-          }
-          if (tempIngredient.notes == null) {
-            tempIngredient.notes = '';
-          }
-          if (tempIngredient.shortName == null) {
-            tempIngredient.shortName = '';
-          }
-          const tempValues = _.omit(values, ['image']);
-          props.setUnsavedChanges?.(!_.isEqual(tempIngredient, tempValues));
+          props.setUnsavedChanges?.(true);
         }
         const errors: any = {};
         if (!values.name) {
           errors.name = 'Required';
         }
-        console.debug('Form errors', errors);
+        if (values.originalImage != undefined && values.image == undefined) {
+          errors.image = 'Bild ausgewählt aber nicht zugeschnitten';
+        }
         return errors;
       }}
     >
-      {({ values, setFieldValue, errors, setFieldError, touched, handleChange, handleBlur, handleSubmit, isSubmitting }) => (
+      {({ values, setFieldValue, errors, setFieldError, touched, handleChange, handleBlur, handleSubmit, isSubmitting, isValid }) => (
         <form onSubmit={handleSubmit} className={'flex flex-col gap-2 md:gap-4'}>
           <div className={'form-control'}>
             <label className={'label'} htmlFor={'name'}>
@@ -477,37 +486,68 @@ export function IngredientForm(props: IngredientFormProps) {
             ) : (
               <></>
             )}
-            {values.image == undefined ? (
+            {values.image == undefined && values.originalImage == undefined ? (
               <UploadDropZone
                 onSelectedFilesChanged={async (file) => {
-                  if (file) {
-                    const compressedImageFile = await compressFile(file);
-                    await setFieldValue('image', await convertToBase64(compressedImageFile));
+                  if (file != undefined) {
+                    await setFieldValue('image', undefined);
+                    await setFieldValue('originalImage', file);
                   } else {
                     alertService.error('Datei konnte nicht ausgewählt werden.');
                   }
                 }}
               />
+            ) : values.image == undefined && values.originalImage != undefined ? (
+              <div className={'w-full'}>
+                <CropComponent
+                  aspect={1}
+                  imageToCrop={values.originalImage}
+                  onCroppedImageComplete={async (file) => {
+                    const compressedImageFile = await compressFile(file);
+                    const value = await convertToBase64(compressedImageFile);
+                    await setFieldValue('image', value);
+                  }}
+                  onCropCancel={async () => {
+                    await setFieldValue('originalImage', undefined);
+                    await setFieldValue('image', undefined);
+                  }}
+                />
+              </div>
             ) : (
               <div className={'relative'}>
-                <div
-                  className={'btn btn-square btn-outline btn-error btn-sm absolute right-2 top-2'}
-                  onClick={() =>
-                    modalContext.openModal(
-                      <DeleteConfirmationModal
-                        spelling={'REMOVE'}
-                        entityName={'das Bild'}
-                        onApprove={async () => {
-                          await setFieldValue('image', undefined);
-                        }}
-                      />,
-                    )
-                  }
-                >
-                  <FaTrashAlt />
+                <div className={'absolute right-2 top-2 flex flex-row gap-2'}>
+                  <div
+                    className={'btn btn-square btn-outline btn-sm'}
+                    onClick={async () => {
+                      await setFieldValue('image', undefined);
+                    }}
+                  >
+                    <FaCropSimple />
+                  </div>
+                  <div
+                    className={'btn btn-square btn-outline btn-error btn-sm'}
+                    onClick={() =>
+                      modalContext.openModal(
+                        <DeleteConfirmationModal
+                          spelling={'REMOVE'}
+                          entityName={'das Bild'}
+                          onApprove={async () => {
+                            await setFieldValue('originalImage', undefined);
+                            await setFieldValue('image', undefined);
+                          }}
+                        />,
+                      )
+                    }
+                  >
+                    <FaTrashAlt />
+                  </div>
                 </div>
                 <div className={'relative h-32 w-32 rounded-lg bg-white'}>
                   <Image className={'w-fit rounded-lg'} src={values.image} layout={'fill'} objectFit={'contain'} alt={'Ingredient Image'} />
+                </div>
+                <div className={'pt-2 font-thin italic'}>
+                  Info: Durch speichern des Cocktails wird das Bild dauerhaft zugeschnitten. Das Original wird nicht gespeichert. (Falls du später also doch
+                  andere Bereiche auswählen möchtest, musst du das Bild dann erneut auswählen)
                 </div>
               </div>
             )}
@@ -552,24 +592,29 @@ export function IngredientForm(props: IngredientFormProps) {
                   fetch(`/api/scraper/ingredient?url=${values.link}`)
                     .then((response) => {
                       if (response.ok) {
-                        response.json().then((data) => {
-                          setFieldValue('name', data.name);
+                        response.json().then(async (data) => {
+                          await setFieldValue('name', data.name);
                           if (data.price != 0) {
-                            setFieldValue('price', data.price);
+                            await setFieldValue('price', data.price);
                           }
-                          setFieldValue('image', data.image);
+
+                          if (data.image) {
+                            await setFieldValue('image', undefined);
+                            await setFieldValue('originalImage', convertBase64ToFile(data.image));
+                          }
                           if (data.volume != 0) {
-                            setFieldValue('volume', data.volume);
+                            await setFieldValue('volume', data.volume);
                           }
-                          setFieldValue('selectedUnit', allUnits.find((unit) => unit.name == 'CL')?.id ?? '');
+                          await setFieldValue('selectedUnit', allUnits.find((unit) => unit.name == 'CL')?.id ?? '');
                           checkSimilarName(data.name);
                         });
                       } else {
                         alertService.warn('Es konnten keine Daten über die URL geladen werden.');
                       }
                     })
-                    .finally(() => {
-                      setFieldValue('fetchingExternalData', false);
+                    .finally(async () => {
+                      await setFieldValue('fetchingExternalData', false);
+                      await setFieldValue('image', undefined);
                     });
                 }}
               >
@@ -586,7 +631,7 @@ export function IngredientForm(props: IngredientFormProps) {
             )}
           </div>
           <div className={'form-control'}>
-            <button type={'submit'} className={`btn btn-primary`} disabled={isSubmitting}>
+            <button type={'submit'} className={`btn btn-primary`} disabled={isSubmitting || !isValid}>
               {isSubmitting ? <span className={'loading loading-spinner'} /> : <></>}
               Speichern
             </button>

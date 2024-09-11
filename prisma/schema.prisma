@@ -231,6 +231,7 @@ model CocktailRecipe {
   CocktailRecipeImage      CocktailRecipeImage[]
   CocktailStatisticItem    CocktailStatisticItem[]
   CocktailQueue            CocktailQueue[]
+  ratings CocktailRating[]
 }
 
 model CocktailRecipeImage {
@@ -267,6 +268,8 @@ model CocktailRecipeStep {
   id         String @id @default(cuid())
   stepNumber Int
 
+  optional Boolean @default(false)
+
   actionId String
   action   WorkspaceCocktailRecipeStepAction @relation(fields: [actionId], references: [id], onDelete: NoAction)
 
@@ -279,7 +282,10 @@ model CocktailRecipeStep {
 model CocktailRecipeIngredient {
   id               String @id @default(cuid())
   ingredientNumber Int
-  amount           Float?
+
+  optional Boolean @default(false)
+
+  amount Float?
 
   unitId String?
   unit   Unit?   @relation(fields: [unitId], references: [id], onDelete: Restrict)
@@ -289,6 +295,19 @@ model CocktailRecipeIngredient {
 
   cocktailRecipeStep   CocktailRecipeStep @relation(fields: [cocktailRecipeStepId], references: [id], onDelete: Cascade)
   cocktailRecipeStepId String
+}
+
+model CocktailRating {
+  id String @id @default(cuid())
+
+  cocktailId String
+  cocktail   CocktailRecipe @relation(fields: [cocktailId], references: [id], onDelete: Cascade)
+
+  name    String?
+  rating  Int     @default(0)
+  comment String?
+
+  createdAt DateTime @default(now())
 }
 
 model Ingredient {

@@ -39,6 +39,7 @@ export default withHttpMethods({
                     garnish: true,
                   },
                 },
+                ratings: true,
               },
             },
           },
