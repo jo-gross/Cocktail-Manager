@@ -726,7 +726,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                             <FaTrashAlt />
                           </div>
                         </div>
-                        <div className={'bg-transparent-pattern w-18 relative h-32 rounded-lg'}>
+                        <div className={'bg-transparent-pattern relative h-32 w-[4.5rem] rounded-lg'}>
                           <Image className={'w-fit rounded-lg'} src={values.image} layout={'fill'} objectFit={'contain'} alt={'Cocktail image'} />
                         </div>
                         <div className={'pt-2 font-thin italic'}>
