@@ -15,6 +15,7 @@ import { Role } from '@prisma/client';
 import { DeleteConfirmationModal } from '../../../../../components/modals/DeleteConfirmationModal';
 import _ from 'lodash';
 import { PageCenter } from '../../../../../components/layout/PageCenter';
+import { routerConditionalBack } from '../../../../../lib/RouterUtils';
 
 interface CocktailCardGroupError {
   name?: string;
@@ -160,7 +161,8 @@ function EditCocktailCard() {
               });
 
               if (response.ok) {
-                router.replace(`/workspaces/${workspaceId}/manage/cards`).then(() => alertService.success('Karte erfolgreich erstellt'));
+                alertService.success('Karte erfolgreich erstellt');
+                await routerConditionalBack(router, `/workspaces/${workspaceId}/manage/cards`);
               } else {
                 const body = await response.json();
                 console.error('CardId -> onSubmit[create]', response);
@@ -174,7 +176,8 @@ function EditCocktailCard() {
               });
 
               if (response.ok) {
-                router.replace(`/workspaces/${workspaceId}/manage/cards`).then(() => alertService.success('Karte erfolgreich gespeichert'));
+                alertService.success('Karte erfolgreich gespeichert');
+                await routerConditionalBack(router, `/workspaces/${workspaceId}/manage/cards`);
               } else {
                 const body = await response.json();
                 console.error('CardId -> onSubmit[update]', response);
@@ -543,7 +546,8 @@ function EditCocktailCard() {
 
                       const body = await response.json();
                       if (response.ok) {
-                        router.replace(`/workspaces/${workspaceId}/manage/cards`).then(() => alertService.success('Karte gelöscht'));
+                        alertService.success('Karte gelöscht');
+                        await routerConditionalBack(router, `/workspaces/${workspaceId}/manage/cards`);
                       } else {
                         console.error('CardId -> deleteCard', response);
                         alertService.error(body.message ?? 'Fehler beim Löschen der Karte', response.status, response.statusText);
