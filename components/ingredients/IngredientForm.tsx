@@ -18,6 +18,7 @@ import Image from 'next/image';
 import { DaisyUITagInput } from '../DaisyUITagInput';
 import CropComponent from '../CropComponent';
 import { FaCropSimple } from 'react-icons/fa6';
+import '../../lib/ArrayUtils';
 
 interface IngredientFormProps {
   ingredient?: IngredientWithImage;
@@ -85,12 +86,16 @@ export function IngredientForm(props: IngredientFormProps) {
       const response = await fetch(`/api/workspaces/${workspaceId}/ingredients/check?name=${name}`);
       const data = await response.json();
       if (data.data != null) {
-        setSimilarIngredient(data.data);
+        if (data.data.id != props.ingredient?.id) {
+          setSimilarIngredient(data.data);
+        } else {
+          setSimilarIngredient(undefined);
+        }
       } else {
         setSimilarIngredient(undefined);
       }
     },
-    [workspaceId],
+    [props.ingredient?.id, workspaceId],
   );
 
   const checkSimilarLink = useCallback(
@@ -98,12 +103,16 @@ export function IngredientForm(props: IngredientFormProps) {
       const response = await fetch(`/api/workspaces/${workspaceId}/ingredients/check?link=${encodeURI(url)}`);
       const data = await response.json();
       if (data.data != null) {
-        setSimilarLinkIngredient(data.data);
+        if (data.data.id != props.ingredient?.id) {
+          setSimilarLinkIngredient(data.data);
+        } else {
+          setSimilarLinkIngredient(undefined);
+        }
       } else {
         setSimilarLinkIngredient(undefined);
       }
     },
-    [workspaceId],
+    [props.ingredient?.id, workspaceId],
   );
 
   return (
@@ -197,14 +206,95 @@ export function IngredientForm(props: IngredientFormProps) {
         return errors;
       }}
     >
-      {({ values, setFieldValue, errors, setFieldError, touched, handleChange, handleBlur, handleSubmit, isSubmitting, isValid }) => (
-        <form onSubmit={handleSubmit} className={'flex flex-col gap-2 md:gap-4'}>
-          <div className={'form-control'}>
+      {({ values, setFieldValue, errors, setFieldError, handleChange, handleBlur, handleSubmit, isSubmitting, isValid }) => (
+        <form onSubmit={handleSubmit} className={'grid grid-cols-1 gap-2 md:max-w-4xl md:grid-cols-2'}>
+          <div className={'form-control col-span-full'}>
+            <label className={'label'} htmlFor={'link'}>
+              <span className={'label-text'}>Über Link importieren</span>
+              <span className={'label-text-alt space-x-2 text-error'}>
+                <span>
+                  <>{errors.link && errors.link}</>
+                </span>
+              </span>
+            </label>
+            <div className={'join'}>
+              <input
+                id={'link'}
+                type={'text'}
+                placeholder={''}
+                className={`input join-item input-bordered w-full ${errors.link && 'input-error'}`}
+                onChange={async (event) => {
+                  checkSimilarLink(event.target.value);
+                  handleChange(event);
+                }}
+                onBlur={handleBlur}
+                value={values.link}
+                name={'link'}
+              />
+              <button
+                className={`btn btn-primary join-item`}
+                type={'button'}
+                disabled={
+                  !(
+                    values.link.includes('expert24.com') ||
+                    values.link.includes('conalco.de') ||
+                    // values.link.includes('metro.de') ||
+                    values.link.includes('rumundco.de') ||
+                    values.link.includes('delicando.com')
+                  ) || values.fetchingExternalData
+                }
+                onClick={async () => {
+                  await setFieldValue('fetchingExternalData', true);
+                  fetch(`/api/scraper/ingredient?url=${values.link}`)
+                    .then((response) => {
+                      if (response.ok) {
+                        response.json().then(async (data) => {
+                          await setFieldValue('name', data.name);
+                          if (data.price != 0) {
+                            await setFieldValue('price', data.price);
+                          }
+
+                          if (data.image) {
+                            await setFieldValue('image', undefined);
+                            await setFieldValue('originalImage', convertBase64ToFile(data.image));
+                          }
+                          if (data.volume != 0) {
+                            await setFieldValue('volume', data.volume);
+                          }
+                          await setFieldValue('selectedUnit', allUnits.find((unit) => unit.name == 'CL')?.id ?? '');
+                          checkSimilarName(data.name);
+                        });
+                      } else {
+                        alertService.warn('Es konnten keine Daten über die URL geladen werden.');
+                      }
+                    })
+                    .finally(async () => {
+                      await setFieldValue('fetchingExternalData', false);
+                      await setFieldValue('image', undefined);
+                    });
+                }}
+              >
+                {values.fetchingExternalData ? <span className={'loading loading-spinner'}></span> : <></>}
+                <FaSyncAlt />
+              </button>
+            </div>
+            {similarLinkIngredient && (
+              <div className="label">
+                <span className="label-text-alt text-warning">
+                  Eine Zutat mit ähnlicher Url existiert bereits unter dem Namen <strong>{similarLinkIngredient.name}</strong>.
+                </span>
+              </div>
+            )}
+          </div>
+
+          <div className={'divider-sm col-span-full'}></div>
+
+          <div className={'form-control col-span-full'}>
             <label className={'label'} htmlFor={'name'}>
               <span className={'label-text'}>Bezeichner</span>
               <span className={'label-text-alt space-x-2 text-error'}>
                 <span>
-                  <>{errors.name && touched.name && errors.name}</>
+                  <>{errors.name && errors.name}</>
                 </span>
                 <span>*</span>
               </span>
@@ -213,7 +303,7 @@ export function IngredientForm(props: IngredientFormProps) {
               id={'name'}
               type={'text'}
               autoComplete={'off'}
-              className={`input input-bordered ${errors.name && touched.name && 'input-error'}`}
+              className={`input input-bordered ${errors.name && 'input-error'}`}
               onChange={(event) => {
                 if (event.target.value.length > 2) {
                   checkSimilarName(event.target.value);
@@ -234,232 +324,49 @@ export function IngredientForm(props: IngredientFormProps) {
               </div>
             )}
           </div>
-          <div className={'form-control'}>
-            <label className={'label'} htmlFor={'shortName'}>
-              <span className={'label-text'}>Eigene Bezeichnung</span>
-              <span className={'label-text-alt space-x-2 text-error'}>
-                <span>
-                  <>{errors.shortName && touched.shortName && errors.shortName}</>
+          <div className={'flex flex-col gap-2'}>
+            <div className={'form-control'}>
+              <label className={'label'} htmlFor={'shortName'}>
+                <span className={'label-text'}>Eigene Bezeichnung</span>
+                <span className={'label-text-alt space-x-2 text-error'}>
+                  <span>
+                    <>{errors.shortName && errors.shortName}</>
+                  </span>
                 </span>
-              </span>
-            </label>
-            <input
-              id={'shortName'}
-              type={'text'}
-              className={`input input-bordered ${errors.shortName && touched.shortName && 'input-error'}`}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              value={values.shortName}
-              name={'shortName'}
-            />
-          </div>
-
-          <div className={'form-control'}>
-            <label className={'label'} htmlFor={'description'}>
-              <span className={'label-text'}>Allgemeine Zutatenbeschreibung</span>
-              <span className={'label-text-alt space-x-2 text-error'}>
-                <span>
-                  <>{errors.description && touched.description && errors.description}</>
-                </span>
-              </span>
-            </label>
-            <textarea
-              id={'description'}
-              className={`textarea textarea-bordered ${errors.description && touched.description && 'textarea-error'} w-full`}
-              value={values.description}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              name={'description'}
-              placeholder={'Herkunft, Geschichte, etc.'}
-              rows={5}
-            />
-          </div>
-
-          <div className={'form-control'}>
-            <label className={'label'} htmlFor={'notes'}>
-              <span className={'label-text'}>Notizen</span>
-              <span className={'label-text-alt space-x-2 text-error'}>
-                <span>
-                  <>{errors.notes && touched.notes && errors.notes}</>
-                </span>
-              </span>
-            </label>
-            <textarea
-              id={'notes'}
-              className={`textarea textarea-bordered ${errors.notes && touched.notes && 'textarea-error'} w-full`}
-              value={values.notes}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              name={'notes'}
-              placeholder={'Lagerort, Zubereitung, etc.'}
-              rows={5}
-            />
-          </div>
-
-          <div className={'form-control'}>
-            <label className={'label'} htmlFor={'price'}>
-              <span className={'label-text'}>Preis</span>
-              <span className={'label-text-alt space-x-2 text-error'}>
-                <span>
-                  <>{errors.price && touched.price && errors.price}</>
-                </span>
-              </span>
-            </label>
-            <div className={'join'}>
+              </label>
               <input
-                id={'price'}
-                type={'number'}
-                className={`input join-item input-bordered w-full ${errors.price && touched.price && 'input-error'}`}
-                value={values.price}
+                id={'shortName'}
+                type={'text'}
+                className={`input input-bordered ${errors.shortName && 'input-error'}`}
                 onChange={handleChange}
                 onBlur={handleBlur}
-                name={'price'}
+                value={values.shortName}
+                name={'shortName'}
               />
-              <span className={'btn btn-secondary join-item'}>€</span>
+            </div>
+            <div className={'form-control'}>
+              <label className={'label'} htmlFor={'price'}>
+                <span className={'label-text'}>Preis</span>
+                <span className={'label-text-alt space-x-2 text-error'}>
+                  <span>
+                    <>{errors.price && errors.price}</>
+                  </span>
+                </span>
+              </label>
+              <div className={'join'}>
+                <input
+                  id={'price'}
+                  type={'number'}
+                  className={`input join-item input-bordered w-full ${errors.price && 'input-error'}`}
+                  value={values.price}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  name={'price'}
+                />
+                <span className={'btn btn-secondary join-item'}>€</span>
+              </div>
             </div>
           </div>
-          <FieldArray name={'units'}>
-            {({ push: pushUnit, remove: removeUnit }) => (
-              <>
-                <div className={'label-text'}>Mengen</div>
-                <table className={'table table-zebra'}>
-                  <thead>
-                    <tr>
-                      <td colSpan={4}>Verfügbare Einheiten</td>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {values.units.length == 0 ? (
-                      <tr>
-                        <td colSpan={4} className={'text-center'}>
-                          Keine Einheiten hinzugefügt
-                        </td>
-                      </tr>
-                    ) : (
-                      (values.units as FormUnitValue[]).map((unit, index) => (
-                        <tr key={`selected-units-${unit.unitId}`}>
-                          <td>{unit.volume}</td>
-                          <td>{userContext.getTranslation(allUnits.find((availableUnit) => availableUnit.id == unit.unitId)?.name ?? 'N/A', 'de')}</td>
-                          <td>
-                            {values.price != undefined ? (values.price / unit.volume).toFixed(2).replace(/\D00(?=\D*$)/, '') : '-'} €/
-                            {userContext.getTranslation(allUnits.find((availableUnit) => availableUnit.id == unit.unitId)?.name ?? 'N/A', 'de')}
-                          </td>
-                          <td className={'flex flex-row items-center justify-center'}>
-                            <div
-                              className={'btn btn-square btn-error btn-sm'}
-                              // type={'button'}
-                              onClick={() => {
-                                removeUnit(index);
-                              }}
-                            >
-                              <FaTrashAlt />
-                            </div>
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-                <div className={'form-control'}>
-                  <label className={'label'} htmlFor={'anotherVolume'}>
-                    <span className={'label-text'}>Weitere Menge hinzufügen</span>
-                    <span className={'label-text-alt space-x-2 text-error'}>
-                      <span>
-                        <>{errors.volume && touched.volume && errors.volume}</>
-                      </span>
-                      <span>*</span>
-                    </span>
-                  </label>
-                  <div className={'join'}>
-                    <input
-                      id={'anotherVolume'}
-                      type={'number'}
-                      className={`input input-sm join-item input-bordered w-full ${errors.volume && touched.volume && 'input-error'}`}
-                      value={values.volume}
-                      onChange={handleChange}
-                      onBlur={handleBlur}
-                      name={'volume'}
-                    />
-                    <select
-                      className={`join-item select select-bordered select-sm ${errors.selectedUnit && 'select-error'}`}
-                      onChange={handleChange}
-                      onBlur={handleBlur}
-                      name={'selectedUnit'}
-                      value={values.selectedUnit}
-                    >
-                      {loadingUnits ? (
-                        <option value={''} disabled={true}>
-                          Lade...
-                        </option>
-                      ) : allUnits.length == 0 ? (
-                        <option value={''}>Keine Einheiten verfügbar</option>
-                      ) : (
-                        <>
-                          <option value={''} disabled>
-                            Auswählen...
-                          </option>
-                          {allUnits
-                            .sort((a, b) => userContext.getTranslation(a.name, 'de').localeCompare(userContext.getTranslation(b.name, 'de')))
-                            .map((unit) => (
-                              <option
-                                key={`unit-option-${unit.id}`}
-                                value={unit.id}
-                                disabled={(values.units as FormUnitValue[]).find((u) => u.unitId == unit.id) != undefined}
-                              >
-                                {userContext.getTranslation(unit.name, 'de')}
-                              </option>
-                            ))}
-                        </>
-                      )}
-                    </select>
-                    <button
-                      className={'btn btn-primary join-item btn-sm'}
-                      type={'button'}
-                      disabled={loadingUnits || values.volume == 0 || values.selectedUnit == '' || isNaN(values.volume) || values.selectedUnit == undefined}
-                      onClick={async () => {
-                        pushUnit({ unitId: values.selectedUnit, volume: values.volume });
-                        await setFieldValue('selectedUnit', '');
-                      }}
-                    >
-                      Hinzufügen
-                    </button>
-                  </div>
-                </div>
-                <div>
-                  <div className={'label-text'}>Mengen vorschläge</div>
-                  <ul className={'list-inside list-disc'}>
-                    {_.uniqBy(
-                      defaultConversions
-                        .filter((conversion) => (formRef?.current?.values.units as FormUnitValue[]).map((u) => u.unitId).includes(conversion.fromUnitId))
-                        .filter((conversion) => !(formRef?.current?.values.units as FormUnitValue[]).map((u) => u.unitId).includes(conversion.toUnitId))
-                        .map((suggestion) => ({
-                          unitId: suggestion.toUnitId,
-                          volume:
-                            suggestion.factor * (formRef?.current?.values.units as FormUnitValue[]).find((u) => u.unitId == suggestion.fromUnitId)!.volume,
-                        })),
-                      function (e) {
-                        return e.unitId;
-                      },
-                    ).map((suggestion, suggestionIndex) => (
-                      <li key={`unit-conversion-suggestion-${suggestionIndex}`} className={'space-x-2 italic'}>
-                        <span className={'p-2'}>{suggestion.volume.toFixed(2).replace(/\D00(?=\D*$)/, '')}</span>
-                        <span className={'p-2'}>{userContext.getTranslation(allUnits.find((unit) => unit.id == suggestion.unitId)?.name ?? 'N/A', 'de')}</span>
-                        <span
-                          className={'btn btn-ghost btn-sm'}
-                          onClick={async () => {
-                            pushUnit(suggestion);
-                          }}
-                        >
-                          Hinzufügen
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </>
-            )}
-          </FieldArray>
-
           <div>
             <div className={'label'}>
               <span className={'label-text'}>Tags</span>
@@ -478,7 +385,159 @@ export function IngredientForm(props: IngredientFormProps) {
               validate={(tag) => validateTag(tag, (text) => setFieldError('tags', text ?? 'Tag fehlerhaft'))}
             />
           </div>
-          <div className={'col-span-2'}>
+
+          <FieldArray name={'units'}>
+            {({ push: pushUnit, remove: removeUnit }) => (
+              <>
+                <div>
+                  <div className={'label-text'}>Mengen</div>
+                  <table className={'table table-zebra'}>
+                    <thead className={'bg-base-300'}>
+                      <tr>
+                        <td colSpan={4}>Verfügbare Einheiten</td>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {values.units.length == 0 ? (
+                        <tr>
+                          <td colSpan={4} className={'text-center'}>
+                            Keine Einheiten hinzugefügt
+                          </td>
+                        </tr>
+                      ) : (
+                        (values.units as FormUnitValue[]).map((unit, index) => (
+                          <tr key={`selected-units-${unit.unitId}`}>
+                            <td>{unit.volume.toFixed(1)}</td>
+                            <td>{userContext.getTranslation(allUnits.find((availableUnit) => availableUnit.id == unit.unitId)?.name ?? 'N/A', 'de')}</td>
+                            <td>
+                              {values.price != undefined ? (values.price / unit.volume).toFixed(2).replace(/\D00(?=\D*$)/, '') : '-'} €/
+                              {userContext.getTranslation(allUnits.find((availableUnit) => availableUnit.id == unit.unitId)?.name ?? 'N/A', 'de')}
+                            </td>
+                            <td className={'flex flex-row items-center justify-center'}>
+                              <div
+                                className={'btn btn-square btn-error btn-sm'}
+                                // type={'button'}
+                                onClick={() => {
+                                  removeUnit(index);
+                                }}
+                              >
+                                <FaTrashAlt />
+                              </div>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+                <div>
+                  <div className={'form-control'}>
+                    <label className={'label'} htmlFor={'anotherVolume'}>
+                      <span className={'label-text'}>Weitere Menge hinzufügen</span>
+                      <span className={'label-text-alt space-x-2 text-error'}>
+                        <span>
+                          <>{errors.volume && errors.volume}</>
+                        </span>
+                        <span>*</span>
+                      </span>
+                    </label>
+                    <div className={'join'}>
+                      <input
+                        id={'anotherVolume'}
+                        type={'number'}
+                        className={`input input-sm join-item input-bordered w-full ${errors.volume && 'input-error'}`}
+                        value={values.volume}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        name={'volume'}
+                      />
+                      <select
+                        className={`join-item select select-bordered select-sm ${errors.selectedUnit && 'select-error'}`}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        name={'selectedUnit'}
+                        value={values.selectedUnit}
+                      >
+                        {loadingUnits ? (
+                          <option value={''} disabled={true}>
+                            Lade...
+                          </option>
+                        ) : allUnits.length == 0 ? (
+                          <option value={''}>Keine Einheiten verfügbar</option>
+                        ) : (
+                          <>
+                            <option value={''} disabled>
+                              Auswählen...
+                            </option>
+                            {allUnits
+                              .sort((a, b) => userContext.getTranslation(a.name, 'de').localeCompare(userContext.getTranslation(b.name, 'de')))
+                              .map((unit) => (
+                                <option
+                                  key={`unit-option-${unit.id}`}
+                                  value={unit.id}
+                                  disabled={(values.units as FormUnitValue[]).find((u) => u.unitId == unit.id) != undefined}
+                                >
+                                  {userContext.getTranslation(unit.name, 'de')}
+                                </option>
+                              ))}
+                          </>
+                        )}
+                      </select>
+                      <button
+                        className={'btn btn-primary join-item btn-sm'}
+                        type={'button'}
+                        disabled={loadingUnits || values.volume == 0 || values.selectedUnit == '' || isNaN(values.volume) || values.selectedUnit == undefined}
+                        onClick={async () => {
+                          pushUnit({ unitId: values.selectedUnit, volume: values.volume });
+                          await setFieldValue('selectedUnit', '');
+                        }}
+                      >
+                        Hinzufügen
+                      </button>
+                    </div>
+                  </div>
+                  <div>
+                    <div className={'label-text'}>Mengen vorschläge</div>
+                    <ul className={'list-inside list-disc'}>
+                      {_.uniqBy(
+                        defaultConversions
+                          .filter((conversion) => (formRef?.current?.values.units as FormUnitValue[]).map((u) => u.unitId).includes(conversion.fromUnitId))
+                          .filter((conversion) => !(formRef?.current?.values.units as FormUnitValue[]).map((u) => u.unitId).includes(conversion.toUnitId))
+                          .map((suggestion) => ({
+                            unitId: suggestion.toUnitId,
+                            volume:
+                              suggestion.factor * (formRef?.current?.values.units as FormUnitValue[]).find((u) => u.unitId == suggestion.fromUnitId)!.volume,
+                          })),
+                        function (e) {
+                          return e.unitId;
+                        },
+                      ).mapWithFallback(
+                        (suggestion, suggestionIndex) => (
+                          <li key={`unit-conversion-suggestion-${suggestionIndex}`} className={'space-x-2 italic'}>
+                            <span className={'p-2'}>{suggestion.volume.toFixed(2).replace(/\D00(?=\D*$)/, '')}</span>
+                            <span className={'p-2'}>
+                              {userContext.getTranslation(allUnits.find((unit) => unit.id == suggestion.unitId)?.name ?? 'N/A', 'de')}
+                            </span>
+                            <span
+                              className={'btn btn-ghost btn-sm'}
+                              onClick={async () => {
+                                pushUnit(suggestion);
+                              }}
+                            >
+                              Hinzufügen
+                            </span>
+                          </li>
+                        ),
+                        <div className={'italic'}>Keine weiteren Vorschläge</div>,
+                      )}
+                    </ul>
+                  </div>
+                </div>
+              </>
+            )}
+          </FieldArray>
+
+          <div className={'col-span-full'}>
             {values.image != undefined ? (
               <div className={'label'}>
                 <span className={'label-text'}>Zutaten Bild</span>
@@ -553,95 +612,61 @@ export function IngredientForm(props: IngredientFormProps) {
               </div>
             )}
           </div>
-          <div className={'form-control'}>
-            <label className={'label'} htmlFor={'link'}>
-              <span className={'label-text'}>Link</span>
+
+          <div className={'form-control col-span-full'}>
+            <label className={'label'} htmlFor={'description'}>
+              <span className={'label-text'}>Allgemeine Zutatenbeschreibung</span>
               <span className={'label-text-alt space-x-2 text-error'}>
                 <span>
-                  <>{errors.link && touched.link && errors.link}</>
+                  <>{errors.description && errors.description}</>
                 </span>
               </span>
             </label>
-            <div className={'join'}>
-              <input
-                id={'link'}
-                type={'text'}
-                placeholder={''}
-                className={`input join-item input-bordered w-full ${errors.link && touched.link && 'input-error'}`}
-                onChange={async (event) => {
-                  checkSimilarLink(event.target.value);
-                  handleChange(event);
-                }}
-                onBlur={handleBlur}
-                value={values.link}
-                name={'link'}
-              />
-              <button
-                className={`btn btn-primary join-item`}
-                type={'button'}
-                disabled={
-                  !(
-                    values.link.includes('expert24.com') ||
-                    values.link.includes('conalco.de') ||
-                    // values.link.includes('metro.de') ||
-                    values.link.includes('rumundco.de') ||
-                    values.link.includes('delicando.com')
-                  ) || values.fetchingExternalData
-                }
-                onClick={async () => {
-                  await setFieldValue('fetchingExternalData', true);
-                  fetch(`/api/scraper/ingredient?url=${values.link}`)
-                    .then((response) => {
-                      if (response.ok) {
-                        response.json().then(async (data) => {
-                          await setFieldValue('name', data.name);
-                          if (data.price != 0) {
-                            await setFieldValue('price', data.price);
-                          }
+            <textarea
+              id={'description'}
+              className={`textarea textarea-bordered ${errors.description && 'textarea-error'} w-full`}
+              value={values.description}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              name={'description'}
+              placeholder={'Herkunft, Geschichte, etc.'}
+              rows={5}
+            />
+          </div>
 
-                          if (data.image) {
-                            await setFieldValue('image', undefined);
-                            await setFieldValue('originalImage', convertBase64ToFile(data.image));
-                          }
-                          if (data.volume != 0) {
-                            await setFieldValue('volume', data.volume);
-                          }
-                          await setFieldValue('selectedUnit', allUnits.find((unit) => unit.name == 'CL')?.id ?? '');
-                          checkSimilarName(data.name);
-                        });
-                      } else {
-                        alertService.warn('Es konnten keine Daten über die URL geladen werden.');
-                      }
-                    })
-                    .finally(async () => {
-                      await setFieldValue('fetchingExternalData', false);
-                      await setFieldValue('image', undefined);
-                    });
-                }}
-              >
-                {values.fetchingExternalData ? <span className={'loading loading-spinner'}></span> : <></>}
-                <FaSyncAlt />
+          <div className={'form-control col-span-full'}>
+            <label className={'label'} htmlFor={'notes'}>
+              <span className={'label-text'}>Notizen</span>
+              <span className={'label-text-alt space-x-2 text-error'}>
+                <span>
+                  <>{errors.notes && errors.notes}</>
+                </span>
+              </span>
+            </label>
+            <textarea
+              id={'notes'}
+              className={`textarea textarea-bordered ${errors.notes && 'textarea-error'} w-full`}
+              value={values.notes}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              name={'notes'}
+              placeholder={'Lagerort, Zubereitung, etc.'}
+              rows={5}
+            />
+          </div>
+          <div className={'col-span-full'}>
+            <div className={'form-control'}>
+              <button type={'submit'} className={`btn btn-primary`} disabled={isSubmitting || !isValid}>
+                {isSubmitting ? <span className={'loading loading-spinner'} /> : <></>}
+                Speichern
               </button>
             </div>
-            {similarLinkIngredient && (
-              <div className="label">
-                <span className="label-text-alt text-warning">
-                  Eine Zutat mit ähnlicher Url existiert bereits unter dem Namen <strong>{similarLinkIngredient.name}</strong>.
-                </span>
+            {!isValid && (
+              <div className={'font-thin italic text-error'}>
+                Nicht alle Felder sind korrekt ausgefüllt. Kontrolliere daher alle Felder. (Name gesetzt, Bild zugeschnitten, ... ?)
               </div>
             )}
           </div>
-          <div className={'form-control'}>
-            <button type={'submit'} className={`btn btn-primary`} disabled={isSubmitting || !isValid}>
-              {isSubmitting ? <span className={'loading loading-spinner'} /> : <></>}
-              Speichern
-            </button>
-          </div>
-          {!isValid && (
-            <div className={'font-thin italic text-error'}>
-              Nicht alle Felder sind korrekt ausgefüllt. Kontrolliere daher alle Felder. (Name gesetzt, Bild zugeschnitten, ... ?)
-            </div>
-          )}
         </form>
       )}
     </Formik>

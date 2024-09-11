@@ -369,7 +369,7 @@ export default function WorkspaceSettingPage() {
         <div className={'card overflow-y-auto md:col-span-2'}>
           <div className={'card-body'}>
             <div className={'card-title'}>Workspace Nutzer verwalten</div>
-            <table className={'table w-full rounded-xl border border-base-200'}>
+            <table className={'table table-zebra w-full rounded-xl border border-base-200'}>
               <thead>
                 <tr>
                   <th>Name</th>
@@ -825,7 +825,7 @@ export default function WorkspaceSettingPage() {
                             <button
                               className={'btn btn-primary btn-sm'}
                               onClick={() => {
-                                modalContext.openModal(<UnitModal unit={undefined} />);
+                                modalContext.openModal(<UnitModal unit={undefined} onSaved={() => fetchUnits(workspaceId, setUnits, setUnitsLoading)} />);
                               }}
                             >
                               Hinzufügen

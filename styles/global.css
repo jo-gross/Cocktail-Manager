@@ -79,6 +79,10 @@ https://stackoverflow.com/a/74043438/12160393
   }
 }
 
+thead {
+  @apply bg-base-100;
+}
+
 .modal {
   @apply z-40;
 }

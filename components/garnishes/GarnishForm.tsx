@@ -112,14 +112,14 @@ export function GarnishForm(props: GarnishFormProps) {
         return errors;
       }}
     >
-      {({ values, errors, touched, handleChange, handleBlur, handleSubmit, isSubmitting, isValid, setFieldValue }) => (
-        <form onSubmit={handleSubmit} className={'flex flex-col gap-2 md:gap-4'}>
-          <div className={'form-control'}>
+      {({ values, errors, handleChange, handleBlur, handleSubmit, isSubmitting, isValid, setFieldValue }) => (
+        <form onSubmit={handleSubmit} className={'grid w-full grid-cols-1 gap-2 md:max-w-4xl md:grid-cols-3'}>
+          <div className={'form-control col-span-2'}>
             <label className={'label'} htmlFor={'name'}>
               <span className={'label-text'}>Name</span>
               <span className={'label-text-alt space-x-2 text-error'}>
                 <span>
-                  <>{errors.name && touched.name && errors.name}</>
+                  <>{errors.name && errors.name}</>
                 </span>
                 <span>*</span>
               </span>
@@ -129,7 +129,7 @@ export function GarnishForm(props: GarnishFormProps) {
               type={'text'}
               autoComplete={'off'}
               placeholder={'Name'}
-              className={`input input-bordered ${errors.name && touched.name && 'input-error'} w-full`}
+              className={`input input-bordered ${errors.name && 'input-error'} w-full`}
               onChange={(event) => {
                 if (event.target.value.length > 2) {
                   fetch(`/api/workspaces/${workspaceId}/garnishes/check?name=${event.target.value}`)
@@ -137,7 +137,11 @@ export function GarnishForm(props: GarnishFormProps) {
                     .then((data) => {
                       console.log(data);
                       if (data.data != null) {
-                        setSimilarGarnish(data.data);
+                        if (data.data.id != props.garnish?.id) {
+                          setSimilarGarnish(data.data);
+                        } else {
+                          setSimilarGarnish(undefined);
+                        }
                       } else {
                         setSimilarGarnish(undefined);
                       }
@@ -154,78 +158,17 @@ export function GarnishForm(props: GarnishFormProps) {
             {similarGarnish && (
               <div className="label">
                 <span className="label-text-alt text-warning">
-                  Eine Ähnliche Zutat mit dem namen <strong>{similarGarnish.name}</strong> existiert bereits.
+                  Eine ähnliche Dekoration mit dem Namen <strong>{similarGarnish.name}</strong> existiert bereits.
                 </span>
               </div>
             )}
           </div>
-          <div className={'form-control'}>
-            <label className={'label'} htmlFor={'notes'}>
-              <span className={'label-text'}>Notizen</span>
-              <span className={'label-text-alt space-x-2 text-error'}>
-                <span>
-                  <>{errors.notes && touched.notes && errors.notes}</>
-                </span>
-              </span>
-            </label>
-            <textarea
-              id={'notes'}
-              className={`textarea textarea-bordered ${errors.notes && touched.notes && 'textarea-error'} w-full`}
-              value={values.notes}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              name={'notes'}
-              placeholder={'Lagerort, Lieferant, etc.'}
-              rows={5}
-            />
-          </div>
 
-          <div className={'form-control'}>
-            <label className={'label'} htmlFor={'notes'}>
-              <span className={'label-text'}>Notizen</span>
-              <span className={'label-text-alt space-x-2 text-error'}>
-                <span>
-                  <>{errors.notes && touched.notes && errors.notes}</>
-                </span>
-              </span>
-            </label>
-            <textarea
-              id={'notes'}
-              className={`textarea textarea-bordered ${errors.notes && touched.notes && 'textarea-error'} w-full`}
-              value={values.notes}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              name={'notes'}
-              placeholder={'Lagerort, Lieferant, etc.'}
-              rows={5}
-            />
-          </div>
-
-          <div className={'form-control'}>
-            <label className={'label'} htmlFor={'description'}>
-              <span className={'label-text'}>Allgemeine Beschreibung</span>
-              <span className={'label-text-alt space-x-2 text-error'}>
-                <span>
-                  <>{errors.description && touched.description && errors.description}</>
-                </span>
-              </span>
-            </label>
-            <textarea
-              id={'description'}
-              className={`textarea textarea-bordered ${errors.description && touched.description && 'textarea-error'} w-full`}
-              value={values.description}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              name={'description'}
-              placeholder={'Das Öl der Zeste hilft, den Geschmack des Cocktails zu intensivieren, ...'}
-              rows={5}
-            />
-          </div>
           <div className={'form-control'}>
             <label className={'label'} htmlFor={'price'}>
               <span className={'label-text'}>Preis</span>
               <span className={'label-text-alt space-x-2 text-error'}>
-                <>{errors.price && touched.price && errors.price}</>
+                <>{errors.price && errors.price}</>
               </span>
             </label>
             <div className={'join'}>
@@ -233,7 +176,7 @@ export function GarnishForm(props: GarnishFormProps) {
                 id={'price'}
                 type={'number'}
                 placeholder={'Preis'}
-                className={`input join-item input-bordered ${errors.price && touched.price && 'input-error'} w-full`}
+                className={`input join-item input-bordered ${errors.price && 'input-error'} w-full`}
                 value={values.price}
                 onChange={handleChange}
                 onBlur={handleBlur}
@@ -242,7 +185,7 @@ export function GarnishForm(props: GarnishFormProps) {
               <span className={'btn btn-secondary join-item'}>€</span>
             </div>
           </div>
-          <div className={'col-span-2'}>
+          <div className={'col-span-3'}>
             {values.image != undefined ? (
               <div className={'label'}>
                 <span className={'label-text'}>Zutaten Bild</span>
@@ -314,17 +257,63 @@ export function GarnishForm(props: GarnishFormProps) {
               </div>
             )}
           </div>
-          <div className={'form-control'}>
-            <button disabled={isSubmitting || !isValid} type={'submit'} className={`btn btn-primary`}>
-              {isSubmitting ? <span className={'loading loading-spinner'} /> : null}
-              Speichern
-            </button>
-          </div>
-          {!isValid && (
-            <div className={'font-thin italic text-error'}>
-              Nicht alle Felder sind korrekt ausgefüllt. Kontrolliere daher alle Felder. (Name gesetzt, Bild zugeschnitten, ... ?)
+
+          <div className={'col-span-3 flex flex-col gap-2'}>
+            <div className={'form-control'}>
+              <label className={'label'} htmlFor={'notes'}>
+                <span className={'label-text'}>Notizen</span>
+                <span className={'label-text-alt space-x-2 text-error'}>
+                  <span>
+                    <>{errors.notes && errors.notes}</>
+                  </span>
+                </span>
+              </label>
+              <textarea
+                id={'notes'}
+                className={`textarea textarea-bordered ${errors.notes && 'textarea-error'} w-full`}
+                value={values.notes}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                name={'notes'}
+                placeholder={'Lagerort, Lieferant, etc.'}
+                rows={5}
+              />
             </div>
-          )}
+
+            <div className={'form-control'}>
+              <label className={'label'} htmlFor={'description'}>
+                <span className={'label-text'}>Allgemeine Beschreibung</span>
+                <span className={'label-text-alt space-x-2 text-error'}>
+                  <span>
+                    <>{errors.description && errors.description}</>
+                  </span>
+                </span>
+              </label>
+              <textarea
+                id={'description'}
+                className={`textarea textarea-bordered ${errors.description && 'textarea-error'} w-full`}
+                value={values.description}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                name={'description'}
+                placeholder={'Das Öl der Zeste hilft, den Geschmack des Cocktails zu intensivieren, ...'}
+                rows={5}
+              />
+            </div>
+          </div>
+          <div className={'col-span-3 items-center justify-end'}>
+            <div className={'form-control'}>
+              <button disabled={isSubmitting || !isValid} type={'submit'} className={`btn btn-primary`}>
+                {isSubmitting ? <span className={'loading loading-spinner'} /> : null}
+                Speichern
+              </button>
+            </div>
+            {!isValid && (
+              <div className={'font-thin italic text-error'}>
+                Nicht alle Felder sind korrekt ausgefüllt. Kontrolliere daher alle Felder. (Name gesetzt, Bild zugeschnitten, ... ?)
+              </div>
+            )}
+          </div>
         </form>
       )}
     </Formik>

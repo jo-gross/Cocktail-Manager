@@ -433,7 +433,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
         }
       }}
     >
-      {({ values, setFieldValue, setFieldError, errors, touched, handleChange, handleBlur, handleSubmit, isSubmitting, isValid }) => (
+      {({ values, setFieldValue, setFieldError, errors, handleChange, handleBlur, handleSubmit, isSubmitting, isValid }) => (
         <form onSubmit={handleSubmit}>
           <div className={'grid grid-cols-1 gap-4 md:grid-cols-3'}>
             <div className={'card grid-cols-1 md:col-span-2'}>
@@ -445,7 +445,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                     <label className={'label'} htmlFor={'name'}>
                       <span className={'label-text'}>Name</span>
                       <span className={'label-text-alt text-error'}>
-                        <>{errors.name && touched.name && errors.name}</> *
+                        <>{errors.name && errors.name}</> *
                       </span>
                     </label>
                     <input
@@ -453,7 +453,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                       name="name"
                       autoComplete={'off'}
                       id={'name'}
-                      className={`input input-bordered w-full ${errors.name && touched.name && 'input-error'}`}
+                      className={`input input-bordered w-full ${errors.name && 'input-error'}`}
                       onChange={(event) => {
                         if (event.target.value.length > 2) {
                           fetch(`/api/workspaces/${workspaceId}/cocktails/check?name=${event.target.value}`)
@@ -461,7 +461,11 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                             .then((data) => {
                               console.log(data);
                               if (data.data != null) {
-                                setSimilarCocktailRecipe(data.data);
+                                if (data.data.id != props.cocktailRecipe?.id) {
+                                  setSimilarCocktailRecipe(data.data);
+                                } else {
+                                  setSimilarCocktailRecipe(undefined);
+                                }
                               } else {
                                 setSimilarCocktailRecipe(undefined);
                               }
@@ -477,7 +481,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                     {similarCocktailRecipe && (
                       <div className="label">
                         <span className="label-text-alt text-warning">
-                          Eine Ähnliche Zutat mit dem namen <strong>{similarCocktailRecipe.name}</strong> existiert bereits.
+                          Eine ähnlicher Cocktail mit dem Namen <strong>{similarCocktailRecipe.name}</strong> existiert bereits.
                         </span>
                       </div>
                     )}
@@ -486,13 +490,13 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                     <label className={'label'} htmlFor={'notes'}>
                       <span className={'label-text'}>Zubereitungsnotizen</span>
                       <span className={'label-text-alt text-error'}>
-                        <>{errors.notes && touched.notes && errors.notes}</>
+                        <>{errors.notes && errors.notes}</>
                       </span>
                     </label>
                     <textarea
                       id={'notes'}
                       name="notes"
-                      className={`textarea textarea-bordered w-full ${errors.notes && touched.notes && 'textarea-error'}`}
+                      className={`textarea textarea-bordered w-full ${errors.notes && 'textarea-error'}`}
                       placeholder={'Zubereitungshinweise, Tipps, etc.'}
                       onChange={handleChange}
                       onBlur={handleBlur}
@@ -504,13 +508,13 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                     <label className={'label'} htmlFor={'description'}>
                       <span className={'label-text'}>Allgemeine Beschreibung</span>
                       <span className={'label-text-alt text-error'}>
-                        <>{errors.description && touched.description && errors.description}</>
+                        <>{errors.description && errors.description}</>
                       </span>
                     </label>
                     <textarea
                       id={'description'}
                       name="description"
-                      className={`textarea textarea-bordered w-full ${errors.description && touched.description && 'textarea-error'}`}
+                      className={`textarea textarea-bordered w-full ${errors.description && 'textarea-error'}`}
                       placeholder={'Geschichte, Herkunft, etc.'}
                       onChange={handleChange}
                       onBlur={handleBlur}
@@ -522,14 +526,14 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                     <label className={'label'} htmlFor={'price'}>
                       <span className={'label-text'}>Preis</span>
                       <span className={'label-text-alt text-error'}>
-                        <>{errors.price && touched.price && errors.price}</>
+                        <>{errors.price && errors.price}</>
                       </span>
                     </label>
                     <div className={'join w-full'}>
                       <input
                         id={'price'}
                         type="number"
-                        className={`input join-item input-bordered w-full ${errors.price && touched.price && 'input-error'}`}
+                        className={`input join-item input-bordered w-full ${errors.price && 'input-error'}`}
                         name="price"
                         onChange={handleChange}
                         onBlur={handleBlur}
@@ -564,14 +568,14 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                     <label className={'label'} htmlFor={'glassId'}>
                       <span className={'label-text'}>Glas</span>
                       <span className={'label-text-alt text-error'}>
-                        <>{errors.glassId && touched.glassId && errors.glassId}</> *
+                        <>{errors.glassId && errors.glassId}</> *
                       </span>
                     </label>
                     <div className={'join w-full'}>
                       <select
                         id={'glassId'}
                         name="glassId"
-                        className={`join-item select select-bordered w-full ${errors.glassId && touched.glassId && 'select-error'}`}
+                        className={`join-item select select-bordered w-full ${errors.glassId && 'select-error'}`}
                         onChange={(event) => {
                           handleChange(event);
                           setFieldValue(
@@ -627,13 +631,13 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                     <label className={'label'} htmlFor={'iceId'}>
                       <span className={'label-text'}>Eis</span>
                       <span className={'label-text-alt text-error'}>
-                        <>{errors.iceId && touched.iceId && errors.iceId}</> *
+                        <>{errors.iceId && errors.iceId}</> *
                       </span>
                     </label>
                     <select
                       id={'iceId'}
                       name="iceId"
-                      className={`select select-bordered w-full ${errors.iceId && touched.iceId && 'select-error'}`}
+                      className={`select select-bordered w-full ${errors.iceId && 'select-error'}`}
                       onChange={(event) => {
                         handleChange(event);
                         setFieldValue(
@@ -766,17 +770,17 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                   />
                 </div>
               </div>
-              <div className={'hidden md:flex'}>
+              <div className={'hidden md:flex md:flex-col'}>
                 <button type="submit" className={`btn btn-primary w-full`} disabled={isSubmitting || !isValid}>
                   {isSubmitting ? <span className={'loading loading-spinner'} /> : <></>}
                   {props.cocktailRecipe == undefined ? 'Erstellen' : 'Aktualisieren'}
                 </button>
+                {!isValid && (
+                  <div className={'font-thin italic text-error'}>
+                    Nicht alle Felder sind korrekt ausgefüllt. Kontrolliere daher alle Felder. (Name gesetzt, Bild zugeschnitten, ... ?)
+                  </div>
+                )}
               </div>
-              {!isValid && (
-                <div className={'font-thin italic text-error'}>
-                  Nicht alle Felder sind korrekt ausgefüllt. Kontrolliere daher alle Felder. (Name gesetzt, Bild zugeschnitten, ... ?)
-                </div>
-              )}
 
               <div className={'card'}>
                 <div className={'card-body'}>
@@ -1042,7 +1046,6 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                           <span className={'label-text'}>Optional</span>
                                           <span className={'label-text-alt text-error'}>
                                             {((errors.steps as StepError[])?.[indexStep] as any)?.ingredients?.[indexIngredient]?.optional &&
-                                              (touched.steps as any)?.[indexStep]?.ingredients?.[indexIngredient]?.optional &&
                                               ((errors.steps as StepError[])?.[indexStep] as any)?.ingredients?.[indexIngredient]?.optional}
                                           </span>
                                           <Field
@@ -1284,16 +1287,13 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                 <span className={'label-text'}>Garnitur</span>
                                 <span className={'label-text-alt text-error'}>
                                   {(errors.garnishes as GarnishError[])?.[indexGarnish]?.garnishId &&
-                                    (touched.garnishes as any)?.[indexGarnish]?.garnishId &&
                                     (errors.garnishes as GarnishError[])?.[indexGarnish]?.garnishId}
                                 </span>
                               </label>
                               <div className={'join w-full'}>
                                 <input
                                   className={`input join-item input-bordered w-full cursor-pointer ${
-                                    (errors.garnishes as GarnishError[])?.[indexGarnish]?.garnishId &&
-                                    (touched.garnishes as any)?.[indexGarnish]?.garnishId &&
-                                    'input-error'
+                                    (errors.garnishes as GarnishError[])?.[indexGarnish]?.garnishId && 'input-error'
                                   }`}
                                   value={garnishesLoading ? 'Lade...' : (values.garnishes[indexGarnish].garnish?.name ?? 'Wähle eine Garnitur aus...')}
                                   readOnly={true}
@@ -1338,9 +1338,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                             <div className={'row-span-2'}>
                               <label className={'label'}>
                                 <span className={'label-text'}>Zusätzliche Beschreibung</span>
-                                <span className={'label-text-alt text-error'}>
-                                  {/*{errors.garnishDescription && touched.garnishDescription && errors.garnishDescription}*/}
-                                </span>
+                                <span className={'label-text-alt text-error'}>{/*{errors.garnishDescription  && errors.garnishDescription}*/}</span>
                               </label>
                               <textarea
                                 value={values.garnishes[indexGarnish].description}
@@ -1348,7 +1346,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                 className={
                                   'textarea textarea-bordered h-24 w-full'
                                   // ${
-                                  // errors.garnishDescription && touched.garnishDescription && 'textarea-error'
+                                  // errors.garnishDescription  && 'textarea-error'
                                   // }`
                                 }
                                 onChange={handleChange}
@@ -1360,7 +1358,6 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                 <span className={'label-text'}>Optional</span>
                                 <span className={'label-text-alt text-error'}>
                                   {(errors.garnishes as GarnishError[])?.[indexGarnish]?.optional &&
-                                    (touched.garnishes as any)?.[indexGarnish]?.optional &&
                                     (errors.garnishes as GarnishError[])?.[indexGarnish]?.optional}
                                 </span>
                                 <Field
@@ -1415,11 +1412,17 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                 </FieldArray>
               </div>
             </div>
+
             <div className={'md:hidden'}>
               <button type="submit" className={`btn btn-primary w-full`} disabled={isSubmitting}>
                 {isSubmitting ? <span className={'loading loading-spinner'} /> : <></>}
                 {props.cocktailRecipe == undefined ? 'Erstellen' : 'Aktualisieren'}
               </button>
+              {!isValid && (
+                <div className={'font-thin italic text-error'}>
+                  Nicht alle Felder sind korrekt ausgefüllt. Kontrolliere daher alle Felder. (Name gesetzt, Bild zugeschnitten, ... ?)
+                </div>
+              )}
             </div>
           </div>
         </form>

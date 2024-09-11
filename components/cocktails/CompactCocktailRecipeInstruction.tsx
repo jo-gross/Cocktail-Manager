@@ -107,10 +107,10 @@ export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeIns
                 )
               }
               src={props.image ?? `/api/workspaces/${props.cocktailRecipe.workspaceId}/cocktails/${props.cocktailRecipe.id}/image`}
-              className={'h-full w-full cursor-pointer rounded-xl object-cover'}
+              className={'h-full w-full flex-grow cursor-pointer rounded-xl object-cover'}
               alt={''}
               width={300}
-              height={300}
+              height={534}
             />
           </div>
         ) : (

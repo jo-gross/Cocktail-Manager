@@ -8,6 +8,7 @@ import { useRouter } from 'next/router';
 
 interface UnitModalProps {
   unit?: Unit;
+  onSaved?: () => void;
 }
 
 export default function UnitModal(props: UnitModalProps) {
@@ -43,6 +44,7 @@ export default function UnitModal(props: UnitModalProps) {
               if (response.status.toString().startsWith('2')) {
                 router.reload();
                 modalContext.closeModal();
+                props.onSaved?.();
                 alertService.success('Einheit erfolgreich erstellt');
               } else {
                 const body = await response.json();
@@ -64,6 +66,7 @@ export default function UnitModal(props: UnitModalProps) {
               if (response.status.toString().startsWith('2')) {
                 router.reload();
                 modalContext.closeModal();
+                props.onSaved?.();
                 alertService.success('Einheit erfolgreich gespeichert');
               } else {
                 const body = await response.json();

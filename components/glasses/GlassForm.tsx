@@ -47,7 +47,7 @@ export function GlassForm(props: GlassFormProps) {
           const body = {
             id: props.glass?.id,
             name: values.name,
-            deposit: values.deposit,
+            deposit: values.deposit ?? 0,
             image: values.image,
             volume: values.volume == 0 ? undefined : values.volume,
           };
@@ -106,23 +106,20 @@ export function GlassForm(props: GlassFormProps) {
         if (!values.name) {
           errors.name = 'Required';
         }
-        if (values.deposit.toString() == '' || isNaN(values.deposit)) {
-          errors.deposit = 'Required';
-        }
         if (values.originalImage != undefined && values.image == undefined) {
           errors.image = 'Bild ausgewählt aber nicht zugeschnitten';
         }
         return errors;
       }}
     >
-      {({ values, setFieldValue, errors, touched, handleChange, handleBlur, handleSubmit, isSubmitting, isValid }) => (
-        <form onSubmit={handleSubmit} className={'flex flex-col gap-2 md:gap-4'}>
-          <div className={'form-control'}>
+      {({ values, setFieldValue, errors, handleChange, handleBlur, handleSubmit, isSubmitting, isValid }) => (
+        <form onSubmit={handleSubmit} className={'grid w-full grid-cols-1 gap-2 md:max-w-4xl md:grid-cols-2'}>
+          <div className={'form-control col-span-2'}>
             <label className={'label'} htmlFor={'name'}>
               <span className={'label-text'}>Name</span>
               <span className={'label-text-alt space-x-2 text-error'}>
                 <span>
-                  <>{errors.name && touched.name && errors.name}</>
+                  <>{errors.name && errors.name}</>
                 </span>
                 <span>*</span>
               </span>
@@ -134,15 +131,18 @@ export function GlassForm(props: GlassFormProps) {
               autoComplete={'off'}
               type={'text'}
               placeholder={'Name'}
-              className={`input input-bordered w-full ${errors.name && touched.name && 'input-error'}`}
+              className={`input input-bordered w-full ${errors.name && 'input-error'}`}
               onChange={(event) => {
                 if (event.target.value.length > 2) {
                   fetch(`/api/workspaces/${workspaceId}/glasses/check?name=${event.target.value}`)
                     .then((response) => response.json())
                     .then((data) => {
-                      console.log(data);
                       if (data.data != null) {
-                        setSimilarGlass(data.data);
+                        if (data.data.id != props.glass?.id) {
+                          setSimilarGlass(data.data);
+                        } else {
+                          setSimilarGlass(undefined);
+                        }
                       } else {
                         setSimilarGlass(undefined);
                       }
@@ -157,7 +157,7 @@ export function GlassForm(props: GlassFormProps) {
             {similarGlass && (
               <div className="label">
                 <span className="label-text-alt text-warning">
-                  Eine Ähnliche Zutat mit dem namen <strong>{similarGlass.name}</strong> existiert bereits.
+                  Ein ähnliches Glas mit dem Namen <strong>{similarGlass.name}</strong> existiert bereits.
                 </span>
               </div>
             )}
@@ -168,9 +168,8 @@ export function GlassForm(props: GlassFormProps) {
               <span className={'label-text'}>Pfand</span>
               <span className={'label-text-alt space-x-2 text-error'}>
                 <span>
-                  <>{errors.deposit && touched.deposit && errors.deposit}</>
+                  <>{errors.deposit && errors.deposit}</>
                 </span>
-                <span>*</span>
               </span>
             </label>
             <div className={'join'}>
@@ -178,7 +177,7 @@ export function GlassForm(props: GlassFormProps) {
                 id={'deposit'}
                 type={'number'}
                 placeholder={'Deposit'}
-                className={`input join-item input-bordered w-full ${errors.deposit && touched.deposit && 'input-error'}}`}
+                className={`input join-item input-bordered w-full ${errors.deposit && 'input-error'}}`}
                 value={values.deposit}
                 onChange={handleChange}
                 onBlur={handleBlur}
@@ -205,7 +204,7 @@ export function GlassForm(props: GlassFormProps) {
               <span className={'btn btn-secondary join-item'}>cl</span>
             </div>
           </div>
-          <div className={'form-control'}>
+          <div className={'form-control col-span-2'}>
             {values.image != undefined ? (
               <div className={'label'}>
                 <span className={'label-text'}>Vorschau Bild</span>
@@ -279,17 +278,19 @@ export function GlassForm(props: GlassFormProps) {
               </div>
             )}
           </div>
-          <div className={'form-control'}>
-            <button disabled={isSubmitting || !isValid} type={'submit'} className={`btn btn-primary`}>
-              {isSubmitting ? <span className={'loading loading-spinner'} /> : <></>}
-              Speichern
-            </button>
-          </div>
-          {!isValid && (
-            <div className={'font-thin italic text-error'}>
-              Nicht alle Felder sind korrekt ausgefüllt. Kontrolliere daher alle Felder. (Name gesetzt, Bild zugeschnitten, ... ?)
+          <div className={'col-span-2'}>
+            <div className={'form-control'}>
+              <button disabled={isSubmitting || !isValid} type={'submit'} className={`btn btn-primary`}>
+                {isSubmitting ? <span className={'loading loading-spinner'} /> : <></>}
+                Speichern
+              </button>
             </div>
-          )}
+            {!isValid && (
+              <div className={'font-thin italic text-error'}>
+                Nicht alle Felder sind korrekt ausgefüllt. Kontrolliere daher alle Felder. (Name gesetzt, Bild zugeschnitten, ... ?)
+              </div>
+            )}
+          </div>
         </form>
       )}
     </Formik>
