@@ -1,6 +1,6 @@
 import { FieldArray, Formik, FormikProps } from 'formik';
 import { useRouter } from 'next/router';
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { updateTags, validateTag } from '../../models/tags/TagUtils';
 import { UploadDropZone } from '../UploadDropZone';
 import { convertToBase64 } from '../../lib/Base64Converter';
@@ -73,6 +73,19 @@ export function IngredientForm(props: IngredientFormProps) {
     tags: props.ingredient?.tags ?? [],
     image: props.ingredient?.IngredientImage?.[0]?.image ?? undefined,
   };
+
+  const checkSimilarName = useCallback(
+    async (name: string) => {
+      const response = await fetch(`/api/workspaces/${workspaceId}/ingredients/check?name=${name}`);
+      const data = await response.json();
+      if (data.data != null) {
+        setSimilarIngredient(data.data);
+      } else {
+        setSimilarIngredient(undefined);
+      }
+    },
+    [workspaceId],
+  );
 
   return (
     <Formik
@@ -179,16 +192,7 @@ export function IngredientForm(props: IngredientFormProps) {
               className={`input input-bordered ${errors.name && touched.name && 'input-error'}`}
               onChange={(event) => {
                 if (event.target.value.length > 2) {
-                  fetch(`/api/workspaces/${workspaceId}/ingredients/check?name=${event.target.value}`)
-                    .then((response) => response.json())
-                    .then((data) => {
-                      console.log(data);
-                      if (data.data != null) {
-                        setSimilarIngredient(data.data);
-                      } else {
-                        setSimilarIngredient(undefined);
-                      }
-                    });
+                  checkSimilarName(event.target.value);
                 } else {
                   setSimilarIngredient(undefined);
                 }
@@ -540,6 +544,7 @@ export function IngredientForm(props: IngredientFormProps) {
                             setFieldValue('volume', data.volume);
                           }
                           setFieldValue('selectedUnit', allUnits.find((unit) => unit.name == 'CL')?.id ?? '');
+                          checkSimilarName(data.name);
                         });
                       } else {
                         alertService.warn('Es konnten keine Daten über die URL geladen werden.');
