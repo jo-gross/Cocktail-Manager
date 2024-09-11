@@ -3,7 +3,7 @@ import { UploadDropZone } from '../UploadDropZone';
 import { convertBase64ToFile, convertToBase64 } from '../../lib/Base64Converter';
 import { useRouter } from 'next/router';
 import { FaTrashAlt } from 'react-icons/fa';
-import React, { useContext } from 'react';
+import React, { useContext, useState } from 'react';
 import { alertService } from '../../lib/alertService';
 import { DeleteConfirmationModal } from '../modals/DeleteConfirmationModal';
 import { ModalContext } from '../../lib/context/ModalContextProvider';
