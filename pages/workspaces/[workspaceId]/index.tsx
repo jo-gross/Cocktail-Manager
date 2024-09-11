@@ -559,7 +559,6 @@ export default function OverviewPage() {
                         readOnly={true}
                         onClick={() => {
                           userContext.updateUserSetting(Setting.showImage, !showImage ? 'true' : 'false');
-                          setShowImage(!showImage);
                         }}
                       />
                     </label>
@@ -574,7 +573,6 @@ export default function OverviewPage() {
                         readOnly={true}
                         onClick={() => {
                           userContext.updateUserSetting(Setting.showTags, !showTags ? 'true' : 'false');
-                          setShowTags(!showTags);
                         }}
                       />
                     </label>
@@ -589,7 +587,6 @@ export default function OverviewPage() {
                         readOnly={true}
                         onClick={() => {
                           userContext.updateUserSetting(Setting.showDescription, !showDescription ? 'true' : 'false');
-                          setShowDescription(!showDescription);
                         }}
                       />
                     </label>
@@ -604,7 +601,6 @@ export default function OverviewPage() {
                         readOnly={true}
                         onClick={() => {
                           userContext.updateUserSetting(Setting.showNotes, !showNotes ? 'true' : 'false');
-                          setShowNotes(!showNotes);
                         }}
                       />
                     </label>
@@ -619,7 +615,6 @@ export default function OverviewPage() {
                         readOnly={true}
                         onClick={() => {
                           userContext.updateUserSetting(Setting.lessItems, !lessItems ? 'true' : 'false');
-                          setLessItems(!lessItems);
                         }}
                       />
                     </label>
@@ -634,7 +629,6 @@ export default function OverviewPage() {
                         readOnly={true}
                         onClick={() => {
                           userContext.updateUserSetting(Setting.showStatisticActions, !showStatisticActions ? 'true' : 'false');
-                          setShowStatisticActions(!showStatisticActions);
                         }}
                       />
                     </label>
@@ -649,7 +643,6 @@ export default function OverviewPage() {
                         readOnly={true}
                         onClick={() => {
                           userContext.updateUserSetting(Setting.showQueueAsOverlay, !showQueueAsOverlay ? 'true' : 'false');
-                          setShowQueueAsOverlay(!showQueueAsOverlay);
                         }}
                       />
                     </label>
