@@ -111,3 +111,7 @@ thead {
     10px -10px,
     -10px 0px;
 }
+
+.prose {
+  @apply max-w-full text-base-content !important;
+}

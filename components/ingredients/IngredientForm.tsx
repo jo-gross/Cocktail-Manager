@@ -20,6 +20,31 @@ import CropComponent from '../CropComponent';
 import { FaCropSimple } from 'react-icons/fa6';
 import '../../lib/ArrayUtils';
 import { routerConditionalBack } from '../../lib/RouterUtils';
+import {
+  BlockTypeSelect,
+  BoldItalicUnderlineToggles,
+  codeBlockPlugin,
+  CodeToggle,
+  CreateLink,
+  frontmatterPlugin,
+  headingsPlugin,
+  InsertTable,
+  InsertThematicBreak,
+  linkDialogPlugin,
+  linkPlugin,
+  listsPlugin,
+  ListsToggle,
+  markdownShortcutPlugin,
+  MDXEditor,
+  quotePlugin,
+  Separator,
+  StrikeThroughSupSubToggles,
+  tablePlugin,
+  thematicBreakPlugin,
+  toolbarPlugin,
+  UndoRedo,
+} from '@mdxeditor/editor';
+import '@mdxeditor/editor/style.css';
 
 interface IngredientFormProps {
   ingredient?: IngredientWithImage;
@@ -410,7 +435,7 @@ export function IngredientForm(props: IngredientFormProps) {
                       ) : (
                         (values.units as FormUnitValue[]).map((unit, index) => (
                           <tr key={`selected-units-${unit.unitId}`}>
-                            <td>{unit.volume.toFixed(1)}</td>
+                            <td>{unit.volume.toFixed(2)}</td>
                             <td>{userContext.getTranslation(allUnits.find((availableUnit) => availableUnit.id == unit.unitId)?.name ?? 'N/A', 'de')}</td>
                             <td>
                               {values.price != undefined ? (values.price / unit.volume).toFixed(2).replace(/\D00(?=\D*$)/, '') : '-'} €/
@@ -616,45 +641,123 @@ export function IngredientForm(props: IngredientFormProps) {
             )}
           </div>
 
+          {/*<div className={'form-control col-span-full'}>*/}
+          {/*  <label className={'label'} htmlFor={'description'}>*/}
+          {/*    <span className={'label-text'}>Allgemeine Zutatenbeschreibung</span>*/}
+          {/*    <span className={'label-text-alt space-x-2 text-error'}>*/}
+          {/*      <span>*/}
+          {/*        <>{errors.description && errors.description}</>*/}
+          {/*      </span>*/}
+          {/*    </span>*/}
+          {/*  </label>*/}
+          {/*  <textarea*/}
+          {/*    id={'description'}*/}
+          {/*    className={`textarea textarea-bordered ${errors.description && 'textarea-error'} w-full`}*/}
+          {/*    value={values.description}*/}
+          {/*    onChange={handleChange}*/}
+          {/*    onBlur={handleBlur}*/}
+          {/*    name={'description'}*/}
+          {/*    placeholder={'Herkunft, Geschichte, etc.'}*/}
+          {/*    rows={5}*/}
+          {/*  />*/}
+          {/*</div>*/}
+
+          {/*<div className={'form-control col-span-full'}>*/}
+          {/*  <label className={'label'} htmlFor={'notes'}>*/}
+          {/*    <span className={'label-text'}>Notizen</span>*/}
+          {/*    <span className={'label-text-alt space-x-2 text-error'}>*/}
+          {/*      <span>*/}
+          {/*        <>{errors.notes && errors.notes}</>*/}
+          {/*      </span>*/}
+          {/*    </span>*/}
+          {/*  </label>*/}
+          {/*  <textarea*/}
+          {/*    id={'notes'}*/}
+          {/*    className={`textarea textarea-bordered ${errors.notes && 'textarea-error'} w-full`}*/}
+          {/*    value={values.notes}*/}
+          {/*    onChange={handleChange}*/}
+          {/*    onBlur={handleBlur}*/}
+          {/*    name={'notes'}*/}
+          {/*    placeholder={'Lagerort, Zubereitung, etc.'}*/}
+          {/*    rows={5}*/}
+          {/*  />*/}
+          {/*</div>*/}
+          {/* MDX Editor für Description */}
           <div className={'form-control col-span-full'}>
             <label className={'label'} htmlFor={'description'}>
               <span className={'label-text'}>Allgemeine Zutatenbeschreibung</span>
               <span className={'label-text-alt space-x-2 text-error'}>
-                <span>
-                  <>{errors.description && errors.description}</>
-                </span>
+                <span>{errors.description && errors.description}</span>
               </span>
             </label>
-            <textarea
-              id={'description'}
-              className={`textarea textarea-bordered ${errors.description && 'textarea-error'} w-full`}
-              value={values.description}
-              onChange={handleChange}
+            <MDXEditor
+              markdown={values.description}
+              className={'dark-editor'}
+              contentEditableClassName={'prose rounded bg-base-100 mt-1'}
+              onChange={(content) => setFieldValue('description', content)} // Setze den Wert des Editors
+              plugins={[
+                toolbarPlugin({
+                  toolbarContents: () => (
+                    <>
+                      <UndoRedo />
+                      <Separator />
+                      <BoldItalicUnderlineToggles />
+                      <CodeToggle />
+                      <Separator />
+                      <StrikeThroughSupSubToggles />
+                      <Separator />
+                      <ListsToggle />
+                      <Separator />
+
+                      <BlockTypeSelect />
+                      <Separator />
+
+                      <CreateLink />
+
+                      <Separator />
+
+                      <InsertTable />
+                      <InsertThematicBreak />
+                    </>
+                  ),
+                }),
+                listsPlugin(),
+                quotePlugin(),
+                headingsPlugin(),
+                linkPlugin(),
+                linkDialogPlugin(),
+                tablePlugin(),
+                thematicBreakPlugin(),
+                frontmatterPlugin(),
+                codeBlockPlugin({ defaultCodeBlockLanguage: '' }),
+                markdownShortcutPlugin(),
+              ]}
               onBlur={handleBlur}
-              name={'description'}
-              placeholder={'Herkunft, Geschichte, etc.'}
-              rows={5}
             />
           </div>
 
+          {/* MDX Editor für Notes */}
           <div className={'form-control col-span-full'}>
             <label className={'label'} htmlFor={'notes'}>
               <span className={'label-text'}>Notizen</span>
               <span className={'label-text-alt space-x-2 text-error'}>
-                <span>
-                  <>{errors.notes && errors.notes}</>
-                </span>
+                <span>{errors.notes && errors.notes}</span>
               </span>
             </label>
-            <textarea
-              id={'notes'}
-              className={`textarea textarea-bordered ${errors.notes && 'textarea-error'} w-full`}
-              value={values.notes}
-              onChange={handleChange}
+            <MDXEditor
+              markdown={values.notes}
+              onChange={(content) => setFieldValue('notes', content)}
+              plugins={[
+                toolbarPlugin({
+                  toolbarContents: () => (
+                    <>
+                      {' '}
+                      <BoldItalicUnderlineToggles />
+                    </>
+                  ),
+                }),
+              ]}
               onBlur={handleBlur}
-              name={'notes'}
-              placeholder={'Lagerort, Zubereitung, etc.'}
-              rows={5}
             />
           </div>
           <div className={'col-span-full'}>

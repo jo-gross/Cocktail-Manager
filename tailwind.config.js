@@ -11,7 +11,7 @@ module.exports = {
       },
     },
   },
-  plugins: [require('daisyui')],
+  plugins: [require('daisyui'), require('@tailwindcss/typography')],
 
   daisyui: {
     themes: [
@@ -34,4 +34,6 @@ module.exports = {
     ],
     darkTheme: 'halloween',
   },
+
+  transpilePackages: ['@mdxeditor/editor'],
 };
