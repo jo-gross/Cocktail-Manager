@@ -29,6 +29,7 @@ export type CocktailCardFull = Prisma.CocktailCardGetPayload<{
                     };
                   };
                 };
+                ratings: true;
               };
             };
           };

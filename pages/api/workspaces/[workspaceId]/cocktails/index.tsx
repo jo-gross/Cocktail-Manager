@@ -37,6 +37,7 @@ export default withHttpMethods({
             },
           },
         },
+        ratings: true,
       },
     });
     let searchParam = req.query.search as string | undefined;

@@ -156,6 +156,27 @@ export function GarnishForm(props: GarnishFormProps) {
           </div>
 
           <div className={'form-control'}>
+            <label className={'label'} htmlFor={'notes'}>
+              <span className={'label-text'}>Notizen</span>
+              <span className={'label-text-alt space-x-2 text-error'}>
+                <span>
+                  <>{errors.notes && touched.notes && errors.notes}</>
+                </span>
+              </span>
+            </label>
+            <textarea
+              id={'notes'}
+              className={`textarea textarea-bordered ${errors.notes && touched.notes && 'textarea-error'} w-full`}
+              value={values.notes}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              name={'notes'}
+              placeholder={'Lagerort, Lieferant, etc.'}
+              rows={5}
+            />
+          </div>
+
+          <div className={'form-control'}>
             <label className={'label'} htmlFor={'description'}>
               <span className={'label-text'}>Allgemeine Beschreibung</span>
               <span className={'label-text-alt space-x-2 text-error'}>
