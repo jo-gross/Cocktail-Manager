@@ -105,7 +105,7 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
           {/*Left side*/}
           <div className={'flex flex-col gap-2'}>
             <div className={'flex flex-row justify-between gap-2 rounded border border-base-300 p-2'}>
-              <div className={'flex flex-col gap-2'}>
+              <div className={'flex flex-1 flex-col gap-2'}>
                 {(loadedCocktail?.tags.length ?? 0) > 0 && (
                   <div className={'gap-2'}>
                     {loadedCocktail?.tags.map((tag) => (
@@ -121,7 +121,7 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                 </div>
               </div>
               {loadedCocktail.glass && loadedCocktail.glass._count.GlassImage > 0 && (
-                <div className={'flex-1'}>
+                <div className={''}>
                   <div className={'h-16 w-16'}>
                     <AvatarImage
                       src={`/api/workspaces/${loadedCocktail.workspaceId}/glasses/${loadedCocktail.glass.id}/image`}
@@ -138,18 +138,28 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
             <div className={`grid ${loadedCocktail._count.CocktailRecipeImage > 0 ? 'grid-cols-5' : 'grid-cols-3'} gap-2`}>
               <div className={'col-span-3 flex flex-col gap-2'}>
                 <div className={'font-bold'}>Zubereitung</div>
-                {loadedCocktail.steps.map((step) => (
-                  <div key={`cocktail-details-step-${step.id}`} className={'flex flex-col gap-2 rounded border border-base-300 p-2'}>
-                    <div className={'font-bold'}>{userContext.getTranslation(step.action.name, 'de')}</div>
-                    {step.ingredients.map((stepIngredient) => (
-                      <div key={`cocktail-details-step-ingredient-${stepIngredient.id}`} className={'flex flex-row gap-2 pl-3'}>
-                        <div className={'font-bold'}>{stepIngredient.amount}</div>
-                        <div className={'font-bold'}>{userContext.getTranslation(stepIngredient.unit?.name ?? '', 'de')}</div>
-                        <div>{stepIngredient.ingredient?.name}</div>
+                {loadedCocktail.steps
+                  .sort((a, b) => a.stepNumber - b.stepNumber)
+                  .map((step) => (
+                    <div key={`cocktail-details-step-${step.id}`} className={'flex flex-col gap-2 rounded border border-base-300 p-2'}>
+                      <div className={`font-bold ${step.optional ? 'italic' : ''}`}>
+                        {userContext.getTranslation(step.action.name, 'de')} {step.optional && '(optional)'}
                       </div>
-                    ))}
-                  </div>
-                ))}
+                      {step.ingredients
+                        .sort((a, b) => a.ingredientNumber - b.ingredientNumber)
+                        .map((stepIngredient) => (
+                          <div
+                            key={`cocktail-details-step-ingredient-${stepIngredient.id}`}
+                            className={`flex flex-row gap-2 pl-3 ${stepIngredient.optional ? 'italic' : ''}`}
+                          >
+                            <div className={'font-bold'}>{stepIngredient.amount}</div>
+                            <div className={'font-bold'}>{userContext.getTranslation(stepIngredient.unit?.name ?? '', 'de')}</div>
+                            <div>{stepIngredient.ingredient?.name}</div>
+                            {stepIngredient.optional && <div>(optional)</div>}
+                          </div>
+                        ))}
+                    </div>
+                  ))}
               </div>
               {loadedCocktail._count.CocktailRecipeImage > 0 && (
                 <div className={'col-span-2'}>
@@ -178,7 +188,7 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                       className={'flex flex-col gap-2 rounded border border-base-300 p-2'}
                     >
                       <div className={'flex flex-row justify-between gap-2'}>
-                        <div className={'font-bold'}>
+                        <div className={`font-bold ${garnish.optional ? 'italic' : ''}`}>
                           {garnish.garnish.name} {garnish.optional ? '(Optional)' : ''}
                         </div>
                         {garnish.garnish._count.GarnishImage > 0 && (
@@ -240,7 +250,7 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                 {loadedCocktail.steps
                   .map((step) => step.ingredients)
                   .flat()
-                  .sort((a, b) => a.ingredientNumber - b.ingredientNumber)
+                  .sort((a, b) => (a.ingredient?.name ?? '').localeCompare(b.ingredient?.name ?? ''))
                   .map((ingredient) => (
                     <div
                       key={`cocktail-details-${loadedCocktail.id}-ingredients-${ingredient.id}`}

@@ -3,7 +3,7 @@ import { UploadDropZone } from '../UploadDropZone';
 import { convertBase64ToFile, convertToBase64 } from '../../lib/Base64Converter';
 import { useRouter } from 'next/router';
 import { FaTrashAlt } from 'react-icons/fa';
-import React, { useContext } from 'react';
+import React, { useContext, useState } from 'react';
 import { alertService } from '../../lib/alertService';
 import { DeleteConfirmationModal } from '../modals/DeleteConfirmationModal';
 import { ModalContext } from '../../lib/context/ModalContextProvider';
@@ -13,6 +13,7 @@ import { GlassWithImage } from '../../models/GlassWithImage';
 import Image from 'next/image';
 import CropComponent from '../CropComponent';
 import { FaCropSimple } from 'react-icons/fa6';
+import { Glass } from '@prisma/client';
 
 interface GlassFormProps {
   glass?: GlassWithImage;
@@ -27,7 +28,9 @@ export function GlassForm(props: GlassFormProps) {
 
   const modalContext = useContext(ModalContext);
 
-  const formRef = props.formRef || React.createRef<FormikProps<any>>();
+  const formRef = props.formRef;
+
+  const [similarGlass, setSimilarGlass] = useState<Glass | undefined>(undefined);
 
   return (
     <Formik
@@ -126,15 +129,38 @@ export function GlassForm(props: GlassFormProps) {
             </label>
             <input
               id={'name'}
+              name={'name'}
+              value={values.name}
               autoComplete={'off'}
               type={'text'}
               placeholder={'Name'}
               className={`input input-bordered w-full ${errors.name && touched.name && 'input-error'}`}
-              onChange={handleChange}
+              onChange={(event) => {
+                if (event.target.value.length > 2) {
+                  fetch(`/api/workspaces/${workspaceId}/glasses/check?name=${event.target.value}`)
+                    .then((response) => response.json())
+                    .then((data) => {
+                      console.log(data);
+                      if (data.data != null) {
+                        setSimilarGlass(data.data);
+                      } else {
+                        setSimilarGlass(undefined);
+                      }
+                    });
+                } else {
+                  setSimilarGlass(undefined);
+                }
+                handleChange(event);
+              }}
               onBlur={handleBlur}
-              value={values.name}
-              name={'name'}
             />
+            {similarGlass && (
+              <div className="label">
+                <span className="label-text-alt text-warning">
+                  Eine Ähnliche Zutat mit dem namen <strong>{similarGlass.name}</strong> existiert bereits.
+                </span>
+              </div>
+            )}
           </div>
 
           <div className={'form-control'}>

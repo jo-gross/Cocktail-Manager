@@ -1,6 +1,6 @@
 import { Formik, FormikProps } from 'formik';
 import { useRouter } from 'next/router';
-import React, { useContext } from 'react';
+import React, { useContext, useState } from 'react';
 import { UploadDropZone } from '../UploadDropZone';
 import { convertBase64ToFile, convertToBase64 } from '../../lib/Base64Converter';
 import { FaTrashAlt } from 'react-icons/fa';
@@ -28,6 +28,8 @@ export function GarnishForm(props: GarnishFormProps) {
   const modalContext = useContext(ModalContext);
 
   const formRef = props.formRef || React.createRef<FormikProps<any>>();
+
+  const [similarGarnish, setSimilarGarnish] = useState<GarnishWithImage | undefined>();
 
   return (
     <Formik
@@ -128,11 +130,34 @@ export function GarnishForm(props: GarnishFormProps) {
               autoComplete={'off'}
               placeholder={'Name'}
               className={`input input-bordered ${errors.name && touched.name && 'input-error'} w-full`}
-              onChange={handleChange}
+              onChange={(event) => {
+                if (event.target.value.length > 2) {
+                  fetch(`/api/workspaces/${workspaceId}/garnishes/check?name=${event.target.value}`)
+                    .then((response) => response.json())
+                    .then((data) => {
+                      console.log(data);
+                      if (data.data != null) {
+                        setSimilarGarnish(data.data);
+                      } else {
+                        setSimilarGarnish(undefined);
+                      }
+                    });
+                } else {
+                  setSimilarGarnish(undefined);
+                }
+                handleChange(event);
+              }}
               onBlur={handleBlur}
               value={values.name}
               name={'name'}
             />
+            {similarGarnish && (
+              <div className="label">
+                <span className="label-text-alt text-warning">
+                  Eine Ähnliche Zutat mit dem namen <strong>{similarGarnish.name}</strong> existiert bereits.
+                </span>
+              </div>
+            )}
           </div>
           <div className={'form-control'}>
             <label className={'label'} htmlFor={'notes'}>

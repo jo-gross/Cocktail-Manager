@@ -1,6 +1,6 @@
 import { FieldArray, Formik, FormikProps } from 'formik';
 import { useRouter } from 'next/router';
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { updateTags, validateTag } from '../../models/tags/TagUtils';
 import { UploadDropZone } from '../UploadDropZone';
 import { convertBase64ToFile, convertToBase64 } from '../../lib/Base64Converter';
@@ -11,7 +11,7 @@ import { ModalContext } from '../../lib/context/ModalContextProvider';
 import _ from 'lodash';
 import { compressFile } from '../../lib/ImageCompressor';
 import { IngredientWithImage } from '../../models/IngredientWithImage';
-import { Unit, UnitConversion } from '@prisma/client';
+import { Ingredient, Unit, UnitConversion } from '@prisma/client';
 import { UserContext } from '../../lib/context/UserContextProvider';
 import { fetchUnitConversions, fetchUnits } from '../../lib/network/units';
 import Image from 'next/image';
@@ -58,6 +58,10 @@ export function IngredientForm(props: IngredientFormProps) {
   const [loadingDefaultConversions, setLoadingDefaultConversions] = useState(false);
   const [defaultConversions, setDefaultConversions] = useState<UnitConversion[]>([]);
 
+  const [similarIngredient, setSimilarIngredient] = useState<Ingredient | undefined>(undefined);
+
+  const [similarLinkIngredient, setSimilarLinkIngredient] = useState<Ingredient | undefined>(undefined);
+
   useEffect(() => {
     fetchUnits(workspaceId, setAllUnits, setUnitsLoading);
     fetchUnitConversions(workspaceId, setLoadingDefaultConversions, setDefaultConversions);
@@ -75,6 +79,32 @@ export function IngredientForm(props: IngredientFormProps) {
     image: props.ingredient?.IngredientImage?.[0]?.image ?? undefined,
     originalImage: (props.ingredient?.IngredientImage.length ?? 0) > 0 ? convertBase64ToFile(props.ingredient!.IngredientImage?.[0]?.image) : undefined,
   };
+
+  const checkSimilarName = useCallback(
+    async (name: string) => {
+      const response = await fetch(`/api/workspaces/${workspaceId}/ingredients/check?name=${name}`);
+      const data = await response.json();
+      if (data.data != null) {
+        setSimilarIngredient(data.data);
+      } else {
+        setSimilarIngredient(undefined);
+      }
+    },
+    [workspaceId],
+  );
+
+  const checkSimilarLink = useCallback(
+    async (url: string) => {
+      const response = await fetch(`/api/workspaces/${workspaceId}/ingredients/check?link=${encodeURI(url)}`);
+      const data = await response.json();
+      if (data.data != null) {
+        setSimilarLinkIngredient(data.data);
+      } else {
+        setSimilarLinkIngredient(undefined);
+      }
+    },
+    [workspaceId],
+  );
 
   return (
     <Formik
@@ -184,11 +214,25 @@ export function IngredientForm(props: IngredientFormProps) {
               type={'text'}
               autoComplete={'off'}
               className={`input input-bordered ${errors.name && touched.name && 'input-error'}`}
-              onChange={handleChange}
+              onChange={(event) => {
+                if (event.target.value.length > 2) {
+                  checkSimilarName(event.target.value);
+                } else {
+                  setSimilarIngredient(undefined);
+                }
+                handleChange(event);
+              }}
               onBlur={handleBlur}
               value={values.name}
               name={'name'}
             />
+            {similarIngredient && (
+              <div className="label">
+                <span className="label-text-alt text-warning">
+                  Eine Ähnliche Zutat mit dem namen <strong>{similarIngredient.name}</strong> existiert bereits.
+                </span>
+              </div>
+            )}
           </div>
           <div className={'form-control'}>
             <label className={'label'} htmlFor={'shortName'}>
@@ -523,7 +567,10 @@ export function IngredientForm(props: IngredientFormProps) {
                 type={'text'}
                 placeholder={''}
                 className={`input join-item input-bordered w-full ${errors.link && touched.link && 'input-error'}`}
-                onChange={handleChange}
+                onChange={async (event) => {
+                  checkSimilarLink(event.target.value);
+                  handleChange(event);
+                }}
                 onBlur={handleBlur}
                 value={values.link}
                 name={'link'}
@@ -559,6 +606,7 @@ export function IngredientForm(props: IngredientFormProps) {
                             await setFieldValue('volume', data.volume);
                           }
                           await setFieldValue('selectedUnit', allUnits.find((unit) => unit.name == 'CL')?.id ?? '');
+                          checkSimilarName(data.name);
                         });
                       } else {
                         alertService.warn('Es konnten keine Daten über die URL geladen werden.');
@@ -574,6 +622,13 @@ export function IngredientForm(props: IngredientFormProps) {
                 <FaSyncAlt />
               </button>
             </div>
+            {similarLinkIngredient && (
+              <div className="label">
+                <span className="label-text-alt text-warning">
+                  Eine Zutat mit ähnlicher Url existiert bereits unter dem Namen <strong>{similarLinkIngredient.name}</strong>.
+                </span>
+              </div>
+            )}
           </div>
           <div className={'form-control'}>
             <button type={'submit'} className={`btn btn-primary`} disabled={isSubmitting || !isValid}>
