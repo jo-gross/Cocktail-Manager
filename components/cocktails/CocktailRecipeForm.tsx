@@ -251,9 +251,9 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
           if (reducedCocktailRecipe.description == null) {
             reducedCocktailRecipe.description = '';
           }
-        if (reducedCocktailRecipe.notes == null) {
-          reducedCocktailRecipe.notes = '';
-        }
+          if (reducedCocktailRecipe.notes == null) {
+            reducedCocktailRecipe.notes = '';
+          }
           if (reducedCocktailRecipe.steps != undefined) {
             reducedCocktailRecipe.steps = orderBy(reducedCocktailRecipe.steps, ['stepNumber'], ['asc']);
             reducedCocktailRecipe.steps.forEach((step) => {
