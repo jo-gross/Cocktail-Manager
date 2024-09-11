@@ -8,6 +8,7 @@ import { ModalContext } from '../../lib/context/ModalContextProvider';
 import InputModal from '../modals/InputModal';
 import { alertService } from '../../lib/alertService';
 import { useRouter } from 'next/router';
+import { routerConditionalBack } from '../../lib/RouterUtils';
 
 interface CardOverviewItemProps {
   card: CocktailCardFull;
@@ -50,8 +51,8 @@ export default function CardOverviewItem(props: CardOverviewItemProps) {
 
                           const body = await response.json();
                           if (response.ok) {
-                            await router.replace(`/workspaces/${props.workspaceId}/manage/cards/${body.data.id}`);
                             alertService.success('Karte erfolgreich dupliziert');
+                            await routerConditionalBack(router, `/workspaces/${props.workspaceId}/manage/cards/${body.data.id}`);
                           } else {
                             console.error('CardId -> cloneCard', response);
                             alertService.error(body.message ?? 'Fehler beim Duplizieren der Karte', response.status, response.statusText);

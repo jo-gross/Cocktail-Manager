@@ -19,6 +19,7 @@ import { DaisyUITagInput } from '../DaisyUITagInput';
 import CropComponent from '../CropComponent';
 import { FaCropSimple } from 'react-icons/fa6';
 import '../../lib/ArrayUtils';
+import { routerConditionalBack } from '../../lib/RouterUtils';
 
 interface IngredientFormProps {
   ingredient?: IngredientWithImage;
@@ -143,7 +144,8 @@ export function IngredientForm(props: IngredientFormProps) {
               if (props.onSaved != undefined) {
                 props.onSaved((await response.json()).data.id);
               } else {
-                router.replace(`/workspaces/${workspaceId}/manage/ingredients`).then(() => alertService.success('Zutat erfolgreich erstellt'));
+                alertService.success('Zutat erfolgreich erstellt');
+                await routerConditionalBack(router, `/workspaces/${workspaceId}/manage/ingredients`);
               }
             } else {
               const body = await response.json();
@@ -160,7 +162,8 @@ export function IngredientForm(props: IngredientFormProps) {
               if (props.onSaved != undefined) {
                 props.onSaved(props.ingredient.id);
               } else {
-                router.replace(`/workspaces/${workspaceId}/manage/ingredients`).then(() => alertService.success('Zutat erfolgreich gespeichert'));
+                alertService.success('Zutat erfolgreich gespeichert');
+                await routerConditionalBack(router, `/workspaces/${workspaceId}/manage/ingredients`);
               }
             } else {
               const body = await response.json();

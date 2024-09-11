@@ -35,6 +35,7 @@ import { DaisyUITagInput } from '../DaisyUITagInput';
 import CropComponent from '../CropComponent';
 import { FaCropSimple } from 'react-icons/fa6';
 import DeepDiff from 'deep-diff';
+import { routerConditionalBack } from '../../lib/RouterUtils';
 
 interface CocktailRecipeFormProps {
   cocktailRecipe?: CocktailRecipeFullWithImage;
@@ -407,7 +408,8 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
               body: JSON.stringify(body),
             });
             if (response.status.toString().startsWith('2')) {
-              router.replace(`/workspaces/${workspaceId}/manage/cocktails`).then(() => alertService.success('Erfolgreich erstellt'));
+              alertService.success('Erfolgreich erstellt');
+              await routerConditionalBack(router, `/workspaces/${workspaceId}/manage/cocktails`);
             } else {
               const body = await response.json();
               console.error('CocktailRecipeForm -> onSubmit[create]', response);
@@ -420,7 +422,8 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
               body: JSON.stringify(body),
             });
             if (response.status.toString().startsWith('2')) {
-              router.replace(`/workspaces/${workspaceId}/manage/cocktails`).then(() => alertService.success('Erfolgreich gespeichert'));
+              alertService.success('Erfolgreich aktualisiert');
+              await routerConditionalBack(router, `/workspaces/${workspaceId}/manage/cocktails`);
             } else {
               const body = await response.json();
               console.error('CocktailRecipeForm -> onSubmit[update]', response);

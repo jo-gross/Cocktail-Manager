@@ -13,6 +13,7 @@ import Image from 'next/image';
 import CropComponent from '../CropComponent';
 import { FaCropSimple } from 'react-icons/fa6';
 import _ from 'lodash';
+import { routerConditionalBack } from '../../lib/RouterUtils';
 
 interface GarnishFormProps {
   garnish?: GarnishWithImage;
@@ -62,7 +63,8 @@ export function GarnishForm(props: GarnishFormProps) {
               if (props.onSaved != undefined) {
                 props.onSaved((await response.json()).data.id);
               } else {
-                router.replace(`/workspaces/${workspaceId}/manage/garnishes`).then(() => alertService.success('Garnitur erfolgreich erstellt'));
+                alertService.success('Garnitur erfolgreich erstellt');
+                await routerConditionalBack(router, `/workspaces/${workspaceId}/manage/garnishes`);
               }
             } else {
               const body = await response.json();
@@ -79,7 +81,8 @@ export function GarnishForm(props: GarnishFormProps) {
               if (props.onSaved != undefined) {
                 props.onSaved(props.garnish.id);
               } else {
-                router.replace(`/workspaces/${workspaceId}/manage/garnishes`).then(() => alertService.success('Garnitur erfolgreich gespeichert'));
+                alertService.success('Garnitur erfolgreich gespeichert');
+                await routerConditionalBack(router, `/workspaces/${workspaceId}/manage/garnishes`);
               }
             } else {
               const body = await response.json();

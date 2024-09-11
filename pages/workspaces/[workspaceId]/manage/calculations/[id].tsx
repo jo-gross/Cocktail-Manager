@@ -18,6 +18,7 @@ import { fetchIngredients } from '../../../../../lib/network/ingredients';
 import _ from 'lodash';
 import { fetchUnits } from '../../../../../lib/network/units';
 import '../../../../../lib/DateUtils';
+import { routerConditionalBack } from '../../../../../lib/RouterUtils';
 
 interface CocktailCalculationItem {
   cocktail: CocktailRecipeFull;
@@ -505,7 +506,7 @@ export default function CalculationPage() {
           openNameModal();
         } else {
           saveCalculationBackend(false);
-          await router.replace(`/workspaces/${workspaceId}/manage/calculations`);
+          await routerConditionalBack(router, `/workspaces/${workspaceId}/manage/calculations`);
         }
       }}
       title={
