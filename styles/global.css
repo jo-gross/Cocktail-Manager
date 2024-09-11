@@ -38,6 +38,10 @@
   @apply border-red-800 bg-red-700 text-white hover:bg-red-800;
 }
 
+.long-text-format {
+  @apply whitespace-pre-line text-pretty break-normal text-justify;
+}
+
 /*
 Remove arrows from input field
 https://stackoverflow.com/a/74043438/12160393

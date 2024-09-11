@@ -208,19 +208,19 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                       {garnish.description && (
                         <>
                           <div className={'underline'}>Cocktailspezifische-Notizen</div>
-                          <div>{garnish.description}</div>
+                          <div className={'long-text-format'}>{garnish.description}</div>
                         </>
                       )}
                       {garnish.garnish.description && (
                         <>
                           <div className={'underline'}>Allgemeine Beschreibung</div>
-                          {garnish.garnish.description}
+                          <div className={'long-text-format'}>{garnish.garnish.description}</div>
                         </>
                       )}
                       {garnish.garnish.notes && (
                         <>
                           <div className={'underline'}>Notizen</div>
-                          {garnish.garnish.notes}
+                          <div className={'long-text-format'}>{garnish.garnish.notes}</div>
                         </>
                       )}
                     </div>
@@ -235,13 +235,13 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
             {loadedCocktail.notes && (
               <>
                 <div className={'font-bold'}>Kurzhinweise // Notizen</div>
-                <div className={'rounded border border-base-300 p-2 text-justify'}>{loadedCocktail.notes}</div>
+                <div className={'long-text-format rounded border border-base-300 p-2'}>{loadedCocktail.notes}</div>
               </>
             )}
             {loadedCocktail.description && (
               <>
                 <div className={'font-bold'}>Ausführliche Cocktailbeschreibung</div>
-                <div className={'rounded border border-base-300 p-2 text-justify'}>{loadedCocktail.description}</div>
+                <div className={'long-text-format rounded border border-base-300 p-2 text-justify'}>{loadedCocktail.description}</div>
               </>
             )}
             {loadedCocktail.steps.map((step) => step.ingredients).flat().length > 0 && (
@@ -282,13 +282,13 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                       {ingredient.ingredient?.description && (
                         <div className={'text-justify'}>
                           <div className={'underline'}>Produktbeschreibung</div>
-                          {ingredient.ingredient?.description}
+                          <div className={'long-text-format'}>{ingredient.ingredient?.description}</div>
                         </div>
                       )}
                       {ingredient.ingredient?.notes && (
                         <div className={'text-justify'}>
                           <div className={'underline'}>Notizen</div>
-                          {ingredient.ingredient?.notes}
+                          <div className={'long-text-format'}>{ingredient.ingredient?.notes}</div>
                         </div>
                       )}
                       {(ingredient.ingredient?.tags.length ?? 0) > 0 && (

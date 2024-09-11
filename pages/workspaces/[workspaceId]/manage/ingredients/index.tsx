@@ -119,11 +119,11 @@ export default function IngredientsOverviewPage() {
                             onClick={() => {
                               modalContext.openModal(
                                 <div className={'flex flex-col gap-2'}>
-                                  <div className={'text-2xl font-bold'}>{ingredient.name}</div>
+                                  <div className={'mr-8 text-2xl font-bold'}>{ingredient.name}</div>
                                   <div className={'text-lg font-bold'}>Produktbeschreibung</div>
-                                  <div className={'whitespace-pre-wrap text-justify'}>{ingredient.description ?? '-'}</div>
+                                  <div className={'long-text-format'}>{ingredient.description ?? '-'}</div>
                                   <div className={'text-lg font-bold'}>Notizen</div>
-                                  <div className={'whitespace-pre-wrap text-justify'}>{ingredient.notes ?? '-'}</div>
+                                  <div className={'long-text-format'}>{ingredient.notes ?? '-'}</div>
                                 </div>,
                               );
                             }}
