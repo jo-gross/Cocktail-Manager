@@ -99,14 +99,16 @@ export default withHttpMethods({
           data: {
             action: { connect: { id: step.actionId } },
             stepNumber: step.stepNumber,
+            optional: step.optional,
             cocktailRecipe: { connect: { id: result!.id } },
             ingredients: {
-              create: step.ingredients.map((ingredient) => {
+              create: step.ingredients.map((stepIngredient) => {
                 return {
-                  amount: ingredient.amount,
-                  ingredientNumber: ingredient.ingredientNumber,
-                  unit: { connect: { id: ingredient.unitId } },
-                  ingredient: { connect: { id: ingredient.ingredientId } },
+                  amount: stepIngredient.amount,
+                  optional: stepIngredient.optional,
+                  ingredientNumber: stepIngredient.ingredientNumber,
+                  unit: { connect: { id: stepIngredient.unitId } },
+                  ingredient: { connect: { id: stepIngredient.ingredientId } },
                 };
               }),
             },
