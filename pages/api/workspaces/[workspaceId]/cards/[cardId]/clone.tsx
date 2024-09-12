@@ -27,7 +27,6 @@ export default withHttpMethods({
           createdAt: undefined,
           updatedAt: undefined,
           workspaceId: workspace.id,
-          showTime: existing.showTime,
           date: existing.date,
           archived: existing.archived,
         },
