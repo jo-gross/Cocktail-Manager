@@ -1,12 +1,11 @@
 import { CocktailRecipeFull } from '../../models/CocktailRecipeFull';
 import Link from 'next/link';
-import { FaArrowLeft, FaInfo, FaPencilAlt, FaPlus, FaTimes } from 'react-icons/fa';
+import { FaArrowLeft, FaInfo, FaPencilAlt, FaPlus, FaSyncAlt, FaTimes } from 'react-icons/fa';
 import { ModalContext } from '../../lib/context/ModalContextProvider';
-import React, { useCallback, useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { UserContext } from '../../lib/context/UserContextProvider';
-import { Role } from '@prisma/client';
-import { alertService } from '../../lib/alertService';
+import { CocktailRating, Role } from '@prisma/client';
 import Image from 'next/image';
 import AvatarImage from '../AvatarImage';
 import { Loading } from '../Loading';
@@ -19,6 +18,8 @@ import { IngredientModel } from '../../models/IngredientModel';
 import AddCocktailRatingModal from './AddCocktailRatingModal';
 import CocktailRatingsModal from './CocktailRatingsModal';
 import StarsComponent from '../StarsComponent';
+import { fetchCocktailRatings } from '../../lib/network/cocktailRatings';
+import { fetchCocktail } from '../../lib/network/cocktails';
 
 interface CocktailDetailModalProps {
   cocktailId: string;
@@ -35,32 +36,15 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
 
   const [ingredients, setIngredients] = useState<IngredientModel[] | undefined>(undefined);
 
-  const fetchCocktail = useCallback(async () => {
-    if (!workspaceId) return;
-
-    setLoading(true);
-    try {
-      const response = await fetch(`/api/workspaces/${workspaceId}/cocktails/${props.cocktailId}`);
-      if (response.ok) {
-        const body = await response.json();
-        setLoadedCocktail(body.data);
-      } else {
-        const body = await response.json();
-        console.error('CocktailDetailModal -> fetchCocktail', response);
-        alertService.error(body.message ?? 'Fehler beim Laden des Cocktails', response.status, response.statusText);
-      }
-    } catch (error) {
-      console.error('CocktailDetailModal -> fetchCocktail', error);
-      alertService.error('Fehler beim Laden des Cocktails');
-    } finally {
-      setLoading(false);
-    }
-  }, [props.cocktailId, workspaceId]);
+  const [cocktailRatings, setCocktailRatings] = useState<CocktailRating[]>([]);
+  const [ratingsLoading, setRatingsLoading] = useState(true);
+  const [ratingError, setRatingsError] = useState(false);
 
   useEffect(() => {
     fetchIngredients(workspaceId, setIngredients, () => {});
-    fetchCocktail();
-  }, [fetchCocktail, workspaceId]);
+    fetchCocktail(workspaceId, props.cocktailId, setLoadedCocktail, setLoading);
+    fetchCocktailRatings(workspaceId, props.cocktailId, setCocktailRatings, setRatingsLoading, setRatingsError);
+  }, [workspaceId]);
 
   const [submittingStatistic, setSubmittingStatistic] = useState(false);
   const [submittingQueue, setSubmittingQueue] = useState(false);
@@ -308,41 +292,69 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
             <div className={'w-full gap-2'}>
               <span className={'font-bold'}>Bewertung</span>
               <div className={'flex flex-row items-center gap-2'}>
-                {(loadedCocktail.ratings ?? []).length > 0
-                  ? (loadedCocktail.ratings.reduce((acc, rating) => acc + rating.rating, 0) / loadedCocktail.ratings.length).toFixed(1)
-                  : 'Keine Bewertungen'}
-                <StarsComponent
-                  rating={
-                    loadedCocktail.ratings.length > 0
-                      ? loadedCocktail.ratings.reduce((acc, rating) => acc + rating.rating, 0) / loadedCocktail.ratings.length
-                      : 0
-                  }
-                />
-                ({loadedCocktail.ratings.length})
-                {loadedCocktail.ratings.length != 0 ? (
-                  <button
-                    type={'button'}
-                    className={'btn btn-square btn-outline btn-info btn-sm'}
-                    disabled={loadedCocktail.ratings.length === 0}
-                    onClick={() =>
-                      modalContext.openModal(
-                        <CocktailRatingsModal cocktailId={loadedCocktail.id} cocktailName={loadedCocktail.name} onRefresh={fetchCocktail} />,
-                      )
-                    }
-                  >
-                    <FaInfo />
-                  </button>
+                {ratingError ? (
+                  <>
+                    <div>Fehler beim Laden der Bewertungen</div>
+                    <button
+                      type={'button'}
+                      className={`btn btn-square btn-outline btn-sm`}
+                      disabled={ratingsLoading}
+                      onClick={() => fetchCocktailRatings(workspaceId, props.cocktailId, setCocktailRatings, setRatingsLoading, setRatingsError)}
+                    >
+                      {ratingsLoading && <span className="loading loading-spinner"></span>}
+                      <FaSyncAlt />
+                    </button>
+                  </>
                 ) : (
-                  <></>
+                  <>
+                    {ratingsLoading ? (
+                      <Loading />
+                    ) : (cocktailRatings ?? []).length > 0 ? (
+                      (cocktailRatings.reduce((acc, rating) => acc + rating.rating, 0) / cocktailRatings.length).toFixed(1)
+                    ) : (
+                      'Keine Bewertungen'
+                    )}
+                    <StarsComponent
+                      rating={cocktailRatings.length > 0 ? cocktailRatings.reduce((acc, rating) => acc + rating.rating, 0) / cocktailRatings.length : 0}
+                    />
+                    ({cocktailRatings.length})
+                    {cocktailRatings.length != 0 ? (
+                      <button
+                        type={'button'}
+                        className={'btn btn-square btn-outline btn-info btn-sm'}
+                        disabled={cocktailRatings.length === 0}
+                        onClick={() =>
+                          modalContext.openModal(
+                            <CocktailRatingsModal
+                              cocktailId={loadedCocktail.id}
+                              cocktailName={loadedCocktail.name}
+                              onRefresh={() => fetchCocktailRatings(workspaceId, props.cocktailId, setCocktailRatings, setRatingsLoading, setRatingsError)}
+                            />,
+                          )
+                        }
+                      >
+                        <FaInfo />
+                      </button>
+                    ) : (
+                      <></>
+                    )}
+                    <div className={'flex-grow'}></div>
+                    <button
+                      type={'button'}
+                      className={'btn btn-outline btn-sm'}
+                      onClick={() =>
+                        modalContext.openModal(
+                          <AddCocktailRatingModal
+                            cocktailId={props.cocktailId}
+                            onCreated={() => fetchCocktailRatings(workspaceId, props.cocktailId, setCocktailRatings, setRatingsLoading, setRatingsError)}
+                          />,
+                        )
+                      }
+                    >
+                      <FaPlus /> Bewertung hinzufügen
+                    </button>
+                  </>
                 )}
-                <div className={'flex-grow'}></div>
-                <button
-                  type={'button'}
-                  className={'btn btn-outline btn-sm'}
-                  onClick={() => modalContext.openModal(<AddCocktailRatingModal cocktailId={props.cocktailId} onCreated={fetchCocktail} />)}
-                >
-                  <FaPlus /> Bewertung hinzufügen
-                </button>
               </div>
             </div>
 

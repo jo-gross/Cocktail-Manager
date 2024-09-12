@@ -428,7 +428,7 @@ export default function OverviewPage() {
                           group.items
                             ?.sort((a, b) => a.itemNumber - b.itemNumber)
                             .map((groupItem, index) => {
-                              if (groupItem.cocktail != undefined) {
+                              if (groupItem.cocktailId != undefined) {
                                 return (
                                   <CocktailRecipeCardItem
                                     key={`card-${selectedCard.id}-group-${group.id}-cocktail-${groupItem.cocktailId}-${index}`}
@@ -437,7 +437,7 @@ export default function OverviewPage() {
                                     showInfo={true}
                                     showPrice={groupItem.specialPrice == undefined && group.groupPrice == undefined}
                                     specialPrice={groupItem.specialPrice ?? group.groupPrice ?? undefined}
-                                    cocktailRecipe={groupItem.cocktail}
+                                    cocktailRecipe={groupItem.cocktailId}
                                     showStatisticActions={showStatisticActions}
                                     showDescription={showDescription}
                                     showNotes={showNotes}
