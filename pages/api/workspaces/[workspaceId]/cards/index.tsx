@@ -40,11 +40,10 @@ export default withHttpMethods({
     return res.json({ data: result });
   }),
   [HTTPMethod.POST]: withWorkspacePermission([Role.MANAGER], async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
-    const { name, date, groups, showTime } = req.body;
+    const { name, date, groups } = req.body;
     const input: CocktailCardCreateInput = {
       name: name,
       date: date,
-      showTime: showTime,
       workspace: { connect: { id: workspace.id } },
     };
     const result = await prisma.cocktailCard.create({
