@@ -487,7 +487,7 @@ export default function OverviewPage() {
               >
                 <div className={'flex flex-col space-x-2'}>
                   <label className="label">
-                    <div className={'label-text'}>Such Ansicht</div>
+                    <div className={'label-text'}>Cocktailsuche</div>
                     <input
                       name={'card-radio'}
                       type={'radio'}
@@ -555,7 +555,7 @@ export default function OverviewPage() {
                   <div className={'divider'}>Darstellung</div>
                   <div className={'w-full pr-3'}>
                     <details className="collapse collapse-arrow max-w-full self-center justify-self-center border">
-                      <summary className="collapse-title">Rezept</summary>
+                      <summary className="collapse-title">Rezeptbereich</summary>
                       <div className="collapse-content">
                         <div className="form-control">
                           <label className="label">
