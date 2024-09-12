@@ -10,7 +10,7 @@ import { Loading } from '../Loading';
 import { fetchCocktail } from '../../lib/network/cocktails';
 
 interface CocktailRecipeOverviewItemProps {
-  cocktailRecipe: CocktailRecipeFull;
+  cocktailRecipe: CocktailRecipeFull | string;
   showImage?: boolean;
   specialPrice?: number;
   showPrice?: boolean;
@@ -29,16 +29,18 @@ export default function CocktailRecipeCardItem(props: CocktailRecipeOverviewItem
   const [submittingStatistic, setSubmittingStatistic] = useState(false);
   const [submittingQueue, setSubmittingQueue] = useState(false);
 
-  const [cocktailRecipe, setCocktailRecipe] = useState<CocktailRecipeFull | undefined>(
+  const [loadedCocktailRecipe, setLoadedCocktailRecipe] = useState<CocktailRecipeFull | undefined>(
     typeof props.cocktailRecipe === 'string' ? undefined : props.cocktailRecipe,
   );
   const [cocktailRecipeLoading, setCocktailRecipeLoading] = useState(false);
 
   useEffect(() => {
     if (typeof props.cocktailRecipe === 'string') {
-      fetchCocktail(workspaceId, props.cocktailRecipe, setCocktailRecipe, setCocktailRecipeLoading);
+      fetchCocktail(workspaceId, props.cocktailRecipe, setLoadedCocktailRecipe, setCocktailRecipeLoading);
     }
   }, [workspaceId, props.cocktailRecipe]);
+
+  const cocktailRecipe = typeof props.cocktailRecipe === 'string' ? loadedCocktailRecipe : props.cocktailRecipe;
 
   return (
     <div className={'col-span-1'}>

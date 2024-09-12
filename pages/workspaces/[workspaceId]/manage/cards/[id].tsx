@@ -369,7 +369,7 @@ function EditCocktailCard() {
                           <div className={'pt-2'}>
                             <FieldArray name={`groups.${groupIndex}.items`}>
                               {({ push: pushItem, remove: removeItem }) => (
-                                <div className={'grid grid-cols-1 gap-2 md:grid-cols-3'}>
+                                <div className={'grid grid-cols-1 gap-2 md:grid-cols-5 lg:grid-cols-7'}>
                                   {values.groups[groupIndex].items
                                     .sort((a, b) => a.itemNumber - b.itemNumber)
                                     .map((item, itemIndex) => (
@@ -450,7 +450,7 @@ function EditCocktailCard() {
                                         </div>
                                       </div>
                                     ))}
-                                  <div className={'col-span-1 flex flex-row justify-end md:col-span-3'}>
+                                  <div className={'col-span-full flex flex-row justify-end'}>
                                     {!card?.archived ? (
                                       <button
                                         type="button"
