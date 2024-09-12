@@ -89,7 +89,7 @@ export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeIns
                 .map((garnish) => (
                   <div
                     key={`cocktail-${props.cocktailRecipe.id}-garnish-${garnish.garnishNumber}-garnishId-${garnish.garnishId}`}
-                    className={garnish.optional ? 'italic' : ''}
+                    className={`pl-2 ${garnish.optional ? 'italic' : ''}`}
                   >
                     {garnish?.garnish?.name}
                     {garnish.optional ? ' (optional)' : ''}
