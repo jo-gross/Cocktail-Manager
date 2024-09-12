@@ -12,6 +12,7 @@ import { PageCenter } from '../../../../../components/layout/PageCenter';
 import { UserContext } from '../../../../../lib/context/UserContextProvider';
 import { ModalContext } from '../../../../../lib/context/ModalContextProvider';
 import { NotSavedArchiveConfirmation } from '../../../../../components/modals/NotSavedArchiveConfirmation';
+import { fetchCocktailWithImage } from '../../../../../lib/network/cocktails';
 
 function EditCocktailRecipe() {
   const router = useRouter();
@@ -27,27 +28,8 @@ function EditCocktailRecipe() {
   const formRef: any = useRef<FormikProps<any>>(null);
 
   useEffect(() => {
-    if (!id) return;
-    if (!workspaceId) return;
-    setLoading(true);
-    fetch(`/api/workspaces/${workspaceId}/cocktails/${id}`)
-      .then(async (response) => {
-        const body = await response.json();
-        if (response.ok) {
-          setCocktailRecipe(body.data);
-        } else {
-          console.error('CocktailId -> fetchCocktail', response);
-          alertService.error(body.message ?? 'Fehler beim Laden des Cocktails', response.status, response.statusText);
-        }
-      })
-      .catch((error) => {
-        console.error('CocktailId -> fetchCocktail', error);
-        alertService.error('Fehler beim Laden des Cocktails');
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  }, [id, workspaceId]);
+    fetchCocktailWithImage(workspaceId as string, id as string, setCocktailRecipe, setLoading);
+  }, []);
 
   return loading ? (
     <PageCenter>
