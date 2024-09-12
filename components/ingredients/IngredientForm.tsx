@@ -45,6 +45,7 @@ import {
   UndoRedo,
 } from '@mdxeditor/editor';
 import '@mdxeditor/editor/style.css';
+import { ThemeContext } from '../../lib/context/ThemeContextProvider';
 
 interface IngredientFormProps {
   ingredient?: IngredientWithImage;
@@ -76,6 +77,7 @@ export function IngredientForm(props: IngredientFormProps) {
   const workspaceId = router.query.workspaceId as string | undefined;
   const modalContext = useContext(ModalContext);
   const userContext = useContext(UserContext);
+  const themeContext = useContext(ThemeContext);
 
   const formRef = props.formRef || React.createRef<FormikProps<any>>();
 
@@ -690,10 +692,11 @@ export function IngredientForm(props: IngredientFormProps) {
                 <span>{errors.description && errors.description}</span>
               </span>
             </label>
+
             <MDXEditor
               markdown={values.description}
-              className={'dark-editor'}
-              contentEditableClassName={'prose rounded bg-base-100 mt-1'}
+              className={'dark-theme dark-editor'}
+              contentEditableClassName={'prose'} //
               onChange={(content) => setFieldValue('description', content)} // Setze den Wert des Editors
               plugins={[
                 toolbarPlugin({
