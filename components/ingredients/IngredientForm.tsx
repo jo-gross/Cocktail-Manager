@@ -410,7 +410,7 @@ export function IngredientForm(props: IngredientFormProps) {
                       ) : (
                         (values.units as FormUnitValue[]).map((unit, index) => (
                           <tr key={`selected-units-${unit.unitId}`}>
-                            <td>{unit.volume.toFixed(1)}</td>
+                            <td>{unit.volume.toFixed(2)}</td>
                             <td>{userContext.getTranslation(allUnits.find((availableUnit) => availableUnit.id == unit.unitId)?.name ?? 'N/A', 'de')}</td>
                             <td>
                               {values.price != undefined ? (values.price / unit.volume).toFixed(2).replace(/\D00(?=\D*$)/, '') : '-'} €/
