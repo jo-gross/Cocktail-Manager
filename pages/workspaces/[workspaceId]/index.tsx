@@ -437,7 +437,7 @@ export default function OverviewPage() {
                                     showInfo={true}
                                     showPrice={groupItem.specialPrice == undefined && group.groupPrice == undefined}
                                     specialPrice={groupItem.specialPrice ?? group.groupPrice ?? undefined}
-                                    cocktailRecipe={groupItem.cocktail}
+                                    cocktailRecipe={groupItem.cocktail.id}
                                     showStatisticActions={showStatisticActions}
                                     showDescription={showDescription}
                                     showNotes={showNotes}
