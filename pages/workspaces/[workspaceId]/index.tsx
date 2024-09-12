@@ -650,20 +650,22 @@ export default function OverviewPage() {
                           />
                         </label>
                       </div>
-                      <div className="form-control">
-                        <label className="label">
-                          Weniger Spalten
-                          <input
-                            type={'checkbox'}
-                            className={'toggle toggle-primary'}
-                            checked={lessItems}
-                            readOnly={true}
-                            onClick={() => {
-                              userContext.updateUserSetting(Setting.lessItems, !lessItems ? 'true' : 'false');
-                            }}
-                          />
-                        </label>
-                      </div>
+                      {router.query.card !== 'search' && (
+                        <div className="form-control">
+                          <label className="label">
+                            Weniger Spalten
+                            <input
+                              type={'checkbox'}
+                              className={'toggle toggle-primary'}
+                              checked={lessItems}
+                              readOnly={true}
+                              onClick={() => {
+                                userContext.updateUserSetting(Setting.lessItems, !lessItems ? 'true' : 'false');
+                              }}
+                            />
+                          </label>
+                        </div>
+                      )}
                       <div className="form-control">
                         <label className="label">
                           Warteschlange als Overlay
