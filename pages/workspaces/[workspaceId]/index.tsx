@@ -25,6 +25,8 @@ export default function OverviewPage() {
   const router = useRouter();
   const { workspaceId } = router.query;
 
+  // Set by user settings
+
   const [showImage, setShowImage] = useState(false);
   const [showTags, setShowTags] = useState(false);
   const [lessItems, setLessItems] = useState(false);
@@ -32,6 +34,7 @@ export default function OverviewPage() {
   const [showQueueAsOverlay, setShowQueueAsOverlay] = useState(false);
   const [showDescription, setShowDescription] = useState(false);
   const [showNotes, setShowNotes] = useState(false);
+  const [showTime, setShowTime] = useState(false);
 
   const [cocktailCards, setCocktailCards] = useState<CocktailCardFull[]>([]);
   const [loadingCards, setLoadingCards] = useState(true);
@@ -189,6 +192,7 @@ export default function OverviewPage() {
     setShowQueueAsOverlay(userContext.user?.settings?.find((s) => s.setting == Setting.showQueueAsOverlay)?.value == 'true' ?? false);
     setShowDescription(userContext.user?.settings?.find((s) => s.setting == Setting.showDescription)?.value == 'true' ?? false);
     setShowNotes(userContext.user?.settings?.find((s) => s.setting == Setting.showNotes)?.value == 'true' ?? false);
+    setShowTime(userContext.user?.settings?.find((s) => s.setting == Setting.showTime)?.value == 'true' ?? false);
   }, [userContext.user?.settings]);
 
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -305,7 +309,7 @@ export default function OverviewPage() {
       </Head>
 
       <div className={'static h-screen'}>
-        {selectedCard?.showTime ? <div className={'pt-2'}>{timeComponent}</div> : <></>}
+        {showTime ? <div className={'pt-2'}>{timeComponent}</div> : <></>}
 
         <div
           className={`grid grid-cols-1 gap-2 p-2 ${showQueueAsOverlay ? '' : showStatisticActions && cocktailQueue.length > 0 ? 'lg:grid-cols-6' : ''} print:grid-cols-5 print:overflow-clip print:p-0`}
@@ -460,7 +464,7 @@ export default function OverviewPage() {
           </div>
         </div>
 
-        {selectedCard?.showTime ? <div className={'pb-2'}>{timeComponent}</div> : <></>}
+        {showTime ? <div className={'pb-2'}>{timeComponent}</div> : <></>}
 
         <div ref={actionButtonRef} className={'fixed bottom-2 right-2 z-10 flex flex-col space-y-2 md:bottom-5 md:right-5 print:hidden'}>
           <div className="dropdown dropdown-end dropdown-top pt-2">
@@ -469,7 +473,7 @@ export default function OverviewPage() {
             </label>
             <div
               tabIndex={0}
-              className={`dropdown-content h-min w-52 rounded-box bg-base-100 p-2 shadow`}
+              className={`dropdown-content h-min w-64 rounded-box bg-base-100 p-2 shadow`}
               style={{
                 maxHeight: maxDropdownHeight + 'px',
               }}
@@ -482,7 +486,27 @@ export default function OverviewPage() {
                 }}
               >
                 <div className={'flex flex-col space-x-2'}>
-                  <div className={'divider'}>Karte</div>
+                  <label className="label">
+                    <div className={'label-text'}>Such Ansicht</div>
+                    <input
+                      name={'card-radio'}
+                      type={'radio'}
+                      className={'radio'}
+                      value={'search'}
+                      checked={selectedCardId == 'search' || selectedCardId == undefined}
+                      readOnly={true}
+                      onClick={() => {
+                        setSelectedCardId('search');
+                        router
+                          .replace({
+                            pathname: '/workspaces/[workspaceId]',
+                            query: { card: 'search', workspaceId: workspaceId },
+                          })
+                          .then();
+                      }}
+                    />
+                  </label>
+                  <div className={'divider-sm'}>Karte(n)</div>
                   {loadingCards ? (
                     <Loading />
                   ) : cocktailCards.length == 0 ? (
@@ -528,125 +552,136 @@ export default function OverviewPage() {
                     ))
                   )}
 
-                  <div className={'divider'}>Anzeige</div>
-                  <label className="label">
-                    <div className={'label-text'}>Suche</div>
-                    <input
-                      name={'card-radio'}
-                      type={'radio'}
-                      className={'radio'}
-                      value={'search'}
-                      checked={selectedCardId == 'search' || selectedCardId == undefined}
-                      readOnly={true}
-                      onClick={() => {
-                        setSelectedCardId('search');
-                        router
-                          .replace({
-                            pathname: '/workspaces/[workspaceId]',
-                            query: { card: 'search', workspaceId: workspaceId },
-                          })
-                          .then();
-                      }}
-                    />
-                  </label>
-                  <div className="form-control">
-                    <label className="label">
-                      Bilder anzeigen
-                      <input
-                        type={'checkbox'}
-                        className={'toggle toggle-primary'}
-                        checked={showImage}
-                        readOnly={true}
-                        onClick={() => {
-                          userContext.updateUserSetting(Setting.showImage, !showImage ? 'true' : 'false');
-                        }}
-                      />
-                    </label>
+                  <div className={'divider'}>Darstellung</div>
+                  <div className={'w-full pr-3'}>
+                    <details className="collapse collapse-arrow max-w-full self-center justify-self-center border">
+                      <summary className="collapse-title">Rezept</summary>
+                      <div className="collapse-content">
+                        <div className="form-control">
+                          <label className="label">
+                            Bilder anzeigen
+                            <input
+                              type={'checkbox'}
+                              className={'toggle toggle-primary'}
+                              checked={showImage}
+                              readOnly={true}
+                              onClick={() => {
+                                userContext.updateUserSetting(Setting.showImage, !showImage ? 'true' : 'false');
+                              }}
+                            />
+                          </label>
+                        </div>
+                        <div className="form-control">
+                          <label className="label">
+                            Tags anzeigen
+                            <input
+                              type={'checkbox'}
+                              className={'toggle toggle-primary'}
+                              checked={showTags}
+                              readOnly={true}
+                              onClick={() => {
+                                userContext.updateUserSetting(Setting.showTags, !showTags ? 'true' : 'false');
+                              }}
+                            />
+                          </label>
+                        </div>
+                        <div className="form-control">
+                          <label className="label">
+                            Beschreibung anzeigen
+                            <input
+                              type={'checkbox'}
+                              className={'toggle toggle-primary'}
+                              checked={showDescription}
+                              readOnly={true}
+                              onClick={() => {
+                                userContext.updateUserSetting(Setting.showDescription, !showDescription ? 'true' : 'false');
+                              }}
+                            />
+                          </label>
+                        </div>
+                        <div className="form-control">
+                          <label className="label">
+                            Notizen anzeigen
+                            <input
+                              type={'checkbox'}
+                              className={'toggle toggle-primary'}
+                              checked={showNotes}
+                              readOnly={true}
+                              onClick={() => {
+                                userContext.updateUserSetting(Setting.showNotes, !showNotes ? 'true' : 'false');
+                              }}
+                            />
+                          </label>
+                        </div>
+                        <div className="form-control">
+                          <label className="label">
+                            Tracking aktivieren
+                            <input
+                              type={'checkbox'}
+                              className={'toggle toggle-primary'}
+                              checked={showStatisticActions}
+                              readOnly={true}
+                              onClick={() => {
+                                userContext.updateUserSetting(Setting.showStatisticActions, !showStatisticActions ? 'true' : 'false');
+                              }}
+                            />
+                          </label>
+                        </div>
+                      </div>
+                    </details>
                   </div>
-                  <div className="form-control">
-                    <label className="label">
-                      Tags anzeigen
-                      <input
-                        type={'checkbox'}
-                        className={'toggle toggle-primary'}
-                        checked={showTags}
-                        readOnly={true}
-                        onClick={() => {
-                          userContext.updateUserSetting(Setting.showTags, !showTags ? 'true' : 'false');
-                        }}
-                      />
-                    </label>
+
+                  <div className={'h-2'}></div>
+                  <div className={'w-full pr-3'}>
+                    <details className="collapse collapse-arrow max-w-full self-center justify-self-center border">
+                      <summary className="collapse-title">Layout</summary>
+                      <div className="collapse-content">
+                        <div className="form-control">
+                          <label className="label">
+                            Uhrzeit anzeigen
+                            <input
+                              type={'checkbox'}
+                              className={'toggle toggle-primary'}
+                              checked={showTime}
+                              readOnly={true}
+                              onClick={() => {
+                                userContext.updateUserSetting(Setting.showTime, !showTime ? 'true' : 'false');
+                              }}
+                            />
+                          </label>
+                        </div>
+                        <div className="form-control">
+                          <label className="label">
+                            Weniger Spalten
+                            <input
+                              type={'checkbox'}
+                              className={'toggle toggle-primary'}
+                              checked={lessItems}
+                              readOnly={true}
+                              onClick={() => {
+                                userContext.updateUserSetting(Setting.lessItems, !lessItems ? 'true' : 'false');
+                              }}
+                            />
+                          </label>
+                        </div>
+                        <div className="form-control">
+                          <label className="label">
+                            Warteschlange als Overlay
+                            <input
+                              type={'checkbox'}
+                              className={'toggle toggle-primary'}
+                              checked={showQueueAsOverlay}
+                              readOnly={true}
+                              onClick={() => {
+                                userContext.updateUserSetting(Setting.showQueueAsOverlay, !showQueueAsOverlay ? 'true' : 'false');
+                              }}
+                            />
+                          </label>
+                        </div>
+                      </div>
+                    </details>
                   </div>
-                  <div className="form-control">
-                    <label className="label">
-                      Beschreibung anzeigen
-                      <input
-                        type={'checkbox'}
-                        className={'toggle toggle-primary'}
-                        checked={showDescription}
-                        readOnly={true}
-                        onClick={() => {
-                          userContext.updateUserSetting(Setting.showDescription, !showDescription ? 'true' : 'false');
-                        }}
-                      />
-                    </label>
-                  </div>
-                  <div className="form-control">
-                    <label className="label">
-                      Notizen anzeigen
-                      <input
-                        type={'checkbox'}
-                        className={'toggle toggle-primary'}
-                        checked={showNotes}
-                        readOnly={true}
-                        onClick={() => {
-                          userContext.updateUserSetting(Setting.showNotes, !showNotes ? 'true' : 'false');
-                        }}
-                      />
-                    </label>
-                  </div>
-                  <div className="form-control">
-                    <label className="label">
-                      Weniger Spalten
-                      <input
-                        type={'checkbox'}
-                        className={'toggle toggle-primary'}
-                        checked={lessItems}
-                        readOnly={true}
-                        onClick={() => {
-                          userContext.updateUserSetting(Setting.lessItems, !lessItems ? 'true' : 'false');
-                        }}
-                      />
-                    </label>
-                  </div>
-                  <div className="form-control">
-                    <label className="label">
-                      Tracking aktivieren
-                      <input
-                        type={'checkbox'}
-                        className={'toggle toggle-primary'}
-                        checked={showStatisticActions}
-                        readOnly={true}
-                        onClick={() => {
-                          userContext.updateUserSetting(Setting.showStatisticActions, !showStatisticActions ? 'true' : 'false');
-                        }}
-                      />
-                    </label>
-                  </div>
-                  <div className="form-control">
-                    <label className="label">
-                      Warteschlange als Overlay
-                      <input
-                        type={'checkbox'}
-                        className={'toggle toggle-primary'}
-                        checked={showQueueAsOverlay}
-                        readOnly={true}
-                        onClick={() => {
-                          userContext.updateUserSetting(Setting.showQueueAsOverlay, !showQueueAsOverlay ? 'true' : 'false');
-                        }}
-                      />
-                    </label>
-                  </div>
+                  <div className={'h-2'}></div>
                   <ThemeChanger />
                 </div>
               </div>

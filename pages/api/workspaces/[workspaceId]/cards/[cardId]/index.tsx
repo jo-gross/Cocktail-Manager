@@ -30,7 +30,7 @@ export default withHttpMethods({
     return res.json({ data: result });
   }),
   [HTTPMethod.PUT]: withWorkspacePermission([Role.MANAGER], async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
-    const { id, name, date, groups, showTime } = req.body;
+    const { id, name, date, groups } = req.body;
     if (id != undefined) {
       await prisma.cocktailCardGroupItem.deleteMany({
         where: {
@@ -55,7 +55,6 @@ export default withHttpMethods({
       id: id,
       name: name,
       date: date,
-      showTime: showTime,
       workspace: { connect: { id: workspace.id } },
     };
     const cocktailCardResult = await prisma.cocktailCard.update({

@@ -70,6 +70,7 @@ enum Setting {
   lastSeenVersion
   showNotes
   showDescription
+  showTime
 }
 
 enum WorkspaceSettingKey {
@@ -231,7 +232,7 @@ model CocktailRecipe {
   CocktailRecipeImage      CocktailRecipeImage[]
   CocktailStatisticItem    CocktailStatisticItem[]
   CocktailQueue            CocktailQueue[]
-  ratings CocktailRating[]
+  ratings                  CocktailRating[]
 }
 
 model CocktailRecipeImage {
@@ -339,7 +340,6 @@ model CocktailCard {
   name     String
   date     DateTime?
   groups   CocktailCardGroup[]
-  showTime Boolean             @default(false)
   archived Boolean             @default(false)
 
   workspace             Workspace               @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
