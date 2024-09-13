@@ -18,7 +18,7 @@ import { fetchIngredients } from '../../../../../lib/network/ingredients';
 import _ from 'lodash';
 import { fetchUnits } from '../../../../../lib/network/units';
 import '../../../../../lib/DateUtils';
-import { routerConditionalBack } from '../../../../../lib/RouterUtils';
+import { RoutingContext } from '../../../../../lib/context/RoutingContextProvider';
 
 interface CocktailCalculationItem {
   cocktail: CocktailRecipeFull;
@@ -53,6 +53,7 @@ interface CalculationData {
 export default function CalculationPage() {
   const modalContext = useContext(ModalContext);
   const userContext = useContext(UserContext);
+  const routingContext = useContext(RoutingContext);
 
   const router = useRouter();
   const { id } = router.query;
@@ -506,7 +507,7 @@ export default function CalculationPage() {
           openNameModal();
         } else {
           saveCalculationBackend(false);
-          await routerConditionalBack(router, `/workspaces/${workspaceId}/manage/calculations`);
+          await routingContext.conditionalBack(`/workspaces/${workspaceId}/manage/calculations`);
         }
       }}
       title={

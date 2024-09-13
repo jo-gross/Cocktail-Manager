@@ -1,5 +1,5 @@
 import React, { useCallback, useContext, useEffect, useState } from 'react';
-import { FaAngleDown, FaAngleUp, FaArrowDown, FaCheck, FaEye, FaSearch, FaTimes } from 'react-icons/fa';
+import { FaAngleDown, FaAngleUp, FaArrowDown, FaCheck, FaEye, FaPlus, FaSearch, FaTimes } from 'react-icons/fa';
 import Link from 'next/link';
 import { BsFillGearFill } from 'react-icons/bs';
 import { CocktailCardFull } from '../../../models/CocktailCardFull';
@@ -503,11 +503,16 @@ export default function OverviewPage() {
                       }}
                     />
                   </label>
-                  <div className={'divider-sm'}>Karte(n)</div>
+                  <div className={'divider'}>Karte(n)</div>
                   {loadingCards ? (
                     <Loading />
                   ) : cocktailCards.length == 0 ? (
-                    <div>Keine Karten vorhanden</div>
+                    <div className={'flex items-center justify-between'}>
+                      <div>Keine Karten vorhanden</div>
+                      <Link href={`/workspaces/${workspaceId}/manage/cards/create`} className={'btn btn-square btn-outline btn-sm'}>
+                        <FaPlus />
+                      </Link>
+                    </div>
                   ) : (
                     cocktailCards.sort(sortCards).map((card) => (
                       <div key={'card-' + card.id} className="form-control">

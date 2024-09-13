@@ -15,7 +15,7 @@ import { Role } from '@prisma/client';
 import { DeleteConfirmationModal } from '../../../../../components/modals/DeleteConfirmationModal';
 import _ from 'lodash';
 import { PageCenter } from '../../../../../components/layout/PageCenter';
-import { routerConditionalBack } from '../../../../../lib/RouterUtils';
+import { RoutingContext } from '../../../../../lib/context/RoutingContextProvider';
 
 interface CocktailCardGroupError {
   name?: string;
@@ -29,6 +29,7 @@ interface CocktailCardError {
 
 function EditCocktailCard() {
   const modalContext = useContext(ModalContext);
+  const routingContext = useContext(RoutingContext);
   const router = useRouter();
 
   const { id, workspaceId } = router.query;
@@ -160,7 +161,7 @@ function EditCocktailCard() {
 
               if (response.ok) {
                 alertService.success('Karte erfolgreich erstellt');
-                await routerConditionalBack(router, `/workspaces/${workspaceId}/manage/cards`);
+                await routingContext.conditionalBack(`/workspaces/${workspaceId}/manage/cards`);
               } else {
                 const body = await response.json();
                 console.error('CardId -> onSubmit[create]', response);
@@ -175,7 +176,7 @@ function EditCocktailCard() {
 
               if (response.ok) {
                 alertService.success('Karte erfolgreich gespeichert');
-                await routerConditionalBack(router, `/workspaces/${workspaceId}/manage/cards`);
+                await routingContext.conditionalBack(`/workspaces/${workspaceId}/manage/cards`);
               } else {
                 const body = await response.json();
                 console.error('CardId -> onSubmit[update]', response);
@@ -528,7 +529,7 @@ function EditCocktailCard() {
                       const body = await response.json();
                       if (response.ok) {
                         alertService.success('Karte gelöscht');
-                        await routerConditionalBack(router, `/workspaces/${workspaceId}/manage/cards`);
+                        await routingContext.conditionalBack(`/workspaces/${workspaceId}/manage/cards`);
                       } else {
                         console.error('CardId -> deleteCard', response);
                         alertService.error(body.message ?? 'Fehler beim Löschen der Karte', response.status, response.statusText);

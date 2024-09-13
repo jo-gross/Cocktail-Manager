@@ -19,7 +19,7 @@ import { DaisyUITagInput } from '../DaisyUITagInput';
 import CropComponent from '../CropComponent';
 import { FaCropSimple } from 'react-icons/fa6';
 import '../../lib/ArrayUtils';
-import { routerConditionalBack } from '../../lib/RouterUtils';
+import { RoutingContext } from '../../lib/context/RoutingContextProvider';
 
 interface IngredientFormProps {
   ingredient?: IngredientWithImage;
@@ -51,6 +51,7 @@ export function IngredientForm(props: IngredientFormProps) {
   const workspaceId = router.query.workspaceId as string | undefined;
   const modalContext = useContext(ModalContext);
   const userContext = useContext(UserContext);
+  const routingContext = useContext(RoutingContext);
 
   const formRef = props.formRef || React.createRef<FormikProps<any>>();
 
@@ -145,7 +146,7 @@ export function IngredientForm(props: IngredientFormProps) {
                 props.onSaved((await response.json()).data.id);
               } else {
                 alertService.success('Zutat erfolgreich erstellt');
-                await routerConditionalBack(router, `/workspaces/${workspaceId}/manage/ingredients`);
+                await routingContext.conditionalBack(`/workspaces/${workspaceId}/manage/ingredients`);
               }
             } else {
               const body = await response.json();
@@ -163,7 +164,7 @@ export function IngredientForm(props: IngredientFormProps) {
                 props.onSaved(props.ingredient.id);
               } else {
                 alertService.success('Zutat erfolgreich gespeichert');
-                await routerConditionalBack(router, `/workspaces/${workspaceId}/manage/ingredients`);
+                await routingContext.conditionalBack(`/workspaces/${workspaceId}/manage/ingredients`);
               }
             } else {
               const body = await response.json();
