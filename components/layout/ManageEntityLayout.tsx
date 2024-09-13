@@ -3,9 +3,8 @@ import Head from 'next/head';
 import React, { useContext } from 'react';
 import { NotSavedLeaveConfirmation } from '../modals/NotSavedLeaveConfirmation';
 import { ModalContext } from '../../lib/context/ModalContextProvider';
-import { useRouter } from 'next/router';
 import { FormikProps } from 'formik';
-import { routerConditionalBack } from '../../lib/RouterUtils';
+import { RoutingContext } from '../../lib/context/RoutingContextProvider';
 
 interface ManageEntityLayoutProps {
   children: React.ReactNode;
@@ -20,7 +19,7 @@ interface ManageEntityLayoutProps {
 
 export function ManageEntityLayout(props: ManageEntityLayoutProps) {
   const modalContext = useContext(ModalContext);
-  const router = useRouter();
+  const routingContext = useContext(RoutingContext);
 
   return (
     <>
@@ -46,10 +45,10 @@ export function ManageEntityLayout(props: ManageEntityLayoutProps) {
                           props.onSave?.();
                           await props.formRef?.current?.submitForm();
                         }}
-                        onNotSave={() => routerConditionalBack(router, props.backLink)}
+                        onNotSave={() => routingContext.conditionalBack(props.backLink)}
                       />,
                     )
-                  : routerConditionalBack(router, props.backLink);
+                  : routingContext.conditionalBack(props.backLink);
               }}
             >
               <FaArrowLeft />

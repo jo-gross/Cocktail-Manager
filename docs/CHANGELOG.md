@@ -1,3 +1,11 @@
+## [1.9.2](https://github.com/jo-gross/Cocktail-Manager/compare/v1.9.1...v1.9.2) (2024-09-12)
+
+
+### Bug Fixes
+
+* Changed card time option to user specific setting ([#426](https://github.com/jo-gross/Cocktail-Manager/issues/426)) ([13625e2](https://github.com/jo-gross/Cocktail-Manager/commit/13625e282d12dbd26a3820c3603b26ea0d3d2273))
+* Cocktail recipe card loading behavior improved  ([#425](https://github.com/jo-gross/Cocktail-Manager/issues/425)) ([5653a80](https://github.com/jo-gross/Cocktail-Manager/commit/5653a801a994d904de1f0349cba390c9ff1069c0))
+
 ## [1.9.1](https://github.com/jo-gross/Cocktail-Manager/compare/v1.9.0...v1.9.1) (2024-09-11)
 
 

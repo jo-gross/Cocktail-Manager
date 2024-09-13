@@ -14,7 +14,7 @@ import Image from 'next/image';
 import CropComponent from '../CropComponent';
 import { FaCropSimple } from 'react-icons/fa6';
 import { Glass } from '@prisma/client';
-import { routerConditionalBack } from '../../lib/RouterUtils';
+import { RoutingContext } from '../../lib/context/RoutingContextProvider';
 
 interface GlassFormProps {
   glass?: GlassWithImage;
@@ -26,8 +26,8 @@ interface GlassFormProps {
 export function GlassForm(props: GlassFormProps) {
   const router = useRouter();
   const { workspaceId } = router.query;
-
   const modalContext = useContext(ModalContext);
+  const routingContext = useContext(RoutingContext);
 
   const formRef = props.formRef;
 
@@ -63,7 +63,7 @@ export function GlassForm(props: GlassFormProps) {
                 props.onSaved((await response.json()).data.id);
               } else {
                 alertService.success('Glas erfolgreich erstellt');
-                await routerConditionalBack(router, `/workspaces/${workspaceId}/manage/glasses`);
+                await routingContext.conditionalBack(`/workspaces/${workspaceId}/manage/glasses`);
               }
             } else {
               const body = await response.json();
@@ -81,7 +81,7 @@ export function GlassForm(props: GlassFormProps) {
                 props.onSaved(props.glass.id);
               } else {
                 alertService.success('Glas erfolgreich gespeichert');
-                await routerConditionalBack(router, `/workspaces/${workspaceId}/manage/glasses`);
+                await routingContext.conditionalBack(`/workspaces/${workspaceId}/manage/glasses`);
               }
             } else {
               const body = await response.json();
