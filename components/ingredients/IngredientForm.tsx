@@ -20,6 +20,7 @@ import CropComponent from '../CropComponent';
 import { FaCropSimple } from 'react-icons/fa6';
 import '../../lib/ArrayUtils';
 import { RoutingContext } from '../../lib/context/RoutingContextProvider';
+import MDEditor from '@uiw/react-md-editor';
 import {
   BlockTypeSelect,
   BoldItalicUnderlineToggles,
@@ -44,7 +45,7 @@ import {
   toolbarPlugin,
   UndoRedo,
 } from '@mdxeditor/editor';
-import '@mdxeditor/editor/style.css';
+// import '@mdxeditor/editor/style.css';
 import { ThemeContext } from '../../lib/context/ThemeContextProvider';
 
 interface IngredientFormProps {
@@ -748,21 +749,7 @@ export function IngredientForm(props: IngredientFormProps) {
                 <span>{errors.notes && errors.notes}</span>
               </span>
             </label>
-            <MDXEditor
-              markdown={values.notes}
-              onChange={(content) => setFieldValue('notes', content)}
-              plugins={[
-                toolbarPlugin({
-                  toolbarContents: () => (
-                    <>
-                      {' '}
-                      <BoldItalicUnderlineToggles />
-                    </>
-                  ),
-                }),
-              ]}
-              onBlur={handleBlur}
-            />
+            <MDEditor value={values.notes} onChange={(content) => setFieldValue('notes', content)} onBlur={handleBlur} />
           </div>
           <div className={'col-span-full'}>
             <div className={'form-control'}>
