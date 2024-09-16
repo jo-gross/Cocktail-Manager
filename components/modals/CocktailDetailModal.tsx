@@ -2,7 +2,7 @@ import { CocktailRecipeFull } from '../../models/CocktailRecipeFull';
 import Link from 'next/link';
 import { FaArrowLeft, FaInfo, FaPencilAlt, FaPlus, FaSyncAlt, FaTimes } from 'react-icons/fa';
 import { ModalContext } from '../../lib/context/ModalContextProvider';
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { UserContext } from '../../lib/context/UserContextProvider';
 import { CocktailRating, Role } from '@prisma/client';
@@ -23,6 +23,8 @@ import { fetchCocktail } from '../../lib/network/cocktails';
 
 interface CocktailDetailModalProps {
   cocktailId: string;
+
+  onRefreshRatings: () => void;
 }
 
 export function CocktailDetailModal(props: CocktailDetailModalProps) {
@@ -40,11 +42,16 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
   const [ratingsLoading, setRatingsLoading] = useState(true);
   const [ratingError, setRatingsError] = useState(false);
 
+  const refreshRatings = useCallback(() => {
+    props.onRefreshRatings();
+    fetchCocktailRatings(workspaceId, props.cocktailId, setCocktailRatings, setRatingsLoading, setRatingsError);
+  }, [props, workspaceId]);
+
   useEffect(() => {
     fetchIngredients(workspaceId, setIngredients, () => {});
     fetchCocktail(workspaceId, props.cocktailId, setLoadedCocktail, setLoading);
     fetchCocktailRatings(workspaceId, props.cocktailId, setCocktailRatings, setRatingsLoading, setRatingsError);
-  }, [workspaceId]);
+  }, [props.cocktailId, workspaceId]);
 
   const [submittingStatistic, setSubmittingStatistic] = useState(false);
   const [submittingQueue, setSubmittingQueue] = useState(false);
@@ -295,12 +302,7 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                 {ratingError ? (
                   <>
                     <div>Fehler beim Laden der Bewertungen</div>
-                    <button
-                      type={'button'}
-                      className={`btn btn-square btn-outline btn-sm`}
-                      disabled={ratingsLoading}
-                      onClick={() => fetchCocktailRatings(workspaceId, props.cocktailId, setCocktailRatings, setRatingsLoading, setRatingsError)}
-                    >
+                    <button type={'button'} className={`btn btn-square btn-outline btn-sm`} disabled={ratingsLoading} onClick={refreshRatings}>
                       {ratingsLoading && <span className="loading loading-spinner"></span>}
                       <FaSyncAlt />
                     </button>
@@ -325,11 +327,7 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                         disabled={cocktailRatings.length === 0}
                         onClick={() =>
                           modalContext.openModal(
-                            <CocktailRatingsModal
-                              cocktailId={loadedCocktail.id}
-                              cocktailName={loadedCocktail.name}
-                              onRefresh={() => fetchCocktailRatings(workspaceId, props.cocktailId, setCocktailRatings, setRatingsLoading, setRatingsError)}
-                            />,
+                            <CocktailRatingsModal cocktailId={loadedCocktail.id} cocktailName={loadedCocktail.name} onUpdate={refreshRatings} />,
                           )
                         }
                       >
@@ -342,14 +340,7 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                     <button
                       type={'button'}
                       className={'btn btn-outline btn-sm'}
-                      onClick={() =>
-                        modalContext.openModal(
-                          <AddCocktailRatingModal
-                            cocktailId={props.cocktailId}
-                            onCreated={() => fetchCocktailRatings(workspaceId, props.cocktailId, setCocktailRatings, setRatingsLoading, setRatingsError)}
-                          />,
-                        )
-                      }
+                      onClick={() => modalContext.openModal(<AddCocktailRatingModal cocktailId={props.cocktailId} onCreated={refreshRatings} />)}
                     >
                       <FaPlus /> Bewertung hinzufügen
                     </button>

@@ -1,9 +1,9 @@
-import React, { useCallback, useContext, useEffect, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { FaAngleDown, FaAngleUp, FaArrowDown, FaCheck, FaEye, FaPlus, FaSearch, FaTimes } from 'react-icons/fa';
 import Link from 'next/link';
 import { BsFillGearFill } from 'react-icons/bs';
 import { CocktailCardFull } from '../../../models/CocktailCardFull';
-import CocktailRecipeCardItem from '../../../components/cocktails/CocktailRecipeCardItem';
+import CocktailRecipeCardItem, { CocktailRecipeOverviewItemRef } from '../../../components/cocktails/CocktailRecipeCardItem';
 import { CocktailCard, CocktailRecipe, Setting } from '@prisma/client';
 import { useRouter } from 'next/router';
 import { ModalContext } from '../../../lib/context/ModalContextProvider';
@@ -35,6 +35,7 @@ export default function OverviewPage() {
   const [showDescription, setShowDescription] = useState(false);
   const [showNotes, setShowNotes] = useState(false);
   const [showTime, setShowTime] = useState(false);
+  const [showRating, setShowRating] = useState(false);
 
   const [cocktailCards, setCocktailCards] = useState<CocktailCardFull[]>([]);
   const [loadingCards, setLoadingCards] = useState(true);
@@ -178,6 +179,7 @@ export default function OverviewPage() {
     setShowDescription(userContext.user?.settings?.find((s) => s.setting == Setting.showDescription)?.value == 'true' ?? false);
     setShowNotes(userContext.user?.settings?.find((s) => s.setting == Setting.showNotes)?.value == 'true' ?? false);
     setShowTime(userContext.user?.settings?.find((s) => s.setting == Setting.showTime)?.value == 'true' ?? false);
+    setShowRating(userContext.user?.settings?.find((s) => s.setting == Setting.showRating)?.value == 'true' ?? false);
   }, [userContext.user?.settings]);
 
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -299,6 +301,15 @@ export default function OverviewPage() {
     </div>
   );
 
+  const cocktailItemRefs = useRef<{ [key: string]: CocktailRecipeOverviewItemRef | null }>({});
+
+  // Function to refresh a specific CocktailRecipeCardItem
+  const handleCocktailCardRefresh = useCallback((cocktailId: string) => {
+    if (cocktailItemRefs.current[cocktailId]) {
+      cocktailItemRefs.current[cocktailId]?.refresh();
+    }
+  }, []);
+
   return (
     <>
       <Head>
@@ -334,7 +345,15 @@ export default function OverviewPage() {
                         <div className={'space between flex flex-row gap-2'}>
                           <div
                             className={'btn btn-square btn-outline btn-sm'}
-                            onClick={() => modalContext.openModal(<CocktailDetailModal cocktailId={cocktailQueueItem.cocktailRecipe.id} />, true)}
+                            onClick={() =>
+                              modalContext.openModal(
+                                <CocktailDetailModal
+                                  cocktailId={cocktailQueueItem.cocktailRecipe.id}
+                                  onRefreshRatings={() => handleCocktailCardRefresh(cocktailQueueItem.cocktailRecipe.id)}
+                                />,
+                                true,
+                              )
+                            }
                           >
                             <FaEye />
                           </div>
@@ -433,7 +452,9 @@ export default function OverviewPage() {
                                 return (
                                   <CocktailRecipeCardItem
                                     key={`card-${selectedCard.id}-group-${group.id}-cocktail-${groupItem.cocktailId}-${index}`}
-                                    showImage={showImage}
+                                    ref={(el) => {
+                                      cocktailItemRefs.current[groupItem.cocktailId!] = el;
+                                    }} // Updated to return void                                    showImage={showImage}
                                     showTags={showTags}
                                     showInfo={true}
                                     showPrice={groupItem.specialPrice == undefined && group.groupPrice == undefined}
@@ -442,6 +463,7 @@ export default function OverviewPage() {
                                     showStatisticActions={showStatisticActions}
                                     showDescription={showDescription}
                                     showNotes={showNotes}
+                                    showRating={showRating}
                                   />
                                 );
                               } else {
@@ -613,6 +635,20 @@ export default function OverviewPage() {
                             readOnly={true}
                             onClick={() => {
                               userContext.updateUserSetting(Setting.showNotes, !showNotes ? 'true' : 'false');
+                            }}
+                          />
+                        </label>
+                      </div>
+                      <div className="form-control">
+                        <label className="label">
+                          Bewertung anzeigen
+                          <input
+                            type={'checkbox'}
+                            className={'toggle toggle-primary'}
+                            checked={showRating}
+                            readOnly={true}
+                            onClick={() => {
+                              userContext.updateUserSetting(Setting.showRating, !showRating ? 'true' : 'false');
                             }}
                           />
                         </label>
