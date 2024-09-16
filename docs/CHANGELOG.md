@@ -1,3 +1,12 @@
+## [1.9.3](https://github.com/jo-gross/Cocktail-Manager/compare/v1.9.2...v1.9.3) (2024-09-16)
+
+
+### Bug Fixes
+
+* Cocktail card rating option ([#433](https://github.com/jo-gross/Cocktail-Manager/issues/433)) ([ced94f7](https://github.com/jo-gross/Cocktail-Manager/commit/ced94f723fca54e697ea3b9f9b31ab96e05ef1aa))
+* customize view collapse bug and selected cocktail card ([95bd848](https://github.com/jo-gross/Cocktail-Manager/commit/95bd8486ae83c422c186a212c3500a8f932227b1))
+* navigation bug if previous site was external ([6f172bf](https://github.com/jo-gross/Cocktail-Manager/commit/6f172bfe9c6c942e34d18289e36433d95557f829))
+
 ## [1.9.2](https://github.com/jo-gross/Cocktail-Manager/compare/v1.9.1...v1.9.2) (2024-09-12)
 
 
