@@ -5,7 +5,7 @@ import { PrismaAdapter } from '@next-auth/prisma-adapter';
 
 export const authOptions: NextAuthOptions = {
   theme: {
-    logo: '/images/The Cocktail Manager Logo.png',
+    logo: '/images/Logo.svg',
   },
   providers: [
     Google({

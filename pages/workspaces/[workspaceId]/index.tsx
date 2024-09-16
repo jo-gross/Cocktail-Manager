@@ -454,7 +454,8 @@ export default function OverviewPage() {
                                     key={`card-${selectedCard.id}-group-${group.id}-cocktail-${groupItem.cocktailId}-${index}`}
                                     ref={(el) => {
                                       cocktailItemRefs.current[groupItem.cocktailId!] = el;
-                                    }} // Updated to return void                                    showImage={showImage}
+                                    }}
+                                    showImage={showImage}
                                     showTags={showTags}
                                     showInfo={true}
                                     showPrice={groupItem.specialPrice == undefined && group.groupPrice == undefined}
