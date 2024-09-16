@@ -4,6 +4,9 @@ import { UserContext } from '../../lib/context/UserContextProvider';
 import Image from 'next/image';
 import { ModalContext } from '../../lib/context/ModalContextProvider';
 import ImageModal from '../modals/ImageModal';
+import { Loading } from '../Loading';
+import StarsComponent from '../StarsComponent';
+import { CocktailRating } from '@prisma/client';
 
 interface CompactCocktailRecipeInstructionProps {
   cocktailRecipe: CocktailRecipeFull;
@@ -11,6 +14,8 @@ interface CompactCocktailRecipeInstructionProps {
   specialPrice?: number;
   showImage?: boolean;
   image?: string;
+
+  showRating?: { ratings: CocktailRating[]; loading: boolean; error: boolean };
 }
 
 export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeInstructionProps) {
@@ -30,7 +35,7 @@ export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeIns
         <></>
       )}
       {props.cocktailRecipe.glass && props.cocktailRecipe.glass._count.GlassImage != 0 && (
-        <div className={'row-span-2 flex h-min items-center justify-center'}>
+        <div className={`${props.showRating ? 'row-span-3' : 'row-span-2'} flex h-full items-center justify-center`}>
           <Image
             className={'h-16 w-fit cursor-pointer rounded-lg object-contain'}
             src={`/api/workspaces/${props.cocktailRecipe.workspaceId}/glasses/${props.cocktailRecipe.glass?.id}/image`}
@@ -43,6 +48,36 @@ export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeIns
             width={200}
             height={200}
           />
+        </div>
+      )}
+      {props.showRating && (
+        <div className={'col-span-3 flex flex-row items-center gap-2'}>
+          {props.showRating.error ? (
+            <>
+              <div>Fehler beim Laden der Bewertungen</div>
+            </>
+          ) : (
+            <>
+              {props.showRating.loading ? (
+                <Loading />
+              ) : (
+                <>
+                  {(props.showRating.ratings.length > 0
+                    ? props.showRating.ratings.reduce((acc, rating) => acc + rating.rating, 0) / props.showRating.ratings.length
+                    : 0
+                  ).toFixed(1)}
+                  <StarsComponent
+                    rating={
+                      props.showRating.ratings.length > 0
+                        ? props.showRating.ratings.reduce((acc, rating) => acc + rating.rating, 0) / props.showRating.ratings.length
+                        : 0
+                    }
+                  />
+                  ({props.showRating.ratings.length})
+                </>
+              )}
+            </>
+          )}
         </div>
       )}
       <div className={'col-span-3 flex flex-row justify-between space-x-2 font-thin'}>

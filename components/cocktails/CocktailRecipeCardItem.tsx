@@ -1,5 +1,5 @@
 import { CocktailRecipeFull } from '../../models/CocktailRecipeFull';
-import React, { useEffect, useState } from 'react';
+import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useState } from 'react';
 import { CompactCocktailRecipeInstruction } from './CompactCocktailRecipeInstruction';
 import { ShowCocktailInfoButton } from './ShowCocktailInfoButton';
 import { useRouter } from 'next/router';
@@ -8,8 +8,14 @@ import { MdPlaylistAdd } from 'react-icons/md';
 import { addCocktailToQueue, addCocktailToStatistic } from '../../lib/network/cocktailTracking';
 import { Loading } from '../Loading';
 import { fetchCocktail } from '../../lib/network/cocktails';
+import { CocktailRating } from '@prisma/client';
+import { fetchCocktailRatings } from '../../lib/network/cocktailRatings';
 
-interface CocktailRecipeOverviewItemProps {
+export type CocktailRecipeOverviewItemRef = {
+  refresh: () => void;
+};
+
+export type CocktailRecipeOverviewItemProps = {
   cocktailRecipe: CocktailRecipeFull | string;
   showImage?: boolean;
   specialPrice?: number;
@@ -20,9 +26,10 @@ interface CocktailRecipeOverviewItemProps {
   showNotes?: boolean;
   showStatisticActions?: boolean;
   image?: string;
-}
+  showRating?: boolean;
+};
 
-export default function CocktailRecipeCardItem(props: CocktailRecipeOverviewItemProps) {
+const CocktailRecipeCardItem = forwardRef<CocktailRecipeOverviewItemRef, CocktailRecipeOverviewItemProps>((props, ref) => {
   const router = useRouter();
   const workspaceId = router.query.workspaceId as string;
 
@@ -34,11 +41,24 @@ export default function CocktailRecipeCardItem(props: CocktailRecipeOverviewItem
   );
   const [cocktailRecipeLoading, setCocktailRecipeLoading] = useState(false);
 
-  useEffect(() => {
+  const [cocktailRatings, setCocktailRatings] = useState<CocktailRating[]>([]);
+  const [cocktailRatingsLoading, setCocktailRatingsLoading] = useState(false);
+  const [cocktailRatingsError, setCocktailRatingsError] = useState<boolean>(false);
+
+  const refresh = useCallback(() => {
     if (typeof props.cocktailRecipe === 'string') {
       fetchCocktail(workspaceId, props.cocktailRecipe, setLoadedCocktailRecipe, setCocktailRecipeLoading);
+      fetchCocktailRatings(workspaceId, props.cocktailRecipe, setCocktailRatings, setCocktailRatingsLoading, setCocktailRatingsError);
     }
   }, [workspaceId, props.cocktailRecipe]);
+
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+
+  useImperativeHandle(ref, () => ({
+    refresh,
+  }));
 
   const cocktailRecipe = typeof props.cocktailRecipe === 'string' ? loadedCocktailRecipe : props.cocktailRecipe;
 
@@ -52,7 +72,13 @@ export default function CocktailRecipeCardItem(props: CocktailRecipeOverviewItem
           </div>
         ) : cocktailRecipe ? (
           <>
-            <ShowCocktailInfoButton showInfo={props.showInfo ?? false} cocktailRecipe={cocktailRecipe} />
+            <ShowCocktailInfoButton
+              showInfo={props.showInfo ?? false}
+              cocktailId={cocktailRecipe.id}
+              onRatingChange={() =>
+                fetchCocktailRatings(workspaceId, cocktailRecipe.id, setCocktailRatings, setCocktailRatingsLoading, setCocktailRatingsError)
+              }
+            />
             <div className={'card-body'}>
               <CompactCocktailRecipeInstruction
                 cocktailRecipe={cocktailRecipe}
@@ -60,6 +86,7 @@ export default function CocktailRecipeCardItem(props: CocktailRecipeOverviewItem
                 showImage={props.showImage ?? false}
                 showPrice={props.showPrice ?? true}
                 image={props.image}
+                showRating={props.showRating ? { ratings: cocktailRatings, loading: cocktailRatingsLoading, error: cocktailRatingsError } : undefined}
               />
               <>
                 {props.showNotes && cocktailRecipe.notes && (
@@ -144,4 +171,7 @@ export default function CocktailRecipeCardItem(props: CocktailRecipeOverviewItem
       </div>
     </div>
   );
-}
+});
+
+export default CocktailRecipeCardItem;
+CocktailRecipeCardItem.displayName = 'CocktailRecipeCardItem';

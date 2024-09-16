@@ -4,6 +4,9 @@ import prisma from '../../../prisma/prisma';
 import { PrismaAdapter } from '@next-auth/prisma-adapter';
 
 export const authOptions: NextAuthOptions = {
+  theme: {
+    logo: '/images/The Cocktail Manager Logo.png',
+  },
   providers: [
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID as string,
