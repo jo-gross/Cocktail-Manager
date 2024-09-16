@@ -1,3 +1,10 @@
+## [1.9.4](https://github.com/jo-gross/Cocktail-Manager/compare/v1.9.3...v1.9.4) (2024-09-16)
+
+
+### Bug Fixes
+
+* corrupted image layout ([55e004a](https://github.com/jo-gross/Cocktail-Manager/commit/55e004a8b70978edd896c1e229959ba0dd26b75b))
+
 ## [1.9.3](https://github.com/jo-gross/Cocktail-Manager/compare/v1.9.2...v1.9.3) (2024-09-16)
 
 
