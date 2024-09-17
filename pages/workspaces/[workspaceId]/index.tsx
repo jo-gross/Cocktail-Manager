@@ -416,7 +416,14 @@ export default function OverviewPage() {
 
           <div className={`order-1 col-span-5 flex w-full flex-col space-y-2 overflow-y-auto rounded-xl`}>
             {selectedCardId == 'search' || selectedCardId == undefined ? (
-              <SearchPage showImage={showImage} showTags={showTags} showStatisticActions={showStatisticActions} />
+              <SearchPage
+                showImage={showImage}
+                showTags={showTags}
+                showStatisticActions={showStatisticActions}
+                showRating={showRating}
+                showNotes={showNotes}
+                showDescription={showDescription}
+              />
             ) : loadingGroups ? (
               <PageCenter>
                 <Loading />
