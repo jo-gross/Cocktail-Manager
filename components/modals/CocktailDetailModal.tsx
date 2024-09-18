@@ -167,7 +167,6 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                 </div>
               )}
             </div>
-
             {loadedCocktail.garnishes.length > 0 && (
               <>
                 <div className={'font-bold'}>Deko</div>
@@ -219,10 +218,42 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
               </>
             )}
 
-            <div className={'flex-grow'}></div>
+            <div className={'grid w-full grid-cols-2 gap-2'}>
+              <button
+                className={'btn btn-outline w-full flex-1'}
+                onClick={() =>
+                  addCocktailToQueue({
+                    workspaceId: router.query.workspaceId as string,
+                    cocktailId: loadedCocktail.id,
+                    setSubmitting: setSubmittingQueue,
+                  })
+                }
+                disabled={submittingQueue}
+              >
+                <MdPlaylistAdd />
+                Liste
+                {submittingQueue ? <span className={'loading loading-spinner'}></span> : <></>}
+              </button>
+              <button
+                className={'btn btn-outline btn-primary w-full flex-1'}
+                onClick={() =>
+                  addCocktailToStatistic({
+                    workspaceId: router.query.workspaceId as string,
+                    cocktailId: loadedCocktail.id,
+                    actionSource: 'DETAIL_MODAL',
+                    setSubmitting: setSubmittingStatistic,
+                  })
+                }
+                disabled={submittingStatistic}
+              >
+                <FaPlus />
+                Gemacht
+                {submittingStatistic ? <span className={'loading loading-spinner'}></span> : <></>}
+              </button>
+            </div>
           </div>
           {/*Right side*/}
-          <div className={'row-span-2 flex flex-col gap-2'}>
+          <div className={'flex flex-col gap-2'}>
             {loadedCocktail.notes && (
               <>
                 <div className={'font-bold'}>Zubereitungsnotizen</div>
@@ -356,39 +387,6 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                 <div>{calcCocktailTotalPrice(loadedCocktail, ingredients).toFixed(2) + ' €'}</div>
               </>
             )}
-          </div>
-          <div className={'grid grid-cols-2 gap-2 self-end'}>
-            <button
-              className={'btn btn-outline w-full flex-1'}
-              onClick={() =>
-                addCocktailToQueue({
-                  workspaceId: router.query.workspaceId as string,
-                  cocktailId: loadedCocktail.id,
-                  setSubmitting: setSubmittingQueue,
-                })
-              }
-              disabled={submittingQueue}
-            >
-              <MdPlaylistAdd />
-              Liste
-              {submittingQueue ? <span className={'loading loading-spinner'}></span> : <></>}
-            </button>
-            <button
-              className={'btn btn-outline btn-primary w-full flex-1'}
-              onClick={() =>
-                addCocktailToStatistic({
-                  workspaceId: router.query.workspaceId as string,
-                  cocktailId: loadedCocktail.id,
-                  actionSource: 'DETAIL_MODAL',
-                  setSubmitting: setSubmittingStatistic,
-                })
-              }
-              disabled={submittingStatistic}
-            >
-              <FaPlus />
-              Gemacht
-              {submittingStatistic ? <span className={'loading loading-spinner'}></span> : <></>}
-            </button>
           </div>
         </div>
       </div>
