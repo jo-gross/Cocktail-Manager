@@ -18,7 +18,13 @@ export function RoutingContextProvider({ children }: { children: JSX.Element }) 
   const [previousRoute, setPreviousRoute] = useState<string | null>(null);
 
   useEffect(() => {
-    const url = `${pathname}?${searchParams}`;
+    let url: string | null = pathname && `${pathname}`;
+    if (url) {
+      if (searchParams != null && searchParams.size > 0) {
+        url = url + '?' + searchParams.toString();
+      }
+    }
+
     setPreviousRoute(currentRoute);
     setCurrentRoute(url);
   }, [pathname, searchParams]);
@@ -27,14 +33,23 @@ export function RoutingContextProvider({ children }: { children: JSX.Element }) 
     <RoutingContext.Provider
       value={{
         conditionalBack: async (fallbackUrl: string) => {
-          if (previousRoute == null || previousRoute == currentRoute) {
-            console.log('Fallback');
+          if (
+            previousRoute == null ||
+            currentRoute == null ||
+            previousRoute == currentRoute ||
+            (previousRoute && currentRoute && previousRoute.includes(currentRoute))
+          ) {
+            await router.replace(fallbackUrl);
+          } else if (previousRoute == currentRoute) {
             await router.replace(fallbackUrl);
           } else if (previousRoute != currentRoute) {
-            console.log('Back');
             router.back();
           } else {
-            alert('no routing');
+            console.error('no routing condition');
+            console.log('Referrer: ', document.referrer);
+            console.log('Current', currentRoute);
+            console.log('Previous', previousRoute);
+            await router.replace(fallbackUrl);
           }
         },
       }}
