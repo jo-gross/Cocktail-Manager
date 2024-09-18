@@ -514,7 +514,7 @@ export default function OverviewPage() {
               >
                 <div className={'flex flex-col space-x-2'}>
                   <label className="label">
-                    <div className={'label-text'}>Cocktailsuche</div>
+                    <div className={'label-text font-bold'}>Cocktailsuche</div>
                     <input
                       name={'card-radio'}
                       type={'radio'}
@@ -547,7 +547,7 @@ export default function OverviewPage() {
                     cocktailCards.sort(sortCards).map((card) => (
                       <div key={'card-' + card.id} className="form-control">
                         <label className="label">
-                          <div className={'label-text'}>
+                          <div className={'label-text font-bold'}>
                             {card.name}
                             {card.date != undefined ? (
                               <span>
