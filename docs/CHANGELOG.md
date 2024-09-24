@@ -1,3 +1,10 @@
+## [1.9.5](https://github.com/jo-gross/Cocktail-Manager/compare/v1.9.4...v1.9.5) (2024-09-24)
+
+
+### Bug Fixes
+
+* ui options in search view ([c650509](https://github.com/jo-gross/Cocktail-Manager/commit/c650509e5c08538aa03eb6dbafee5dc949e44e50))
+
 ## [1.9.4](https://github.com/jo-gross/Cocktail-Manager/compare/v1.9.3...v1.9.4) (2024-09-16)
 
 
