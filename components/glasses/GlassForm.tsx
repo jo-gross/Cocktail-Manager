@@ -8,13 +8,13 @@ import { alertService } from '../../lib/alertService';
 import { DeleteConfirmationModal } from '../modals/DeleteConfirmationModal';
 import { ModalContext } from '../../lib/context/ModalContextProvider';
 import _ from 'lodash';
-import { compressFile } from '../../lib/ImageCompressor';
 import { GlassWithImage } from '../../models/GlassWithImage';
 import Image from 'next/image';
 import CropComponent from '../CropComponent';
 import { FaCropSimple } from 'react-icons/fa6';
 import { Glass } from '@prisma/client';
 import { RoutingContext } from '../../lib/context/RoutingContextProvider';
+import { resizeImage } from '../../lib/ImageCompressor';
 
 interface GlassFormProps {
   glass?: GlassWithImage;
@@ -233,8 +233,13 @@ export function GlassForm(props: GlassFormProps) {
                   aspect={1}
                   imageToCrop={values.originalImage}
                   onCroppedImageComplete={async (file) => {
-                    const compressedImageFile = await compressFile(file);
-                    await setFieldValue('image', await convertToBase64(compressedImageFile));
+                    resizeImage(file, 400, 400, async (compressedImageFile) => {
+                      if (compressedImageFile) {
+                        await setFieldValue('image', await convertToBase64(new File([compressedImageFile], 'image.png', { type: 'image/png' })));
+                      } else {
+                        alertService.error('Bild konnte nicht skaliert werden.');
+                      }
+                    });
                   }}
                   onCropCancel={async () => {
                     await setFieldValue('originalImage', undefined);

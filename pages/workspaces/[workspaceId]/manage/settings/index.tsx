@@ -9,7 +9,6 @@ import { FaArrowDown, FaArrowUp, FaShareAlt, FaTrashAlt } from 'react-icons/fa';
 import { DeleteConfirmationModal } from '../../../../../components/modals/DeleteConfirmationModal';
 import { ModalContext } from '../../../../../lib/context/ModalContextProvider';
 import { UploadDropZone } from '../../../../../components/UploadDropZone';
-import { compressFile } from '../../../../../lib/ImageCompressor';
 import { convertToBase64 } from '../../../../../lib/Base64Converter';
 import '../../../../../lib/DateUtils';
 import { Loading } from '../../../../../components/Loading';
@@ -23,6 +22,7 @@ import { fetchActions } from '../../../../../lib/network/actions';
 import Image from 'next/image';
 import { fetchIce } from '../../../../../lib/network/ices';
 import CreateIceModal from '../../../../../components/modals/CreateIceModal';
+import { compressFile } from '../../../../../lib/ImageCompressor';
 import MonitorFormat = $Enums.MonitorFormat;
 
 export default function WorkspaceSettingPage() {
