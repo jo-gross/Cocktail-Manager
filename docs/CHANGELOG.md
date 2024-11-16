@@ -1,3 +1,11 @@
+## [1.9.6](https://github.com/jo-gross/Cocktail-Manager/compare/v1.9.5...v1.9.6) (2024-11-16)
+
+
+### Bug Fixes
+
+* Crop image behavior ([#456](https://github.com/jo-gross/Cocktail-Manager/issues/456)) ([704a73d](https://github.com/jo-gross/Cocktail-Manager/commit/704a73dbc5726119435347357ed1b36bcb346634))
+* Queue order improvement ([#458](https://github.com/jo-gross/Cocktail-Manager/issues/458)) ([330bc49](https://github.com/jo-gross/Cocktail-Manager/commit/330bc494cc64e7012226fafdedcc247cd38ff97a))
+
 ## [1.9.5](https://github.com/jo-gross/Cocktail-Manager/compare/v1.9.4...v1.9.5) (2024-09-24)
 
 
