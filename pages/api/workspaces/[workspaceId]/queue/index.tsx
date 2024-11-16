@@ -3,34 +3,52 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { withWorkspacePermission } from '../../../../../middleware/api/authenticationMiddleware';
 import { withHttpMethods } from '../../../../../middleware/api/handleMethods';
-import { CocktailQueue, Role } from '@prisma/client';
+import { Role } from '@prisma/client';
 import HTTPMethod from 'http-method-enum';
 import prisma from '../../../../../prisma/prisma';
 
 export default withHttpMethods({
   [HTTPMethod.GET]: withWorkspacePermission([Role.USER], async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
     // @ts-ignore
-    const cocktailQueue: CocktailQueue[] = await prisma.cocktailQueue.groupBy({
-      by: 'cocktailId',
-      _count: {
-        cocktailId: true,
-      },
+    // const cocktailQueue: CocktailQueue[] = await prisma.cocktailQueue.groupBy({
+    //   by: 'cocktailId',
+    //   _count: {
+    //     cocktailId: true,
+    //   },
+    //   where: {
+    //     workspaceId: workspace.id,
+    //   },
+    // });
+    //
+    // const cocktailQueueWithCocktail: { cocktailRecipe: any; count: number }[] = await Promise.all(
+    //   cocktailQueue.map(async (queueItem) => {
+    //     const cocktailRecipe = await prisma.cocktailRecipe.findUnique({ where: { id: queueItem.cocktailId } });
+    //
+    //     return {
+    //       cocktailRecipe: cocktailRecipe,
+    //       // @ts-ignore
+    //       count: queueItem._count.cocktailId,
+    //     };
+    //   }),
+    // );
+    // return res.json({ data: cocktailQueueWithCocktail });
+
+    const cocktailQueue = await prisma.cocktailQueue.findMany({
       where: {
         workspaceId: workspace.id,
       },
+      include: {
+        cocktail: true,
+      },
     });
-
-    const cocktailQueueWithCocktail: { cocktailRecipe: any; count: number }[] = await Promise.all(
-      cocktailQueue.map(async (queueItem) => {
-        const cocktailRecipe = await prisma.cocktailRecipe.findUnique({ where: { id: queueItem.cocktailId } });
-
+    return res.json({
+      data: cocktailQueue.map((cocktailQueueItem) => {
         return {
-          cocktailRecipe: cocktailRecipe,
-          // @ts-ignore
-          count: queueItem._count.cocktailId,
+          cocktailId: cocktailQueueItem.cocktailId,
+          timestamp: cocktailQueueItem.createdAt,
+          cocktailName: cocktailQueueItem.cocktail.name,
         };
       }),
-    );
-    return res.json({ data: cocktailQueueWithCocktail });
+    });
   }),
 });

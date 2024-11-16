@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { BsFillGearFill } from 'react-icons/bs';
 import { CocktailCardFull } from '../../../models/CocktailCardFull';
 import CocktailRecipeCardItem, { CocktailRecipeOverviewItemRef } from '../../../components/cocktails/CocktailRecipeCardItem';
-import { CocktailCard, CocktailRecipe, Setting } from '@prisma/client';
+import { CocktailCard, Setting } from '@prisma/client';
 import { useRouter } from 'next/router';
 import { ModalContext } from '../../../lib/context/ModalContextProvider';
 import { SearchModal } from '../../../components/modals/SearchModal';
@@ -18,6 +18,7 @@ import SearchPage from './search';
 import '../../../lib/DateUtils';
 import { addCocktailToStatistic, removeCocktailFromQueue } from '../../../lib/network/cocktailTracking';
 import { CocktailDetailModal } from '../../../components/modals/CocktailDetailModal';
+import _ from 'lodash';
 
 export default function OverviewPage() {
   const modalContext = useContext(ModalContext);
@@ -185,7 +186,7 @@ export default function OverviewPage() {
   const [currentTime, setCurrentTime] = useState(new Date());
 
   const refreshQueue = useCallback(() => {
-    fetch(`/api/workspaces/${workspaceId}/queue`)
+    fetch(`/api/workspaces/${workspaceId}/queue?timestamp=${new Date().toISOString()}`)
       .then(async (response) => {
         const body = await response.json();
         if (response.ok) {
@@ -209,8 +210,9 @@ export default function OverviewPage() {
   }, []);
 
   interface CocktailQueueItem {
-    cocktailRecipe: CocktailRecipe;
-    count: number;
+    cocktailId: string;
+    timestamp: Date;
+    cocktailName: string;
   }
 
   const [cocktailQueue, setCocktailQueue] = useState<CocktailQueueItem[]>([]);
@@ -333,13 +335,22 @@ export default function OverviewPage() {
               <div className={`${showQueueAsOverlay ? 'bg-opacity-75 lg:max-w-60' : ''} flex w-full flex-col rounded-xl bg-base-300 p-2 print:hidden`}>
                 <div className={'underline'}>Warteschlange (A-Z)</div>
                 <div className={'flex flex-col divide-y'}>
-                  {cocktailQueue
-                    .sort((a, b) => a.cocktailRecipe.name.localeCompare(b.cocktailRecipe.name))
+                  {_(cocktailQueue)
+                    .groupBy('cocktailId') // Gruppiere nach Cocktail-ID
+                    .map((items, cocktailId) => ({
+                      cocktailId,
+                      cocktailName: items[0].cocktailName,
+                      count: items.length,
+                      oldestTimestamp: _.minBy(items, 'timestamp')!.timestamp,
+                    }))
+                    .sortBy('cocktailName')
+                    .value()
                     .map((cocktailQueueItem, index) => (
                       <div key={`cocktailQueue-item-${index}`} className={'flex w-full flex-row justify-between gap-2 pb-1 pt-1 lg:flex-col'}>
                         <div className={'flex flex-row items-center justify-between'}>
                           <div className={'flex flex-row items-center gap-1'}>
-                            <strong>{cocktailQueueItem.count}x</strong> {cocktailQueueItem.cocktailRecipe.name}
+                            <strong>{cocktailQueueItem.count}x</strong> {cocktailQueueItem.cocktailName} (seit{' '}
+                            {new Date(cocktailQueueItem.oldestTimestamp).toFormatTimeString()})
                           </div>
                         </div>
                         <div className={'space between flex flex-row gap-2'}>
@@ -348,8 +359,8 @@ export default function OverviewPage() {
                             onClick={() =>
                               modalContext.openModal(
                                 <CocktailDetailModal
-                                  cocktailId={cocktailQueueItem.cocktailRecipe.id}
-                                  onRefreshRatings={() => handleCocktailCardRefresh(cocktailQueueItem.cocktailRecipe.id)}
+                                  cocktailId={cocktailQueueItem.cocktailId}
+                                  onRefreshRatings={() => handleCocktailCardRefresh(cocktailQueueItem.cocktailName)}
                                 />,
                                 true,
                               )
@@ -360,17 +371,17 @@ export default function OverviewPage() {
                           <div className={'join w-full'}>
                             <button
                               className={'btn btn-success join-item btn-sm flex-1'}
-                              disabled={!!submittingQueue.find((i) => i.cocktailId == cocktailQueueItem.cocktailRecipe.id)}
+                              disabled={!!submittingQueue.find((i) => i.cocktailId == cocktailQueueItem.cocktailId)}
                               onClick={() =>
                                 addCocktailToStatistic({
                                   workspaceId: router.query.workspaceId as string,
-                                  cocktailId: cocktailQueueItem.cocktailRecipe.id,
+                                  cocktailId: cocktailQueueItem.cocktailId,
                                   actionSource: 'QUEUE',
                                   setSubmitting: (submitting) => {
                                     if (submitting) {
-                                      setSubmittingQueue([...submittingQueue, { cocktailId: cocktailQueueItem.cocktailRecipe.id, mode: 'ACCEPT' }]);
+                                      setSubmittingQueue([...submittingQueue, { cocktailId: cocktailQueueItem.cocktailId, mode: 'ACCEPT' }]);
                                     } else {
-                                      setSubmittingQueue(submittingQueue.filter((i) => i.cocktailId != cocktailQueueItem.cocktailRecipe.id));
+                                      setSubmittingQueue(submittingQueue.filter((i) => i.cocktailId != cocktailQueueItem.cocktailId));
                                     }
                                   },
                                   reload: () => {
@@ -383,16 +394,16 @@ export default function OverviewPage() {
                             </button>
                             <button
                               className={'btn btn-error join-item btn-sm flex-1'}
-                              disabled={!!submittingQueue.find((i) => i.cocktailId == cocktailQueueItem.cocktailRecipe.id)}
+                              disabled={!!submittingQueue.find((i) => i.cocktailId == cocktailQueueItem.cocktailId)}
                               onClick={() =>
                                 removeCocktailFromQueue({
                                   workspaceId: router.query.workspaceId as string,
-                                  cocktailId: cocktailQueueItem.cocktailRecipe.id,
+                                  cocktailId: cocktailQueueItem.cocktailId,
                                   setSubmitting: (submitting) => {
                                     if (submitting) {
-                                      setSubmittingQueue([...submittingQueue, { cocktailId: cocktailQueueItem.cocktailRecipe.id, mode: 'REJECT' }]);
+                                      setSubmittingQueue([...submittingQueue, { cocktailId: cocktailQueueItem.cocktailId, mode: 'REJECT' }]);
                                     } else {
-                                      setSubmittingQueue(submittingQueue.filter((i) => i.cocktailId != cocktailQueueItem.cocktailRecipe.id));
+                                      setSubmittingQueue(submittingQueue.filter((i) => i.cocktailId != cocktailQueueItem.cocktailId));
                                     }
                                   },
                                   reload: () => {
