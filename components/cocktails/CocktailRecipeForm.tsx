@@ -12,7 +12,7 @@ import { CocktailRecipeGarnishFull } from '../../models/CocktailRecipeGarnishFul
 import { DeleteConfirmationModal } from '../modals/DeleteConfirmationModal';
 import { ModalContext } from '../../lib/context/ModalContextProvider';
 import _, { orderBy } from 'lodash';
-import { compressFile } from '../../lib/ImageCompressor';
+import { resizeImage } from '../../lib/ImageCompressor';
 import { SelectModal } from '../modals/SelectModal';
 import FormModal from '../modals/FormModal';
 import { GarnishForm } from '../garnishes/GarnishForm';
@@ -689,8 +689,13 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                           aspect={9 / 16}
                           imageToCrop={values.originalImage}
                           onCroppedImageComplete={async (file) => {
-                            const compressedImageFile = await compressFile(file);
-                            await setFieldValue('image', await convertToBase64(compressedImageFile));
+                            resizeImage(file, 504, 896, async (compressedImageFile) => {
+                              if (compressedImageFile) {
+                                await setFieldValue('image', await convertToBase64(new File([compressedImageFile], 'image.png', { type: 'image/png' })));
+                              } else {
+                                alertService.error('Bild konnte nicht skaliert werden.');
+                              }
+                            });
                           }}
                           onCropCancel={async () => {
                             await setFieldValue('originalImage', undefined);

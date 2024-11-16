@@ -26,9 +26,11 @@ export default function CropComponent(props: CropComponentProps) {
   const imgRef = useRef<HTMLImageElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  const [isCropping, setIsCropping] = useState<boolean>(false);
+
   const generateCroppedImage = async () => {
     if (!crop || !imgRef.current || !containerRef.current) return;
-
+    setIsCropping(true);
     const scaleX = imgRef.current!.naturalWidth / imgRef.current!.width;
     const scaleY = imgRef.current!.naturalHeight / imgRef.current!.height;
 
@@ -43,6 +45,7 @@ export default function CropComponent(props: CropComponentProps) {
 
     // Erstelle ein Canvas mit den Dimensionen des Crop-Bereichs
     const canvas = document.createElement('canvas');
+    // const canvas = new OffscreenCanvas(crop.width, crop.height);
     canvas.width = crop.width * scaleX;
     canvas.height = crop.height * scaleY;
     const ctx = canvas.getContext('2d');
@@ -52,16 +55,18 @@ export default function CropComponent(props: CropComponentProps) {
       ctx!.fillStyle = customColor;
       ctx!.fillRect(0, 0, canvas.width, canvas.height);
     }
-
     // Zeichne das Bild auf das Canvas, nur der gecroppte Bereich wird sichtbar sein
     ctx?.drawImage(imgRef.current!, (crop.x - offsetX) * scaleX, (crop.y - offsetY) * scaleY, cropWidth, cropHeight, 0, 0, canvas.width, canvas.height);
 
-    return new Promise((resolve, reject) => {
+    return await new Promise((resolve, reject) => {
       canvas.toBlob((blob) => {
+        // canvas.convertToBlob({ type: 'image/png' }).then((blob) => {
         if (!blob) {
           reject(new Error('Canvas is empty'));
           return;
         }
+
+        setIsCropping(false);
         props.onCroppedImageComplete(new File([blob], 'image.png', { type: 'image/png' }));
       }, 'image/png');
     });
@@ -69,7 +74,7 @@ export default function CropComponent(props: CropComponentProps) {
 
   return (
     <div className="relative flex h-full w-full flex-col items-center justify-center gap-2">
-      <div className={'flex h-full w-full flex-row gap-2'}>
+      <div className={'flex h-full w-full flex-col gap-2 md:flex-row'}>
         <div className={`h-auto w-fit ${props.isValid == true ? '' : 'rounded-2xl border-2 border-error p-2 pb-1'}`}>
           <ReactCrop crop={crop} onChange={(newCrop) => setCrop(newCrop)} aspect={props.aspect} className={`h-auto w-fit`}>
             <div className={`relative h-96 max-h-96 w-96 max-w-96`} ref={containerRef} id={'image-container-ref'}>
@@ -125,7 +130,13 @@ export default function CropComponent(props: CropComponentProps) {
         </div>
       </div>
       <div className="flex w-full flex-row items-center justify-end gap-2">
-        <button disabled={!crop || crop?.width === 0 || crop?.height === 0} type="button" onClick={generateCroppedImage} className="btn btn-primary flex-1">
+        <button
+          disabled={!crop || crop?.width === 0 || crop?.height === 0 || isCropping}
+          type="button"
+          onClick={async () => await generateCroppedImage()}
+          className="btn btn-primary flex-1"
+        >
+          {isCropping ? <span className={'loading loading-spinner'} /> : null}
           Zuschneiden und Bild übernehmen
         </button>
         {props.onCropCancel && (
