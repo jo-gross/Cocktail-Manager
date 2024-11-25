@@ -11,6 +11,14 @@ import HTTPMethod from 'http-method-enum';
 import { withHttpMethods } from '../../../../../middleware/api/handleMethods';
 import CocktailRecipeCreateInput = Prisma.CocktailRecipeCreateInput;
 
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '20mb',
+    },
+  },
+};
+
 export default withHttpMethods({
   [HTTPMethod.GET]: withWorkspacePermission([Role.USER], async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
     const cocktailRecipes: CocktailRecipeFull[] = await prisma.cocktailRecipe.findMany({
