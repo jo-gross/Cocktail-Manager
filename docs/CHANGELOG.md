@@ -1,3 +1,10 @@
+## [1.9.7](https://github.com/jo-gross/Cocktail-Manager/compare/v1.9.6...v1.9.7) (2024-11-25)
+
+
+### Bug Fixes
+
+* Cocktail image upload error ([a9be847](https://github.com/jo-gross/Cocktail-Manager/commit/a9be847066fe8a153a2bf90725e43184867b1b1a))
+
 ## [1.9.6](https://github.com/jo-gross/Cocktail-Manager/compare/v1.9.5...v1.9.6) (2024-11-16)
 
 
