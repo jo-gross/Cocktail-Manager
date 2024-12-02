@@ -26,7 +26,7 @@ export function GlobalModal(props: GlobalModalProps) {
     <div>
       {props.children}
       <dialog id="globalModal" className="modal">
-        <div className={`modal-box relative w-fit p-1.5 md:p-4`}>
+        <div className={`modal-box relative w-fit min-w-[30%] p-1.5 md:p-4`}>
           <form method="dialog">
             {modalContext.content.length > 1 && (
               <div
