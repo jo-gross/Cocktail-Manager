@@ -7,57 +7,102 @@ import { withHttpMethods } from '../../../../../../middleware/api/handleMethods'
 import { CocktailRecipeStepFull } from '../../../../../../models/CocktailRecipeStepFull';
 import { CocktailRecipeGarnishFull } from '../../../../../../models/CocktailRecipeGarnishFull';
 import { CocktailRecipeFullWithImage } from '../../../../../../models/CocktailRecipeFullWithImage';
+import { CocktailRecipeFull } from '../../../../../../models/CocktailRecipeFull';
 import CocktailRecipeUpdateInput = Prisma.CocktailRecipeUpdateInput;
+
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '20mb',
+    },
+  },
+};
 
 export default withHttpMethods({
   [HTTPMethod.GET]: withWorkspacePermission([Role.USER], async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
     const cocktailId = req.query.cocktailId as string | undefined;
     if (!cocktailId) return res.status(400).json({ message: 'No cocktail id' });
 
-    const result: CocktailRecipeFullWithImage | null = await prisma.cocktailRecipe.findFirst({
-      where: {
-        id: cocktailId,
-        workspaceId: workspace.id,
-      },
-      include: {
-        _count: { select: { CocktailRecipeImage: true } },
-        ice: true,
-        glass: { include: { _count: { select: { GlassImage: true } } } },
-        CocktailRecipeImage: {
-          select: {
-            image: true,
-          },
+    const { include } = req.query;
+    if (include == 'image' || include?.includes('image')) {
+      const result: CocktailRecipeFullWithImage | null = await prisma.cocktailRecipe.findFirst({
+        where: {
+          id: cocktailId,
+          workspaceId: workspace.id,
         },
-        garnishes: {
-          include: {
-            garnish: { include: { _count: { select: { GarnishImage: true } } } },
+        include: {
+          _count: { select: { CocktailRecipeImage: true } },
+          ice: true,
+          glass: { include: { _count: { select: { GlassImage: true } } } },
+          CocktailRecipeImage: {
+            select: {
+              image: true,
+            },
           },
-        },
-        steps: {
-          include: {
-            action: true,
-            ingredients: {
-              include: {
-                ingredient: { include: { _count: { select: { IngredientImage: true } } } },
-                unit: true,
+          garnishes: {
+            include: {
+              garnish: { include: { _count: { select: { GarnishImage: true } } } },
+            },
+          },
+          steps: {
+            include: {
+              action: true,
+              ingredients: {
+                include: {
+                  ingredient: { include: { _count: { select: { IngredientImage: true } } } },
+                  unit: true,
+                },
               },
             },
           },
+          ratings: true,
         },
-      },
-    });
-
-    return res.json({ data: result });
+      });
+      return res.json({ data: result });
+    } else {
+      const result: CocktailRecipeFull | null = await prisma.cocktailRecipe.findFirst({
+        where: {
+          id: cocktailId,
+          workspaceId: workspace.id,
+        },
+        include: {
+          _count: { select: { CocktailRecipeImage: true } },
+          ice: true,
+          glass: { include: { _count: { select: { GlassImage: true } } } },
+          garnishes: {
+            include: {
+              garnish: { include: { _count: { select: { GarnishImage: true } } } },
+            },
+          },
+          steps: {
+            include: {
+              action: true,
+              ingredients: {
+                include: {
+                  ingredient: {
+                    include: { _count: { select: { IngredientImage: true } } },
+                  },
+                  unit: true,
+                },
+              },
+            },
+          },
+          ratings: true,
+        },
+      });
+      return res.json({ data: result });
+    }
   }),
   [HTTPMethod.PUT]: withWorkspacePermission([Role.MANAGER], async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
     const cocktailId = req.query.cocktailId as string | undefined;
     if (!cocktailId) return res.status(400).json({ message: 'No cocktail id' });
 
-    const { name, description, tags, price, iceId, image, glassId, garnishes, steps } = req.body;
+    const { name, description, tags, price, iceId, image, glassId, garnishes, steps, notes } = req.body;
 
     const input: CocktailRecipeUpdateInput = {
       name: name,
       description: description,
+      notes: notes,
       tags: tags,
       price: price,
       ice: { connect: { id: iceId } },
@@ -119,14 +164,16 @@ export default withHttpMethods({
           data: {
             action: { connect: { id: step.actionId } },
             stepNumber: step.stepNumber,
+            optional: step.optional,
             cocktailRecipe: { connect: { id: result!.id } },
             ingredients: {
-              create: step.ingredients.map((ingredient) => {
+              create: step.ingredients.map((stepIngredient) => {
                 return {
-                  amount: ingredient.amount,
-                  ingredientNumber: ingredient.ingredientNumber,
-                  unit: { connect: { id: ingredient.unitId } },
-                  ingredient: { connect: { id: ingredient.ingredientId } },
+                  amount: stepIngredient.amount,
+                  optional: stepIngredient.optional,
+                  ingredientNumber: stepIngredient.ingredientNumber,
+                  unit: { connect: { id: stepIngredient.unitId } },
+                  ingredient: { connect: { id: stepIngredient.ingredientId } },
                 };
               }),
             },

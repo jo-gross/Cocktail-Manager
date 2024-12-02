@@ -21,6 +21,10 @@ const withPWA = require('next-pwa')({
       handler: 'NetworkOnly', // don't cache queue requests, always fetch from network
     },
     {
+      urlPattern: /\/ratings$/,
+      handler: 'NetworkOnly', // don't cache queue requests, always fetch from network
+    },
+    {
       urlPattern: /^https?.*/,
       handler: 'StaleWhileRevalidate', // always cache first, but go to network (if available) for new data and update cache
       method: 'GET', // only cache GET requests

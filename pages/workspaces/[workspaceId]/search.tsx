@@ -5,9 +5,12 @@ import { SearchModal } from '../../../components/modals/SearchModal';
 import { useRouter } from 'next/router';
 
 interface SearchPageProps {
-  showImage?: boolean;
-  showTags?: boolean;
-  showStatisticActions?: boolean;
+  showImage: boolean;
+  showTags: boolean;
+  showStatisticActions: boolean;
+  showRating: boolean;
+  showDescription: boolean;
+  showNotes: boolean;
 }
 
 export default function SearchPage(props: SearchPageProps) {
@@ -23,7 +26,12 @@ export default function SearchPage(props: SearchPageProps) {
     <div className={'flex flex-col-reverse gap-2 md:flex-row'}>
       <div className={'card w-full flex-1'}>
         <div className={'card-body'}>
-          <SearchModal onCocktailSelectedObject={(cocktail) => setSelectedCocktail(cocktail)} selectionLabel={'Ansehen'} showRecipe={false} />
+          <SearchModal
+            onCocktailSelectedObject={(cocktail) => setSelectedCocktail(cocktail)}
+            selectionLabel={'Ansehen'}
+            showRecipe={false}
+            customWidthClassName={'w-full'}
+          />
         </div>
       </div>
       <div className={'h-min w-full flex-1'}>
@@ -33,9 +41,11 @@ export default function SearchPage(props: SearchPageProps) {
             showImage={props.showImage}
             showInfo={true}
             showPrice={true}
-            showDescription={true}
+            showDescription={props.showDescription}
+            showNotes={props.showNotes}
             showTags={props.showTags}
             showStatisticActions={props.showStatisticActions}
+            showRating={props.showRating}
           />
         ) : (
           <></>

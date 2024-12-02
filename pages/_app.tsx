@@ -8,9 +8,11 @@ import { AuthBoundary } from '../components/layout/AuthBoundary';
 import { GlobalModal } from '../components/modals/GlobalModal';
 import Head from 'next/head';
 import ThemeBoundary from '../components/layout/ThemeBoundary';
+import { RoutingContextProvider } from '../lib/context/RoutingContextProvider';
 
 const App = ({ Component, pageProps: { session, ...pageProps } }: AppProps) => {
   const [modalContentStack, setModalContentStack] = useState<JSX.Element[]>([]);
+  const [modalHideCloseButton, setModalHideCloseButton] = useState<boolean[]>([]);
 
   const [, forceUpdate] = useReducer((x) => x + 1, 0);
 
@@ -18,21 +20,24 @@ const App = ({ Component, pageProps: { session, ...pageProps } }: AppProps) => {
 
   return (
     <SessionProvider session={session}>
-      <AlertBoundary>
+      <RoutingContextProvider>
         <ModalContext.Provider
           value={{
             content: modalContentStack,
-            openModal: async (content) => {
+            hideCloseButton: modalHideCloseButton,
+            openModal: async (content, hideCloseButton) => {
               if ((document.getElementById('globalModal') as HTMLDialogElement)?.open == false) {
                 (document.getElementById('globalModal') as HTMLDialogElement).showModal();
               }
 
               // The await has the effect in chrome, that the modal was not replaces otherwise
               setModalContentStack([...modalContentStack, content]);
+              setModalHideCloseButton([...modalHideCloseButton, hideCloseButton ?? false]);
             },
             async closeModal() {
               if (modalContentStack.length > 0) {
                 setModalContentStack(modalContentStack.slice(0, modalContentStack.length - 1));
+                setModalHideCloseButton(modalHideCloseButton.slice(0, modalHideCloseButton.length - 1));
 
                 if (modalContentStack.length == 1 && (document.getElementById('globalModal') as HTMLDialogElement | null)?.open == true) {
                   (document.getElementById('globalModal') as HTMLDialogElement).close();
@@ -47,6 +52,7 @@ const App = ({ Component, pageProps: { session, ...pageProps } }: AppProps) => {
             },
             closeAllModals() {
               setModalContentStack([]);
+              setModalHideCloseButton([]);
               if ((document.getElementById('globalModal') as HTMLDialogElement | null)?.open == true) {
                 (document.getElementById('globalModal') as HTMLDialogElement).close();
               }
@@ -54,32 +60,34 @@ const App = ({ Component, pageProps: { session, ...pageProps } }: AppProps) => {
             },
           }}
         >
-          <AuthBoundary>
-            <ThemeBoundary
-              onThemeChange={(theme) => {
-                setTheme(theme);
-              }}
-            >
-              <GlobalModal>
-                <>
-                  <Head>
-                    <title>The Cocktail-Manager</title>
-                  </Head>
-                  {theme != 'auto' ? (
-                    <>
-                      <input type="checkbox" hidden={true} checked={theme == 'dark'} readOnly={true} value="halloween" className="theme-controller toggle" />
-                      <input type="checkbox" hidden={true} checked={theme == 'light'} readOnly={true} value="autumn" className="theme-controller toggle" />
-                    </>
-                  ) : (
-                    <></>
-                  )}
-                  <Component {...pageProps} />
-                </>
-              </GlobalModal>
-            </ThemeBoundary>
-          </AuthBoundary>
+          <GlobalModal>
+            <AlertBoundary>
+              <AuthBoundary>
+                <ThemeBoundary
+                  onThemeChange={(theme) => {
+                    setTheme(theme);
+                  }}
+                >
+                  <>
+                    <Head>
+                      <title>The Cocktail-Manager</title>
+                    </Head>
+                    {theme != 'auto' ? (
+                      <>
+                        <input type="checkbox" hidden={true} checked={theme == 'dark'} readOnly={true} value="halloween" className="theme-controller toggle" />
+                        <input type="checkbox" hidden={true} checked={theme == 'light'} readOnly={true} value="autumn" className="theme-controller toggle" />
+                      </>
+                    ) : (
+                      <></>
+                    )}
+                    <Component {...pageProps} />
+                  </>
+                </ThemeBoundary>
+              </AuthBoundary>
+            </AlertBoundary>
+          </GlobalModal>
         </ModalContext.Provider>
-      </AlertBoundary>
+      </RoutingContextProvider>
     </SessionProvider>
   );
 };

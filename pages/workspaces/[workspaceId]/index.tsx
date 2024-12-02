@@ -1,10 +1,10 @@
-import React, { useCallback, useContext, useEffect, useState } from 'react';
-import { FaArrowDown, FaCheck, FaEye, FaSearch, FaTimes } from 'react-icons/fa';
+import React, { useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { FaAngleDown, FaAngleUp, FaArrowDown, FaCheck, FaEye, FaPlus, FaSearch, FaTimes } from 'react-icons/fa';
 import Link from 'next/link';
 import { BsFillGearFill } from 'react-icons/bs';
 import { CocktailCardFull } from '../../../models/CocktailCardFull';
-import CocktailRecipeCardItem from '../../../components/cocktails/CocktailRecipeCardItem';
-import { CocktailCard, CocktailRecipe, Setting } from '@prisma/client';
+import CocktailRecipeCardItem, { CocktailRecipeOverviewItemRef } from '../../../components/cocktails/CocktailRecipeCardItem';
+import { CocktailCard, Setting } from '@prisma/client';
 import { useRouter } from 'next/router';
 import { ModalContext } from '../../../lib/context/ModalContextProvider';
 import { SearchModal } from '../../../components/modals/SearchModal';
@@ -18,6 +18,7 @@ import SearchPage from './search';
 import '../../../lib/DateUtils';
 import { addCocktailToStatistic, removeCocktailFromQueue } from '../../../lib/network/cocktailTracking';
 import { CocktailDetailModal } from '../../../components/modals/CocktailDetailModal';
+import _ from 'lodash';
 
 export default function OverviewPage() {
   const modalContext = useContext(ModalContext);
@@ -25,20 +26,26 @@ export default function OverviewPage() {
   const router = useRouter();
   const { workspaceId } = router.query;
 
+  // Set by user settings
+
   const [showImage, setShowImage] = useState(false);
   const [showTags, setShowTags] = useState(false);
   const [lessItems, setLessItems] = useState(false);
   const [showStatisticActions, setShowStatisticActions] = useState(false);
   const [showQueueAsOverlay, setShowQueueAsOverlay] = useState(false);
   const [showDescription, setShowDescription] = useState(false);
+  const [showNotes, setShowNotes] = useState(false);
+  const [showTime, setShowTime] = useState(false);
+  const [showRating, setShowRating] = useState(false);
 
   const [cocktailCards, setCocktailCards] = useState<CocktailCardFull[]>([]);
   const [loadingCards, setLoadingCards] = useState(true);
   const [loadingGroups, setLoadingGroups] = useState(false);
 
+  // Search modal shortcut (Shift + F)
   useEffect(() => {
     const handleSearchShortCut = (event: any) => {
-      if (event.shiftKey && event.key === 'F') {
+      if (event.shiftKey && event.key === 'F' && modalContext.content.length == 0) {
         if (!(document.querySelector('#globalModal') as any)?.checked) {
           modalContext.openModal(<SearchModal showStatisticActions={showStatisticActions} />);
         }
@@ -133,27 +140,11 @@ export default function OverviewPage() {
   }, []);
 
   useEffect(() => {
-    console.debug('selectedCardId', selectedCardId);
-    if (selectedCardId == undefined && cocktailCards.length > 0) {
-      const todayCardId = cocktailCards.filter((card) => card.date != undefined).find((card) => card.date?.withoutTime == new Date().withoutTime)?.id;
+    if (selectedCardId == undefined && cocktailCards.length > 0 && router.query.card != 'search') {
+      const todayCardId = cocktailCards
+        .filter((card) => card.date != undefined)
+        .find((card) => new Date(card.date!).toISOString().split('T')[0] == new Date().toISOString().split('T')[0])?.id;
 
-      console.debug(
-        'cocktailCards',
-        cocktailCards.map((c) => {
-          return {
-            name: c.name,
-            date: c.date,
-            dateWithoutTime: c.date?.withoutTime,
-          };
-        }),
-      );
-
-      const date = new Date();
-      date.setHours(0, 0, 0, 0);
-      console.debug('today-date', date.toISOString());
-      console.debug('today-withouttime', new Date().withoutTime);
-
-      console.debug('todayCardId', todayCardId);
       if (todayCardId) {
         setSelectedCardId(todayCardId);
         router
@@ -187,12 +178,15 @@ export default function OverviewPage() {
     setShowStatisticActions(userContext.user?.settings?.find((s) => s.setting == Setting.showStatisticActions)?.value == 'true' ?? false);
     setShowQueueAsOverlay(userContext.user?.settings?.find((s) => s.setting == Setting.showQueueAsOverlay)?.value == 'true' ?? false);
     setShowDescription(userContext.user?.settings?.find((s) => s.setting == Setting.showDescription)?.value == 'true' ?? false);
+    setShowNotes(userContext.user?.settings?.find((s) => s.setting == Setting.showNotes)?.value == 'true' ?? false);
+    setShowTime(userContext.user?.settings?.find((s) => s.setting == Setting.showTime)?.value == 'true' ?? false);
+    setShowRating(userContext.user?.settings?.find((s) => s.setting == Setting.showRating)?.value == 'true' ?? false);
   }, [userContext.user?.settings]);
 
   const [currentTime, setCurrentTime] = useState(new Date());
 
   const refreshQueue = useCallback(() => {
-    fetch(`/api/workspaces/${workspaceId}/queue`)
+    fetch(`/api/workspaces/${workspaceId}/queue?timestamp=${new Date().toISOString()}`)
       .then(async (response) => {
         const body = await response.json();
         if (response.ok) {
@@ -216,8 +210,9 @@ export default function OverviewPage() {
   }, []);
 
   interface CocktailQueueItem {
-    cocktailRecipe: CocktailRecipe;
-    count: number;
+    cocktailId: string;
+    timestamp: Date;
+    cocktailName: string;
   }
 
   const [cocktailQueue, setCocktailQueue] = useState<CocktailQueueItem[]>([]);
@@ -235,33 +230,45 @@ export default function OverviewPage() {
 
   const [maxDropdownHeight, setMaxDropdownHeight] = useState(0);
   const actionButtonRef = React.useRef<HTMLDivElement>(null);
-  const dropdownRef = React.useRef<HTMLDivElement>(null);
+  const dropdownContentRef = React.useRef<HTMLDivElement>(null);
   const [isDropdownScrollable, setIsDropdownScrollable] = useState(false);
 
-  useEffect(() => {
+  const [showRecipeOptions, setShowRecipeOptions] = useState(false);
+  const [showLayoutOptions, setShowLayoutOptions] = useState(false);
+
+  const checkDropdownScroll = useCallback(() => {
     const handleScroll = () => {
-      if (dropdownRef.current) {
-        const { scrollTop, scrollHeight, clientHeight } = dropdownRef.current;
+      if (dropdownContentRef.current) {
+        const { scrollTop, scrollHeight, clientHeight } = dropdownContentRef.current;
         setIsDropdownScrollable(scrollTop + clientHeight + 16 < scrollHeight);
       }
     };
 
-    if (dropdownRef.current) {
-      dropdownRef.current.addEventListener('scroll', handleScroll);
+    if (dropdownContentRef.current) {
+      dropdownContentRef.current.addEventListener('scroll', handleScroll);
       handleScroll(); // Initial check
     }
 
     return () => {
-      if (dropdownRef.current) {
-        dropdownRef.current.removeEventListener('scroll', handleScroll);
+      if (dropdownContentRef.current) {
+        dropdownContentRef.current.removeEventListener('scroll', handleScroll);
       }
     };
   }, []);
+
+  useEffect(() => {
+    checkDropdownScroll();
+  }, []);
+
+  useEffect(() => {
+    checkDropdownScroll();
+  }, [showLayoutOptions, showRecipeOptions]);
 
   const [windowSize, setWindowSize] = useState({
     width: 0,
     height: 0,
   });
+
   useEffect(() => {
     function handleResize() {
       setWindowSize({
@@ -296,6 +303,15 @@ export default function OverviewPage() {
     </div>
   );
 
+  const cocktailItemRefs = useRef<{ [key: string]: CocktailRecipeOverviewItemRef | null }>({});
+
+  // Function to refresh a specific CocktailRecipeCardItem
+  const handleCocktailCardRefresh = useCallback((cocktailId: string) => {
+    if (cocktailItemRefs.current[cocktailId]) {
+      cocktailItemRefs.current[cocktailId]?.refresh();
+    }
+  }, []);
+
   return (
     <>
       <Head>
@@ -303,7 +319,7 @@ export default function OverviewPage() {
       </Head>
 
       <div className={'static h-screen'}>
-        {selectedCard?.showTime ? <div className={'pt-2'}>{timeComponent}</div> : <></>}
+        {showTime ? <div className={'pt-2'}>{timeComponent}</div> : <></>}
 
         <div
           className={`grid grid-cols-1 gap-2 p-2 ${showQueueAsOverlay ? '' : showStatisticActions && cocktailQueue.length > 0 ? 'lg:grid-cols-6' : ''} print:grid-cols-5 print:overflow-clip print:p-0`}
@@ -319,36 +335,53 @@ export default function OverviewPage() {
               <div className={`${showQueueAsOverlay ? 'bg-opacity-75 lg:max-w-60' : ''} flex w-full flex-col rounded-xl bg-base-300 p-2 print:hidden`}>
                 <div className={'underline'}>Warteschlange (A-Z)</div>
                 <div className={'flex flex-col divide-y'}>
-                  {cocktailQueue
-                    .sort((a, b) => a.cocktailRecipe.name.localeCompare(b.cocktailRecipe.name))
+                  {_(cocktailQueue)
+                    .groupBy('cocktailId') // Gruppiere nach Cocktail-ID
+                    .map((items, cocktailId) => ({
+                      cocktailId,
+                      cocktailName: items[0].cocktailName,
+                      count: items.length,
+                      oldestTimestamp: _.minBy(items, 'timestamp')!.timestamp,
+                    }))
+                    .sortBy('cocktailName')
+                    .value()
                     .map((cocktailQueueItem, index) => (
                       <div key={`cocktailQueue-item-${index}`} className={'flex w-full flex-row justify-between gap-2 pb-1 pt-1 lg:flex-col'}>
                         <div className={'flex flex-row items-center justify-between'}>
                           <div className={'flex flex-row items-center gap-1'}>
-                            <strong>{cocktailQueueItem.count}x</strong> {cocktailQueueItem.cocktailRecipe.name}
+                            <strong>{cocktailQueueItem.count}x</strong> {cocktailQueueItem.cocktailName} (seit{' '}
+                            {new Date(cocktailQueueItem.oldestTimestamp).toFormatTimeString()})
                           </div>
                         </div>
                         <div className={'space between flex flex-row gap-2'}>
                           <div
                             className={'btn btn-square btn-outline btn-sm'}
-                            onClick={() => modalContext.openModal(<CocktailDetailModal cocktailId={cocktailQueueItem.cocktailRecipe.id} />)}
+                            onClick={() =>
+                              modalContext.openModal(
+                                <CocktailDetailModal
+                                  cocktailId={cocktailQueueItem.cocktailId}
+                                  onRefreshRatings={() => handleCocktailCardRefresh(cocktailQueueItem.cocktailName)}
+                                />,
+                                true,
+                              )
+                            }
                           >
                             <FaEye />
                           </div>
                           <div className={'join w-full'}>
                             <button
                               className={'btn btn-success join-item btn-sm flex-1'}
-                              disabled={!!submittingQueue.find((i) => i.cocktailId == cocktailQueueItem.cocktailRecipe.id)}
+                              disabled={!!submittingQueue.find((i) => i.cocktailId == cocktailQueueItem.cocktailId)}
                               onClick={() =>
                                 addCocktailToStatistic({
                                   workspaceId: router.query.workspaceId as string,
-                                  cocktailId: cocktailQueueItem.cocktailRecipe.id,
+                                  cocktailId: cocktailQueueItem.cocktailId,
                                   actionSource: 'QUEUE',
                                   setSubmitting: (submitting) => {
                                     if (submitting) {
-                                      setSubmittingQueue([...submittingQueue, { cocktailId: cocktailQueueItem.cocktailRecipe.id, mode: 'ACCEPT' }]);
+                                      setSubmittingQueue([...submittingQueue, { cocktailId: cocktailQueueItem.cocktailId, mode: 'ACCEPT' }]);
                                     } else {
-                                      setSubmittingQueue(submittingQueue.filter((i) => i.cocktailId != cocktailQueueItem.cocktailRecipe.id));
+                                      setSubmittingQueue(submittingQueue.filter((i) => i.cocktailId != cocktailQueueItem.cocktailId));
                                     }
                                   },
                                   reload: () => {
@@ -361,16 +394,16 @@ export default function OverviewPage() {
                             </button>
                             <button
                               className={'btn btn-error join-item btn-sm flex-1'}
-                              disabled={!!submittingQueue.find((i) => i.cocktailId == cocktailQueueItem.cocktailRecipe.id)}
+                              disabled={!!submittingQueue.find((i) => i.cocktailId == cocktailQueueItem.cocktailId)}
                               onClick={() =>
                                 removeCocktailFromQueue({
                                   workspaceId: router.query.workspaceId as string,
-                                  cocktailId: cocktailQueueItem.cocktailRecipe.id,
+                                  cocktailId: cocktailQueueItem.cocktailId,
                                   setSubmitting: (submitting) => {
                                     if (submitting) {
-                                      setSubmittingQueue([...submittingQueue, { cocktailId: cocktailQueueItem.cocktailRecipe.id, mode: 'REJECT' }]);
+                                      setSubmittingQueue([...submittingQueue, { cocktailId: cocktailQueueItem.cocktailId, mode: 'REJECT' }]);
                                     } else {
-                                      setSubmittingQueue(submittingQueue.filter((i) => i.cocktailId != cocktailQueueItem.cocktailRecipe.id));
+                                      setSubmittingQueue(submittingQueue.filter((i) => i.cocktailId != cocktailQueueItem.cocktailId));
                                     }
                                   },
                                   reload: () => {
@@ -394,7 +427,14 @@ export default function OverviewPage() {
 
           <div className={`order-1 col-span-5 flex w-full flex-col space-y-2 overflow-y-auto rounded-xl`}>
             {selectedCardId == 'search' || selectedCardId == undefined ? (
-              <SearchPage showImage={showImage} showTags={showTags} showStatisticActions={showStatisticActions} />
+              <SearchPage
+                showImage={showImage}
+                showTags={showTags}
+                showStatisticActions={showStatisticActions}
+                showRating={showRating}
+                showNotes={showNotes}
+                showDescription={showDescription}
+              />
             ) : loadingGroups ? (
               <PageCenter>
                 <Loading />
@@ -409,7 +449,7 @@ export default function OverviewPage() {
                 .map((group) => (
                   <div
                     key={`card-${selectedCard.id}-group-${group.id}`}
-                    className={'collapse collapse-arrow rounded-xl border border-base-300 bg-base-200 p-1 print:p-1'}
+                    className={`collapse collapse-arrow rounded-xl border border-base-300 bg-base-200 p-1 print:p-1`}
                   >
                     <input type={'checkbox'} defaultChecked={true} />
                     <div className={'collapse-title text-center text-2xl font-bold'}>
@@ -426,18 +466,23 @@ export default function OverviewPage() {
                           group.items
                             ?.sort((a, b) => a.itemNumber - b.itemNumber)
                             .map((groupItem, index) => {
-                              if (groupItem.cocktail != undefined) {
+                              if (groupItem.cocktailId != undefined) {
                                 return (
                                   <CocktailRecipeCardItem
                                     key={`card-${selectedCard.id}-group-${group.id}-cocktail-${groupItem.cocktailId}-${index}`}
+                                    ref={(el) => {
+                                      cocktailItemRefs.current[groupItem.cocktailId!] = el;
+                                    }}
                                     showImage={showImage}
                                     showTags={showTags}
                                     showInfo={true}
                                     showPrice={groupItem.specialPrice == undefined && group.groupPrice == undefined}
                                     specialPrice={groupItem.specialPrice ?? group.groupPrice ?? undefined}
-                                    cocktailRecipe={groupItem.cocktail}
+                                    cocktailRecipe={groupItem.cocktailId}
                                     showStatisticActions={showStatisticActions}
                                     showDescription={showDescription}
+                                    showNotes={showNotes}
+                                    showRating={showRating}
                                   />
                                 );
                               } else {
@@ -457,7 +502,7 @@ export default function OverviewPage() {
           </div>
         </div>
 
-        {selectedCard?.showTime ? <div className={'pb-2'}>{timeComponent}</div> : <></>}
+        {showTime ? <div className={'pb-2'}>{timeComponent}</div> : <></>}
 
         <div ref={actionButtonRef} className={'fixed bottom-2 right-2 z-10 flex flex-col space-y-2 md:bottom-5 md:right-5 print:hidden'}>
           <div className="dropdown dropdown-end dropdown-top pt-2">
@@ -466,29 +511,54 @@ export default function OverviewPage() {
             </label>
             <div
               tabIndex={0}
-              className={`dropdown-content h-min w-52 rounded-box bg-base-100 p-2 shadow`}
+              className={`dropdown-content h-min w-64 rounded-box bg-base-100 p-2 shadow`}
               style={{
                 maxHeight: maxDropdownHeight + 'px',
               }}
             >
               <div
-                ref={dropdownRef}
+                ref={dropdownContentRef}
                 className={'overflow-y-auto'}
                 style={{
                   maxHeight: maxDropdownHeight - 16 + 'px',
                 }}
               >
                 <div className={'flex flex-col space-x-2'}>
-                  <div className={'divider'}>Karte</div>
+                  <label className="label">
+                    <div className={'label-text font-bold'}>Cocktailsuche</div>
+                    <input
+                      name={'card-radio'}
+                      type={'radio'}
+                      className={'radio'}
+                      value={'search'}
+                      checked={selectedCardId == 'search' || selectedCardId == undefined}
+                      readOnly={true}
+                      onClick={() => {
+                        setSelectedCardId('search');
+                        router
+                          .replace({
+                            pathname: '/workspaces/[workspaceId]',
+                            query: { card: 'search', workspaceId: workspaceId },
+                          })
+                          .then();
+                      }}
+                    />
+                  </label>
+                  <div className={'divider'}>Karte(n)</div>
                   {loadingCards ? (
                     <Loading />
                   ) : cocktailCards.length == 0 ? (
-                    <div>Keine Karten vorhanden</div>
+                    <div className={'flex items-center justify-between'}>
+                      <div>Keine Karten vorhanden</div>
+                      <Link href={`/workspaces/${workspaceId}/manage/cards/create`} className={'btn btn-square btn-outline btn-sm'}>
+                        <FaPlus />
+                      </Link>
+                    </div>
                   ) : (
                     cocktailCards.sort(sortCards).map((card) => (
                       <div key={'card-' + card.id} className="form-control">
                         <label className="label">
-                          <div className={'label-text'}>
+                          <div className={'label-text font-bold'}>
                             {card.name}
                             {card.date != undefined ? (
                               <span>
@@ -508,7 +578,7 @@ export default function OverviewPage() {
                             type={'radio'}
                             className={'radio'}
                             value={card.id}
-                            checked={selectedCard?.id == card.id}
+                            checked={router.query.card != 'search' && selectedCard?.id == card.id}
                             readOnly={true}
                             onClick={() => {
                               setSelectedCardId(card.id);
@@ -525,117 +595,154 @@ export default function OverviewPage() {
                     ))
                   )}
 
-                  <div className={'divider'}>Anzeige</div>
-                  <label className="label">
-                    <div className={'label-text'}>Suche</div>
-                    <input
-                      name={'card-radio'}
-                      type={'radio'}
-                      className={'radio'}
-                      value={'search'}
-                      checked={selectedCardId == 'search' || selectedCardId == undefined}
-                      readOnly={true}
-                      onClick={() => {
-                        setSelectedCardId('search');
-                        router
-                          .replace({
-                            pathname: '/workspaces/[workspaceId]',
-                            query: { card: 'search', workspaceId: workspaceId },
-                          })
-                          .then();
-                      }}
-                    />
-                  </label>
-                  <div className="form-control">
-                    <label className="label">
-                      Bilder anzeigen
-                      <input
-                        type={'checkbox'}
-                        className={'toggle toggle-primary'}
-                        checked={showImage}
-                        readOnly={true}
-                        onClick={() => {
-                          userContext.updateUserSetting(Setting.showImage, !showImage ? 'true' : 'false');
-                          setShowImage(!showImage);
-                        }}
-                      />
-                    </label>
+                  <div className={'divider'}>Darstellung</div>
+                  <div className={`flex flex-col gap-2`}>
+                    <div className={'flex cursor-pointer flex-row items-center justify-between'} onClick={() => setShowRecipeOptions(!showRecipeOptions)}>
+                      <div className={'font-bold'}>Rezeptbereich</div>
+                      <div>{showRecipeOptions ? <FaAngleUp /> : <FaAngleDown />}</div>
+                    </div>
+                    <div className={`flex flex-col gap-2 ${showRecipeOptions ? '' : 'hidden'}`}>
+                      <div className="form-control">
+                        <label className="label">
+                          Bilder anzeigen
+                          <input
+                            type={'checkbox'}
+                            className={'toggle toggle-primary'}
+                            checked={showImage}
+                            readOnly={true}
+                            onClick={() => {
+                              userContext.updateUserSetting(Setting.showImage, !showImage ? 'true' : 'false');
+                            }}
+                          />
+                        </label>
+                      </div>
+                      <div className="form-control">
+                        <label className="label">
+                          Tags anzeigen
+                          <input
+                            type={'checkbox'}
+                            className={'toggle toggle-primary'}
+                            checked={showTags}
+                            readOnly={true}
+                            onClick={() => {
+                              userContext.updateUserSetting(Setting.showTags, !showTags ? 'true' : 'false');
+                            }}
+                          />
+                        </label>
+                      </div>
+                      <div className="form-control">
+                        <label className="label">
+                          Beschreibung anzeigen
+                          <input
+                            type={'checkbox'}
+                            className={'toggle toggle-primary'}
+                            checked={showDescription}
+                            readOnly={true}
+                            onClick={() => {
+                              userContext.updateUserSetting(Setting.showDescription, !showDescription ? 'true' : 'false');
+                            }}
+                          />
+                        </label>
+                      </div>
+                      <div className="form-control">
+                        <label className="label">
+                          Notizen anzeigen
+                          <input
+                            type={'checkbox'}
+                            className={'toggle toggle-primary'}
+                            checked={showNotes}
+                            readOnly={true}
+                            onClick={() => {
+                              userContext.updateUserSetting(Setting.showNotes, !showNotes ? 'true' : 'false');
+                            }}
+                          />
+                        </label>
+                      </div>
+                      <div className="form-control">
+                        <label className="label">
+                          Bewertung anzeigen
+                          <input
+                            type={'checkbox'}
+                            className={'toggle toggle-primary'}
+                            checked={showRating}
+                            readOnly={true}
+                            onClick={() => {
+                              userContext.updateUserSetting(Setting.showRating, !showRating ? 'true' : 'false');
+                            }}
+                          />
+                        </label>
+                      </div>
+                      <div className="form-control">
+                        <label className="label">
+                          Tracking aktivieren
+                          <input
+                            type={'checkbox'}
+                            className={'toggle toggle-primary'}
+                            checked={showStatisticActions}
+                            readOnly={true}
+                            onClick={() => {
+                              userContext.updateUserSetting(Setting.showStatisticActions, !showStatisticActions ? 'true' : 'false');
+                            }}
+                          />
+                        </label>
+                      </div>
+                    </div>
                   </div>
-                  <div className="form-control">
-                    <label className="label">
-                      Tags anzeigen
-                      <input
-                        type={'checkbox'}
-                        className={'toggle toggle-primary'}
-                        checked={showTags}
-                        readOnly={true}
-                        onClick={() => {
-                          userContext.updateUserSetting(Setting.showTags, !showTags ? 'true' : 'false');
-                          setShowTags(!showTags);
-                        }}
-                      />
-                    </label>
+
+                  <div className={'divider'}></div>
+                  <div className={`flex flex-col gap-2`}>
+                    <div className={'flex cursor-pointer flex-row items-center justify-between'} onClick={() => setShowLayoutOptions(!showLayoutOptions)}>
+                      <div className={'font-bold'}>Layout</div>
+                      <div>{showLayoutOptions ? <FaAngleUp /> : <FaAngleDown />}</div>
+                    </div>
+                    <div className={`flex flex-col gap-2 ${showLayoutOptions ? '' : 'hidden'}`}>
+                      <div className="form-control">
+                        <label className="label">
+                          Uhrzeit anzeigen
+                          <input
+                            type={'checkbox'}
+                            className={'toggle toggle-primary'}
+                            checked={showTime}
+                            readOnly={true}
+                            onClick={() => {
+                              userContext.updateUserSetting(Setting.showTime, !showTime ? 'true' : 'false');
+                            }}
+                          />
+                        </label>
+                      </div>
+                      {router.query.card !== 'search' && (
+                        <div className="form-control">
+                          <label className="label">
+                            Weniger Spalten
+                            <input
+                              type={'checkbox'}
+                              className={'toggle toggle-primary'}
+                              checked={lessItems}
+                              readOnly={true}
+                              onClick={() => {
+                                userContext.updateUserSetting(Setting.lessItems, !lessItems ? 'true' : 'false');
+                              }}
+                            />
+                          </label>
+                        </div>
+                      )}
+                      <div className="form-control">
+                        <label className="label">
+                          Warteschlange als Overlay
+                          <input
+                            type={'checkbox'}
+                            className={'toggle toggle-primary'}
+                            checked={showQueueAsOverlay}
+                            readOnly={true}
+                            onClick={() => {
+                              userContext.updateUserSetting(Setting.showQueueAsOverlay, !showQueueAsOverlay ? 'true' : 'false');
+                            }}
+                          />
+                        </label>
+                      </div>
+                    </div>
                   </div>
-                  <div className="form-control">
-                    <label className="label">
-                      Beschreibung anzeigen
-                      <input
-                        type={'checkbox'}
-                        className={'toggle toggle-primary'}
-                        checked={showDescription}
-                        readOnly={true}
-                        onClick={() => {
-                          userContext.updateUserSetting(Setting.showDescription, !showDescription ? 'true' : 'false');
-                          setShowDescription(!showDescription);
-                        }}
-                      />
-                    </label>
-                  </div>
-                  <div className="form-control">
-                    <label className="label">
-                      Weniger Spalten
-                      <input
-                        type={'checkbox'}
-                        className={'toggle toggle-primary'}
-                        checked={lessItems}
-                        readOnly={true}
-                        onClick={() => {
-                          userContext.updateUserSetting(Setting.lessItems, !lessItems ? 'true' : 'false');
-                          setLessItems(!lessItems);
-                        }}
-                      />
-                    </label>
-                  </div>
-                  <div className="form-control">
-                    <label className="label">
-                      Tracking aktivieren
-                      <input
-                        type={'checkbox'}
-                        className={'toggle toggle-primary'}
-                        checked={showStatisticActions}
-                        readOnly={true}
-                        onClick={() => {
-                          userContext.updateUserSetting(Setting.showStatisticActions, !showStatisticActions ? 'true' : 'false');
-                          setShowStatisticActions(!showStatisticActions);
-                        }}
-                      />
-                    </label>
-                  </div>
-                  <div className="form-control">
-                    <label className="label">
-                      Warteschlange als Overlay
-                      <input
-                        type={'checkbox'}
-                        className={'toggle toggle-primary'}
-                        checked={showQueueAsOverlay}
-                        readOnly={true}
-                        onClick={() => {
-                          userContext.updateUserSetting(Setting.showQueueAsOverlay, !showQueueAsOverlay ? 'true' : 'false');
-                          setShowQueueAsOverlay(!showQueueAsOverlay);
-                        }}
-                      />
-                    </label>
-                  </div>
+                  <div className={'divider'}></div>
                   <ThemeChanger />
                 </div>
               </div>

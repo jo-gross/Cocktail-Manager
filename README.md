@@ -158,7 +158,7 @@ Starting development:
 > Apply migrations (WARNING: this could drop all of your local data, pay attention)
 >
 > ```sh
-> pnpm prisma migrate dev
+> pnpm prisma migrate deploy
 > ```
 >
 > Start the application

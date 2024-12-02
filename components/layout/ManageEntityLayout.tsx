@@ -3,8 +3,8 @@ import Head from 'next/head';
 import React, { useContext } from 'react';
 import { NotSavedLeaveConfirmation } from '../modals/NotSavedLeaveConfirmation';
 import { ModalContext } from '../../lib/context/ModalContextProvider';
-import { useRouter } from 'next/router';
 import { FormikProps } from 'formik';
+import { RoutingContext } from '../../lib/context/RoutingContextProvider';
 
 interface ManageEntityLayoutProps {
   children: React.ReactNode;
@@ -19,15 +19,7 @@ interface ManageEntityLayoutProps {
 
 export function ManageEntityLayout(props: ManageEntityLayoutProps) {
   const modalContext = useContext(ModalContext);
-  const router = useRouter();
-
-  const routerConditionalBack = async (fallbackUrl: string) => {
-    if (document.referrer && document.referrer.includes(window.location.origin)) {
-      await router.replace(fallbackUrl);
-    } else {
-      router.back();
-    }
-  };
+  const routingContext = useContext(RoutingContext);
 
   return (
     <>
@@ -53,10 +45,10 @@ export function ManageEntityLayout(props: ManageEntityLayoutProps) {
                           props.onSave?.();
                           await props.formRef?.current?.submitForm();
                         }}
-                        onNotSave={() => routerConditionalBack(props.backLink)}
+                        onNotSave={() => routingContext.conditionalBack(props.backLink)}
                       />,
                     )
-                  : routerConditionalBack(props.backLink);
+                  : routingContext.conditionalBack(props.backLink);
               }}
             >
               <FaArrowLeft />

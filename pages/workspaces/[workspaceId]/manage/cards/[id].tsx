@@ -15,6 +15,7 @@ import { Role } from '@prisma/client';
 import { DeleteConfirmationModal } from '../../../../../components/modals/DeleteConfirmationModal';
 import _ from 'lodash';
 import { PageCenter } from '../../../../../components/layout/PageCenter';
+import { RoutingContext } from '../../../../../lib/context/RoutingContextProvider';
 
 interface CocktailCardGroupError {
   name?: string;
@@ -28,6 +29,7 @@ interface CocktailCardError {
 
 function EditCocktailCard() {
   const modalContext = useContext(ModalContext);
+  const routingContext = useContext(RoutingContext);
   const router = useRouter();
 
   const { id, workspaceId } = router.query;
@@ -97,7 +99,6 @@ function EditCocktailCard() {
           groups: card?.groups.sort((a, b) => a.groupNumber - b.groupNumber) ?? [],
           name: card?.name ?? '',
           date: card?.date != undefined ? new Date(card.date).toISOString().split('T')[0] : '',
-          showTime: card?.showTime ?? false,
         }}
         validate={(values) => {
           var reducedCard: any = _.omit(card, ['workspaceId', 'id', 'groups[*].items[*].cocktail']);
@@ -139,7 +140,6 @@ function EditCocktailCard() {
             const input = {
               id: card?.id,
               name: values.name,
-              showTime: values.showTime,
               date: values.date != '' ? new Date(values.date).toISOString() : null,
               groups: values.groups.map((group, index) => ({
                 name: group.name,
@@ -160,7 +160,8 @@ function EditCocktailCard() {
               });
 
               if (response.ok) {
-                router.replace(`/workspaces/${workspaceId}/manage/cards`).then(() => alertService.success('Karte erfolgreich erstellt'));
+                alertService.success('Karte erfolgreich erstellt');
+                await routingContext.conditionalBack(`/workspaces/${workspaceId}/manage/cards`);
               } else {
                 const body = await response.json();
                 console.error('CardId -> onSubmit[create]', response);
@@ -174,7 +175,8 @@ function EditCocktailCard() {
               });
 
               if (response.ok) {
-                router.replace(`/workspaces/${workspaceId}/manage/cards`).then(() => alertService.success('Karte erfolgreich gespeichert'));
+                alertService.success('Karte erfolgreich gespeichert');
+                await routingContext.conditionalBack(`/workspaces/${workspaceId}/manage/cards`);
               } else {
                 const body = await response.json();
                 console.error('CardId -> onSubmit[update]', response);
@@ -224,23 +226,6 @@ function EditCocktailCard() {
                     onChange={handleChange}
                     onBlur={handleBlur}
                     value={values.date}
-                  />
-                </div>
-                <div className={'form-control'}>
-                  <label className={'label'}>
-                    <div className={'label-text'}>Zeige Uhrzeit</div>
-                    <div className={'label-text-alt text-error'}>
-                      <span>{errors.showTime && touched.showTime ? errors.showTime : ''}</span>
-                    </div>
-                  </label>
-                  <input
-                    type={'checkbox'}
-                    disabled={card?.archived}
-                    className={`toggle-bordered toggle ${errors.showTime && touched.showTime ? 'toggle-error' : ''}}`}
-                    name={`showTime`}
-                    onChange={handleChange}
-                    onBlur={handleBlur}
-                    checked={values.showTime}
                   />
                 </div>
               </div>
@@ -366,7 +351,7 @@ function EditCocktailCard() {
                           <div className={'pt-2'}>
                             <FieldArray name={`groups.${groupIndex}.items`}>
                               {({ push: pushItem, remove: removeItem }) => (
-                                <div className={'grid grid-cols-1 gap-2 md:grid-cols-3'}>
+                                <div className={'grid grid-cols-1 gap-2 md:grid-cols-5 lg:grid-cols-7'}>
                                   {values.groups[groupIndex].items
                                     .sort((a, b) => a.itemNumber - b.itemNumber)
                                     .map((item, itemIndex) => (
@@ -447,7 +432,7 @@ function EditCocktailCard() {
                                         </div>
                                       </div>
                                     ))}
-                                  <div className={'col-span-1 flex flex-row justify-end md:col-span-3'}>
+                                  <div className={'col-span-full flex flex-row justify-end'}>
                                     {!card?.archived ? (
                                       <button
                                         type="button"
@@ -543,7 +528,8 @@ function EditCocktailCard() {
 
                       const body = await response.json();
                       if (response.ok) {
-                        router.replace(`/workspaces/${workspaceId}/manage/cards`).then(() => alertService.success('Karte gelöscht'));
+                        alertService.success('Karte gelöscht');
+                        await routingContext.conditionalBack(`/workspaces/${workspaceId}/manage/cards`);
                       } else {
                         console.error('CardId -> deleteCard', response);
                         alertService.error(body.message ?? 'Fehler beim Löschen der Karte', response.status, response.statusText);

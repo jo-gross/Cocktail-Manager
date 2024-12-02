@@ -38,6 +38,10 @@
   @apply border-red-800 bg-red-700 text-white hover:bg-red-800;
 }
 
+.long-text-format {
+  @apply whitespace-pre-line text-pretty break-normal text-justify;
+}
+
 /*
 Remove arrows from input field
 https://stackoverflow.com/a/74043438/12160393
@@ -75,10 +79,17 @@ https://stackoverflow.com/a/74043438/12160393
   }
 }
 
+thead {
+  @apply bg-base-100;
+}
+
 .modal {
   @apply z-40;
 }
 
+.modal-box {
+  max-width: unset !important;
+}
 :root {
   --button-height: 64px; /* h-12 */
   --button-margin: 32px; /* my-4 */
@@ -87,4 +98,16 @@ https://stackoverflow.com/a/74043438/12160393
 
 .max-h-custom {
   max-height: var(--max-height);
+}
+
+.bg-transparent-pattern {
+  background-color: #fff;
+  background-image: linear-gradient(45deg, #ccc 25%, transparent 25%), linear-gradient(-45deg, #ccc 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #ccc 75%), linear-gradient(-45deg, transparent 75%, #ccc 75%);
+  background-size: 20px 20px;
+  background-position:
+    0 0,
+    0 10px,
+    10px -10px,
+    -10px 0px;
 }

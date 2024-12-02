@@ -1,10 +1,12 @@
 import { CocktailRecipeFull } from '../../models/CocktailRecipeFull';
 import React, { useContext } from 'react';
-import DefaultGlassIcon from '../DefaultGlassIcon';
 import { UserContext } from '../../lib/context/UserContextProvider';
 import Image from 'next/image';
 import { ModalContext } from '../../lib/context/ModalContextProvider';
 import ImageModal from '../modals/ImageModal';
+import { Loading } from '../Loading';
+import StarsComponent from '../StarsComponent';
+import { CocktailRating } from '@prisma/client';
 
 interface CompactCocktailRecipeInstructionProps {
   cocktailRecipe: CocktailRecipeFull;
@@ -12,6 +14,8 @@ interface CompactCocktailRecipeInstructionProps {
   specialPrice?: number;
   showImage?: boolean;
   image?: string;
+
+  showRating?: { ratings: CocktailRating[]; loading: boolean; error: boolean };
 }
 
 export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeInstructionProps) {
@@ -30,21 +34,52 @@ export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeIns
       ) : (
         <></>
       )}
-      <div className={'row-span-2 flex h-min items-center justify-center'}>
-        {props.cocktailRecipe.glass && props.cocktailRecipe.glass._count.GlassImage != 0 ? (
+      {props.cocktailRecipe.glass && props.cocktailRecipe.glass._count.GlassImage != 0 && (
+        <div className={`${props.showRating ? 'row-span-3' : 'row-span-2'} flex h-full items-center justify-center`}>
           <Image
-            className={'h-16 object-contain'}
+            className={'h-16 w-fit cursor-pointer rounded-lg object-contain'}
             src={`/api/workspaces/${props.cocktailRecipe.workspaceId}/glasses/${props.cocktailRecipe.glass?.id}/image`}
             alt={props.cocktailRecipe.glass?.name ?? 'Cocktail-Glas'}
+            onClick={() =>
+              modalContext.openModal(
+                <ImageModal image={`/api/workspaces/${props.cocktailRecipe.workspaceId}/glasses/${props.cocktailRecipe.glass?.id}/image`} />,
+              )
+            }
             width={200}
             height={200}
           />
-        ) : (
-          <div className={'flex flex-col items-center justify-center'}>
-            <DefaultGlassIcon />
-          </div>
-        )}
-      </div>
+        </div>
+      )}
+      {props.showRating && (
+        <div className={'col-span-3 flex flex-row items-center gap-2'}>
+          {props.showRating.error ? (
+            <>
+              <div>Fehler beim Laden der Bewertungen</div>
+            </>
+          ) : (
+            <>
+              {props.showRating.loading ? (
+                <Loading />
+              ) : (
+                <>
+                  {(props.showRating.ratings.length > 0
+                    ? props.showRating.ratings.reduce((acc, rating) => acc + rating.rating, 0) / props.showRating.ratings.length
+                    : 0
+                  ).toFixed(1)}
+                  <StarsComponent
+                    rating={
+                      props.showRating.ratings.length > 0
+                        ? props.showRating.ratings.reduce((acc, rating) => acc + rating.rating, 0) / props.showRating.ratings.length
+                        : 0
+                    }
+                  />
+                  ({props.showRating.ratings.length})
+                </>
+              )}
+            </>
+          )}
+        </div>
+      )}
       <div className={'col-span-3 flex flex-row justify-between space-x-2 font-thin'}>
         <div>Glas: {props.cocktailRecipe.glass?.name ?? '<Glas>'}</div>
         <div>Eis: {userContext.getTranslation(props.cocktailRecipe.ice?.name ?? '<Eis>', 'de')}</div>
@@ -56,19 +91,25 @@ export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeIns
             ?.sort((a, b) => a.stepNumber - b.stepNumber)
             ?.map((step, index) => (
               <div key={`step-${step.id}`} className={'break-words pb-2'}>
-                <span className={'font-bold'}>{userContext.getTranslation(step.action.name, 'de')}</span>
+                <span className={`font-bold ${step.optional && 'italic'}`}>
+                  {userContext.getTranslation(step.action.name, 'de')}
+                  {step.optional ? ' (optional)' : ''}
+                </span>
                 {step.ingredients
                   ?.sort((a, b) => a.ingredientNumber - b.ingredientNumber)
                   .map((stepIngredient, indexIngredient) => (
                     <div
                       key={`cocktail-${props.cocktailRecipe.id}-step-${step.id}-ingredient-${stepIngredient.id}-index-${indexIngredient}`}
-                      className={'flex flex-row gap-2'}
+                      className={`flex flex-row gap-2 pl-2 ${stepIngredient.optional && 'italic'}`}
                     >
                       <div className={'flex flex-row gap-1'}>
                         <div>{stepIngredient.amount ?? ''}</div>
                         <div>{userContext.getTranslation(stepIngredient?.unit?.name ?? '', 'de')}</div>
                       </div>
-                      <div>{stepIngredient.ingredient?.shortName ?? stepIngredient.ingredient?.name ?? ''} </div>
+                      <div>
+                        {stepIngredient.ingredient?.shortName ?? stepIngredient.ingredient?.name ?? ''}
+                        {stepIngredient.optional ? ' (optional)' : ''}
+                      </div>
                     </div>
                   ))}
               </div>
@@ -81,7 +122,10 @@ export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeIns
               {props.cocktailRecipe.garnishes
                 ?.sort((a, b) => a.garnishNumber - b.garnishNumber)
                 .map((garnish) => (
-                  <div key={`cocktail-${props.cocktailRecipe.id}-garnish-${garnish.garnishNumber}-garnishId-${garnish.garnishId}`}>
+                  <div
+                    key={`cocktail-${props.cocktailRecipe.id}-garnish-${garnish.garnishNumber}-garnishId-${garnish.garnishId}`}
+                    className={`pl-2 ${garnish.optional ? 'italic' : ''}`}
+                  >
                     {garnish?.garnish?.name}
                     {garnish.optional ? ' (optional)' : ''}
                   </div>
@@ -98,10 +142,10 @@ export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeIns
                 )
               }
               src={props.image ?? `/api/workspaces/${props.cocktailRecipe.workspaceId}/cocktails/${props.cocktailRecipe.id}/image`}
-              className={'h-full w-full cursor-pointer rounded-xl object-cover'}
+              className={'h-full w-full flex-grow cursor-pointer rounded-xl object-cover'}
               alt={''}
               width={300}
-              height={300}
+              height={534}
             />
           </div>
         ) : (

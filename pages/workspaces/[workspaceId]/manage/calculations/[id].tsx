@@ -18,6 +18,7 @@ import { fetchIngredients } from '../../../../../lib/network/ingredients';
 import _ from 'lodash';
 import { fetchUnits } from '../../../../../lib/network/units';
 import '../../../../../lib/DateUtils';
+import { RoutingContext } from '../../../../../lib/context/RoutingContextProvider';
 
 interface CocktailCalculationItem {
   cocktail: CocktailRecipeFull;
@@ -52,6 +53,7 @@ interface CalculationData {
 export default function CalculationPage() {
   const modalContext = useContext(ModalContext);
   const userContext = useContext(UserContext);
+  const routingContext = useContext(RoutingContext);
 
   const router = useRouter();
   const { id } = router.query;
@@ -291,7 +293,7 @@ export default function CalculationPage() {
               setOriginalName(calculationName);
               setOriginalIngredientShoppingUnits(JSON.stringify(ingredientShoppingUnits));
               if (redirect) {
-                await router.push(`/workspaces/${workspaceId}/manage/calculations/${body.data.id}`);
+                await router.replace(`/workspaces/${workspaceId}/manage/calculations/${body.data.id}`);
               }
               alertService.success('Kalkulation erfolgreich erstellt');
             } else {
@@ -335,7 +337,7 @@ export default function CalculationPage() {
               setOriginalName(calculationName);
               setOriginalIngredientShoppingUnits(JSON.stringify(ingredientShoppingUnits));
               if (redirect) {
-                await router.push(`/workspaces/${workspaceId}/manage/calculations/${body.data.id}`);
+                await router.replace(`/workspaces/${workspaceId}/manage/calculations/${body.data.id}`);
               }
               alertService.success('Kalkulation erfolgreich gespeichert');
             } else {
@@ -505,7 +507,7 @@ export default function CalculationPage() {
           openNameModal();
         } else {
           saveCalculationBackend(false);
-          await router.replace(`/workspaces/${workspaceId}/manage/calculations`);
+          await routingContext.conditionalBack(`/workspaces/${workspaceId}/manage/calculations`);
         }
       }}
       title={

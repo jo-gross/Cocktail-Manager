@@ -64,7 +64,6 @@ export default function ManagePage() {
             </label>
             <ul tabIndex={0} className="menu dropdown-content menu-sm z-[1] mt-2 w-52 gap-2 rounded-box border border-base-200 bg-base-100 p-2 shadow">
               <div className={'pt-1 text-center text-lg font-bold md:hidden'}>{userContext.user?.name}</div>
-              <div className={'divider-sm md:hidden'}></div>
               <Link href={'/'} className={'btn btn-outline btn-sm'}>
                 Workspaces
               </Link>

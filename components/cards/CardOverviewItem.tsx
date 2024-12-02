@@ -7,7 +7,7 @@ import { CocktailCardFull } from '../../models/CocktailCardFull';
 import { ModalContext } from '../../lib/context/ModalContextProvider';
 import InputModal from '../modals/InputModal';
 import { alertService } from '../../lib/alertService';
-import { useRouter } from 'next/router';
+import { RoutingContext } from '../../lib/context/RoutingContextProvider';
 
 interface CardOverviewItemProps {
   card: CocktailCardFull;
@@ -17,8 +17,7 @@ interface CardOverviewItemProps {
 export default function CardOverviewItem(props: CardOverviewItemProps) {
   const userContext = useContext(UserContext);
   const modalContext = useContext(ModalContext);
-
-  const router = useRouter();
+  const routingContext = useContext(RoutingContext);
 
   return (
     <div key={'card-' + props.card.id} className={'card'}>
@@ -50,8 +49,8 @@ export default function CardOverviewItem(props: CardOverviewItemProps) {
 
                           const body = await response.json();
                           if (response.ok) {
-                            await router.replace(`/workspaces/${props.workspaceId}/manage/cards/${body.data.id}`);
                             alertService.success('Karte erfolgreich dupliziert');
+                            await routingContext.conditionalBack(`/workspaces/${props.workspaceId}/manage/cards/${body.data.id}`);
                           } else {
                             console.error('CardId -> cloneCard', response);
                             alertService.error(body.message ?? 'Fehler beim Duplizieren der Karte', response.status, response.statusText);

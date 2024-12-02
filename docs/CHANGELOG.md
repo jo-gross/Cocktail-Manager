@@ -1,3 +1,77 @@
+## [1.9.7](https://github.com/jo-gross/Cocktail-Manager/compare/v1.9.6...v1.9.7) (2024-11-25)
+
+
+### Bug Fixes
+
+* Cocktail image upload error ([a9be847](https://github.com/jo-gross/Cocktail-Manager/commit/a9be847066fe8a153a2bf90725e43184867b1b1a))
+
+## [1.9.6](https://github.com/jo-gross/Cocktail-Manager/compare/v1.9.5...v1.9.6) (2024-11-16)
+
+
+### Bug Fixes
+
+* Crop image behavior ([#456](https://github.com/jo-gross/Cocktail-Manager/issues/456)) ([704a73d](https://github.com/jo-gross/Cocktail-Manager/commit/704a73dbc5726119435347357ed1b36bcb346634))
+* Queue order improvement ([#458](https://github.com/jo-gross/Cocktail-Manager/issues/458)) ([330bc49](https://github.com/jo-gross/Cocktail-Manager/commit/330bc494cc64e7012226fafdedcc247cd38ff97a))
+
+## [1.9.5](https://github.com/jo-gross/Cocktail-Manager/compare/v1.9.4...v1.9.5) (2024-09-24)
+
+
+### Bug Fixes
+
+* ui options in search view ([c650509](https://github.com/jo-gross/Cocktail-Manager/commit/c650509e5c08538aa03eb6dbafee5dc949e44e50))
+
+## [1.9.4](https://github.com/jo-gross/Cocktail-Manager/compare/v1.9.3...v1.9.4) (2024-09-16)
+
+
+### Bug Fixes
+
+* corrupted image layout ([55e004a](https://github.com/jo-gross/Cocktail-Manager/commit/55e004a8b70978edd896c1e229959ba0dd26b75b))
+
+## [1.9.3](https://github.com/jo-gross/Cocktail-Manager/compare/v1.9.2...v1.9.3) (2024-09-16)
+
+
+### Bug Fixes
+
+* Cocktail card rating option ([#433](https://github.com/jo-gross/Cocktail-Manager/issues/433)) ([ced94f7](https://github.com/jo-gross/Cocktail-Manager/commit/ced94f723fca54e697ea3b9f9b31ab96e05ef1aa))
+* customize view collapse bug and selected cocktail card ([95bd848](https://github.com/jo-gross/Cocktail-Manager/commit/95bd8486ae83c422c186a212c3500a8f932227b1))
+* navigation bug if previous site was external ([6f172bf](https://github.com/jo-gross/Cocktail-Manager/commit/6f172bfe9c6c942e34d18289e36433d95557f829))
+
+## [1.9.2](https://github.com/jo-gross/Cocktail-Manager/compare/v1.9.1...v1.9.2) (2024-09-12)
+
+
+### Bug Fixes
+
+* Changed card time option to user specific setting ([#426](https://github.com/jo-gross/Cocktail-Manager/issues/426)) ([13625e2](https://github.com/jo-gross/Cocktail-Manager/commit/13625e282d12dbd26a3820c3603b26ea0d3d2273))
+* Cocktail recipe card loading behavior improved  ([#425](https://github.com/jo-gross/Cocktail-Manager/issues/425)) ([5653a80](https://github.com/jo-gross/Cocktail-Manager/commit/5653a801a994d904de1f0349cba390c9ff1069c0))
+
+## [1.9.1](https://github.com/jo-gross/Cocktail-Manager/compare/v1.9.0...v1.9.1) (2024-09-11)
+
+
+### Bug Fixes
+
+* invalid redirects after saving and on navigation ([#424](https://github.com/jo-gross/Cocktail-Manager/issues/424)) ([f1d2bd1](https://github.com/jo-gross/Cocktail-Manager/commit/f1d2bd1632a0049678e8f305b525ecdac59da188))
+* not forcing background color on crop image ([92f077d](https://github.com/jo-gross/Cocktail-Manager/commit/92f077dfb47a49d966dfc60983c1f42080c51b05))
+* Notes and description formating, new lines now displayed correctly ([b12fa7c](https://github.com/jo-gross/Cocktail-Manager/commit/b12fa7c7ee46f0e31eb9ebd85b9ebb09c191d7a5))
+* restructured form layouts ([419cb7b](https://github.com/jo-gross/Cocktail-Manager/commit/419cb7be67e42bc75cd8552693a41a94a8a3a1bc))
+
+# [1.9.0](https://github.com/jo-gross/Cocktail-Manager/compare/v1.8.2...v1.9.0) (2024-09-11)
+
+
+### Bug Fixes
+
+* Form validation and error message handling ([cdda452](https://github.com/jo-gross/Cocktail-Manager/commit/cdda452c7db58b7c3237a4d446a34f6c69f3d292))
+* Routing when updating an cocktail from the search view ([a5abba8](https://github.com/jo-gross/Cocktail-Manager/commit/a5abba8644337de61aa626d80f6a0cb85a6765cf))
+
+
+### Features
+
+* added cocktail ratings ([#415](https://github.com/jo-gross/Cocktail-Manager/issues/415)) ([850646a](https://github.com/jo-gross/Cocktail-Manager/commit/850646a80dcde8ee44715aa91761bf4dbf4b3494))
+* added image crop option when selecting images (cocktail, ingredient, glass and garnish) ([#413](https://github.com/jo-gross/Cocktail-Manager/issues/413)) ([d5ec542](https://github.com/jo-gross/Cocktail-Manager/commit/d5ec542d54cd477e9b963baac8c197eb49000e9c))
+* Added name similarity check at ingredient-, cocktail-, garnish- and glassform ([#403](https://github.com/jo-gross/Cocktail-Manager/issues/403)) ([0183a0a](https://github.com/jo-gross/Cocktail-Manager/commit/0183a0adc368d20a322bc64773e287abaa74d624))
+* Added notes to cocktails, redesigned the cocktail info popup field, general popup behavior improved ([#402](https://github.com/jo-gross/Cocktail-Manager/issues/402)) ([a57aeee](https://github.com/jo-gross/Cocktail-Manager/commit/a57aeee0d06c0ac9dc7a74e79f623ec2d2d19639))
+* Added offline availability with service workers ([#405](https://github.com/jo-gross/Cocktail-Manager/issues/405)) by [@resaki1](https://github.com/resaki1) ([43798b3](https://github.com/jo-gross/Cocktail-Manager/commit/43798b39f48dfa625e31a14b0e88ff7397bb261d))
+* Added option to make cocktail ingredients and steps optional ([#404](https://github.com/jo-gross/Cocktail-Manager/issues/404)) ([83e7f8c](https://github.com/jo-gross/Cocktail-Manager/commit/83e7f8cd3b4bfc142af7ef54dcefd4bd81ccc3fe))
+
 ## [1.8.2](https://github.com/jo-gross/Cocktail-Manager/compare/v1.8.1...v1.8.2) (2024-08-26)
 
 

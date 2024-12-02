@@ -8,9 +8,9 @@ interface ListSearchFieldProps {
 export default function ListSearchField(props: ListSearchFieldProps) {
   const [filterString, setFilterString] = React.useState('');
   return (
-    <div className={'join self-center'}>
+    <div className={'join w-full self-center'}>
       <input
-        className={'input join-item input-bordered'}
+        className={'input join-item input-bordered w-full'}
         placeholder={'Suche...'}
         value={filterString}
         onChange={(e) => {
