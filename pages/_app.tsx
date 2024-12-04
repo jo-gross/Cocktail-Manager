@@ -60,9 +60,9 @@ const App = ({ Component, pageProps: { session, ...pageProps } }: AppProps) => {
             },
           }}
         >
-          <GlobalModal>
-            <AlertBoundary>
-              <AuthBoundary>
+          <AlertBoundary>
+            <AuthBoundary>
+              <GlobalModal>
                 <ThemeBoundary
                   onThemeChange={(theme) => {
                     setTheme(theme);
@@ -83,9 +83,9 @@ const App = ({ Component, pageProps: { session, ...pageProps } }: AppProps) => {
                     <Component {...pageProps} />
                   </>
                 </ThemeBoundary>
-              </AuthBoundary>
-            </AlertBoundary>
-          </GlobalModal>
+              </GlobalModal>
+            </AuthBoundary>
+          </AlertBoundary>
         </ModalContext.Provider>
       </RoutingContextProvider>
     </SessionProvider>

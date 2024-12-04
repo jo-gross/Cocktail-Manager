@@ -117,7 +117,7 @@ export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeIns
 
           {props.cocktailRecipe.garnishes.length == 0 ? <></> : <div className={`mb-1 border-b border-base-100`}></div>}
           <div>
-            {props.cocktailRecipe.garnishes.length == 0 ? <></> : <div className={'font-bold'}>Deko</div>}
+            {props.cocktailRecipe.garnishes.length == 0 ? <></> : <div className={'font-bold'}>Garnitur</div>}
             <div>
               {props.cocktailRecipe.garnishes
                 ?.sort((a, b) => a.garnishNumber - b.garnishNumber)
