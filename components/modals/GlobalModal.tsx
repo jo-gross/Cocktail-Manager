@@ -30,7 +30,7 @@ export function GlobalModal(props: GlobalModalProps) {
         <div className="fixed left-2 top-2 z-50 ml-2 flex flex-col items-center justify-center overflow-hidden md:left-10 md:top-10 print:hidden">
           <AlertsContainer />
         </div>
-        <div className={`modal-box relative w-fit p-1.5 md:p-4`}>
+        <div className={`modal-box relative w-fit min-w-[30%] p-1.5 md:p-4`}>
           <form method="dialog">
             {modalContext.content.length > 1 && (
               <div
