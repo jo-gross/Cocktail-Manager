@@ -21,53 +21,53 @@ const App = ({ Component, pageProps: { session, ...pageProps } }: AppProps) => {
   return (
     <SessionProvider session={session}>
       <RoutingContextProvider>
-        <AlertBoundary>
-          <ModalContext.Provider
-            value={{
-              content: modalContentStack,
-              hideCloseButton: modalHideCloseButton,
-              openModal: async (content, hideCloseButton) => {
-                if ((document.getElementById('globalModal') as HTMLDialogElement)?.open == false) {
-                  (document.getElementById('globalModal') as HTMLDialogElement).showModal();
-                }
+        <ModalContext.Provider
+          value={{
+            content: modalContentStack,
+            hideCloseButton: modalHideCloseButton,
+            openModal: async (content, hideCloseButton) => {
+              if ((document.getElementById('globalModal') as HTMLDialogElement)?.open == false) {
+                (document.getElementById('globalModal') as HTMLDialogElement).showModal();
+              }
 
-                // The await has the effect in chrome, that the modal was not replaces otherwise
-                setModalContentStack([...modalContentStack, content]);
-                setModalHideCloseButton([...modalHideCloseButton, hideCloseButton ?? false]);
-              },
-              async closeModal() {
-                if (modalContentStack.length > 0) {
-                  setModalContentStack(modalContentStack.slice(0, modalContentStack.length - 1));
-                  setModalHideCloseButton(modalHideCloseButton.slice(0, modalHideCloseButton.length - 1));
+              // The await has the effect in chrome, that the modal was not replaces otherwise
+              setModalContentStack([...modalContentStack, content]);
+              setModalHideCloseButton([...modalHideCloseButton, hideCloseButton ?? false]);
+            },
+            async closeModal() {
+              if (modalContentStack.length > 0) {
+                setModalContentStack(modalContentStack.slice(0, modalContentStack.length - 1));
+                setModalHideCloseButton(modalHideCloseButton.slice(0, modalHideCloseButton.length - 1));
 
-                  if (modalContentStack.length == 1 && (document.getElementById('globalModal') as HTMLDialogElement | null)?.open == true) {
-                    (document.getElementById('globalModal') as HTMLDialogElement).close();
-                  }
-                } else {
-                  if (modalContentStack.length == 0 && (document.getElementById('globalModal') as HTMLDialogElement | null)?.open == true) {
-                    (document.getElementById('globalModal') as HTMLDialogElement).close();
-                  }
-                }
-
-                forceUpdate();
-              },
-              closeAllModals() {
-                setModalContentStack([]);
-                setModalHideCloseButton([]);
-                if ((document.getElementById('globalModal') as HTMLDialogElement | null)?.open == true) {
+                if (modalContentStack.length == 1 && (document.getElementById('globalModal') as HTMLDialogElement | null)?.open == true) {
                   (document.getElementById('globalModal') as HTMLDialogElement).close();
                 }
-                forceUpdate();
-              },
-            }}
-          >
-            <AuthBoundary>
-              <ThemeBoundary
-                onThemeChange={(theme) => {
-                  setTheme(theme);
-                }}
-              >
-                <GlobalModal>
+              } else {
+                if (modalContentStack.length == 0 && (document.getElementById('globalModal') as HTMLDialogElement | null)?.open == true) {
+                  (document.getElementById('globalModal') as HTMLDialogElement).close();
+                }
+              }
+
+              forceUpdate();
+            },
+            closeAllModals() {
+              setModalContentStack([]);
+              setModalHideCloseButton([]);
+              if ((document.getElementById('globalModal') as HTMLDialogElement | null)?.open == true) {
+                (document.getElementById('globalModal') as HTMLDialogElement).close();
+              }
+              forceUpdate();
+            },
+          }}
+        >
+          <GlobalModal>
+            <AlertBoundary>
+              <AuthBoundary>
+                <ThemeBoundary
+                  onThemeChange={(theme) => {
+                    setTheme(theme);
+                  }}
+                >
                   <>
                     <Head>
                       <title>The Cocktail-Manager</title>
@@ -82,11 +82,11 @@ const App = ({ Component, pageProps: { session, ...pageProps } }: AppProps) => {
                     )}
                     <Component {...pageProps} />
                   </>
-                </GlobalModal>
-              </ThemeBoundary>
-            </AuthBoundary>
-          </ModalContext.Provider>
-        </AlertBoundary>
+                </ThemeBoundary>
+              </AuthBoundary>
+            </AlertBoundary>
+          </GlobalModal>
+        </ModalContext.Provider>
       </RoutingContextProvider>
     </SessionProvider>
   );
