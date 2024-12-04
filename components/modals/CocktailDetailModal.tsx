@@ -192,19 +192,6 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                           <div className={`font-bold ${garnish.optional ? 'italic' : ''}`}>
                             {garnish.garnish.name} {garnish.optional ? '(Optional)' : ''}
                           </div>
-                          {/*{garnish.garnish._count.GarnishImage > 0 && (*/}
-                          {/*  <div className={'h-12 w-12'}>*/}
-                          {/*    <AvatarImage*/}
-                          {/*      src={`/api/workspaces/${garnish.garnish.workspaceId}/garnishes/${garnish.garnish.id}/image`}*/}
-                          {/*      alt={'Cocktail Garnitur ' + garnish.garnish?.name}*/}
-                          {/*      onClick={() =>*/}
-                          {/*        modalContext.openModal(*/}
-                          {/*          <ImageModal image={`/api/workspaces/${garnish.garnish.workspaceId}/garnishes/${garnish.garnish.id}/image`} />,*/}
-                          {/*        )*/}
-                          {/*      }*/}
-                          {/*    />*/}
-                          {/*  </div>*/}
-                          {/*)}*/}
                         </div>
                         {garnish.description && (
                           <>
@@ -212,18 +199,6 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                             <div className={'long-text-format'}>{garnish.description}</div>
                           </>
                         )}
-                        {/*{garnish.garnish.description && (*/}
-                        {/*  <>*/}
-                        {/*    <div className={'underline'}>Allgemeine Beschreibung</div>*/}
-                        {/*    <div className={'long-text-format'}>{garnish.garnish.description}</div>*/}
-                        {/*  </>*/}
-                        {/*)}*/}
-                        {/*{garnish.garnish.notes && (*/}
-                        {/*  <>*/}
-                        {/*    <div className={'underline'}>Notizen</div>*/}
-                        {/*    <div className={'long-text-format'}>{garnish.garnish.notes}</div>*/}
-                        {/*  </>*/}
-                        {/*)}*/}
                       </div>
                     ))}
                 </>
