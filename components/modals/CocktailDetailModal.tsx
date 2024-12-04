@@ -62,7 +62,7 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
     <>
       <div className={'md:max-w-5xl'}>
         <div className={'card-body bg-base-100'}>
-          <div className={'no-print:hidden w-full pb-4 text-center text-2xl font-bold'}>{loadedCocktail.name}</div>
+          <div className={'w-full pb-4 text-center text-2xl font-bold no-print:hidden'}>{loadedCocktail.name}</div>
           <div className={'flex flex-row space-x-2 print:hidden'}>
             {modalContext.content.length > 1 && (
               <button className={'btn btn-square btn-outline btn-sm'} onClick={() => modalContext.closeModal()}>
