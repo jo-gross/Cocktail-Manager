@@ -1,10 +1,10 @@
-import React, { useCallback, useContext, useEffect, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { FaAngleDown, FaAngleUp, FaArrowDown, FaCheck, FaEye, FaPlus, FaSearch, FaTimes } from 'react-icons/fa';
 import Link from 'next/link';
 import { BsFillGearFill } from 'react-icons/bs';
 import { CocktailCardFull } from '../../../models/CocktailCardFull';
-import CocktailRecipeCardItem from '../../../components/cocktails/CocktailRecipeCardItem';
-import { CocktailCard, CocktailRecipe, Setting } from '@prisma/client';
+import CocktailRecipeCardItem, { CocktailRecipeOverviewItemRef } from '../../../components/cocktails/CocktailRecipeCardItem';
+import { CocktailCard, Setting } from '@prisma/client';
 import { useRouter } from 'next/router';
 import { ModalContext } from '../../../lib/context/ModalContextProvider';
 import { SearchModal } from '../../../components/modals/SearchModal';
@@ -18,6 +18,7 @@ import SearchPage from './search';
 import '../../../lib/DateUtils';
 import { addCocktailToStatistic, removeCocktailFromQueue } from '../../../lib/network/cocktailTracking';
 import { CocktailDetailModal } from '../../../components/modals/CocktailDetailModal';
+import _ from 'lodash';
 
 export default function OverviewPage() {
   const modalContext = useContext(ModalContext);
@@ -35,6 +36,7 @@ export default function OverviewPage() {
   const [showDescription, setShowDescription] = useState(false);
   const [showNotes, setShowNotes] = useState(false);
   const [showTime, setShowTime] = useState(false);
+  const [showRating, setShowRating] = useState(false);
 
   const [cocktailCards, setCocktailCards] = useState<CocktailCardFull[]>([]);
   const [loadingCards, setLoadingCards] = useState(true);
@@ -178,12 +180,13 @@ export default function OverviewPage() {
     setShowDescription(userContext.user?.settings?.find((s) => s.setting == Setting.showDescription)?.value == 'true' ?? false);
     setShowNotes(userContext.user?.settings?.find((s) => s.setting == Setting.showNotes)?.value == 'true' ?? false);
     setShowTime(userContext.user?.settings?.find((s) => s.setting == Setting.showTime)?.value == 'true' ?? false);
+    setShowRating(userContext.user?.settings?.find((s) => s.setting == Setting.showRating)?.value == 'true' ?? false);
   }, [userContext.user?.settings]);
 
   const [currentTime, setCurrentTime] = useState(new Date());
 
   const refreshQueue = useCallback(() => {
-    fetch(`/api/workspaces/${workspaceId}/queue`)
+    fetch(`/api/workspaces/${workspaceId}/queue?timestamp=${new Date().toISOString()}`)
       .then(async (response) => {
         const body = await response.json();
         if (response.ok) {
@@ -207,8 +210,9 @@ export default function OverviewPage() {
   }, []);
 
   interface CocktailQueueItem {
-    cocktailRecipe: CocktailRecipe;
-    count: number;
+    cocktailId: string;
+    timestamp: Date;
+    cocktailName: string;
   }
 
   const [cocktailQueue, setCocktailQueue] = useState<CocktailQueueItem[]>([]);
@@ -299,6 +303,15 @@ export default function OverviewPage() {
     </div>
   );
 
+  const cocktailItemRefs = useRef<{ [key: string]: CocktailRecipeOverviewItemRef | null }>({});
+
+  // Function to refresh a specific CocktailRecipeCardItem
+  const handleCocktailCardRefresh = useCallback((cocktailId: string) => {
+    if (cocktailItemRefs.current[cocktailId]) {
+      cocktailItemRefs.current[cocktailId]?.refresh();
+    }
+  }, []);
+
   return (
     <>
       <Head>
@@ -322,36 +335,53 @@ export default function OverviewPage() {
               <div className={`${showQueueAsOverlay ? 'bg-opacity-75 lg:max-w-60' : ''} flex w-full flex-col rounded-xl bg-base-300 p-2 print:hidden`}>
                 <div className={'underline'}>Warteschlange (A-Z)</div>
                 <div className={'flex flex-col divide-y'}>
-                  {cocktailQueue
-                    .sort((a, b) => a.cocktailRecipe.name.localeCompare(b.cocktailRecipe.name))
+                  {_(cocktailQueue)
+                    .groupBy('cocktailId') // Gruppiere nach Cocktail-ID
+                    .map((items, cocktailId) => ({
+                      cocktailId,
+                      cocktailName: items[0].cocktailName,
+                      count: items.length,
+                      oldestTimestamp: _.minBy(items, 'timestamp')!.timestamp,
+                    }))
+                    .sortBy('cocktailName')
+                    .value()
                     .map((cocktailQueueItem, index) => (
                       <div key={`cocktailQueue-item-${index}`} className={'flex w-full flex-row justify-between gap-2 pb-1 pt-1 lg:flex-col'}>
                         <div className={'flex flex-row items-center justify-between'}>
                           <div className={'flex flex-row items-center gap-1'}>
-                            <strong>{cocktailQueueItem.count}x</strong> {cocktailQueueItem.cocktailRecipe.name}
+                            <strong>{cocktailQueueItem.count}x</strong> {cocktailQueueItem.cocktailName} (seit{' '}
+                            {new Date(cocktailQueueItem.oldestTimestamp).toFormatTimeString()})
                           </div>
                         </div>
                         <div className={'space between flex flex-row gap-2'}>
                           <div
                             className={'btn btn-square btn-outline btn-sm'}
-                            onClick={() => modalContext.openModal(<CocktailDetailModal cocktailId={cocktailQueueItem.cocktailRecipe.id} />, true)}
+                            onClick={() =>
+                              modalContext.openModal(
+                                <CocktailDetailModal
+                                  cocktailId={cocktailQueueItem.cocktailId}
+                                  onRefreshRatings={() => handleCocktailCardRefresh(cocktailQueueItem.cocktailName)}
+                                />,
+                                true,
+                              )
+                            }
                           >
                             <FaEye />
                           </div>
                           <div className={'join w-full'}>
                             <button
                               className={'btn btn-success join-item btn-sm flex-1'}
-                              disabled={!!submittingQueue.find((i) => i.cocktailId == cocktailQueueItem.cocktailRecipe.id)}
+                              disabled={!!submittingQueue.find((i) => i.cocktailId == cocktailQueueItem.cocktailId)}
                               onClick={() =>
                                 addCocktailToStatistic({
                                   workspaceId: router.query.workspaceId as string,
-                                  cocktailId: cocktailQueueItem.cocktailRecipe.id,
+                                  cocktailId: cocktailQueueItem.cocktailId,
                                   actionSource: 'QUEUE',
                                   setSubmitting: (submitting) => {
                                     if (submitting) {
-                                      setSubmittingQueue([...submittingQueue, { cocktailId: cocktailQueueItem.cocktailRecipe.id, mode: 'ACCEPT' }]);
+                                      setSubmittingQueue([...submittingQueue, { cocktailId: cocktailQueueItem.cocktailId, mode: 'ACCEPT' }]);
                                     } else {
-                                      setSubmittingQueue(submittingQueue.filter((i) => i.cocktailId != cocktailQueueItem.cocktailRecipe.id));
+                                      setSubmittingQueue(submittingQueue.filter((i) => i.cocktailId != cocktailQueueItem.cocktailId));
                                     }
                                   },
                                   reload: () => {
@@ -364,16 +394,16 @@ export default function OverviewPage() {
                             </button>
                             <button
                               className={'btn btn-error join-item btn-sm flex-1'}
-                              disabled={!!submittingQueue.find((i) => i.cocktailId == cocktailQueueItem.cocktailRecipe.id)}
+                              disabled={!!submittingQueue.find((i) => i.cocktailId == cocktailQueueItem.cocktailId)}
                               onClick={() =>
                                 removeCocktailFromQueue({
                                   workspaceId: router.query.workspaceId as string,
-                                  cocktailId: cocktailQueueItem.cocktailRecipe.id,
+                                  cocktailId: cocktailQueueItem.cocktailId,
                                   setSubmitting: (submitting) => {
                                     if (submitting) {
-                                      setSubmittingQueue([...submittingQueue, { cocktailId: cocktailQueueItem.cocktailRecipe.id, mode: 'REJECT' }]);
+                                      setSubmittingQueue([...submittingQueue, { cocktailId: cocktailQueueItem.cocktailId, mode: 'REJECT' }]);
                                     } else {
-                                      setSubmittingQueue(submittingQueue.filter((i) => i.cocktailId != cocktailQueueItem.cocktailRecipe.id));
+                                      setSubmittingQueue(submittingQueue.filter((i) => i.cocktailId != cocktailQueueItem.cocktailId));
                                     }
                                   },
                                   reload: () => {
@@ -397,7 +427,14 @@ export default function OverviewPage() {
 
           <div className={`order-1 col-span-5 flex w-full flex-col space-y-2 overflow-y-auto rounded-xl`}>
             {selectedCardId == 'search' || selectedCardId == undefined ? (
-              <SearchPage showImage={showImage} showTags={showTags} showStatisticActions={showStatisticActions} />
+              <SearchPage
+                showImage={showImage}
+                showTags={showTags}
+                showStatisticActions={showStatisticActions}
+                showRating={showRating}
+                showNotes={showNotes}
+                showDescription={showDescription}
+              />
             ) : loadingGroups ? (
               <PageCenter>
                 <Loading />
@@ -433,6 +470,9 @@ export default function OverviewPage() {
                                 return (
                                   <CocktailRecipeCardItem
                                     key={`card-${selectedCard.id}-group-${group.id}-cocktail-${groupItem.cocktailId}-${index}`}
+                                    ref={(el) => {
+                                      cocktailItemRefs.current[groupItem.cocktailId!] = el;
+                                    }}
                                     showImage={showImage}
                                     showTags={showTags}
                                     showInfo={true}
@@ -442,6 +482,7 @@ export default function OverviewPage() {
                                     showStatisticActions={showStatisticActions}
                                     showDescription={showDescription}
                                     showNotes={showNotes}
+                                    showRating={showRating}
                                   />
                                 );
                               } else {
@@ -484,7 +525,7 @@ export default function OverviewPage() {
               >
                 <div className={'flex flex-col space-x-2'}>
                   <label className="label">
-                    <div className={'label-text'}>Cocktailsuche</div>
+                    <div className={'label-text font-bold'}>Cocktailsuche</div>
                     <input
                       name={'card-radio'}
                       type={'radio'}
@@ -517,7 +558,7 @@ export default function OverviewPage() {
                     cocktailCards.sort(sortCards).map((card) => (
                       <div key={'card-' + card.id} className="form-control">
                         <label className="label">
-                          <div className={'label-text'}>
+                          <div className={'label-text font-bold'}>
                             {card.name}
                             {card.date != undefined ? (
                               <span>
@@ -613,6 +654,20 @@ export default function OverviewPage() {
                             readOnly={true}
                             onClick={() => {
                               userContext.updateUserSetting(Setting.showNotes, !showNotes ? 'true' : 'false');
+                            }}
+                          />
+                        </label>
+                      </div>
+                      <div className="form-control">
+                        <label className="label">
+                          Bewertung anzeigen
+                          <input
+                            type={'checkbox'}
+                            className={'toggle toggle-primary'}
+                            checked={showRating}
+                            readOnly={true}
+                            onClick={() => {
+                              userContext.updateUserSetting(Setting.showRating, !showRating ? 'true' : 'false');
                             }}
                           />
                         </label>

@@ -9,7 +9,6 @@ import { alertService } from '../../lib/alertService';
 import { DeleteConfirmationModal } from '../modals/DeleteConfirmationModal';
 import { ModalContext } from '../../lib/context/ModalContextProvider';
 import _ from 'lodash';
-import { compressFile } from '../../lib/ImageCompressor';
 import { IngredientWithImage } from '../../models/IngredientWithImage';
 import { Ingredient, Unit, UnitConversion } from '@prisma/client';
 import { UserContext } from '../../lib/context/UserContextProvider';
@@ -47,6 +46,7 @@ import {
 } from '@mdxeditor/editor';
 // import '@mdxeditor/editor/style.css';
 import { ThemeContext } from '../../lib/context/ThemeContextProvider';
+import { resizeImage } from '../../lib/ImageCompressor';
 
 interface IngredientFormProps {
   ingredient?: IngredientWithImage;
@@ -595,9 +595,13 @@ export function IngredientForm(props: IngredientFormProps) {
                   aspect={1}
                   imageToCrop={values.originalImage}
                   onCroppedImageComplete={async (file) => {
-                    const compressedImageFile = await compressFile(file);
-                    const value = await convertToBase64(compressedImageFile);
-                    await setFieldValue('image', value);
+                    resizeImage(file, 400, 400, async (compressedImageFile) => {
+                      if (compressedImageFile) {
+                        await setFieldValue('image', await convertToBase64(new File([compressedImageFile], 'image.png', { type: 'image/png' })));
+                      } else {
+                        alertService.error('Bild konnte nicht skaliert werden.');
+                      }
+                    });
                   }}
                   onCropCancel={async () => {
                     await setFieldValue('originalImage', undefined);

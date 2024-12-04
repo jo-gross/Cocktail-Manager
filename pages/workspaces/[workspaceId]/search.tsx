@@ -5,9 +5,12 @@ import { SearchModal } from '../../../components/modals/SearchModal';
 import { useRouter } from 'next/router';
 
 interface SearchPageProps {
-  showImage?: boolean;
-  showTags?: boolean;
-  showStatisticActions?: boolean;
+  showImage: boolean;
+  showTags: boolean;
+  showStatisticActions: boolean;
+  showRating: boolean;
+  showDescription: boolean;
+  showNotes: boolean;
 }
 
 export default function SearchPage(props: SearchPageProps) {
@@ -38,10 +41,11 @@ export default function SearchPage(props: SearchPageProps) {
             showImage={props.showImage}
             showInfo={true}
             showPrice={true}
-            showDescription={true}
-            showNotes={true}
+            showDescription={props.showDescription}
+            showNotes={props.showNotes}
             showTags={props.showTags}
             showStatisticActions={props.showStatisticActions}
+            showRating={props.showRating}
           />
         ) : (
           <></>

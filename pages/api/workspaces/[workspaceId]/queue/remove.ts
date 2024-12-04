@@ -14,6 +14,9 @@ export default withHttpMethods({
         workspaceId: workspace.id,
         cocktailId: cocktailId,
       },
+      orderBy: {
+        createdAt: 'asc',
+      },
     });
 
     if (firstQueueItem) {

@@ -11,7 +11,7 @@ import { alertService } from '../../lib/alertService';
 interface CocktailRatingModalProps {
   cocktailId: string;
   cocktailName: string;
-  onRefresh?: () => void;
+  onUpdate?: () => void;
 }
 
 export default function CocktailRatingsModal(props: CocktailRatingModalProps) {
@@ -36,7 +36,7 @@ export default function CocktailRatingsModal(props: CocktailRatingModalProps) {
     const body = await response.json();
     if (response.ok) {
       await fetchCocktailRating();
-      props.onRefresh?.();
+      props.onUpdate?.();
       alertService.success('Erfolgreich gelöscht');
     } else {
       console.error(`CocktailRatingModal[${ratingId}] -> delete`, response);

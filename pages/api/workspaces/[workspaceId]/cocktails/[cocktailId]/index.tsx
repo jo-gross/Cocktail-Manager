@@ -10,6 +10,14 @@ import { CocktailRecipeFullWithImage } from '../../../../../../models/CocktailRe
 import { CocktailRecipeFull } from '../../../../../../models/CocktailRecipeFull';
 import CocktailRecipeUpdateInput = Prisma.CocktailRecipeUpdateInput;
 
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '20mb',
+    },
+  },
+};
+
 export default withHttpMethods({
   [HTTPMethod.GET]: withWorkspacePermission([Role.USER], async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
     const cocktailId = req.query.cocktailId as string | undefined;

@@ -71,6 +71,7 @@ enum Setting {
   showNotes
   showDescription
   showTime
+  showRating
 }
 
 enum WorkspaceSettingKey {

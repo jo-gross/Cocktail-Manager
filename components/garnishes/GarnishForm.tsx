@@ -7,13 +7,13 @@ import { FaTrashAlt } from 'react-icons/fa';
 import { alertService } from '../../lib/alertService';
 import { DeleteConfirmationModal } from '../modals/DeleteConfirmationModal';
 import { ModalContext } from '../../lib/context/ModalContextProvider';
-import { compressFile } from '../../lib/ImageCompressor';
 import { GarnishWithImage } from '../../models/GarnishWithImage';
 import Image from 'next/image';
 import CropComponent from '../CropComponent';
 import { FaCropSimple } from 'react-icons/fa6';
 import _ from 'lodash';
 import { RoutingContext } from '../../lib/context/RoutingContextProvider';
+import { resizeImage } from '../../lib/ImageCompressor';
 
 interface GarnishFormProps {
   garnish?: GarnishWithImage;
@@ -213,8 +213,13 @@ export function GarnishForm(props: GarnishFormProps) {
                   aspect={1}
                   imageToCrop={values.originalImage}
                   onCroppedImageComplete={async (file) => {
-                    const compressedImageFile = await compressFile(file);
-                    await setFieldValue('image', await convertToBase64(compressedImageFile));
+                    resizeImage(file, 400, 400, async (compressedImageFile) => {
+                      if (compressedImageFile) {
+                        await setFieldValue('image', await convertToBase64(new File([compressedImageFile], 'image.png', { type: 'image/png' })));
+                      } else {
+                        alertService.error('Bild konnte nicht skaliert werden.');
+                      }
+                    });
                   }}
                   onCropCancel={async () => {
                     await setFieldValue('image', undefined);

@@ -1,3 +1,41 @@
+## [1.9.7](https://github.com/jo-gross/Cocktail-Manager/compare/v1.9.6...v1.9.7) (2024-11-25)
+
+
+### Bug Fixes
+
+* Cocktail image upload error ([a9be847](https://github.com/jo-gross/Cocktail-Manager/commit/a9be847066fe8a153a2bf90725e43184867b1b1a))
+
+## [1.9.6](https://github.com/jo-gross/Cocktail-Manager/compare/v1.9.5...v1.9.6) (2024-11-16)
+
+
+### Bug Fixes
+
+* Crop image behavior ([#456](https://github.com/jo-gross/Cocktail-Manager/issues/456)) ([704a73d](https://github.com/jo-gross/Cocktail-Manager/commit/704a73dbc5726119435347357ed1b36bcb346634))
+* Queue order improvement ([#458](https://github.com/jo-gross/Cocktail-Manager/issues/458)) ([330bc49](https://github.com/jo-gross/Cocktail-Manager/commit/330bc494cc64e7012226fafdedcc247cd38ff97a))
+
+## [1.9.5](https://github.com/jo-gross/Cocktail-Manager/compare/v1.9.4...v1.9.5) (2024-09-24)
+
+
+### Bug Fixes
+
+* ui options in search view ([c650509](https://github.com/jo-gross/Cocktail-Manager/commit/c650509e5c08538aa03eb6dbafee5dc949e44e50))
+
+## [1.9.4](https://github.com/jo-gross/Cocktail-Manager/compare/v1.9.3...v1.9.4) (2024-09-16)
+
+
+### Bug Fixes
+
+* corrupted image layout ([55e004a](https://github.com/jo-gross/Cocktail-Manager/commit/55e004a8b70978edd896c1e229959ba0dd26b75b))
+
+## [1.9.3](https://github.com/jo-gross/Cocktail-Manager/compare/v1.9.2...v1.9.3) (2024-09-16)
+
+
+### Bug Fixes
+
+* Cocktail card rating option ([#433](https://github.com/jo-gross/Cocktail-Manager/issues/433)) ([ced94f7](https://github.com/jo-gross/Cocktail-Manager/commit/ced94f723fca54e697ea3b9f9b31ab96e05ef1aa))
+* customize view collapse bug and selected cocktail card ([95bd848](https://github.com/jo-gross/Cocktail-Manager/commit/95bd8486ae83c422c186a212c3500a8f932227b1))
+* navigation bug if previous site was external ([6f172bf](https://github.com/jo-gross/Cocktail-Manager/commit/6f172bfe9c6c942e34d18289e36433d95557f829))
+
 ## [1.9.2](https://github.com/jo-gross/Cocktail-Manager/compare/v1.9.1...v1.9.2) (2024-09-12)
 
 
