@@ -111,13 +111,3 @@ thead {
     10px -10px,
     -10px 0px;
 }
-
-.mdxeditor-root-contenteditable {
-    @apply rounded border bg-primary-content mt-1;
-    background-color: var(--fallback-b1, oklch(var(--b1)/var(--tw-bg-opacity)));
-    border-color: var(--fallback-bc, oklch(var(--bc)/0.2));
-}
-
-.mdxeditor-select-content {
-    @apply dropdown-content
-}

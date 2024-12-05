@@ -4,7 +4,7 @@ import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { updateTags, validateTag } from '../../models/tags/TagUtils';
 import { UploadDropZone } from '../UploadDropZone';
 import { convertBase64ToFile, convertToBase64 } from '../../lib/Base64Converter';
-import { FaSyncAlt, FaTrashAlt } from 'react-icons/fa';
+import { FaBold, FaItalic, FaLink, FaListOl, FaListUl, FaQuoteRight, FaSyncAlt, FaTrashAlt } from 'react-icons/fa';
 import { alertService } from '../../lib/alertService';
 import { DeleteConfirmationModal } from '../modals/DeleteConfirmationModal';
 import { ModalContext } from '../../lib/context/ModalContextProvider';
@@ -19,34 +19,14 @@ import CropComponent from '../CropComponent';
 import { FaCropSimple } from 'react-icons/fa6';
 import '../../lib/ArrayUtils';
 import { RoutingContext } from '../../lib/context/RoutingContextProvider';
-import MDEditor from '@uiw/react-md-editor';
-import {
-  BlockTypeSelect,
-  BoldItalicUnderlineToggles,
-  codeBlockPlugin,
-  CodeToggle,
-  CreateLink,
-  frontmatterPlugin,
-  headingsPlugin,
-  InsertTable,
-  InsertThematicBreak,
-  linkDialogPlugin,
-  linkPlugin,
-  listsPlugin,
-  ListsToggle,
-  markdownShortcutPlugin,
-  MDXEditor,
-  quotePlugin,
-  Separator,
-  StrikeThroughSupSubToggles,
-  tablePlugin,
-  thematicBreakPlugin,
-  toolbarPlugin,
-  UndoRedo,
-} from '@mdxeditor/editor';
-// import '@mdxeditor/editor/style.css';
-import { ThemeContext } from '../../lib/context/ThemeContextProvider';
 import { resizeImage } from '../../lib/ImageCompressor';
+import MDEditor from '@uiw/react-md-editor';
+import '@uiw/react-md-editor/markdown-editor.css';
+import '@uiw/react-markdown-preview/markdown.css';
+
+import 'simplemde/dist/simplemde.min.css';
+
+import SimpleMDEEditor from 'react-simplemde-editor';
 
 interface IngredientFormProps {
   ingredient?: IngredientWithImage;
@@ -78,7 +58,6 @@ export function IngredientForm(props: IngredientFormProps) {
   const workspaceId = router.query.workspaceId as string | undefined;
   const modalContext = useContext(ModalContext);
   const userContext = useContext(UserContext);
-  const themeContext = useContext(ThemeContext);
   const routingContext = useContext(RoutingContext);
 
   const formRef = props.formRef || React.createRef<FormikProps<any>>();
@@ -144,6 +123,8 @@ export function IngredientForm(props: IngredientFormProps) {
     },
     [props.ingredient?.id, workspaceId],
   );
+
+  const [value, setValue] = useState('# Hello, world!');
 
   return (
     <Formik
@@ -320,6 +301,110 @@ export function IngredientForm(props: IngredientFormProps) {
           </div>
 
           <div className={'divider-sm col-span-full'}></div>
+
+          <MDEditor
+            id="description"
+            value={values.description}
+            onChange={(value) => setFieldValue('description', value)}
+            className="focus:ring-primary-focus rounded-lg border border-base-300 focus:ring"
+          />
+
+          <MDEditor
+            value={value}
+            onChange={setValue}
+            className={'col-span-2'}
+            commands={[
+              {
+                name: 'bold',
+                keyCommand: 'bold',
+                buttonProps: { 'aria-label': 'Bold' },
+                icon: <FaBold />,
+                execute: (state, api) => {
+                  const modifyText = `**${state.selectedText || 'bold text'}**`;
+                  api.replaceSelection(modifyText);
+                },
+              },
+              {
+                name: 'italic',
+                keyCommand: 'italic',
+                buttonProps: { 'aria-label': 'Italic' },
+                icon: <FaItalic />,
+                execute: (state, api) => {
+                  const modifyText = `*${state.selectedText || 'italic text'}*`;
+                  api.replaceSelection(modifyText);
+                },
+              },
+              {
+                name: 'quote',
+                keyCommand: 'quote',
+                buttonProps: { 'aria-label': 'Quote' },
+                icon: <FaQuoteRight />,
+                execute: (state, api) => {
+                  const modifyText = `> ${state.selectedText || 'quote text'}`;
+                  api.replaceSelection(modifyText);
+                },
+              },
+              {
+                name: 'unordered-list',
+                keyCommand: 'unordered-list',
+                buttonProps: { 'aria-label': 'Unordered List' },
+                icon: <FaListUl />,
+                execute: (state, api) => {
+                  const modifyText = `- ${state.selectedText || 'list item'}`;
+                  api.replaceSelection(modifyText);
+                },
+              },
+              {
+                name: 'ordered-list',
+                keyCommand: 'ordered-list',
+                buttonProps: { 'aria-label': 'Ordered List' },
+                icon: <FaListOl />,
+                execute: (state, api) => {
+                  const modifyText = `1. ${state.selectedText || 'list item'}`;
+                  api.replaceSelection(modifyText);
+                },
+              },
+              {
+                name: 'link',
+                keyCommand: 'link',
+                buttonProps: { 'aria-label': 'Link' },
+                icon: <FaLink />,
+                execute: (state, api) => {
+                  const modifyText = `[${state.selectedText || 'link text'}](url)`;
+                  api.replaceSelection(modifyText);
+                },
+              },
+            ]}
+          />
+          {/*<MDEditor.Markdown source={value} style={{ whiteSpace: 'pre-wrap' }} />*/}
+
+          <SimpleMDEEditor
+            id="markdown-editor"
+            value={value}
+            onChange={setValue}
+            options={{
+              spellChecker: false,
+              placeholder: 'Schreibe hier deine Beschreibung...',
+              status: false,
+              toolbar: [
+                'bold',
+                'italic',
+                'heading',
+                '|',
+                'quote',
+                'unordered-list',
+                'ordered-list',
+                '|',
+                'link',
+                'image',
+                '|',
+                'preview',
+                'side-by-side',
+                'fullscreen',
+              ],
+            }}
+            className="focus:ring-primary-focus textarea rounded-lg bg-base-200 text-base-content focus:ring"
+          />
 
           <div className={'form-control col-span-full'}>
             <label className={'label'} htmlFor={'name'}>
@@ -649,111 +734,46 @@ export function IngredientForm(props: IngredientFormProps) {
             )}
           </div>
 
-          {/*<div className={'form-control col-span-full'}>*/}
-          {/*  <label className={'label'} htmlFor={'description'}>*/}
-          {/*    <span className={'label-text'}>Allgemeine Zutatenbeschreibung</span>*/}
-          {/*    <span className={'label-text-alt space-x-2 text-error'}>*/}
-          {/*      <span>*/}
-          {/*        <>{errors.description && errors.description}</>*/}
-          {/*      </span>*/}
-          {/*    </span>*/}
-          {/*  </label>*/}
-          {/*  <textarea*/}
-          {/*    id={'description'}*/}
-          {/*    className={`textarea textarea-bordered ${errors.description && 'textarea-error'} w-full`}*/}
-          {/*    value={values.description}*/}
-          {/*    onChange={handleChange}*/}
-          {/*    onBlur={handleBlur}*/}
-          {/*    name={'description'}*/}
-          {/*    placeholder={'Herkunft, Geschichte, etc.'}*/}
-          {/*    rows={5}*/}
-          {/*  />*/}
-          {/*</div>*/}
-
-          {/*<div className={'form-control col-span-full'}>*/}
-          {/*  <label className={'label'} htmlFor={'notes'}>*/}
-          {/*    <span className={'label-text'}>Notizen</span>*/}
-          {/*    <span className={'label-text-alt space-x-2 text-error'}>*/}
-          {/*      <span>*/}
-          {/*        <>{errors.notes && errors.notes}</>*/}
-          {/*      </span>*/}
-          {/*    </span>*/}
-          {/*  </label>*/}
-          {/*  <textarea*/}
-          {/*    id={'notes'}*/}
-          {/*    className={`textarea textarea-bordered ${errors.notes && 'textarea-error'} w-full`}*/}
-          {/*    value={values.notes}*/}
-          {/*    onChange={handleChange}*/}
-          {/*    onBlur={handleBlur}*/}
-          {/*    name={'notes'}*/}
-          {/*    placeholder={'Lagerort, Zubereitung, etc.'}*/}
-          {/*    rows={5}*/}
-          {/*  />*/}
-          {/*</div>*/}
-          {/* MDX Editor für Description */}
           <div className={'form-control col-span-full'}>
             <label className={'label'} htmlFor={'description'}>
               <span className={'label-text'}>Allgemeine Zutatenbeschreibung</span>
               <span className={'label-text-alt space-x-2 text-error'}>
-                <span>{errors.description && errors.description}</span>
+                <span>
+                  <>{errors.description && errors.description}</>
+                </span>
               </span>
             </label>
-
-            <MDXEditor
-              markdown={values.description}
-              className={'dark-theme dark-editor'}
-              contentEditableClassName={'prose'} //
-              onChange={(content) => setFieldValue('description', content)} // Setze den Wert des Editors
-              plugins={[
-                toolbarPlugin({
-                  toolbarContents: () => (
-                    <>
-                      <UndoRedo />
-                      <Separator />
-                      <BoldItalicUnderlineToggles />
-                      <CodeToggle />
-                      <Separator />
-                      <StrikeThroughSupSubToggles />
-                      <Separator />
-                      <ListsToggle />
-                      <Separator />
-
-                      <BlockTypeSelect />
-                      <Separator />
-
-                      <CreateLink />
-
-                      <Separator />
-
-                      <InsertTable />
-                      <InsertThematicBreak />
-                    </>
-                  ),
-                }),
-                listsPlugin(),
-                quotePlugin(),
-                headingsPlugin(),
-                linkPlugin(),
-                linkDialogPlugin(),
-                tablePlugin(),
-                thematicBreakPlugin(),
-                frontmatterPlugin(),
-                codeBlockPlugin({ defaultCodeBlockLanguage: '' }),
-                markdownShortcutPlugin(),
-              ]}
+            <textarea
+              id={'description'}
+              className={`textarea textarea-bordered ${errors.description && 'textarea-error'} w-full`}
+              value={values.description}
+              onChange={handleChange}
               onBlur={handleBlur}
+              name={'description'}
+              placeholder={'Herkunft, Geschichte, etc.'}
+              rows={5}
             />
           </div>
 
-          {/* MDX Editor für Notes */}
           <div className={'form-control col-span-full'}>
             <label className={'label'} htmlFor={'notes'}>
               <span className={'label-text'}>Notizen</span>
               <span className={'label-text-alt space-x-2 text-error'}>
-                <span>{errors.notes && errors.notes}</span>
+                <span>
+                  <>{errors.notes && errors.notes}</>
+                </span>
               </span>
             </label>
-            <MDEditor value={values.notes} onChange={(content) => setFieldValue('notes', content)} onBlur={handleBlur} />
+            <textarea
+              id={'notes'}
+              className={`textarea textarea-bordered ${errors.notes && 'textarea-error'} w-full`}
+              value={values.notes}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              name={'notes'}
+              placeholder={'Lagerort, Zubereitung, etc.'}
+              rows={5}
+            />
           </div>
           <div className={'col-span-full'}>
             <div className={'form-control'}>

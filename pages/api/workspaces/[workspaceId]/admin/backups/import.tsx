@@ -8,7 +8,7 @@ import { Role } from '@prisma/client';
 export const config = {
   api: {
     bodyParser: {
-      sizeLimit: '20mb',
+      sizeLimit: '100mb',
     },
   },
 };
