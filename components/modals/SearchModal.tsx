@@ -79,11 +79,11 @@ export function SearchModal(props: SearchModalProps) {
   const [submittingStatistic, setSubmittingStatistic] = useState(false);
   const [submittingQueue, setSubmittingQueue] = useState(false);
 
-  const renderCocktailCard = (cocktail: CocktailRecipeFull, index: number, isArchived: boolean) => (
+  const renderCocktailCard = (cocktail: CocktailRecipeFull, index: number, isArchived: boolean, openCard: boolean = false) => (
     <div
       key={'search-modal-' + cocktail.id}
       tabIndex={index}
-      className={` ${showRecipe ? 'collapse collapse-arrow' : ''} rounded-box border border-base-300 bg-base-100`}
+      className={` ${showRecipe ? `collapse ${openCard ? 'collapse-open' : 'collapse-arrow'}` : ''} rounded-box border border-base-300 bg-base-100`}
     >
       {showRecipe ? <input type="checkbox" /> : <></>}
       <div className={`${showRecipe ? 'collapse-title' : 'p-2 md:p-3'} flex justify-between text-xl font-medium`}>
@@ -106,7 +106,7 @@ export function SearchModal(props: SearchModalProps) {
         )}
       </div>
       {showRecipe && (
-        <div className="collapse-content pl-2 pr-2 md:pl-3">
+        <div className="collapse-content ml-2 mr-2 md:ml-3">
           <CocktailRecipeCardItem
             cocktailRecipe={cocktail}
             showImage={true}
@@ -137,7 +137,7 @@ export function SearchModal(props: SearchModalProps) {
           )}
 
           {props.showStatisticActions ? (
-            <div className={'mt-2 flex flex-row gap-2'}>
+            <div className={'mt-2 flex flex-row gap-2 pb-2'}>
               <button
                 className={'btn btn-outline w-full flex-1'}
                 onClick={() =>
@@ -215,7 +215,9 @@ export function SearchModal(props: SearchModalProps) {
         ) : (
           <>
             {groupedCocktails['false']?.length > 0 &&
-              groupedCocktails['false'].sort((a, b) => a.name.localeCompare(b.name)).map((cocktail, index) => renderCocktailCard(cocktail, index, false))}
+              groupedCocktails['false']
+                .sort((a, b) => a.name.localeCompare(b.name))
+                .map((cocktail, index) => renderCocktailCard(cocktail, index, false, groupedCocktails['false']?.length == 1))}
             {groupedCocktails['true']?.length > 0 && (
               <div tabIndex={0} className="collapse collapse-arrow bg-base-200">
                 <input type="checkbox" />
