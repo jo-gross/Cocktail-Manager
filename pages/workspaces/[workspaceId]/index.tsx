@@ -213,6 +213,7 @@ export default function OverviewPage() {
     cocktailId: string;
     timestamp: Date;
     cocktailName: string;
+    notes?: string;
   }
 
   const [cocktailQueue, setCocktailQueue] = useState<CocktailQueueItem[]>([]);
@@ -336,23 +337,29 @@ export default function OverviewPage() {
                 <div className={'underline'}>Warteschlange (A-Z)</div>
                 <div className={'flex flex-col divide-y'}>
                   {_(cocktailQueue)
-                    .groupBy('cocktailId') // Gruppiere nach Cocktail-ID
-                    .map((items, cocktailId) => ({
-                      cocktailId,
-                      cocktailName: items[0].cocktailName,
-                      count: items.length,
-                      oldestTimestamp: _.minBy(items, 'timestamp')!.timestamp,
-                    }))
-                    .sortBy('cocktailName')
+                    // .groupBy('cocktailId')
+                    .groupBy((item) => `${item.cocktailId}||${item.notes}`) // Gruppierung basierend auf cocktailId und notes
+                    .map((items, key) => {
+                      const [cocktailId, notes] = key.split('||'); // Extrahiere cocktailId und notes aus dem Key
+                      return {
+                        cocktailId,
+                        notes: notes === 'null' || notes === '' ? undefined : notes,
+                        cocktailName: items[0].cocktailName,
+                        count: items.length,
+                        oldestTimestamp: _.minBy(items, 'timestamp')!.timestamp, // Finde den ältesten Timestamp
+                      };
+                    })
+                    .sortBy(['cocktailName', (item) => -(item.notes ?? '')]) // Sortiere nach cocktailName (asc) und notes (desc)
                     .value()
                     .map((cocktailQueueItem, index) => (
                       <div key={`cocktailQueue-item-${index}`} className={'flex w-full flex-row justify-between gap-2 pb-1 pt-1 lg:flex-col'}>
                         <div className={'flex flex-row items-center justify-between'}>
                           <div className={'flex flex-row items-center gap-1'}>
-                            <strong>{cocktailQueueItem.count}x</strong> {cocktailQueueItem.cocktailName} (seit{' '}
-                            {new Date(cocktailQueueItem.oldestTimestamp).toFormatTimeString()} Uhr)
+                            <strong>{cocktailQueueItem.count}x</strong> {cocktailQueueItem.cocktailName} {cocktailQueueItem.notes && <strong>mit Notiz</strong>}
+                            (seit {new Date(cocktailQueueItem.oldestTimestamp).toFormatTimeString()} Uhr)
                           </div>
                         </div>
+                        {cocktailQueueItem.notes && <div className={'italic'}>{cocktailQueueItem.notes}</div>}
                         <div className={'space between flex flex-row gap-2'}>
                           <div
                             className={'btn btn-square btn-outline btn-sm'}
@@ -361,6 +368,9 @@ export default function OverviewPage() {
                                 <CocktailDetailModal
                                   cocktailId={cocktailQueueItem.cocktailId}
                                   onRefreshRatings={() => handleCocktailCardRefresh(cocktailQueueItem.cocktailName)}
+                                  queueNotes={cocktailQueueItem.notes}
+                                  queueAmount={cocktailQueueItem.count}
+                                  openReferer={'QUEUE'}
                                 />,
                                 true,
                               )
@@ -377,6 +387,7 @@ export default function OverviewPage() {
                                   workspaceId: router.query.workspaceId as string,
                                   cocktailId: cocktailQueueItem.cocktailId,
                                   actionSource: 'QUEUE',
+                                  notes: cocktailQueueItem.notes,
                                   setSubmitting: (submitting) => {
                                     if (submitting) {
                                       setSubmittingQueue([...submittingQueue, { cocktailId: cocktailQueueItem.cocktailId, mode: 'ACCEPT' }]);
@@ -384,7 +395,7 @@ export default function OverviewPage() {
                                       setSubmittingQueue(submittingQueue.filter((i) => i.cocktailId != cocktailQueueItem.cocktailId));
                                     }
                                   },
-                                  reload: () => {
+                                  onSuccess: () => {
                                     refreshQueue();
                                   },
                                 })
@@ -399,6 +410,7 @@ export default function OverviewPage() {
                                 removeCocktailFromQueue({
                                   workspaceId: router.query.workspaceId as string,
                                   cocktailId: cocktailQueueItem.cocktailId,
+                                  notes: cocktailQueueItem.notes,
                                   setSubmitting: (submitting) => {
                                     if (submitting) {
                                       setSubmittingQueue([...submittingQueue, { cocktailId: cocktailQueueItem.cocktailId, mode: 'REJECT' }]);

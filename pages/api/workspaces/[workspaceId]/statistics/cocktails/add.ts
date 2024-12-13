@@ -8,7 +8,7 @@ import CocktailStatisticItemCreateInput = Prisma.CocktailStatisticItemCreateInpu
 
 export default withHttpMethods({
   [HTTPMethod.POST]: withWorkspacePermission([Role.USER], async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
-    const { cocktailId, cocktailCardId, actionSource } = req.body;
+    const { cocktailId, cocktailCardId, actionSource, notes } = req.body;
 
     var cardId = cocktailCardId as string | undefined;
     if (cardId == 'search') {
@@ -45,6 +45,7 @@ export default withHttpMethods({
       where: {
         workspaceId: workspace.id,
         cocktailId: cocktailId,
+        notes: notes,
       },
     });
     if (queueItem) {

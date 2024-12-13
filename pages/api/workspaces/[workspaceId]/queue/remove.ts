@@ -7,12 +7,13 @@ import { withHttpMethods } from '../../../../../middleware/api/handleMethods';
 
 export default withHttpMethods({
   [HTTPMethod.POST]: withWorkspacePermission([Role.USER], async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
-    const { cocktailId } = req.body;
+    const { cocktailId, notes } = req.body;
 
     const firstQueueItem = await prisma.cocktailQueue.findFirst({
       where: {
         workspaceId: workspace.id,
         cocktailId: cocktailId,
+        notes: notes,
       },
       orderBy: {
         createdAt: 'asc',

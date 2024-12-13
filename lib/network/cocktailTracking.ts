@@ -5,15 +5,17 @@ export async function addCocktailToStatistic({
   cocktailId,
   cardId,
   actionSource,
+  notes,
   setSubmitting,
-  reload,
+  onSuccess,
 }: {
   workspaceId: string;
   cocktailId: string;
   cardId?: string | string[] | undefined;
   actionSource: 'SEARCH_MODAL' | 'CARD' | 'DETAIL_MODAL' | 'QUEUE';
+  notes?: string;
   setSubmitting: (submitting: boolean) => void;
-  reload?: () => void;
+  onSuccess?: () => void;
 }) {
   try {
     setSubmitting(true);
@@ -26,10 +28,11 @@ export async function addCocktailToStatistic({
         cocktailId: cocktailId,
         cocktailCardId: cardId,
         actionSource: actionSource,
+        notes: notes,
       }),
     });
     if (response.ok) {
-      reload?.();
+      onSuccess?.();
       alertService.success('Cocktail als gemacht markiert');
     } else {
       const body = await response.json();
@@ -47,13 +50,17 @@ export async function addCocktailToStatistic({
 export async function addCocktailToQueue({
   workspaceId,
   cocktailId,
+  notes,
+  amount,
   setSubmitting,
-  reload,
+  onSuccess,
 }: {
   workspaceId: string;
   cocktailId: string;
+  notes?: string;
+  amount?: number;
   setSubmitting: (submitting: boolean) => void;
-  reload?: () => void;
+  onSuccess?: () => void;
 }) {
   try {
     setSubmitting(true);
@@ -64,11 +71,13 @@ export async function addCocktailToQueue({
       },
       body: JSON.stringify({
         cocktailId: cocktailId,
+        notes: notes,
+        amount: amount,
       }),
     });
     if (response.ok) {
       // alertService.success('Cocktail zur Warteschlange hinzugefügt');
-      reload?.();
+      onSuccess?.();
       alertService.info('Cocktail zur Warteschlange hinzugefügt');
     } else {
       const body = await response.json();
@@ -86,11 +95,13 @@ export async function addCocktailToQueue({
 export async function removeCocktailFromQueue({
   workspaceId,
   cocktailId,
+  notes: notes,
   setSubmitting,
   reload,
 }: {
   workspaceId: string;
   cocktailId: string;
+  notes?: string;
   setSubmitting: (submitting: boolean) => void;
   reload?: () => void;
 }) {
@@ -103,6 +114,7 @@ export async function removeCocktailFromQueue({
       },
       body: JSON.stringify({
         cocktailId: cocktailId,
+        notes: notes,
       }),
     });
     if (response.ok) {
