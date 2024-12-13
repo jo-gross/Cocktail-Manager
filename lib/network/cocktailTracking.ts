@@ -1,4 +1,5 @@
 import { alertService } from '../alertService';
+import { StatisticBadRequestMessage } from '../../models/StatisticBadRequest';
 
 export async function addCocktailToStatistic({
   workspaceId,
@@ -7,15 +8,19 @@ export async function addCocktailToStatistic({
   actionSource,
   notes,
   setSubmitting,
+  ignoreQueue,
   onSuccess,
+  onNotDecidableError,
 }: {
   workspaceId: string;
   cocktailId: string;
   cardId?: string | string[] | undefined;
   actionSource: 'SEARCH_MODAL' | 'CARD' | 'DETAIL_MODAL' | 'QUEUE';
   notes?: string;
+  ignoreQueue?: boolean;
   setSubmitting: (submitting: boolean) => void;
   onSuccess?: () => void;
+  onNotDecidableError?: (data: { _min: { id: string; createdAt: Date }; cocktailId: string; notes: string }[]) => void;
 }) {
   try {
     setSubmitting(true);
@@ -29,6 +34,7 @@ export async function addCocktailToStatistic({
         cocktailCardId: cardId,
         actionSource: actionSource,
         notes: notes,
+        ignoreQueue: ignoreQueue,
       }),
     });
     if (response.ok) {
@@ -36,8 +42,12 @@ export async function addCocktailToStatistic({
       alertService.success('Cocktail als gemacht markiert');
     } else {
       const body = await response.json();
-      console.error('addCocktailToStatistic', response);
-      alertService.error(body.message ?? 'Fehler beim Hinzufügen des Cocktails zur Statistik', response.status, response.statusText);
+      if (body.message == StatisticBadRequestMessage) {
+        onNotDecidableError?.(body.data);
+      } else {
+        console.error('addCocktailToStatistic', response);
+        alertService.error(body.message ?? 'Fehler beim Hinzufügen des Cocktails zur Statistik', response.status, response.statusText);
+      }
     }
   } catch (error) {
     console.error('addCocktailToStatistic', error);

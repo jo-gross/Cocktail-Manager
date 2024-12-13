@@ -236,6 +236,7 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
             <StatisticActions
               workspaceId={router.query.workspaceId as string}
               cocktailId={loadedCocktail.id}
+              cocktailName={loadedCocktail.name}
               actionSource={'DETAIL_MODAL'}
               notes={props.queueNotes}
               onMarkedAsDone={

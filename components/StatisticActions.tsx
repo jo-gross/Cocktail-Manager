@@ -4,10 +4,12 @@ import { FaCheck } from 'react-icons/fa';
 import React, { useContext, useState } from 'react';
 import { ModalContext } from '../lib/context/ModalContextProvider';
 import AddCocktailToQueueModal from './modals/AddCocktailToQueueModal';
+import SelectSpecifyCocktailForStatisticModal from './modals/SelectSpecifyCocktailForStatisticModal';
 
 interface StatisticActionsProps {
   workspaceId: string;
   cocktailId: string;
+  cocktailName: string;
 
   cardId?: string;
   actionSource: 'SEARCH_MODAL' | 'CARD' | 'DETAIL_MODAL' | 'QUEUE';
@@ -17,7 +19,16 @@ interface StatisticActionsProps {
   onMarkedAsDone?: () => void;
 }
 
-export default function StatisticActions({ workspaceId, cocktailId, cardId, actionSource, notes, onMarkedAsDone, onAddToQueue }: StatisticActionsProps) {
+export default function StatisticActions({
+  workspaceId,
+  cocktailId,
+  cardId,
+  actionSource,
+  notes,
+  onMarkedAsDone,
+  onAddToQueue,
+  cocktailName,
+}: StatisticActionsProps) {
   const [submittingQueue, setSubmittingQueue] = useState(false);
   const [submittingStatistic, setSubmittingStatistic] = useState(false);
 
@@ -61,6 +72,18 @@ export default function StatisticActions({ workspaceId, cocktailId, cardId, acti
             notes: notes,
             setSubmitting: setSubmittingStatistic,
             onSuccess: () => onMarkedAsDone?.(),
+            onNotDecidableError: (options) => {
+              modalContext.openModal(
+                <SelectSpecifyCocktailForStatisticModal
+                  workspaceId={workspaceId}
+                  cocktailId={cocktailId}
+                  cardId={cardId}
+                  actionSource={actionSource}
+                  cocktailName={cocktailName}
+                  options={options}
+                />,
+              );
+            },
           })
         }
         disabled={submittingStatistic}

@@ -136,7 +136,12 @@ export function SearchModal(props: SearchModalProps) {
 
           {props.showStatisticActions ? (
             <div className={'mt-2 pb-2'}>
-              <StatisticActions workspaceId={router.query.workspaceId as string} cocktailId={cocktail.id} actionSource={'SEARCH_MODAL'} />
+              <StatisticActions
+                workspaceId={router.query.workspaceId as string}
+                cocktailId={cocktail.id}
+                cocktailName={cocktail.name}
+                actionSource={'SEARCH_MODAL'}
+              />
             </div>
           ) : (
             <></>

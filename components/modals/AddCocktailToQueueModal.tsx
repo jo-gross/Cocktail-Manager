@@ -37,7 +37,7 @@ export default function AddCocktailToQueueModal({ workspaceId, cocktailId, actio
             />
           </label>
           <button
-            className={'btn btn-outline join-item'}
+            className={'btn btn-outline btn-primary join-item'}
             onClick={() => {
               setAmount(amount + 1);
             }}
@@ -45,7 +45,7 @@ export default function AddCocktailToQueueModal({ workspaceId, cocktailId, actio
             <FaPlus />
           </button>
           <button
-            className={'btn btn-outline join-item'}
+            className={'btn btn-outline btn-secondary join-item'}
             disabled={amount <= 1}
             onClick={() => {
               if (amount > 1) {
@@ -59,7 +59,7 @@ export default function AddCocktailToQueueModal({ workspaceId, cocktailId, actio
       </div>
       <textarea className={'textarea textarea-bordered w-full'} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={'Notiz'}></textarea>
       <button
-        className={'btn btn-outline w-full flex-1'}
+        className={'btn btn-outline btn-primary w-full flex-1'}
         onClick={() =>
           addCocktailToQueue({
             workspaceId: workspaceId,

@@ -355,11 +355,14 @@ export default function OverviewPage() {
                       <div key={`cocktailQueue-item-${index}`} className={'flex w-full flex-row justify-between gap-2 pb-1 pt-1 lg:flex-col'}>
                         <div className={'flex flex-row items-center justify-between'}>
                           <div className={'flex flex-row items-center gap-1'}>
-                            <strong>{cocktailQueueItem.count}x</strong> {cocktailQueueItem.cocktailName} {cocktailQueueItem.notes && <strong>mit Notiz</strong>}
+                            <div className={'font-bold'}>
+                              <strong>{cocktailQueueItem.count}x</strong> {cocktailQueueItem.cocktailName}
+                            </div>
+                            {cocktailQueueItem.notes && <span className={'italic'}>mit Notiz</span>}
                             (seit {new Date(cocktailQueueItem.oldestTimestamp).toFormatTimeString()} Uhr)
                           </div>
                         </div>
-                        {cocktailQueueItem.notes && <div className={'italic'}>{cocktailQueueItem.notes}</div>}
+                        {cocktailQueueItem.notes && <span className={'pb-1 italic'}>Notiz: {cocktailQueueItem.notes}</span>}
                         <div className={'space between flex flex-row gap-2'}>
                           <div
                             className={'btn btn-square btn-outline btn-sm'}
@@ -378,9 +381,9 @@ export default function OverviewPage() {
                           >
                             <FaEye />
                           </div>
-                          <div className={'join w-full'}>
+                          <div className={'join grid w-full grid-cols-3'}>
                             <button
-                              className={'btn btn-success join-item btn-sm flex-1'}
+                              className={'btn btn-success join-item btn-sm col-span-2'}
                               disabled={!!submittingQueue.find((i) => i.cocktailId == cocktailQueueItem.cocktailId)}
                               onClick={() =>
                                 addCocktailToStatistic({
@@ -404,7 +407,7 @@ export default function OverviewPage() {
                               <FaCheck />
                             </button>
                             <button
-                              className={'btn btn-error join-item btn-sm flex-1'}
+                              className={'btn btn-error join-item btn-sm'}
                               disabled={!!submittingQueue.find((i) => i.cocktailId == cocktailQueueItem.cocktailId)}
                               onClick={() =>
                                 removeCocktailFromQueue({

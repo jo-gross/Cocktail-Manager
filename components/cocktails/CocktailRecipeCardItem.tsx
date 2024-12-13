@@ -123,6 +123,7 @@ const CocktailRecipeCardItem = forwardRef<CocktailRecipeOverviewItemRef, Cocktai
                     <StatisticActions
                       workspaceId={router.query.workspaceId as string}
                       cocktailId={cocktailRecipe.id}
+                      cocktailName={cocktailRecipe.name}
                       actionSource={'CARD'}
                       cardId={router.query.cardId as string | undefined}
                     />
