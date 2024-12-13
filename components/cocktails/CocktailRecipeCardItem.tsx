@@ -32,9 +32,6 @@ const CocktailRecipeCardItem = forwardRef<CocktailRecipeOverviewItemRef, Cocktai
   const router = useRouter();
   const workspaceId = router.query.workspaceId as string;
 
-  const [submittingStatistic, setSubmittingStatistic] = useState(false);
-  const [submittingQueue, setSubmittingQueue] = useState(false);
-
   const [loadedCocktailRecipe, setLoadedCocktailRecipe] = useState<CocktailRecipeFull | undefined>(
     typeof props.cocktailRecipe === 'string' ? undefined : props.cocktailRecipe,
   );
