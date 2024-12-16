@@ -219,6 +219,7 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                 </>
               )}
 
+              <div className={'divider-sm print:hidden'}></div>
               <div className={'print:hidden'}>
                 <StatisticActions
                   workspaceId={router.query.workspaceId as string}
