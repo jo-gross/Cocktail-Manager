@@ -130,8 +130,8 @@ importers:
         specifier: 18.3.12
         version: 18.3.12
       '@types/react-image-crop':
-        specifier: ^8.1.6
-        version: 8.1.6
+        specifier: ^9.0.2
+        version: 9.0.2(react@18.3.1)
       '@types/react-is':
         specifier: 18.3.0
         version: 18.3.0
@@ -1309,8 +1309,9 @@ packages:
   '@types/prop-types@15.7.13':
     resolution: {integrity: sha512-hCZTSvwbzWGvhqxp/RqVqwU999pBf2vp7hzIjiYOsl8wqOmUxkQ6ddw1cV3l8811+kdUFus/q4d1Y3E3SyEifA==}
 
-  '@types/react-image-crop@8.1.6':
-    resolution: {integrity: sha512-mH3qs5sk2lq0JitgAOyyFeQQ8Zlz+yCIhn4CNznmoRyH4PIRMpZUWi+hGqLyUeKTSMAg+daS3txHMR3oBAkkRg==}
+  '@types/react-image-crop@9.0.2':
+    resolution: {integrity: sha512-gOa5G6CuPuRuvEfQty7Ho4GxsKNwRTdk2jwS/XmI3agPFvsVEmtxR9y3tt5Y3UNp4NkRHbnH4U4YLR04YlSARw==}
+    deprecated: This is a stub types definition. react-image-crop provides its own type definitions, so you do not need this installed.
 
   '@types/react-is@18.3.0':
     resolution: {integrity: sha512-KZJpHUkAdzyKj/kUHJDc6N7KyidftICufJfOFpiG6haL/BDQNQt5i4n1XDUL/nDZAtGLHDSWRYpLzKTAKSvX6w==}
@@ -6079,9 +6080,11 @@ snapshots:
 
   '@types/prop-types@15.7.13': {}
 
-  '@types/react-image-crop@8.1.6':
+  '@types/react-image-crop@9.0.2(react@18.3.1)':
     dependencies:
-      '@types/react': 18.3.12
+      react-image-crop: 11.0.7(react@18.3.1)
+    transitivePeerDependencies:
+      - react
 
   '@types/react-is@18.3.0':
     dependencies:
