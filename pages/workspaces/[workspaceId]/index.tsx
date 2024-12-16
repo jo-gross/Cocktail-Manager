@@ -390,7 +390,7 @@ export default function OverviewPage() {
                                   workspaceId: router.query.workspaceId as string,
                                   cocktailId: cocktailQueueItem.cocktailId,
                                   actionSource: 'QUEUE',
-                                  notes: cocktailQueueItem.notes,
+                                  notes: cocktailQueueItem.notes ?? '-',
                                   setSubmitting: (submitting) => {
                                     if (submitting) {
                                       setSubmittingQueue([...submittingQueue, { cocktailId: cocktailQueueItem.cocktailId, mode: 'ACCEPT' }]);

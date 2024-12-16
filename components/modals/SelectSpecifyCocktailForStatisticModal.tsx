@@ -31,8 +31,14 @@ export default function SelectSpecifyCocktailForStatisticModal({
         {options.map((option) => (
           <div key={option._min.id} className={'flex flex-row items-center justify-between p-2'}>
             <div className={'flex flex-col gap-1'}>
-              <div>Notiz:</div>
-              <div className={'italic'}>{option.notes}</div>
+              {option.notes ? (
+                <>
+                  <div>Notiz:</div>
+                  <div className={'italic'}>{option.notes ?? 'ohne Notiz'}</div>
+                </>
+              ) : (
+                <div>Normal, ohne Notiz</div>
+              )}
             </div>
             <button
               className={'btn btn-outline btn-primary'}
@@ -43,7 +49,7 @@ export default function SelectSpecifyCocktailForStatisticModal({
                   cocktailId: cocktailId,
                   cardId: cardId,
                   actionSource: actionSource,
-                  notes: option.notes,
+                  notes: option.notes ?? '-',
                   setSubmitting: () => {
                     setSubmittingStatistic({ [`option-${option._min.id}`]: true });
                   },
@@ -59,7 +65,7 @@ export default function SelectSpecifyCocktailForStatisticModal({
         ))}
 
         <div className={'flex flex-row items-center justify-between p-2'}>
-          Keiner davon, normale Variante.
+          Ohne Warteschlange zu beeinflussen
           <button
             className={'btn btn-outline btn-primary'}
             disabled={Object.keys(submittingStatistic).length > 0}

@@ -58,11 +58,12 @@ export default withHttpMethods({
           - if there are cocktails with notes in the queue, return an error "ask user wich one to remove" (oldest
          */
         if (notes) {
+          const searchNote = notes == '-' ? null : notes;
           const queueItem = await prisma.cocktailQueue.findFirst({
             where: {
               workspaceId: workspace.id,
               cocktailId: cocktailId,
-              notes: notes,
+              notes: searchNote,
             },
             orderBy: {
               createdAt: 'asc',
@@ -72,39 +73,26 @@ export default withHttpMethods({
             await prisma.cocktailQueue.delete({ where: { id: queueItem.id } });
           }
         } else {
-          const queueItems = await prisma.cocktailQueue.findMany({
+          // Ask user which one to remove
+          // list with the oldest cocktail grouped by cocktailId and notes
+          const oldestEntries = await prisma.cocktailQueue.groupBy({
+            by: ['cocktailId', 'notes'],
             where: {
               workspaceId: workspace.id,
               cocktailId: cocktailId,
-              notes: null,
+            },
+            _min: {
+              createdAt: true, // Wir wollen das älteste Datum
+              id: true, // Option, um den Datensatz selbst zu identifizieren
             },
             orderBy: {
-              createdAt: 'asc',
+              _min: {
+                createdAt: 'asc',
+              },
             },
           });
-          if (false && queueItems.length > 0) {
-            await prisma.cocktailQueue.delete({ where: { id: queueItems[0].id } });
-          } else {
-            // list with the oldest cocktail grouped by cocktailId and notes
-            const oldestEntries = await prisma.cocktailQueue.groupBy({
-              by: ['cocktailId', 'notes'],
-              where: {
-                workspaceId: workspace.id,
-                cocktailId: cocktailId,
-              },
-              _min: {
-                createdAt: true, // Wir wollen das älteste Datum
-                id: true, // Option, um den Datensatz selbst zu identifizieren
-              },
-              orderBy: {
-                _min: {
-                  createdAt: 'asc',
-                },
-              },
-            });
 
-            return res.status(400).json({ message: StatisticBadRequestMessage, data: oldestEntries });
-          }
+          return res.status(400).json({ message: StatisticBadRequestMessage, data: oldestEntries });
         }
       }
     }
