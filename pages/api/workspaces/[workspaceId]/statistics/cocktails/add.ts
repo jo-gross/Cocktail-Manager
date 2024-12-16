@@ -91,6 +91,9 @@ export default withHttpMethods({
               where: {
                 workspaceId: workspace.id,
                 cocktailId: cocktailId,
+                notes: {
+                  not: null,
+                },
               },
               _min: {
                 createdAt: true, // Wir wollen das älteste Datum
