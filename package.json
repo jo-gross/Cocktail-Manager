@@ -57,7 +57,7 @@
     "@types/node": "22.10.2",
     "@types/prop-types": "15.7.13",
     "@types/react": "18.3.12",
-    "@types/react-image-crop": "^8.1.6",
+    "@types/react-image-crop": "^9.0.2",
     "@types/react-is": "18.3.0",
     "autoprefixer": "10.4.20",
     "daisyui": "4.12.10",
