@@ -7,10 +7,11 @@ import { FaMinus, FaPlus } from 'react-icons/fa';
 interface AddCocktailToQueueModalProps {
   workspaceId: string;
   cocktailId: string;
+  cocktailName: string;
   actionSource: 'SEARCH_MODAL' | 'CARD' | 'DETAIL_MODAL' | 'QUEUE';
 }
 
-export default function AddCocktailToQueueModal({ workspaceId, cocktailId, actionSource }: AddCocktailToQueueModalProps) {
+export default function AddCocktailToQueueModal({ workspaceId, cocktailId, actionSource, cocktailName }: AddCocktailToQueueModalProps) {
   const [submittingQueue, setSubmittingQueue] = useState(false);
 
   const [notes, setNotes] = useState('');
@@ -20,7 +21,7 @@ export default function AddCocktailToQueueModal({ workspaceId, cocktailId, actio
   return (
     <div className={'space-y-2 pt-4'}>
       <div className={'text-2xl font-bold'}>
-        <strong>{'Tommys Marairat mi'}</strong> hinzufügen
+        <strong>{cocktailName}</strong> hinzufügen
       </div>
       <div className={'flex'}>
         <div className={'join'}>

@@ -54,7 +54,11 @@ export default function StatisticActions({
 
       <button
         className={'btn btn-outline flex-1'}
-        onClick={() => modalContext.openModal(<AddCocktailToQueueModal workspaceId={workspaceId} cocktailId={cocktailId} actionSource={actionSource} />)}
+        onClick={() =>
+          modalContext.openModal(
+            <AddCocktailToQueueModal workspaceId={workspaceId} cocktailId={cocktailId} actionSource={actionSource} cocktailName={cocktailName} />,
+          )
+        }
         disabled={submittingQueue}
       >
         <MdPlaylistAdd />
