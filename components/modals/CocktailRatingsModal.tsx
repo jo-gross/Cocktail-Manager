@@ -3,10 +3,11 @@ import { UserContext } from '../../lib/context/UserContextProvider';
 import { ModalContext } from '../../lib/context/ModalContextProvider';
 import { useRouter } from 'next/router';
 import StarsComponent from '../StarsComponent';
-import { FaTrashAlt } from 'react-icons/fa';
+import { FaPlus, FaTrashAlt } from 'react-icons/fa';
 import { CocktailRating, Role } from '@prisma/client';
 import { DeleteConfirmationModal } from './DeleteConfirmationModal';
 import { alertService } from '../../lib/alertService';
+import AddCocktailRatingModal from './AddCocktailRatingModal';
 
 interface CocktailRatingModalProps {
   cocktailId: string;
@@ -28,22 +29,6 @@ export default function CocktailRatingsModal(props: CocktailRatingModalProps) {
 
   const [search, setSearch] = React.useState<string>('');
 
-  const handleDelete = useCallback(async (ratingId: string) => {
-    const response = await fetch(`/api/workspaces/${workspaceId}/cocktails/${props.cocktailId}/ratings/${ratingId}`, {
-      method: 'DELETE',
-    });
-
-    const body = await response.json();
-    if (response.ok) {
-      await fetchCocktailRating();
-      props.onUpdate?.();
-      alertService.success('Erfolgreich gelöscht');
-    } else {
-      console.error(`CocktailRatingModal[${ratingId}] -> delete`, response);
-      alertService.error(body.message ?? 'Fehler beim Löschen', response.status, response.statusText);
-    }
-  }, []);
-
   const fetchCocktailRating = useCallback(async () => {
     const response = await fetch(`/api/workspaces/${workspaceId}/cocktails/${props.cocktailId}/ratings`);
     const body = await response.json();
@@ -53,18 +38,45 @@ export default function CocktailRatingsModal(props: CocktailRatingModalProps) {
       console.error(`CocktailRatingModal -> fetchCocktailRating`, response);
       alertService.error(body.message ?? 'Fehler beim Laden der Bewertungen', response.status, response.statusText);
     }
-  }, []);
+  }, [props.cocktailId, workspaceId]);
+
+  const handleDelete = useCallback(
+    async (ratingId: string) => {
+      const response = await fetch(`/api/workspaces/${workspaceId}/cocktails/${props.cocktailId}/ratings/${ratingId}`, {
+        method: 'DELETE',
+      });
+
+      const body = await response.json();
+      if (response.ok) {
+        await fetchCocktailRating();
+        props.onUpdate?.();
+        alertService.success('Erfolgreich gelöscht');
+      } else {
+        console.error(`CocktailRatingModal[${ratingId}] -> delete`, response);
+        alertService.error(body.message ?? 'Fehler beim Löschen', response.status, response.statusText);
+      }
+    },
+    [fetchCocktailRating, props, workspaceId],
+  );
 
   useEffect(() => {
     fetchCocktailRating();
-  }, []);
+  }, [fetchCocktailRating]);
 
   return (
-    <div className={'flex flex-col gap-2 md:max-w-lg'}>
+    <div className={'flex flex-col gap-2'}>
       <div className={'flex flex-row items-center gap-1 text-2xl font-bold'}>
         {props.cocktailName} - {cocktailRatings.length > 0 ? parseFloat(avgRating.toFixed(1).toString()).toLocaleString() : 'N/A'}{' '}
-        <StarsComponent rating={avgRating} /> ({cocktailRatings.length})
+        <StarsComponent rating={avgRating} /> ({cocktailRatings.length})<div className={'flex-grow'}></div>
+        <button
+          type={'button'}
+          className={'btn btn-outline btn-sm print:hidden'}
+          onClick={() => modalContext.openModal(<AddCocktailRatingModal cocktailId={props.cocktailId} onCreated={fetchCocktailRating} />)}
+        >
+          <FaPlus /> Bewertung hinzufügen
+        </button>
       </div>
+
       <input
         className={'input input-sm input-bordered'}
         placeholder={'Nach Person suchen...'}
