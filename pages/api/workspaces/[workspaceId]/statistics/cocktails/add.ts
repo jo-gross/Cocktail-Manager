@@ -82,7 +82,7 @@ export default withHttpMethods({
               createdAt: 'asc',
             },
           });
-          if (queueItems.length > 0) {
+          if (false && queueItems.length > 0) {
             await prisma.cocktailQueue.delete({ where: { id: queueItems[0].id } });
           } else {
             // list with the oldest cocktail grouped by cocktailId and notes
