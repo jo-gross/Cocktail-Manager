@@ -8,7 +8,7 @@ import CocktailQueueCreateInput = Prisma.CocktailQueueCreateInput;
 
 export default withHttpMethods({
   [HTTPMethod.POST]: withWorkspacePermission([Role.USER], async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
-    const { cocktailId } = req.body;
+    const { cocktailId, notes, amount } = req.body;
 
     const input: CocktailQueueCreateInput = {
       workspace: {
@@ -21,10 +21,17 @@ export default withHttpMethods({
           id: cocktailId,
         },
       },
+      notes: notes ? (notes.trim() == '' ? undefined : notes.trim()) : undefined,
     };
-    const result = await prisma.cocktailQueue.create({
-      data: input,
-    });
-    return res.json({ data: result });
+
+    const results = [];
+    for (let i = 0; i < (amount ?? 1); i++) {
+      const result = await prisma.cocktailQueue.create({
+        data: input,
+      });
+      results.push(result);
+    }
+
+    return res.json({ data: results });
   }),
 });
