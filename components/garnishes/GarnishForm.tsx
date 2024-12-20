@@ -162,7 +162,7 @@ export function GarnishForm(props: GarnishFormProps) {
             {similarGarnish && (
               <div className="label">
                 <span className="label-text-alt text-warning">
-                  Eine ähnliche Dekoration mit dem Namen <strong>{similarGarnish.name}</strong> existiert bereits.
+                  Eine ähnliche Garnitur mit dem Namen <strong>{similarGarnish.name}</strong> existiert bereits.
                 </span>
               </div>
             )}

@@ -1003,12 +1003,12 @@ export default function CalculationPage() {
                     </tbody>
                   </table>
                 </div>
-                <div className={'text-lg font-bold'}>Dekorationen</div>
+                <div className={'text-lg font-bold'}>Garnituren</div>
                 <div className={'overflow-x-auto'}>
                   <table className={'table-compact table w-full'}>
                     <thead>
                       <tr>
-                        <th>Dekoration</th>
+                        <th>Garnitur</th>
                         <th>Menge</th>
                       </tr>
                     </thead>

@@ -350,7 +350,7 @@ export default function OverviewPage() {
                         <div className={'flex flex-row items-center justify-between'}>
                           <div className={'flex flex-row items-center gap-1'}>
                             <strong>{cocktailQueueItem.count}x</strong> {cocktailQueueItem.cocktailName} (seit{' '}
-                            {new Date(cocktailQueueItem.oldestTimestamp).toFormatTimeString()})
+                            {new Date(cocktailQueueItem.oldestTimestamp).toFormatTimeString()} Uhr)
                           </div>
                         </div>
                         <div className={'space between flex flex-row gap-2'}>

@@ -23,3 +23,8 @@ updates:
     commit-message:
       prefix: "build"
       include: "scope"
+    groups:
+      prisma-packages:
+        patterns:
+          - "prisma"
+          - "@prisma/client"
