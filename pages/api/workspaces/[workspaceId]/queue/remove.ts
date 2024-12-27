@@ -9,11 +9,13 @@ export default withHttpMethods({
   [HTTPMethod.POST]: withWorkspacePermission([Role.USER], async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
     const { cocktailId, notes } = req.body;
 
+    const notesTrimmed = notes ? (notes.trim() == '' || notes.trim() == '-' ? null : notes.trim()) : null;
+
     const firstQueueItem = await prisma.cocktailQueue.findFirst({
       where: {
         workspaceId: workspace.id,
         cocktailId: cocktailId,
-        notes: notes,
+        notes: notesTrimmed,
       },
       orderBy: {
         createdAt: 'asc',

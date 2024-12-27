@@ -616,7 +616,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                               form={
                                 <GlassForm
                                   onSaved={async (id) => {
-                                    modalContext.closeModal();
+                                    modalContext.closeAllModals();
                                     await setFieldValue('glassId', id);
                                     fetchGlasses(workspaceId, setGlasses, setGlassesLoading);
                                   }}
@@ -1102,7 +1102,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                                     <IngredientForm
                                                       formRef={createRef<FormikProps<any>>()}
                                                       onSaved={async (id) => {
-                                                        modalContext.closeModal();
+                                                        modalContext.closeAllModals();
                                                         await setFieldValue(`steps.${indexStep}.ingredients.${indexIngredient}.ingredientId`, id);
                                                         fetchIngredients(workspaceId, setIngredients, setIngredientsLoading);
                                                       }}
@@ -1329,7 +1329,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                           <GarnishForm
                                             formRef={createRef<FormikProps<any>>()}
                                             onSaved={async (id) => {
-                                              modalContext.closeModal();
+                                              modalContext.closeAllModals();
                                               await setFieldValue(`garnishes.${indexGarnish}.garnishId`, id);
                                               fetchGarnishes(workspaceId, setGarnishes, setGarnishesLoading);
                                             }}

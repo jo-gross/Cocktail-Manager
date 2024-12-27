@@ -58,7 +58,7 @@ export default withHttpMethods({
           - if there are cocktails with notes in the queue, return an error "ask user wich one to remove" (oldest
          */
         if (notes) {
-          const searchNote = notes == '-' ? null : notes;
+          const searchNote: string | null = notes == '-' ? null : notes;
           const queueItem = await prisma.cocktailQueue.findFirst({
             where: {
               workspaceId: workspace.id,

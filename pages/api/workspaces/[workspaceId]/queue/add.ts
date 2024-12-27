@@ -21,7 +21,7 @@ export default withHttpMethods({
           id: cocktailId,
         },
       },
-      notes: notes ? (notes.trim() == '' ? undefined : notes.trim()) : undefined,
+      notes: notes ? (notes.trim() == '' || notes.trim() == '-' ? undefined : notes.trim()) : undefined,
     };
 
     const results = [];
