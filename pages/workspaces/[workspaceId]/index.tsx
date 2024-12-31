@@ -35,6 +35,7 @@ export default function OverviewPage() {
   const [showQueueAsOverlay, setShowQueueAsOverlay] = useState(false);
   const [showDescription, setShowDescription] = useState(false);
   const [showNotes, setShowNotes] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
   const [showTime, setShowTime] = useState(false);
   const [showRating, setShowRating] = useState(false);
 
@@ -179,6 +180,7 @@ export default function OverviewPage() {
     setShowQueueAsOverlay(userContext.user?.settings?.find((s) => s.setting == Setting.showQueueAsOverlay)?.value == 'true' ?? false);
     setShowDescription(userContext.user?.settings?.find((s) => s.setting == Setting.showDescription)?.value == 'true' ?? false);
     setShowNotes(userContext.user?.settings?.find((s) => s.setting == Setting.showNotes)?.value == 'true' ?? false);
+    setShowHistory(userContext.user?.settings?.find((s) => s.setting == Setting.showHistory)?.value == 'true' ?? false);
     setShowTime(userContext.user?.settings?.find((s) => s.setting == Setting.showTime)?.value == 'true' ?? false);
     setShowRating(userContext.user?.settings?.find((s) => s.setting == Setting.showRating)?.value == 'true' ?? false);
   }, [userContext.user?.settings]);
@@ -482,6 +484,7 @@ export default function OverviewPage() {
                                     showStatisticActions={showStatisticActions}
                                     showDescription={showDescription}
                                     showNotes={showNotes}
+                                    showHistory={showHistory}
                                     showRating={showRating}
                                   />
                                 );
@@ -654,6 +657,20 @@ export default function OverviewPage() {
                             readOnly={true}
                             onClick={() => {
                               userContext.updateUserSetting(Setting.showNotes, !showNotes ? 'true' : 'false');
+                            }}
+                          />
+                        </label>
+                      </div>
+                      <div className="form-control">
+                        <label className="label">
+                          Geschichte und Entstehung anzeigen
+                          <input
+                            type={'checkbox'}
+                            className={'toggle toggle-primary'}
+                            checked={showHistory}
+                            readOnly={true}
+                            onClick={() => {
+                              userContext.updateUserSetting(Setting.showHistory, !showHistory ? 'true' : 'false');
                             }}
                           />
                         </label>

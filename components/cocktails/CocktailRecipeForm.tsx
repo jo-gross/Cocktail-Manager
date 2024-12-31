@@ -227,6 +227,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
     name: props.cocktailRecipe?.name ?? '',
     description: props.cocktailRecipe?.description ?? '',
     notes: props.cocktailRecipe?.notes ?? '',
+    history: props.cocktailRecipe?.history ?? '',
     price: props.cocktailRecipe?.price ?? undefined,
     tags: props.cocktailRecipe?.tags ?? [],
     iceId: props.cocktailRecipe?.iceId ?? null,
@@ -375,8 +376,9 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
           const body = {
             id: props.cocktailRecipe?.id,
             name: values.name,
-            description: values.description.trim() === '' ? null : values.description,
-            notes: values.notes.trim() === '' ? null : values.notes,
+            description: values.description.trim() === '' ? null : values.description.trim(),
+            notes: values.notes.trim() === '' ? null : values.notes.trim(),
+            history: values.history.trim() === '' ? null : values.history.trim(),
             price: values.price == '' ? null : values.price,
             iceId: values.iceId,
             glassId: values.glassId,
@@ -519,10 +521,28 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                       id={'description'}
                       name="description"
                       className={`textarea textarea-bordered w-full ${errors.description && 'textarea-error'}`}
-                      placeholder={'Geschichte, Herkunft, etc.'}
+                      placeholder={'Was zeichnet diesen Cocktail aus? Was macht ihn besonders? Was sollte wissen?'}
                       onChange={handleChange}
                       onBlur={handleBlur}
                       value={values.description}
+                      rows={5}
+                    />
+                  </div>
+                  <div className={'col-span-2'}>
+                    <label className={'label'} htmlFor={'history'}>
+                      <span className={'label-text'}>Geschichte und Entstehung</span>
+                      <span className={'label-text-alt text-error'}>
+                        <>{errors.history && errors.history}</>
+                      </span>
+                    </label>
+                    <textarea
+                      id={'history'}
+                      name="history"
+                      className={`textarea textarea-bordered w-full ${errors.history && 'textarea-error'}`}
+                      placeholder={'Geschichte, Herkunft, etc.'}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      value={values.history}
                       rows={5}
                     />
                   </div>
@@ -759,6 +779,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                       name: values.name,
                       description: values.description,
                       notes: values.notes,
+                      history: values.history,
                       tags: values.tags,
                       price: !values.price && values.price == '' ? null : values.price,
                       iceId: values.iceId,
@@ -776,6 +797,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                     showImage={true}
                     showDescription={true}
                     showNotes={true}
+                    showHistory={true}
                   />
                 </div>
               </div>

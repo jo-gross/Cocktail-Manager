@@ -72,12 +72,13 @@ export default withHttpMethods({
     }
   }),
   [HTTPMethod.POST]: withWorkspacePermission([Role.MANAGER], async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
-    const { name, description, tags, price, iceId, image, glassId, garnishes, steps, notes } = req.body;
+    const { name, description, tags, price, iceId, image, glassId, garnishes, steps, notes, history } = req.body;
 
     const input: CocktailRecipeCreateInput = {
       name: name,
       description: description,
       notes: notes,
+      history: history,
       tags: tags,
       price: price,
       ice: { connect: { id: iceId } },
