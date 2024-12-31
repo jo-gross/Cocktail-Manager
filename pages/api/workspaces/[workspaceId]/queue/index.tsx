@@ -47,6 +47,7 @@ export default withHttpMethods({
           cocktailId: cocktailQueueItem.cocktailId,
           timestamp: cocktailQueueItem.createdAt,
           cocktailName: cocktailQueueItem.cocktail.name,
+          notes: cocktailQueueItem.notes,
         };
       }),
     });

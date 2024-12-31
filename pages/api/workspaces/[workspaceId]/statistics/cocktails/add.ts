@@ -4,11 +4,12 @@ import { Prisma, Role } from '@prisma/client';
 import { NextApiRequest, NextApiResponse } from 'next';
 import prisma from '../../../../../../prisma/prisma';
 import { withHttpMethods } from '../../../../../../middleware/api/handleMethods';
+import { StatisticBadRequestMessage } from '../../../../../../models/StatisticBadRequest';
 import CocktailStatisticItemCreateInput = Prisma.CocktailStatisticItemCreateInput;
 
 export default withHttpMethods({
   [HTTPMethod.POST]: withWorkspacePermission([Role.USER], async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
-    const { cocktailId, cocktailCardId, actionSource } = req.body;
+    const { cocktailId, cocktailCardId, actionSource, notes, ignoreQueue } = req.body;
 
     var cardId = cocktailCardId as string | undefined;
     if (cardId == 'search') {
@@ -41,16 +42,62 @@ export default withHttpMethods({
       actionSource: actionSource,
     };
 
-    const queueItem = await prisma.cocktailQueue.findFirst({
-      where: {
-        workspaceId: workspace.id,
-        cocktailId: cocktailId,
-      },
-    });
-    if (queueItem) {
-      await prisma.cocktailQueue.delete({ where: { id: queueItem.id } });
+    if (!ignoreQueue) {
+      const items = await prisma.cocktailQueue.findMany({
+        where: {
+          workspaceId: workspace.id,
+          cocktailId: cocktailId,
+        },
+      });
+      // If there are items in the queue, then some could be removed
+      if (items.length != 0) {
+        /*
+        - If notes are provided, the cocktail is removed from the queue. If no cocktail was found - ignore the queue,
+        - If no note was provided:
+          - if only cocktails with no notes are in the queue, the cocktail gets removed from the queue,
+          - if there are cocktails with notes in the queue, return an error "ask user wich one to remove" (oldest
+         */
+        if (notes) {
+          const searchNote: string | null = notes == '-' ? null : notes;
+          const queueItem = await prisma.cocktailQueue.findFirst({
+            where: {
+              workspaceId: workspace.id,
+              cocktailId: cocktailId,
+              notes: searchNote,
+            },
+            orderBy: {
+              createdAt: 'asc',
+            },
+          });
+          if (queueItem) {
+            await prisma.cocktailQueue.delete({ where: { id: queueItem.id } });
+          }
+        } else {
+          // Ask user which one to remove
+          // list with the oldest cocktail grouped by cocktailId and notes
+          const oldestEntries = await prisma.cocktailQueue.groupBy({
+            by: ['cocktailId', 'notes'],
+            where: {
+              workspaceId: workspace.id,
+              cocktailId: cocktailId,
+            },
+            _min: {
+              createdAt: true, // Wir wollen das älteste Datum
+              id: true, // Option, um den Datensatz selbst zu identifizieren
+            },
+            orderBy: {
+              _min: {
+                createdAt: 'asc',
+              },
+            },
+          });
+
+          return res.status(400).json({ message: StatisticBadRequestMessage, data: oldestEntries });
+        }
+      }
     }
 
+    // Add the statistic item
     const result = await prisma.cocktailStatisticItem.create({
       data: input,
     });
