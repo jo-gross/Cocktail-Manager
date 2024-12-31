@@ -112,6 +112,9 @@ export function SearchModal(props: SearchModalProps) {
             showImage={true}
             showTags={true}
             showDescription={true}
+            showHistory={true}
+            showNotes={true}
+            showRating={true}
             showStatisticActions={false}
             showPrice={true}
             showInfo={true}

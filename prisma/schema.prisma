@@ -69,6 +69,7 @@ enum Setting {
   showQueueAsOverlay
   lastSeenVersion
   showNotes
+  showHistory
   showDescription
   showTime
   showRating
@@ -215,6 +216,7 @@ model CocktailRecipe {
   name                  String
   description           String?
   notes                 String?
+  history String?
   tags                  String[]
   price                 Float?
   iceId                 String?
