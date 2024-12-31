@@ -216,7 +216,7 @@ model CocktailRecipe {
   name                  String
   description           String?
   notes                 String?
-  history String?
+  history               String?
   tags                  String[]
   price                 Float?
   iceId                 String?
