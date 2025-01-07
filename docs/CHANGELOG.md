@@ -1,3 +1,20 @@
+# [1.10.0](https://github.com/jo-gross/Cocktail-Manager/compare/v1.9.7...v1.10.0) (2025-01-07)
+
+
+### Bug Fixes
+
+* Added add cocktail rating to cocktail ratings modal ([a6f909a](https://github.com/jo-gross/Cocktail-Manager/commit/a6f909aff52458b592503b03d59bbaae5979d176))
+* Alert z-index ([4012a27](https://github.com/jo-gross/Cocktail-Manager/commit/4012a27808644ddf91cfcb653adeb8b0f86bf306))
+* Search model open card behavior ([e589174](https://github.com/jo-gross/Cocktail-Manager/commit/e589174892d9a47029a0081cd298b55e597f7706))
+
+
+### Features
+
+* Added field for cocktail history notes and allowed numbers in tags ([#497](https://github.com/jo-gross/Cocktail-Manager/issues/497)) ([bb1a17d](https://github.com/jo-gross/Cocktail-Manager/commit/bb1a17d65e4565e13fe4de6fbfce52e54b8b5a37))
+* Added option for notes when queueing cocktails ([#480](https://github.com/jo-gross/Cocktail-Manager/issues/480)) ([b87a6b9](https://github.com/jo-gross/Cocktail-Manager/commit/b87a6b976a41f29da8430f1ec810851b2c6f432a))
+* Export cocktail as PDF ([#474](https://github.com/jo-gross/Cocktail-Manager/issues/474)) ([c424941](https://github.com/jo-gross/Cocktail-Manager/commit/c4249411d79cec9dc380e5deac7cb00f3ec3babd))
+* Tag suggestions ([#472](https://github.com/jo-gross/Cocktail-Manager/issues/472)) ([39584dc](https://github.com/jo-gross/Cocktail-Manager/commit/39584dcad92e103b800dd8ee20adc29a0eb880a1))
+
 ## [1.9.7](https://github.com/jo-gross/Cocktail-Manager/compare/v1.9.6...v1.9.7) (2024-11-25)
 
 
