@@ -477,6 +477,7 @@ model CocktailQueue {
   cocktail    CocktailRecipe @relation(fields: [cocktailId], references: [id], onDelete: Cascade)
   workspaceId String
   workspace   Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  notes String?
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @default(now()) @updatedAt
 }

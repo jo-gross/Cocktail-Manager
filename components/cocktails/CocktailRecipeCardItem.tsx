@@ -3,13 +3,12 @@ import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useStat
 import { CompactCocktailRecipeInstruction } from './CompactCocktailRecipeInstruction';
 import { ShowCocktailInfoButton } from './ShowCocktailInfoButton';
 import { useRouter } from 'next/router';
-import { FaExclamationTriangle, FaPlus } from 'react-icons/fa';
-import { MdPlaylistAdd } from 'react-icons/md';
-import { addCocktailToQueue, addCocktailToStatistic } from '../../lib/network/cocktailTracking';
+import { FaExclamationTriangle } from 'react-icons/fa';
 import { Loading } from '../Loading';
 import { fetchCocktail } from '../../lib/network/cocktails';
 import { CocktailRating } from '@prisma/client';
 import { fetchCocktailRatings } from '../../lib/network/cocktailRatings';
+import StatisticActions from '../StatisticActions';
 
 export type CocktailRecipeOverviewItemRef = {
   refresh: () => void;
@@ -33,9 +32,6 @@ export type CocktailRecipeOverviewItemProps = {
 const CocktailRecipeCardItem = forwardRef<CocktailRecipeOverviewItemRef, CocktailRecipeOverviewItemProps>((props, ref) => {
   const router = useRouter();
   const workspaceId = router.query.workspaceId as string;
-
-  const [submittingStatistic, setSubmittingStatistic] = useState(false);
-  const [submittingQueue, setSubmittingQueue] = useState(false);
 
   const [loadedCocktailRecipe, setLoadedCocktailRecipe] = useState<CocktailRecipeFull | undefined>(
     typeof props.cocktailRecipe === 'string' ? undefined : props.cocktailRecipe,
@@ -128,41 +124,14 @@ const CocktailRecipeCardItem = forwardRef<CocktailRecipeOverviewItemRef, Cocktai
                 )}
 
                 {props.showStatisticActions ? (
-                  <div className={''}>
-                    <div className={'mt-1 flex flex-row gap-2'}>
-                      <button
-                        className={'btn btn-outline flex-1'}
-                        onClick={() =>
-                          addCocktailToQueue({
-                            workspaceId: router.query.workspaceId as string,
-                            cocktailId: cocktailRecipe.id,
-                            setSubmitting: setSubmittingQueue,
-                          })
-                        }
-                        disabled={submittingQueue}
-                      >
-                        <MdPlaylistAdd />
-                        Liste
-                        {submittingQueue ? <span className={'loading loading-spinner'}></span> : <></>}
-                      </button>
-                      <button
-                        className={'btn btn-outline btn-primary flex-1'}
-                        onClick={() =>
-                          addCocktailToStatistic({
-                            workspaceId: router.query.workspaceId as string,
-                            cocktailId: cocktailRecipe.id,
-                            cardId: router.query.cardId,
-                            actionSource: 'CARD',
-                            setSubmitting: setSubmittingStatistic,
-                          })
-                        }
-                        disabled={submittingStatistic}
-                      >
-                        <FaPlus />
-                        Gemacht
-                        {submittingStatistic ? <span className={'loading loading-spinner'}></span> : <></>}
-                      </button>
-                    </div>
+                  <div className={'mt-1'}>
+                    <StatisticActions
+                      workspaceId={router.query.workspaceId as string}
+                      cocktailId={cocktailRecipe.id}
+                      cocktailName={cocktailRecipe.name}
+                      actionSource={'CARD'}
+                      cardId={router.query.cardId as string | undefined}
+                    />
                   </div>
                 ) : (
                   <></>

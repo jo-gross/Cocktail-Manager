@@ -1,19 +1,26 @@
 import { alertService } from '../alertService';
+import { StatisticBadRequestMessage } from '../../models/StatisticBadRequest';
 
 export async function addCocktailToStatistic({
   workspaceId,
   cocktailId,
   cardId,
   actionSource,
+  notes,
   setSubmitting,
-  reload,
+  ignoreQueue,
+  onSuccess,
+  onNotDecidableError,
 }: {
   workspaceId: string;
   cocktailId: string;
   cardId?: string | string[] | undefined;
   actionSource: 'SEARCH_MODAL' | 'CARD' | 'DETAIL_MODAL' | 'QUEUE';
+  notes?: string;
+  ignoreQueue?: boolean;
   setSubmitting: (submitting: boolean) => void;
-  reload?: () => void;
+  onSuccess?: () => void;
+  onNotDecidableError?: (data: { _min: { id: string; createdAt: Date }; cocktailId: string; notes: string }[]) => void;
 }) {
   try {
     setSubmitting(true);
@@ -26,15 +33,21 @@ export async function addCocktailToStatistic({
         cocktailId: cocktailId,
         cocktailCardId: cardId,
         actionSource: actionSource,
+        notes: notes,
+        ignoreQueue: ignoreQueue,
       }),
     });
     if (response.ok) {
-      reload?.();
+      onSuccess?.();
       alertService.success('Cocktail als gemacht markiert');
     } else {
       const body = await response.json();
-      console.error('addCocktailToStatistic', response);
-      alertService.error(body.message ?? 'Fehler beim Hinzufügen des Cocktails zur Statistik', response.status, response.statusText);
+      if (body.message == StatisticBadRequestMessage) {
+        onNotDecidableError?.(body.data);
+      } else {
+        console.error('addCocktailToStatistic', response);
+        alertService.error(body.message ?? 'Fehler beim Hinzufügen des Cocktails zur Statistik', response.status, response.statusText);
+      }
     }
   } catch (error) {
     console.error('addCocktailToStatistic', error);
@@ -47,13 +60,17 @@ export async function addCocktailToStatistic({
 export async function addCocktailToQueue({
   workspaceId,
   cocktailId,
+  notes,
+  amount,
   setSubmitting,
-  reload,
+  onSuccess,
 }: {
   workspaceId: string;
   cocktailId: string;
+  notes?: string;
+  amount?: number;
   setSubmitting: (submitting: boolean) => void;
-  reload?: () => void;
+  onSuccess?: () => void;
 }) {
   try {
     setSubmitting(true);
@@ -64,11 +81,13 @@ export async function addCocktailToQueue({
       },
       body: JSON.stringify({
         cocktailId: cocktailId,
+        notes: notes,
+        amount: amount,
       }),
     });
     if (response.ok) {
       // alertService.success('Cocktail zur Warteschlange hinzugefügt');
-      reload?.();
+      onSuccess?.();
       alertService.info('Cocktail zur Warteschlange hinzugefügt');
     } else {
       const body = await response.json();
@@ -86,11 +105,13 @@ export async function addCocktailToQueue({
 export async function removeCocktailFromQueue({
   workspaceId,
   cocktailId,
+  notes: notes,
   setSubmitting,
   reload,
 }: {
   workspaceId: string;
   cocktailId: string;
+  notes?: string;
   setSubmitting: (submitting: boolean) => void;
   reload?: () => void;
 }) {
@@ -103,6 +124,7 @@ export async function removeCocktailFromQueue({
       },
       body: JSON.stringify({
         cocktailId: cocktailId,
+        notes: notes,
       }),
     });
     if (response.ok) {

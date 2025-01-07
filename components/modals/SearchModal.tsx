@@ -5,11 +5,9 @@ import { Loading } from '../Loading';
 import { ModalContext } from '../../lib/context/ModalContextProvider';
 import { useRouter } from 'next/router';
 import { alertService } from '../../lib/alertService';
-import { FaPlus } from 'react-icons/fa';
-import { MdPlaylistAdd } from 'react-icons/md';
-import { addCocktailToQueue, addCocktailToStatistic } from '../../lib/network/cocktailTracking';
 import CocktailRecipeCardItem from '../cocktails/CocktailRecipeCardItem';
 import _ from 'lodash';
+import StatisticActions from '../StatisticActions';
 
 interface SearchModalProps {
   onCocktailSelectedObject?: (cocktail: CocktailRecipeFull) => void;
@@ -140,39 +138,13 @@ export function SearchModal(props: SearchModalProps) {
           )}
 
           {props.showStatisticActions ? (
-            <div className={'mt-2 flex flex-row gap-2 pb-2'}>
-              <button
-                className={'btn btn-outline w-full flex-1'}
-                onClick={() =>
-                  addCocktailToQueue({
-                    workspaceId: router.query.workspaceId as string,
-                    cocktailId: cocktail.id,
-                    setSubmitting: setSubmittingQueue,
-                  })
-                }
-                disabled={submittingQueue}
-              >
-                <MdPlaylistAdd />
-                Liste
-                {submittingQueue ? <span className={'loading loading-spinner'}></span> : <></>}
-              </button>
-
-              <button
-                className={'btn btn-outline btn-primary w-full flex-1'}
-                onClick={() =>
-                  addCocktailToStatistic({
-                    workspaceId: router.query.workspaceId as string,
-                    cocktailId: cocktail.id,
-                    actionSource: 'SEARCH_MODAL',
-                    setSubmitting: setSubmittingStatistic,
-                  })
-                }
-                disabled={submittingStatistic}
-              >
-                <FaPlus />
-                Gemacht
-                {submittingStatistic ? <span className={'loading loading-spinner'}></span> : <></>}
-              </button>
+            <div className={'mt-2 pb-2'}>
+              <StatisticActions
+                workspaceId={router.query.workspaceId as string}
+                cocktailId={cocktail.id}
+                cocktailName={cocktail.name}
+                actionSource={'SEARCH_MODAL'}
+              />
             </div>
           ) : (
             <></>

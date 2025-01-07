@@ -16,7 +16,10 @@ export function ShowCocktailInfoButton(props: ShowCocktailInfoButtonProps) {
     <div
       className={'btn btn-circle btn-ghost btn-sm absolute right-1 top-1 bg-info/50 print:hidden'}
       onClick={async () => {
-        modalContext.openModal(<CocktailDetailModal cocktailId={props.cocktailId} onRefreshRatings={() => props.onRatingChange()} />, true);
+        modalContext.openModal(
+          <CocktailDetailModal cocktailId={props.cocktailId} onRefreshRatings={() => props.onRatingChange()} openReferer={'DETAIL'} />,
+          true,
+        );
       }}
     >
       <FaInfoCircle />

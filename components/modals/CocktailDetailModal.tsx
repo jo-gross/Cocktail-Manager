@@ -9,8 +9,6 @@ import { CocktailRating, Role } from '@prisma/client';
 import Image from 'next/image';
 import AvatarImage from '../AvatarImage';
 import { Loading } from '../Loading';
-import { MdPlaylistAdd } from 'react-icons/md';
-import { addCocktailToQueue, addCocktailToStatistic } from '../../lib/network/cocktailTracking';
 import ImageModal from './ImageModal';
 import { calcCocktailTotalPrice } from '../../lib/CocktailRecipeCalculation';
 import { fetchIngredients } from '../../lib/network/ingredients';
@@ -20,11 +18,15 @@ import CocktailRatingsModal from './CocktailRatingsModal';
 import StarsComponent from '../StarsComponent';
 import { fetchCocktailRatings } from '../../lib/network/cocktailRatings';
 import { fetchCocktail } from '../../lib/network/cocktails';
+import StatisticActions from '../StatisticActions';
 
 interface CocktailDetailModalProps {
   cocktailId: string;
 
   onRefreshRatings: () => void;
+  queueNotes?: string;
+  queueAmount?: number;
+  openReferer: 'QUEUE' | 'DETAIL';
 }
 
 export function CocktailDetailModal(props: CocktailDetailModalProps) {
@@ -42,6 +44,8 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
   const [ratingsLoading, setRatingsLoading] = useState(true);
   const [ratingError, setRatingsError] = useState(false);
 
+  const [localQueueAmount, setLocalQueueAmount] = useState(props.queueAmount);
+
   const refreshRatings = useCallback(() => {
     props.onRefreshRatings();
     fetchCocktailRatings(workspaceId, props.cocktailId, setCocktailRatings, setRatingsLoading, setRatingsError);
@@ -52,9 +56,6 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
     fetchCocktail(workspaceId, props.cocktailId, setLoadedCocktail, setLoading);
     fetchCocktailRatings(workspaceId, props.cocktailId, setCocktailRatings, setRatingsLoading, setRatingsError);
   }, [props.cocktailId, workspaceId]);
-
-  const [submittingStatistic, setSubmittingStatistic] = useState(false);
-  const [submittingQueue, setSubmittingQueue] = useState(false);
 
   return loading || loadedCocktail == undefined ? (
     <Loading />
@@ -101,6 +102,20 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
               <FaTimes />
             </button>
           </div>
+          {(props.queueNotes || localQueueAmount) && (
+            <div className={'alert alert-warning grid grid-cols-2'}>
+              {localQueueAmount && (
+                <div>
+                  Anzahl: <strong>{localQueueAmount}x</strong>
+                </div>
+              )}
+              {props.queueNotes && (
+                <div>
+                  Warteschlangennotiz: <strong>{props.queueNotes}</strong>
+                </div>
+              )}
+            </div>
+          )}
           <div className={'grid grid-cols-1 gap-4 md:grid-cols-2'}>
             {/*Left side*/}
             <div className={'flex flex-col gap-2'}>
@@ -204,39 +219,26 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                 </>
               )}
 
-              <div className={'grid w-full grid-cols-2 gap-2 print:hidden'}>
-                <div className={'divider-sm col-span-2'}></div>
-                <button
-                  className={'btn btn-outline w-full flex-1'}
-                  onClick={() =>
-                    addCocktailToQueue({
-                      workspaceId: router.query.workspaceId as string,
-                      cocktailId: loadedCocktail.id,
-                      setSubmitting: setSubmittingQueue,
-                    })
+              <div className={'divider-sm print:hidden'}></div>
+              <div className={'print:hidden'}>
+                <StatisticActions
+                  workspaceId={router.query.workspaceId as string}
+                  cocktailId={loadedCocktail.id}
+                  cocktailName={loadedCocktail.name}
+                  actionSource={'DETAIL_MODAL'}
+                  notes={props.queueNotes}
+                  onMarkedAsDone={
+                    props.openReferer === 'QUEUE'
+                      ? () => {
+                          if (localQueueAmount === 1) {
+                            modalContext.closeAllModals();
+                          } else {
+                            setLocalQueueAmount((prev) => (prev ?? 0) - 1);
+                          }
+                        }
+                      : undefined
                   }
-                  disabled={submittingQueue}
-                >
-                  <MdPlaylistAdd />
-                  Liste
-                  {submittingQueue ? <span className={'loading loading-spinner'}></span> : <></>}
-                </button>
-                <button
-                  className={'btn btn-outline btn-primary w-full flex-1'}
-                  onClick={() =>
-                    addCocktailToStatistic({
-                      workspaceId: router.query.workspaceId as string,
-                      cocktailId: loadedCocktail.id,
-                      actionSource: 'DETAIL_MODAL',
-                      setSubmitting: setSubmittingStatistic,
-                    })
-                  }
-                  disabled={submittingStatistic}
-                >
-                  <FaPlus />
-                  Gemacht
-                  {submittingStatistic ? <span className={'loading loading-spinner'}></span> : <></>}
-                </button>
+                />
               </div>
             </div>
             {/*Right side*/}
