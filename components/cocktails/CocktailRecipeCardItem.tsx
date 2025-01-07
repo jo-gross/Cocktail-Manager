@@ -24,6 +24,7 @@ export type CocktailRecipeOverviewItemProps = {
   showTags?: boolean;
   showDescription?: boolean;
   showNotes?: boolean;
+  showHistory?: boolean;
   showStatisticActions?: boolean;
   image?: string;
   showRating?: boolean;
@@ -101,6 +102,13 @@ const CocktailRecipeCardItem = forwardRef<CocktailRecipeOverviewItemRef, Cocktai
                     <div className={'border-b border-base-100'}></div>
                     <div className={'font-bold'}>Allgemeine Beschreibung</div>
                     <div className={'long-text-format'}>{cocktailRecipe.description}</div>
+                  </>
+                )}
+                {props.showHistory && cocktailRecipe.history && (
+                  <>
+                    <div className={'border-b border-base-100'}></div>
+                    <div className={'font-bold'}>Geschichte und Entstehung</div>
+                    <div className={'long-text-format'}>{cocktailRecipe.history}</div>
                   </>
                 )}
 

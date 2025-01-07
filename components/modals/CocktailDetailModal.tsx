@@ -306,6 +306,12 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                   <div className={'long-text-format rounded border border-base-300 p-2 text-justify'}>{loadedCocktail.description}</div>
                 </>
               )}
+              {loadedCocktail.history && (
+                <>
+                  <div className={'font-bold'}>Geschichte und Entstehung</div>
+                  <div className={'long-text-format rounded border border-base-300 p-2 text-justify'}>{loadedCocktail.history}</div>
+                </>
+              )}
               {loadedCocktail.steps.map((step) => step.ingredients).flat().length > 0 && (
                 <>
                   <div className={'font-bold'}>Zutatenbeschreibungen</div>

@@ -100,6 +100,7 @@ export default function WorkspaceSettingPage() {
         method: 'POST',
         body: JSON.stringify(data),
       });
+      console.log('SettingsPage -> importBackup -> response', response);
       if (response.ok) {
         fetchActions(workspaceId, setWorkspaceActions, setWorkspaceActionLoading);
         alertService.success(`Import erfolgreich`);
