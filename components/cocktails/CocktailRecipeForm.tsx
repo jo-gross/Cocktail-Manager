@@ -426,7 +426,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
             });
             if (response.status.toString().startsWith('2')) {
               alertService.success('Erfolgreich aktualisiert');
-              await routingContext.conditionalBack(`/workspaces/${workspaceId}/manage/cocktails`);
+              await routingContext.conditionalBack(`/workspaces/${workspaceId}/manage/cocktails#${props.cocktailRecipe.id}`);
             } else {
               const body = await response.json();
               console.error('CocktailRecipeForm -> onSubmit[update]', response);
@@ -521,7 +521,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                       id={'description'}
                       name="description"
                       className={`textarea textarea-bordered w-full ${errors.description && 'textarea-error'}`}
-                      placeholder={'Was zeichnet diesen Cocktail aus? Was macht ihn besonders? Was sollte wissen?'}
+                      placeholder={'Was zeichnet diesen Cocktail aus? Wie schmeckt er? Was macht ihn besonders? Was sollte man wissen?'}
                       onChange={handleChange}
                       onBlur={handleBlur}
                       value={values.description}
@@ -777,9 +777,9 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                       _count: { CocktailRecipeImage: values.image != undefined ? 1 : 0 },
                       id: values.id,
                       name: values.name,
-                      description: values.description,
-                      notes: values.notes,
-                      history: values.history,
+                      description: values.description.trim() == '' ? null : values.description.trim(),
+                      notes: values.notes.trim() == '' ? null : values.notes.trim(),
+                      history: values.history.trim() == '' ? null : values.history.trim(),
                       tags: values.tags,
                       price: !values.price && values.price == '' ? null : values.price,
                       iceId: values.iceId,

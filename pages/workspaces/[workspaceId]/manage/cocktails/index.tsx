@@ -61,7 +61,7 @@ export default function CocktailsOverviewPage() {
       .filter(cocktailFilter(filterString))
       .sort((a, b) => a.name.localeCompare(b.name))
       .map((cocktailRecipe) => (
-        <tr key={cocktailRecipe.id} className={''}>
+        <tr key={cocktailRecipe.id} id={cocktailRecipe.id}>
           <td>
             <div className="flex items-center space-x-3">
               <div className={'h-12 w-12'}>
