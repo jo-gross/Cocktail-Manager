@@ -29,7 +29,7 @@ const ExpandableText = forwardRef<ExpandableTextHandle, ExpandableTextProps>(({ 
   return (
     <details className="group">
       <summary className={`${isClamped ? 'cursor-pointer' : ''} flex w-full list-none flex-col`}>
-        <div ref={textRef} className="line-clamp-3 text-justify group-open:line-clamp-none">
+        <div ref={textRef} className="long-text-format line-clamp-3 group-open:line-clamp-none">
           {text}
         </div>
         {isClamped && (
