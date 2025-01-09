@@ -295,6 +295,11 @@ export default function OverviewPage() {
 
   const timeComponent = (
     <div className={'w-full text-center'}>
+      {userContext.workspace && (
+        <span>
+          Umgebung: <strong>{userContext.workspace.name}</strong> -{' '}
+        </span>
+      )}
       {selectedCard && selectedCardId != 'search' ? (
         <span>
           Angezeigte Karte: <strong>{selectedCard.name}</strong> -{' '}
@@ -318,7 +323,7 @@ export default function OverviewPage() {
   return (
     <>
       <Head>
-        <title>{`${selectedCard?.name ?? 'Cocktailkarte'} - ${userContext.workspace?.name ?? 'Cocktailkarte'}`}</title>
+        <title>The Cocktail-Manager • {selectedCard?.name ?? 'Cocktailkarte'}</title>
       </Head>
 
       <div className={'static h-screen'}>

@@ -24,7 +24,7 @@ export function ManageEntityLayout(props: ManageEntityLayoutProps) {
   return (
     <>
       <Head>
-        <>{typeof props.title === 'string' ? <title>{`${props.title} - The Cocktail-Manager`}</title> : <title>The Cocktail-Manager</title>}</>
+        <>{typeof props.title === 'string' ? <title>{`The Cocktail-Manager • ${props.title}`}</title> : <title>The Cocktail-Manager</title>}</>
       </Head>
       <div>
         {/*<div className={'flex flex-col p-1 md:p-4 print:p-1'}>*/}
