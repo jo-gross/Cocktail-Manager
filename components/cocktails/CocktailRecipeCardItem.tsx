@@ -9,6 +9,7 @@ import { fetchCocktail } from '../../lib/network/cocktails';
 import { CocktailRating } from '@prisma/client';
 import { fetchCocktailRatings } from '../../lib/network/cocktailRatings';
 import StatisticActions from '../StatisticActions';
+import ExpandableText from '../ExpandableText';
 
 export type CocktailRecipeOverviewItemRef = {
   refresh: () => void;
@@ -90,21 +91,30 @@ const CocktailRecipeCardItem = forwardRef<CocktailRecipeOverviewItemRef, Cocktai
                   <>
                     <div className={'border-b border-base-100'}></div>
                     <div className={'font-bold'}>Zubereitungsnotizen</div>
-                    <div className={'long-text-format'}>{cocktailRecipe.notes}</div>
+                    <div className={'pl-2'}>
+                      <ExpandableText text={cocktailRecipe.notes} />
+                      {/*<div className={'long-text-format'}>{cocktailRecipe.notes}</div>*/}
+                    </div>
                   </>
                 )}
                 {props.showDescription && cocktailRecipe.description && (
                   <>
                     <div className={'border-b border-base-100'}></div>
                     <div className={'font-bold'}>Allgemeine Beschreibung</div>
-                    <div className={'long-text-format'}>{cocktailRecipe.description}</div>
+                    <div className={'pl-2'}>
+                      <ExpandableText text={cocktailRecipe.description} />
+                      {/*<div className={'long-text-format'}>{cocktailRecipe.description}</div>*/}
+                    </div>
                   </>
                 )}
                 {props.showHistory && cocktailRecipe.history && (
                   <>
                     <div className={'border-b border-base-100'}></div>
                     <div className={'font-bold'}>Geschichte und Entstehung</div>
-                    <div className={'long-text-format'}>{cocktailRecipe.history}</div>
+                    <div className={'pl-2'}>
+                      <ExpandableText text={cocktailRecipe.history} />
+                    </div>
+                    {/*<div className={'long-text-format'}>{cocktailRecipe.history}</div>*/}
                   </>
                 )}
 
