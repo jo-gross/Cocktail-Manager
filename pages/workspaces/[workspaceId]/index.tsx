@@ -315,6 +315,17 @@ export default function OverviewPage() {
     }
   }, []);
 
+  const triggerAllCocktailCardRefresh = useCallback(() => {
+    Object.keys(cocktailItemRefs.current).forEach((cocktailId) => {
+      if (cocktailItemRefs.current[cocktailId]) {
+        cocktailItemRefs.current[cocktailId]?.recalculateClamp();
+      }
+    });
+  }, []);
+  useEffect(() => {
+    triggerAllCocktailCardRefresh();
+  }, [lessItems]);
+
   return (
     <>
       <Head>

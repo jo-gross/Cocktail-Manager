@@ -1,18 +1,29 @@
-import { useEffect, useRef, useState } from 'react';
+import React, { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 
 interface ExpandableTextProps {
   text: string;
-  resized?: void;
 }
 
-const ExpandableText = ({ text, resized }: ExpandableTextProps) => {
-  const textRef = useRef<HTMLDivElement | null>(null);
+export interface ExpandableTextHandle {
+  recalculateClamp: () => void;
+}
+
+const ExpandableText = forwardRef<ExpandableTextHandle, ExpandableTextProps>(({ text }, ref) => {
+  const textRef = useRef<HTMLDivElement | null>(null); // Typisiert als HTMLDivElement
   const [isClamped, setIsClamped] = useState(false);
 
-  useEffect(() => {
+  const checkClamp = () => {
     if (textRef.current) {
       setIsClamped(textRef.current.scrollHeight > textRef.current.clientHeight);
     }
+  };
+
+  useImperativeHandle(ref, () => ({
+    recalculateClamp: checkClamp,
+  }));
+
+  useEffect(() => {
+    checkClamp();
   }, [text]);
 
   return (
@@ -30,6 +41,8 @@ const ExpandableText = ({ text, resized }: ExpandableTextProps) => {
       </summary>
     </details>
   );
-};
+});
+
+ExpandableText.displayName = 'ExpandableText';
 
 export default ExpandableText;
