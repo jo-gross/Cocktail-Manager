@@ -22,7 +22,7 @@ export default function AddCocktailRatingModal(props: CocktailRatingModalProps) 
 
   return (
     <div className={'flex flex-col gap-2'}>
-      <div className={'text-2xl font-bold'}>{props.cocktailName} - Rating hinzufügen</div>
+      <div className={'text-2xl font-bold'}>{props.cocktailName} - Bewertung hinzufügen</div>
       <Formik
         initialValues={{
           name: undefined,
