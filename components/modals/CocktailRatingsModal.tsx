@@ -71,7 +71,9 @@ export default function CocktailRatingsModal(props: CocktailRatingModalProps) {
         <button
           type={'button'}
           className={'btn btn-outline btn-sm print:hidden'}
-          onClick={() => modalContext.openModal(<AddCocktailRatingModal cocktailId={props.cocktailId} onCreated={fetchCocktailRating} />)}
+          onClick={() =>
+            modalContext.openModal(<AddCocktailRatingModal cocktailId={props.cocktailId} cocktailName={props.cocktailName} onCreated={fetchCocktailRating} />)
+          }
         >
           <FaPlus /> Bewertung hinzufügen
         </button>
