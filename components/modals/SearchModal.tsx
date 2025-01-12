@@ -74,8 +74,7 @@ export function SearchModal(props: SearchModalProps) {
     fetchCocktails('');
   }, [fetchCocktails, workspaceId]);
 
-  const [submittingStatistic, setSubmittingStatistic] = useState(false);
-  const [submittingQueue, setSubmittingQueue] = useState(false);
+  const [cocktailRatings, setCocktailRatings] = useState<Record<string, number>>();
 
   const renderCocktailCard = (cocktail: CocktailRecipeFull, index: number, isArchived: boolean, openCard: boolean = false) => (
     <div

@@ -46,6 +46,8 @@ const CocktailRecipeCardItem = forwardRef<CocktailRecipeOverviewItemRef, Cocktai
     if (typeof props.cocktailRecipe === 'string') {
       fetchCocktail(workspaceId, props.cocktailRecipe, setLoadedCocktailRecipe, setCocktailRecipeLoading);
       fetchCocktailRatings(workspaceId, props.cocktailRecipe, setCocktailRatings, setCocktailRatingsLoading, setCocktailRatingsError);
+    } else {
+      fetchCocktailRatings(workspaceId, props.cocktailRecipe.id, setCocktailRatings, setCocktailRatingsLoading, setCocktailRatingsError);
     }
   }, [workspaceId, props.cocktailRecipe]);
 
