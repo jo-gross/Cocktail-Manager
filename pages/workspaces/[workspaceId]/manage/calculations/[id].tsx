@@ -481,7 +481,12 @@ export default function CalculationPage() {
         .sortBy((group) => group[0].ingredient.name)
         .map(
           (items, key) =>
-            `${ingredientShoppingUnits.find((ingredient) => ingredient.ingredientId == items[0].ingredient.id)?.checked ? 'true' : 'false'},${items[0].ingredient.name},${calculateTotalIngredientAmount(items).toFixed(2)},${userContext.getTranslation(
+            `${ingredientShoppingUnits.find((ingredient) => ingredient.ingredientId == items[0].ingredient.id)?.checked ? 'true' : 'false'},${items[0].ingredient.name},${calculateTotalIngredientAmount(
+              items,
+            ).toLocaleString(undefined, {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })},${userContext.getTranslation(
               units.find((unit) => unit.id == ingredientShoppingUnits.find((ingredient) => ingredient.ingredientId == items[0].ingredient.id)?.unitId)?.name ??
                 'N/A',
               'de',
@@ -702,7 +707,12 @@ export default function CalculationPage() {
                             {showSalesStuff ? (
                               <>
                                 <td>
-                                  <span>{`${cocktail.cocktail.price ?? '-'} €`}</span>
+                                  <span>{`${
+                                    cocktail.cocktail.price?.toLocaleString(undefined, {
+                                      minimumFractionDigits: 0,
+                                      maximumFractionDigits: 2,
+                                    }) ?? '-'
+                                  } €`}</span>
                                 </td>
                                 <td>
                                   <div className={'join print:hidden'}>
@@ -727,7 +737,13 @@ export default function CalculationPage() {
                                     />
                                     <span className={'btn btn-secondary join-item btn-sm'}> €</span>
                                   </div>
-                                  <div className={'hidden print:flex'}>{cocktail.customPrice ?? '-'} €</div>
+                                  <div className={'hidden print:flex'}>
+                                    {cocktail.customPrice?.toLocaleString(undefined, {
+                                      minimumFractionDigits: 0,
+                                      maximumFractionDigits: 2,
+                                    }) ?? '-'}{' '}
+                                    €
+                                  </div>
                                 </td>
                               </>
                             ) : (
@@ -812,16 +828,37 @@ export default function CalculationPage() {
                             <tr key={'cocktail-' + cocktail.cocktail.id}>
                               <td>{cocktail.cocktail.name}</td>
                               <td>{cocktail.plannedAmount} x</td>
-                              <td>{calcCocktailTotalPrice(cocktail.cocktail, ingredients).toFixed(2)} €</td>
-                              <td>{(cocktail.plannedAmount * calcCocktailTotalPrice(cocktail.cocktail, ingredients)).toFixed(2)} €</td>
+                              <td>
+                                {calcCocktailTotalPrice(cocktail.cocktail, ingredients).toLocaleString(undefined, {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                })}{' '}
+                                €
+                              </td>
+                              <td>
+                                {(cocktail.plannedAmount * calcCocktailTotalPrice(cocktail.cocktail, ingredients)).toLocaleString(undefined, {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                })}{' '}
+                                €
+                              </td>
                               {showSalesStuff ? (
                                 <>
-                                  <td>{(cocktail.plannedAmount * (cocktail.customPrice ?? cocktail.cocktail.price ?? 0)).toFixed(2)}€</td>
+                                  <td>
+                                    {(cocktail.plannedAmount * (cocktail.customPrice ?? cocktail.cocktail.price ?? 0)).toLocaleString(undefined, {
+                                      minimumFractionDigits: 2,
+                                      maximumFractionDigits: 2,
+                                    })}
+                                    €
+                                  </td>
                                   <td>
                                     {(
                                       cocktail.plannedAmount * (cocktail.customPrice ?? cocktail.cocktail.price ?? 0) -
                                       cocktail.plannedAmount * calcCocktailTotalPrice(cocktail.cocktail, ingredients)
-                                    ).toFixed(2)}{' '}
+                                    ).toLocaleString(undefined, {
+                                      minimumFractionDigits: 2,
+                                      maximumFractionDigits: 2,
+                                    })}{' '}
                                     €
                                   </td>
                                 </>
@@ -840,7 +877,10 @@ export default function CalculationPage() {
                           {cocktailCalculationItems
                             .map((cocktail) => cocktail.plannedAmount * calcCocktailTotalPrice(cocktail.cocktail, ingredients))
                             .reduce((acc, curr) => acc + curr, 0)
-                            .toFixed(2)}{' '}
+                            .toLocaleString(undefined, {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            })}{' '}
                           €
                         </td>
                         {showSalesStuff ? (
@@ -849,7 +889,10 @@ export default function CalculationPage() {
                               {cocktailCalculationItems
                                 .map((cocktail) => cocktail.plannedAmount * (cocktail.customPrice ?? cocktail.cocktail.price ?? 0))
                                 .reduce((acc, curr) => acc + curr, 0)
-                                .toFixed(2)}{' '}
+                                .toLocaleString(undefined, {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                })}{' '}
                               €
                             </td>
                             <td>
@@ -860,7 +903,10 @@ export default function CalculationPage() {
                                     cocktail.plannedAmount * calcCocktailTotalPrice(cocktail.cocktail, ingredients),
                                 )
                                 .reduce((acc, curr) => acc + curr, 0)
-                                .toFixed(2)}{' '}
+                                .toLocaleString(undefined, {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                })}{' '}
                               €
                             </td>
                           </>
@@ -949,7 +995,11 @@ export default function CalculationPage() {
                               <td className={'flex flex-col'}>
                                 {items.map((item) => (
                                   <div key={`shopping-ingredient-${key}-unit-${item.unit.id}`}>
-                                    {item.amount.toFixed(2)} {userContext.getTranslation(item.unit.name ?? 'N/A', 'de')}
+                                    {item.amount.toLocaleString(undefined, {
+                                      minimumFractionDigits: 0,
+                                      maximumFractionDigits: 2,
+                                    })}{' '}
+                                    {userContext.getTranslation(item.unit.name ?? 'N/A', 'de')}
                                   </div>
                                 ))}
                               </td>
@@ -987,7 +1037,10 @@ export default function CalculationPage() {
                                 </select>
                               </td>
                               <td>
-                                {calculateTotalIngredientAmount(items).toFixed(2)}{' '}
+                                {calculateTotalIngredientAmount(items).toLocaleString(undefined, {
+                                  minimumFractionDigits: 0,
+                                  maximumFractionDigits: 2,
+                                })}{' '}
                                 {userContext.getTranslation(
                                   units.find(
                                     (unit) =>
@@ -1025,7 +1078,12 @@ export default function CalculationPage() {
                           .map((garnishCalculationItem) => (
                             <tr key={'garnishCalculation-' + garnishCalculationItem.garnish.id}>
                               <td>{garnishCalculationItem.garnish.name}</td>
-                              <td>{garnishCalculationItem.amount.toFixed(0)}</td>
+                              <td>
+                                {garnishCalculationItem.amount.toLocaleString(undefined, {
+                                  minimumFractionDigits: 0,
+                                  maximumFractionDigits: 0,
+                                })}
+                              </td>
                             </tr>
                           ))
                       )}

@@ -75,7 +75,12 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
               {loadedCocktail.price != undefined ? (
                 <>
                   {' - '}
-                  <span className={'font-bold'}>{loadedCocktail.price + ' €'}</span>
+                  <span className={'font-bold'}>
+                    {loadedCocktail.price.toLocaleString(undefined, {
+                      minimumFractionDigits: 0,
+                      maximumFractionDigits: 2,
+                    }) + ' €'}
+                  </span>
                 </>
               ) : (
                 <></>
@@ -169,7 +174,12 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                               key={`cocktail-details-step-ingredient-${stepIngredient.id}`}
                               className={`flex flex-row gap-2 pl-3 ${stepIngredient.optional ? 'italic' : ''}`}
                             >
-                              <div className={'font-bold'}>{stepIngredient.amount}</div>
+                              <div className={'font-bold'}>
+                                {stepIngredient.amount?.toLocaleString(undefined, {
+                                  minimumFractionDigits: 0,
+                                  maximumFractionDigits: 2,
+                                })}
+                              </div>
                               <div className={'font-bold'}>{userContext.getTranslation(stepIngredient.unit?.name ?? '', 'de')}</div>
                               <div>{stepIngredient.ingredient?.shortName ?? stepIngredient.ingredient?.name}</div>
                               {stepIngredient.optional && <div>(optional)</div>}
@@ -259,7 +269,10 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                       {ratingsLoading ? (
                         <Loading />
                       ) : (cocktailRatings ?? []).length > 0 ? (
-                        (cocktailRatings.reduce((acc, rating) => acc + rating.rating, 0) / cocktailRatings.length).toFixed(1)
+                        (cocktailRatings.reduce((acc, rating) => acc + rating.rating, 0) / cocktailRatings.length).toLocaleString(undefined, {
+                          minimumFractionDigits: 1,
+                          maximumFractionDigits: 1,
+                        })
                       ) : (
                         'Keine Bewertungen'
                       )}
@@ -424,7 +437,12 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
               {userContext.isUserPermitted(Role.MANAGER) && ingredients && (
                 <>
                   <div className={'font-bold'}>Materialkosten</div>
-                  <div>{calcCocktailTotalPrice(loadedCocktail, ingredients).toFixed(2) + ' €'}</div>
+                  <div>
+                    {calcCocktailTotalPrice(loadedCocktail, ingredients).toLocaleString(undefined, {
+                      minimumFractionDigits: 0,
+                      maximumFractionDigits: 2,
+                    }) + ' €'}
+                  </div>
                 </>
               )}
             </div>

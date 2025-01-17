@@ -97,7 +97,13 @@ export default function ManageGlassesOverviewPage() {
                         <td>
                           <div className="font-bold">{garnish.name}</div>
                         </td>
-                        <td>{garnish.price ?? '-'} €</td>
+                        <td>
+                          {garnish.price?.toLocaleString(undefined, {
+                            minimumFractionDigits: 0,
+                            maximumFractionDigits: 2,
+                          }) ?? '-'}{' '}
+                          €
+                        </td>
                         <ManageColumn entity={'garnishes'} id={garnish.id} onRefresh={() => fetchGarnishes(workspaceId, setGarnishes, setLoading)} />
                       </tr>
                     ))

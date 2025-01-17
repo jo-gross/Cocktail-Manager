@@ -926,11 +926,19 @@ export default function WorkspaceSettingPage() {
                               .map((conversion) => (
                                 <tr key={`unit-conversion-${conversion.id}`}>
                                   <td>{userContext.getTranslation(units.find((unit) => unit.id == conversion.fromUnitId)?.name ?? '', 'de')}</td>
-                                  <td className={'text-right'}>{conversion.factor.toFixed(2)}</td>
+                                  <td className={'text-right'}>
+                                    {conversion.factor.toLocaleString(undefined, {
+                                      minimumFractionDigits: 2,
+                                      maximumFractionDigits: 2,
+                                    })}
+                                  </td>
                                   <td>{userContext.getTranslation(units.find((unit) => unit.id == conversion.toUnitId)?.name ?? '', 'de')}</td>
                                   <td>
                                     1 {userContext.getTranslation(units.find((unit) => unit.id == conversion.toUnitId)?.name ?? '', 'de')} ={' '}
-                                    {(1 / conversion.factor).toFixed(2)}{' '}
+                                    {(1 / conversion.factor).toLocaleString(undefined, {
+                                      minimumFractionDigits: 2,
+                                      maximumFractionDigits: 2,
+                                    })}{' '}
                                     {userContext.getTranslation(units.find((unit) => unit.id == conversion.fromUnitId)?.name ?? '', 'de')}
                                   </td>
                                   <td className={'flex flex-row justify-end gap-2'}>
@@ -986,11 +994,19 @@ export default function WorkspaceSettingPage() {
                                 .map((conversion) => (
                                   <tr key={`unit-conversion-${conversion.id}`}>
                                     <td>{userContext.getTranslation(units.find((unit) => unit.id == conversion.fromUnitId)?.name ?? 'N/A', 'de')}</td>
-                                    <td className={'text-right'}>{conversion.factor.toFixed(2)}</td>
+                                    <td className={'text-right'}>
+                                      {conversion.factor.toLocaleString(undefined, {
+                                        minimumFractionDigits: 2,
+                                        maximumFractionDigits: 2,
+                                      })}
+                                    </td>
                                     <td>{userContext.getTranslation(units.find((unit) => unit.id == conversion.toUnitId)?.name ?? 'N/A', 'de')}</td>
                                     <td>
                                       1 {userContext.getTranslation(units.find((unit) => unit.id == conversion.toUnitId)?.name ?? 'N/A', 'de')} ={' '}
-                                      {(1 / conversion.factor).toFixed(2)}{' '}
+                                      {(1 / conversion.factor).toLocaleString(undefined, {
+                                        minimumFractionDigits: 2,
+                                        maximumFractionDigits: 2,
+                                      })}{' '}
                                       {userContext.getTranslation(units.find((unit) => unit.id == conversion.fromUnitId)?.name ?? 'N/A', 'de')}
                                     </td>
                                     <td className={''}></td>

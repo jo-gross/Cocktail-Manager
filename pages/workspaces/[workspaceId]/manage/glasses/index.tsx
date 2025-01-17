@@ -102,7 +102,13 @@ export default function ManageGlassesOverviewPage() {
                         <td>
                           <div className="font-bold">{glass.name}</div>
                         </td>
-                        <td>{glass.deposit} €</td>
+                        <td>
+                          {glass.deposit.toLocaleString(undefined, {
+                            minimumFractionDigits: 0,
+                            maximumFractionDigits: 2,
+                          })}{' '}
+                          €
+                        </td>
                         <ManageColumn entity={'glasses'} id={glass.id} onRefresh={() => fetchGlasses(workspaceId, setGlasses, setLoading)} />
                       </tr>
                     ))
