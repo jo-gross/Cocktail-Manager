@@ -132,7 +132,13 @@ export default function IngredientsOverviewPage() {
                             <span>Anzeigen</span>
                           </button>
                         </td>
-                        <td className={'whitespace-nowrap'}>{ingredient.price ?? '-'} €</td>
+                        <td className={'whitespace-nowrap'}>
+                          {ingredient.price?.toLocaleString(undefined, {
+                            minimumFractionDigits: 0,
+                            maximumFractionDigits: 2,
+                          }) ?? '-'}{' '}
+                          €
+                        </td>
                         <td className={''}>
                           {ingredient.IngredientVolume.map((volume) => (
                             <div key={`ingredient-${ingredient.id}-volume-unit-${volume.id}`} className={'whitespace-nowrap'}>
@@ -143,7 +149,11 @@ export default function IngredientsOverviewPage() {
                         <td>
                           {ingredient.IngredientVolume.map((volume) => (
                             <div key={`ingredient-${ingredient.id}-volume-unit-price-${volume.id}`} className={'whitespace-nowrap'}>
-                              {((ingredient.price ?? 0) / volume.volume).toFixed(2)} €/{userContext.getTranslation(volume.unit.name, 'de')}
+                              {((ingredient.price ?? 0) / volume.volume).toLocaleString(undefined, {
+                                minimumFractionDigits: 0,
+                                maximumFractionDigits: 2,
+                              })}{' '}
+                              €/{userContext.getTranslation(volume.unit.name, 'de')}
                             </div>
                           ))}
                         </td>

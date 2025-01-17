@@ -359,18 +359,18 @@ export default function OverviewPage() {
                     .sortBy(['cocktailName', (item) => -(item.notes ?? '')]) // Sortiere nach cocktailName (asc) und notes (desc)
                     .value()
                     .map((cocktailQueueItem, index) => (
-                      <div key={`cocktailQueue-item-${index}`} className={'flex w-full flex-row justify-between gap-2 pb-1 pt-1 lg:flex-col'}>
-                        <div className={'flex flex-row items-center justify-between'}>
-                          <div className={'flex flex-row items-center gap-1'}>
-                            <div className={'font-bold'}>
-                              <strong>{cocktailQueueItem.count}x</strong> {cocktailQueueItem.cocktailName}
-                            </div>
+                      <div key={`cocktailQueue-item-${index}`} className={'flex w-full flex-row flex-wrap justify-between gap-2 pb-1 pt-1 lg:flex-col'}>
+                        <div className={'flex flex-row flex-wrap items-center justify-between gap-1'}>
+                          <div className={'font-bold'}>
+                            <strong>{cocktailQueueItem.count}x</strong> {cocktailQueueItem.cocktailName}
+                          </div>
+                          <span className={'flex flex-wrap gap-1'}>
                             {cocktailQueueItem.notes && <span className={'italic'}>mit Notiz</span>}
                             (seit {new Date(cocktailQueueItem.oldestTimestamp).toFormatTimeString()} Uhr)
-                          </div>
+                          </span>
                         </div>
-                        {cocktailQueueItem.notes && <span className={'pb-1 italic'}>Notiz: {cocktailQueueItem.notes}</span>}
-                        <div className={'space between flex flex-row gap-2'}>
+                        {cocktailQueueItem.notes && <span className={'italic lg:pb-1'}>Notiz: {cocktailQueueItem.notes}</span>}
+                        <div className={'flex w-full flex-row gap-2'}>
                           <div
                             className={'btn btn-square btn-outline btn-sm'}
                             onClick={() =>

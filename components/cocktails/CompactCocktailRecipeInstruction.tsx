@@ -29,7 +29,16 @@ export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeIns
       </div>
       {props.showPrice == true ? (
         <div className={'col-span-1 text-right text-xl font-bold'}>
-          {(props.specialPrice ?? props.cocktailRecipe.price) != undefined ? (props.specialPrice ?? props.cocktailRecipe.price + ' €') : ''}
+          {(props.specialPrice ?? props.cocktailRecipe.price) != undefined
+            ? (props.specialPrice?.toLocaleString(undefined, {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 2,
+              }) ??
+              props.cocktailRecipe.price?.toLocaleString(undefined, {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 2,
+              }) + ' €')
+            : ''}
         </div>
       ) : (
         <></>
@@ -65,7 +74,10 @@ export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeIns
                   {(props.showRating.ratings.length > 0
                     ? props.showRating.ratings.reduce((acc, rating) => acc + rating.rating, 0) / props.showRating.ratings.length
                     : 0
-                  ).toFixed(1)}
+                  ).toLocaleString(undefined, {
+                    minimumFractionDigits: 1,
+                    maximumFractionDigits: 1,
+                  })}
                   <StarsComponent
                     rating={
                       props.showRating.ratings.length > 0
@@ -103,7 +115,12 @@ export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeIns
                       className={`flex flex-row gap-2 pl-2 ${stepIngredient.optional && 'italic'}`}
                     >
                       <div className={'flex flex-row gap-1'}>
-                        <div>{stepIngredient.amount ?? ''}</div>
+                        <div>
+                          {stepIngredient.amount?.toLocaleString(undefined, {
+                            minimumFractionDigits: 0,
+                            maximumFractionDigits: 2,
+                          }) ?? ''}
+                        </div>
                         <div>{userContext.getTranslation(stepIngredient?.unit?.name ?? '', 'de')}</div>
                       </div>
                       <div>

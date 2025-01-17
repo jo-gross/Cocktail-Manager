@@ -66,7 +66,13 @@ export default function CocktailRatingsModal(props: CocktailRatingModalProps) {
   return (
     <div className={'flex flex-col gap-2'}>
       <div className={'flex flex-row items-center gap-1 text-2xl font-bold'}>
-        {props.cocktailName} - {cocktailRatings.length > 0 ? parseFloat(avgRating.toFixed(1).toString()).toLocaleString() : 'N/A'}{' '}
+        {props.cocktailName} -{' '}
+        {cocktailRatings.length > 0
+          ? avgRating.toLocaleString(undefined, {
+              minimumFractionDigits: 1,
+              maximumFractionDigits: 1,
+            })
+          : 'N/A'}{' '}
         <StarsComponent rating={avgRating} /> ({cocktailRatings.length})<div className={'flex-grow'}></div>
         <button
           type={'button'}
