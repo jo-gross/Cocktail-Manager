@@ -243,6 +243,14 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
     isArchived: props.cocktailRecipe?.isArchived ?? false,
   };
 
+  const inheritTagsFromIngredients = useCallback((steps: CocktailRecipeStepFull[], tags: string[]) => {
+    return (steps as CocktailRecipeStepFull[])
+      .flatMap((step) => step.ingredients.map((stepIngredient) => stepIngredient.ingredient))
+      .flatMap((ingredient) => ingredient?.tags ?? [])
+      .filter((tag) => tag != undefined && tag.trim() != '' && !tags.includes(tag))
+      .filterUnique();
+  }, []);
+
   return (
     <Formik
       innerRef={formRef}
@@ -586,6 +594,32 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                         }
                         validate={(tag) => validateTag(tag, (text) => setFieldError('tags', text ?? 'Tag fehlerhaft!!!'))}
                       />
+                      {inheritTagsFromIngredients(values.steps, values.tags).length > 0 && (
+                        <>
+                          <div className={'tooltip'} data-tip={'Basierend auf den Tags der Zutaten'}>
+                            <div className={'label'}>
+                              <span className={'label-text'}>Tags aus Zutaten</span>
+                            </div>
+                          </div>
+                          <div className={'flex flex-row flex-wrap gap-2'}>
+                            {inheritTagsFromIngredients(values.steps, values.tags).map((tag) => {
+                              return (
+                                <div key={`tag-suggestion-${tag}`} className={'badge badge-outline'}>
+                                  {tag}{' '}
+                                  <div
+                                    className={'btn btn-square btn-ghost btn-xs'}
+                                    onClick={() => {
+                                      setFieldValue('tags', [...values.tags, tag]);
+                                    }}
+                                  >
+                                    <FaPlus />
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </>
+                      )}
                     </div>
                   </div>
                   <div>
