@@ -182,7 +182,12 @@ export default function IngredientsOverviewPage() {
                             </div>
                           )}
                         </td>
-                        <ManageColumn entity={'ingredients'} id={ingredient.id} onRefresh={() => fetchIngredients(workspaceId, setIngredients, setLoading)} />
+                        <ManageColumn
+                          entity={'ingredients'}
+                          id={ingredient.id}
+                          name={ingredient.name}
+                          onRefresh={() => fetchIngredients(workspaceId, setIngredients, setLoading)}
+                        />
                       </tr>
                     ))
                 )}

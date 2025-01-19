@@ -100,6 +100,7 @@ export default function CocktailCalculationOverviewPage() {
                         <td>{cocktailCalculation.updatedByUser.name}</td>
                         <ManageColumn
                           entity={'calculations'}
+                          name={cocktailCalculation.name}
                           id={cocktailCalculation.id}
                           onRefresh={refreshCocktailCalculations}
                           editRole={Role.USER}

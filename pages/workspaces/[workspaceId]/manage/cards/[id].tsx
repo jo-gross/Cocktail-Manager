@@ -336,7 +336,11 @@ function EditCocktailCard() {
                                   className={'btn btn-square btn-outline btn-error btn-sm'}
                                   onClick={() =>
                                     modalContext.openModal(
-                                      <DeleteConfirmationModal spelling={'REMOVE'} entityName={'die Gruppe'} onApprove={async () => removeGroup(groupIndex)} />,
+                                      <DeleteConfirmationModal
+                                        spelling={'REMOVE'}
+                                        entityName={`die Gruppe${values.groups[groupIndex].name ? ` '${values.groups[groupIndex].name}'` : ''}`}
+                                        onApprove={async () => removeGroup(groupIndex)}
+                                      />,
                                     )
                                   }
                                 >
@@ -351,7 +355,7 @@ function EditCocktailCard() {
                           <div className={'pt-2'}>
                             <FieldArray name={`groups.${groupIndex}.items`}>
                               {({ push: pushItem, remove: removeItem }) => (
-                                <div className={'grid grid-cols-1 gap-2 md:grid-cols-5 lg:grid-cols-7'}>
+                                <div className={'grid grid-cols-1 gap-2 md:grid-cols-3 lg:grid-cols-5'}>
                                   {values.groups[groupIndex].items
                                     .sort((a, b) => a.itemNumber - b.itemNumber)
                                     .map((item, itemIndex) => (
@@ -405,7 +409,7 @@ function EditCocktailCard() {
                                                   modalContext.openModal(
                                                     <DeleteConfirmationModal
                                                       spelling={'REMOVE'}
-                                                      entityName={'den Cocktail von der Gruppe'}
+                                                      entityName={`den Cocktail '${cocktails.find((cocktail) => cocktail.id == values.groups[groupIndex].items[itemIndex].cocktailId)?.name ?? '-'}' von der Gruppe${values.groups[groupIndex].name ? ` '${values.groups[groupIndex].name}'` : ''}`}
                                                       onApprove={async () => removeItem(itemIndex)}
                                                     />,
                                                   )
@@ -421,7 +425,7 @@ function EditCocktailCard() {
                                           {cocktails.find((cocktail) => cocktail.id == item.cocktailId) != undefined ? (
                                             <CompactCocktailRecipeInstruction
                                               showPrice={true}
-                                              showImage={true}
+                                              showImage={false}
                                               cocktailRecipe={cocktails.find((cocktail) => cocktail.id == item.cocktailId)!}
                                             />
                                           ) : loadingCocktails ? (
@@ -519,7 +523,7 @@ function EditCocktailCard() {
                 modalContext.openModal(
                   <DeleteConfirmationModal
                     spelling={'DELETE'}
-                    entityName={`'${card.name}'`}
+                    entityName={`die Karte '${card.name}'`}
                     onApprove={async () => {
                       if (!workspaceId) return;
                       const response = await fetch(`/api/workspaces/${workspaceId}/cards/${card.id}`, {

@@ -104,7 +104,12 @@ export default function ManageGlassesOverviewPage() {
                           }) ?? '-'}{' '}
                           €
                         </td>
-                        <ManageColumn entity={'garnishes'} id={garnish.id} onRefresh={() => fetchGarnishes(workspaceId, setGarnishes, setLoading)} />
+                        <ManageColumn
+                          entity={'garnishes'}
+                          id={garnish.id}
+                          name={garnish.name}
+                          onRefresh={() => fetchGarnishes(workspaceId, setGarnishes, setLoading)}
+                        />
                       </tr>
                     ))
                 )}

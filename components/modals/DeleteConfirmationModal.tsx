@@ -6,7 +6,7 @@ interface DeleteConfirmationModalProps {
   onApprove: () => Promise<void>;
   onCancel?: () => void;
   spelling: 'DELETE' | 'REMOVE';
-  entityName?: string;
+  entityName: string;
 }
 
 export function DeleteConfirmationModal(props: DeleteConfirmationModalProps) {
