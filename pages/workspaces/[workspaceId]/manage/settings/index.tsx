@@ -741,9 +741,9 @@ export default function WorkspaceSettingPage() {
                                   onClick={() =>
                                     modalContext.openModal(
                                       <DeleteConfirmationModal
-                                        onApprove={() => deleteCocktailRecipeAction(action.id)}
                                         spelling={'DELETE'}
                                         entityName={userContext.getTranslation(action.name, 'de')}
+                                        onApprove={() => deleteCocktailRecipeAction(action.id)}
                                       />,
                                     )
                                   }
@@ -861,9 +861,9 @@ export default function WorkspaceSettingPage() {
                                   onClick={() =>
                                     modalContext.openModal(
                                       <DeleteConfirmationModal
-                                        onApprove={() => deleteUnit(unit.id)}
                                         spelling={'DELETE'}
                                         entityName={userContext.getTranslation(unit.name, 'de')}
+                                        onApprove={() => deleteUnit(unit.id)}
                                       />,
                                     )
                                   }
@@ -963,13 +963,13 @@ export default function WorkspaceSettingPage() {
                                       onClick={() =>
                                         modalContext.openModal(
                                           <DeleteConfirmationModal
-                                            onApprove={() => deleteUnitConversion(conversion.id)}
                                             spelling={'DELETE'}
                                             entityName={
                                               userContext.getTranslation(units.find((unit) => unit.id == conversion.fromUnitId)?.name ?? 'N/A', 'de') +
                                               ' zu ' +
                                               userContext.getTranslation(units.find((unit) => unit.id == conversion.toUnitId)?.name ?? 'N/A', 'de')
                                             }
+                                            onApprove={() => deleteUnitConversion(conversion.id)}
                                           />,
                                         )
                                       }
@@ -1083,9 +1083,9 @@ export default function WorkspaceSettingPage() {
                                   onClick={() =>
                                     modalContext.openModal(
                                       <DeleteConfirmationModal
-                                        onApprove={() => deleteIce(iceOption.id)}
                                         spelling={'DELETE'}
                                         entityName={userContext.getTranslation(iceOption.name, 'de')}
+                                        onApprove={() => deleteIce(iceOption.id)}
                                       />,
                                     )
                                   }
@@ -1137,7 +1137,11 @@ export default function WorkspaceSettingPage() {
                 <div className={'divider'}></div>
                 <button
                   className={'btn btn-outline btn-error'}
-                  onClick={() => modalContext.openModal(<DeleteConfirmationModal onApprove={handleDeleteWorkspace} spelling={'DELETE'} />)}
+                  onClick={() =>
+                    modalContext.openModal(
+                      <DeleteConfirmationModal onApprove={handleDeleteWorkspace} entityName={'diesen Arbeitsbereich'} spelling={'DELETE'} />,
+                    )
+                  }
                 >
                   {workspaceDeleting ? <span className={'loading loading-spinner'} /> : <></>}
                   Workspace löschen

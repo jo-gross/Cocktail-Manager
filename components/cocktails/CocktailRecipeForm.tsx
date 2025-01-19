@@ -1028,7 +1028,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                   modalContext.openModal(
                                     <DeleteConfirmationModal
                                       spelling={'REMOVE'}
-                                      entityName={'den Schritt'}
+                                      entityName={`Schritt ${indexStep + 1} - ${userContext.getTranslation(values.steps[indexStep].action.name, 'de')}`}
                                       onApprove={async () => {
                                         removeStep(indexStep);
                                       }}
@@ -1231,7 +1231,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                               modalContext.openModal(
                                                 <DeleteConfirmationModal
                                                   spelling={'REMOVE'}
-                                                  entityName={'die Zutat'}
+                                                  entityName={`die Zutat '${values.steps[indexStep].ingredients[indexIngredient].ingredient.name}'`}
                                                   onApprove={async () => removeIngredient(indexIngredient)}
                                                 />,
                                               )
@@ -1433,7 +1433,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                 modalContext.openModal(
                                   <DeleteConfirmationModal
                                     spelling={'REMOVE'}
-                                    entityName={'die Garnitur'}
+                                    entityName={`die Garnitur '${values.garnishes[indexGarnish].garnish.name}'`}
                                     onApprove={async () => removeGarnish(indexGarnish)}
                                   />,
                                 )

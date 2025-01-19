@@ -10,6 +10,7 @@ import { DeleteConfirmationModal } from './modals/DeleteConfirmationModal';
 
 interface ManageColumnProps {
   id: string;
+  name: string;
   entity: 'cocktails' | 'ingredients' | 'glasses' | 'garnishes' | 'calculations';
   onRefresh: () => void;
   editRole?: Role;
@@ -38,6 +39,7 @@ export function ManageColumn(props: ManageColumnProps) {
                 modalContext.openModal(
                   <DeleteConfirmationModal
                     spelling={'DELETE'}
+                    entityName={props.name}
                     onApprove={async () => {
                       await new Promise((resolve) => setTimeout(resolve, 1000));
                       const response = await fetch(`/api/workspaces/${workspaceId}/${props.entity}/${props.id}`, {

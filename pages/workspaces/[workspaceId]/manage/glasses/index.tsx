@@ -109,7 +109,7 @@ export default function ManageGlassesOverviewPage() {
                           })}{' '}
                           €
                         </td>
-                        <ManageColumn entity={'glasses'} id={glass.id} onRefresh={() => fetchGlasses(workspaceId, setGlasses, setLoading)} />
+                        <ManageColumn entity={'glasses'} id={glass.id} name={glass.name} onRefresh={() => fetchGlasses(workspaceId, setGlasses, setLoading)} />
                       </tr>
                     ))
                 )}

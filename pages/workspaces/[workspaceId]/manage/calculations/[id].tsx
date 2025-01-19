@@ -757,6 +757,7 @@ export default function CalculationPage() {
                                     modalContext.openModal(
                                       <DeleteConfirmationModal
                                         spelling={'REMOVE'}
+                                        entityName={`den Cocktail '${cocktail.cocktail.name}'`}
                                         onApprove={async () => {
                                           setCocktailCalculationItems(cocktailCalculationItems.filter((item) => item.cocktail.id != cocktail.cocktail.id));
                                           triggerRecalculate(true);

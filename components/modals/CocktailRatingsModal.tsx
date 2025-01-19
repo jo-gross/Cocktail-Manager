@@ -8,6 +8,7 @@ import { CocktailRating, Role } from '@prisma/client';
 import { DeleteConfirmationModal } from './DeleteConfirmationModal';
 import { alertService } from '../../lib/alertService';
 import AddCocktailRatingModal from './AddCocktailRatingModal';
+import '../../lib/DateUtils';
 
 interface CocktailRatingModalProps {
   cocktailId: string;
@@ -110,7 +111,15 @@ export default function CocktailRatingsModal(props: CocktailRatingModalProps) {
                     {userContext.isUserPermitted(Role.MANAGER) && (
                       <button
                         type={'button'}
-                        onClick={() => modalContext.openModal(<DeleteConfirmationModal onApprove={async () => handleDelete(rating.id)} spelling={'DELETE'} />)}
+                        onClick={() =>
+                          modalContext.openModal(
+                            <DeleteConfirmationModal
+                              spelling={'DELETE'}
+                              entityName={`die ${rating.rating} Sterne Bewertung ${rating.name ? `von ${rating.name} ` : ''}vom ${new Date(rating.createdAt).toFormatDateTimeString()}`}
+                              onApprove={async () => handleDelete(rating.id)}
+                            />,
+                          )
+                        }
                         className={'btn btn-square btn-outline btn-error btn-xs'}
                       >
                         <FaTrashAlt />
@@ -127,7 +136,15 @@ export default function CocktailRatingsModal(props: CocktailRatingModalProps) {
                     {userContext.isUserPermitted(Role.MANAGER) && (
                       <button
                         type={'button'}
-                        onClick={() => modalContext.openModal(<DeleteConfirmationModal onApprove={async () => handleDelete(rating.id)} spelling={'DELETE'} />)}
+                        onClick={() =>
+                          modalContext.openModal(
+                            <DeleteConfirmationModal
+                              spelling={'DELETE'}
+                              entityName={`die ${rating.rating} Sterne Bewertung ${rating.name ? `von ${rating.name} ` : ''}vom ${new Date(rating.createdAt).toFormatDateTimeString()}`}
+                              onApprove={async () => handleDelete(rating.id)}
+                            />,
+                          )
+                        }
                         className={'btn btn-square btn-outline btn-error btn-xs'}
                       >
                         <FaTrashAlt />

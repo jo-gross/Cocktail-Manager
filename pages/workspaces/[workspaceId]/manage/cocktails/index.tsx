@@ -101,7 +101,7 @@ export default function CocktailsOverviewPage() {
           </td>
           <td>{cocktailRecipe.glass?.name}</td>
           <td>{cocktailRecipe.garnishes.map((garnish) => garnish.garnish.name).join(', ')}</td>
-          <ManageColumn entity={'cocktails'} id={cocktailRecipe.id} onRefresh={refreshCocktails} />
+          <ManageColumn entity={'cocktails'} id={cocktailRecipe.id} name={cocktailRecipe.name} onRefresh={refreshCocktails} />
         </tr>
       ));
   };
