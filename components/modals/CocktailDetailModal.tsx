@@ -85,15 +85,21 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                       maximumFractionDigits: 2,
                     }) + ' €'}
                     {amountAdjustment != 100
-                      ? ` (${(loadedCocktail.price * (amountAdjustment / 100) - loadedCocktail.price).toLocaleString(undefined, {
-                          signDisplay: 'exceptZero',
+                      ? ` ${(loadedCocktail.price * (amountAdjustment / 100) - loadedCocktail.price)
+                          .toLocaleString(undefined, {
+                            signDisplay: 'exceptZero',
+                            minimumFractionDigits: 0,
+                            maximumFractionDigits: 2,
+                          })
+                          .replace('-', '- ')
+                          .replace('+', '+ ')} € = ${(
+                          loadedCocktail.price +
+                          (loadedCocktail.price * (amountAdjustment / 100) - loadedCocktail.price)
+                        ).toLocaleString(undefined, {
                           minimumFractionDigits: 0,
                           maximumFractionDigits: 2,
-                        })} € = ${(loadedCocktail.price + (loadedCocktail.price * (amountAdjustment / 100) - loadedCocktail.price)).toLocaleString(undefined, {
-                          minimumFractionDigits: 0,
-                          maximumFractionDigits: 2,
-                        })} €)`
-                      : ''}{' '}
+                        })} €`
+                      : ''}
                   </span>
                 </>
               ) : (
@@ -262,11 +268,11 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                   disabled={{ list: amountAdjustment != 100 }}
                   initData={{
                     comment:
-                      amountAdjustment != 100
+                      amountAdjustment != 100 && loadedCocktail
                         ? `Angepasste Menge (${amountAdjustment}%):\n${loadedCocktail.steps
                             .sort((a, b) => a.stepNumber - b.stepNumber)
                             .map((step) => {
-                              return `${userContext.getTranslation(step.action.name, 'de')}${step.optional ? ' (optional)' : ''}\n${step.ingredients
+                              return `${step.ingredients
                                 .sort((a, b) => a.ingredientNumber - b.ingredientNumber)
                                 .map((stepIngredient) => {
                                   return `- ${((stepIngredient.amount ?? 0) * (amountAdjustment / 100))?.toLocaleString(undefined, {
@@ -276,7 +282,25 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                                 })
                                 .join('\n')}`;
                             })
-                            .join('\n')}`
+                            .join('\n')}\nBasispreis ± angepasste Menge = Verkaufspreis (${amountAdjustment}%):\n${
+                            loadedCocktail.price?.toLocaleString(undefined, {
+                              minimumFractionDigits: 0,
+                              maximumFractionDigits: 2,
+                            }) + ' €'
+                          } ${((loadedCocktail.price ?? 0) * (amountAdjustment / 100) - (loadedCocktail.price ?? 0))
+                            .toLocaleString(undefined, {
+                              signDisplay: 'exceptZero',
+                              minimumFractionDigits: 0,
+                              maximumFractionDigits: 2,
+                            })
+                            .replace('-', '- ')
+                            .replace('+', '+ ')} € = ${(
+                            (loadedCocktail.price ?? 0) +
+                            ((loadedCocktail.price ?? 0) * (amountAdjustment / 100) - (loadedCocktail!.price ?? 0))
+                          ).toLocaleString(undefined, {
+                            minimumFractionDigits: 0,
+                            maximumFractionDigits: 2,
+                          })} €`
                         : undefined,
                   }}
                   cocktailId={loadedCocktail.id}
@@ -296,29 +320,31 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                   }
                 />
               </div>
-              {amountAdjustment != 100 && <div className={'font-thin'}>Die geänderte Menge fließt nicht in die Statistik mit ein</div>}
               <div className={'divider-sm'}></div>
               <details className="collapse collapse-arrow border">
-                <summary className="collapse-title font-bold">Menge Anpassen</summary>
+                <summary className="collapse-title font-bold">Menge anpassen</summary>
                 <div className="collapse-content">
-                  <div className={'flex items-end gap-2 pb-2 pl-4 pr-3'}>
-                    <div className={'form-control w-full'}>
-                      <label className={'label'}>Menge</label>
-                      <div className={'join w-full'}>
-                        <input
-                          inputMode={'numeric'}
-                          className={'input join-item input-bordered w-full'}
-                          step={1}
-                          min={0}
-                          value={amountAdjustment}
-                          onChange={(e) => setAmountAdjustment(toInteger(e.target.value))}
-                        />
-                        <span className={'base-content join-item flex w-12 items-center justify-center bg-primary text-primary-content'}>%</span>
+                  <div className={'flex flex-col gap-2 pb-2 pl-4 pr-3'}>
+                    <div className={'flex items-end gap-2'}>
+                      <div className={'form-control w-full'}>
+                        <label className={'label'}>Menge</label>
+                        <div className={'join w-full'}>
+                          <input
+                            inputMode={'numeric'}
+                            className={'input join-item input-bordered w-full'}
+                            step={1}
+                            min={1}
+                            value={amountAdjustment}
+                            onChange={(e) => setAmountAdjustment(toInteger(e.target.value))}
+                          />
+                          <span className={'base-content join-item flex w-12 items-center justify-center bg-primary text-primary-content'}>%</span>
+                        </div>
                       </div>
+                      <button type={'button'} className={'btn btn-square btn-secondary'} onClick={() => setAmountAdjustment(100)}>
+                        <FaArrowRotateLeft />
+                      </button>
                     </div>
-                    <button type={'button'} className={'btn btn-square btn-secondary'} onClick={() => setAmountAdjustment(100)}>
-                      <FaArrowRotateLeft />
-                    </button>
+                    {amountAdjustment != 100 && <div className={'font-thin'}>Die geänderte Menge fließt nicht in die Statistik mit ein</div>}
                   </div>
                 </div>
               </details>
@@ -515,20 +541,23 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                       maximumFractionDigits: 2,
                     }) + ' €'}
                     {amountAdjustment != 100
-                      ? ` (${(
+                      ? ` ${(
                           calcCocktailTotalPrice(loadedCocktail, ingredients) * (amountAdjustment / 100) -
                           calcCocktailTotalPrice(loadedCocktail, ingredients)
-                        ).toLocaleString(undefined, {
-                          signDisplay: 'exceptZero',
-                          minimumFractionDigits: 0,
-                          maximumFractionDigits: 2,
-                        })} € = ${(
+                        )
+                          .toLocaleString(undefined, {
+                            signDisplay: 'exceptZero',
+                            minimumFractionDigits: 0,
+                            maximumFractionDigits: 2,
+                          })
+                          .replace('-', '- ')
+                          .replace('+', '+ ')} € = ${(
                           calcCocktailTotalPrice(loadedCocktail, ingredients) +
                           (calcCocktailTotalPrice(loadedCocktail, ingredients) * (amountAdjustment / 100) - calcCocktailTotalPrice(loadedCocktail, ingredients))
                         ).toLocaleString(undefined, {
                           minimumFractionDigits: 0,
                           maximumFractionDigits: 2,
-                        })} €)`
+                        })} € (${amountAdjustment}%)`
                       : ''}
                   </div>
                 </>
