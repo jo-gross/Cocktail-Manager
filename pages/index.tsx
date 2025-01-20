@@ -1,6 +1,6 @@
 import { signIn, signOut } from 'next-auth/react';
 import { useCallback, useContext, useEffect, useState } from 'react';
-import { Setting, Workspace } from '@prisma/client';
+import { Setting, Workspace, WorkspaceJoinRequests } from '@prisma/client';
 import { Loading } from '../components/Loading';
 import Image from 'next/image';
 import { FaArrowRight } from 'react-icons/fa';
@@ -12,6 +12,7 @@ import packageInfo from '../package.json';
 import { ThemeContext } from '../lib/context/ThemeContextProvider';
 import { ModalContext } from '../lib/context/ModalContextProvider';
 import { marked } from 'marked';
+import '../lib/DateUtils';
 
 export default function WorkspacesPage() {
   const themeContext = useContext(ThemeContext);
@@ -19,6 +20,8 @@ export default function WorkspacesPage() {
 
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [workspacesLoading, setWorkspacesLoading] = useState(false);
+
+  const [openJoinRequests, setOpenJoinRequests] = useState<(WorkspaceJoinRequests & { workspace: Workspace })[]>([]);
 
   const [newWorkspaceName, setNewWorkspaceName] = useState('');
   const [joinWorkspaceId, setJoinWorkspaceId] = useState('');
@@ -46,6 +49,26 @@ export default function WorkspacesPage() {
       .catch((error) => {
         console.error('WorkspacesOverview -> fetchWorkspaces', error);
         alertService.error('Fehler beim Laden der Workspaces');
+      })
+      .finally(() => setWorkspacesLoading(false));
+  }, [userContext.user]);
+
+  const fetchOpenWorkspaceJoinRequests = useCallback(() => {
+    if (!userContext.user) return;
+    setWorkspacesLoading(true);
+    fetch('/api/users/workspace-requests', { method: 'GET' })
+      .then(async (response) => {
+        const body = await response.json();
+        if (response.ok) {
+          setOpenJoinRequests(body.data);
+        } else {
+          console.error('WorkspacesOverview -> fetchOpenWorkspaceJoinRequests', response);
+          alertService.error(body.message ?? 'Fehler beim Laden der offenen Beitrittsanfragen', response.status, response.statusText);
+        }
+      })
+      .catch((error) => {
+        console.error('WorkspacesOverview -> fetchOpenWorkspaceJoinRequests', error);
+        alertService.error('Fehler beim Laden der offenen Beitrittsanfragen');
       })
       .finally(() => setWorkspacesLoading(false));
   }, [userContext.user]);
@@ -83,15 +106,19 @@ export default function WorkspacesPage() {
         if (!response.ok) {
           throw new Error('Fehler beim beitreten');
         }
+        alertService.success('Beitrittsanfrage gesendet, warte auf Annahme');
       })
       .then(() => setJoinWorkspaceId(''))
-      .then(() => fetchWorkspaces())
+      .then(() => {
+        fetchWorkspaces();
+        fetchOpenWorkspaceJoinRequests();
+      })
       .catch((error) => {
         console.error('WorkspacesOverview -> joinWorkspace', error);
         alertService.error('Fehler beim Beitreten');
       })
       .finally(() => setJoiningWorkspace(false));
-  }, [fetchWorkspaces, joinWorkspaceId, userContext.user]);
+  }, [fetchOpenWorkspaceJoinRequests, fetchWorkspaces, joinWorkspaceId, userContext.user]);
 
   useEffect(() => {
     if (userContext.user && (document.getElementById('changelog-modal')?.innerHTML == '' || !document.getElementById('changelog-modal'))) {
@@ -143,7 +170,8 @@ export default function WorkspacesPage() {
 
   useEffect(() => {
     fetchWorkspaces();
-  }, [fetchWorkspaces]);
+    fetchOpenWorkspaceJoinRequests();
+  }, [fetchOpenWorkspaceJoinRequests, fetchWorkspaces]);
 
   return (
     <>
@@ -205,6 +233,23 @@ export default function WorkspacesPage() {
                         <Link href={'/workspaces/' + workspace.id} replace={true}>
                           <span className={'btn btn-outline btn-primary'}>Öffnen</span>
                         </Link>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                {openJoinRequests.map((joinRequest) => (
+                  <div key={`join-request-${joinRequest.workspace.id}`} className={'card h-40'}>
+                    <div className={'card-body'}>
+                      <div className={'text-center text-3xl font-bold'}>
+                        <span className={'italic'}>Angefragt: </span>
+                        {joinRequest.workspace.name}
+                      </div>
+                      <div className={'text-center font-thin'}>Datum der Anfrage: {new Date(joinRequest.date).toFormatDateTimeString()}</div>
+                      <div className={'h-full'}></div>
+                      <div className={'card-actions justify-center'}>
+                        <button type={'button'} className={'btn btn-outline btn-primary'} disabled={true}>
+                          Warte auf Annahme
+                        </button>
                       </div>
                     </div>
                   </div>

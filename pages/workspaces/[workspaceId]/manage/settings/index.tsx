@@ -3,9 +3,20 @@ import { alertService } from '../../../../../lib/alertService';
 import { useRouter } from 'next/router';
 import { BackupStructure } from '../../../../api/workspaces/[workspaceId]/admin/backups/backupStructure';
 import { ManageEntityLayout } from '../../../../../components/layout/ManageEntityLayout';
-import { $Enums, Ice, Role, Signage, Unit, UnitConversion, User, WorkspaceCocktailRecipeStepAction, WorkspaceUser } from '@prisma/client';
+import {
+  $Enums,
+  Ice,
+  Role,
+  Signage,
+  Unit,
+  UnitConversion,
+  User,
+  WorkspaceCocktailRecipeStepAction,
+  WorkspaceJoinRequests,
+  WorkspaceUser,
+} from '@prisma/client';
 import { UserContext } from '../../../../../lib/context/UserContextProvider';
-import { FaArrowDown, FaArrowUp, FaShareAlt, FaTrashAlt } from 'react-icons/fa';
+import { FaArrowDown, FaArrowUp, FaCheck, FaShareAlt, FaSync, FaTimes, FaTrashAlt } from 'react-icons/fa';
 import { DeleteConfirmationModal } from '../../../../../components/modals/DeleteConfirmationModal';
 import { ModalContext } from '../../../../../lib/context/ModalContextProvider';
 import { UploadDropZone } from '../../../../../components/UploadDropZone';
@@ -33,7 +44,14 @@ export default function WorkspaceSettingPage() {
   const { workspaceId } = router.query;
 
   const [workspaceUsers, setWorkspaceUsers] = useState<(WorkspaceUser & { user: User })[]>([]);
+  const [workspaceUsersLoading, setWorkspaceUsersLoading] = useState<boolean>(false);
+
   const [newWorkspaceName, setNewWorkspaceName] = useState<string>('');
+
+  const [workspaceJoinRequests, setWorkspaceJoinRequests] = useState<(WorkspaceJoinRequests & { user: User })[]>([]);
+  const [workspaceJoinRequestAcceptLoading, setWorkspaceJoinRequestAcceptLoading] = useState<Record<string, boolean>>({});
+  const [workspaceJoinRequestRejectLoading, setWorkspaceJoinRequestRejectLoading] = useState<Record<string, boolean>>({});
+  const [joinRequestsLoading, setJoinRequestsLoading] = useState<boolean>(false);
 
   const [exporting, setExporting] = useState<boolean>(false);
   const [importing, setImporting] = useState<boolean>(false);
@@ -202,6 +220,7 @@ export default function WorkspaceSettingPage() {
 
   const fetchWorkspaceUsers = useCallback(() => {
     if (workspaceId == undefined) return;
+    setWorkspaceUsersLoading(true);
     fetch(`/api/workspaces/${workspaceId}/users`)
       .then((response) => {
         if (!response.ok) throw new Error('Error while loading');
@@ -211,6 +230,27 @@ export default function WorkspaceSettingPage() {
       .catch((error) => {
         console.error('SettingsPage -> fetchWorkspaceUsers', error);
         alertService.error('Fehler beim Laden der Benutzer');
+      })
+      .finally(() => {
+        setWorkspaceUsersLoading(false);
+      });
+  }, [workspaceId]);
+
+  const fetchWorkspaceJoinRequests = useCallback(() => {
+    if (workspaceId == undefined) return;
+    setJoinRequestsLoading(true);
+    fetch(`/api/workspaces/${workspaceId}/join-requests`)
+      .then((response) => {
+        if (!response.ok) throw new Error('Error while loading');
+        return response.json();
+      })
+      .then((data) => setWorkspaceJoinRequests(data.data))
+      .catch((error) => {
+        console.error('SettingsPage -> fetchWorkspaceJoinRequests', error);
+        alertService.error('Fehler beim Laden der Beitrittsanfragen');
+      })
+      .finally(() => {
+        setJoinRequestsLoading(false);
       });
   }, [workspaceId]);
 
@@ -356,6 +396,12 @@ export default function WorkspaceSettingPage() {
   );
 
   useEffect(() => {
+    if (userContext.isUserPermitted(Role.MANAGER)) {
+      fetchWorkspaceJoinRequests();
+    }
+  }, [fetchWorkspaceJoinRequests, userContext]);
+
+  useEffect(() => {
     fetchWorkspaceUsers();
     fetchSignage();
     fetchActions(workspaceId, setWorkspaceActions, setWorkspaceActionLoading);
@@ -394,122 +440,238 @@ export default function WorkspaceSettingPage() {
                 </tr>
               </thead>
               <tbody>
-                {workspaceUsers?.map((workspaceUser) => (
-                  <tr key={workspaceUser.user.id}>
-                    <td className={'whitespace-nowrap'}>
-                      {workspaceUser.user.name}
-                      {workspaceUser.user.id == userContext.user?.id ? ' (du)' : ''}
-                    </td>
-                    <td>{workspaceUser.user.email}</td>
-                    <td>
-                      {userContext.isUserPermitted(Role.ADMIN) ? (
-                        <select
-                          disabled={workspaceUser.user.id == userContext.user?.id || workspaceUser.role == Role.OWNER}
-                          value={workspaceUser.role}
-                          className={'select select-bordered select-sm w-full min-w-fit max-w-xs'}
-                          onChange={(event) => {
-                            fetch(`/api/workspaces/${workspaceId}/users/${workspaceUser.userId}`, {
-                              method: 'PUT',
-                              headers: { 'Content-Type': 'application/json' },
-                              body: JSON.stringify({ userId: workspaceUser.userId, role: event.target.value }),
-                            })
-                              .then(async (response) => {
-                                if (response.ok) {
-                                  fetchWorkspaceUsers();
-                                  alertService.success('Erfolgreich aktualisiert');
-                                } else {
-                                  const body = await response.json();
-                                  console.error('SettingsPage -> updateUserRole', response);
-                                  alertService.error(body.message ?? 'Fehler beim aktualisieren', response.status, response.statusText);
-                                }
-                              })
-                              .catch((error) => {
-                                console.error('SettingsPage -> updateUserRole', error);
-                                alertService.error('Es ist ein Fehler aufgetreten');
-                              });
-                          }}
-                        >
-                          {Object.values(Role)
-                            .filter((role) => (workspaceUser.role == Role.OWNER ? true : role != Role.OWNER))
-                            .map((role) => (
-                              <option key={role}>{role}</option>
-                            ))}
-                        </select>
-                      ) : (
-                        workspaceUser.role
-                      )}
-                    </td>
-                    <td className={'flex justify-end'}>
-                      {userContext.isUserPermitted(Role.ADMIN) && workspaceUser.user.id != userContext.user?.id ? (
-                        <button
-                          className={'btn btn-error btn-sm ml-2'}
-                          disabled={workspaceUser.role == Role.OWNER}
-                          onClick={() => {
-                            setLeaveLoading({ ...leaveLoading, [workspaceUser.userId]: true });
-                            fetch(`/api/workspaces/${workspaceId}/users/${workspaceUser.userId}`, {
-                              method: 'DELETE',
-                            })
-                              .then(async (response) => {
-                                if (response.ok) {
-                                  fetchWorkspaceUsers();
-                                  alertService.success('Erfolgreich entfernt');
-                                } else {
-                                  const body = await response.json();
-                                  console.error('SettingsPage -> removeUser', response);
-                                  alertService.error(body.message ?? 'Fehler beim Entfernen', response.status, response.statusText);
-                                }
-                              })
-                              .catch((error) => {
-                                console.error('SettingsPage -> removeUser', error);
-                                alertService.error('Es ist ein Fehler aufgetreten');
-                              })
-                              .finally(() => {
-                                setLeaveLoading({ ...leaveLoading, [workspaceUser.userId]: false });
-                              });
-                          }}
-                        >
-                          {leaveLoading[workspaceUser.userId] ? <span className={'loading loading-spinner'} /> : <></>}
-                          <>{workspaceUser.user.id == userContext.user?.id ? 'Verlassen' : 'Entfernen'}</>
-                        </button>
-                      ) : (
-                        <button
-                          className={'btn btn-error btn-sm ml-2'}
-                          disabled={workspaceUser.role == Role.OWNER || workspaceUser.user.id != userContext.user?.id || leaveLoading[workspaceUser.user.id]}
-                          onClick={() => {
-                            setLeaveLoading({ ...leaveLoading, [workspaceUser.user.id]: true });
-
-                            fetch(`/api/workspaces/${workspaceId}/leave`, {
-                              method: 'POST',
-                            })
-                              .then(async (response) => {
-                                if (response.ok) {
-                                  router.replace('/').then(() => alertService.success('Erfolgreich verlassen'));
-                                } else {
-                                  const body = await response.json();
-                                  console.error('SettingsPage -> leaveWorkspace', response);
-                                  alertService.error(body.message ?? 'Fehler beim Verlassen der Workspace', response.status, response.statusText);
-                                }
-                              })
-                              .catch((error) => {
-                                console.error('SettingsPage -> leaveWorkspace', error);
-                                alertService.error('Fehler beim Verlassen der Workspace');
-                              })
-                              .finally(() => {
-                                setLeaveLoading({ ...leaveLoading, [workspaceUser.user.id]: false });
-                              });
-                          }}
-                        >
-                          {leaveLoading[workspaceUser.user.id] ? <span className={'loading loading-spinner'} /> : <></>}
-                          <>{workspaceUser.user.id == userContext.user?.id ? 'Verlassen' : 'Entfernen'}</>
-                        </button>
-                      )}
+                {workspaceUsersLoading ? (
+                  <tr>
+                    <td colSpan={4} className={'w-full text-center'}>
+                      Lade...
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  workspaceUsers
+                    ?.sort((a, b) => (a.user.name ?? '').localeCompare(b.user.name ?? ''))
+                    .map((workspaceUser) => (
+                      <tr key={workspaceUser.user.id}>
+                        <td className={'whitespace-nowrap'}>
+                          {workspaceUser.user.name}
+                          {workspaceUser.user.id == userContext.user?.id ? ' (du)' : ''}
+                        </td>
+                        <td>{workspaceUser.user.email}</td>
+                        <td>
+                          {userContext.isUserPermitted(Role.ADMIN) ? (
+                            <select
+                              disabled={workspaceUser.user.id == userContext.user?.id || workspaceUser.role == Role.OWNER}
+                              value={workspaceUser.role}
+                              className={'select select-bordered select-sm w-full min-w-fit max-w-xs'}
+                              onChange={(event) => {
+                                fetch(`/api/workspaces/${workspaceId}/users/${workspaceUser.userId}`, {
+                                  method: 'PUT',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ userId: workspaceUser.userId, role: event.target.value }),
+                                })
+                                  .then(async (response) => {
+                                    if (response.ok) {
+                                      fetchWorkspaceUsers();
+                                      alertService.success('Erfolgreich aktualisiert');
+                                    } else {
+                                      const body = await response.json();
+                                      console.error('SettingsPage -> updateUserRole', response);
+                                      alertService.error(body.message ?? 'Fehler beim aktualisieren', response.status, response.statusText);
+                                    }
+                                  })
+                                  .catch((error) => {
+                                    console.error('SettingsPage -> updateUserRole', error);
+                                    alertService.error('Es ist ein Fehler aufgetreten');
+                                  });
+                              }}
+                            >
+                              {Object.values(Role)
+                                .filter((role) => (workspaceUser.role == Role.OWNER ? true : role != Role.OWNER))
+                                .map((role) => (
+                                  <option key={role}>{role}</option>
+                                ))}
+                            </select>
+                          ) : (
+                            workspaceUser.role
+                          )}
+                        </td>
+                        <td className={'flex justify-end'}>
+                          {userContext.isUserPermitted(Role.ADMIN) && workspaceUser.user.id != userContext.user?.id ? (
+                            <button
+                              className={'btn btn-error btn-sm ml-2'}
+                              disabled={workspaceUser.role == Role.OWNER}
+                              onClick={() => {
+                                setLeaveLoading({ ...leaveLoading, [workspaceUser.userId]: true });
+                                fetch(`/api/workspaces/${workspaceId}/users/${workspaceUser.userId}`, {
+                                  method: 'DELETE',
+                                })
+                                  .then(async (response) => {
+                                    if (response.ok) {
+                                      fetchWorkspaceUsers();
+                                      alertService.success('Erfolgreich entfernt');
+                                    } else {
+                                      const body = await response.json();
+                                      console.error('SettingsPage -> removeUser', response);
+                                      alertService.error(body.message ?? 'Fehler beim Entfernen', response.status, response.statusText);
+                                    }
+                                  })
+                                  .catch((error) => {
+                                    console.error('SettingsPage -> removeUser', error);
+                                    alertService.error('Es ist ein Fehler aufgetreten');
+                                  })
+                                  .finally(() => {
+                                    setLeaveLoading({ ...leaveLoading, [workspaceUser.userId]: false });
+                                  });
+                              }}
+                            >
+                              {leaveLoading[workspaceUser.userId] ? <span className={'loading loading-spinner'} /> : <></>}
+                              <>{workspaceUser.user.id == userContext.user?.id ? 'Verlassen' : 'Entfernen'}</>
+                            </button>
+                          ) : (
+                            <button
+                              className={'btn btn-error btn-sm ml-2'}
+                              disabled={
+                                workspaceUser.role == Role.OWNER || workspaceUser.user.id != userContext.user?.id || leaveLoading[workspaceUser.user.id]
+                              }
+                              onClick={() => {
+                                setLeaveLoading({ ...leaveLoading, [workspaceUser.user.id]: true });
+
+                                fetch(`/api/workspaces/${workspaceId}/leave`, {
+                                  method: 'POST',
+                                })
+                                  .then(async (response) => {
+                                    if (response.ok) {
+                                      router.replace('/').then(() => alertService.success('Erfolgreich verlassen'));
+                                    } else {
+                                      const body = await response.json();
+                                      console.error('SettingsPage -> leaveWorkspace', response);
+                                      alertService.error(body.message ?? 'Fehler beim Verlassen der Workspace', response.status, response.statusText);
+                                    }
+                                  })
+                                  .catch((error) => {
+                                    console.error('SettingsPage -> leaveWorkspace', error);
+                                    alertService.error('Fehler beim Verlassen der Workspace');
+                                  })
+                                  .finally(() => {
+                                    setLeaveLoading({ ...leaveLoading, [workspaceUser.user.id]: false });
+                                  });
+                              }}
+                            >
+                              {leaveLoading[workspaceUser.user.id] ? <span className={'loading loading-spinner'} /> : <></>}
+                              <>{workspaceUser.user.id == userContext.user?.id ? 'Verlassen' : 'Entfernen'}</>
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ))
+                )}
               </tbody>
             </table>
           </div>
         </div>
+        {userContext.isUserPermitted(Role.MANAGER) && workspaceJoinRequests.length > 0 && (
+          <div className={'card overflow-y-auto md:col-span-2'}>
+            <div className={'card-body'}>
+              <div className={'card-title'}>Beitrittsanfragen</div>
+              <table className={'table table-zebra w-full rounded-xl border border-base-200'}>
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Datum</th>
+                    <th className={'flex justify-end'}>
+                      <button type={'button'} className={'btn btn-square btn-outline btn-primary btn-sm'} onClick={fetchWorkspaceJoinRequests}>
+                        <FaSync />
+                      </button>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {joinRequestsLoading ? (
+                    <tr>
+                      <td colSpan={4} className={'text-center'}>
+                        Lade...
+                      </td>
+                    </tr>
+                  ) : (
+                    <>
+                      {workspaceJoinRequests
+                        .sort((a, b) => a.date.getTime() - b.date.getTime())
+                        .map((joinRequest) => (
+                          <tr key={`workspace-join-request-${joinRequest.user.id}`}>
+                            <td>{joinRequest.user.name}</td>
+                            <td>{joinRequest.user.email}</td>
+                            <td>{new Date(joinRequest.date).toFormatDateTimeString()}</td>
+                            <td className={'join flex justify-end'}>
+                              <button
+                                className={'btn-green btn join-item btn-sm'}
+                                disabled={workspaceJoinRequestAcceptLoading[joinRequest.user.id] || workspaceJoinRequestRejectLoading[joinRequest.user.id]}
+                                onClick={() => {
+                                  setWorkspaceJoinRequestAcceptLoading({ ...workspaceJoinRequestAcceptLoading, [joinRequest.user.id]: true });
+                                  fetch(`/api/workspaces/${workspaceId}/join-requests/${joinRequest.user.id}/accept`, {
+                                    method: 'POST',
+                                  })
+                                    .then(async (response) => {
+                                      if (response.ok) {
+                                        fetchWorkspaceUsers();
+                                        fetchWorkspaceJoinRequests();
+                                        alertService.success('Erfolgreich angenommen');
+                                      } else {
+                                        const body = await response.json();
+                                        console.error('SettingsPage -> acceptJoinRequest', response);
+                                        alertService.error(body.message ?? 'Fehler beim Annehmen', response.status, response.statusText);
+                                      }
+                                    })
+                                    .catch((error) => {
+                                      console.error('SettingsPage -> acceptJoinRequest', error);
+                                      alertService.error('Es ist ein Fehler aufgetreten');
+                                    })
+                                    .finally(() => {
+                                      setWorkspaceJoinRequestAcceptLoading({ ...workspaceJoinRequestAcceptLoading, [joinRequest.user.id]: false });
+                                    });
+                                }}
+                              >
+                                <FaCheck /> Annehmen
+                              </button>
+                              <button
+                                className={'btn-red btn btn-outline join-item btn-sm'}
+                                disabled={workspaceJoinRequestRejectLoading[joinRequest.user.id] || workspaceJoinRequestAcceptLoading[joinRequest.user.id]}
+                                onClick={() => {
+                                  setWorkspaceJoinRequestRejectLoading({ ...workspaceJoinRequestRejectLoading, [joinRequest.user.id]: true });
+                                  fetch(`/api/workspaces/${workspaceId}/join-requests/${joinRequest.user.id}/reject`, {
+                                    method: 'POST',
+                                  })
+                                    .then(async (response) => {
+                                      if (response.ok) {
+                                        fetchWorkspaceUsers();
+                                        fetchWorkspaceJoinRequests();
+                                        alertService.success('Erfolgreich abgelehnt');
+                                      } else {
+                                        const body = await response.json();
+                                        console.error('SettingsPage -> acceptJoinRequest', response);
+                                        alertService.error(body.message ?? 'Fehler beim Abhlehnen', response.status, response.statusText);
+                                      }
+                                    })
+                                    .catch((error) => {
+                                      console.error('SettingsPage -> rejectJoinRequest', error);
+                                      alertService.error('Es ist ein Fehler aufgetreten');
+                                    })
+                                    .finally(() => {
+                                      setWorkspaceJoinRequestRejectLoading({ ...workspaceJoinRequestRejectLoading, [joinRequest.user.id]: false });
+                                    });
+                                }}
+                              >
+                                <FaTimes /> Ablehnen
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                    </>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
         {userContext.isUserPermitted(Role.ADMIN) ? (
           <div className={'card'}>
             <div className={'card-body'}>
