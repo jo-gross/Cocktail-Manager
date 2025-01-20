@@ -11,4 +11,3 @@ LICENSE.md
 README.md
 pnpm-lock.yaml
 public/
-**/schema.prisma
