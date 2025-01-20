@@ -1,5 +1,5 @@
 import { CocktailRecipeFull } from '../../models/CocktailRecipeFull';
-import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useState } from 'react';
+import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { CompactCocktailRecipeInstruction } from './CompactCocktailRecipeInstruction';
 import { ShowCocktailInfoButton } from './ShowCocktailInfoButton';
 import { useRouter } from 'next/router';
@@ -9,9 +9,11 @@ import { fetchCocktail } from '../../lib/network/cocktails';
 import { CocktailRating } from '@prisma/client';
 import { fetchCocktailRatings } from '../../lib/network/cocktailRatings';
 import StatisticActions from '../StatisticActions';
+import ExpandableText, { ExpandableTextHandle } from '../ExpandableText';
 
 export type CocktailRecipeOverviewItemRef = {
   refresh: () => void;
+  recalculateClamp: () => void;
 };
 
 export type CocktailRecipeOverviewItemProps = {
@@ -55,8 +57,19 @@ const CocktailRecipeCardItem = forwardRef<CocktailRecipeOverviewItemRef, Cocktai
     refresh();
   }, [refresh]);
 
+  const expandableRefs = useRef<Record<string, Record<string, ExpandableTextHandle | null>>>({});
+
+  const recalculateClamp = useCallback(() => {
+    Object.values(expandableRefs.current).forEach((textRefs) => Object.values(textRefs).forEach((expandableText) => expandableText?.recalculateClamp()));
+  }, []);
+
+  useEffect(() => {
+    recalculateClamp();
+  }, [recalculateClamp]);
+
   useImperativeHandle(ref, () => ({
     refresh,
+    recalculateClamp,
   }));
 
   const cocktailRecipe = typeof props.cocktailRecipe === 'string' ? loadedCocktailRecipe : props.cocktailRecipe;
@@ -92,21 +105,48 @@ const CocktailRecipeCardItem = forwardRef<CocktailRecipeOverviewItemRef, Cocktai
                   <>
                     <div className={'border-b border-base-100'}></div>
                     <div className={'font-bold'}>Zubereitungsnotizen</div>
-                    <div className={'long-text-format'}>{cocktailRecipe.notes}</div>
+                    <div className={'pl-2'}>
+                      <ExpandableText
+                        text={cocktailRecipe.notes}
+                        ref={(el) => {
+                          if (!expandableRefs.current[cocktailRecipe.id]) expandableRefs.current[cocktailRecipe.id] = {};
+                          expandableRefs.current[cocktailRecipe.id]['notes'] = el;
+                        }}
+                      />
+                      {/*<div className={'long-text-format'}>{cocktailRecipe.notes}</div>*/}
+                    </div>
                   </>
                 )}
                 {props.showDescription && cocktailRecipe.description && (
                   <>
                     <div className={'border-b border-base-100'}></div>
                     <div className={'font-bold'}>Allgemeine Beschreibung</div>
-                    <div className={'long-text-format'}>{cocktailRecipe.description}</div>
+                    <div className={'pl-2'}>
+                      <ExpandableText
+                        text={cocktailRecipe.description}
+                        ref={(el) => {
+                          if (!expandableRefs.current[cocktailRecipe.id]) expandableRefs.current[cocktailRecipe.id] = {};
+                          expandableRefs.current[cocktailRecipe.id]['description'] = el;
+                        }}
+                      />
+                      {/*<div className={'long-text-format'}>{cocktailRecipe.description}</div>*/}
+                    </div>
                   </>
                 )}
                 {props.showHistory && cocktailRecipe.history && (
                   <>
                     <div className={'border-b border-base-100'}></div>
                     <div className={'font-bold'}>Geschichte und Entstehung</div>
-                    <div className={'long-text-format'}>{cocktailRecipe.history}</div>
+                    <div className={'pl-2'}>
+                      <ExpandableText
+                        text={cocktailRecipe.history}
+                        ref={(el) => {
+                          if (!expandableRefs.current[cocktailRecipe.id]) expandableRefs.current[cocktailRecipe.id] = {};
+                          expandableRefs.current[cocktailRecipe.id]['history'] = el;
+                        }}
+                      />
+                    </div>
+                    {/*<div className={'long-text-format'}>{cocktailRecipe.history}</div>*/}
                   </>
                 )}
 
