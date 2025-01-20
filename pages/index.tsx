@@ -21,7 +21,7 @@ export default function WorkspacesPage() {
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [workspacesLoading, setWorkspacesLoading] = useState(false);
 
-  const [openJoinRequests, setOpenJoinRequests] = useState<(WorkspaceJoinRequests & { workspace: Workspace })[]>([]);
+  const [openWorkspaceJoinRequests, setOpenWorkspaceJoinRequests] = useState<(WorkspaceJoinRequests & { workspace: Workspace })[]>([]);
 
   const [newWorkspaceName, setNewWorkspaceName] = useState('');
   const [joinWorkspaceId, setJoinWorkspaceId] = useState('');
@@ -60,7 +60,7 @@ export default function WorkspacesPage() {
       .then(async (response) => {
         const body = await response.json();
         if (response.ok) {
-          setOpenJoinRequests(body.data);
+          setOpenWorkspaceJoinRequests(body.data);
         } else {
           console.error('WorkspacesOverview -> fetchOpenWorkspaceJoinRequests', response);
           alertService.error(body.message ?? 'Fehler beim Laden der offenen Beitrittsanfragen', response.status, response.statusText);
@@ -237,14 +237,14 @@ export default function WorkspacesPage() {
                     </div>
                   </div>
                 ))}
-                {openJoinRequests.map((joinRequest) => (
-                  <div key={`join-request-${joinRequest.workspace.id}`} className={'card h-40'}>
+                {openWorkspaceJoinRequests.map((workspaceJoinRequest) => (
+                  <div key={`join-request-${workspaceJoinRequest.workspace.id}`} className={'card h-40'}>
                     <div className={'card-body'}>
                       <div className={'text-center text-3xl font-bold'}>
                         <span className={'italic'}>Angefragt: </span>
-                        {joinRequest.workspace.name}
+                        {workspaceJoinRequest.workspace.name}
                       </div>
-                      <div className={'text-center font-thin'}>Datum der Anfrage: {new Date(joinRequest.date).toFormatDateTimeString()}</div>
+                      <div className={'text-center font-thin'}>Datum der Anfrage: {new Date(workspaceJoinRequest.date).toFormatDateTimeString()}</div>
                       <div className={'h-full'}></div>
                       <div className={'card-actions justify-center'}>
                         <button type={'button'} className={'btn btn-outline btn-primary'} disabled={true}>
