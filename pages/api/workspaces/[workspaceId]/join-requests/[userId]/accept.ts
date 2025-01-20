@@ -8,7 +8,7 @@ export default withHttpMethods({
   [HTTPMethod.POST]: withWorkspacePermission([Role.MANAGER], async (req, res, user, workspace) => {
     try {
       await prisma.$transaction(async (transaction) => {
-        await transaction.workspaceJoinRequests.delete({
+        await transaction.workspaceJoinRequest.delete({
           where: {
             userId_workspaceId: {
               workspaceId: workspace.id,

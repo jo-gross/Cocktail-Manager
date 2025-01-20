@@ -6,7 +6,7 @@ import { Role } from '@prisma/client';
 
 export default withHttpMethods({
   [HTTPMethod.GET]: withWorkspacePermission([Role.MANAGER], async (req, res, user, workspace) => {
-    const joinRequests = await prisma.workspaceJoinRequests.findMany({
+    const joinRequests = await prisma.workspaceJoinRequest.findMany({
       where: { workspaceId: workspace.id },
       include: {
         user: true,

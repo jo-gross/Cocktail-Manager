@@ -1,6 +1,6 @@
 import { signIn, signOut } from 'next-auth/react';
 import { useCallback, useContext, useEffect, useState } from 'react';
-import { Setting, Workspace, WorkspaceJoinRequests } from '@prisma/client';
+import { Setting, Workspace, WorkspaceJoinRequest } from '@prisma/client';
 import { Loading } from '../components/Loading';
 import Image from 'next/image';
 import { FaArrowRight } from 'react-icons/fa';
@@ -21,7 +21,7 @@ export default function WorkspacesPage() {
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [workspacesLoading, setWorkspacesLoading] = useState(false);
 
-  const [openWorkspaceJoinRequests, setOpenWorkspaceJoinRequests] = useState<(WorkspaceJoinRequests & { workspace: Workspace })[]>([]);
+  const [openWorkspaceJoinRequest, setOpenWorkspaceJoinRequest] = useState<(WorkspaceJoinRequest & { workspace: Workspace })[]>([]);
 
   const [newWorkspaceName, setNewWorkspaceName] = useState('');
   const [joinWorkspaceId, setJoinWorkspaceId] = useState('');
@@ -53,21 +53,21 @@ export default function WorkspacesPage() {
       .finally(() => setWorkspacesLoading(false));
   }, [userContext.user]);
 
-  const fetchOpenWorkspaceJoinRequests = useCallback(() => {
+  const fetchOpenWorkspaceJoinRequest = useCallback(() => {
     if (!userContext.user) return;
     setWorkspacesLoading(true);
     fetch('/api/users/workspace-requests', { method: 'GET' })
       .then(async (response) => {
         const body = await response.json();
         if (response.ok) {
-          setOpenWorkspaceJoinRequests(body.data);
+          setOpenWorkspaceJoinRequest(body.data);
         } else {
-          console.error('WorkspacesOverview -> fetchOpenWorkspaceJoinRequests', response);
+          console.error('WorkspacesOverview -> fetchOpenWorkspaceJoinRequest', response);
           alertService.error(body.message ?? 'Fehler beim Laden der offenen Beitrittsanfragen', response.status, response.statusText);
         }
       })
       .catch((error) => {
-        console.error('WorkspacesOverview -> fetchOpenWorkspaceJoinRequests', error);
+        console.error('WorkspacesOverview -> fetchOpenWorkspaceJoinRequest', error);
         alertService.error('Fehler beim Laden der offenen Beitrittsanfragen');
       })
       .finally(() => setWorkspacesLoading(false));
@@ -96,29 +96,37 @@ export default function WorkspacesPage() {
   const joinWorkspace = useCallback(() => {
     if (!userContext.user) return;
     setJoiningWorkspace(true);
-    fetch(`/api/workspaces/${joinWorkspaceId}/join`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
+    fetch(
+      `/api/workspaces/join?` +
+        new URLSearchParams({
+          code: joinWorkspaceId,
+        }),
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
       },
-    })
+    )
       .then((response) => {
         if (!response.ok) {
-          throw new Error('Fehler beim beitreten');
+          // throw new Error('Fehler beim beitreten');
+          alertService.error('Mit diesem Code konntest du keiner Workspace beitreten, bitte überprüfe den Code und versuche es erneut');
+        } else {
+          alertService.success('Beitrittsanfrage gesendet, warte auf Annahme');
         }
-        alertService.success('Beitrittsanfrage gesendet, warte auf Annahme');
       })
       .then(() => setJoinWorkspaceId(''))
       .then(() => {
         fetchWorkspaces();
-        fetchOpenWorkspaceJoinRequests();
+        fetchOpenWorkspaceJoinRequest();
       })
       .catch((error) => {
         console.error('WorkspacesOverview -> joinWorkspace', error);
         alertService.error('Fehler beim Beitreten');
       })
       .finally(() => setJoiningWorkspace(false));
-  }, [fetchOpenWorkspaceJoinRequests, fetchWorkspaces, joinWorkspaceId, userContext.user]);
+  }, [fetchOpenWorkspaceJoinRequest, fetchWorkspaces, joinWorkspaceId, userContext.user]);
 
   useEffect(() => {
     if (userContext.user && (document.getElementById('changelog-modal')?.innerHTML == '' || !document.getElementById('changelog-modal'))) {
@@ -170,8 +178,8 @@ export default function WorkspacesPage() {
 
   useEffect(() => {
     fetchWorkspaces();
-    fetchOpenWorkspaceJoinRequests();
-  }, [fetchOpenWorkspaceJoinRequests, fetchWorkspaces]);
+    fetchOpenWorkspaceJoinRequest();
+  }, [fetchOpenWorkspaceJoinRequest, fetchWorkspaces]);
 
   return (
     <>
@@ -237,7 +245,7 @@ export default function WorkspacesPage() {
                     </div>
                   </div>
                 ))}
-                {openWorkspaceJoinRequests.map((workspaceJoinRequest) => (
+                {openWorkspaceJoinRequest.map((workspaceJoinRequest) => (
                   <div key={`join-request-${workspaceJoinRequest.workspace.id}`} className={'card h-40'}>
                     <div className={'card-body'}>
                       <div className={'text-center text-3xl font-bold'}>

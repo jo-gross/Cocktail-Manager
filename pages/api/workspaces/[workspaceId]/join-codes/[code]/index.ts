@@ -5,18 +5,15 @@ import prisma from '../../../../../../prisma/prisma';
 import { Role } from '@prisma/client';
 
 export default withHttpMethods({
-  [HTTPMethod.POST]: withWorkspacePermission([Role.MANAGER], async (req, res, user, workspace) => {
+  [HTTPMethod.DELETE]: withWorkspacePermission([Role.MANAGER], async (req, res, user, workspace) => {
     try {
-      await prisma.$transaction(async (transaction) => {
-        await transaction.workspaceJoinRequest.delete({
-          where: {
-            userId_workspaceId: {
-              workspaceId: workspace.id,
-              userId: req.query.userId as string,
-            },
+      await prisma.workspaceJoinCode.delete({
+        where: {
+          workspaceId_code: {
+            workspaceId: workspace.id,
+            code: req.query.code as string,
           },
-        });
-        //TODO: Send notification to user
+        },
       });
       return res.json({ data: 'ok' });
     } catch (error) {

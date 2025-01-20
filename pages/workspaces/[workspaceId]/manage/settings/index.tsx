@@ -12,11 +12,12 @@ import {
   UnitConversion,
   User,
   WorkspaceCocktailRecipeStepAction,
-  WorkspaceJoinRequests,
+  WorkspaceJoinCode,
+  WorkspaceJoinRequest,
   WorkspaceUser,
 } from '@prisma/client';
 import { UserContext } from '../../../../../lib/context/UserContextProvider';
-import { FaArrowDown, FaArrowUp, FaCheck, FaShareAlt, FaSync, FaTimes, FaTrashAlt } from 'react-icons/fa';
+import { FaArrowDown, FaArrowUp, FaCheck, FaCopy, FaPlus, FaShareAlt, FaSync, FaTimes, FaTrashAlt } from 'react-icons/fa';
 import { DeleteConfirmationModal } from '../../../../../components/modals/DeleteConfirmationModal';
 import { ModalContext } from '../../../../../lib/context/ModalContextProvider';
 import { UploadDropZone } from '../../../../../components/UploadDropZone';
@@ -34,6 +35,8 @@ import Image from 'next/image';
 import { fetchIce } from '../../../../../lib/network/ices';
 import CreateIceModal from '../../../../../components/modals/CreateIceModal';
 import { compressFile } from '../../../../../lib/ImageCompressor';
+import { FaRegCircle } from 'react-icons/fa6';
+import AddWorkspaceJoinCodeModal from '../../../../../components/modals/AddWorkspaceJoinCodeModal';
 import MonitorFormat = $Enums.MonitorFormat;
 
 export default function WorkspaceSettingPage() {
@@ -48,10 +51,14 @@ export default function WorkspaceSettingPage() {
 
   const [newWorkspaceName, setNewWorkspaceName] = useState<string>('');
 
-  const [workspaceJoinRequests, setWorkspaceJoinRequests] = useState<(WorkspaceJoinRequests & { user: User })[]>([]);
+  const [WorkspaceJoinRequest, setWorkspaceJoinRequest] = useState<(WorkspaceJoinRequest & { user: User })[]>([]);
   const [workspaceJoinRequestAcceptLoading, setWorkspaceJoinRequestAcceptLoading] = useState<Record<string, boolean>>({});
   const [workspaceJoinRequestRejectLoading, setWorkspaceJoinRequestRejectLoading] = useState<Record<string, boolean>>({});
   const [joinRequestsLoading, setJoinRequestsLoading] = useState<boolean>(false);
+
+  const [workspaceJoinCodes, setWorkspaceJoinCodes] = useState<WorkspaceJoinCode[]>([]);
+  const [workspaceJoinCodeLoading, setWorkspaceJoinCodeLoading] = useState<boolean>(false);
+  const [workspaceJoinCodeDeleting, setWorkspaceJoinCodeDeleting] = useState<Record<string, boolean>>({});
 
   const [exporting, setExporting] = useState<boolean>(false);
   const [importing, setImporting] = useState<boolean>(false);
@@ -236,7 +243,7 @@ export default function WorkspaceSettingPage() {
       });
   }, [workspaceId]);
 
-  const fetchWorkspaceJoinRequests = useCallback(() => {
+  const fetchWorkspaceJoinRequest = useCallback(() => {
     if (workspaceId == undefined) return;
     setJoinRequestsLoading(true);
     fetch(`/api/workspaces/${workspaceId}/join-requests`)
@@ -244,13 +251,31 @@ export default function WorkspaceSettingPage() {
         if (!response.ok) throw new Error('Error while loading');
         return response.json();
       })
-      .then((data) => setWorkspaceJoinRequests(data.data))
+      .then((data) => setWorkspaceJoinRequest(data.data))
       .catch((error) => {
-        console.error('SettingsPage -> fetchWorkspaceJoinRequests', error);
+        console.error('SettingsPage -> fetchWorkspaceJoinRequest', error);
         alertService.error('Fehler beim Laden der Beitrittsanfragen');
       })
       .finally(() => {
         setJoinRequestsLoading(false);
+      });
+  }, [workspaceId]);
+
+  const fetchWorkspaceJoinCodes = useCallback(() => {
+    if (workspaceId == undefined) return;
+    setWorkspaceJoinCodeLoading(true);
+    fetch(`/api/workspaces/${workspaceId}/join-codes`)
+      .then((response) => {
+        if (!response.ok) throw new Error('Error while loading');
+        return response.json();
+      })
+      .then((data) => setWorkspaceJoinCodes(data.data))
+      .catch((error) => {
+        console.error('SettingsPage -> fetchWorkspaceJoinCodes', error);
+        alertService.error('Fehler beim Laden der Beitrittcodes');
+      })
+      .finally(() => {
+        setWorkspaceJoinCodeLoading(false);
       });
   }, [workspaceId]);
 
@@ -397,9 +422,15 @@ export default function WorkspaceSettingPage() {
 
   useEffect(() => {
     if (userContext.isUserPermitted(Role.MANAGER)) {
-      fetchWorkspaceJoinRequests();
+      fetchWorkspaceJoinRequest();
     }
-  }, [fetchWorkspaceJoinRequests, userContext]);
+  }, [fetchWorkspaceJoinRequest, userContext]);
+
+  useEffect(() => {
+    if (userContext.isUserPermitted(Role.MANAGER)) {
+      fetchWorkspaceJoinCodes();
+    }
+  }, [fetchWorkspaceJoinCodes, userContext]);
 
   useEffect(() => {
     fetchWorkspaceUsers();
@@ -422,21 +453,7 @@ export default function WorkspaceSettingPage() {
                   <th>Name</th>
                   <th>Email</th>
                   <th>Rolle</th>
-                  <th className={'flex justify-end'}>
-                    {userContext.isUserPermitted(Role.ADMIN) && (
-                      <button
-                        className={'btn btn-outline btn-primary btn-sm'}
-                        onClick={() => {
-                          navigator.clipboard.writeText(workspaceId as string).then(() => {
-                            alertService.info('Erfolgreich kopiert');
-                          });
-                        }}
-                      >
-                        <FaShareAlt />
-                        <div>Einladungs-Code kopieren</div>
-                      </button>
-                    )}
-                  </th>
+                  <th></th>
                 </tr>
               </thead>
               <tbody>
@@ -568,7 +585,7 @@ export default function WorkspaceSettingPage() {
             </table>
           </div>
         </div>
-        {userContext.isUserPermitted(Role.MANAGER) && workspaceJoinRequests.length > 0 && (
+        {userContext.isUserPermitted(Role.MANAGER) && WorkspaceJoinRequest.length > 0 && (
           <div className={'card overflow-y-auto md:col-span-2'}>
             <div className={'card-body'}>
               <div className={'card-title'}>Beitrittsanfragen</div>
@@ -579,7 +596,7 @@ export default function WorkspaceSettingPage() {
                     <th>Email</th>
                     <th>Datum</th>
                     <th className={'flex justify-end'}>
-                      <button type={'button'} className={'btn btn-square btn-outline btn-primary btn-sm'} onClick={fetchWorkspaceJoinRequests}>
+                      <button type={'button'} className={'btn btn-square btn-outline btn-primary btn-sm'} onClick={fetchWorkspaceJoinRequest}>
                         <FaSync />
                       </button>
                     </th>
@@ -594,77 +611,231 @@ export default function WorkspaceSettingPage() {
                     </tr>
                   ) : (
                     <>
-                      {workspaceJoinRequests
-                        .sort((a, b) => a.date.getTime() - b.date.getTime())
-                        .map((joinRequest) => (
-                          <tr key={`workspace-join-request-${joinRequest.user.id}`}>
-                            <td>{joinRequest.user.name}</td>
-                            <td>{joinRequest.user.email}</td>
-                            <td>{new Date(joinRequest.date).toFormatDateTimeString()}</td>
-                            <td className={'join flex justify-end'}>
-                              <button
-                                className={'btn-green btn join-item btn-sm'}
-                                disabled={workspaceJoinRequestAcceptLoading[joinRequest.user.id] || workspaceJoinRequestRejectLoading[joinRequest.user.id]}
-                                onClick={() => {
-                                  setWorkspaceJoinRequestAcceptLoading({ ...workspaceJoinRequestAcceptLoading, [joinRequest.user.id]: true });
-                                  fetch(`/api/workspaces/${workspaceId}/join-requests/${joinRequest.user.id}/accept`, {
-                                    method: 'POST',
+                      {WorkspaceJoinRequest.sort((a, b) => a.date.getTime() - b.date.getTime()).map((joinRequest) => (
+                        <tr key={`workspace-join-request-${joinRequest.user.id}`}>
+                          <td>{joinRequest.user.name}</td>
+                          <td>{joinRequest.user.email}</td>
+                          <td>{new Date(joinRequest.date).toFormatDateTimeString()}</td>
+                          <td className={'join flex justify-end'}>
+                            <button
+                              className={'btn-green btn join-item btn-sm'}
+                              disabled={workspaceJoinRequestAcceptLoading[joinRequest.user.id] || workspaceJoinRequestRejectLoading[joinRequest.user.id]}
+                              onClick={() => {
+                                setWorkspaceJoinRequestAcceptLoading({ ...workspaceJoinRequestAcceptLoading, [joinRequest.user.id]: true });
+                                fetch(`/api/workspaces/${workspaceId}/join-requests/${joinRequest.user.id}/accept`, {
+                                  method: 'POST',
+                                })
+                                  .then(async (response) => {
+                                    if (response.ok) {
+                                      fetchWorkspaceUsers();
+                                      fetchWorkspaceJoinRequest();
+                                      alertService.success('Erfolgreich angenommen');
+                                    } else {
+                                      const body = await response.json();
+                                      console.error('SettingsPage -> acceptJoinRequest', response);
+                                      alertService.error(body.message ?? 'Fehler beim Annehmen', response.status, response.statusText);
+                                    }
                                   })
-                                    .then(async (response) => {
-                                      if (response.ok) {
-                                        fetchWorkspaceUsers();
-                                        fetchWorkspaceJoinRequests();
-                                        alertService.success('Erfolgreich angenommen');
-                                      } else {
-                                        const body = await response.json();
-                                        console.error('SettingsPage -> acceptJoinRequest', response);
-                                        alertService.error(body.message ?? 'Fehler beim Annehmen', response.status, response.statusText);
-                                      }
-                                    })
-                                    .catch((error) => {
-                                      console.error('SettingsPage -> acceptJoinRequest', error);
-                                      alertService.error('Es ist ein Fehler aufgetreten');
-                                    })
-                                    .finally(() => {
-                                      setWorkspaceJoinRequestAcceptLoading({ ...workspaceJoinRequestAcceptLoading, [joinRequest.user.id]: false });
-                                    });
-                                }}
-                              >
-                                <FaCheck /> Annehmen
-                              </button>
-                              <button
-                                className={'btn-red btn btn-outline join-item btn-sm'}
-                                disabled={workspaceJoinRequestRejectLoading[joinRequest.user.id] || workspaceJoinRequestAcceptLoading[joinRequest.user.id]}
-                                onClick={() => {
-                                  setWorkspaceJoinRequestRejectLoading({ ...workspaceJoinRequestRejectLoading, [joinRequest.user.id]: true });
-                                  fetch(`/api/workspaces/${workspaceId}/join-requests/${joinRequest.user.id}/reject`, {
-                                    method: 'POST',
+                                  .catch((error) => {
+                                    console.error('SettingsPage -> acceptJoinRequest', error);
+                                    alertService.error('Es ist ein Fehler aufgetreten');
                                   })
-                                    .then(async (response) => {
-                                      if (response.ok) {
-                                        fetchWorkspaceUsers();
-                                        fetchWorkspaceJoinRequests();
-                                        alertService.success('Erfolgreich abgelehnt');
-                                      } else {
-                                        const body = await response.json();
-                                        console.error('SettingsPage -> acceptJoinRequest', response);
-                                        alertService.error(body.message ?? 'Fehler beim Abhlehnen', response.status, response.statusText);
-                                      }
-                                    })
-                                    .catch((error) => {
-                                      console.error('SettingsPage -> rejectJoinRequest', error);
-                                      alertService.error('Es ist ein Fehler aufgetreten');
-                                    })
-                                    .finally(() => {
-                                      setWorkspaceJoinRequestRejectLoading({ ...workspaceJoinRequestRejectLoading, [joinRequest.user.id]: false });
+                                  .finally(() => {
+                                    setWorkspaceJoinRequestAcceptLoading({ ...workspaceJoinRequestAcceptLoading, [joinRequest.user.id]: false });
+                                  });
+                              }}
+                            >
+                              <FaCheck /> Annehmen
+                            </button>
+                            <button
+                              className={'btn-red btn btn-outline join-item btn-sm'}
+                              disabled={workspaceJoinRequestRejectLoading[joinRequest.user.id] || workspaceJoinRequestAcceptLoading[joinRequest.user.id]}
+                              onClick={() => {
+                                setWorkspaceJoinRequestRejectLoading({ ...workspaceJoinRequestRejectLoading, [joinRequest.user.id]: true });
+                                fetch(`/api/workspaces/${workspaceId}/join-requests/${joinRequest.user.id}/reject`, {
+                                  method: 'POST',
+                                })
+                                  .then(async (response) => {
+                                    if (response.ok) {
+                                      fetchWorkspaceUsers();
+                                      fetchWorkspaceJoinRequest();
+                                      alertService.success('Erfolgreich abgelehnt');
+                                    } else {
+                                      const body = await response.json();
+                                      console.error('SettingsPage -> acceptJoinRequest', response);
+                                      alertService.error(body.message ?? 'Fehler beim Ablehnen', response.status, response.statusText);
+                                    }
+                                  })
+                                  .catch((error) => {
+                                    console.error('SettingsPage -> rejectJoinRequest', error);
+                                    alertService.error('Es ist ein Fehler aufgetreten');
+                                  })
+                                  .finally(() => {
+                                    setWorkspaceJoinRequestRejectLoading({ ...workspaceJoinRequestRejectLoading, [joinRequest.user.id]: false });
+                                  });
+                              }}
+                            >
+                              <FaTimes /> Ablehnen
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+        {userContext.isUserPermitted(Role.MANAGER) && (
+          <div className={'card overflow-y-auto md:col-span-2'}>
+            <div className={'card-body'}>
+              <div className={'card-title'}>Einladungscode</div>
+              <table className={'table table-zebra w-full rounded-xl border border-base-200'}>
+                <thead>
+                  <tr>
+                    <th>Code</th>
+                    <th>Erstelldatum</th>
+                    <th>Ablaufdatum</th>
+                    <th>Einmal-Code</th>
+                    <th>Verwendet</th>
+                    <th className={'flex justify-end'}>
+                      <button
+                        type={'button'}
+                        className={'btn btn-outline btn-primary btn-sm'}
+                        onClick={() => modalContext.openModal(<AddWorkspaceJoinCodeModal onCreated={() => fetchWorkspaceJoinCodes()} />)}
+                      >
+                        <FaPlus /> Erstellen
+                      </button>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {workspaceJoinCodeLoading ? (
+                    <tr>
+                      <td colSpan={6} className={'text-center'}>
+                        Lade...
+                      </td>
+                    </tr>
+                  ) : (
+                    <>
+                      {workspaceJoinCodes.length == 0 ? (
+                        <tr>
+                          <td colSpan={6} className={'text-center'}>
+                            Keine Einladungscode vorhanden
+                          </td>
+                        </tr>
+                      ) : (
+                        workspaceJoinCodes
+                          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                          .map((workspaceJoinCode) => (
+                            <tr key={`workspace-join-request-${workspaceJoinCode.code}`}>
+                              <td>
+                                <button
+                                  className={'btn btn-ghost btn-primary btn-sm'}
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(workspaceJoinCode.code).then(() => {
+                                      alertService.info('Erfolgreich kopiert');
                                     });
-                                }}
-                              >
-                                <FaTimes /> Ablehnen
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
+                                  }}
+                                >
+                                  <FaCopy />
+                                </button>
+                                {workspaceJoinCode.code}
+                              </td>
+                              <td>{new Date(workspaceJoinCode.createdAt).toFormatDateString()}</td>
+                              <td>{workspaceJoinCode.expires ? new Date(workspaceJoinCode.expires).toFormatDateString() : '-'}</td>
+                              <td>
+                                {workspaceJoinCode.onlyUseOnce ? (
+                                  <div style={{ position: 'relative', display: 'inline-block' }}>
+                                    <FaRegCircle style={{ fontSize: '24px' }} />
+                                    <span
+                                      style={{
+                                        position: 'absolute',
+                                        top: '50%',
+                                        left: '50%',
+                                        transform: 'translate(-50%, -50%)',
+                                        fontSize: '12px',
+                                        fontWeight: 'bold',
+                                      }}
+                                    >
+                                      1
+                                    </span>
+                                  </div>
+                                ) : (
+                                  '-'
+                                )}
+                              </td>
+                              <td>
+                                {workspaceJoinCode.onlyUseOnce ? (
+                                  workspaceJoinCode.used > 0 ? (
+                                    <FaCheck />
+                                  ) : (
+                                    '-'
+                                  )
+                                ) : workspaceJoinCode.used == 0 ? (
+                                  '-'
+                                ) : (
+                                  workspaceJoinCode.used
+                                )}
+                              </td>
+                              <td className={'flex justify-end gap-2'}>
+                                <button
+                                  className={'btn btn-outline btn-primary btn-sm'}
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(workspaceJoinCode.code).then(() => {
+                                      alertService.info('Erfolgreich kopiert');
+                                    });
+                                  }}
+                                >
+                                  <FaShareAlt />
+                                  <div>Einladungs-Code kopieren</div>
+                                </button>
+                                <button
+                                  className={'btn-red btn btn-outline btn-sm'}
+                                  disabled={workspaceJoinCodeDeleting[workspaceJoinCode.code]}
+                                  onClick={() => {
+                                    modalContext.openModal(
+                                      <DeleteConfirmationModal
+                                        onApprove={async () => {
+                                          setWorkspaceJoinCodeDeleting({ ...workspaceJoinCodeDeleting, [workspaceJoinCode.code]: true });
+                                          fetch(`/api/workspaces/${workspaceId}/join-codes/${workspaceJoinCode.code}`, {
+                                            method: 'DELETE',
+                                          })
+                                            .then(async (response) => {
+                                              if (response.ok) {
+                                                fetchWorkspaceJoinCodes();
+                                                alertService.success('Erfolgreich entfernt');
+                                              } else {
+                                                const body = await response.json();
+                                                console.error('SettingsPage -> deleteWorkspaceJoinCode', response);
+                                                alertService.error(
+                                                  body.message ?? 'Fehler beim Löschen des Beitrittcodes',
+                                                  response.status,
+                                                  response.statusText,
+                                                );
+                                              }
+                                            })
+                                            .catch((error) => {
+                                              console.error('SettingsPage -> deleteWorkspaceJoinCode', error);
+                                              alertService.error('Es ist ein Fehler aufgetreten');
+                                            })
+                                            .finally(() => {
+                                              setWorkspaceJoinCodeDeleting({ ...workspaceJoinCodeDeleting, [workspaceJoinCode.code]: false });
+                                            });
+                                        }}
+                                        spelling={'DELETE'}
+                                        entityName={`den Beitrittscode '${workspaceJoinCode.code}'`}
+                                      />,
+                                    );
+                                  }}
+                                >
+                                  <FaTrashAlt />
+                                </button>
+                              </td>
+                            </tr>
+                          ))
+                      )}
                     </>
                   )}
                 </tbody>

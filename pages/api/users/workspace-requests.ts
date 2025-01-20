@@ -4,7 +4,7 @@ import { User } from '@prisma/client';
 import prisma from '../../../prisma/prisma';
 
 export default withAuthentication(async (req: NextApiRequest, res: NextApiResponse, user: User) => {
-  const openWorkspaceRequests = await prisma.workspaceJoinRequests.findMany({
+  const openWorkspaceRequests = await prisma.workspaceJoinRequest.findMany({
     where: {
       userId: user.id,
     },
