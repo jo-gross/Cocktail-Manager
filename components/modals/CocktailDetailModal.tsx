@@ -259,6 +259,26 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
               <div className={'print:hidden'}>
                 <StatisticActions
                   workspaceId={router.query.workspaceId as string}
+                  disabled={{ list: amountAdjustment != 100 }}
+                  initData={{
+                    comment:
+                      amountAdjustment != 100
+                        ? `Angepasste Menge (${amountAdjustment}%):\n${loadedCocktail.steps
+                            .sort((a, b) => a.stepNumber - b.stepNumber)
+                            .map((step) => {
+                              return `${userContext.getTranslation(step.action.name, 'de')}${step.optional ? ' (optional)' : ''}\n${step.ingredients
+                                .sort((a, b) => a.ingredientNumber - b.ingredientNumber)
+                                .map((stepIngredient) => {
+                                  return `- ${((stepIngredient.amount ?? 0) * (amountAdjustment / 100))?.toLocaleString(undefined, {
+                                    minimumFractionDigits: 0,
+                                    maximumFractionDigits: 2,
+                                  })} ${userContext.getTranslation(stepIngredient.unit?.name ?? '', 'de')} ${stepIngredient.ingredient?.shortName ?? stepIngredient.ingredient?.name}${stepIngredient.optional ? '(optional)' : ''}`;
+                                })
+                                .join('\n')}`;
+                            })
+                            .join('\n')}`
+                        : undefined,
+                  }}
                   cocktailId={loadedCocktail.id}
                   cocktailName={loadedCocktail.name}
                   actionSource={'DETAIL_MODAL'}
@@ -276,6 +296,7 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                   }
                 />
               </div>
+              {amountAdjustment != 100 && <div className={'font-thin'}>Die geänderte Menge fließt nicht in die Statistik mit ein</div>}
               <div className={'divider-sm'}></div>
               <details className="collapse collapse-arrow border">
                 <summary className="collapse-title font-bold">Menge Anpassen</summary>

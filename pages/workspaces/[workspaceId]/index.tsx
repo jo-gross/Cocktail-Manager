@@ -369,7 +369,7 @@ export default function OverviewPage() {
                             (seit {new Date(cocktailQueueItem.oldestTimestamp).toFormatTimeString()} Uhr)
                           </span>
                         </div>
-                        {cocktailQueueItem.notes && <span className={'italic lg:pb-1'}>Notiz: {cocktailQueueItem.notes}</span>}
+                        {cocktailQueueItem.notes && <span className={'long-text-format italic lg:pb-1'}>Notiz: {cocktailQueueItem.notes}</span>}
                         <div className={'flex w-full flex-row gap-2'}>
                           <div
                             className={'btn btn-square btn-outline btn-sm'}
