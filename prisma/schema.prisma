@@ -106,13 +106,13 @@ model WorkspaceSetting {
 }
 
 model WorkspaceJoinCodes {
-  workspaceId String
-
   code String @unique
 
-  expires DateTime?
+  expires     DateTime?
+  onlyUseOnce Boolean   @default(false)
 
-  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
   @@id([workspaceId, code])
 }
