@@ -74,8 +74,6 @@ export function SearchModal(props: SearchModalProps) {
     fetchCocktails('');
   }, [fetchCocktails, workspaceId]);
 
-  const [cocktailRatings, setCocktailRatings] = useState<Record<string, number>>();
-
   const renderCocktailCard = (cocktail: CocktailRecipeFull, index: number, isArchived: boolean, openCard: boolean = false) => (
     <div
       key={'search-modal-' + cocktail.id}

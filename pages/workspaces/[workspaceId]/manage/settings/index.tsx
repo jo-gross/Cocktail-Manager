@@ -783,13 +783,13 @@ export default function WorkspaceSettingPage() {
                                 <button
                                   className={'btn btn-outline btn-primary btn-sm'}
                                   onClick={() => {
-                                    navigator.clipboard.writeText(workspaceJoinCode.code).then(() => {
+                                    navigator.clipboard.writeText(window.location.origin + '/?code=' + workspaceJoinCode.code).then(() => {
                                       alertService.info('Erfolgreich kopiert');
                                     });
                                   }}
                                 >
                                   <FaShareAlt />
-                                  <div>Einladungs-Code kopieren</div>
+                                  <div>Link kopieren</div>
                                 </button>
                                 <button
                                   className={'btn-red btn btn-outline btn-sm'}

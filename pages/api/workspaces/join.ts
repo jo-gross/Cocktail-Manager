@@ -25,7 +25,29 @@ export default withHttpMethods({
           return res.status(HttpStatus.HTTP_STATUS_BAD_REQUEST).json(undefined);
         }
 
-        if (findWorkspace.expires && findWorkspace.expires < new Date()) {
+        const workspaceRequests = await transaction.workspaceJoinRequest.findFirst({
+          where: {
+            userId: user.id,
+            workspaceId: findWorkspace.workspaceId,
+          },
+        });
+        if (workspaceRequests) {
+          console.log('User already requested to join workspace');
+          return res.status(HttpStatus.HTTP_STATUS_BAD_REQUEST).json({ data: { key: 'JOIN_ALREADY_REQUESTED' } });
+        }
+
+        const workspaceUser = await transaction.workspaceUser.findFirst({
+          where: {
+            userId: user.id,
+            workspaceId: findWorkspace.workspaceId,
+          },
+        });
+        if (workspaceUser) {
+          console.log('User already in workspace');
+          return res.status(HttpStatus.HTTP_STATUS_BAD_REQUEST).json({ data: { key: 'ALREADY_IN_WORKSPACE' } });
+        }
+
+        if (findWorkspace.expires && findWorkspace.expires <= new Date()) {
           console.log('Code expired');
           return res.status(HttpStatus.HTTP_STATUS_BAD_REQUEST).json(undefined);
         }
