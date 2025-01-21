@@ -3,7 +3,7 @@ import HTTPMethod from 'http-method-enum';
 import { withWorkspacePermission } from '../../../../../../middleware/api/authenticationMiddleware';
 import { Prisma, Role, Unit, UnitConversion } from '@prisma/client';
 import prisma from '../../../../../../prisma/prisma';
-import Graph from 'graph-data-structure';
+import { Graph, shortestPath } from 'graph-data-structure';
 import UnitConversionCreateInput = Prisma.UnitConversionCreateInput;
 
 export default withHttpMethods({
@@ -53,7 +53,7 @@ export async function regenerateUnitConversions(workspaceId: string): Promise<Un
   const nodes: Unit[] = await prisma.unit.findMany({ where: { workspaceId: workspaceId } });
   const paths: UnitConversion[] = await prisma.unitConversion.findMany({ where: { workspaceId: workspaceId } });
 
-  const graph = Graph();
+  const graph = new Graph<string>();
   nodes.forEach((node) => graph.addNode(node.id));
   paths.forEach((path) => {
     graph.addEdge(path.fromUnitId, path.toUnitId);
@@ -79,8 +79,9 @@ export async function regenerateUnitConversions(workspaceId: string): Promise<Un
 
   combinations.forEach((combination) => {
     try {
-      const path = graph.shortestPath(combination[0], combination[1]);
-      allConnections.push(path);
+      const path = shortestPath(graph, combination[0], combination[1]);
+      // const path = graph.shortestPath(combination[0], combination[1]);
+      allConnections.push(path.nodes);
     } catch (e) {}
   });
 
