@@ -13,6 +13,7 @@ import '../../../../../lib/DateUtils';
 import '../../../../../lib/StringUtils';
 import { Loading } from '../../../../../components/Loading';
 import ListSearchField from '../../../../../components/ListSearchField';
+import ChartDataLabels from 'chartjs-plugin-datalabels';
 
 ChartJS.register(ArcElement, Tooltip, Legend, TimeScale, CategoryScale, LinearScale);
 
@@ -23,6 +24,9 @@ export default function StatisticsPage() {
 
   const [startDate, setStartDate] = useState<Date>(typeof router.query.startDate === 'string' ? new Date(router.query.startDate) : new Date());
   const [endDate, setEndDate] = useState<Date>(typeof router.query.endDate === 'string' ? new Date(router.query.endDate) : new Date());
+
+  const [showAllDays, setShowAllDays] = useState(false);
+  const [groupBy, setGroupBy] = useState<'hour' | 'day'>('hour');
 
   const [cocktailStatisticItems, setCocktailStatisticItems] = useState<CocktailStatisticItemFull[]>([]);
   const [loading, setLoading] = useState(false);
@@ -54,6 +58,9 @@ export default function StatisticsPage() {
 
   useEffect(() => {
     refreshStatistics().then();
+    if (endDate.getTime() - startDate.getTime() < 24 * 3600 * 1000) {
+      setGroupBy('hour');
+    }
   }, [startDate, endDate, refreshStatistics]);
 
   interface ProcessedData {
@@ -65,7 +72,7 @@ export default function StatisticsPage() {
     }[];
   }
 
-  function processData(data: CocktailStatisticItemFull[]): ProcessedData {
+  function processDataGroupByHourly(data: CocktailStatisticItemFull[]): ProcessedData {
     const hourlyCocktails: Record<string, Record<string, number>> = {};
 
     data
@@ -101,6 +108,75 @@ export default function StatisticsPage() {
       backgroundColor: cocktailName.string2color(), // Zufällige Farbe
     }));
 
+    return { labels, datasets };
+  }
+
+  function processDataGroupByDaily(data: CocktailStatisticItemFull[], showEmptyDays: boolean): ProcessedData {
+    const dailyCocktails: Record<string, Record<string, number>> = {};
+
+    data
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+      .forEach((entry) => {
+        const date = new Date(entry.date);
+        // Gruppieren in Tage von 8 AM bis 8 AM
+        const adjustedDate = new Date(date);
+        if (date.getHours() < 8) {
+          adjustedDate.setDate(date.getDate() - 1);
+        }
+
+        const nextDate = new Date(adjustedDate);
+        nextDate.setDate(adjustedDate.getDate() + 1);
+
+        const dateString = `${adjustedDate.toFormatDateString()}/${nextDate.toFormatDateString()}`;
+        const cocktailName = entry.cocktail.name;
+
+        if (!dailyCocktails[dateString]) {
+          dailyCocktails[dateString] = {};
+        }
+        if (!dailyCocktails[dateString][cocktailName]) {
+          dailyCocktails[dateString][cocktailName] = 0;
+        }
+
+        dailyCocktails[dateString][cocktailName]++;
+      });
+
+    let labels = Object.keys(dailyCocktails);
+    const cocktailNames = new Set<string>();
+
+    if (showEmptyDays) {
+      labels = [];
+
+      const loopStartDate = new Date(startDate);
+      const loopEndDate = new Date(endDate);
+      const allDates: string[] = [];
+
+      while (loopStartDate <= loopEndDate) {
+        const nextDate = new Date(loopStartDate);
+        nextDate.setDate(loopStartDate.getDate() + 1);
+        const dateString = `${loopStartDate.toFormatDateString()}/${nextDate.toFormatDateString()}`;
+        allDates.push(dateString);
+        loopStartDate.setDate(loopStartDate.getDate() + 1);
+      }
+
+      allDates.forEach((dateString) => {
+        labels.push(dateString);
+        if (!dailyCocktails[dateString]) {
+          dailyCocktails[dateString] = {};
+        }
+      });
+    }
+
+    Object.values(dailyCocktails).forEach((cocktails) => {
+      Object.keys(cocktails).forEach((name) => cocktailNames.add(name));
+    });
+
+    const datasets = Array.from(cocktailNames).map((cocktailName) => ({
+      label: cocktailName,
+      data: labels.map((day) => dailyCocktails[day][cocktailName] || 0),
+      backgroundColor: cocktailName.string2color(), // Zufällige Farbe
+    }));
+
+    console.log({ labels, datasets });
     return { labels, datasets };
   }
 
@@ -249,7 +325,7 @@ export default function StatisticsPage() {
                   {cocktailStatisticItems.length}
                 </div>
               </div>
-              <div className={'h-full max-h-96'}>
+              <div className="h-[50vh] w-full rounded-lg border bg-base-100 p-4 lg:h-[70vh]">
                 <Doughnut
                   data={{
                     labels: _.chain(cocktailStatisticItems)
@@ -285,9 +361,13 @@ export default function StatisticsPage() {
                   }}
                   options={{
                     responsive: true,
+                    maintainAspectRatio: false,
                     plugins: {
                       legend: {
-                        position: 'right',
+                        position: 'bottom',
+                        labels: {
+                          usePointStyle: true,
+                        },
                       },
                     },
                   }}
@@ -301,12 +381,55 @@ export default function StatisticsPage() {
             <div className={'card-title'}>
               Übersicht ({startDate.toFormatDateString()} - {endDate.toFormatDateString()})
             </div>
-            <div>
+            <div className={'font-thin'}>Ein Tag geht immer von 8:00 Uhr bis 8:00 Uhr des folgenden Tages</div>
+            <div className={'flex w-full flex-row items-start justify-start gap-2'}>
+              <div className={'form-control'}>
+                <label className={'label flex w-fit flex-col items-start justify-start'}>
+                  <div className={'label-text'}>Gruppieren nach</div>
+                </label>
+                <select className={'select select-bordered'} value={groupBy} onChange={(event) => setGroupBy(event.target.value as 'day' | 'hour')}>
+                  <option value={'hour'}>Stunden</option>
+                  <option value={'day'} disabled={endDate.getTime() - startDate.getTime() < 24 * 3600 * 1000}>
+                    Tagen
+                  </option>
+                </select>
+              </div>
+              <div className={'form-control h-full'}>
+                <label className={'flex h-full w-fit flex-col items-start gap-1'}>
+                  <div className={'label'}>
+                    <div className={'label-text'}>Alle Tage anzeigen</div>
+                  </div>
+                  <div className={'flex h-full items-center'}>
+                    <input
+                      disabled={groupBy != 'day'}
+                      className={'toggle toggle-primary'}
+                      type={'checkbox'}
+                      checked={showAllDays}
+                      onClick={() => setShowAllDays(!showAllDays)}
+                    />
+                  </div>
+                </label>
+              </div>
+            </div>
+            <div className="h-[50vh] w-full overflow-x-auto rounded-lg border bg-base-100 p-4 lg:h-[70vh]">
               <Bar
-                className={'w'}
-                data={processData(cocktailStatisticItems)}
+                plugins={[ChartDataLabels]}
+                data={
+                  endDate.getTime() - startDate.getTime() >= 24 * 3600 * 1000 && groupBy == 'day'
+                    ? processDataGroupByDaily(cocktailStatisticItems, showAllDays)
+                    : processDataGroupByHourly(cocktailStatisticItems)
+                }
                 options={{
+                  maintainAspectRatio: false,
                   responsive: true,
+                  layout: {
+                    padding: {
+                      top: 20, // Platz für obere Labels
+                      right: 20,
+                      bottom: 20,
+                      left: 20,
+                    },
+                  },
                   scales: {
                     x: {
                       stacked: true,
@@ -318,7 +441,34 @@ export default function StatisticsPage() {
                   },
                   plugins: {
                     legend: {
-                      position: 'right',
+                      position: 'bottom',
+                      labels: {
+                        usePointStyle: true,
+                      },
+                    },
+                    datalabels: {
+                      display: 'auto',
+                      font: {
+                        weight: 'bold',
+                      },
+                      anchor: 'end',
+                      offset: 4,
+                      align: 'end',
+                      formatter: (value, context) => {
+                        const dataIndex = context.dataIndex;
+
+                        // Berechnung der Gesamtsumme nur für sichtbare Datensätze
+                        const total = context.chart.data.datasets.reduce((sum, dataset, index) => {
+                          if (!context.chart.isDatasetVisible(index)) {
+                            return sum; // Überspringe unsichtbare Datensätze
+                          }
+                          return sum + (dataset.data[dataIndex] as number);
+                        }, 0);
+
+                        const isTopOfStack = context.datasetIndex === context.chart.data.datasets.length - 1;
+
+                        return isTopOfStack ? total : null;
+                      },
                     },
                   },
                 }}

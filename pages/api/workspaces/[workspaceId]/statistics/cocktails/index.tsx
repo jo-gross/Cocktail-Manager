@@ -16,8 +16,12 @@ export default withHttpMethods({
       where: {
         workspaceId: workspace.id,
         date: {
-          gte: startDate ? new Date(new Date(startDate as string).setHours(0, 0, 0, 0)) : undefined,
-          lte: endDate ? new Date(new Date(endDate as string).setHours(24, 59, 59, 999)) : undefined,
+          gte: startDate ? new Date(new Date(startDate as string).setHours(8, 0, 0, 0)) : undefined,
+          lte: endDate
+            ? startDate != undefined && new Date(startDate as string).withoutTime().getTime() - new Date(endDate as string).withoutTime().getTime() == 0
+              ? new Date(new Date(endDate as string).setHours(23, 59, 59, 999))
+              : new Date(new Date(endDate as string).setHours(8, 0, 0, 0))
+            : undefined,
         },
       },
       include: {
