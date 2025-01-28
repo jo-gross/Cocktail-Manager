@@ -38,6 +38,10 @@
   @apply border-red-800 bg-red-700 text-white hover:bg-red-800;
 }
 
+.btn-green {
+  @apply border-green-800 bg-green-700 text-white hover:bg-green-800;
+}
+
 .long-text-format {
   @apply whitespace-pre-line text-pretty break-normal text-justify;
 }

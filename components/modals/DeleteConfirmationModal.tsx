@@ -5,7 +5,7 @@ import { alertService } from '../../lib/alertService';
 interface DeleteConfirmationModalProps {
   onApprove: () => Promise<void>;
   onCancel?: () => void;
-  spelling: 'DELETE' | 'REMOVE';
+  spelling: 'DELETE' | 'REMOVE' | 'ABORT';
   entityName: string;
 }
 
@@ -16,10 +16,10 @@ export function DeleteConfirmationModal(props: DeleteConfirmationModalProps) {
 
   return (
     <div className="flex flex-col space-y-4">
-      <div className="text-2xl font-bold">{props.spelling == 'DELETE' ? 'Löschen' : 'Entfernen'}</div>
+      <div className="text-2xl font-bold">{props.spelling == 'DELETE' ? 'Löschen' : props.spelling == 'REMOVE' ? 'Entfernen' : 'Abbrechen'}</div>
       <div className="max-w-xl text-justify">
         Möchtest du <span className={'font-bold italic'}>{props.entityName ?? 'diesen Eintrag'}</span> wirklich{' '}
-        {props.spelling == 'DELETE' ? 'löschen' : 'entfernen'}?
+        {props.spelling == 'DELETE' ? 'löschen' : props.spelling == 'REMOVE' ? 'entfernen' : 'abbrechen'}?
       </div>
       <div className="flex flex-row space-x-4">
         <div className={'flex-1'}></div>
@@ -49,7 +49,7 @@ export function DeleteConfirmationModal(props: DeleteConfirmationModalProps) {
           }}
         >
           {isDeleting ? <span className={'loading loading-spinner'} /> : <></>}
-          {props.spelling == 'DELETE' ? 'Löschen' : 'Entfernen'}
+          {props.spelling == 'DELETE' ? 'Löschen' : props.spelling == 'REMOVE' ? 'Entfernen' : 'Abbruch bestätigen'}
         </button>
       </div>
     </div>
