@@ -7,7 +7,7 @@ import { signOut } from 'next-auth/react';
 import LoadingText from '../../../../components/LoadingText';
 import Link from 'next/link';
 import AvatarImage from '../../../../components/AvatarImage';
-import { FaCalculator, FaCocktail, FaGlassMartiniAlt } from 'react-icons/fa';
+import { FaCalculator, FaCocktail, FaGlassMartiniAlt, FaUsers } from 'react-icons/fa';
 import { LuCitrus } from 'react-icons/lu';
 import { PiBeerBottleBold, PiCards } from 'react-icons/pi';
 import { FaGear } from 'react-icons/fa6';
@@ -98,6 +98,7 @@ export default function ManagePage() {
           <ManageCard icon={<FaCalculator />} title={'Mengen-Kalkulation'} link={`/workspaces/${workspaceId}/manage/calculations`} />
           <ManageCard icon={<IoMdStats />} title={'Statistiken'} link={`/workspaces/${workspaceId}/manage/statistics`} />
           <ManageCard icon={<FaGear />} title={'Einstellungen'} link={`/workspaces/${workspaceId}/manage/settings`} />
+          <ManageCard icon={<FaUsers />} title={'Nutzer'} link={`/workspaces/${workspaceId}/manage/settings/users`} />
         </div>
       </ManageEntityLayout>
     </>

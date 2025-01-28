@@ -31,8 +31,7 @@ export default function AddWorkspaceJoinCodeModal(props: AddWorkspaceJoinCodeMod
       <Formik
         innerRef={formRef}
         initialValues={{
-          code: 'abcdef',
-          // code: Math.random().toString(36).slice(2, 8).toLowerCase(),
+          code: Math.random().toString(36).slice(2, 8).toLowerCase(),
           expires: undefined,
           onlyUseOnce: false,
         }}
