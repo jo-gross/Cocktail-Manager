@@ -6,7 +6,11 @@ export default function App() {
   const router = useRouter();
 
   useEffect(() => {
-    router.replace('/').then();
+    if (router.query.code) {
+      router.replace(`/?code=${router.query.code}`).then();
+    } else {
+      router.replace('/').then();
+    }
   }, [router]);
 
   return (
