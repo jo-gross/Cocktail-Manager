@@ -8,13 +8,14 @@ interface AddCocktailToQueueModalProps {
   workspaceId: string;
   cocktailId: string;
   cocktailName: string;
+  initComment?: string;
   actionSource: 'SEARCH_MODAL' | 'CARD' | 'DETAIL_MODAL' | 'QUEUE';
 }
 
-export default function AddCocktailToQueueModal({ workspaceId, cocktailId, actionSource, cocktailName }: AddCocktailToQueueModalProps) {
+export default function AddCocktailToQueueModal({ workspaceId, cocktailId, actionSource, cocktailName, initComment }: AddCocktailToQueueModalProps) {
   const [submittingQueue, setSubmittingQueue] = useState(false);
 
-  const [notes, setNotes] = useState('');
+  const [notes, setNotes] = useState(initComment ?? '');
   const [amount, setAmount] = useState(1);
 
   const modalContext = useContext(ModalContext);

@@ -14,7 +14,8 @@ interface StatisticActionsProps {
   cardId?: string;
   actionSource: 'SEARCH_MODAL' | 'CARD' | 'DETAIL_MODAL' | 'QUEUE';
   notes?: string;
-
+  disabled?: { list?: boolean; listWithNote?: boolean; markAsDone?: boolean };
+  initData?: { comment?: string };
   onAddToQueue?: () => void;
   onMarkedAsDone?: () => void;
 }
@@ -24,7 +25,9 @@ export default function StatisticActions({
   cocktailId,
   cardId,
   actionSource,
+  disabled,
   notes,
+  initData,
   onMarkedAsDone,
   onAddToQueue,
   cocktailName,
@@ -45,7 +48,7 @@ export default function StatisticActions({
             setSubmitting: setSubmittingQueue,
           })
         }
-        disabled={submittingQueue}
+        disabled={submittingQueue || disabled?.list}
       >
         <MdPlaylistAdd />
         Liste
@@ -56,10 +59,16 @@ export default function StatisticActions({
         className={'btn btn-outline flex-1'}
         onClick={() =>
           modalContext.openModal(
-            <AddCocktailToQueueModal workspaceId={workspaceId} cocktailId={cocktailId} actionSource={actionSource} cocktailName={cocktailName} />,
+            <AddCocktailToQueueModal
+              workspaceId={workspaceId}
+              cocktailId={cocktailId}
+              actionSource={actionSource}
+              cocktailName={cocktailName}
+              initComment={initData?.comment}
+            />,
           )
         }
-        disabled={submittingQueue}
+        disabled={submittingQueue || disabled?.listWithNote}
       >
         <MdPlaylistAdd />
         mit Notiz
@@ -90,7 +99,7 @@ export default function StatisticActions({
             },
           })
         }
-        disabled={submittingStatistic}
+        disabled={submittingStatistic || disabled?.markAsDone}
       >
         <FaCheck />
         Gemacht
