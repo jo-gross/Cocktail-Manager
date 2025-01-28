@@ -26,7 +26,7 @@ export default function CocktailRatingsModal(props: CocktailRatingModalProps) {
 
   const { workspaceId } = router.query;
 
-  const avgRating = (cocktailRatings ?? []).reduce((acc, rating) => acc + rating.rating ?? 0, 0) / (cocktailRatings ?? []).length;
+  const avgRating = (cocktailRatings ?? []).reduce((acc, rating) => acc + (rating.rating ?? 0), 0) / (cocktailRatings ?? []).length;
 
   const [search, setSearch] = React.useState<string>('');
 

@@ -173,16 +173,16 @@ export default function OverviewPage() {
   }, [cocktailCards, router, selectedCardId, sortCards, workspaceId]);
 
   useEffect(() => {
-    setShowImage(userContext.user?.settings?.find((s) => s.setting == Setting.showImage)?.value == 'true' ?? false);
-    setShowTags(userContext.user?.settings?.find((s) => s.setting == Setting.showTags)?.value == 'true' ?? false);
-    setLessItems(userContext.user?.settings?.find((s) => s.setting == Setting.lessItems)?.value == 'true' ?? false);
-    setShowStatisticActions(userContext.user?.settings?.find((s) => s.setting == Setting.showStatisticActions)?.value == 'true' ?? false);
-    setShowQueueAsOverlay(userContext.user?.settings?.find((s) => s.setting == Setting.showQueueAsOverlay)?.value == 'true' ?? false);
-    setShowDescription(userContext.user?.settings?.find((s) => s.setting == Setting.showDescription)?.value == 'true' ?? false);
-    setShowNotes(userContext.user?.settings?.find((s) => s.setting == Setting.showNotes)?.value == 'true' ?? false);
-    setShowHistory(userContext.user?.settings?.find((s) => s.setting == Setting.showHistory)?.value == 'true' ?? false);
-    setShowTime(userContext.user?.settings?.find((s) => s.setting == Setting.showTime)?.value == 'true' ?? false);
-    setShowRating(userContext.user?.settings?.find((s) => s.setting == Setting.showRating)?.value == 'true' ?? false);
+    setShowImage(userContext.user?.settings?.find((s) => s.setting == Setting.showImage)?.value == 'true');
+    setShowTags(userContext.user?.settings?.find((s) => s.setting == Setting.showTags)?.value == 'true');
+    setLessItems(userContext.user?.settings?.find((s) => s.setting == Setting.lessItems)?.value == 'true');
+    setShowStatisticActions(userContext.user?.settings?.find((s) => s.setting == Setting.showStatisticActions)?.value == 'true');
+    setShowQueueAsOverlay(userContext.user?.settings?.find((s) => s.setting == Setting.showQueueAsOverlay)?.value == 'true');
+    setShowDescription(userContext.user?.settings?.find((s) => s.setting == Setting.showDescription)?.value == 'true');
+    setShowNotes(userContext.user?.settings?.find((s) => s.setting == Setting.showNotes)?.value == 'true');
+    setShowHistory(userContext.user?.settings?.find((s) => s.setting == Setting.showHistory)?.value == 'true');
+    setShowTime(userContext.user?.settings?.find((s) => s.setting == Setting.showTime)?.value == 'true');
+    setShowRating(userContext.user?.settings?.find((s) => s.setting == Setting.showRating)?.value == 'true');
   }, [userContext.user?.settings]);
 
   const [currentTime, setCurrentTime] = useState(new Date());
