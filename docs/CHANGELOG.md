@@ -1,3 +1,24 @@
+# [1.11.0](https://github.com/jo-gross/Cocktail-Manager/compare/v1.10.0...v1.11.0) (2025-01-28)
+
+
+### Bug Fixes
+
+* Added cocktail name to add rating modal ([ace4dd9](https://github.com/jo-gross/Cocktail-Manager/commit/ace4dd9f09e81a0e82605dbcdda7d94a992fd49f))
+* Fixed number localization and cocktail queue mobile layout ([#510](https://github.com/jo-gross/Cocktail-Manager/issues/510)) ([4e4adcb](https://github.com/jo-gross/Cocktail-Manager/commit/4e4adcb00d192ddbf9106430c26d29e0853ffb48))
+* Made long notes, history, and description fields collapsible ([#503](https://github.com/jo-gross/Cocktail-Manager/issues/503)) ([87ded4e](https://github.com/jo-gross/Cocktail-Manager/commit/87ded4eb04cd4c897f64c4ba2519397ce4f7ec18))
+* Made page titles consistent ([d32b735](https://github.com/jo-gross/Cocktail-Manager/commit/d32b7359d8ba5565e501d3348150d72f18645ee4))
+* Moved user settings to separate page ([#532](https://github.com/jo-gross/Cocktail-Manager/issues/532)) ([dc252b0](https://github.com/jo-gross/Cocktail-Manager/commit/dc252b028ae4523d83591927cb5ba245e7d67ea0))
+* Named all entities in the delete confirmation dialog ([#516](https://github.com/jo-gross/Cocktail-Manager/issues/516)) ([a5d146e](https://github.com/jo-gross/Cocktail-Manager/commit/a5d146e843e2448f9e1aa924559f4ba1b935d5a8))
+* Rating in the search modal has now the correct value ([3cd8824](https://github.com/jo-gross/Cocktail-Manager/commit/3cd8824d91975464d5b38d6cd715642ce4b95394))
+
+
+### Features
+
+* Added 'group by day' option in statistics ([#527](https://github.com/jo-gross/Cocktail-Manager/issues/527)) ([d2c5440](https://github.com/jo-gross/Cocktail-Manager/commit/d2c54407d89cebf088c8e890c5fed312abae0d40))
+* Added cocktail amount adjustment in detail modal ([#519](https://github.com/jo-gross/Cocktail-Manager/issues/519)) ([bc04259](https://github.com/jo-gross/Cocktail-Manager/commit/bc04259b334e55ddd2714a159425321164c00fd5))
+* Added cocktail´s tag suggestion based on the ingredient tags ([#512](https://github.com/jo-gross/Cocktail-Manager/issues/512)) ([4a5b9ff](https://github.com/jo-gross/Cocktail-Manager/commit/4a5b9ffd26fcdfbd9e3a0e2269bd1168707d2b1e))
+* Improved workspace join process ([#522](https://github.com/jo-gross/Cocktail-Manager/issues/522)) ([834af42](https://github.com/jo-gross/Cocktail-Manager/commit/834af4297792eb5c44c0b21a02d1d056d8d5c2cb))
+
 # [1.10.0](https://github.com/jo-gross/Cocktail-Manager/compare/v1.9.7...v1.10.0) (2025-01-07)
 
 
