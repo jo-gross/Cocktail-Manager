@@ -1,3 +1,10 @@
+## [1.11.1](https://github.com/jo-gross/Cocktail-Manager/compare/v1.11.0...v1.11.1) (2025-01-29)
+
+
+### Bug Fixes
+
+* Internal statistic error ([6ab4feb](https://github.com/jo-gross/Cocktail-Manager/commit/6ab4feb14af3fca0bfe73cbf323d7164dfd0d2fe))
+
 # [1.11.0](https://github.com/jo-gross/Cocktail-Manager/compare/v1.10.0...v1.11.0) (2025-01-28)
 
 
