@@ -7,6 +7,7 @@ import { withHttpMethods } from '../../../../../../middleware/api/handleMethods'
 import { Role } from '@prisma/client';
 import HTTPMethod from 'http-method-enum';
 import { CocktailStatisticItemFull } from '../../../../../../models/CocktailStatisticItemFull';
+import '../../../../../../lib/DateUtils';
 
 export default withHttpMethods({
   [HTTPMethod.GET]: withWorkspacePermission([Role.USER], async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
