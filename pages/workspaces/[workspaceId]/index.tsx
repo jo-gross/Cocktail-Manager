@@ -371,18 +371,28 @@ export default function OverviewPage() {
                           };
                         })
                         .sortBy(['cocktailName', (item) => -(item.notes ?? '')]) // Sortiere nach cocktailName (asc) und notes (desc)
-                    : _(cocktailQueue).sortBy('timestamp')
-                  ) // Sortiere nach timestamp (desc)
+                    : _(cocktailQueue)
+                        .sortBy('timestamp') // Sortiere nach timestamp (desc)
+                        .map((item, key) => {
+                          return {
+                            cocktailId: item.cocktailId,
+                            notes: item.notes,
+                            cocktailName: item.cocktailName,
+                            count: 1,
+                            oldestTimestamp: item.timestamp,
+                          };
+                        })
+                  )
                     .value()
                     .map((cocktailQueueItem, index) => (
                       <div key={`cocktailQueue-item-${index}`} className={'flex w-full flex-row flex-wrap justify-between gap-2 pb-1 pt-1 lg:flex-col'}>
                         <div className={'flex flex-row flex-wrap items-center justify-between gap-1'}>
                           <div className={'font-bold'}>
-                            <strong>{cocktailQueueItem.count ?? 1}x</strong> {cocktailQueueItem.cocktailName}
+                            <strong>{cocktailQueueItem.count}x</strong> {cocktailQueueItem.cocktailName}
                           </div>
                           <span className={'flex flex-wrap gap-1'}>
                             {cocktailQueueItem.notes && <span className={'italic'}>mit Notiz</span>}
-                            (seit {new Date(cocktailQueueItem.oldestTimestamp ?? cocktailQueueItem.timestamp).toFormatTimeString()} Uhr)
+                            (seit {new Date(cocktailQueueItem?.oldestTimestamp).toFormatTimeString()} Uhr)
                           </span>
                         </div>
                         {cocktailQueueItem.notes && <span className={'long-text-format italic lg:pb-1'}>Notiz: {cocktailQueueItem.notes}</span>}
