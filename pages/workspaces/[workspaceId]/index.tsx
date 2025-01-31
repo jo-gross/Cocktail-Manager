@@ -38,6 +38,7 @@ export default function OverviewPage() {
   const [showHistory, setShowHistory] = useState(false);
   const [showTime, setShowTime] = useState(false);
   const [showRating, setShowRating] = useState(false);
+  const [queueGrouping, setQueueGrouping] = useState<'ALPHABETIC' | 'NONE'>('NONE');
 
   const [cocktailCards, setCocktailCards] = useState<CocktailCardFull[]>([]);
   const [loadingCards, setLoadingCards] = useState(true);
@@ -183,6 +184,7 @@ export default function OverviewPage() {
     setShowHistory(userContext.user?.settings?.find((s) => s.setting == Setting.showHistory)?.value == 'true');
     setShowTime(userContext.user?.settings?.find((s) => s.setting == Setting.showTime)?.value == 'true');
     setShowRating(userContext.user?.settings?.find((s) => s.setting == Setting.showRating)?.value == 'true');
+    setQueueGrouping(userContext.user?.settings?.find((s) => s.setting == Setting.queueGrouping)?.value as 'ALPHABETIC' | 'NONE');
   }, [userContext.user?.settings]);
 
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -237,6 +239,7 @@ export default function OverviewPage() {
   const [isDropdownScrollable, setIsDropdownScrollable] = useState(false);
 
   const [showRecipeOptions, setShowRecipeOptions] = useState(false);
+  const [showQueueOptions, setShowQueueOptions] = useState(false);
   const [showLayoutOptions, setShowLayoutOptions] = useState(false);
 
   const checkDropdownScroll = useCallback(() => {
@@ -352,32 +355,52 @@ export default function OverviewPage() {
               }
             >
               <div className={`${showQueueAsOverlay ? 'bg-opacity-75 lg:max-w-60' : ''} flex w-full flex-col rounded-xl bg-base-300 p-2 print:hidden`}>
-                <div className={'underline'}>Warteschlange (A-Z)</div>
+                <div className={'underline'}>Warteschlange ({queueGrouping == 'ALPHABETIC' ? 'A-Z' : 'Chronologisch'})</div>
                 <div className={'flex flex-col divide-y'}>
-                  {_(cocktailQueue)
-                    // .groupBy('cocktailId')
-                    .groupBy((item) => `${item.cocktailId}||${item.notes}`) // Gruppierung basierend auf cocktailId und notes
-                    .map((items, key) => {
-                      const [cocktailId, notes] = key.split('||'); // Extrahiere cocktailId und notes aus dem Key
-                      return {
-                        cocktailId,
-                        notes: notes === 'null' || notes === '' ? undefined : notes,
-                        cocktailName: items[0].cocktailName,
-                        count: items.length,
-                        oldestTimestamp: _.minBy(items, 'timestamp')!.timestamp, // Finde den ältesten Timestamp
-                      };
-                    })
-                    .sortBy(['cocktailName', (item) => -(item.notes ?? '')]) // Sortiere nach cocktailName (asc) und notes (desc)
+                  {(queueGrouping == 'ALPHABETIC'
+                    ? _(cocktailQueue)
+                        // .groupBy('cocktailId')
+                        .groupBy((item) => `${item.cocktailId}||${item.notes}`) // Gruppierung basierend auf cocktailId und notes
+                        .map((items, key) => {
+                          const [cocktailId, notes] = key.split('||'); // Extrahiere cocktailId und notes aus dem Key
+                          return {
+                            cocktailId,
+                            notes: notes === 'null' || notes === '' ? undefined : notes,
+                            cocktailName: items[0].cocktailName,
+                            count: items.length,
+                            oldestTimestamp: _.minBy(items, 'timestamp')!.timestamp, // Finde den ältesten Timestamp
+                            total: undefined,
+                          };
+                        })
+                        .sortBy(['cocktailName', (item) => -(item.notes ?? '')]) // Sortiere nach cocktailName (asc) und notes (desc)
+                    : _(cocktailQueue)
+                        .sortBy('timestamp') // Sortiere nach timestamp (desc)
+                        .map((item, key) => {
+                          return {
+                            cocktailId: item.cocktailId,
+                            notes: item.notes,
+                            cocktailName: item.cocktailName,
+                            count: 1,
+                            oldestTimestamp: item.timestamp,
+                            total: cocktailQueue.filter((i) => i.cocktailId == item.cocktailId && i.notes == item.notes).length,
+                          };
+                        })
+                  )
                     .value()
                     .map((cocktailQueueItem, index) => (
                       <div key={`cocktailQueue-item-${index}`} className={'flex w-full flex-row flex-wrap justify-between gap-2 pb-1 pt-1 lg:flex-col'}>
                         <div className={'flex flex-row flex-wrap items-center justify-between gap-1'}>
                           <div className={'font-bold'}>
-                            <strong>{cocktailQueueItem.count}x</strong> {cocktailQueueItem.cocktailName}
+                            <strong>{cocktailQueueItem.count}x</strong> {cocktailQueueItem.cocktailName}{' '}
+                            {cocktailQueueItem.total != undefined && cocktailQueueItem.total > 1 ? (
+                              <span className={'font-thin'}>(Insg. {cocktailQueueItem.total} gleiche)</span>
+                            ) : (
+                              <></>
+                            )}
                           </div>
                           <span className={'flex flex-wrap gap-1'}>
                             {cocktailQueueItem.notes && <span className={'italic'}>mit Notiz</span>}
-                            (seit {new Date(cocktailQueueItem.oldestTimestamp).toFormatTimeString()} Uhr)
+                            (seit {new Date(cocktailQueueItem?.oldestTimestamp).toFormatTimeString()} Uhr)
                           </span>
                         </div>
                         {cocktailQueueItem.notes && <span className={'long-text-format italic lg:pb-1'}>Notiz: {cocktailQueueItem.notes}</span>}
@@ -733,6 +756,52 @@ export default function OverviewPage() {
                             }}
                           />
                         </label>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className={'divider'}></div>
+
+                  <div className={`flex flex-col gap-2`}>
+                    <div className={'flex cursor-pointer flex-row items-center justify-between'} onClick={() => setShowQueueOptions(!showQueueOptions)}>
+                      <div className={'font-bold'}>Warteschlange</div>
+                      <div>{showQueueOptions ? <FaAngleUp /> : <FaAngleDown />}</div>
+                    </div>
+                    <div className={`flex flex-col gap-2 ${showQueueOptions ? '' : 'hidden'}`}>
+                      <div className="form-control">
+                        <div className={''}>Gruppierung</div>
+                        <div key={'grouping-alphabetic'} className="form-control">
+                          <label className="label">
+                            <div className={'label-text'}>Cocktailname (A-Z)</div>
+                            <input
+                              name={'card-radio'}
+                              type={'radio'}
+                              className={'radio'}
+                              value={'ALPHABETIC'}
+                              checked={queueGrouping == 'ALPHABETIC'}
+                              readOnly={true}
+                              onClick={() => {
+                                setQueueGrouping('ALPHABETIC');
+                                userContext.updateUserSetting(Setting.queueGrouping, 'ALPHABETIC');
+                              }}
+                            />
+                          </label>
+                          <label className="label">
+                            <div className={'label-text'}>Keine (Chronologisch)</div>
+                            <input
+                              name={'card-radio'}
+                              type={'radio'}
+                              className={'radio'}
+                              value={'NONE'}
+                              checked={queueGrouping == 'NONE' || queueGrouping == undefined}
+                              readOnly={true}
+                              onClick={() => {
+                                setQueueGrouping('NONE');
+                                userContext.updateUserSetting(Setting.queueGrouping, 'NONE');
+                              }}
+                            />
+                          </label>
+                        </div>
                       </div>
                     </div>
                   </div>

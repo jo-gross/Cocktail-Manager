@@ -58,7 +58,7 @@ model User {
   settings              UserSetting[]
   CocktailCalculation   CocktailCalculation[]
   CocktailStatisticItem CocktailStatisticItem[]
-  WorkspaceJoinRequest WorkspaceJoinRequest[]
+  WorkspaceJoinRequest  WorkspaceJoinRequest[]
 }
 
 enum Setting {
@@ -74,6 +74,7 @@ enum Setting {
   showDescription
   showTime
   showRating
+  queueGrouping
 }
 
 enum WorkspaceSettingKey {
@@ -110,7 +111,7 @@ model WorkspaceJoinCode {
 
   expires     DateTime?
   onlyUseOnce Boolean   @default(false)
-  used Int @default(0)
+  used        Int       @default(0)
 
   workspaceId String
   workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
@@ -189,8 +190,8 @@ model Workspace {
   IngredientVolume                  IngredientVolume[]
   CocktailQueue                     CocktailQueue[]
   Ice                               Ice[]
-  WorkspaceJoinCode    WorkspaceJoinCode[]
-  WorkspaceJoinRequest WorkspaceJoinRequest[]
+  WorkspaceJoinCode                 WorkspaceJoinCode[]
+  WorkspaceJoinRequest              WorkspaceJoinRequest[]
 }
 
 model Signage {
@@ -507,7 +508,7 @@ model CocktailQueue {
   cocktail    CocktailRecipe @relation(fields: [cocktailId], references: [id], onDelete: Cascade)
   workspaceId String
   workspace   Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  notes String?
+  notes       String?
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @default(now()) @updatedAt
 }
