@@ -239,6 +239,7 @@ export default function OverviewPage() {
   const [isDropdownScrollable, setIsDropdownScrollable] = useState(false);
 
   const [showRecipeOptions, setShowRecipeOptions] = useState(false);
+  const [showQueueOptions, setShowQueueOptions] = useState(false);
   const [showLayoutOptions, setShowLayoutOptions] = useState(false);
 
   const checkDropdownScroll = useCallback(() => {
@@ -354,7 +355,7 @@ export default function OverviewPage() {
               }
             >
               <div className={`${showQueueAsOverlay ? 'bg-opacity-75 lg:max-w-60' : ''} flex w-full flex-col rounded-xl bg-base-300 p-2 print:hidden`}>
-                <div className={'underline'}>Warteschlange ({queueGrouping == 'NONE' ? 'Chronologisch' : 'A-Z'})</div>
+                <div className={'underline'}>Warteschlange ({queueGrouping == 'ALPHABETIC' ? 'A-Z' : 'Chronologisch'})</div>
                 <div className={'flex flex-col divide-y'}>
                   {(queueGrouping == 'ALPHABETIC'
                     ? _(cocktailQueue)
@@ -368,6 +369,7 @@ export default function OverviewPage() {
                             cocktailName: items[0].cocktailName,
                             count: items.length,
                             oldestTimestamp: _.minBy(items, 'timestamp')!.timestamp, // Finde den ältesten Timestamp
+                            total: undefined,
                           };
                         })
                         .sortBy(['cocktailName', (item) => -(item.notes ?? '')]) // Sortiere nach cocktailName (asc) und notes (desc)
@@ -380,6 +382,7 @@ export default function OverviewPage() {
                             cocktailName: item.cocktailName,
                             count: 1,
                             oldestTimestamp: item.timestamp,
+                            total: cocktailQueue.filter((i) => i.cocktailId == item.cocktailId && i.notes == item.notes).length,
                           };
                         })
                   )
@@ -388,7 +391,12 @@ export default function OverviewPage() {
                       <div key={`cocktailQueue-item-${index}`} className={'flex w-full flex-row flex-wrap justify-between gap-2 pb-1 pt-1 lg:flex-col'}>
                         <div className={'flex flex-row flex-wrap items-center justify-between gap-1'}>
                           <div className={'font-bold'}>
-                            <strong>{cocktailQueueItem.count}x</strong> {cocktailQueueItem.cocktailName}
+                            <strong>{cocktailQueueItem.count}x</strong> {cocktailQueueItem.cocktailName}{' '}
+                            {cocktailQueueItem.total != undefined && cocktailQueueItem.total > 1 ? (
+                              <span className={'font-thin'}>(Insg. {cocktailQueueItem.total} gleiche)</span>
+                            ) : (
+                              <></>
+                            )}
                           </div>
                           <span className={'flex flex-wrap gap-1'}>
                             {cocktailQueueItem.notes && <span className={'italic'}>mit Notiz</span>}
@@ -755,11 +763,11 @@ export default function OverviewPage() {
                   <div className={'divider'}></div>
 
                   <div className={`flex flex-col gap-2`}>
-                    <div className={'flex cursor-pointer flex-row items-center justify-between'} onClick={() => setShowRecipeOptions(!showRecipeOptions)}>
+                    <div className={'flex cursor-pointer flex-row items-center justify-between'} onClick={() => setShowQueueOptions(!showQueueOptions)}>
                       <div className={'font-bold'}>Warteschlange</div>
-                      <div>{showRecipeOptions ? <FaAngleUp /> : <FaAngleDown />}</div>
+                      <div>{showQueueOptions ? <FaAngleUp /> : <FaAngleDown />}</div>
                     </div>
-                    <div className={`flex flex-col gap-2 ${showRecipeOptions ? '' : 'hidden'}`}>
+                    <div className={`flex flex-col gap-2 ${showQueueOptions ? '' : 'hidden'}`}>
                       <div className="form-control">
                         <div className={''}>Gruppierung</div>
                         <div key={'grouping-alphabetic'} className="form-control">
@@ -785,7 +793,7 @@ export default function OverviewPage() {
                               type={'radio'}
                               className={'radio'}
                               value={'NONE'}
-                              checked={queueGrouping == 'NONE'}
+                              checked={queueGrouping == 'NONE' || queueGrouping == undefined}
                               readOnly={true}
                               onClick={() => {
                                 setQueueGrouping('NONE');
