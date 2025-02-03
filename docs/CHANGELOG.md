@@ -1,3 +1,12 @@
+## [1.11.2](https://github.com/jo-gross/Cocktail-Manager/compare/v1.11.1...v1.11.2) (2025-02-03)
+
+
+### Bug Fixes
+
+* Dockerfile ([a91ed94](https://github.com/jo-gross/Cocktail-Manager/commit/a91ed940391de5b38604d7be61740c8b5b6725db))
+* Layout fixes for ingredient, garnish and glass form ([#541](https://github.com/jo-gross/Cocktail-Manager/issues/541)) ([db19507](https://github.com/jo-gross/Cocktail-Manager/commit/db195074ae5ba138c7203b3ffbda85efaaece74d))
+* made cocktail queue grouping/ordering adjustable ([#534](https://github.com/jo-gross/Cocktail-Manager/issues/534)) ([7912629](https://github.com/jo-gross/Cocktail-Manager/commit/791262958d84a2a19cc912c274faa9f482277092))
+
 ## [1.11.1](https://github.com/jo-gross/Cocktail-Manager/compare/v1.11.0...v1.11.1) (2025-01-29)
 
 
