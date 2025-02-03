@@ -30,8 +30,8 @@ importers:
         specifier: 1.0.2
         version: 1.0.2
       express-validator:
-        specifier: 7.2.0
-        version: 7.2.0
+        specifier: 7.2.1
+        version: 7.2.1
       formik:
         specifier: 2.4.6
         version: 2.4.6(react@18.3.1)
@@ -2423,8 +2423,8 @@ packages:
     resolution: {integrity: sha512-lSgHc4Elo2m6bUDhc3Hl/VxvUDJdQWI40RZ4KMY9bKRc+hgMOT7II/JjbNDhI8VnMtrCb7U/fhpJIkLORZozWw==}
     engines: {node: '>=18'}
 
-  express-validator@7.2.0:
-    resolution: {integrity: sha512-I2ByKD8panjtr8Y05l21Wph9xk7kk64UMyvJCl/fFM/3CTJq8isXYPLeKW/aZBCdb/LYNv63PwhY8khw8VWocA==}
+  express-validator@7.2.1:
+    resolution: {integrity: sha512-CjNE6aakfpuwGaHQZ3m8ltCG2Qvivd7RHtVMS/6nVxOM7xVGqr4bhflsm4+N5FP5zI7Zxp+Hae+9RE+o8e3ZOQ==}
     engines: {node: '>= 8.0.0'}
 
   extend@3.0.2:
@@ -7820,7 +7820,7 @@ snapshots:
       strip-final-newline: 4.0.0
       yoctocolors: 2.0.2
 
-  express-validator@7.2.0:
+  express-validator@7.2.1:
     dependencies:
       lodash: 4.17.21
       validator: 13.12.0
