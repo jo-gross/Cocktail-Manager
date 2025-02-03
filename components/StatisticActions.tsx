@@ -75,7 +75,7 @@ export default function StatisticActions({
         {submittingQueue ? <span className={'loading loading-spinner'}></span> : <></>}
       </button>
       <button
-        className={'col-span-auto btn btn-outline btn-primary'}
+        className={'btn btn-outline btn-primary col-span-2 md:col-span-1'}
         onClick={() =>
           addCocktailToStatistic({
             workspaceId: workspaceId,

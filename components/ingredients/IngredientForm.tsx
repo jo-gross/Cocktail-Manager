@@ -211,7 +211,7 @@ export function IngredientForm(props: IngredientFormProps) {
       }}
     >
       {({ values, setFieldValue, errors, setFieldError, handleChange, handleBlur, handleSubmit, isSubmitting, isValid }) => (
-        <form onSubmit={handleSubmit} className={'grid grid-cols-1 gap-2 md:max-w-4xl md:grid-cols-2'}>
+        <form onSubmit={handleSubmit} className={'grid grid-cols-1 gap-2 md:grid-cols-2'}>
           <div className={'form-control col-span-full'}>
             <label className={'label'} htmlFor={'link'}>
               <span className={'label-text'}>Über Link importieren</span>
@@ -293,392 +293,398 @@ export function IngredientForm(props: IngredientFormProps) {
 
           <div className={'divider-sm col-span-full'}></div>
 
-          <div className={'form-control col-span-full'}>
-            <label className={'label'} htmlFor={'name'}>
-              <span className={'label-text'}>Name der Zutat</span>
-              <span className={'label-text-alt space-x-2 text-error'}>
-                <span>
-                  <>{errors.name && errors.name}</>
-                </span>
-                <span>*</span>
-              </span>
-            </label>
-            <input
-              id={'name'}
-              type={'text'}
-              autoComplete={'off'}
-              className={`input input-bordered ${errors.name && 'input-error'}`}
-              onChange={(event) => {
-                if (event.target.value.length > 2) {
-                  checkSimilarName(event.target.value);
-                } else {
-                  setSimilarIngredient(undefined);
-                }
-                handleChange(event);
-              }}
-              onBlur={handleBlur}
-              value={values.name}
-              name={'name'}
-            />
-            {similarIngredient && (
-              <div className="label">
-                <span className="label-text-alt text-warning">
-                  Eine ähnliche Zutat mit dem Namen <strong>{similarIngredient.name}</strong> existiert bereits.
-                </span>
-              </div>
-            )}
-          </div>
-          <div className={'flex flex-col gap-2'}>
-            <div className={'form-control'}>
-              <label className={'label'} htmlFor={'shortName'}>
-                <span className={'label-text'}>Eigene Bezeichnung</span>
+          <div className={'grid grid-cols-1 gap-2 xl:grid-cols-2'}>
+            <div className={'form-control col-span-full'}>
+              <label className={'label'} htmlFor={'name'}>
+                <span className={'label-text'}>Name der Zutat</span>
                 <span className={'label-text-alt space-x-2 text-error'}>
                   <span>
-                    <>{errors.shortName && errors.shortName}</>
+                    <>{errors.name && errors.name}</>
                   </span>
+                  <span>*</span>
                 </span>
               </label>
               <input
-                id={'shortName'}
+                id={'name'}
                 type={'text'}
-                className={`input input-bordered ${errors.shortName && 'input-error'}`}
-                onChange={handleChange}
+                autoComplete={'off'}
+                className={`input input-bordered ${errors.name && 'input-error'}`}
+                onChange={(event) => {
+                  if (event.target.value.length > 2) {
+                    checkSimilarName(event.target.value);
+                  } else {
+                    setSimilarIngredient(undefined);
+                  }
+                  handleChange(event);
+                }}
                 onBlur={handleBlur}
-                value={values.shortName}
-                name={'shortName'}
+                value={values.name}
+                name={'name'}
               />
-            </div>
-            <div className={'form-control'}>
-              <label className={'label'} htmlFor={'price'}>
-                <span className={'label-text'}>Preis</span>
-                <span className={'label-text-alt space-x-2 text-error'}>
-                  <span>
-                    <>{errors.price && errors.price}</>
+              {similarIngredient && (
+                <div className="label">
+                  <span className="label-text-alt text-warning">
+                    Eine ähnliche Zutat mit dem Namen <strong>{similarIngredient.name}</strong> existiert bereits.
                   </span>
-                </span>
-              </label>
-              <div className={'join'}>
+                </div>
+              )}
+            </div>
+            <div className={'flex flex-col gap-2'}>
+              <div className={'form-control'}>
+                <label className={'label'} htmlFor={'shortName'}>
+                  <span className={'label-text'}>Eigene Bezeichnung</span>
+                  <span className={'label-text-alt space-x-2 text-error'}>
+                    <span>
+                      <>{errors.shortName && errors.shortName}</>
+                    </span>
+                  </span>
+                </label>
                 <input
-                  id={'price'}
-                  type={'number'}
-                  className={`input join-item input-bordered w-full ${errors.price && 'input-error'}`}
-                  value={values.price}
+                  id={'shortName'}
+                  type={'text'}
+                  className={`input input-bordered ${errors.shortName && 'input-error'}`}
                   onChange={handleChange}
                   onBlur={handleBlur}
-                  name={'price'}
+                  value={values.shortName}
+                  name={'shortName'}
                 />
-                <span className={'btn btn-secondary join-item'}>€</span>
+              </div>
+              <div className={'form-control'}>
+                <label className={'label'} htmlFor={'price'}>
+                  <span className={'label-text'}>Preis</span>
+                  <span className={'label-text-alt space-x-2 text-error'}>
+                    <span>
+                      <>{errors.price && errors.price}</>
+                    </span>
+                  </span>
+                </label>
+                <div className={'join'}>
+                  <input
+                    id={'price'}
+                    type={'number'}
+                    className={`input join-item input-bordered w-full ${errors.price && 'input-error'}`}
+                    value={values.price}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    name={'price'}
+                  />
+                  <span className={'btn btn-secondary join-item'}>€</span>
+                </div>
               </div>
             </div>
-          </div>
-          <div>
-            <div className={'label'}>
-              <span className={'label-text'}>Tags</span>
-              <span className={'label-text-alt text-error'}>
-                <>{errors.tags && errors.tags}</>
-              </span>
+            <div>
+              <div className={'label'}>
+                <span className={'label-text'}>Tags</span>
+                <span className={'label-text-alt text-error'}>
+                  <>{errors.tags && errors.tags}</>
+                </span>
+              </div>
+              <DaisyUITagInput
+                value={values.tags}
+                onChange={(tags) =>
+                  setFieldValue(
+                    'tags',
+                    updateTags(tags, (text) => setFieldError('tags', text ?? 'Tag fehlerhaft')),
+                  )
+                }
+                validate={(tag) => validateTag(tag, (text) => setFieldError('tags', text ?? 'Tag fehlerhaft'))}
+              />
             </div>
-            <DaisyUITagInput
-              value={values.tags}
-              onChange={(tags) =>
-                setFieldValue(
-                  'tags',
-                  updateTags(tags, (text) => setFieldError('tags', text ?? 'Tag fehlerhaft')),
-                )
-              }
-              validate={(tag) => validateTag(tag, (text) => setFieldError('tags', text ?? 'Tag fehlerhaft'))}
-            />
-          </div>
 
-          <FieldArray name={'units'}>
-            {({ push: pushUnit, remove: removeUnit }) => (
-              <>
-                <div>
-                  <div className={'label-text'}>Mengen</div>
-                  <table className={'table table-zebra'}>
-                    <thead className={'bg-base-300'}>
-                      <tr>
-                        <td colSpan={4}>Verfügbare Einheiten</td>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {values.units.length == 0 ? (
-                        <tr>
-                          <td colSpan={4} className={'text-center'}>
-                            Keine Einheiten hinzugefügt
-                          </td>
-                        </tr>
-                      ) : (
-                        (values.units as FormUnitValue[]).map((unit, index) => (
-                          <tr key={`selected-units-${unit.unitId}`}>
-                            <td>
-                              {unit.volume.toLocaleString(undefined, {
-                                minimumFractionDigits: 0,
-                                maximumFractionDigits: 2,
-                              })}
-                            </td>
-                            <td>{userContext.getTranslation(allUnits.find((availableUnit) => availableUnit.id == unit.unitId)?.name ?? 'N/A', 'de')}</td>
-                            <td>
-                              {values.price != undefined ? (values.price / unit.volume).toFixed(2).replace(/\D00(?=\D*$)/, '') : '-'} €/
-                              {userContext.getTranslation(allUnits.find((availableUnit) => availableUnit.id == unit.unitId)?.name ?? 'N/A', 'de')}
-                            </td>
-                            <td className={'flex flex-row items-center justify-center'}>
-                              <div
-                                className={'btn btn-square btn-error btn-sm'}
-                                // type={'button'}
-                                onClick={() => {
-                                  removeUnit(index);
-                                }}
-                              >
-                                <FaTrashAlt />
-                              </div>
-                            </td>
+            <FieldArray name={'units'}>
+              {({ push: pushUnit, remove: removeUnit }) => (
+                <>
+                  <div>
+                    <div className={'label-text'}>Mengen</div>
+                    <div className={'overflow-x-auto'}>
+                      <table className={'table table-zebra'}>
+                        <thead className={'bg-base-300'}>
+                          <tr>
+                            <td colSpan={4}>Verfügbare Einheiten</td>
                           </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-                <div>
-                  <div className={'form-control'}>
-                    <label className={'label'} htmlFor={'anotherVolume'}>
-                      <span className={'label-text'}>Weitere Menge hinzufügen</span>
-                      <span className={'label-text-alt space-x-2 text-error'}>
-                        <span>
-                          <>{errors.volume && errors.volume}</>
-                        </span>
-                        <span>*</span>
-                      </span>
-                    </label>
-                    <div className={'join'}>
-                      <input
-                        id={'anotherVolume'}
-                        type={'number'}
-                        className={`input input-sm join-item input-bordered w-full ${errors.volume && 'input-error'}`}
-                        value={values.volume}
-                        onChange={handleChange}
-                        onBlur={handleBlur}
-                        name={'volume'}
-                      />
-                      <select
-                        className={`join-item select select-bordered select-sm ${errors.selectedUnit && 'select-error'}`}
-                        onChange={handleChange}
-                        onBlur={handleBlur}
-                        name={'selectedUnit'}
-                        value={values.selectedUnit}
-                      >
-                        {loadingUnits ? (
-                          <option value={''} disabled={true}>
-                            Lade...
-                          </option>
-                        ) : allUnits.length == 0 ? (
-                          <option value={''}>Keine Einheiten verfügbar</option>
-                        ) : (
-                          <>
-                            <option value={''} disabled>
-                              Auswählen...
-                            </option>
-                            {allUnits
-                              .sort((a, b) => userContext.getTranslation(a.name, 'de').localeCompare(userContext.getTranslation(b.name, 'de')))
-                              .map((unit) => (
-                                <option
-                                  key={`unit-option-${unit.id}`}
-                                  value={unit.id}
-                                  disabled={(values.units as FormUnitValue[]).find((u) => u.unitId == unit.id) != undefined}
-                                >
-                                  {userContext.getTranslation(unit.name, 'de')}
-                                </option>
-                              ))}
-                          </>
-                        )}
-                      </select>
-                      <button
-                        className={'btn btn-primary join-item btn-sm'}
-                        type={'button'}
-                        disabled={loadingUnits || values.volume == 0 || values.selectedUnit == '' || isNaN(values.volume) || values.selectedUnit == undefined}
-                        onClick={async () => {
-                          pushUnit({ unitId: values.selectedUnit, volume: values.volume });
-                          await setFieldValue('selectedUnit', '');
-                        }}
-                      >
-                        Hinzufügen
-                      </button>
+                        </thead>
+                        <tbody>
+                          {values.units.length == 0 ? (
+                            <tr>
+                              <td colSpan={4} className={'text-center'}>
+                                Keine Einheiten hinzugefügt
+                              </td>
+                            </tr>
+                          ) : (
+                            (values.units as FormUnitValue[]).map((unit, index) => (
+                              <tr key={`selected-units-${unit.unitId}`}>
+                                <td>
+                                  {unit.volume.toLocaleString(undefined, {
+                                    minimumFractionDigits: 0,
+                                    maximumFractionDigits: 2,
+                                  })}
+                                </td>
+                                <td>{userContext.getTranslation(allUnits.find((availableUnit) => availableUnit.id == unit.unitId)?.name ?? 'N/A', 'de')}</td>
+                                <td>
+                                  {values.price != undefined ? (values.price / unit.volume).toFixed(2).replace(/\D00(?=\D*$)/, '') : '-'} €/
+                                  {userContext.getTranslation(allUnits.find((availableUnit) => availableUnit.id == unit.unitId)?.name ?? 'N/A', 'de')}
+                                </td>
+                                <td className={'flex flex-row items-center justify-center'}>
+                                  <div
+                                    className={'btn btn-square btn-error btn-sm'}
+                                    // type={'button'}
+                                    onClick={() => {
+                                      removeUnit(index);
+                                    }}
+                                  >
+                                    <FaTrashAlt />
+                                  </div>
+                                </td>
+                              </tr>
+                            ))
+                          )}
+                        </tbody>
+                      </table>
                     </div>
                   </div>
                   <div>
-                    <div className={'label-text'}>Mengen vorschläge</div>
-                    <ul className={'list-inside list-disc'}>
-                      {_.uniqBy(
-                        defaultConversions
-                          .filter((conversion) => (formRef?.current?.values.units as FormUnitValue[]).map((u) => u.unitId).includes(conversion.fromUnitId))
-                          .filter((conversion) => !(formRef?.current?.values.units as FormUnitValue[]).map((u) => u.unitId).includes(conversion.toUnitId))
-                          .map((suggestion) => ({
-                            unitId: suggestion.toUnitId,
-                            volume:
-                              suggestion.factor * (formRef?.current?.values.units as FormUnitValue[]).find((u) => u.unitId == suggestion.fromUnitId)!.volume,
-                          })),
-                        function (e) {
-                          return e.unitId;
-                        },
-                      ).mapWithFallback(
-                        (suggestion, suggestionIndex) => (
-                          <li key={`unit-conversion-suggestion-${suggestionIndex}`} className={'space-x-2 italic'}>
-                            <span className={'p-2'}>{suggestion.volume.toFixed(2).replace(/\D00(?=\D*$)/, '')}</span>
-                            <span className={'p-2'}>
-                              {userContext.getTranslation(allUnits.find((unit) => unit.id == suggestion.unitId)?.name ?? 'N/A', 'de')}
-                            </span>
-                            <span
-                              className={'btn btn-ghost btn-sm'}
-                              onClick={async () => {
-                                pushUnit(suggestion);
-                              }}
-                            >
-                              Hinzufügen
-                            </span>
-                          </li>
-                        ),
-                        <div className={'italic'}>Keine weiteren Vorschläge</div>,
-                      )}
-                    </ul>
+                    <div className={'form-control'}>
+                      <label className={'label'} htmlFor={'anotherVolume'}>
+                        <span className={'label-text'}>Weitere Menge hinzufügen</span>
+                        <span className={'label-text-alt space-x-2 text-error'}>
+                          <span>
+                            <>{errors.volume && errors.volume}</>
+                          </span>
+                          <span>*</span>
+                        </span>
+                      </label>
+                      <div className={'join'}>
+                        <input
+                          id={'anotherVolume'}
+                          type={'number'}
+                          className={`input input-sm join-item input-bordered w-full ${errors.volume && 'input-error'}`}
+                          value={values.volume}
+                          onChange={handleChange}
+                          onBlur={handleBlur}
+                          name={'volume'}
+                        />
+                        <select
+                          className={`join-item select select-bordered select-sm ${errors.selectedUnit && 'select-error'}`}
+                          onChange={handleChange}
+                          onBlur={handleBlur}
+                          name={'selectedUnit'}
+                          value={values.selectedUnit}
+                        >
+                          {loadingUnits ? (
+                            <option value={''} disabled={true}>
+                              Lade...
+                            </option>
+                          ) : allUnits.length == 0 ? (
+                            <option value={''}>Keine Einheiten verfügbar</option>
+                          ) : (
+                            <>
+                              <option value={''} disabled>
+                                Auswählen...
+                              </option>
+                              {allUnits
+                                .sort((a, b) => userContext.getTranslation(a.name, 'de').localeCompare(userContext.getTranslation(b.name, 'de')))
+                                .map((unit) => (
+                                  <option
+                                    key={`unit-option-${unit.id}`}
+                                    value={unit.id}
+                                    disabled={(values.units as FormUnitValue[]).find((u) => u.unitId == unit.id) != undefined}
+                                  >
+                                    {userContext.getTranslation(unit.name, 'de')}
+                                  </option>
+                                ))}
+                            </>
+                          )}
+                        </select>
+                        <button
+                          className={'btn btn-primary join-item btn-sm'}
+                          type={'button'}
+                          disabled={loadingUnits || values.volume == 0 || values.selectedUnit == '' || isNaN(values.volume) || values.selectedUnit == undefined}
+                          onClick={async () => {
+                            pushUnit({ unitId: values.selectedUnit, volume: values.volume });
+                            await setFieldValue('selectedUnit', '');
+                          }}
+                        >
+                          Hinzufügen
+                        </button>
+                      </div>
+                    </div>
+                    <div>
+                      <div className={'label-text'}>Mengen vorschläge</div>
+                      <ul className={'list-inside list-disc'}>
+                        {_.uniqBy(
+                          defaultConversions
+                            .filter((conversion) => (formRef?.current?.values.units as FormUnitValue[]).map((u) => u.unitId).includes(conversion.fromUnitId))
+                            .filter((conversion) => !(formRef?.current?.values.units as FormUnitValue[]).map((u) => u.unitId).includes(conversion.toUnitId))
+                            .map((suggestion) => ({
+                              unitId: suggestion.toUnitId,
+                              volume:
+                                suggestion.factor * (formRef?.current?.values.units as FormUnitValue[]).find((u) => u.unitId == suggestion.fromUnitId)!.volume,
+                            })),
+                          function (e) {
+                            return e.unitId;
+                          },
+                        ).mapWithFallback(
+                          (suggestion, suggestionIndex) => (
+                            <li key={`unit-conversion-suggestion-${suggestionIndex}`} className={'space-x-2 italic'}>
+                              <span className={'p-2'}>{suggestion.volume.toFixed(2).replace(/\D00(?=\D*$)/, '')}</span>
+                              <span className={'p-2'}>
+                                {userContext.getTranslation(allUnits.find((unit) => unit.id == suggestion.unitId)?.name ?? 'N/A', 'de')}
+                              </span>
+                              <span
+                                className={'btn btn-ghost btn-sm'}
+                                onClick={async () => {
+                                  pushUnit(suggestion);
+                                }}
+                              >
+                                Hinzufügen
+                              </span>
+                            </li>
+                          ),
+                          <div className={'italic'}>Keine weiteren Vorschläge</div>,
+                        )}
+                      </ul>
+                    </div>
                   </div>
-                </div>
-              </>
-            )}
-          </FieldArray>
+                </>
+              )}
+            </FieldArray>
 
-          <div className={'col-span-full'}>
-            {values.image != undefined ? (
-              <div className={'label'}>
-                <span className={'label-text'}>Zutaten Bild</span>
-              </div>
-            ) : (
-              <></>
-            )}
-            {values.image == undefined && values.originalImage == undefined ? (
-              <UploadDropZone
-                onSelectedFilesChanged={async (file) => {
-                  if (file != undefined) {
-                    await setFieldValue('image', undefined);
-                    await setFieldValue('originalImage', file);
-                  } else {
-                    alertService.error('Datei konnte nicht ausgewählt werden.');
-                  }
-                }}
-              />
-            ) : values.image == undefined && values.originalImage != undefined ? (
-              <div className={'w-full'}>
-                <CropComponent
-                  isValid={isValid}
-                  aspect={1}
-                  imageToCrop={values.originalImage}
-                  onCroppedImageComplete={async (file) => {
-                    resizeImage(file, 400, 400, async (compressedImageFile) => {
-                      if (compressedImageFile) {
-                        await setFieldValue('image', await convertToBase64(new File([compressedImageFile], 'image.png', { type: 'image/png' })));
-                      } else {
-                        alertService.error('Bild konnte nicht skaliert werden.');
-                      }
-                    });
-                  }}
-                  onCropCancel={async () => {
-                    await setFieldValue('originalImage', undefined);
-                    await setFieldValue('image', undefined);
+            <div className={'col-span-full'}>
+              {values.image != undefined ? (
+                <div className={'label'}>
+                  <span className={'label-text'}>Zutaten Bild</span>
+                </div>
+              ) : (
+                <></>
+              )}
+              {values.image == undefined && values.originalImage == undefined ? (
+                <UploadDropZone
+                  onSelectedFilesChanged={async (file) => {
+                    if (file != undefined) {
+                      await setFieldValue('image', undefined);
+                      await setFieldValue('originalImage', file);
+                    } else {
+                      alertService.error('Datei konnte nicht ausgewählt werden.');
+                    }
                   }}
                 />
-              </div>
-            ) : (
-              <div className={'relative'}>
-                <div className={'absolute right-2 top-2 flex flex-row gap-2'}>
-                  <div
-                    className={'btn btn-square btn-outline btn-sm'}
-                    onClick={async () => {
+              ) : values.image == undefined && values.originalImage != undefined ? (
+                <div className={'w-full'}>
+                  <CropComponent
+                    isValid={isValid}
+                    aspect={1}
+                    imageToCrop={values.originalImage}
+                    onCroppedImageComplete={async (file) => {
+                      resizeImage(file, 400, 400, async (compressedImageFile) => {
+                        if (compressedImageFile) {
+                          await setFieldValue('image', await convertToBase64(new File([compressedImageFile], 'image.png', { type: 'image/png' })));
+                        } else {
+                          alertService.error('Bild konnte nicht skaliert werden.');
+                        }
+                      });
+                    }}
+                    onCropCancel={async () => {
+                      await setFieldValue('originalImage', undefined);
                       await setFieldValue('image', undefined);
                     }}
-                  >
-                    <FaCropSimple />
+                  />
+                </div>
+              ) : (
+                <div className={'relative'}>
+                  <div className={'absolute right-2 top-2 flex flex-row gap-2'}>
+                    <div
+                      className={'btn btn-square btn-outline btn-sm'}
+                      onClick={async () => {
+                        await setFieldValue('image', undefined);
+                      }}
+                    >
+                      <FaCropSimple />
+                    </div>
+                    <div
+                      className={'btn btn-square btn-outline btn-error btn-sm'}
+                      onClick={() =>
+                        modalContext.openModal(
+                          <DeleteConfirmationModal
+                            spelling={'REMOVE'}
+                            entityName={'das Bild'}
+                            onApprove={async () => {
+                              await setFieldValue('originalImage', undefined);
+                              await setFieldValue('image', undefined);
+                            }}
+                          />,
+                        )
+                      }
+                    >
+                      <FaTrashAlt />
+                    </div>
                   </div>
-                  <div
-                    className={'btn btn-square btn-outline btn-error btn-sm'}
-                    onClick={() =>
-                      modalContext.openModal(
-                        <DeleteConfirmationModal
-                          spelling={'REMOVE'}
-                          entityName={'das Bild'}
-                          onApprove={async () => {
-                            await setFieldValue('originalImage', undefined);
-                            await setFieldValue('image', undefined);
-                          }}
-                        />,
-                      )
-                    }
-                  >
-                    <FaTrashAlt />
+                  <div className={'bg-transparent-pattern relative h-32 w-32 rounded-lg'}>
+                    <Image className={'w-fit rounded-lg'} src={values.image} layout={'fill'} objectFit={'contain'} alt={'Ingredient Image'} />
+                  </div>
+                  <div className={'pt-2 font-thin italic'}>
+                    Info: Durch Speichern des Cocktails wird das Bild dauerhaft zugeschnitten. Das Original wird nicht gespeichert. Falls du später also doch
+                    andere Bereiche auswählen möchtest, musst du das Bild dann erneut auswählen.
                   </div>
                 </div>
-                <div className={'bg-transparent-pattern relative h-32 w-32 rounded-lg'}>
-                  <Image className={'w-fit rounded-lg'} src={values.image} layout={'fill'} objectFit={'contain'} alt={'Ingredient Image'} />
-                </div>
-                <div className={'pt-2 font-thin italic'}>
-                  Info: Durch Speichern des Cocktails wird das Bild dauerhaft zugeschnitten. Das Original wird nicht gespeichert. Falls du später also doch
-                  andere Bereiche auswählen möchtest, musst du das Bild dann erneut auswählen.
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div className={'form-control col-span-full'}>
-            <label className={'label'} htmlFor={'description'}>
-              <span className={'label-text'}>Allgemeine Zutatenbeschreibung</span>
-              <span className={'label-text-alt space-x-2 text-error'}>
-                <span>
-                  <>{errors.description && errors.description}</>
-                </span>
-              </span>
-            </label>
-            <textarea
-              id={'description'}
-              className={`textarea textarea-bordered ${errors.description && 'textarea-error'} w-full`}
-              value={values.description}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              name={'description'}
-              placeholder={'Herkunft, Geschichte, etc.'}
-              rows={5}
-            />
-          </div>
-
-          <div className={'form-control col-span-full'}>
-            <label className={'label'} htmlFor={'notes'}>
-              <span className={'label-text'}>Notizen</span>
-              <span className={'label-text-alt space-x-2 text-error'}>
-                <span>
-                  <>{errors.notes && errors.notes}</>
-                </span>
-              </span>
-            </label>
-            <textarea
-              id={'notes'}
-              className={`textarea textarea-bordered ${errors.notes && 'textarea-error'} w-full`}
-              value={values.notes}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              name={'notes'}
-              placeholder={'Lagerort, Zubereitung, etc.'}
-              rows={5}
-            />
-          </div>
-          <div className={'col-span-full'}>
-            <div className={'form-control'}>
-              <button type={'submit'} className={`btn btn-primary`} disabled={isSubmitting || !isValid}>
-                {isSubmitting ? <span className={'loading loading-spinner'} /> : <></>}
-                Speichern
-              </button>
+              )}
             </div>
-            {!isValid && (
-              <div className={'font-thin italic text-error'}>
-                Nicht alle Felder sind korrekt ausgefüllt. Kontrolliere daher alle Felder. (Name gesetzt, Bild zugeschnitten, ... ?)
+          </div>
+          <div className={'flex h-full flex-col gap-2'}>
+            <div className={'form-control col-span-full'}>
+              <label className={'label'} htmlFor={'description'}>
+                <span className={'label-text'}>Allgemeine Zutatenbeschreibung</span>
+                <span className={'label-text-alt space-x-2 text-error'}>
+                  <span>
+                    <>{errors.description && errors.description}</>
+                  </span>
+                </span>
+              </label>
+              <textarea
+                id={'description'}
+                className={`textarea textarea-bordered ${errors.description && 'textarea-error'} w-full`}
+                value={values.description}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                name={'description'}
+                placeholder={'Herkunft, Geschichte, etc.'}
+                rows={5}
+              />
+            </div>
+
+            <div className={'form-control col-span-full'}>
+              <label className={'label'} htmlFor={'notes'}>
+                <span className={'label-text'}>Notizen</span>
+                <span className={'label-text-alt space-x-2 text-error'}>
+                  <span>
+                    <>{errors.notes && errors.notes}</>
+                  </span>
+                </span>
+              </label>
+              <textarea
+                id={'notes'}
+                className={`textarea textarea-bordered ${errors.notes && 'textarea-error'} w-full`}
+                value={values.notes}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                name={'notes'}
+                placeholder={'Lagerort, Zubereitung, etc.'}
+                rows={5}
+              />
+            </div>
+            <div className={'flex-grow'}></div>
+            <div className={'col-span-full'}>
+              <div className={'form-control'}>
+                <button type={'submit'} className={`btn btn-primary`} disabled={isSubmitting || !isValid}>
+                  {isSubmitting ? <span className={'loading loading-spinner'} /> : <></>}
+                  Speichern
+                </button>
               </div>
-            )}
+              {!isValid && (
+                <div className={'font-thin italic text-error'}>
+                  Nicht alle Felder sind korrekt ausgefüllt. Kontrolliere daher alle Felder. (Name gesetzt, Bild zugeschnitten, ... ?)
+                </div>
+              )}
+            </div>
           </div>
         </form>
       )}
