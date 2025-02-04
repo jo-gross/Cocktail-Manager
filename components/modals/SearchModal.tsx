@@ -116,7 +116,7 @@ export function SearchModal(props: SearchModalProps) {
           />
 
           {props.onCocktailSelectedObject != undefined ? (
-            <div className={'card-actions flex flex-row justify-end pt-2'}>
+            <div className={'card-actions flex flex-row justify-end py-2'}>
               <button
                 type="button"
                 disabled={props.selectedCocktails?.includes(cocktail.id) ?? false}

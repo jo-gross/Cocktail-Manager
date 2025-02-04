@@ -98,37 +98,65 @@ export default function CalculationPage() {
   /**
    * check for unsaved changes start
    */
-  useEffect(() => {
-    if (originalItems != JSON.stringify(cocktailCalculationItems)) {
-      setUnsavedChanges(true);
-    } else {
-      setUnsavedChanges(false);
-    }
-  }, [cocktailCalculationItems, originalItems]);
+  // useEffect(() => {
+  //   console.log(
+  //     'Validating unsaved changes',
+  //     originalItems,
+  //     JSON.stringify(cocktailCalculationItems),
+  //     originalItems != JSON.stringify(cocktailCalculationItems),
+  //   );
+  //   if (originalItems !== JSON.stringify(cocktailCalculationItems)) {
+  //     setUnsavedChanges(true);
+  //   } else {
+  //     setUnsavedChanges(false);
+  //   }
+  // }, [cocktailCalculationItems, originalItems]);
+  //
+  // useEffect(() => {
+  //   if (originalName != calculationName) {
+  //     setUnsavedChanges(true);
+  //   } else {
+  //     setUnsavedChanges(false);
+  //   }
+  // }, [calculationName, originalName]);
+  //
+  // useEffect(() => {
+  //   if (originalShowSalesStuff != showSalesStuff) {
+  //     setUnsavedChanges(true);
+  //   } else {
+  //     setUnsavedChanges(false);
+  //   }
+  // }, [originalShowSalesStuff, showSalesStuff]);
+  //
+  // useEffect(() => {
+  //   if (originalIngredientShoppingUnits != JSON.stringify(ingredientShoppingUnits)) {
+  //     setUnsavedChanges(true);
+  //   } else {
+  //     setUnsavedChanges(false);
+  //   }
+  // }, [ingredientShoppingUnits, originalIngredientShoppingUnits]);
 
   useEffect(() => {
-    if (originalName != calculationName) {
+    if (
+      originalItems != JSON.stringify(cocktailCalculationItems) ||
+      originalIngredientShoppingUnits != JSON.stringify(ingredientShoppingUnits) ||
+      originalName != calculationName ||
+      originalShowSalesStuff != showSalesStuff
+    ) {
       setUnsavedChanges(true);
     } else {
       setUnsavedChanges(false);
     }
-  }, [calculationName, originalName]);
-
-  useEffect(() => {
-    if (originalShowSalesStuff != showSalesStuff) {
-      setUnsavedChanges(true);
-    } else {
-      setUnsavedChanges(false);
-    }
-  }, [originalShowSalesStuff, showSalesStuff]);
-
-  useEffect(() => {
-    if (originalIngredientShoppingUnits != JSON.stringify(ingredientShoppingUnits)) {
-      setUnsavedChanges(true);
-    } else {
-      setUnsavedChanges(false);
-    }
-  }, [ingredientShoppingUnits, originalIngredientShoppingUnits]);
+  }, [
+    cocktailCalculationItems,
+    originalItems,
+    ingredientShoppingUnits,
+    originalIngredientShoppingUnits,
+    originalName,
+    calculationName,
+    originalShowSalesStuff,
+    showSalesStuff,
+  ]);
 
   /**
    * check for unsaved changes end
@@ -872,7 +900,16 @@ export default function CalculationPage() {
                       <tr className={''}></tr>
                       <tr className="bg-base-200">
                         <td className={'font-bold'}>Gesamt</td>
-                        <td></td>
+                        <td>
+                          {cocktailCalculationItems
+                            .map((cocktail) => cocktail.plannedAmount)
+                            .reduce((acc, curr) => acc + curr, 0)
+                            .toLocaleString(undefined, {
+                              minimumFractionDigits: 0,
+                              maximumFractionDigits: 0,
+                            })}{' '}
+                          x
+                        </td>
                         <td></td>
                         <td>
                           {cocktailCalculationItems

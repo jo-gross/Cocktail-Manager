@@ -314,7 +314,7 @@ export default function StatisticsPage() {
                     .map((cocktailStatisticItem) => (
                       <div key={`cocktail-items-${cocktailStatisticItem.name}`}>
                         <span className={'font-bold'}>{cocktailStatisticItem.name}: </span>
-                        <span>{cocktailStatisticItem.count}</span>
+                        <span>{cocktailStatisticItem.count.toLocaleString()}</span>
                       </div>
                     ))
                     .value()}
@@ -322,7 +322,7 @@ export default function StatisticsPage() {
                 <div className={'divider-sm'}></div>
                 <div>
                   <strong>Cocktails in Summe: </strong>
-                  {cocktailStatisticItems.length}
+                  {cocktailStatisticItems.length.toLocaleString()}
                 </div>
               </div>
               <div className="h-[50vh] w-full rounded-lg border bg-base-100 p-4 lg:h-[70vh]">
