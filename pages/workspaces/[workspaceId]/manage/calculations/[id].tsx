@@ -96,46 +96,8 @@ export default function CalculationPage() {
   }, [workspaceId]);
 
   /**
-   * check for unsaved changes start
+   * check for unsaved changes
    */
-  // useEffect(() => {
-  //   console.log(
-  //     'Validating unsaved changes',
-  //     originalItems,
-  //     JSON.stringify(cocktailCalculationItems),
-  //     originalItems != JSON.stringify(cocktailCalculationItems),
-  //   );
-  //   if (originalItems !== JSON.stringify(cocktailCalculationItems)) {
-  //     setUnsavedChanges(true);
-  //   } else {
-  //     setUnsavedChanges(false);
-  //   }
-  // }, [cocktailCalculationItems, originalItems]);
-  //
-  // useEffect(() => {
-  //   if (originalName != calculationName) {
-  //     setUnsavedChanges(true);
-  //   } else {
-  //     setUnsavedChanges(false);
-  //   }
-  // }, [calculationName, originalName]);
-  //
-  // useEffect(() => {
-  //   if (originalShowSalesStuff != showSalesStuff) {
-  //     setUnsavedChanges(true);
-  //   } else {
-  //     setUnsavedChanges(false);
-  //   }
-  // }, [originalShowSalesStuff, showSalesStuff]);
-  //
-  // useEffect(() => {
-  //   if (originalIngredientShoppingUnits != JSON.stringify(ingredientShoppingUnits)) {
-  //     setUnsavedChanges(true);
-  //   } else {
-  //     setUnsavedChanges(false);
-  //   }
-  // }, [ingredientShoppingUnits, originalIngredientShoppingUnits]);
-
   useEffect(() => {
     if (
       originalItems != JSON.stringify(cocktailCalculationItems) ||
@@ -157,10 +119,6 @@ export default function CalculationPage() {
     originalShowSalesStuff,
     showSalesStuff,
   ]);
-
-  /**
-   * check for unsaved changes end
-   */
 
   // Fetch Calculation
   useEffect(() => {
