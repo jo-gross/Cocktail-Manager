@@ -927,10 +927,9 @@ export default function OverviewPage() {
                           </label>
                         </div>
                       </div>
-                      <div className="form-co'trol">
-                        '{' '}
+                      <div className="form-control">
                         <label className="label">
-                          ' ' ' ' Schnelles abhaken anzeigen
+                          Schnelles abhaken anzeigen
                           <input
                             type={'checkbox'}
                             className={'toggle toggle-primary'}
