@@ -75,6 +75,7 @@ enum Setting {
   showTime
   showRating
   queueGrouping
+  showFastQueueCheck
 }
 
 enum WorkspaceSettingKey {
@@ -509,8 +510,11 @@ model CocktailQueue {
   workspaceId String
   workspace   Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   notes       String?
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @default(now()) @updatedAt
+
+  inProgress Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
 }
 
 model Ice {
