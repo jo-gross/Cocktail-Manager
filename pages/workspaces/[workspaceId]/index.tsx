@@ -238,7 +238,7 @@ export default function OverviewPage() {
   }
 
   const [cocktailQueue, setCocktailQueue] = useState<CocktailQueueItem[]>([]);
-  const [submittingQueue, setSubmittingQueue] = useState<{ cocktailId: string; mode: 'ACCEPT' | 'REJECT' }[]>([]);
+  const [submittingQueue, setSubmittingQueue] = useState<{ cocktailId: string; mode: 'ACCEPT' | 'REJECT' | 'IN_PROGRESS' | 'NOT_ANYMORE_IN_PROGRESS' }[]>([]);
 
   useEffect(() => {
     let interval: NodeJS.Timeout | undefined;
@@ -411,6 +411,9 @@ export default function OverviewPage() {
                   })
                 }
               >
+                {submittingQueue.find((i) => i.cocktailId == cocktailQueueItem.cocktailId && i.mode == 'ACCEPT') && (
+                  <span className={'loading loading-spinner'} />
+                )}
                 <FaCheck />
               </button>
             )}
@@ -425,7 +428,7 @@ export default function OverviewPage() {
                     inProgress: true,
                     setSubmitting: (submitting) => {
                       if (submitting) {
-                        setSubmittingQueue([...submittingQueue, { cocktailId: cocktailQueueItem.cocktailId, mode: 'ACCEPT' }]);
+                        setSubmittingQueue([...submittingQueue, { cocktailId: cocktailQueueItem.cocktailId, mode: 'IN_PROGRESS' }]);
                       } else {
                         setSubmittingQueue(submittingQueue.filter((i) => i.cocktailId != cocktailQueueItem.cocktailId));
                       }
@@ -436,6 +439,9 @@ export default function OverviewPage() {
                   })
                 }
               >
+                {submittingQueue.find((i) => i.cocktailId == cocktailQueueItem.cocktailId && i.mode == 'IN_PROGRESS') && (
+                  <span className={'loading loading-spinner'} />
+                )}
                 <FaArrowTurnUp />
               </button>
             )}
@@ -450,7 +456,7 @@ export default function OverviewPage() {
                     inProgress: false,
                     setSubmitting: (submitting) => {
                       if (submitting) {
-                        setSubmittingQueue([...submittingQueue, { cocktailId: cocktailQueueItem.cocktailId, mode: 'ACCEPT' }]);
+                        setSubmittingQueue([...submittingQueue, { cocktailId: cocktailQueueItem.cocktailId, mode: 'NOT_ANYMORE_IN_PROGRESS' }]);
                       } else {
                         setSubmittingQueue(submittingQueue.filter((i) => i.cocktailId != cocktailQueueItem.cocktailId));
                       }
@@ -461,6 +467,9 @@ export default function OverviewPage() {
                   })
                 }
               >
+                {submittingQueue.find((i) => i.cocktailId == cocktailQueueItem.cocktailId && i.mode == 'NOT_ANYMORE_IN_PROGRESS') && (
+                  <span className={'loading loading-spinner'} />
+                )}
                 <FaArrowTurnDown />
               </button>
             ) : (
@@ -485,6 +494,9 @@ export default function OverviewPage() {
                   })
                 }
               >
+                {submittingQueue.find((i) => i.cocktailId == cocktailQueueItem.cocktailId && i.mode == 'REJECT') && (
+                  <span className={'loading loading-spinner'} />
+                )}
                 <FaTimes />
               </button>
             )}

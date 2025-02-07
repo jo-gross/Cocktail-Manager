@@ -24,6 +24,7 @@ export async function addCocktailToStatistic({
 }) {
   try {
     setSubmitting(true);
+
     const response = await fetch(`/api/workspaces/${workspaceId}/statistics/cocktails/add`, {
       method: 'POST',
       headers: {
