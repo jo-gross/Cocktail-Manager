@@ -550,13 +550,7 @@ export function IngredientForm(props: IngredientFormProps) {
             </FieldArray>
 
             <div className={'col-span-full'}>
-              {values.image != undefined ? (
-                <div className={'label'}>
-                  <span className={'label-text'}>Zutaten Bild</span>
-                </div>
-              ) : (
-                <></>
-              )}
+              <div className={'divider'}>Vorschau Bild</div>
               {values.image == undefined && values.originalImage == undefined ? (
                 <UploadDropZone
                   onSelectedFilesChanged={async (file) => {
@@ -590,40 +584,43 @@ export function IngredientForm(props: IngredientFormProps) {
                   />
                 </div>
               ) : (
-                <div className={'relative'}>
-                  <div className={'absolute right-2 top-2 flex flex-row gap-2'}>
-                    <div
-                      className={'btn btn-square btn-outline btn-sm'}
-                      onClick={async () => {
-                        await setFieldValue('image', undefined);
-                      }}
-                    >
-                      <FaCropSimple />
+                <div className={'w-full'}>
+                  <div className={'relative'}>
+                    <div className={'absolute right-2 top-2 z-20 flex flex-row gap-2'}>
+                      <div
+                        className={'btn btn-square btn-outline btn-secondary btn-sm'}
+                        onClick={async () => {
+                          await setFieldValue('image', undefined);
+                        }}
+                      >
+                        <FaCropSimple />
+                      </div>
+                      <div
+                        className={'btn btn-square btn-outline btn-error btn-sm'}
+                        onClick={() =>
+                          modalContext.openModal(
+                            <DeleteConfirmationModal
+                              spelling={'REMOVE'}
+                              entityName={'das Bild'}
+                              onApprove={async () => {
+                                await setFieldValue('originalImage', undefined);
+                                await setFieldValue('image', undefined);
+                              }}
+                            />,
+                          )
+                        }
+                      >
+                        <FaTrashAlt />
+                      </div>
                     </div>
-                    <div
-                      className={'btn btn-square btn-outline btn-error btn-sm'}
-                      onClick={() =>
-                        modalContext.openModal(
-                          <DeleteConfirmationModal
-                            spelling={'REMOVE'}
-                            entityName={'das Bild'}
-                            onApprove={async () => {
-                              await setFieldValue('originalImage', undefined);
-                              await setFieldValue('image', undefined);
-                            }}
-                          />,
-                        )
-                      }
-                    >
-                      <FaTrashAlt />
+                    <div className={'bg-transparent-pattern relative h-32 w-32 rounded-lg'}>
+                      <Image className={'w-fit rounded-lg'} src={values.image} layout={'fill'} objectFit={'contain'} alt={'Ingredient Image'} />
                     </div>
-                  </div>
-                  <div className={'bg-transparent-pattern relative h-32 w-32 rounded-lg'}>
-                    <Image className={'w-fit rounded-lg'} src={values.image} layout={'fill'} objectFit={'contain'} alt={'Ingredient Image'} />
-                  </div>
-                  <div className={'pt-2 font-thin italic'}>
-                    Info: Durch Speichern des Cocktails wird das Bild dauerhaft zugeschnitten. Das Original wird nicht gespeichert. Falls du später also doch
-                    andere Bereiche auswählen möchtest, musst du das Bild dann erneut auswählen.
+                    <div className={'pt-2 font-thin italic'}>
+                      Info: Durch Speichern des Cocktails wird das Bild dauerhaft zugeschnitten. <br />
+                      Das Original wird nicht gespeichert. <br />
+                      Falls du später also doch andere Bereiche auswählen möchtest, musst du das Bild dann erneut auswählen.
+                    </div>
                   </div>
                 </div>
               )}
