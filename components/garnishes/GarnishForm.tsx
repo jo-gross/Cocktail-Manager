@@ -117,84 +117,82 @@ export function GarnishForm(props: GarnishFormProps) {
       }}
     >
       {({ values, errors, handleChange, handleBlur, handleSubmit, isSubmitting, isValid, setFieldValue }) => (
-        <form onSubmit={handleSubmit} className={'grid w-full grid-cols-1 gap-2 md:max-w-4xl md:grid-cols-3'}>
-          <div className={'form-control col-span-2'}>
-            <label className={'label'} htmlFor={'name'}>
-              <span className={'label-text'}>Name</span>
-              <span className={'label-text-alt space-x-2 text-error'}>
-                <span>
-                  <>{errors.name && errors.name}</>
+        <form onSubmit={handleSubmit} className={'grid grid-cols-1 gap-2 md:grid-cols-2'}>
+          <div className={'col-span-full flex flex-row flex-wrap gap-2'}>
+            <div className={'form-control flex-1'}>
+              <label className={'label'} htmlFor={'name'}>
+                <span className={'label-text'}>Name</span>
+                <span className={'label-text-alt space-x-2 text-error'}>
+                  <span>
+                    <>{errors.name && errors.name}</>
+                  </span>
+                  <span>*</span>
                 </span>
-                <span>*</span>
-              </span>
-            </label>
-            <input
-              id={'name'}
-              type={'text'}
-              autoComplete={'off'}
-              placeholder={'Name'}
-              className={`input input-bordered ${errors.name && 'input-error'} w-full`}
-              onChange={(event) => {
-                if (event.target.value.length > 2) {
-                  fetch(`/api/workspaces/${workspaceId}/garnishes/check?name=${event.target.value}`)
-                    .then((response) => response.json())
-                    .then((data) => {
-                      console.log(data);
-                      if (data.data != null) {
-                        if (data.data.id != props.garnish?.id) {
-                          setSimilarGarnish(data.data);
+              </label>
+              <input
+                id={'name'}
+                type={'text'}
+                autoComplete={'off'}
+                placeholder={'Name'}
+                className={`input input-bordered ${errors.name && 'input-error'} w-full`}
+                onChange={(event) => {
+                  if (event.target.value.length > 2) {
+                    fetch(`/api/workspaces/${workspaceId}/garnishes/check?name=${event.target.value}`)
+                      .then((response) => response.json())
+                      .then((data) => {
+                        console.log(data);
+                        if (data.data != null) {
+                          if (data.data.id != props.garnish?.id) {
+                            setSimilarGarnish(data.data);
+                          } else {
+                            setSimilarGarnish(undefined);
+                          }
                         } else {
                           setSimilarGarnish(undefined);
                         }
-                      } else {
-                        setSimilarGarnish(undefined);
-                      }
-                    });
-                } else {
-                  setSimilarGarnish(undefined);
-                }
-                handleChange(event);
-              }}
-              onBlur={handleBlur}
-              value={values.name}
-              name={'name'}
-            />
-            {similarGarnish && (
-              <div className="label">
-                <span className="label-text-alt text-warning">
-                  Eine ähnliche Garnitur mit dem Namen <strong>{similarGarnish.name}</strong> existiert bereits.
-                </span>
-              </div>
-            )}
-          </div>
-
-          <div className={'form-control'}>
-            <label className={'label'} htmlFor={'price'}>
-              <span className={'label-text'}>Preis</span>
-              <span className={'label-text-alt space-x-2 text-error'}>
-                <>{errors.price && errors.price}</>
-              </span>
-            </label>
-            <div className={'join'}>
-              <input
-                id={'price'}
-                type={'number'}
-                placeholder={'Preis'}
-                className={`input join-item input-bordered ${errors.price && 'input-error'} w-full`}
-                value={values.price}
-                onChange={handleChange}
+                      });
+                  } else {
+                    setSimilarGarnish(undefined);
+                  }
+                  handleChange(event);
+                }}
                 onBlur={handleBlur}
-                name={'price'}
+                value={values.name}
+                name={'name'}
               />
-              <span className={'btn btn-secondary join-item'}>€</span>
+              {similarGarnish && (
+                <div className="label">
+                  <span className="label-text-alt text-warning">
+                    Eine ähnliche Garnitur mit dem Namen <strong>{similarGarnish.name}</strong> existiert bereits.
+                  </span>
+                </div>
+              )}
+            </div>
+
+            <div className={'form-control'}>
+              <label className={'label'} htmlFor={'price'}>
+                <span className={'label-text'}>Preis</span>
+                <span className={'label-text-alt space-x-2 text-error'}>
+                  <>{errors.price && errors.price}</>
+                </span>
+              </label>
+              <div className={'join'}>
+                <input
+                  id={'price'}
+                  type={'number'}
+                  placeholder={'Preis'}
+                  className={`input join-item input-bordered ${errors.price && 'input-error'} w-full`}
+                  value={values.price}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  name={'price'}
+                />
+                <span className={'btn btn-secondary join-item'}>€</span>
+              </div>
             </div>
           </div>
-          <div className={'col-span-3'}>
-            {values.image != undefined ? (
-              <div className={'label'}>
-                <span className={'label-text'}>Zutaten Bild</span>
-              </div>
-            ) : null}
+          <div className={''}>
+            <div className={'divider'}>Vorschau Bild</div>
             {values.image == undefined && values.originalImage == undefined ? (
               <UploadDropZone
                 onSelectedFilesChanged={async (file) => {
@@ -260,14 +258,15 @@ export function GarnishForm(props: GarnishFormProps) {
                   <Image className={'w-fit rounded-lg'} src={values.image} layout={'fill'} objectFit={'contain'} alt={'Garnish image'} />
                 </div>
                 <div className={'pt-2 font-thin italic'}>
-                  Info: Durch Speichern des Cocktails wird das Bild dauerhaft zugeschnitten. Das Original wird nicht gespeichert. Falls du später also doch
-                  andere Bereiche auswählen möchtest, musst du das Bild dann erneut auswählen.
+                  Info: Durch Speichern des Cocktails wird das Bild dauerhaft zugeschnitten. <br />
+                  Das Original wird nicht gespeichert. <br />
+                  Falls du später also doch andere Bereiche auswählen möchtest, musst du das Bild dann erneut auswählen.
                 </div>
               </div>
             )}
           </div>
 
-          <div className={'col-span-3 flex flex-col gap-2'}>
+          <div className={'flex flex-col gap-2'}>
             <div className={'form-control'}>
               <label className={'label'} htmlFor={'notes'}>
                 <span className={'label-text'}>Notizen</span>
@@ -309,19 +308,19 @@ export function GarnishForm(props: GarnishFormProps) {
                 rows={5}
               />
             </div>
-          </div>
-          <div className={'col-span-3 items-center justify-end'}>
-            <div className={'form-control'}>
-              <button disabled={isSubmitting || !isValid} type={'submit'} className={`btn btn-primary`}>
-                {isSubmitting ? <span className={'loading loading-spinner'} /> : null}
-                Speichern
-              </button>
-            </div>
-            {!isValid && (
-              <div className={'font-thin italic text-error'}>
-                Nicht alle Felder sind korrekt ausgefüllt. Kontrolliere daher alle Felder. (Name gesetzt, Bild zugeschnitten, ... ?)
+            <div className={'w-full items-center justify-end'}>
+              <div className={'form-control'}>
+                <button disabled={isSubmitting || !isValid} type={'submit'} className={`btn btn-primary w-full`}>
+                  {isSubmitting ? <span className={'loading loading-spinner'} /> : null}
+                  Speichern
+                </button>
               </div>
-            )}
+              {!isValid && (
+                <div className={'font-thin italic text-error'}>
+                  Nicht alle Felder sind korrekt ausgefüllt. Kontrolliere daher alle Felder. (Name gesetzt, Bild zugeschnitten, ... ?)
+                </div>
+              )}
+            </div>
           </div>
         </form>
       )}

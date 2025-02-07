@@ -3,13 +3,11 @@ import { alertService } from '../../../../../lib/alertService';
 import { useRouter } from 'next/router';
 import { BackupStructure } from '../../../../api/workspaces/[workspaceId]/admin/backups/backupStructure';
 import { ManageEntityLayout } from '../../../../../components/layout/ManageEntityLayout';
-import { $Enums, Ice, Role, Signage, Unit, UnitConversion, WorkspaceCocktailRecipeStepAction } from '@prisma/client';
+import { Ice, Role, Unit, UnitConversion, WorkspaceCocktailRecipeStepAction } from '@prisma/client';
 import { UserContext } from '../../../../../lib/context/UserContextProvider';
-import { FaArrowDown, FaArrowUp, FaShareAlt, FaTrashAlt } from 'react-icons/fa';
+import { FaArrowDown, FaArrowUp, FaTrashAlt } from 'react-icons/fa';
 import { DeleteConfirmationModal } from '../../../../../components/modals/DeleteConfirmationModal';
 import { ModalContext } from '../../../../../lib/context/ModalContextProvider';
-import { UploadDropZone } from '../../../../../components/UploadDropZone';
-import { convertToBase64 } from '../../../../../lib/Base64Converter';
 import '../../../../../lib/DateUtils';
 import { Loading } from '../../../../../components/Loading';
 import _ from 'lodash';
@@ -19,13 +17,12 @@ import UnitModal from '../../../../../components/modals/UnitModal';
 import UnitConversionModal from '../../../../../components/modals/UnitConversionModal';
 import { fetchUnitConversions, fetchUnits } from '../../../../../lib/network/units';
 import { fetchActions } from '../../../../../lib/network/actions';
-import Image from 'next/image';
+
 import { fetchIce } from '../../../../../lib/network/ices';
 import CreateIceModal from '../../../../../components/modals/CreateIceModal';
-import { compressFile } from '../../../../../lib/ImageCompressor';
-import MonitorFormat = $Enums.MonitorFormat;
+import { withPagePermission } from '../../../../../middleware/ui/withPagePermission';
 
-export default function WorkspaceSettingPage() {
+function WorkspaceSettingPage() {
   const router = useRouter();
   const userContext = useContext(UserContext);
   const modalContext = useContext(ModalContext);
@@ -40,13 +37,6 @@ export default function WorkspaceSettingPage() {
   const [uploadImportFile, setUploadImportFile] = useState<File>();
   const uploadImportFileRef = useRef<HTMLInputElement>(null);
 
-  const [verticalImage, setVerticalImage] = useState<string>();
-  const [verticalImageColor, setVerticalImageColor] = useState<string>();
-  const [horizontalImage, setHorizontalImage] = useState<string>();
-  const [horizontalImageColor, setHorizontalImageColor] = useState<string>();
-  const [updatingSignage, setUpdatingSignage] = useState<boolean>(false);
-
-  const [copyToClipboardLoading, setCopyToClipboardLoading] = useState<boolean>(false);
   const [workspaceDeleting, setWorkspaceDeleting] = useState<boolean>(false);
   const [workspaceRenaming, setWorkspaceRenaming] = useState<boolean>(false);
 
@@ -64,7 +54,7 @@ export default function WorkspaceSettingPage() {
 
   const [deleting, setDeleting] = useState<{ [key: string]: boolean }>({});
 
-  const [collapsedGeneratedUnits, setCollapsedGeneratedUnits] = useState<boolean>(true);
+  const [collapsedGeneratedUnits, setCollapsedGeneratedUnits] = useState<boolean>(false);
 
   const exportAll = useCallback(async () => {
     setExporting(true);
@@ -168,59 +158,6 @@ export default function WorkspaceSettingPage() {
         setWorkspaceRenaming(false);
       });
   }, [newWorkspaceName, router, workspaceId]);
-
-  const handleUpdateSignage = useCallback(async () => {
-    setUpdatingSignage(true);
-    fetch(`/api/workspaces/${workspaceId}/admin/signage`, {
-      method: 'PUT',
-      body: JSON.stringify({
-        verticalContent: verticalImage,
-        horizontalContent: horizontalImage,
-        verticalBgColor: verticalImageColor,
-        horizontalBgColor: horizontalImageColor,
-      }),
-    })
-      .then(async (response) => {
-        const body = await response.json();
-        if (response.ok) {
-          alertService.success(`Update erfolgreich`);
-        } else {
-          console.error('Admin -> UpdateSignage', response);
-          alertService.error(body.message ?? 'Fehler beim Speichern', response.status, response.statusText);
-        }
-      })
-      .catch((error) => {
-        console.error('SettingsPage -> handleUpdateSignage', error);
-        alertService.error('Es ist ein Fehler Aufgetreten, z.B. zu große Datei');
-      })
-      .finally(() => {
-        setUpdatingSignage(false);
-      });
-  }, [horizontalImage, horizontalImageColor, verticalImage, verticalImageColor, workspaceId]);
-
-  const fetchSignage = useCallback(() => {
-    if (workspaceId == undefined) return;
-
-    fetch(`/api/signage/${workspaceId}`)
-      .then(async (response) => {
-        return response.json();
-      })
-      .then((data) => {
-        data.content.forEach((signage: Signage) => {
-          if (signage.format == MonitorFormat.PORTRAIT) {
-            setVerticalImage(signage.content);
-            setVerticalImageColor(signage.backgroundColor ?? undefined);
-          } else {
-            setHorizontalImage(signage.content);
-            setHorizontalImageColor(signage.backgroundColor ?? undefined);
-          }
-        });
-      })
-      .catch((error) => {
-        console.error('SettingsPage -> fetchSignage', error);
-        alertService.error('Fehler beim Laden der Monitor-Einstellungen');
-      });
-  }, [workspaceId]);
 
   const deleteCocktailRecipeAction = useCallback(
     async (actionId: string) => {
@@ -340,176 +277,15 @@ export default function WorkspaceSettingPage() {
   );
 
   useEffect(() => {
-    fetchSignage();
     fetchActions(workspaceId, setWorkspaceActions, setWorkspaceActionLoading);
     fetchUnits(workspaceId, setUnits, setUnitsLoading);
     fetchUnitConversions(workspaceId, setUnitConversionsLoading, setUnitConversions);
     fetchIce(workspaceId, setIceOptions, setIceOptionsLoading);
-  }, [fetchSignage, workspaceId]);
+  }, [workspaceId]);
 
   return (
     <ManageEntityLayout backLink={`/workspaces/${workspaceId}/manage`} title={'Workspace-Einstellungen'}>
       <div className={'grid grid-flow-row-dense grid-cols-1 gap-2 md:grid-cols-2 md:gap-4'}>
-        {userContext.isUserPermitted(Role.ADMIN) ? (
-          <div className={'card'}>
-            <div className={'card-body'}>
-              <div className={'card-title'}>Daten Transfer</div>
-              <div className={'form-control'}>
-                <input
-                  type={'file'}
-                  disabled={importing}
-                  className={'file-input file-input-bordered'}
-                  ref={uploadImportFileRef}
-                  onChange={(event) => setUploadImportFile(event.target.files?.[0])}
-                />
-              </div>
-              <button className={`btn btn-primary`} disabled={uploadImportFile == undefined || importing} type={'button'} onClick={importBackup}>
-                {importing ? <span className="loading loading-spinner"></span> : <></>}
-                Import
-              </button>
-              <button className={`btn btn-primary`} onClick={exportAll} disabled={exporting}>
-                {exporting ? <span className="loading loading-spinner"></span> : <></>}
-                Export All
-              </button>
-            </div>
-          </div>
-        ) : (
-          <></>
-        )}
-
-        {/*Signage*/}
-        {userContext.isUserPermitted(Role.MANAGER) ? (
-          <div className={'card'}>
-            <div className={'card-body'}>
-              <div className={'card-title w-full justify-between'}>
-                <div>Monitor</div>
-                <button
-                  onClick={async () => {
-                    setCopyToClipboardLoading(true);
-                    await navigator.clipboard.writeText(`${window.location.origin}/signage?id=${workspaceId}`);
-                    setCopyToClipboardLoading(false);
-                    alertService.info('In Zwischenablage kopiert');
-                  }}
-                  className={'btn btn-square btn-ghost'}
-                >
-                  {copyToClipboardLoading ? <span className={'loading loading-spinner'} /> : <></>}
-                  <FaShareAlt />
-                </button>
-              </div>
-              <div className={'grid grid-cols-2 gap-2'}>
-                <div className={'flex flex-col gap-2'}>
-                  <div>Horizontal</div>
-                  {horizontalImage == undefined ? (
-                    <UploadDropZone
-                      maxUploadSize={'1MB'}
-                      onSelectedFilesChanged={async (file) => {
-                        if (file) {
-                          const compressedImageFile = await compressFile(file);
-                          const base = await convertToBase64(compressedImageFile);
-                          setHorizontalImage(base);
-                        } else {
-                          alertService.error('Datei konnte nicht ausgewählt werden.');
-                        }
-                      }}
-                    />
-                  ) : (
-                    <div className={'relative h-full min-h-40'}>
-                      <div
-                        className={'btn btn-square btn-outline btn-error btn-sm absolute right-2 top-2 z-10'}
-                        onClick={() =>
-                          modalContext.openModal(
-                            <DeleteConfirmationModal spelling={'REMOVE'} entityName={'das Bild'} onApprove={async () => setHorizontalImage(undefined)} />,
-                          )
-                        }
-                      >
-                        <FaTrashAlt />
-                      </div>
-                      <Image
-                        className={'w-fit rounded-lg'}
-                        src={horizontalImage}
-                        layout={'fill'}
-                        objectFit={'contain'}
-                        alt={'Fehler beim darstellen der Karte (horizontal)'}
-                      />
-                    </div>
-                  )}
-                  <div className={'form-control'}>
-                    <label className={'label'}>
-                      <span className={'label-text'}>Hintergrundfarbe</span>
-                    </label>
-                    <input
-                      type={'color'}
-                      disabled={horizontalImage == undefined}
-                      value={horizontalImageColor}
-                      onChange={(event) => {
-                        setHorizontalImageColor(event.target.value);
-                      }}
-                      className={'input w-full'}
-                    />
-                  </div>
-                </div>
-
-                <div className={'flex flex-col gap-2'}>
-                  <div>Vertikal</div>
-                  {verticalImage == undefined ? (
-                    <UploadDropZone
-                      maxUploadSize={'1MB'}
-                      onSelectedFilesChanged={async (file) => {
-                        if (file) {
-                          const compressedImageFile = await compressFile(file);
-                          const base = await convertToBase64(compressedImageFile);
-                          setVerticalImage(base);
-                        } else {
-                          alertService.error('Datei konnte nicht ausgewählt werden.');
-                        }
-                      }}
-                    />
-                  ) : (
-                    <div className={'relative h-full min-h-40'}>
-                      <div
-                        className={'btn btn-square btn-outline btn-error btn-sm absolute right-2 top-2 z-10'}
-                        onClick={() =>
-                          modalContext.openModal(
-                            <DeleteConfirmationModal spelling={'REMOVE'} entityName={'das Bild'} onApprove={async () => setVerticalImage(undefined)} />,
-                          )
-                        }
-                      >
-                        <FaTrashAlt />
-                      </div>
-                      <Image
-                        className={'rounded-lg'}
-                        src={verticalImage}
-                        layout={'fill'}
-                        objectFit={'contain'}
-                        alt={'Fehler beim darstellen der Karte (vertikal)'}
-                      />
-                    </div>
-                  )}
-                  <div className={'form-control'}>
-                    <label className={'label'}>
-                      <span className={'label-text'}>Hintergrundfarbe</span>
-                    </label>
-                    <input
-                      type={'color'}
-                      disabled={verticalImage == undefined}
-                      value={verticalImageColor}
-                      onChange={(event) => {
-                        setVerticalImageColor(event.target.value);
-                      }}
-                      className={'input w-full'}
-                    />
-                  </div>
-                </div>
-              </div>
-              <button className={`btn btn-primary`} onClick={handleUpdateSignage}>
-                {updatingSignage ? <span className={'loading loading-spinner'} /> : <></>}
-                Speichern
-              </button>
-            </div>
-          </div>
-        ) : (
-          <></>
-        )}
         {/*Cocktail Recipe Actions*/}
         {userContext.isUserPermitted(Role.ADMIN) ? (
           <div className={'card h-min'}>
@@ -821,7 +597,9 @@ export default function WorkspaceSettingPage() {
                                 </tr>
                               ))}
                             <tr onClick={() => setCollapsedGeneratedUnits(!collapsedGeneratedUnits)}>
-                              <td colSpan={4}>Automatisch generierte Umrechnungen</td>
+                              <td colSpan={4} className={'cursor-pointer italic'}>
+                                Automatisch generierte Umrechnungen <span className={'underline'}>{!collapsedGeneratedUnits ? 'anzeigen' : 'verbergen'}</span>
+                              </td>
                               <td className={'flex items-center justify-end'}>
                                 <div className={'p-2'}>{collapsedGeneratedUnits ? <FaArrowUp /> : <FaArrowDown />}</div>
                               </td>
@@ -948,6 +726,36 @@ export default function WorkspaceSettingPage() {
           <></>
         )}
 
+        {userContext.isUserPermitted(Role.ADMIN) ? (
+          <>
+            <div className={'col-span-full'}></div>
+            <div className={'card'}>
+              <div className={'card-body'}>
+                <div className={'card-title'}>Daten Transfer</div>
+                <div className={'form-control'}>
+                  <input
+                    type={'file'}
+                    disabled={importing}
+                    className={'file-input file-input-bordered'}
+                    ref={uploadImportFileRef}
+                    onChange={(event) => setUploadImportFile(event.target.files?.[0])}
+                  />
+                </div>
+                <button className={`btn btn-primary`} disabled={uploadImportFile == undefined || importing} type={'button'} onClick={importBackup}>
+                  {importing ? <span className="loading loading-spinner"></span> : <></>}
+                  Import
+                </button>
+                <button className={`btn btn-primary`} onClick={exportAll} disabled={exporting}>
+                  {exporting ? <span className="loading loading-spinner"></span> : <></>}
+                  Export All
+                </button>
+              </div>
+            </div>
+          </>
+        ) : (
+          <></>
+        )}
+
         {/*Workspace Dangerous Actions*/}
         {userContext.isUserPermitted(Role.ADMIN) ? (
           <div className={'col-span-full'}>
@@ -996,3 +804,5 @@ export default function WorkspaceSettingPage() {
     </ManageEntityLayout>
   );
 }
+
+export default withPagePermission(['ADMIN'], WorkspaceSettingPage, '/workspaces/[workspaceId]/manage');
