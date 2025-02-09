@@ -19,6 +19,7 @@ import '../../../lib/DateUtils';
 import { addCocktailToStatistic, removeCocktailFromQueue } from '../../../lib/network/cocktailTracking';
 import { CocktailDetailModal } from '../../../components/modals/CocktailDetailModal';
 import _ from 'lodash';
+import { CocktailRecipeFull } from '../../../models/CocktailRecipeFull';
 
 export default function OverviewPage() {
   const modalContext = useContext(ModalContext);
@@ -43,6 +44,8 @@ export default function OverviewPage() {
   const [cocktailCards, setCocktailCards] = useState<CocktailCardFull[]>([]);
   const [loadingCards, setLoadingCards] = useState(true);
   const [loadingGroups, setLoadingGroups] = useState(false);
+
+  const [selectedCocktail, setSelectedCocktail] = useState<CocktailRecipeFull | string | undefined>(undefined);
 
   // Search modal shortcut (Shift + F)
   useEffect(() => {
@@ -490,6 +493,8 @@ export default function OverviewPage() {
                 showRating={showRating}
                 showNotes={showNotes}
                 showDescription={showDescription}
+                selectedCocktail={selectedCocktail}
+                setSelectedCocktail={setSelectedCocktail}
               />
             ) : loadingGroups ? (
               <PageCenter>

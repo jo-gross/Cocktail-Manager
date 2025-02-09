@@ -11,23 +11,23 @@ interface SearchPageProps {
   showRating: boolean;
   showDescription: boolean;
   showNotes: boolean;
+  selectedCocktail: CocktailRecipeFull | string | undefined;
+  setSelectedCocktail: (cocktail: CocktailRecipeFull) => void;
 }
 
 export default function SearchPage(props: SearchPageProps) {
-  const [selectedCocktail, setSelectedCocktail] = useState<CocktailRecipeFull | undefined>(undefined);
-
   const router = useRouter();
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [selectedCocktail]);
+  }, [props.selectedCocktail]);
 
   return (
     <div className={'flex flex-col-reverse gap-2 md:flex-row'}>
       <div className={'card w-full flex-1'}>
         <div className={'card-body'}>
           <SearchModal
-            onCocktailSelectedObject={(cocktail) => setSelectedCocktail(cocktail)}
+            onCocktailSelectedObject={(cocktail) => props.setSelectedCocktail(cocktail)}
             selectionLabel={'Ansehen'}
             showRecipe={false}
             customWidthClassName={'w-full'}
@@ -35,9 +35,9 @@ export default function SearchPage(props: SearchPageProps) {
         </div>
       </div>
       <div className={'h-min w-full flex-1'}>
-        {selectedCocktail ? (
+        {props.selectedCocktail ? (
           <CocktailRecipeCardItem
-            cocktailRecipe={selectedCocktail}
+            cocktailRecipe={props.selectedCocktail}
             showImage={props.showImage}
             showInfo={true}
             showPrice={true}
