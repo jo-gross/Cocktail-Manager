@@ -1,3 +1,17 @@
+# [1.12.0](https://github.com/jo-gross/Cocktail-Manager/compare/v1.11.2...v1.12.0) (2025-02-10)
+
+
+### Bug Fixes
+
+* Calculation "unsaved changes" validation, number formating ([#543](https://github.com/jo-gross/Cocktail-Manager/issues/543)) ([659d0b2](https://github.com/jo-gross/Cocktail-Manager/commit/659d0b2957b9c856a41c9c3d0dbb0eda08d6101f))
+* Improved the "view cocktail" from the queue behavior  ([#548](https://github.com/jo-gross/Cocktail-Manager/issues/548)) ([4f90e49](https://github.com/jo-gross/Cocktail-Manager/commit/4f90e49b6e52cc20cb6ccaa51b75cde2589d25f7))
+
+
+### Features
+
+* Added cocktail queue "in progress" state, improved queue ordering ([#546](https://github.com/jo-gross/Cocktail-Manager/issues/546)) ([872a7bf](https://github.com/jo-gross/Cocktail-Manager/commit/872a7bfcdd7bd0e06f5ed826cba491672b41aea7))
+* Added option to import images by url and restructured the manage menu ([#547](https://github.com/jo-gross/Cocktail-Manager/issues/547)) ([abeb885](https://github.com/jo-gross/Cocktail-Manager/commit/abeb885f5e2a563f900482fc402c79577273f220))
+
 ## [1.11.2](https://github.com/jo-gross/Cocktail-Manager/compare/v1.11.1...v1.11.2) (2025-02-03)
 
 
