@@ -8,7 +8,7 @@ import LoadingText from '../../../../components/LoadingText';
 import Link from 'next/link';
 import AvatarImage from '../../../../components/AvatarImage';
 import { FaCalculator, FaCocktail, FaGlassMartiniAlt, FaUsers } from 'react-icons/fa';
-import { LuCitrus } from 'react-icons/lu';
+import { LuCitrus, LuMonitorPlay } from 'react-icons/lu';
 import { PiBeerBottleBold, PiCards } from 'react-icons/pi';
 import { FaGear } from 'react-icons/fa6';
 import { IoMdStats } from 'react-icons/io';
@@ -90,15 +90,38 @@ export default function ManagePage() {
         ]}
       >
         <div className={'grid grid-cols-1 gap-2 md:grid-cols-2 md:gap-4'}>
-          <ManageCard icon={<FaCocktail />} title={'Cocktails'} link={`/workspaces/${workspaceId}/manage/cocktails`} />
-          <ManageCard icon={<PiCards />} title={'Karten'} link={`/workspaces/${workspaceId}/manage/cards`} />
-          <ManageCard icon={<PiBeerBottleBold />} title={'Zutaten'} link={`/workspaces/${workspaceId}/manage/ingredients`} />
-          <ManageCard icon={<LuCitrus />} title={'Garnituren'} link={`/workspaces/${workspaceId}/manage/garnishes`} />
-          <ManageCard icon={<FaGlassMartiniAlt />} title={'Gläser'} link={`/workspaces/${workspaceId}/manage/glasses`} />
-          <ManageCard icon={<FaCalculator />} title={'Mengen-Kalkulation'} link={`/workspaces/${workspaceId}/manage/calculations`} />
-          <ManageCard icon={<IoMdStats />} title={'Statistiken'} link={`/workspaces/${workspaceId}/manage/statistics`} />
-          <ManageCard icon={<FaUsers />} title={'Nutzer'} link={`/workspaces/${workspaceId}/manage/settings/users`} />
-          <ManageCard icon={<FaGear />} title={'Einstellungen'} link={`/workspaces/${workspaceId}/manage/settings`} />
+          <div className={'flex flex-col gap-2'}>
+            <div className={'divider col-span-full'}>Cocktails</div>
+
+            <ManageCard icon={<FaCocktail />} title={'Cocktails'} link={`/workspaces/${workspaceId}/manage/cocktails`} />
+            <ManageCard icon={<PiBeerBottleBold />} title={'Zutaten'} link={`/workspaces/${workspaceId}/manage/ingredients`} />
+            <ManageCard icon={<LuCitrus />} title={'Garnituren'} link={`/workspaces/${workspaceId}/manage/garnishes`} />
+            <ManageCard icon={<FaGlassMartiniAlt />} title={'Gläser'} link={`/workspaces/${workspaceId}/manage/glasses`} />
+          </div>
+
+          {userContext.isUserPermitted('MANAGER') && (
+            <>
+              <div className={'flex flex-col gap-2'}>
+                <div className={'divider col-span-full'}>Darstellung</div>
+                <ManageCard icon={<PiCards />} title={'Bartender-Karten'} link={`/workspaces/${workspaceId}/manage/cards`} />
+                <ManageCard icon={<LuMonitorPlay />} title={'Externer Monitor'} link={`/workspaces/${workspaceId}/manage/monitor`} />
+              </div>
+            </>
+          )}
+
+          <div className={'flex flex-col gap-2'}>
+            <div className={'divider col-span-full'}>Zahlen</div>
+            <ManageCard icon={<IoMdStats />} title={'Statistiken'} link={`/workspaces/${workspaceId}/manage/statistics`} />
+            <ManageCard icon={<FaCalculator />} title={'Mengen-Kalkulation'} link={`/workspaces/${workspaceId}/manage/calculations`} />
+          </div>
+
+          <div className={'flex flex-col gap-2'}>
+            <div className={'divider col-span-full'}>Workspace</div>
+            <ManageCard icon={<FaUsers />} title={'Nutzer'} link={`/workspaces/${workspaceId}/manage/settings/users`} />
+            {userContext.isUserPermitted('ADMIN') && (
+              <ManageCard icon={<FaGear />} title={'Einstellungen'} link={`/workspaces/${workspaceId}/manage/settings`} />
+            )}
+          </div>
         </div>
       </ManageEntityLayout>
     </>
