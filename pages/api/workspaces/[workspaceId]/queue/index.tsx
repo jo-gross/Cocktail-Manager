@@ -44,10 +44,12 @@ export default withHttpMethods({
     return res.json({
       data: cocktailQueue.map((cocktailQueueItem) => {
         return {
+          queueItemId: cocktailQueueItem.id,
           cocktailId: cocktailQueueItem.cocktailId,
           timestamp: cocktailQueueItem.createdAt,
           cocktailName: cocktailQueueItem.cocktail.name,
           notes: cocktailQueueItem.notes,
+          inProgress: cocktailQueueItem.inProgress,
         };
       }),
     });

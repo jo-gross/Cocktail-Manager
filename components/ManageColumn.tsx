@@ -41,7 +41,6 @@ export function ManageColumn(props: ManageColumnProps) {
                     spelling={'DELETE'}
                     entityName={props.name}
                     onApprove={async () => {
-                      await new Promise((resolve) => setTimeout(resolve, 1000));
                       const response = await fetch(`/api/workspaces/${workspaceId}/${props.entity}/${props.id}`, {
                         method: 'DELETE',
                       });

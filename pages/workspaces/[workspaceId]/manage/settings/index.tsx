@@ -64,7 +64,7 @@ function WorkspaceSettingPage() {
         const element = document.createElement('a');
         const file = new Blob([content], { type: 'application/json' });
         element.href = URL.createObjectURL(file);
-        element.download = `Cocktail-Manager ${userContext.workspace?.name} Backup ${new Date().toFormatDateString()}.json`;
+        element.download = `The Cocktail-Manager ${userContext.workspace?.name} Backup ${new Date().toFormatDateString()}.json`;
         document.body.appendChild(element); // Required for this to work in FireFox
         element.click();
       })

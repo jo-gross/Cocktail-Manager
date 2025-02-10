@@ -266,7 +266,7 @@ export default function WorkspacesPage() {
               height={211}
               width={247}
             />
-            <h1 className={'text-center text-4xl font-bold'}>Cocktail-Manager</h1>
+            <h1 className={'text-center text-4xl font-bold'}>The Cocktail-Manager</h1>
             <div>
               <Link href={'https://github.com/jo-gross/Cocktail-Manager/'} target={'_blank'} className={'link'}>
                 v{packageInfo.version}

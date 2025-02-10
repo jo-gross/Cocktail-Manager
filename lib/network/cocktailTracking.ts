@@ -24,6 +24,7 @@ export async function addCocktailToStatistic({
 }) {
   try {
     setSubmitting(true);
+
     const response = await fetch(`/api/workspaces/${workspaceId}/statistics/cocktails/add`, {
       method: 'POST',
       headers: {
@@ -137,6 +138,46 @@ export async function removeCocktailFromQueue({
     }
   } catch (error) {
     console.error('addCocktailToQueue', error);
+    alertService.error('Es ist ein Fehler aufgetreten');
+  } finally {
+    setSubmitting(false);
+  }
+}
+
+export async function changeQueueProcess({
+  workspaceId,
+  cocktailQueueItemId,
+  inProgress,
+  setSubmitting,
+  onSuccess,
+}: {
+  workspaceId: string;
+  cocktailQueueItemId: string;
+  inProgress: boolean;
+  setSubmitting: (submitting: boolean) => void;
+  onSuccess?: () => void;
+}) {
+  try {
+    setSubmitting(true);
+    const response = await fetch(`/api/workspaces/${workspaceId}/queue/${cocktailQueueItemId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        inProgress: inProgress,
+      }),
+    });
+    if (response.ok) {
+      // alertService.success('Cocktail aus der Warteschlange entfernt');
+      onSuccess?.();
+    } else {
+      const body = await response.json();
+      console.error('changeQueueProcess', response);
+      alertService.error(body.message ?? 'Fehler beim aktualisieren des Eintrags', response.status, response.statusText);
+    }
+  } catch (error) {
+    console.error('changeQueueProcess', error);
     alertService.error('Es ist ein Fehler aufgetreten');
   } finally {
     setSubmitting(false);

@@ -16,9 +16,11 @@ import Head from 'next/head';
 import { UserContext } from '../../../lib/context/UserContextProvider';
 import SearchPage from './search';
 import '../../../lib/DateUtils';
-import { addCocktailToStatistic, removeCocktailFromQueue } from '../../../lib/network/cocktailTracking';
+import { addCocktailToStatistic, changeQueueProcess, removeCocktailFromQueue } from '../../../lib/network/cocktailTracking';
 import { CocktailDetailModal } from '../../../components/modals/CocktailDetailModal';
 import _ from 'lodash';
+import { FaArrowTurnDown, FaArrowTurnUp } from 'react-icons/fa6';
+import '../../../lib/ArrayUtils';
 import { CocktailRecipeFull } from '../../../models/CocktailRecipeFull';
 
 export default function OverviewPage() {
@@ -40,6 +42,7 @@ export default function OverviewPage() {
   const [showTime, setShowTime] = useState(false);
   const [showRating, setShowRating] = useState(false);
   const [queueGrouping, setQueueGrouping] = useState<'ALPHABETIC' | 'NONE'>('NONE');
+  const [showFastQueueCheck, setShowFastQueueCheck] = useState(false);
 
   const [cocktailCards, setCocktailCards] = useState<CocktailCardFull[]>([]);
   const [loadingCards, setLoadingCards] = useState(true);
@@ -188,6 +191,7 @@ export default function OverviewPage() {
     setShowTime(userContext.user?.settings?.find((s) => s.setting == Setting.showTime)?.value == 'true');
     setShowRating(userContext.user?.settings?.find((s) => s.setting == Setting.showRating)?.value == 'true');
     setQueueGrouping(userContext.user?.settings?.find((s) => s.setting == Setting.queueGrouping)?.value as 'ALPHABETIC' | 'NONE');
+    setShowFastQueueCheck(userContext.user?.settings?.find((s) => s.setting == Setting.showFastQueueCheck)?.value == 'true');
   }, [userContext.user?.settings]);
 
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -217,14 +221,27 @@ export default function OverviewPage() {
   }, []);
 
   interface CocktailQueueItem {
+    queueItemId: string;
     cocktailId: string;
     timestamp: Date;
     cocktailName: string;
+    inProgress: boolean;
     notes?: string;
   }
 
+  interface GroupedItem {
+    queueItemId: string;
+    cocktailId: string;
+    notes: string | undefined;
+    cocktailName: string;
+    count: number;
+    oldestTimestamp: Date;
+    inProgress?: boolean;
+    total: number | undefined;
+  }
+
   const [cocktailQueue, setCocktailQueue] = useState<CocktailQueueItem[]>([]);
-  const [submittingQueue, setSubmittingQueue] = useState<{ cocktailId: string; mode: 'ACCEPT' | 'REJECT' }[]>([]);
+  const [submittingQueue, setSubmittingQueue] = useState<{ cocktailId: string; mode: 'ACCEPT' | 'REJECT' | 'IN_PROGRESS' | 'NOT_ANYMORE_IN_PROGRESS' }[]>([]);
 
   useEffect(() => {
     let interval: NodeJS.Timeout | undefined;
@@ -337,6 +354,181 @@ export default function OverviewPage() {
     triggerAllCocktailCardRefresh();
   }, [lessItems]);
 
+  function renderCocktailQueueItem(cocktailQueueItem: GroupedItem, index: number) {
+    return (
+      <div key={`cocktailQueue-item-${index}`} className={'flex w-full flex-row flex-wrap justify-between gap-2 pb-1 pt-1 lg:flex-col'}>
+        <div
+          className={'cursor-pointer'}
+          onClick={() => {
+            if (selectedCardId == 'search' || selectedCardId == undefined) {
+              setSelectedCocktail(cocktailQueueItem.cocktailId);
+            } else {
+              modalContext.openModal(
+                <CocktailDetailModal
+                  cocktailId={cocktailQueueItem.cocktailId}
+                  onRefreshRatings={() => handleCocktailCardRefresh(cocktailQueueItem.cocktailName)}
+                  queueNotes={cocktailQueueItem.notes}
+                  queueAmount={cocktailQueueItem.count}
+                  openReferer={'QUEUE'}
+                />,
+                true,
+              );
+            }
+          }}
+        >
+          <div className={'mt-1 flex flex-row flex-wrap items-center justify-between gap-1'}>
+            <div className={'font-bold'}>
+              <strong>{cocktailQueueItem.count}x</strong> {cocktailQueueItem.cocktailName}{' '}
+            </div>
+            <span className={'flex flex-wrap gap-1'}>{cocktailQueueItem.notes && <span className={'italic'}>mit Notiz</span>}</span>
+          </div>
+          <div className={'flex flex-row flex-wrap items-center justify-between gap-1'}>
+            {cocktailQueueItem.total != undefined && cocktailQueueItem.total > 1 ? (
+              <span className={'font-thin'}> (Insg. {cocktailQueueItem.total} gleiche)</span>
+            ) : (
+              <></>
+            )}
+            <span>(seit {new Date(cocktailQueueItem?.oldestTimestamp).toFormatTimeString()} Uhr)</span>
+          </div>
+          {cocktailQueueItem.notes && <span className={'long-text-format italic lg:pb-1'}>Notiz: {cocktailQueueItem.notes}</span>}
+        </div>
+        <div className={'flex w-full flex-row gap-2 pb-1'}>
+          <div
+            className={'btn btn-square btn-outline btn-sm'}
+            onClick={() =>
+              modalContext.openModal(
+                <CocktailDetailModal
+                  cocktailId={cocktailQueueItem.cocktailId}
+                  onRefreshRatings={() => handleCocktailCardRefresh(cocktailQueueItem.cocktailName)}
+                  queueNotes={cocktailQueueItem.notes}
+                  queueAmount={cocktailQueueItem.count}
+                  openReferer={'QUEUE'}
+                />,
+                true,
+              )
+            }
+          >
+            <FaEye />
+          </div>
+          <div className={'join grid w-full grid-cols-3'}>
+            {(cocktailQueueItem.inProgress || showFastQueueCheck) && (
+              <button
+                className={`btn btn-success join-item btn-sm ${showFastQueueCheck && !cocktailQueueItem.inProgress ? '' : 'col-span-2'}`}
+                disabled={!!submittingQueue.find((i) => i.cocktailId == cocktailQueueItem.cocktailId)}
+                onClick={() =>
+                  addCocktailToStatistic({
+                    workspaceId: router.query.workspaceId as string,
+                    cocktailId: cocktailQueueItem.cocktailId,
+                    actionSource: 'QUEUE',
+                    notes: cocktailQueueItem.notes ?? '-',
+                    setSubmitting: (submitting) => {
+                      if (submitting) {
+                        setSubmittingQueue([...submittingQueue, { cocktailId: cocktailQueueItem.cocktailId, mode: 'ACCEPT' }]);
+                      } else {
+                        setSubmittingQueue(submittingQueue.filter((i) => i.cocktailId != cocktailQueueItem.cocktailId));
+                      }
+                    },
+                    onSuccess: () => {
+                      refreshQueue();
+                    },
+                  })
+                }
+              >
+                {submittingQueue.find((i) => i.cocktailId == cocktailQueueItem.cocktailId && i.mode == 'ACCEPT') && (
+                  <span className={'loading loading-spinner'} />
+                )}
+                <FaCheck />
+              </button>
+            )}
+            {!cocktailQueueItem.inProgress && (
+              <button
+                className={`btn ${showFastQueueCheck ? '' : 'col-span-2'} btn-info join-item btn-sm`}
+                disabled={!!submittingQueue.find((i) => i.cocktailId == cocktailQueueItem.cocktailId)}
+                onClick={() =>
+                  changeQueueProcess({
+                    workspaceId: router.query.workspaceId as string,
+                    cocktailQueueItemId: cocktailQueueItem.queueItemId,
+                    inProgress: true,
+                    setSubmitting: (submitting) => {
+                      if (submitting) {
+                        setSubmittingQueue([...submittingQueue, { cocktailId: cocktailQueueItem.cocktailId, mode: 'IN_PROGRESS' }]);
+                      } else {
+                        setSubmittingQueue(submittingQueue.filter((i) => i.cocktailId != cocktailQueueItem.cocktailId));
+                      }
+                    },
+                    onSuccess: () => {
+                      refreshQueue();
+                    },
+                  })
+                }
+              >
+                {submittingQueue.find((i) => i.cocktailId == cocktailQueueItem.cocktailId && i.mode == 'IN_PROGRESS') && (
+                  <span className={'loading loading-spinner'} />
+                )}
+                <FaArrowTurnUp />
+              </button>
+            )}
+            {cocktailQueueItem.inProgress ? (
+              <button
+                className={'btn btn-error join-item btn-sm'}
+                disabled={!!submittingQueue.find((i) => i.cocktailId == cocktailQueueItem.cocktailId)}
+                onClick={() =>
+                  changeQueueProcess({
+                    workspaceId: router.query.workspaceId as string,
+                    cocktailQueueItemId: cocktailQueueItem.queueItemId,
+                    inProgress: false,
+                    setSubmitting: (submitting) => {
+                      if (submitting) {
+                        setSubmittingQueue([...submittingQueue, { cocktailId: cocktailQueueItem.cocktailId, mode: 'NOT_ANYMORE_IN_PROGRESS' }]);
+                      } else {
+                        setSubmittingQueue(submittingQueue.filter((i) => i.cocktailId != cocktailQueueItem.cocktailId));
+                      }
+                    },
+                    onSuccess: () => {
+                      refreshQueue();
+                    },
+                  })
+                }
+              >
+                {submittingQueue.find((i) => i.cocktailId == cocktailQueueItem.cocktailId && i.mode == 'NOT_ANYMORE_IN_PROGRESS') && (
+                  <span className={'loading loading-spinner'} />
+                )}
+                <FaArrowTurnDown />
+              </button>
+            ) : (
+              <button
+                className={'btn btn-error join-item btn-sm'}
+                disabled={!!submittingQueue.find((i) => i.cocktailId == cocktailQueueItem.cocktailId)}
+                onClick={() =>
+                  removeCocktailFromQueue({
+                    workspaceId: router.query.workspaceId as string,
+                    cocktailId: cocktailQueueItem.cocktailId,
+                    notes: cocktailQueueItem.notes,
+                    setSubmitting: (submitting) => {
+                      if (submitting) {
+                        setSubmittingQueue([...submittingQueue, { cocktailId: cocktailQueueItem.cocktailId, mode: 'REJECT' }]);
+                      } else {
+                        setSubmittingQueue(submittingQueue.filter((i) => i.cocktailId != cocktailQueueItem.cocktailId));
+                      }
+                    },
+                    reload: () => {
+                      refreshQueue();
+                    },
+                  })
+                }
+              >
+                {submittingQueue.find((i) => i.cocktailId == cocktailQueueItem.cocktailId && i.mode == 'REJECT') && (
+                  <span className={'loading loading-spinner'} />
+                )}
+                <FaTimes />
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
       <Head>
@@ -358,144 +550,99 @@ export default function OverviewPage() {
               }
             >
               <div className={`${showQueueAsOverlay ? 'bg-opacity-75 lg:max-w-60' : ''} flex w-full flex-col rounded-xl bg-base-300 p-2 print:hidden`}>
-                <div className={'underline'}>Warteschlange ({queueGrouping == 'ALPHABETIC' ? 'A-Z' : 'Chronologisch'})</div>
+                <div className="flex w-full flex-row flex-wrap items-center justify-center overflow-hidden border-b border-base-content pb-1 text-center">
+                  <span className="truncate">Wird gemacht</span>
+                  <span className="ml-1">(A-Z)</span>
+                </div>
+
+                {/*<div className={'divider'}></div>*/}
                 <div className={'flex flex-col divide-y'}>
-                  {(queueGrouping == 'ALPHABETIC'
+                  {(queueGrouping == 'ALPHABETIC' || true
                     ? _(cocktailQueue)
-                        // .groupBy('cocktailId')
+                        .filter((item) => item.inProgress)
                         .groupBy((item) => `${item.cocktailId}||${item.notes}`) // Gruppierung basierend auf cocktailId und notes
                         .map((items, key) => {
                           const [cocktailId, notes] = key.split('||'); // Extrahiere cocktailId und notes aus dem Key
                           return {
-                            cocktailId,
+                            queueItemId: items[0].queueItemId,
+                            cocktailId: cocktailId,
                             notes: notes === 'null' || notes === '' ? undefined : notes,
                             cocktailName: items[0].cocktailName,
                             count: items.length,
                             oldestTimestamp: _.minBy(items, 'timestamp')!.timestamp, // Finde den ältesten Timestamp
+                            inProgress: true,
                             total: undefined,
                           };
                         })
                         .sortBy(['cocktailName', (item) => -(item.notes ?? '')]) // Sortiere nach cocktailName (asc) und notes (desc)
                     : _(cocktailQueue)
+                        .filter((item) => item.inProgress)
                         .sortBy('timestamp') // Sortiere nach timestamp (desc)
                         .map((item, key) => {
                           return {
+                            queueItemId: item.queueItemId,
                             cocktailId: item.cocktailId,
                             notes: item.notes,
                             cocktailName: item.cocktailName,
                             count: 1,
                             oldestTimestamp: item.timestamp,
+                            inProgress: true,
                             total: cocktailQueue.filter((i) => i.cocktailId == item.cocktailId && i.notes == item.notes).length,
                           };
                         })
                   )
                     .value()
-                    .map((cocktailQueueItem, index) => (
-                      <div
-                        key={`cocktailQueue-item-${index}`}
-                        className={'flex w-full cursor-pointer flex-row flex-wrap justify-between gap-2 pb-1 pt-1 lg:flex-col'}
-                        onClick={() => {
-                          if (selectedCardId == 'search' || selectedCardId == undefined) {
-                            setSelectedCocktail(cocktailQueueItem.cocktailId);
+                    .mapWithFallback(
+                      (cocktailQueueItem, index) => renderCocktailQueueItem(cocktailQueueItem, index),
+                      <div>Es werden gerade keine Cocktails gemacht</div>,
+                    )}
+                </div>
+                {/*<div className={'divider'}>Warteschl. ({queueGrouping == 'ALPHABETIC' ? 'A-Z' : 'Uhr'})</div>*/}
+                <div className={'h-5'}></div>
+                <div className="flex w-full flex-row flex-wrap items-center justify-center overflow-hidden border-b border-base-content pb-1 text-center">
+                  <span className="truncate">Warteschlange</span>
+                  <span className="ml-1">({queueGrouping == 'ALPHABETIC' ? 'A-Z' : 'Uhr'})</span>
+                </div>
+                <div className={'flex flex-col divide-y'}>
+                  {(queueGrouping == 'ALPHABETIC'
+                    ? _(cocktailQueue)
+                        .filter((item) => !item.inProgress)
+                        .groupBy((item) => `${item.cocktailId}||${item.notes || ''}`) // Gruppierung basierend auf cocktailId und notes
+                        .map<GroupedItem>((items, key) => {
+                          const [cocktailId, notes] = key.split('||'); // Extrahiere cocktailId und notes aus dem Key
+                          return {
+                            queueItemId: items[0].queueItemId,
+                            cocktailId: cocktailId,
+                            notes: notes === 'null' || notes === '' ? undefined : notes,
+                            cocktailName: items[0].cocktailName,
+                            count: items.length,
+                            oldestTimestamp: _.minBy(items, 'timestamp')!.timestamp, // Finde den ältesten Timestamp
+                            inProgress: false,
+                            total: undefined,
+                          };
+                        })
+                        .sortBy(['cocktailName', (item) => -(item.notes ?? '')])
+                        .value()
+                    : _(cocktailQueue)
+                        .filter((item) => !item.inProgress)
+                        .sortBy('timestamp') // Sortiere nach timestamp (desc)
+                        .reduce<GroupedItem[]>((acc, item) => {
+                          if (acc.length > 0 && acc[acc.length - 1].cocktailId === item.cocktailId && acc[acc.length - 1].notes === item.notes) {
+                            acc[acc.length - 1].count += 1; // Erhöhe die Anzahl für zusammenhängende gleiche Einträge
                           } else {
-                            modalContext.openModal(
-                              <CocktailDetailModal
-                                cocktailId={cocktailQueueItem.cocktailId}
-                                onRefreshRatings={() => handleCocktailCardRefresh(cocktailQueueItem.cocktailName)}
-                                queueNotes={cocktailQueueItem.notes}
-                                queueAmount={cocktailQueueItem.count}
-                                openReferer={'QUEUE'}
-                              />,
-                              true,
-                            );
+                            acc.push({
+                              queueItemId: item.queueItemId,
+                              cocktailId: item.cocktailId,
+                              notes: item.notes,
+                              cocktailName: item.cocktailName,
+                              count: 1,
+                              oldestTimestamp: item.timestamp,
+                              total: cocktailQueue.filter((i) => i.cocktailId == item.cocktailId && i.notes == item.notes).length,
+                            });
                           }
-                        }}
-                      >
-                        <div className={'mt-1 flex flex-row flex-wrap items-center justify-between gap-1'}>
-                          <div className={'font-bold'}>
-                            <strong>{cocktailQueueItem.count}x</strong> {cocktailQueueItem.cocktailName}{' '}
-                          </div>
-                          <span className={'flex flex-wrap gap-1'}>{cocktailQueueItem.notes && <span className={'italic'}>mit Notiz</span>}</span>
-                        </div>
-                        <div className={'flex flex-row flex-wrap items-center justify-between gap-1'}>
-                          {cocktailQueueItem.total != undefined && cocktailQueueItem.total > 1 ? (
-                            <span className={'font-thin'}>(Insg. {cocktailQueueItem.total} gleiche)</span>
-                          ) : (
-                            <span></span>
-                          )}
-                          <span>(seit {new Date(cocktailQueueItem?.oldestTimestamp).toFormatTimeString()} Uhr)</span>
-                        </div>
-                        {cocktailQueueItem.notes && <span className={'long-text-format italic lg:pb-1'}>Notiz: {cocktailQueueItem.notes}</span>}
-                        <div className={'flex w-full flex-row gap-2'}>
-                          <div
-                            className={'btn btn-square btn-outline btn-sm'}
-                            onClick={() =>
-                              modalContext.openModal(
-                                <CocktailDetailModal
-                                  cocktailId={cocktailQueueItem.cocktailId}
-                                  onRefreshRatings={() => handleCocktailCardRefresh(cocktailQueueItem.cocktailName)}
-                                  queueNotes={cocktailQueueItem.notes}
-                                  queueAmount={cocktailQueueItem.count}
-                                  openReferer={'QUEUE'}
-                                />,
-                                true,
-                              )
-                            }
-                          >
-                            <FaEye />
-                          </div>
-                          <div className={'join grid w-full grid-cols-3'}>
-                            <button
-                              className={'btn btn-success join-item btn-sm col-span-2'}
-                              disabled={!!submittingQueue.find((i) => i.cocktailId == cocktailQueueItem.cocktailId)}
-                              onClick={() =>
-                                addCocktailToStatistic({
-                                  workspaceId: router.query.workspaceId as string,
-                                  cocktailId: cocktailQueueItem.cocktailId,
-                                  actionSource: 'QUEUE',
-                                  notes: cocktailQueueItem.notes ?? '-',
-                                  setSubmitting: (submitting) => {
-                                    if (submitting) {
-                                      setSubmittingQueue([...submittingQueue, { cocktailId: cocktailQueueItem.cocktailId, mode: 'ACCEPT' }]);
-                                    } else {
-                                      setSubmittingQueue(submittingQueue.filter((i) => i.cocktailId != cocktailQueueItem.cocktailId));
-                                    }
-                                  },
-                                  onSuccess: () => {
-                                    refreshQueue();
-                                  },
-                                })
-                              }
-                            >
-                              <FaCheck />
-                            </button>
-                            <button
-                              className={'btn btn-error join-item btn-sm'}
-                              disabled={!!submittingQueue.find((i) => i.cocktailId == cocktailQueueItem.cocktailId)}
-                              onClick={() =>
-                                removeCocktailFromQueue({
-                                  workspaceId: router.query.workspaceId as string,
-                                  cocktailId: cocktailQueueItem.cocktailId,
-                                  notes: cocktailQueueItem.notes,
-                                  setSubmitting: (submitting) => {
-                                    if (submitting) {
-                                      setSubmittingQueue([...submittingQueue, { cocktailId: cocktailQueueItem.cocktailId, mode: 'REJECT' }]);
-                                    } else {
-                                      setSubmittingQueue(submittingQueue.filter((i) => i.cocktailId != cocktailQueueItem.cocktailId));
-                                    }
-                                  },
-                                  reload: () => {
-                                    refreshQueue();
-                                  },
-                                })
-                              }
-                            >
-                              <FaTimes />
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
+                          return acc;
+                        }, [])
+                  ).mapWithFallback((cocktailQueueItem, index) => renderCocktailQueueItem(cocktailQueueItem, index), <div>Warteschlange ist leer</div>)}
                 </div>
               </div>
             </div>
@@ -826,6 +973,20 @@ export default function OverviewPage() {
                             />
                           </label>
                         </div>
+                      </div>
+                      <div className="form-control">
+                        <label className="label">
+                          Schnelles abhaken anzeigen
+                          <input
+                            type={'checkbox'}
+                            className={'toggle toggle-primary'}
+                            checked={showFastQueueCheck}
+                            readOnly={true}
+                            onClick={() => {
+                              userContext.updateUserSetting(Setting.showFastQueueCheck, !showFastQueueCheck ? 'true' : 'false');
+                            }}
+                          />
+                        </label>
                       </div>
                     </div>
                   </div>
