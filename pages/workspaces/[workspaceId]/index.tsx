@@ -356,42 +356,43 @@ export default function OverviewPage() {
 
   function renderCocktailQueueItem(cocktailQueueItem: GroupedItem, index: number) {
     return (
-      <div
-        key={`cocktailQueue-item-${index}`}
-        className={'flex w-full cursor-pointer flex-row flex-wrap justify-between gap-2 pb-1 pt-1 lg:flex-col'}
-        onClick={() => {
-          if (selectedCardId == 'search' || selectedCardId == undefined) {
-            setSelectedCocktail(cocktailQueueItem.cocktailId);
-          } else {
-            modalContext.openModal(
-              <CocktailDetailModal
-                cocktailId={cocktailQueueItem.cocktailId}
-                onRefreshRatings={() => handleCocktailCardRefresh(cocktailQueueItem.cocktailName)}
-                queueNotes={cocktailQueueItem.notes}
-                queueAmount={cocktailQueueItem.count}
-                openReferer={'QUEUE'}
-              />,
-              true,
-            );
-          }
-        }}
-      >
-        <div className={'mt-1 flex flex-row flex-wrap items-center justify-between gap-1'}>
-          <div className={'font-bold'}>
-            <strong>{cocktailQueueItem.count}x</strong> {cocktailQueueItem.cocktailName}{' '}
+      <div key={`cocktailQueue-item-${index}`} className={'flex w-full flex-row flex-wrap justify-between gap-2 pb-1 pt-1 lg:flex-col'}>
+        <div
+          className={'cursor-pointer'}
+          onClick={() => {
+            if (selectedCardId == 'search' || selectedCardId == undefined) {
+              setSelectedCocktail(cocktailQueueItem.cocktailId);
+            } else {
+              modalContext.openModal(
+                <CocktailDetailModal
+                  cocktailId={cocktailQueueItem.cocktailId}
+                  onRefreshRatings={() => handleCocktailCardRefresh(cocktailQueueItem.cocktailName)}
+                  queueNotes={cocktailQueueItem.notes}
+                  queueAmount={cocktailQueueItem.count}
+                  openReferer={'QUEUE'}
+                />,
+                true,
+              );
+            }
+          }}
+        >
+          <div className={'mt-1 flex flex-row flex-wrap items-center justify-between gap-1'}>
+            <div className={'font-bold'}>
+              <strong>{cocktailQueueItem.count}x</strong> {cocktailQueueItem.cocktailName}{' '}
+            </div>
+            <span className={'flex flex-wrap gap-1'}>{cocktailQueueItem.notes && <span className={'italic'}>mit Notiz</span>}</span>
           </div>
-          <span className={'flex flex-wrap gap-1'}>{cocktailQueueItem.notes && <span className={'italic'}>mit Notiz</span>}</span>
+          <div className={'flex flex-row flex-wrap items-center justify-between gap-1'}>
+            {cocktailQueueItem.total != undefined && cocktailQueueItem.total > 1 ? (
+              <span className={'font-thin'}> (Insg. {cocktailQueueItem.total} gleiche)</span>
+            ) : (
+              <></>
+            )}
+            <span>(seit {new Date(cocktailQueueItem?.oldestTimestamp).toFormatTimeString()} Uhr)</span>
+          </div>
+          {cocktailQueueItem.notes && <span className={'long-text-format italic lg:pb-1'}>Notiz: {cocktailQueueItem.notes}</span>}
         </div>
-        <div className={'flex flex-row flex-wrap items-center justify-between gap-1'}>
-          {cocktailQueueItem.total != undefined && cocktailQueueItem.total > 1 ? (
-            <span className={'font-thin'}> (Insg. {cocktailQueueItem.total} gleiche)</span>
-          ) : (
-            <></>
-          )}
-          <span>(seit {new Date(cocktailQueueItem?.oldestTimestamp).toFormatTimeString()} Uhr)</span>
-        </div>
-        {cocktailQueueItem.notes && <span className={'long-text-format italic lg:pb-1'}>Notiz: {cocktailQueueItem.notes}</span>}
-        <div className={'flex w-full flex-row gap-2'}>
+        <div className={'flex w-full flex-row gap-2 pb-1'}>
           <div
             className={'btn btn-square btn-outline btn-sm'}
             onClick={() =>
