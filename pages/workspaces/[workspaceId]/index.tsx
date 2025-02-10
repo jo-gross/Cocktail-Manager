@@ -358,7 +358,7 @@ export default function OverviewPage() {
           <div className={'font-bold'}>
             <strong>{cocktailQueueItem.count}x</strong> {cocktailQueueItem.cocktailName}{' '}
             {cocktailQueueItem.total != undefined && cocktailQueueItem.total > 1 ? (
-              <span className={'font-thin'}>(Insg. {cocktailQueueItem.total} gleiche)</span>
+              <span className={'font-thin'}> (Insg. {cocktailQueueItem.total} gleiche)</span>
             ) : (
               <></>
             )}
@@ -527,7 +527,12 @@ export default function OverviewPage() {
               }
             >
               <div className={`${showQueueAsOverlay ? 'bg-opacity-75 lg:max-w-60' : ''} flex w-full flex-col rounded-xl bg-base-300 p-2 print:hidden`}>
-                <div className={'divider'}>Wird gemacht (A-Z)</div>
+                <div className="flex w-full flex-row flex-wrap items-center justify-center overflow-hidden border-b border-base-content pb-1 text-center">
+                  <span className="truncate">Wird gemacht</span>
+                  <span className="ml-1">(A-Z)</span>
+                </div>
+
+                {/*<div className={'divider'}></div>*/}
                 <div className={'flex flex-col divide-y'}>
                   {(queueGrouping == 'ALPHABETIC' || true
                     ? _(cocktailQueue)
@@ -569,7 +574,12 @@ export default function OverviewPage() {
                       <div>Es werden gerade keine Cocktails gemacht</div>,
                     )}
                 </div>
-                <div className={'divider'}>Warteschlange ({queueGrouping == 'ALPHABETIC' ? 'A-Z' : 'Chronologisch'})</div>
+                {/*<div className={'divider'}>Warteschl. ({queueGrouping == 'ALPHABETIC' ? 'A-Z' : 'Uhr'})</div>*/}
+                <div className={'h-5'}></div>
+                <div className="flex w-full flex-row flex-wrap items-center justify-center overflow-hidden border-b border-base-content pb-1 text-center">
+                  <span className="truncate">Warteschlange</span>
+                  <span className="ml-1">({queueGrouping == 'ALPHABETIC' ? 'A-Z' : 'Uhr'})</span>
+                </div>
                 <div className={'flex flex-col divide-y'}>
                   {(queueGrouping == 'ALPHABETIC'
                     ? _(cocktailQueue)
