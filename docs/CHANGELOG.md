@@ -3,7 +3,7 @@
 
 ### Features
 
-* Add custom OpenID Connect provider ([#555](https://github.com/jo-gross/Cocktail-Manager/issues/555)) ([7c747a7](https://github.com/jo-gross/Cocktail-Manager/commit/7c747a7960a3e34b7deac2e457fc2062d8dc49c8))
+* Add custom OpenID Connect provider ([#555](https://github.com/jo-gross/Cocktail-Manager/issues/555)) ([7c747a7](https://github.com/jo-gross/Cocktail-Manager/commit/7c747a7960a3e34b7deac2e457fc2062d8dc49c8)) by [@ibot3](https://github.com/ibot3)
 
 # [1.12.0](https://github.com/jo-gross/Cocktail-Manager/compare/v1.11.2...v1.12.0) (2025-02-10)
 
