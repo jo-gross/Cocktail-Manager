@@ -86,28 +86,26 @@ cocktail, with the detailed recipe making and the compact view for the bartender
 **System Requirements:**
 
 - Docker
-- Google Cloud Project (for authentication)
+- Google Cloud Project (for authentication) or an other OIDC provider
 - Node.js (only for local development)
 
-**Google Client ID and Secret:**
+**Setting up the application:**
 
-To generate the Google OAuth credentials, go to
-the [Google Developer Console](https://console.developers.google.com/apis/credentials) and create a OAuth 2.0-Client
-with the following settings:
+1. Get started with cloning the repository and copy the .env.example to .env
 
-- Redirect URIs: http://localhost:3000/api/auth/callback/google
+    ```sh
+    git clone https://github.com/jo-gross/Cocktail-Manager.git
+    cd Cocktail-Manager
+    cp .env.example .env
+    ```
 
-> Getting started with cloning the repository and copy the .env.example to .env
->
-> ```sh
-> git clone https://github.com/jo-gross/Cocktail-Manager.git
-> cd Cocktail-Manager
-> cp .env.example .env
-> ```
->
-> Enter your Google Client ID and Secret in the .env file and set the other environment variables.
+2. Set the required env vars for the authentication provider (See [Auth](docs/AUTH.md)) in the .env file and set the other environment variables
+3. Start the application with `docker compose` (see more options below)
 
-When the application is running, you should be able to access it at [http://localhost:3000](http://localhost:3000)
+    ```sh
+    docker compose up -d
+    ```
+5. When the application is running, you should be able to access it at [http://localhost:3000](http://localhost:3000)
 
 ---
 
