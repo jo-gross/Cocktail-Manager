@@ -3,6 +3,7 @@ import Google from 'next-auth/providers/google';
 import prisma from '../../../prisma/prisma';
 import { PrismaAdapter } from '@next-auth/prisma-adapter';
 import { OAuthConfig } from 'next-auth/providers';
+import { AdapterAccount } from 'next-auth/adapters';
 
 const providers: OAuthConfig<any>[] = [];
 
@@ -43,12 +44,29 @@ if (process.env.CUSTOM_OIDC_NAME as string) {
   });
 }
 
+// Some providers have custom options in their tokens. This causes problems if these fields are not present in the account db model.
+// This is a custom adapter that removes all fields from the account object that are not present in the account model.
+const adapter = PrismaAdapter(prisma);
+const _linkAccount = adapter.linkAccount;
+adapter.linkAccount = (account: AdapterAccount) => {
+  const data = { ...account };
+
+  // Remove all fields from data that are not present in the prisma.account model
+  for (const field in account) {
+    if (!(field in prisma.account.fields)) {
+      delete data[field];
+    }
+  }
+
+  return _linkAccount(data);
+};
+
 export const authOptions: NextAuthOptions = {
   theme: {
     logo: '/images/Logo.svg',
   },
   providers,
-  adapter: PrismaAdapter(prisma),
+  adapter,
   secret: process.env.NEXTAUTH_SECRET,
   callbacks: {
     session: async ({ session, token }) => {
