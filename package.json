@@ -30,7 +30,7 @@
     "jssoup": "0.0.15",
     "lodash": "4.17.21",
     "marked": "15.0.7",
-    "next": "15.1.5",
+    "next": "15.1.7",
     "next-auth": "4.24.11",
     "next-pwa": "5.6.0",
     "node-html-parser": "6.1.13",
