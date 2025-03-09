@@ -76,6 +76,7 @@ enum Setting {
   showRating
   queueGrouping
   showFastQueueCheck
+  showSettingsAtBottom
 }
 
 enum WorkspaceSettingKey {

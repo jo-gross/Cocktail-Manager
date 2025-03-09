@@ -43,6 +43,7 @@ export default function OverviewPage() {
   const [showRating, setShowRating] = useState(false);
   const [queueGrouping, setQueueGrouping] = useState<'ALPHABETIC' | 'NONE'>('NONE');
   const [showFastQueueCheck, setShowFastQueueCheck] = useState(false);
+  const [showSettingsAtBottom, setShowSettingsAtBottom] = useState(false);
 
   const [cocktailCards, setCocktailCards] = useState<CocktailCardFull[]>([]);
   const [loadingCards, setLoadingCards] = useState(true);
@@ -192,6 +193,7 @@ export default function OverviewPage() {
     setShowRating(userContext.user?.settings?.find((s) => s.setting == Setting.showRating)?.value == 'true');
     setQueueGrouping(userContext.user?.settings?.find((s) => s.setting == Setting.queueGrouping)?.value as 'ALPHABETIC' | 'NONE');
     setShowFastQueueCheck(userContext.user?.settings?.find((s) => s.setting == Setting.showFastQueueCheck)?.value == 'true');
+    setShowSettingsAtBottom(userContext.user?.settings?.find((s) => s.setting == Setting.showSettingsAtBottom)?.value == 'true');
   }, [userContext.user?.settings]);
 
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -732,8 +734,13 @@ export default function OverviewPage() {
 
         {showTime ? <div className={'pb-2'}>{timeComponent}</div> : <></>}
 
-        <div ref={actionButtonRef} className={'fixed bottom-2 right-2 z-10 flex flex-col space-y-2 md:bottom-5 md:right-5 print:hidden'}>
-          <div className="dropdown dropdown-end dropdown-top pt-2">
+        <div
+          ref={actionButtonRef}
+          className={
+            'bottom-2 right-2 z-10 flex space-y-2 md:bottom-5 md:right-5 print:hidden' + (showSettingsAtBottom ? ' mx-2 justify-end' : ' fixed flex-col')
+          }
+        >
+          <div className={'dropdown dropdown-end dropdown-top pt-2' + (showSettingsAtBottom ? ' mr-1' : '')}>
             <label tabIndex={0} className={'btn btn-square btn-primary rounded-xl md:btn-lg'}>
               <FaEye />
             </label>
@@ -1042,6 +1049,20 @@ export default function OverviewPage() {
                           />
                         </label>
                       </div>
+                      <div className="form-control">
+                        <label className="label">
+                          Einstellungen am Ende
+                          <input
+                            type={'checkbox'}
+                            className={'toggle toggle-primary'}
+                            checked={showSettingsAtBottom}
+                            readOnly={true}
+                            onClick={() => {
+                              userContext.updateUserSetting(Setting.showSettingsAtBottom, !showSettingsAtBottom ? 'true' : 'false');
+                            }}
+                          />
+                        </label>
+                      </div>
                     </div>
                   </div>
                   <div className={'divider'}></div>
@@ -1058,7 +1079,7 @@ export default function OverviewPage() {
 
           <>
             {selectedCardId != 'search' && selectedCardId != undefined ? (
-              <div className={'tooltip'} data-tip={'Suche (Shift + F)'}>
+              <div className={'tooltip' + (showSettingsAtBottom ? ' mr-1' : '')} data-tip={'Suche (Shift + F)'}>
                 <div
                   className={'btn btn-square btn-primary rounded-xl md:btn-lg'}
                   onClick={() => modalContext.openModal(<SearchModal showStatisticActions={showStatisticActions} />)}
