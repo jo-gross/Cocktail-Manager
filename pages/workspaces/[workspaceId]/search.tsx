@@ -39,7 +39,7 @@ export default function SearchPage(props: SearchPageProps) {
           <CocktailRecipeCardItem
             cocktailRecipe={props.selectedCocktail}
             showImage={props.showImage}
-            showInfo={true}
+            showDetailsOnClick={true}
             showPrice={true}
             showDescription={props.showDescription}
             showNotes={props.showNotes}
