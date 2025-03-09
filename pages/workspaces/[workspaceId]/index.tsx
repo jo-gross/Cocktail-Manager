@@ -704,7 +704,7 @@ export default function OverviewPage() {
                                     }}
                                     showImage={showImage}
                                     showTags={showTags}
-                                    showInfo={true}
+                                    showDetailsOnClick={true}
                                     showPrice={groupItem.specialPrice == undefined && group.groupPrice == undefined}
                                     specialPrice={groupItem.specialPrice ?? group.groupPrice ?? undefined}
                                     cocktailRecipe={groupItem.cocktailId}
