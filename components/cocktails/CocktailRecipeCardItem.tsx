@@ -1,5 +1,5 @@
 import { CocktailRecipeFull } from '../../models/CocktailRecipeFull';
-import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
+import React, { forwardRef, useCallback, useContext, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { CompactCocktailRecipeInstruction } from './CompactCocktailRecipeInstruction';
 import { ShowCocktailInfoButton } from './ShowCocktailInfoButton';
 import { useRouter } from 'next/router';
@@ -10,6 +10,8 @@ import { CocktailRating } from '@prisma/client';
 import { fetchCocktailRatings } from '../../lib/network/cocktailRatings';
 import StatisticActions from '../StatisticActions';
 import ExpandableText, { ExpandableTextHandle } from '../ExpandableText';
+import { CocktailDetailModal } from '../modals/CocktailDetailModal';
+import { ModalContext } from '../../lib/context/ModalContextProvider';
 
 export type CocktailRecipeOverviewItemRef = {
   refresh: () => void;
@@ -29,6 +31,7 @@ export type CocktailRecipeOverviewItemProps = {
   showStatisticActions?: boolean;
   image?: string;
   showRating?: boolean;
+  showDetailsOnClick?: boolean;
 };
 
 const CocktailRecipeCardItem = forwardRef<CocktailRecipeOverviewItemRef, CocktailRecipeOverviewItemProps>((props, ref) => {
@@ -74,6 +77,8 @@ const CocktailRecipeCardItem = forwardRef<CocktailRecipeOverviewItemRef, Cocktai
 
   const cocktailRecipe = typeof props.cocktailRecipe === 'string' ? loadedCocktailRecipe : props.cocktailRecipe;
 
+  const modalContext = useContext(ModalContext);
+
   return (
     <div className={'col-span-1'}>
       <div className={'card card-side h-full'}>
@@ -85,21 +90,41 @@ const CocktailRecipeCardItem = forwardRef<CocktailRecipeOverviewItemRef, Cocktai
         ) : cocktailRecipe ? (
           <>
             <ShowCocktailInfoButton
-              showInfo={props.showInfo ?? false}
+              showInfo={(props.showInfo ?? false) && !(props.showDetailsOnClick ?? false)}
               cocktailId={cocktailRecipe.id}
               onRatingChange={() =>
                 fetchCocktailRatings(workspaceId, cocktailRecipe.id, setCocktailRatings, setCocktailRatingsLoading, setCocktailRatingsError)
               }
             />
             <div className={'card-body'}>
-              <CompactCocktailRecipeInstruction
-                cocktailRecipe={cocktailRecipe}
-                specialPrice={props.specialPrice}
-                showImage={props.showImage ?? false}
-                showPrice={props.showPrice ?? true}
-                image={props.image}
-                showRating={props.showRating ? { ratings: cocktailRatings, loading: cocktailRatingsLoading, error: cocktailRatingsError } : undefined}
-              />
+              <div
+                onClick={
+                  (props.showDetailsOnClick ?? false)
+                    ? async () => {
+                        modalContext.openModal(
+                          <CocktailDetailModal
+                            cocktailId={cocktailRecipe.id}
+                            onRefreshRatings={() =>
+                              fetchCocktailRatings(workspaceId, cocktailRecipe.id, setCocktailRatings, setCocktailRatingsLoading, setCocktailRatingsError)
+                            }
+                            openReferer={'DETAIL'}
+                          />,
+                          true,
+                        );
+                      }
+                    : undefined
+                }
+                style={(props.showDetailsOnClick ?? false) ? { cursor: 'pointer' } : {}}
+              >
+                <CompactCocktailRecipeInstruction
+                  cocktailRecipe={cocktailRecipe}
+                  specialPrice={props.specialPrice}
+                  showImage={props.showImage ?? false}
+                  showPrice={props.showPrice ?? true}
+                  image={props.image}
+                  showRating={props.showRating ? { ratings: cocktailRatings, loading: cocktailRatingsLoading, error: cocktailRatingsError } : undefined}
+                />
+              </div>
               <>
                 {props.showNotes && cocktailRecipe.notes && (
                   <>

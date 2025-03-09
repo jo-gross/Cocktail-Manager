@@ -15,7 +15,7 @@ interface AlertsContainerProps {
   fade?: boolean;
 }
 
-const duration = 5000;
+const duration = 3000;
 
 function AlertsContainer({ id = 'default-alert', fade }: AlertsContainerProps) {
   const mounted = useRef(false);
