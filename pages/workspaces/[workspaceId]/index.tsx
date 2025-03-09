@@ -541,14 +541,14 @@ export default function OverviewPage() {
         {showTime ? <div className={'pt-2'}>{timeComponent}</div> : <></>}
 
         <div
-          className={`grid grid-cols-1 gap-2 p-2 ${showQueueAsOverlay ? '' : showStatisticActions && cocktailQueue.length > 0 ? 'lg:grid-cols-6' : ''} print:grid-cols-5 print:overflow-clip print:p-0`}
+          className={`grid grid-cols-1 gap-2 p-2 ${showQueueAsOverlay ? '' : showStatisticActions && cocktailQueue.length > 0 ? 'lg:grid-cols-8 xl:grid-cols-6' : ''} print:grid-cols-5 print:overflow-clip print:p-0`}
         >
           {showStatisticActions && cocktailQueue.length > 0 ? (
             <div
               className={
                 showQueueAsOverlay
                   ? `sticky right-0 z-10 col-span-5 flex w-full justify-end print:hidden ${process.env.NODE_ENV == 'development' ? 'md:top-12' : 'md:top-2'}`
-                  : 'order-first col-span-5 w-full lg:order-last lg:col-span-1 print:hidden'
+                  : 'order-first col-span-5 w-full lg:order-last lg:col-span-2 xl:col-span-1 print:hidden'
               }
             >
               <div className={`${showQueueAsOverlay ? 'bg-opacity-75 lg:max-w-60' : ''} flex w-full flex-col rounded-xl bg-base-300 p-2 print:hidden`}>
@@ -652,7 +652,7 @@ export default function OverviewPage() {
             <></>
           )}
 
-          <div className={`order-1 col-span-5 flex w-full flex-col space-y-2 overflow-y-auto rounded-xl`}>
+          <div className={`order-1 col-span-5 flex w-full flex-col space-y-2 overflow-y-auto rounded-xl lg:col-span-6 xl:col-span-5`}>
             {selectedCardId == 'search' || selectedCardId == undefined ? (
               <SearchPage
                 showImage={showImage}
