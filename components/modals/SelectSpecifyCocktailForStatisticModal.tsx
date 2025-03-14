@@ -9,6 +9,7 @@ interface SelectSpecifyCocktailForStatisticModalProps {
   cardId?: string;
   cocktailName: string;
   actionSource: 'SEARCH_MODAL' | 'CARD' | 'DETAIL_MODAL' | 'QUEUE';
+  onMarkedAsDone?: () => void;
   options: { _min: { id: string }; notes: string }[];
 }
 
@@ -19,6 +20,7 @@ export default function SelectSpecifyCocktailForStatisticModal({
   cocktailName,
   options,
   actionSource,
+  onMarkedAsDone,
 }: SelectSpecifyCocktailForStatisticModalProps) {
   const modalContext = useContext(ModalContext);
   const [submittingStatistic, setSubmittingStatistic] = React.useState<{ [key: string]: boolean }>({});
@@ -53,7 +55,10 @@ export default function SelectSpecifyCocktailForStatisticModal({
                   setSubmitting: () => {
                     setSubmittingStatistic({ [`option-${option._min.id}`]: true });
                   },
-                  onSuccess: () => modalContext.closeModal(),
+                  onSuccess: () => {
+                    modalContext.closeModal();
+                    onMarkedAsDone?.();
+                  },
                 });
               }}
             >
@@ -79,7 +84,10 @@ export default function SelectSpecifyCocktailForStatisticModal({
                 setSubmitting: () => {
                   setSubmittingStatistic({ normal: true });
                 },
-                onSuccess: () => modalContext.closeModal(),
+                onSuccess: () => {
+                  modalContext.closeModal();
+                  onMarkedAsDone?.();
+                },
               });
             }}
           >

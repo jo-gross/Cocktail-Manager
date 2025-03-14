@@ -94,6 +94,7 @@ export default function StatisticActions({
                   actionSource={actionSource}
                   cocktailName={cocktailName}
                   options={options}
+                  onMarkedAsDone={onMarkedAsDone}
                 />,
               );
             },
