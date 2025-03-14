@@ -112,7 +112,7 @@ export function SearchModal(props: SearchModalProps) {
             showRating={true}
             showStatisticActions={false}
             showPrice={true}
-            showInfo={true}
+            showDetailsOnClick={true}
           />
 
           {props.onCocktailSelectedObject != undefined ? (
