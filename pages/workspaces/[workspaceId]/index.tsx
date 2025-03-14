@@ -255,8 +255,6 @@ export default function OverviewPage() {
     return () => clearInterval(interval);
   }, [refreshQueue, showStatisticActions]);
 
-  const [maxDropdownHeight, setMaxDropdownHeight] = useState(0);
-  const actionButtonRef = React.useRef<HTMLDivElement>(null);
   const dropdownContentRef = React.useRef<HTMLDivElement>(null);
   const [isDropdownScrollable, setIsDropdownScrollable] = useState(false);
 
@@ -290,19 +288,16 @@ export default function OverviewPage() {
 
   useEffect(() => {
     checkDropdownScroll();
-  }, [showLayoutOptions, showRecipeOptions]);
+  }, [checkDropdownScroll, showLayoutOptions, showRecipeOptions, showSettingsAtBottom, showTime]);
 
-  const [windowSize, setWindowSize] = useState({
-    width: 0,
-    height: 0,
-  });
+  const [maxDropdownHeight, setMaxDropdownHeight] = useState(0);
+  const actionButtonRef = useRef<HTMLDivElement>(null);
+
+  const [windowHeight, setWindowHeight] = useState<number>(0);
 
   useEffect(() => {
     function handleResize() {
-      setWindowSize({
-        width: window.innerWidth,
-        height: window.innerHeight,
-      });
+      setWindowHeight(window.innerHeight);
     }
 
     window.addEventListener('resize', handleResize);
@@ -310,13 +305,21 @@ export default function OverviewPage() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  useEffect(() => {
-    if (actionButtonRef.current) {
+  const calcMaxDropdownHeight = useCallback(() => {
+    if (actionButtonRef.current && windowHeight > 0) {
       const rect = actionButtonRef.current.getBoundingClientRect();
-      const maxHeight = windowSize.height - (windowSize.height - rect.y) - (process.env.NODE_ENV == 'development' ? 40 : 0) - 8;
-      setMaxDropdownHeight(maxHeight);
+      if (showSettingsAtBottom) {
+        setMaxDropdownHeight(rect.top - (process.env.NODE_ENV == 'development' ? 40 : 0) - 8);
+      } else {
+        const maxHeight = windowHeight - (windowHeight - rect.y) - (process.env.NODE_ENV == 'development' ? 40 : 0) - 8;
+        setMaxDropdownHeight(maxHeight);
+      }
     }
-  }, [windowSize, showSettingsAtBottom]);
+  }, [windowHeight, showSettingsAtBottom]);
+
+  useEffect(() => {
+    calcMaxDropdownHeight();
+  }, [calcMaxDropdownHeight, showSettingsAtBottom, showTime, selectedCard]);
 
   const timeComponent = (
     <div className={'w-full text-center'}>
@@ -952,7 +955,7 @@ export default function OverviewPage() {
                           <label className="label">
                             <div className={'label-text'}>Cocktailname (A-Z)</div>
                             <input
-                              name={'card-radio'}
+                              name={'queue-radio'}
                               type={'radio'}
                               className={'radio'}
                               value={'ALPHABETIC'}
@@ -967,7 +970,7 @@ export default function OverviewPage() {
                           <label className="label">
                             <div className={'label-text'}>Keine (Chronologisch)</div>
                             <input
-                              name={'card-radio'}
+                              name={'queue-radio'}
                               type={'radio'}
                               className={'radio'}
                               value={'NONE'}

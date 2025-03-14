@@ -27,7 +27,7 @@ export function GlobalModal(props: GlobalModalProps) {
     <div>
       <div className={modalContext.content.length >= 1 ? 'print:hidden' : ''}>{props.children}</div>
       <dialog id="globalModal" className="modal">
-        <div className="fixed left-2 top-2 z-50 ml-2 flex flex-col items-center justify-center overflow-hidden md:left-10 md:top-10 print:hidden">
+        <div className="fixed bottom-2 left-2 right-2 z-50 ml-2 flex flex-col items-center justify-center overflow-hidden md:left-10 md:top-10 print:hidden">
           <AlertsContainer />
         </div>
         <div className={`modal-box relative w-fit p-1.5 md:p-4 print:top-0 print:shadow-none`}>
