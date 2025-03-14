@@ -1,3 +1,11 @@
+## [1.13.1](https://github.com/jo-gross/Cocktail-Manager/compare/v1.13.0...v1.13.1) (2025-03-14)
+
+
+### Bug Fixes
+
+* improve behaviour on mobile/tablet devices by [@ibot3](https://github.com/ibot3) ([#571](https://github.com/jo-gross/Cocktail-Manager/issues/571)) ([e576bdb](https://github.com/jo-gross/Cocktail-Manager/commit/e576bdb1343b5d503a26a14d22f4e4203d8531f6))
+* Selected cocktail card was not marked as selected ([f10f039](https://github.com/jo-gross/Cocktail-Manager/commit/f10f0393ea678c89fc34cff618fc983f904a51ef))
+
 # [1.13.0](https://github.com/jo-gross/Cocktail-Manager/compare/v1.12.0...v1.13.0) (2025-02-11)
 
 
