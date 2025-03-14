@@ -316,7 +316,7 @@ export default function OverviewPage() {
       const maxHeight = windowSize.height - (windowSize.height - rect.y) - (process.env.NODE_ENV == 'development' ? 40 : 0) - 8;
       setMaxDropdownHeight(maxHeight);
     }
-  }, [windowSize]);
+  }, [windowSize, showSettingsAtBottom]);
 
   const timeComponent = (
     <div className={'w-full text-center'}>
