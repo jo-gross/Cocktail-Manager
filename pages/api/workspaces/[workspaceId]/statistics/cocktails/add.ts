@@ -92,7 +92,15 @@ export default withHttpMethods({
             },
           });
 
-          return res.status(400).json({ message: StatisticBadRequestMessage, data: oldestEntries });
+          // Check if there are any cocktails with notes
+          const notesEntry = oldestEntries.find((entry) => entry.notes != null);
+
+          if (notesEntry == null && oldestEntries.length > 0 && oldestEntries[0]._min?.id != null) {
+            // Delete the oldest entry without notes
+            await prisma.cocktailQueue.delete({ where: { id: oldestEntries[0]._min.id } });
+          } else {
+            return res.status(400).json({ message: StatisticBadRequestMessage, data: oldestEntries });
+          }
         }
       }
     }
