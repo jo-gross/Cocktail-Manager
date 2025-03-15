@@ -91,7 +91,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
   const openIngredientSelectModal = useCallback(
     (setFieldValue: any, indexStep: number, indexIngredient: number) => {
       modalContext.openModal(
-        <SelectModal<Ingredient>
+        <SelectModal<IngredientModel>
           title={'Zutat auswählen'}
           compareFunction={(a, b) => a.name.localeCompare(b.name)}
           fetchElements={async (search) => {
@@ -107,6 +107,18 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
           onElementSelected={async (ingredient) => {
             await setFieldValue(`steps.${indexStep}.ingredients.${indexIngredient}.ingredientId`, ingredient.id);
             await setFieldValue(`steps.${indexStep}.ingredients.${indexIngredient}.ingredient`, ingredient);
+
+            if (ingredient.IngredientVolume.length > 0) {
+              const clUnit = units.find((unit) => unit.name.toLocaleLowerCase() == 'cl');
+              let unitClOrFirst = ingredient.IngredientVolume.find((ingredientUnit) => ingredientUnit.unitId == clUnit?.id)?.unit;
+              if (unitClOrFirst == undefined) {
+                unitClOrFirst = ingredient.IngredientVolume[0].unit;
+              }
+              if (unitClOrFirst) {
+                await setFieldValue(`steps.${indexStep}.ingredients.${indexIngredient}.unit`, unitClOrFirst);
+                await setFieldValue(`steps.${indexStep}.ingredients.${indexIngredient}.unitId`, unitClOrFirst.id);
+              }
+            }
           }}
         />,
       );
