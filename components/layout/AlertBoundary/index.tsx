@@ -22,7 +22,8 @@ export function AlertBoundary(props: AlertBoundaryProps) {
           <></>
         )}
       </>
-      <div className="fixed bottom-2 left-2 right-2 z-50 ml-2 flex flex-col items-center justify-center overflow-hidden print:hidden">
+      <div className={'fixed bottom-2 left-1/2 z-50 w-full max-w-fit -translate-x-1/2 overflow-hidden print:hidden'}>
+        {/*<div className="fixed bottom-2 left-2 right-2 z-50 flex flex-col items-center justify-center overflow-hidden print:hidden">*/}
         <AlertsContainer />
       </div>
       {props.children}

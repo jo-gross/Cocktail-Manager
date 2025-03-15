@@ -1,6 +1,6 @@
 import { useRouter } from 'next/router';
 import { useEffect, useRef, useState } from 'react';
-import { FaCheckCircle, FaExclamationCircle, FaExclamationTriangle, FaInfoCircle, FaTimes } from 'react-icons/fa';
+import { FaCheckCircle, FaExclamationCircle, FaExclamationTriangle, FaInfoCircle } from 'react-icons/fa';
 import PropTypes from 'prop-types';
 import { Alert, alertService, AlertType } from '../../../lib/alertService';
 
@@ -36,7 +36,7 @@ function AlertsContainer({ id = 'default-alert', fade }: AlertsContainerProps) {
         alert.itemId = Math.random();
         setAlerts((alerts) => [...alerts, alert]);
 
-        setTimeout(() => removeAlert(alert), duration);
+        // setTimeout(() => removeAlert(alert), duration);
       }
     });
 
@@ -93,7 +93,7 @@ function AlertsContainer({ id = 'default-alert', fade }: AlertsContainerProps) {
   return (
     <div className="space-y-2">
       {alerts.reverse().map((alert, index) => (
-        <div role={'alert'} key={index} className={`alert flex flex-row justify-between shadow-lg ${cssClasses(alert)}`}>
+        <div role={'alert'} key={index} className={`alert flex w-fit flex-row justify-between ${cssClasses(alert)}`}>
           <div className={'w-10 p-2'}>{icon(alert)}</div>
           <div className={''}>
             <>
@@ -107,9 +107,11 @@ function AlertsContainer({ id = 'default-alert', fade }: AlertsContainerProps) {
               <span>{alert.message}</span>
             </>
           </div>
-          <div className="text-md btn btn-square btn-ghost btn-sm justify-self-end" onClick={() => removeAlert(alert)}>
-            <FaTimes />
-          </div>
+          {/*TODO Enable after sync with open modal container and alertboundary container*/}
+          {/*<div className="text-md btn btn-square btn-ghost btn-sm justify-self-end" onClick={() => removeAlert(alert)}>*/}
+          {/*  <FaTimes />*/}
+          {/*</div>*/}
+          <div className={'pr-2'}></div>
         </div>
       ))}
     </div>
