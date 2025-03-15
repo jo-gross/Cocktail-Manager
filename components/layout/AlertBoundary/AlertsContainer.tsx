@@ -36,7 +36,7 @@ function AlertsContainer({ id = 'default-alert', fade }: AlertsContainerProps) {
         alert.itemId = Math.random();
         setAlerts((alerts) => [...alerts, alert]);
 
-        // setTimeout(() => removeAlert(alert), duration);
+        setTimeout(() => removeAlert(alert), duration);
       }
     });
 
