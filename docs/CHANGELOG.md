@@ -1,3 +1,16 @@
+# [1.14.0](https://github.com/jo-gross/Cocktail-Manager/compare/v1.13.1...v1.14.0) (2025-03-16)
+
+
+### Bug Fixes
+
+* Invisible area over dialogs makes dialogs unusable ([#582](https://github.com/jo-gross/Cocktail-Manager/issues/582)) ([0b2c1bd](https://github.com/jo-gross/Cocktail-Manager/commit/0b2c1bd7f39141cc321651d0b3573be9a67b7866))
+
+
+### Features
+
+* Automatically select first unit when selecting an ingredient  ([#588](https://github.com/jo-gross/Cocktail-Manager/issues/588)) ([1aedfb0](https://github.com/jo-gross/Cocktail-Manager/commit/1aedfb0d6327cbe773c909d7367a64688bbb0143))
+* Default crop image and add unit when importing an ingredient from a website ([#589](https://github.com/jo-gross/Cocktail-Manager/issues/589)) ([487f8d5](https://github.com/jo-gross/Cocktail-Manager/commit/487f8d5a6bcbc83de5b4563b1919342527e945ab))
+
 ## [1.13.1](https://github.com/jo-gross/Cocktail-Manager/compare/v1.13.0...v1.13.1) (2025-03-14)
 
 
