@@ -262,11 +262,19 @@ export function IngredientForm(props: IngredientFormProps) {
                             await setFieldValue('image', undefined);
                             await setFieldValue('originalImage', convertBase64ToFile(data.image));
                           }
-                          if (data.volume != 0) {
-                            await setFieldValue('volume', data.volume);
-                          }
-                          await setFieldValue('selectedUnit', allUnits.find((unit) => unit.name == 'CL')?.id ?? '');
+                          const selectedUnitId = allUnits.find((unit) => unit.name == 'CL')?.id ?? '';
                           checkSimilarName(data.name);
+
+                          if (data.volume != 0 && selectedUnitId != '') {
+                            await setFieldValue('units', [{ unitId: selectedUnitId, volume: data.volume }]);
+                          } else {
+                            if (data.volume != 0) {
+                              await setFieldValue('volume', data.volume);
+                            }
+                            await setFieldValue('selectedUnit', selectedUnitId);
+                          }
+
+                          alertService.info('Daten geladen, bitte überprüfen!');
                         });
                       } else {
                         alertService.warn('Es konnten keine Daten über die URL geladen werden.');

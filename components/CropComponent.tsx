@@ -1,5 +1,5 @@
 import ReactCrop, { Crop } from 'react-image-crop';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import 'react-image-crop/dist/ReactCrop.css';
 import { FaTrashAlt } from 'react-icons/fa';
 
@@ -12,34 +12,70 @@ interface CropComponentProps {
 }
 
 export default function CropComponent(props: CropComponentProps) {
-  const [crop, setCrop] = useState<Crop>({
-    unit: '%',
-    width: 0,
-    height: 0,
-    x: 0,
-    y: 0,
-  });
+  const [crop, setCrop] = useState<Crop | null>(null);
 
   const [backgroundColor, setBackgroundColor] = useState<string>('transparent'); // Hintergrundfarbe speichern
   const [customColor, setCustomColor] = useState<string>('#ffffff'); // Benutzerdefinierte Farbe speichern
 
-  const imgRef = useRef<HTMLImageElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  const [imgRef, setImageRef] = useState<HTMLImageElement | null>(null);
+  const [imageLoaded, setImageLoaded] = useState(false);
+
+  useEffect(() => {
+    if (!imgRef || !imageLoaded || !containerRef.current) return;
+    const imgWidth = imgRef.naturalWidth;
+    const imgHeight = imgRef.naturalHeight;
+
+    if (imgWidth === 0 || imgHeight === 0) return;
+
+    const containerWidthPx = containerRef.current.getBoundingClientRect().width;
+    const containerHeightPx = containerRef.current.getBoundingClientRect().height;
+    if (!props.aspect || props.aspect === 1) {
+      setCrop({
+        unit: 'px',
+        width: containerWidthPx,
+        height: containerHeightPx,
+        x: 0,
+        y: 0,
+      });
+    } else if (props.aspect > 1) {
+      // e.g., 16/9
+      const cropFactor = 1 / props.aspect;
+      setCrop({
+        unit: 'px',
+        width: containerWidthPx,
+        height: cropFactor * containerHeightPx,
+        x: 0,
+        y: (containerHeightPx - cropFactor * containerHeightPx) / 2,
+      });
+    } else {
+      // e.g., 9/16
+      const cropFactor = props.aspect;
+      setCrop({
+        unit: 'px',
+        width: cropFactor * containerWidthPx,
+        height: containerHeightPx,
+        x: (containerWidthPx - cropFactor * containerWidthPx) / 2,
+        y: 0,
+      });
+    }
+  }, [imgRef, imageLoaded, props?.aspect]);
 
   const [isCropping, setIsCropping] = useState<boolean>(false);
 
   const generateCroppedImage = async () => {
-    if (!crop || !imgRef.current || !containerRef.current) return;
+    if (!crop || !imgRef || !containerRef.current) return;
     setIsCropping(true);
-    const scaleX = imgRef.current!.naturalWidth / imgRef.current!.width;
-    const scaleY = imgRef.current!.naturalHeight / imgRef.current!.height;
+    const scaleX = imgRef.naturalWidth / imgRef.width;
+    const scaleY = imgRef.naturalHeight / imgRef.height;
 
     const cropWidth = crop.width * scaleX;
     const cropHeight = crop.height * scaleY;
 
     // Berechne den Offset des Bildes im Container
     const containerRect = containerRef.current!.getBoundingClientRect();
-    const imgRect = imgRef.current!.getBoundingClientRect();
+    const imgRect = imgRef.getBoundingClientRect();
     const offsetX = (containerRect.width - imgRect.width) / 2;
     const offsetY = (containerRect.height - imgRect.height) / 2;
 
@@ -56,7 +92,7 @@ export default function CropComponent(props: CropComponentProps) {
       ctx!.fillRect(0, 0, canvas.width, canvas.height);
     }
     // Zeichne das Bild auf das Canvas, nur der gecroppte Bereich wird sichtbar sein
-    ctx?.drawImage(imgRef.current!, (crop.x - offsetX) * scaleX, (crop.y - offsetY) * scaleY, cropWidth, cropHeight, 0, 0, canvas.width, canvas.height);
+    ctx?.drawImage(imgRef, (crop.x - offsetX) * scaleX, (crop.y - offsetY) * scaleY, cropWidth, cropHeight, 0, 0, canvas.width, canvas.height);
 
     return await new Promise((resolve, reject) => {
       canvas.toBlob((blob) => {
@@ -76,7 +112,12 @@ export default function CropComponent(props: CropComponentProps) {
     <div className="relative flex h-full w-full flex-col items-center justify-center gap-2">
       <div className={'flex h-full w-full flex-col gap-2 md:flex-row'}>
         <div className={`h-auto w-fit ${props.isValid == true ? '' : 'rounded-2xl border-2 border-error p-2 pb-1'}`}>
-          <ReactCrop crop={crop} onChange={(newCrop) => setCrop(newCrop)} aspect={props.aspect} className={`h-auto w-fit`}>
+          <ReactCrop
+            crop={crop || { width: 0, height: 0, unit: '%', x: 0, y: 0 }}
+            onChange={(newCrop) => setCrop(newCrop)}
+            aspect={props.aspect}
+            className={`h-auto w-fit`}
+          >
             <div className={`relative h-96 max-h-96 w-96 max-w-96`} ref={containerRef} id={'image-container-ref'}>
               {/*<div className={'bg-transparent-pattern absolute h-full w-full'}></div>*/}
               <div
@@ -84,10 +125,13 @@ export default function CropComponent(props: CropComponentProps) {
                 style={{ backgroundColor: backgroundColor === 'custom' ? customColor : '' }}
               ></div>
               <img
-                ref={imgRef}
+                ref={(imgRef) => setImageRef(imgRef)}
                 src={URL.createObjectURL(props.imageToCrop)}
                 alt="Crop"
                 className={'absolute bottom-0 left-0 right-0 top-0 m-auto max-h-96 max-w-96 object-contain'}
+                onLoad={() => {
+                  setImageLoaded(true);
+                }}
               />
             </div>
           </ReactCrop>
