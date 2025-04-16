@@ -60,7 +60,7 @@
     "@types/react": "18.3.12",
     "@types/react-is": "19.0.0",
     "autoprefixer": "10.4.21",
-    "daisyui": "4.12.23",
+    "daisyui": "5.0.20",
     "eslint": "9.24.0",
     "eslint-config-next": "15.2.4",
     "eslint-config-prettier": "10.1.2",
