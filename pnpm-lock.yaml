@@ -87,8 +87,8 @@ importers:
         specifier: 5.5.0
         version: 5.5.0(react@18.3.1)
       react-image-crop:
-        specifier: 11.0.7
-        version: 11.0.7(react@18.3.1)
+        specifier: 11.0.10
+        version: 11.0.10(react@18.3.1)
       react-markdown:
         specifier: 10.1.0
         version: 10.1.0(@types/react@18.3.12)(react@18.3.1)
@@ -4391,8 +4391,8 @@ packages:
     peerDependencies:
       react: '*'
 
-  react-image-crop@11.0.7:
-    resolution: {integrity: sha512-ZciKWHDYzmm366JDL18CbrVyjnjH0ojufGDmScfS4ZUqLHg4nm6ATY+K62C75W4ZRNt4Ii+tX0bSjNk9LQ2xzQ==}
+  react-image-crop@11.0.10:
+    resolution: {integrity: sha512-+5FfDXUgYLLqBh1Y/uQhIycpHCbXkI50a+nbfkB1C0xXXUTwkisHDo2QCB1SQJyHCqIuia4FeyReqXuMDKWQTQ==}
     peerDependencies:
       react: '>=16.13.1'
 
@@ -9908,7 +9908,7 @@ snapshots:
     dependencies:
       react: 18.3.1
 
-  react-image-crop@11.0.7(react@18.3.1):
+  react-image-crop@11.0.10(react@18.3.1):
     dependencies:
       react: 18.3.1
 
