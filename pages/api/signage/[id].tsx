@@ -1,4 +1,4 @@
-import { withHttpMethods } from '../../../middleware/api/handleMethods';
+import { withHttpMethods } from '@middleware/api/handleMethods';
 import HTTPMethod from 'http-method-enum';
 import prisma from '../../../prisma/prisma';
 

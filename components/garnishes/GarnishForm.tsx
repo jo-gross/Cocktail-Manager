@@ -2,18 +2,18 @@ import { Formik, FormikProps } from 'formik';
 import { useRouter } from 'next/router';
 import React, { useContext, useState } from 'react';
 import { UploadDropZone } from '../UploadDropZone';
-import { convertBase64ToFile, convertToBase64 } from '../../lib/Base64Converter';
+import { convertBase64ToFile, convertToBase64 } from '@lib/Base64Converter';
 import { FaTrashAlt } from 'react-icons/fa';
-import { alertService } from '../../lib/alertService';
+import { alertService } from '@lib/alertService';
 import { DeleteConfirmationModal } from '../modals/DeleteConfirmationModal';
-import { ModalContext } from '../../lib/context/ModalContextProvider';
+import { ModalContext } from '@lib/context/ModalContextProvider';
 import { GarnishWithImage } from '../../models/GarnishWithImage';
 import Image from 'next/image';
 import CropComponent from '../CropComponent';
 import { FaCropSimple } from 'react-icons/fa6';
 import _ from 'lodash';
-import { RoutingContext } from '../../lib/context/RoutingContextProvider';
-import { resizeImage } from '../../lib/ImageCompressor';
+import { RoutingContext } from '@lib/context/RoutingContextProvider';
+import { resizeImage } from '@lib/ImageCompressor';
 
 interface GarnishFormProps {
   garnish?: GarnishWithImage;

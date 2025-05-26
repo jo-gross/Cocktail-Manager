@@ -3,12 +3,12 @@
 import prisma from '../../../../../prisma/prisma';
 import { CocktailRecipeFull } from '../../../../../models/CocktailRecipeFull';
 import { NextApiRequest, NextApiResponse } from 'next';
-import { Prisma, Role } from '@prisma/client';
+import { Prisma, Role } from '@generated/prisma/client';
 import { CocktailRecipeStepFull } from '../../../../../models/CocktailRecipeStepFull';
 import { CocktailRecipeGarnishFull } from '../../../../../models/CocktailRecipeGarnishFull';
-import { withWorkspacePermission } from '../../../../../middleware/api/authenticationMiddleware';
+import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
 import HTTPMethod from 'http-method-enum';
-import { withHttpMethods } from '../../../../../middleware/api/handleMethods';
+import { withHttpMethods } from '@middleware/api/handleMethods';
 import CocktailRecipeCreateInput = Prisma.CocktailRecipeCreateInput;
 
 export const config = {

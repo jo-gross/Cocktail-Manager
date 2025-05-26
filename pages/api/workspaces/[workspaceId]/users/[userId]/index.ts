@@ -1,9 +1,9 @@
 import HTTPMethod from 'http-method-enum';
-import { withWorkspacePermission } from '../../../../../../middleware/api/authenticationMiddleware';
-import { Role } from '@prisma/client';
+import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
+import { Role } from '@generated/prisma/client';
 import { constants as HttpStatus } from 'http2';
 import prisma from '../../../../../../prisma/prisma';
-import { withHttpMethods } from '../../../../../../middleware/api/handleMethods';
+import { withHttpMethods } from '@middleware/api/handleMethods';
 
 export default withHttpMethods({
   [HTTPMethod.DELETE]: withWorkspacePermission([Role.ADMIN], async (req, res, user, workspace) => {

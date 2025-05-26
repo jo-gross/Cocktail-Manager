@@ -1,12 +1,12 @@
 import Link from 'next/link';
-import { ManageEntityLayout } from '../../../../../components/layout/ManageEntityLayout';
-import { ManageColumn } from '../../../../../components/ManageColumn';
+import { ManageEntityLayout } from '@components/layout/ManageEntityLayout';
+import { ManageColumn } from '@components/ManageColumn';
 import React, { useCallback, useEffect, useState } from 'react';
-import { Loading } from '../../../../../components/Loading';
+import { Loading } from '@components/Loading';
 import { useRouter } from 'next/router';
-import { alertService } from '../../../../../lib/alertService';
+import { alertService } from '@lib/alertService';
 import { CocktailCalculationOverview } from '../../../../../models/CocktailCalculationOverview';
-import { Role } from '@prisma/client';
+import { Role } from '@generated/prisma/client';
 import { FaPlus } from 'react-icons/fa';
 import ListSearchField from '../../../../../components/ListSearchField';
 

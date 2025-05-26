@@ -1,24 +1,24 @@
-import { ManageEntityLayout } from '../../../../../components/layout/ManageEntityLayout';
+import { ManageEntityLayout } from '@components/layout/ManageEntityLayout';
 import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { CocktailRecipeFull } from '../../../../../models/CocktailRecipeFull';
 import { FaInfoCircle, FaPencilAlt, FaPrint, FaSave, FaTrashAlt } from 'react-icons/fa';
-import { ModalContext } from '../../../../../lib/context/ModalContextProvider';
-import { SearchModal } from '../../../../../components/modals/SearchModal';
-import { alertService } from '../../../../../lib/alertService';
-import { calcCocktailTotalPrice } from '../../../../../lib/CocktailRecipeCalculation';
-import { Garnish, Ingredient, Unit } from '@prisma/client';
+import { ModalContext } from '@lib/context/ModalContextProvider';
+import { SearchModal } from '@components/modals/SearchModal';
+import { alertService } from '@lib/alertService';
+import { calcCocktailTotalPrice } from '@lib/CocktailRecipeCalculation';
+import { Garnish, Ingredient, Unit } from '@generated/prisma/client';
 import InputModal from '../../../../../components/modals/InputModal';
-import { PageCenter } from '../../../../../components/layout/PageCenter';
-import { Loading } from '../../../../../components/Loading';
-import { DeleteConfirmationModal } from '../../../../../components/modals/DeleteConfirmationModal';
-import { UserContext } from '../../../../../lib/context/UserContextProvider';
+import { PageCenter } from '@components/layout/PageCenter';
+import { Loading } from '@components/Loading';
+import { DeleteConfirmationModal } from '@components/modals/DeleteConfirmationModal';
+import { UserContext } from '@lib/context/UserContextProvider';
 import { IngredientModel } from '../../../../../models/IngredientModel';
-import { fetchIngredients } from '../../../../../lib/network/ingredients';
+import { fetchIngredients } from '@lib/network/ingredients';
 import _ from 'lodash';
-import { fetchUnits } from '../../../../../lib/network/units';
+import { fetchUnits } from '@lib/network/units';
 import '../../../../../lib/DateUtils';
-import { RoutingContext } from '../../../../../lib/context/RoutingContextProvider';
+import { RoutingContext } from '@lib/context/RoutingContextProvider';
 
 interface CocktailCalculationItem {
   cocktail: CocktailRecipeFull;

@@ -1,14 +1,14 @@
-import { ManageEntityLayout } from '../../../../../components/layout/ManageEntityLayout';
+import { ManageEntityLayout } from '@components/layout/ManageEntityLayout';
 import { useRouter } from 'next/router';
 import React, { useCallback, useContext, useEffect, useState } from 'react';
-import { UserContext } from '../../../../../lib/context/UserContextProvider';
-import { ModalContext } from '../../../../../lib/context/ModalContextProvider';
-import { Role, User, WorkspaceJoinCode, WorkspaceJoinRequest, WorkspaceUser } from '@prisma/client';
-import { alertService } from '../../../../../lib/alertService';
+import { UserContext } from '@lib/context/UserContextProvider';
+import { ModalContext } from '@lib/context/ModalContextProvider';
+import { Role, User, WorkspaceJoinCode, WorkspaceJoinRequest, WorkspaceUser } from '@generated/prisma/client';
+import { alertService } from '@lib/alertService';
 import { FaCheck, FaCopy, FaPlus, FaShareAlt, FaSync, FaTimes, FaTrashAlt } from 'react-icons/fa';
 import AddWorkspaceJoinCodeModal from '../../../../../components/modals/AddWorkspaceJoinCodeModal';
 import { FaRegCircle } from 'react-icons/fa6';
-import { DeleteConfirmationModal } from '../../../../../components/modals/DeleteConfirmationModal';
+import { DeleteConfirmationModal } from '@components/modals/DeleteConfirmationModal';
 import '../../../../../lib/DateUtils';
 
 export default function ManageUsersPage() {

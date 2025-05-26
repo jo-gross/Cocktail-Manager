@@ -1,12 +1,12 @@
 import React, { useCallback, useContext, useEffect } from 'react';
-import { UserContext } from '../../lib/context/UserContextProvider';
-import { ModalContext } from '../../lib/context/ModalContextProvider';
+import { UserContext } from '@lib/context/UserContextProvider';
+import { ModalContext } from '@lib/context/ModalContextProvider';
 import { useRouter } from 'next/router';
 import StarsComponent from '../StarsComponent';
 import { FaPlus, FaTrashAlt } from 'react-icons/fa';
-import { CocktailRating, Role } from '@prisma/client';
+import { CocktailRating, Role } from '@generated/prisma/client';
 import { DeleteConfirmationModal } from './DeleteConfirmationModal';
-import { alertService } from '../../lib/alertService';
+import { alertService } from '@lib/alertService';
 import AddCocktailRatingModal from './AddCocktailRatingModal';
 import '../../lib/DateUtils';
 

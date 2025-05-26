@@ -1,7 +1,7 @@
-import { ManageCard } from '../../../../components/manage/ManageCard';
-import { ManageEntityLayout } from '../../../../components/layout/ManageEntityLayout';
+import { ManageCard } from '@components/manage/ManageCard';
+import { ManageEntityLayout } from '@components/layout/ManageEntityLayout';
 import { useRouter } from 'next/router';
-import { UserContext } from '../../../../lib/context/UserContextProvider';
+import { UserContext } from '@lib/context/UserContextProvider';
 import React, { useContext } from 'react';
 import { signOut } from 'next-auth/react';
 import LoadingText from '../../../../components/LoadingText';

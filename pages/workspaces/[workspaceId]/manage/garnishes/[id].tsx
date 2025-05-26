@@ -1,15 +1,15 @@
-import { GarnishForm } from '../../../../../components/garnishes/GarnishForm';
-import { ManageEntityLayout } from '../../../../../components/layout/ManageEntityLayout';
+import { GarnishForm } from '@components/garnishes/GarnishForm';
+import { ManageEntityLayout } from '@components/layout/ManageEntityLayout';
 import { useRouter } from 'next/router';
 import { useEffect, useRef, useState } from 'react';
-import { Role } from '@prisma/client';
-import { Loading } from '../../../../../components/Loading';
-import { alertService } from '../../../../../lib/alertService';
-import { withPagePermission } from '../../../../../middleware/ui/withPagePermission';
+import { Role } from '@generated/prisma/client';
+import { Loading } from '@components/Loading';
+import { alertService } from '@lib/alertService';
+import { withPagePermission } from '@middleware/ui/withPagePermission';
 import { FormikProps } from 'formik';
-import { SingleFormLayout } from '../../../../../components/layout/SingleFormLayout';
+import { SingleFormLayout } from '@components/layout/SingleFormLayout';
 import { GarnishWithImage } from '../../../../../models/GarnishWithImage';
-import { PageCenter } from '../../../../../components/layout/PageCenter';
+import { PageCenter } from '@components/layout/PageCenter';
 
 function EditGarnishPage() {
   const router = useRouter();

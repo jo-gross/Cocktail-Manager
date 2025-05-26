@@ -1,13 +1,13 @@
-import { Role } from '@prisma/client';
+import { Role } from '@generated/prisma/client';
 import Link from 'next/link';
 import { FaRegClone, FaRegEdit } from 'react-icons/fa';
 import React, { useContext } from 'react';
-import { UserContext } from '../../lib/context/UserContextProvider';
+import { UserContext } from '@lib/context/UserContextProvider';
 import { CocktailCardFull } from '../../models/CocktailCardFull';
-import { ModalContext } from '../../lib/context/ModalContextProvider';
+import { ModalContext } from '@lib/context/ModalContextProvider';
 import InputModal from '../modals/InputModal';
-import { alertService } from '../../lib/alertService';
-import { RoutingContext } from '../../lib/context/RoutingContextProvider';
+import { alertService } from '@lib/alertService';
+import { RoutingContext } from '@lib/context/RoutingContextProvider';
 
 interface CardOverviewItemProps {
   card: CocktailCardFull;

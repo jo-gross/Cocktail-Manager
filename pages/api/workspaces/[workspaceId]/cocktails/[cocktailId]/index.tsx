@@ -1,9 +1,9 @@
 import prisma from '../../../../../../prisma/prisma';
 import { NextApiRequest, NextApiResponse } from 'next';
-import { Prisma, Role } from '@prisma/client';
-import { withWorkspacePermission } from '../../../../../../middleware/api/authenticationMiddleware';
+import { Prisma, Role } from '@generated/prisma/client';
+import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
 import HTTPMethod from 'http-method-enum';
-import { withHttpMethods } from '../../../../../../middleware/api/handleMethods';
+import { withHttpMethods } from '@middleware/api/handleMethods';
 import { CocktailRecipeStepFull } from '../../../../../../models/CocktailRecipeStepFull';
 import { CocktailRecipeGarnishFull } from '../../../../../../models/CocktailRecipeGarnishFull';
 import { CocktailRecipeFullWithImage } from '../../../../../../models/CocktailRecipeFullWithImage';

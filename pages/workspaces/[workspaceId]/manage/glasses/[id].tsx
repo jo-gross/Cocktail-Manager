@@ -1,15 +1,15 @@
-import { GlassForm } from '../../../../../components/glasses/GlassForm';
-import { ManageEntityLayout } from '../../../../../components/layout/ManageEntityLayout';
+import { GlassForm } from '@components/glasses/GlassForm';
+import { ManageEntityLayout } from '@components/layout/ManageEntityLayout';
 import { useRouter } from 'next/router';
 import { useEffect, useRef, useState } from 'react';
-import { Role } from '@prisma/client';
-import { Loading } from '../../../../../components/Loading';
-import { alertService } from '../../../../../lib/alertService';
-import { withPagePermission } from '../../../../../middleware/ui/withPagePermission';
+import { Role } from '@generated/prisma/client';
+import { Loading } from '@components/Loading';
+import { alertService } from '@lib/alertService';
+import { withPagePermission } from '@middleware/ui/withPagePermission';
 import { FormikProps } from 'formik';
-import { SingleFormLayout } from '../../../../../components/layout/SingleFormLayout';
+import { SingleFormLayout } from '@components/layout/SingleFormLayout';
 import { GlassWithImage } from '../../../../../models/GlassWithImage';
-import { PageCenter } from '../../../../../components/layout/PageCenter';
+import { PageCenter } from '@components/layout/PageCenter';
 
 function EditGlassPage() {
   const router = useRouter();

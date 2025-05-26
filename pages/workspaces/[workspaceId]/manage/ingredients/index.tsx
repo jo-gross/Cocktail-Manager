@@ -1,17 +1,17 @@
-import { Role } from '@prisma/client';
+import { Role } from '@generated/prisma/client';
 import Link from 'next/link';
-import { ManageEntityLayout } from '../../../../../components/layout/ManageEntityLayout';
+import { ManageEntityLayout } from '@components/layout/ManageEntityLayout';
 import React, { useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import { Loading } from '../../../../../components/Loading';
+import { Loading } from '@components/Loading';
 import { FaCheck, FaInfoCircle, FaPlus, FaTimes } from 'react-icons/fa';
-import { ManageColumn } from '../../../../../components/ManageColumn';
-import { UserContext } from '../../../../../lib/context/UserContextProvider';
+import { ManageColumn } from '@components/ManageColumn';
+import { UserContext } from '@lib/context/UserContextProvider';
 import AvatarImage from '../../../../../components/AvatarImage';
 import ListSearchField from '../../../../../components/ListSearchField';
 import { IngredientModel } from '../../../../../models/IngredientModel';
-import { ModalContext } from '../../../../../lib/context/ModalContextProvider';
-import { fetchIngredients } from '../../../../../lib/network/ingredients';
+import { ModalContext } from '@lib/context/ModalContextProvider';
+import { fetchIngredients } from '@lib/network/ingredients';
 import ImageModal from '../../../../../components/modals/ImageModal';
 
 export default function IngredientsOverviewPage() {

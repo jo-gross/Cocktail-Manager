@@ -1,10 +1,10 @@
 import prisma from '../../../../../../prisma/prisma';
 import { NextApiRequest, NextApiResponse } from 'next';
-import { withWorkspacePermission } from '../../../../../../middleware/api/authenticationMiddleware';
-import { Garnish, Role, Workspace } from '@prisma/client';
-import { withHttpMethods } from '../../../../../../middleware/api/handleMethods';
+import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
+import { Garnish, Role, Workspace } from '@generated/prisma/client';
+import { withHttpMethods } from '@middleware/api/handleMethods';
 import HTTPMethod from 'http-method-enum';
-import { calculateGarnishSimilarity } from '../../../../../../lib/findSimilarEntities';
+import { calculateGarnishSimilarity } from '@lib/findSimilarEntities';
 
 export default withHttpMethods({
   [HTTPMethod.GET]: withWorkspacePermission([Role.USER], async (req: NextApiRequest, res: NextApiResponse, user, workspace: Workspace) => {

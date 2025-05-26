@@ -1,9 +1,9 @@
 import { useRouter } from 'next/router';
 import { useCallback, useEffect, useState } from 'react';
-import { alertService } from '../lib/alertService';
-import { $Enums, Signage } from '@prisma/client';
-import { PageCenter } from '../components/layout/PageCenter';
-import { Loading } from '../components/Loading';
+import { alertService } from '@lib/alertService';
+import { $Enums, Signage } from '@generated/prisma/client';
+import { PageCenter } from '@components/layout/PageCenter';
+import { Loading } from '@components/Loading';
 import Image from 'next/image';
 import MonitorFormat = $Enums.MonitorFormat;
 

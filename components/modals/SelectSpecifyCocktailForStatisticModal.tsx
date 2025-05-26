@@ -1,7 +1,7 @@
-import { addCocktailToStatistic } from '../../lib/network/cocktailTracking';
+import { addCocktailToStatistic } from '@lib/network/cocktailTracking';
 import { FaCheck } from 'react-icons/fa';
 import React, { useContext } from 'react';
-import { ModalContext } from '../../lib/context/ModalContextProvider';
+import { ModalContext } from '@lib/context/ModalContextProvider';
 
 interface SelectSpecifyCocktailForStatisticModalProps {
   workspaceId: string;

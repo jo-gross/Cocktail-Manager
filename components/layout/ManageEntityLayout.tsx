@@ -2,9 +2,9 @@ import { FaArrowLeft } from 'react-icons/fa';
 import Head from 'next/head';
 import React, { useContext } from 'react';
 import { NotSavedLeaveConfirmation } from '../modals/NotSavedLeaveConfirmation';
-import { ModalContext } from '../../lib/context/ModalContextProvider';
+import { ModalContext } from '@lib/context/ModalContextProvider';
 import { FormikProps } from 'formik';
-import { RoutingContext } from '../../lib/context/RoutingContextProvider';
+import { RoutingContext } from '@lib/context/RoutingContextProvider';
 
 interface ManageEntityLayoutProps {
   children: React.ReactNode;

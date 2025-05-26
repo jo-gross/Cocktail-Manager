@@ -1,17 +1,17 @@
-import { ManageEntityLayout } from '../../../../../components/layout/ManageEntityLayout';
+import { ManageEntityLayout } from '@components/layout/ManageEntityLayout';
 import { useRouter } from 'next/router';
 import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { CocktailStatisticItemFull } from '../../../../../models/CocktailStatisticItemFull';
-import { alertService } from '../../../../../lib/alertService';
+import { alertService } from '@lib/alertService';
 import { FaSyncAlt, FaTrashAlt } from 'react-icons/fa';
 import _ from 'lodash';
-import { UserContext } from '../../../../../lib/context/UserContextProvider';
+import { UserContext } from '@lib/context/UserContextProvider';
 import { ArcElement, CategoryScale, Legend, LinearScale, TimeScale, Tooltip } from 'chart.js';
 import { Chart as ChartJS } from 'chart.js/auto';
 import { Bar, Doughnut } from 'react-chartjs-2';
 import '../../../../../lib/DateUtils';
 import '../../../../../lib/StringUtils';
-import { Loading } from '../../../../../components/Loading';
+import { Loading } from '@components/Loading';
 import ListSearchField from '../../../../../components/ListSearchField';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 

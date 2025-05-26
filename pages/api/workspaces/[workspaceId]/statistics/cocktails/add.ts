@@ -1,9 +1,9 @@
 import HTTPMethod from 'http-method-enum';
-import { withWorkspacePermission } from '../../../../../../middleware/api/authenticationMiddleware';
-import { Prisma, Role } from '@prisma/client';
+import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
+import { Prisma, Role } from '@generated/prisma/client';
 import { NextApiRequest, NextApiResponse } from 'next';
 import prisma from '../../../../../../prisma/prisma';
-import { withHttpMethods } from '../../../../../../middleware/api/handleMethods';
+import { withHttpMethods } from '@middleware/api/handleMethods';
 import { StatisticBadRequestMessage } from '../../../../../../models/StatisticBadRequest';
 import CocktailStatisticItemCreateInput = Prisma.CocktailStatisticItemCreateInput;
 

@@ -2,10 +2,10 @@
 
 import prisma from '../../../../../prisma/prisma';
 import { NextApiRequest, NextApiResponse } from 'next';
-import { CocktailCardGroupItem, Prisma, Role } from '@prisma/client';
-import { withWorkspacePermission } from '../../../../../middleware/api/authenticationMiddleware';
+import { CocktailCardGroupItem, Prisma, Role } from '@generated/prisma/client';
+import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
 import HTTPMethod from 'http-method-enum';
-import { withHttpMethods } from '../../../../../middleware/api/handleMethods';
+import { withHttpMethods } from '@middleware/api/handleMethods';
 import CocktailCardCreateInput = Prisma.CocktailCardCreateInput;
 import CocktailCardGroupItemCreateInput = Prisma.CocktailCardGroupItemCreateInput;
 

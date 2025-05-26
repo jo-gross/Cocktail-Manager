@@ -1,4 +1,4 @@
-import { ModalContext } from '../../lib/context/ModalContextProvider';
+import { ModalContext } from '@lib/context/ModalContextProvider';
 import React, { useContext, useState } from 'react';
 
 interface InputModalProps {

@@ -1,13 +1,13 @@
-import { ManageEntityLayout } from '../../../../../components/layout/ManageEntityLayout';
+import { ManageEntityLayout } from '@components/layout/ManageEntityLayout';
 import { FaPlus } from 'react-icons/fa';
 import Link from 'next/link';
 import { CocktailCardFull } from '../../../../../models/CocktailCardFull';
 import React, { useContext, useEffect, useState } from 'react';
-import { Loading } from '../../../../../components/Loading';
+import { Loading } from '@components/Loading';
 import { useRouter } from 'next/router';
-import { alertService } from '../../../../../lib/alertService';
-import { UserContext } from '../../../../../lib/context/UserContextProvider';
-import { Role } from '@prisma/client';
+import { alertService } from '@lib/alertService';
+import { UserContext } from '@lib/context/UserContextProvider';
+import { Role } from '@generated/prisma/client';
 import CardOverviewItem from '../../../../../components/cards/CardOverviewItem';
 
 export default function CardsOverviewPage() {

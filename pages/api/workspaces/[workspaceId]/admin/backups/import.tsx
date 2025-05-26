@@ -2,8 +2,8 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { BackupStructure } from './backupStructure';
 import prisma from '../../../../../../prisma/prisma';
 import { randomUUID } from 'crypto';
-import { withWorkspacePermission } from '../../../../../../middleware/api/authenticationMiddleware';
-import { Role } from '@prisma/client';
+import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
+import { Role } from '@generated/prisma/client';
 
 export const config = {
   api: {

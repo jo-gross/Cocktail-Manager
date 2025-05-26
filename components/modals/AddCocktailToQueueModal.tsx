@@ -1,7 +1,7 @@
-import { addCocktailToQueue } from '../../lib/network/cocktailTracking';
+import { addCocktailToQueue } from '@lib/network/cocktailTracking';
 import { MdPlaylistAdd } from 'react-icons/md';
 import React, { useContext, useState } from 'react';
-import { ModalContext } from '../../lib/context/ModalContextProvider';
+import { ModalContext } from '@lib/context/ModalContextProvider';
 import { FaMinus, FaPlus } from 'react-icons/fa';
 
 interface AddCocktailToQueueModalProps {

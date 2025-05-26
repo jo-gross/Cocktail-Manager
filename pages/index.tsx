@@ -1,21 +1,21 @@
 import { signIn, signOut } from 'next-auth/react';
 import { useCallback, useContext, useEffect, useState } from 'react';
-import { Setting, Workspace, WorkspaceJoinRequest } from '@prisma/client';
-import { Loading } from '../components/Loading';
+import { Setting, Workspace, WorkspaceJoinRequest } from '@generated/prisma/client';
+import { Loading } from '@components/Loading';
 import Image from 'next/image';
 import { FaArrowRight } from 'react-icons/fa';
 import Link from 'next/link';
-import { UserContext } from '../lib/context/UserContextProvider';
-import { alertService } from '../lib/alertService';
+import { UserContext } from '@lib/context/UserContextProvider';
+import { alertService } from '@lib/alertService';
 import Head from 'next/head';
 import packageInfo from '../package.json';
-import { ThemeContext } from '../lib/context/ThemeContextProvider';
-import { ModalContext } from '../lib/context/ModalContextProvider';
+import { ThemeContext } from '@lib/context/ThemeContextProvider';
+import { ModalContext } from '@lib/context/ModalContextProvider';
 import { marked } from 'marked';
 import '../lib/DateUtils';
 import { useRouter } from 'next/router';
 import { MdOutlineCancel } from 'react-icons/md';
-import { DeleteConfirmationModal } from '../components/modals/DeleteConfirmationModal';
+import { DeleteConfirmationModal } from '@components/modals/DeleteConfirmationModal';
 
 export default function WorkspacesPage() {
   const themeContext = useContext(ThemeContext);

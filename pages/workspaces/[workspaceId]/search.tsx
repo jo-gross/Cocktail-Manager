@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { CocktailRecipeFull } from '../../../models/CocktailRecipeFull';
 import CocktailRecipeCardItem from '../../../components/cocktails/CocktailRecipeCardItem';
-import { SearchModal } from '../../../components/modals/SearchModal';
+import { SearchModal } from '@components/modals/SearchModal';
 import { useRouter } from 'next/router';
 
 interface SearchPageProps {

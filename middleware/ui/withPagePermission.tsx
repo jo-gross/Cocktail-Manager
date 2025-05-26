@@ -1,8 +1,8 @@
 import React, { useContext, useEffect } from 'react';
-import { Role } from '@prisma/client';
+import { Role } from '@generated/prisma/client';
 import { useRouter } from 'next/router';
-import { UserContext } from '../../lib/context/UserContextProvider';
-import { alertService } from '../../lib/alertService';
+import { UserContext } from '@lib/context/UserContextProvider';
+import { alertService } from '@lib/alertService';
 
 export const withPagePermission = <P extends object>(roles: Role[], Component: React.ComponentType<P>, fallbackUrl: string) =>
   function WithPagePermission({ ...props }: P) {

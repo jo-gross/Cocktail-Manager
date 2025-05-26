@@ -1,5 +1,5 @@
 import levenshtein from 'js-levenshtein';
-import { CocktailRecipe, Garnish, Glass, Ingredient } from '@prisma/client';
+import { CocktailRecipe, Garnish, Glass, Ingredient } from '@generated/prisma/client';
 
 export function calculateIngredientSimilarity(newProductName: string, ingredient: Ingredient) {
   const nameSimilarity = 1 - levenshtein(newProductName, ingredient.name) / Math.max(newProductName.length, ingredient.name.length);

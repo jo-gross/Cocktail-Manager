@@ -1,9 +1,9 @@
 import HTTPMethod from 'http-method-enum';
-import { withWorkspacePermission } from '../../../../../../middleware/api/authenticationMiddleware';
-import { Role } from '@prisma/client';
+import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
+import { Role } from '@generated/prisma/client';
 import { NextApiRequest, NextApiResponse } from 'next';
 import prisma from '../../../../../../prisma/prisma';
-import { withHttpMethods } from '../../../../../../middleware/api/handleMethods';
+import { withHttpMethods } from '@middleware/api/handleMethods';
 
 export default withHttpMethods({
   [HTTPMethod.PUT]: withWorkspacePermission([Role.USER], async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {

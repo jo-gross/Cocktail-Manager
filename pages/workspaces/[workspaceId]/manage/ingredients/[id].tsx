@@ -1,15 +1,15 @@
-import { ManageEntityLayout } from '../../../../../components/layout/ManageEntityLayout';
-import { Role } from '@prisma/client';
+import { ManageEntityLayout } from '@components/layout/ManageEntityLayout';
+import { Role } from '@generated/prisma/client';
 import { useRouter } from 'next/router';
 import { useEffect, useRef, useState } from 'react';
-import { Loading } from '../../../../../components/Loading';
-import { IngredientForm } from '../../../../../components/ingredients/IngredientForm';
-import { alertService } from '../../../../../lib/alertService';
-import { withPagePermission } from '../../../../../middleware/ui/withPagePermission';
+import { Loading } from '@components/Loading';
+import { IngredientForm } from '@components/ingredients/IngredientForm';
+import { alertService } from '@lib/alertService';
+import { withPagePermission } from '@middleware/ui/withPagePermission';
 import { FormikProps } from 'formik';
-import { SingleFormLayout } from '../../../../../components/layout/SingleFormLayout';
+import { SingleFormLayout } from '@components/layout/SingleFormLayout';
 import { IngredientWithImage } from '../../../../../models/IngredientWithImage';
-import { PageCenter } from '../../../../../components/layout/PageCenter';
+import { PageCenter } from '@components/layout/PageCenter';
 
 function EditCocktailRecipe() {
   const router = useRouter();

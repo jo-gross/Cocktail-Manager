@@ -1,18 +1,18 @@
-import { CocktailRecipeForm } from '../../../../../components/cocktails/CocktailRecipeForm';
-import { ManageEntityLayout } from '../../../../../components/layout/ManageEntityLayout';
+import { CocktailRecipeForm } from '@components/cocktails/CocktailRecipeForm';
+import { ManageEntityLayout } from '@components/layout/ManageEntityLayout';
 import React, { useContext, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
-import { Loading } from '../../../../../components/Loading';
-import { alertService } from '../../../../../lib/alertService';
-import { withPagePermission } from '../../../../../middleware/ui/withPagePermission';
-import { Role } from '@prisma/client';
+import { Loading } from '@components/Loading';
+import { alertService } from '@lib/alertService';
+import { withPagePermission } from '@middleware/ui/withPagePermission';
+import { Role } from '@generated/prisma/client';
 import { FormikProps } from 'formik';
 import { CocktailRecipeFullWithImage } from '../../../../../models/CocktailRecipeFullWithImage';
-import { PageCenter } from '../../../../../components/layout/PageCenter';
-import { UserContext } from '../../../../../lib/context/UserContextProvider';
-import { ModalContext } from '../../../../../lib/context/ModalContextProvider';
-import { NotSavedArchiveConfirmation } from '../../../../../components/modals/NotSavedArchiveConfirmation';
-import { fetchCocktailWithImage } from '../../../../../lib/network/cocktails';
+import { PageCenter } from '@components/layout/PageCenter';
+import { UserContext } from '@lib/context/UserContextProvider';
+import { ModalContext } from '@lib/context/ModalContextProvider';
+import { NotSavedArchiveConfirmation } from '@components/modals/NotSavedArchiveConfirmation';
+import { fetchCocktailWithImage } from '@lib/network/cocktails';
 
 function EditCocktailRecipe() {
   const router = useRouter();

@@ -1,6 +1,6 @@
-import { ThemeContext } from '../../../lib/context/ThemeContextProvider';
+import { ThemeContext } from '@lib/context/ThemeContextProvider';
 import { useContext, useEffect, useState } from 'react';
-import { UserContext } from '../../../lib/context/UserContextProvider';
+import { UserContext } from '@lib/context/UserContextProvider';
 
 interface ThemeBoundaryProps {
   children: React.ReactNode;
