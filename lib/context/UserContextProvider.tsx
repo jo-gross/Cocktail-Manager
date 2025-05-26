@@ -1,5 +1,5 @@
 import { createContext } from 'react';
-import { Role, User, UserSetting } from '@prisma/client';
+import { Role, User, UserSetting } from '@generated/prisma/client';
 import { WorkspaceFull } from '../../models/WorkspaceFull';
 
 interface UserContextProps {

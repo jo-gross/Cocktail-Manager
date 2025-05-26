@@ -1,7 +1,7 @@
-import { withHttpMethods } from '../../../../../middleware/api/handleMethods';
+import { withHttpMethods } from '@middleware/api/handleMethods';
 import HTTPMethod from 'http-method-enum';
-import { withWorkspacePermission } from '../../../../../middleware/api/authenticationMiddleware';
-import { Prisma, Role } from '@prisma/client';
+import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
+import { Prisma, Role } from '@generated/prisma/client';
 import prisma from '../../../../../prisma/prisma';
 import { updateTranslation } from '../admin/translation';
 import UnitCreateInput = Prisma.UnitCreateInput;

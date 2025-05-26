@@ -1,21 +1,21 @@
-import { ManageEntityLayout } from '../../../../../components/layout/ManageEntityLayout';
+import { ManageEntityLayout } from '@components/layout/ManageEntityLayout';
 import { FieldArray, Formik, FormikErrors } from 'formik';
 import { FaAngleDown, FaAngleLeft, FaAngleRight, FaAngleUp, FaEuroSign, FaTrashAlt } from 'react-icons/fa';
-import { CompactCocktailRecipeInstruction } from '../../../../../components/cocktails/CompactCocktailRecipeInstruction';
+import { CompactCocktailRecipeInstruction } from '@components/cocktails/CompactCocktailRecipeInstruction';
 import React, { useContext, useEffect, useState } from 'react';
-import { ModalContext } from '../../../../../lib/context/ModalContextProvider';
-import { SearchModal } from '../../../../../components/modals/SearchModal';
+import { ModalContext } from '@lib/context/ModalContextProvider';
+import { SearchModal } from '@components/modals/SearchModal';
 import { useRouter } from 'next/router';
 import { CocktailCardFull } from '../../../../../models/CocktailCardFull';
 import { CocktailRecipeFull } from '../../../../../models/CocktailRecipeFull';
-import { Loading } from '../../../../../components/Loading';
-import { alertService } from '../../../../../lib/alertService';
-import { withPagePermission } from '../../../../../middleware/ui/withPagePermission';
-import { Role } from '@prisma/client';
-import { DeleteConfirmationModal } from '../../../../../components/modals/DeleteConfirmationModal';
+import { Loading } from '@components/Loading';
+import { alertService } from '@lib/alertService';
+import { withPagePermission } from '@middleware/ui/withPagePermission';
+import { Role } from '@generated/prisma/client';
+import { DeleteConfirmationModal } from '@components/modals/DeleteConfirmationModal';
 import _ from 'lodash';
-import { PageCenter } from '../../../../../components/layout/PageCenter';
-import { RoutingContext } from '../../../../../lib/context/RoutingContextProvider';
+import { PageCenter } from '@components/layout/PageCenter';
+import { RoutingContext } from '@lib/context/RoutingContextProvider';
 
 interface CocktailCardGroupError {
   name?: string;

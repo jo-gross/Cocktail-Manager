@@ -5,13 +5,13 @@ import { ShowCocktailInfoButton } from './ShowCocktailInfoButton';
 import { useRouter } from 'next/router';
 import { FaExclamationTriangle } from 'react-icons/fa';
 import { Loading } from '../Loading';
-import { fetchCocktail } from '../../lib/network/cocktails';
-import { CocktailRating } from '@prisma/client';
-import { fetchCocktailRatings } from '../../lib/network/cocktailRatings';
+import { fetchCocktail } from '@lib/network/cocktails';
+import { CocktailRating } from '@generated/prisma/client';
+import { fetchCocktailRatings } from '@lib/network/cocktailRatings';
 import StatisticActions from '../StatisticActions';
 import ExpandableText, { ExpandableTextHandle } from '../ExpandableText';
 import { CocktailDetailModal } from '../modals/CocktailDetailModal';
-import { ModalContext } from '../../lib/context/ModalContextProvider';
+import { ModalContext } from '@lib/context/ModalContextProvider';
 
 export type CocktailRecipeOverviewItemRef = {
   refresh: () => void;

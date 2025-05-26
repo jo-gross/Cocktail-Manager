@@ -1,8 +1,8 @@
 import { BsSearch } from 'react-icons/bs';
 import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { Loading } from '../Loading';
-import { ModalContext } from '../../lib/context/ModalContextProvider';
-import { alertService } from '../../lib/alertService';
+import { ModalContext } from '@lib/context/ModalContextProvider';
+import { alertService } from '@lib/alertService';
 
 interface SelectModalProps<T> {
   title: string;

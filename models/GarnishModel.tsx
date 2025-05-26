@@ -1,4 +1,4 @@
-import { Prisma } from '@prisma/client';
+import { Prisma } from '@generated/prisma/client';
 
 export type GarnishModel = Prisma.GarnishGetPayload<{
   include: {

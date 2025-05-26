@@ -1,6 +1,6 @@
-import { withHttpMethods } from '../../../middleware/api/handleMethods';
+import { withHttpMethods } from '@middleware/api/handleMethods';
 import HTTPMethod from 'http-method-enum';
-import { withAuthentication } from '../../../middleware/api/authenticationMiddleware';
+import { withAuthentication } from '@middleware/api/authenticationMiddleware';
 import { NextApiRequest, NextApiResponse } from 'next';
 
 export default withHttpMethods({

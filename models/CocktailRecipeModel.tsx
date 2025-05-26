@@ -1,4 +1,4 @@
-import { Prisma } from '@prisma/client';
+import { Prisma } from '@generated/prisma/client';
 
 export type CocktailRecipeModel = Prisma.CocktailRecipeGetPayload<{
   include: {

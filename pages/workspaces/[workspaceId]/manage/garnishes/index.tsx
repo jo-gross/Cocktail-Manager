@@ -1,18 +1,18 @@
-import { Role } from '@prisma/client';
+import { Role } from '@generated/prisma/client';
 import Link from 'next/link';
-import { ManageEntityLayout } from '../../../../../components/layout/ManageEntityLayout';
-import { ManageColumn } from '../../../../../components/ManageColumn';
+import { ManageEntityLayout } from '@components/layout/ManageEntityLayout';
+import { ManageColumn } from '@components/ManageColumn';
 import React, { useContext, useEffect, useState } from 'react';
-import { Loading } from '../../../../../components/Loading';
+import { Loading } from '@components/Loading';
 import { useRouter } from 'next/router';
-import { UserContext } from '../../../../../lib/context/UserContextProvider';
+import { UserContext } from '@lib/context/UserContextProvider';
 import { FaPlus } from 'react-icons/fa';
 import ListSearchField from '../../../../../components/ListSearchField';
 import { GarnishModel } from '../../../../../models/GarnishModel';
 import AvatarImage from '../../../../../components/AvatarImage';
-import { fetchGarnishes } from '../../../../../lib/network/garnishes';
+import { fetchGarnishes } from '@lib/network/garnishes';
 import ImageModal from '../../../../../components/modals/ImageModal';
-import { ModalContext } from '../../../../../lib/context/ModalContextProvider';
+import { ModalContext } from '@lib/context/ModalContextProvider';
 
 export default function ManageGlassesOverviewPage() {
   const router = useRouter();

@@ -1,11 +1,11 @@
 import { FaTrashAlt } from 'react-icons/fa';
 import { useRouter } from 'next/router';
-import { alertService } from '../lib/alertService';
+import { alertService } from '@lib/alertService';
 import { useContext } from 'react';
-import { UserContext } from '../lib/context/UserContextProvider';
+import { UserContext } from '@lib/context/UserContextProvider';
 import Link from 'next/link';
-import { Role } from '@prisma/client';
-import { ModalContext } from '../lib/context/ModalContextProvider';
+import { Role } from '@generated/prisma/client';
+import { ModalContext } from '@lib/context/ModalContextProvider';
 import { DeleteConfirmationModal } from './modals/DeleteConfirmationModal';
 
 interface ManageColumnProps {

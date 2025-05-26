@@ -1,5 +1,5 @@
 import React, { useContext, useEffect } from 'react';
-import { ModalContext } from '../../lib/context/ModalContextProvider';
+import { ModalContext } from '@lib/context/ModalContextProvider';
 import { FaArrowLeft, FaTimes } from 'react-icons/fa';
 import { AlertsContainer } from '../layout/AlertBoundary/AlertsContainer';
 

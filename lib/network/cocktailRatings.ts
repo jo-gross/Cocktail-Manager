@@ -1,5 +1,5 @@
 import { alertService } from '../alertService';
-import { CocktailRating } from '@prisma/client';
+import { CocktailRating } from '@generated/prisma/client';
 
 export function fetchCocktailRatings(
   workspaceId: string | string[] | undefined,

@@ -46,6 +46,7 @@ if (process.env.CUSTOM_OIDC_NAME as string) {
 
 // Some providers have custom options in their tokens. This causes problems if these fields are not present in the account db model.
 // This is a custom adapter that removes all fields from the account object that are not present in the account model.
+// @ts-ignore
 const adapter = PrismaAdapter(prisma);
 const _linkAccount = adapter.linkAccount;
 adapter.linkAccount = (account: AdapterAccount) => {

@@ -1,5 +1,5 @@
 import React, { useContext } from 'react';
-import { ThemeContext } from '../lib/context/ThemeContextProvider';
+import { ThemeContext } from '@lib/context/ThemeContextProvider';
 import { MdOutlineBrightnessAuto } from 'react-icons/md';
 import { FaMoon, FaSun } from 'react-icons/fa';
 

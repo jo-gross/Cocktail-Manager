@@ -1,12 +1,12 @@
 import { CocktailRecipeFull } from '../../models/CocktailRecipeFull';
 import React, { useContext } from 'react';
-import { UserContext } from '../../lib/context/UserContextProvider';
+import { UserContext } from '@lib/context/UserContextProvider';
 import Image from 'next/image';
-import { ModalContext } from '../../lib/context/ModalContextProvider';
+import { ModalContext } from '@lib/context/ModalContextProvider';
 import ImageModal from '../modals/ImageModal';
 import { Loading } from '../Loading';
 import StarsComponent from '../StarsComponent';
-import { CocktailRating } from '@prisma/client';
+import { CocktailRating } from '@generated/prisma/client';
 
 interface CompactCocktailRecipeInstructionProps {
   cocktailRecipe: CocktailRecipeFull;

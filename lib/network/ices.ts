@@ -1,5 +1,5 @@
 import { alertService } from '../alertService';
-import { Ice } from '@prisma/client';
+import { Ice } from '@generated/prisma/client';
 
 export function fetchIce(workspaceId: string | string[] | undefined, setIce: (ice: Ice[]) => void, setIceLoading: (loading: boolean) => void) {
   if (!workspaceId) return;

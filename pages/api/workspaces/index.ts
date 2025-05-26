@@ -1,9 +1,9 @@
 import prisma from '../../../prisma/prisma';
 import { NextApiRequest, NextApiResponse } from 'next';
-import { $Enums, Role, User } from '@prisma/client';
-import { withAuthentication } from '../../../middleware/api/authenticationMiddleware';
+import { $Enums, Role, User } from '@generated/prisma/client';
+import { withAuthentication } from '@middleware/api/authenticationMiddleware';
 import HTTPMethod from 'http-method-enum';
-import { withHttpMethods } from '../../../middleware/api/handleMethods';
+import { withHttpMethods } from '@middleware/api/handleMethods';
 import { randomUUID } from 'crypto';
 import { regenerateUnitConversions } from './[workspaceId]/units/conversions';
 import WorkspaceSettingKey = $Enums.WorkspaceSettingKey;

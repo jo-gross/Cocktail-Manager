@@ -1,17 +1,17 @@
-import { ManageEntityLayout } from '../../../../../components/layout/ManageEntityLayout';
+import { ManageEntityLayout } from '@components/layout/ManageEntityLayout';
 import { useRouter } from 'next/router';
-import { $Enums, Role, Signage } from '@prisma/client';
-import { alertService } from '../../../../../lib/alertService';
+import { $Enums, Role, Signage } from '@generated/prisma/client';
+import { alertService } from '@lib/alertService';
 import { FaShareAlt, FaTrashAlt } from 'react-icons/fa';
-import { UploadDropZone } from '../../../../../components/UploadDropZone';
-import { compressFile } from '../../../../../lib/ImageCompressor';
-import { convertToBase64 } from '../../../../../lib/Base64Converter';
-import { DeleteConfirmationModal } from '../../../../../components/modals/DeleteConfirmationModal';
+import { UploadDropZone } from '@components/UploadDropZone';
+import { compressFile } from '@lib/ImageCompressor';
+import { convertToBase64 } from '@lib/Base64Converter';
+import { DeleteConfirmationModal } from '@components/modals/DeleteConfirmationModal';
 import Image from 'next/image';
 import React, { useCallback, useContext, useEffect, useState } from 'react';
-import { ModalContext } from '../../../../../lib/context/ModalContextProvider';
-import { UserContext } from '../../../../../lib/context/UserContextProvider';
-import { withPagePermission } from '../../../../../middleware/ui/withPagePermission';
+import { ModalContext } from '@lib/context/ModalContextProvider';
+import { UserContext } from '@lib/context/UserContextProvider';
+import { withPagePermission } from '@middleware/ui/withPagePermission';
 import MonitorFormat = $Enums.MonitorFormat;
 
 function ManageMonitorPage() {

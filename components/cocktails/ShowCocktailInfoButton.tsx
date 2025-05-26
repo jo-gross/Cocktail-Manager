@@ -1,7 +1,7 @@
 import { CocktailDetailModal } from '../modals/CocktailDetailModal';
 import { FaInfoCircle } from 'react-icons/fa';
 import { useContext } from 'react';
-import { ModalContext } from '../../lib/context/ModalContextProvider';
+import { ModalContext } from '@lib/context/ModalContextProvider';
 
 interface ShowCocktailInfoButtonProps {
   showInfo: boolean;

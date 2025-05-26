@@ -1,26 +1,26 @@
 import React, { useCallback, useContext, useEffect, useRef, useState } from 'react';
-import { alertService } from '../../../../../lib/alertService';
+import { alertService } from '@lib/alertService';
 import { useRouter } from 'next/router';
 import { BackupStructure } from '../../../../api/workspaces/[workspaceId]/admin/backups/backupStructure';
-import { ManageEntityLayout } from '../../../../../components/layout/ManageEntityLayout';
-import { Ice, Role, Unit, UnitConversion, WorkspaceCocktailRecipeStepAction } from '@prisma/client';
-import { UserContext } from '../../../../../lib/context/UserContextProvider';
+import { ManageEntityLayout } from '@components/layout/ManageEntityLayout';
+import { Ice, Role, Unit, UnitConversion, WorkspaceCocktailRecipeStepAction } from '@generated/prisma/client';
+import { UserContext } from '@lib/context/UserContextProvider';
 import { FaArrowDown, FaArrowUp, FaTrashAlt } from 'react-icons/fa';
-import { DeleteConfirmationModal } from '../../../../../components/modals/DeleteConfirmationModal';
-import { ModalContext } from '../../../../../lib/context/ModalContextProvider';
+import { DeleteConfirmationModal } from '@components/modals/DeleteConfirmationModal';
+import { ModalContext } from '@lib/context/ModalContextProvider';
 import '../../../../../lib/DateUtils';
-import { Loading } from '../../../../../components/Loading';
+import { Loading } from '@components/Loading';
 import _ from 'lodash';
 import CocktailStepActionModal from '../../../../../components/modals/CocktailStepActionModal';
 import EditTranslationModal from '../../../../../components/modals/EditTranslationModal';
 import UnitModal from '../../../../../components/modals/UnitModal';
 import UnitConversionModal from '../../../../../components/modals/UnitConversionModal';
-import { fetchUnitConversions, fetchUnits } from '../../../../../lib/network/units';
-import { fetchActions } from '../../../../../lib/network/actions';
+import { fetchUnitConversions, fetchUnits } from '@lib/network/units';
+import { fetchActions } from '@lib/network/actions';
 
-import { fetchIce } from '../../../../../lib/network/ices';
+import { fetchIce } from '@lib/network/ices';
 import CreateIceModal from '../../../../../components/modals/CreateIceModal';
-import { withPagePermission } from '../../../../../middleware/ui/withPagePermission';
+import { withPagePermission } from '@middleware/ui/withPagePermission';
 
 function WorkspaceSettingPage() {
   const router = useRouter();

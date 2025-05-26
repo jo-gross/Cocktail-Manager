@@ -1,5 +1,5 @@
 import { alertService } from '../alertService';
-import { WorkspaceCocktailRecipeStepAction } from '@prisma/client';
+import { WorkspaceCocktailRecipeStepAction } from '@generated/prisma/client';
 
 export function fetchActions(
   workspaceId: string | string[] | undefined,

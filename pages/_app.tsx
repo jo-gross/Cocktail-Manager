@@ -1,17 +1,17 @@
 import { AppProps } from 'next/app';
 import '../styles/global.css';
-import React, { useReducer, useState } from 'react';
-import { ModalContext } from '../lib/context/ModalContextProvider';
-import { AlertBoundary } from '../components/layout/AlertBoundary';
+import React, { ReactNode, useReducer, useState } from 'react';
+import { ModalContext } from '@lib/context/ModalContextProvider';
+import { AlertBoundary } from '@components/layout/AlertBoundary';
 import { SessionProvider } from 'next-auth/react';
-import { AuthBoundary } from '../components/layout/AuthBoundary';
-import { GlobalModal } from '../components/modals/GlobalModal';
+import { AuthBoundary } from '@components/layout/AuthBoundary';
+import { GlobalModal } from '@components/modals/GlobalModal';
 import Head from 'next/head';
 import ThemeBoundary from '../components/layout/ThemeBoundary';
-import { RoutingContextProvider } from '../lib/context/RoutingContextProvider';
+import { RoutingContextProvider } from '@lib/context/RoutingContextProvider';
 
 const App = ({ Component, pageProps: { session, ...pageProps } }: AppProps) => {
-  const [modalContentStack, setModalContentStack] = useState<JSX.Element[]>([]);
+  const [modalContentStack, setModalContentStack] = useState<ReactNode[]>([]);
   const [modalHideCloseButton, setModalHideCloseButton] = useState<boolean[]>([]);
 
   const [, forceUpdate] = useReducer((x) => x + 1, 0);
@@ -26,7 +26,7 @@ const App = ({ Component, pageProps: { session, ...pageProps } }: AppProps) => {
             content: modalContentStack,
             hideCloseButton: modalHideCloseButton,
             openModal: async (content, hideCloseButton) => {
-              if ((document.getElementById('globalModal') as HTMLDialogElement)?.open == false) {
+              if (!(document.getElementById('globalModal') as HTMLDialogElement)?.open) {
                 (document.getElementById('globalModal') as HTMLDialogElement).showModal();
               }
 

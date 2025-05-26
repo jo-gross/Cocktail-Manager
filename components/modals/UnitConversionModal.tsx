@@ -1,11 +1,11 @@
-import { Unit, UnitConversion } from '@prisma/client';
+import { Unit, UnitConversion } from '@generated/prisma/client';
 import { Formik } from 'formik';
 import React, { useContext } from 'react';
-import { UserContext } from '../../lib/context/UserContextProvider';
-import { ModalContext } from '../../lib/context/ModalContextProvider';
+import { UserContext } from '@lib/context/UserContextProvider';
+import { ModalContext } from '@lib/context/ModalContextProvider';
 import { useRouter } from 'next/router';
 import { FaArrowsLeftRight } from 'react-icons/fa6';
-import { alertService } from '../../lib/alertService';
+import { alertService } from '@lib/alertService';
 
 interface UnitConversionModalProps {
   unitConversion?: UnitConversion;

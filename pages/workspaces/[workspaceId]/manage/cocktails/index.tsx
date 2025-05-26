@@ -1,20 +1,20 @@
-import { Role } from '@prisma/client';
+import { Role } from '@generated/prisma/client';
 import Link from 'next/link';
-import { ManageEntityLayout } from '../../../../../components/layout/ManageEntityLayout';
-import { ManageColumn } from '../../../../../components/ManageColumn';
+import { ManageEntityLayout } from '@components/layout/ManageEntityLayout';
+import { ManageColumn } from '@components/ManageColumn';
 import React, { useCallback, useContext, useEffect, useState } from 'react';
-import { Loading } from '../../../../../components/Loading';
+import { Loading } from '@components/Loading';
 import { useRouter } from 'next/router';
-import { alertService } from '../../../../../lib/alertService';
-import { UserContext } from '../../../../../lib/context/UserContextProvider';
+import { alertService } from '@lib/alertService';
+import { UserContext } from '@lib/context/UserContextProvider';
 import AvatarImage from '../../../../../components/AvatarImage';
 import { FaArrowDown, FaArrowUp, FaPlus } from 'react-icons/fa';
 import ListSearchField from '../../../../../components/ListSearchField';
 import { CocktailRecipeModel } from '../../../../../models/CocktailRecipeModel';
 import ImageModal from '../../../../../components/modals/ImageModal';
-import { ModalContext } from '../../../../../lib/context/ModalContextProvider';
+import { ModalContext } from '@lib/context/ModalContextProvider';
 import _ from 'lodash';
-import { cocktailFilter } from '../../../../../lib/cocktailFilter';
+import { cocktailFilter } from '@lib/cocktailFilter';
 
 export default function CocktailsOverviewPage() {
   const router = useRouter();

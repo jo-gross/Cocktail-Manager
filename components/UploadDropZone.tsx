@@ -1,9 +1,9 @@
 import { useContext } from 'react';
 import { isMobile } from 'react-device-detect';
 import { FaCamera, FaFileAlt, FaLink } from 'react-icons/fa';
-import { ModalContext } from '../lib/context/ModalContextProvider';
+import { ModalContext } from '@lib/context/ModalContextProvider';
 import ImportPhotoByUrlModal from './ImportPhotoByUrlModal';
-import { alertService } from '../lib/alertService';
+import { alertService } from '@lib/alertService';
 
 interface UploadDropZoneProps {
   onSelectedFilesChanged: (file: File | undefined) => void;

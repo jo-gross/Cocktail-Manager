@@ -1,8 +1,8 @@
-import { withAuthentication } from '../../../../middleware/api/authenticationMiddleware';
+import { withAuthentication } from '@middleware/api/authenticationMiddleware';
 import HTTPMethod from 'http-method-enum';
-import { withHttpMethods } from '../../../../middleware/api/handleMethods';
+import { withHttpMethods } from '@middleware/api/handleMethods';
 import { NextApiRequest, NextApiResponse } from 'next';
-import { User } from '@prisma/client';
+import { User } from '@generated/prisma/client';
 import prisma from '../../../../prisma/prisma';
 
 export default withHttpMethods({

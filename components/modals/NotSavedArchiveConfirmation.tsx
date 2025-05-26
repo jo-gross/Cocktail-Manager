@@ -1,6 +1,6 @@
 import { useContext, useState } from 'react';
-import { ModalContext } from '../../lib/context/ModalContextProvider';
-import { alertService } from '../../lib/alertService';
+import { ModalContext } from '@lib/context/ModalContextProvider';
+import { alertService } from '@lib/alertService';
 
 interface NotSavedConfirmationProps {
   onArchive: () => void;

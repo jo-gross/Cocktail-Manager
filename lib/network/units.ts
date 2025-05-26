@@ -1,5 +1,5 @@
 import { alertService } from '../alertService';
-import { Unit, UnitConversion } from '@prisma/client';
+import { Unit, UnitConversion } from '@generated/prisma/client';
 
 export function fetchUnits(workspaceId: string | string[] | undefined, setUnits: (units: Unit[]) => void, setUnitsLoading: (loading: boolean) => void) {
   if (workspaceId == undefined) return;

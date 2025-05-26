@@ -1,8 +1,8 @@
-import { addCocktailToQueue, addCocktailToStatistic } from '../lib/network/cocktailTracking';
+import { addCocktailToQueue, addCocktailToStatistic } from '@lib/network/cocktailTracking';
 import { MdPlaylistAdd } from 'react-icons/md';
 import { FaCheck } from 'react-icons/fa';
 import React, { useContext, useState } from 'react';
-import { ModalContext } from '../lib/context/ModalContextProvider';
+import { ModalContext } from '@lib/context/ModalContextProvider';
 import AddCocktailToQueueModal from './modals/AddCocktailToQueueModal';
 import SelectSpecifyCocktailForStatisticModal from './modals/SelectSpecifyCocktailForStatisticModal';
 

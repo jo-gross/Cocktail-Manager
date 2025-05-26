@@ -1,20 +1,20 @@
 import { Formik, FormikProps } from 'formik';
 import { UploadDropZone } from '../UploadDropZone';
-import { convertBase64ToFile, convertToBase64 } from '../../lib/Base64Converter';
+import { convertBase64ToFile, convertToBase64 } from '@lib/Base64Converter';
 import { useRouter } from 'next/router';
 import { FaTrashAlt } from 'react-icons/fa';
 import React, { useContext, useState } from 'react';
-import { alertService } from '../../lib/alertService';
+import { alertService } from '@lib/alertService';
 import { DeleteConfirmationModal } from '../modals/DeleteConfirmationModal';
-import { ModalContext } from '../../lib/context/ModalContextProvider';
+import { ModalContext } from '@lib/context/ModalContextProvider';
 import _ from 'lodash';
 import { GlassWithImage } from '../../models/GlassWithImage';
 import Image from 'next/image';
 import CropComponent from '../CropComponent';
 import { FaCropSimple } from 'react-icons/fa6';
-import { Glass } from '@prisma/client';
-import { RoutingContext } from '../../lib/context/RoutingContextProvider';
-import { resizeImage } from '../../lib/ImageCompressor';
+import { Glass } from '@generated/prisma/client';
+import { RoutingContext } from '@lib/context/RoutingContextProvider';
+import { resizeImage } from '@lib/ImageCompressor';
 
 interface GlassFormProps {
   glass?: GlassWithImage;

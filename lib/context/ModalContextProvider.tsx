@@ -1,10 +1,10 @@
-import { createContext } from 'react';
+import { createContext, ReactNode } from 'react';
 
 interface ModalContextProps {
-  content: JSX.Element[];
+  content: ReactNode[];
   hideCloseButton: boolean[];
 
-  openModal: (content: JSX.Element, hideCloseButton?: boolean) => void;
+  openModal: (content: ReactNode, hideCloseButton?: boolean) => void;
 
   closeModal(): void;
 

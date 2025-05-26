@@ -1,9 +1,9 @@
-import { Unit } from '@prisma/client';
+import { Unit } from '@generated/prisma/client';
 import { Formik } from 'formik';
 import React, { useContext } from 'react';
-import { UserContext } from '../../lib/context/UserContextProvider';
-import { ModalContext } from '../../lib/context/ModalContextProvider';
-import { alertService } from '../../lib/alertService';
+import { UserContext } from '@lib/context/UserContextProvider';
+import { ModalContext } from '@lib/context/ModalContextProvider';
+import { alertService } from '@lib/alertService';
 import { useRouter } from 'next/router';
 
 interface UnitModalProps {
