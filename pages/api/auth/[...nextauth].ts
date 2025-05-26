@@ -63,7 +63,7 @@ adapter.linkAccount = (account: AdapterAccount) => {
 
 export const authOptions: NextAuthOptions = {
   theme: {
-    logo: '/images/Logo.svg',
+    logo: '/images/Logo-with-Text.svg',
   },
   providers,
   adapter,
