@@ -309,9 +309,9 @@ export default function OverviewPage() {
     if (actionButtonRef.current && windowHeight > 0) {
       const rect = actionButtonRef.current.getBoundingClientRect();
       if (showSettingsAtBottom) {
-        setMaxDropdownHeight(rect.top - (process.env.DEPLOYMENT == 'development' ? 40 : 0) - 8);
+        setMaxDropdownHeight(rect.top - (process.env.NODE_ENV == 'development' || process.env.DEPLOYMENT == 'staging' ? 40 : 0) - 8);
       } else {
-        const maxHeight = windowHeight - (windowHeight - rect.y) - (process.env.DEPLOYMENT == 'development' ? 40 : 0) - 8;
+        const maxHeight = windowHeight - (windowHeight - rect.y) - (process.env.NODE_ENV == 'development' || process.env.DEPLOYMENT == 'staging' ? 40 : 0) - 8;
         setMaxDropdownHeight(maxHeight);
       }
     }
@@ -550,7 +550,7 @@ export default function OverviewPage() {
             <div
               className={
                 showQueueAsOverlay
-                  ? `sticky right-0 z-10 col-span-5 flex w-full justify-end print:hidden ${process.env.DEPLOYMENT == 'development' ? 'md:top-12' : 'md:top-2'}`
+                  ? `sticky right-0 z-10 col-span-5 flex w-full justify-end print:hidden ${process.env.NODE_ENV == 'development' || process.env.DEPLOYMENT == 'staging' ? 'md:top-12' : 'md:top-2'}`
                   : 'order-first col-span-5 w-full lg:order-last lg:col-span-2 xl:col-span-1 print:hidden'
               }
             >

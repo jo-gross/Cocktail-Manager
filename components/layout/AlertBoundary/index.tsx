@@ -10,7 +10,7 @@ export function AlertBoundary(props: AlertBoundaryProps) {
   return (
     <div>
       <>
-        {process.env.DEPLOYMENT == 'development' || process.env.DEPLOYMENT == 'staging' ? (
+        {process.env.NODE_ENV == 'development' || process.env.DEPLOYMENT == 'staging' ? (
           <>
             <div
               className={`fixed top-0 z-50 flex h-10 w-full flex-row items-center justify-center gap-2 overflow-hidden ${process.env.DEPLOYMENT == 'staging' ? 'bg-info' : 'bg-warning'} p-2 text-white`}
