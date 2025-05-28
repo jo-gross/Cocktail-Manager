@@ -10,11 +10,13 @@ export function AlertBoundary(props: AlertBoundaryProps) {
   return (
     <div>
       <>
-        {process.env.NODE_ENV == 'development' ? (
+        {process.env.DEPLOYMENT == 'development' || process.env.DEPLOYMENT == 'staging' ? (
           <>
-            <div className={'fixed top-0 z-50 flex h-10 w-full flex-row items-center justify-center gap-2 overflow-hidden bg-warning p-2 text-white'}>
+            <div
+              className={`fixed top-0 z-50 flex h-10 w-full flex-row items-center justify-center gap-2 overflow-hidden ${process.env.DEPLOYMENT == 'staging' ? 'bg-info' : 'bg-warning'} p-2 text-white`}
+            >
               <FaExclamationTriangle />
-              Achtung sie befinden sich in der Entwicklungs-Umgebung
+              Achtung sie befinden sich in der {process.env.DEPLOYMENT == 'staging' ? 'Staging' : 'Entwicklungs'}-Umgebung
             </div>
             <div className={'h-10'}></div>
           </>

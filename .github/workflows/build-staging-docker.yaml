@@ -42,6 +42,8 @@ jobs:
           context: .
           file: Dockerfile
           push: true
+          build-args: |
+            DEPLOYMENT=staging
           tags: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:staging-${{ github.sha }}
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:staging-latest

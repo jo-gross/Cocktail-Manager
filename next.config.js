@@ -11,6 +11,9 @@ const nextConfig = {
       },
     ],
   },
+  env: {
+    DEPLOYMENT: process.env.DEPLOYMENT,
+  },
 };
 
 const withPWA = require('next-pwa')({

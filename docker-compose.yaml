@@ -49,6 +49,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+#      args:
+#        DEPLOYMENT: "staging" # or "production" or "development"
     ports:
       - '3000:3000'
     env_file:

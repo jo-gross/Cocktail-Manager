@@ -271,7 +271,7 @@ export default function WorkspacesPage() {
               <Link href={'https://github.com/jo-gross/Cocktail-Manager/'} target={'_blank'} className={'link'}>
                 v{packageInfo.version}
               </Link>
-              {` ${process.env.NODE_ENV == 'development' ? '(DEV)' : ''} - by `}
+              {` ${process.env.DEPLOYMENT == 'development' ? '(DEV)' : ''} - by `}
               <Link className={'link'} target={'_blank'} href={'https://github.com/jo-gross'}>
                 Johannes Groß
               </Link>
