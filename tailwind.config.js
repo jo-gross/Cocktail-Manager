@@ -14,31 +14,31 @@ module.exports = {
     },
   },
   plugins: [
-    require('daisyui'),
+    // require('daisyui'),
     plugin(function ({ addVariant }) {
       addVariant('no-print', '@media not print');
     }),
   ],
 
-  daisyui: {
-    themes: [
-      'autumn',
-      'halloween',
-      {
-        halloween: {
-          ...require('daisyui/src/theming/themes')['halloween'],
-          primary: '#f28c18',
-          secondary: '#B51288',
-          accent: '#51a800',
-          neutral: '#2e1a05',
-          'base-100': '#212121',
-          info: '#22d3ee',
-          success: '#65a30d',
-          warning: '#db7706',
-          error: '#dc2828',
-        },
-      },
-    ],
-    darkTheme: 'halloween',
-  },
+  // daisyui: {
+  //   themes: [
+  //     'autumn',
+  //     'halloween',
+  //     {
+  //       halloween: {
+  //         ...require('daisyui/src/theming/themes')['halloween'],
+  //         primary: '#f28c18',
+  //         secondary: '#B51288',
+  //         accent: '#51a800',
+  //         neutral: '#2e1a05',
+  //         'base-100': '#212121',
+  //         info: '#22d3ee',
+  //         success: '#65a30d',
+  //         warning: '#db7706',
+  //         error: '#dc2828',
+  //       },
+  //     },
+  //   ],
+  //   darkTheme: 'halloween',
+  // },
 };
