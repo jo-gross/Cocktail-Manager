@@ -49,7 +49,7 @@ export default function ManagePage() {
                   </div>
                 ) : (
                   <div className="avatar placeholder">
-                    <div className="rounded-full border bg-neutral p-2 text-neutral-content">
+                    <div className="bg-neutral text-neutral-content rounded-full border p-2">
                       <span className="text-xs">
                         {userContext.user?.name
                           ?.split(' ')
@@ -62,7 +62,7 @@ export default function ManagePage() {
               </>
               <div className={'hidden md:inline'}>{userContext.user?.name}</div>
             </label>
-            <ul tabIndex={0} className="menu dropdown-content menu-sm z-[1] mt-2 w-52 gap-2 rounded-box border border-base-200 bg-base-100 p-2 shadow">
+            <ul tabIndex={0} className="menu dropdown-content menu-sm rounded-box border-base-200 bg-base-100 z-1 mt-2 w-52 gap-2 border p-2 shadow">
               <div className={'pt-1 text-center text-lg font-bold md:hidden'}>{userContext.user?.name}</div>
               <Link href={'/'} className={'btn btn-outline btn-sm'}>
                 Workspaces

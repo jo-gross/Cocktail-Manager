@@ -597,7 +597,7 @@ export default function CalculationPage() {
                           <tr key={'cocktail-' + cocktail.cocktail.id}>
                             <td>
                               <input
-                                className={'input input-sm input-bordered w-full print:hidden'}
+                                className={'input input-sm w-full print:hidden'}
                                 type={'number'}
                                 min={1}
                                 step={1}
@@ -704,7 +704,7 @@ export default function CalculationPage() {
                                   <div className={'join print:hidden'}>
                                     <input
                                       type={'number'}
-                                      className={'input input-sm join-item input-bordered w-20'}
+                                      className={'input input-sm join-item w-20'}
                                       step={0.01}
                                       value={cocktail.customPrice ?? ''}
                                       onChange={(event) => {

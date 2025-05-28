@@ -188,7 +188,7 @@ export default function StatisticsPage() {
         <div key={'startDate'} className={'form-control hidden md:flex'}>
           <label className={'lable'}>Startdatum</label>
           <input
-            className={'input input-bordered'}
+            className={'input'}
             type={'date'}
             value={new Date(startDate).toISOString().split('T')[0]}
             onChange={async (event) => {
@@ -218,7 +218,7 @@ export default function StatisticsPage() {
             <span className={'lable-text'}>Enddatum</span>
           </label>
           <input
-            className={`input input-bordered`}
+            className={`input`}
             type={'date'}
             value={endDate.toISOString().split('T')[0]}
             onChange={async (event) => {
@@ -248,7 +248,7 @@ export default function StatisticsPage() {
         <div key={'startDate-mobile'} className={'form-control md:hidden'}>
           <label className={'lable'}>Startdatum</label>
           <input
-            className={'input input-bordered'}
+            className={'input'}
             type={'date'}
             value={startDate.toISOString().split('T')[0]}
             onChange={async (event) => {
@@ -276,7 +276,7 @@ export default function StatisticsPage() {
             <span className={'lable-text'}>Enddatum</span>
           </label>
           <input
-            className={`input input-bordered`}
+            className={`input`}
             type={'date'}
             value={endDate.toISOString().split('T')[0]}
             onChange={async (event) => {
@@ -325,7 +325,7 @@ export default function StatisticsPage() {
                   {cocktailStatisticItems.length.toLocaleString()}
                 </div>
               </div>
-              <div className="h-[50vh] w-full rounded-lg border bg-base-100 p-4 lg:h-[70vh]">
+              <div className="bg-base-100 h-[50vh] w-full rounded-lg border p-4 lg:h-[70vh]">
                 <Doughnut
                   data={{
                     labels: _.chain(cocktailStatisticItems)
@@ -387,7 +387,7 @@ export default function StatisticsPage() {
                 <label className={'label flex w-fit flex-col items-start justify-start'}>
                   <div className={'label-text'}>Gruppieren nach</div>
                 </label>
-                <select className={'select select-bordered'} value={groupBy} onChange={(event) => setGroupBy(event.target.value as 'day' | 'hour')}>
+                <select className={'select'} value={groupBy} onChange={(event) => setGroupBy(event.target.value as 'day' | 'hour')}>
                   <option value={'hour'}>Stunden</option>
                   <option value={'day'} disabled={endDate.getTime() - startDate.getTime() < 24 * 3600 * 1000}>
                     Tagen
@@ -411,7 +411,7 @@ export default function StatisticsPage() {
                 </label>
               </div>
             </div>
-            <div className="h-[50vh] w-full overflow-x-auto rounded-lg border bg-base-100 p-4 lg:h-[70vh]">
+            <div className="bg-base-100 h-[50vh] w-full overflow-x-auto rounded-lg border p-4 lg:h-[70vh]">
               <Bar
                 plugins={[ChartDataLabels]}
                 data={
@@ -487,7 +487,7 @@ export default function StatisticsPage() {
             <ListSearchField onFilterChange={(filterString) => setFilterString(filterString)} />
 
             <div className="overflow-x-auto">
-              <table className="table-compact table table-zebra w-full">
+              <table className="table-compact table-zebra table w-full">
                 <thead>
                   <tr>
                     <td>Zeitpunkt</td>

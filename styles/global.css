@@ -1,17 +1,19 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@plugin "daisyui" {
+    themes: autumn --default, halloween --prefersdark;
+}
 
+/*@reference "./custom.css";*/
 /*.rti--tag {*/
 /*  @apply badge badge-outline space-x-2 p-4 !important;*/
 /*}*/
 
 /*.rti--container {*/
-/*  @apply textarea textarea-bordered !important;*/
+/*  @apply textarea  !important;*/
 /*}*/
 
 /*.rti--input {*/
-/*  @apply input input-bordered !important;*/
+/*  @apply input  !important;*/
 /*}*/
 
 /*.card-body {*/

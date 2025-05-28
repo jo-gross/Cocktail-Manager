@@ -81,7 +81,7 @@ const CocktailRecipeCardItem = forwardRef<CocktailRecipeOverviewItemRef, Cocktai
 
   return (
     <div className={'col-span-1'}>
-      <div className={'card card-side h-full'}>
+      <div className={'card card-border bg-base-100 h-full'}>
         {cocktailRecipeLoading ? (
           <div className={'flex h-full min-h-40 w-full flex-col items-center justify-center gap-2'}>
             <Loading />
@@ -128,7 +128,7 @@ const CocktailRecipeCardItem = forwardRef<CocktailRecipeOverviewItemRef, Cocktai
               <>
                 {props.showNotes && cocktailRecipe.notes && (
                   <>
-                    <div className={'border-b border-base-100'}></div>
+                    <div className={'border-base-100 border-b'}></div>
                     <div className={'font-bold'}>Zubereitungsnotizen</div>
                     <div className={'pl-2'}>
                       <ExpandableText
@@ -144,7 +144,7 @@ const CocktailRecipeCardItem = forwardRef<CocktailRecipeOverviewItemRef, Cocktai
                 )}
                 {props.showDescription && cocktailRecipe.description && (
                   <>
-                    <div className={'border-b border-base-100'}></div>
+                    <div className={'border-base-100 border-b'}></div>
                     <div className={'font-bold'}>Allgemeine Beschreibung</div>
                     <div className={'pl-2'}>
                       <ExpandableText
@@ -160,7 +160,7 @@ const CocktailRecipeCardItem = forwardRef<CocktailRecipeOverviewItemRef, Cocktai
                 )}
                 {props.showHistory && cocktailRecipe.history && (
                   <>
-                    <div className={'border-b border-base-100'}></div>
+                    <div className={'border-base-100 border-b'}></div>
                     <div className={'font-bold'}>Geschichte und Entstehung</div>
                     <div className={'pl-2'}>
                       <ExpandableText
@@ -179,7 +179,7 @@ const CocktailRecipeCardItem = forwardRef<CocktailRecipeOverviewItemRef, Cocktai
 
                 {props.showTags && cocktailRecipe.tags.length > 0 ? (
                   <div className={''}>
-                    <div className={'mb-2 border-b border-base-100'}></div>
+                    <div className={'border-base-100 mb-2 border-b'}></div>
                     {cocktailRecipe.tags.map((tag) => (
                       <span key={`cocktail-overview-item-${cocktailRecipe.id}-tag-${tag}`} className={'badge badge-primary badge-outline mr-1'}>
                         {tag}

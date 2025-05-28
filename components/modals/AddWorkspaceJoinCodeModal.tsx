@@ -84,7 +84,7 @@ export default function AddWorkspaceJoinCodeModal(props: AddWorkspaceJoinCodeMod
                     <span>{errors.code && touched.code ? errors.code : ''}</span>
                   </div>
                 </label>
-                <input id={'code'} name={'code'} value={values.code} disabled={true} className={`input input-bordered`} />
+                <input id={'code'} name={'code'} value={values.code} disabled={true} className={`input`} />
               </div>
               <div className={'form-control'}>
                 <label className={'label'}>
@@ -93,7 +93,7 @@ export default function AddWorkspaceJoinCodeModal(props: AddWorkspaceJoinCodeMod
                     <span>{errors.expires && touched.expires ? errors.expires : ''}</span>
                   </div>
                 </label>
-                <input id={'expires'} name={'expires'} type={'date'} value={values.expires} onChange={handleChange} className={`input input-bordered`} />
+                <input id={'expires'} name={'expires'} type={'date'} value={values.expires} onChange={handleChange} className={`input`} />
               </div>
               <div className={'form-control'}>
                 <label className={'label'}>

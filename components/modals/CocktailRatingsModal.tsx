@@ -74,7 +74,7 @@ export default function CocktailRatingsModal(props: CocktailRatingModalProps) {
               maximumFractionDigits: 1,
             })
           : 'N/A'}{' '}
-        <StarsComponent rating={avgRating} /> ({cocktailRatings.length})<div className={'flex-grow'}></div>
+        <StarsComponent rating={avgRating} /> ({cocktailRatings.length})<div className={'grow'}></div>
         <button
           type={'button'}
           className={'btn btn-outline btn-sm print:hidden'}
@@ -86,16 +86,11 @@ export default function CocktailRatingsModal(props: CocktailRatingModalProps) {
         </button>
       </div>
 
-      <input
-        className={'input input-sm input-bordered'}
-        placeholder={'Nach Person suchen...'}
-        value={search}
-        onChange={(event) => setSearch(event.target.value)}
-      />
+      <input className={'input input-sm'} placeholder={'Nach Person suchen...'} value={search} onChange={(event) => setSearch(event.target.value)} />
       <div className={'flex flex-col divide-y'}>
         {cocktailRatings.filter(
           (rating) => (rating.name ?? '').toLowerCase().includes(search.toLowerCase()) || (rating.comment ?? '').toLowerCase().includes(search.toLowerCase()),
-        )?.length === 0 && <div className={'text-center italic text-gray-500'}>Keine Bewertungen vorhanden</div>}
+        )?.length === 0 && <div className={'text-center text-gray-500 italic'}>Keine Bewertungen vorhanden</div>}
         {cocktailRatings
           .filter(
             (rating) => (rating.name ?? '').toLowerCase().includes(search.toLowerCase()) || (rating.comment ?? '').toLowerCase().includes(search.toLowerCase()),

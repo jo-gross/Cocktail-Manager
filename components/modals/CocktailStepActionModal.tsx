@@ -119,7 +119,7 @@ export default function CocktailStepActionModal(props: CocktailStepActionModalPr
                   <Field type={'radio'} name={'actionGroup'} className={'radio'} value={values.newActionGroup} />
                   <div className={'label-text'}>Neuen Gruppe-Identifier (A-Z,_)</div>
                   <div>
-                    <div className={'label-text-alt text-end text-error'}>
+                    <div className={'label-text-alt text-error text-end'}>
                       <span>{errors.newActionGroup && touched.newActionGroup ? errors.newActionGroup : ''}</span>
                     </div>
                     <input
@@ -130,7 +130,7 @@ export default function CocktailStepActionModal(props: CocktailStepActionModalPr
                         handleChange(event);
                         await setFieldValue('actionGroup', event.target.value);
                       }}
-                      className={'input input-bordered w-full'}
+                      className={'input w-full'}
                     />
                   </div>
                 </label>
@@ -151,7 +151,7 @@ export default function CocktailStepActionModal(props: CocktailStepActionModalPr
                   name={'action'}
                   value={values.action}
                   onChange={handleChange}
-                  className={`input input-bordered ${props.cocktailStepAction != undefined ? 'input-disabled' : ''}`}
+                  className={`input ${props.cocktailStepAction != undefined ? 'input-disabled' : ''}`}
                 />
               </div>
               <div className={'form-control'}>
@@ -162,7 +162,7 @@ export default function CocktailStepActionModal(props: CocktailStepActionModalPr
                     <span>*</span>
                   </div>
                 </label>
-                <input id={'lableDE'} name={'lableDE'} value={values.lableDE} onChange={handleChange} className={'input input-bordered'} />
+                <input id={'lableDE'} name={'lableDE'} value={values.lableDE} onChange={handleChange} className={'input'} />
               </div>
             </div>
             <div className={'flex justify-end gap-2'}>

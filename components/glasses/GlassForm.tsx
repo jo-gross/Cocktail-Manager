@@ -120,7 +120,7 @@ export function GlassForm(props: GlassFormProps) {
           <div className={'form-control col-span-2'}>
             <label className={'label'} htmlFor={'name'}>
               <span className={'label-text'}>Name</span>
-              <span className={'label-text-alt space-x-2 text-error'}>
+              <span className={'label-text-alt text-error space-x-2'}>
                 <span>
                   <>{errors.name && errors.name}</>
                 </span>
@@ -134,7 +134,7 @@ export function GlassForm(props: GlassFormProps) {
               autoComplete={'off'}
               type={'text'}
               placeholder={'Name'}
-              className={`input input-bordered w-full ${errors.name && 'input-error'}`}
+              className={`input w-full ${errors.name && 'input-error'}`}
               onChange={(event) => {
                 if (event.target.value.length > 2) {
                   fetch(`/api/workspaces/${workspaceId}/glasses/check?name=${event.target.value}`)
@@ -169,7 +169,7 @@ export function GlassForm(props: GlassFormProps) {
           <div className={'form-control'}>
             <label className={'label'} htmlFor={'deposit'}>
               <span className={'label-text'}>Pfand</span>
-              <span className={'label-text-alt space-x-2 text-error'}>
+              <span className={'label-text-alt text-error space-x-2'}>
                 <span>
                   <>{errors.deposit && errors.deposit}</>
                 </span>
@@ -180,7 +180,7 @@ export function GlassForm(props: GlassFormProps) {
                 id={'deposit'}
                 type={'number'}
                 placeholder={'Deposit'}
-                className={`input join-item input-bordered w-full ${errors.deposit && 'input-error'}}`}
+                className={`input join-item w-full ${errors.deposit && 'input-error'}}`}
                 value={values.deposit}
                 onChange={handleChange}
                 onBlur={handleBlur}
@@ -198,7 +198,7 @@ export function GlassForm(props: GlassFormProps) {
                 id={'volume'}
                 type={'number'}
                 placeholder={'38cl'}
-                className={'input join-item input-bordered w-full'}
+                className={'input join-item w-full'}
                 value={values.volume}
                 onChange={handleChange}
                 onBlur={handleBlur}
@@ -249,7 +249,7 @@ export function GlassForm(props: GlassFormProps) {
               </div>
             ) : (
               <div className={'relative'}>
-                <div className={'absolute right-2 top-2 flex flex-row gap-2'}>
+                <div className={'absolute top-2 right-2 flex flex-row gap-2'}>
                   <div
                     className={'btn btn-square btn-outline btn-sm'}
                     onClick={async () => {
@@ -295,7 +295,7 @@ export function GlassForm(props: GlassFormProps) {
               </button>
             </div>
             {!isValid && (
-              <div className={'font-thin italic text-error'}>
+              <div className={'text-error font-thin italic'}>
                 Nicht alle Felder sind korrekt ausgefüllt. Kontrolliere daher alle Felder. (Name gesetzt, Bild zugeschnitten, ... ?)
               </div>
             )}

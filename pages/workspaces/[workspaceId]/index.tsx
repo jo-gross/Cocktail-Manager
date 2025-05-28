@@ -361,7 +361,7 @@ export default function OverviewPage() {
 
   function renderCocktailQueueItem(cocktailQueueItem: GroupedItem, index: number) {
     return (
-      <div key={`cocktailQueue-item-${index}`} className={'flex w-full flex-row flex-wrap justify-between gap-2 pb-1 pt-1 lg:flex-col'}>
+      <div key={`cocktailQueue-item-${index}`} className={'flex w-full flex-row flex-wrap justify-between gap-2 pt-1 pb-1 lg:flex-col'}>
         <div
           className={'cursor-pointer'}
           onClick={() => {
@@ -554,8 +554,8 @@ export default function OverviewPage() {
                   : 'order-first col-span-5 w-full lg:order-last lg:col-span-2 xl:col-span-1 print:hidden'
               }
             >
-              <div className={`${showQueueAsOverlay ? 'bg-opacity-75 lg:max-w-60' : ''} flex w-full flex-col rounded-xl bg-base-300 p-2 print:hidden`}>
-                <div className="flex w-full flex-row flex-wrap items-center justify-center overflow-hidden border-b border-base-content pb-1 text-center">
+              <div className={`${showQueueAsOverlay ? 'bg-opacity-75 lg:max-w-60' : ''} bg-base-300 flex w-full flex-col rounded-xl p-2 print:hidden`}>
+                <div className="border-base-content flex w-full flex-row flex-wrap items-center justify-center overflow-hidden border-b pb-1 text-center">
                   <span className="truncate">Wird gemacht</span>
                   <span className="ml-1">(A-Z)</span>
                 </div>
@@ -604,7 +604,7 @@ export default function OverviewPage() {
                 </div>
                 {/*<div className={'divider'}>Warteschl. ({queueGrouping == 'ALPHABETIC' ? 'A-Z' : 'Uhr'})</div>*/}
                 <div className={'h-5'}></div>
-                <div className="flex w-full flex-row flex-wrap items-center justify-center overflow-hidden border-b border-base-content pb-1 text-center">
+                <div className="border-base-content flex w-full flex-row flex-wrap items-center justify-center overflow-hidden border-b pb-1 text-center">
                   <span className="truncate">Warteschlange</span>
                   <span className="ml-1">({queueGrouping == 'ALPHABETIC' ? 'A-Z' : 'Uhr'})</span>
                 </div>
@@ -681,7 +681,7 @@ export default function OverviewPage() {
                 .map((group) => (
                   <div
                     key={`card-${selectedCard.id}-group-${group.id}`}
-                    className={`collapse collapse-arrow rounded-xl border border-base-300 bg-base-200 p-1 print:p-1`}
+                    className={`collapse-arrow border-base-300 bg-base-200 collapse rounded-xl border p-1 print:p-1`}
                   >
                     <input type={'checkbox'} defaultChecked={true} />
                     <div className={'collapse-title text-center text-2xl font-bold'}>
@@ -740,16 +740,16 @@ export default function OverviewPage() {
         <div
           ref={actionButtonRef}
           className={
-            'bottom-2 right-2 z-10 flex space-y-2 md:bottom-5 md:right-5 print:hidden' + (showSettingsAtBottom ? ' mx-2 justify-end' : ' fixed flex-col')
+            'right-2 bottom-2 z-10 flex space-y-2 md:right-5 md:bottom-5 print:hidden' + (showSettingsAtBottom ? ' mx-2 justify-end' : ' fixed flex-col')
           }
         >
           <div className={'dropdown dropdown-end dropdown-top pt-2' + (showSettingsAtBottom ? ' mr-1' : '')}>
-            <label tabIndex={0} className={'btn btn-square btn-primary rounded-xl md:btn-lg'}>
+            <label tabIndex={0} className={'btn btn-square btn-primary md:btn-lg rounded-xl'}>
               <FaEye />
             </label>
             <div
               tabIndex={0}
-              className={`dropdown-content h-min w-64 rounded-box bg-base-100 p-2 shadow`}
+              className={`dropdown-content rounded-box bg-base-100 h-min w-64 p-2 shadow`}
               style={{
                 maxHeight: maxDropdownHeight + 'px',
               }}
@@ -1084,7 +1084,7 @@ export default function OverviewPage() {
             {selectedCardId != 'search' && selectedCardId != undefined ? (
               <div className={'tooltip' + (showSettingsAtBottom ? ' mr-1' : '')} data-tip={'Suche (Shift + F)'}>
                 <div
-                  className={'btn btn-square btn-primary rounded-xl md:btn-lg'}
+                  className={'btn btn-square btn-primary md:btn-lg rounded-xl'}
                   onClick={() => modalContext.openModal(<SearchModal showStatisticActions={showStatisticActions} />)}
                 >
                   <FaSearch />
@@ -1095,7 +1095,7 @@ export default function OverviewPage() {
             )}
           </>
           <Link href={`/workspaces/${workspaceId}/manage`}>
-            <div className={'btn btn-square btn-primary rounded-xl md:btn-lg'}>
+            <div className={'btn btn-square btn-primary md:btn-lg rounded-xl'}>
               <BsFillGearFill />
             </div>
           </Link>

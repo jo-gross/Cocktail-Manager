@@ -230,7 +230,7 @@ export default function WorkspacesPage() {
               </label>
               <div className={'join w-full'}>
                 <input
-                  className={'input join-item input-bordered w-full'}
+                  className={'input join-item w-full'}
                   placeholder={'Beitrittscode'}
                   value={code as string}
                   onChange={(event) => setJoinWorkspaceId(event.target.value)}
@@ -399,7 +399,7 @@ export default function WorkspacesPage() {
                     </label>
                     <div className={'join w-full'}>
                       <input
-                        className={'input join-item input-bordered w-full'}
+                        className={'input join-item w-full'}
                         placeholder={'Name der Workspace'}
                         value={newWorkspaceName}
                         onChange={(event) => setNewWorkspaceName(event.target.value)}
@@ -432,7 +432,7 @@ export default function WorkspacesPage() {
                     </label>
                     <div className={'join w-full'}>
                       <input
-                        className={'input join-item input-bordered w-full'}
+                        className={'input join-item w-full'}
                         placeholder={'Beitrittscode'}
                         value={joinWorkspaceId}
                         onChange={(event) => setJoinWorkspaceId(event.target.value)}

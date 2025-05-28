@@ -192,7 +192,7 @@ function EditCocktailCard() {
         {({ values, setFieldValue, errors, touched, handleChange, handleBlur, handleSubmit, isSubmitting }) => (
           <form onSubmit={handleSubmit}>
             <div className={'flex flex-col space-y-2'}>
-              <div className={'flex flex-col gap-2 rounded-2xl border border-base-300 p-2 md:flex-row'}>
+              <div className={'border-base-300 flex flex-col gap-2 rounded-2xl border p-2 md:flex-row'}>
                 <div className={'form-control'}>
                   <label className={'label'}>
                     <div className={'label-text'}>Karte</div>
@@ -204,7 +204,7 @@ function EditCocktailCard() {
                   <input
                     type="text"
                     disabled={card?.archived}
-                    className={`input input-bordered ${errors.name && touched.name ? 'input-error' : ''}`}
+                    className={`input ${errors.name && touched.name ? 'input-error' : ''}`}
                     name={`name`}
                     onChange={handleChange}
                     onBlur={handleBlur}
@@ -221,7 +221,7 @@ function EditCocktailCard() {
                   <input
                     type={'date'}
                     disabled={card?.archived}
-                    className={`input input-bordered ${errors.date && touched.date ? 'input-error' : ''}}`}
+                    className={`input ${errors.date && touched.date ? 'input-error' : ''}}`}
                     name={`date`}
                     onChange={handleChange}
                     onBlur={handleBlur}
@@ -235,7 +235,7 @@ function EditCocktailCard() {
                     {values?.groups
                       .sort((a, b) => a.groupNumber - b.groupNumber)
                       .map((group, groupIndex) => (
-                        <div key={`card-group-${groupIndex}`} className={'rounded-2xl border border-base-300 p-2'}>
+                        <div key={`card-group-${groupIndex}`} className={'border-base-300 rounded-2xl border p-2'}>
                           <div className={'grid grid-cols-1 items-center gap-2 md:grid-cols-3'}>
                             <div className={'form-control flex-1'}>
                               <label className={'label'}>
@@ -252,7 +252,7 @@ function EditCocktailCard() {
                               <input
                                 type="text"
                                 disabled={card?.archived}
-                                className={`input input-bordered w-full ${
+                                className={`input w-full ${
                                   (errors?.groups?.[groupIndex] as any)?.name && touched?.groups?.[groupIndex]?.name ? 'input-error' : ''
                                 }`}
                                 name={`groups.${groupIndex}.name`}
@@ -278,7 +278,7 @@ function EditCocktailCard() {
                                   disabled={card?.archived}
                                   min={0}
                                   step={0.01}
-                                  className={`input join-item input-bordered w-full ${
+                                  className={`input join-item w-full ${
                                     (errors?.groups?.[groupIndex] as any)?.groupPrice && touched?.groups?.[groupIndex]?.groupPrice ? 'input-error' : ''
                                   }`}
                                   name={`groups.${groupIndex}.groupPrice`}
@@ -351,7 +351,7 @@ function EditCocktailCard() {
                               <></>
                             )}
                           </div>
-                          <div className={'border-b border-base-300 p-1'}></div>
+                          <div className={'border-base-300 border-b p-1'}></div>
                           <div className={'pt-2'}>
                             <FieldArray name={`groups.${groupIndex}.items`}>
                               {({ push: pushItem, remove: removeItem }) => (

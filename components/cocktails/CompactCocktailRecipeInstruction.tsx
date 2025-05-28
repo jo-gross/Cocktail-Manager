@@ -96,13 +96,13 @@ export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeIns
         <div>Glas: {props.cocktailRecipe.glass?.name ?? '<Glas>'}</div>
         <div>Eis: {userContext.getTranslation(props.cocktailRecipe.ice?.name ?? '<Eis>', 'de')}</div>
       </div>
-      <div className={'col-span-4 border-b border-base-100'}></div>
+      <div className={'border-base-100 col-span-4 border-b'}></div>
       <div className={`col-span-4 grid grid-cols-5 gap-1`}>
         <div className={`${props.showImage == true && props.cocktailRecipe._count.CocktailRecipeImage > 0 ? 'col-span-3' : 'col-span-5'}`}>
           {props.cocktailRecipe.steps
             ?.sort((a, b) => a.stepNumber - b.stepNumber)
             ?.map((step, index) => (
-              <div key={`step-${step.id}`} className={'break-words pb-2'}>
+              <div key={`step-${step.id}`} className={'pb-2 break-words'}>
                 <span className={`font-bold ${step.optional && 'italic'}`}>
                   {userContext.getTranslation(step.action.name, 'de')}
                   {step.optional ? ' (optional)' : ''}
@@ -132,7 +132,7 @@ export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeIns
               </div>
             ))}
 
-          {props.cocktailRecipe.garnishes.length == 0 ? <></> : <div className={`mb-1 border-b border-base-100`}></div>}
+          {props.cocktailRecipe.garnishes.length == 0 ? <></> : <div className={`border-base-100 mb-1 border-b`}></div>}
           <div>
             {props.cocktailRecipe.garnishes.length == 0 ? <></> : <div className={'font-bold'}>Garnitur</div>}
             <div>
@@ -159,7 +159,7 @@ export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeIns
                 )
               }
               src={props.image ?? `/api/workspaces/${props.cocktailRecipe.workspaceId}/cocktails/${props.cocktailRecipe.id}/image`}
-              className={'h-full w-full flex-grow cursor-pointer rounded-xl object-cover'}
+              className={'h-full w-full grow cursor-pointer rounded-xl object-cover'}
               alt={''}
               width={300}
               height={534}

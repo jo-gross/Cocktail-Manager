@@ -303,7 +303,7 @@ function WorkspaceSettingPage() {
                 <>
                   <div className={'text-lg font-bold'}>Methoden</div>
                   <div className={'overflow-x-auto'}>
-                    <table className={'grid-col-full table table-zebra w-full table-auto'}>
+                    <table className={'grid-col-full table-zebra table w-full table-auto'}>
                       <thead>
                         <tr>
                           <td>Key</td>
@@ -378,7 +378,7 @@ function WorkspaceSettingPage() {
                   <div>Diese können bei den Methoden erstellt werden, hier kannst du die passende Anzeige einstellen</div>
 
                   <div className={'overflow-x-auto'}>
-                    <table className={'grid-col-full table table-zebra w-full table-auto'}>
+                    <table className={'grid-col-full table-zebra table w-full table-auto'}>
                       <thead>
                         <tr>
                           <td>Key</td>
@@ -433,7 +433,7 @@ function WorkspaceSettingPage() {
                 <>
                   <div className={'text-lg font-bold'}>Einheiten</div>
                   <div className={'overflow-x-auto'}>
-                    <table className={'grid-col-full table table-zebra w-full table-auto'}>
+                    <table className={'grid-col-full table-zebra table w-full table-auto'}>
                       <thead>
                         <tr>
                           <td>Key</td>
@@ -497,7 +497,7 @@ function WorkspaceSettingPage() {
                   <div className={'text-lg font-bold'}>Umrechnungen</div>
                   <div>Hier können die standardmäßigen Umrechnungen der Einheiten angepasst werden.</div>
                   <div className={'overflow-x-auto'}>
-                    <table className={'grid-col-full table table-zebra w-full'}>
+                    <table className={'grid-col-full table-zebra table w-full'}>
                       <thead>
                         <tr>
                           <td>1 Einheit A</td>
@@ -659,7 +659,7 @@ function WorkspaceSettingPage() {
               ) : (
                 <>
                   <div className={'overflow-x-auto'}>
-                    <table className={'grid-col-full table table-zebra w-full table-auto'}>
+                    <table className={'grid-col-full table-zebra table w-full table-auto'}>
                       <thead>
                         <tr>
                           <td>Key</td>
@@ -736,7 +736,7 @@ function WorkspaceSettingPage() {
                   <input
                     type={'file'}
                     disabled={importing}
-                    className={'file-input file-input-bordered'}
+                    className={'file-input'}
                     ref={uploadImportFileRef}
                     onChange={(event) => setUploadImportFile(event.target.files?.[0])}
                   />
@@ -769,7 +769,7 @@ function WorkspaceSettingPage() {
                 <div className={'join'}>
                   <input
                     type={'text'}
-                    className={'input join-item input-bordered w-full'}
+                    className={'input join-item w-full'}
                     value={newWorkspaceName}
                     onChange={(event) => setNewWorkspaceName(event.target.value)}
                   />

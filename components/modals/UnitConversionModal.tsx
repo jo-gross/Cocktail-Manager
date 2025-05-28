@@ -107,7 +107,7 @@ export default function UnitConversionModal(props: UnitConversionModalProps) {
                 <div className={'join'}>
                   <div className={'btn btn-secondary join-item'}>1</div>
                   <select
-                    className={'join-item select select-bordered w-full'}
+                    className={'join-item select w-full'}
                     name={'fromUnitId'}
                     disabled={props.unitConversion != undefined}
                     onChange={async (e) => {
@@ -153,7 +153,7 @@ export default function UnitConversionModal(props: UnitConversionModalProps) {
                   />
                   <select
                     disabled={props.unitConversion != undefined}
-                    className={'join-item select select-bordered w-full'}
+                    className={'join-item select w-full'}
                     name={'toUnitId'}
                     onChange={handleChange}
                     value={values.toUnitId}

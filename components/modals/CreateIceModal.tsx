@@ -78,7 +78,7 @@ export default function CreateIceModal() {
                     <span>*</span>
                   </div>
                 </label>
-                <input id={'identifier'} name={'identifier'} value={values.identifier} onChange={handleChange} className={`input input-bordered`} />
+                <input id={'identifier'} name={'identifier'} value={values.identifier} onChange={handleChange} className={`input`} />
               </div>
               <div className={'form-control'}>
                 <label className={'label'}>
@@ -88,7 +88,7 @@ export default function CreateIceModal() {
                     <span>*</span>
                   </div>
                 </label>
-                <input id={'lableDE'} name={'lableDE'} value={values.lableDE} onChange={handleChange} className={'input input-bordered'} />
+                <input id={'lableDE'} name={'lableDE'} value={values.lableDE} onChange={handleChange} className={'input'} />
               </div>
             </div>
             <div className={'flex justify-end gap-2'}>

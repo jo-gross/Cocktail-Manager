@@ -114,7 +114,7 @@ export default function UnitModal(props: UnitModalProps) {
                   name={'name'}
                   value={values.name}
                   onChange={handleChange}
-                  className={`input input-bordered ${props.unit != undefined ? 'input-disabled' : ''}`}
+                  className={`input ${props.unit != undefined ? 'input-disabled' : ''}`}
                 />
               </div>
               <div className={'form-control'}>
@@ -125,7 +125,7 @@ export default function UnitModal(props: UnitModalProps) {
                     <span>*</span>
                   </div>
                 </label>
-                <input id={'lableDE'} name={'lableDE'} value={values.lableDE} onChange={handleChange} className={'input input-bordered'} />
+                <input id={'lableDE'} name={'lableDE'} value={values.lableDE} onChange={handleChange} className={'input'} />
               </div>
             </div>
             <div className={'flex justify-end gap-2'}>

@@ -76,14 +76,7 @@ export default function AddCocktailRatingModal(props: CocktailRatingModalProps) 
                     <span>{errors.name && touched.name ? errors.name : ''}</span>
                   </div>
                 </label>
-                <input
-                  id={'name'}
-                  name={'name'}
-                  value={values.name}
-                  onChange={handleChange}
-                  className={`input input-bordered`}
-                  placeholder={'z.B. Manuel Neuer'}
-                />
+                <input id={'name'} name={'name'} value={values.name} onChange={handleChange} className={`input`} placeholder={'z.B. Manuel Neuer'} />
               </div>
               <div className={'form-control'}>
                 <label className={'label'}>
@@ -114,7 +107,7 @@ export default function AddCocktailRatingModal(props: CocktailRatingModalProps) 
                   name={'comment'}
                   value={values.comment}
                   onChange={handleChange}
-                  className={'textarea textarea-bordered'}
+                  className={'textarea'}
                   rows={4}
                   placeholder={'Unfassbar geiler Cocktail!'}
                 />

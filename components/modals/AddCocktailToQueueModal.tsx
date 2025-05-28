@@ -26,7 +26,7 @@ export default function AddCocktailToQueueModal({ workspaceId, cocktailId, actio
       </div>
       <div className={'flex'}>
         <div className={'join'}>
-          <label className="input join-item input-bordered flex flex-1 items-center gap-2">
+          <label className="input join-item flex flex-1 items-center gap-2">
             <strong>Anzahl</strong>
             <input
               type="number"
@@ -59,7 +59,7 @@ export default function AddCocktailToQueueModal({ workspaceId, cocktailId, actio
           </button>
         </div>
       </div>
-      <textarea className={'textarea textarea-bordered w-full'} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={'Notiz'}></textarea>
+      <textarea className={'textarea w-full'} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={'Notiz'}></textarea>
       <button
         className={'btn btn-outline btn-primary w-full flex-1'}
         onClick={() =>

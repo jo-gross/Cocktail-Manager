@@ -76,7 +76,7 @@ export default function EditTranslationModal(props: TranslationModalProps) {
                   name={'identifier'}
                   value={props.identifier}
                   onChange={handleChange}
-                  className={`input input-bordered input-disabled`}
+                  className={`input input-disabled`}
                 />
               </div>
               <div className={'form-control'}>
@@ -87,7 +87,7 @@ export default function EditTranslationModal(props: TranslationModalProps) {
                     <span>*</span>
                   </div>
                 </label>
-                <input id={'lableDE'} name={'lableDE'} value={values.lableDE} onChange={handleChange} className={'input input-bordered'} />
+                <input id={'lableDE'} name={'lableDE'} value={values.lableDE} onChange={handleChange} className={'input'} />
               </div>
             </div>
             <div className={'flex justify-end gap-2'}>

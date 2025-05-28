@@ -21,12 +21,7 @@ export default function InputModal(props: InputModalProps) {
       <div className={'text-2xl font-bold'}>{props.title}</div>
       <div>{props.description}</div>
       <div className={'join'}>
-        <input
-          value={inputValue}
-          autoFocus={true}
-          className={'input join-item input-bordered w-full'}
-          onChange={(event) => setInputValue(event.target.value)}
-        />
+        <input value={inputValue} autoFocus={true} className={'input join-item w-full'} onChange={(event) => setInputValue(event.target.value)} />
         <button
           className={'btn btn-primary join-item'}
           disabled={isSubmitting || (!props.allowEmpty && inputValue.trim().length == 0)}

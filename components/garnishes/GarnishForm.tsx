@@ -122,7 +122,7 @@ export function GarnishForm(props: GarnishFormProps) {
             <div className={'form-control flex-1'}>
               <label className={'label'} htmlFor={'name'}>
                 <span className={'label-text'}>Name</span>
-                <span className={'label-text-alt space-x-2 text-error'}>
+                <span className={'label-text-alt text-error space-x-2'}>
                   <span>
                     <>{errors.name && errors.name}</>
                   </span>
@@ -134,7 +134,7 @@ export function GarnishForm(props: GarnishFormProps) {
                 type={'text'}
                 autoComplete={'off'}
                 placeholder={'Name'}
-                className={`input input-bordered ${errors.name && 'input-error'} w-full`}
+                className={`input ${errors.name && 'input-error'} w-full`}
                 onChange={(event) => {
                   if (event.target.value.length > 2) {
                     fetch(`/api/workspaces/${workspaceId}/garnishes/check?name=${event.target.value}`)
@@ -172,7 +172,7 @@ export function GarnishForm(props: GarnishFormProps) {
             <div className={'form-control'}>
               <label className={'label'} htmlFor={'price'}>
                 <span className={'label-text'}>Preis</span>
-                <span className={'label-text-alt space-x-2 text-error'}>
+                <span className={'label-text-alt text-error space-x-2'}>
                   <>{errors.price && errors.price}</>
                 </span>
               </label>
@@ -181,7 +181,7 @@ export function GarnishForm(props: GarnishFormProps) {
                   id={'price'}
                   type={'number'}
                   placeholder={'Preis'}
-                  className={`input join-item input-bordered ${errors.price && 'input-error'} w-full`}
+                  className={`input join-item ${errors.price && 'input-error'} w-full`}
                   value={values.price}
                   onChange={handleChange}
                   onBlur={handleBlur}
@@ -227,7 +227,7 @@ export function GarnishForm(props: GarnishFormProps) {
               </div>
             ) : (
               <div className={'relative'}>
-                <div className={'absolute right-2 top-2 flex flex-row gap-2'}>
+                <div className={'absolute top-2 right-2 flex flex-row gap-2'}>
                   <div
                     className={'btn btn-square btn-outline btn-sm'}
                     onClick={async () => {
@@ -270,7 +270,7 @@ export function GarnishForm(props: GarnishFormProps) {
             <div className={'form-control'}>
               <label className={'label'} htmlFor={'notes'}>
                 <span className={'label-text'}>Notizen</span>
-                <span className={'label-text-alt space-x-2 text-error'}>
+                <span className={'label-text-alt text-error space-x-2'}>
                   <span>
                     <>{errors.notes && errors.notes}</>
                   </span>
@@ -278,7 +278,7 @@ export function GarnishForm(props: GarnishFormProps) {
               </label>
               <textarea
                 id={'notes'}
-                className={`textarea textarea-bordered ${errors.notes && 'textarea-error'} w-full`}
+                className={`textarea ${errors.notes && 'textarea-error'} w-full`}
                 value={values.notes}
                 onChange={handleChange}
                 onBlur={handleBlur}
@@ -291,7 +291,7 @@ export function GarnishForm(props: GarnishFormProps) {
             <div className={'form-control'}>
               <label className={'label'} htmlFor={'description'}>
                 <span className={'label-text'}>Allgemeine Beschreibung</span>
-                <span className={'label-text-alt space-x-2 text-error'}>
+                <span className={'label-text-alt text-error space-x-2'}>
                   <span>
                     <>{errors.description && errors.description}</>
                   </span>
@@ -299,7 +299,7 @@ export function GarnishForm(props: GarnishFormProps) {
               </label>
               <textarea
                 id={'description'}
-                className={`textarea textarea-bordered ${errors.description && 'textarea-error'} w-full`}
+                className={`textarea ${errors.description && 'textarea-error'} w-full`}
                 value={values.description}
                 onChange={handleChange}
                 onBlur={handleBlur}
@@ -316,7 +316,7 @@ export function GarnishForm(props: GarnishFormProps) {
                 </button>
               </div>
               {!isValid && (
-                <div className={'font-thin italic text-error'}>
+                <div className={'text-error font-thin italic'}>
                   Nicht alle Felder sind korrekt ausgefüllt. Kontrolliere daher alle Felder. (Name gesetzt, Bild zugeschnitten, ... ?)
                 </div>
               )}

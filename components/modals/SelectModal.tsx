@@ -42,7 +42,7 @@ export function SelectModal<T>(props: SelectModalProps<T>) {
       <div className={'w-max text-2xl font-bold'}>{props.title}</div>
       <div className={'join pb-2'}>
         <input
-          className={'input join-item input-bordered w-full'}
+          className={'input join-item w-full'}
           value={search}
           autoFocus={true}
           onChange={async (e) => {
@@ -67,7 +67,7 @@ export function SelectModal<T>(props: SelectModalProps<T>) {
           )
         ) : (
           elements.sort(props.compareFunction).map((element, index) => (
-            <div key={'select-modal-' + index} tabIndex={index} className={`rounded-box border border-base-300 bg-base-100`}>
+            <div key={'select-modal-' + index} tabIndex={index} className={`rounded-box border-base-300 bg-base-100 border`}>
               <div className={`md:p-3' flex justify-between p-2 text-xl font-medium`}>
                 {props.elementComponent(element)}
                 <button

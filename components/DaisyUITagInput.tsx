@@ -44,7 +44,6 @@ export function DaisyUITagInput(props: DaisyUITagInputProps) {
   const [menuIsOpen, setMenuIsOpen] = useState(false);
 
   return (
-    // <div className="input-bordered w-full rounded-box border p-2">
     <div className="w-full">
       <CreatableSelect
         isMulti
@@ -69,7 +68,7 @@ export function DaisyUITagInput(props: DaisyUITagInputProps) {
         // Apply DaisyUI classes
         unstyled // Remove all non-essential styles
         classNames={{
-          control: ({ isDisabled, isFocused }) => classNames('select', 'select-bordered'),
+          control: ({ isDisabled, isFocused }) => classNames('select'),
           indicatorsContainer: () => classNames('invisible'),
           menu: () => classNames('dropdown', 'dropdown-open', 'w-full'),
           menuList: () => classNames('dropdown-content', 'w-full', 'bg-base-100', 'rounded-lg'),

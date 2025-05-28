@@ -23,13 +23,7 @@ export default function ImportPhotoByUrlModal({ onImport, hideTitle }: ImportPho
   return (
     <>
       {!(hideTitle == true) && <h2 className={'p-2 text-2xl font-bold'}>Bild über URL laden</h2>}
-      <input
-        type="text"
-        placeholder="Bild-URL eingeben..."
-        className="input input-bordered mb-2 w-full"
-        value={imageUrl}
-        onChange={(e) => setImageUrl(e.target.value)}
-      />
+      <input type="text" placeholder="Bild-URL eingeben..." className="input mb-2 w-full" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} />
       <button
         className="btn btn-secondary w-full"
         type={'button'}

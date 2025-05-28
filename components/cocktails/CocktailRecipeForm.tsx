@@ -479,7 +479,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                       name="name"
                       autoComplete={'off'}
                       id={'name'}
-                      className={`input input-bordered w-full ${errors.name && 'input-error'}`}
+                      className={`input w-full ${errors.name && 'input-error'}`}
                       onChange={(event) => {
                         if (event.target.value.length > 2) {
                           fetch(`/api/workspaces/${workspaceId}/cocktails/check?name=${event.target.value}`)
@@ -522,7 +522,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                     <textarea
                       id={'notes'}
                       name="notes"
-                      className={`textarea textarea-bordered w-full ${errors.notes && 'textarea-error'}`}
+                      className={`textarea w-full ${errors.notes && 'textarea-error'}`}
                       placeholder={'Zubereitungshinweise, Tipps, etc.'}
                       onChange={handleChange}
                       onBlur={handleBlur}
@@ -540,7 +540,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                     <textarea
                       id={'description'}
                       name="description"
-                      className={`textarea textarea-bordered w-full ${errors.description && 'textarea-error'}`}
+                      className={`textarea w-full ${errors.description && 'textarea-error'}`}
                       placeholder={'Was zeichnet diesen Cocktail aus? Wie schmeckt er? Was macht ihn besonders? Was sollte man wissen?'}
                       onChange={handleChange}
                       onBlur={handleBlur}
@@ -558,7 +558,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                     <textarea
                       id={'history'}
                       name="history"
-                      className={`textarea textarea-bordered w-full ${errors.history && 'textarea-error'}`}
+                      className={`textarea w-full ${errors.history && 'textarea-error'}`}
                       placeholder={'Geschichte, Herkunft, etc.'}
                       onChange={handleChange}
                       onBlur={handleBlur}
@@ -577,7 +577,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                       <input
                         id={'price'}
                         type="number"
-                        className={`input join-item input-bordered w-full ${errors.price && 'input-error'}`}
+                        className={`input join-item w-full ${errors.price && 'input-error'}`}
                         name="price"
                         onChange={handleChange}
                         onBlur={handleBlur}
@@ -645,7 +645,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                       <select
                         id={'glassId'}
                         name="glassId"
-                        className={`join-item select select-bordered w-full ${errors.glassId && 'select-error'}`}
+                        className={`join-item select w-full ${errors.glassId && 'select-error'}`}
                         onChange={(event) => {
                           handleChange(event);
                           setFieldValue(
@@ -707,7 +707,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                     <select
                       id={'iceId'}
                       name="iceId"
-                      className={`select select-bordered w-full ${errors.iceId && 'select-error'}`}
+                      className={`select w-full ${errors.iceId && 'select-error'}`}
                       onChange={(event) => {
                         handleChange(event);
                         setFieldValue(
@@ -771,7 +771,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                       </div>
                     ) : (
                       <div className={'relative'}>
-                        <div className={'absolute right-2 top-2 flex flex-row gap-2'}>
+                        <div className={'absolute top-2 right-2 flex flex-row gap-2'}>
                           <div
                             className={'btn btn-square btn-outline btn-sm'}
                             onClick={async () => {
@@ -798,7 +798,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                             <FaTrashAlt />
                           </div>
                         </div>
-                        <div className={'bg-transparent-pattern relative h-32 w-[4.5rem] rounded-lg'}>
+                        <div className={'bg-transparent-pattern relative h-32 w-18 rounded-lg'}>
                           <Image className={'w-fit rounded-lg'} src={values.image} layout={'fill'} objectFit={'contain'} alt={'Cocktail image'} />
                         </div>
                         <div className={'pt-2 font-thin italic'}>
@@ -853,7 +853,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                   {props.cocktailRecipe == undefined ? 'Erstellen' : 'Aktualisieren'}
                 </button>
                 {!isValid && (
-                  <div className={'font-thin italic text-error'}>
+                  <div className={'text-error font-thin italic'}>
                     Nicht alle Felder sind korrekt ausgefüllt. Kontrolliere daher alle Felder. (Name gesetzt, Bild zugeschnitten, ... ?)
                   </div>
                 )}
@@ -984,7 +984,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                       {(values.steps as CocktailRecipeStepFull[]).map((step, indexStep) => (
                         <div
                           key={`form-recipe-step-${indexStep}`}
-                          className={'flex w-full flex-col justify-between space-y-2 rounded-xl border border-neutral p-4'}
+                          className={'border-neutral flex w-full flex-col justify-between space-y-2 rounded-xl border p-4'}
                         >
                           <div className={'grid grid-cols-2 gap-2 md:grid-cols-3 md:gap-4'}>
                             <div className={'flex flex-row items-center gap-2'}>
@@ -1006,7 +1006,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                               <select
                                 name={`steps.${indexStep}.actionId`}
                                 value={values.steps[indexStep].actionId}
-                                className={'select select-bordered select-sm w-full'}
+                                className={'select select-sm w-full'}
                                 onChange={(event) => {
                                   handleChange(event);
                                   setFieldValue(
@@ -1163,7 +1163,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                         <div key={`form-recipe-step${step.id}-ingredient-${ingredient.id}`} className={'join col-span-2 flex w-full flex-row'}>
                                           <input
                                             id={`ingredient-${indexIngredient}-name`}
-                                            className={`input join-item input-bordered w-full cursor-pointer ${
+                                            className={`input join-item w-full cursor-pointer ${
                                               ((errors.steps as StepError[])?.[indexStep] as any)?.ingredients?.[indexIngredient]?.ingredientId && 'input-error'
                                             }`}
                                             value={
@@ -1213,7 +1213,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                           <input
                                             type="number"
                                             name={`steps.${indexStep}.ingredients.${indexIngredient}.amount`}
-                                            className={'input join-item input-bordered w-20 md:w-40'}
+                                            className={'input join-item w-20 md:w-40'}
                                             onChange={handleChange}
                                             onBlur={handleBlur}
                                             value={values.steps[indexStep].ingredients[indexIngredient].amount}
@@ -1221,7 +1221,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                           <div className={'tooltip'}></div>
                                           <select
                                             name={`steps.${indexStep}.ingredients.${indexIngredient}.unitId`}
-                                            className={`join-item select select-bordered w-full ${
+                                            className={`join-item select w-full ${
                                               ((errors.steps as StepError[])?.[indexStep] as any)?.ingredients?.[indexIngredient]?.unit ? 'select-error' : ''
                                             }`}
                                             onChange={async (e) => {
@@ -1340,7 +1340,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                   {({ push: pushGarnish, remove: removeGarnish }) => (
                     <div className={'col-span-2 space-y-2'}>
                       {values.garnishes.map((garnish: CocktailRecipeGarnishFull, indexGarnish: number) => (
-                        <div key={`form-recipe-garnish-${indexGarnish}`} className={'flex flex-row space-x-2 rounded-xl border border-neutral p-4'}>
+                        <div key={`form-recipe-garnish-${indexGarnish}`} className={'border-neutral flex flex-row space-x-2 rounded-xl border p-4'}>
                           <div className={'flex flex-none items-center'}>
                             <div className={'join join-vertical'}>
                               <button
@@ -1383,7 +1383,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                               </button>
                             </div>
                           </div>
-                          <div className={'flex-2 grid w-full grid-cols-1 gap-3 md:grid-cols-2'}>
+                          <div className={'grid w-full flex-2 grid-cols-1 gap-3 md:grid-cols-2'}>
                             <div className={''}>
                               <label className={'label'}>
                                 <span className={'label-text'}>Garnitur</span>
@@ -1394,7 +1394,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                               </label>
                               <div className={'join w-full'}>
                                 <input
-                                  className={`input join-item input-bordered w-full cursor-pointer ${
+                                  className={`input join-item w-full cursor-pointer ${
                                     (errors.garnishes as GarnishError[])?.[indexGarnish]?.garnishId && 'input-error'
                                   }`}
                                   value={garnishesLoading ? 'Lade...' : (values.garnishes[indexGarnish].garnish?.name ?? 'Wähle eine Garnitur aus...')}
@@ -1446,7 +1446,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                 value={values.garnishes[indexGarnish].description}
                                 name={`garnishes.${indexGarnish}.description`}
                                 className={
-                                  'textarea textarea-bordered h-24 w-full'
+                                  'textarea h-24 w-full'
                                   // ${
                                   // errors.garnishDescription  && 'textarea-error'
                                   // }`
@@ -1521,7 +1521,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                 {props.cocktailRecipe == undefined ? 'Erstellen' : 'Aktualisieren'}
               </button>
               {!isValid && (
-                <div className={'font-thin italic text-error'}>
+                <div className={'text-error font-thin italic'}>
                   Nicht alle Felder sind korrekt ausgefüllt. Kontrolliere daher alle Felder. (Name gesetzt, Bild zugeschnitten, ... ?)
                 </div>
               )}

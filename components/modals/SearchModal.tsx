@@ -78,7 +78,7 @@ export function SearchModal(props: SearchModalProps) {
     <div
       key={'search-modal-' + cocktail.id}
       tabIndex={index}
-      className={` ${showRecipe ? `collapse ${openCard ? 'collapse-open' : 'collapse-arrow'}` : ''} rounded-box border border-base-300 bg-base-100`}
+      className={` ${showRecipe ? `collapse ${openCard ? 'collapse-open' : 'collapse-arrow'}` : ''} rounded-box border-base-300 bg-base-100 border`}
     >
       {showRecipe ? <input type="checkbox" /> : <></>}
       <div className={`${showRecipe ? 'collapse-title' : 'p-2 md:p-3'} flex justify-between text-xl font-medium`}>
@@ -101,7 +101,7 @@ export function SearchModal(props: SearchModalProps) {
         )}
       </div>
       {showRecipe && (
-        <div className="collapse-content ml-2 mr-2 md:ml-3">
+        <div className="collapse-content mr-2 ml-2 md:ml-3">
           <CocktailRecipeCardItem
             cocktailRecipe={cocktail}
             showImage={true}
@@ -158,7 +158,7 @@ export function SearchModal(props: SearchModalProps) {
       <div className={'w-max text-2xl font-bold'}>Cocktail suchen</div>
       <div className={'join pb-2'}>
         <input
-          className={'input join-item input-bordered w-full'}
+          className={'input join-item w-full'}
           value={search}
           autoFocus={true}
           onChange={(e) => {
@@ -191,7 +191,7 @@ export function SearchModal(props: SearchModalProps) {
                 .sort((a, b) => a.name.localeCompare(b.name))
                 .map((cocktail, index) => renderCocktailCard(cocktail, index, false, groupedCocktails['false']?.length == 1))}
             {groupedCocktails['true']?.length > 0 && (
-              <div tabIndex={0} className="collapse collapse-arrow bg-base-200">
+              <div tabIndex={0} className="collapse-arrow bg-base-200 collapse">
                 <input type="checkbox" />
                 <div className="collapse-title text-xl font-medium">Archiviert</div>
                 <div className="collapse-content">

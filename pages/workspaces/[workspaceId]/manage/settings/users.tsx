@@ -107,7 +107,7 @@ export default function ManageUsersPage() {
         <div className={'card overflow-y-auto md:col-span-2'}>
           <div className={'card-body'}>
             <div className={'card-title'}>Workspace Nutzer verwalten</div>
-            <table className={'table table-zebra w-full rounded-xl border border-base-200'}>
+            <table className={'table-zebra border-base-200 table w-full rounded-xl border'}>
               <thead>
                 <tr>
                   <th>Name</th>
@@ -138,7 +138,7 @@ export default function ManageUsersPage() {
                             <select
                               disabled={workspaceUser.user.id == userContext.user?.id || workspaceUser.role == Role.OWNER}
                               value={workspaceUser.role}
-                              className={'select select-bordered select-sm w-full min-w-fit max-w-xs'}
+                              className={'select select-sm w-full max-w-xs min-w-fit'}
                               onChange={(event) => {
                                 fetch(`/api/workspaces/${workspaceId}/users/${workspaceUser.userId}`, {
                                   method: 'PUT',
@@ -249,7 +249,7 @@ export default function ManageUsersPage() {
           <div className={'card overflow-y-auto md:col-span-2'}>
             <div className={'card-body'}>
               <div className={'card-title'}>Beitrittsanfragen</div>
-              <table className={'table table-zebra w-full rounded-xl border border-base-200'}>
+              <table className={'table-zebra border-base-200 table w-full rounded-xl border'}>
                 <thead>
                   <tr>
                     <th>Name</th>
@@ -351,7 +351,7 @@ export default function ManageUsersPage() {
           <div className={'card overflow-y-auto md:col-span-2'}>
             <div className={'card-body'}>
               <div className={'card-title'}>Einladungscode</div>
-              <table className={'table table-zebra w-full rounded-xl border border-base-200'}>
+              <table className={'table-zebra border-base-200 table w-full rounded-xl border'}>
                 <thead>
                   <tr>
                     <th>Code</th>

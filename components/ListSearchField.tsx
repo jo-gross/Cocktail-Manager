@@ -10,7 +10,7 @@ export default function ListSearchField(props: ListSearchFieldProps) {
   return (
     <div className={'join w-full self-center'}>
       <input
-        className={'input join-item input-bordered w-full'}
+        className={'input join-item w-full'}
         placeholder={'Suche...'}
         value={filterString}
         onChange={(e) => {

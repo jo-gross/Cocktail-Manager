@@ -67,7 +67,7 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
     <>
       <div className={'md:max-w-5xl'}>
         <div className={'card-body bg-base-100'}>
-          <div className={'w-full pb-4 text-center text-2xl font-bold no-print:hidden'}>{loadedCocktail.name}</div>
+          <div className={'no-print:hidden w-full pb-4 text-center text-2xl font-bold'}>{loadedCocktail.name}</div>
           <div className={'flex flex-row space-x-2 print:hidden'}>
             {modalContext.content.length > 1 && (
               <button className={'btn btn-square btn-outline btn-sm'} onClick={() => modalContext.closeModal()}>
@@ -144,7 +144,7 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
           <div className={'grid grid-cols-1 gap-4 md:grid-cols-2'}>
             {/*Left side*/}
             <div className={'flex flex-col gap-2'}>
-              <div className={'flex flex-row justify-between gap-2 rounded border border-base-300 p-2'}>
+              <div className={'border-base-300 flex flex-row justify-between gap-2 rounded border p-2'}>
                 <div className={'flex flex-1 flex-col gap-2'}>
                   {(loadedCocktail?.tags.length ?? 0) > 0 && (
                     <div className={'gap-2'}>
@@ -195,7 +195,7 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                   {loadedCocktail.steps
                     .sort((a, b) => a.stepNumber - b.stepNumber)
                     .map((step) => (
-                      <div key={`cocktail-details-step-${step.id}`} className={'flex flex-col gap-2 rounded border border-base-300 p-2'}>
+                      <div key={`cocktail-details-step-${step.id}`} className={'border-base-300 flex flex-col gap-2 rounded border p-2'}>
                         <div className={`font-bold ${step.optional ? 'italic' : ''}`}>
                           {userContext.getTranslation(step.action.name, 'de')} {step.optional && '(optional)'}
                         </div>
@@ -243,7 +243,7 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                     .map((garnish) => (
                       <div
                         key={`cocktail-details-garnish-${garnish.garnishNumber}-${garnish.garnish?.id}`}
-                        className={'flex flex-col gap-2 rounded border border-base-300 p-2'}
+                        className={'border-base-300 flex flex-col gap-2 rounded border p-2'}
                       >
                         <div className={'flex flex-row justify-between gap-2'}>
                           <div className={`font-bold ${garnish.optional ? 'italic' : ''}`}>
@@ -321,23 +321,23 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                 />
               </div>
               <div className={'divider-sm'}></div>
-              <details className="collapse collapse-arrow border">
+              <details className="collapse-arrow collapse border">
                 <summary className="collapse-title font-bold">Menge anpassen</summary>
                 <div className="collapse-content">
-                  <div className={'flex flex-col gap-2 pb-2 pl-4 pr-3'}>
+                  <div className={'flex flex-col gap-2 pr-3 pb-2 pl-4'}>
                     <div className={'flex items-end gap-2'}>
                       <div className={'form-control w-full'}>
                         <label className={'label'}>Menge</label>
                         <div className={'join w-full'}>
                           <input
                             inputMode={'numeric'}
-                            className={'input join-item input-bordered w-full'}
+                            className={'input join-item w-full'}
                             step={1}
                             min={1}
                             value={amountAdjustment}
                             onChange={(e) => setAmountAdjustment(toInteger(e.target.value))}
                           />
-                          <span className={'base-content join-item flex w-12 items-center justify-center bg-primary text-primary-content'}>%</span>
+                          <span className={'base-content join-item bg-primary text-primary-content flex w-12 items-center justify-center'}>%</span>
                         </div>
                       </div>
                       <button type={'button'} className={'btn btn-square btn-secondary'} onClick={() => setAmountAdjustment(100)}>
@@ -394,7 +394,7 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                       ) : (
                         <></>
                       )}
-                      <div className={'flex-grow'}></div>
+                      <div className={'grow'}></div>
                       <button
                         type={'button'}
                         className={'btn btn-outline btn-sm print:hidden'}
@@ -414,19 +414,19 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
               {loadedCocktail.notes && (
                 <>
                   <div className={'font-bold'}>Zubereitungsnotizen</div>
-                  <div className={'long-text-format rounded border border-base-300 p-2'}>{loadedCocktail.notes}</div>
+                  <div className={'long-text-format border-base-300 rounded border p-2'}>{loadedCocktail.notes}</div>
                 </>
               )}
               {loadedCocktail.description && (
                 <>
                   <div className={'font-bold'}>Allgemeine Beschreibung</div>
-                  <div className={'long-text-format rounded border border-base-300 p-2 text-justify'}>{loadedCocktail.description}</div>
+                  <div className={'long-text-format border-base-300 rounded border p-2 text-justify'}>{loadedCocktail.description}</div>
                 </>
               )}
               {loadedCocktail.history && (
                 <>
                   <div className={'font-bold'}>Geschichte und Entstehung</div>
-                  <div className={'long-text-format rounded border border-base-300 p-2 text-justify'}>{loadedCocktail.history}</div>
+                  <div className={'long-text-format border-base-300 rounded border p-2 text-justify'}>{loadedCocktail.history}</div>
                 </>
               )}
               {loadedCocktail.steps.map((step) => step.ingredients).flat().length > 0 && (
@@ -439,7 +439,7 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                     .map((ingredient) => (
                       <div
                         key={`cocktail-details-${loadedCocktail.id}-ingredients-${ingredient.id}`}
-                        className={'flex flex-col gap-2 rounded border border-base-300 p-2'}
+                        className={'border-base-300 flex flex-col gap-2 rounded border p-2'}
                       >
                         <div className={'flex flex-row items-center justify-between gap-2'}>
                           <div className={'flex flex-col gap-2'}>
@@ -481,7 +481,7 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                             {ingredient.ingredient?.tags.map((tag) => (
                               <div
                                 key={`cocktail-details-${loadedCocktail.id}-ingredients-${ingredient.id}-tags-${tag}`}
-                                className={'badge badge-primary mr-1 print:badge-outline'}
+                                className={'badge badge-primary print:badge-outline mr-1'}
                               >
                                 {tag}
                               </div>
@@ -499,7 +499,7 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                     .map((garnish) => garnish.garnish)
                     .sort((a, b) => (a.name ?? '').localeCompare(b.name ?? ''))
                     .map((garnish, index) => (
-                      <div key={`cocktail-details-garnish-${index}-${garnish?.id}`} className={'flex flex-col gap-2 rounded border border-base-300 p-2'}>
+                      <div key={`cocktail-details-garnish-${index}-${garnish?.id}`} className={'border-base-300 flex flex-col gap-2 rounded border p-2'}>
                         <div className={'flex flex-row justify-between gap-2'}>
                           <div className={`font-bold`}>{garnish.name}</div>
                           {garnish._count.GarnishImage > 0 && (
@@ -531,7 +531,7 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                 </>
               )}
 
-              <div className={'flex-grow'}></div>
+              <div className={'grow'}></div>
               {userContext.isUserPermitted(Role.MANAGER) && ingredients && (
                 <>
                   <div className={'font-bold'}>Materialkosten</div>
