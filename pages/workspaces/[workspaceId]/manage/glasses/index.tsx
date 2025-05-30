@@ -14,6 +14,7 @@ import AvatarImage from '../../../../../components/AvatarImage';
 import { fetchGlasses } from '@lib/network/glasses';
 import ImageModal from '../../../../../components/modals/ImageModal';
 import { ModalContext } from '@lib/context/ModalContextProvider';
+import '../../../../../lib/NumberUtils';
 
 export default function ManageGlassesOverviewPage() {
   const router = useRouter();
@@ -102,13 +103,7 @@ export default function ManageGlassesOverviewPage() {
                         <td>
                           <div className="font-bold">{glass.name}</div>
                         </td>
-                        <td>
-                          {glass.deposit.toLocaleString(undefined, {
-                            minimumFractionDigits: 0,
-                            maximumFractionDigits: 2,
-                          })}{' '}
-                          €
-                        </td>
+                        <td>{glass.deposit.formatPrice()} €</td>
                         <ManageColumn entity={'glasses'} id={glass.id} name={glass.name} onRefresh={() => fetchGlasses(workspaceId, setGlasses, setLoading)} />
                       </tr>
                     ))

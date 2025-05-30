@@ -21,6 +21,7 @@ import { fetchCocktail } from '@lib/network/cocktails';
 import StatisticActions from '../StatisticActions';
 import { toInteger } from 'lodash';
 import { FaArrowRotateLeft } from 'react-icons/fa6';
+import '../../lib/NumberUtils';
 
 interface CocktailDetailModalProps {
   cocktailId: string;
@@ -80,25 +81,20 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                 <>
                   {' - '}
                   <span className={'font-bold'}>
-                    {loadedCocktail.price.toLocaleString(undefined, {
-                      minimumFractionDigits: 0,
-                      maximumFractionDigits: 2,
-                    }) + ' €'}
+                    {loadedCocktail.price.formatPriceEfficent() + ' €'}
                     {amountAdjustment != 100
                       ? ` ${(loadedCocktail.price * (amountAdjustment / 100) - loadedCocktail.price)
-                          .toLocaleString(undefined, {
-                            signDisplay: 'exceptZero',
-                            minimumFractionDigits: 0,
-                            maximumFractionDigits: 2,
-                          })
+                          // .toLocaleString(undefined, {
+                          //   signDisplay: 'exceptZero',
+                          //   minimumFractionDigits: 0,
+                          //   maximumFractionDigits: 2,
+                          // })
+                          .formatPriceEfficent({ signDisplay: 'exceptZero' })
                           .replace('-', '- ')
                           .replace('+', '+ ')} € = ${(
                           loadedCocktail.price +
                           (loadedCocktail.price * (amountAdjustment / 100) - loadedCocktail.price)
-                        ).toLocaleString(undefined, {
-                          minimumFractionDigits: 0,
-                          maximumFractionDigits: 2,
-                        })} €`
+                        ).formatPriceEfficent()} €`
                       : ''}
                   </span>
                 </>
