@@ -21,6 +21,7 @@ import { fetchCocktail } from '@lib/network/cocktails';
 import StatisticActions from '../StatisticActions';
 import { toInteger } from 'lodash';
 import { FaArrowRotateLeft } from 'react-icons/fa6';
+import '../../lib/NumberUtils';
 
 interface CocktailDetailModalProps {
   cocktailId: string;
@@ -80,25 +81,15 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                 <>
                   {' - '}
                   <span className={'font-bold'}>
-                    {loadedCocktail.price.toLocaleString(undefined, {
-                      minimumFractionDigits: 0,
-                      maximumFractionDigits: 2,
-                    }) + ' €'}
+                    {loadedCocktail.price.formatPriceEfficent() + ' €'}
                     {amountAdjustment != 100
                       ? ` ${(loadedCocktail.price * (amountAdjustment / 100) - loadedCocktail.price)
-                          .toLocaleString(undefined, {
-                            signDisplay: 'exceptZero',
-                            minimumFractionDigits: 0,
-                            maximumFractionDigits: 2,
-                          })
+                          .formatPriceEfficent({ signDisplay: 'exceptZero' })
                           .replace('-', '- ')
                           .replace('+', '+ ')} € = ${(
                           loadedCocktail.price +
                           (loadedCocktail.price * (amountAdjustment / 100) - loadedCocktail.price)
-                        ).toLocaleString(undefined, {
-                          minimumFractionDigits: 0,
-                          maximumFractionDigits: 2,
-                        })} €`
+                        ).formatPriceEfficent()} €`
                       : ''}
                   </span>
                 </>
@@ -283,24 +274,14 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                                 .join('\n')}`;
                             })
                             .join('\n')}\nBasispreis ± angepasste Menge = Verkaufspreis (${amountAdjustment}%):\n${
-                            loadedCocktail.price?.toLocaleString(undefined, {
-                              minimumFractionDigits: 0,
-                              maximumFractionDigits: 2,
-                            }) + ' €'
+                            loadedCocktail.price?.formatPriceEfficent() + ' €'
                           } ${((loadedCocktail.price ?? 0) * (amountAdjustment / 100) - (loadedCocktail.price ?? 0))
-                            .toLocaleString(undefined, {
-                              signDisplay: 'exceptZero',
-                              minimumFractionDigits: 0,
-                              maximumFractionDigits: 2,
-                            })
+                            .formatPriceEfficent({ signDisplay: 'exceptZero' })
                             .replace('-', '- ')
                             .replace('+', '+ ')} € = ${(
                             (loadedCocktail.price ?? 0) +
                             ((loadedCocktail.price ?? 0) * (amountAdjustment / 100) - (loadedCocktail!.price ?? 0))
-                          ).toLocaleString(undefined, {
-                            minimumFractionDigits: 0,
-                            maximumFractionDigits: 2,
-                          })} €`
+                          ).formatPriceEfficent()} €`
                         : undefined,
                   }}
                   cocktailId={loadedCocktail.id}
@@ -536,28 +517,18 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                 <>
                   <div className={'font-bold'}>Materialkosten</div>
                   <div>
-                    {calcCocktailTotalPrice(loadedCocktail, ingredients).toLocaleString(undefined, {
-                      minimumFractionDigits: 0,
-                      maximumFractionDigits: 2,
-                    }) + ' €'}
+                    {calcCocktailTotalPrice(loadedCocktail, ingredients).formatPrice() + ' €'}
                     {amountAdjustment != 100
                       ? ` ${(
                           calcCocktailTotalPrice(loadedCocktail, ingredients) * (amountAdjustment / 100) -
                           calcCocktailTotalPrice(loadedCocktail, ingredients)
                         )
-                          .toLocaleString(undefined, {
-                            signDisplay: 'exceptZero',
-                            minimumFractionDigits: 0,
-                            maximumFractionDigits: 2,
-                          })
+                          .formatPrice({ signDisplay: 'exceptZero' })
                           .replace('-', '- ')
                           .replace('+', '+ ')} € = ${(
                           calcCocktailTotalPrice(loadedCocktail, ingredients) +
                           (calcCocktailTotalPrice(loadedCocktail, ingredients) * (amountAdjustment / 100) - calcCocktailTotalPrice(loadedCocktail, ingredients))
-                        ).toLocaleString(undefined, {
-                          minimumFractionDigits: 0,
-                          maximumFractionDigits: 2,
-                        })} € (${amountAdjustment}%)`
+                        ).formatPrice()} € (${amountAdjustment}%)`
                       : ''}
                   </div>
                 </>

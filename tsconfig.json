@@ -21,10 +21,7 @@
       "@components/*": ["components/*"],
       "@lib/*": ["lib/*"]
     },
-    "typeRoots": [
-      "./node_modules/@types",
-      "./types"
-    ]
+    "typeRoots": ["./node_modules/@types", "./types"]
   },
   "include": ["next-env.d.ts", "types/**/*.ts", "**/*.ts", "**/*.tsx"],
   "exclude": ["node_modules"]

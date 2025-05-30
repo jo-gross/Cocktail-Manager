@@ -36,6 +36,7 @@ import CropComponent from '../CropComponent';
 import { FaCropSimple } from 'react-icons/fa6';
 import DeepDiff from 'deep-diff';
 import { RoutingContext } from '@lib/context/RoutingContextProvider';
+import '../../lib/NumberUtils';
 
 interface CocktailRecipeFormProps {
   cocktailRecipe?: CocktailRecipeFullWithImage;
@@ -893,10 +894,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                           (ingredients
                                             .find((ingredient) => ingredient.id == stepIngredient.ingredientId)
                                             ?.IngredientVolume.find((volumeUnits) => volumeUnits.unitId == stepIngredient.unitId)?.volume ?? 1)
-                                        ).toLocaleString(undefined, {
-                                          minimumFractionDigits: 2,
-                                          maximumFractionDigits: 2,
-                                        })}{' '}
+                                        ).formatPrice()}{' '}
                                         €/{userContext.getTranslation(stepIngredient?.unit?.name ?? '', 'de')}
                                       </div>
                                       <div className={'text-end'}>
@@ -907,10 +905,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                               .find((ingredient) => ingredient.id == stepIngredient.ingredientId)
                                               ?.IngredientVolume.find((volumeUnits) => volumeUnits.unitId == stepIngredient.unitId)?.volume ?? 1)) *
                                           (stepIngredient.amount ?? 0)
-                                        ).toLocaleString(undefined, {
-                                          minimumFractionDigits: 2,
-                                          maximumFractionDigits: 2,
-                                        })}
+                                        ).formatPrice()}
                                         €
                                       </div>
                                     </>
@@ -938,20 +933,10 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                         <>
                           <div key={`price-calculation-step-garnish-name`}>{garnish?.garnish?.name}</div>
                           <div key={`price-calculation-step-garnish-price`} className={'grid grid-cols-2'}>
-                            <div>
-                              1 x{' '}
-                              {(garnish?.garnish?.price ?? 0).toLocaleString(undefined, {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 2,
-                              })}
-                            </div>
+                            <div>1 x {(garnish?.garnish?.price ?? 0).formatPrice()}</div>
                             <div className={'text-end'}>
                               {(values.steps as CocktailRecipeStepFull[]).some((step) => step.ingredients.length > 0) ? '+ ' : ''}
-                              {(garnish?.garnish?.price ?? 0).toLocaleString(undefined, {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 2,
-                              })}
-                              €
+                              {(garnish?.garnish?.price ?? 0).formatPrice()}€
                             </div>
                           </div>
                         </>
@@ -962,12 +947,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                     <div className={'grid grid-cols-3'}>
                       <div></div>
                       <div></div>
-                      <div className={'text-end font-bold'}>
-                        {calcCocktailTotalPrice(values, ingredients).toLocaleString(undefined, {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        }) + ' €'}
-                      </div>
+                      <div className={'text-end font-bold'}>{calcCocktailTotalPrice(values, ingredients).formatPrice() + ' €'}</div>
                     </div>
                   </div>
                 </div>
