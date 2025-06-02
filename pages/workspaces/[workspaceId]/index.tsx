@@ -22,6 +22,7 @@ import _ from 'lodash';
 import { FaArrowTurnDown, FaArrowTurnUp } from 'react-icons/fa6';
 import '../../../lib/ArrayUtils';
 import { CocktailRecipeFull } from '../../../models/CocktailRecipeFull';
+import { CgArrowsExpandUpLeft } from 'react-icons/cg';
 
 export default function OverviewPage() {
   const modalContext = useContext(ModalContext);
@@ -262,6 +263,21 @@ export default function OverviewPage() {
   const [showQueueOptions, setShowQueueOptions] = useState(false);
   const [showLayoutOptions, setShowLayoutOptions] = useState(false);
 
+  const [isMenuExpanded, setIsMenuExpanded] = useState(false);
+  /* ───── Click‑Outside Detection ───── */
+  useEffect(() => {
+    if (!isMenuExpanded) return;
+
+    function handleOutside(e: MouseEvent) {
+      if (actionButtonRef.current && !actionButtonRef.current.contains(e.target as Node)) {
+        setIsMenuExpanded(false);
+      }
+    }
+
+    document.addEventListener('mousedown', handleOutside);
+    return () => document.removeEventListener('mousedown', handleOutside);
+  }, [isMenuExpanded]);
+
   const checkDropdownScroll = useCallback(() => {
     const handleScroll = () => {
       if (dropdownContentRef.current) {
@@ -315,11 +331,11 @@ export default function OverviewPage() {
         setMaxDropdownHeight(maxHeight);
       }
     }
-  }, [windowHeight, showSettingsAtBottom]);
+  }, [windowHeight, showSettingsAtBottom, isMenuExpanded]);
 
   useEffect(() => {
     calcMaxDropdownHeight();
-  }, [calcMaxDropdownHeight, showSettingsAtBottom, showTime, selectedCard]);
+  }, [calcMaxDropdownHeight, showSettingsAtBottom, showTime, selectedCard, isMenuExpanded]);
 
   const timeComponent = (
     <div className={'w-full text-center'}>
@@ -540,122 +556,119 @@ export default function OverviewPage() {
         <title>The Cocktail-Manager • {selectedCard?.name ?? 'Cocktailkarte'}</title>
       </Head>
 
-      <div className={'static h-screen'}>
+      <div className={'static min-h-screen'}>
         {showTime ? <div className={'pt-2'}>{timeComponent}</div> : <></>}
 
         <div
           className={`grid grid-cols-1 gap-2 p-2 ${showQueueAsOverlay ? '' : showStatisticActions && cocktailQueue.length > 0 ? 'lg:grid-cols-8 xl:grid-cols-6' : ''} print:grid-cols-5 print:overflow-clip print:p-0`}
         >
           {showStatisticActions && cocktailQueue.length > 0 ? (
-            <div
-              className={
+            <aside
+              className={`${
                 showQueueAsOverlay
-                  ? `sticky right-0 z-10 col-span-5 flex w-full justify-end print:hidden ${process.env.NODE_ENV == 'development' || process.env.DEPLOYMENT == 'staging' ? 'md:top-12' : 'md:top-2'}`
-                  : 'order-first col-span-5 w-full lg:order-last lg:col-span-2 xl:col-span-1 print:hidden'
-              }
+                  ? `sticky right-0 z-10 col-span-5 flex w-full justify-end bg-opacity-75 lg:max-w-60`
+                  : `sticky order-first col-span-5 h-fit ${process.env.DEPLOYMENT == 'production' ? 'max-h-screen' : 'max-h-[calc(100vh-12rem)]'} w-full lg:order-last lg:col-span-2 xl:col-span-1`
+              } flex w-full flex-col rounded-xl bg-base-300 p-2 print:hidden ${process.env.NODE_ENV == 'development' || process.env.DEPLOYMENT == 'staging' ? 'md:top-12' : 'md:top-2'}`}
             >
-              <div className={`${showQueueAsOverlay ? 'bg-opacity-75 lg:max-w-60' : ''} flex w-full flex-col rounded-xl bg-base-300 p-2 print:hidden`}>
-                <div className="flex w-full flex-row flex-wrap items-center justify-center overflow-hidden border-b border-base-content pb-1 text-center">
-                  <span className="truncate">Wird gemacht</span>
-                  <span className="ml-1">(A-Z)</span>
-                </div>
+              <div className="flex w-full flex-row flex-wrap items-center justify-center border-b border-base-content pb-1 text-center">
+                <span className="truncate">Wird gemacht</span>
+                <span className="ml-1">(A-Z)</span>
+              </div>
 
-                {/*<div className={'divider'}></div>*/}
-                <div className={'flex flex-col divide-y'}>
-                  {(queueGrouping == 'ALPHABETIC' || true
-                    ? _(cocktailQueue)
-                        .filter((item) => item.inProgress)
-                        .groupBy((item) => `${item.cocktailId}||${item.notes}`) // Gruppierung basierend auf cocktailId und notes
-                        .map((items, key) => {
-                          const [cocktailId, notes] = key.split('||'); // Extrahiere cocktailId und notes aus dem Key
-                          return {
-                            queueItemId: items[0].queueItemId,
-                            cocktailId: cocktailId,
-                            notes: notes === 'null' || notes === '' ? undefined : notes,
-                            cocktailName: items[0].cocktailName,
-                            count: items.length,
-                            oldestTimestamp: _.minBy(items, 'timestamp')!.timestamp, // Finde den ältesten Timestamp
-                            inProgress: true,
-                            total: undefined,
-                          };
-                        })
-                        .sortBy(['cocktailName', (item) => -(item.notes ?? '')]) // Sortiere nach cocktailName (asc) und notes (desc)
-                    : _(cocktailQueue)
-                        .filter((item) => item.inProgress)
-                        .sortBy('timestamp') // Sortiere nach timestamp (desc)
-                        .map((item, key) => {
-                          return {
+              {/*<div className={'divider'}></div>*/}
+              <div className={'max-h-1/3 flex flex-col divide-y overflow-y-auto'}>
+                {(queueGrouping == 'ALPHABETIC' || true
+                  ? _(cocktailQueue)
+                      .filter((item) => item.inProgress)
+                      .groupBy((item) => `${item.cocktailId}||${item.notes}`) // Gruppierung basierend auf cocktailId und notes
+                      .map((items, key) => {
+                        const [cocktailId, notes] = key.split('||'); // Extrahiere cocktailId und notes aus dem Key
+                        return {
+                          queueItemId: items[0].queueItemId,
+                          cocktailId: cocktailId,
+                          notes: notes === 'null' || notes === '' ? undefined : notes,
+                          cocktailName: items[0].cocktailName,
+                          count: items.length,
+                          oldestTimestamp: _.minBy(items, 'timestamp')!.timestamp, // Finde den ältesten Timestamp
+                          inProgress: true,
+                          total: undefined,
+                        };
+                      })
+                      .sortBy(['cocktailName', (item) => -(item.notes ?? '')]) // Sortiere nach cocktailName (asc) und notes (desc)
+                  : _(cocktailQueue)
+                      .filter((item) => item.inProgress)
+                      .sortBy('timestamp') // Sortiere nach timestamp (desc)
+                      .map((item, key) => {
+                        return {
+                          queueItemId: item.queueItemId,
+                          cocktailId: item.cocktailId,
+                          notes: item.notes,
+                          cocktailName: item.cocktailName,
+                          count: 1,
+                          oldestTimestamp: item.timestamp,
+                          inProgress: true,
+                          total: cocktailQueue.filter((i) => i.cocktailId == item.cocktailId && i.notes == item.notes).length,
+                        };
+                      })
+                )
+                  .value()
+                  .mapWithFallback(
+                    (cocktailQueueItem, index) => renderCocktailQueueItem(cocktailQueueItem, index),
+                    <div className={'w-full text-center font-thin italic'}>Keine Einträge</div>,
+                  )}
+              </div>
+              <div className={'h-5'}></div>
+              <div className="flex w-full flex-row flex-wrap items-center justify-center border-b border-base-content pb-1 text-center">
+                <span className="truncate">Warteschlange</span>
+                <span className="ml-1">({queueGrouping == 'ALPHABETIC' ? 'A-Z' : 'Uhr'})</span>
+              </div>
+              <div className={'flex flex-col divide-y overflow-y-auto'}>
+                {(queueGrouping == 'ALPHABETIC'
+                  ? _(cocktailQueue)
+                      .filter((item) => !item.inProgress)
+                      .groupBy((item) => `${item.cocktailId}||${item.notes || ''}`) // Gruppierung basierend auf cocktailId und notes
+                      .map<GroupedItem>((items, key) => {
+                        const [cocktailId, notes] = key.split('||'); // Extrahiere cocktailId und notes aus dem Key
+                        return {
+                          queueItemId: items[0].queueItemId,
+                          cocktailId: cocktailId,
+                          notes: notes === 'null' || notes === '' ? undefined : notes,
+                          cocktailName: items[0].cocktailName,
+                          count: items.length,
+                          oldestTimestamp: _.minBy(items, 'timestamp')!.timestamp, // Finde den ältesten Timestamp
+                          inProgress: false,
+                          total: undefined,
+                        };
+                      })
+                      .sortBy(['cocktailName', (item) => -(item.notes ?? '')])
+                      .value()
+                  : _(cocktailQueue)
+                      .filter((item) => !item.inProgress)
+                      .sortBy('timestamp') // Sortiere nach timestamp (desc)
+                      .reduce<GroupedItem[]>((acc, item) => {
+                        if (acc.length > 0 && acc[acc.length - 1].cocktailId === item.cocktailId && acc[acc.length - 1].notes === item.notes) {
+                          acc[acc.length - 1].count += 1; // Erhöhe die Anzahl für zusammenhängende gleiche Einträge
+                        } else {
+                          acc.push({
                             queueItemId: item.queueItemId,
                             cocktailId: item.cocktailId,
                             notes: item.notes,
                             cocktailName: item.cocktailName,
                             count: 1,
                             oldestTimestamp: item.timestamp,
-                            inProgress: true,
                             total: cocktailQueue.filter((i) => i.cocktailId == item.cocktailId && i.notes == item.notes).length,
-                          };
-                        })
-                  )
-                    .value()
-                    .mapWithFallback(
-                      (cocktailQueueItem, index) => renderCocktailQueueItem(cocktailQueueItem, index),
-                      <div>Es werden gerade keine Cocktails gemacht</div>,
-                    )}
-                </div>
-                {/*<div className={'divider'}>Warteschl. ({queueGrouping == 'ALPHABETIC' ? 'A-Z' : 'Uhr'})</div>*/}
-                <div className={'h-5'}></div>
-                <div className="flex w-full flex-row flex-wrap items-center justify-center overflow-hidden border-b border-base-content pb-1 text-center">
-                  <span className="truncate">Warteschlange</span>
-                  <span className="ml-1">({queueGrouping == 'ALPHABETIC' ? 'A-Z' : 'Uhr'})</span>
-                </div>
-                <div className={'flex flex-col divide-y'}>
-                  {(queueGrouping == 'ALPHABETIC'
-                    ? _(cocktailQueue)
-                        .filter((item) => !item.inProgress)
-                        .groupBy((item) => `${item.cocktailId}||${item.notes || ''}`) // Gruppierung basierend auf cocktailId und notes
-                        .map<GroupedItem>((items, key) => {
-                          const [cocktailId, notes] = key.split('||'); // Extrahiere cocktailId und notes aus dem Key
-                          return {
-                            queueItemId: items[0].queueItemId,
-                            cocktailId: cocktailId,
-                            notes: notes === 'null' || notes === '' ? undefined : notes,
-                            cocktailName: items[0].cocktailName,
-                            count: items.length,
-                            oldestTimestamp: _.minBy(items, 'timestamp')!.timestamp, // Finde den ältesten Timestamp
-                            inProgress: false,
-                            total: undefined,
-                          };
-                        })
-                        .sortBy(['cocktailName', (item) => -(item.notes ?? '')])
-                        .value()
-                    : _(cocktailQueue)
-                        .filter((item) => !item.inProgress)
-                        .sortBy('timestamp') // Sortiere nach timestamp (desc)
-                        .reduce<GroupedItem[]>((acc, item) => {
-                          if (acc.length > 0 && acc[acc.length - 1].cocktailId === item.cocktailId && acc[acc.length - 1].notes === item.notes) {
-                            acc[acc.length - 1].count += 1; // Erhöhe die Anzahl für zusammenhängende gleiche Einträge
-                          } else {
-                            acc.push({
-                              queueItemId: item.queueItemId,
-                              cocktailId: item.cocktailId,
-                              notes: item.notes,
-                              cocktailName: item.cocktailName,
-                              count: 1,
-                              oldestTimestamp: item.timestamp,
-                              total: cocktailQueue.filter((i) => i.cocktailId == item.cocktailId && i.notes == item.notes).length,
-                            });
-                          }
-                          return acc;
-                        }, [])
-                  ).mapWithFallback((cocktailQueueItem, index) => renderCocktailQueueItem(cocktailQueueItem, index), <div>Warteschlange ist leer</div>)}
-                </div>
+                          });
+                        }
+                        return acc;
+                      }, [])
+                ).mapWithFallback((cocktailQueueItem, index) => renderCocktailQueueItem(cocktailQueueItem, index), <div>Warteschlange ist leer</div>)}
               </div>
-            </div>
+            </aside>
           ) : (
             <></>
           )}
 
-          <div className={`order-1 col-span-5 flex w-full flex-col space-y-2 overflow-y-auto rounded-xl lg:col-span-6 xl:col-span-5`}>
+          <main className={`order-1 col-span-5 flex w-full flex-col space-y-2 overflow-y-auto rounded-xl lg:col-span-6 xl:col-span-5`}>
             {selectedCardId == 'search' || selectedCardId == undefined ? (
               <SearchPage
                 showImage={showImage}
@@ -732,374 +745,388 @@ export default function OverviewPage() {
                   </div>
                 ))
             )}
-          </div>
+          </main>
         </div>
 
         {showTime ? <div className={'pb-2'}>{timeComponent}</div> : <></>}
 
-        <div
-          ref={actionButtonRef}
-          className={
-            'bottom-2 right-2 z-10 flex space-y-2 md:bottom-5 md:right-5 print:hidden' + (showSettingsAtBottom ? ' mx-2 justify-end' : ' fixed flex-col')
-          }
-        >
-          <div className={'dropdown dropdown-end dropdown-top pt-2' + (showSettingsAtBottom ? ' mr-1' : '')}>
-            <label tabIndex={0} className={'btn btn-square btn-primary rounded-xl md:btn-lg'}>
-              <FaEye />
-            </label>
-            <div
-              tabIndex={0}
-              className={`dropdown-content h-min w-64 rounded-box bg-base-100 p-2 shadow`}
-              style={{
-                maxHeight: maxDropdownHeight + 'px',
+        {!isMenuExpanded && !showSettingsAtBottom ? (
+          <div className={'fixed bottom-2 right-2'}>
+            <button
+              type={'button'}
+              className={'btn btn-square btn-primary btn-sm'}
+              onClick={async () => {
+                setIsMenuExpanded(true);
               }}
             >
+              <CgArrowsExpandUpLeft />
+            </button>
+          </div>
+        ) : (
+          <div
+            ref={actionButtonRef}
+            className={
+              'bottom-2 right-2 z-10 flex space-y-2 md:bottom-5 md:right-5 print:hidden' + (showSettingsAtBottom ? ' mx-2 justify-end' : ' fixed flex-col')
+            }
+          >
+            <div className={'dropdown dropdown-end dropdown-top pt-2' + (showSettingsAtBottom ? ' mr-1' : '')}>
+              <label tabIndex={0} className={'btn btn-square btn-primary rounded-xl md:btn-lg'}>
+                <FaEye />
+              </label>
               <div
-                ref={dropdownContentRef}
-                className={'overflow-y-auto'}
+                tabIndex={0}
+                className={`dropdown-content h-min w-64 rounded-box bg-base-100 p-2 shadow`}
                 style={{
-                  maxHeight: maxDropdownHeight - 16 + 'px',
+                  maxHeight: maxDropdownHeight + 'px',
                 }}
               >
-                <div className={'flex flex-col space-x-2'}>
-                  <label className="label">
-                    <div className={'label-text font-bold'}>Cocktailsuche</div>
-                    <input
-                      name={'card-radio'}
-                      type={'radio'}
-                      className={'radio'}
-                      value={'search'}
-                      checked={selectedCardId == 'search' || selectedCardId == undefined}
-                      readOnly={true}
-                      onClick={() => {
-                        setSelectedCardId('search');
-                        router
-                          .replace({
-                            pathname: '/workspaces/[workspaceId]',
-                            query: { card: 'search', workspaceId: workspaceId },
-                          })
-                          .then();
-                      }}
-                    />
-                  </label>
-                  <div className={'divider'}>Karte(n)</div>
-                  {loadingCards ? (
-                    <Loading />
-                  ) : cocktailCards.length == 0 ? (
-                    <div className={'flex items-center justify-between'}>
-                      <div>Keine Karten vorhanden</div>
-                      <Link href={`/workspaces/${workspaceId}/manage/cards/create`} className={'btn btn-square btn-outline btn-sm'}>
-                        <FaPlus />
-                      </Link>
-                    </div>
-                  ) : (
-                    cocktailCards.sort(sortCards).map((card) => (
-                      <div key={'card-' + card.id} className="form-control">
-                        <label className="label">
-                          <div className={'label-text font-bold'}>
-                            {card.name}
-                            {card.date != undefined ? (
-                              <span>
-                                {' '}
-                                - (
-                                {new Date().toISOString().split('T')[0] == new Date(card.date).toISOString().split('T')[0]
-                                  ? 'Heute'
-                                  : new Date(card.date).toLocaleDateString('de')}
-                                )
-                              </span>
-                            ) : (
-                              ''
-                            )}
-                          </div>
-                          <input
-                            name={'card-radio'}
-                            type={'radio'}
-                            className={'radio'}
-                            value={card.id}
-                            checked={router.query.card != 'search' && selectedCard?.id == card.id}
-                            readOnly={true}
-                            onClick={() => {
-                              setSelectedCardId(card.id);
-                              router
-                                .replace({
-                                  pathname: '/workspaces/[workspaceId]',
-                                  query: { card: card.id, workspaceId: workspaceId },
-                                })
-                                .then();
-                            }}
-                          />
-                        </label>
+                <div
+                  ref={dropdownContentRef}
+                  className={'overflow-y-auto'}
+                  style={{
+                    maxHeight: maxDropdownHeight - 16 + 'px',
+                  }}
+                >
+                  <div className={'flex flex-col space-x-2'}>
+                    <label className="label">
+                      <div className={'label-text font-bold'}>Cocktailsuche</div>
+                      <input
+                        name={'card-radio'}
+                        type={'radio'}
+                        className={'radio'}
+                        value={'search'}
+                        checked={selectedCardId == 'search' || selectedCardId == undefined}
+                        readOnly={true}
+                        onClick={() => {
+                          setSelectedCardId('search');
+                          router
+                            .replace({
+                              pathname: '/workspaces/[workspaceId]',
+                              query: { card: 'search', workspaceId: workspaceId },
+                            })
+                            .then();
+                        }}
+                      />
+                    </label>
+                    <div className={'divider'}>Karte(n)</div>
+                    {loadingCards ? (
+                      <Loading />
+                    ) : cocktailCards.length == 0 ? (
+                      <div className={'flex items-center justify-between'}>
+                        <div>Keine Karten vorhanden</div>
+                        <Link href={`/workspaces/${workspaceId}/manage/cards/create`} className={'btn btn-square btn-outline btn-sm'}>
+                          <FaPlus />
+                        </Link>
                       </div>
-                    ))
-                  )}
-
-                  <div className={'divider'}>Darstellung</div>
-                  <div className={`flex flex-col gap-2`}>
-                    <div className={'flex cursor-pointer flex-row items-center justify-between'} onClick={() => setShowRecipeOptions(!showRecipeOptions)}>
-                      <div className={'font-bold'}>Rezeptbereich</div>
-                      <div>{showRecipeOptions ? <FaAngleUp /> : <FaAngleDown />}</div>
-                    </div>
-                    <div className={`flex flex-col gap-2 ${showRecipeOptions ? '' : 'hidden'}`}>
-                      <div className="form-control">
-                        <label className="label">
-                          Bilder anzeigen
-                          <input
-                            type={'checkbox'}
-                            className={'toggle toggle-primary'}
-                            checked={showImage}
-                            readOnly={true}
-                            onClick={() => {
-                              userContext.updateUserSetting(Setting.showImage, !showImage ? 'true' : 'false');
-                            }}
-                          />
-                        </label>
-                      </div>
-                      <div className="form-control">
-                        <label className="label">
-                          Tags anzeigen
-                          <input
-                            type={'checkbox'}
-                            className={'toggle toggle-primary'}
-                            checked={showTags}
-                            readOnly={true}
-                            onClick={() => {
-                              userContext.updateUserSetting(Setting.showTags, !showTags ? 'true' : 'false');
-                            }}
-                          />
-                        </label>
-                      </div>
-                      <div className="form-control">
-                        <label className="label">
-                          Beschreibung anzeigen
-                          <input
-                            type={'checkbox'}
-                            className={'toggle toggle-primary'}
-                            checked={showDescription}
-                            readOnly={true}
-                            onClick={() => {
-                              userContext.updateUserSetting(Setting.showDescription, !showDescription ? 'true' : 'false');
-                            }}
-                          />
-                        </label>
-                      </div>
-                      <div className="form-control">
-                        <label className="label">
-                          Notizen anzeigen
-                          <input
-                            type={'checkbox'}
-                            className={'toggle toggle-primary'}
-                            checked={showNotes}
-                            readOnly={true}
-                            onClick={() => {
-                              userContext.updateUserSetting(Setting.showNotes, !showNotes ? 'true' : 'false');
-                            }}
-                          />
-                        </label>
-                      </div>
-                      <div className="form-control">
-                        <label className="label">
-                          Geschichte und Entstehung anzeigen
-                          <input
-                            type={'checkbox'}
-                            className={'toggle toggle-primary'}
-                            checked={showHistory}
-                            readOnly={true}
-                            onClick={() => {
-                              userContext.updateUserSetting(Setting.showHistory, !showHistory ? 'true' : 'false');
-                            }}
-                          />
-                        </label>
-                      </div>
-                      <div className="form-control">
-                        <label className="label">
-                          Bewertung anzeigen
-                          <input
-                            type={'checkbox'}
-                            className={'toggle toggle-primary'}
-                            checked={showRating}
-                            readOnly={true}
-                            onClick={() => {
-                              userContext.updateUserSetting(Setting.showRating, !showRating ? 'true' : 'false');
-                            }}
-                          />
-                        </label>
-                      </div>
-                      <div className="form-control">
-                        <label className="label">
-                          Tracking aktivieren
-                          <input
-                            type={'checkbox'}
-                            className={'toggle toggle-primary'}
-                            checked={showStatisticActions}
-                            readOnly={true}
-                            onClick={() => {
-                              userContext.updateUserSetting(Setting.showStatisticActions, !showStatisticActions ? 'true' : 'false');
-                            }}
-                          />
-                        </label>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className={'divider'}></div>
-
-                  <div className={`flex flex-col gap-2`}>
-                    <div className={'flex cursor-pointer flex-row items-center justify-between'} onClick={() => setShowQueueOptions(!showQueueOptions)}>
-                      <div className={'font-bold'}>Warteschlange</div>
-                      <div>{showQueueOptions ? <FaAngleUp /> : <FaAngleDown />}</div>
-                    </div>
-                    <div className={`flex flex-col gap-2 ${showQueueOptions ? '' : 'hidden'}`}>
-                      <div className="form-control">
-                        <div className={''}>Gruppierung</div>
-                        <div key={'grouping-alphabetic'} className="form-control">
+                    ) : (
+                      cocktailCards.sort(sortCards).map((card) => (
+                        <div key={'card-' + card.id} className="form-control">
                           <label className="label">
-                            <div className={'label-text'}>Cocktailname (A-Z)</div>
+                            <div className={'label-text font-bold'}>
+                              {card.name}
+                              {card.date != undefined ? (
+                                <span>
+                                  {' '}
+                                  - (
+                                  {new Date().toISOString().split('T')[0] == new Date(card.date).toISOString().split('T')[0]
+                                    ? 'Heute'
+                                    : new Date(card.date).toLocaleDateString('de')}
+                                  )
+                                </span>
+                              ) : (
+                                ''
+                              )}
+                            </div>
                             <input
-                              name={'queue-radio'}
+                              name={'card-radio'}
                               type={'radio'}
                               className={'radio'}
-                              value={'ALPHABETIC'}
-                              checked={queueGrouping == 'ALPHABETIC'}
+                              value={card.id}
+                              checked={router.query.card != 'search' && selectedCard?.id == card.id}
                               readOnly={true}
                               onClick={() => {
-                                setQueueGrouping('ALPHABETIC');
-                                userContext.updateUserSetting(Setting.queueGrouping, 'ALPHABETIC');
-                              }}
-                            />
-                          </label>
-                          <label className="label">
-                            <div className={'label-text'}>Keine (Chronologisch)</div>
-                            <input
-                              name={'queue-radio'}
-                              type={'radio'}
-                              className={'radio'}
-                              value={'NONE'}
-                              checked={queueGrouping == 'NONE' || queueGrouping == undefined}
-                              readOnly={true}
-                              onClick={() => {
-                                setQueueGrouping('NONE');
-                                userContext.updateUserSetting(Setting.queueGrouping, 'NONE');
+                                setSelectedCardId(card.id);
+                                router
+                                  .replace({
+                                    pathname: '/workspaces/[workspaceId]',
+                                    query: { card: card.id, workspaceId: workspaceId },
+                                  })
+                                  .then();
                               }}
                             />
                           </label>
                         </div>
-                      </div>
-                      <div className="form-control">
-                        <label className="label">
-                          Schnelles abhaken anzeigen
-                          <input
-                            type={'checkbox'}
-                            className={'toggle toggle-primary'}
-                            checked={showFastQueueCheck}
-                            readOnly={true}
-                            onClick={() => {
-                              userContext.updateUserSetting(Setting.showFastQueueCheck, !showFastQueueCheck ? 'true' : 'false');
-                            }}
-                          />
-                        </label>
-                      </div>
-                    </div>
-                  </div>
+                      ))
+                    )}
 
-                  <div className={'divider'}></div>
-                  <div className={`flex flex-col gap-2`}>
-                    <div className={'flex cursor-pointer flex-row items-center justify-between'} onClick={() => setShowLayoutOptions(!showLayoutOptions)}>
-                      <div className={'font-bold'}>Layout</div>
-                      <div>{showLayoutOptions ? <FaAngleUp /> : <FaAngleDown />}</div>
-                    </div>
-                    <div className={`flex flex-col gap-2 ${showLayoutOptions ? '' : 'hidden'}`}>
-                      <div className="form-control">
-                        <label className="label">
-                          Uhrzeit anzeigen
-                          <input
-                            type={'checkbox'}
-                            className={'toggle toggle-primary'}
-                            checked={showTime}
-                            readOnly={true}
-                            onClick={() => {
-                              userContext.updateUserSetting(Setting.showTime, !showTime ? 'true' : 'false');
-                            }}
-                          />
-                        </label>
+                    <div className={'divider'}>Darstellung</div>
+                    <div className={`flex flex-col gap-2`}>
+                      <div className={'flex cursor-pointer flex-row items-center justify-between'} onClick={() => setShowRecipeOptions(!showRecipeOptions)}>
+                        <div className={'font-bold'}>Rezeptbereich</div>
+                        <div>{showRecipeOptions ? <FaAngleUp /> : <FaAngleDown />}</div>
                       </div>
-                      {router.query.card !== 'search' && (
+                      <div className={`flex flex-col gap-2 ${showRecipeOptions ? '' : 'hidden'}`}>
                         <div className="form-control">
                           <label className="label">
-                            Weniger Spalten
+                            Bilder anzeigen
                             <input
                               type={'checkbox'}
                               className={'toggle toggle-primary'}
-                              checked={lessItems}
+                              checked={showImage}
                               readOnly={true}
                               onClick={() => {
-                                userContext.updateUserSetting(Setting.lessItems, !lessItems ? 'true' : 'false');
+                                userContext.updateUserSetting(Setting.showImage, !showImage ? 'true' : 'false');
                               }}
                             />
                           </label>
                         </div>
-                      )}
-                      <div className="form-control">
-                        <label className="label">
-                          Warteschlange als Overlay
-                          <input
-                            type={'checkbox'}
-                            className={'toggle toggle-primary'}
-                            checked={showQueueAsOverlay}
-                            readOnly={true}
-                            onClick={() => {
-                              userContext.updateUserSetting(Setting.showQueueAsOverlay, !showQueueAsOverlay ? 'true' : 'false');
-                            }}
-                          />
-                        </label>
-                      </div>
-                      <div className="form-control">
-                        <label className="label">
-                          Einstellungen am Ende
-                          <input
-                            type={'checkbox'}
-                            className={'toggle toggle-primary'}
-                            checked={showSettingsAtBottom}
-                            readOnly={true}
-                            onClick={() => {
-                              userContext.updateUserSetting(Setting.showSettingsAtBottom, !showSettingsAtBottom ? 'true' : 'false');
-                            }}
-                          />
-                        </label>
+                        <div className="form-control">
+                          <label className="label">
+                            Tags anzeigen
+                            <input
+                              type={'checkbox'}
+                              className={'toggle toggle-primary'}
+                              checked={showTags}
+                              readOnly={true}
+                              onClick={() => {
+                                userContext.updateUserSetting(Setting.showTags, !showTags ? 'true' : 'false');
+                              }}
+                            />
+                          </label>
+                        </div>
+                        <div className="form-control">
+                          <label className="label">
+                            Beschreibung anzeigen
+                            <input
+                              type={'checkbox'}
+                              className={'toggle toggle-primary'}
+                              checked={showDescription}
+                              readOnly={true}
+                              onClick={() => {
+                                userContext.updateUserSetting(Setting.showDescription, !showDescription ? 'true' : 'false');
+                              }}
+                            />
+                          </label>
+                        </div>
+                        <div className="form-control">
+                          <label className="label">
+                            Notizen anzeigen
+                            <input
+                              type={'checkbox'}
+                              className={'toggle toggle-primary'}
+                              checked={showNotes}
+                              readOnly={true}
+                              onClick={() => {
+                                userContext.updateUserSetting(Setting.showNotes, !showNotes ? 'true' : 'false');
+                              }}
+                            />
+                          </label>
+                        </div>
+                        <div className="form-control">
+                          <label className="label">
+                            Geschichte und Entstehung anzeigen
+                            <input
+                              type={'checkbox'}
+                              className={'toggle toggle-primary'}
+                              checked={showHistory}
+                              readOnly={true}
+                              onClick={() => {
+                                userContext.updateUserSetting(Setting.showHistory, !showHistory ? 'true' : 'false');
+                              }}
+                            />
+                          </label>
+                        </div>
+                        <div className="form-control">
+                          <label className="label">
+                            Bewertung anzeigen
+                            <input
+                              type={'checkbox'}
+                              className={'toggle toggle-primary'}
+                              checked={showRating}
+                              readOnly={true}
+                              onClick={() => {
+                                userContext.updateUserSetting(Setting.showRating, !showRating ? 'true' : 'false');
+                              }}
+                            />
+                          </label>
+                        </div>
+                        <div className="form-control">
+                          <label className="label">
+                            Tracking aktivieren
+                            <input
+                              type={'checkbox'}
+                              className={'toggle toggle-primary'}
+                              checked={showStatisticActions}
+                              readOnly={true}
+                              onClick={() => {
+                                userContext.updateUserSetting(Setting.showStatisticActions, !showStatisticActions ? 'true' : 'false');
+                              }}
+                            />
+                          </label>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <div className={'divider'}></div>
-                  <ThemeChanger />
-                </div>
-              </div>
-              {isDropdownScrollable && (
-                <div className="absolute bottom-0 left-0 flex w-full justify-center pb-2">
-                  <FaArrowDown className="animate-bounce" />
-                </div>
-              )}
-            </div>
-          </div>
 
-          <>
-            {selectedCardId != 'search' && selectedCardId != undefined ? (
-              <div className={'tooltip' + (showSettingsAtBottom ? ' mr-1' : '')} data-tip={'Suche (Shift + F)'}>
-                <div
-                  className={'btn btn-square btn-primary rounded-xl md:btn-lg'}
-                  onClick={() => modalContext.openModal(<SearchModal showStatisticActions={showStatisticActions} />)}
-                >
-                  <FaSearch />
+                    <div className={'divider'}></div>
+
+                    <div className={`flex flex-col gap-2`}>
+                      <div className={'flex cursor-pointer flex-row items-center justify-between'} onClick={() => setShowQueueOptions(!showQueueOptions)}>
+                        <div className={'font-bold'}>Warteschlange</div>
+                        <div>{showQueueOptions ? <FaAngleUp /> : <FaAngleDown />}</div>
+                      </div>
+                      <div className={`flex flex-col gap-2 ${showQueueOptions ? '' : 'hidden'}`}>
+                        <div className="form-control">
+                          <div className={''}>Gruppierung</div>
+                          <div key={'grouping-alphabetic'} className="form-control">
+                            <label className="label">
+                              <div className={'label-text'}>Cocktailname (A-Z)</div>
+                              <input
+                                name={'queue-radio'}
+                                type={'radio'}
+                                className={'radio'}
+                                value={'ALPHABETIC'}
+                                checked={queueGrouping == 'ALPHABETIC'}
+                                readOnly={true}
+                                onClick={() => {
+                                  setQueueGrouping('ALPHABETIC');
+                                  userContext.updateUserSetting(Setting.queueGrouping, 'ALPHABETIC');
+                                }}
+                              />
+                            </label>
+                            <label className="label">
+                              <div className={'label-text'}>Keine (Chronologisch)</div>
+                              <input
+                                name={'queue-radio'}
+                                type={'radio'}
+                                className={'radio'}
+                                value={'NONE'}
+                                checked={queueGrouping == 'NONE' || queueGrouping == undefined}
+                                readOnly={true}
+                                onClick={() => {
+                                  setQueueGrouping('NONE');
+                                  userContext.updateUserSetting(Setting.queueGrouping, 'NONE');
+                                }}
+                              />
+                            </label>
+                          </div>
+                        </div>
+                        <div className="form-control">
+                          <label className="label">
+                            Schnelles abhaken anzeigen
+                            <input
+                              type={'checkbox'}
+                              className={'toggle toggle-primary'}
+                              checked={showFastQueueCheck}
+                              readOnly={true}
+                              onClick={() => {
+                                userContext.updateUserSetting(Setting.showFastQueueCheck, !showFastQueueCheck ? 'true' : 'false');
+                              }}
+                            />
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className={'divider'}></div>
+                    <div className={`flex flex-col gap-2`}>
+                      <div className={'flex cursor-pointer flex-row items-center justify-between'} onClick={() => setShowLayoutOptions(!showLayoutOptions)}>
+                        <div className={'font-bold'}>Layout</div>
+                        <div>{showLayoutOptions ? <FaAngleUp /> : <FaAngleDown />}</div>
+                      </div>
+                      <div className={`flex flex-col gap-2 ${showLayoutOptions ? '' : 'hidden'}`}>
+                        <div className="form-control">
+                          <label className="label">
+                            Uhrzeit anzeigen
+                            <input
+                              type={'checkbox'}
+                              className={'toggle toggle-primary'}
+                              checked={showTime}
+                              readOnly={true}
+                              onClick={() => {
+                                userContext.updateUserSetting(Setting.showTime, !showTime ? 'true' : 'false');
+                              }}
+                            />
+                          </label>
+                        </div>
+                        {router.query.card !== 'search' && (
+                          <div className="form-control">
+                            <label className="label">
+                              Weniger Spalten
+                              <input
+                                type={'checkbox'}
+                                className={'toggle toggle-primary'}
+                                checked={lessItems}
+                                readOnly={true}
+                                onClick={() => {
+                                  userContext.updateUserSetting(Setting.lessItems, !lessItems ? 'true' : 'false');
+                                }}
+                              />
+                            </label>
+                          </div>
+                        )}
+                        <div className="form-control">
+                          <label className="label">
+                            Warteschlange als Overlay
+                            <input
+                              type={'checkbox'}
+                              className={'toggle toggle-primary'}
+                              checked={showQueueAsOverlay}
+                              readOnly={true}
+                              onClick={() => {
+                                userContext.updateUserSetting(Setting.showQueueAsOverlay, !showQueueAsOverlay ? 'true' : 'false');
+                              }}
+                            />
+                          </label>
+                        </div>
+                        <div className="form-control">
+                          <label className="label">
+                            Einstellungen am Ende
+                            <input
+                              type={'checkbox'}
+                              className={'toggle toggle-primary'}
+                              checked={showSettingsAtBottom}
+                              readOnly={true}
+                              onClick={() => {
+                                userContext.updateUserSetting(Setting.showSettingsAtBottom, !showSettingsAtBottom ? 'true' : 'false');
+                              }}
+                            />
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                    <div className={'divider'}></div>
+                    <ThemeChanger />
+                  </div>
                 </div>
+                {isDropdownScrollable && (
+                  <div className="absolute bottom-0 left-0 flex w-full justify-center pb-2">
+                    <FaArrowDown className="animate-bounce" />
+                  </div>
+                )}
               </div>
-            ) : (
-              <></>
-            )}
-          </>
-          <Link href={`/workspaces/${workspaceId}/manage`}>
-            <div className={'btn btn-square btn-primary rounded-xl md:btn-lg'}>
-              <BsFillGearFill />
             </div>
-          </Link>
-        </div>
+
+            <>
+              {selectedCardId != 'search' && selectedCardId != undefined ? (
+                <div className={'tooltip' + (showSettingsAtBottom ? ' mr-1' : '')} data-tip={'Suche (Shift + F)'}>
+                  <div
+                    className={'btn btn-square btn-primary rounded-xl md:btn-lg'}
+                    onClick={() => modalContext.openModal(<SearchModal showStatisticActions={showStatisticActions} />)}
+                  >
+                    <FaSearch />
+                  </div>
+                </div>
+              ) : (
+                <></>
+              )}
+            </>
+            <Link href={`/workspaces/${workspaceId}/manage`}>
+              <div className={'btn btn-square btn-primary rounded-xl md:btn-lg'}>
+                <BsFillGearFill />
+              </div>
+            </Link>
+          </div>
+        )}
       </div>
     </>
   );

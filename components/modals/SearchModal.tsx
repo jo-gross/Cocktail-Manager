@@ -16,6 +16,7 @@ interface SearchModalProps {
   showRecipe?: boolean;
   showStatisticActions?: boolean;
   customWidthClassName?: string;
+  asFitOnScreen?: boolean;
 }
 
 export function SearchModal(props: SearchModalProps) {
@@ -155,29 +156,33 @@ export function SearchModal(props: SearchModalProps) {
 
   return (
     <div className={`grid w-full grid-cols-1 gap-2 p-0.5 md:p-2 ${props.customWidthClassName ? props.customWidthClassName : 'md:max-w-2xl'}`}>
-      <div className={'w-max text-2xl font-bold'}>Cocktail suchen</div>
-      <div className={'join pb-2'}>
-        <input
-          className={'input join-item input-bordered w-full'}
-          value={search}
-          autoFocus={true}
-          onChange={(e) => {
-            setSearch(e.target.value);
-            if (e.target.value.trim().length != 0) {
-              fetchCocktails(e.target.value);
-            }
-          }}
-        />
-        <span
-          className={'btn btn-square btn-outline btn-primary join-item'}
-          onClick={() => {
-            fetchCocktails(search);
-          }}
-        >
-          <BsSearch />
-        </span>
+      <div className={'sticky w-full'}>
+        <div className={'w-max text-2xl font-bold'}>Cocktail suchen</div>
+        <div className={'join w-full pb-2'}>
+          <input
+            className={'input join-item input-bordered w-full'}
+            value={search}
+            autoFocus={true}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              if (e.target.value.trim().length != 0) {
+                fetchCocktails(e.target.value);
+              }
+            }}
+          />
+          <span
+            className={'btn btn-square btn-outline btn-primary join-item'}
+            onClick={() => {
+              fetchCocktails(search);
+            }}
+          >
+            <BsSearch />
+          </span>
+        </div>
       </div>
-      <>
+      <div
+        className={`${props.asFitOnScreen ? (process.env.DEPLOYMENT == 'production' ? 'h-screen' : 'h-[calc(100vh-12rem)]') : ''} grid grid-cols-1 gap-1 overflow-y-auto`}
+      >
         {cocktails.length == 0 ? (
           search != '' ? (
             <div>Keine Einträge gefunden</div>
@@ -202,7 +207,7 @@ export function SearchModal(props: SearchModalProps) {
           </>
         )}
         {isLoading ? <Loading /> : <></>}
-      </>
+      </div>
     </div>
   );
 }

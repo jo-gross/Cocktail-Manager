@@ -24,6 +24,7 @@
     "deep-diff": "1.0.2",
     "express-validator": "7.2.1",
     "formik": "2.4.6",
+    "framer-motion": "^12.15.0",
     "graph-data-structure": "4.5.0",
     "http-method-enum": "1.0.0",
     "js-levenshtein": "1.1.6",
