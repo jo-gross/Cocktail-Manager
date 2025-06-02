@@ -181,7 +181,7 @@ export function SearchModal(props: SearchModalProps) {
         </div>
       </div>
       <div
-        className={`${props.asFitOnScreen ? (process.env.DEPLOYMENT == 'production' ? 'h-screen' : 'h-[calc(100vh-12rem)]') : ''} grid grid-cols-1 gap-1 overflow-y-auto`}
+        className={`${props.asFitOnScreen ? (process.env.NODE_ENV == 'development' || process.env.DEPLOYMENT == 'staging' ? 'h-[calc(100vh-12rem)]' : 'h-[calc(100vh-9.5rem)]') : ''} flex flex-col gap-1 overflow-y-auto`}
       >
         {cocktails.length == 0 ? (
           search != '' ? (
@@ -200,7 +200,9 @@ export function SearchModal(props: SearchModalProps) {
                 <input type="checkbox" />
                 <div className="collapse-title text-xl font-medium">Archiviert</div>
                 <div className="collapse-content">
-                  {groupedCocktails['true'].sort((a, b) => a.name.localeCompare(b.name)).map((cocktail, index) => renderCocktailCard(cocktail, index, true))}
+                  <div className={'flex flex-col gap-1 p-0.5'}>
+                    {groupedCocktails['true'].sort((a, b) => a.name.localeCompare(b.name)).map((cocktail, index) => renderCocktailCard(cocktail, index, true))}
+                  </div>
                 </div>
               </div>
             )}

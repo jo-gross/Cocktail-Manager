@@ -565,10 +565,8 @@ export default function OverviewPage() {
           {showStatisticActions && cocktailQueue.length > 0 ? (
             <aside
               className={`${
-                showQueueAsOverlay
-                  ? `sticky right-0 z-10 col-span-5 flex w-full justify-end bg-opacity-75 lg:max-w-60`
-                  : `sticky order-first col-span-5 h-fit ${process.env.DEPLOYMENT == 'production' ? 'max-h-screen' : 'max-h-[calc(100vh-12rem)]'} w-full lg:order-last lg:col-span-2 xl:col-span-1`
-              } flex w-full flex-col rounded-xl bg-base-300 p-2 print:hidden ${process.env.NODE_ENV == 'development' || process.env.DEPLOYMENT == 'staging' ? 'md:top-12' : 'md:top-2'}`}
+                showQueueAsOverlay ? `right-0 z-10 justify-end bg-opacity-75 lg:max-w-60` : `order-first lg:order-last lg:col-span-2 xl:col-span-1`
+              } sticky col-span-5 flex w-full flex-col rounded-xl bg-base-300 p-2 print:hidden ${process.env.NODE_ENV == 'development' || process.env.DEPLOYMENT == 'staging' ? 'md:top-12' : 'md:top-2'} h-fit ${process.env.NODE_ENV == 'development' || process.env.DEPLOYMENT == 'staging' ? 'max-h-[calc(100vh-3.5rem)]' : 'max-h-[calc(100vh-1rem)]'}`}
             >
               <div className="flex w-full flex-row flex-wrap items-center justify-center border-b border-base-content pb-1 text-center">
                 <span className="truncate">Wird gemacht</span>
