@@ -68,7 +68,6 @@ enum Setting {
   lessItems
   theme
   showStatisticActions
-  showQueueAsOverlay
   lastSeenVersion
   showNotes
   showHistory

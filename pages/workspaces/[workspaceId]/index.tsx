@@ -9,7 +9,6 @@ import { useRouter } from 'next/router';
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import { SearchModal } from '@components/modals/SearchModal';
 import { Loading } from '@components/Loading';
-import { PageCenter } from '@components/layout/PageCenter';
 import { alertService } from '@lib/alertService';
 import ThemeChanger from '../../../components/ThemeChanger';
 import Head from 'next/head';
@@ -23,6 +22,7 @@ import { FaArrowTurnDown, FaArrowTurnUp } from 'react-icons/fa6';
 import '../../../lib/ArrayUtils';
 import { CocktailRecipeFull } from '../../../models/CocktailRecipeFull';
 import { CgArrowsExpandUpLeft } from 'react-icons/cg';
+import { PageCenter } from '@components/layout/PageCenter';
 
 export default function OverviewPage() {
   const modalContext = useContext(ModalContext);
@@ -36,7 +36,6 @@ export default function OverviewPage() {
   const [showTags, setShowTags] = useState(false);
   const [lessItems, setLessItems] = useState(false);
   const [showStatisticActions, setShowStatisticActions] = useState(false);
-  const [showQueueAsOverlay, setShowQueueAsOverlay] = useState(false);
   const [showDescription, setShowDescription] = useState(false);
   const [showNotes, setShowNotes] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
@@ -186,7 +185,6 @@ export default function OverviewPage() {
     setShowTags(userContext.user?.settings?.find((s) => s.setting == Setting.showTags)?.value == 'true');
     setLessItems(userContext.user?.settings?.find((s) => s.setting == Setting.lessItems)?.value == 'true');
     setShowStatisticActions(userContext.user?.settings?.find((s) => s.setting == Setting.showStatisticActions)?.value == 'true');
-    setShowQueueAsOverlay(userContext.user?.settings?.find((s) => s.setting == Setting.showQueueAsOverlay)?.value == 'true');
     setShowDescription(userContext.user?.settings?.find((s) => s.setting == Setting.showDescription)?.value == 'true');
     setShowNotes(userContext.user?.settings?.find((s) => s.setting == Setting.showNotes)?.value == 'true');
     setShowHistory(userContext.user?.settings?.find((s) => s.setting == Setting.showHistory)?.value == 'true');
@@ -339,19 +337,14 @@ export default function OverviewPage() {
 
   const timeComponent = (
     <div className={'w-full text-center'}>
-      {userContext.workspace && (
-        <span>
-          Umgebung: <strong>{userContext.workspace.name}</strong> -{' '}
-        </span>
-      )}
       {selectedCard && selectedCardId != 'search' ? (
         <span>
-          Angezeigte Karte: <strong>{selectedCard.name}</strong> -{' '}
+          <strong>{selectedCard.name}</strong> -{' '}
         </span>
       ) : (
         ''
       )}
-      {currentTime?.toFormatDateString()}, {currentTime?.toFormatTimeString()} Uhr
+      {currentTime?.toFormatDateTimeShort()} Uhr
     </div>
   );
 
@@ -557,24 +550,21 @@ export default function OverviewPage() {
       </Head>
 
       <div className={'static min-h-screen'}>
-        {showTime ? <div className={'pt-2'}>{timeComponent}</div> : <></>}
-
         <div
-          className={`grid grid-cols-1 gap-2 p-2 ${showQueueAsOverlay ? '' : showStatisticActions && cocktailQueue.length > 0 ? 'lg:grid-cols-8 xl:grid-cols-6' : ''} print:grid-cols-5 print:overflow-clip print:p-0`}
+          className={`grid grid-cols-1 gap-2 p-2 ${showStatisticActions && cocktailQueue.length > 0 ? 'lg:grid-cols-8 xl:grid-cols-6' : ''} print:grid-cols-5 print:overflow-clip print:p-0`}
         >
           {showStatisticActions && cocktailQueue.length > 0 ? (
             <aside
-              className={`${
-                showQueueAsOverlay ? `right-0 z-10 justify-end bg-opacity-75 lg:max-w-60` : `order-first lg:order-last lg:col-span-2 xl:col-span-1`
-              } sticky col-span-5 flex w-full flex-col rounded-xl bg-base-300 p-2 print:hidden ${process.env.NODE_ENV == 'development' || process.env.DEPLOYMENT == 'staging' ? 'md:top-12' : 'md:top-2'} h-fit ${process.env.NODE_ENV == 'development' || process.env.DEPLOYMENT == 'staging' ? 'max-h-[calc(100vh-3.5rem)]' : 'max-h-[calc(100vh-1rem)]'}`}
+              className={`sticky order-first col-span-5 flex w-full flex-col rounded-xl bg-base-300 p-2 pb-0 lg:order-last lg:col-span-2 xl:col-span-1 print:hidden ${process.env.NODE_ENV == 'development' || process.env.DEPLOYMENT == 'staging' ? 'md:top-12' : 'md:top-2'} h-fit ${process.env.NODE_ENV == 'development' || process.env.DEPLOYMENT == 'staging' ? 'max-h-[calc(100vh-3.5rem)]' : 'max-h-[calc(100vh-1rem)]'}`}
             >
+              {showTime ? <div className={'pb-2'}>{timeComponent}</div> : <></>}
               <div className="flex w-full flex-row flex-wrap items-center justify-center border-b border-base-content pb-1 text-center">
                 <span className="truncate">Wird gemacht</span>
                 <span className="ml-1">(A-Z)</span>
               </div>
 
               {/*<div className={'divider'}></div>*/}
-              <div className={'max-h-1/3 flex flex-col divide-y overflow-y-auto'}>
+              <div className={'max-h-1/3 scroll-gradient-base flex flex-col divide-y overflow-y-auto border-b border-base-content'}>
                 {(queueGrouping == 'ALPHABETIC' || true
                   ? _(cocktailQueue)
                       .filter((item) => item.inProgress)
@@ -615,12 +605,12 @@ export default function OverviewPage() {
                     <div className={'w-full text-center font-thin italic'}>Keine Einträge</div>,
                   )}
               </div>
-              <div className={'h-5'}></div>
+              <div className={'h-2'}></div>
               <div className="flex w-full flex-row flex-wrap items-center justify-center border-b border-base-content pb-1 text-center">
                 <span className="truncate">Warteschlange</span>
                 <span className="ml-1">({queueGrouping == 'ALPHABETIC' ? 'A-Z' : 'Uhr'})</span>
               </div>
-              <div className={'flex flex-col divide-y overflow-y-auto'}>
+              <div className={'scroll-gradient-base flex flex-col divide-y overflow-y-auto'}>
                 {(queueGrouping == 'ALPHABETIC'
                   ? _(cocktailQueue)
                       .filter((item) => !item.inProgress)
@@ -677,76 +667,81 @@ export default function OverviewPage() {
                 showDescription={showDescription}
                 selectedCocktail={selectedCocktail}
                 setSelectedCocktail={setSelectedCocktail}
+                showTime={showTime}
+                currentTime={currentTime}
               />
-            ) : loadingGroups ? (
-              <PageCenter>
-                <Loading />
-              </PageCenter>
-            ) : (selectedCard?.groups ?? []).length == 0 ? (
-              <PageCenter>
-                <div className={'text-center'}>Keine Gruppen in der Karte vorhanden</div>
-              </PageCenter>
             ) : (
-              selectedCard?.groups
-                ?.sort((a, b) => a.groupNumber - b.groupNumber)
-                .map((group) => (
-                  <div
-                    key={`card-${selectedCard.id}-group-${group.id}`}
-                    className={`collapse collapse-arrow rounded-xl border border-base-300 bg-base-200 p-1 print:p-1`}
-                  >
-                    <input type={'checkbox'} defaultChecked={true} />
-                    <div className={'collapse-title text-center text-2xl font-bold'}>
-                      {group.name}
-                      {group.groupPrice != undefined ? ` - Special Preis: ${group.groupPrice}€` : ''}
-                    </div>
-                    <div className={'collapse-content'}>
+              <div>
+                {showTime && !showStatisticActions ? <div className={'pb-2'}>{timeComponent}</div> : <></>}
+                {loadingGroups ? (
+                  <PageCenter>
+                    <Loading />
+                  </PageCenter>
+                ) : (selectedCard?.groups ?? []).length == 0 ? (
+                  <PageCenter>
+                    <div className={'text-center'}>Keine Gruppen in der Karte vorhanden</div>
+                  </PageCenter>
+                ) : (
+                  selectedCard?.groups
+                    ?.sort((a, b) => a.groupNumber - b.groupNumber)
+                    .map((group) => (
                       <div
-                        className={`grid ${lessItems ? '2xl:grid-cols-5' : '2xl:grid-cols-6'} ${lessItems ? 'xl:grid-cols-3' : 'xl:grid-cols-4'} ${lessItems ? 'md:grid-cols-2' : 'md:grid-cols-3'} ${lessItems ? 'xs:grid-cols-1' : 'xs:grid-cols-2'} grid-cols-1 gap-2 p-1`}
+                        key={`card-${selectedCard.id}-group-${group.id}`}
+                        className={`collapse collapse-arrow rounded-xl border border-base-300 bg-base-200 p-1 print:p-1`}
                       >
-                        {group.items.length == 0 ? (
-                          <div className={'col-span-full text-center'}>Keine Einträge vorhanden</div>
-                        ) : (
-                          group.items
-                            ?.sort((a, b) => a.itemNumber - b.itemNumber)
-                            .map((groupItem, index) => {
-                              if (groupItem.cocktailId != undefined) {
-                                return (
-                                  <CocktailRecipeCardItem
-                                    key={`card-${selectedCard.id}-group-${group.id}-cocktail-${groupItem.cocktailId}-${index}`}
-                                    ref={(el) => {
-                                      cocktailItemRefs.current[groupItem.cocktailId!] = el;
-                                    }}
-                                    showImage={showImage}
-                                    showTags={showTags}
-                                    showDetailsOnClick={true}
-                                    showPrice={groupItem.specialPrice == undefined && group.groupPrice == undefined}
-                                    specialPrice={groupItem.specialPrice ?? group.groupPrice ?? undefined}
-                                    cocktailRecipe={groupItem.cocktailId}
-                                    showStatisticActions={showStatisticActions}
-                                    showDescription={showDescription}
-                                    showNotes={showNotes}
-                                    showHistory={showHistory}
-                                    showRating={showRating}
-                                  />
-                                );
-                              } else {
-                                return (
-                                  <div key={`card-${selectedCard.id}-group-${group.id}-cocktail-${groupItem.cocktailId}-${index}`}>
-                                    <Loading />
-                                  </div>
-                                );
-                              }
-                            })
-                        )}
+                        <input type={'checkbox'} defaultChecked={true} />
+                        <div className={'collapse-title text-center text-2xl font-bold'}>
+                          {group.name}
+                          {group.groupPrice != undefined ? ` - Special Preis: ${group.groupPrice}€` : ''}
+                        </div>
+                        <div className={'collapse-content'}>
+                          <div
+                            className={`grid ${lessItems ? '2xl:grid-cols-5' : '2xl:grid-cols-6'} ${lessItems ? 'xl:grid-cols-3' : 'xl:grid-cols-4'} ${lessItems ? 'md:grid-cols-2' : 'md:grid-cols-3'} ${lessItems ? 'xs:grid-cols-1' : 'xs:grid-cols-2'} grid-cols-1 gap-2 p-1`}
+                          >
+                            {group.items.length == 0 ? (
+                              <div className={'col-span-full text-center'}>Keine Einträge vorhanden</div>
+                            ) : (
+                              group.items
+                                ?.sort((a, b) => a.itemNumber - b.itemNumber)
+                                .map((groupItem, index) => {
+                                  if (groupItem.cocktailId != undefined) {
+                                    return (
+                                      <CocktailRecipeCardItem
+                                        key={`card-${selectedCard.id}-group-${group.id}-cocktail-${groupItem.cocktailId}-${index}`}
+                                        ref={(el) => {
+                                          cocktailItemRefs.current[groupItem.cocktailId!] = el;
+                                        }}
+                                        showImage={showImage}
+                                        showTags={showTags}
+                                        showDetailsOnClick={true}
+                                        showPrice={groupItem.specialPrice == undefined && group.groupPrice == undefined}
+                                        specialPrice={groupItem.specialPrice ?? group.groupPrice ?? undefined}
+                                        cocktailRecipe={groupItem.cocktailId}
+                                        showStatisticActions={showStatisticActions}
+                                        showDescription={showDescription}
+                                        showNotes={showNotes}
+                                        showHistory={showHistory}
+                                        showRating={showRating}
+                                      />
+                                    );
+                                  } else {
+                                    return (
+                                      <div key={`card-${selectedCard.id}-group-${group.id}-cocktail-${groupItem.cocktailId}-${index}`}>
+                                        <Loading />
+                                      </div>
+                                    );
+                                  }
+                                })
+                            )}
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                ))
+                    ))
+                )}
+              </div>
             )}
           </main>
         </div>
-
-        {showTime ? <div className={'pb-2'}>{timeComponent}</div> : <></>}
 
         {!isMenuExpanded && !showSettingsAtBottom ? (
           <div className={'fixed bottom-2 right-2'}>
@@ -1062,20 +1057,6 @@ export default function OverviewPage() {
                             </label>
                           </div>
                         )}
-                        <div className="form-control">
-                          <label className="label">
-                            Warteschlange als Overlay
-                            <input
-                              type={'checkbox'}
-                              className={'toggle toggle-primary'}
-                              checked={showQueueAsOverlay}
-                              readOnly={true}
-                              onClick={() => {
-                                userContext.updateUserSetting(Setting.showQueueAsOverlay, !showQueueAsOverlay ? 'true' : 'false');
-                              }}
-                            />
-                          </label>
-                        </div>
                         <div className="form-control">
                           <label className="label">
                             Einstellungen am Ende
