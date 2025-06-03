@@ -84,13 +84,7 @@ export default function CocktailsOverviewPage() {
             {cocktailRecipe.name} {isArchived && '(Archiviert)'}
           </td>
           <td className={''}>
-            <span className={'whitespace-nowrap'}>
-              {cocktailRecipe.price?.toLocaleString(undefined, {
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 2,
-              }) ?? '-'}{' '}
-              €
-            </span>
+            <span className={'whitespace-nowrap'}>{cocktailRecipe.price?.formatPrice() ?? '-'} €</span>
           </td>
           <td className={'flex items-center gap-1'}>
             {cocktailRecipe.tags.map((tag) => (

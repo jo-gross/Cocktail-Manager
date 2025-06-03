@@ -7,6 +7,7 @@ import ImageModal from '../modals/ImageModal';
 import { Loading } from '../Loading';
 import StarsComponent from '../StarsComponent';
 import { CocktailRating } from '@generated/prisma/client';
+import '../../lib/NumberUtils';
 
 interface CompactCocktailRecipeInstructionProps {
   cocktailRecipe: CocktailRecipeFull;
@@ -30,14 +31,7 @@ export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeIns
       {props.showPrice == true ? (
         <div className={'col-span-1 text-right text-xl font-bold'}>
           {(props.specialPrice ?? props.cocktailRecipe.price) != undefined
-            ? (props.specialPrice?.toLocaleString(undefined, {
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 2,
-              }) ??
-              props.cocktailRecipe.price?.toLocaleString(undefined, {
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 2,
-              }) + ' €')
+            ? (props.specialPrice?.formatPriceEfficent() ?? props.cocktailRecipe.price?.formatPriceEfficent() + ' €')
             : ''}
         </div>
       ) : (
