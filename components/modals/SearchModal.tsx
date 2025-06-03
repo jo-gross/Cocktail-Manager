@@ -183,6 +183,7 @@ export function SearchModal(props: SearchModalProps) {
       <div
         className={`${props.asFitOnScreen ? (process.env.NODE_ENV == 'development' || process.env.DEPLOYMENT == 'staging' ? 'h-[calc(100vh-12rem)]' : 'h-[calc(100vh-9.5rem)]') : ''} flex flex-col gap-1 overflow-y-auto`}
       >
+        {/*<ScrollShadowWrapper className={`flex h-screen flex-col gap-1`}>*/}
         {cocktails.length == 0 ? (
           search != '' ? (
             <div>Keine Einträge gefunden</div>
@@ -209,6 +210,7 @@ export function SearchModal(props: SearchModalProps) {
           </>
         )}
         {isLoading ? <Loading /> : <></>}
+        {/*</ScrollShadowWrapper>*/}
       </div>
     </div>
   );

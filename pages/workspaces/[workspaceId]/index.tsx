@@ -564,7 +564,7 @@ export default function OverviewPage() {
               </div>
 
               {/*<div className={'divider'}></div>*/}
-              <div className={'max-h-1/3 scroll-gradient-base flex flex-col divide-y overflow-y-auto border-b border-base-content'}>
+              <div className={'max-h-1/3 flex flex-col divide-y overflow-y-auto border-b border-base-content'}>
                 {(queueGrouping == 'ALPHABETIC' || true
                   ? _(cocktailQueue)
                       .filter((item) => item.inProgress)
@@ -610,7 +610,7 @@ export default function OverviewPage() {
                 <span className="truncate">Warteschlange</span>
                 <span className="ml-1">({queueGrouping == 'ALPHABETIC' ? 'A-Z' : 'Uhr'})</span>
               </div>
-              <div className={'scroll-gradient-base flex flex-col divide-y overflow-y-auto'}>
+              <div className={'flex flex-col divide-y overflow-y-auto'}>
                 {(queueGrouping == 'ALPHABETIC'
                   ? _(cocktailQueue)
                       .filter((item) => !item.inProgress)

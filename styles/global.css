@@ -2,49 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer utilities {
-  /* ===============================================
-   * Scroll‑Gradient Utilities (Tailwind v3)
-   * -----------------------------------------------
-   * 1) .scroll-gradient-white   – weisser Hintergrund
-   * 2) .scroll-gradient-base    – DaisyUI bg-base-300 Hintergrund
-   *
-   *  Beide Klassen erzeugen automatisch die Scroll‑Shadows oben & unten,
-   *  OHNE zusätzliche JS‑Logik. Einfach dem Scroll‑Container hinzufügen:
-   *
-   *  <div class="h-64 overflow-y-auto scroll-gradient-white">
-   *    …Content…
-   *  </div>
-   * ===============================================*/
-  /* ---- 1) Weiss ---- */
-  .scroll-gradient-white {
-    /* Basisfarbe */
-    --sg-bg: theme("colors.white");
-    --sg-fg: rgb(70, 70, 70, 0.5); /* Fallback für DaisyUI */
-  }
-
-  /* ---- 2) DaisyUI base-300 ---- */
-  .scroll-gradient-base {
-    /* DaisyUI setzt die Color‑Variable automatisch; fallback nutzen */
-    @apply bg-base-300;
-    --sg-bg: theme("colors.base-300");
-    --sg-fg: theme("colors.base-content");
-  }
-
-  /* ---- Gemeinsamer Gradient‑Code ---- */
-  .scroll-gradient-white,
-  .scroll-gradient-base {
-    background: /* fade‑in oben */ linear-gradient(var(--sg-bg) 33%, rgba(255, 255, 255, 0)),
-      /* fade‑in unten */ linear-gradient(rgba(255, 255, 255, 0), var(--sg-bg) 66%) 0 100%,
-      /* Schlagschatten oben */ radial-gradient(farthest-side at 50% 0, var(--sg-fg), rgba(0, 0, 0, 0)),
-      /* Schlagschatten unten */ radial-gradient(farthest-side at 50% 100%, var(--sg-fg), rgba(0, 0, 0, 0)) 0 100%;
-    background-color: var(--sg-bg);
-    background-repeat: no-repeat;
-    background-attachment: local, local, scroll, scroll;
-    background-size: 100% 70px, 100% 70px, 100% 12px, 100% 12px;
-  }
-}
-
 .rti--tag {
   @apply badge badge-outline space-x-2 p-4 !important;
 }
