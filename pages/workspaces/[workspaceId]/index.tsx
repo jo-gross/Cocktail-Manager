@@ -22,10 +22,13 @@ import '../../../lib/ArrayUtils';
 import { CgArrowsExpandUpLeft } from 'react-icons/cg';
 import { PageCenter } from '@components/layout/PageCenter';
 import { NextPageWithPullToRefresh } from '../../../types/next';
+import { NetworkIndicatorContext } from '@lib/context/NetworkIndicatorContextProvider';
 
 const OverviewPage: NextPageWithPullToRefresh = () => {
   const modalContext = useContext(ModalContext);
   const userContext = useContext(UserContext);
+  const networkContext = useContext(NetworkIndicatorContext);
+
   const router = useRouter();
   const { workspaceId } = router.query;
 
@@ -215,20 +218,26 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
   // ========================
 
   const refreshQueue = useCallback(() => {
-    fetch(`/api/workspaces/${workspaceId}/queue?timestamp=${new Date().toISOString()}`)
-      .then(async (response) => {
-        const body = await response.json();
-        if (response.ok) {
-          setCocktailQueue(body.data);
-          console.debug('queue', body.data);
-        } else {
-          console.error('CocktailCardPage -> fetchQueue', response);
-        }
-      })
-      .catch((error) => {
-        console.error('CocktailCardPage -> fetchQueue', error);
-      })
-      .finally(() => {});
+    try {
+      fetch(`/api/workspaces/${workspaceId}/queue?timestamp=${new Date().toISOString()}`)
+        .then(async (response) => {
+          networkContext.updateOnlineStatus(true);
+          const body = await response.json();
+          if (response.ok) {
+            setCocktailQueue(body.data);
+            console.debug('queue', body.data);
+          } else {
+            console.error('CocktailCardPage -> fetchQueue', response);
+          }
+        })
+        .catch((error) => {
+          console.error('CocktailCardPage -> fetchQueue', error);
+          networkContext.updateOnlineStatus(false);
+        })
+        .finally(() => {});
+    } catch (e) {
+      networkContext.updateOnlineStatus(false);
+    }
   }, [workspaceId]);
 
   interface CocktailQueueItem {
