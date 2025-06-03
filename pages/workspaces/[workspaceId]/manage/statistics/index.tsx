@@ -14,10 +14,11 @@ import '../../../../../lib/StringUtils';
 import { Loading } from '@components/Loading';
 import ListSearchField from '../../../../../components/ListSearchField';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
+import { NextPageWithPullToRefresh } from '../../../../../types/next';
 
 ChartJS.register(ArcElement, Tooltip, Legend, TimeScale, CategoryScale, LinearScale);
 
-export default function StatisticsPage() {
+const StatisticsPage: NextPageWithPullToRefresh = () => {
   const router = useRouter();
   const { workspaceId } = router.query;
   const userContext = useContext(UserContext);
@@ -62,6 +63,10 @@ export default function StatisticsPage() {
       setGroupBy('hour');
     }
   }, [startDate, endDate, refreshStatistics]);
+
+  StatisticsPage.pullToRefresh = async () => {
+    await refreshStatistics();
+  };
 
   interface ProcessedData {
     labels: string[];
@@ -571,4 +576,6 @@ export default function StatisticsPage() {
       </div>
     </ManageEntityLayout>
   );
-}
+};
+
+export default StatisticsPage;

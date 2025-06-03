@@ -16,8 +16,9 @@ import '../lib/DateUtils';
 import { useRouter } from 'next/router';
 import { MdOutlineCancel } from 'react-icons/md';
 import { DeleteConfirmationModal } from '@components/modals/DeleteConfirmationModal';
+import { NextPageWithPullToRefresh } from '../types/next';
 
-export default function WorkspacesPage() {
+const WorkspacesPage: NextPageWithPullToRefresh = () => {
   const themeContext = useContext(ThemeContext);
   const modalContext = useContext(ModalContext);
 
@@ -210,6 +211,11 @@ export default function WorkspacesPage() {
     fetchWorkspaces();
     fetchOpenWorkspaceJoinRequest();
   }, [fetchOpenWorkspaceJoinRequest, fetchWorkspaces]);
+
+  WorkspacesPage.pullToRefresh = () => {
+    fetchWorkspaces();
+    fetchOpenWorkspaceJoinRequest();
+  };
 
   useEffect(() => {
     if (code) {
@@ -455,4 +461,6 @@ export default function WorkspacesPage() {
       </div>
     </>
   );
-}
+};
+
+export default WorkspacesPage;

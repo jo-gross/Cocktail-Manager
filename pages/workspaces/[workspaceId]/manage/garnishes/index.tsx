@@ -13,8 +13,9 @@ import AvatarImage from '../../../../../components/AvatarImage';
 import { fetchGarnishes } from '@lib/network/garnishes';
 import ImageModal from '../../../../../components/modals/ImageModal';
 import { ModalContext } from '@lib/context/ModalContextProvider';
+import { NextPageWithPullToRefresh } from '../../../../../types/next';
 
-export default function ManageGlassesOverviewPage() {
+const ManageGarnishesOverviewPage: NextPageWithPullToRefresh = () => {
   const router = useRouter();
   const { workspaceId } = router.query;
 
@@ -29,6 +30,10 @@ export default function ManageGlassesOverviewPage() {
   useEffect(() => {
     fetchGarnishes(workspaceId, setGarnishes, setLoading);
   }, [workspaceId]);
+
+  ManageGarnishesOverviewPage.pullToRefresh = () => {
+    fetchGarnishes(workspaceId, setGarnishes, setLoading);
+  };
 
   return (
     <ManageEntityLayout
@@ -114,4 +119,6 @@ export default function ManageGlassesOverviewPage() {
       </div>
     </ManageEntityLayout>
   );
-}
+};
+
+export default ManageGarnishesOverviewPage;
