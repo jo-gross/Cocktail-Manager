@@ -19,6 +19,7 @@ import _ from 'lodash';
 import { fetchUnits } from '@lib/network/units';
 import '../../../../../lib/DateUtils';
 import { RoutingContext } from '@lib/context/RoutingContextProvider';
+import '../../../../../lib/NumberUtils';
 
 interface CocktailCalculationItem {
   cocktail: CocktailRecipeFull;
@@ -693,12 +694,7 @@ export default function CalculationPage() {
                             {showSalesStuff ? (
                               <>
                                 <td>
-                                  <span>{`${
-                                    cocktail.cocktail.price?.toLocaleString(undefined, {
-                                      minimumFractionDigits: 0,
-                                      maximumFractionDigits: 2,
-                                    }) ?? '-'
-                                  } €`}</span>
+                                  <span>{`${cocktail.cocktail.price?.formatPrice() ?? '-'} €`}</span>
                                 </td>
                                 <td>
                                   <div className={'join print:hidden'}>
@@ -723,13 +719,7 @@ export default function CalculationPage() {
                                     />
                                     <span className={'btn btn-secondary join-item btn-sm'}> €</span>
                                   </div>
-                                  <div className={'hidden print:flex'}>
-                                    {cocktail.customPrice?.toLocaleString(undefined, {
-                                      minimumFractionDigits: 0,
-                                      maximumFractionDigits: 2,
-                                    }) ?? '-'}{' '}
-                                    €
-                                  </div>
+                                  <div className={'hidden print:flex'}>{cocktail.customPrice?.formatPrice() ?? '-'} €</div>
                                 </td>
                               </>
                             ) : (
@@ -815,37 +805,16 @@ export default function CalculationPage() {
                             <tr key={'cocktail-' + cocktail.cocktail.id}>
                               <td>{cocktail.cocktail.name}</td>
                               <td>{cocktail.plannedAmount} x</td>
-                              <td>
-                                {calcCocktailTotalPrice(cocktail.cocktail, ingredients).toLocaleString(undefined, {
-                                  minimumFractionDigits: 2,
-                                  maximumFractionDigits: 2,
-                                })}{' '}
-                                €
-                              </td>
-                              <td>
-                                {(cocktail.plannedAmount * calcCocktailTotalPrice(cocktail.cocktail, ingredients)).toLocaleString(undefined, {
-                                  minimumFractionDigits: 2,
-                                  maximumFractionDigits: 2,
-                                })}{' '}
-                                €
-                              </td>
+                              <td>{calcCocktailTotalPrice(cocktail.cocktail, ingredients).formatPrice()} €</td>
+                              <td>{(cocktail.plannedAmount * calcCocktailTotalPrice(cocktail.cocktail, ingredients)).formatPrice()} €</td>
                               {showSalesStuff ? (
                                 <>
-                                  <td>
-                                    {(cocktail.plannedAmount * (cocktail.customPrice ?? cocktail.cocktail.price ?? 0)).toLocaleString(undefined, {
-                                      minimumFractionDigits: 2,
-                                      maximumFractionDigits: 2,
-                                    })}
-                                    €
-                                  </td>
+                                  <td>{(cocktail.plannedAmount * (cocktail.customPrice ?? cocktail.cocktail.price ?? 0)).formatPrice()}€</td>
                                   <td>
                                     {(
                                       cocktail.plannedAmount * (cocktail.customPrice ?? cocktail.cocktail.price ?? 0) -
                                       cocktail.plannedAmount * calcCocktailTotalPrice(cocktail.cocktail, ingredients)
-                                    ).toLocaleString(undefined, {
-                                      minimumFractionDigits: 2,
-                                      maximumFractionDigits: 2,
-                                    })}{' '}
+                                    ).formatPrice()}{' '}
                                     €
                                   </td>
                                 </>
@@ -873,10 +842,7 @@ export default function CalculationPage() {
                           {cocktailCalculationItems
                             .map((cocktail) => cocktail.plannedAmount * calcCocktailTotalPrice(cocktail.cocktail, ingredients))
                             .reduce((acc, curr) => acc + curr, 0)
-                            .toLocaleString(undefined, {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2,
-                            })}{' '}
+                            .formatPrice()}{' '}
                           €
                         </td>
                         {showSalesStuff ? (
@@ -885,10 +851,7 @@ export default function CalculationPage() {
                               {cocktailCalculationItems
                                 .map((cocktail) => cocktail.plannedAmount * (cocktail.customPrice ?? cocktail.cocktail.price ?? 0))
                                 .reduce((acc, curr) => acc + curr, 0)
-                                .toLocaleString(undefined, {
-                                  minimumFractionDigits: 2,
-                                  maximumFractionDigits: 2,
-                                })}{' '}
+                                .formatPrice()}{' '}
                               €
                             </td>
                             <td>
@@ -899,10 +862,7 @@ export default function CalculationPage() {
                                     cocktail.plannedAmount * calcCocktailTotalPrice(cocktail.cocktail, ingredients),
                                 )
                                 .reduce((acc, curr) => acc + curr, 0)
-                                .toLocaleString(undefined, {
-                                  minimumFractionDigits: 2,
-                                  maximumFractionDigits: 2,
-                                })}{' '}
+                                .formatPrice()}{' '}
                               €
                             </td>
                           </>

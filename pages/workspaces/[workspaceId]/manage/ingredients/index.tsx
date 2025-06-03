@@ -13,6 +13,7 @@ import { IngredientModel } from '../../../../../models/IngredientModel';
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import { fetchIngredients } from '@lib/network/ingredients';
 import ImageModal from '../../../../../components/modals/ImageModal';
+import '../../../../../lib/NumberUtils';
 
 export default function IngredientsOverviewPage() {
   const router = useRouter();
@@ -132,13 +133,7 @@ export default function IngredientsOverviewPage() {
                             <span>Anzeigen</span>
                           </button>
                         </td>
-                        <td className={'whitespace-nowrap'}>
-                          {ingredient.price?.toLocaleString(undefined, {
-                            minimumFractionDigits: 0,
-                            maximumFractionDigits: 2,
-                          }) ?? '-'}{' '}
-                          €
-                        </td>
+                        <td className={'whitespace-nowrap'}>{ingredient.price?.formatPrice() ?? '-'} €</td>
                         <td className={''}>
                           {ingredient.IngredientVolume.map((volume) => (
                             <div key={`ingredient-${ingredient.id}-volume-unit-${volume.id}`} className={'whitespace-nowrap'}>
@@ -149,11 +144,7 @@ export default function IngredientsOverviewPage() {
                         <td>
                           {ingredient.IngredientVolume.map((volume) => (
                             <div key={`ingredient-${ingredient.id}-volume-unit-price-${volume.id}`} className={'whitespace-nowrap'}>
-                              {((ingredient.price ?? 0) / volume.volume).toLocaleString(undefined, {
-                                minimumFractionDigits: 0,
-                                maximumFractionDigits: 2,
-                              })}{' '}
-                              €/{userContext.getTranslation(volume.unit.name, 'de')}
+                              {((ingredient.price ?? 0) / volume.volume).formatPrice()} €/{userContext.getTranslation(volume.unit.name, 'de')}
                             </div>
                           ))}
                         </td>
