@@ -1,8 +1,6 @@
-import { useEffect } from 'react';
 import { CocktailRecipeFull } from '../../../models/CocktailRecipeFull';
 import CocktailRecipeCardItem from '../../../components/cocktails/CocktailRecipeCardItem';
 import { SearchModal } from '@components/modals/SearchModal';
-import { useRouter } from 'next/router';
 
 interface SearchPageProps {
   showImage: boolean;
@@ -13,28 +11,31 @@ interface SearchPageProps {
   showNotes: boolean;
   selectedCocktail: CocktailRecipeFull | string | undefined;
   setSelectedCocktail: (cocktail: CocktailRecipeFull) => void;
+  showTime: boolean;
+  currentTime: Date;
 }
 
 export default function SearchPage(props: SearchPageProps) {
-  const router = useRouter();
-
-  useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [props.selectedCocktail]);
-
   return (
     <div className={'flex flex-col-reverse gap-2 md:flex-row'}>
       <div className={'card w-full flex-1'}>
-        <div className={'card-body'}>
+        <div className={`card-body`}>
           <SearchModal
             onCocktailSelectedObject={(cocktail) => props.setSelectedCocktail(cocktail)}
             selectionLabel={'Ansehen'}
             showRecipe={false}
             customWidthClassName={'w-full'}
+            asFitOnScreen={true}
           />
         </div>
       </div>
       <div className={'h-min w-full flex-1'}>
+        {props.showTime && !props.showStatisticActions ? (
+          <div className={'w-full pb-2 text-center'}>{props.currentTime?.toFormatDateTimeShort()} Uhr</div>
+        ) : (
+          <></>
+        )}
+
         {props.selectedCocktail ? (
           <CocktailRecipeCardItem
             cocktailRecipe={props.selectedCocktail}

@@ -38,7 +38,7 @@ export default function StatisticActions({
   const modalContext = useContext(ModalContext);
 
   return (
-    <div className={'grid grid-cols-2 gap-2 md:grid-cols-3'}>
+    <div className={'grid grid-cols-2 gap-2 md:grid-cols-2 2xl:grid-cols-3'}>
       <button
         className={'btn btn-outline flex-1'}
         onClick={() =>
@@ -75,7 +75,7 @@ export default function StatisticActions({
         {submittingQueue ? <span className={'loading loading-spinner'}></span> : <></>}
       </button>
       <button
-        className={'btn btn-outline btn-primary col-span-2 md:col-span-1'}
+        className={'btn btn-outline btn-primary col-span-2 2xl:col-span-1'}
         onClick={() =>
           addCocktailToStatistic({
             workspaceId: workspaceId,
