@@ -9,6 +9,7 @@ import { GlobalModal } from '@components/modals/GlobalModal';
 import Head from 'next/head';
 import ThemeBoundary from '../components/layout/ThemeBoundary';
 import { RoutingContextProvider } from '@lib/context/RoutingContextProvider';
+import PullToRefresh from '@components/PullToRefresh';
 
 const App = ({ Component, pageProps: { session, ...pageProps } }: AppProps) => {
   const [modalContentStack, setModalContentStack] = useState<ReactNode[]>([]);
@@ -80,7 +81,9 @@ const App = ({ Component, pageProps: { session, ...pageProps } }: AppProps) => {
                     ) : (
                       <></>
                     )}
-                    <Component {...pageProps} />
+                    <PullToRefresh>
+                      <Component {...pageProps} />
+                    </PullToRefresh>
                   </>
                 </ThemeBoundary>
               </GlobalModal>
