@@ -94,6 +94,7 @@ thead {
 .modal-box {
   max-width: unset !important;
 }
+
 :root {
   --button-height: 64px; /* h-12 */
   --button-margin: 32px; /* my-4 */
@@ -106,8 +107,9 @@ thead {
 
 .bg-transparent-pattern {
   background-color: #fff;
-  background-image: linear-gradient(45deg, #ccc 25%, transparent 25%), linear-gradient(-45deg, #ccc 25%, transparent 25%),
-    linear-gradient(45deg, transparent 75%, #ccc 75%), linear-gradient(-45deg, transparent 75%, #ccc 75%);
+  background-image:
+    linear-gradient(45deg, #ccc 25%, transparent 25%), linear-gradient(-45deg, #ccc 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #ccc 75%),
+    linear-gradient(-45deg, transparent 75%, #ccc 75%);
   background-size: 20px 20px;
   background-position:
     0 0,
