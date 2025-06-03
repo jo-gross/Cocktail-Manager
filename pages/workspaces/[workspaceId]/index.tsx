@@ -7,24 +7,23 @@ import CocktailRecipeCardItem, { CocktailRecipeOverviewItemRef } from '../../../
 import { CocktailCard, Setting } from '@generated/prisma/client';
 import { useRouter } from 'next/router';
 import { ModalContext } from '@lib/context/ModalContextProvider';
-import { SearchModal } from '@components/modals/SearchModal';
+import { SearchModal, SearchModalRef } from '@components/modals/SearchModal';
 import { Loading } from '@components/Loading';
 import { alertService } from '@lib/alertService';
 import ThemeChanger from '../../../components/ThemeChanger';
 import Head from 'next/head';
 import { UserContext } from '@lib/context/UserContextProvider';
-import SearchPage from './search';
 import '../../../lib/DateUtils';
 import { addCocktailToStatistic, changeQueueProcess, removeCocktailFromQueue } from '@lib/network/cocktailTracking';
 import { CocktailDetailModal } from '@components/modals/CocktailDetailModal';
 import _ from 'lodash';
 import { FaArrowTurnDown, FaArrowTurnUp } from 'react-icons/fa6';
 import '../../../lib/ArrayUtils';
-import { CocktailRecipeFull } from '../../../models/CocktailRecipeFull';
 import { CgArrowsExpandUpLeft } from 'react-icons/cg';
 import { PageCenter } from '@components/layout/PageCenter';
+import { NextPageWithPullToRefresh } from '../../../types/next';
 
-export default function OverviewPage() {
+const OverviewPage: NextPageWithPullToRefresh = () => {
   const modalContext = useContext(ModalContext);
   const userContext = useContext(UserContext);
   const router = useRouter();
@@ -49,7 +48,7 @@ export default function OverviewPage() {
   const [loadingCards, setLoadingCards] = useState(true);
   const [loadingGroups, setLoadingGroups] = useState(false);
 
-  const [selectedCocktail, setSelectedCocktail] = useState<CocktailRecipeFull | string | undefined>(undefined);
+  const [selectedCocktail, setSelectedCocktail] = useState<string | undefined>(undefined);
 
   // Search modal shortcut (Shift + F)
   useEffect(() => {
@@ -91,7 +90,7 @@ export default function OverviewPage() {
   const [selectedCardId, setSelectedCardId] = useState<string | undefined>(cocktailCards.length > 0 ? cocktailCards[0].id : undefined);
   const [selectedCard, setSelectedCard] = useState<CocktailCardFull | undefined>(cocktailCards.length > 0 ? cocktailCards[0] : undefined);
 
-  useEffect(() => {
+  const fetchSelectedCard = useCallback(() => {
     if (selectedCardId != undefined && selectedCardId != 'search') {
       setLoadingGroups(true);
       fetch(`/api/workspaces/${workspaceId}/cards/` + selectedCardId)
@@ -111,6 +110,10 @@ export default function OverviewPage() {
         .finally(() => setLoadingGroups(false));
     }
   }, [selectedCardId, workspaceId]);
+
+  useEffect(() => {
+    fetchSelectedCard();
+  }, [fetchSelectedCard]);
 
   const sortCards = useCallback((a: CocktailCard, b: CocktailCard) => {
     const today = new Date().toISOString().slice(0, 10);
@@ -195,7 +198,21 @@ export default function OverviewPage() {
     setShowSettingsAtBottom(userContext.user?.settings?.find((s) => s.setting == Setting.showSettingsAtBottom)?.value == 'true');
   }, [userContext.user?.settings]);
 
+  // ========================
+  // Clock
+  // ========================
+
   const [currentTime, setCurrentTime] = useState(new Date());
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 10 * 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // ========================
+  // Queue
+  // ========================
 
   const refreshQueue = useCallback(() => {
     fetch(`/api/workspaces/${workspaceId}/queue?timestamp=${new Date().toISOString()}`)
@@ -213,13 +230,6 @@ export default function OverviewPage() {
       })
       .finally(() => {});
   }, [workspaceId]);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 10 * 1000);
-    return () => clearInterval(interval);
-  }, []);
 
   interface CocktailQueueItem {
     queueItemId: string;
@@ -367,6 +377,23 @@ export default function OverviewPage() {
   useEffect(() => {
     triggerAllCocktailCardRefresh();
   }, [lessItems]);
+
+  const searchPageSearchRef = useRef<SearchModalRef>(null);
+  const selectedCocktailItemCardRef = useRef<CocktailRecipeOverviewItemRef>(null);
+
+  OverviewPage.pullToRefresh = async () => {
+    refreshQueue();
+    if (selectedCardId != 'search' && selectedCardId != undefined) {
+      fetchSelectedCard();
+    } else {
+      if (searchPageSearchRef.current) {
+        await searchPageSearchRef.current.refresh(selectedCocktail);
+      }
+      if (selectedCocktailItemCardRef.current) {
+        selectedCocktailItemCardRef.current.refresh();
+      }
+    }
+  };
 
   function renderCocktailQueueItem(cocktailQueueItem: GroupedItem, index: number) {
     return (
@@ -658,18 +685,40 @@ export default function OverviewPage() {
 
           <main className={`order-1 col-span-5 flex w-full flex-col space-y-2 overflow-y-auto rounded-xl lg:col-span-6 xl:col-span-5`}>
             {selectedCardId == 'search' || selectedCardId == undefined ? (
-              <SearchPage
-                showImage={showImage}
-                showTags={showTags}
-                showStatisticActions={showStatisticActions}
-                showRating={showRating}
-                showNotes={showNotes}
-                showDescription={showDescription}
-                selectedCocktail={selectedCocktail}
-                setSelectedCocktail={setSelectedCocktail}
-                showTime={showTime}
-                currentTime={currentTime}
-              />
+              <div className={'flex flex-col-reverse gap-2 md:flex-row'}>
+                <div className={'card w-full flex-1'}>
+                  <div className={`card-body`}>
+                    <SearchModal
+                      ref={searchPageSearchRef}
+                      onCocktailSelectedObject={(cocktail) => setSelectedCocktail(cocktail.id)}
+                      selectionLabel={'Ansehen'}
+                      showRecipe={false}
+                      customWidthClassName={'w-full'}
+                      notAsModal={true}
+                    />
+                  </div>
+                </div>
+                <div className={'h-min w-full flex-1'}>
+                  {showTime && !showStatisticActions ? <div className={'w-full pb-2 text-center'}>{currentTime?.toFormatDateTimeShort()} Uhr</div> : <></>}
+
+                  {selectedCocktail ? (
+                    <CocktailRecipeCardItem
+                      ref={selectedCocktailItemCardRef}
+                      cocktailRecipe={selectedCocktail}
+                      showImage={showImage}
+                      showDetailsOnClick={true}
+                      showPrice={true}
+                      showDescription={showDescription}
+                      showNotes={showNotes}
+                      showTags={showTags}
+                      showStatisticActions={showStatisticActions}
+                      showRating={showRating}
+                    />
+                  ) : (
+                    <></>
+                  )}
+                </div>
+              </div>
             ) : (
               <div>
                 {showTime && !showStatisticActions ? <div className={'pb-2'}>{timeComponent}</div> : <></>}
@@ -1109,4 +1158,6 @@ export default function OverviewPage() {
       </div>
     </>
   );
-}
+};
+
+export default OverviewPage;

@@ -9,10 +9,18 @@ import { GlobalModal } from '@components/modals/GlobalModal';
 import Head from 'next/head';
 import ThemeBoundary from '../components/layout/ThemeBoundary';
 import { RoutingContextProvider } from '@lib/context/RoutingContextProvider';
+import PullToRefresh from '@components/PullToRefresh';
+import { NextPageWithPullToRefresh } from '../types/next';
 
-const App = ({ Component, pageProps: { session, ...pageProps } }: AppProps) => {
+export type AppPropsWithPullToRefresh = AppProps & {
+  Component: NextPageWithPullToRefresh;
+};
+
+const App = ({ Component, pageProps: { session, ...pageProps } }: AppPropsWithPullToRefresh) => {
   const [modalContentStack, setModalContentStack] = useState<ReactNode[]>([]);
   const [modalHideCloseButton, setModalHideCloseButton] = useState<boolean[]>([]);
+
+  const customRefresh = Component.pullToRefresh;
 
   const [, forceUpdate] = useReducer((x) => x + 1, 0);
 
@@ -80,7 +88,9 @@ const App = ({ Component, pageProps: { session, ...pageProps } }: AppProps) => {
                     ) : (
                       <></>
                     )}
-                    <Component {...pageProps} />
+                    <PullToRefresh onRefresh={customRefresh}>
+                      <Component {...pageProps} />
+                    </PullToRefresh>
                   </>
                 </ThemeBoundary>
               </GlobalModal>

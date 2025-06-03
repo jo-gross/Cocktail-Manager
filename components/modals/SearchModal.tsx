@@ -1,5 +1,5 @@
 import { BsSearch } from 'react-icons/bs';
-import React, { useCallback, useContext, useEffect, useRef, useState } from 'react';
+import React, { forwardRef, useCallback, useContext, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { CocktailRecipeFull } from '../../models/CocktailRecipeFull';
 import { Loading } from '../Loading';
 import { ModalContext } from '@lib/context/ModalContextProvider';
@@ -16,10 +16,14 @@ interface SearchModalProps {
   showRecipe?: boolean;
   showStatisticActions?: boolean;
   customWidthClassName?: string;
-  asFitOnScreen?: boolean;
+  notAsModal?: boolean;
 }
 
-export function SearchModal(props: SearchModalProps) {
+export type SearchModalRef = {
+  refresh: (selectedCocktailId?: string) => Promise<void>;
+};
+
+export const SearchModal = forwardRef<SearchModalRef, SearchModalProps>((props, ref) => {
   const router = useRouter();
   const workspaceId = router.query.workspaceId as string | undefined;
   const modalContext = useContext(ModalContext);
@@ -33,7 +37,7 @@ export function SearchModal(props: SearchModalProps) {
   const controllerRef = useRef<AbortController>(new AbortController());
 
   const fetchCocktails = useCallback(
-    (search: string) => {
+    async (search: string) => {
       if (!workspaceId) return;
       controllerRef.current.abort(); // Vorherige Anfrage abbrechen
       const newAbortController = new AbortController();
@@ -72,8 +76,24 @@ export function SearchModal(props: SearchModalProps) {
 
   useEffect(() => {
     if (workspaceId == undefined) return;
-    fetchCocktails('');
+    fetchCocktails('').then();
   }, [fetchCocktails, workspaceId]);
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      refresh: async (selectedCocktailId) => {
+        await fetchCocktails(search);
+        if (selectedCocktailId) {
+          const selectedCocktail = cocktails.find((c) => c.id === selectedCocktailId);
+          if (selectedCocktail && props.onCocktailSelectedObject) {
+            props.onCocktailSelectedObject(selectedCocktail);
+          }
+        }
+      },
+    }),
+    [cocktails, fetchCocktails, props, search],
+  );
 
   const renderCocktailCard = (cocktail: CocktailRecipeFull, index: number, isArchived: boolean, openCard: boolean = false) => (
     <div
@@ -163,27 +183,29 @@ export function SearchModal(props: SearchModalProps) {
             className={'input join-item input-bordered w-full'}
             value={search}
             autoFocus={true}
-            onChange={(e) => {
+            onChange={async (e) => {
               setSearch(e.target.value);
               if (e.target.value.trim().length != 0) {
-                fetchCocktails(e.target.value);
+                await fetchCocktails(e.target.value);
               }
             }}
           />
-          <span
-            className={'btn btn-square btn-outline btn-primary join-item'}
-            onClick={() => {
-              fetchCocktails(search);
+          <button
+            type={'button'}
+            disabled={isLoading}
+            className={`btn ${isLoading ? 'w-fit px-2' : 'btn-square'} btn-outline btn-primary join-item`}
+            onClick={async () => {
+              await fetchCocktails(search);
             }}
           >
+            {isLoading ? <span className={'loading loading-spinner loading-xs'}></span> : <></>}
             <BsSearch />
-          </span>
+          </button>
         </div>
       </div>
       <div
-        className={`${props.asFitOnScreen ? (process.env.NODE_ENV == 'development' || process.env.DEPLOYMENT == 'staging' ? 'h-[calc(100vh-12rem)]' : 'h-[calc(100vh-9.5rem)]') : ''} flex flex-col gap-1 overflow-y-auto`}
+        className={`${props.notAsModal ? (process.env.NODE_ENV == 'development' || process.env.DEPLOYMENT == 'staging' ? 'h-[calc(100vh-12rem)]' : 'h-[calc(100vh-9.5rem)]') : ''} flex flex-col gap-1 overflow-y-auto`}
       >
-        {/*<ScrollShadowWrapper className={`flex h-screen flex-col gap-1`}>*/}
         {cocktails.length == 0 ? (
           search != '' ? (
             <div>Keine Einträge gefunden</div>
@@ -210,8 +232,9 @@ export function SearchModal(props: SearchModalProps) {
           </>
         )}
         {isLoading ? <Loading /> : <></>}
-        {/*</ScrollShadowWrapper>*/}
       </div>
     </div>
   );
-}
+});
+
+SearchModal.displayName = 'SearchModal';

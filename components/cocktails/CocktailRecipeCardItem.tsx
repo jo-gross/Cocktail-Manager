@@ -52,6 +52,7 @@ const CocktailRecipeCardItem = forwardRef<CocktailRecipeOverviewItemRef, Cocktai
       fetchCocktail(workspaceId, props.cocktailRecipe, setLoadedCocktailRecipe, setCocktailRecipeLoading);
       fetchCocktailRatings(workspaceId, props.cocktailRecipe, setCocktailRatings, setCocktailRatingsLoading, setCocktailRatingsError);
     } else {
+      fetchCocktail(workspaceId, props.cocktailRecipe.id, setLoadedCocktailRecipe, setCocktailRecipeLoading);
       fetchCocktailRatings(workspaceId, props.cocktailRecipe.id, setCocktailRatings, setCocktailRatingsLoading, setCocktailRatingsError);
     }
   }, [workspaceId, props.cocktailRecipe]);

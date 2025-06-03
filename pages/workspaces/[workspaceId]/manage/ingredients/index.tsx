@@ -14,8 +14,9 @@ import { ModalContext } from '@lib/context/ModalContextProvider';
 import { fetchIngredients } from '@lib/network/ingredients';
 import ImageModal from '../../../../../components/modals/ImageModal';
 import '../../../../../lib/NumberUtils';
+import { NextPageWithPullToRefresh } from '../../../../../types/next';
 
-export default function IngredientsOverviewPage() {
+const IngredientsOverviewPage: NextPageWithPullToRefresh = () => {
   const router = useRouter();
   const { workspaceId } = router.query;
 
@@ -23,13 +24,17 @@ export default function IngredientsOverviewPage() {
   const modalContext = useContext(ModalContext);
 
   const [ingredients, setIngredients] = useState<IngredientModel[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   const [filterString, setFilterString] = useState('');
 
   useEffect(() => {
     fetchIngredients(workspaceId, setIngredients, setLoading);
   }, [workspaceId]);
+
+  IngredientsOverviewPage.pullToRefresh = () => {
+    fetchIngredients(workspaceId, setIngredients, setLoading);
+  };
 
   return (
     <ManageEntityLayout
@@ -189,4 +194,6 @@ export default function IngredientsOverviewPage() {
       </div>
     </ManageEntityLayout>
   );
-}
+};
+
+export default IngredientsOverviewPage;

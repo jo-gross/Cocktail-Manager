@@ -9,8 +9,9 @@ import { CocktailCalculationOverview } from '../../../../../models/CocktailCalcu
 import { Role } from '@generated/prisma/client';
 import { FaPlus } from 'react-icons/fa';
 import ListSearchField from '../../../../../components/ListSearchField';
+import { NextPageWithPullToRefresh } from '../../../../../types/next';
 
-export default function CocktailCalculationOverviewPage() {
+const CocktailCalculationOverviewPage: NextPageWithPullToRefresh = () => {
   const router = useRouter();
   const { workspaceId } = router.query;
 
@@ -44,6 +45,10 @@ export default function CocktailCalculationOverviewPage() {
   useEffect(() => {
     refreshCocktailCalculations();
   }, [refreshCocktailCalculations]);
+
+  CocktailCalculationOverviewPage.pullToRefresh = () => {
+    refreshCocktailCalculations();
+  };
 
   return (
     <ManageEntityLayout
@@ -116,4 +121,6 @@ export default function CocktailCalculationOverviewPage() {
       </div>
     </ManageEntityLayout>
   );
-}
+};
+
+export default CocktailCalculationOverviewPage;

@@ -12,9 +12,10 @@ import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import { UserContext } from '@lib/context/UserContextProvider';
 import { withPagePermission } from '@middleware/ui/withPagePermission';
+import { NextPageWithPullToRefresh } from '../../../../../types/next';
 import MonitorFormat = $Enums.MonitorFormat;
 
-function ManageMonitorPage() {
+const ManageMonitorPage: NextPageWithPullToRefresh = () => {
   const router = useRouter();
   const { workspaceId } = router.query;
   const modalContext = useContext(ModalContext);
@@ -89,6 +90,10 @@ function ManageMonitorPage() {
   useEffect(() => {
     fetchSignage();
   }, [fetchSignage]);
+
+  ManageMonitorPage.pullToRefresh = () => {
+    fetchSignage();
+  };
 
   return (
     <ManageEntityLayout title={'Monitor'} backLink={`/workspaces/${workspaceId}/manage`}>
@@ -246,6 +251,6 @@ function ManageMonitorPage() {
       )}
     </ManageEntityLayout>
   );
-}
+};
 
 export default withPagePermission(['MANAGER'], ManageMonitorPage, '/workspaces/[workspaceId]/manage');

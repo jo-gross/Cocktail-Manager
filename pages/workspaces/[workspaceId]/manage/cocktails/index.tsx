@@ -15,8 +15,10 @@ import ImageModal from '../../../../../components/modals/ImageModal';
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import _ from 'lodash';
 import { cocktailFilter } from '@lib/cocktailFilter';
+import { NextPageWithPullToRefresh } from '../../../../../types/next';
+import '../../../../../lib/NumberUtils';
 
-export default function CocktailsOverviewPage() {
+const CocktailsOverviewPage: NextPageWithPullToRefresh = () => {
   const router = useRouter();
   const { workspaceId } = router.query;
 
@@ -55,6 +57,10 @@ export default function CocktailsOverviewPage() {
   useEffect(() => {
     refreshCocktails();
   }, [refreshCocktails]);
+
+  CocktailsOverviewPage.pullToRefresh = () => {
+    refreshCocktails();
+  };
 
   const renderTableRows = (recipes: CocktailRecipeModel[], isArchived: boolean) => {
     return recipes
@@ -172,4 +178,6 @@ export default function CocktailsOverviewPage() {
       </div>
     </ManageEntityLayout>
   );
-}
+};
+
+export default CocktailsOverviewPage;

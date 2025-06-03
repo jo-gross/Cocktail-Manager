@@ -15,8 +15,9 @@ import { fetchGlasses } from '@lib/network/glasses';
 import ImageModal from '../../../../../components/modals/ImageModal';
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import '../../../../../lib/NumberUtils';
+import { NextPageWithPullToRefresh } from '../../../../../types/next';
 
-export default function ManageGlassesOverviewPage() {
+const ManageGlassesOverviewPage: NextPageWithPullToRefresh = () => {
   const router = useRouter();
   const { workspaceId } = router.query;
 
@@ -31,6 +32,10 @@ export default function ManageGlassesOverviewPage() {
   useEffect(() => {
     fetchGlasses(workspaceId, setGlasses, setLoading);
   }, [workspaceId]);
+
+  ManageGlassesOverviewPage.pullToRefresh = () => {
+    fetchGlasses(workspaceId, setGlasses, setLoading);
+  };
 
   return (
     <ManageEntityLayout
@@ -115,4 +120,6 @@ export default function ManageGlassesOverviewPage() {
       </div>
     </ManageEntityLayout>
   );
-}
+};
+
+export default ManageGlassesOverviewPage;

@@ -19,7 +19,9 @@
       "@generated/*": ["generated/*"],
       "@middleware/*": ["middleware/*"],
       "@components/*": ["components/*"],
-      "@lib/*": ["lib/*"]
+      "@lib/*": [
+        "lib/*"
+      ]
     },
     "typeRoots": ["./node_modules/@types", "./types"]
   },

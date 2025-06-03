@@ -2,15 +2,16 @@ import { ManageEntityLayout } from '@components/layout/ManageEntityLayout';
 import { FaPlus } from 'react-icons/fa';
 import Link from 'next/link';
 import { CocktailCardFull } from '../../../../../models/CocktailCardFull';
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { Loading } from '@components/Loading';
 import { useRouter } from 'next/router';
 import { alertService } from '@lib/alertService';
 import { UserContext } from '@lib/context/UserContextProvider';
 import { Role } from '@generated/prisma/client';
 import CardOverviewItem from '../../../../../components/cards/CardOverviewItem';
+import { NextPageWithPullToRefresh } from '../../../../../types/next';
 
-export default function CardsOverviewPage() {
+const CardsOverviewPage: NextPageWithPullToRefresh = () => {
   const router = useRouter();
   const { workspaceId } = router.query;
 
@@ -19,7 +20,7 @@ export default function CardsOverviewPage() {
   const [cards, setCards] = useState<CocktailCardFull[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const fetchCards = useCallback(() => {
     if (!workspaceId) return;
     setLoading(true);
     fetch(`/api/workspaces/${workspaceId}/cards?withArchived=true`)
@@ -40,6 +41,14 @@ export default function CardsOverviewPage() {
         setLoading(false);
       });
   }, [workspaceId]);
+
+  useEffect(() => {
+    fetchCards();
+  }, [fetchCards]);
+
+  CardsOverviewPage.pullToRefresh = () => {
+    fetchCards();
+  };
 
   return (
     <ManageEntityLayout
@@ -68,7 +77,7 @@ export default function CardsOverviewPage() {
               <CardOverviewItem key={'card-' + card.id} card={card} workspaceId={workspaceId as string} />
             ))}
 
-          <div className={'divider col-span-full'}>Achiviert</div>
+          <div className={'divider col-span-full'}>Archiviert</div>
           {cards
             .sort((a, b) => a.name.localeCompare(b.name))
             .filter((card) => card.archived)
@@ -79,4 +88,6 @@ export default function CardsOverviewPage() {
       )}
     </ManageEntityLayout>
   );
-}
+};
+
+export default CardsOverviewPage;
