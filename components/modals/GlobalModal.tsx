@@ -2,6 +2,8 @@ import React, { useContext, useEffect } from 'react';
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import { FaArrowLeft, FaTimes } from 'react-icons/fa';
 import { AlertsContainer } from '../layout/AlertBoundary/AlertsContainer';
+import { NetworkIndicatorContext } from '@lib/context/NetworkIndicatorContextProvider';
+import NetworkOfflineIndicator from '@components/NetworkOfflineIndicator';
 
 interface GlobalModalProps {
   children: React.ReactNode;
@@ -9,6 +11,7 @@ interface GlobalModalProps {
 
 export function GlobalModal(props: GlobalModalProps) {
   const modalContext = useContext(ModalContext);
+  const networkContext = useContext(NetworkIndicatorContext);
 
   useEffect(() => {
     const handleEsc = (event: any) => {
@@ -27,6 +30,7 @@ export function GlobalModal(props: GlobalModalProps) {
     <div>
       <div className={modalContext.content.length >= 1 ? 'print:hidden' : ''}>{props.children}</div>
       <dialog id="globalModal" className="modal">
+        <NetworkOfflineIndicator />
         <div className={'fixed bottom-2 left-1/2 z-50 w-full max-w-fit -translate-x-1/2 overflow-hidden print:hidden'}>
           {/*<div className="fixed bottom-2 left-2 right-2 z-50 flex flex-col items-center justify-center overflow-hidden print:hidden">*/}
           <AlertsContainer />

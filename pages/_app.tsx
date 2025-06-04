@@ -1,6 +1,6 @@
 import { AppProps } from 'next/app';
 import '../styles/global.css';
-import React, { ReactNode, useEffect, useReducer, useState } from 'react';
+import React, { ReactNode, useCallback, useEffect, useReducer, useState } from 'react';
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import { AlertBoundary } from '@components/layout/AlertBoundary';
 import { SessionProvider } from 'next-auth/react';
@@ -29,8 +29,29 @@ const App = ({ Component, pageProps: { session, ...pageProps } }: AppPropsWithPu
 
   const [theme, setTheme] = useState<'dark' | 'auto' | 'light'>('auto');
 
+  // TODO Offline Detector not working properly
   const { online } = useNetworkState();
   const [onlineStatus, setOnlineStatus] = useState<boolean>(online ?? true);
+
+  const updateStatus = useCallback(() => {
+    setOnlineStatus(navigator.onLine);
+  }, []);
+
+  useEffect(() => {
+    // Nur im Browser registrieren
+    if (typeof window === 'undefined') return;
+
+    window.addEventListener('online', updateStatus);
+    window.addEventListener('offline', updateStatus);
+
+    // Status initial setzen (falls sich der Status zwischen SSR und Hydration geändert hat)
+    updateStatus();
+
+    return () => {
+      window.removeEventListener('online', updateStatus);
+      window.removeEventListener('offline', updateStatus);
+    };
+  }, [updateStatus]);
 
   useEffect(() => {
     if (online != true) {
@@ -42,7 +63,7 @@ const App = ({ Component, pageProps: { session, ...pageProps } }: AppPropsWithPu
       }
       setOnlineStatus(true);
     }
-  }, [online, onlineStatus]);
+  }, [online]);
 
   return (
     <SessionProvider session={session}>
