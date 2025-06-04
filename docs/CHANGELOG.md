@@ -1,3 +1,16 @@
+# [1.15.0](https://github.com/jo-gross/Cocktail-Manager/compare/v1.14.0...v1.15.0) (2025-06-04)
+
+
+### Bug Fixes
+
+* Prices always are shown with 2 decimal places (except the CocktailDetail dialog, on zero as decimal place) ([#664](https://github.com/jo-gross/Cocktail-Manager/issues/664)) ([b2d037b](https://github.com/jo-gross/Cocktail-Manager/commit/b2d037b16400c227b3329504b063138779f70a06))
+
+
+### Features
+
+* Added pull to refresh for mobile devices ([#677](https://github.com/jo-gross/Cocktail-Manager/issues/677)) ([7c81f6e](https://github.com/jo-gross/Cocktail-Manager/commit/7c81f6ec5140eb4081e2666989e9dd71e0bd6b3b))
+* improved the cocktail queue and search view scroll behavior, removed queueAsOverlay option ([#675](https://github.com/jo-gross/Cocktail-Manager/issues/675)) ([e6a6d4a](https://github.com/jo-gross/Cocktail-Manager/commit/e6a6d4a537d17b6871eb4877455032c86f410c08))
+
 # [1.14.0](https://github.com/jo-gross/Cocktail-Manager/compare/v1.13.1...v1.14.0) (2025-03-16)
 
 
