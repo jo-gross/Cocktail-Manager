@@ -12,7 +12,6 @@ import { RoutingContextProvider } from '@lib/context/RoutingContextProvider';
 import PullToRefresh from '@components/PullToRefresh';
 import { NextPageWithPullToRefresh } from '../types/next';
 import { NetworkIndicatorContext } from '@lib/context/NetworkIndicatorContextProvider';
-import { useNetworkState } from 'react-use';
 import { alertService } from '@lib/alertService';
 
 export type AppPropsWithPullToRefresh = AppProps & {
@@ -30,40 +29,37 @@ const App = ({ Component, pageProps: { session, ...pageProps } }: AppPropsWithPu
   const [theme, setTheme] = useState<'dark' | 'auto' | 'light'>('auto');
 
   // TODO Offline Detector not working properly
-  const { online } = useNetworkState();
-  const [onlineStatus, setOnlineStatus] = useState<boolean>(online ?? true);
+  const [onlineStatus, setOnlineStatus] = useState<boolean>(true);
 
   const updateStatus = useCallback(() => {
-    setOnlineStatus(navigator.onLine);
-  }, []);
+    const online = navigator.onLine;
+
+    if (online) {
+      if (!onlineStatus) {
+        alertService.info('Du bist wieder online!');
+      }
+    } else {
+      if (onlineStatus) {
+        alertService.error('Du bist offline! Einige Funktionen sind nicht verfügbar.');
+      }
+    }
+    setOnlineStatus(online);
+
+    console.log(`Network status updated: ${navigator.onLine ? 'Online' : 'Offline'}`);
+  }, [onlineStatus]);
 
   useEffect(() => {
-    // Nur im Browser registrieren
     if (typeof window === 'undefined') return;
 
+    console.log('Registering network status listeners');
     window.addEventListener('online', updateStatus);
     window.addEventListener('offline', updateStatus);
-
-    // Status initial setzen (falls sich der Status zwischen SSR und Hydration geändert hat)
-    updateStatus();
 
     return () => {
       window.removeEventListener('online', updateStatus);
       window.removeEventListener('offline', updateStatus);
     };
   }, [updateStatus]);
-
-  useEffect(() => {
-    if (online != true) {
-      setOnlineStatus(false);
-      alertService.error('Du bist offline! Einige Funktionen sind nicht verfügbar.');
-    } else {
-      if (!onlineStatus) {
-        alertService.info('Du bist wieder online!');
-      }
-      setOnlineStatus(true);
-    }
-  }, [online]);
 
   return (
     <SessionProvider session={session}>
