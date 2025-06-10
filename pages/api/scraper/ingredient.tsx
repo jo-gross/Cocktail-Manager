@@ -4,6 +4,8 @@ import { NextApiRequest, NextApiResponse } from 'next';
 
 // @ts-ignore
 import JSSoup from 'jssoup';
+import { withAuthentication } from '@middleware/api/authenticationMiddleware';
+import { User } from '@generated/prisma';
 
 interface ResponseBody {
   name: string;
@@ -12,8 +14,9 @@ interface ResponseBody {
   volume: number;
 }
 
-export default async function handle(req: NextApiRequest, res: NextApiResponse) {
+export default withAuthentication(async (req: NextApiRequest, res: NextApiResponse, user: User) => {
   if (req.method === 'GET') {
+    console.log(`User '${user.id}' requested scraping for URL: ${req.query.url}`);
     if (req.query?.url?.includes('conalco.de')) {
       console.debug(req.query.url);
       const response = await fetch(req.query.url as string);
@@ -22,7 +25,10 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       const body = await response.text();
       const soup = new JSSoup(body);
 
-      const imageResponse = await fetch(soup.find('div', 'cms-element-image-gallery').contents[0].find('img').attrs.src).catch((error) => {
+      const imageTag = soup.find('div', { class: 'cms-element-image-gallery' })?.find('img');
+      const imageUrl = imageTag?.attrs?.src;
+
+      const imageResponse = await fetch(imageUrl).catch((error) => {
         console.log(error);
         return undefined;
       });
@@ -136,4 +142,4 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
   }
 
   return res.status(404).json({ message: 'URL not allowed' });
-}
+});
