@@ -1,3 +1,10 @@
+## [1.15.1](https://github.com/jo-gross/Cocktail-Manager/compare/v1.15.0...v1.15.1) (2025-06-10)
+
+
+### Bug Fixes
+
+* conalco.de import ([#685](https://github.com/jo-gross/Cocktail-Manager/issues/685)) ([18066cd](https://github.com/jo-gross/Cocktail-Manager/commit/18066cd83510c76a01862e29b2f405c73dca41cd))
+
 # [1.15.0](https://github.com/jo-gross/Cocktail-Manager/compare/v1.14.0...v1.15.0) (2025-06-04)
 
 
