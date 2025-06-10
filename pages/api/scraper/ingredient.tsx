@@ -16,8 +16,8 @@ interface ResponseBody {
 
 export default withAuthentication(async (req: NextApiRequest, res: NextApiResponse, user: User) => {
   if (req.method === 'GET') {
+    console.log(`User '${user.id}' requested scraping for URL: ${req.query.url}`);
     if (req.query?.url?.includes('conalco.de')) {
-      console.log(`User ${user.email} requested scraping for URL: ${req.query.url}`);
       console.debug(req.query.url);
       const response = await fetch(req.query.url as string);
       console.debug(response.status + ' ' + response.statusText);
