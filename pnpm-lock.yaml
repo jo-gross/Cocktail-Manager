@@ -18,11 +18,11 @@ importers:
         specifier: ^2.0.2
         version: 2.0.2
       chart.js:
-        specifier: 4.4.9
-        version: 4.4.9
+        specifier: 4.5.0
+        version: 4.5.0
       chartjs-plugin-datalabels:
         specifier: ^2.2.0
-        version: 2.2.0(chart.js@4.4.9)
+        version: 2.2.0(chart.js@4.5.0)
       classnames:
         specifier: ^2.5.1
         version: 2.5.1
@@ -79,7 +79,7 @@ importers:
         version: 18.3.1
       react-chartjs-2:
         specifier: 5.3.0
-        version: 5.3.0(chart.js@4.4.9)(react@18.3.1)
+        version: 5.3.0(chart.js@4.5.0)(react@18.3.1)
       react-device-detect:
         specifier: 2.2.3
         version: 2.2.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -1842,8 +1842,8 @@ packages:
   character-reference-invalid@2.0.1:
     resolution: {integrity: sha512-iBZ4F4wRbyORVsu0jPV7gXkOsGYjGHPmAyv+HiHG8gi5PtC9KI2j1+v8/tlibRvjoWX027ypmG/n0HtO5t7unw==}
 
-  chart.js@4.4.9:
-    resolution: {integrity: sha512-EyZ9wWKgpAU0fLJ43YAEIF8sr5F2W3LqbS40ZJyHIner2lY14ufqv2VMp69MAiZ2rpwxEUxEhIH/0U3xyRynxg==}
+  chart.js@4.5.0:
+    resolution: {integrity: sha512-aYeC/jDgSEx8SHWZvANYMioYMZ2KX02W6f6uVfyteuCGcadDLcYVHdfdygsTQkQ4TKn5lghoojAsPj5pu0SnvQ==}
     engines: {pnpm: '>=8'}
 
   chartjs-plugin-datalabels@2.2.0:
@@ -6840,13 +6840,13 @@ snapshots:
 
   character-reference-invalid@2.0.1: {}
 
-  chart.js@4.4.9:
+  chart.js@4.5.0:
     dependencies:
       '@kurkle/color': 0.3.4
 
-  chartjs-plugin-datalabels@2.2.0(chart.js@4.4.9):
+  chartjs-plugin-datalabels@2.2.0(chart.js@4.5.0):
     dependencies:
-      chart.js: 4.4.9
+      chart.js: 4.5.0
 
   chokidar@3.6.0:
     dependencies:
@@ -9144,9 +9144,9 @@ snapshots:
       minimist: 1.2.8
       strip-json-comments: 2.0.1
 
-  react-chartjs-2@5.3.0(chart.js@4.4.9)(react@18.3.1):
+  react-chartjs-2@5.3.0(chart.js@4.5.0)(react@18.3.1):
     dependencies:
-      chart.js: 4.4.9
+      chart.js: 4.5.0
       react: 18.3.1
 
   react-device-detect@2.2.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
