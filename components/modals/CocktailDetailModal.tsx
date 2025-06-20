@@ -22,6 +22,7 @@ import StatisticActions from '../StatisticActions';
 import { toInteger } from 'lodash';
 import { FaArrowRotateLeft } from 'react-icons/fa6';
 import '../../lib/NumberUtils';
+import { NetworkIndicatorContext } from '@lib/context/NetworkIndicatorContextProvider';
 
 interface CocktailDetailModalProps {
   cocktailId: string;
@@ -37,6 +38,7 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
   const workspaceId = router.query.workspaceId as string | undefined;
   const modalContext = useContext(ModalContext);
   const userContext = useContext(UserContext);
+  const networkContext = useContext(NetworkIndicatorContext);
 
   const [loading, setLoading] = useState(true);
   const [loadedCocktail, setLoadedCocktail] = useState<CocktailRecipeFull>();
@@ -85,7 +87,7 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                     {amountAdjustment != 100
                       ? ` ${(loadedCocktail.price * (amountAdjustment / 100) - loadedCocktail.price)
                           .formatPriceEfficent({ signDisplay: 'exceptZero' })
-                          .replace('-', '- ')
+                          .replace('-', '' + '- ')
                           .replace('+', '+ ')} € = ${(
                           loadedCocktail.price +
                           (loadedCocktail.price * (amountAdjustment / 100) - loadedCocktail.price)
@@ -108,9 +110,14 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
             <>
               {userContext.isUserPermitted(Role.MANAGER) && (
                 <Link href={`/workspaces/${workspaceId}/manage/cocktails/${loadedCocktail.id}`}>
-                  <div className={'btn btn-square btn-outline btn-secondary btn-sm'} onClick={() => modalContext.closeAllModals()}>
+                  <button
+                    type={'button'}
+                    disabled={!networkContext.isOnline}
+                    className={'btn btn-square btn-outline btn-secondary btn-sm'}
+                    onClick={() => modalContext.closeAllModals()}
+                  >
                     <FaPencilAlt />
-                  </div>
+                  </button>
                 </Link>
               )}
             </>
@@ -338,7 +345,12 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                   {ratingError ? (
                     <>
                       <div>Fehler beim Laden der Bewertungen</div>
-                      <button type={'button'} className={`btn btn-square btn-outline btn-sm`} disabled={ratingsLoading} onClick={refreshRatings}>
+                      <button
+                        type={'button'}
+                        className={`btn btn-square btn-outline btn-sm`}
+                        disabled={ratingsLoading || !networkContext.isOnline}
+                        onClick={refreshRatings}
+                      >
                         {ratingsLoading && <span className="loading loading-spinner"></span>}
                         <FaSyncAlt />
                       </button>
@@ -363,7 +375,7 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                         <button
                           type={'button'}
                           className={'btn btn-square btn-outline btn-info btn-sm print:hidden'}
-                          disabled={cocktailRatings.length === 0}
+                          disabled={cocktailRatings.length === 0 || !networkContext.isOnline}
                           onClick={() =>
                             modalContext.openModal(
                               <CocktailRatingsModal cocktailId={loadedCocktail.id} cocktailName={loadedCocktail.name} onUpdate={refreshRatings} />,
@@ -379,6 +391,7 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                       <button
                         type={'button'}
                         className={'btn btn-outline btn-sm print:hidden'}
+                        disabled={!networkContext.isOnline}
                         onClick={() =>
                           modalContext.openModal(
                             <AddCocktailRatingModal cocktailId={props.cocktailId} cocktailName={loadedCocktail.name} onCreated={refreshRatings} />,

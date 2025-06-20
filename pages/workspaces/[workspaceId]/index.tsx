@@ -22,10 +22,13 @@ import '../../../lib/ArrayUtils';
 import { CgArrowsExpandUpLeft } from 'react-icons/cg';
 import { PageCenter } from '@components/layout/PageCenter';
 import { NextPageWithPullToRefresh } from '../../../types/next';
+import { NetworkIndicatorContext } from '@lib/context/NetworkIndicatorContextProvider';
 
 const OverviewPage: NextPageWithPullToRefresh = () => {
   const modalContext = useContext(ModalContext);
   const userContext = useContext(UserContext);
+  const networkContext = useContext(NetworkIndicatorContext);
+
   const router = useRouter();
   const { workspaceId } = router.query;
 
@@ -72,6 +75,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
     setLoadingCards(true);
     fetch(`/api/workspaces/${workspaceId}/cards`)
       .then(async (response) => {
+        networkContext.updateOnlineStatus(true);
         const body = await response.json();
         if (response.ok) {
           setCocktailCards(body.data);
@@ -85,7 +89,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
         alertService.error('Fehler beim Laden der Karten');
       })
       .finally(() => setLoadingCards(false));
-  }, [userContext.user, workspaceId]);
+  }, [networkContext, userContext.user, workspaceId]);
 
   const [selectedCardId, setSelectedCardId] = useState<string | undefined>(cocktailCards.length > 0 ? cocktailCards[0].id : undefined);
   const [selectedCard, setSelectedCard] = useState<CocktailCardFull | undefined>(cocktailCards.length > 0 ? cocktailCards[0] : undefined);
@@ -95,6 +99,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
       setLoadingGroups(true);
       fetch(`/api/workspaces/${workspaceId}/cards/` + selectedCardId)
         .then(async (response) => {
+          networkContext.updateOnlineStatus(true);
           const body = await response.json();
           if (response.ok) {
             setSelectedCard(body.data);
@@ -109,7 +114,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
         })
         .finally(() => setLoadingGroups(false));
     }
-  }, [selectedCardId, workspaceId]);
+  }, [selectedCardId, workspaceId, networkContext]);
 
   useEffect(() => {
     fetchSelectedCard();
@@ -215,21 +220,27 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
   // ========================
 
   const refreshQueue = useCallback(() => {
-    fetch(`/api/workspaces/${workspaceId}/queue?timestamp=${new Date().toISOString()}`)
-      .then(async (response) => {
-        const body = await response.json();
-        if (response.ok) {
-          setCocktailQueue(body.data);
-          console.debug('queue', body.data);
-        } else {
-          console.error('CocktailCardPage -> fetchQueue', response);
-        }
-      })
-      .catch((error) => {
-        console.error('CocktailCardPage -> fetchQueue', error);
-      })
-      .finally(() => {});
-  }, [workspaceId]);
+    try {
+      fetch(`/api/workspaces/${workspaceId}/queue?timestamp=${new Date().toISOString()}`)
+        .then(async (response) => {
+          networkContext.updateOnlineStatus(true);
+          const body = await response.json();
+          if (response.ok) {
+            setCocktailQueue(body.data);
+            console.debug('queue', body.data);
+          } else {
+            console.error('CocktailCardPage -> fetchQueue', response);
+          }
+        })
+        .catch((error) => {
+          console.error('CocktailCardPage -> fetchQueue', error);
+          networkContext.updateOnlineStatus(false);
+        })
+        .finally(() => {});
+    } catch (e) {
+      networkContext.updateOnlineStatus(false);
+    }
+  }, [networkContext, workspaceId]);
 
   interface CocktailQueueItem {
     queueItemId: string;
@@ -455,7 +466,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
             {(cocktailQueueItem.inProgress || showFastQueueCheck) && (
               <button
                 className={`btn btn-success join-item btn-sm ${showFastQueueCheck && !cocktailQueueItem.inProgress ? '' : 'col-span-2'}`}
-                disabled={!!submittingQueue.find((i) => i.cocktailId == cocktailQueueItem.cocktailId)}
+                disabled={!!submittingQueue.find((i) => i.cocktailId == cocktailQueueItem.cocktailId) || !networkContext.isOnline}
                 onClick={() =>
                   addCocktailToStatistic({
                     workspaceId: router.query.workspaceId as string,
@@ -484,7 +495,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
             {!cocktailQueueItem.inProgress && (
               <button
                 className={`btn ${showFastQueueCheck ? '' : 'col-span-2'} btn-info join-item btn-sm`}
-                disabled={!!submittingQueue.find((i) => i.cocktailId == cocktailQueueItem.cocktailId)}
+                disabled={!!submittingQueue.find((i) => i.cocktailId == cocktailQueueItem.cocktailId) || !networkContext.isOnline}
                 onClick={() =>
                   changeQueueProcess({
                     workspaceId: router.query.workspaceId as string,
@@ -512,7 +523,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
             {cocktailQueueItem.inProgress ? (
               <button
                 className={'btn btn-error join-item btn-sm'}
-                disabled={!!submittingQueue.find((i) => i.cocktailId == cocktailQueueItem.cocktailId)}
+                disabled={!!submittingQueue.find((i) => i.cocktailId == cocktailQueueItem.cocktailId) || !networkContext.isOnline}
                 onClick={() =>
                   changeQueueProcess({
                     workspaceId: router.query.workspaceId as string,
@@ -539,7 +550,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
             ) : (
               <button
                 className={'btn btn-error join-item btn-sm'}
-                disabled={!!submittingQueue.find((i) => i.cocktailId == cocktailQueueItem.cocktailId)}
+                disabled={!!submittingQueue.find((i) => i.cocktailId == cocktailQueueItem.cocktailId) || !networkContext.isOnline}
                 onClick={() =>
                   removeCocktailFromQueue({
                     workspaceId: router.query.workspaceId as string,
