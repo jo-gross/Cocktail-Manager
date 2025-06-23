@@ -163,8 +163,8 @@ importers:
         specifier: 5.0.0
         version: 5.0.0(prettier@3.6.0)
       prettier-plugin-tailwindcss:
-        specifier: 0.6.12
-        version: 0.6.12(prettier@3.6.0)
+        specifier: 0.6.13
+        version: 0.6.13(prettier@3.6.0)
       prisma:
         specifier: 6.9.0
         version: 6.9.0(typescript@5.8.3)
@@ -3899,8 +3899,8 @@ packages:
     peerDependencies:
       prettier: '>=2 || >=3'
 
-  prettier-plugin-tailwindcss@0.6.12:
-    resolution: {integrity: sha512-OuTQKoqNwV7RnxTPwXWzOFXy6Jc4z8oeRZYGuMpRyG3WbuR3jjXdQFK8qFBMBx8UHWdHrddARz2fgUenild6aw==}
+  prettier-plugin-tailwindcss@0.6.13:
+    resolution: {integrity: sha512-uQ0asli1+ic8xrrSmIOaElDu0FacR4x69GynTh2oZjFY10JUt6EEumTQl5tB4fMeD6I1naKd+4rXQQ7esT2i1g==}
     engines: {node: '>=14.21.3'}
     peerDependencies:
       '@ianvs/prettier-plugin-sort-imports': '*'
@@ -9103,7 +9103,7 @@ snapshots:
       '@prisma/prisma-schema-wasm': 4.17.0-26.6b0aef69b7cdfc787f822ecd7cdc76d5f1991584
       prettier: 3.6.0
 
-  prettier-plugin-tailwindcss@0.6.12(prettier@3.6.0):
+  prettier-plugin-tailwindcss@0.6.13(prettier@3.6.0):
     dependencies:
       prettier: 3.6.0
 
