@@ -157,14 +157,14 @@ importers:
         specifier: 8.5.5
         version: 8.5.5
       prettier:
-        specifier: 3.5.3
-        version: 3.5.3
+        specifier: 3.6.0
+        version: 3.6.0
       prettier-plugin-prisma:
         specifier: 5.0.0
-        version: 5.0.0(prettier@3.5.3)
+        version: 5.0.0(prettier@3.6.0)
       prettier-plugin-tailwindcss:
         specifier: 0.6.12
-        version: 0.6.12(prettier@3.5.3)
+        version: 0.6.12(prettier@3.6.0)
       prisma:
         specifier: 6.9.0
         version: 6.9.0(typescript@5.8.3)
@@ -3944,8 +3944,8 @@ packages:
       prettier-plugin-svelte:
         optional: true
 
-  prettier@3.5.3:
-    resolution: {integrity: sha512-QQtaxnoDJeAkDvDKWCLiwIXkTgRhwYDEQCghU9Z6q03iyek/rxRh/2lC3HB7P8sWT2xC/y5JDctPLBIGzHKbhw==}
+  prettier@3.6.0:
+    resolution: {integrity: sha512-ujSB9uXHJKzM/2GBuE0hBOUgC77CN3Bnpqa+g80bkv3T3A93wL/xlzDATHhnhkzifz/UE2SNOvmbTz5hSkDlHw==}
     engines: {node: '>=14'}
     hasBin: true
 
@@ -9082,16 +9082,16 @@ snapshots:
 
   prelude-ls@1.2.1: {}
 
-  prettier-plugin-prisma@5.0.0(prettier@3.5.3):
+  prettier-plugin-prisma@5.0.0(prettier@3.6.0):
     dependencies:
       '@prisma/prisma-schema-wasm': 4.17.0-26.6b0aef69b7cdfc787f822ecd7cdc76d5f1991584
-      prettier: 3.5.3
+      prettier: 3.6.0
 
-  prettier-plugin-tailwindcss@0.6.12(prettier@3.5.3):
+  prettier-plugin-tailwindcss@0.6.12(prettier@3.6.0):
     dependencies:
-      prettier: 3.5.3
+      prettier: 3.6.0
 
-  prettier@3.5.3: {}
+  prettier@3.6.0: {}
 
   pretty-bytes@5.6.0: {}
 
