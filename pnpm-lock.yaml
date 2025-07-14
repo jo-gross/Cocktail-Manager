@@ -163,8 +163,8 @@ importers:
         specifier: 5.0.0
         version: 5.0.0(prettier@3.6.0)
       prettier-plugin-tailwindcss:
-        specifier: 0.6.13
-        version: 0.6.13(prettier@3.6.0)
+        specifier: 0.6.14
+        version: 0.6.14(prettier@3.6.0)
       prisma:
         specifier: 6.9.0
         version: 6.9.0(typescript@5.8.3)
@@ -2180,8 +2180,8 @@ packages:
   end-of-stream@1.4.4:
     resolution: {integrity: sha512-+uw1inIHVPQoaVuHzRyXd21icM+cnt4CzD5rW+NC1wjOUSTOs+Te7FOv7AhN7vS9x/oIyhLP5PR1H+phQAHu5Q==}
 
-  enhanced-resolve@5.18.1:
-    resolution: {integrity: sha512-ZSW3ma5GkcQBIpwZTSRAI8N71Uuwgs93IezB7mf7R60tC8ZbJideoDNKjHn2O9KIlx6rkGTTEk1xUCK2E1Y2Yg==}
+  enhanced-resolve@5.18.2:
+    resolution: {integrity: sha512-6Jw4sE1maoRJo3q8MsSIn2onJFbLTOjY9hlx4DZXmOKvLRd1Ok2kXmAGXaafL2+ijsJZ1ClYbl/pmqr9+k4iUQ==}
     engines: {node: '>=10.13.0'}
 
   entities@4.5.0:
@@ -3899,11 +3899,13 @@ packages:
     peerDependencies:
       prettier: '>=2 || >=3'
 
-  prettier-plugin-tailwindcss@0.6.13:
-    resolution: {integrity: sha512-uQ0asli1+ic8xrrSmIOaElDu0FacR4x69GynTh2oZjFY10JUt6EEumTQl5tB4fMeD6I1naKd+4rXQQ7esT2i1g==}
+  prettier-plugin-tailwindcss@0.6.14:
+    resolution: {integrity: sha512-pi2e/+ZygeIqntN+vC573BcW5Cve8zUB0SSAGxqpB4f96boZF4M3phPVoOFCeypwkpRYdi7+jQ5YJJUwrkGUAg==}
     engines: {node: '>=14.21.3'}
     peerDependencies:
       '@ianvs/prettier-plugin-sort-imports': '*'
+      '@prettier/plugin-hermes': '*'
+      '@prettier/plugin-oxc': '*'
       '@prettier/plugin-pug': '*'
       '@shopify/prettier-plugin-liquid': '*'
       '@trivago/prettier-plugin-sort-imports': '*'
@@ -3922,6 +3924,10 @@ packages:
       prettier-plugin-svelte: '*'
     peerDependenciesMeta:
       '@ianvs/prettier-plugin-sort-imports':
+        optional: true
+      '@prettier/plugin-hermes':
+        optional: true
+      '@prettier/plugin-oxc':
         optional: true
       '@prettier/plugin-pug':
         optional: true
@@ -7194,7 +7200,7 @@ snapshots:
     dependencies:
       once: 1.4.0
 
-  enhanced-resolve@5.18.1:
+  enhanced-resolve@5.18.2:
     dependencies:
       graceful-fs: 4.2.11
       tapable: 2.2.2
@@ -9103,7 +9109,7 @@ snapshots:
       '@prisma/prisma-schema-wasm': 4.17.0-26.6b0aef69b7cdfc787f822ecd7cdc76d5f1991584
       prettier: 3.6.0
 
-  prettier-plugin-tailwindcss@0.6.13(prettier@3.6.0):
+  prettier-plugin-tailwindcss@0.6.14(prettier@3.6.0):
     dependencies:
       prettier: 3.6.0
 
@@ -10132,7 +10138,7 @@ snapshots:
       acorn-import-attributes: 1.9.5(acorn@8.15.0)
       browserslist: 4.24.5
       chrome-trace-event: 1.0.4
-      enhanced-resolve: 5.18.1
+      enhanced-resolve: 5.18.2
       es-module-lexer: 1.7.0
       eslint-scope: 5.1.1
       events: 3.3.0
