@@ -5,6 +5,7 @@ import React, { useContext, useState } from 'react';
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import AddCocktailToQueueModal from './modals/AddCocktailToQueueModal';
 import SelectSpecifyCocktailForStatisticModal from './modals/SelectSpecifyCocktailForStatisticModal';
+import { NetworkIndicatorContext } from '@lib/context/NetworkIndicatorContextProvider';
 
 interface StatisticActionsProps {
   workspaceId: string;
@@ -36,6 +37,7 @@ export default function StatisticActions({
   const [submittingStatistic, setSubmittingStatistic] = useState(false);
 
   const modalContext = useContext(ModalContext);
+  const networkContext = useContext(NetworkIndicatorContext);
 
   return (
     <div className={'grid grid-cols-2 gap-2 md:grid-cols-2 2xl:grid-cols-3'}>
@@ -48,7 +50,7 @@ export default function StatisticActions({
             setSubmitting: setSubmittingQueue,
           })
         }
-        disabled={submittingQueue || disabled?.list}
+        disabled={submittingQueue || disabled?.list || !networkContext.isOnline}
       >
         <MdPlaylistAdd />
         Liste
@@ -68,7 +70,7 @@ export default function StatisticActions({
             />,
           )
         }
-        disabled={submittingQueue || disabled?.listWithNote}
+        disabled={submittingQueue || disabled?.listWithNote || !networkContext.isOnline}
       >
         <MdPlaylistAdd />
         mit Notiz
@@ -100,7 +102,7 @@ export default function StatisticActions({
             },
           })
         }
-        disabled={submittingStatistic || disabled?.markAsDone}
+        disabled={submittingStatistic || disabled?.markAsDone || !networkContext.isOnline}
       >
         <FaCheck />
         Gemacht

@@ -1,6 +1,7 @@
 import React from 'react';
 import { AlertsContainer } from './AlertsContainer';
 import { FaExclamationTriangle } from 'react-icons/fa';
+import NetworkOfflineIndicator from '@components/NetworkOfflineIndicator';
 
 interface AlertBoundaryProps {
   children: React.ReactNode;
@@ -24,6 +25,7 @@ export function AlertBoundary(props: AlertBoundaryProps) {
           <></>
         )}
       </>
+      <NetworkOfflineIndicator />
       <div className={'fixed bottom-2 left-1/2 z-50 w-full max-w-fit -translate-x-1/2 overflow-hidden print:hidden'}>
         {/*<div className="fixed bottom-2 left-2 right-2 z-50 flex flex-col items-center justify-center overflow-hidden print:hidden">*/}
         <AlertsContainer />
