@@ -59,7 +59,7 @@
     "@types/node": "24.0.3",
     "@types/prop-types": "15.7.15",
     "@types/react": "18.3.12",
-    "@types/react-is": "19.0.0",
+    "@types/react-is": "19.2.0",
     "autoprefixer": "10.4.21",
     "daisyui": "4.12.23",
     "eslint": "9.29.0",
