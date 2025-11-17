@@ -1,14 +1,15 @@
 import { CocktailRecipeModel } from '../models/CocktailRecipeModel';
+import { normalizeString } from '../lib/StringUtils';
 
 export const cocktailFilter = (filterString: string) => {
-  const lowerCaseFilterString = filterString.toLowerCase();
+  const filterFor = normalizeString(filterString);
 
   return function (cocktailRecipe: CocktailRecipeModel): boolean {
     return (
-      cocktailRecipe.name.toLowerCase().includes(lowerCaseFilterString) ||
-      cocktailRecipe.glass?.name.toLowerCase().includes(lowerCaseFilterString) ||
-      cocktailRecipe.garnishes.some((garnish) => garnish.garnish.name.toLowerCase().includes(lowerCaseFilterString)) ||
-      cocktailRecipe.tags.some((tag) => tag.toLowerCase().includes(lowerCaseFilterString))
+      normalizeString(cocktailRecipe.name).includes(filterFor) ||
+      normalizeString(cocktailRecipe.glass?.name).includes(filterFor) ||
+      cocktailRecipe.garnishes.some((garnish) => normalizeString(garnish.garnish.name).includes(filterFor)) ||
+      cocktailRecipe.tags.some((tag) => normalizeString(tag).includes(filterFor))
     );
   };
 };
