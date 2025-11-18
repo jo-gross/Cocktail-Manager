@@ -1,3 +1,10 @@
+## [1.15.2](https://github.com/jo-gross/Cocktail-Manager/compare/v1.15.1...v1.15.2) (2025-11-18)
+
+
+### Bug Fixes
+
+* Cocktail search ignore diacritics ([#807](https://github.com/jo-gross/Cocktail-Manager/issues/807)) [@x-zvf](https://github.com/x-zvf) ([d28919a](https://github.com/jo-gross/Cocktail-Manager/commit/d28919a8ae2e2487a88274eeeeba70b15a85c30f))
+
 ## [1.15.1](https://github.com/jo-gross/Cocktail-Manager/compare/v1.15.0...v1.15.1) (2025-06-10)
 
 
