@@ -9,6 +9,7 @@ import { CocktailRecipeGarnishFull } from '../../../../../models/CocktailRecipeG
 import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
 import HTTPMethod from 'http-method-enum';
 import { withHttpMethods } from '@middleware/api/handleMethods';
+import { normalizeString } from '../../../../../lib/StringUtils';
 import CocktailRecipeCreateInput = Prisma.CocktailRecipeCreateInput;
 
 export const config = {
@@ -52,19 +53,19 @@ export default withHttpMethods({
     if (searchParam == undefined) {
       return res.json({ data: cocktailRecipes });
     } else {
-      const search = searchParam.trim().toLowerCase();
+      const search = normalizeString(searchParam);
       const result = cocktailRecipes.filter(
         (cocktail) =>
-          cocktail.name.toLowerCase().includes(search) ||
-          (cocktail.tags.some((tag) => tag.toLowerCase().includes(search)) && search.length >= 3) ||
-          (cocktail.garnishes.some((garnish) => garnish.garnish.name.toLowerCase().includes(search)) && search.length >= 3) ||
+          normalizeString(cocktail.name).includes(search) ||
+          (cocktail.tags.some((tag) => normalizeString(tag).includes(search)) && search.length >= 3) ||
+          (cocktail.garnishes.some((garnish) => normalizeString(garnish.garnish.name).includes(search)) && search.length >= 3) ||
           cocktail.steps.some((step) =>
             step.ingredients
               .filter((ingredient) => ingredient.ingredient?.name != undefined)
               .some(
                 (ingredient) =>
-                  (ingredient.ingredient?.name.toLowerCase().includes(search) && search.length >= 3) ||
-                  ((ingredient.ingredient?.shortName ?? '').toLowerCase().includes(search) && search.length >= 3),
+                  (normalizeString(ingredient.ingredient?.name).includes(search) && search.length >= 3) ||
+                  (normalizeString(ingredient.ingredient?.shortName ?? '').includes(search) && search.length >= 3),
               ),
           ),
       );
