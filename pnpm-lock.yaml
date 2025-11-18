@@ -69,8 +69,8 @@ importers:
         specifier: 7.0.1
         version: 7.0.1
       playwright:
-        specifier: 1.53.1
-        version: 1.53.1
+        specifier: 1.56.1
+        version: 1.56.1
       prop-types:
         specifier: 15.8.1
         version: 15.8.1
@@ -3859,13 +3859,13 @@ packages:
     resolution: {integrity: sha512-HRDzbaKjC+AOWVXxAU/x54COGeIv9eb+6CkDSQoNTt4XyWoIJvuPsXizxu/Fr23EiekbtZwmh1IcIG/l/a10GQ==}
     engines: {node: '>=8'}
 
-  playwright-core@1.53.1:
-    resolution: {integrity: sha512-Z46Oq7tLAyT0lGoFx4DOuB1IA9D1TPj0QkYxpPVUnGDqHHvDpCftu1J2hM2PiWsNMoZh8+LQaarAWcDfPBc6zg==}
+  playwright-core@1.56.1:
+    resolution: {integrity: sha512-hutraynyn31F+Bifme+Ps9Vq59hKuUCz7H1kDOcBs+2oGguKkWTU50bBWrtz34OUWmIwpBTWDxaRPXrIXkgvmQ==}
     engines: {node: '>=18'}
     hasBin: true
 
-  playwright@1.53.1:
-    resolution: {integrity: sha512-LJ13YLr/ocweuwxyGf1XNFWIU4M2zUSo149Qbp+A4cpwDjsxRPj7k6H25LBrEHiEwxvRbD8HdwvQmRMSvquhYw==}
+  playwright@1.56.1:
+    resolution: {integrity: sha512-aFi5B0WovBHTEvpM3DzXTUaeN6eN0qWnTkKx4NQaH4Wvcmc153PdaY2UBdSYKaGYw+UyWXSVyxDUg5DoPEttjw==}
     engines: {node: '>=18'}
     hasBin: true
 
@@ -9145,11 +9145,11 @@ snapshots:
     dependencies:
       find-up: 4.1.0
 
-  playwright-core@1.53.1: {}
+  playwright-core@1.56.1: {}
 
-  playwright@1.53.1:
+  playwright@1.56.1:
     dependencies:
-      playwright-core: 1.53.1
+      playwright-core: 1.56.1
     optionalDependencies:
       fsevents: 2.3.2
 
