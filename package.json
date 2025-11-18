@@ -32,7 +32,7 @@
     "lodash": "4.17.21",
     "marked": "15.0.12",
     "next": "15.3.4",
-    "next-auth": "4.24.11",
+    "next-auth": "4.24.12",
     "next-pwa": "5.6.0",
     "node-html-parser": "7.0.1",
     "playwright": "1.56.1",
