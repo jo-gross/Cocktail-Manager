@@ -25,6 +25,7 @@ export default function AvatarImage(props: AvatarImageProps) {
           alt={props.alt}
           width={300}
           height={300}
+          unoptimized={true}
         />
       </div>
       <div className={'z-100 absolute flex h-full w-full items-center justify-center'}>
@@ -37,6 +38,7 @@ export default function AvatarImage(props: AvatarImageProps) {
           onError={() => {
             setError(true);
           }}
+          unoptimized={true}
         />
       </div>
     </div>

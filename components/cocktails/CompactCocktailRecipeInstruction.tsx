@@ -50,6 +50,7 @@ export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeIns
             }
             width={200}
             height={200}
+            unoptimized={true}
           />
         </div>
       )}
@@ -157,6 +158,7 @@ export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeIns
               alt={''}
               width={300}
               height={534}
+              unoptimized={true}
             />
           </div>
         ) : (

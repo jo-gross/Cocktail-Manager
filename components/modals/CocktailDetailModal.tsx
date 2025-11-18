@@ -222,6 +222,7 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                       }
                       width={100}
                       height={300}
+                      unoptimized={true}
                     />
                   </div>
                 )}
