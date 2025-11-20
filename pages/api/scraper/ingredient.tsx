@@ -75,25 +75,54 @@ export default withAuthentication(async (req: NextApiRequest, res: NextApiRespon
     } else if (req.query?.url?.includes('metro.de')) {
       console.debug(req.query.url);
 
-      const playwright = require('playwright');
-      const browser = await playwright['chromium'].launch();
-      const context = await browser.newContext();
-      const page = await context.newPage();
-      await page.goto(req.query.url);
+      const puppeteer = require('puppeteer-core');
+      const chromiumHost = process.env.CHROMIUM_HOST;
 
-      const imageUrl = await page.locator('#mainImage').first().getAttribute('src');
-      const name = (await page.locator('div.mfcss_article-detail--title > h2 > span')?.first()?.innerText()) ?? '';
-      const price =
-        (
-          await page
-            .locator('div.mfcss_article-detail--price-container > div.row > div.text-right > div > span.mfcss_article-detail--price-breakdown > span > span')
-            ?.allInnerTexts()
-        )?.[1]
-          ?.replace(',', '.')
-          ?.replace('€', '')
-          ?.trim() ?? 0;
+      let browser;
+      if (chromiumHost && chromiumHost !== 'localhost' && chromiumHost !== '127.0.0.1') {
+        // Connect to remote Chromium service using DNS lookup
+        console.log('Fetching WebSocket URL from Chromium...');
+        const dns = require('dns').promises;
 
-      await browser.close();
+        try {
+          const { address: chromeIP } = await dns.lookup(chromiumHost);
+          console.log('Chromium IP:', chromeIP);
+
+          browser = await puppeteer.connect({
+            browserURL: `http://${chromeIP}:9222`,
+          });
+        } catch (dnsError) {
+          console.error('DNS lookup failed, trying hostname directly:', dnsError);
+          // Fallback: try with hostname directly
+          browser = await puppeteer.connect({
+            browserURL: `http://${chromiumHost}:9222`,
+          });
+        }
+      } else if (chromiumHost === 'localhost' || chromiumHost === '127.0.0.1') {
+        // Connect to localhost Chromium
+        browser = await puppeteer.connect({
+          browserURL: 'http://localhost:9222',
+        });
+      } else {
+        browser = await puppeteer.launch();
+      }
+
+      const page = await browser.newPage();
+      await page.goto(req.query.url as string, { waitUntil: 'networkidle0' });
+
+      const imageUrl = await page.$eval('#mainImage', (el: Element) => (el as HTMLImageElement).src).catch(() => null);
+      const name = (await page.$eval('div.mfcss_article-detail--title > h2 > span', (el: Element) => el.textContent || '').catch(() => '')) ?? '';
+      const priceText = await page
+        .$$eval(
+          'div.mfcss_article-detail--price-container > div.row > div.text-right > div > span.mfcss_article-detail--price-breakdown > span > span',
+          (elements: Element[]) => elements.map((el) => el.textContent || ''),
+        )
+        .catch(() => []);
+
+      const price = priceText?.[1]?.replace(',', '.')?.replace('€', '')?.trim() ?? 0;
+
+      await page.close();
+      await browser.disconnect();
 
       const imageResponse = imageUrl
         ? await fetch(imageUrl).catch((error) => {
