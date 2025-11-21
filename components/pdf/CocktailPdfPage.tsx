@@ -77,11 +77,15 @@ export function CocktailPdfPage({ cocktail, imageBase64, getTranslation = (key: 
                   {cocktail.garnishes
                     .sort((a, b) => a.garnishNumber - b.garnishNumber)
                     .map((garnish) => (
-                      <div key={`pdf-garnish-${garnish.garnishId}`} className={`rounded bg-base-100 p-2 text-sm ${garnish.optional ? 'italic' : ''}`}>
-                        <div>
-                          {garnish.garnish.name} {garnish.optional && '(optional)'}
+                      <div key={`pdf-garnish-${garnish.garnishId}`} className={`rounded bg-base-100 p-2 ${garnish.optional ? 'italic' : ''}`}>
+                        <div className={'text-md'}>
+                          <span className={'font-bold'}>{garnish.garnish.name}</span> {garnish.optional && '(optional)'}
                         </div>
-                        {garnish.description && <div className="ml-3 mt-0.5 text-xs italic">{garnish.description}</div>}
+                        {garnish.description && (
+                          <div>
+                            <div className="text-xs">{garnish.description}</div>
+                          </div>
+                        )}
                       </div>
                     ))}
                 </div>
