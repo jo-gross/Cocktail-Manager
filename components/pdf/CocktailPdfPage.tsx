@@ -14,38 +14,37 @@ export function CocktailPdfPage({ cocktail, imageBase64, getTranslation = (key: 
         {/* Header */}
         <div className="mb-2 border-b-2 border-primary pb-2">
           <h1 className="text-3xl font-bold text-primary">{cocktail.name}</h1>
-          {cocktail.price != undefined && <div className="mt-1 text-xl font-semibold">Preis: {cocktail.price.toFixed(2).replace('.', ',')} €</div>}
-        </div>
-
-        {/* Tags und Glas/Eis */}
-        <div className="mb-2 flex flex-row justify-between gap-2 rounded border p-2">
-          <div className="flex flex-1 flex-col gap-1">
-            {cocktail.tags.length > 0 && (
-              <div className="flex flex-wrap gap-1">
-                {cocktail.tags.map((tag) => (
-                  <div key={`pdf-tag-${tag}`} className="badge badge-primary badge-sm">
-                    {tag}
-                  </div>
-                ))}
-              </div>
-            )}
-            <div className="flex flex-1 items-end justify-between gap-2 text-sm">
-              {cocktail.glass && <div>Glas: {cocktail.glass.name}</div>}
-              {cocktail.ice && <div>Eis: {getTranslation(cocktail.ice.name)}</div>}
-            </div>
-          </div>
+          {cocktail.price != undefined && <div className="mt-1 text-xl">Preis: {cocktail.price.toFixed(2).replace('.', ',')} €</div>}
         </div>
 
         {/* Bild und Zubereitung in Grid */}
         <div className={`grid ${imageBase64 ? 'grid-cols-3' : 'grid-cols-1'} mb-2 gap-2`}>
           <div className={`${imageBase64 ? 'col-span-2' : 'col-span-1'} flex flex-col gap-1`}>
+            {/* Tags und Glas/Eis */}
+            <div className="mb-2 flex flex-row justify-between gap-2 rounded border p-2">
+              <div className="flex flex-1 flex-col gap-1">
+                {cocktail.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-1">
+                    {cocktail.tags.map((tag) => (
+                      <div key={`pdf-tag-${tag}`} className="badge badge-primary badge-sm">
+                        {tag}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <div className="flex flex-1 items-end justify-between gap-2 text-sm">
+                  {cocktail.glass && <div>Glas: {cocktail.glass.name}</div>}
+                  {cocktail.ice && <div>Eis: {getTranslation(cocktail.ice.name)}</div>}
+                </div>
+              </div>
+            </div>
             <div className="text-lg font-bold">Zubereitung</div>
             <div className="space-y-1">
               {cocktail.steps
                 .sort((a, b) => a.stepNumber - b.stepNumber)
                 .map((step) => (
-                  <div key={`pdf-step-${step.id}`} className="rounded border p-2">
-                    <div className={`text-sm font-bold ${step.optional ? 'italic' : ''}`}>
+                  <div key={`pdf-step-${step.id}`} className="rounded bg-base-100 p-2">
+                    <div className={`text-md font-bold ${step.optional ? 'italic' : ''}`}>
                       {getTranslation(step.action.name)} {step.optional && '(optional)'}
                     </div>
                     {step.ingredients
@@ -69,52 +68,52 @@ export function CocktailPdfPage({ cocktail, imageBase64, getTranslation = (key: 
                   </div>
                 ))}
             </div>
+
+            {/* Garnituren */}
+            {cocktail.garnishes.length > 0 && (
+              <div className="mb-2">
+                <div className="mb-1 text-lg font-bold">Garnitur</div>
+                <div className="space-y-1">
+                  {cocktail.garnishes
+                    .sort((a, b) => a.garnishNumber - b.garnishNumber)
+                    .map((garnish) => (
+                      <div key={`pdf-garnish-${garnish.garnishId}`} className={`rounded bg-base-100 p-2 text-sm ${garnish.optional ? 'italic' : ''}`}>
+                        <div>
+                          {garnish.garnish.name} {garnish.optional && '(optional)'}
+                        </div>
+                        {garnish.description && <div className="ml-3 mt-0.5 text-xs italic">{garnish.description}</div>}
+                      </div>
+                    ))}
+                </div>
+              </div>
+            )}
           </div>
           {imageBase64 && (
             <div className="col-span-1 flex justify-center">
-              <img src={imageBase64} alt={cocktail.name} className="max-h-48 w-auto rounded-lg object-contain shadow-md" />
+              <img src={imageBase64} alt={cocktail.name} className="h-full w-fit rounded-lg object-contain" />
             </div>
           )}
         </div>
 
-        {/* Garnituren */}
-        {cocktail.garnishes.length > 0 && (
-          <div className="mb-2">
-            <div className="mb-1 text-lg font-bold">Garnitur</div>
-            <div className="space-y-1">
-              {cocktail.garnishes
-                .sort((a, b) => a.garnishNumber - b.garnishNumber)
-                .map((garnish) => (
-                  <div key={`pdf-garnish-${garnish.garnishId}`} className={`rounded border p-1 text-sm ${garnish.optional ? 'italic' : ''}`}>
-                    <div>
-                      {garnish.garnish.name} {garnish.optional && '(optional)'}
-                    </div>
-                    {garnish.description && <div className="ml-3 mt-0.5 text-xs italic">{garnish.description}</div>}
-                  </div>
-                ))}
-            </div>
-          </div>
-        )}
-
         {/* Notizen, Beschreibung, Geschichte - Reihenfolge wie im DetailModal */}
         {cocktail.notes && (
           <div className="mb-1">
-            <h2 className="mb-1 text-sm font-bold">Zubereitungsnotizen</h2>
-            <div className="long-text-format whitespace-pre-line rounded border p-2 text-xs">{cocktail.notes}</div>
+            <div className="mb-1 text-lg font-bold">Zubereitungsnotizen</div>
+            <div className="long-text-format columns-2 gap-6 whitespace-pre-line text-xs">{cocktail.notes}</div>
           </div>
         )}
 
         {cocktail.description && (
           <div className="mb-1">
-            <h2 className="mb-1 text-sm font-bold">Allgemeine Beschreibung</h2>
-            <div className="long-text-format whitespace-pre-line rounded border p-2 text-justify text-xs">{cocktail.description}</div>
+            <h2 className="mb-1 text-lg font-bold">Allgemeine Beschreibung</h2>
+            <div className="long-text-format columns-2 gap-6 whitespace-pre-line text-justify text-xs">{cocktail.description}</div>
           </div>
         )}
 
         {cocktail.history && (
           <div className="mb-1">
-            <h2 className="mb-1 text-sm font-bold">Geschichte und Entstehung</h2>
-            <div className="long-text-format whitespace-pre-line rounded border p-2 text-justify text-xs">{cocktail.history}</div>
+            <h2 className="mb-1 text-lg font-bold">Geschichte und Entstehung</h2>
+            <div className="long-text-format columns-2 gap-6 whitespace-pre-line text-justify text-xs">{cocktail.history}</div>
           </div>
         )}
       </div>

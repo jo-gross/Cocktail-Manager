@@ -89,9 +89,12 @@ async function generatePdf(html: string, numberOfCocktails: number): Promise<Buf
     // Set content and wait for everything to load
     await page.setContent(html, { waitUntil: 'networkidle0', timeout: timeoutMs });
 
-    // Set DaisyUI theme to "autumn"
+    // Set DaisyUI theme to "autumn" and ensure white background
     await page.evaluate(() => {
       document.documentElement.setAttribute('data-theme', 'autumn');
+      // Set white background explicitly
+      document.body.style.backgroundColor = 'white';
+      document.documentElement.style.backgroundColor = 'white';
     });
 
     // Wait for Tailwind to process the classes - longer wait for large documents
@@ -126,6 +129,8 @@ async function generatePdf(html: string, numberOfCocktails: number): Promise<Buf
             left: '5mm',
           },
           preferCSSPageSize: false,
+          // Ensure white background for all pages
+          displayHeaderFooter: false,
         }),
         timeoutPromise,
       ])) as Buffer;
@@ -180,20 +185,14 @@ function getTranslation(translations: Record<string, Record<string, string>>, ke
 }
 
 function generateHtmlForCocktails(cocktails: any[], translations: Record<string, Record<string, string>>): string {
-  const tailwindCdn = 'https://cdn.tailwindcss.com';
-  const daisyuiCdn = 'https://cdn.jsdelivr.net/npm/daisyui@4.12.23/dist/full.min.css';
-
-  const tailwindBrowserCdn = 'https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4';
-  const tailwindTypographyCdn = 'https://cdn.jsdelivr.net/npm/@tailwindcss/typography@0.5.19/src/index.min.js';
-
-  const pages = cocktails.map((cocktail) => {
+  const pages = cocktails.map((cocktail, index) => {
     console.log('Rendering cocktail', cocktail.name);
     // Extract base64 image from CocktailRecipeImage if available
     const imageBase64 = cocktail.CocktailRecipeImage?.[0]?.image || null;
     const componentHtml = renderToString(
       React.createElement(CocktailPdfPage, { cocktail, imageBase64, getTranslation: (key: string) => getTranslation(translations, key) }),
     );
-    return `<div class="pdf-page">${componentHtml}</div>`;
+    return `<div class="pdf-page" data-cocktail-id="${cocktail.id}" data-cocktail-index="${index}">${componentHtml}</div>`;
   });
 
   return `<!DOCTYPE html>
@@ -202,20 +201,33 @@ function generateHtmlForCocktails(cocktails: any[], translations: Record<string,
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Cocktail Export</title>
-  <script src="${tailwindCdn}"></script>
-  <link href="${daisyuiCdn}" rel="stylesheet">
-  <script src="${tailwindBrowserCdn}"></script>
-  <script src="${tailwindTypographyCdn}"></script>
+  <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.24/dist/full.min.css" rel="stylesheet" type="text/css" />
+  <script src="https://cdn.tailwindcss.com"></script>  
+  
   <style>
+    html {
+      -webkit-print-color-adjust: exact;
+    }
+  
     * {
       font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    body {
+      background: white;
     }
     .pdf-page {
       page-break-after: always;
-      min-height: 100vh;
+      background: white;
     }
     .pdf-page:last-child {
       page-break-after: auto;
+      min-height: auto;
+    }
+    /* Nur für Seiten, die nicht die letzte sind, volle Höhe erzwingen */
+    .pdf-page:not(:last-child) {
+      min-height: 100vh;
     }
     .long-text-format {
       white-space: pre-line;
@@ -224,7 +236,7 @@ function generateHtmlForCocktails(cocktails: any[], translations: Record<string,
     }
   </style>
 </head>
-<body class="bg-white">
+<body class='bg-white'>
   ${pages.join('')}
 </body>
 </html>`;
