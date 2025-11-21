@@ -103,21 +103,21 @@ export function CocktailPdfPage({ cocktail, imageBase64, getTranslation = (key: 
         {cocktail.notes && (
           <div className="mb-1">
             <div className="mb-1 text-lg font-bold">Zubereitungsnotizen</div>
-            <div className="long-text-format columns-2 gap-6 whitespace-pre-line text-xs">{cocktail.notes}</div>
+            <div className="long-text-format whitespace-pre-line text-xs">{cocktail.notes}</div>
           </div>
         )}
 
         {cocktail.description && (
           <div className="mb-1">
             <h2 className="mb-1 text-lg font-bold">Allgemeine Beschreibung</h2>
-            <div className="long-text-format columns-2 gap-6 whitespace-pre-line text-justify text-xs">{cocktail.description}</div>
+            <div className="long-text-format whitespace-pre-line text-justify text-xs">{cocktail.description}</div>
           </div>
         )}
 
         {cocktail.history && (
           <div className="mb-1">
             <h2 className="mb-1 text-lg font-bold">Geschichte und Entstehung</h2>
-            <div className="long-text-format columns-2 gap-6 whitespace-pre-line text-justify text-xs">{cocktail.history}</div>
+            <div className="long-text-format whitespace-pre-line text-justify text-xs">{cocktail.history}</div>
           </div>
         )}
       </div>
