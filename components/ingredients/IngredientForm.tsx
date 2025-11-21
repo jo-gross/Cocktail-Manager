@@ -20,6 +20,7 @@ import { FaCropSimple } from 'react-icons/fa6';
 import '../../lib/ArrayUtils';
 import { RoutingContext } from '@lib/context/RoutingContextProvider';
 import { resizeImage } from '@lib/ImageCompressor';
+import { autoCropImage } from '@lib/ImageUtils';
 
 interface IngredientFormProps {
   ingredient?: IngredientWithImage;
@@ -259,8 +260,23 @@ export function IngredientForm(props: IngredientFormProps) {
                           }
 
                           if (data.image) {
-                            await setFieldValue('image', undefined);
-                            await setFieldValue('originalImage', convertBase64ToFile(data.image));
+                            try {
+                              const imageFile = convertBase64ToFile(data.image);
+                              // Automatisch das Bild zuschneiden (aspect 1:1 für quadratisch)
+                              const croppedImage = await autoCropImage(imageFile, 1, 'transparent');
+                              // Bild auf 400x400 skalieren
+                              resizeImage(croppedImage, 400, 400, async (compressedImageFile) => {
+                                if (compressedImageFile) {
+                                  await setFieldValue('image', await convertToBase64(new File([compressedImageFile], 'image.png', { type: 'image/png' })));
+                                  await setFieldValue('originalImage', imageFile);
+                                } else {
+                                  alertService.error('Bild konnte nicht skaliert werden.');
+                                }
+                              });
+                            } catch (error) {
+                              console.error('Fehler beim automatischen Zuschneiden des Bildes:', error);
+                              alertService.error('Bild konnte nicht automatisch zugeschnitten werden.');
+                            }
                           }
                           const selectedUnitId = allUnits.find((unit) => unit.name == 'CL')?.id ?? '';
                           checkSimilarName(data.name);
@@ -282,7 +298,6 @@ export function IngredientForm(props: IngredientFormProps) {
                     })
                     .finally(async () => {
                       await setFieldValue('fetchingExternalData', false);
-                      await setFieldValue('image', undefined);
                     });
                 }}
               >
