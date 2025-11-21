@@ -21,6 +21,7 @@ import { fetchCocktail } from '@lib/network/cocktails';
 import StatisticActions from '../StatisticActions';
 import { toInteger } from 'lodash';
 import { FaArrowRotateLeft } from 'react-icons/fa6';
+import { alertService } from '@lib/alertService';
 import '../../lib/NumberUtils';
 
 interface CocktailDetailModalProps {
@@ -46,18 +47,67 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
   const [cocktailRatings, setCocktailRatings] = useState<CocktailRating[]>([]);
   const [ratingsLoading, setRatingsLoading] = useState(true);
   const [ratingError, setRatingsError] = useState(false);
+  const [chromiumAvailable, setChromiumAvailable] = useState(false);
 
   const [localQueueAmount, setLocalQueueAmount] = useState(props.queueAmount);
+  const [exportingPdf, setExportingPdf] = useState(false);
 
   const refreshRatings = useCallback(() => {
     props.onRefreshRatings();
     fetchCocktailRatings(workspaceId, props.cocktailId, setCocktailRatings, setRatingsLoading, setRatingsError);
   }, [props, workspaceId]);
 
+  const handleExportPdf = useCallback(async () => {
+    if (!workspaceId || !loadedCocktail) return;
+    setExportingPdf(true);
+    try {
+      const response = await fetch(`/api/workspaces/${workspaceId}/cocktails/export-pdf`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ cocktailIds: [loadedCocktail.id] }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ message: 'Fehler beim Exportieren' }));
+        alertService.error(error.message ?? 'Fehler beim Exportieren des PDFs', response.status, response.statusText);
+        return;
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `cocktail-${loadedCocktail.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}-${Date.now()}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      alertService.success('PDF erfolgreich exportiert');
+    } catch (error) {
+      console.error('PDF export error:', error);
+      alertService.error('Fehler beim Exportieren des PDFs');
+    } finally {
+      setExportingPdf(false);
+    }
+  }, [workspaceId, loadedCocktail]);
+
   useEffect(() => {
     fetchIngredients(workspaceId, setIngredients, () => {});
     fetchCocktail(workspaceId, props.cocktailId, setLoadedCocktail, setLoading);
     fetchCocktailRatings(workspaceId, props.cocktailId, setCocktailRatings, setRatingsLoading, setRatingsError);
+
+    // Check if Chromium service is available
+    fetch('/api/chromium-status')
+      .then((res) => res.json())
+      .then((data) => {
+        setChromiumAvailable(data.available || false);
+      })
+      .catch((error) => {
+        console.error('Error checking Chromium status:', error);
+        setChromiumAvailable(false);
+      });
   }, [props.cocktailId, workspaceId]);
 
   const [amountAdjustment, setAmountAdjustment] = useState<number>(100);
@@ -97,14 +147,20 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                 <></>
               )}
             </h2>
-            <button
-              className={'btn btn-square btn-outline btn-sm'}
-              onClick={() => {
-                window.print();
-              }}
-            >
-              <FaFileDownload />
-            </button>
+            {chromiumAvailable ? (
+              <button className={'btn btn-square btn-outline btn-sm'} onClick={handleExportPdf} disabled={exportingPdf} title="Als PDF exportieren">
+                {exportingPdf ? <span className={'loading loading-spinner'} /> : <FaFileDownload />}
+              </button>
+            ) : (
+              <button
+                className={'btn btn-square btn-outline btn-sm'}
+                onClick={() => {
+                  window.print();
+                }}
+              >
+                <FaFileDownload />
+              </button>
+            )}
             <>
               {userContext.isUserPermitted(Role.MANAGER) && (
                 <Link href={`/workspaces/${workspaceId}/manage/cocktails/${loadedCocktail.id}`}>
