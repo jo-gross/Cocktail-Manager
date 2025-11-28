@@ -1,5 +1,39 @@
 # [1.16.0](https://github.com/jo-gross/Cocktail-Manager/compare/v1.15.2...v1.16.0) (2025-11-28)
 
+> [!IMPORTANT]
+> To use the new pdf export featre you need to add and configure a chromium instance
+>
+> docker-compose:
+> ```
+>cocktail-manager:
+>    depends_on:
+>      - ...
+>      - chromium-service
+>    links:
+>      - ...
+>      - chromium-service
+>    environment:
+>      - ...
+>      - CHROMIUM_HOST=chromium-service
+>    
+>  chromium-service:
+>    image: eu.gcr.io/zenika-hub/alpine-chrome:latest
+>    container_name: chromium-service
+>    networks:
+>      - cocktail-recipe-network
+>    command:
+>      - chromium-browser
+>      - --headless
+>      - --disable-gpu
+>      - --no-sandbox
+>      - --disable-dev-shm-usage
+>      - --remote-debugging-address=0.0.0.0
+>      - --remote-debugging-port=9222
+>    ports:
+>      - '9222:9222'
+>    restart: unless-stopped
+>```
+>
 
 ### Bug Fixes
 
