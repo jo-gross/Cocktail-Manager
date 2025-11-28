@@ -17,6 +17,7 @@ import _ from 'lodash';
 import { cocktailFilter } from '@lib/cocktailFilter';
 import { NextPageWithPullToRefresh } from '../../../../../types/next';
 import '../../../../../lib/NumberUtils';
+import CocktailExportOptionsModal, { CocktailExportOptions } from '../../../../../components/modals/CocktailExportOptionsModal';
 
 const CocktailsOverviewPage: NextPageWithPullToRefresh = () => {
   const router = useRouter();
@@ -104,43 +105,56 @@ const CocktailsOverviewPage: NextPageWithPullToRefresh = () => {
     [selectedCocktailIds],
   );
 
-  const handleExportPdf = useCallback(async () => {
+  const handleExportPdf = useCallback(() => {
     if (!workspaceId || selectedCocktailIds.size === 0) return;
-    setExportingPdf(true);
-    try {
-      alertService.info('Export gestartet, dies kann einen Moment dauern...');
-      const response = await fetch(`/api/workspaces/${workspaceId}/cocktails/export-pdf`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ cocktailIds: Array.from(selectedCocktailIds) }),
-      });
+    modalContext.openModal(
+      <CocktailExportOptionsModal
+        onExport={async (options: CocktailExportOptions) => {
+          setExportingPdf(true);
+          try {
+            alertService.info('Export läuft und wird gleich zur Verfügung stehen. Dieser Vorgang kann je nach Anzahl der Rezepte einige Minuten dauern.');
+            const response = await fetch(`/api/workspaces/${workspaceId}/cocktails/export-pdf`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                cocktailIds: Array.from(selectedCocktailIds),
+                exportImage: options.exportImage,
+                exportDescription: options.exportDescription,
+                exportNotes: options.exportNotes,
+                exportHistory: options.exportHistory,
+                newPagePerCocktail: options.newPagePerCocktail,
+              }),
+            });
 
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({ message: 'Fehler beim Exportieren' }));
-        alertService.error(error.message ?? 'Fehler beim Exportieren des PDFs', response.status, response.statusText);
-        return;
-      }
+            if (!response.ok) {
+              const error = await response.json().catch(() => ({ message: 'Fehler beim Exportieren' }));
+              alertService.error(error.message ?? 'Fehler beim Exportieren des PDFs', response.status, response.statusText);
+              return;
+            }
 
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `cocktails-export-${Date.now()}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-      alertService.success('PDF erfolgreich exportiert');
-      setSelectedCocktailIds(new Set());
-    } catch (error) {
-      console.error('PDF export error:', error);
-      alertService.error('Fehler beim Exportieren des PDFs');
-    } finally {
-      setExportingPdf(false);
-    }
-  }, [workspaceId, selectedCocktailIds]);
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `cocktails-export-${Date.now()}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+            alertService.success('PDF erfolgreich exportiert');
+            setSelectedCocktailIds(new Set());
+          } catch (error) {
+            console.error('PDF export error:', error);
+            alertService.error('Fehler beim Exportieren des PDFs');
+          } finally {
+            setExportingPdf(false);
+          }
+        }}
+      />,
+    );
+  }, [workspaceId, selectedCocktailIds, modalContext]);
 
   const renderTableRows = (recipes: CocktailRecipeModel[], isArchived: boolean) => {
     return recipes

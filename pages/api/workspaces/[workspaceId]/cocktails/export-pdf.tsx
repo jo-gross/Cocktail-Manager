@@ -184,15 +184,34 @@ function getTranslation(translations: Record<string, Record<string, string>>, ke
   return translations[language]?.[key] ?? key;
 }
 
-function generateHtmlForCocktails(cocktails: any[], translations: Record<string, Record<string, string>>): string {
+function generateHtmlForCocktails(
+  cocktails: any[],
+  translations: Record<string, Record<string, string>>,
+  options: {
+    exportImage: boolean;
+    exportDescription: boolean;
+    exportNotes: boolean;
+    exportHistory: boolean;
+    newPagePerCocktail: boolean;
+  },
+): string {
   const pages = cocktails.map((cocktail, index) => {
     console.log('Rendering cocktail', cocktail.name);
     // Extract base64 image from CocktailRecipeImage if available
-    const imageBase64 = cocktail.CocktailRecipeImage?.[0]?.image || null;
+    const imageBase64 = options.exportImage ? cocktail.CocktailRecipeImage?.[0]?.image || null : null;
     const componentHtml = renderToString(
-      React.createElement(CocktailPdfPage, { cocktail, imageBase64, getTranslation: (key: string) => getTranslation(translations, key) }),
+      React.createElement(CocktailPdfPage, {
+        cocktail,
+        imageBase64,
+        getTranslation: (key: string) => getTranslation(translations, key),
+        exportImage: options.exportImage,
+        exportDescription: options.exportDescription,
+        exportNotes: options.exportNotes,
+        exportHistory: options.exportHistory,
+      }),
     );
-    return `<div class="pdf-page" data-cocktail-id="${cocktail.id}" data-cocktail-index="${index}">${componentHtml}</div>`;
+    const pageBreakClass = options.newPagePerCocktail ? 'pdf-page' : 'pdf-page-no-break';
+    return `<div class="${pageBreakClass}" data-cocktail-id="${cocktail.id}" data-cocktail-index="${index}">${componentHtml}</div>`;
   });
 
   return `<!DOCTYPE html>
@@ -229,6 +248,10 @@ function generateHtmlForCocktails(cocktails: any[], translations: Record<string,
     .pdf-page:not(:last-child) {
       min-height: 100vh;
     }
+    .pdf-page-no-break {
+      background: white;
+      margin-bottom: 2rem;
+    }
     .long-text-format {
       white-space: pre-line;
       text-align: justify;
@@ -245,7 +268,14 @@ function generateHtmlForCocktails(cocktails: any[], translations: Record<string,
 export default withHttpMethods({
   [HTTPMethod.POST]: withWorkspacePermission([Role.USER], async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
     try {
-      const { cocktailIds } = req.body;
+      const {
+        cocktailIds,
+        exportImage = true,
+        exportDescription = true,
+        exportNotes = true,
+        exportHistory = true,
+        newPagePerCocktail = true,
+      } = req.body;
 
       if (!cocktailIds || !Array.isArray(cocktailIds) || cocktailIds.length === 0) {
         return res.status(400).json({ message: 'cocktailIds array is required and must not be empty' });
@@ -325,7 +355,13 @@ export default withHttpMethods({
         console.log(`Processing batch ${i + 1}/${batches.length} with ${batch.length} cocktails`);
 
         try {
-          const html = generateHtmlForCocktails(batch, translations);
+          const html = generateHtmlForCocktails(batch, translations, {
+            exportImage,
+            exportDescription,
+            exportNotes,
+            exportHistory,
+            newPagePerCocktail,
+          });
           const batchPdfBuffer = await generatePdf(html, batch.length);
           pdfBuffers.push(batchPdfBuffer);
           console.log(`Batch ${i + 1}/${batches.length} completed successfully`);

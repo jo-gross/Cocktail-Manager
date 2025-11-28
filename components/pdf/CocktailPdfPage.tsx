@@ -5,9 +5,22 @@ interface CocktailPdfPageProps {
   cocktail: CocktailRecipeFull;
   imageBase64?: string | null;
   getTranslation?: (key: string) => string;
+  exportImage?: boolean;
+  exportDescription?: boolean;
+  exportNotes?: boolean;
+  exportHistory?: boolean;
 }
 
-export function CocktailPdfPage({ cocktail, imageBase64, getTranslation = (key: string) => key }: CocktailPdfPageProps) {
+export function CocktailPdfPage({
+  cocktail,
+  imageBase64,
+  getTranslation = (key: string) => key,
+  exportImage = true,
+  exportDescription = true,
+  exportNotes = true,
+  exportHistory = true,
+}: CocktailPdfPageProps) {
+  const shouldShowImage = exportImage && imageBase64;
   return (
     <div className="h-fit bg-white">
       <div className="p-4">
@@ -18,7 +31,7 @@ export function CocktailPdfPage({ cocktail, imageBase64, getTranslation = (key: 
         </div>
 
         {/* Bild und Zubereitung in Grid */}
-        <div className={`grid ${imageBase64 ? 'grid-cols-3' : 'grid-cols-1'} mb-2 gap-2`}>
+        <div className={`grid ${shouldShowImage ? 'grid-cols-3' : 'grid-cols-1'} mb-2 gap-2`}>
           <div className={`${imageBase64 ? 'col-span-2' : 'col-span-1'} flex flex-col gap-1`}>
             {/* Tags und Glas/Eis */}
             <div className="mb-2 flex flex-row justify-between gap-2 rounded border p-2">
@@ -92,7 +105,7 @@ export function CocktailPdfPage({ cocktail, imageBase64, getTranslation = (key: 
               </div>
             )}
           </div>
-          {imageBase64 && (
+          {shouldShowImage && (
             <div className="col-span-1 flex justify-center">
               <img src={imageBase64} alt={cocktail.name} className="h-full w-fit rounded-lg object-contain" />
             </div>
@@ -100,21 +113,21 @@ export function CocktailPdfPage({ cocktail, imageBase64, getTranslation = (key: 
         </div>
 
         {/* Notizen, Beschreibung, Geschichte - Reihenfolge wie im DetailModal */}
-        {cocktail.notes && (
+        {exportNotes && cocktail.notes && (
           <div className="mb-1">
             <div className="mb-1 text-lg font-bold">Zubereitungsnotizen</div>
             <div className="long-text-format whitespace-pre-line text-xs">{cocktail.notes}</div>
           </div>
         )}
 
-        {cocktail.description && (
+        {exportDescription && cocktail.description && (
           <div className="mb-1">
             <h2 className="mb-1 text-lg font-bold">Allgemeine Beschreibung</h2>
             <div className="long-text-format whitespace-pre-line text-justify text-xs">{cocktail.description}</div>
           </div>
         )}
 
-        {cocktail.history && (
+        {exportHistory && cocktail.history && (
           <div className="mb-1">
             <h2 className="mb-1 text-lg font-bold">Geschichte und Entstehung</h2>
             <div className="long-text-format whitespace-pre-line text-justify text-xs">{cocktail.history}</div>
