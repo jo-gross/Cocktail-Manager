@@ -14,6 +14,7 @@ import { ModalContext } from '@lib/context/ModalContextProvider';
 import { NotSavedArchiveConfirmation } from '@components/modals/NotSavedArchiveConfirmation';
 import { fetchCocktailWithImage } from '@lib/network/cocktails';
 import { FaFileDownload } from 'react-icons/fa';
+import CocktailExportOptionsModal, { CocktailExportOptions } from '@components/modals/CocktailExportOptionsModal';
 
 function EditCocktailRecipe() {
   const router = useRouter();
@@ -30,41 +31,57 @@ function EditCocktailRecipe() {
   const [unsavedChanges, setUnsavedChanges] = useState(false);
   const formRef: any = useRef<FormikProps<any>>(null);
 
-  const handleExportPdf = useCallback(async () => {
+  const handleExportPdf = useCallback(() => {
     if (!workspaceId || !cocktailRecipe) return;
-    setExportingPdf(true);
-    try {
-      const response = await fetch(`/api/workspaces/${workspaceId}/cocktails/export-pdf`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ cocktailIds: [cocktailRecipe.id] }),
-      });
+    modalContext.openModal(
+      <CocktailExportOptionsModal
+        onExport={async (options: CocktailExportOptions) => {
+          setExportingPdf(true);
+          try {
+            alertService.info('Export läuft und wird gleich zur Verfügung stehen. Dieser Vorgang kann einige Minuten dauern.');
+            const response = await fetch(`/api/workspaces/${workspaceId}/cocktails/export-pdf`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                cocktailIds: [cocktailRecipe.id],
+                exportImage: options.exportImage,
+                exportDescription: options.exportDescription,
+                exportNotes: options.exportNotes,
+                exportHistory: options.exportHistory,
+                newPagePerCocktail: options.newPagePerCocktail,
+                showHeader: options.showHeader,
+                showFooter: options.showFooter,
+              }),
+            });
 
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({ message: 'Fehler beim Exportieren' }));
-        alertService.error(error.message ?? 'Fehler beim Exportieren des PDFs', response.status, response.statusText);
-        return;
-      }
+            if (!response.ok) {
+              const error = await response.json().catch(() => ({ message: 'Fehler beim Exportieren' }));
+              alertService.error(error.message ?? 'Fehler beim Exportieren des PDFs', response.status, response.statusText);
+              return;
+            }
 
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `cocktail-${cocktailRecipe.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}-${Date.now()}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-      alertService.success('PDF erfolgreich exportiert');
-    } catch (error) {
-      console.error('PDF export error:', error);
-      alertService.error('Fehler beim Exportieren des PDFs');
-    } finally {
-      setExportingPdf(false);
-    }
-  }, [workspaceId, cocktailRecipe]);
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `cocktail-${cocktailRecipe.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}-${Date.now()}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+            alertService.success('PDF erfolgreich exportiert');
+          } catch (error) {
+            console.error('PDF export error:', error);
+            alertService.error('Fehler beim Exportieren des PDFs');
+          } finally {
+            setExportingPdf(false);
+          }
+        }}
+      />,
+    );
+  }, [workspaceId, cocktailRecipe, modalContext]);
 
   useEffect(() => {
     fetchCocktailWithImage(workspaceId as string, id as string, setCocktailRecipe, setLoading);
