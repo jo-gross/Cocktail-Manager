@@ -22,7 +22,7 @@ export const config = {
   },
 };
 
-async function generatePdf(html: string, numberOfCocktails: number): Promise<Buffer> {
+async function generatePdf(html: string, numberOfCocktails: number, showFooter: boolean = false): Promise<Buffer> {
   const chromiumHost = process.env.CHROMIUM_HOST;
   console.debug('chromiumHost', chromiumHost);
 
@@ -118,6 +118,13 @@ async function generatePdf(html: string, numberOfCocktails: number): Promise<Buf
     // Race between PDF generation and timeout
     let pdfBuffer: Buffer;
     try {
+      // Prepare footer template for Puppeteer (header is now in HTML for dynamic content)
+      const footerTemplate = showFooter
+        ? `<div style="font-size: 8pt; color: rgba(0, 0, 0, 0.6); width: 100%; text-align: center; padding: 0 5mm;">
+            Seite <span class="pageNumber"></span>
+          </div>`
+        : '<div></div>';
+
       pdfBuffer = (await Promise.race([
         page.pdf({
           format: 'A4',
@@ -125,12 +132,13 @@ async function generatePdf(html: string, numberOfCocktails: number): Promise<Buf
           margin: {
             top: '5mm',
             right: '5mm',
-            bottom: '5mm',
+            bottom: showFooter ? '15mm' : '5mm',
             left: '5mm',
           },
           preferCSSPageSize: false,
-          // Ensure white background for all pages
-          displayHeaderFooter: false,
+          displayHeaderFooter: showFooter, // Only footer uses Puppeteer's displayHeaderFooter
+          headerTemplate: '<div></div>', // Empty header, we use HTML header instead
+          footerTemplate: footerTemplate,
         }),
         timeoutPromise,
       ])) as Buffer;
@@ -193,6 +201,7 @@ function generateHtmlForCocktails(
     exportNotes: boolean;
     exportHistory: boolean;
     newPagePerCocktail: boolean;
+    showFooter: boolean;
   },
 ): string {
   const pages = cocktails.map((cocktail, index) => {
@@ -211,8 +220,19 @@ function generateHtmlForCocktails(
       }),
     );
     const pageBreakClass = options.newPagePerCocktail ? 'pdf-page' : 'pdf-page-no-break';
-    return `<div class="${pageBreakClass}" data-cocktail-id="${cocktail.id}" data-cocktail-index="${index}">${componentHtml}</div>`;
+    return `<div class="${pageBreakClass}" data-cocktail-id="${cocktail.id}" data-cocktail-index="${index}" data-cocktail-name="${cocktail.name}">${componentHtml}</div>`;
   });
+  
+  const footerHtml = '';
+
+  const headerFooterStyles = options.showFooter
+    ? `
+    @page {
+      margin-top: 5mm;
+      margin-bottom: ${options.showFooter ? '15mm' : '5mm'};
+    }
+    `
+    : '';
 
   return `<!DOCTYPE html>
 <html lang="de" data-theme="autumn">
@@ -257,10 +277,18 @@ function generateHtmlForCocktails(
       text-align: justify;
       word-break: break-word;
     }
+    ${headerFooterStyles}
   </style>
 </head>
 <body class='bg-white'>
   ${pages.join('')}
+  ${footerHtml}
+  <script>
+    (function() {
+      // Headers are now rendered per cocktail block, so no JavaScript needed
+      // Footer page numbers are handled by Puppeteer's displayHeaderFooter
+    })();
+  </script>
 </body>
 </html>`;
 }
@@ -275,6 +303,7 @@ export default withHttpMethods({
         exportNotes = true,
         exportHistory = true,
         newPagePerCocktail = true,
+        showFooter = false,
       } = req.body;
 
       if (!cocktailIds || !Array.isArray(cocktailIds) || cocktailIds.length === 0) {
@@ -361,8 +390,9 @@ export default withHttpMethods({
             exportNotes,
             exportHistory,
             newPagePerCocktail,
+            showFooter,
           });
-          const batchPdfBuffer = await generatePdf(html, batch.length);
+          const batchPdfBuffer = await generatePdf(html, batch.length, showFooter);
           pdfBuffers.push(batchPdfBuffer);
           console.log(`Batch ${i + 1}/${batches.length} completed successfully`);
         } catch (batchError) {
