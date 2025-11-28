@@ -1,3 +1,16 @@
+# [1.16.0](https://github.com/jo-gross/Cocktail-Manager/compare/v1.15.2...v1.16.0) (2025-11-28)
+
+
+### Bug Fixes
+
+* auto image crop on ingredient import ([#814](https://github.com/jo-gross/Cocktail-Manager/issues/814)) ([2fae89b](https://github.com/jo-gross/Cocktail-Manager/commit/2fae89b427db0f7efda6ce5b3c182f095d11469b))
+
+
+### Features
+
+* added pdf export options ([#820](https://github.com/jo-gross/Cocktail-Manager/issues/820)) ([3e6dc00](https://github.com/jo-gross/Cocktail-Manager/commit/3e6dc00c08dcff8fc4237724264d4dd7225474b0))
+* Added PDF export to cocktail recipes ([#813](https://github.com/jo-gross/Cocktail-Manager/issues/813)) ([5d5069b](https://github.com/jo-gross/Cocktail-Manager/commit/5d5069b9f3ab45eb9d399c5cc2e5ad4d73cc56bd))
+
 ## [1.15.2](https://github.com/jo-gross/Cocktail-Manager/compare/v1.15.1...v1.15.2) (2025-11-18)
 
 
