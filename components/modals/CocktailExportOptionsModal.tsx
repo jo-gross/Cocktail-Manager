@@ -7,6 +7,7 @@ export interface CocktailExportOptions {
   exportNotes: boolean;
   exportHistory: boolean;
   newPagePerCocktail: boolean;
+  showHeader: boolean;
   showFooter: boolean;
 }
 
@@ -22,6 +23,7 @@ export default function CocktailExportOptionsModal({ onExport }: CocktailExportO
   const [exportNotes, setExportNotes] = useState(true);
   const [exportHistory, setExportHistory] = useState(true);
   const [newPagePerCocktail, setNewPagePerCocktail] = useState(true);
+  const [showHeader, setShowHeader] = useState(true);
   const [showFooter, setShowFooter] = useState(true);
 
   const handleExport = () => {
@@ -31,6 +33,7 @@ export default function CocktailExportOptionsModal({ onExport }: CocktailExportO
       exportNotes,
       exportHistory,
       newPagePerCocktail,
+      showHeader,
       showFooter,
     };
     modalContext.closeModal();
@@ -107,6 +110,17 @@ export default function CocktailExportOptionsModal({ onExport }: CocktailExportO
                   onChange={(e) => setNewPagePerCocktail(e.target.checked)}
                 />
                 <span className={'label-text'}>Neue Seite für jeden Cocktail</span>
+              </label>
+            </div>
+            <div className="form-control">
+              <label className="label cursor-pointer justify-start gap-2">
+                <input
+                  type={'checkbox'}
+                  className={'toggle toggle-primary'}
+                  checked={showHeader}
+                  onChange={(e) => setShowHeader(e.target.checked)}
+                />
+                <span className={'label-text'}>Header anzeigen</span>
               </label>
             </div>
             <div className="form-control">

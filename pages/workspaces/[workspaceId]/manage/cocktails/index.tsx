@@ -125,6 +125,7 @@ const CocktailsOverviewPage: NextPageWithPullToRefresh = () => {
                 exportNotes: options.exportNotes,
                 exportHistory: options.exportHistory,
                 newPagePerCocktail: options.newPagePerCocktail,
+                showHeader: options.showHeader,
                 showFooter: options.showFooter,
               }),
             });
