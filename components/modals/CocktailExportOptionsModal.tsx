@@ -44,7 +44,8 @@ export default function CocktailExportOptionsModal({ onExport }: CocktailExportO
     <div className={'flex flex-col gap-4'}>
       <div className={'text-2xl font-bold'}>Export-Optionen</div>
       <div className={'text-sm text-base-content/70'}>
-        Sie können das exportierte PDF nach Ihren Wünschen gestalten.<br />
+        Sie können das exportierte PDF nach Ihren Wünschen gestalten.
+        <br />
         Der Export-Vorgang kann je nach Anzahl der Rezepte einige Minuten dauern.
       </div>
       <div className={'flex flex-col gap-4'}>
@@ -53,12 +54,7 @@ export default function CocktailExportOptionsModal({ onExport }: CocktailExportO
           <div className={'flex flex-col gap-2 pl-2'}>
             <div className="form-control">
               <label className="label cursor-pointer justify-start gap-2">
-                <input
-                  type={'checkbox'}
-                  className={'toggle toggle-primary'}
-                  checked={exportImage}
-                  onChange={(e) => setExportImage(e.target.checked)}
-                />
+                <input type={'checkbox'} className={'toggle toggle-primary'} checked={exportImage} onChange={(e) => setExportImage(e.target.checked)} />
                 <span className={'label-text'}>Bild anzeigen</span>
               </label>
             </div>
@@ -75,23 +71,13 @@ export default function CocktailExportOptionsModal({ onExport }: CocktailExportO
             </div>
             <div className="form-control">
               <label className="label cursor-pointer justify-start gap-2">
-                <input
-                  type={'checkbox'}
-                  className={'toggle toggle-primary'}
-                  checked={exportNotes}
-                  onChange={(e) => setExportNotes(e.target.checked)}
-                />
+                <input type={'checkbox'} className={'toggle toggle-primary'} checked={exportNotes} onChange={(e) => setExportNotes(e.target.checked)} />
                 <span className={'label-text'}>Zubereitungsnotizen anzeigen</span>
               </label>
             </div>
             <div className="form-control">
               <label className="label cursor-pointer justify-start gap-2">
-                <input
-                  type={'checkbox'}
-                  className={'toggle toggle-primary'}
-                  checked={exportHistory}
-                  onChange={(e) => setExportHistory(e.target.checked)}
-                />
+                <input type={'checkbox'} className={'toggle toggle-primary'} checked={exportHistory} onChange={(e) => setExportHistory(e.target.checked)} />
                 <span className={'label-text'}>Geschichte und Entstehung anzeigen</span>
               </label>
             </div>
@@ -114,23 +100,13 @@ export default function CocktailExportOptionsModal({ onExport }: CocktailExportO
             </div>
             <div className="form-control">
               <label className="label cursor-pointer justify-start gap-2">
-                <input
-                  type={'checkbox'}
-                  className={'toggle toggle-primary'}
-                  checked={showHeader}
-                  onChange={(e) => setShowHeader(e.target.checked)}
-                />
+                <input type={'checkbox'} className={'toggle toggle-primary'} checked={showHeader} onChange={(e) => setShowHeader(e.target.checked)} />
                 <span className={'label-text'}>Header anzeigen</span>
               </label>
             </div>
             <div className="form-control">
               <label className="label cursor-pointer justify-start gap-2">
-                <input
-                  type={'checkbox'}
-                  className={'toggle toggle-primary'}
-                  checked={showFooter}
-                  onChange={(e) => setShowFooter(e.target.checked)}
-                />
+                <input type={'checkbox'} className={'toggle toggle-primary'} checked={showFooter} onChange={(e) => setShowFooter(e.target.checked)} />
                 <span className={'label-text'}>Seitenzahl anzeigen</span>
               </label>
             </div>
@@ -154,4 +130,3 @@ export default function CocktailExportOptionsModal({ onExport }: CocktailExportO
     </div>
   );
 }
-

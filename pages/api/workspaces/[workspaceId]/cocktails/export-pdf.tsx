@@ -123,9 +123,9 @@ async function generatePdf(html: string, numberOfCocktails: number, showHeader: 
       const formattedDate = currentDate.toLocaleDateString('de-DE', {
         day: '2-digit',
         month: '2-digit',
-        year: 'numeric'
+        year: 'numeric',
       });
-      
+
       const headerTemplate = showHeader
         ? `<div style="font-size: 8pt; color: rgba(0, 0, 0, 0.6); width: 100%; display: flex; justify-content: space-between; align-items: center; padding: 0 5mm;">
             <div style="flex: 1;"></div>
@@ -133,7 +133,7 @@ async function generatePdf(html: string, numberOfCocktails: number, showHeader: 
             <div style="flex: 1; text-align: right;">${formattedDate}</div>
           </div>`
         : '<div></div>';
-      
+
       const footerTemplate = showFooter
         ? `<div style="font-size: 8pt; color: rgba(0, 0, 0, 0.6); width: 100%; text-align: center; padding: 0 5mm;">
             Seite <span class="pageNumber"></span>
@@ -238,17 +238,18 @@ function generateHtmlForCocktails(
     const pageBreakClass = options.newPagePerCocktail ? 'pdf-page' : 'pdf-page-no-break';
     return `<div class="${pageBreakClass}" data-cocktail-id="${cocktail.id}" data-cocktail-index="${index}" data-cocktail-name="${cocktail.name}">${componentHtml}</div>`;
   });
-  
+
   const footerHtml = '';
 
-  const headerFooterStyles = options.showHeader || options.showFooter
-    ? `
+  const headerFooterStyles =
+    options.showHeader || options.showFooter
+      ? `
     @page {
       margin-top: ${options.showHeader ? '10mm' : '5mm'};
       margin-bottom: ${options.showFooter ? '10mm' : '5mm'};
     }
     `
-    : '';
+      : '';
 
   return `<!DOCTYPE html>
 <html lang="de" data-theme="autumn">
