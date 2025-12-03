@@ -41,6 +41,7 @@ const WorkspacesPage: NextPageWithPullToRefresh = () => {
   const [creatingWorkspace, setCreatingWorkspace] = useState(false);
 
   const [changeLogFetch, setChangelogFetch] = useState(false);
+  const [workspaceCreationConfig, setWorkspaceCreationConfig] = useState<{ disabled: boolean; message: string | null } | null>(null);
 
   const fetchWorkspaces = useCallback(() => {
     if (!userContext.user) return;
@@ -81,6 +82,25 @@ const WorkspacesPage: NextPageWithPullToRefresh = () => {
       })
       .finally(() => setOpenWorkspaceJoinRequestLoading(false));
   }, [userContext.user]);
+
+  const fetchWorkspaceCreationConfig = useCallback(() => {
+    fetch('/api/config/workspace-creation', { method: 'GET' })
+      .then(async (response) => {
+        const body = await response.json();
+        if (response.ok) {
+          setWorkspaceCreationConfig(body.data);
+        } else {
+          console.error('WorkspacesOverview -> fetchWorkspaceCreationConfig', response);
+          // Fallback: Wenn der Endpoint fehlschlägt, erlauben wir die Erstellung
+          setWorkspaceCreationConfig({ disabled: false, message: null });
+        }
+      })
+      .catch((error) => {
+        console.error('WorkspacesOverview -> fetchWorkspaceCreationConfig', error);
+        // Fallback: Wenn der Endpoint fehlschlägt, erlauben wir die Erstellung
+        setWorkspaceCreationConfig({ disabled: false, message: null });
+      });
+  }, []);
 
   const createNewWorkspace = useCallback(() => {
     if (!userContext.user) return;
@@ -210,11 +230,13 @@ const WorkspacesPage: NextPageWithPullToRefresh = () => {
   useEffect(() => {
     fetchWorkspaces();
     fetchOpenWorkspaceJoinRequest();
-  }, [fetchOpenWorkspaceJoinRequest, fetchWorkspaces]);
+    fetchWorkspaceCreationConfig();
+  }, [fetchOpenWorkspaceJoinRequest, fetchWorkspaces, fetchWorkspaceCreationConfig]);
 
   WorkspacesPage.pullToRefresh = () => {
     fetchWorkspaces();
     fetchOpenWorkspaceJoinRequest();
+    fetchWorkspaceCreationConfig();
   };
 
   useEffect(() => {
@@ -389,40 +411,58 @@ const WorkspacesPage: NextPageWithPullToRefresh = () => {
                 )}
               </>
             )}
-            <div className={'divider col-span-full'}>Workspace hinzufügen</div>
-            <div className={'card'}>
-              <div className={'card-body flex h-full flex-col items-center justify-center space-y-2'}>
-                <div className={'card-title'}>Workspace erstellen</div>
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    createNewWorkspace();
-                  }}
-                >
-                  <div className={'form-control'}>
-                    <label className={'label'}>
-                      <div className={'label-text'}>Name der Workspace</div>
-                    </label>
-                    <div className={'join w-full'}>
-                      <input
-                        className={'input join-item input-bordered w-full'}
-                        placeholder={'Name der Workspace'}
-                        value={newWorkspaceName}
-                        onChange={(event) => setNewWorkspaceName(event.target.value)}
+            {workspaceCreationConfig && (!workspaceCreationConfig.disabled || workspaceCreationConfig.message) ? (
+              <>
+                <div className={'divider col-span-full'}>Workspace hinzufügen</div>
+                {workspaceCreationConfig.disabled && workspaceCreationConfig.message ? (
+                  <div className={'card'}>
+                    <div className={'card-body flex h-full flex-col items-center justify-center space-y-2'}>
+                      <div className={'card-title'}>Workspace erstellen</div>
+                      <div
+                        className={'text-center'}
+                        dangerouslySetInnerHTML={{
+                          __html: workspaceCreationConfig.message.replaceAll('<a', '<a class="link"'),
+                        }}
                       />
-                      <button
-                        className={`btn btn-outline join-item w-fit min-w-12`}
-                        disabled={newWorkspaceName.trim().length == 0 || creatingWorkspace}
-                        type={'submit'}
-                      >
-                        {creatingWorkspace ? <span className={'loading loading-spinner'} /> : <></>}
-                        <FaArrowRight />
-                      </button>
                     </div>
                   </div>
-                </form>
-              </div>
-            </div>
+                ) : (
+                  <div className={'card'}>
+                    <div className={'card-body flex h-full flex-col items-center justify-center space-y-2'}>
+                      <div className={'card-title'}>Workspace erstellen</div>
+                      <form
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          createNewWorkspace();
+                        }}
+                      >
+                        <div className={'form-control'}>
+                          <label className={'label'}>
+                            <div className={'label-text'}>Name der Workspace</div>
+                          </label>
+                          <div className={'join w-full'}>
+                            <input
+                              className={'input join-item input-bordered w-full'}
+                              placeholder={'Name der Workspace'}
+                              value={newWorkspaceName}
+                              onChange={(event) => setNewWorkspaceName(event.target.value)}
+                            />
+                            <button
+                              className={`btn btn-outline join-item w-fit min-w-12`}
+                              disabled={newWorkspaceName.trim().length == 0 || creatingWorkspace}
+                              type={'submit'}
+                            >
+                              {creatingWorkspace ? <span className={'loading loading-spinner'} /> : <></>}
+                              <FaArrowRight />
+                            </button>
+                          </div>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+                )}
+              </>
+            ) : null}
             <div className={'card'}>
               <div className={'card-body flex flex-col items-center justify-center gap-2'}>
                 <div className={'card-title'}>Workspace beitreten</div>

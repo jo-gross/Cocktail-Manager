@@ -10,6 +10,10 @@ import WorkspaceSettingKey = $Enums.WorkspaceSettingKey;
 
 export default withHttpMethods({
   [HTTPMethod.POST]: withAuthentication(async (req: NextApiRequest, res: NextApiResponse, user: User) => {
+    if (process.env.DISABLE_WORKSPACE_CREATION === 'true') {
+      return res.status(403).json({ message: 'Workspace-Erstellung ist deaktiviert' });
+    }
+
     const { name } = req.body;
 
     const grammId = randomUUID();
