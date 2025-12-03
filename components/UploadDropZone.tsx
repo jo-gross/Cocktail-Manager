@@ -73,7 +73,7 @@ export function UploadDropZone(props: UploadDropZoneProps) {
               </div>
             ) : (
               <div className={'w-full'}>
-                <ImportPhotoByUrl onImport={handleUrlImport} hideTitle={true} />
+                <ImportPhotoByUrl onImport={handleUrlImport} />
                 <button type="button" className="btn btn-outline btn-sm mt-2 w-full p-1" onClick={() => setShowUrlInput(false)}>
                   Zurück
                 </button>
@@ -126,7 +126,7 @@ export function UploadDropZone(props: UploadDropZoneProps) {
               />
             </label>
             <div className={'divider'}>Bild über URL laden</div>
-            <ImportPhotoByUrl onImport={handleUrlImport} hideTitle={true} />
+            <ImportPhotoByUrl onImport={handleUrlImport} />
           </div>
         )}
       </div>
