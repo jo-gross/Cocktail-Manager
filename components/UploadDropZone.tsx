@@ -1,8 +1,7 @@
-import { useContext } from 'react';
+import { useState } from 'react';
 import { isMobile } from 'react-device-detect';
 import { FaCamera, FaFileAlt, FaLink } from 'react-icons/fa';
-import { ModalContext } from '@lib/context/ModalContextProvider';
-import ImportPhotoByUrlModal from './ImportPhotoByUrlModal';
+import ImportPhotoByUrl from './ImportPhotoByUrl';
 import { alertService } from '@lib/alertService';
 
 interface UploadDropZoneProps {
@@ -12,7 +11,7 @@ interface UploadDropZoneProps {
 
 export function UploadDropZone(props: UploadDropZoneProps) {
   const identifier = Math.floor(Math.random() * 1000000);
-  const modalContext = useContext(ModalContext);
+  const [showUrlInput, setShowUrlInput] = useState(false);
 
   const handleUrlImport = async (imageUrl: string) => {
     try {
@@ -25,54 +24,62 @@ export function UploadDropZone(props: UploadDropZoneProps) {
         const blob = await response.blob();
         const file = new File([blob], 'imported-image.jpg', { type: blob.type });
 
-        modalContext.closeModal();
         props.onSelectedFilesChanged(file);
+        setShowUrlInput(false);
       }
     } catch (error) {
       console.error('Fehler beim Laden des Bildes:', error);
+      alertService.error('Fehler beim Laden des Bildes');
     }
-  };
-
-  const openUrlImportModal = () => {
-    modalContext.openModal(<ImportPhotoByUrlModal onImport={handleUrlImport} />);
   };
 
   return (
     <>
       <div className="flex h-fit w-full items-center justify-center">
         {isMobile ? (
-          <div className={'grid grid-cols-3 gap-2'}>
-            <label className={'btn btn-outline'}>
-              <FaCamera /> Kamera
-              <input
-                type="file"
-                name="file"
-                className="hidden"
-                capture="environment"
-                accept={'image/*'}
-                onChange={(event) => {
-                  const file = event?.target?.files?.[0];
-                  props.onSelectedFilesChanged(file);
-                }}
-              />
-            </label>
-            <label className={'btn btn-outline'}>
-              <FaFileAlt /> Datei
-              <input
-                type="file"
-                name="file"
-                className="hidden"
-                accept={'image/*'}
-                onChange={(event) => {
-                  const file = event?.target?.files?.[0];
-                  props.onSelectedFilesChanged(file);
-                }}
-              />
-            </label>
-            <button className="btn btn-outline" onClick={openUrlImportModal}>
-              <FaLink /> URL
-            </button>
-          </div>
+          <>
+            {!showUrlInput ? (
+              <div className={'grid w-full grid-cols-3 gap-2'}>
+                <label className={'btn btn-outline'}>
+                  <FaCamera /> Kamera
+                  <input
+                    type="file"
+                    name="file"
+                    className="hidden"
+                    capture="environment"
+                    accept={'image/*'}
+                    onChange={(event) => {
+                      const file = event?.target?.files?.[0];
+                      props.onSelectedFilesChanged(file);
+                    }}
+                  />
+                </label>
+                <label className={'btn btn-outline'}>
+                  <FaFileAlt /> Datei
+                  <input
+                    type="file"
+                    name="file"
+                    className="hidden"
+                    accept={'image/*'}
+                    onChange={(event) => {
+                      const file = event?.target?.files?.[0];
+                      props.onSelectedFilesChanged(file);
+                    }}
+                  />
+                </label>
+                <button type="button" className="btn btn-outline" onClick={() => setShowUrlInput(true)}>
+                  <FaLink /> URL
+                </button>
+              </div>
+            ) : (
+              <div className={'w-full'}>
+                <ImportPhotoByUrl onImport={handleUrlImport} hideTitle={true} />
+                <button type="button" className="btn btn-outline btn-sm mt-2 w-full p-1" onClick={() => setShowUrlInput(false)}>
+                  Zurück
+                </button>
+              </div>
+            )}
+          </>
         ) : (
           <div className={'w-full'}>
             <label
@@ -119,7 +126,7 @@ export function UploadDropZone(props: UploadDropZoneProps) {
               />
             </label>
             <div className={'divider'}>Bild über URL laden</div>
-            <ImportPhotoByUrlModal onImport={handleUrlImport} hideTitle={true} />
+            <ImportPhotoByUrl onImport={handleUrlImport} hideTitle={true} />
           </div>
         )}
       </div>
