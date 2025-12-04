@@ -22,6 +22,7 @@ import '../../../lib/ArrayUtils';
 import { CgArrowsExpandUpLeft } from 'react-icons/cg';
 import { PageCenter } from '@components/layout/PageCenter';
 import { NextPageWithPullToRefresh } from '../../../types/next';
+import { OrderView } from '../../../components/order/OrderView';
 
 const OverviewPage: NextPageWithPullToRefresh = () => {
   const modalContext = useContext(ModalContext);
@@ -54,7 +55,16 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
   useEffect(() => {
     const handleSearchShortCut = (event: any) => {
       if (event.shiftKey && event.key === 'F' && modalContext.content.length == 0) {
-        if (!(document.querySelector('#globalModal') as any)?.checked) {
+        // Prüfe, ob der Fokus auf einem Input-Element liegt
+        const activeElement = document.activeElement;
+        const isInputFocused = activeElement && (
+          activeElement.tagName === 'INPUT' ||
+          activeElement.tagName === 'TEXTAREA' ||
+          activeElement.tagName === 'SELECT' ||
+          (activeElement as HTMLElement).isContentEditable
+        );
+
+        if (!isInputFocused && !(document.querySelector('#globalModal') as any)?.checked) {
           modalContext.openModal(<SearchModal showStatisticActions={showStatisticActions} />);
         }
       }
@@ -87,11 +97,13 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
       .finally(() => setLoadingCards(false));
   }, [userContext.user, workspaceId]);
 
-  const [selectedCardId, setSelectedCardId] = useState<string | undefined>(cocktailCards.length > 0 ? cocktailCards[0].id : undefined);
+  const [selectedCardId, setSelectedCardId] = useState<string | undefined>(
+    (router.query.card as string) || undefined,
+  );
   const [selectedCard, setSelectedCard] = useState<CocktailCardFull | undefined>(cocktailCards.length > 0 ? cocktailCards[0] : undefined);
 
   const fetchSelectedCard = useCallback(() => {
-    if (selectedCardId != undefined && selectedCardId != 'search') {
+    if (selectedCardId != undefined && selectedCardId != 'search' && selectedCardId != 'order') {
       setLoadingGroups(true);
       fetch(`/api/workspaces/${workspaceId}/cards/` + selectedCardId)
         .then(async (response) => {
@@ -152,7 +164,14 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
   }, []);
 
   useEffect(() => {
-    if (selectedCardId == undefined && cocktailCards.length > 0 && router.query.card != 'search') {
+    // Initialize selectedCardId from router query if available
+    if (router.query.card && router.query.card !== selectedCardId) {
+      setSelectedCardId(router.query.card as string);
+    }
+  }, [router.query.card]);
+
+  useEffect(() => {
+    if (selectedCardId == undefined && cocktailCards.length > 0 && router.query.card != 'search' && router.query.card != 'order') {
       const todayCardId = cocktailCards
         .filter((card) => card.date != undefined)
         .find((card) => new Date(card.date!).toISOString().split('T')[0] == new Date().toISOString().split('T')[0])?.id;
@@ -684,7 +703,9 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
           )}
 
           <main className={`order-1 col-span-5 flex w-full flex-col space-y-2 overflow-y-auto rounded-xl lg:col-span-6 xl:col-span-5`}>
-            {selectedCardId == 'search' || selectedCardId == undefined ? (
+            {selectedCardId == 'order' ? (
+              <OrderView cocktailCards={cocktailCards} workspaceId={workspaceId as string} />
+            ) : selectedCardId == 'search' || selectedCardId == undefined ? (
               <div className={'flex flex-col-reverse gap-2 md:flex-row'}>
                 <div className={'card w-full flex-1'}>
                   <div className={`card-body`}>
@@ -845,6 +866,26 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                             .replace({
                               pathname: '/workspaces/[workspaceId]',
                               query: { card: 'search', workspaceId: workspaceId },
+                            })
+                            .then();
+                        }}
+                      />
+                    </label>
+                    <label className="label">
+                      <div className={'label-text font-bold'}>Bestellen</div>
+                      <input
+                        name={'card-radio'}
+                        type={'radio'}
+                        className={'radio'}
+                        value={'order'}
+                        checked={selectedCardId == 'order'}
+                        readOnly={true}
+                        onClick={() => {
+                          setSelectedCardId('order');
+                          router
+                            .replace({
+                              pathname: '/workspaces/[workspaceId]',
+                              query: { card: 'order', workspaceId: workspaceId },
                             })
                             .then();
                         }}
@@ -1135,7 +1176,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
             </div>
 
             <>
-              {selectedCardId != 'search' && selectedCardId != undefined ? (
+              {selectedCardId != 'search' && selectedCardId != 'order' && selectedCardId != undefined ? (
                 <div className={'tooltip' + (showSettingsAtBottom ? ' mr-1' : '')} data-tip={'Suche (Shift + F)'}>
                   <div
                     className={'btn btn-square btn-primary rounded-xl md:btn-lg'}

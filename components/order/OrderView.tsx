@@ -266,7 +266,7 @@ export function OrderView({ cocktailCards, workspaceId }: OrderViewProps) {
     } finally {
       setSubmitting(false);
     }
-  }, [orderItems, workspaceId, clearOrder]);
+  }, [orderItems, workspaceId, clearOrder, globalNotes]);
 
   // Calculate totals
   const totalCocktailPrice = orderItems
@@ -389,32 +389,21 @@ export function OrderView({ cocktailCards, workspaceId }: OrderViewProps) {
                           {glassesInGroup.map((glass) => (
                             <div
                               key={glass.id}
-                              className="flex flex-col items-center gap-1 cursor-pointer"
+                              className="flex flex-col items-center gap-1 cursor-pointer rounded-lg border border-base-300 p-2 hover:border-primary transition-colors"
                               onClick={() => addReturnedGlass(glass)}
                             >
-                              <div className="h-12 w-12">
+                              <div className="h-16 w-16">
                                 {glass._count?.GlassImage == 0 ? (
                                   <DefaultGlassIcon />
                                 ) : (
-                                  <div
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      modalContext.openModal(
-                                        <ImageModal
-                                          image={`/api/workspaces/${workspaceId}/glasses/${glass.id}/image`}
-                                        />,
-                                      );
-                                    }}
-                                  >
-                                    <AvatarImage
-                                      src={`/api/workspaces/${workspaceId}/glasses/${glass.id}/image`}
-                                      alt={glass.name}
-                                      altComponent={<DefaultGlassIcon />}
-                                    />
-                                  </div>
+                                  <AvatarImage
+                                    src={`/api/workspaces/${workspaceId}/glasses/${glass.id}/image`}
+                                    alt={glass.name}
+                                    altComponent={<DefaultGlassIcon />}
+                                  />
                                 )}
                               </div>
-                              <span className="text-xs text-center">{glass.name}</span>
+                              <span className="text-xs text-center max-w-[4rem] break-words">{glass.name}</span>
                             </div>
                           ))}
                         </div>
@@ -446,7 +435,7 @@ export function OrderView({ cocktailCards, workspaceId }: OrderViewProps) {
           <div className="card-body">
             <h2 className="card-title text-2xl mb-4">Bestellung</h2>
             {orderItems.length === 0 ? (
-              <div className="text-center text-gray-500 py-8">Keine Items in der Bestellung</div>
+              <div className="text-center text-gray-500 py-8">Keine Cocktails oder Gläser in der Bestellung</div>
             ) : (
               <>
                 <div className="overflow-x-auto">
@@ -592,19 +581,19 @@ export function OrderView({ cocktailCards, workspaceId }: OrderViewProps) {
                 <div className="mt-4 space-y-2">
                   <div className="form-control">
                     <label className="label">
-                      <span className="label-text">Kommentar für alle Cocktails</span>
+                      <span className="label-text">Notiz für alle Cocktails der Bestellung</span>
                     </label>
                     <input
                       type="text"
                       className="input input-bordered w-full"
-                      placeholder="Kommentar (wird für alle Cocktails übernommen)..."
+                      placeholder="z.B. Für Tim und Freunde ..."
                       value={globalNotes}
                       onChange={(e) => setGlobalNotes(e.target.value)}
                     />
                   </div>
                   <div className="card-actions flex gap-2">
                     <button
-                      className="btn btn-error flex-1"
+                      className="btn btn-error flex-1 btn-outline"
                       onClick={() => {
                         clearOrder();
                         setGlobalNotes('');
@@ -612,7 +601,7 @@ export function OrderView({ cocktailCards, workspaceId }: OrderViewProps) {
                       disabled={orderItems.length === 0}
                     >
                       <FaTrash />
-                      Formular löschen
+                      Bestellung leeren
                     </button>
                     <button
                       className="btn btn-primary flex-1"
