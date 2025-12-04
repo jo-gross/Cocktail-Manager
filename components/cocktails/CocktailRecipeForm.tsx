@@ -960,14 +960,14 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
 
                 <FieldArray name={'steps'}>
                   {({ push: pushStep, remove: removeStep }) => (
-                    <div className={'col-span-2 space-y-2'}>
+                    <div className={'col-span-2 gap-2 space-y-2'}>
                       {(values.steps as CocktailRecipeStepFull[]).map((step, indexStep) => (
                         <div
                           key={`form-recipe-step-${indexStep}`}
-                          className={'flex w-full flex-col justify-between space-y-2 rounded-xl border border-neutral p-4'}
+                          className={'flex w-full flex-col justify-between rounded-xl border border-base-100 p-3 md:p-4'}
                         >
                           <div className={'grid grid-cols-2 gap-2 md:grid-cols-3 md:gap-4'}>
-                            <div className={'flex flex-row items-center gap-2'}>
+                            <div className={'col-span-2 flex flex-row items-center justify-between gap-2 md:col-span-1 md:justify-start'}>
                               <div className={'font-bold'}>Schritt {indexStep + 1}</div>
                               <div className={'form-control'}>
                                 <label className={'label w-fit justify-start gap-1'}>
@@ -1014,7 +1014,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                 )}
                               </select>
                             </div>
-                            <div className={'space-x-2 md:justify-self-end'}>
+                            <div className={'space-x-2 justify-self-end'}>
                               <button
                                 type={'button'}
                                 disabled={indexStep == 0}
@@ -1066,211 +1066,216 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                               </button>
                             </div>
                           </div>
+                          <div className="divider col-span-full font-thin">Zutaten</div>
                           <FieldArray name={`steps.${indexStep}.ingredients`}>
                             {({ push: pushIngredient, remove: removeIngredient }) => (
                               <>
                                 {step.ingredients
                                   .sort((a, b) => a.ingredientNumber - b.ingredientNumber)
                                   .map((ingredient, indexIngredient) => (
-                                    <div
-                                      key={`form-recipe-step-${indexStep}-ingredient-${indexIngredient}`}
-                                      className={'flex flex-row items-center gap-2 pt-2'}
-                                    >
-                                      <div className={'join join-vertical w-min items-center justify-center'}>
-                                        <button
-                                          type={'button'}
-                                          disabled={indexIngredient == 0}
-                                          className={'btn btn-square btn-outline join-item btn-xs'}
-                                          onClick={() => {
-                                            const value = values.steps[indexStep].ingredients[indexIngredient];
-                                            const reorderedGroups = (values.steps as CocktailRecipeStepFull[])[indexStep].ingredients.filter(
-                                              (_, i) => i != indexIngredient,
-                                            );
-                                            reorderedGroups.splice(indexIngredient - 1, 0, value);
-                                            setFieldValue(
-                                              `steps.${indexStep}.ingredients`,
-                                              reorderedGroups.map((group, groupIndex) => ({
-                                                ...group,
-                                                ingredientNumber: groupIndex,
-                                              })),
-                                            );
-                                          }}
-                                        >
-                                          <FaAngleUp />
-                                        </button>
-                                        <button
-                                          type={'button'}
-                                          disabled={
-                                            !(values.steps[indexStep].ingredients.length > 1) ||
-                                            indexIngredient == values.steps[indexStep].ingredients.length - 1
-                                          }
-                                          className={'btn btn-square btn-outline join-item btn-xs'}
-                                          onClick={() => {
-                                            const value = values.steps[indexStep].ingredients[indexIngredient];
-                                            const reorderedGroups = (values.steps as CocktailRecipeStepFull[])[indexStep].ingredients.filter(
-                                              (_, i) => i != indexIngredient,
-                                            );
-                                            reorderedGroups.splice(indexIngredient + 1, 0, value);
-                                            setFieldValue(
-                                              `steps.${indexStep}.ingredients`,
-                                              reorderedGroups.map((group, groupIndex) => ({
-                                                ...group,
-                                                ingredientNumber: groupIndex,
-                                              })),
-                                            );
-                                          }}
-                                        >
-                                          <FaAngleDown />
-                                        </button>
-                                      </div>
-                                      <div className={'form-control'}>
-                                        <label className={'label w-fit flex-col justify-start gap-1'}>
-                                          <span className={'label-text'}>Optional</span>
-                                          <span className={'label-text-alt text-error'}>
-                                            {((errors.steps as StepError[])?.[indexStep] as any)?.ingredients?.[indexIngredient]?.optional &&
-                                              ((errors.steps as StepError[])?.[indexStep] as any)?.ingredients?.[indexIngredient]?.optional}
-                                          </span>
-                                          <Field
-                                            type={'checkbox'}
-                                            name={`steps.${indexStep}.ingredients.${indexIngredient}.optional`}
-                                            onChange={handleChange}
-                                            onBlur={handleBlur}
-                                            className={'toggle toggle-primary'}
-                                          />
-                                        </label>
-                                      </div>
-                                      <div className={'grid w-full grid-cols-2 gap-1 md:grid-cols-3'}>
-                                        <div key={`form-recipe-step${step.id}-ingredient-${ingredient.id}`} className={'join col-span-2 flex w-full flex-row'}>
-                                          <input
-                                            id={`ingredient-${indexIngredient}-name`}
-                                            className={`input join-item input-bordered w-full cursor-pointer ${
-                                              ((errors.steps as StepError[])?.[indexStep] as any)?.ingredients?.[indexIngredient]?.ingredientId && 'input-error'
-                                            }`}
-                                            value={
-                                              ingredientsLoading
-                                                ? 'Lade...'
-                                                : (values.steps[indexStep].ingredients?.[indexIngredient].ingredient?.name ?? 'Wähle eine Zutat aus...')
-                                            }
-                                            readOnly={true}
-                                            onClick={() => {
-                                              openIngredientSelectModal(setFieldValue, indexStep, indexIngredient);
-                                            }}
-                                          />
+                                    <>
+                                      {indexIngredient > 0 && <div className="divider-sm col-span-full"></div>}
+                                      <div key={`form-recipe-step-${indexStep}-ingredient-${indexIngredient}`} className={`flex flex-row items-center gap-2`}>
+                                        <div className={'join join-vertical w-min items-center justify-center'}>
                                           <button
                                             type={'button'}
-                                            className={'btn btn-outline btn-primary join-item'}
+                                            disabled={indexIngredient == 0}
+                                            className={'btn btn-square btn-outline join-item btn-xs'}
                                             onClick={() => {
-                                              openIngredientSelectModal(setFieldValue, indexStep, indexIngredient);
-                                            }}
-                                          >
-                                            <FaSearch />
-                                          </button>
-                                          <button
-                                            type={'button'}
-                                            className={'btn btn-outline btn-secondary join-item'}
-                                            onClick={() => {
-                                              modalContext.openModal(
-                                                <FormModal<Ingredient>
-                                                  form={
-                                                    <IngredientForm
-                                                      formRef={createRef<FormikProps<any>>()}
-                                                      onSaved={async (id) => {
-                                                        modalContext.closeAllModals();
-                                                        await setFieldValue(`steps.${indexStep}.ingredients.${indexIngredient}.ingredientId`, id);
-                                                        fetchIngredients(workspaceId, setIngredients, setIngredientsLoading);
-                                                      }}
-                                                    />
-                                                  }
-                                                  title={'Zutat erfassen'}
-                                                />,
+                                              const value = values.steps[indexStep].ingredients[indexIngredient];
+                                              const reorderedGroups = (values.steps as CocktailRecipeStepFull[])[indexStep].ingredients.filter(
+                                                (_, i) => i != indexIngredient,
+                                              );
+                                              reorderedGroups.splice(indexIngredient - 1, 0, value);
+                                              setFieldValue(
+                                                `steps.${indexStep}.ingredients`,
+                                                reorderedGroups.map((group, groupIndex) => ({
+                                                  ...group,
+                                                  ingredientNumber: groupIndex,
+                                                })),
                                               );
                                             }}
                                           >
-                                            <FaPlus />
+                                            <FaAngleUp />
+                                          </button>
+                                          <button
+                                            type={'button'}
+                                            disabled={
+                                              !(values.steps[indexStep].ingredients.length > 1) ||
+                                              indexIngredient == values.steps[indexStep].ingredients.length - 1
+                                            }
+                                            className={'btn btn-square btn-outline join-item btn-xs'}
+                                            onClick={() => {
+                                              const value = values.steps[indexStep].ingredients[indexIngredient];
+                                              const reorderedGroups = (values.steps as CocktailRecipeStepFull[])[indexStep].ingredients.filter(
+                                                (_, i) => i != indexIngredient,
+                                              );
+                                              reorderedGroups.splice(indexIngredient + 1, 0, value);
+                                              setFieldValue(
+                                                `steps.${indexStep}.ingredients`,
+                                                reorderedGroups.map((group, groupIndex) => ({
+                                                  ...group,
+                                                  ingredientNumber: groupIndex,
+                                                })),
+                                              );
+                                            }}
+                                          >
+                                            <FaAngleDown />
                                           </button>
                                         </div>
-                                        <div className={'join col-span-2 flex w-full md:col-span-1'}>
-                                          <input
-                                            type="number"
-                                            name={`steps.${indexStep}.ingredients.${indexIngredient}.amount`}
-                                            className={'input join-item input-bordered w-20 md:w-40'}
-                                            onChange={handleChange}
-                                            onBlur={handleBlur}
-                                            value={values.steps[indexStep].ingredients[indexIngredient].amount}
-                                          />
-                                          <div className={'tooltip'}></div>
-                                          <select
-                                            name={`steps.${indexStep}.ingredients.${indexIngredient}.unitId`}
-                                            className={`join-item select select-bordered w-full ${
-                                              ((errors.steps as StepError[])?.[indexStep] as any)?.ingredients?.[indexIngredient]?.unit ? 'select-error' : ''
-                                            }`}
-                                            onChange={async (e) => {
-                                              handleChange(e);
-                                              await setFieldValue(
-                                                `steps.${indexStep}.ingredients.${indexIngredient}.unit`,
-                                                units.find((u) => u.id == e.target.value),
-                                              );
-                                            }}
-                                            onBlur={handleBlur}
-                                            value={values.steps[indexStep].ingredients[indexIngredient].unitId}
+                                        <div className={'grid w-full grid-cols-2 gap-1 md:grid-cols-4'}>
+                                          <div className={'form-control col-span-2 md:col-span-1'}>
+                                            <label className={'label w-fit flex-row justify-start gap-1 md:flex-col'}>
+                                              <span className={'label-text'}>Optional</span>
+                                              <span className={'label-text-alt text-error'}>
+                                                {((errors.steps as StepError[])?.[indexStep] as any)?.ingredients?.[indexIngredient]?.optional &&
+                                                  ((errors.steps as StepError[])?.[indexStep] as any)?.ingredients?.[indexIngredient]?.optional}
+                                              </span>
+                                              <Field
+                                                type={'checkbox'}
+                                                name={`steps.${indexStep}.ingredients.${indexIngredient}.optional`}
+                                                onChange={handleChange}
+                                                onBlur={handleBlur}
+                                                className={'toggle toggle-primary'}
+                                              />
+                                            </label>
+                                          </div>
+                                          <div
+                                            key={`form-recipe-step${step.id}-ingredient-${ingredient.id}`}
+                                            className={'join col-span-2 flex w-full flex-row items-center'}
                                           >
-                                            <option value={''} disabled>
-                                              Auswählen
-                                            </option>
-
-                                            {values.steps[indexStep].ingredients[indexIngredient].unitId &&
-                                            ingredients
-                                              .find((ingredient) => ingredient.id == values.steps[indexStep].ingredients[indexIngredient]?.ingredientId)
-                                              ?.IngredientVolume.find((unit) => unit.unitId == values.steps[indexStep].ingredients[indexIngredient].unitId) ==
-                                              undefined ? (
-                                              <option
-                                                className="tooltip"
-                                                data-tip="hello"
-                                                value={values.steps[indexStep].ingredients[indexIngredient]?.unitId}
-                                                disabled={true}
-                                              >
-                                                !!!
-                                                {userContext.getTranslation(
-                                                  units.find((unit) => unit.id == values.steps[indexStep].ingredients[indexIngredient]?.unitId)?.name ?? '',
-                                                  'de',
-                                                )}
-                                                !!!
+                                            <input
+                                              id={`ingredient-${indexIngredient}-name`}
+                                              className={`input join-item input-bordered w-full cursor-pointer ${
+                                                ((errors.steps as StepError[])?.[indexStep] as any)?.ingredients?.[indexIngredient]?.ingredientId &&
+                                                'input-error'
+                                              }`}
+                                              value={
+                                                ingredientsLoading
+                                                  ? 'Lade...'
+                                                  : (values.steps[indexStep].ingredients?.[indexIngredient].ingredient?.name ?? 'Wähle eine Zutat aus...')
+                                              }
+                                              readOnly={true}
+                                              onClick={() => {
+                                                openIngredientSelectModal(setFieldValue, indexStep, indexIngredient);
+                                              }}
+                                            />
+                                            <button
+                                              type={'button'}
+                                              className={'btn btn-outline btn-primary join-item'}
+                                              onClick={() => {
+                                                openIngredientSelectModal(setFieldValue, indexStep, indexIngredient);
+                                              }}
+                                            >
+                                              <FaSearch />
+                                            </button>
+                                            <button
+                                              type={'button'}
+                                              className={'btn btn-outline btn-secondary join-item'}
+                                              onClick={() => {
+                                                modalContext.openModal(
+                                                  <FormModal<Ingredient>
+                                                    form={
+                                                      <IngredientForm
+                                                        formRef={createRef<FormikProps<any>>()}
+                                                        onSaved={async (id) => {
+                                                          modalContext.closeAllModals();
+                                                          await setFieldValue(`steps.${indexStep}.ingredients.${indexIngredient}.ingredientId`, id);
+                                                          fetchIngredients(workspaceId, setIngredients, setIngredientsLoading);
+                                                        }}
+                                                      />
+                                                    }
+                                                    title={'Zutat erfassen'}
+                                                  />,
+                                                );
+                                              }}
+                                            >
+                                              <FaPlus />
+                                            </button>
+                                          </div>
+                                          <div className={'join col-span-2 flex w-full items-center md:col-span-1'}>
+                                            <input
+                                              type="number"
+                                              name={`steps.${indexStep}.ingredients.${indexIngredient}.amount`}
+                                              className={'input join-item input-bordered w-full min-w-20'}
+                                              onChange={handleChange}
+                                              onBlur={handleBlur}
+                                              value={values.steps[indexStep].ingredients[indexIngredient].amount}
+                                            />
+                                            <div className={'tooltip'}></div>
+                                            <select
+                                              name={`steps.${indexStep}.ingredients.${indexIngredient}.unitId`}
+                                              className={`join-item select select-bordered w-full ${
+                                                ((errors.steps as StepError[])?.[indexStep] as any)?.ingredients?.[indexIngredient]?.unit ? 'select-error' : ''
+                                              }`}
+                                              onChange={async (e) => {
+                                                handleChange(e);
+                                                await setFieldValue(
+                                                  `steps.${indexStep}.ingredients.${indexIngredient}.unit`,
+                                                  units.find((u) => u.id == e.target.value),
+                                                );
+                                              }}
+                                              onBlur={handleBlur}
+                                              value={values.steps[indexStep].ingredients[indexIngredient].unitId}
+                                            >
+                                              <option value={''} disabled>
+                                                Auswählen
                                               </option>
-                                            ) : (
-                                              <></>
-                                            )}
-                                            {ingredients
-                                              .find((ingredient) => ingredient.id == values.steps[indexStep].ingredients[indexIngredient]?.ingredientId)
-                                              ?.IngredientVolume?.sort((a, b) =>
-                                                userContext.getTranslation(a.unit.name, 'de').localeCompare(userContext.getTranslation(b.unit.name, 'de')),
-                                              )
-                                              ?.map((value) => (
-                                                <option key={`steps.${indexStep}.ingredients.${indexIngredient}.units-${value.unitId}`} value={value.unitId}>
-                                                  {userContext.getTranslation(value.unit.name, 'de')}
+
+                                              {values.steps[indexStep].ingredients[indexIngredient].unitId &&
+                                              ingredients
+                                                .find((ingredient) => ingredient.id == values.steps[indexStep].ingredients[indexIngredient]?.ingredientId)
+                                                ?.IngredientVolume.find((unit) => unit.unitId == values.steps[indexStep].ingredients[indexIngredient].unitId) ==
+                                                undefined ? (
+                                                <option
+                                                  className="tooltip"
+                                                  data-tip="hello"
+                                                  value={values.steps[indexStep].ingredients[indexIngredient]?.unitId}
+                                                  disabled={true}
+                                                >
+                                                  !!!
+                                                  {userContext.getTranslation(
+                                                    units.find((unit) => unit.id == values.steps[indexStep].ingredients[indexIngredient]?.unitId)?.name ?? '',
+                                                    'de',
+                                                  )}
+                                                  !!!
                                                 </option>
-                                              ))}
-                                          </select>
-                                          <button
-                                            type={'button'}
-                                            className={'btn btn-square btn-error join-item'}
-                                            onClick={() =>
-                                              modalContext.openModal(
-                                                <DeleteConfirmationModal
-                                                  spelling={'REMOVE'}
-                                                  entityName={`die Zutat '${values.steps[indexStep].ingredients[indexIngredient].ingredient.name}'`}
-                                                  onApprove={async () => removeIngredient(indexIngredient)}
-                                                />,
-                                              )
-                                            }
-                                          >
-                                            <FaTrashAlt />
-                                          </button>
+                                              ) : (
+                                                <></>
+                                              )}
+                                              {ingredients
+                                                .find((ingredient) => ingredient.id == values.steps[indexStep].ingredients[indexIngredient]?.ingredientId)
+                                                ?.IngredientVolume?.sort((a, b) =>
+                                                  userContext.getTranslation(a.unit.name, 'de').localeCompare(userContext.getTranslation(b.unit.name, 'de')),
+                                                )
+                                                ?.map((value) => (
+                                                  <option key={`steps.${indexStep}.ingredients.${indexIngredient}.units-${value.unitId}`} value={value.unitId}>
+                                                    {userContext.getTranslation(value.unit.name, 'de')}
+                                                  </option>
+                                                ))}
+                                            </select>
+                                            <button
+                                              type={'button'}
+                                              className={'btn btn-square btn-error join-item'}
+                                              onClick={() =>
+                                                modalContext.openModal(
+                                                  <DeleteConfirmationModal
+                                                    spelling={'REMOVE'}
+                                                    entityName={`die Zutat '${values.steps[indexStep].ingredients[indexIngredient].ingredient.name}'`}
+                                                    onApprove={async () => removeIngredient(indexIngredient)}
+                                                  />,
+                                                )
+                                              }
+                                            >
+                                              <FaTrashAlt />
+                                            </button>
+                                          </div>
                                         </div>
                                       </div>
-                                    </div>
+                                    </>
                                   ))}
 
-                                <div className={'flex w-full justify-end'}>
+                                <div className={'flex w-full justify-end pt-2'}>
                                   <button
                                     type={'button'}
                                     className={'btn btn-outline btn-secondary btn-sm space-x-2'}
@@ -1320,7 +1325,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                   {({ push: pushGarnish, remove: removeGarnish }) => (
                     <div className={'col-span-2 space-y-2'}>
                       {values.garnishes.map((garnish: CocktailRecipeGarnishFull, indexGarnish: number) => (
-                        <div key={`form-recipe-garnish-${indexGarnish}`} className={'flex flex-row space-x-2 rounded-xl border border-neutral p-4'}>
+                        <div key={`form-recipe-garnish-${indexGarnish}`} className={'flex flex-row space-x-2 rounded-xl border border-base-200 p-4'}>
                           <div className={'flex flex-none items-center'}>
                             <div className={'join join-vertical'}>
                               <button
