@@ -117,7 +117,7 @@ export function GlassForm(props: GlassFormProps) {
     >
       {({ values, setFieldValue, errors, handleChange, handleBlur, handleSubmit, isSubmitting, isValid }) => (
         <form onSubmit={handleSubmit} className={'grid w-full grid-cols-1 gap-2 md:max-w-4xl md:grid-cols-2'}>
-          <div className={'form-control col-span-2'}>
+          <div className={'form-control col-span-full'}>
             <label className={'label'} htmlFor={'name'}>
               <span className={'label-text'}>Name</span>
               <span className={'label-text-alt space-x-2 text-error'}>
@@ -207,7 +207,8 @@ export function GlassForm(props: GlassFormProps) {
               <span className={'btn btn-secondary join-item'}>cl</span>
             </div>
           </div>
-          <div className={'form-control col-span-2'}>
+          <div className="divider col-span-full">Darstellung</div>
+          <div className={'form-control col-span-full'}>
             {values.image != undefined ? (
               <div className={'label'}>
                 <span className={'label-text'}>Vorschau Bild</span>
@@ -287,7 +288,8 @@ export function GlassForm(props: GlassFormProps) {
               </div>
             )}
           </div>
-          <div className={'col-span-2'}>
+          <div className="divider col-span-full"></div>
+          <div className={'col-span-full'}>
             <div className={'form-control'}>
               <button disabled={isSubmitting || !isValid} type={'submit'} className={`btn btn-primary`}>
                 {isSubmitting ? <span className={'loading loading-spinner'} /> : <></>}
