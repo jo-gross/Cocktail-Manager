@@ -42,4 +42,3 @@ export function CompactCocktailCard({ cocktail, onAdd, onAddWithDeposit }: Compa
     </div>
   );
 }
-

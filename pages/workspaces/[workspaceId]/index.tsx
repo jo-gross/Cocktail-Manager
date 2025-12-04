@@ -57,12 +57,12 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
       if (event.shiftKey && event.key === 'F' && modalContext.content.length == 0) {
         // Prüfe, ob der Fokus auf einem Input-Element liegt
         const activeElement = document.activeElement;
-        const isInputFocused = activeElement && (
-          activeElement.tagName === 'INPUT' ||
-          activeElement.tagName === 'TEXTAREA' ||
-          activeElement.tagName === 'SELECT' ||
-          (activeElement as HTMLElement).isContentEditable
-        );
+        const isInputFocused =
+          activeElement &&
+          (activeElement.tagName === 'INPUT' ||
+            activeElement.tagName === 'TEXTAREA' ||
+            activeElement.tagName === 'SELECT' ||
+            (activeElement as HTMLElement).isContentEditable);
 
         if (!isInputFocused && !(document.querySelector('#globalModal') as any)?.checked) {
           modalContext.openModal(<SearchModal showStatisticActions={showStatisticActions} />);
@@ -97,9 +97,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
       .finally(() => setLoadingCards(false));
   }, [userContext.user, workspaceId]);
 
-  const [selectedCardId, setSelectedCardId] = useState<string | undefined>(
-    (router.query.card as string) || undefined,
-  );
+  const [selectedCardId, setSelectedCardId] = useState<string | undefined>((router.query.card as string) || undefined);
   const [selectedCard, setSelectedCard] = useState<CocktailCardFull | undefined>(cocktailCards.length > 0 ? cocktailCards[0] : undefined);
 
   const fetchSelectedCard = useCallback(() => {

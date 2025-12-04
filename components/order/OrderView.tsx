@@ -13,7 +13,6 @@ import { FaMinus, FaPlus, FaTrash } from 'react-icons/fa';
 import AvatarImage from '../AvatarImage';
 import DefaultGlassIcon from '../DefaultGlassIcon';
 import { ModalContext } from '@lib/context/ModalContextProvider';
-import ImageModal from '../modals/ImageModal';
 import '../../lib/NumberUtils';
 
 interface OrderItem {
@@ -80,9 +79,7 @@ export function OrderView({ cocktailCards, workspaceId }: OrderViewProps) {
     if (selectedCardId && selectedCardId !== 'all') {
       const selectedCard = cocktailCards.find((card) => card.id === selectedCardId);
       if (selectedCard) {
-        const cardCocktailIds = new Set(
-          selectedCard.groups.flatMap((group) => group.items.map((item) => item.cocktailId)),
-        );
+        const cardCocktailIds = new Set(selectedCard.groups.flatMap((group) => group.items.map((item) => item.cocktailId)));
         filtered = filtered.filter((c) => cardCocktailIds.has(c.id));
       }
     }
@@ -107,13 +104,7 @@ export function OrderView({ cocktailCards, workspaceId }: OrderViewProps) {
       const existingItem = orderItems.find((item) => item.type === 'glass' && item.id === glass.id);
 
       if (existingItem) {
-        setOrderItems(
-          orderItems.map((item) =>
-            item === existingItem
-              ? { ...item, returnedDeposit: item.returnedDeposit + 1 }
-              : item,
-          ),
-        );
+        setOrderItems(orderItems.map((item) => (item === existingItem ? { ...item, returnedDeposit: item.returnedDeposit + 1 } : item)));
       } else {
         setOrderItems([
           ...orderItems,
@@ -152,16 +143,10 @@ export function OrderView({ cocktailCards, workspaceId }: OrderViewProps) {
         addReturnedGlass(glass);
       } else {
         // Neuer Cocktail - das Glas-Pfand ist bereits im Cocktail-Item enthalten
-        const existingItem = orderItems.find(
-          (item) => item.type === 'cocktail' && item.id === cocktail.id,
-        );
+        const existingItem = orderItems.find((item) => item.type === 'cocktail' && item.id === cocktail.id);
 
         if (existingItem) {
-          setOrderItems(
-            orderItems.map((item) =>
-              item === existingItem ? { ...item, amount: item.amount + 1 } : item,
-            ),
-          );
+          setOrderItems(orderItems.map((item) => (item === existingItem ? { ...item, amount: item.amount + 1 } : item)));
         } else {
           setOrderItems([
             ...orderItems,
@@ -187,9 +172,7 @@ export function OrderView({ cocktailCards, workspaceId }: OrderViewProps) {
       if (item.amount + delta <= 0) {
         setOrderItems(orderItems.filter((i) => i !== item));
       } else {
-        setOrderItems(
-          orderItems.map((i) => (i === item ? { ...item, amount: item.amount + delta } : i)),
-        );
+        setOrderItems(orderItems.map((i) => (i === item ? { ...item, amount: item.amount + delta } : i)));
       }
     },
     [orderItems],
@@ -198,11 +181,7 @@ export function OrderView({ cocktailCards, workspaceId }: OrderViewProps) {
   const addReturnedDeposit = useCallback(
     (item: OrderItem) => {
       // Ein gleiches Glas wurde zurückgegeben (Pfand wird abgezogen)
-      setOrderItems(
-        orderItems.map((i) =>
-          i === item ? { ...item, returnedDeposit: item.returnedDeposit + 1 } : i,
-        ),
-      );
+      setOrderItems(orderItems.map((i) => (i === item ? { ...item, returnedDeposit: item.returnedDeposit + 1 } : i)));
     },
     [orderItems],
   );
@@ -214,16 +193,10 @@ export function OrderView({ cocktailCards, workspaceId }: OrderViewProps) {
         if (item.amount === 0) {
           setOrderItems(orderItems.filter((i) => i !== item));
         } else {
-          setOrderItems(
-            orderItems.map((i) => (i === item ? { ...item, returnedDeposit: 0 } : i)),
-          );
+          setOrderItems(orderItems.map((i) => (i === item ? { ...item, returnedDeposit: 0 } : i)));
         }
       } else {
-        setOrderItems(
-          orderItems.map((i) =>
-            i === item ? { ...item, returnedDeposit: item.returnedDeposit - delta } : i,
-          ),
-        );
+        setOrderItems(orderItems.map((i) => (i === item ? { ...item, returnedDeposit: item.returnedDeposit - delta } : i)));
       }
     },
     [orderItems],
@@ -235,7 +208,7 @@ export function OrderView({ cocktailCards, workspaceId }: OrderViewProps) {
 
   const addToQueue = useCallback(async () => {
     const cocktailItems = orderItems.filter((item) => item.type === 'cocktail');
-    
+
     if (cocktailItems.length === 0) {
       alertService.warn('Keine Cocktails in der Bestellung');
       return;
@@ -269,33 +242,29 @@ export function OrderView({ cocktailCards, workspaceId }: OrderViewProps) {
   }, [orderItems, workspaceId, clearOrder, globalNotes]);
 
   // Calculate totals
-  const totalCocktailPrice = orderItems
-    .filter((item) => item.type === 'cocktail')
-    .reduce((sum, item) => sum + item.price * item.amount, 0);
+  const totalCocktailPrice = orderItems.filter((item) => item.type === 'cocktail').reduce((sum, item) => sum + item.price * item.amount, 0);
 
   // Pfand für neue Gläser (bei Cocktails mit deposit)
-  const totalNewDeposit = orderItems
-    .filter((item) => item.type === 'cocktail' && item.deposit > 0)
-    .reduce((sum, item) => sum + item.deposit * item.amount, 0);
+  const totalNewDeposit = orderItems.filter((item) => item.type === 'cocktail' && item.deposit > 0).reduce((sum, item) => sum + item.deposit * item.amount, 0);
 
   // Zurückgegebener Pfand (wird abgezogen)
-  const totalReturnedDeposit = orderItems.reduce(
-    (sum, item) => sum + item.deposit * item.returnedDeposit,
-    0,
-  );
+  const totalReturnedDeposit = orderItems.reduce((sum, item) => sum + item.deposit * item.returnedDeposit, 0);
 
   const totalPrice = totalCocktailPrice + totalNewDeposit - totalReturnedDeposit;
   const depositReturn = totalReturnedDeposit;
 
   // Group glasses by deposit
-  const groupedGlasses = glasses.reduce((acc, glass) => {
-    const depositKey = glass.deposit.toString();
-    if (!acc[depositKey]) {
-      acc[depositKey] = [];
-    }
-    acc[depositKey].push(glass);
-    return acc;
-  }, {} as Record<string, GlassModel[]>);
+  const groupedGlasses = glasses.reduce(
+    (acc, glass) => {
+      const depositKey = glass.deposit.toString();
+      if (!acc[depositKey]) {
+        acc[depositKey] = [];
+      }
+      acc[depositKey].push(glass);
+      return acc;
+    },
+    {} as Record<string, GlassModel[]>,
+  );
 
   return (
     <div className="flex flex-col gap-2 md:flex-row">
@@ -312,11 +281,7 @@ export function OrderView({ cocktailCards, workspaceId }: OrderViewProps) {
                 <label className="label">
                   <span className="label-text">Karte auswählen</span>
                 </label>
-                <select
-                  className="select select-bordered w-full"
-                  value={selectedCardId}
-                  onChange={(e) => setSelectedCardId(e.target.value)}
-                >
+                <select className="select select-bordered w-full" value={selectedCardId} onChange={(e) => setSelectedCardId(e.target.value)}>
                   <option value="all">Alle Cocktails</option>
                   {cocktailCards.map((card) => (
                     <option key={card.id} value={card.id}>
@@ -344,7 +309,7 @@ export function OrderView({ cocktailCards, workspaceId }: OrderViewProps) {
               </div>
 
               {/* Cocktail Cards */}
-              <div className="max-h-[calc(100vh-20rem)] overflow-y-auto space-y-2">
+              <div className="max-h-[calc(100vh-20rem)] space-y-2 overflow-y-auto">
                 {cocktailsLoading ? (
                   <Loading />
                 ) : filteredCocktails.length === 0 ? (
@@ -369,7 +334,7 @@ export function OrderView({ cocktailCards, workspaceId }: OrderViewProps) {
           <input type="checkbox" defaultChecked={true} />
           <div className="collapse-title text-xl font-medium">Gläser</div>
           <div className="collapse-content">
-            <div className="max-h-[calc(100vh-20rem)] overflow-y-auto space-y-4">
+            <div className="max-h-[calc(100vh-20rem)] space-y-4 overflow-y-auto">
               {glassesLoading ? (
                 <Loading />
               ) : glasses.length === 0 ? (
@@ -381,15 +346,13 @@ export function OrderView({ cocktailCards, workspaceId }: OrderViewProps) {
                     <div key={deposit} className="card bg-base-100 shadow-md">
                       <div className="card-body p-4">
                         <div className="mb-2">
-                          <h3 className="card-title text-lg">
-                            Pfand: {parseFloat(deposit).formatPrice()} €
-                          </h3>
+                          <h3 className="card-title text-lg">Pfand: {parseFloat(deposit).formatPrice()} €</h3>
                         </div>
-                        <div className="flex flex-wrap gap-2">
+                        <div className="flex flex-wrap justify-between gap-2">
                           {glassesInGroup.map((glass) => (
                             <div
                               key={glass.id}
-                              className="flex flex-col items-center gap-1 cursor-pointer rounded-lg border border-base-300 p-2 hover:border-primary transition-colors"
+                              className="flex cursor-pointer flex-col items-center gap-1 rounded-lg border border-base-300 p-2 transition-colors hover:border-primary"
                               onClick={() => addReturnedGlass(glass)}
                             >
                               <div className="h-16 w-16">
@@ -403,7 +366,7 @@ export function OrderView({ cocktailCards, workspaceId }: OrderViewProps) {
                                   />
                                 )}
                               </div>
-                              <span className="text-xs text-center max-w-[4rem] break-words">{glass.name}</span>
+                              <span className="max-w-[4rem] break-words text-center text-xs">{glass.name}</span>
                             </div>
                           ))}
                         </div>
@@ -433,9 +396,9 @@ export function OrderView({ cocktailCards, workspaceId }: OrderViewProps) {
       <div className="w-full flex-1">
         <div className="card bg-base-100 shadow-lg">
           <div className="card-body">
-            <h2 className="card-title text-2xl mb-4">Bestellung</h2>
+            <h2 className="card-title mb-4 text-2xl">Bestellung</h2>
             {orderItems.length === 0 ? (
-              <div className="text-center text-gray-500 py-8">Keine Cocktails oder Gläser in der Bestellung</div>
+              <div className="py-8 text-center text-gray-500">Keine Cocktails oder Gläser in der Bestellung</div>
             ) : (
               <>
                 <div className="overflow-x-auto">
@@ -466,38 +429,22 @@ export function OrderView({ cocktailCards, workspaceId }: OrderViewProps) {
                                   <div className="join">
                                     {item.amount > 0 && (
                                       <>
-                                        <button
-                                          className="btn btn-sm join-item"
-                                          onClick={() => updateItemAmount(item, -1)}
-                                        >
+                                        <button className="btn join-item btn-sm" onClick={() => updateItemAmount(item, -1)}>
                                           <FaMinus />
                                         </button>
-                                        <span className="btn btn-sm join-item pointer-events-none">
-                                          {item.amount}
-                                        </span>
-                                        <button
-                                          className="btn btn-sm join-item"
-                                          onClick={() => updateItemAmount(item, 1)}
-                                        >
+                                        <span className="btn join-item btn-sm pointer-events-none">{item.amount}</span>
+                                        <button className="btn join-item btn-sm" onClick={() => updateItemAmount(item, 1)}>
                                           <FaPlus />
                                         </button>
                                       </>
                                     )}
                                     {item.amount === 0 && item.returnedDeposit > 0 && (
                                       <>
-                                        <button
-                                          className="btn btn-sm join-item"
-                                          onClick={() => removeReturnedDeposit(item, 1)}
-                                        >
+                                        <button className="btn join-item btn-sm" onClick={() => removeReturnedDeposit(item, 1)}>
                                           <FaMinus />
                                         </button>
-                                        <span className="btn btn-sm join-item pointer-events-none">
-                                          {item.returnedDeposit}
-                                        </span>
-                                        <button
-                                          className="btn btn-sm join-item"
-                                          onClick={() => addReturnedDeposit(item)}
-                                        >
+                                        <span className="btn join-item btn-sm pointer-events-none">{item.returnedDeposit}</span>
+                                        <button className="btn join-item btn-sm" onClick={() => addReturnedDeposit(item)}>
                                           <FaPlus />
                                         </button>
                                       </>
@@ -505,32 +452,19 @@ export function OrderView({ cocktailCards, workspaceId }: OrderViewProps) {
                                   </div>
                                 )}
                               </td>
-                              <td>
-                                {item.type === 'cocktail' && item.amount > 0
-                                  ? (item.price * item.amount).formatPrice()
-                                  : '0.00'}{' '}
-                                €
-                              </td>
+                              <td>{item.type === 'cocktail' && item.amount > 0 ? (item.price * item.amount).formatPrice() : '0.00'} €</td>
                               <td>
                                 <div className="flex flex-col gap-1">
-                                  {newDeposit > 0 && (
-                                    <span className="text-sm">+{newDeposit.formatPrice()} €</span>
-                                  )}
-                                  {returnedDeposit > 0 && (
-                                    <span className="text-sm text-success">-{returnedDeposit.formatPrice()} €</span>
-                                  )}
-                                  {newDeposit === 0 && returnedDeposit === 0 && (
-                                    <span className="text-sm">0.00 €</span>
-                                  )}
+                                  {newDeposit > 0 && <span className="text-sm">+{newDeposit.formatPrice()} €</span>}
+                                  {returnedDeposit > 0 && <span className="text-sm text-success">-{returnedDeposit.formatPrice()} €</span>}
+                                  {newDeposit === 0 && returnedDeposit === 0 && <span className="text-sm">0.00 €</span>}
                                 </div>
                               </td>
-                              <td className="font-bold">
-                                {itemTotal.formatPrice()} €
-                              </td>
+                              <td className="font-bold">{itemTotal.formatPrice()} €</td>
                               <td>
                                 {item.type === 'cocktail' && item.deposit > 0 && (
                                   <button
-                                    className="btn btn-xs btn-outline"
+                                    className="btn btn-outline btn-xs"
                                     onClick={() => {
                                       // Finde das entsprechende Glas und erstelle ein separates Glas-Item
                                       const cocktail = cocktails.find((c) => c.id === item.id);
@@ -593,7 +527,7 @@ export function OrderView({ cocktailCards, workspaceId }: OrderViewProps) {
                   </div>
                   <div className="card-actions flex gap-2">
                     <button
-                      className="btn btn-error flex-1 btn-outline"
+                      className="btn btn-outline btn-error flex-1"
                       onClick={() => {
                         clearOrder();
                         setGlobalNotes('');
@@ -608,11 +542,7 @@ export function OrderView({ cocktailCards, workspaceId }: OrderViewProps) {
                       onClick={addToQueue}
                       disabled={submitting || orderItems.filter((item) => item.type === 'cocktail').length === 0}
                     >
-                      {submitting ? (
-                        <span className="loading loading-spinner"></span>
-                      ) : (
-                        'Zur Warteschlange hinzufügen'
-                      )}
+                      {submitting ? <span className="loading loading-spinner"></span> : 'Zur Warteschlange hinzufügen'}
                     </button>
                   </div>
                 </div>
@@ -624,4 +554,3 @@ export function OrderView({ cocktailCards, workspaceId }: OrderViewProps) {
     </div>
   );
 }
-
