@@ -1,3 +1,16 @@
+# [1.17.0](https://github.com/jo-gross/Cocktail-Manager/compare/v1.16.0...v1.17.0) (2025-12-04)
+
+
+### Bug Fixes
+
+* import an image by an URL from a pop-up dialog is not closing the dialog anymore ([#828](https://github.com/jo-gross/Cocktail-Manager/issues/828)) ([8190692](https://github.com/jo-gross/Cocktail-Manager/commit/8190692d3bafd12d571c72381c9124328e8f49e8))
+* mobile layout for cocktail form improved (steps and ingredients) ([a78337f](https://github.com/jo-gross/Cocktail-Manager/commit/a78337f1fbb42d57482c2afeee1365084d755d18))
+
+
+### Features
+
+* added option to disable workspace creation ([#827](https://github.com/jo-gross/Cocktail-Manager/issues/827)) ([0975f8f](https://github.com/jo-gross/Cocktail-Manager/commit/0975f8fde8b545653012b6140ecd1b194e0cf196))
+
 # [1.16.0](https://github.com/jo-gross/Cocktail-Manager/compare/v1.15.2...v1.16.0) (2025-11-28)
 
 !!! To use the new PDF export feature, you need to add and configure a Chromium instance !!!
