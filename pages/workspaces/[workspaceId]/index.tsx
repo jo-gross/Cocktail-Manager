@@ -848,7 +848,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                     maxHeight: maxDropdownHeight - 16 + 'px',
                   }}
                 >
-                  <div className={'flex flex-col space-x-2'}>
+                  <div className={'flex flex-col gap-2'}>
                     <label className="label">
                       <div className={'label-text font-bold'}>Cocktailsuche</div>
                       <input

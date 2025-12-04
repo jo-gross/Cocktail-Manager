@@ -407,10 +407,13 @@ export function OrderView({ cocktailCards, workspaceId }: OrderViewProps) {
                       <tr>
                         <th>Item</th>
                         <th>Anzahl</th>
-                        <th>Preis (ohne Pfand)</th>
+                        <th>
+                          Preis
+                          <br />
+                          (ohne Pfand)
+                        </th>
                         <th>Pfand</th>
-                        <th>Gesamt</th>
-                        <th>Aktionen</th>
+                        <th className={'text-right'}>Gesamt</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -428,15 +431,34 @@ export function OrderView({ cocktailCards, workspaceId }: OrderViewProps) {
                                 {(item.amount > 0 || item.returnedDeposit > 0) && (
                                   <div className="join">
                                     {item.amount > 0 && (
-                                      <>
-                                        <button className="btn join-item btn-sm" onClick={() => updateItemAmount(item, -1)}>
-                                          <FaMinus />
-                                        </button>
-                                        <span className="btn join-item btn-sm pointer-events-none">{item.amount}</span>
-                                        <button className="btn join-item btn-sm" onClick={() => updateItemAmount(item, 1)}>
-                                          <FaPlus />
-                                        </button>
-                                      </>
+                                      <div className="flex flex-col gap-2">
+                                        <div className={'join'}>
+                                          <button className="btn join-item btn-sm" onClick={() => updateItemAmount(item, -1)}>
+                                            <FaMinus />
+                                          </button>
+                                          <span className="btn join-item btn-sm pointer-events-none">{item.amount}</span>
+                                          <button className="btn join-item btn-sm" onClick={() => updateItemAmount(item, 1)}>
+                                            <FaPlus />
+                                          </button>
+                                        </div>
+                                        {item.type === 'cocktail' && item.deposit > 0 && (
+                                          <button
+                                            className="btn btn-outline btn-xs"
+                                            onClick={() => {
+                                              // Finde das entsprechende Glas und erstelle ein separates Glas-Item
+                                              const cocktail = cocktails.find((c) => c.id === item.id);
+                                              if (cocktail?.glass) {
+                                                const glass = glasses.find((g) => g.id === cocktail.glass?.id);
+                                                if (glass) {
+                                                  addReturnedGlass(glass);
+                                                }
+                                              }
+                                            }}
+                                          >
+                                            Glas zurück
+                                          </button>
+                                        )}
+                                      </div>
                                     )}
                                     {item.amount === 0 && item.returnedDeposit > 0 && (
                                       <>
@@ -452,34 +474,17 @@ export function OrderView({ cocktailCards, workspaceId }: OrderViewProps) {
                                   </div>
                                 )}
                               </td>
-                              <td>{item.type === 'cocktail' && item.amount > 0 ? (item.price * item.amount).formatPrice() : '0.00'} €</td>
+                              <td className={'text-nowrap'}>
+                                {item.type === 'cocktail' && item.amount > 0 ? (item.price * item.amount).formatPrice() : '0.00'} €
+                              </td>
                               <td>
                                 <div className="flex flex-col gap-1">
-                                  {newDeposit > 0 && <span className="text-sm">+{newDeposit.formatPrice()} €</span>}
-                                  {returnedDeposit > 0 && <span className="text-sm text-success">-{returnedDeposit.formatPrice()} €</span>}
-                                  {newDeposit === 0 && returnedDeposit === 0 && <span className="text-sm">0.00 €</span>}
+                                  {newDeposit > 0 && <span className="text-nowrap text-sm">+{newDeposit.formatPrice()} €</span>}
+                                  {returnedDeposit > 0 && <span className="text-nowrap text-sm text-success">-{returnedDeposit.formatPrice()} €</span>}
+                                  {newDeposit === 0 && returnedDeposit === 0 && <span className="text-nowrap text-sm">0.00 €</span>}
                                 </div>
                               </td>
-                              <td className="font-bold">{itemTotal.formatPrice()} €</td>
-                              <td>
-                                {item.type === 'cocktail' && item.deposit > 0 && (
-                                  <button
-                                    className="btn btn-outline btn-xs"
-                                    onClick={() => {
-                                      // Finde das entsprechende Glas und erstelle ein separates Glas-Item
-                                      const cocktail = cocktails.find((c) => c.id === item.id);
-                                      if (cocktail?.glass) {
-                                        const glass = glasses.find((g) => g.id === cocktail.glass?.id);
-                                        if (glass) {
-                                          addReturnedGlass(glass);
-                                        }
-                                      }
-                                    }}
-                                  >
-                                    Glas zurück
-                                  </button>
-                                )}
-                              </td>
+                              <td className="text-nowrap text-right font-bold">{itemTotal.formatPrice()} €</td>
                             </tr>
                           );
                         })}
@@ -487,27 +492,23 @@ export function OrderView({ cocktailCards, workspaceId }: OrderViewProps) {
                     <tfoot>
                       <tr>
                         <th colSpan={4}>Gesamtpreis Cocktails (ohne Pfand)</th>
-                        <th className="font-bold">{totalCocktailPrice.formatPrice()} €</th>
-                        <th></th>
+                        <th className="text-right font-bold">{totalCocktailPrice.formatPrice()} €</th>
                       </tr>
                       {totalNewDeposit > 0 && (
                         <tr>
                           <th colSpan={4}>Pfand (neu)</th>
-                          <th className="font-bold">+{totalNewDeposit.formatPrice()} €</th>
-                          <th></th>
+                          <th className="text-right font-bold">+{totalNewDeposit.formatPrice()} €</th>
                         </tr>
                       )}
                       {totalReturnedDeposit > 0 && (
                         <tr>
                           <th colSpan={4}>Pfand zurück</th>
-                          <th className="font-bold text-success">-{totalReturnedDeposit.formatPrice()} €</th>
-                          <th></th>
+                          <th className="text-right font-bold text-success">-{totalReturnedDeposit.formatPrice()} €</th>
                         </tr>
                       )}
                       <tr className="text-lg">
                         <th colSpan={4}>Gesamtpreis</th>
-                        <th className="font-bold text-primary">{totalPrice.formatPrice()} €</th>
-                        <th></th>
+                        <th className="text-right font-bold text-primary">{totalPrice.formatPrice()} €</th>
                       </tr>
                     </tfoot>
                   </table>
