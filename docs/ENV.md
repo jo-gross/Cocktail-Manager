@@ -40,6 +40,20 @@ For authentication-related environment variables, see [Authentication Methods](A
 
 When `CHROMIUM_HOST` is set, the application will use the external Chromium service for PDF generation. If not set, PDF export functionality will be disabled.
 
+### API Keys
+
+| Variable                  | Description                                                                 | Default | Example                                    |
+| ------------------------- | --------------------------------------------------------------------------- | ------- | ------------------------------------------ |
+| `INSTANCE_MASTER_API_KEY` | Master API Key for instance-wide access to all workspaces (full permissions) | -       | `ck_master_<your-secure-random-key-here>` |
+
+The `INSTANCE_MASTER_API_KEY` provides unrestricted access to all workspaces in the instance. This key should be:
+- Kept secure and never committed to version control
+- Rotated regularly
+- Used only for administrative or integration purposes
+- Stored in secure secret management systems in production
+
+When set, this key can be used in the `Authorization: Bearer <key>` header to access any workspace endpoint with full permissions.
+
 ## Configuration Files
 
 ### .env File
