@@ -2,7 +2,7 @@ import prisma from '../../../../../prisma/prisma';
 import { NextApiRequest, NextApiResponse } from 'next';
 import HTTPMethod from 'http-method-enum';
 import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
-import { Prisma, Role, Permission } from '@generated/prisma/client';
+import { Permission, Prisma, Role } from '@generated/prisma/client';
 import { withHttpMethods } from '@middleware/api/handleMethods';
 import CocktailCalculationUpdateInput = Prisma.CocktailCalculationUpdateInput;
 
@@ -50,17 +50,21 @@ export default withHttpMethods({
     });
     return res.json({ data: result });
   }),
-  [HTTPMethod.DELETE]: withWorkspacePermission([Role.ADMIN], Permission.CALCULATIONS_DELETE, async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
-    const calculationId = req.query.calculationId as string | undefined;
-    if (!calculationId) return res.status(400).json({ message: 'No cocktailCalculation id' });
-    const result = await prisma.cocktailCalculation.delete({
-      where: {
-        id: calculationId,
-        workspaceId: workspace.id,
-      },
-    });
-    return res.json({ data: result });
-  }),
+  [HTTPMethod.DELETE]: withWorkspacePermission(
+    [Role.ADMIN],
+    Permission.CALCULATIONS_DELETE,
+    async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
+      const calculationId = req.query.calculationId as string | undefined;
+      if (!calculationId) return res.status(400).json({ message: 'No cocktailCalculation id' });
+      const result = await prisma.cocktailCalculation.delete({
+        where: {
+          id: calculationId,
+          workspaceId: workspace.id,
+        },
+      });
+      return res.json({ data: result });
+    },
+  ),
   [HTTPMethod.PUT]: withWorkspacePermission([Role.USER], Permission.CALCULATIONS_UPDATE, async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
     const calculationId = req.query.calculationId as string | undefined;
     if (!calculationId) return res.status(400).json({ message: 'No calculationId id' });

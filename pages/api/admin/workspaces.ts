@@ -4,7 +4,7 @@ import HTTPMethod from 'http-method-enum';
 import { checkMasterApiKey } from '@middleware/api/jwtApiKeyMiddleware';
 import prisma from '../../../prisma/prisma';
 import { constants as HttpStatus } from 'http2';
-import { $Enums, Role } from '@generated/prisma/client';
+import { $Enums } from '@generated/prisma/client';
 import { randomUUID } from 'crypto';
 import { regenerateUnitConversions } from '../workspaces/[workspaceId]/units/conversions';
 import WorkspaceSettingKey = $Enums.WorkspaceSettingKey;
@@ -266,4 +266,3 @@ export default withHttpMethods({
     }
   },
 });
-

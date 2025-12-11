@@ -1,6 +1,6 @@
 import prisma from '../../../../../../prisma/prisma';
 import { NextApiRequest, NextApiResponse } from 'next';
-import { Prisma, Role, Permission } from '@generated/prisma/client';
+import { Permission, Prisma, Role } from '@generated/prisma/client';
 import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
 import HTTPMethod from 'http-method-enum';
 import { withHttpMethods } from '@middleware/api/handleMethods';
@@ -198,28 +198,32 @@ export default withHttpMethods({
 
     return res.json(result);
   }),
-  [HTTPMethod.DELETE]: withWorkspacePermission([Role.ADMIN], Permission.COCKTAILS_DELETE, async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
-    const cocktailId = req.query.cocktailId as string | undefined;
-    if (!cocktailId) return res.status(400).json({ message: 'No cocktail id' });
+  [HTTPMethod.DELETE]: withWorkspacePermission(
+    [Role.ADMIN],
+    Permission.COCKTAILS_DELETE,
+    async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
+      const cocktailId = req.query.cocktailId as string | undefined;
+      if (!cocktailId) return res.status(400).json({ message: 'No cocktail id' });
 
-    await prisma.cocktailRecipeIngredient.deleteMany({
-      where: {
-        cocktailRecipeStep: {
+      await prisma.cocktailRecipeIngredient.deleteMany({
+        where: {
+          cocktailRecipeStep: {
+            cocktailRecipeId: cocktailId,
+          },
+        },
+      });
+      await prisma.cocktailRecipeStep.deleteMany({
+        where: {
           cocktailRecipeId: cocktailId,
         },
-      },
-    });
-    await prisma.cocktailRecipeStep.deleteMany({
-      where: {
-        cocktailRecipeId: cocktailId,
-      },
-    });
-    const result = await prisma.cocktailRecipe.delete({
-      where: {
-        id: cocktailId,
-        workspaceId: workspace.id,
-      },
-    });
-    return res.json({ data: result });
-  }),
+      });
+      const result = await prisma.cocktailRecipe.delete({
+        where: {
+          id: cocktailId,
+          workspaceId: workspace.id,
+        },
+      });
+      return res.json({ data: result });
+    },
+  ),
 });

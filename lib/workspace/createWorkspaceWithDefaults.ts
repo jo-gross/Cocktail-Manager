@@ -1,5 +1,5 @@
 import prisma from '../../prisma/prisma';
-import { $Enums, Role, Prisma } from '@generated/prisma/client';
+import { $Enums, Prisma, Role } from '@generated/prisma/client';
 import { randomUUID } from 'crypto';
 import WorkspaceSettingKey = $Enums.WorkspaceSettingKey;
 
@@ -246,4 +246,3 @@ export async function createWorkspaceWithDefaults(options: CreateWorkspaceOption
     data: workspaceData,
   });
 }
-

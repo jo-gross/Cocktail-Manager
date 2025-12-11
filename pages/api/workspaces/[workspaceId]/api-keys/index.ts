@@ -1,12 +1,11 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
 import { withHttpMethods } from '@middleware/api/handleMethods';
-import { Role, Permission } from '@generated/prisma/client';
+import { Permission, Role } from '@generated/prisma/client';
 import HTTPMethod from 'http-method-enum';
 import prisma from '../../../../../prisma/prisma';
 import crypto from 'crypto';
 import { createApiKeyJwt } from '@middleware/api/jwtApiKeyMiddleware';
-import { invalidateKeyCache } from '@middleware/api/jwtApiKeyMiddleware';
 
 export default withHttpMethods({
   [HTTPMethod.GET]: withWorkspacePermission([Role.ADMIN, Role.OWNER], async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
@@ -92,12 +91,7 @@ export default withHttpMethods({
     });
 
     // Generate JWT token
-    const apiKeyToken = createApiKeyJwt(
-      keyId,
-      workspace.id,
-      permissionList,
-      expiresAtDate,
-    );
+    const apiKeyToken = createApiKeyJwt(keyId, workspace.id, permissionList, expiresAtDate);
 
     // Return the JWT token only once - client must save it immediately
     return res.json({

@@ -2,7 +2,7 @@ import prisma from '../../../../../../prisma/prisma';
 import { NextApiRequest, NextApiResponse } from 'next';
 import HTTPMethod from 'http-method-enum';
 import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
-import { Prisma, Role, Permission } from '@generated/prisma/client';
+import { Permission, Prisma, Role } from '@generated/prisma/client';
 import { withHttpMethods } from '@middleware/api/handleMethods';
 import GarnishUpdateInput = Prisma.GarnishUpdateInput;
 
@@ -28,18 +28,22 @@ export default withHttpMethods({
     });
     return res.json({ data: result });
   }),
-  [HTTPMethod.DELETE]: withWorkspacePermission([Role.ADMIN], Permission.GARNISHES_DELETE, async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
-    const garnishId = req.query.garnishId as string | undefined;
-    if (!garnishId) return res.status(400).json({ message: 'No garnish id' });
+  [HTTPMethod.DELETE]: withWorkspacePermission(
+    [Role.ADMIN],
+    Permission.GARNISHES_DELETE,
+    async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
+      const garnishId = req.query.garnishId as string | undefined;
+      if (!garnishId) return res.status(400).json({ message: 'No garnish id' });
 
-    const result = await prisma.garnish.delete({
-      where: {
-        id: garnishId,
-        workspaceId: workspace.id,
-      },
-    });
-    return res.json({ data: result });
-  }),
+      const result = await prisma.garnish.delete({
+        where: {
+          id: garnishId,
+          workspaceId: workspace.id,
+        },
+      });
+      return res.json({ data: result });
+    },
+  ),
   [HTTPMethod.PUT]: withWorkspacePermission([Role.MANAGER], Permission.GARNISHES_UPDATE, async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
     const garnishId = req.query.garnishId as string | undefined;
     if (!garnishId) return res.status(400).json({ message: 'No garnish id' });

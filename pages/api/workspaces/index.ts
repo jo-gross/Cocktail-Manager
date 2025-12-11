@@ -48,4 +48,3 @@ export default withHttpMethods({
     return res.json({ data: sortedResult });
   }),
 });
-

@@ -2,7 +2,7 @@ import prisma from '../../../../../../prisma/prisma';
 import { NextApiRequest, NextApiResponse } from 'next';
 import HTTPMethod from 'http-method-enum';
 import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
-import { Role, Permission } from '@generated/prisma/client';
+import { Permission, Role } from '@generated/prisma/client';
 import { withHttpMethods } from '@middleware/api/handleMethods';
 import { updateTranslation } from '../../admin/translation';
 
@@ -24,7 +24,7 @@ export default withHttpMethods({
   [HTTPMethod.PUT]: withWorkspacePermission([Role.MANAGER], Permission.ICE_UPDATE, async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
     const iceId = req.query.iceId as string | undefined;
     if (!iceId) return res.status(400).json({ message: 'No ice id' });
-    
+
     const { name, translations } = req.body;
     const result = await prisma.ice.update({
       where: {
@@ -35,12 +35,12 @@ export default withHttpMethods({
         name: name,
       },
     });
-    
+
     // Update translations if provided
     if (translations) {
       await updateTranslation(workspace.id, name, translations);
     }
-    
+
     return res.json({ data: result });
   }),
   [HTTPMethod.DELETE]: withWorkspacePermission([Role.ADMIN], Permission.ICE_DELETE, async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {

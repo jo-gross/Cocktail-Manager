@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import { ManageEntityLayout } from '@components/layout/ManageEntityLayout';
 import { UserContext } from '@lib/context/UserContextProvider';
 import { ModalContext } from '@lib/context/ModalContextProvider';
-import { Role, Permission } from '@generated/prisma/client';
+import { Permission } from '@generated/prisma/client';
 import { withPagePermission } from '@middleware/ui/withPagePermission';
 import CreateApiKeyModal from '../../../../../components/modals/CreateApiKeyModal';
 import { DeleteConfirmationModal } from '@components/modals/DeleteConfirmationModal';
@@ -168,7 +168,7 @@ function ApiKeysPage() {
                       const expired = isExpired(apiKey.expiresAt);
                       return (
                         <tr key={apiKey.id}>
-                          <td  className={expired ? 'opacity-50' : ''}>
+                          <td className={expired ? 'opacity-50' : ''}>
                             <div className="font-semibold">{apiKey.name}</div>
                             <div className="font-mono text-xs text-base-content/60">{apiKey.keyPrefix}</div>
                           </td>

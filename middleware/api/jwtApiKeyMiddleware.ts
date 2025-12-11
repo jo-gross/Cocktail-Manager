@@ -2,7 +2,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import jwt from 'jsonwebtoken';
 import Keyv from 'keyv';
 import prisma from '../../prisma/prisma';
-import { WorkspaceApiKey, Workspace, Permission } from '@generated/prisma/client';
+import { Permission, Workspace, WorkspaceApiKey } from '@generated/prisma/client';
 import { constants as HttpStatus } from 'http2';
 
 export interface ApiKeyJwtPayload {
@@ -169,12 +169,7 @@ export async function authenticateApiKey(req: NextApiRequest): Promise<ApiKeyAut
 /**
  * Creates a JWT token for an API key
  */
-export function createApiKeyJwt(
-  keyId: string,
-  workspaceId: string,
-  permissions: Permission[],
-  expiresAt?: Date | null,
-): string {
+export function createApiKeyJwt(keyId: string, workspaceId: string, permissions: Permission[], expiresAt?: Date | null): string {
   const secret = getJwtSecret();
   const payload: ApiKeyJwtPayload = {
     keyId,
@@ -240,4 +235,3 @@ export function withApiKeyAuthentication(fn: (req: NextApiRequest, res: NextApiR
     return fn(req, res, authResult);
   };
 }
-

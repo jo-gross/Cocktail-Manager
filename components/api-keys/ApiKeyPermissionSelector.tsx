@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Permission } from '@generated/prisma/client';
 import { FaInfoCircle } from 'react-icons/fa';
 
@@ -217,7 +217,7 @@ export default function ApiKeyPermissionSelector(props: ApiKeyPermissionSelector
   // Toggle category selection
   const toggleCategory = (categoryKey: string) => {
     if (props.disabled) return;
-    
+
     const newSelected = new Set(selectedPermissionSet);
     const isFullySelected = isCategoryFullySelected(categoryKey);
 
@@ -255,7 +255,7 @@ export default function ApiKeyPermissionSelector(props: ApiKeyPermissionSelector
   // Toggle individual permission
   const togglePermission = (permission: Permission) => {
     if (props.disabled) return;
-    
+
     const newSelected = new Set(selectedPermissionSet);
 
     if (newSelected.has(permission)) {
@@ -334,7 +334,10 @@ export default function ApiKeyPermissionSelector(props: ApiKeyPermissionSelector
                     }
                   }}
                 />
-                <label className={props.disabled ? 'font-semibold uppercase' : 'cursor-pointer font-semibold uppercase'} onClick={() => toggleCategory(categoryKey)}>
+                <label
+                  className={props.disabled ? 'font-semibold uppercase' : 'cursor-pointer font-semibold uppercase'}
+                  onClick={() => toggleCategory(categoryKey)}
+                >
                   {category.label}
                 </label>
                 <div className="tooltip tooltip-left" data-tip={category.permissions.map((p) => permissionLabels[p]).join(', ')}>
@@ -350,7 +353,13 @@ export default function ApiKeyPermissionSelector(props: ApiKeyPermissionSelector
                 {category.permissions.map((perm) => (
                   <div key={perm} className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
-                      <input type="checkbox" className="checkbox checkbox-sm" checked={isPermissionSelected(perm)} onChange={() => togglePermission(perm)} disabled={props.disabled} />
+                      <input
+                        type="checkbox"
+                        className="checkbox checkbox-sm"
+                        checked={isPermissionSelected(perm)}
+                        onChange={() => togglePermission(perm)}
+                        disabled={props.disabled}
+                      />
                       <label className={props.disabled ? 'text-sm uppercase' : 'cursor-pointer text-sm uppercase'} onClick={() => togglePermission(perm)}>
                         {permissionLabels[perm]}
                       </label>
