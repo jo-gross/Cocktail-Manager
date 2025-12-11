@@ -1,11 +1,11 @@
 import NextAuth, { NextAuthOptions } from 'next-auth';
 import Google from 'next-auth/providers/google';
+import Credentials from 'next-auth/providers/credentials';
 import prisma from '../../../prisma/prisma';
 import { PrismaAdapter } from '@next-auth/prisma-adapter';
-import { OAuthConfig } from 'next-auth/providers';
 import { AdapterAccount } from 'next-auth/adapters';
 
-const providers: OAuthConfig<any>[] = [];
+const providers: any[] = [];
 
 // Google OAuth Provider
 // Required: GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET
@@ -34,7 +34,7 @@ if (process.env.CUSTOM_OIDC_NAME as string) {
     clientSecret: process.env.CUSTOM_OIDC_CLIENT_SECRET as string,
     idToken: true,
     checks: ['pkce', 'state'],
-    profile(profile) {
+    profile(profile: any) {
       return {
         id: profile[(process.env.CUSTOM_OIDC_ID_KEY as string) || 'sub'],
         name: profile[(process.env.CUSTOM_OIDC_NAME_KEY as string) || 'name'],
@@ -42,6 +42,42 @@ if (process.env.CUSTOM_OIDC_NAME as string) {
       };
     },
   });
+}
+
+// Demo Mode Credentials Provider (only enabled when DEMO_MODE is true)
+if (process.env.DEMO_MODE === 'true') {
+  providers.push(
+    Credentials({
+      id: 'demo',
+      name: 'Demo',
+      credentials: {
+        userId: { label: 'User ID', type: 'text' },
+      },
+      async authorize(credentials) {
+        if (!credentials?.userId) {
+          return null;
+        }
+
+        // Find demo user by ID
+        const user = await prisma.user.findUnique({
+          where: {
+            id: credentials.userId as string,
+          },
+        });
+
+        // Only allow demo users (users without email)
+        if (user && !user.email) {
+          return {
+            id: user.id,
+            name: user.name || 'Demo User',
+            email: null,
+          };
+        }
+
+        return null;
+      },
+    }),
+  );
 }
 
 // Some providers have custom options in their tokens. This causes problems if these fields are not present in the account db model.

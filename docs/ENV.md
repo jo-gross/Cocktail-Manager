@@ -40,6 +40,22 @@ For authentication-related environment variables, see [Authentication Methods](A
 
 When `CHROMIUM_HOST` is set, the application will use the external Chromium service for PDF generation. If not set, PDF export functionality will be disabled.
 
+### Demo Mode
+
+| Variable                     | Description                                        | Default | Example                                  |
+|------------------------------|----------------------------------------------------|---------|------------------------------------------|
+| `DEMO_MODE`                  | Enables demo mode (set to `"true"` to enable)      | `false` | `"true"`                                 |
+| `DEMO_WORKSPACE_CONFIG_PATH` | Path to the demo workspace configuration JSON file | -       | `/app/config/demo-workspace-config.json` |
+| `DEMO_TTL_HOURS`             | Time-to-live for demo workspaces in hours          | `24`    | `24`                                     |
+
+**Note:** When `DEMO_MODE` is enabled:
+
+- Normal authentication/login is disabled
+- Users can create demo workspaces without login
+- Demo workspaces are automatically deleted after the TTL expires
+- Demo mode configuration is loaded at runtime. Changes take effect after restarting the container (no rebuild
+  required).
+
 ## Configuration Files
 
 ### .env File

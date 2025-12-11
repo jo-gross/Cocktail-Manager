@@ -1,0 +1,593 @@
+{
+  "workspace": {
+    "name": "Demo Workspace",
+    "description": "Willkommen in der Demo-Version! Diese Workspace wird nach 24 Stunden automatisch gelöscht."
+  },
+  "glasses": [
+    {
+      "name": "Martini Glas",
+      "volume": 200,
+      "deposit": 2.5,
+      "notes": "Klassisches Martini-Glas"
+    },
+    {
+      "name": "Old Fashioned Glas",
+      "volume": 300,
+      "deposit": 2.0,
+      "notes": "Robustes Glas für Whiskey-Cocktails"
+    },
+    {
+      "name": "Highball Glas",
+      "volume": 350,
+      "deposit": 1.5,
+      "notes": "Hohes Glas für Longdrinks"
+    },
+    {
+      "name": "Coupe Glas",
+      "volume": 150,
+      "deposit": 2.0,
+      "notes": "Elegantes Glas für Champagner-Cocktails"
+    }
+  ],
+  "ingredients": [
+    {
+      "name": "Wodka",
+      "shortName": "Wodka",
+      "description": "Klassischer Wodka",
+      "price": 15.99,
+      "tags": [
+        "alkohol",
+        "basis"
+      ]
+    },
+    {
+      "name": "Gin",
+      "shortName": "Gin",
+      "description": "London Dry Gin",
+      "price": 18.99,
+      "tags": [
+        "alkohol",
+        "basis"
+      ]
+    },
+    {
+      "name": "Rum",
+      "shortName": "Rum",
+      "description": "Weißer Rum",
+      "price": 16.99,
+      "tags": [
+        "alkohol",
+        "basis"
+      ]
+    },
+    {
+      "name": "Tequila",
+      "shortName": "Tequila",
+      "description": "Blanco Tequila",
+      "price": 19.99,
+      "tags": [
+        "alkohol",
+        "basis"
+      ]
+    },
+    {
+      "name": "Triple Sec",
+      "shortName": "Triple Sec",
+      "description": "Orangenlikör",
+      "price": 12.99,
+      "tags": [
+        "likör",
+        "süß"
+      ]
+    },
+    {
+      "name": "Limettensaft",
+      "shortName": "Lime",
+      "description": "Frisch gepresster Limettensaft",
+      "price": 0.5,
+      "tags": [
+        "saft",
+        "sauer"
+      ]
+    },
+    {
+      "name": "Zitronensaft",
+      "shortName": "Lemon",
+      "description": "Frisch gepresster Zitronensaft",
+      "price": 0.5,
+      "tags": [
+        "saft",
+        "sauer"
+      ]
+    },
+    {
+      "name": "Cranberry-Saft",
+      "shortName": "Cranberry",
+      "description": "Cranberry-Saft",
+      "price": 1.5,
+      "tags": [
+        "saft",
+        "süß"
+      ]
+    },
+    {
+      "name": "Orangensaft",
+      "shortName": "Orange",
+      "description": "Frisch gepresster Orangensaft",
+      "price": 0.8,
+      "tags": [
+        "saft",
+        "süß"
+      ]
+    },
+    {
+      "name": "Zuckersirup",
+      "shortName": "Simple",
+      "description": "Einfacher Zuckersirup",
+      "price": 0.2,
+      "tags": [
+        "süß",
+        "sirup"
+      ]
+    },
+    {
+      "name": "Soda",
+      "shortName": "Soda",
+      "description": "Sodawasser",
+      "price": 0.3,
+      "tags": [
+        "mischgetränk",
+        "sprudel"
+      ]
+    },
+    {
+      "name": "Tonic Water",
+      "shortName": "Tonic",
+      "description": "Tonic Water",
+      "price": 0.5,
+      "tags": [
+        "mischgetränk",
+        "sprudel"
+      ]
+    },
+    {
+      "name": "Bitters",
+      "shortName": "Bitters",
+      "description": "Angostura Bitters",
+      "price": 8.99,
+      "tags": [
+        "gewürz",
+        "aroma"
+      ]
+    },
+    {
+      "name": "Minze",
+      "shortName": "Minze",
+      "description": "Frische Minzblätter",
+      "price": 0.1,
+      "tags": [
+        "kräuter",
+        "garnitur"
+      ]
+    }
+  ],
+  "garnishes": [
+    {
+      "name": "Zitronenscheibe",
+      "description": "Frische Zitronenscheibe",
+      "price": 0.1
+    },
+    {
+      "name": "Limettenscheibe",
+      "description": "Frische Limettenscheibe",
+      "price": 0.1
+    },
+    {
+      "name": "Orangenscheibe",
+      "description": "Frische Orangenscheibe",
+      "price": 0.1
+    },
+    {
+      "name": "Minzzweig",
+      "description": "Frischer Minzzweig",
+      "price": 0.15
+    },
+    {
+      "name": "Cocktailkirsche",
+      "description": "Maraschino-Kirsche",
+      "price": 0.2
+    },
+    {
+      "name": "Zitronenzeste",
+      "description": "Zitronenzeste zum Abreiben",
+      "price": 0.05
+    }
+  ],
+  "cocktails": [
+    {
+      "name": "Moscow Mule",
+      "description": "Erfrischender Cocktail mit Wodka, Ingwerbier und Limette",
+      "tags": [
+        "erfrischend",
+        "klassisch"
+      ],
+      "price": 8.5,
+      "iceName": "ICE_CUBES",
+      "glassName": "Highball Glas",
+      "garnishes": [
+        {
+          "garnishName": "Limettenscheibe",
+          "garnishNumber": 1,
+          "description": "Limettenscheibe als Garnitur",
+          "optional": false
+        },
+        {
+          "garnishName": "Minzzweig",
+          "garnishNumber": 2,
+          "description": "Minzzweig zum Dekorieren",
+          "optional": true
+        }
+      ],
+      "steps": [
+        {
+          "stepNumber": 1,
+          "actionName": "SHAKE",
+          "actionGroup": "MIXING",
+          "optional": false,
+          "ingredients": [
+            {
+              "ingredientNumber": 1,
+              "ingredientName": "Wodka",
+              "amount": 4,
+              "unitName": "CL",
+              "optional": false
+            },
+            {
+              "ingredientNumber": 2,
+              "ingredientName": "Limettensaft",
+              "amount": 2,
+              "unitName": "CL",
+              "optional": false
+            }
+          ]
+        },
+        {
+          "stepNumber": 2,
+          "actionName": "BUILD_IN_GLASS",
+          "actionGroup": "MIXING",
+          "optional": false,
+          "ingredients": [
+            {
+              "ingredientNumber": 3,
+              "ingredientName": "Soda",
+              "amount": 10,
+              "unitName": "CL",
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Gin Tonic",
+      "description": "Klassischer Gin Tonic mit frischer Limette",
+      "tags": [
+        "klassisch",
+        "erfrischend"
+      ],
+      "price": 7.5,
+      "iceName": "ICE_CUBES",
+      "glassName": "Highball Glas",
+      "garnishes": [
+        {
+          "garnishName": "Limettenscheibe",
+          "garnishNumber": 1,
+          "description": "Limettenscheibe",
+          "optional": false
+        }
+      ],
+      "steps": [
+        {
+          "stepNumber": 1,
+          "actionName": "BUILD_IN_GLASS",
+          "actionGroup": "MIXING",
+          "optional": false,
+          "ingredients": [
+            {
+              "ingredientNumber": 1,
+              "ingredientName": "Gin",
+              "amount": 4,
+              "unitName": "CL",
+              "optional": false
+            },
+            {
+              "ingredientNumber": 2,
+              "ingredientName": "Tonic Water",
+              "amount": 12,
+              "unitName": "CL",
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Mojito",
+      "description": "Kubanischer Klassiker mit Rum, Minze und Limette",
+      "tags": [
+        "tropisch",
+        "erfrischend"
+      ],
+      "price": 9.0,
+      "iceName": "ICE_CRUSHED",
+      "glassName": "Highball Glas",
+      "garnishes": [
+        {
+          "garnishName": "Minzzweig",
+          "garnishNumber": 1,
+          "description": "Minzzweig zum Dekorieren",
+          "optional": false
+        },
+        {
+          "garnishName": "Limettenscheibe",
+          "garnishNumber": 2,
+          "description": "Limettenscheibe",
+          "optional": false
+        }
+      ],
+      "steps": [
+        {
+          "stepNumber": 1,
+          "actionName": "MUDDLE",
+          "actionGroup": "MIXING",
+          "optional": false,
+          "ingredients": [
+            {
+              "ingredientNumber": 1,
+              "ingredientName": "Minze",
+              "amount": 8,
+              "unitName": "PIECE",
+              "optional": false
+            },
+            {
+              "ingredientNumber": 2,
+              "ingredientName": "Limettensaft",
+              "amount": 2,
+              "unitName": "CL",
+              "optional": false
+            },
+            {
+              "ingredientNumber": 3,
+              "ingredientName": "Zuckersirup",
+              "amount": 2,
+              "unitName": "CL",
+              "optional": false
+            }
+          ]
+        },
+        {
+          "stepNumber": 2,
+          "actionName": "SHAKE",
+          "actionGroup": "MIXING",
+          "optional": false,
+          "ingredients": [
+            {
+              "ingredientNumber": 4,
+              "ingredientName": "Rum",
+              "amount": 5,
+              "unitName": "CL",
+              "optional": false
+            }
+          ]
+        },
+        {
+          "stepNumber": 3,
+          "actionName": "SINGLE_STRAIN",
+          "actionGroup": "POURING",
+          "optional": false,
+          "ingredients": [
+            {
+              "ingredientNumber": 5,
+              "ingredientName": "Soda",
+              "amount": 8,
+              "unitName": "CL",
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Margarita",
+      "description": "Klassischer Tequila-Cocktail mit Triple Sec und Limette",
+      "tags": [
+        "klassisch",
+        "sauer"
+      ],
+      "price": 8.5,
+      "iceName": "ICE_CUBES",
+      "glassName": "Coupe Glas",
+      "garnishes": [
+        {
+          "garnishName": "Limettenscheibe",
+          "garnishNumber": 1,
+          "description": "Limettenscheibe",
+          "optional": false
+        },
+        {
+          "garnishName": "Zitronenzeste",
+          "garnishNumber": 2,
+          "description": "Zitronenzeste",
+          "optional": true
+        }
+      ],
+      "steps": [
+        {
+          "stepNumber": 1,
+          "actionName": "SHAKE",
+          "actionGroup": "MIXING",
+          "optional": false,
+          "ingredients": [
+            {
+              "ingredientNumber": 1,
+              "ingredientName": "Tequila",
+              "amount": 4,
+              "unitName": "CL",
+              "optional": false
+            },
+            {
+              "ingredientNumber": 2,
+              "ingredientName": "Triple Sec",
+              "amount": 2,
+              "unitName": "CL",
+              "optional": false
+            },
+            {
+              "ingredientNumber": 3,
+              "ingredientName": "Limettensaft",
+              "amount": 2,
+              "unitName": "CL",
+              "optional": false
+            }
+          ]
+        },
+        {
+          "stepNumber": 2,
+          "actionName": "DOUBLE_STRAIN",
+          "actionGroup": "POURING",
+          "optional": false,
+          "ingredients": []
+        }
+      ]
+    },
+    {
+      "name": "Cosmopolitan",
+      "description": "Eleganter Cocktail mit Wodka, Cranberry und Limette",
+      "tags": [
+        "elegant",
+        "fruchtig"
+      ],
+      "price": 9.5,
+      "iceName": "ICE_CUBES",
+      "glassName": "Martini Glas",
+      "garnishes": [
+        {
+          "garnishName": "Limettenscheibe",
+          "garnishNumber": 1,
+          "description": "Limettenscheibe",
+          "optional": false
+        }
+      ],
+      "steps": [
+        {
+          "stepNumber": 1,
+          "actionName": "SHAKE",
+          "actionGroup": "MIXING",
+          "optional": false,
+          "ingredients": [
+            {
+              "ingredientNumber": 1,
+              "ingredientName": "Wodka",
+              "amount": 4,
+              "unitName": "CL",
+              "optional": false
+            },
+            {
+              "ingredientNumber": 2,
+              "ingredientName": "Triple Sec",
+              "amount": 1.5,
+              "unitName": "CL",
+              "optional": false
+            },
+            {
+              "ingredientNumber": 3,
+              "ingredientName": "Cranberry-Saft",
+              "amount": 3,
+              "unitName": "CL",
+              "optional": false
+            },
+            {
+              "ingredientNumber": 4,
+              "ingredientName": "Limettensaft",
+              "amount": 1,
+              "unitName": "CL",
+              "optional": false
+            }
+          ]
+        },
+        {
+          "stepNumber": 2,
+          "actionName": "DOUBLE_STRAIN",
+          "actionGroup": "POURING",
+          "optional": false,
+          "ingredients": []
+        }
+      ]
+    },
+    {
+      "name": "Old Fashioned",
+      "description": "Klassischer Whiskey-Cocktail mit Bitters und Zucker",
+      "tags": [
+        "klassisch",
+        "stark"
+      ],
+      "price": 10.0,
+      "iceName": "ICE_CUBES",
+      "glassName": "Old Fashioned Glas",
+      "garnishes": [
+        {
+          "garnishName": "Orangenscheibe",
+          "garnishNumber": 1,
+          "description": "Orangenscheibe",
+          "optional": false
+        },
+        {
+          "garnishName": "Cocktailkirsche",
+          "garnishNumber": 2,
+          "description": "Cocktailkirsche",
+          "optional": true
+        }
+      ],
+      "steps": [
+        {
+          "stepNumber": 1,
+          "actionName": "MUDDLE",
+          "actionGroup": "MIXING",
+          "optional": false,
+          "ingredients": [
+            {
+              "ingredientNumber": 1,
+              "ingredientName": "Zuckersirup",
+              "amount": 1,
+              "unitName": "CL",
+              "optional": false
+            },
+            {
+              "ingredientNumber": 2,
+              "ingredientName": "Bitters",
+              "amount": 2,
+              "unitName": "DASH",
+              "optional": false
+            }
+          ]
+        },
+        {
+          "stepNumber": 2,
+          "actionName": "STIR",
+          "actionGroup": "MIXING",
+          "optional": false,
+          "ingredients": [
+            {
+              "ingredientNumber": 3,
+              "ingredientName": "Gin",
+              "amount": 6,
+              "unitName": "CL",
+              "optional": false
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+

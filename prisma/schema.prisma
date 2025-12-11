@@ -176,6 +176,9 @@ model Workspace {
   name                              String
   description                       String?
   image                             String?
+  isDemo                            Boolean                             @default(false)
+  expiresAt                         DateTime?
+  demoUserId                        String?
   users                             WorkspaceUser[]
   Glass                             Glass[]
   Garnish                           Garnish[]

@@ -14,6 +14,11 @@ export default withHttpMethods({
       return res.status(403).json({ message: 'Workspace-Erstellung ist deaktiviert' });
     }
 
+    // Check if user is a demo user (no email) and block workspace creation
+    if (!user.email) {
+      return res.status(403).json({ message: 'Demo-User können keine Workspaces erstellen' });
+    }
+
     const { name } = req.body;
 
     const grammId = randomUUID();
@@ -231,7 +236,7 @@ export default withHttpMethods({
     await regenerateUnitConversions(result.id);
 
     return res.json({ data: result });
-  }),
+  };),
   [HTTPMethod.GET]: withAuthentication(async (req: NextApiRequest, res: NextApiResponse, user: User) => {
     const result = await prisma.workspace.findMany({
       where: {
@@ -254,4 +259,4 @@ export default withHttpMethods({
 
     return res.json({ data: sortedResult });
   }),
-});
+})
