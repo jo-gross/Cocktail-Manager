@@ -1,6 +1,6 @@
 import HTTPMethod from 'http-method-enum';
 import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
-import { Prisma, Role } from '@generated/prisma/client';
+import { Prisma, Role, Permission } from '@generated/prisma/client';
 import { NextApiRequest, NextApiResponse } from 'next';
 import prisma from '../../../../../../prisma/prisma';
 import { withHttpMethods } from '@middleware/api/handleMethods';
@@ -8,7 +8,7 @@ import { StatisticBadRequestMessage } from '../../../../../../models/StatisticBa
 import CocktailStatisticItemCreateInput = Prisma.CocktailStatisticItemCreateInput;
 
 export default withHttpMethods({
-  [HTTPMethod.POST]: withWorkspacePermission([Role.USER], async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
+  [HTTPMethod.POST]: withWorkspacePermission([Role.USER], Permission.STATISTICS_CREATE, async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
     const { cocktailId, cocktailCardId, actionSource, notes, ignoreQueue } = req.body;
 
     var cardId = cocktailCardId as string | undefined;

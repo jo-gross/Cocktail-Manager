@@ -3,12 +3,12 @@ import prisma from '../../../../../../prisma/prisma';
 import { NextApiRequest, NextApiResponse } from 'next';
 import HTTPMethod from 'http-method-enum';
 import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
-import { Prisma, Role, Workspace } from '@generated/prisma/client';
+import { Prisma, Role, Workspace, Permission } from '@generated/prisma/client';
 import { withHttpMethods } from '@middleware/api/handleMethods';
 import IngredientUpdateInput = Prisma.IngredientUpdateInput;
 
 export default withHttpMethods({
-  [HTTPMethod.GET]: withWorkspacePermission([Role.USER], async (req: NextApiRequest, res: NextApiResponse) => {
+  [HTTPMethod.GET]: withWorkspacePermission([Role.USER], Permission.INGREDIENTS_READ, async (req: NextApiRequest, res: NextApiResponse, user, workspace: Workspace) => {
     const ingredientId = req.query.ingredientId as string | undefined;
     if (!ingredientId) return res.status(400).json({ message: 'No ingredient id' });
 
@@ -16,6 +16,7 @@ export default withHttpMethods({
       data: await prisma.ingredient.findUnique({
         where: {
           id: ingredientId,
+          workspaceId: workspace.id,
         },
         include: {
           IngredientVolume: {
@@ -32,7 +33,7 @@ export default withHttpMethods({
       }),
     });
   }),
-  [HTTPMethod.PUT]: withWorkspacePermission([Role.MANAGER], async (req: NextApiRequest, res: NextApiResponse, user, workspace: Workspace) => {
+  [HTTPMethod.PUT]: withWorkspacePermission([Role.MANAGER], Permission.INGREDIENTS_UPDATE, async (req: NextApiRequest, res: NextApiResponse, user, workspace: Workspace) => {
     try {
       await prisma.$transaction(async (transaction) => {
         const { name, price, id, shortName, link, tags, image, notes, description, units } = req.body;
@@ -109,13 +110,14 @@ export default withHttpMethods({
       return res.status(500).json({ msg: 'Error' });
     }
   }),
-  [HTTPMethod.DELETE]: withWorkspacePermission([Role.ADMIN], async (req: NextApiRequest, res: NextApiResponse) => {
+  [HTTPMethod.DELETE]: withWorkspacePermission([Role.ADMIN], Permission.INGREDIENTS_DELETE, async (req: NextApiRequest, res: NextApiResponse, user, workspace: Workspace) => {
     const ingredientId = req.query.ingredientId as string | undefined;
     if (!ingredientId) return res.status(400).json({ message: 'No ingredient id' });
 
     const result = await prisma.ingredient.delete({
       where: {
         id: ingredientId,
+        workspaceId: workspace.id,
       },
     });
     return res.json({ data: result });

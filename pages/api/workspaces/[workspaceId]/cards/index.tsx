@@ -2,7 +2,7 @@
 
 import prisma from '../../../../../prisma/prisma';
 import { NextApiRequest, NextApiResponse } from 'next';
-import { CocktailCardGroupItem, Prisma, Role } from '@generated/prisma/client';
+import { CocktailCardGroupItem, Prisma, Role, Permission } from '@generated/prisma/client';
 import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
 import HTTPMethod from 'http-method-enum';
 import { withHttpMethods } from '@middleware/api/handleMethods';
@@ -10,7 +10,7 @@ import CocktailCardCreateInput = Prisma.CocktailCardCreateInput;
 import CocktailCardGroupItemCreateInput = Prisma.CocktailCardGroupItemCreateInput;
 
 export default withHttpMethods({
-  [HTTPMethod.GET]: withWorkspacePermission([Role.USER], async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
+  [HTTPMethod.GET]: withWorkspacePermission([Role.USER], Permission.CARDS_READ, async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
     const { withArchived } = req.query;
 
     let archiveFilter;
@@ -39,7 +39,7 @@ export default withHttpMethods({
     });
     return res.json({ data: result });
   }),
-  [HTTPMethod.POST]: withWorkspacePermission([Role.MANAGER], async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
+  [HTTPMethod.POST]: withWorkspacePermission([Role.MANAGER], Permission.CARDS_CREATE, async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
     const { name, date, groups } = req.body;
     const input: CocktailCardCreateInput = {
       name: name,

@@ -8,8 +8,9 @@ import { withPagePermission } from '@middleware/ui/withPagePermission';
 import CreateApiKeyModal from '../../../../../components/modals/CreateApiKeyModal';
 import { DeleteConfirmationModal } from '@components/modals/DeleteConfirmationModal';
 import { alertService } from '@lib/alertService';
-import { FaPlus, FaEdit, FaTrash } from 'react-icons/fa';
+import { FaPlus, FaTrash } from 'react-icons/fa';
 import { Loading } from '@components/Loading';
+import '../../../../../lib/DateUtils';
 
 interface ApiKey {
   id: string;
@@ -23,10 +24,7 @@ interface ApiKey {
     name: string | null;
     email: string | null;
   };
-  permissions: Array<{
-    permission: Permission;
-    endpointPattern: string | null;
-  }>;
+  permissions: Permission[];
 }
 
 function ApiKeysPage() {
@@ -71,17 +69,6 @@ function ApiKeysPage() {
     }, 500);
   };
 
-  const handleEdit = (apiKey: ApiKey) => {
-    modalContext.openModal(
-      <CreateApiKeyModal apiKeyId={apiKey.id} initialName={apiKey.name} initialExpiresAt={apiKey.expiresAt} initialPermissions={apiKey.permissions} />,
-      false,
-    );
-    // Reload after modal closes
-    setTimeout(() => {
-      fetchApiKeys();
-    }, 500);
-  };
-
   const handleDelete = (apiKey: ApiKey) => {
     modalContext.openModal(
       <DeleteConfirmationModal
@@ -115,7 +102,7 @@ function ApiKeysPage() {
   const formatDate = (dateString: string | null) => {
     if (!dateString) return 'Nie';
     try {
-      return new Date(dateString).toLocaleString('de-DE');
+      return new Date(dateString).toFormatDateString();
     } catch {
       return dateString;
     }
@@ -177,47 +164,62 @@ function ApiKeysPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {apiKeys.map((apiKey, index) => (
-                      <tr key={apiKey.id} className={isExpired(apiKey.expiresAt) ? 'opacity-50' : ''}>
-                        <td>
-                          <div className="font-semibold">{apiKey.name}</div>
-                          <div className="font-mono text-xs text-base-content/60">{apiKey.keyPrefix}</div>
-                        </td>
-                        <td>{formatDate(apiKey.createdAt)}</td>
-                        <td>
-                          {apiKey.expiresAt ? (
-                            <span className={isExpired(apiKey.expiresAt) ? 'text-error' : ''}>{formatDate(apiKey.expiresAt)}</span>
-                          ) : (
-                            <span className="text-base-content/60">Nie</span>
-                          )}
-                        </td>
-                        <td>{formatDate(apiKey.lastUsedAt)}</td>
-                        <td>{apiKey.createdBy.name || apiKey.createdBy.email || 'Unbekannt'}</td>
-                        <td>
-                          {apiKey.permissions.length > 0 ? (
-                            <div className={`tooltip ${index == 0 ? 'tooltip-left' : ''}`} data-tip={apiKey.permissions.map((p) => p.permission).join(', ')}>
-                              <div className="badge badge-primary badge-sm cursor-help">
+                    {apiKeys.map((apiKey, index) => {
+                      const expired = isExpired(apiKey.expiresAt);
+                      return (
+                        <tr key={apiKey.id}>
+                          <td  className={expired ? 'opacity-50' : ''}>
+                            <div className="font-semibold">{apiKey.name}</div>
+                            <div className="font-mono text-xs text-base-content/60">{apiKey.keyPrefix}</div>
+                          </td>
+                          <td className={expired ? 'opacity-50' : ''}>{formatDate(apiKey.createdAt)}</td>
+                          <td className={expired ? 'opacity-50' : ''}>
+                            {apiKey.expiresAt ? (
+                              <span className={expired ? 'text-error' : ''}>{formatDate(apiKey.expiresAt)}</span>
+                            ) : (
+                              <span className="text-base-content/60">Nie</span>
+                            )}
+                          </td>
+                          <td className={expired ? 'opacity-50' : ''}>{formatDate(apiKey.lastUsedAt)}</td>
+                          <td className={expired ? 'opacity-50' : ''}>{apiKey.createdBy.name || apiKey.createdBy.email || 'Unbekannt'}</td>
+                          <td className={expired ? 'opacity-50' : ''}>
+                            {apiKey.permissions.length > 0 ? (
+                              <div
+                                className="badge badge-primary badge-sm cursor-help"
+                                onClick={() => {
+                                  modalContext.openModal(
+                                    <CreateApiKeyModal
+                                      initialName={apiKey.name}
+                                      initialExpiresAt={apiKey.expiresAt}
+                                      initialPermissions={apiKey.permissions}
+                                      viewOnly={true}
+                                    />,
+                                    false,
+                                  );
+                                }}
+                              >
                                 {apiKey.permissions.length} Berechtigung{apiKey.permissions.length !== 1 ? 'en' : ''}
                               </div>
+                            ) : (
+                              <div className="badge badge-primary badge-sm">
+                                {apiKey.permissions.length} Berechtigung{apiKey.permissions.length !== 1 ? 'en' : ''}
+                              </div>
+                            )}
+                          </td>
+                          <td>
+                            <div className="flex gap-2">
+                              <button
+                                className={`btn btn-error btn-sm ${deleting === apiKey.id ? 'loading loading-spinner' : ''}`}
+                                onClick={() => handleDelete(apiKey)}
+                                disabled={deleting === apiKey.id}
+                              >
+                                {deleting === apiKey.id ? <span className="loading loading-spinner" /> : <FaTrash />}
+                              </button>
                             </div>
-                          ) : (
-                            <div className="badge badge-primary badge-sm">
-                              {apiKey.permissions.length} Berechtigung{apiKey.permissions.length !== 1 ? 'en' : ''}
-                            </div>
-                          )}
-                        </td>
-                        <td>
-                          <div className="flex gap-2">
-                            <button className="btn btn-ghost btn-sm" onClick={() => handleEdit(apiKey)} disabled={deleting === apiKey.id}>
-                              <FaEdit />
-                            </button>
-                            <button className="btn btn-error btn-sm" onClick={() => handleDelete(apiKey)} disabled={deleting === apiKey.id}>
-                              {deleting === apiKey.id ? <span className="loading loading-spinner" /> : <FaTrash />}
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>

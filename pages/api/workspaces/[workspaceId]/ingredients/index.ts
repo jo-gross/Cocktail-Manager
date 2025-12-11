@@ -3,13 +3,13 @@
 import prisma from '../../../../../prisma/prisma';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
-import { Prisma, Role, Workspace } from '@generated/prisma/client';
+import { Prisma, Role, Workspace, Permission } from '@generated/prisma/client';
 import { withHttpMethods } from '@middleware/api/handleMethods';
 import HTTPMethod from 'http-method-enum';
 import IngredientCreateInput = Prisma.IngredientCreateInput;
 
 export default withHttpMethods({
-  [HTTPMethod.GET]: withWorkspacePermission([Role.USER], async (req: NextApiRequest, res: NextApiResponse, user, workspace: Workspace) => {
+  [HTTPMethod.GET]: withWorkspacePermission([Role.USER], Permission.INGREDIENTS_READ, async (req: NextApiRequest, res: NextApiResponse, user, workspace: Workspace) => {
     const ingredients = await prisma.ingredient.findMany({
       where: {
         workspaceId: workspace.id,
@@ -29,7 +29,7 @@ export default withHttpMethods({
     });
     return res.json({ data: ingredients });
   }),
-  [HTTPMethod.POST]: withWorkspacePermission([Role.MANAGER], async (req: NextApiRequest, res: NextApiResponse, user, workspace: Workspace) => {
+  [HTTPMethod.POST]: withWorkspacePermission([Role.MANAGER], Permission.INGREDIENTS_CREATE, async (req: NextApiRequest, res: NextApiResponse, user, workspace: Workspace) => {
     try {
       await prisma.$transaction(async (transaction) => {
         const { name, price, shortName, link, tags, image, notes, description, units } = req.body;

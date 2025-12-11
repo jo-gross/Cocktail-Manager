@@ -53,7 +53,7 @@ function convertIce(ice: string): string {
   }
 }
 
-export default withWorkspacePermission([Role.USER], async (req: NextApiRequest, res: NextApiResponse, user) => {
+export default withWorkspacePermission([Role.USER], async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
   const workspaceId = req.query.workspaceId as string | undefined;
   if (!workspaceId) return res.status(400).json({ message: 'No workspace id' });
 

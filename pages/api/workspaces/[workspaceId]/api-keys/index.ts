@@ -4,25 +4,9 @@ import { withHttpMethods } from '@middleware/api/handleMethods';
 import { Role, Permission } from '@generated/prisma/client';
 import HTTPMethod from 'http-method-enum';
 import prisma from '../../../../../prisma/prisma';
-import bcrypt from 'bcrypt';
 import crypto from 'crypto';
-
-/**
- * Generates a new API key
- * Format: ck_<base64 encoded random bytes>
- */
-function generateApiKey(): string {
-  const randomBytes = crypto.randomBytes(32);
-  const base64 = randomBytes.toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
-  return `ck_${base64}`;
-}
-
-/**
- * Hashes an API key using bcrypt
- */
-async function hashApiKey(key: string): Promise<string> {
-  return bcrypt.hash(key, 10);
-}
+import { createApiKeyJwt } from '@middleware/api/jwtApiKeyMiddleware';
+import { invalidateKeyCache } from '@middleware/api/jwtApiKeyMiddleware';
 
 export default withHttpMethods({
   [HTTPMethod.GET]: withWorkspacePermission([Role.ADMIN, Role.OWNER], async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
@@ -45,19 +29,18 @@ export default withHttpMethods({
       },
     });
 
-    // Return keys without the full hash, only show a prefix for identification
+    // Return keys with keyId prefix for identification
     const sanitizedKeys = apiKeys.map((key) => ({
       id: key.id,
       name: key.name,
-      keyPrefix: key.keyHash.substring(0, 8) + '...',
+      keyId: key.keyId,
+      keyPrefix: key.keyId.substring(0, 8) + '...',
+      revoked: key.revoked,
       expiresAt: key.expiresAt,
       lastUsedAt: key.lastUsedAt,
       createdAt: key.createdAt,
       createdBy: key.createdByUser,
-      permissions: key.permissions.map((p) => ({
-        permission: p.permission,
-        endpointPattern: p.endpointPattern,
-      })),
+      permissions: key.permissions.map((p) => p.permission),
     }));
 
     return res.json({ data: sanitizedKeys });
@@ -70,34 +53,37 @@ export default withHttpMethods({
       return res.status(400).json({ message: 'Name is required' });
     }
 
-    // Generate API key
-    const apiKey = generateApiKey();
-    const keyHash = await hashApiKey(apiKey);
+    // Generate unique keyId
+    const keyId = crypto.randomBytes(16).toString('hex');
 
     // Validate and parse permissions
-    const permissionEntries: Array<{ permission: Permission; endpointPattern?: string | null }> = [];
+    const permissionList: Permission[] = [];
 
     if (permissions && Array.isArray(permissions)) {
       for (const perm of permissions) {
-        if (perm.permission) {
-          permissionEntries.push({
-            permission: perm.permission as Permission,
-            endpointPattern: perm.endpointPattern || null,
-          });
+        if (typeof perm === 'string') {
+          // Direct permission string
+          permissionList.push(perm as Permission);
+        } else if (perm && perm.permission) {
+          // Object with permission property (backward compatibility)
+          permissionList.push(perm.permission as Permission);
         }
       }
     }
 
-    // Create API key
+    const expiresAtDate = expiresAt ? new Date(expiresAt) : null;
+
+    // Create API key record
     const createdKey = await prisma.workspaceApiKey.create({
       data: {
         name,
-        keyHash,
-        expiresAt: expiresAt ? new Date(expiresAt) : null,
+        keyId,
+        revoked: false,
+        expiresAt: expiresAtDate,
         workspaceId: workspace.id,
         createdByUserId: user.id,
         permissions: {
-          create: permissionEntries,
+          create: permissionList.map((permission) => ({ permission })),
         },
       },
       include: {
@@ -105,18 +91,23 @@ export default withHttpMethods({
       },
     });
 
-    // Return the key only once - client must save it immediately
+    // Generate JWT token
+    const apiKeyToken = createApiKeyJwt(
+      keyId,
+      workspace.id,
+      permissionList,
+      expiresAtDate,
+    );
+
+    // Return the JWT token only once - client must save it immediately
     return res.json({
       data: {
         id: createdKey.id,
         name: createdKey.name,
-        key: apiKey, // Only returned once!
+        key: apiKeyToken, // JWT token - only returned once!
         expiresAt: createdKey.expiresAt,
         createdAt: createdKey.createdAt,
-        permissions: createdKey.permissions.map((p) => ({
-          permission: p.permission,
-          endpointPattern: p.endpointPattern,
-        })),
+        permissions: createdKey.permissions.map((p) => p.permission),
       },
     });
   }),

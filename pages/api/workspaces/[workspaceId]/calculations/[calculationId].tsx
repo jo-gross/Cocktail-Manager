@@ -2,20 +2,21 @@ import prisma from '../../../../../prisma/prisma';
 import { NextApiRequest, NextApiResponse } from 'next';
 import HTTPMethod from 'http-method-enum';
 import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
-import { Prisma, Role } from '@generated/prisma/client';
+import { Prisma, Role, Permission } from '@generated/prisma/client';
 import { withHttpMethods } from '@middleware/api/handleMethods';
 import CocktailCalculationUpdateInput = Prisma.CocktailCalculationUpdateInput;
 
 // DELETE /api/glasses/:id
 
 export default withHttpMethods({
-  [HTTPMethod.GET]: withWorkspacePermission([Role.USER], async (req: NextApiRequest, res: NextApiResponse) => {
+  [HTTPMethod.GET]: withWorkspacePermission([Role.USER], Permission.CALCULATIONS_READ, async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
     const calculationId = req.query.calculationId as string | undefined;
     if (!calculationId) return res.status(400).json({ message: 'No calculation id' });
 
     const result = await prisma.cocktailCalculation.findUnique({
       where: {
         id: calculationId,
+        workspaceId: workspace.id,
       },
       include: {
         updatedByUser: true,
@@ -49,17 +50,18 @@ export default withHttpMethods({
     });
     return res.json({ data: result });
   }),
-  [HTTPMethod.DELETE]: withWorkspacePermission([Role.ADMIN], async (req: NextApiRequest, res: NextApiResponse) => {
+  [HTTPMethod.DELETE]: withWorkspacePermission([Role.ADMIN], Permission.CALCULATIONS_DELETE, async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
     const calculationId = req.query.calculationId as string | undefined;
     if (!calculationId) return res.status(400).json({ message: 'No cocktailCalculation id' });
     const result = await prisma.cocktailCalculation.delete({
       where: {
         id: calculationId,
+        workspaceId: workspace.id,
       },
     });
     return res.json({ data: result });
   }),
-  [HTTPMethod.PUT]: withWorkspacePermission([Role.USER], async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
+  [HTTPMethod.PUT]: withWorkspacePermission([Role.USER], Permission.CALCULATIONS_UPDATE, async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
     const calculationId = req.query.calculationId as string | undefined;
     if (!calculationId) return res.status(400).json({ message: 'No calculationId id' });
     const { name, calculationItems, showSalesStuff, ingredientShoppingUnits } = req.body;

@@ -3,8 +3,9 @@ import { Permission } from '@generated/prisma/client';
 import { FaInfoCircle } from 'react-icons/fa';
 
 interface ApiKeyPermissionSelectorProps {
-  selectedPermissions: Array<{ permission: Permission; endpointPattern?: string | null }>;
-  onChange: (permissions: Array<{ permission: Permission; endpointPattern?: string | null }>) => void;
+  selectedPermissions: Permission[];
+  onChange: (permissions: Permission[]) => void;
+  disabled?: boolean;
 }
 
 // Define permission categories for UI grouping
@@ -27,7 +28,7 @@ const permissionCategories: Record<string, { label: string; permissions: Permiss
   },
   UNITS: {
     label: 'UNITS',
-    permissions: [Permission.UNITS_READ, Permission.UNITS_CREATE, Permission.UNITS_UPDATE, Permission.UNITS_DELETE],
+    permissions: [Permission.UNITS_READ, Permission.UNITS_UPDATE],
   },
   QUEUE: {
     label: 'QUEUE',
@@ -35,7 +36,7 @@ const permissionCategories: Record<string, { label: string; permissions: Permiss
   },
   STATISTICS: {
     label: 'STATISTICS',
-    permissions: [Permission.STATISTICS_READ, Permission.STATISTICS_CREATE, Permission.STATISTICS_UPDATE, Permission.STATISTICS_DELETE],
+    permissions: [Permission.STATISTICS_READ, Permission.STATISTICS_CREATE, Permission.STATISTICS_DELETE],
   },
   CARDS: {
     label: 'CARDS',
@@ -51,27 +52,15 @@ const permissionCategories: Record<string, { label: string; permissions: Permiss
   },
   USERS: {
     label: 'USERS',
-    permissions: [Permission.USERS_READ, Permission.USERS_CREATE, Permission.USERS_UPDATE, Permission.USERS_DELETE],
-  },
-  ACTIONS: {
-    label: 'ACTIONS',
-    permissions: [Permission.ACTIONS_READ, Permission.ACTIONS_CREATE, Permission.ACTIONS_UPDATE, Permission.ACTIONS_DELETE],
+    permissions: [Permission.USERS_READ, Permission.USERS_UPDATE, Permission.USERS_DELETE],
   },
   ICE: {
     label: 'ICE',
     permissions: [Permission.ICE_READ, Permission.ICE_CREATE, Permission.ICE_UPDATE, Permission.ICE_DELETE],
   },
-  JOIN_CODES: {
-    label: 'JOIN_CODES',
-    permissions: [Permission.JOIN_CODES_READ, Permission.JOIN_CODES_CREATE, Permission.JOIN_CODES_UPDATE, Permission.JOIN_CODES_DELETE],
-  },
-  JOIN_REQUESTS: {
-    label: 'JOIN_REQUESTS',
-    permissions: [Permission.JOIN_REQUESTS_READ, Permission.JOIN_REQUESTS_CREATE, Permission.JOIN_REQUESTS_UPDATE, Permission.JOIN_REQUESTS_DELETE],
-  },
   RATINGS: {
     label: 'RATINGS',
-    permissions: [Permission.RATINGS_READ, Permission.RATINGS_CREATE, Permission.RATINGS_UPDATE, Permission.RATINGS_DELETE],
+    permissions: [Permission.RATINGS_READ, Permission.RATINGS_CREATE, Permission.RATINGS_DELETE],
   },
 };
 
@@ -99,16 +88,13 @@ const permissionLabels: Record<Permission, string> = {
   [Permission.GLASSES_UPDATE]: 'GLASSES_UPDATE',
   [Permission.GLASSES_DELETE]: 'GLASSES_DELETE',
   [Permission.UNITS_READ]: 'UNITS_READ',
-  [Permission.UNITS_CREATE]: 'UNITS_CREATE',
   [Permission.UNITS_UPDATE]: 'UNITS_UPDATE',
-  [Permission.UNITS_DELETE]: 'UNITS_DELETE',
   [Permission.QUEUE_READ]: 'QUEUE_READ',
   [Permission.QUEUE_CREATE]: 'QUEUE_CREATE',
   [Permission.QUEUE_UPDATE]: 'QUEUE_UPDATE',
   [Permission.QUEUE_DELETE]: 'QUEUE_DELETE',
   [Permission.STATISTICS_READ]: 'STATISTICS_READ',
   [Permission.STATISTICS_CREATE]: 'STATISTICS_CREATE',
-  [Permission.STATISTICS_UPDATE]: 'STATISTICS_UPDATE',
   [Permission.STATISTICS_DELETE]: 'STATISTICS_DELETE',
   [Permission.CARDS_READ]: 'CARDS_READ',
   [Permission.CARDS_CREATE]: 'CARDS_CREATE',
@@ -121,28 +107,14 @@ const permissionLabels: Record<Permission, string> = {
   [Permission.WORKSPACE_READ]: 'WORKSPACE_READ',
   [Permission.WORKSPACE_UPDATE]: 'WORKSPACE_UPDATE',
   [Permission.USERS_READ]: 'USERS_READ',
-  [Permission.USERS_CREATE]: 'USERS_CREATE',
   [Permission.USERS_UPDATE]: 'USERS_UPDATE',
   [Permission.USERS_DELETE]: 'USERS_DELETE',
-  [Permission.ACTIONS_READ]: 'ACTIONS_READ',
-  [Permission.ACTIONS_CREATE]: 'ACTIONS_CREATE',
-  [Permission.ACTIONS_UPDATE]: 'ACTIONS_UPDATE',
-  [Permission.ACTIONS_DELETE]: 'ACTIONS_DELETE',
   [Permission.ICE_READ]: 'ICE_READ',
   [Permission.ICE_CREATE]: 'ICE_CREATE',
   [Permission.ICE_UPDATE]: 'ICE_UPDATE',
   [Permission.ICE_DELETE]: 'ICE_DELETE',
-  [Permission.JOIN_CODES_READ]: 'JOIN_CODES_READ',
-  [Permission.JOIN_CODES_CREATE]: 'JOIN_CODES_CREATE',
-  [Permission.JOIN_CODES_UPDATE]: 'JOIN_CODES_UPDATE',
-  [Permission.JOIN_CODES_DELETE]: 'JOIN_CODES_DELETE',
-  [Permission.JOIN_REQUESTS_READ]: 'JOIN_REQUESTS_READ',
-  [Permission.JOIN_REQUESTS_CREATE]: 'JOIN_REQUESTS_CREATE',
-  [Permission.JOIN_REQUESTS_UPDATE]: 'JOIN_REQUESTS_UPDATE',
-  [Permission.JOIN_REQUESTS_DELETE]: 'JOIN_REQUESTS_DELETE',
   [Permission.RATINGS_READ]: 'RATINGS_READ',
   [Permission.RATINGS_CREATE]: 'RATINGS_CREATE',
-  [Permission.RATINGS_UPDATE]: 'RATINGS_UPDATE',
   [Permission.RATINGS_DELETE]: 'RATINGS_DELETE',
 };
 
@@ -165,16 +137,13 @@ const permissionDescriptions: Record<Permission, string> = {
   [Permission.GLASSES_UPDATE]: 'Bestehende Gläser bearbeiten',
   [Permission.GLASSES_DELETE]: 'Gläser löschen',
   [Permission.UNITS_READ]: 'Einheiten lesen und anzeigen',
-  [Permission.UNITS_CREATE]: 'Neue Einheiten erstellen',
   [Permission.UNITS_UPDATE]: 'Bestehende Einheiten bearbeiten',
-  [Permission.UNITS_DELETE]: 'Einheiten löschen',
   [Permission.QUEUE_READ]: 'Warteschlange lesen und anzeigen',
   [Permission.QUEUE_CREATE]: 'Items zur Warteschlange hinzufügen',
   [Permission.QUEUE_UPDATE]: 'Items in der Warteschlange bearbeiten',
   [Permission.QUEUE_DELETE]: 'Items aus der Warteschlange entfernen',
   [Permission.STATISTICS_READ]: 'Statistiken lesen und anzeigen',
   [Permission.STATISTICS_CREATE]: 'Statistik-Einträge erstellen',
-  [Permission.STATISTICS_UPDATE]: 'Statistik-Einträge bearbeiten',
   [Permission.STATISTICS_DELETE]: 'Statistik-Einträge löschen',
   [Permission.CARDS_READ]: 'Bartender-Karten lesen und anzeigen',
   [Permission.CARDS_CREATE]: 'Neue Bartender-Karten erstellen',
@@ -187,28 +156,14 @@ const permissionDescriptions: Record<Permission, string> = {
   [Permission.WORKSPACE_READ]: 'Workspace-Informationen lesen',
   [Permission.WORKSPACE_UPDATE]: 'Workspace-Einstellungen bearbeiten',
   [Permission.USERS_READ]: 'Workspace-Nutzer lesen und anzeigen',
-  [Permission.USERS_CREATE]: 'Nutzer zum Workspace hinzufügen',
   [Permission.USERS_UPDATE]: 'Workspace-Nutzer bearbeiten',
   [Permission.USERS_DELETE]: 'Nutzer aus dem Workspace entfernen',
-  [Permission.ACTIONS_READ]: 'Zubereitungsschritte lesen und anzeigen',
-  [Permission.ACTIONS_CREATE]: 'Neue Zubereitungsschritte erstellen',
-  [Permission.ACTIONS_UPDATE]: 'Bestehende Zubereitungsschritte bearbeiten',
-  [Permission.ACTIONS_DELETE]: 'Zubereitungsschritte löschen',
   [Permission.ICE_READ]: 'Eis-Optionen lesen und anzeigen',
   [Permission.ICE_CREATE]: 'Neue Eis-Optionen erstellen',
   [Permission.ICE_UPDATE]: 'Bestehende Eis-Optionen bearbeiten',
   [Permission.ICE_DELETE]: 'Eis-Optionen löschen',
-  [Permission.JOIN_CODES_READ]: 'Beitrittscodes lesen und anzeigen',
-  [Permission.JOIN_CODES_CREATE]: 'Neue Beitrittscodes erstellen',
-  [Permission.JOIN_CODES_UPDATE]: 'Bestehende Beitrittscodes bearbeiten',
-  [Permission.JOIN_CODES_DELETE]: 'Beitrittscodes löschen',
-  [Permission.JOIN_REQUESTS_READ]: 'Beitrittsanfragen lesen und anzeigen',
-  [Permission.JOIN_REQUESTS_CREATE]: 'Beitrittsanfragen erstellen',
-  [Permission.JOIN_REQUESTS_UPDATE]: 'Beitrittsanfragen bearbeiten (z.B. akzeptieren)',
-  [Permission.JOIN_REQUESTS_DELETE]: 'Beitrittsanfragen ablehnen oder löschen',
   [Permission.RATINGS_READ]: 'Bewertungen lesen und anzeigen',
   [Permission.RATINGS_CREATE]: 'Neue Bewertungen erstellen',
-  [Permission.RATINGS_UPDATE]: 'Bestehende Bewertungen bearbeiten',
   [Permission.RATINGS_DELETE]: 'Bewertungen löschen',
 };
 
@@ -219,8 +174,8 @@ export default function ApiKeyPermissionSelector(props: ApiKeyPermissionSelector
   // Initialize from props
   useEffect(() => {
     const selected = new Set<string>();
-    props.selectedPermissions.forEach((p) => {
-      selected.add(p.permission);
+    props.selectedPermissions.forEach((permission) => {
+      selected.add(permission);
     });
     setSelectedPermissionSet(selected);
   }, [props.selectedPermissions]);
@@ -261,6 +216,8 @@ export default function ApiKeyPermissionSelector(props: ApiKeyPermissionSelector
 
   // Toggle category selection
   const toggleCategory = (categoryKey: string) => {
+    if (props.disabled) return;
+    
     const newSelected = new Set(selectedPermissionSet);
     const isFullySelected = isCategoryFullySelected(categoryKey);
 
@@ -297,6 +254,8 @@ export default function ApiKeyPermissionSelector(props: ApiKeyPermissionSelector
 
   // Toggle individual permission
   const togglePermission = (permission: Permission) => {
+    if (props.disabled) return;
+    
     const newSelected = new Set(selectedPermissionSet);
 
     if (newSelected.has(permission)) {
@@ -311,14 +270,11 @@ export default function ApiKeyPermissionSelector(props: ApiKeyPermissionSelector
 
   // Update parent component with selected permissions
   const updatePermissions = (selected: Set<string>) => {
-    const permissions: Array<{ permission: Permission; endpointPattern?: string | null }> = [];
+    const permissions: Permission[] = [];
 
     // Return all selected individual permissions (no ALL permission)
     selected.forEach((perm) => {
-      permissions.push({
-        permission: perm as Permission,
-        endpointPattern: null,
-      });
+      permissions.push(perm as Permission);
     });
 
     props.onChange(permissions);
@@ -342,13 +298,14 @@ export default function ApiKeyPermissionSelector(props: ApiKeyPermissionSelector
                 className="checkbox"
                 checked={isCategoryFullySelected('ALL')}
                 onChange={() => toggleCategory('ALL')}
+                disabled={props.disabled}
                 ref={(input) => {
                   if (input) {
                     input.indeterminate = isCategoryPartiallySelected('ALL');
                   }
                 }}
               />
-              <label className="cursor-pointer font-semibold uppercase" onClick={() => toggleCategory('ALL')}>
+              <label className={props.disabled ? 'font-semibold uppercase' : 'cursor-pointer font-semibold uppercase'} onClick={() => toggleCategory('ALL')}>
                 ALL
               </label>
               <div className="tooltip tooltip-left" data-tip={allPermissions.map((p) => permissionLabels[p]).join(', ')}>
@@ -370,13 +327,14 @@ export default function ApiKeyPermissionSelector(props: ApiKeyPermissionSelector
                   className="checkbox"
                   checked={isCategoryFullySelected(categoryKey)}
                   onChange={() => toggleCategory(categoryKey)}
+                  disabled={props.disabled}
                   ref={(input) => {
                     if (input) {
                       input.indeterminate = isCategoryPartiallySelected(categoryKey);
                     }
                   }}
                 />
-                <label className="cursor-pointer font-semibold uppercase" onClick={() => toggleCategory(categoryKey)}>
+                <label className={props.disabled ? 'font-semibold uppercase' : 'cursor-pointer font-semibold uppercase'} onClick={() => toggleCategory(categoryKey)}>
                   {category.label}
                 </label>
                 <div className="tooltip tooltip-left" data-tip={category.permissions.map((p) => permissionLabels[p]).join(', ')}>
@@ -392,8 +350,8 @@ export default function ApiKeyPermissionSelector(props: ApiKeyPermissionSelector
                 {category.permissions.map((perm) => (
                   <div key={perm} className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
-                      <input type="checkbox" className="checkbox checkbox-sm" checked={isPermissionSelected(perm)} onChange={() => togglePermission(perm)} />
-                      <label className="cursor-pointer text-sm uppercase" onClick={() => togglePermission(perm)}>
+                      <input type="checkbox" className="checkbox checkbox-sm" checked={isPermissionSelected(perm)} onChange={() => togglePermission(perm)} disabled={props.disabled} />
+                      <label className={props.disabled ? 'text-sm uppercase' : 'cursor-pointer text-sm uppercase'} onClick={() => togglePermission(perm)}>
                         {permissionLabels[perm]}
                       </label>
                     </div>

@@ -4,7 +4,7 @@ import { Role, User, Workspace, WorkspaceUser, Permission } from '@generated/pri
 import { constants as HttpStatus } from 'http2';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '../../pages/api/auth/[...nextauth]';
-import { authenticateApiKey, checkMasterApiKey, ApiKeyAuthResult } from './apiKeyMiddleware';
+import { authenticateApiKey, checkMasterApiKey, ApiKeyAuthResult } from './jwtApiKeyMiddleware';
 import { hasPermission } from '@lib/permissions/apiKeyPermissions';
 
 export function withAuthentication(fn: (fnReq: NextApiRequest, fnRes: NextApiResponse, fnUser: User) => void) {
@@ -85,8 +85,7 @@ export function withWorkspacePermission(
 
       // Check permissions if required
       if (apiKeyPermission) {
-        const path = req.url?.split('?')[0] || '';
-        const hasRequiredPermission = hasPermission(apiKeyAuth.permissions, apiKeyPermission, path);
+        const hasRequiredPermission = hasPermission(apiKeyAuth.permissions, apiKeyPermission);
 
         if (!hasRequiredPermission) {
           return res.status(HttpStatus.HTTP_STATUS_FORBIDDEN).json({ message: 'API key does not have required permission' });

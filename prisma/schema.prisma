@@ -548,16 +548,13 @@ enum Permission {
   GLASSES_UPDATE
   GLASSES_DELETE
   UNITS_READ
-  UNITS_CREATE
   UNITS_UPDATE
-  UNITS_DELETE
   QUEUE_READ
   QUEUE_CREATE
   QUEUE_UPDATE
   QUEUE_DELETE
   STATISTICS_READ
   STATISTICS_CREATE
-  STATISTICS_UPDATE
   STATISTICS_DELETE
   CARDS_READ
   CARDS_CREATE
@@ -570,28 +567,14 @@ enum Permission {
   WORKSPACE_READ
   WORKSPACE_UPDATE
   USERS_READ
-  USERS_CREATE
   USERS_UPDATE
   USERS_DELETE
-  ACTIONS_READ
-  ACTIONS_CREATE
-  ACTIONS_UPDATE
-  ACTIONS_DELETE
   ICE_READ
   ICE_CREATE
   ICE_UPDATE
   ICE_DELETE
-  JOIN_CODES_READ
-  JOIN_CODES_CREATE
-  JOIN_CODES_UPDATE
-  JOIN_CODES_DELETE
-  JOIN_REQUESTS_READ
-  JOIN_REQUESTS_CREATE
-  JOIN_REQUESTS_UPDATE
-  JOIN_REQUESTS_DELETE
   RATINGS_READ
   RATINGS_CREATE
-  RATINGS_UPDATE
   RATINGS_DELETE
 }
 
@@ -600,7 +583,8 @@ model WorkspaceApiKey {
   workspaceId     String
   workspace       Workspace          @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   name            String
-  keyHash         String
+  keyId           String             @unique // Unique ID for JWT (replaces keyHash)
+  revoked         Boolean            @default(false) // For invalidation
   expiresAt       DateTime?
   lastUsedAt      DateTime?
   createdAt       DateTime           @default(now())
@@ -609,16 +593,16 @@ model WorkspaceApiKey {
   permissions     ApiKeyPermission[]
 
   @@index([workspaceId])
-  @@index([keyHash])
+  @@index([keyId])
+  @@index([revoked])
 }
 
 model ApiKeyPermission {
-  id              String          @id @default(cuid())
-  apiKeyId        String
-  apiKey          WorkspaceApiKey @relation(fields: [apiKeyId], references: [id], onDelete: Cascade)
-  permission      Permission
-  endpointPattern String?
+  id         String          @id @default(cuid())
+  apiKeyId   String
+  apiKey     WorkspaceApiKey @relation(fields: [apiKeyId], references: [id], onDelete: Cascade)
+  permission Permission
 
-  @@unique([apiKeyId, permission, endpointPattern])
+  @@unique([apiKeyId, permission])
   @@index([apiKeyId])
 }

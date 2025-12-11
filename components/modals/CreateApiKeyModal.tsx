@@ -7,10 +7,10 @@ import { Permission } from '@generated/prisma/client';
 import { FaCopy } from 'react-icons/fa';
 
 interface CreateApiKeyModalProps {
-  apiKeyId?: string;
   initialName?: string;
   initialExpiresAt?: string | null;
-  initialPermissions?: Array<{ permission: Permission; endpointPattern?: string | null }>;
+  initialPermissions?: Permission[];
+  viewOnly?: boolean;
 }
 
 export default function CreateApiKeyModal(props: CreateApiKeyModalProps) {
@@ -19,11 +19,11 @@ export default function CreateApiKeyModal(props: CreateApiKeyModalProps) {
   const { workspaceId } = router.query;
 
   const [name, setName] = useState(props.initialName || '');
-  const [expiresAt, setExpiresAt] = useState(props.initialExpiresAt || '');
-  const [permissions, setPermissions] = useState<Array<{ permission: Permission; endpointPattern?: string | null }>>(props.initialPermissions || []);
+  const [expiresAt, setExpiresAt] = useState(props.initialExpiresAt ? new Date(props.initialExpiresAt).toISOString().split('T')[0] : '');
+  const [permissions, setPermissions] = useState<Permission[]>(props.initialPermissions || []);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [createdKey, setCreatedKey] = useState<string | null>(null);
-  const [isEditing] = useState(!!props.apiKeyId);
+  const viewOnly = props.viewOnly || false;
 
   const handleSubmit = async () => {
     if (!name.trim()) {
@@ -39,30 +39,17 @@ export default function CreateApiKeyModal(props: CreateApiKeyModalProps) {
         permissions: permissions,
       };
 
-      let response;
-      if (isEditing && props.apiKeyId) {
-        response = await fetch(`/api/workspaces/${workspaceId}/api-keys/${props.apiKeyId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body),
-        });
-      } else {
-        response = await fetch(`/api/workspaces/${workspaceId}/api-keys`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body),
-        });
-      }
+      const response = await fetch(`/api/workspaces/${workspaceId}/api-keys`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
 
       if (response.ok) {
         const data = await response.json();
-        if (data.data.key && !isEditing) {
+        if (data.data.key) {
           // Show the key only once
           setCreatedKey(data.data.key);
-        } else {
-          // For edits, just close and reload
-          router.reload();
-          modalContext.closeModal();
         }
       } else {
         const error = await response.json();
@@ -120,7 +107,7 @@ export default function CreateApiKeyModal(props: CreateApiKeyModalProps) {
 
   return (
     <div className="flex flex-col gap-4 md:min-w-[32rem]">
-      <div className="text-2xl font-bold">{isEditing ? 'API Key bearbeiten' : 'API Key erstellen'}</div>
+      <div className="text-2xl font-bold">{viewOnly ? 'API Key Details' : 'API Key erstellen'}</div>
 
       <div className="flex flex-col gap-2">
         <label className="label">
@@ -132,7 +119,8 @@ export default function CreateApiKeyModal(props: CreateApiKeyModalProps) {
           onChange={(e) => setName(e.target.value)}
           className="input input-bordered"
           placeholder="z.B. Production API Key"
-          disabled={isSubmitting}
+          disabled={isSubmitting || viewOnly}
+          readOnly={viewOnly}
         />
       </div>
 
@@ -140,19 +128,34 @@ export default function CreateApiKeyModal(props: CreateApiKeyModalProps) {
         <label className="label">
           <span className="label-text font-semibold">Ablaufdatum (optional):</span>
         </label>
-        <input type="date" value={expiresAt} onChange={(e) => setExpiresAt(e.target.value)} className="input input-bordered" disabled={isSubmitting} />
+        <input
+          type="date"
+          value={expiresAt}
+          onChange={(e) => setExpiresAt(e.target.value)}
+          className="input input-bordered"
+          disabled={isSubmitting || viewOnly}
+          readOnly={viewOnly}
+        />
       </div>
 
-      <ApiKeyPermissionSelector selectedPermissions={permissions} onChange={setPermissions} />
+      <ApiKeyPermissionSelector selectedPermissions={permissions} onChange={setPermissions} disabled={viewOnly} />
 
       <div className="flex justify-end gap-2">
-        <button className="btn btn-ghost" onClick={() => modalContext.closeModal()} disabled={isSubmitting}>
-          Abbrechen
-        </button>
-        <button className="btn btn-primary" onClick={handleSubmit} disabled={isSubmitting || !name.trim()}>
-          {isSubmitting ? <span className="loading loading-spinner" /> : <></>}
-          {isEditing ? 'Speichern' : 'Erstellen'} ({permissions.length})
-        </button>
+        {viewOnly ? (
+          <button className="btn btn-primary" onClick={() => modalContext.closeModal()}>
+            Schließen
+          </button>
+        ) : (
+          <>
+            <button className="btn btn-ghost" onClick={() => modalContext.closeModal()} disabled={isSubmitting}>
+              Abbrechen
+            </button>
+            <button className="btn btn-primary" onClick={handleSubmit} disabled={isSubmitting || !name.trim()}>
+              {isSubmitting ? <span className="loading loading-spinner" /> : <></>}
+              Erstellen ({permissions.length})
+            </button>
+          </>
+        )}
       </div>
     </div>
   );
