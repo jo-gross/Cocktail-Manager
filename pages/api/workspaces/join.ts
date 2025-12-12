@@ -3,6 +3,7 @@ import HTTPMethod from 'http-method-enum';
 import { withAuthentication } from '@middleware/api/authenticationMiddleware';
 import prisma from '../../../prisma/prisma';
 import { constants as HttpStatus } from 'http2';
+import { Role } from '@generated/prisma/client';
 
 export default withHttpMethods({
   [HTTPMethod.POST]: withAuthentication(async (req, res, user) => {
@@ -23,17 +24,6 @@ export default withHttpMethods({
         if (!findWorkspace) {
           console.log('Code not found');
           return res.status(HttpStatus.HTTP_STATUS_BAD_REQUEST).json(undefined);
-        }
-
-        const workspaceRequests = await transaction.workspaceJoinRequest.findFirst({
-          where: {
-            userId: user.id,
-            workspaceId: findWorkspace.workspaceId,
-          },
-        });
-        if (workspaceRequests) {
-          console.log('User already requested to join workspace');
-          return res.status(HttpStatus.HTTP_STATUS_BAD_REQUEST).json({ data: { key: 'JOIN_ALREADY_REQUESTED' } });
         }
 
         const workspaceUser = await transaction.workspaceUser.findFirst({
@@ -57,6 +47,46 @@ export default withHttpMethods({
           return res.status(HttpStatus.HTTP_STATUS_BAD_REQUEST).json(undefined);
         }
 
+        // Check if workspace is empty (no users)
+        const workspaceUsersCount = await transaction.workspaceUser.count({
+          where: {
+            workspaceId: findWorkspace.workspaceId,
+          },
+        });
+
+        // If workspace is empty, add user directly as OWNER
+        if (workspaceUsersCount === 0) {
+          const result = await transaction.workspaceUser.create({
+            data: {
+              userId: user.id,
+              workspaceId: findWorkspace.workspaceId,
+              role: Role.OWNER,
+            },
+          });
+
+          // Delete join code after successful join (no longer needed)
+          await transaction.workspaceJoinCode.delete({
+            where: {
+              code: code,
+            },
+          });
+
+          return res.json({ data: result });
+        }
+
+        // Workspace has users - check for existing join request
+        const workspaceRequests = await transaction.workspaceJoinRequest.findFirst({
+          where: {
+            userId: user.id,
+            workspaceId: findWorkspace.workspaceId,
+          },
+        });
+        if (workspaceRequests) {
+          console.log('User already requested to join workspace');
+          return res.status(HttpStatus.HTTP_STATUS_BAD_REQUEST).json({ data: { key: 'JOIN_ALREADY_REQUESTED' } });
+        }
+
+        // Create join request (needs approval)
         await transaction.workspaceJoinCode.update({
           where: {
             code: code,

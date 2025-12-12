@@ -1,12 +1,12 @@
 import { withHttpMethods } from '@middleware/api/handleMethods';
 import HTTPMethod from 'http-method-enum';
 import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
-import { Role } from '@generated/prisma/client';
+import { Role, Permission } from '@generated/prisma/client';
 import prisma from '../../../../../../prisma/prisma';
 import { regenerateUnitConversions } from './index';
 
 export default withHttpMethods({
-  [HTTPMethod.PUT]: withWorkspacePermission([Role.ADMIN], async (req, res, user, workspace) => {
+  [HTTPMethod.PUT]: withWorkspacePermission([Role.ADMIN], Permission.UNITS_UPDATE, async (req, res, user, workspace) => {
     const unitConversionId = req.query.unitConversionId as string | undefined;
     if (!unitConversionId) return res.status(400).json({ message: 'No unitConversion id' });
 

@@ -1,12 +1,12 @@
 import { withHttpMethods } from '@middleware/api/handleMethods';
 import HTTPMethod from 'http-method-enum';
 import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
-import { Role } from '@generated/prisma/client';
+import { Role, Permission } from '@generated/prisma/client';
 import { NextApiRequest, NextApiResponse } from 'next';
 import prisma from '../../../../../../prisma/prisma';
 
 export default withHttpMethods({
-  [HTTPMethod.POST]: withWorkspacePermission([Role.MANAGER], async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
+  [HTTPMethod.POST]: withWorkspacePermission([Role.MANAGER], Permission.CARDS_CREATE, async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
     const cardId = req.query.cardId as string | undefined;
     if (!cardId) return res.status(400).json({ message: 'No card id' });
     const { name } = JSON.parse(req.body);

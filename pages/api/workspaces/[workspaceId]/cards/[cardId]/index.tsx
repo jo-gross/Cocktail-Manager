@@ -1,6 +1,6 @@
 import prisma from '../../../../../../prisma/prisma';
 import { NextApiRequest, NextApiResponse } from 'next';
-import { CocktailCardGroupItem, Prisma, Role } from '@generated/prisma/client';
+import { CocktailCardGroupItem, Prisma, Role, Permission } from '@generated/prisma/client';
 import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
 import HTTPMethod from 'http-method-enum';
 import { withHttpMethods } from '@middleware/api/handleMethods';
@@ -10,7 +10,7 @@ import CocktailCardGroupItemCreateInput = Prisma.CocktailCardGroupItemCreateInpu
 // DELETE /api/cocktails/:id
 
 export default withHttpMethods({
-  [HTTPMethod.GET]: withWorkspacePermission([Role.USER], async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
+  [HTTPMethod.GET]: withWorkspacePermission([Role.USER], Permission.CARDS_READ, async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
     const cardId = req.query.cardId as string | undefined;
     if (!cardId) return res.status(400).json({ message: 'No card id' });
 
@@ -29,7 +29,7 @@ export default withHttpMethods({
     });
     return res.json({ data: result });
   }),
-  [HTTPMethod.PUT]: withWorkspacePermission([Role.MANAGER], async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
+  [HTTPMethod.PUT]: withWorkspacePermission([Role.MANAGER], Permission.CARDS_UPDATE, async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
     const { id, name, date, groups } = req.body;
     if (id != undefined) {
       await prisma.cocktailCardGroupItem.deleteMany({
@@ -94,7 +94,7 @@ export default withHttpMethods({
 
     return res.json(cocktailCardResult);
   }),
-  [HTTPMethod.DELETE]: withWorkspacePermission([Role.ADMIN], async (req: NextApiRequest, res: NextApiResponse) => {
+  [HTTPMethod.DELETE]: withWorkspacePermission([Role.ADMIN], Permission.CARDS_DELETE, async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
     const cardId = req.query.cardId as string | undefined;
     if (!cardId) return res.status(400).json({ message: 'No card id' });
 
@@ -113,6 +113,7 @@ export default withHttpMethods({
     const result = await prisma.cocktailCard.delete({
       where: {
         id: cardId,
+        workspaceId: workspace.id,
       },
     });
     return res.json({ data: result });

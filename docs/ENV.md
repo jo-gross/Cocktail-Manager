@@ -40,6 +40,26 @@ For authentication-related environment variables, see [Authentication Methods](A
 
 When `CHROMIUM_HOST` is set, the application will use the external Chromium service for PDF generation. If not set, PDF export functionality will be disabled.
 
+### API Keys
+
+| Variable                              | Description                                                                 | Default | Example                                    |
+| ------------------------------------- | --------------------------------------------------------------------------- | ------- | ------------------------------------------ |
+| `INSTANCE_MASTER_API_KEY`             | Master API Key for instance-wide access to all workspaces (full permissions) | -       | `ck_master_<your-secure-random-key-here>` |
+| `API_KEY_JWT_SECRET`                  | Secret for signing and verifying JWT-based API keys                          | `NEXTAUTH_SECRET` | `your-secure-jwt-secret-here`             |
+| `API_KEY_REVOKED_CACHE_TTL_MINUTES`  | TTL for revoked API keys cache in minutes                                   | `15`    | `30`                                       |
+
+The `INSTANCE_MASTER_API_KEY` provides unrestricted access to all workspaces in the instance. This key should be:
+- Kept secure and never committed to version control
+- Rotated regularly
+- Used only for administrative or integration purposes
+- Stored in secure secret management systems in production
+
+When set, this key can be used in the `Authorization: Bearer <key>` header to access any workspace endpoint with full permissions.
+
+The `API_KEY_JWT_SECRET` is used to sign and verify JWT tokens for workspace API keys. If not set, it falls back to `NEXTAUTH_SECRET`. For production, it's recommended to use a separate secret for API keys.
+
+The `API_KEY_REVOKED_CACHE_TTL_MINUTES` controls how long revoked API keys are cached in memory before checking the database again. This reduces database load when checking if a key is revoked. The default is 15 minutes. Set to a higher value (e.g., 30) for better performance at the cost of slightly delayed revocation propagation, or lower (e.g., 5) for faster revocation but more database queries.
+
 ## Configuration Files
 
 ### .env File
