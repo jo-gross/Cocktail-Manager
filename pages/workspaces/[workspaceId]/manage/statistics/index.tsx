@@ -399,7 +399,7 @@ const StatisticsPage: NextPageWithPullToRefresh = () => {
                   </option>
                 </select>
               </div>
-              <div className={'form-control h-full'}>
+              <div className={`form-control h-full ${groupBy != 'day' ? 'hidden' : ''}`}>
                 <label className={'flex h-full w-fit flex-col items-start gap-1'}>
                   <div className={'label'}>
                     <div className={'label-text'}>Alle Tage anzeigen</div>
