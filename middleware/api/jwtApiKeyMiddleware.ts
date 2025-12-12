@@ -6,6 +6,7 @@ import { Permission, Workspace, WorkspaceApiKey } from '@generated/prisma/client
 import { constants as HttpStatus } from 'http2';
 
 export interface ApiKeyJwtPayload {
+  type: 'api-key'; // Type claim to quickly identify API key tokens
   keyId: string;
   workspaceId: string;
   permissions: Permission[];
@@ -93,6 +94,20 @@ export async function invalidateKeyCache(keyId: string): Promise<void> {
 }
 
 /**
+ * Quick pre-check: Decodes JWT without verification to check if it's an API key token
+ * This is very fast (~0.01ms) compared to full verification (~1-5ms)
+ */
+function isApiKeyToken(token: string): boolean {
+  try {
+    // Decode without verification (fast - no cryptographic operations)
+    const decoded = jwt.decode(token) as ApiKeyJwtPayload | null;
+    return decoded?.type === 'api-key';
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Authenticates using JWT-based API key from Authorization header
  */
 export async function authenticateApiKey(req: NextApiRequest): Promise<ApiKeyAuthResult | null> {
@@ -108,8 +123,14 @@ export async function authenticateApiKey(req: NextApiRequest): Promise<ApiKeyAut
     return null;
   }
 
+  // Fast pre-check: Is this even an API key token?
+  // This avoids expensive JWT verification for non-API-key tokens (e.g., session tokens)
+  if (!isApiKeyToken(apiKeyToken)) {
+    return null;
+  }
+
   try {
-    // Verify JWT signature (no DB query needed!)
+    // Verify JWT signature (only if it's an API key token)
     const secret = getJwtSecret();
     const decoded = jwt.verify(apiKeyToken, secret) as ApiKeyJwtPayload;
 
@@ -172,6 +193,7 @@ export async function authenticateApiKey(req: NextApiRequest): Promise<ApiKeyAut
 export function createApiKeyJwt(keyId: string, workspaceId: string, permissions: Permission[], expiresAt?: Date | null): string {
   const secret = getJwtSecret();
   const payload: ApiKeyJwtPayload = {
+    type: 'api-key', // Add type claim for fast pre-check
     keyId,
     workspaceId,
     permissions,
