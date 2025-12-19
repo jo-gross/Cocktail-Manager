@@ -1,3 +1,10 @@
+## [1.17.1](https://github.com/jo-gross/Cocktail-Manager/compare/v1.17.0...v1.17.1) (2025-12-13)
+
+
+### Bug Fixes
+
+* statistics hide show all days on hourly grouped ([a5d3e09](https://github.com/jo-gross/Cocktail-Manager/commit/a5d3e0902c2ad75e7e7ff3750a6ce0d86333c39b))
+
 # [1.17.0](https://github.com/jo-gross/Cocktail-Manager/compare/v1.16.0...v1.17.0) (2025-12-04)
 
 
