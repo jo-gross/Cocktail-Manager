@@ -1,12 +1,12 @@
 import { withHttpMethods } from '@middleware/api/handleMethods';
 import HTTPMethod from 'http-method-enum';
 import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
-import { Role } from '@generated/prisma/client';
+import { Role, Permission } from '@generated/prisma/client';
 import { NextApiRequest, NextApiResponse } from 'next';
 import prisma from '../../../../../../prisma/prisma';
 
 export default withHttpMethods({
-  [HTTPMethod.PUT]: withWorkspacePermission([Role.MANAGER], async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
+  [HTTPMethod.PUT]: withWorkspacePermission([Role.MANAGER], Permission.COCKTAILS_UPDATE, async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
     const { cocktailId } = req.query;
 
     if (!cocktailId) return res.status(400).json({ message: 'No cocktail id' });
@@ -14,6 +14,7 @@ export default withHttpMethods({
     const result = await prisma.cocktailRecipe.update({
       where: {
         id: cocktailId as string,
+        workspaceId: workspace.id,
       },
       data: {
         isArchived: false,
