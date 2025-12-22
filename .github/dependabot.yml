@@ -29,3 +29,4 @@ updates:
         patterns:
           - "prisma"
           - "@prisma/client"
+          - "@prisma/adapter-pg"
