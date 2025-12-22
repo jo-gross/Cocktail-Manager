@@ -14,6 +14,7 @@ const nextConfig = {
   env: {
     DEPLOYMENT: process.env.DEPLOYMENT,
   },
+  turbopack: {},
 };
 
 const withPWA = require('next-pwa')({
