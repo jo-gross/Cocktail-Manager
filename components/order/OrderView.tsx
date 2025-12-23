@@ -8,12 +8,11 @@ import { addCocktailToQueue } from '../../lib/network/cocktailTracking';
 import { alertService } from '../../lib/alertService';
 import { Loading } from '../Loading';
 import { BsSearch } from 'react-icons/bs';
-import { FaLongArrowAltLeft, FaMinus, FaPlus, FaReply, FaTrash } from 'react-icons/fa';
+import { FaMinus, FaPlus, FaReply, FaTrash } from 'react-icons/fa';
 import AvatarImage from '../AvatarImage';
 import DefaultGlassIcon from '../DefaultGlassIcon';
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import '../../lib/NumberUtils';
-import { FaArrowLeft, FaBackwardStep, FaHandBackFist } from 'react-icons/fa6';
 
 interface OrderItem {
   type: 'cocktail' | 'glass';
@@ -401,7 +400,7 @@ export const OrderView = React.memo(function OrderView({ cocktailCards, workspac
                       <div className="2 flex h-full w-full flex-col">
                         <h3 className="shrink-0 text-lg font-semibold">Alle Cocktails</h3>
                         <div className="min-h-0 flex-1 overflow-y-auto">
-                          <div className="flex flex-row flex-wrap gap-2 justify-between">
+                          <div className="flex flex-row flex-wrap justify-between gap-2">
                             {filteredCocktails
                               .sort((a, b) => a.name.localeCompare(b.name))
                               .map((cocktail) => (
@@ -457,7 +456,7 @@ export const OrderView = React.memo(function OrderView({ cocktailCards, workspac
       </div>
 
       {/* Zweite Zeile: Gläser (1/2) & Bestellung (1/2) */}
-      <div className="flex max-h-[50vh] flex-1 flex-col gap-2 overflow-y-auto md:overflow-hidden md:flex-row">
+      <div className="flex max-h-[50vh] flex-1 flex-col gap-2 overflow-y-auto md:flex-row md:overflow-hidden">
         {/* Gläser */}
         <div className="w-full md:w-1/2">
           <div className="card h-full bg-base-100 shadow-md">
