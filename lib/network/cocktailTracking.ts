@@ -87,9 +87,11 @@ export async function addCocktailToQueue({
       }),
     });
     if (response.ok) {
-      // alertService.success('Cocktail zur Warteschlange hinzugefügt');
-      onSuccess?.();
-      alertService.info('Cocktail zur Warteschlange hinzugefügt');
+      if (onSuccess) {
+        onSuccess();
+      } else {
+        alertService.info('Cocktail zur Warteschlange hinzugefügt');
+      }
     } else {
       const body = await response.json();
       console.error('addCocktailToQueue', response);
