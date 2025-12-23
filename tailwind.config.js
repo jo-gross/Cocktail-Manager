@@ -23,6 +23,15 @@ module.exports = {
   daisyui: {
     themes: [
       'autumn',
+      {
+        autumn: {
+          ...require('daisyui/src/theming/themes')['autumn'],
+          primary: '#8d0801',
+          secondary: '#708d81',
+          error: '#b60000',
+          success: '#65a30d',
+        },
+      },
       'halloween',
       {
         halloween: {

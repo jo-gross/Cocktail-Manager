@@ -923,7 +923,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                               type={'radio'}
                               className={'radio'}
                               value={card.id}
-                              checked={router.query.card != 'search' && selectedCard?.id == card.id}
+                              checked={selectedCardId === card.id}
                               readOnly={true}
                               onClick={() => {
                                 setSelectedCardId(card.id);

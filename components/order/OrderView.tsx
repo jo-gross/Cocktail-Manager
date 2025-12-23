@@ -3,17 +3,17 @@ import { useRouter } from 'next/router';
 import { CocktailRecipeFull } from '../../models/CocktailRecipeFull';
 import { CocktailCardFull } from '../../models/CocktailCardFull';
 import { GlassModel } from '../../models/GlassModel';
-import { CompactCocktailCard } from './CompactCocktailCard';
 import { fetchGlasses } from '../../lib/network/glasses';
 import { addCocktailToQueue } from '../../lib/network/cocktailTracking';
 import { alertService } from '../../lib/alertService';
 import { Loading } from '../Loading';
 import { BsSearch } from 'react-icons/bs';
-import { FaMinus, FaPlus, FaTrash } from 'react-icons/fa';
+import { FaLongArrowAltLeft, FaMinus, FaPlus, FaReply, FaTrash } from 'react-icons/fa';
 import AvatarImage from '../AvatarImage';
 import DefaultGlassIcon from '../DefaultGlassIcon';
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import '../../lib/NumberUtils';
+import { FaArrowLeft, FaBackwardStep, FaHandBackFist } from 'react-icons/fa6';
 
 interface OrderItem {
   type: 'cocktail' | 'glass';
@@ -31,7 +31,7 @@ interface OrderViewProps {
   workspaceId: string;
 }
 
-export function OrderView({ cocktailCards, workspaceId }: OrderViewProps) {
+export const OrderView = React.memo(function OrderView({ cocktailCards, workspaceId }: OrderViewProps) {
   const router = useRouter();
   const modalContext = useContext(ModalContext);
   const [selectedCardId, setSelectedCardId] = useState<string>('');
@@ -71,32 +71,23 @@ export function OrderView({ cocktailCards, workspaceId }: OrderViewProps) {
       .finally(() => setCocktailsLoading(false));
   }, [workspaceId]);
 
-  // Filter cocktails based on selected card and search term
+  // Filter cocktails based on search term (used for "Alle Cocktails"-Ansicht)
   useEffect(() => {
-    let filtered = cocktails.filter((c) => !c.isArchived);
+    const searchLower = searchTerm.toLowerCase().trim();
 
-    // Filter by selected card
-    if (selectedCardId && selectedCardId !== 'all') {
-      const selectedCard = cocktailCards.find((card) => card.id === selectedCardId);
-      if (selectedCard) {
-        const cardCocktailIds = new Set(selectedCard.groups.flatMap((group) => group.items.map((item) => item.cocktailId)));
-        filtered = filtered.filter((c) => cardCocktailIds.has(c.id));
-      }
-    }
+    const filtered = cocktails.filter((c) => {
+      if (c.isArchived) return false;
+      if (!searchLower) return true;
 
-    // Filter by search term
-    if (searchTerm.trim()) {
-      const searchLower = searchTerm.toLowerCase();
-      filtered = filtered.filter(
-        (c) =>
-          c.name.toLowerCase().includes(searchLower) ||
-          c.description?.toLowerCase().includes(searchLower) ||
-          c.tags.some((tag) => tag.toLowerCase().includes(searchLower)),
+      return (
+        c.name.toLowerCase().includes(searchLower) ||
+        c.description?.toLowerCase().includes(searchLower) ||
+        c.tags.some((tag) => tag.toLowerCase().includes(searchLower))
       );
-    }
+    });
 
     setFilteredCocktails(filtered);
-  }, [cocktails, selectedCardId, searchTerm, cocktailCards]);
+  }, [cocktails, searchTerm]);
 
   const addReturnedGlass = useCallback(
     (glass: GlassModel) => {
@@ -266,292 +257,433 @@ export function OrderView({ cocktailCards, workspaceId }: OrderViewProps) {
     {} as Record<string, GlassModel[]>,
   );
 
+  const selectedCard = selectedCardId && selectedCardId !== 'all' ? cocktailCards.find((card) => card.id === selectedCardId) : undefined;
+
+  // Cocktails, die explizit in der ausgewählten Karte vorkommen
+  const cocktailsOnSelectedCardIds = selectedCard
+    ? new Set<string>(
+        selectedCard.groups
+          .flatMap((group: any) => group.items ?? [])
+          .map((item: any) => item.cocktailId)
+          .filter((id: string | undefined) => !!id),
+      )
+    : new Set<string>();
+
+  // Weitere Cocktails, die durch die Suche gefunden werden, aber nicht auf der aktuellen Karte liegen
+  const additionalCocktailsForSearch =
+    selectedCard && selectedCardId !== 'all' && searchTerm.trim().length > 0
+      ? filteredCocktails.filter((cocktail) => !cocktailsOnSelectedCardIds.has(cocktail.id))
+      : [];
+
+  const matchesSearchTerm = (cocktail: CocktailRecipeFull) => {
+    const searchLower = searchTerm.toLowerCase().trim();
+    if (!searchLower) return !cocktail.isArchived;
+    if (cocktail.isArchived) return false;
+
+    return (
+      cocktail.name.toLowerCase().includes(searchLower) ||
+      cocktail.description?.toLowerCase().includes(searchLower) ||
+      cocktail.tags.some((tag) => tag.toLowerCase().includes(searchLower))
+    );
+  };
+
+  const getCocktailsForGroup = (group: any): CocktailRecipeFull[] => {
+    return group.items
+      .map((item: any) => cocktails.find((c) => c.id === item.cocktailId))
+      .filter((cocktail: CocktailRecipeFull | undefined): cocktail is CocktailRecipeFull => !!cocktail && matchesSearchTerm(cocktail));
+  };
+
+  const CocktailTile = React.memo(function CocktailTile({ cocktail }: { cocktail: CocktailRecipeFull }) {
+    const price = cocktail.price ?? 0;
+    const deposit = cocktail.glass?.deposit ?? 0;
+
+    return (
+      <button
+        key={cocktail.id}
+        type="button"
+        className="flex w-40 flex-col items-center gap-2 rounded-lg border border-base-300 bg-base-200/60 p-2 text-center text-sm transition hover:border-primary hover:bg-base-200"
+        onClick={() => addCocktailToOrder(cocktail, false)}
+      >
+        <div className="h-20 w-20 overflow-hidden rounded-full bg-base-300">
+          {cocktail._count?.CocktailRecipeImage && cocktail._count.CocktailRecipeImage > 0 ? (
+            <AvatarImage
+              src={`/api/workspaces/${workspaceId}/cocktails/${cocktail.id}/image`}
+              alt={cocktail.name}
+              altComponent={
+                <div className="flex h-full w-full items-center justify-center text-xs font-semibold">{cocktail.name.trim().charAt(0).toUpperCase()}</div>
+              }
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center text-xs font-semibold">{cocktail.name.trim().charAt(0).toUpperCase()}</div>
+          )}
+        </div>
+        <div className="line-clamp-2 text-xs font-medium">{cocktail.name}</div>
+        <div className="text-xs text-base-content/80">
+          {price.formatPrice()} € {deposit > 0 && <span className="text-[0.65rem] text-base-content/60">(+ {deposit.formatPrice()} € Pfand)</span>}
+        </div>
+      </button>
+    );
+  });
+
   return (
-    <div className="flex flex-col gap-2 md:flex-row">
-      {/* Left side - Selection */}
-      <div className="w-full flex-1 space-y-2">
-        {/* Cocktail Selection Accordion */}
-        <div className="collapse collapse-arrow rounded-box border border-base-300 bg-base-200">
-          <input type="checkbox" defaultChecked={true} />
-          <div className="collapse-title text-xl font-medium">Cocktails</div>
-          <div className="collapse-content">
-            <div className="space-y-2">
-              {/* Card Selection Dropdown */}
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text">Karte auswählen</span>
-                </label>
-                <select className="select select-bordered w-full" value={selectedCardId} onChange={(e) => setSelectedCardId(e.target.value)}>
-                  <option value="all">Alle Cocktails</option>
-                  {cocktailCards.map((card) => (
-                    <option key={card.id} value={card.id}>
-                      {card.name}
-                    </option>
-                  ))}
-                </select>
+    <div className="flex h-screen flex-col gap-2">
+      {/* Erste Zeile: Kombinierte Suche & Cocktails nach Karte (volle Breite, nur horizontal scrollend) */}
+      <div className="flex max-h-[50vh] flex-1 flex-col overflow-hidden">
+        <div className="card h-full bg-base-100 shadow-md">
+          <div className="card-body flex h-full flex-col">
+            {/* Header: Titel, Suche, Kartenauswahl */}
+            <div className="flex flex-col items-start gap-2 md:flex-row md:justify-between">
+              <div className={'h-full items-center'}>
+                <h2 className="card-title text-xl">Übersicht</h2>
+                <p className="text-sm text-base-content/70">Füge Cocktails einfach zur Bestellung hinzu.</p>
               </div>
-
-              {/* Search Field */}
-              <div className="join w-full">
-                <input
-                  className="input join-item input-bordered w-full"
-                  placeholder="Cocktail suchen..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-                <button
-                  type="button"
-                  className={`btn ${cocktailsLoading ? 'w-fit px-2' : 'btn-square'} btn-outline btn-primary join-item`}
-                  disabled={cocktailsLoading}
-                >
-                  {cocktailsLoading ? <span className="loading loading-spinner loading-xs"></span> : <BsSearch />}
-                </button>
-              </div>
-
-              {/* Cocktail Cards */}
-              <div className="max-h-[calc(100vh-20rem)] space-y-2 overflow-y-auto">
-                {cocktailsLoading ? (
-                  <Loading />
-                ) : filteredCocktails.length === 0 ? (
-                  <div className="text-center text-gray-500">Keine Cocktails gefunden</div>
-                ) : (
-                  filteredCocktails.map((cocktail) => (
-                    <CompactCocktailCard
-                      key={cocktail.id}
-                      cocktail={cocktail}
-                      onAdd={() => addCocktailToOrder(cocktail, false)}
-                      onAddWithDeposit={() => addCocktailToOrder(cocktail, true)}
+              <div className="flex w-full flex-row items-end gap-2 md:w-2/3">
+                <div className="flex-1">
+                  <label className="label flex items-baseline justify-between py-1">
+                    <span className="label-text text-xs xl:text-base">Cocktail suchen</span>
+                    <span className="text-xs text-base-content/60">
+                      {cocktailsLoading
+                        ? 'Lade Cocktails...'
+                        : filteredCocktails.length > 0
+                          ? `${filteredCocktails.length} Cocktail${filteredCocktails.length === 1 ? '' : 's'} gefunden`
+                          : 'Keine Cocktails gefunden'}
+                    </span>
+                  </label>
+                  <div className="join w-full">
+                    <input
+                      className="input input-sm join-item input-bordered w-full xl:input-md"
+                      placeholder="Name, Beschreibung oder Tags..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
                     />
-                  ))
-                )}
+                    <button
+                      type="button"
+                      className={`btn ${cocktailsLoading ? 'w-fit px-2' : 'btn-square'} btn-outline btn-primary join-item btn-sm xl:btn-md`}
+                      disabled={cocktailsLoading}
+                    >
+                      {cocktailsLoading ? <span className="loading loading-spinner loading-xs"></span> : <BsSearch />}
+                    </button>
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <label className="label py-1">
+                    <span className="label-text text-xs xl:text-base">Karte auswählen</span>
+                  </label>
+                  <select
+                    className="select select-bordered select-sm w-full xl:select-md"
+                    value={selectedCardId}
+                    onChange={(e) => setSelectedCardId(e.target.value)}
+                  >
+                    <option value="all">Alle Cocktails</option>
+                    {cocktailCards.map((card) => (
+                      <option key={card.id} value={card.id}>
+                        {card.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
 
-        {/* Glasses Accordion */}
-        <div className="collapse collapse-arrow rounded-box border border-base-300 bg-base-200">
-          <input type="checkbox" defaultChecked={true} />
-          <div className="collapse-title text-xl font-medium">Gläser</div>
-          <div className="collapse-content">
-            <div className="max-h-[calc(100vh-20rem)] space-y-4 overflow-y-auto">
-              {glassesLoading ? (
-                <Loading />
-              ) : glasses.length === 0 ? (
-                <div className="text-center text-gray-500">Keine Gläser vorhanden</div>
-              ) : (
-                Object.entries(groupedGlasses)
-                  .sort(([a], [b]) => parseFloat(b) - parseFloat(a))
-                  .map(([deposit, glassesInGroup]) => (
-                    <div key={deposit} className="card bg-base-100 shadow-md">
-                      <div className="card-body p-4">
-                        <div className="mb-2">
-                          <h3 className="card-title text-lg">Pfand: {parseFloat(deposit).formatPrice()} €</h3>
-                        </div>
-                        <div className="flex flex-wrap justify-between gap-2">
-                          {glassesInGroup.map((glass) => (
-                            <div
-                              key={glass.id}
-                              className="flex cursor-pointer flex-col items-center gap-1 rounded-lg border border-base-300 p-2 transition-colors hover:border-primary"
-                              onClick={() => addReturnedGlass(glass)}
-                            >
-                              <div className="h-16 w-16">
-                                {glass._count?.GlassImage == 0 ? (
-                                  <DefaultGlassIcon />
-                                ) : (
-                                  <AvatarImage
-                                    src={`/api/workspaces/${workspaceId}/glasses/${glass.id}/image`}
-                                    alt={glass.name}
-                                    altComponent={<DefaultGlassIcon />}
-                                  />
-                                )}
-                              </div>
-                              <span className="max-w-[4rem] break-words text-center text-xs">{glass.name}</span>
-                            </div>
-                          ))}
-                        </div>
-                        <div className="mt-2">
-                          <button
-                            className="btn btn-outline btn-primary btn-sm w-full"
-                            onClick={() => {
-                              // Add first glass as returned
-                              if (glassesInGroup.length > 0) {
-                                addReturnedGlass(glassesInGroup[0]);
-                              }
-                            }}
-                          >
-                            - Pfand ({parseFloat(deposit).formatPrice()} €)
-                          </button>
+            {/* Inhalt: Gruppen & Cocktails horizontal */}
+            <div className="min-h-0 flex-1 overflow-x-auto overflow-y-hidden">
+              {cocktailsLoading ? (
+                <div className="flex h-full items-center justify-center">
+                  <Loading />
+                </div>
+              ) : selectedCardId === 'all' || !selectedCard ? (
+                <>
+                  {filteredCocktails.length === 0 ? (
+                    <div className="flex h-full items-center justify-center text-gray-500">Keine Cocktails gefunden</div>
+                  ) : (
+                    <div className="flex h-full items-stretch gap-2">
+                      {/* Pseudo-Gruppe "Alle" */}
+                      <div className="2 flex h-full w-full flex-col">
+                        <h3 className="shrink-0 text-lg font-semibold">Alle Cocktails</h3>
+                        <div className="min-h-0 flex-1 overflow-y-auto">
+                          <div className="flex flex-row flex-wrap gap-2 justify-between">
+                            {filteredCocktails
+                              .sort((a, b) => a.name.localeCompare(b.name))
+                              .map((cocktail) => (
+                                <CocktailTile key={cocktail.id} cocktail={cocktail} />
+                              ))}
+                          </div>
                         </div>
                       </div>
                     </div>
-                  ))
+                  )}
+                </>
+              ) : (
+                <div className="flex h-full items-stretch gap-2">
+                  {selectedCard.groups.map((group: any) => {
+                    const cocktailsInGroup = getCocktailsForGroup(group);
+                    if (cocktailsInGroup.length === 0) {
+                      return null;
+                    }
+
+                    return (
+                      <div key={group.id ?? group.name} className={`flex h-full ${cocktailsInGroup.length > 1 ? 'min-w-[21rem]' : ''} flex-col gap-2`}>
+                        <h3 className="shrink-0 text-lg font-semibold">{group.name}</h3>
+                        <div className="min-h-0 flex-1 overflow-y-auto">
+                          <div className="flex flex-row flex-wrap gap-2">
+                            {cocktailsInGroup.map((cocktail) => (
+                              <CocktailTile key={cocktail.id} cocktail={cocktail} />
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+
+                  {additionalCocktailsForSearch.length > 0 && (
+                    <div className="flex h-full w-full flex-col gap-2">
+                      <h3 className="shrink-0 text-lg font-semibold">Weitere Cocktails</h3>
+                      <div className="min-h-0 flex-1 overflow-y-auto">
+                        <div className="flex flex-row flex-wrap gap-2">
+                          {additionalCocktailsForSearch
+                            .sort((a, b) => a.name.localeCompare(b.name))
+                            .map((cocktail) => (
+                              <CocktailTile key={cocktail.id} cocktail={cocktail} />
+                            ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
               )}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Right side - Order List */}
-      <div className="w-full flex-1">
-        <div className="card bg-base-100 shadow-lg">
-          <div className="card-body">
-            <h2 className="card-title mb-4 text-2xl">Bestellung</h2>
-            {orderItems.length === 0 ? (
-              <div className="py-8 text-center text-gray-500">Keine Cocktails oder Gläser in der Bestellung</div>
-            ) : (
-              <>
-                <div className="overflow-x-auto">
-                  <table className="table table-zebra">
-                    <thead>
-                      <tr>
-                        <th>Item</th>
-                        <th>Anzahl</th>
-                        <th>
-                          Preis
-                          <br />
-                          (ohne Pfand)
-                        </th>
-                        <th>Pfand</th>
-                        <th className={'text-right'}>Gesamt</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {orderItems
-                        .filter((item) => item.amount > 0 || item.returnedDeposit > 0)
-                        .map((item, index) => {
-                          const newDeposit = item.type === 'cocktail' && item.deposit > 0 ? item.deposit * item.amount : 0;
-                          const returnedDeposit = item.deposit * item.returnedDeposit;
-                          const itemTotal = item.type === 'cocktail' ? item.price * item.amount + newDeposit - returnedDeposit : -returnedDeposit;
+      {/* Zweite Zeile: Gläser (1/2) & Bestellung (1/2) */}
+      <div className="flex max-h-[50vh] flex-1 flex-col gap-2 overflow-y-auto md:overflow-hidden md:flex-row">
+        {/* Gläser */}
+        <div className="w-full md:w-1/2">
+          <div className="card h-full bg-base-100 shadow-md">
+            <div className="card-body flex h-full flex-col">
+              <h2 className="card-title text-xl">Gläser</h2>
+              <div className="min-h-0 flex-1 space-y-4 overflow-y-auto">
+                {glassesLoading ? (
+                  <Loading />
+                ) : glasses.length === 0 ? (
+                  <div className="py-8 text-center text-gray-500">Keine Gläser vorhanden</div>
+                ) : (
+                  Object.entries(groupedGlasses)
+                    .sort(([a], [b]) => parseFloat(b) - parseFloat(a))
+                    .map(([deposit, glassesInGroup]) => (
+                      <div key={deposit} className="card bg-base-100 shadow-md">
+                        <div className="card-body p-4">
+                          <div className="mb-2">
+                            <h3 className="card-title text-lg">Pfand: {parseFloat(deposit).formatPrice()} €</h3>
+                          </div>
+                          <div className="flex flex-wrap justify-between gap-2">
+                            {glassesInGroup.map((glass) => (
+                              <div
+                                key={glass.id}
+                                className="flex flex-col items-center gap-2 rounded-lg border border-base-300 bg-base-200/60 p-2 text-center text-xs transition hover:cursor-pointer hover:border-primary hover:bg-base-200"
+                                onClick={() => addReturnedGlass(glass)}
+                              >
+                                <div className="h-16 w-16 overflow-hidden rounded-full bg-base-300">
+                                  {glass._count?.GlassImage == 0 ? (
+                                    <DefaultGlassIcon />
+                                  ) : (
+                                    <AvatarImage
+                                      src={`/api/workspaces/${workspaceId}/glasses/${glass.id}/image`}
+                                      alt={glass.name}
+                                      altComponent={<DefaultGlassIcon />}
+                                    />
+                                  )}
+                                </div>
+                                <span className="max-w-[4rem] break-words text-center text-xs">{glass.name}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
 
-                          return (
-                            <tr key={`${item.type}-${item.id}-${index}`}>
-                              <td>{item.name}</td>
-                              <td>
-                                {(item.amount > 0 || item.returnedDeposit > 0) && (
-                                  <div className="join">
-                                    {item.amount > 0 && (
-                                      <div className="flex flex-col gap-2">
-                                        <div className={'join'}>
-                                          <button className="btn join-item btn-sm" onClick={() => updateItemAmount(item, -1)}>
+        {/* Bestellung */}
+        <div className="w-full md:w-1/2">
+          <div className="card h-full bg-base-100 shadow-lg">
+            <div className="card-body flex h-full flex-col">
+              <div className="flex items-start justify-between gap-2">
+                <h2 className="card-title text-2xl">Bestellung</h2>
+                <button
+                  className="btn btn-outline btn-error btn-xs xl:btn-sm"
+                  onClick={() => {
+                    clearOrder();
+                    setGlobalNotes('');
+                  }}
+                  disabled={orderItems.length === 0}
+                >
+                  <FaTrash />
+                  Bestellung leeren
+                </button>
+              </div>
+              {orderItems.length === 0 ? (
+                <div className="flex flex-1 items-center justify-center py-8 text-center text-gray-500">Keine Cocktails oder Gläser in der Bestellung</div>
+              ) : (
+                <>
+                  <div className="min-h-0 flex-1 overflow-x-auto overflow-y-auto">
+                    <table className="table table-zebra table-xs xl:table-md">
+                      <thead>
+                        <tr>
+                          <th>Item</th>
+                          <th>Anzahl</th>
+                          <th>Preis</th>
+                          <th>Pfand</th>
+                          <th className={'text-right'}>Gesamt</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {orderItems
+                          .filter((item) => item.amount > 0 || item.returnedDeposit > 0)
+                          .map((item, index) => {
+                            const newDeposit = item.type === 'cocktail' && item.deposit > 0 ? item.deposit * item.amount : 0;
+                            const returnedDeposit = item.deposit * item.returnedDeposit;
+                            const itemTotal = item.type === 'cocktail' ? item.price * item.amount + newDeposit - returnedDeposit : -returnedDeposit;
+
+                            return (
+                              <tr key={`${item.type}-${item.id}-${index}`}>
+                                <td>{item.name}</td>
+                                <td>
+                                  {(item.amount > 0 || item.returnedDeposit > 0) && (
+                                    <div className="flex">
+                                      {item.amount > 0 && (
+                                        <div className="flex flex-row justify-center gap-1">
+                                          <div className={'join'}>
+                                            <button
+                                              className="btn btn-outline btn-secondary join-item btn-xs xl:btn-sm"
+                                              onClick={() => updateItemAmount(item, -1)}
+                                            >
+                                              <FaMinus />
+                                            </button>
+                                            <span className="btn btn-outline btn-primary join-item btn-xs pointer-events-none xl:btn-sm">{item.amount}</span>
+                                            <button
+                                              className="btn btn-outline btn-secondary join-item btn-xs border-l-primary xl:btn-sm"
+                                              onClick={() => updateItemAmount(item, 1)}
+                                            >
+                                              <FaPlus />
+                                            </button>
+                                          </div>
+                                          {item.type === 'cocktail' && item.deposit > 0 && (
+                                            <button
+                                              className="btn btn-outline btn-xs w-fit xl:btn-sm"
+                                              onClick={() => {
+                                                // Finde das entsprechende Glas und erstelle ein separates Glas-Item
+                                                const cocktail = cocktails.find((c) => c.id === item.id);
+                                                if (cocktail?.glass) {
+                                                  const glass = glasses.find((g) => g.id === cocktail.glass?.id);
+                                                  if (glass) {
+                                                    addReturnedGlass(glass);
+                                                  }
+                                                }
+                                              }}
+                                            >
+                                              <FaReply /> Glas
+                                            </button>
+                                          )}
+                                        </div>
+                                      )}
+                                      {item.amount === 0 && item.returnedDeposit > 0 && (
+                                        <div className="join">
+                                          <button
+                                            className="btn btn-outline btn-secondary join-item btn-xs xl:btn-sm"
+                                            onClick={() => removeReturnedDeposit(item, 1)}
+                                          >
                                             <FaMinus />
                                           </button>
-                                          <span className="btn join-item btn-sm pointer-events-none">{item.amount}</span>
-                                          <button className="btn join-item btn-sm" onClick={() => updateItemAmount(item, 1)}>
+                                          <span className="btn btn-outline btn-primary join-item btn-xs pointer-events-none xl:btn-sm">
+                                            {item.returnedDeposit}
+                                          </span>
+                                          <button
+                                            className="btn btn-outline btn-secondary join-item btn-xs border-l-primary xl:btn-sm"
+                                            onClick={() => addReturnedDeposit(item)}
+                                          >
                                             <FaPlus />
                                           </button>
                                         </div>
-                                        {item.type === 'cocktail' && item.deposit > 0 && (
-                                          <button
-                                            className="btn btn-outline btn-xs"
-                                            onClick={() => {
-                                              // Finde das entsprechende Glas und erstelle ein separates Glas-Item
-                                              const cocktail = cocktails.find((c) => c.id === item.id);
-                                              if (cocktail?.glass) {
-                                                const glass = glasses.find((g) => g.id === cocktail.glass?.id);
-                                                if (glass) {
-                                                  addReturnedGlass(glass);
-                                                }
-                                              }
-                                            }}
-                                          >
-                                            Glas zurück
-                                          </button>
-                                        )}
-                                      </div>
-                                    )}
-                                    {item.amount === 0 && item.returnedDeposit > 0 && (
-                                      <>
-                                        <button className="btn join-item btn-sm" onClick={() => removeReturnedDeposit(item, 1)}>
-                                          <FaMinus />
-                                        </button>
-                                        <span className="btn join-item btn-sm pointer-events-none">{item.returnedDeposit}</span>
-                                        <button className="btn join-item btn-sm" onClick={() => addReturnedDeposit(item)}>
-                                          <FaPlus />
-                                        </button>
-                                      </>
-                                    )}
+                                      )}
+                                    </div>
+                                  )}
+                                </td>
+                                <td className={'text-nowrap'}>
+                                  {item.type === 'cocktail' && item.amount > 0 ? (item.price * item.amount).formatPrice() : '0.00'} €
+                                </td>
+                                <td>
+                                  <div className="flex flex-col gap-1">
+                                    {newDeposit > 0 && <span className="text-nowrap">+{newDeposit.formatPrice()} €</span>}
+                                    {returnedDeposit > 0 && <span className="text-nowrap text-success">-{returnedDeposit.formatPrice()} €</span>}
+                                    {newDeposit === 0 && returnedDeposit === 0 && <span className="text-nowrap">0.00 €</span>}
                                   </div>
-                                )}
-                              </td>
-                              <td className={'text-nowrap'}>
-                                {item.type === 'cocktail' && item.amount > 0 ? (item.price * item.amount).formatPrice() : '0.00'} €
-                              </td>
-                              <td>
-                                <div className="flex flex-col gap-1">
-                                  {newDeposit > 0 && <span className="text-nowrap text-sm">+{newDeposit.formatPrice()} €</span>}
-                                  {returnedDeposit > 0 && <span className="text-nowrap text-sm text-success">-{returnedDeposit.formatPrice()} €</span>}
-                                  {newDeposit === 0 && returnedDeposit === 0 && <span className="text-nowrap text-sm">0.00 €</span>}
-                                </div>
-                              </td>
-                              <td className="text-nowrap text-right font-bold">{itemTotal.formatPrice()} €</td>
-                            </tr>
-                          );
-                        })}
-                    </tbody>
-                    <tfoot>
-                      <tr>
-                        <th colSpan={4}>Gesamtpreis Cocktails (ohne Pfand)</th>
-                        <th className="text-right font-bold">{totalCocktailPrice.formatPrice()} €</th>
-                      </tr>
+                                </td>
+                                <td className="text-nowrap text-right font-bold">{itemTotal.formatPrice()} €</td>
+                              </tr>
+                            );
+                          })}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div className={'grid grid-cols-1 xl:grid-cols-2'}>
+                    <div className="hidden xl:block"></div>
+                    <div className="flex flex-col gap-1 text-xs xl:text-base">
+                      <div className="flex justify-between">
+                        <span className={'font-semibold'}>Gesamtpreis Cocktails (ohne Pfand)</span>
+                        <span>{totalCocktailPrice.formatPrice()} €</span>
+                      </div>
                       {totalNewDeposit > 0 && (
-                        <tr>
-                          <th colSpan={4}>Pfand (neu)</th>
-                          <th className="text-right font-bold">+{totalNewDeposit.formatPrice()} €</th>
-                        </tr>
+                        <div className="flex justify-between">
+                          <span className={'font-semibold'}>Pfand (neu)</span>
+                          <span>+{totalNewDeposit.formatPrice()} €</span>
+                        </div>
                       )}
                       {totalReturnedDeposit > 0 && (
-                        <tr>
-                          <th colSpan={4}>Pfand zurück</th>
-                          <th className="text-right font-bold text-success">-{totalReturnedDeposit.formatPrice()} €</th>
-                        </tr>
+                        <div className="flex justify-between">
+                          <span className={'font-semibold'}>Pfand zurück</span>
+                          <span className="text-success">-{totalReturnedDeposit.formatPrice()} €</span>
+                        </div>
                       )}
-                      <tr className="text-lg">
-                        <th colSpan={4}>Gesamtpreis</th>
-                        <th className="text-right font-bold text-primary">{totalPrice.formatPrice()} €</th>
-                      </tr>
-                    </tfoot>
-                  </table>
-                </div>
-                <div className="mt-4 space-y-2">
-                  <div className="form-control">
-                    <label className="label">
-                      <span className="label-text">Notiz für alle Cocktails der Bestellung</span>
-                    </label>
-                    <input
-                      type="text"
-                      className="input input-bordered w-full"
-                      placeholder="z.B. Für Tim und Freunde ..."
-                      value={globalNotes}
-                      onChange={(e) => setGlobalNotes(e.target.value)}
-                    />
+                      <div className="flex justify-between font-bold">
+                        <span>Gesamtpreis</span>
+                        <span className="text-right text-primary">{totalPrice.formatPrice()} €</span>
+                      </div>
+                    </div>
                   </div>
-                  <div className="card-actions flex gap-2">
-                    <button
-                      className="btn btn-outline btn-error flex-1"
-                      onClick={() => {
-                        clearOrder();
-                        setGlobalNotes('');
-                      }}
-                      disabled={orderItems.length === 0}
-                    >
-                      <FaTrash />
-                      Bestellung leeren
-                    </button>
-                    <button
-                      className="btn btn-primary flex-1"
-                      onClick={addToQueue}
-                      disabled={submitting || orderItems.filter((item) => item.type === 'cocktail').length === 0}
-                    >
-                      {submitting ? <span className="loading loading-spinner"></span> : 'Zur Warteschlange hinzufügen'}
-                    </button>
+                  <div className="gap-2">
+                    <div className="card-actions flex gap-2">
+                      <div className="form-control flex-1">
+                        <label className="label text-xs xl:text-base">
+                          <span className="label-text">Notiz für alle Cocktails</span>
+                        </label>
+                        <input
+                          type="text"
+                          className="input input-sm input-bordered w-full xl:input-md"
+                          placeholder="z.B. Für Tim und Freunde ..."
+                          value={globalNotes}
+                          onChange={(e) => setGlobalNotes(e.target.value)}
+                        />
+                      </div>
+                      <button
+                        className="btn btn-primary btn-sm self-end xl:btn-md"
+                        onClick={addToQueue}
+                        disabled={submitting || orderItems.filter((item) => item.type === 'cocktail').length === 0}
+                      >
+                        {submitting ? <span className="loading loading-spinner"></span> : 'Zur Warteschlange hinzufügen'}
+                      </button>
+                    </div>
                   </div>
-                </div>
-              </>
-            )}
+                </>
+              )}
+            </div>
           </div>
         </div>
       </div>
     </div>
   );
-}
+});
