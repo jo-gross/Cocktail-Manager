@@ -5,7 +5,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 model Account {
@@ -60,6 +59,7 @@ model User {
   CocktailCalculation   CocktailCalculation[]
   CocktailStatisticItem CocktailStatisticItem[]
   WorkspaceJoinRequest  WorkspaceJoinRequest[]
+  WorkspaceApiKey       WorkspaceApiKey[]
 }
 
 enum Setting {
@@ -194,6 +194,7 @@ model Workspace {
   Ice                               Ice[]
   WorkspaceJoinCode                 WorkspaceJoinCode[]
   WorkspaceJoinRequest              WorkspaceJoinRequest[]
+  WorkspaceApiKey                   WorkspaceApiKey[]
 }
 
 model Signage {
@@ -526,4 +527,81 @@ model Ice {
   CocktailRecipe CocktailRecipe[]
 
   @@unique([name, workspaceId])
+}
+
+enum Permission {
+  COCKTAILS_READ
+  COCKTAILS_CREATE
+  COCKTAILS_UPDATE
+  COCKTAILS_DELETE
+  INGREDIENTS_READ
+  INGREDIENTS_CREATE
+  INGREDIENTS_UPDATE
+  INGREDIENTS_DELETE
+  GARNISHES_READ
+  GARNISHES_CREATE
+  GARNISHES_UPDATE
+  GARNISHES_DELETE
+  GLASSES_READ
+  GLASSES_CREATE
+  GLASSES_UPDATE
+  GLASSES_DELETE
+  UNITS_READ
+  UNITS_UPDATE
+  QUEUE_READ
+  QUEUE_CREATE
+  QUEUE_UPDATE
+  QUEUE_DELETE
+  STATISTICS_READ
+  STATISTICS_CREATE
+  STATISTICS_DELETE
+  CARDS_READ
+  CARDS_CREATE
+  CARDS_UPDATE
+  CARDS_DELETE
+  CALCULATIONS_READ
+  CALCULATIONS_CREATE
+  CALCULATIONS_UPDATE
+  CALCULATIONS_DELETE
+  WORKSPACE_READ
+  WORKSPACE_UPDATE
+  USERS_READ
+  USERS_UPDATE
+  USERS_DELETE
+  ICE_READ
+  ICE_CREATE
+  ICE_UPDATE
+  ICE_DELETE
+  RATINGS_READ
+  RATINGS_CREATE
+  RATINGS_DELETE
+}
+
+model WorkspaceApiKey {
+  id              String             @id @default(cuid())
+  workspaceId     String
+  workspace       Workspace          @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  name            String
+  keyId           String             @unique // Unique ID for JWT (replaces keyHash)
+  revoked         Boolean            @default(false) // For invalidation
+  expiresAt       DateTime?
+  lastUsedAt      DateTime?
+  createdAt       DateTime           @default(now())
+  createdByUserId String
+  createdByUser   User               @relation(fields: [createdByUserId], references: [id], onDelete: Cascade)
+  permissions     ApiKeyPermission[]
+
+  @@index([workspaceId])
+  @@index([keyId])
+  @@index([revoked])
+}
+
+model ApiKeyPermission {
+  id         String          @id @default(cuid())
+  apiKeyId   String
+  apiKey     WorkspaceApiKey @relation(fields: [apiKeyId], references: [id], onDelete: Cascade)
+  permission Permission
+
+  @@unique([apiKeyId, permission])
+  @@index([apiKeyId])
 }

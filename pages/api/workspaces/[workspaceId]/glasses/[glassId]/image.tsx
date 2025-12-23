@@ -1,18 +1,21 @@
 import { withHttpMethods } from '@middleware/api/handleMethods';
 import HTTPMethod from 'http-method-enum';
 import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
-import { Role } from '@generated/prisma/client';
+import { Role, Permission } from '@generated/prisma/client';
 import { NextApiRequest, NextApiResponse } from 'next';
 import prisma from '../../../../../../prisma/prisma';
 
 export default withHttpMethods({
-  [HTTPMethod.GET]: withWorkspacePermission([Role.USER], async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
+  [HTTPMethod.GET]: withWorkspacePermission([Role.USER], Permission.GLASSES_READ, async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
     const glassId = req.query.glassId as string | undefined;
     if (!glassId) return res.status(400).json({ message: 'No glass id' });
 
     const result = await prisma.glassImage.findFirst({
       where: {
         glassId: glassId,
+        glass: {
+          workspaceId: workspace.id,
+        },
       },
       select: {
         image: true,

@@ -1,11 +1,14 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import prisma from '../../../../../../prisma/prisma';
 import { BackupStructure } from './backupStructure';
+import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
+import { Role } from '@generated/prisma/client';
+import { withHttpMethods } from '@middleware/api/handleMethods';
+import HTTPMethod from 'http-method-enum';
 
-export default async function handle(req: NextApiRequest, res: NextApiResponse) {
-  const workspaceId = req.query.workspaceId as string | undefined;
-
-  if (req.method === 'GET') {
+export default withHttpMethods({
+  [HTTPMethod.GET]: withWorkspacePermission([Role.USER], async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
+    const workspaceId = workspace.id;
     const cocktailRecipes = await prisma.cocktailRecipe.findMany({ where: { workspaceId } });
     const cocktailRecipeSteps = await prisma.cocktailRecipeStep.findMany({
       where: {
@@ -106,6 +109,5 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     };
 
     return res.json(backup);
-  }
-  return res.status(405).json({ msg: 'Method not implemented' });
-}
+  }),
+});
