@@ -15,6 +15,7 @@ import { fetchIngredients } from '@lib/network/ingredients';
 import ImageModal from '../../../../../components/modals/ImageModal';
 import '../../../../../lib/NumberUtils';
 import { NextPageWithPullToRefresh } from '../../../../../types/next';
+import { normalizeString } from '@lib/StringUtils';
 
 const IngredientsOverviewPage: NextPageWithPullToRefresh = () => {
   const router = useRouter();
@@ -79,8 +80,9 @@ const IngredientsOverviewPage: NextPageWithPullToRefresh = () => {
                   </tr>
                 ) : ingredients.filter(
                     (ingredient) =>
-                      ingredient.name.toLowerCase().includes(filterString.toLowerCase()) ||
-                      ingredient.tags.some((tag) => tag.toLowerCase().includes(filterString.toLowerCase())),
+                      normalizeString(ingredient.name).includes(normalizeString(filterString)) ||
+                      (ingredient.shortName != null && normalizeString(ingredient.shortName).includes(normalizeString(filterString))) ||
+                      ingredient.tags.some((tag) => normalizeString(tag).includes(normalizeString(filterString))),
                   ).length == 0 ? (
                   <tr>
                     <td colSpan={11} className="text-center">
@@ -91,8 +93,9 @@ const IngredientsOverviewPage: NextPageWithPullToRefresh = () => {
                   ingredients
                     .filter(
                       (ingredient) =>
-                        ingredient.name.toLowerCase().includes(filterString.toLowerCase()) ||
-                        ingredient.tags.some((tag) => tag.toLowerCase().includes(filterString.toLowerCase())),
+                        normalizeString(ingredient.name).includes(normalizeString(filterString)) ||
+                        (ingredient.shortName != null && normalizeString(ingredient.shortName).includes(normalizeString(filterString))) ||
+                        ingredient.tags.some((tag) => normalizeString(tag).includes(normalizeString(filterString))),
                     )
                     .sort((a, b) => a.name.localeCompare(b.name))
                     .map((ingredient) => (

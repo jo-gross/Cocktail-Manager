@@ -125,6 +125,46 @@ export default withHttpMethods({
       const ingredientId = req.query.ingredientId as string | undefined;
       if (!ingredientId) return res.status(400).json({ message: 'No ingredient id' });
 
+      // Prüfe, ob die Zutat noch in Cocktail-Rezepten verwendet wird
+      const cocktailRecipeIngredients = await prisma.cocktailRecipeIngredient.findMany({
+        where: {
+          ingredientId: ingredientId,
+        },
+        include: {
+          cocktailRecipeStep: {
+            include: {
+              cocktailRecipe: {
+                select: {
+                  id: true,
+                  name: true,
+                  workspaceId: true,
+                },
+              },
+            },
+          },
+        },
+      });
+
+      // Extrahiere eindeutige Cocktails (könnte mehrere Referenzen pro Cocktail geben)
+      const uniqueCocktails = new Map<string, { id: string; name: string }>();
+      cocktailRecipeIngredients.forEach((ingredient) => {
+        const cocktail = ingredient.cocktailRecipeStep.cocktailRecipe;
+        // Nur Cocktails aus dem gleichen Workspace berücksichtigen
+        if (cocktail.workspaceId === workspace.id) {
+          uniqueCocktails.set(cocktail.id, { id: cocktail.id, name: cocktail.name });
+        }
+      });
+
+      const cocktails = Array.from(uniqueCocktails.values());
+
+      // Wenn noch Referenzen existieren, Fehler zurückgeben
+      if (cocktails.length > 0) {
+        return res.status(409).json({
+          message: `Die Zutat wird noch in ${cocktails.length} Cocktail(s) verwendet und kann nicht gelöscht werden.`,
+          cocktails: cocktails,
+        });
+      }
+
       const result = await prisma.ingredient.delete({
         where: {
           id: ingredientId,
