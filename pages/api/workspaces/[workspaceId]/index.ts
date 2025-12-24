@@ -1,4 +1,4 @@
-import { Prisma, Role } from '@generated/prisma/client';
+import { Prisma, Role, Permission } from '@generated/prisma/client';
 import { withHttpMethods } from '@middleware/api/handleMethods';
 import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
 import HTTPMethod from 'http-method-enum';
@@ -6,7 +6,7 @@ import prisma from '../../../../prisma/prisma';
 import WorkspaceUpdateInput = Prisma.WorkspaceUpdateInput;
 
 export default withHttpMethods({
-  [HTTPMethod.GET]: withWorkspacePermission([Role.USER], async (req, res, user, workspace) => {
+  [HTTPMethod.GET]: withWorkspacePermission([Role.USER], Permission.WORKSPACE_READ, async (req, res, user, workspace) => {
     // Check if demo workspace has expired
     if (workspace.isDemo && workspace.expiresAt && workspace.expiresAt < new Date()) {
       // Workspace has expired, delete it
@@ -18,7 +18,6 @@ export default withHttpMethods({
 
       return res.status(410).json({ message: 'Demo workspace has expired and has been deleted' });
     }
-
     const settings = await prisma.workspaceSetting.findMany({ where: { workspaceId: workspace.id } });
     const workspaceUsers = await prisma.workspaceUser.findMany({
       where: { workspaceId: workspace.id },
@@ -49,7 +48,7 @@ export default withHttpMethods({
     });
     return res.json({ data: result });
   }),
-  [HTTPMethod.PUT]: withWorkspacePermission([Role.MANAGER], async (req, res, user, workspace) => {
+  [HTTPMethod.PUT]: withWorkspacePermission([Role.MANAGER], Permission.WORKSPACE_UPDATE, async (req, res, user, workspace) => {
     const { name } = JSON.parse(req.body);
     const update: WorkspaceUpdateInput = {
       id: workspace.id,
@@ -64,4 +63,4 @@ export default withHttpMethods({
     });
     return res.json({ data: result });
   }),
-})
+});

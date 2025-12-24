@@ -7,7 +7,7 @@ import { signOut } from 'next-auth/react';
 import LoadingText from '../../../../components/LoadingText';
 import Link from 'next/link';
 import AvatarImage from '../../../../components/AvatarImage';
-import { FaCalculator, FaCocktail, FaGlassMartiniAlt, FaUsers } from 'react-icons/fa';
+import { FaCalculator, FaCocktail, FaGlassMartiniAlt, FaKey, FaUsers } from 'react-icons/fa';
 import { LuCitrus, LuMonitorPlay } from 'react-icons/lu';
 import { PiBeerBottleBold, PiCards } from 'react-icons/pi';
 import { FaGear } from 'react-icons/fa6';
@@ -135,7 +135,10 @@ export default function ManagePage() {
             <div className={'divider col-span-full'}>Workspace</div>
             <ManageCard icon={<FaUsers />} title={'Nutzer'} link={`/workspaces/${workspaceId}/manage/settings/users`} />
             {userContext.isUserPermitted('ADMIN') && (
-              <ManageCard icon={<FaGear />} title={'Einstellungen'} link={`/workspaces/${workspaceId}/manage/settings`} />
+              <>
+                <ManageCard icon={<FaGear />} title={'Einstellungen'} link={`/workspaces/${workspaceId}/manage/settings`} />
+                <ManageCard icon={<FaKey />} title={'API Keys'} link={`/workspaces/${workspaceId}/manage/settings/api-keys`} />
+              </>
             )}
           </div>
         </div>

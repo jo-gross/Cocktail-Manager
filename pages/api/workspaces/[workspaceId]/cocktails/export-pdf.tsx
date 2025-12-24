@@ -1,6 +1,6 @@
 import prisma from '../../../../../prisma/prisma';
 import { NextApiRequest, NextApiResponse } from 'next';
-import { $Enums, Role } from '@generated/prisma/client';
+import { $Enums, Role, Permission } from '@generated/prisma/client';
 import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
 import HTTPMethod from 'http-method-enum';
 import { withHttpMethods } from '@middleware/api/handleMethods';
@@ -311,7 +311,7 @@ function generateHtmlForCocktails(
 }
 
 export default withHttpMethods({
-  [HTTPMethod.POST]: withWorkspacePermission([Role.USER], async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
+  [HTTPMethod.POST]: withWorkspacePermission([Role.USER], Permission.COCKTAILS_READ, async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
     try {
       const {
         cocktailIds,
