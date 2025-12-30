@@ -3,7 +3,7 @@ services:
     image: postgres:latest
     container_name: cocktail-recipe-postgres-demo
     ports:
-      - '5433:5432'  # Different port to avoid conflicts
+      - '5433:5432' # Different port to avoid conflicts
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
@@ -32,9 +32,9 @@ services:
     image: ghcr.io/jo-gross/cocktail-manager-demo:latest
     container_name: cocktail-manager-demo
     ports:
-      - '3001:3000'  # Different port to avoid conflicts
+      - '3001:3000' # Different port to avoid conflicts
     env_file:
-      - .env  # Optional: separate env file for demo
+      - .env # Optional: separate env file for demo
     environment:
       - DATABASE_URL=postgres://postgres:postgres@postgres:5432/cocktail_recipe_demo
       - CHROMIUM_HOST=chromium-service-demo
@@ -44,7 +44,7 @@ services:
       - NEXTAUTH_SECRET=${NEXTAUTH_SECRET:-demo-secret-change-in-production}
       - NEXTAUTH_URL=${NEXTAUTH_URL:-http://localhost:3001}
     volumes:
-      - ./config:/app/config:ro  # Mount config directory
+      - ./config:/app/config:ro # Mount config directory
     networks:
       - cocktail-recipe-demo-network
     restart: unless-stopped
@@ -63,7 +63,7 @@ services:
       - --remote-debugging-address=0.0.0.0
       - --remote-debugging-port=9222
     ports:
-      - '9223:9222'  # Different port to avoid conflicts
+      - '9223:9222' # Different port to avoid conflicts
     restart: unless-stopped
 
   cleanup-cron:

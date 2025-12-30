@@ -122,6 +122,7 @@ Make sure the `config` directory is mounted correctly. The docker-compose file m
 ### Pre-built Image
 
 The demo uses a pre-built Docker image from GitHub Container Registry:
+
 - **Image:** `ghcr.io/jo-gross/cocktail-manager-demo:latest`
 - **Built via:** GitHub Actions (`.github/workflows/build-demo-image.yml`)
 - **Build args:** `DEPLOYMENT=demo`, `DEMO_MODE=true`
@@ -129,6 +130,7 @@ The demo uses a pre-built Docker image from GitHub Container Registry:
 ### Building the Image
 
 The image is automatically built and pushed when:
+
 - A GitHub Release is published
 - Workflow is manually triggered via GitHub Actions UI
 
@@ -137,10 +139,12 @@ The image version is automatically read from `package.json` and used as the imag
 ### Image Tags
 
 The workflow creates two tags for each build:
+
 - `<version>` - Version from `package.json` (e.g., `1.17.1`)
 - `latest` - Always points to the latest published release
 
 **Example:** If `package.json` has version `1.17.1`, the image will be tagged as:
+
 - `ghcr.io/jo-gross/cocktail-manager-demo:1.17.1`
 - `ghcr.io/jo-gross/cocktail-manager-demo:latest`
 
@@ -166,4 +170,3 @@ For production deployment, ensure:
 2. Set the correct `NEXTAUTH_URL`
 3. Use proper database credentials
 4. Configure authentication providers if needed (see `docs/AUTH.md`)
-
