@@ -40,43 +40,28 @@ export default function ManagePage() {
         actions={[
           <div key={'profile'} className="dropdown dropdown-end">
             <label tabIndex={0} className="btn btn-outline">
-              <>
-                {userContext.user?.image ? (
-                  <div className="avatar">
-                    <div className="w-10 rounded-full">
-                      <AvatarImage alt={'Profile Image'} src={userContext.user.image} />
-                    </div>
+              {userContext.user?.image && (
+                <div className="avatar">
+                  <div className="w-10 rounded-full">
+                    <AvatarImage alt={'Profile Image'} src={userContext.user.image} />
                   </div>
-                ) : (
-                  <div className="avatar placeholder">
-                    <div className="rounded-full border bg-neutral p-2 text-neutral-content">
-                      <span className="text-xs">
-                        {userContext.user?.name
-                          ?.split(' ')
-                          .map((s) => s.charAt(0))
-                          .join('')}
-                      </span>
-                    </div>
-                  </div>
-                )}
-              </>
-              <div className={'hidden md:inline'}>
-                {userContext.user?.name || 'Demo Nutzer'}
+                </div>
+              )}
+              <div className={'hidden md:flex md:flex-col md:items-start'}>
+                <span>{userContext.user?.name || 'Demo Nutzer'}</span>
                 {userContext.workspace?.users && (
-                  <span className="badge badge-info badge-sm ml-2">
+                  <span className="text-xs font-normal opacity-70">
                     {userContext.workspace.users.find((u) => u.userId === userContext.user?.id)?.role || 'MANAGER'}
                   </span>
                 )}
               </div>
             </label>
             <ul tabIndex={0} className="menu dropdown-content menu-sm z-[1] mt-2 w-52 gap-2 rounded-box border border-base-200 bg-base-100 p-2 shadow">
-              <div className={'pt-1 text-center text-lg font-bold md:hidden'}>
-                {userContext.user?.name || 'Demo Nutzer'}
+              <div className={'pt-1 text-center md:hidden'}>
+                <div className="text-lg font-bold">{userContext.user?.name || 'Demo Nutzer'}</div>
                 {userContext.workspace?.users && (
-                  <div className="mt-1">
-                    <span className="badge badge-info badge-sm">
-                      {userContext.workspace.users.find((u) => u.userId === userContext.user?.id)?.role || 'MANAGER'}
-                    </span>
+                  <div className="text-xs font-normal opacity-70 mt-1">
+                    {userContext.workspace.users.find((u) => u.userId === userContext.user?.id)?.role || 'MANAGER'}
                   </div>
                 )}
               </div>
