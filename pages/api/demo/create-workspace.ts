@@ -109,7 +109,7 @@ export default withHttpMethods({
           users: {
             create: {
               userId: demoUserId,
-              role: Role.MANAGER,
+              role: Role.OWNER,
             },
           },
           Ice: {

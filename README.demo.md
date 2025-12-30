@@ -9,7 +9,17 @@ demo workspace with pre-configured data that is automatically deleted after 24 h
 
 ## Quick Start
 
-1. **Build and start the demo instance:**
+1. **Start the demo instance:**
+
+The demo uses a pre-built Docker image from GitHub Container Registry. Simply start the containers:
+
+```bash
+docker-compose -f docker-compose.demo.yaml up -d
+```
+
+**Note:** The image is automatically built and pushed to `ghcr.io/jo-gross/cocktail-manager-demo:latest` via GitHub Actions when changes are pushed to the main branch.
+
+**To build locally instead** (e.g., for development), uncomment the `build` section and comment out the `image` line in `docker-compose.demo.yaml`, then run:
 
 ```bash
 docker-compose -f docker-compose.demo.yaml up -d --build
@@ -106,6 +116,47 @@ docker ps | grep postgres-demo
 ### Config file not found
 
 Make sure the `config` directory is mounted correctly. The docker-compose file mounts `./config:/app/config:ro`
+
+## Docker Image
+
+### Pre-built Image
+
+The demo uses a pre-built Docker image from GitHub Container Registry:
+- **Image:** `ghcr.io/jo-gross/cocktail-manager-demo:latest`
+- **Built via:** GitHub Actions (`.github/workflows/build-demo-image.yml`)
+- **Build args:** `DEPLOYMENT=demo`, `DEMO_MODE=true`
+
+### Building the Image
+
+The image is automatically built and pushed when:
+- A GitHub Release is published
+- Workflow is manually triggered via GitHub Actions UI
+
+The image version is automatically read from `package.json` and used as the image tag.
+
+### Image Tags
+
+The workflow creates two tags for each build:
+- `<version>` - Version from `package.json` (e.g., `1.17.1`)
+- `latest` - Always points to the latest published release
+
+**Example:** If `package.json` has version `1.17.1`, the image will be tagged as:
+- `ghcr.io/jo-gross/cocktail-manager-demo:1.17.1`
+- `ghcr.io/jo-gross/cocktail-manager-demo:latest`
+
+### Pulling the Image
+
+To pull the latest image manually:
+
+```bash
+docker pull ghcr.io/jo-gross/cocktail-manager-demo:latest
+```
+
+**Note:** You may need to authenticate with GitHub Container Registry:
+
+```bash
+echo $GITHUB_TOKEN | docker login ghcr.io -u USERNAME --password-stdin
+```
 
 ## Production Deployment
 

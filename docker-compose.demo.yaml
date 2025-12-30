@@ -21,18 +21,20 @@ services:
     links:
       - postgres
       - chromium-service-demo
-    build:
-      context: .
-      dockerfile: Dockerfile
-      args:
-        DEPLOYMENT: 'demo'
-        DEMO_MODE: 'true'
-    image: cocktail-manager-demo:latest
+    # Use pre-built image from GitHub Container Registry
+    # To build locally, uncomment the build section and comment out the image line
+    # build:
+    #   context: .
+    #   dockerfile: Dockerfile
+    #   args:
+    #     DEPLOYMENT: 'demo'
+    #     DEMO_MODE: 'true'
+    image: ghcr.io/jo-gross/cocktail-manager-demo:latest
     container_name: cocktail-manager-demo
     ports:
       - '3001:3000'  # Different port to avoid conflicts
     env_file:
-      - .env.demo  # Optional: separate env file for demo
+      - .env  # Optional: separate env file for demo
     environment:
       - DATABASE_URL=postgres://postgres:postgres@postgres:5432/cocktail_recipe_demo
       - CHROMIUM_HOST=chromium-service-demo
@@ -65,7 +67,7 @@ services:
     restart: unless-stopped
 
   cleanup-cron:
-    image: cocktail-manager-demo:latest
+    image: ghcr.io/jo-gross/cocktail-manager-demo:latest
     container_name: cocktail-manager-demo-cleanup
     depends_on:
       - postgres

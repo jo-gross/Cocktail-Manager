@@ -39,7 +39,7 @@ export default withHttpMethods({
     });
 
     return res.json({ data: { ...workspace, WorkspaceSetting: settings, users: workspaceUsers } });
-  };),
+  }),
   [HTTPMethod.DELETE]: withWorkspacePermission([Role.ADMIN], async (req, res, user, workspace) => {
     const result = await prisma.workspace.delete({
       where: {
