@@ -193,10 +193,7 @@ export function ManageColumn(props: ManageColumnProps) {
   const canEdit = userContext.isUserPermitted(props.editRole ?? Role.MANAGER);
   const canDelete = userContext.isUserPermitted(props.deleteRole ?? Role.ADMIN);
   const canDuplicate =
-    (props.entity === 'cocktails' ||
-      props.entity === 'ingredients' ||
-      props.entity === 'glasses' ||
-      props.entity === 'garnishes') &&
+    (props.entity === 'cocktails' || props.entity === 'ingredients' || props.entity === 'glasses' || props.entity === 'garnishes') &&
     userContext.isUserPermitted(Role.MANAGER);
 
   if (!canEdit) {
@@ -219,12 +216,7 @@ export function ManageColumn(props: ManageColumnProps) {
             </li>
             {canDuplicate && (
               <li>
-                <button
-                  type="button"
-                  className="flex items-center gap-2"
-                  onClick={handleDuplicateClick}
-                  disabled={isDuplicating}
-                >
+                <button type="button" className="flex items-center gap-2" onClick={handleDuplicateClick} disabled={isDuplicating}>
                   {isDuplicating ? <span className={'loading loading-spinner loading-sm'} /> : <FaRegClone />}
                   Duplizieren
                 </button>
@@ -232,12 +224,7 @@ export function ManageColumn(props: ManageColumnProps) {
             )}
             {canDelete && (
               <li>
-                <button
-                  type="button"
-                  className="flex items-center gap-2 text-error"
-                  onClick={handleDeleteClick}
-                  disabled={isCheckingReferences}
-                >
+                <button type="button" className="flex items-center gap-2 text-error" onClick={handleDeleteClick} disabled={isCheckingReferences}>
                   {isCheckingReferences ? <span className={'loading loading-spinner loading-sm'} /> : <FaTrashAlt />}
                   Löschen
                 </button>

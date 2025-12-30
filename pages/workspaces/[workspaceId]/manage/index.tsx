@@ -60,7 +60,7 @@ export default function ManagePage() {
               <div className={'pt-1 text-center md:hidden'}>
                 <div className="text-lg font-bold">{userContext.user?.name || 'Demo Nutzer'}</div>
                 {userContext.workspace?.users && (
-                  <div className="text-xs font-normal opacity-70 mt-1">
+                  <div className="mt-1 text-xs font-normal opacity-70">
                     {userContext.workspace.users.find((u) => u.userId === userContext.user?.id)?.role || 'MANAGER'}
                   </div>
                 )}
