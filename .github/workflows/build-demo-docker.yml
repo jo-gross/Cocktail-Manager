@@ -1,4 +1,4 @@
-name: Build and Push Demo Image
+name: Build Demo Docker image
 
 on:
   release:
