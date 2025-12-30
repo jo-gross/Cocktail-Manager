@@ -60,6 +60,22 @@ The `API_KEY_JWT_SECRET` is used to sign and verify JWT tokens for workspace API
 
 The `API_KEY_REVOKED_CACHE_TTL_MINUTES` controls how long revoked API keys are cached in memory before checking the database again. This reduces database load when checking if a key is revoked. The default is 15 minutes. Set to a higher value (e.g., 30) for better performance at the cost of slightly delayed revocation propagation, or lower (e.g., 5) for faster revocation but more database queries.
 
+### Demo Mode
+
+| Variable                     | Description                                        | Default | Example                                  |
+|------------------------------|----------------------------------------------------|---------|------------------------------------------|
+| `DEMO_MODE`                  | Enables demo mode (set to `"true"` to enable)      | `false` | `"true"`                                 |
+| `DEMO_WORKSPACE_CONFIG_PATH` | Path to the demo workspace configuration JSON file | -       | `/app/config/demo-workspace-config.json` |
+| `DEMO_TTL_HOURS`             | Time-to-live for demo workspaces in hours          | `24`    | `24`                                     |
+
+**Note:** When `DEMO_MODE` is enabled:
+
+- Normal authentication/login is disabled
+- Users can create demo workspaces without login
+- Demo workspaces are automatically deleted after the TTL expires
+- Demo mode configuration is loaded at runtime. Changes take effect after restarting the container (no rebuild
+  required).
+
 ## Configuration Files
 
 ### .env File

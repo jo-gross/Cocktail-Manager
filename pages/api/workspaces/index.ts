@@ -13,6 +13,11 @@ export default withHttpMethods({
       return res.status(403).json({ message: 'Workspace-Erstellung ist deaktiviert' });
     }
 
+    // Check if user is a demo user (no email) and block workspace creation
+    if (!user.email) {
+      return res.status(403).json({ message: 'Demo-User können keine Workspaces erstellen' });
+    }
+
     const { name } = req.body;
 
     const result = await createWorkspaceWithDefaults({

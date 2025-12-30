@@ -42,6 +42,7 @@ const WorkspacesPage: NextPageWithPullToRefresh = () => {
 
   const [changeLogFetch, setChangelogFetch] = useState(false);
   const [workspaceCreationConfig, setWorkspaceCreationConfig] = useState<{ disabled: boolean; message: string | null } | null>(null);
+  const [creatingDemoWorkspace, setCreatingDemoWorkspace] = useState(false);
 
   const fetchWorkspaces = useCallback(() => {
     if (!userContext.user) return;
@@ -121,6 +122,43 @@ const WorkspacesPage: NextPageWithPullToRefresh = () => {
       })
       .finally(() => setCreatingWorkspace(false));
   }, [userContext.user, newWorkspaceName, fetchWorkspaces]);
+
+  const createDemoWorkspace = useCallback(async () => {
+    setCreatingDemoWorkspace(true);
+    try {
+      const response = await fetch('/api/demo/create-workspace', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const body = await response.json();
+
+      if (!response.ok) {
+        alertService.error(body.message ?? 'Fehler beim Erstellen der Demo-Workspace', response.status, response.statusText);
+        return;
+      }
+
+      // Sign in as demo user
+      const signInResponse = await signIn('demo', {
+        userId: body.data.userId,
+        redirect: false,
+      });
+
+      if (signInResponse?.ok) {
+        // Redirect to workspace
+        router.push(`/workspaces/${body.data.workspaceId}`);
+      } else {
+        alertService.error('Fehler beim Anmelden als Demo-User');
+      }
+    } catch (error) {
+      console.error('WorkspacesOverview -> createDemoWorkspace', error);
+      alertService.error('Fehler beim Erstellen der Demo-Workspace');
+    } finally {
+      setCreatingDemoWorkspace(false);
+    }
+  }, [router]);
 
   const joinWorkspace = useCallback(
     (code: string) => {
@@ -313,6 +351,17 @@ const WorkspacesPage: NextPageWithPullToRefresh = () => {
                       Sign out
                     </button>
                   </>
+                ) : process.env.NEXT_PUBLIC_DEMO_MODE === 'true' ? (
+                  <button className={'btn btn-primary btn-sm'} onClick={createDemoWorkspace} disabled={creatingDemoWorkspace}>
+                    {creatingDemoWorkspace ? (
+                      <>
+                        <span className={'loading loading-spinner'} />
+                        Demo wird erstellt...
+                      </>
+                    ) : (
+                      'Demo starten'
+                    )}
+                  </button>
                 ) : (
                   <button className={'btn btn-outline btn-sm'} onClick={() => signIn()}>
                     Sign in

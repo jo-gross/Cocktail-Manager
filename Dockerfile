@@ -25,6 +25,8 @@ COPY . .
 ENV NODE_ENV=production
 ARG DEPLOYMENT
 ENV DEPLOYMENT=${DEPLOYMENT:-$NODE_ENV}
+ARG DEMO_MODE
+ENV DEMO_MODE=${DEMO_MODE:-false}
 # Next.js collects completely anonymous telemetry data about general usage.
 # Learn more here: https://nextjs.org/telemetry
 # Uncomment the following line in case you want to disable telemetry during the build.
@@ -44,6 +46,8 @@ WORKDIR /app
 ENV NODE_ENV=production
 ARG DEPLOYMENT
 ENV DEPLOYMENT=${DEPLOYMENT:-$NODE_ENV}
+ARG DEMO_MODE
+ENV DEMO_MODE=${DEMO_MODE:-false}
 # Uncomment the following line in case you want to disable telemetry during runtime.
 ENV NEXT_TELEMETRY_DISABLED=1
 
@@ -60,9 +64,14 @@ RUN chown nextjs:nodejs .next
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/config ./config
+COPY --from=builder /app/scripts ./scripts
 COPY --from=builder /app/prisma.config.ts ./
 
 COPY --from=deps /app/node_modules ./node_modules
+
+# Install cron for cleanup job (only needed if using cron container)
+RUN apk add --no-cache dcron
 
 #USER nextjs
 

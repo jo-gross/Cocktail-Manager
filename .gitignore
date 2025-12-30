@@ -39,6 +39,8 @@ yarn-error.log*
 *.tsbuildinfo
 
 .env
+.env.example!
+.env.*
 
 .idea/copilot
 

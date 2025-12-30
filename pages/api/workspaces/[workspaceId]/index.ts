@@ -7,7 +7,24 @@ import WorkspaceUpdateInput = Prisma.WorkspaceUpdateInput;
 
 export default withHttpMethods({
   [HTTPMethod.GET]: withWorkspacePermission([Role.USER], Permission.WORKSPACE_READ, async (req, res, user, workspace) => {
+    // Check if demo workspace has expired
+    if (workspace.isDemo && workspace.expiresAt && workspace.expiresAt < new Date()) {
+      // Workspace has expired, delete it
+      await prisma.workspace.delete({
+        where: {
+          id: workspace.id,
+        },
+      });
+
+      return res.status(410).json({ message: 'Demo workspace has expired and has been deleted' });
+    }
     const settings = await prisma.workspaceSetting.findMany({ where: { workspaceId: workspace.id } });
+    const workspaceUsers = await prisma.workspaceUser.findMany({
+      where: { workspaceId: workspace.id },
+      include: {
+        user: true,
+      },
+    });
 
     await prisma.workspaceUser.update({
       where: {
@@ -21,7 +38,7 @@ export default withHttpMethods({
       },
     });
 
-    return res.json({ data: { ...workspace, WorkspaceSetting: settings } });
+    return res.json({ data: { ...workspace, WorkspaceSetting: settings, users: workspaceUsers } });
   }),
   [HTTPMethod.DELETE]: withWorkspacePermission([Role.ADMIN], async (req, res, user, workspace) => {
     const result = await prisma.workspace.delete({

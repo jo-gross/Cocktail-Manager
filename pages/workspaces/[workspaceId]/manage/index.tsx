@@ -60,10 +60,26 @@ export default function ManagePage() {
                   </div>
                 )}
               </>
-              <div className={'hidden md:inline'}>{userContext.user?.name}</div>
+              <div className={'hidden md:inline'}>
+                {userContext.user?.name || 'Demo Nutzer'}
+                {userContext.workspace?.users && (
+                  <span className="badge badge-info badge-sm ml-2">
+                    {userContext.workspace.users.find((u) => u.userId === userContext.user?.id)?.role || 'MANAGER'}
+                  </span>
+                )}
+              </div>
             </label>
             <ul tabIndex={0} className="menu dropdown-content menu-sm z-[1] mt-2 w-52 gap-2 rounded-box border border-base-200 bg-base-100 p-2 shadow">
-              <div className={'pt-1 text-center text-lg font-bold md:hidden'}>{userContext.user?.name}</div>
+              <div className={'pt-1 text-center text-lg font-bold md:hidden'}>
+                {userContext.user?.name || 'Demo Nutzer'}
+                {userContext.workspace?.users && (
+                  <div className="mt-1">
+                    <span className="badge badge-info badge-sm">
+                      {userContext.workspace.users.find((u) => u.userId === userContext.user?.id)?.role || 'MANAGER'}
+                    </span>
+                  </div>
+                )}
+              </div>
               <Link href={'/'} className={'btn btn-outline btn-sm'}>
                 Workspaces
               </Link>
