@@ -21,6 +21,7 @@ import '../../lib/ArrayUtils';
 import { RoutingContext } from '@lib/context/RoutingContextProvider';
 import { resizeImage } from '@lib/ImageCompressor';
 import { autoCropImage } from '@lib/ImageUtils';
+import { FormValidationWarningModal } from '../modals/FormValidationWarningModal';
 
 interface IngredientFormProps {
   ingredient?: IngredientWithImage;
@@ -211,8 +212,37 @@ export function IngredientForm(props: IngredientFormProps) {
         return errors;
       }}
     >
-      {({ values, setFieldValue, errors, setFieldError, handleChange, handleBlur, handleSubmit, isSubmitting, isValid }) => (
-        <form onSubmit={handleSubmit} className={'grid grid-cols-1 gap-2 md:grid-cols-2'}>
+      {({ values, setFieldValue, errors, setFieldError, handleChange, handleBlur, handleSubmit, isSubmitting, isValid, submitForm }) => {
+        const checkValidationWarnings = (): string[] => {
+          const warnings: string[] = [];
+          if (!values.units || values.units.length === 0) {
+            warnings.push('Keine Volumes/Mengen hinzugefügt');
+          }
+          return warnings;
+        };
+
+        const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+          e.preventDefault();
+          const warnings = checkValidationWarnings();
+          if (warnings.length > 0) {
+            modalContext.openModal(
+              <FormValidationWarningModal
+                warnings={warnings}
+                onContinue={async () => {
+                  await submitForm();
+                }}
+                onCancel={() => {
+                  // Do nothing, just close modal
+                }}
+              />,
+            );
+          } else {
+            await handleSubmit(e);
+          }
+        };
+
+        return (
+          <form onSubmit={handleFormSubmit} className={'grid grid-cols-1 gap-2 md:grid-cols-2'}>
           <div className={'form-control col-span-full'}>
             <label className={'label'} htmlFor={'link'}>
               <span className={'label-text'}>Über Link importieren</span>
@@ -707,7 +737,8 @@ export function IngredientForm(props: IngredientFormProps) {
             </div>
           </div>
         </form>
-      )}
+        );
+      }}
     </Formik>
   );
 }
