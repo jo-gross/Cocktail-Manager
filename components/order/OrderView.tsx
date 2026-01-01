@@ -288,6 +288,7 @@ export const OrderView = React.memo(function OrderView({ cocktailCards, workspac
 
   const getCocktailsForGroup = (group: any): CocktailRecipeFull[] => {
     return group.items
+      .sort((a: any, b: any) => (a.itemNumber ?? 0) - (b.itemNumber ?? 0))
       .map((item: any) => cocktails.find((c) => c.id === item.cocktailId))
       .filter((cocktail: CocktailRecipeFull | undefined): cocktail is CocktailRecipeFull => !!cocktail && matchesSearchTerm(cocktail));
   };
@@ -414,25 +415,27 @@ export const OrderView = React.memo(function OrderView({ cocktailCards, workspac
                 </>
               ) : (
                 <div className="flex h-full items-stretch gap-2">
-                  {selectedCard.groups.map((group: any) => {
-                    const cocktailsInGroup = getCocktailsForGroup(group);
-                    if (cocktailsInGroup.length === 0) {
-                      return null;
-                    }
+                  {selectedCard.groups
+                    .sort((a: any, b: any) => (a.groupNumber ?? 0) - (b.groupNumber ?? 0))
+                    .map((group: any) => {
+                      const cocktailsInGroup = getCocktailsForGroup(group);
+                      if (cocktailsInGroup.length === 0) {
+                        return null;
+                      }
 
-                    return (
-                      <div key={group.id ?? group.name} className={`flex h-full ${cocktailsInGroup.length > 1 ? 'min-w-[21rem]' : ''} flex-col gap-2`}>
-                        <h3 className="shrink-0 text-lg font-semibold">{group.name}</h3>
-                        <div className="min-h-0 flex-1 overflow-y-auto">
-                          <div className="flex flex-row flex-wrap gap-2">
-                            {cocktailsInGroup.map((cocktail) => (
-                              <CocktailTile key={cocktail.id} cocktail={cocktail} />
-                            ))}
+                      return (
+                        <div key={group.id ?? group.name} className={`flex h-full ${cocktailsInGroup.length > 1 ? 'min-w-[21rem]' : ''} flex-col gap-2`}>
+                          <h3 className="shrink-0 text-lg font-semibold">{group.name}</h3>
+                          <div className="min-h-0 flex-1 overflow-y-auto">
+                            <div className="flex flex-row flex-wrap gap-2">
+                              {cocktailsInGroup.map((cocktail) => (
+                                <CocktailTile key={cocktail.id} cocktail={cocktail} />
+                              ))}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
 
                   {additionalCocktailsForSearch.length > 0 && (
                     <div className="flex h-full w-full flex-col gap-2">
