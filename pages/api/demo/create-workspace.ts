@@ -74,9 +74,7 @@ interface DemoConfig {
 function readImageAsBase64(imagePath: string, configDir: string): string | null {
   try {
     // Resolve path: if absolute (starts with /), use as-is; otherwise resolve relative to config directory
-    const resolvedPath = imagePath.startsWith('/')
-      ? imagePath
-      : join(configDir, imagePath);
+    const resolvedPath = imagePath.startsWith('/') ? imagePath : join(configDir, imagePath);
 
     if (!existsSync(resolvedPath)) {
       console.warn(`Image file not found: ${resolvedPath}`);
