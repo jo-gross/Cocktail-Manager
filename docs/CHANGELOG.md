@@ -1,3 +1,10 @@
+## [1.18.1](https://github.com/jo-gross/Cocktail-Manager/compare/v1.18.0...v1.18.1) (2026-01-01)
+
+
+### Bug Fixes
+
+* order view´s card and cocktail sort fixed ([643bd15](https://github.com/jo-gross/Cocktail-Manager/commit/643bd15e1cfc73dc831388bb51cc0992ada490e6))
+
 # [1.18.0](https://github.com/jo-gross/Cocktail-Manager/compare/v1.17.1...v1.18.0) (2026-01-01)
 
 
