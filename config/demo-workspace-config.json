@@ -8,25 +8,29 @@
       "name": "Martini Glas",
       "volume": 200,
       "deposit": 2.5,
-      "notes": "Klassisches Martini-Glas"
+      "notes": "Klassisches Martini-Glas",
+      "image": "./images/glasses/martini.png"
     },
     {
       "name": "Old Fashioned Glas",
       "volume": 300,
       "deposit": 2.0,
-      "notes": "Robustes Glas für Whiskey-Cocktails"
+      "notes": "Robustes Glas für Whiskey-Cocktails",
+      "image": "./images/glasses/oldfashion.png"
     },
     {
       "name": "Highball Glas",
       "volume": 350,
       "deposit": 1.5,
-      "notes": "Hohes Glas für Longdrinks"
+      "notes": "Hohes Glas für Longdrinks",
+      "image": "./images/glasses/highball.png"
     },
     {
       "name": "Coupe Glas",
       "volume": 150,
       "deposit": 2.0,
-      "notes": "Elegantes Glas für Champagner-Cocktails"
+      "notes": "Elegantes Glas für Champagner-Cocktails",
+      "image": "./images/glasses/coupe.png"
     }
   ],
   "ingredients": [
@@ -169,6 +173,7 @@
       "price": 8.5,
       "iceName": "ICE_CUBES",
       "glassName": "Highball Glas",
+      "image": "./images/cocktails/moscow_mule.png",
       "garnishes": [
         {
           "garnishName": "Limettenscheibe",
@@ -230,6 +235,7 @@
       "price": 7.5,
       "iceName": "ICE_CUBES",
       "glassName": "Highball Glas",
+      "image": "./images/cocktails/gin_tonic.png",
       "garnishes": [
         {
           "garnishName": "Limettenscheibe",
@@ -270,6 +276,7 @@
       "price": 9.0,
       "iceName": "ICE_CRUSHED",
       "glassName": "Highball Glas",
+      "image": "./images/cocktails/mojito.png",
       "garnishes": [
         {
           "garnishName": "Minzzweig",
@@ -353,6 +360,7 @@
       "price": 8.5,
       "iceName": "ICE_CUBES",
       "glassName": "Coupe Glas",
+      "image": "./images/cocktails/margarita.png",
       "garnishes": [
         {
           "garnishName": "Limettenscheibe",
@@ -413,6 +421,7 @@
       "price": 9.5,
       "iceName": "ICE_CUBES",
       "glassName": "Martini Glas",
+      "image": "./images/cocktails/cosmopolitan.png",
       "garnishes": [
         {
           "garnishName": "Limettenscheibe",
@@ -474,6 +483,7 @@
       "price": 10.0,
       "iceName": "ICE_CUBES",
       "glassName": "Old Fashioned Glas",
+      "image": "./images/cocktails/old_fashioned.png",
       "garnishes": [
         {
           "garnishName": "Orangenscheibe",

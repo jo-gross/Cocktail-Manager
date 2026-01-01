@@ -42,7 +42,7 @@ export function AlertBoundary(props: AlertBoundaryProps) {
 
   const isDemoWorkspace = userContext.workspace?.isDemo === true;
   const showDevStagingBanner = process.env.NODE_ENV == 'development' || process.env.DEPLOYMENT == 'staging';
-  const bannerHeight = showDevStagingBanner || isDemoWorkspace ? 'h-10' : '';
+  const bannerHeight = showDevStagingBanner || isDemoWorkspace ? (showDevStagingBanner && isDemoWorkspace ? 'h-20' : 'h-10') : '';
 
   return (
     <div>

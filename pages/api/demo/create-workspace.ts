@@ -4,8 +4,8 @@ import { $Enums, Role } from '@generated/prisma/client';
 import HTTPMethod from 'http-method-enum';
 import { withHttpMethods } from '@middleware/api/handleMethods';
 import { randomUUID } from 'crypto';
-import { readFileSync } from 'fs';
-import { join } from 'path';
+import { readFileSync, existsSync } from 'fs';
+import { join, dirname, extname } from 'path';
 import { regenerateUnitConversions } from '../workspaces/[workspaceId]/units/conversions';
 import WorkspaceSettingKey = $Enums.WorkspaceSettingKey;
 
@@ -19,6 +19,7 @@ interface DemoConfig {
     volume?: number;
     deposit: number;
     notes?: string;
+    image?: string;
   }>;
   ingredients: Array<{
     name: string;
@@ -26,11 +27,13 @@ interface DemoConfig {
     description?: string;
     price?: number;
     tags?: string[];
+    image?: string;
   }>;
   garnishes: Array<{
     name: string;
     description?: string;
     price?: number;
+    image?: string;
   }>;
   cocktails: Array<{
     name: string;
@@ -39,6 +42,7 @@ interface DemoConfig {
     price?: number;
     iceName: string;
     glassName: string;
+    image?: string;
     garnishes?: Array<{
       garnishName: string;
       garnishNumber: number;
@@ -61,6 +65,49 @@ interface DemoConfig {
   }>;
 }
 
+/**
+ * Reads an image file and converts it to a base64 data URL string
+ * @param imagePath - Path to the image file (relative to config directory or absolute)
+ * @param configDir - Directory where the config file is located
+ * @returns Base64 data URL string or null if file doesn't exist
+ */
+function readImageAsBase64(imagePath: string, configDir: string): string | null {
+  try {
+    // Resolve path: if absolute (starts with /), use as-is; otherwise resolve relative to config directory
+    const resolvedPath = imagePath.startsWith('/')
+      ? imagePath
+      : join(configDir, imagePath);
+
+    if (!existsSync(resolvedPath)) {
+      console.warn(`Image file not found: ${resolvedPath}`);
+      return null;
+    }
+
+    // Read file as buffer
+    const imageBuffer = readFileSync(resolvedPath);
+
+    // Determine MIME type from file extension
+    const ext = extname(resolvedPath).toLowerCase();
+    let mimeType = 'image/png'; // default
+    if (ext === '.jpg' || ext === '.jpeg') {
+      mimeType = 'image/jpeg';
+    } else if (ext === '.gif') {
+      mimeType = 'image/gif';
+    } else if (ext === '.webp') {
+      mimeType = 'image/webp';
+    } else if (ext === '.svg') {
+      mimeType = 'image/svg+xml';
+    }
+
+    // Convert to base64 data URL
+    const base64String = imageBuffer.toString('base64');
+    return `data:${mimeType};base64,${base64String}`;
+  } catch (error) {
+    console.error(`Error reading image file ${imagePath}:`, error);
+    return null;
+  }
+}
+
 export default withHttpMethods({
   [HTTPMethod.POST]: async (req: NextApiRequest, res: NextApiResponse) => {
     // Check if demo mode is enabled
@@ -73,6 +120,7 @@ export default withHttpMethods({
       const configPath = process.env.DEMO_WORKSPACE_CONFIG_PATH || join(process.cwd(), 'config', 'demo-workspace-config.json');
       const configFile = readFileSync(configPath, 'utf-8');
       const config: DemoConfig = JSON.parse(configFile);
+      const configDir = dirname(configPath);
 
       // Calculate expiration time
       const ttlHours = parseInt(process.env.DEMO_TTL_HOURS || '24', 10);
@@ -336,6 +384,19 @@ export default withHttpMethods({
           },
         });
         glassMap.set(glassConfig.name, glass.id);
+
+        // Create image if provided
+        if (glassConfig.image) {
+          const imageBase64 = readImageAsBase64(glassConfig.image, configDir);
+          if (imageBase64) {
+            await prisma.glassImage.create({
+              data: {
+                image: imageBase64,
+                glassId: glass.id,
+              },
+            });
+          }
+        }
       }
 
       // Create ingredients
@@ -353,6 +414,19 @@ export default withHttpMethods({
           },
         });
         ingredientMap.set(ingredientConfig.name, ingredient.id);
+
+        // Create image if provided
+        if (ingredientConfig.image) {
+          const imageBase64 = readImageAsBase64(ingredientConfig.image, configDir);
+          if (imageBase64) {
+            await prisma.ingredientImage.create({
+              data: {
+                image: imageBase64,
+                ingredientId: ingredient.id,
+              },
+            });
+          }
+        }
       }
 
       // Create garnishes
@@ -368,6 +442,19 @@ export default withHttpMethods({
           },
         });
         garnishMap.set(garnishConfig.name, garnish.id);
+
+        // Create image if provided
+        if (garnishConfig.image) {
+          const imageBase64 = readImageAsBase64(garnishConfig.image, configDir);
+          if (imageBase64) {
+            await prisma.garnishImage.create({
+              data: {
+                image: imageBase64,
+                garnishId: garnish.id,
+              },
+            });
+          }
+        }
       }
 
       // Create cocktails
@@ -400,6 +487,19 @@ export default withHttpMethods({
             isArchived: false,
           },
         });
+
+        // Create image if provided
+        if (cocktailConfig.image) {
+          const imageBase64 = readImageAsBase64(cocktailConfig.image, configDir);
+          if (imageBase64) {
+            await prisma.cocktailRecipeImage.create({
+              data: {
+                image: imageBase64,
+                cocktailRecipeId: cocktail.id,
+              },
+            });
+          }
+        }
 
         // Create garnishes for cocktail
         if (cocktailConfig.garnishes) {
