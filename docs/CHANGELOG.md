@@ -1,3 +1,19 @@
+# [1.18.0](https://github.com/jo-gross/Cocktail-Manager/compare/v1.17.1...v1.18.0) (2026-01-01)
+
+
+### Bug Fixes
+
+* added warning on missing ingredient volume ([#863](https://github.com/jo-gross/Cocktail-Manager/issues/863)) ([22fb9ca](https://github.com/jo-gross/Cocktail-Manager/commit/22fb9ca59221af074a27972f776d09ee0ac2a5b9))
+
+
+### Features
+
+* added instance demo mode ([#861](https://github.com/jo-gross/Cocktail-Manager/issues/861)) ([85d2b96](https://github.com/jo-gross/Cocktail-Manager/commit/85d2b96094ee1f51ed1290a5a9f3410c34fcc460))
+* added option to duplicate an entity (cocktail, ingredient, glass, garnish and calculation) ([#862](https://github.com/jo-gross/Cocktail-Manager/issues/862)) ([9779a8f](https://github.com/jo-gross/Cocktail-Manager/commit/9779a8fed4f07e88b00f4ee19846658f382871c1))
+* added warning before deleting ingredients or glasses that are still in use ([#858](https://github.com/jo-gross/Cocktail-Manager/issues/858)) ([12c7983](https://github.com/jo-gross/Cocktail-Manager/commit/12c7983dd536a6adad802cad908ae564943eb314))
+* added workspace and instance API keys ([#836](https://github.com/jo-gross/Cocktail-Manager/issues/836)) ([f495925](https://github.com/jo-gross/Cocktail-Manager/commit/f4959253a599ab6dd70d89d37ddf22407186210e))
+* Order view for bartender ([#835](https://github.com/jo-gross/Cocktail-Manager/issues/835)) ([9977562](https://github.com/jo-gross/Cocktail-Manager/commit/9977562b0e8bc40a2d7bfa8b4b36726f4a7d77c3))
+
 ## [1.17.1](https://github.com/jo-gross/Cocktail-Manager/compare/v1.17.0...v1.17.1) (2025-12-13)
 
 
