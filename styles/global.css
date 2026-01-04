@@ -19,7 +19,11 @@
 }
 
 .card {
-  @apply bg-base-300 shadow-lg !important;
+  @apply bg-base-200 shadow-lg !important;
+}
+
+.collapse {
+  @apply bg-base-300 !important;
 }
 
 .collapse-content {

@@ -328,7 +328,7 @@ export const OrderView = React.memo(function OrderView({ cocktailCards, workspac
   return (
     <div className="flex h-screen flex-col gap-2">
       {/* Erste Zeile: Kombinierte Suche & Cocktails nach Karte (volle Breite, nur horizontal scrollend) */}
-      <div className="flex max-h-[50vh] flex-1 flex-col overflow-hidden">
+      <div className="flex max-h-[calc(50vh-2rem)] flex-1 flex-col overflow-hidden">
         <div className="card h-full bg-base-100 shadow-md">
           <div className="card-body flex h-full flex-col">
             {/* Header: Titel, Suche, Kartenauswahl */}
@@ -459,7 +459,7 @@ export const OrderView = React.memo(function OrderView({ cocktailCards, workspac
       </div>
 
       {/* Zweite Zeile: Gläser (1/2) & Bestellung (1/2) */}
-      <div className="flex max-h-[50vh] flex-1 flex-col gap-2 overflow-y-auto md:flex-row md:overflow-hidden">
+      <div className="flex max-h-[calc(50vh-2rem)] flex-1 flex-col gap-2 overflow-y-auto md:flex-row md:overflow-hidden">
         {/* Gläser */}
         <div className="w-full md:w-1/2">
           <div className="card h-full bg-base-100 shadow-md">

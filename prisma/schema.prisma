@@ -82,6 +82,7 @@ enum Setting {
 enum WorkspaceSettingKey {
   translations
   usePrices
+  statisticDayStartTime
 }
 
 model UserSetting {
@@ -198,6 +199,7 @@ model Workspace {
   WorkspaceJoinCode                 WorkspaceJoinCode[]
   WorkspaceJoinRequest              WorkspaceJoinRequest[]
   WorkspaceApiKey                   WorkspaceApiKey[]
+  StatisticSavedSet                 StatisticSavedSet[]
 }
 
 model Signage {
@@ -532,6 +534,17 @@ model Ice {
   @@unique([name, workspaceId])
 }
 
+enum SavedSetType {
+  TAG_SET
+  INGREDIENT_SET
+  COCKTAIL_SET
+}
+
+enum SavedSetLogic {
+  AND
+  OR
+}
+
 enum Permission {
   COCKTAILS_READ
   COCKTAILS_CREATE
@@ -607,4 +620,19 @@ model ApiKeyPermission {
 
   @@unique([apiKeyId, permission])
   @@index([apiKeyId])
+}
+
+model StatisticSavedSet {
+  id          String         @id @default(cuid())
+  workspaceId String
+  workspace   Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  name        String
+  type        SavedSetType
+  logic       SavedSetLogic?
+  items       Json           // Array of IDs (tags, ingredients, or cocktail IDs)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@index([workspaceId])
+  @@index([workspaceId, type])
 }

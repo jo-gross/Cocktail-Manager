@@ -187,7 +187,7 @@ const StatisticsPage: NextPageWithPullToRefresh = () => {
 
   return (
     <ManageEntityLayout
-      title={'Statistiken'}
+      title={'Logs'}
       backLink={`/workspaces/${workspaceId}/manage`}
       actions={[
         <div key={'startDate'} className={'form-control hidden md:flex'}>

@@ -11,6 +11,8 @@ interface SelectModalProps<T> {
   fetchElements: (search: string) => Promise<T[]>;
   elementComponent: (t: T) => JSX.Element;
   compareFunction?: (t1: T, t2: T) => number;
+  getElementId?: (t: T) => string; // Function to extract ID from element
+  selectedIds?: Set<string> | string[]; // IDs that are already selected and should be disabled
 }
 
 export function SelectModal<T>(props: SelectModalProps<T>) {
@@ -19,6 +21,22 @@ export function SelectModal<T>(props: SelectModalProps<T>) {
   const [search, setSearch] = useState('');
   const [elements, setElements] = useState<T[]>([]);
   const [isLoading, setLoading] = useState(false);
+
+  // Convert selectedIds to Set for efficient lookup
+  const selectedIdsSet = React.useMemo(() => {
+    if (!props.selectedIds) return new Set<string>();
+    if (Array.isArray(props.selectedIds)) {
+      return new Set(props.selectedIds);
+    }
+    return props.selectedIds;
+  }, [props.selectedIds]);
+
+  // Check if an element is already selected
+  const isElementSelected = (element: T): boolean => {
+    if (!props.getElementId || selectedIdsSet.size === 0) return false;
+    const id = props.getElementId(element);
+    return selectedIdsSet.has(id);
+  };
 
   const fetchElements = useCallback(async () => {
     try {
@@ -66,24 +84,32 @@ export function SelectModal<T>(props: SelectModalProps<T>) {
             <div>Bitte gib deine Suche ein</div>
           )
         ) : (
-          elements.sort(props.compareFunction).map((element, index) => (
-            <div key={'select-modal-' + index} tabIndex={index} className={`rounded-box border border-base-300 bg-base-100`}>
-              <div className={`md:p-3' flex justify-between p-2 text-xl font-medium`}>
-                {props.elementComponent(element)}
-                <button
-                  type="button"
-                  className={'btn btn-primary btn-sm'}
-                  onClick={() => {
-                    props.onElementSelected?.(element);
-                    setSearch('');
-                    modalContext.closeModal();
-                  }}
-                >
-                  {props.selectionLabel ?? 'Auswählen'}
-                </button>
+          elements.sort(props.compareFunction).map((element, index) => {
+            const isSelected = isElementSelected(element);
+            return (
+              <div
+                key={'select-modal-' + index}
+                tabIndex={index}
+                className={`rounded-box border border-base-300 bg-base-100 ${isSelected ? 'opacity-60' : ''}`}
+              >
+                <div className={`md:p-3' flex justify-between p-2 text-xl font-medium`}>
+                  {props.elementComponent(element)}
+                  <button
+                    type="button"
+                    disabled={isSelected}
+                    className={'btn btn-primary btn-sm'}
+                    onClick={() => {
+                      props.onElementSelected?.(element);
+                      setSearch('');
+                      modalContext.closeModal();
+                    }}
+                  >
+                    {props.selectionLabel ?? 'Auswählen'}
+                  </button>
+                </div>
               </div>
-            </div>
-          ))
+            );
+          })
         )}
       </>
     </div>
