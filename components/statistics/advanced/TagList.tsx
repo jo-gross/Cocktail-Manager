@@ -41,9 +41,9 @@ export function TagList({ items, selectedIds = new Set(), onToggleSelect, onClea
   }, [items, filter, sortBy]);
 
   return (
-    <div className="card bg-base-100 shadow">
+    <div className="card">
       <div className="card-body">
-        <div className="card-title mb-4 flex items-center justify-between text-lg">
+        <div className="card-title flex items-center justify-between">
           <span className="flex items-center gap-2">
             Tags
             {loading && <span className="loading loading-spinner loading-xs"></span>}
@@ -62,15 +62,15 @@ export function TagList({ items, selectedIds = new Set(), onToggleSelect, onClea
           )}
         </div>
 
-        <div className="mb-4 flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <input
             type="text"
             placeholder="Filter..."
-            className="input input-sm input-bordered flex-1"
+            className="input input-sm input-bordered w-full flex-1"
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
           />
-          <select className="select select-bordered select-sm" value={sortBy} onChange={(e) => setSortBy(e.target.value as SortOption)}>
+          <select className="select select-bordered select-sm w-fit" value={sortBy} onChange={(e) => setSortBy(e.target.value as SortOption)}>
             <option value="count-desc">↓ Bestellungen</option>
             <option value="count-asc">↑ Bestellungen</option>
             <option value="alpha-asc">A-Z</option>

@@ -59,7 +59,7 @@ export function CocktailList({ items, selectedId, onSelect, hiddenIds = new Set(
 
   if (loading) {
     return (
-      <div className="card bg-base-100 shadow">
+      <div className="card">
         <div className="card-body">
           <div className="text-center text-base-content/70">Lade...</div>
         </div>
@@ -68,13 +68,16 @@ export function CocktailList({ items, selectedId, onSelect, hiddenIds = new Set(
   }
 
   return (
-    <div className="card bg-base-100 shadow">
+    <div className="card">
       <div className="card-body">
-        <div className="mb-4 flex items-center justify-between">
-          <h3 className="card-title text-lg">Cocktails</h3>
+        <div className="flex items-center justify-between">
+          <span className="flex items-center gap-2">
+            Cocktails
+            {loading && <span className="loading loading-spinner loading-xs"></span>}
+          </span>
         </div>
 
-        <input type="text" placeholder="Filter..." className="input input-sm input-bordered mb-4" value={filter} onChange={(e) => setFilter(e.target.value)} />
+        <input type="text" placeholder="Filter..." className="input input-sm input-bordered" value={filter} onChange={(e) => setFilter(e.target.value)} />
 
         <div className="overflow-x-auto">
           <table className="table table-sm">

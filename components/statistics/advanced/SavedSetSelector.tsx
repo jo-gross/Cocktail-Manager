@@ -111,58 +111,64 @@ export function SavedSetSelector({
   };
 
   return (
-    <div className="space-y-2">
-      <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-base-content/70">
-        Gespeicherte Sets
-        {loading && <span className="loading loading-spinner loading-xs"></span>}
-      </div>
-      {sets.length === 0 ? (
-        <div className="text-sm text-base-content/70">Keine Sets gespeichert</div>
-      ) : (
-        sets.map((set) => (
-          <div
-            key={set.id}
-            className={`cursor-pointer rounded-lg border-2 p-3 transition-colors ${
-              selectedSetId === set.id ? 'border-primary bg-primary/10' : 'border-base-300'
-            }`}
-            onClick={() => onSelect(selectedSetId === set.id ? undefined : set.id, set.type)}
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div>
-                  <div className="font-semibold">{set.name}</div>
-                  <div className="text-xs text-base-content/70">
-                    {set.items.length} {getTypeLabel(set.type)}
-                    {set.logic && ` · ${set.logic}`}
+    <div className="card">
+      <div className="card-body">
+        <div className="card-title flex items-center justify-between">
+          <span className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-base-content/70">
+            Gespeicherte Sets
+            {loading && <span className="loading loading-spinner loading-xs"></span>}
+          </span>
+        </div>
+        <div className="space-y-2">
+          {sets.length === 0 ? (
+            <div className="text-sm text-base-content/70">Keine Sets gespeichert</div>
+          ) : (
+            sets.map((set) => (
+              <div
+                key={set.id}
+                className={`cursor-pointer rounded-lg border-2 p-3 transition-colors ${
+                  selectedSetId === set.id ? 'border-primary bg-primary/10' : 'border-base-300'
+                }`}
+                onClick={() => onSelect(selectedSetId === set.id ? undefined : set.id, set.type)}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div>
+                      <div className="font-semibold">{set.name}</div>
+                      <div className="text-xs text-base-content/70">
+                        {set.items.length} {getTypeLabel(set.type)}
+                        {set.logic && ` · ${set.logic}`}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    {onEdit && (
+                      <button
+                        className="btn btn-ghost btn-xs"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onEdit(set);
+                        }}
+                      >
+                        <FaEdit />
+                      </button>
+                    )}
+                    <button
+                      className="btn btn-ghost btn-xs text-error"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDelete(set);
+                      }}
+                    >
+                      <FaTrash />
+                    </button>
                   </div>
                 </div>
               </div>
-              <div className="flex gap-2">
-                {onEdit && (
-                  <button
-                    className="btn btn-ghost btn-xs"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onEdit(set);
-                    }}
-                  >
-                    <FaEdit />
-                  </button>
-                )}
-                <button
-                  className="btn btn-ghost btn-xs text-error"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDelete(set);
-                  }}
-                >
-                  <FaTrash />
-                </button>
-              </div>
-            </div>
-          </div>
-        ))
-      )}
+            ))
+          )}
+        </div>
+      </div>
     </div>
   );
 }

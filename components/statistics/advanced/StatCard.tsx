@@ -39,7 +39,7 @@ export function StatCard({ title, value, desc, delta, previousValue, previousPer
     ) : null;
 
   return (
-    <div className={`stat bg-base-200 shadow-md ${className}`}>
+    <div className={`stat bg-base-200 ${className}`}>
       <div className="stat-title">{title}</div>
       <div className="stat-value">{loading ? <div className="skeleton h-8 w-24"></div> : displayValue}</div>
       <div className="stat-desc">{loading ? <div className="skeleton mt-1 h-4 w-40"></div> : deltaDesc || desc || <span className="opacity-0">.</span>}</div>

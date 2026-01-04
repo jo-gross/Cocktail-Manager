@@ -186,7 +186,7 @@ export function TimeRangePicker({
           </svg>
           <span className="hidden sm:inline">{formatDateRange(value.startDate, value.endDate)}</span>
         </div>
-        <div tabIndex={0} className="menu dropdown-content z-[1000] w-80 rounded-box bg-base-100 p-4 shadow-lg">
+        <div tabIndex={0} className="menu dropdown-content z-[1000] w-[calc(100vw-2rem)] rounded-box bg-base-100 p-4 shadow-lg md:w-80">
           <div className="flex flex-col gap-3">
             <div className="text-sm font-semibold">Zeitraum auswählen</div>
             <select className="select select-bordered select-sm w-full" value={preset} onChange={(e) => handlePresetChange(e.target.value as TimeRangePreset)}>
@@ -232,7 +232,7 @@ export function TimeRangePicker({
               </div>
             )}
 
-            <div className="divider my-1"></div>
+            <div className="divider-sm"></div>
 
             <div className="text-xs text-base-content/70">
               <div className="mb-1 font-medium">Gewählter Zeitraum:</div>
@@ -240,7 +240,7 @@ export function TimeRangePicker({
             </div>
 
             {dayStartTime && dayStartTime !== '00:00' && (
-              <div className="mt-2 flex items-center gap-1 text-xs text-base-content/50">
+              <div className="flex items-center gap-1 text-xs text-base-content/50">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
