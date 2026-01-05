@@ -1,38 +1,39 @@
-import React, { useState, useMemo } from 'react';
-import { FaTimes } from 'react-icons/fa';
+import React, {useMemo, useState} from 'react';
+import {FaTimes} from 'react-icons/fa';
 
 type SortOption = 'count-desc' | 'count-asc' | 'alpha-asc' | 'alpha-desc';
 
-interface CocktailItem {
-  id: string;
-  name: string;
+interface IngredientListItem {
+  ingredient: string;
   count: number;
+  cocktailCount: number;
+  percentage: number;
 }
 
-interface AnalysisCocktailSelectorProps {
-  items: CocktailItem[];
-  selectedIds: Set<string>;
-  onToggleSelect: (cocktailId: string) => void;
+interface IngredientListProps {
+  items: IngredientListItem[];
+  selectedIds?: Set<string>;
+  onToggleSelect?: (ingredient: string) => void;
   onClear?: () => void;
   loading?: boolean;
 }
 
-export function AnalysisCocktailSelector({ items, selectedIds, onToggleSelect, onClear, loading }: AnalysisCocktailSelectorProps) {
+export function IngredientList({ items, selectedIds = new Set(), onToggleSelect, onClear, loading }: IngredientListProps) {
   const [filter, setFilter] = useState('');
   const [sortBy, setSortBy] = useState<SortOption>('count-desc');
 
   const sortedAndFilteredItems = useMemo(() => {
-    let filtered = items.filter((item) => item.name.toLowerCase().includes(filter.toLowerCase()));
+    let filtered = items.filter((item) => item.ingredient.toLowerCase().includes(filter.toLowerCase()));
 
     switch (sortBy) {
       case 'count-desc':
-        return filtered.sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+        return filtered.sort((a, b) => b.count - a.count || a.ingredient.localeCompare(b.ingredient));
       case 'count-asc':
-        return filtered.sort((a, b) => a.count - b.count || a.name.localeCompare(b.name));
+        return filtered.sort((a, b) => a.count - b.count || a.ingredient.localeCompare(b.ingredient));
       case 'alpha-asc':
-        return filtered.sort((a, b) => a.name.localeCompare(b.name));
+        return filtered.sort((a, b) => a.ingredient.localeCompare(b.ingredient));
       case 'alpha-desc':
-        return filtered.sort((a, b) => b.name.localeCompare(a.name));
+        return filtered.sort((a, b) => b.ingredient.localeCompare(a.ingredient));
       default:
         return filtered;
     }
@@ -43,7 +44,7 @@ export function AnalysisCocktailSelector({ items, selectedIds, onToggleSelect, o
       <div className="card-body">
         <div className="card-title flex items-center justify-between">
           <span className="flex items-center gap-2">
-            Cocktails
+            Zutaten
             {loading && <span className="loading loading-spinner loading-xs"></span>}
           </span>
           {selectedIds.size > 0 && onClear && (
@@ -79,29 +80,33 @@ export function AnalysisCocktailSelector({ items, selectedIds, onToggleSelect, o
         <div className="max-h-[60vh] space-y-2 overflow-y-auto">
           {sortedAndFilteredItems.map((item) => (
             <div
-              key={item.id}
+              key={item.ingredient}
               className={`cursor-pointer rounded-lg border-2 p-3 transition-colors ${
-                selectedIds.has(item.id) ? 'border-primary bg-primary/10' : 'border-base-300'
+                selectedIds.has(item.ingredient) ? 'border-primary bg-primary/10' : 'border-base-300'
               }`}
-              onClick={() => onToggleSelect(item.id)}
+              onClick={() => onToggleSelect?.(item.ingredient)}
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="font-semibold">{item.name}</div>
-                  <div className="text-sm text-base-content/70">{item.count} Bestellungen</div>
+                  <div className="font-semibold">{item.ingredient}</div>
+                  <div className="text-sm text-base-content/70">
+                    {item.count} Bestellungen · {item.cocktailCount} Cocktails
+                  </div>
                 </div>
-                <input
-                  type="checkbox"
-                  className="checkbox-primary checkbox"
-                  checked={selectedIds.has(item.id)}
-                  onChange={() => onToggleSelect(item.id)}
-                  onClick={(e) => e.stopPropagation()}
-                />
+                {onToggleSelect && (
+                  <input
+                    type="checkbox"
+                    className="checkbox-primary checkbox"
+                    checked={selectedIds.has(item.ingredient)}
+                    onChange={() => onToggleSelect(item.ingredient)}
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                )}
               </div>
             </div>
           ))}
         </div>
-        {sortedAndFilteredItems.length === 0 && <div className="py-4 text-center text-base-content/70">Keine Cocktails gefunden</div>}
+        {sortedAndFilteredItems.length === 0 && <div className="py-4 text-center text-base-content/70">Keine Zutaten gefunden</div>}
       </div>
     </div>
   );

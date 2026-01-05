@@ -1,17 +1,17 @@
-import { ManageCard } from '@components/manage/ManageCard';
-import { ManageEntityLayout } from '@components/layout/ManageEntityLayout';
-import { useRouter } from 'next/router';
-import { UserContext } from '@lib/context/UserContextProvider';
-import React, { useContext } from 'react';
-import { signOut } from 'next-auth/react';
+import {ManageCard} from '@components/manage/ManageCard';
+import {ManageEntityLayout} from '@components/layout/ManageEntityLayout';
+import {useRouter} from 'next/router';
+import {UserContext} from '@lib/context/UserContextProvider';
+import React, {useContext} from 'react';
+import {signOut} from 'next-auth/react';
 import LoadingText from '../../../../components/LoadingText';
 import Link from 'next/link';
 import AvatarImage from '../../../../components/AvatarImage';
-import { FaCalculator, FaCocktail, FaGlassMartiniAlt, FaKey, FaUsers } from 'react-icons/fa';
-import { LuCitrus, LuHistory, LuMonitorPlay } from 'react-icons/lu';
-import { PiBeerBottleBold, PiCards } from 'react-icons/pi';
-import { FaGear } from 'react-icons/fa6';
-import { IoMdStats } from 'react-icons/io';
+import {FaCalculator, FaCocktail, FaGlassMartiniAlt, FaKey, FaUsers} from 'react-icons/fa';
+import {LuCitrus, LuHistory, LuMonitorPlay} from 'react-icons/lu';
+import {PiBeerBottleBold, PiCards} from 'react-icons/pi';
+import {FaGear} from 'react-icons/fa6';
+import {IoMdStats} from 'react-icons/io';
 import packageInfo from '../../../../package.json';
 
 export default function ManagePage() {
@@ -112,9 +112,10 @@ export default function ManagePage() {
 
           <div className={'flex flex-col gap-2'}>
             <div className={'divider col-span-full'}>Zahlen</div>
-            <ManageCard icon={<IoMdStats />} title={'Statistik'} link={`/workspaces/${workspaceId}/manage/statistics/advanced`} />
+              <ManageCard icon={<IoMdStats/>} title={'Statistik'}
+                          link={`/workspaces/${workspaceId}/manage/statistics`}/>
             <ManageCard icon={<FaCalculator />} title={'Mengen-Kalkulation'} link={`/workspaces/${workspaceId}/manage/calculations`} />
-            <ManageCard icon={<LuHistory />} title={'Buchungs-Logs'} link={`/workspaces/${workspaceId}/manage/statistics`} />
+            <ManageCard icon={<LuHistory />} title={'Buchungs-Logs'} link={`/workspaces/${workspaceId}/manage/logs`} />
           </div>
 
           <div className={'flex flex-col gap-2'}>

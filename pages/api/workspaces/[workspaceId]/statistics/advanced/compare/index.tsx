@@ -2,7 +2,7 @@ import prisma from '../../../../../../../prisma/prisma';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
 import { withHttpMethods } from '@middleware/api/handleMethods';
-import { Role, Permission } from '@generated/prisma/client';
+import { Role, Permission, WorkspaceSettingKey } from '@generated/prisma/client';
 import HTTPMethod from 'http-method-enum';
 import '../../../../../../../lib/DateUtils';
 import { getStartOfDay, getEndOfDay } from '../../../../../../../lib/dateHelpers';
@@ -14,6 +14,17 @@ export default withHttpMethods({
     if (!type || !items) {
       return res.status(400).json({ message: 'type and items are required' });
     }
+
+    // Load workspace day start time setting
+    const dayStartTimeSetting = await prisma.workspaceSetting.findUnique({
+      where: {
+        workspaceId_setting: {
+          workspaceId: workspace.id,
+          setting: WorkspaceSettingKey.statisticDayStartTime,
+        },
+      },
+    });
+    const dayStartTime = dayStartTimeSetting?.value || undefined;
 
     // Parse items from JSON string if it's a string, otherwise use as array
     let itemArray: string[];
@@ -36,8 +47,8 @@ export default withHttpMethods({
     let end: Date;
 
     if (startDate && endDate) {
-      start = getStartOfDay(new Date(startDate as string));
-      end = getEndOfDay(new Date(endDate as string));
+      start = getStartOfDay(new Date(startDate as string), dayStartTime);
+      end = getEndOfDay(new Date(endDate as string), dayStartTime);
     } else {
       // Use all time
       start = new Date(0);

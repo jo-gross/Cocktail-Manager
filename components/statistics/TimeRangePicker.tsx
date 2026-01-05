@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, {useEffect, useState} from 'react';
+import {getEndOfDay, getStartOfDay, getStartOfMonth, getStartOfWeek, getStartOfYear} from '@lib/dateHelpers';
 
 export type TimeRangePreset = 'today' | 'yesterday' | 'thisWeek' | 'lastWeek' | 'thisMonth' | 'lastMonth' | 'thisYear' | 'allTime' | 'custom';
 
@@ -18,8 +19,6 @@ interface TimeRangePickerProps {
   compact?: boolean;
   dayStartTime?: string;
 }
-
-import { getStartOfDay, getEndOfDay, getStartOfWeek, getStartOfMonth, getStartOfYear } from '@lib/dateHelpers';
 
 function getPresetRange(preset: TimeRangePreset, dayStartTime?: string): { start: Date; end: Date } {
   const now = new Date();

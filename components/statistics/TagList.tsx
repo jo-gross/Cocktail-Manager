@@ -1,39 +1,39 @@
-import React, { useState, useMemo } from 'react';
-import { FaTimes } from 'react-icons/fa';
+import React, {useMemo, useState} from 'react';
+import {FaTimes} from 'react-icons/fa';
 
 type SortOption = 'count-desc' | 'count-asc' | 'alpha-asc' | 'alpha-desc';
 
-interface IngredientListItem {
-  ingredient: string;
+interface TagListItem {
+  tag: string;
   count: number;
   cocktailCount: number;
   percentage: number;
 }
 
-interface IngredientListProps {
-  items: IngredientListItem[];
+interface TagListProps {
+  items: TagListItem[];
   selectedIds?: Set<string>;
-  onToggleSelect?: (ingredient: string) => void;
+  onToggleSelect?: (tag: string) => void;
   onClear?: () => void;
   loading?: boolean;
 }
 
-export function IngredientList({ items, selectedIds = new Set(), onToggleSelect, onClear, loading }: IngredientListProps) {
+export function TagList({ items, selectedIds = new Set(), onToggleSelect, onClear, loading }: TagListProps) {
   const [filter, setFilter] = useState('');
   const [sortBy, setSortBy] = useState<SortOption>('count-desc');
 
   const sortedAndFilteredItems = useMemo(() => {
-    let filtered = items.filter((item) => item.ingredient.toLowerCase().includes(filter.toLowerCase()));
+    let filtered = items.filter((item) => item.tag.toLowerCase().includes(filter.toLowerCase()));
 
     switch (sortBy) {
       case 'count-desc':
-        return filtered.sort((a, b) => b.count - a.count || a.ingredient.localeCompare(b.ingredient));
+        return filtered.sort((a, b) => b.count - a.count || a.tag.localeCompare(b.tag));
       case 'count-asc':
-        return filtered.sort((a, b) => a.count - b.count || a.ingredient.localeCompare(b.ingredient));
+        return filtered.sort((a, b) => a.count - b.count || a.tag.localeCompare(b.tag));
       case 'alpha-asc':
-        return filtered.sort((a, b) => a.ingredient.localeCompare(b.ingredient));
+        return filtered.sort((a, b) => a.tag.localeCompare(b.tag));
       case 'alpha-desc':
-        return filtered.sort((a, b) => b.ingredient.localeCompare(a.ingredient));
+        return filtered.sort((a, b) => b.tag.localeCompare(a.tag));
       default:
         return filtered;
     }
@@ -44,7 +44,7 @@ export function IngredientList({ items, selectedIds = new Set(), onToggleSelect,
       <div className="card-body">
         <div className="card-title flex items-center justify-between">
           <span className="flex items-center gap-2">
-            Zutaten
+            Tags
             {loading && <span className="loading loading-spinner loading-xs"></span>}
           </span>
           {selectedIds.size > 0 && onClear && (
@@ -80,15 +80,15 @@ export function IngredientList({ items, selectedIds = new Set(), onToggleSelect,
         <div className="max-h-[60vh] space-y-2 overflow-y-auto">
           {sortedAndFilteredItems.map((item) => (
             <div
-              key={item.ingredient}
+              key={item.tag}
               className={`cursor-pointer rounded-lg border-2 p-3 transition-colors ${
-                selectedIds.has(item.ingredient) ? 'border-primary bg-primary/10' : 'border-base-300'
+                selectedIds.has(item.tag) ? 'border-primary bg-primary/10' : 'border-base-300'
               }`}
-              onClick={() => onToggleSelect?.(item.ingredient)}
+              onClick={() => onToggleSelect?.(item.tag)}
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="font-semibold">{item.ingredient}</div>
+                  <div className="font-semibold">{item.tag}</div>
                   <div className="text-sm text-base-content/70">
                     {item.count} Bestellungen · {item.cocktailCount} Cocktails
                   </div>
@@ -97,8 +97,8 @@ export function IngredientList({ items, selectedIds = new Set(), onToggleSelect,
                   <input
                     type="checkbox"
                     className="checkbox-primary checkbox"
-                    checked={selectedIds.has(item.ingredient)}
-                    onChange={() => onToggleSelect(item.ingredient)}
+                    checked={selectedIds.has(item.tag)}
+                    onChange={() => onToggleSelect(item.tag)}
                     onClick={(e) => e.stopPropagation()}
                   />
                 )}
@@ -106,7 +106,7 @@ export function IngredientList({ items, selectedIds = new Set(), onToggleSelect,
             </div>
           ))}
         </div>
-        {sortedAndFilteredItems.length === 0 && <div className="py-4 text-center text-base-content/70">Keine Zutaten gefunden</div>}
+        {sortedAndFilteredItems.length === 0 && <div className="py-4 text-center text-base-content/70">Keine Tags gefunden</div>}
       </div>
     </div>
   );

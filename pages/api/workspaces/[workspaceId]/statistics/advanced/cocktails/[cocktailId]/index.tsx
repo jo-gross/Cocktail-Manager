@@ -2,7 +2,7 @@ import prisma from '../../../../../../../../prisma/prisma';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
 import { withHttpMethods } from '@middleware/api/handleMethods';
-import { Role, Permission } from '@generated/prisma/client';
+import { Role, Permission, WorkspaceSettingKey } from '@generated/prisma/client';
 import HTTPMethod from 'http-method-enum';
 import '../../../../../../../../lib/DateUtils';
 import { getStartOfDay, getEndOfDay } from '../../../../../../../../lib/dateHelpers';
@@ -52,13 +52,24 @@ export default withHttpMethods({
       return res.status(404).json({ message: 'Cocktail not found' });
     }
 
+    // Load workspace day start time setting
+    const dayStartTimeSetting = await prisma.workspaceSetting.findUnique({
+      where: {
+        workspaceId_setting: {
+          workspaceId: workspace.id,
+          setting: WorkspaceSettingKey.statisticDayStartTime,
+        },
+      },
+    });
+    const dayStartTime = dayStartTimeSetting?.value || undefined;
+
     // Determine date range
     let start: Date;
     let end: Date;
 
     if (startDate && endDate) {
-      start = getStartOfDay(new Date(startDate as string));
-      end = getEndOfDay(new Date(endDate as string));
+      start = getStartOfDay(new Date(startDate as string), dayStartTime);
+      end = getEndOfDay(new Date(endDate as string), dayStartTime);
     } else {
       // All-time: get first and last statistic
       const firstStat = await prisma.cocktailStatisticItem.findFirst({
@@ -101,8 +112,8 @@ export default withHttpMethods({
         });
       }
 
-      start = getStartOfDay(firstStat.date);
-      end = lastStat ? getEndOfDay(lastStat.date) : getEndOfDay(new Date());
+      start = getStartOfDay(firstStat.date, dayStartTime);
+      end = lastStat ? getEndOfDay(lastStat.date, dayStartTime) : getEndOfDay(new Date(), dayStartTime);
     }
 
     // Calculate previous period for comparison

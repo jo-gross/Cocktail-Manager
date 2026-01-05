@@ -1,6 +1,6 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { Bar } from 'react-chartjs-2';
-import { CategoryScale, Chart as ChartJS, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
+import React, {useEffect, useRef, useState} from 'react';
+import {Bar} from 'react-chartjs-2';
+import {BarElement, CategoryScale, Chart as ChartJS, Legend, LinearScale, Title, Tooltip} from 'chart.js';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 

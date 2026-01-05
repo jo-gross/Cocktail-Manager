@@ -2,7 +2,7 @@ import prisma from '../../../../../../../prisma/prisma';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
 import { withHttpMethods } from '@middleware/api/handleMethods';
-import { Role, Permission } from '@generated/prisma/client';
+import { Role, Permission, WorkspaceSettingKey } from '@generated/prisma/client';
 import HTTPMethod from 'http-method-enum';
 import '../../../../../../../lib/DateUtils';
 import { getStartOfDay, getEndOfDay, getStartOfWeek, getStartOfMonth } from '../../../../../../../lib/dateHelpers';
@@ -106,6 +106,17 @@ export default withHttpMethods({
   [HTTPMethod.GET]: withWorkspacePermission([Role.USER], Permission.STATISTICS_READ, async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
     const now = new Date();
 
+    // Load workspace day start time setting
+    const dayStartTimeSetting = await prisma.workspaceSetting.findUnique({
+      where: {
+        workspaceId_setting: {
+          workspaceId: workspace.id,
+          setting: WorkspaceSettingKey.statisticDayStartTime,
+        },
+      },
+    });
+    const dayStartTime = dayStartTimeSetting?.value || undefined;
+
     // Check if custom date range is provided
     const customStartDate = req.query.startDate as string | undefined;
     const customEndDate = req.query.endDate as string | undefined;
@@ -117,38 +128,42 @@ export default withHttpMethods({
       selectedStartDate = new Date(customStartDate);
       selectedEndDate = new Date(customEndDate);
       // Ensure we're working with full days
-      selectedStartDate = getStartOfDay(selectedStartDate);
-      selectedEndDate = getEndOfDay(selectedEndDate);
+      selectedStartDate = getStartOfDay(selectedStartDate, dayStartTime);
+      selectedEndDate = getEndOfDay(selectedEndDate, dayStartTime);
     } else {
       // Default to last 7 days
       selectedStartDate = new Date(now);
       selectedStartDate.setDate(selectedStartDate.getDate() - 7);
-      selectedStartDate = getStartOfDay(selectedStartDate);
-      selectedEndDate = getEndOfDay(now);
+      selectedStartDate = getStartOfDay(selectedStartDate, dayStartTime);
+      selectedEndDate = getEndOfDay(now, dayStartTime);
     }
 
-    const todayStart = getStartOfDay(now);
-    const todayEnd = getEndOfDay(now);
+    const todayStart = getStartOfDay(now, dayStartTime);
+    const todayEnd = getEndOfDay(now, dayStartTime);
     const yesterdayStart = new Date(todayStart);
     yesterdayStart.setDate(yesterdayStart.getDate() - 1);
     const yesterdayEnd = new Date(todayEnd);
     yesterdayEnd.setDate(yesterdayEnd.getDate() - 1);
 
-    const weekStart = getStartOfWeek(now);
-    const weekEnd = getEndOfDay(now);
+    const weekStart = getStartOfWeek(now, dayStartTime);
+    const weekEnd = getEndOfDay(now, dayStartTime);
     const lastWeekStart = new Date(weekStart);
     lastWeekStart.setDate(lastWeekStart.getDate() - 7);
     const lastWeekEnd = new Date(weekStart);
     lastWeekEnd.setDate(lastWeekEnd.getDate() - 1);
-    lastWeekEnd.setHours(23, 59, 59, 999);
+    // Ensure last week dates respect dayStartTime
+    const lastWeekStartAdjusted = getStartOfDay(lastWeekStart, dayStartTime);
+    const lastWeekEndAdjusted = getEndOfDay(lastWeekEnd, dayStartTime);
 
-    const monthStart = getStartOfMonth(now);
-    const monthEnd = getEndOfDay(now);
+    const monthStart = getStartOfMonth(now, dayStartTime);
+    const monthEnd = getEndOfDay(now, dayStartTime);
     const lastMonthStart = new Date(monthStart);
     lastMonthStart.setMonth(lastMonthStart.getMonth() - 1);
     const lastMonthEnd = new Date(monthStart);
     lastMonthEnd.setDate(0); // Last day of previous month
-    lastMonthEnd.setHours(23, 59, 59, 999);
+    // Ensure last month dates respect dayStartTime
+    const lastMonthStartAdjusted = getStartOfDay(lastMonthStart, dayStartTime);
+    const lastMonthEndAdjusted = getEndOfDay(lastMonthEnd, dayStartTime);
 
     // Get statistics for current periods
     const todayStats = await getStatisticsForPeriod(workspace.id, todayStart, todayEnd);
@@ -157,8 +172,8 @@ export default withHttpMethods({
 
     // Get statistics for comparison periods
     const yesterdayStats = await getStatisticsForPeriod(workspace.id, yesterdayStart, yesterdayEnd);
-    const lastWeekStats = await getStatisticsForPeriod(workspace.id, lastWeekStart, lastWeekEnd);
-    const lastMonthStats = await getStatisticsForPeriod(workspace.id, lastMonthStart, lastMonthEnd);
+    const lastWeekStats = await getStatisticsForPeriod(workspace.id, lastWeekStartAdjusted, lastWeekEndAdjusted);
+    const lastMonthStats = await getStatisticsForPeriod(workspace.id, lastMonthStartAdjusted, lastMonthEndAdjusted);
 
     // Get all-time statistics
     const firstStat = await prisma.cocktailStatisticItem.findFirst({
@@ -172,8 +187,8 @@ export default withHttpMethods({
 
     let allTimeStats = { total: 0, avgPerDay: 0, daysActive: 0, topCocktail: null, revenue: 0 };
     if (firstStat) {
-      const allTimeStart = getStartOfDay(firstStat.date);
-      const allTimeEnd = getEndOfDay(now);
+      const allTimeStart = getStartOfDay(firstStat.date, dayStartTime);
+      const allTimeEnd = getEndOfDay(now, dayStartTime);
       const allTimeData = await getStatisticsForPeriod(workspace.id, allTimeStart, allTimeEnd);
       const daysActive = Math.ceil((allTimeEnd.getTime() - allTimeStart.getTime()) / (1000 * 60 * 60 * 24));
       allTimeStats = {

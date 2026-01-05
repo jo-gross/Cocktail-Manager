@@ -2,7 +2,7 @@ import prisma from '../../../../../../../prisma/prisma';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
 import { withHttpMethods } from '@middleware/api/handleMethods';
-import { Role, Permission } from '@generated/prisma/client';
+import { Role, Permission, WorkspaceSettingKey } from '@generated/prisma/client';
 import HTTPMethod from 'http-method-enum';
 import '../../../../../../../lib/DateUtils';
 import { getStartOfDay, getEndOfDay } from '../../../../../../../lib/dateHelpers';
@@ -15,8 +15,19 @@ export default withHttpMethods({
       return res.status(400).json({ message: 'startDate and endDate are required' });
     }
 
-    const start = getStartOfDay(new Date(startDate as string));
-    const end = getEndOfDay(new Date(endDate as string));
+    // Load workspace day start time setting
+    const dayStartTimeSetting = await prisma.workspaceSetting.findUnique({
+      where: {
+        workspaceId_setting: {
+          workspaceId: workspace.id,
+          setting: WorkspaceSettingKey.statisticDayStartTime,
+        },
+      },
+    });
+    const dayStartTime = dayStartTimeSetting?.value || undefined;
+
+    const start = getStartOfDay(new Date(startDate as string), dayStartTime);
+    const end = getEndOfDay(new Date(endDate as string), dayStartTime);
 
     // Calculate previous period for comparison
     const periodLength = end.getTime() - start.getTime();
