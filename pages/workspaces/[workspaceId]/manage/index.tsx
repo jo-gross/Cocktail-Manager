@@ -8,7 +8,7 @@ import LoadingText from '../../../../components/LoadingText';
 import Link from 'next/link';
 import AvatarImage from '../../../../components/AvatarImage';
 import { FaCalculator, FaCocktail, FaGlassMartiniAlt, FaKey, FaUsers } from 'react-icons/fa';
-import { LuCitrus, LuMonitorPlay } from 'react-icons/lu';
+import { LuCitrus, LuHistory, LuMonitorPlay } from 'react-icons/lu';
 import { PiBeerBottleBold, PiCards } from 'react-icons/pi';
 import { FaGear } from 'react-icons/fa6';
 import { IoMdStats } from 'react-icons/io';
@@ -112,8 +112,9 @@ export default function ManagePage() {
 
           <div className={'flex flex-col gap-2'}>
             <div className={'divider col-span-full'}>Zahlen</div>
-            <ManageCard icon={<IoMdStats />} title={'Statistiken'} link={`/workspaces/${workspaceId}/manage/statistics`} />
+            <ManageCard icon={<IoMdStats />} title={'Statistik'} link={`/workspaces/${workspaceId}/manage/statistics`} />
             <ManageCard icon={<FaCalculator />} title={'Mengen-Kalkulation'} link={`/workspaces/${workspaceId}/manage/calculations`} />
+            <ManageCard icon={<LuHistory />} title={'Buchungs-Logs'} link={`/workspaces/${workspaceId}/manage/logs`} />
           </div>
 
           <div className={'flex flex-col gap-2'}>

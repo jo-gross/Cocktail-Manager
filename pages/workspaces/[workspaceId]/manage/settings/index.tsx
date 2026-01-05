@@ -56,6 +56,48 @@ function WorkspaceSettingPage() {
 
   const [collapsedGeneratedUnits, setCollapsedGeneratedUnits] = useState<boolean>(false);
 
+  // Statistik-Einstellungen
+  const [statisticDayStartTime, setStatisticDayStartTime] = useState<string>('00:00');
+  const [statisticSettingsSaving, setStatisticSettingsSaving] = useState<boolean>(false);
+
+  // Lade Workspace-Settings beim Start
+  useEffect(() => {
+    if (!workspaceId) return;
+    fetch(`/api/workspaces/${workspaceId}/settings`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.data?.statisticDayStartTime) {
+          setStatisticDayStartTime(data.data.statisticDayStartTime);
+        }
+      })
+      .catch(console.error);
+  }, [workspaceId]);
+
+  const saveStatisticDayStartTime = useCallback(async () => {
+    if (!workspaceId) return;
+    setStatisticSettingsSaving(true);
+    try {
+      const response = await fetch(`/api/workspaces/${workspaceId}/settings`, {
+        method: 'PUT',
+        body: JSON.stringify({
+          setting: 'statisticDayStartTime',
+          value: statisticDayStartTime,
+        }),
+      });
+      if (response.ok) {
+        alertService.success('Einstellung gespeichert');
+      } else {
+        const body = await response.json();
+        alertService.error(body.message ?? 'Fehler beim Speichern');
+      }
+    } catch (error) {
+      console.error('saveStatisticDayStartTime', error);
+      alertService.error('Fehler beim Speichern');
+    } finally {
+      setStatisticSettingsSaving(false);
+    }
+  }, [workspaceId, statisticDayStartTime]);
+
   const exportAll = useCallback(async () => {
     setExporting(true);
     fetch(`/api/workspaces/${workspaceId}/admin/backups/export`)
@@ -725,6 +767,42 @@ function WorkspaceSettingPage() {
         ) : (
           <></>
         )}
+
+        {/* Statistik-Einstellungen */}
+        {userContext.isUserPermitted(Role.MANAGER) ? (
+          <>
+            <div className={'col-span-full'}></div>
+            <div className={'card'}>
+              <div className={'card-body'}>
+                <div className={'card-title'}>Statistik-Einstellungen</div>
+                <div className={'form-control'}>
+                  <label className={'label'}>
+                    <span className={'label-text font-semibold'}>Tagesstart-Uhrzeit</span>
+                  </label>
+                  <p className={'mb-2 text-sm text-base-content/70'}>
+                    Definiert, wann ein &quot;Tag&quot; für Statistik-Zwecke beginnt. Nützlich für Bars, deren Arbeitstag nicht um Mitternacht beginnt (z.B.
+                    18:00 Uhr).
+                  </p>
+                  <div className={'join'}>
+                    <input
+                      type={'time'}
+                      className={'input join-item input-bordered w-full'}
+                      value={statisticDayStartTime}
+                      onChange={(e) => setStatisticDayStartTime(e.target.value)}
+                    />
+                    <button className={'btn btn-primary join-item'} onClick={saveStatisticDayStartTime} disabled={statisticSettingsSaving}>
+                      {statisticSettingsSaving ? <span className={'loading loading-spinner'} /> : null}
+                      Speichern
+                    </button>
+                  </div>
+                  <label className={'label'}>
+                    <span className={'label-text-alt'}>Aktuell: Ein Tag beginnt um {statisticDayStartTime} Uhr</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </>
+        ) : null}
 
         {userContext.isUserPermitted(Role.ADMIN) ? (
           <>

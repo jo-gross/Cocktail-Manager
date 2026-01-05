@@ -10,6 +10,7 @@ interface ManageEntityLayoutProps {
   children: React.ReactNode;
   backLink: string;
   title?: string | React.ReactNode;
+  subtitle?: string | React.ReactNode;
   actions?: React.ReactNode;
   unsavedChanges?: boolean;
   formRef?: React.RefObject<FormikProps<any>>;
@@ -30,7 +31,7 @@ export function ManageEntityLayout(props: ManageEntityLayoutProps) {
         {/*<div className={'flex flex-col p-1 md:p-4 print:p-1'}>*/}
         <div
           className={
-            'sticky top-0 z-10 grid w-full grid-cols-3 items-center justify-center justify-items-center bg-base-100 p-1 md:p-2 print:grid-cols-1 print:p-1'
+            'sticky top-0 z-20 grid w-full grid-cols-3 items-center justify-center justify-items-center bg-base-100 p-1 md:p-2 print:grid-cols-1 print:p-1'
           }
         >
           <div className={'col-span-1 justify-self-start print:hidden'}>
@@ -54,7 +55,10 @@ export function ManageEntityLayout(props: ManageEntityLayoutProps) {
               <FaArrowLeft />
             </div>
           </div>
-          <div className={'justify-items-center text-3xl font-bold print:text-2xl'}>{props.title}</div>
+          <div className={'justify-items-center'}>
+            <div className="text-3xl font-bold print:text-2xl">{props.title}</div>
+            {props.subtitle && <div className="mt-1 text-sm text-base-content/70 print:hidden">{props.subtitle}</div>}
+          </div>
           <div className={'flex flex-col-reverse items-center gap-2 justify-self-end md:flex-row print:hidden'}>
             {props.unsavedChanges && <div className={'text-center italic print:hidden'}>Nicht gespeicherte Änderungen</div>}
             {props.actions}
