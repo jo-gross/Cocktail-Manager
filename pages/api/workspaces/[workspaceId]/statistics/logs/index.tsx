@@ -1,14 +1,14 @@
 // pages/api/post/index.ts
 
 import prisma from '../../../../../../prisma/prisma';
-import {NextApiRequest, NextApiResponse} from 'next';
-import {withWorkspacePermission} from '@middleware/api/authenticationMiddleware';
-import {withHttpMethods} from '@middleware/api/handleMethods';
-import {Permission, Role, WorkspaceSettingKey} from '@generated/prisma/client';
+import { NextApiRequest, NextApiResponse } from 'next';
+import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
+import { withHttpMethods } from '@middleware/api/handleMethods';
+import { Permission, Role, WorkspaceSettingKey } from '@generated/prisma/client';
 import HTTPMethod from 'http-method-enum';
-import {CocktailStatisticItemFull} from '../../../../../../models/CocktailStatisticItemFull';
+import { CocktailStatisticItemFull } from '../../../../../../models/CocktailStatisticItemFull';
 import '../../../../../../lib/DateUtils';
-import {getEndOfDay, getStartOfDay} from '../../../../../../lib/dateHelpers';
+import { getEndOfDay, getStartOfDay } from '../../../../../../lib/dateHelpers';
 
 export default withHttpMethods({
   [HTTPMethod.GET]: withWorkspacePermission([Role.USER], Permission.STATISTICS_READ, async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {

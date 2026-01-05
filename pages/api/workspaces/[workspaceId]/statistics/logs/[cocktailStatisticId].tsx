@@ -1,9 +1,9 @@
 import prisma from '../../../../../../prisma/prisma';
-import {NextApiRequest, NextApiResponse} from 'next';
+import { NextApiRequest, NextApiResponse } from 'next';
 import HTTPMethod from 'http-method-enum';
-import {withWorkspacePermission} from '@middleware/api/authenticationMiddleware';
-import {Permission, Role} from '@generated/prisma/client';
-import {withHttpMethods} from '@middleware/api/handleMethods';
+import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
+import { Permission, Role } from '@generated/prisma/client';
+import { withHttpMethods } from '@middleware/api/handleMethods';
 
 // DELETE /api/workspaces/[workspaceId]/statistics/logs/:id
 

@@ -1,7 +1,7 @@
-import React, {useContext, useEffect, useState} from 'react';
-import {FaEdit, FaTrash} from 'react-icons/fa';
-import {ModalContext} from '@lib/context/ModalContextProvider';
-import {DeleteConfirmationModal} from '@components/modals/DeleteConfirmationModal';
+import React, { useContext, useEffect, useState } from 'react';
+import { FaEdit, FaTrash } from 'react-icons/fa';
+import { ModalContext } from '@lib/context/ModalContextProvider';
+import { DeleteConfirmationModal } from '@components/modals/DeleteConfirmationModal';
 
 type SavedSetType = 'TAG_SET' | 'INGREDIENT_SET' | 'COCKTAIL_SET';
 

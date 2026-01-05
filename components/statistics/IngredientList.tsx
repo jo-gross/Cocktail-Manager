@@ -1,5 +1,5 @@
-import React, {useMemo, useState} from 'react';
-import {FaTimes} from 'react-icons/fa';
+import React, { useMemo, useState } from 'react';
+import { FaTimes } from 'react-icons/fa';
 
 type SortOption = 'count-desc' | 'count-asc' | 'alpha-asc' | 'alpha-desc';
 

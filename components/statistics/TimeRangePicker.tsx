@@ -1,5 +1,5 @@
-import React, {useEffect, useState} from 'react';
-import {getEndOfDay, getStartOfDay, getStartOfMonth, getStartOfWeek, getStartOfYear} from '@lib/dateHelpers';
+import React, { useEffect, useState } from 'react';
+import { getEndOfDay, getStartOfDay, getStartOfMonth, getStartOfWeek, getStartOfYear } from '@lib/dateHelpers';
 
 export type TimeRangePreset = 'today' | 'yesterday' | 'thisWeek' | 'lastWeek' | 'thisMonth' | 'lastMonth' | 'thisYear' | 'allTime' | 'custom';
 

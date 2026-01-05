@@ -1,36 +1,32 @@
-import {ManageEntityLayout} from '@components/layout/ManageEntityLayout';
-import {useRouter} from 'next/router';
-import React, {useCallback, useContext, useEffect, useMemo, useState} from 'react';
-import {TimeRange, TimeRangePicker} from '@components/statistics/TimeRangePicker';
-import {getEndOfDay, getOrderedHourLabels, getStartOfWeek, reorderHourDistribution} from '@lib/dateHelpers';
-import {DAY_NAMES_SHORT_MONDAY_FIRST, DAY_ORDER_MONDAY_FIRST, reorderDaysMondayFirst} from '@lib/dayConstants';
-import {StatCard} from '@components/statistics/StatCard';
-import {TimeSeriesChart} from '@components/statistics/TimeSeriesChart';
-import {DistributionChart} from '@components/statistics/DistributionChart';
-import {StackedDistributionChart} from '@components/statistics/StackedDistributionChart';
-import {AnalysisCocktailTable} from '@components/statistics/AnalysisCocktailTable';
-import {ListDetailLayout} from '@components/statistics/ListDetailLayout';
-import {CocktailList} from '@components/statistics/CocktailList';
-import {TagList} from '@components/statistics/TagList';
-import {IngredientList} from '@components/statistics/IngredientList';
-import {SavedSetSelector} from '@components/statistics/SavedSetSelector';
-import {alertService} from '@lib/alertService';
-import {Loading} from '@components/Loading';
-import {SavedSetType} from '@generated/prisma/client';
-import {FaSyncAlt} from 'react-icons/fa';
-import {ModalContext} from '@lib/context/ModalContextProvider';
-import {UserContext} from '@lib/context/UserContextProvider';
+import { ManageEntityLayout } from '@components/layout/ManageEntityLayout';
+import { useRouter } from 'next/router';
+import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { TimeRange, TimeRangePicker } from '@components/statistics/TimeRangePicker';
+import { getEndOfDay, getOrderedHourLabels, getStartOfWeek, reorderHourDistribution } from '@lib/dateHelpers';
+import { DAY_NAMES_SHORT_MONDAY_FIRST, DAY_ORDER_MONDAY_FIRST, reorderDaysMondayFirst } from '@lib/dayConstants';
+import { StatCard } from '@components/statistics/StatCard';
+import { TimeSeriesChart } from '@components/statistics/TimeSeriesChart';
+import { DistributionChart } from '@components/statistics/DistributionChart';
+import { StackedDistributionChart } from '@components/statistics/StackedDistributionChart';
+import { AnalysisCocktailTable } from '@components/statistics/AnalysisCocktailTable';
+import { ListDetailLayout } from '@components/statistics/ListDetailLayout';
+import { CocktailList } from '@components/statistics/CocktailList';
+import { TagList } from '@components/statistics/TagList';
+import { IngredientList } from '@components/statistics/IngredientList';
+import { SavedSetSelector } from '@components/statistics/SavedSetSelector';
+import { alertService } from '@lib/alertService';
+import { Loading } from '@components/Loading';
+import { SavedSetType } from '@generated/prisma/client';
+import { FaSyncAlt } from 'react-icons/fa';
+import { ModalContext } from '@lib/context/ModalContextProvider';
+import { UserContext } from '@lib/context/UserContextProvider';
 import InputModal from '@components/modals/InputModal';
-import {AnalysisCocktailSelector} from '@components/statistics/AnalysisCocktailSelector';
-import {Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis} from 'recharts';
-import {CocktailStatisticItemFull} from '../../../../../models/CocktailStatisticItemFull';
+import { AnalysisCocktailSelector } from '@components/statistics/AnalysisCocktailSelector';
+import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { CocktailStatisticItemFull } from '../../../../../models/CocktailStatisticItemFull';
 import '@lib/DateUtils';
 import '@lib/StringUtils';
-import {
-    AmountWithUnit,
-    calculateAggregatedIngredientAmount,
-    IngredientVolumeInfo
-} from '@lib/CocktailRecipeCalculation';
+import { AmountWithUnit, calculateAggregatedIngredientAmount, IngredientVolumeInfo } from '@lib/CocktailRecipeCalculation';
 
 type Tab = 'overview' | 'cocktails' | 'comparisons' | 'analysis';
 
@@ -1026,9 +1022,9 @@ const StatisticsAdvancedPage = () => {
     setActiveTab(newTab);
   };
 
-    const handleTimeRangeChange = useCallback((range: TimeRange) => {
-        setTimeRange(range);
-    }, []);
+  const handleTimeRangeChange = useCallback((range: TimeRange) => {
+    setTimeRange(range);
+  }, []);
 
   // Format time range with time for subtitle
   const formatTimeRangeWithTime = useCallback((range: TimeRange): string => {
@@ -1190,7 +1186,7 @@ const StatisticsAdvancedPage = () => {
         {/* Tab Navigation - Sticky with offset for header */}
         <div className="sticky top-16 z-10 bg-base-100 py-2">
           <div className="overflow-x-auto">
-              <div className="tabs-boxed tabs min-w-max flex-nowrap">
+            <div className="tabs-boxed tabs min-w-max flex-nowrap">
               {tabs.map((tab) => (
                 <button key={tab.id} className={`tab flex-shrink-0 ${activeTab === tab.id ? 'tab-active' : ''}`} onClick={() => handleTabChange(tab.id)}>
                   {tab.label}
@@ -1205,7 +1201,7 @@ const StatisticsAdvancedPage = () => {
           <div className="flex flex-col gap-4">
             {/* Period Tabs */}
             <div className="overflow-x-auto">
-                <div className="tabs tabs-bordered min-w-max flex-nowrap">
+              <div className="tabs tabs-bordered min-w-max flex-nowrap">
                 <button className={`tab flex-shrink-0 ${overviewPeriodTab === 'today' ? 'tab-active' : ''}`} onClick={() => setOverviewPeriodTab('today')}>
                   Heute
                 </button>

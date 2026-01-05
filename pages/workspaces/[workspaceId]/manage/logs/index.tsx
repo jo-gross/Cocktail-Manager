@@ -1,14 +1,14 @@
-import {ManageEntityLayout} from '@components/layout/ManageEntityLayout';
-import {useRouter} from 'next/router';
-import React, {useCallback, useContext, useEffect, useState} from 'react';
-import {CocktailStatisticItemFull} from '../../../../../models/CocktailStatisticItemFull';
-import {alertService} from '@lib/alertService';
-import {FaSyncAlt, FaTrashAlt} from 'react-icons/fa';
-import {UserContext} from '@lib/context/UserContextProvider';
-import {Loading} from '@components/Loading';
+import { ManageEntityLayout } from '@components/layout/ManageEntityLayout';
+import { useRouter } from 'next/router';
+import React, { useCallback, useContext, useEffect, useState } from 'react';
+import { CocktailStatisticItemFull } from '../../../../../models/CocktailStatisticItemFull';
+import { alertService } from '@lib/alertService';
+import { FaSyncAlt, FaTrashAlt } from 'react-icons/fa';
+import { UserContext } from '@lib/context/UserContextProvider';
+import { Loading } from '@components/Loading';
 import ListSearchField from '../../../../../components/ListSearchField';
-import {NextPageWithPullToRefresh} from '../../../../../types/next';
-import {TimeRange, TimeRangePicker} from '@components/statistics/TimeRangePicker';
+import { NextPageWithPullToRefresh } from '../../../../../types/next';
+import { TimeRange, TimeRangePicker } from '@components/statistics/TimeRangePicker';
 import '../../../../../lib/DateUtils';
 
 interface PaginationInfo {
@@ -197,16 +197,14 @@ const LogsPage: NextPageWithPullToRefresh = () => {
             </div>
 
             {pagination && (
-                <div className={'mt-4 flex items-center justify-center gap-2'}>
-                  <button className={'btn btn-sm'} disabled={currentPage === 1 || loading}
-                          onClick={() => handlePageChange(currentPage - 1)}>
+              <div className={'mt-4 flex items-center justify-center gap-2'}>
+                <button className={'btn btn-sm'} disabled={currentPage === 1 || loading} onClick={() => handlePageChange(currentPage - 1)}>
                   Vorherige
                 </button>
                 <span className={'text-sm'}>
                   Seite {pagination.page} von {pagination.totalPages} ({pagination.total} Einträge)
                 </span>
-                  <button className={'btn btn-sm'} disabled={currentPage >= pagination.totalPages || loading}
-                          onClick={() => handlePageChange(currentPage + 1)}>
+                <button className={'btn btn-sm'} disabled={currentPage >= pagination.totalPages || loading} onClick={() => handlePageChange(currentPage + 1)}>
                   Nächste
                 </button>
               </div>
