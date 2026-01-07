@@ -9,7 +9,6 @@ import { useRouter } from 'next/router';
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import { SearchModal, SearchModalRef } from '@components/modals/SearchModal';
 import { Loading } from '@components/Loading';
-import { alertService } from '@lib/alertService';
 import ThemeChanger from '../../../components/ThemeChanger';
 import Head from 'next/head';
 import { UserContext } from '@lib/context/UserContextProvider';
@@ -23,12 +22,19 @@ import { CgArrowsExpandUpLeft } from 'react-icons/cg';
 import { PageCenter } from '@components/layout/PageCenter';
 import { NextPageWithPullToRefresh } from '../../../types/next';
 import { OrderView } from '../../../components/order/OrderView';
+import { useOffline } from '@lib/context/OfflineContextProvider';
+import { fetchCards, fetchCard, prefetchCardData } from '@lib/network/cards';
+import { prefetchAllCocktails } from '@lib/network/cocktails';
 
 const OverviewPage: NextPageWithPullToRefresh = () => {
   const modalContext = useContext(ModalContext);
   const userContext = useContext(UserContext);
+  const { isOnline, isOfflineMode } = useOffline();
   const router = useRouter();
   const { workspaceId } = router.query;
+
+  // Effective offline state - true when network is unavailable or manually in offline mode
+  const isOffline = !isOnline || isOfflineMode;
 
   // Set by user settings
 
@@ -76,54 +82,34 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
     };
   }, [modalContext, showStatisticActions]);
 
-  // fetch cards initially
+  // fetch cards initially with cache support
   useEffect(() => {
     if (!workspaceId) return;
-    setLoadingCards(true);
-    fetch(`/api/workspaces/${workspaceId}/cards`)
-      .then(async (response) => {
-        const body = await response.json();
-        if (response.ok) {
-          setCocktailCards(body.data);
-        } else {
-          console.error('CocktailCardPage -> fetchCards', response);
-          alertService.error(body.message ?? 'Fehler beim Laden der Karten', response.status, response.statusText);
-        }
-      })
-      .catch((error) => {
-        console.error('CocktailCardPage -> fetchCards', error);
-        alertService.error('Fehler beim Laden der Karten');
-      })
-      .finally(() => setLoadingCards(false));
+    fetchCards(workspaceId as string, setCocktailCards, setLoadingCards);
   }, [userContext.user, workspaceId]);
 
   const [selectedCardId, setSelectedCardId] = useState<string | undefined>((router.query.card as string) || undefined);
   const [selectedCard, setSelectedCard] = useState<CocktailCardFull | undefined>(cocktailCards.length > 0 ? cocktailCards[0] : undefined);
 
   const fetchSelectedCard = useCallback(() => {
-    if (selectedCardId != undefined && selectedCardId != 'search' && selectedCardId != 'order') {
-      setLoadingGroups(true);
-      fetch(`/api/workspaces/${workspaceId}/cards/` + selectedCardId)
-        .then(async (response) => {
-          const body = await response.json();
-          if (response.ok) {
-            setSelectedCard(body.data);
-          } else {
-            console.error('CocktailCardPage -> fetchCard', response);
-            alertService.error(body.message ?? 'Fehler beim Laden der Karte', response.status, response.statusText);
-          }
-        })
-        .catch((error) => {
-          console.error('CocktailCardPage -> fetchCard', error);
-          alertService.error('Fehler beim Laden der Karte');
-        })
-        .finally(() => setLoadingGroups(false));
+    if (selectedCardId != undefined && selectedCardId != 'search' && selectedCardId != 'order' && workspaceId) {
+      fetchCard(workspaceId as string, selectedCardId, setSelectedCard, setLoadingGroups);
     }
   }, [selectedCardId, workspaceId]);
 
   useEffect(() => {
     fetchSelectedCard();
   }, [fetchSelectedCard]);
+
+  // Prefetch card data for offline use when a card is loaded
+  useEffect(() => {
+    if (selectedCard && workspaceId && isOnline) {
+      // Prefetch in background without blocking UI
+      prefetchCardData(workspaceId as string, selectedCard).catch(console.error);
+      // Also prefetch all cocktails for search
+      prefetchAllCocktails(workspaceId as string).catch(console.error);
+    }
+  }, [selectedCard, workspaceId, isOnline]);
 
   const sortCards = useCallback((a: CocktailCard, b: CocktailCard) => {
     const today = new Date().toISOString().slice(0, 10);
@@ -273,13 +259,14 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
 
   useEffect(() => {
     let interval: NodeJS.Timeout | undefined;
-    if (showStatisticActions) {
+    // Only refresh queue when online and statistic actions are enabled
+    if (showStatisticActions && !isOffline) {
       interval = setInterval(() => {
         refreshQueue();
       }, 1000);
     }
     return () => clearInterval(interval);
-  }, [refreshQueue, showStatisticActions]);
+  }, [refreshQueue, showStatisticActions, isOffline]);
 
   const dropdownContentRef = React.useRef<HTMLDivElement>(null);
   const [isDropdownScrollable, setIsDropdownScrollable] = useState(false);
@@ -399,7 +386,10 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
   const selectedCocktailItemCardRef = useRef<CocktailRecipeOverviewItemRef>(null);
 
   OverviewPage.pullToRefresh = async () => {
-    refreshQueue();
+    // Only refresh queue when online
+    if (!isOffline) {
+      refreshQueue();
+    }
     if (selectedCardId != 'search' && selectedCardId != undefined) {
       fetchSelectedCard();
     } else {
@@ -595,9 +585,9 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
 
       <div className={'static min-h-screen'}>
         <div
-          className={`grid grid-cols-1 gap-2 p-2 ${showStatisticActions && cocktailQueue.length > 0 ? 'lg:grid-cols-8 xl:grid-cols-6' : ''} print:grid-cols-5 print:overflow-clip print:p-0`}
+          className={`grid grid-cols-1 gap-2 p-2 ${showStatisticActions && cocktailQueue.length > 0 && !isOffline ? 'lg:grid-cols-8 xl:grid-cols-6' : ''} print:grid-cols-5 print:overflow-clip print:p-0`}
         >
-          {showStatisticActions && cocktailQueue.length > 0 ? (
+          {showStatisticActions && cocktailQueue.length > 0 && !isOffline ? (
             <aside
               className={`sticky order-first col-span-5 flex w-full flex-col rounded-xl bg-base-300 p-2 pb-0 lg:order-last lg:col-span-2 xl:col-span-1 print:hidden ${process.env.NODE_ENV == 'development' || process.env.DEPLOYMENT == 'staging' ? 'md:top-12' : 'md:top-2'} h-fit ${process.env.NODE_ENV == 'development' || process.env.DEPLOYMENT == 'staging' ? 'max-h-[calc(100vh-3.5rem)]' : 'max-h-[calc(100vh-1rem)]'}`}
             >
@@ -947,100 +937,122 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                         <div>{showRecipeOptions ? <FaAngleUp /> : <FaAngleDown />}</div>
                       </div>
                       <div className={`flex flex-col gap-2 ${showRecipeOptions ? '' : 'hidden'}`}>
+                        {isOffline && <span className="text-xs text-warning">Nicht verfügbar im Offline-Modus</span>}
                         <div className="form-control">
-                          <label className="label">
+                          <label className={`label ${isOffline ? 'opacity-50' : ''}`}>
                             Bilder anzeigen
                             <input
                               type={'checkbox'}
                               className={'toggle toggle-primary'}
                               checked={showImage}
                               readOnly={true}
+                              disabled={isOffline}
                               onClick={() => {
-                                userContext.updateUserSetting(Setting.showImage, !showImage ? 'true' : 'false');
+                                if (!isOffline) {
+                                  userContext.updateUserSetting(Setting.showImage, !showImage ? 'true' : 'false');
+                                }
                               }}
                             />
                           </label>
                         </div>
                         <div className="form-control">
-                          <label className="label">
+                          <label className={`label ${isOffline ? 'opacity-50' : ''}`}>
                             Tags anzeigen
                             <input
                               type={'checkbox'}
                               className={'toggle toggle-primary'}
                               checked={showTags}
                               readOnly={true}
+                              disabled={isOffline}
                               onClick={() => {
-                                userContext.updateUserSetting(Setting.showTags, !showTags ? 'true' : 'false');
+                                if (!isOffline) {
+                                  userContext.updateUserSetting(Setting.showTags, !showTags ? 'true' : 'false');
+                                }
                               }}
                             />
                           </label>
                         </div>
                         <div className="form-control">
-                          <label className="label">
+                          <label className={`label ${isOffline ? 'opacity-50' : ''}`}>
                             Beschreibung anzeigen
                             <input
                               type={'checkbox'}
                               className={'toggle toggle-primary'}
                               checked={showDescription}
                               readOnly={true}
+                              disabled={isOffline}
                               onClick={() => {
-                                userContext.updateUserSetting(Setting.showDescription, !showDescription ? 'true' : 'false');
+                                if (!isOffline) {
+                                  userContext.updateUserSetting(Setting.showDescription, !showDescription ? 'true' : 'false');
+                                }
                               }}
                             />
                           </label>
                         </div>
                         <div className="form-control">
-                          <label className="label">
+                          <label className={`label ${isOffline ? 'opacity-50' : ''}`}>
                             Notizen anzeigen
                             <input
                               type={'checkbox'}
                               className={'toggle toggle-primary'}
                               checked={showNotes}
                               readOnly={true}
+                              disabled={isOffline}
                               onClick={() => {
-                                userContext.updateUserSetting(Setting.showNotes, !showNotes ? 'true' : 'false');
+                                if (!isOffline) {
+                                  userContext.updateUserSetting(Setting.showNotes, !showNotes ? 'true' : 'false');
+                                }
                               }}
                             />
                           </label>
                         </div>
                         <div className="form-control">
-                          <label className="label">
+                          <label className={`label ${isOffline ? 'opacity-50' : ''}`}>
                             Geschichte und Entstehung anzeigen
                             <input
                               type={'checkbox'}
                               className={'toggle toggle-primary'}
                               checked={showHistory}
                               readOnly={true}
+                              disabled={isOffline}
                               onClick={() => {
-                                userContext.updateUserSetting(Setting.showHistory, !showHistory ? 'true' : 'false');
+                                if (!isOffline) {
+                                  userContext.updateUserSetting(Setting.showHistory, !showHistory ? 'true' : 'false');
+                                }
                               }}
                             />
                           </label>
                         </div>
                         <div className="form-control">
-                          <label className="label">
+                          <label className={`label ${isOffline ? 'opacity-50' : ''}`}>
                             Bewertung anzeigen
                             <input
                               type={'checkbox'}
                               className={'toggle toggle-primary'}
                               checked={showRating}
                               readOnly={true}
+                              disabled={isOffline}
                               onClick={() => {
-                                userContext.updateUserSetting(Setting.showRating, !showRating ? 'true' : 'false');
+                                if (!isOffline) {
+                                  userContext.updateUserSetting(Setting.showRating, !showRating ? 'true' : 'false');
+                                }
                               }}
                             />
                           </label>
                         </div>
                         <div className="form-control">
-                          <label className="label">
+                          <label className={`label ${isOffline ? 'opacity-50' : ''}`}>
                             Tracking aktivieren
                             <input
                               type={'checkbox'}
                               className={'toggle toggle-primary'}
                               checked={showStatisticActions}
                               readOnly={true}
+                              disabled={isOffline}
                               onClick={() => {
-                                userContext.updateUserSetting(Setting.showStatisticActions, !showStatisticActions ? 'true' : 'false');
+                                if (!isOffline) {
+                                  userContext.updateUserSetting(Setting.showStatisticActions, !showStatisticActions ? 'true' : 'false');
+                                }
                               }}
                             />
                           </label>
@@ -1056,10 +1068,11 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                         <div>{showQueueOptions ? <FaAngleUp /> : <FaAngleDown />}</div>
                       </div>
                       <div className={`flex flex-col gap-2 ${showQueueOptions ? '' : 'hidden'}`}>
+                        {isOffline && <span className="text-xs text-warning">Nicht verfügbar im Offline-Modus</span>}
                         <div className="form-control">
-                          <div className={''}>Gruppierung</div>
+                          <div className={`${isOffline ? 'opacity-50' : ''}`}>Gruppierung</div>
                           <div key={'grouping-alphabetic'} className="form-control">
-                            <label className="label">
+                            <label className={`label ${isOffline ? 'opacity-50' : ''}`}>
                               <div className={'label-text'}>Cocktailname (A-Z)</div>
                               <input
                                 name={'queue-radio'}
@@ -1068,13 +1081,16 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                                 value={'ALPHABETIC'}
                                 checked={queueGrouping == 'ALPHABETIC'}
                                 readOnly={true}
+                                disabled={isOffline}
                                 onClick={() => {
-                                  setQueueGrouping('ALPHABETIC');
-                                  userContext.updateUserSetting(Setting.queueGrouping, 'ALPHABETIC');
+                                  if (!isOffline) {
+                                    setQueueGrouping('ALPHABETIC');
+                                    userContext.updateUserSetting(Setting.queueGrouping, 'ALPHABETIC');
+                                  }
                                 }}
                               />
                             </label>
-                            <label className="label">
+                            <label className={`label ${isOffline ? 'opacity-50' : ''}`}>
                               <div className={'label-text'}>Keine (Chronologisch)</div>
                               <input
                                 name={'queue-radio'}
@@ -1083,24 +1099,30 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                                 value={'NONE'}
                                 checked={queueGrouping == 'NONE' || queueGrouping == undefined}
                                 readOnly={true}
+                                disabled={isOffline}
                                 onClick={() => {
-                                  setQueueGrouping('NONE');
-                                  userContext.updateUserSetting(Setting.queueGrouping, 'NONE');
+                                  if (!isOffline) {
+                                    setQueueGrouping('NONE');
+                                    userContext.updateUserSetting(Setting.queueGrouping, 'NONE');
+                                  }
                                 }}
                               />
                             </label>
                           </div>
                         </div>
                         <div className="form-control">
-                          <label className="label">
+                          <label className={`label ${isOffline ? 'opacity-50' : ''}`}>
                             Schnelles abhaken anzeigen
                             <input
                               type={'checkbox'}
                               className={'toggle toggle-primary'}
                               checked={showFastQueueCheck}
                               readOnly={true}
+                              disabled={isOffline}
                               onClick={() => {
-                                userContext.updateUserSetting(Setting.showFastQueueCheck, !showFastQueueCheck ? 'true' : 'false');
+                                if (!isOffline) {
+                                  userContext.updateUserSetting(Setting.showFastQueueCheck, !showFastQueueCheck ? 'true' : 'false');
+                                }
                               }}
                             />
                           </label>
@@ -1115,46 +1137,56 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                         <div>{showLayoutOptions ? <FaAngleUp /> : <FaAngleDown />}</div>
                       </div>
                       <div className={`flex flex-col gap-2 ${showLayoutOptions ? '' : 'hidden'}`}>
+                        {isOffline && <span className="text-xs text-warning">Nicht verfügbar im Offline-Modus</span>}
                         <div className="form-control">
-                          <label className="label">
+                          <label className={`label ${isOffline ? 'opacity-50' : ''}`}>
                             Uhrzeit anzeigen
                             <input
                               type={'checkbox'}
                               className={'toggle toggle-primary'}
                               checked={showTime}
                               readOnly={true}
+                              disabled={isOffline}
                               onClick={() => {
-                                userContext.updateUserSetting(Setting.showTime, !showTime ? 'true' : 'false');
+                                if (!isOffline) {
+                                  userContext.updateUserSetting(Setting.showTime, !showTime ? 'true' : 'false');
+                                }
                               }}
                             />
                           </label>
                         </div>
                         {router.query.card !== 'search' && (
                           <div className="form-control">
-                            <label className="label">
+                            <label className={`label ${isOffline ? 'opacity-50' : ''}`}>
                               Weniger Spalten
                               <input
                                 type={'checkbox'}
                                 className={'toggle toggle-primary'}
                                 checked={lessItems}
                                 readOnly={true}
+                                disabled={isOffline}
                                 onClick={() => {
-                                  userContext.updateUserSetting(Setting.lessItems, !lessItems ? 'true' : 'false');
+                                  if (!isOffline) {
+                                    userContext.updateUserSetting(Setting.lessItems, !lessItems ? 'true' : 'false');
+                                  }
                                 }}
                               />
                             </label>
                           </div>
                         )}
                         <div className="form-control">
-                          <label className="label">
+                          <label className={`label ${isOffline ? 'opacity-50' : ''}`}>
                             Einstellungen am Ende
                             <input
                               type={'checkbox'}
                               className={'toggle toggle-primary'}
                               checked={showSettingsAtBottom}
                               readOnly={true}
+                              disabled={isOffline}
                               onClick={() => {
-                                userContext.updateUserSetting(Setting.showSettingsAtBottom, !showSettingsAtBottom ? 'true' : 'false');
+                                if (!isOffline) {
+                                  userContext.updateUserSetting(Setting.showSettingsAtBottom, !showSettingsAtBottom ? 'true' : 'false');
+                                }
                               }}
                             />
                           </label>
@@ -1162,7 +1194,10 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                       </div>
                     </div>
                     <div className={'divider'}></div>
-                    <ThemeChanger />
+                    <div className={isOffline ? 'tooltip' : ''} data-tip={isOffline ? 'Nicht verfügbar im Offline-Modus' : undefined}>
+                      <ThemeChanger disabled={isOffline} />
+                    </div>
+                    {isOffline && <span className="text-xs text-warning">Nicht verfügbar im Offline-Modus</span>}
                   </div>
                 </div>
                 {isDropdownScrollable && (
@@ -1187,11 +1222,19 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                 <></>
               )}
             </>
-            <Link href={`/workspaces/${workspaceId}/manage`}>
-              <div className={'btn btn-square btn-primary rounded-xl md:btn-lg'}>
-                <BsFillGearFill />
+            {isOffline ? (
+              <div className={'tooltip tooltip-left'} data-tip="Nicht verfügbar im Offline-Modus">
+                <div className={'btn btn-square btn-disabled rounded-xl md:btn-lg'}>
+                  <BsFillGearFill />
+                </div>
               </div>
-            </Link>
+            ) : (
+              <Link href={`/workspaces/${workspaceId}/manage`}>
+                <div className={'btn btn-square btn-primary rounded-xl md:btn-lg'}>
+                  <BsFillGearFill />
+                </div>
+              </Link>
+            )}
           </div>
         )}
       </div>

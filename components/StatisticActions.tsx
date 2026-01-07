@@ -5,6 +5,7 @@ import React, { useContext, useState } from 'react';
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import AddCocktailToQueueModal from './modals/AddCocktailToQueueModal';
 import SelectSpecifyCocktailForStatisticModal from './modals/SelectSpecifyCocktailForStatisticModal';
+import { useOffline } from '@lib/context/OfflineContextProvider';
 
 interface StatisticActionsProps {
   workspaceId: string;
@@ -36,76 +37,86 @@ export default function StatisticActions({
   const [submittingStatistic, setSubmittingStatistic] = useState(false);
 
   const modalContext = useContext(ModalContext);
+  const { isOnline, isOfflineMode } = useOffline();
+
+  // Disable all actions when offline
+  const isOffline = !isOnline || isOfflineMode;
 
   return (
     <div className={'grid grid-cols-2 gap-2 md:grid-cols-2 2xl:grid-cols-3'}>
-      <button
-        className={'btn btn-outline flex-1'}
-        onClick={() =>
-          addCocktailToQueue({
-            workspaceId: workspaceId,
-            cocktailId: cocktailId,
-            setSubmitting: setSubmittingQueue,
-          })
-        }
-        disabled={submittingQueue || disabled?.list}
-      >
-        <MdPlaylistAdd />
-        Liste
-        {submittingQueue ? <span className={'loading loading-spinner'}></span> : <></>}
-      </button>
+      <div className={isOffline ? 'tooltip' : ''} data-tip={isOffline ? 'Nicht verfügbar im Offline-Modus' : undefined}>
+        <button
+          className={'btn btn-outline flex-1 w-full'}
+          onClick={() =>
+            addCocktailToQueue({
+              workspaceId: workspaceId,
+              cocktailId: cocktailId,
+              setSubmitting: setSubmittingQueue,
+            })
+          }
+          disabled={submittingQueue || disabled?.list || isOffline}
+        >
+          <MdPlaylistAdd />
+          Liste
+          {submittingQueue ? <span className={'loading loading-spinner'}></span> : <></>}
+        </button>
+      </div>
 
-      <button
-        className={'btn btn-outline flex-1'}
-        onClick={() =>
-          modalContext.openModal(
-            <AddCocktailToQueueModal
-              workspaceId={workspaceId}
-              cocktailId={cocktailId}
-              actionSource={actionSource}
-              cocktailName={cocktailName}
-              initComment={initData?.comment}
-            />,
-          )
-        }
-        disabled={submittingQueue || disabled?.listWithNote}
-      >
-        <MdPlaylistAdd />
-        mit Notiz
-        {submittingQueue ? <span className={'loading loading-spinner'}></span> : <></>}
-      </button>
-      <button
-        className={'btn btn-outline btn-primary col-span-2 2xl:col-span-1'}
-        onClick={() =>
-          addCocktailToStatistic({
-            workspaceId: workspaceId,
-            cocktailId: cocktailId,
-            cardId: cardId,
-            actionSource: actionSource,
-            notes: notes,
-            setSubmitting: setSubmittingStatistic,
-            onSuccess: () => onMarkedAsDone?.(),
-            onNotDecidableError: (options) => {
-              modalContext.openModal(
-                <SelectSpecifyCocktailForStatisticModal
-                  workspaceId={workspaceId}
-                  cocktailId={cocktailId}
-                  cardId={cardId}
-                  actionSource={actionSource}
-                  cocktailName={cocktailName}
-                  options={options}
-                  onMarkedAsDone={onMarkedAsDone}
-                />,
-              );
-            },
-          })
-        }
-        disabled={submittingStatistic || disabled?.markAsDone}
-      >
-        <FaCheck />
-        Gemacht
-        {submittingStatistic ? <span className={'loading loading-spinner'}></span> : <></>}
-      </button>
+      <div className={isOffline ? 'tooltip' : ''} data-tip={isOffline ? 'Nicht verfügbar im Offline-Modus' : undefined}>
+        <button
+          className={'btn btn-outline flex-1 w-full'}
+          onClick={() =>
+            modalContext.openModal(
+              <AddCocktailToQueueModal
+                workspaceId={workspaceId}
+                cocktailId={cocktailId}
+                actionSource={actionSource}
+                cocktailName={cocktailName}
+                initComment={initData?.comment}
+              />,
+            )
+          }
+          disabled={submittingQueue || disabled?.listWithNote || isOffline}
+        >
+          <MdPlaylistAdd />
+          mit Notiz
+          {submittingQueue ? <span className={'loading loading-spinner'}></span> : <></>}
+        </button>
+      </div>
+      <div className={isOffline ? 'tooltip col-span-2 2xl:col-span-1' : 'col-span-2 2xl:col-span-1'} data-tip={isOffline ? 'Nicht verfügbar im Offline-Modus' : undefined}>
+        <button
+          className={'btn btn-outline btn-primary w-full'}
+          onClick={() =>
+            addCocktailToStatistic({
+              workspaceId: workspaceId,
+              cocktailId: cocktailId,
+              cardId: cardId,
+              actionSource: actionSource,
+              notes: notes,
+              setSubmitting: setSubmittingStatistic,
+              onSuccess: () => onMarkedAsDone?.(),
+              onNotDecidableError: (options) => {
+                modalContext.openModal(
+                  <SelectSpecifyCocktailForStatisticModal
+                    workspaceId={workspaceId}
+                    cocktailId={cocktailId}
+                    cardId={cardId}
+                    actionSource={actionSource}
+                    cocktailName={cocktailName}
+                    options={options}
+                    onMarkedAsDone={onMarkedAsDone}
+                  />,
+                );
+              },
+            })
+          }
+          disabled={submittingStatistic || disabled?.markAsDone || isOffline}
+        >
+          <FaCheck />
+          Gemacht
+          {submittingStatistic ? <span className={'loading loading-spinner'}></span> : <></>}
+        </button>
+      </div>
     </div>
   );
 }

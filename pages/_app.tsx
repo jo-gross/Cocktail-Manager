@@ -11,6 +11,8 @@ import ThemeBoundary from '../components/layout/ThemeBoundary';
 import { RoutingContextProvider } from '@lib/context/RoutingContextProvider';
 import PullToRefresh from '@components/PullToRefresh';
 import { NextPageWithPullToRefresh } from '../types/next';
+import { OfflineContextProvider } from '@lib/context/OfflineContextProvider';
+import { OfflineBanner } from '@components/layout/OfflineBanner';
 
 export type AppPropsWithPullToRefresh = AppProps & {
   Component: NextPageWithPullToRefresh;
@@ -28,8 +30,9 @@ const App = ({ Component, pageProps: { session, ...pageProps } }: AppPropsWithPu
 
   return (
     <SessionProvider session={session}>
-      <RoutingContextProvider>
-        <ModalContext.Provider
+      <OfflineContextProvider>
+        <RoutingContextProvider>
+          <ModalContext.Provider
           value={{
             content: modalContentStack,
             hideCloseButton: modalHideCloseButton,
@@ -88,6 +91,7 @@ const App = ({ Component, pageProps: { session, ...pageProps } }: AppPropsWithPu
                     ) : (
                       <></>
                     )}
+                    <OfflineBanner />
                     <PullToRefresh onRefresh={customRefresh}>
                       <Component {...pageProps} />
                     </PullToRefresh>
@@ -98,6 +102,7 @@ const App = ({ Component, pageProps: { session, ...pageProps } }: AppPropsWithPu
           </AuthBoundary>
         </ModalContext.Provider>
       </RoutingContextProvider>
+    </OfflineContextProvider>
     </SessionProvider>
   );
 };
