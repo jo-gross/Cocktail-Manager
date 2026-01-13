@@ -2,7 +2,7 @@ import { ManageEntityLayout } from '@components/layout/ManageEntityLayout';
 import { useRouter } from 'next/router';
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { TimeRange, TimeRangePicker } from '@components/statistics/TimeRangePicker';
-import { getEndOfDay, getOrderedHourLabels, getStartOfWeek, reorderHourDistribution } from '@lib/dateHelpers';
+import { getEndOfDay, getOrderedHourLabels, getStartOfWeek, reorderHourDistribution, getLogicalDate } from '@lib/dateHelpers';
 import { DAY_NAMES_SHORT_MONDAY_FIRST, DAY_ORDER_MONDAY_FIRST, reorderDaysMondayFirst } from '@lib/dayConstants';
 import { StatCard } from '@components/statistics/StatCard';
 import { TimeSeriesChart } from '@components/statistics/TimeSeriesChart';
@@ -78,6 +78,34 @@ interface OverviewData {
       revenue: number;
     };
   };
+  charts?: {
+    today: {
+      timeSeries: Array<{ date: string; count: number }>;
+      topCocktails: Array<{ cocktailId: string; name: string; count: number }>;
+      hourDistribution: Array<{ hour: number; count: number }>;
+    };
+    week: {
+      timeSeries: Array<{ date: string; count: number }>;
+      topCocktails: Array<{ cocktailId: string; name: string; count: number }>;
+      hourDistribution: Array<{ hour: number; count: number }>;
+    };
+    month: {
+      timeSeries: Array<{ date: string; count: number }>;
+      topCocktails: Array<{ cocktailId: string; name: string; count: number }>;
+      hourDistribution: Array<{ hour: number; count: number }>;
+    };
+    period: {
+      timeSeries: Array<{ date: string; count: number }>;
+      topCocktails: Array<{ cocktailId: string; name: string; count: number }>;
+      hourDistribution: Array<{ hour: number; count: number }>;
+    };
+    allTime: {
+      timeSeries: Array<{ date: string; count: number }>;
+      topCocktails: Array<{ cocktailId: string; name: string; count: number }>;
+      hourDistribution: Array<{ hour: number; count: number }>;
+    };
+  };
+  // Legacy fields for backward compatibility
   timeSeries: Array<{ date: string; count: number }>;
   topCocktails: Array<{ cocktailId: string; name: string; count: number }>;
   hourDistribution: Array<{ hour: number; count: number }>;
@@ -212,7 +240,15 @@ const StatisticsAdvancedPage = () => {
         const body = await response.json();
         setOverviewData(body.data);
       } else {
-        const body = await response.json();
+        let body;
+        try {
+          body = await response.json();
+        } catch (jsonError) {
+          const text = await response.text();
+          console.error('StatisticsAdvancedPage -> loadOverviewData - Non-JSON response', text);
+          alertService.error('Fehler beim Laden der Übersichtsdaten', response.status, response.statusText);
+          return;
+        }
         console.error('StatisticsAdvancedPage -> loadOverviewData', response);
         alertService.error(body.message ?? 'Fehler beim Laden der Übersichtsdaten', response.status, response.statusText);
       }
@@ -379,7 +415,7 @@ const StatisticsAdvancedPage = () => {
   }, []);
 
   const processDataGroupByDaily = useCallback(
-    (data: CocktailStatisticItemFull[], showEmptyDays: boolean, hiddenIds: Set<string>, startDate: Date, endDate: Date): ProcessedData => {
+    (data: CocktailStatisticItemFull[], showEmptyDays: boolean, hiddenIds: Set<string>, startDate: Date, endDate: Date, dayStartTime?: string): ProcessedData => {
       const dailyCocktails: Record<string, Record<string, number>> = {};
 
       data
@@ -387,10 +423,7 @@ const StatisticsAdvancedPage = () => {
         .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
         .forEach((entry) => {
           const date = new Date(entry.date);
-          const adjustedDate = new Date(date);
-          if (date.getHours() < 8) {
-            adjustedDate.setDate(date.getDate() - 1);
-          }
+          const adjustedDate = getLogicalDate(date, dayStartTime);
 
           const nextDate = new Date(adjustedDate);
           nextDate.setDate(adjustedDate.getDate() + 1);
@@ -1129,7 +1162,7 @@ const StatisticsAdvancedPage = () => {
 
     const chartData =
       timeRange.endDate.getTime() - timeRange.startDate.getTime() >= 24 * 3600 * 1000 && groupBy == 'day'
-        ? processDataGroupByDaily(cocktailStatisticItems, showAllDays, hiddenCocktailIds, timeRange.startDate, timeRange.endDate)
+        ? processDataGroupByDaily(cocktailStatisticItems, showAllDays, hiddenCocktailIds, timeRange.startDate, timeRange.endDate, dayStartTime)
         : processDataGroupByHourly(cocktailStatisticItems, hiddenCocktailIds);
 
     return convertToRechartsData(chartData);
@@ -1346,63 +1379,78 @@ const StatisticsAdvancedPage = () => {
             {overviewData && (
               <>
                 {/* Charts */}
-                <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                  <div className="card shadow">
-                    <div className="card-body">
-                      <h3 className="card-title text-lg">Cocktails im Zeitverlauf</h3>
-                      {loading ? (
-                        <div className="skeleton w-full" style={{ height: '260px' }}></div>
-                      ) : overviewData.timeSeries.length > 0 ? (
-                        <TimeSeriesChart data={overviewData.timeSeries} label="Bestellungen" height={260} />
-                      ) : (
-                        <div className="py-8 text-center text-base-content/70">Keine Cocktails vorhanden</div>
-                      )}
-                    </div>
-                  </div>
+                {(() => {
+                  // Get chart data based on selected period tab
+                  const chartData = overviewData.charts
+                    ? overviewData.charts[overviewPeriodTab]
+                    : {
+                        timeSeries: overviewData.timeSeries,
+                        topCocktails: overviewData.topCocktails,
+                        hourDistribution: overviewData.hourDistribution,
+                      };
 
-                  <div className="card shadow">
-                    <div className="card-body">
-                      <h3 className="card-title text-lg">Cocktails nach Uhrzeit</h3>
-                      {loading ? (
-                        <div className="skeleton w-full" style={{ height: '260px' }}></div>
-                      ) : overviewData.hourDistribution.some((d) => d.count > 0) ? (
-                        <DistributionChart
-                          data={reorderHourDistribution(overviewData.hourDistribution, dayStartTime).map((d) => ({
-                            label: `${d.hour}:00`,
-                            value: d.count,
-                          }))}
-                          height={260}
-                          xLabel="Uhrzeit"
-                          yLabel="Anzahl"
-                        />
-                      ) : (
-                        <div className="py-8 text-center text-base-content/70">Keine Cocktails vorhanden</div>
-                      )}
-                    </div>
-                  </div>
-                </div>
+                  return (
+                    <>
+                      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                        <div className="card shadow">
+                          <div className="card-body">
+                            <h3 className="card-title text-lg">Cocktails im Zeitverlauf</h3>
+                            {loading ? (
+                              <div className="skeleton w-full" style={{ height: '260px' }}></div>
+                            ) : chartData.timeSeries.length > 0 ? (
+                              <TimeSeriesChart data={chartData.timeSeries} label="Bestellungen" height={260} />
+                            ) : (
+                              <div className="py-8 text-center text-base-content/70">Keine Cocktails vorhanden</div>
+                            )}
+                          </div>
+                        </div>
 
-                <div className="card shadow">
-                  <div className="card-body">
-                    <h3 className="card-title text-lg">Top-Cocktails</h3>
-                    {loading ? (
-                      <div className="skeleton w-full" style={{ height: '200px' }}></div>
-                    ) : overviewData.topCocktails.length > 0 ? (
-                      <DistributionChart
-                        data={overviewData.topCocktails.map((c) => ({
-                          label: c.name,
-                          value: c.count,
-                        }))}
-                        horizontal
-                        height={Math.max(200, overviewData.topCocktails.length * 40)}
-                        yLabel="Cocktail"
-                        xLabel="Anzahl"
-                      />
-                    ) : (
-                      <div className="py-8 text-center text-base-content/70">Keine Cocktails vorhanden</div>
-                    )}
-                  </div>
-                </div>
+                        <div className="card shadow">
+                          <div className="card-body">
+                            <h3 className="card-title text-lg">Cocktails nach Uhrzeit</h3>
+                            {loading ? (
+                              <div className="skeleton w-full" style={{ height: '260px' }}></div>
+                            ) : chartData.hourDistribution.some((d) => d.count > 0) ? (
+                              <DistributionChart
+                                data={reorderHourDistribution(chartData.hourDistribution, dayStartTime).map((d) => ({
+                                  label: `${d.hour}:00`,
+                                  value: d.count,
+                                }))}
+                                height={260}
+                                xLabel="Uhrzeit"
+                                yLabel="Anzahl"
+                              />
+                            ) : (
+                              <div className="py-8 text-center text-base-content/70">Keine Cocktails vorhanden</div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="card shadow">
+                        <div className="card-body">
+                          <h3 className="card-title text-lg">Top-Cocktails</h3>
+                          {loading ? (
+                            <div className="skeleton w-full" style={{ height: '200px' }}></div>
+                          ) : chartData.topCocktails.length > 0 ? (
+                            <DistributionChart
+                              data={chartData.topCocktails.map((c) => ({
+                                label: c.name,
+                                value: c.count,
+                              }))}
+                              horizontal
+                              height={Math.max(200, chartData.topCocktails.length * 40)}
+                              yLabel="Cocktail"
+                              xLabel="Anzahl"
+                            />
+                          ) : (
+                            <div className="py-8 text-center text-base-content/70">Keine Cocktails vorhanden</div>
+                          )}
+                        </div>
+                      </div>
+                    </>
+                  );
+                })()}
               </>
             )}
           </div>
@@ -1989,7 +2037,18 @@ const StatisticsAdvancedPage = () => {
                         value={setDetailData.kpis.cocktailPercentageAll !== undefined ? `${setDetailData.kpis.cocktailPercentageAll.toFixed(1)}%` : '-'}
                         desc={
                           setDetailData.kpis.cocktailCount && setDetailData.kpis.totalCocktailsInWorkspace
-                            ? `${setDetailData.kpis.cocktailCount} von ${setDetailData.kpis.totalCocktailsInWorkspace} aller Cocktails`
+                            ? `${setDetailData.kpis.cocktailCount} von ${setDetailData.kpis.totalCocktailsInWorkspace} allen Cocktails`
+                            : undefined
+                        }
+                        loading={setDetailLoading}
+                      />
+                      <StatCard
+                        title="Umsatz"
+                        value={setDetailData.kpis.revenue !== undefined ? setDetailData.kpis.revenue : 0}
+                        formatValue={(val) => (typeof val === 'number' ? val.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' }) : String(val))}
+                        desc={
+                          setDetailData.kpis.totalRevenue !== undefined && setDetailData.kpis.totalRevenue > 0
+                            ? `${((setDetailData.kpis.revenue || 0) / setDetailData.kpis.totalRevenue * 100).toFixed(1)}% vom Gesamtumsatz`
                             : undefined
                         }
                         loading={setDetailLoading}
@@ -2276,6 +2335,9 @@ const StatisticsAdvancedPage = () => {
                                     details={analysisCocktailDetails}
                                     totalRevenue={totalRevenue}
                                     previousTotalRevenue={previousTotalRevenue}
+                                    workspaceId={workspaceId as string}
+                                    startDate={timeRange.startDate}
+                                    endDate={timeRange.endDate}
                                   />
                                 </>
                               );

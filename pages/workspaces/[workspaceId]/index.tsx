@@ -729,7 +729,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                 </div>
               </div>
             ) : (
-              <div className="gap-1 md:gap-2">
+              <div className="gap-1 md:gap-2 flex flex-col">
                 {showTime && !showStatisticActions ? <div className={'pb-2'}>{timeComponent}</div> : <></>}
                 {loadingGroups ? (
                   <PageCenter>
