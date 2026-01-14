@@ -2,12 +2,12 @@ import prisma from '../../../../../../../prisma/prisma';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
 import { withHttpMethods } from '@middleware/api/handleMethods';
-import { Role, Permission, WorkspaceSettingKey } from '@generated/prisma/client';
+import { Permission, Role, WorkspaceSettingKey } from '@generated/prisma/client';
 import HTTPMethod from 'http-method-enum';
 import '../../../../../../../lib/DateUtils';
-import { getStartOfDay, getEndOfDay, getStartOfWeek, getStartOfMonth } from '../../../../../../../lib/dateHelpers';
+import { getEndOfDay, getLogicalDate, getStartOfDay, getStartOfMonth, getStartOfWeek } from '../../../../../../../lib/dateHelpers';
 
-async function getStatisticsForPeriod(workspaceId: string, startDate: Date, endDate: Date) {
+async function getStatisticsForPeriod(workspaceId: string, startDate: Date, endDate: Date, dayStartTime?: string) {
   const stats = await prisma.cocktailStatisticItem.findMany({
     where: {
       workspaceId,
@@ -48,9 +48,11 @@ async function getStatisticsForPeriod(workspaceId: string, startDate: Date, endD
   });
 
   // Find peak day (0 = Sunday, 1 = Monday, etc.)
+  // Use logical date based on dayStartTime to correctly assign orders to days
   const dayCounts: Record<number, number> = {};
   stats.forEach((stat) => {
-    const day = new Date(stat.date).getDay();
+    const logicalDate = getLogicalDate(new Date(stat.date), dayStartTime);
+    const day = logicalDate.getDay();
     dayCounts[day] = (dayCounts[day] || 0) + 1;
   });
 
@@ -99,6 +101,85 @@ async function getStatisticsForPeriod(workspaceId: string, startDate: Date, endD
     peakDay,
     topCocktail,
     revenue,
+  };
+}
+
+async function getChartDataForPeriod(workspaceId: string, startDate: Date, endDate: Date) {
+  const stats = await prisma.cocktailStatisticItem.findMany({
+    where: {
+      workspaceId,
+      date: {
+        gte: startDate,
+        lte: endDate,
+      },
+    },
+    orderBy: {
+      date: 'asc',
+    },
+  });
+
+  // Group by day for time series
+  const dayGroups: Record<string, number> = {};
+  stats.forEach((stat) => {
+    const dateKey = new Date(stat.date).toISOString().split('T')[0];
+    dayGroups[dateKey] = (dayGroups[dateKey] || 0) + 1;
+  });
+
+  const timeSeries = Object.entries(dayGroups)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([date, count]) => ({ date, count }));
+
+  // Get top cocktails
+  const topCocktails = await prisma.cocktailStatisticItem.groupBy({
+    by: ['cocktailId'],
+    where: {
+      workspaceId,
+      date: {
+        gte: startDate,
+        lte: endDate,
+      },
+    },
+    _count: {
+      cocktailId: true,
+    },
+    orderBy: {
+      _count: {
+        cocktailId: 'desc',
+      },
+    },
+    take: 10,
+  });
+
+  const topCocktailsWithNames = await Promise.all(
+    topCocktails.map(async (item) => {
+      const cocktail = await prisma.cocktailRecipe.findUnique({
+        where: { id: item.cocktailId },
+        select: { name: true },
+      });
+      return {
+        cocktailId: item.cocktailId,
+        name: cocktail?.name || 'Unknown',
+        count: item._count.cocktailId,
+      };
+    }),
+  );
+
+  // Get distribution by hour
+  const hourDistribution: Record<number, number> = {};
+  stats.forEach((stat) => {
+    const hour = new Date(stat.date).getHours();
+    hourDistribution[hour] = (hourDistribution[hour] || 0) + 1;
+  });
+
+  const hourDistributionArray = Array.from({ length: 24 }, (_, i) => ({
+    hour: i,
+    count: hourDistribution[i] || 0,
+  }));
+
+  return {
+    timeSeries,
+    topCocktails: topCocktailsWithNames,
+    hourDistribution: hourDistributionArray,
   };
 }
 
@@ -166,14 +247,14 @@ export default withHttpMethods({
     const lastMonthEndAdjusted = getEndOfDay(lastMonthEnd, dayStartTime);
 
     // Get statistics for current periods
-    const todayStats = await getStatisticsForPeriod(workspace.id, todayStart, todayEnd);
-    const weekStats = await getStatisticsForPeriod(workspace.id, weekStart, weekEnd);
-    const monthStats = await getStatisticsForPeriod(workspace.id, monthStart, monthEnd);
+    const todayStats = await getStatisticsForPeriod(workspace.id, todayStart, todayEnd, dayStartTime);
+    const weekStats = await getStatisticsForPeriod(workspace.id, weekStart, weekEnd, dayStartTime);
+    const monthStats = await getStatisticsForPeriod(workspace.id, monthStart, monthEnd, dayStartTime);
 
     // Get statistics for comparison periods
-    const yesterdayStats = await getStatisticsForPeriod(workspace.id, yesterdayStart, yesterdayEnd);
-    const lastWeekStats = await getStatisticsForPeriod(workspace.id, lastWeekStartAdjusted, lastWeekEndAdjusted);
-    const lastMonthStats = await getStatisticsForPeriod(workspace.id, lastMonthStartAdjusted, lastMonthEndAdjusted);
+    const yesterdayStats = await getStatisticsForPeriod(workspace.id, yesterdayStart, yesterdayEnd, dayStartTime);
+    const lastWeekStats = await getStatisticsForPeriod(workspace.id, lastWeekStartAdjusted, lastWeekEndAdjusted, dayStartTime);
+    const lastMonthStats = await getStatisticsForPeriod(workspace.id, lastMonthStartAdjusted, lastMonthEndAdjusted, dayStartTime);
 
     // Get all-time statistics
     const firstStat = await prisma.cocktailStatisticItem.findFirst({
@@ -189,7 +270,7 @@ export default withHttpMethods({
     if (firstStat) {
       const allTimeStart = getStartOfDay(firstStat.date, dayStartTime);
       const allTimeEnd = getEndOfDay(now, dayStartTime);
-      const allTimeData = await getStatisticsForPeriod(workspace.id, allTimeStart, allTimeEnd);
+      const allTimeData = await getStatisticsForPeriod(workspace.id, allTimeStart, allTimeEnd, dayStartTime);
       const daysActive = Math.ceil((allTimeEnd.getTime() - allTimeStart.getTime()) / (1000 * 60 * 60 * 24));
       allTimeStats = {
         total: allTimeData.total,
@@ -218,6 +299,7 @@ export default withHttpMethods({
       },
     });
     const periodRevenue = periodStats.reduce((sum, stat) => sum + (stat.cocktail?.price || 0), 0);
+    const periodTotal = periodStats.length;
 
     // Calculate deltas
     const todayDelta = yesterdayStats.total > 0 ? ((todayStats.total - yesterdayStats.total) / yesterdayStats.total) * 100 : 0;
@@ -225,77 +307,26 @@ export default withHttpMethods({
     const monthDelta = lastMonthStats.total > 0 ? ((monthStats.total - lastMonthStats.total) / lastMonthStats.total) * 100 : 0;
     const avgPerHourDelta = yesterdayStats.avgPerHour > 0 ? ((todayStats.avgPerHour - yesterdayStats.avgPerHour) / yesterdayStats.avgPerHour) * 100 : 0;
 
-    // Get time series data for overview chart (use selected date range)
-    const timeSeriesStats = await prisma.cocktailStatisticItem.findMany({
-      where: {
-        workspaceId: workspace.id,
-        date: {
-          gte: selectedStartDate,
-          lte: selectedEndDate,
-        },
-      },
-      orderBy: {
-        date: 'asc',
-      },
-    });
+    // Get chart data for each period
+    const todayChartData = await getChartDataForPeriod(workspace.id, todayStart, todayEnd);
+    const weekChartData = await getChartDataForPeriod(workspace.id, weekStart, weekEnd);
+    const monthChartData = await getChartDataForPeriod(workspace.id, monthStart, monthEnd);
+    const periodChartData = await getChartDataForPeriod(workspace.id, selectedStartDate, selectedEndDate);
 
-    // Group by day
-    const dayGroups: Record<string, number> = {};
-    timeSeriesStats.forEach((stat) => {
-      const dateKey = new Date(stat.date).toISOString().split('T')[0];
-      dayGroups[dateKey] = (dayGroups[dateKey] || 0) + 1;
-    });
-
-    const timeSeries = Object.entries(dayGroups)
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([date, count]) => ({ date, count }));
-
-    // Get top cocktails for the selected date range
-    const topCocktails = await prisma.cocktailStatisticItem.groupBy({
-      by: ['cocktailId'],
-      where: {
-        workspaceId: workspace.id,
-        date: {
-          gte: selectedStartDate,
-          lte: selectedEndDate,
-        },
-      },
-      _count: {
-        cocktailId: true,
-      },
-      orderBy: {
-        _count: {
-          cocktailId: 'desc',
-        },
-      },
-      take: 10,
-    });
-
-    const topCocktailsWithNames = await Promise.all(
-      topCocktails.map(async (item) => {
-        const cocktail = await prisma.cocktailRecipe.findUnique({
-          where: { id: item.cocktailId },
-          select: { name: true },
-        });
-        return {
-          cocktailId: item.cocktailId,
-          name: cocktail?.name || 'Unknown',
-          count: item._count.cocktailId,
-        };
-      }),
-    );
-
-    // Get distribution by hour for the week
-    const hourDistribution: Record<number, number> = {};
-    timeSeriesStats.forEach((stat) => {
-      const hour = new Date(stat.date).getHours();
-      hourDistribution[hour] = (hourDistribution[hour] || 0) + 1;
-    });
-
-    const hourDistributionArray = Array.from({ length: 24 }, (_, i) => ({
-      hour: i,
-      count: hourDistribution[i] || 0,
-    }));
+    let allTimeChartData: {
+      timeSeries: { date: string; count: number }[];
+      topCocktails: { cocktailId: string; name: string; count: number }[];
+      hourDistribution: { hour: number; count: number }[];
+    } = {
+      timeSeries: [],
+      topCocktails: [],
+      hourDistribution: [],
+    };
+    if (firstStat) {
+      const allTimeStart = getStartOfDay(firstStat.date, dayStartTime);
+      const allTimeEnd = getEndOfDay(now, dayStartTime);
+      allTimeChartData = await getChartDataForPeriod(workspace.id, allTimeStart, allTimeEnd);
+    }
 
     return res.json({
       data: {
@@ -328,8 +359,9 @@ export default withHttpMethods({
             revenue: monthStats.revenue,
           },
           period: {
-            total: timeSeriesStats.length,
-            topCocktail: topCocktailsWithNames.length > 0 ? { name: topCocktailsWithNames[0].name, count: topCocktailsWithNames[0].count } : null,
+            total: periodTotal,
+            topCocktail:
+              periodChartData.topCocktails.length > 0 ? { name: periodChartData.topCocktails[0].name, count: periodChartData.topCocktails[0].count } : null,
             revenue: periodRevenue,
           },
           avgPerHour: {
@@ -346,9 +378,17 @@ export default withHttpMethods({
             revenue: allTimeStats.revenue,
           },
         },
-        timeSeries,
-        topCocktails: topCocktailsWithNames,
-        hourDistribution: hourDistributionArray,
+        charts: {
+          today: todayChartData,
+          week: weekChartData,
+          month: monthChartData,
+          period: periodChartData,
+          allTime: allTimeChartData,
+        },
+        // Keep legacy fields for backward compatibility (use period data)
+        timeSeries: periodChartData.timeSeries,
+        topCocktails: periodChartData.topCocktails,
+        hourDistribution: periodChartData.hourDistribution,
       },
     });
   }),

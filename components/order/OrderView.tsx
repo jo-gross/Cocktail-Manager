@@ -301,7 +301,7 @@ export const OrderView = React.memo(function OrderView({ cocktailCards, workspac
       <button
         key={cocktail.id}
         type="button"
-        className="flex w-40 flex-col items-center gap-2 rounded-lg border border-base-300 bg-base-200/60 p-2 text-center text-sm transition hover:border-primary hover:bg-base-200"
+        className="flex w-40 flex-col items-center gap-2 rounded-lg border border-base-300 bg-base-100/60 p-2 text-center text-sm transition hover:border-primary hover:bg-base-100"
         onClick={() => addCocktailToOrder(cocktail, false)}
       >
         <div className="h-20 w-20 overflow-hidden rounded-full bg-base-300">
@@ -394,7 +394,7 @@ export const OrderView = React.memo(function OrderView({ cocktailCards, workspac
               ) : selectedCardId === 'all' || !selectedCard ? (
                 <>
                   {filteredCocktails.length === 0 ? (
-                    <div className="flex h-full items-center justify-center text-gray-500">Keine Cocktails gefunden</div>
+                    <div className="flex h-full items-center justify-center text-base-content/70">Keine Cocktails gefunden</div>
                   ) : (
                     <div className="flex h-full items-stretch gap-2">
                       {/* Pseudo-Gruppe "Alle" */}
@@ -462,20 +462,20 @@ export const OrderView = React.memo(function OrderView({ cocktailCards, workspac
       <div className="flex max-h-[calc(50vh-2rem)] flex-1 flex-col gap-2 overflow-y-auto md:flex-row md:overflow-hidden">
         {/* Gläser */}
         <div className="w-full md:w-1/2">
-          <div className="card h-full bg-base-100 shadow-md">
+          <div className="card h-full">
             <div className="card-body flex h-full flex-col">
               <h2 className="card-title text-xl">Gläser</h2>
               <div className="min-h-0 flex-1 space-y-4 overflow-y-auto">
                 {glassesLoading ? (
                   <Loading />
                 ) : glasses.length === 0 ? (
-                  <div className="py-8 text-center text-gray-500">Keine Gläser vorhanden</div>
+                  <div className="py-8 text-center text-base-content/70">Keine Gläser vorhanden</div>
                 ) : (
                   Object.entries(groupedGlasses)
                     .sort(([a], [b]) => parseFloat(b) - parseFloat(a))
                     .map(([deposit, glassesInGroup]) => (
-                      <div key={deposit} className="card bg-base-100 shadow-md">
-                        <div className="card-body p-4">
+                      <div key={deposit} className="">
+                        <div className="p-4">
                           <div className="mb-2">
                             <h3 className="card-title text-lg">Pfand: {parseFloat(deposit).formatPrice()} €</h3>
                           </div>
@@ -483,7 +483,7 @@ export const OrderView = React.memo(function OrderView({ cocktailCards, workspac
                             {glassesInGroup.map((glass) => (
                               <div
                                 key={glass.id}
-                                className="flex flex-col items-center gap-2 rounded-lg border border-base-300 bg-base-200/60 p-2 text-center text-xs transition hover:cursor-pointer hover:border-primary hover:bg-base-200"
+                                className="flex flex-col items-center gap-2 rounded-lg border border-base-300 bg-base-100/60 p-2 text-center text-xs transition hover:cursor-pointer hover:border-primary hover:bg-base-100"
                                 onClick={() => addReturnedGlass(glass)}
                               >
                                 <div className="h-16 w-16 overflow-hidden rounded-full bg-base-300">
@@ -512,7 +512,7 @@ export const OrderView = React.memo(function OrderView({ cocktailCards, workspac
 
         {/* Bestellung */}
         <div className="w-full md:w-1/2">
-          <div className="card h-full bg-base-100 shadow-lg">
+          <div className="card h-full">
             <div className="card-body flex h-full flex-col">
               <div className="flex items-start justify-between gap-2">
                 <h2 className="card-title text-2xl">Bestellung</h2>
@@ -529,7 +529,9 @@ export const OrderView = React.memo(function OrderView({ cocktailCards, workspac
                 </button>
               </div>
               {orderItems.length === 0 ? (
-                <div className="flex flex-1 items-center justify-center py-8 text-center text-gray-500">Keine Cocktails oder Gläser in der Bestellung</div>
+                <div className="flex flex-1 items-center justify-center py-8 text-center text-base-content/70">
+                  Keine Cocktails oder Gläser in der Bestellung
+                </div>
               ) : (
                 <>
                   <div className="min-h-0 flex-1 overflow-x-auto overflow-y-auto">

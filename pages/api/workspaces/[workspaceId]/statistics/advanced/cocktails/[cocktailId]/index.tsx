@@ -5,7 +5,7 @@ import { withHttpMethods } from '@middleware/api/handleMethods';
 import { Role, Permission, WorkspaceSettingKey } from '@generated/prisma/client';
 import HTTPMethod from 'http-method-enum';
 import '../../../../../../../../lib/DateUtils';
-import { getStartOfDay, getEndOfDay } from '../../../../../../../../lib/dateHelpers';
+import { getStartOfDay, getEndOfDay, getLogicalDate } from '../../../../../../../../lib/dateHelpers';
 
 function determineGranularity(startDate: Date, endDate: Date): 'hour' | 'day' | 'week' | 'month' {
   const diffMs = endDate.getTime() - startDate.getTime();
@@ -227,9 +227,11 @@ export default withHttpMethods({
     }));
 
     // Day distribution (0 = Sunday, 1 = Monday, etc.)
+    // Use logical date based on dayStartTime to correctly assign orders to days
     const dayDistribution: Record<number, number> = {};
     currentStats.forEach((stat) => {
-      const day = new Date(stat.date).getDay();
+      const logicalDate = getLogicalDate(new Date(stat.date), dayStartTime);
+      const day = logicalDate.getDay();
       dayDistribution[day] = (dayDistribution[day] || 0) + 1;
     });
 

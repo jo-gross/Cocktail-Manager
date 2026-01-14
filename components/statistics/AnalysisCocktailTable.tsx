@@ -1,5 +1,8 @@
-import React, { useState } from 'react';
+import React, { useContext, useState } from 'react';
 import '@lib/StringUtils';
+import { FaInfoCircle } from 'react-icons/fa';
+import { ModalContext } from '@lib/context/ModalContextProvider';
+import CocktailOrderTimesModal from '@components/modals/CocktailOrderTimesModal';
 
 interface AnalysisCocktailDetail {
   total: number;
@@ -21,11 +24,23 @@ interface AnalysisCocktailTableProps {
   details: Map<string, AnalysisCocktailDetail>;
   totalRevenue: number;
   previousTotalRevenue?: number;
+  workspaceId?: string;
+  startDate?: Date;
+  endDate?: Date;
 }
 
-export function AnalysisCocktailTable({ cocktails, details, totalRevenue, previousTotalRevenue = 0 }: AnalysisCocktailTableProps) {
+export function AnalysisCocktailTable({
+  cocktails,
+  details,
+  totalRevenue,
+  previousTotalRevenue = 0,
+  workspaceId,
+  startDate,
+  endDate,
+}: AnalysisCocktailTableProps) {
   const [sortBy, setSortBy] = useState<'name' | 'total' | 'rank' | 'revenue' | 'revenuePercentage' | 'delta'>('total');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  const modalContext = useContext(ModalContext);
 
   const handleSort = (newSortBy: typeof sortBy) => {
     if (sortBy === newSortBy) {
@@ -84,9 +99,11 @@ export function AnalysisCocktailTable({ cocktails, details, totalRevenue, previo
               </button>
             </th>
             <th>
-              <button className="btn btn-ghost btn-xs" onClick={() => handleSort('total')}>
-                Bestellungen {getSortIcon('total')}
-              </button>
+              <div className="flex items-center gap-1">
+                <button className="btn btn-ghost btn-xs" onClick={() => handleSort('total')}>
+                  Bestellungen {getSortIcon('total')}
+                </button>
+              </div>
             </th>
             <th>
               <button className="btn btn-ghost btn-xs" onClick={() => handleSort('rank')}>
@@ -133,13 +150,37 @@ export function AnalysisCocktailTable({ cocktails, details, totalRevenue, previo
                 </td>
                 <td className="font-semibold">{cocktail.name}</td>
                 <td>
-                  {total || '-'}
-                  {previousTotal !== undefined && previousTotal !== null && (
-                    <span className="ml-1 text-xs text-base-content/70">
-                      ({totalDifference > 0 ? '+' : ''}
-                      {totalDifference.toLocaleString('de-DE')})
+                  <div className="flex items-center gap-2">
+                    <span>
+                      {total || '-'}
+                      {previousTotal !== undefined && previousTotal !== null && (
+                        <span className="ml-1 text-xs text-base-content/70">
+                          ({totalDifference > 0 ? '+' : ''}
+                          {totalDifference.toLocaleString('de-DE')})
+                        </span>
+                      )}
                     </span>
-                  )}
+                    {workspaceId && total > 0 && (
+                      <button
+                        className="btn btn-circle btn-ghost btn-xs"
+                        onClick={() => {
+                          modalContext.openModal(
+                            <CocktailOrderTimesModal
+                              workspaceId={workspaceId}
+                              cocktailId={cocktail.id}
+                              cocktailName={cocktail.name}
+                              startDate={startDate}
+                              endDate={endDate}
+                            />,
+                            true,
+                          );
+                        }}
+                        title="Bestellzeitpunkte anzeigen"
+                      >
+                        <FaInfoCircle />
+                      </button>
+                    )}
+                  </div>
                 </td>
                 <td>{detail.rank ? `#${detail.rank}` : '-'}</td>
                 <td>

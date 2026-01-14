@@ -176,6 +176,8 @@ export default withHttpMethods({
             cocktailPercentage: 0, // Prozentualer Anteil der übereinstimmenden Cocktails im Zeitraum
             totalCocktailsInWorkspace: totalCocktailsInWorkspace, // Gesamtanzahl aller Cocktails im Workspace
             cocktailPercentageAll: cocktailPercentageAll, // Prozentualer Anteil der übereinstimmenden Cocktails von allen Cocktails
+            revenue: 0,
+            totalRevenue: 0,
           },
           cocktails: [],
           aggregated: [],
@@ -195,11 +197,40 @@ export default withHttpMethods({
           lte: end,
         },
       },
+      include: {
+        cocktail: {
+          select: {
+            price: true,
+          },
+        },
+      },
     });
 
     const total = stats.length;
 
     const percentage = allStats.length > 0 ? (total / allStats.length) * 100 : 0;
+
+    // Calculate revenue for matching cocktails
+    const revenue = stats.reduce((sum, stat) => sum + (stat.cocktail?.price || 0), 0);
+
+    // Calculate total revenue for the period
+    const allStatsWithPrices = await prisma.cocktailStatisticItem.findMany({
+      where: {
+        workspaceId: workspace.id,
+        date: {
+          gte: start,
+          lte: end,
+        },
+      },
+      include: {
+        cocktail: {
+          select: {
+            price: true,
+          },
+        },
+      },
+    });
+    const totalRevenue = allStatsWithPrices.reduce((sum, stat) => sum + (stat.cocktail?.price || 0), 0);
 
     // Calculate percentage of matching cocktails vs total unique cocktails in period
     const cocktailPercentage = totalUniqueCocktailsInPeriod > 0 ? (matchingCocktailIds.length / totalUniqueCocktailsInPeriod) * 100 : 0;
@@ -314,6 +345,8 @@ export default withHttpMethods({
           cocktailPercentage: cocktailPercentage, // Prozentualer Anteil der übereinstimmenden Cocktails im Zeitraum
           totalCocktailsInWorkspace: totalCocktailsInWorkspace, // Gesamtanzahl aller Cocktails im Workspace
           cocktailPercentageAll: cocktailPercentageAll, // Prozentualer Anteil der übereinstimmenden Cocktails von allen Cocktails
+          revenue,
+          totalRevenue,
         },
         cocktails: cocktailsWithCounts,
         aggregated: aggregatedData,

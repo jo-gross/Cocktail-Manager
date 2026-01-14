@@ -103,9 +103,25 @@ export function TimeSeriesChart({
     return colorStr;
   };
 
+  // Format date with weekday (e.g., "Do. 08.01.25")
+  const formatDateWithWeekday = (dateString: string): string => {
+    try {
+      const date = new Date(dateString);
+      const weekdays = ['So.', 'Mo.', 'Di.', 'Mi.', 'Do.', 'Fr.', 'Sa.'];
+      const weekday = weekdays[date.getDay()];
+      const day = date.getDate().toString().padStart(2, '0');
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const year = date.getFullYear().toString().slice(-2);
+      return `${weekday} ${day}.${month}.${year}`;
+    } catch {
+      return dateString;
+    }
+  };
+
   // If datasets are provided, use them; otherwise use the old format
   let chartDatasets: any[];
   let chartLabels: string[];
+  let formattedLabels: string[];
 
   if (datasets && datasets.length > 0) {
     // Collect all unique dates from all datasets
@@ -114,6 +130,7 @@ export function TimeSeriesChart({
       ds.data.forEach((d) => allDates.add(d.date));
     });
     chartLabels = Array.from(allDates).sort();
+    formattedLabels = chartLabels.map(formatDateWithWeekday);
 
     // Create datasets with colors - use theme color as default for single dataset
     const defaultColors = [
@@ -147,6 +164,7 @@ export function TimeSeriesChart({
   } else {
     // Legacy format - use theme color
     chartLabels = data ? data.map((d) => d.date) : [];
+    formattedLabels = chartLabels.map(formatDateWithWeekday);
     chartDatasets = [
       {
         label,
@@ -182,7 +200,7 @@ export function TimeSeriesChart({
   } | null>(null);
 
   const chartData = {
-    labels: chartLabels,
+    labels: formattedLabels,
     datasets: chartDatasets,
   };
 
