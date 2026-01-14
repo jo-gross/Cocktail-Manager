@@ -529,7 +529,9 @@ export const OrderView = React.memo(function OrderView({ cocktailCards, workspac
                 </button>
               </div>
               {orderItems.length === 0 ? (
-                <div className="flex flex-1 items-center justify-center py-8 text-center text-base-content/70">Keine Cocktails oder Gläser in der Bestellung</div>
+                <div className="flex flex-1 items-center justify-center py-8 text-center text-base-content/70">
+                  Keine Cocktails oder Gläser in der Bestellung
+                </div>
               ) : (
                 <>
                   <div className="min-h-0 flex-1 overflow-x-auto overflow-y-auto">

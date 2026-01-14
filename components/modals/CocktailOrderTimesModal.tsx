@@ -1,5 +1,4 @@
-import React, { useCallback, useEffect, useState, useRef } from 'react';
-import { FaInfoCircle } from 'react-icons/fa';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Loading } from '../Loading';
 import { alertService } from '@lib/alertService';
 import '@lib/DateUtils';
@@ -124,7 +123,7 @@ export default function CocktailOrderTimesModal({ workspaceId, cocktailId, cockt
       <h3 className="flex-shrink-0 text-xl font-bold">Bestellzeitpunkte: {cocktailName}</h3>
 
       {/* Search */}
-      <div className={"join w-full"}>
+      <div className={'join w-full'}>
         <input
           className="input join-item input-bordered flex-1"
           type="text"
@@ -133,12 +132,12 @@ export default function CocktailOrderTimesModal({ workspaceId, cocktailId, cockt
           onChange={(e) => setSearchInput(e.target.value)}
         />
         {searchInput && (
-          <button className="btn join-item btn-outline" onClick={handleClearSearch} title="Suche zurücksetzen">
+          <button className="btn btn-outline join-item" onClick={handleClearSearch} title="Suche zurücksetzen">
             ✕
           </button>
         )}
         {loading && (
-          <span className="btn join-item btn-square btn-ghost">
+          <span className="btn btn-square btn-ghost join-item">
             <span className="loading loading-spinner loading-sm"></span>
           </span>
         )}
@@ -155,9 +154,9 @@ export default function CocktailOrderTimesModal({ workspaceId, cocktailId, cockt
         </div>
       ) : (
         <>
-          <div className="min-h-0 flex-1 overflow-y-auto overflow-x-auto">
+          <div className="min-h-0 flex-1 overflow-x-auto overflow-y-auto">
             <table className="table table-zebra table-sm">
-              <thead className="sticky top-0 bg-base-200 z-10">
+              <thead className="sticky top-0 z-10 bg-base-200">
                 <tr>
                   <th>Datum</th>
                   <th>Uhrzeit</th>
@@ -199,4 +198,3 @@ export default function CocktailOrderTimesModal({ workspaceId, cocktailId, cockt
     </div>
   );
 }
-

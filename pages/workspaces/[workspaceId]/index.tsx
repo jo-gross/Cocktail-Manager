@@ -23,7 +23,7 @@ import { PageCenter } from '@components/layout/PageCenter';
 import { NextPageWithPullToRefresh } from '../../../types/next';
 import { OrderView } from '../../../components/order/OrderView';
 import { useOffline } from '@lib/context/OfflineContextProvider';
-import { fetchCards, fetchCard, prefetchCardData } from '@lib/network/cards';
+import { fetchCard, fetchCards, prefetchCardData } from '@lib/network/cards';
 import { prefetchAllCocktails } from '@lib/network/cocktails';
 
 const OverviewPage: NextPageWithPullToRefresh = () => {
@@ -729,7 +729,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                 </div>
               </div>
             ) : (
-              <div className="gap-1 md:gap-2 flex flex-col">
+              <div className="flex flex-col gap-1 md:gap-2">
                 {showTime && !showStatisticActions ? <div className={'pb-2'}>{timeComponent}</div> : <></>}
                 {loadingGroups ? (
                   <PageCenter>
@@ -1224,7 +1224,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
             </>
             {isOffline ? (
               <div className={'tooltip tooltip-left'} data-tip="Nicht verfügbar im Offline-Modus">
-                <div className={'btn btn-square btn-disabled rounded-xl md:btn-lg'}>
+                <div className={'btn btn-disabled btn-square rounded-xl md:btn-lg'}>
                   <BsFillGearFill />
                 </div>
               </div>

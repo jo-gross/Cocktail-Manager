@@ -1,6 +1,6 @@
 import { alertService } from '../alertService';
 import { CocktailCardFull } from '../../models/CocktailCardFull';
-import { fetchWithCache, fetchListWithCache, prefetchImage } from './fetchWithCache';
+import { fetchListWithCache, fetchWithCache, prefetchImage } from './fetchWithCache';
 
 /**
  * Fetch all cards for a workspace
@@ -94,11 +94,7 @@ export async function fetchCard(
 /**
  * Prefetch all data for a card (cocktails, images, etc.) for offline use
  */
-export async function prefetchCardData(
-  workspaceId: string,
-  card: CocktailCardFull,
-  onProgress?: (current: number, total: number) => void,
-): Promise<void> {
+export async function prefetchCardData(workspaceId: string, card: CocktailCardFull, onProgress?: (current: number, total: number) => void): Promise<void> {
   const { cacheService } = await import('../offline/CacheService');
 
   // Collect all cocktail IDs from the card
@@ -155,4 +151,3 @@ export async function prefetchCardData(
   // Cache images in parallel
   await Promise.allSettled(imageUrls.map((url) => prefetchImage(workspaceId, url)));
 }
-

@@ -26,12 +26,9 @@ export function OfflineBanner({ className = '' }: OfflineBannerProps) {
       aria-live="polite"
     >
       <FaWifi className="h-4 w-4 animate-pulse" />
-      <span className="text-sm font-medium">
-        Du bist offline – Einige Funktionen sind eingeschränkt. Daten werden aus dem Cache geladen.
-      </span>
+      <span className="text-sm font-medium">Du bist offline – Einige Funktionen sind eingeschränkt. Daten werden aus dem Cache geladen.</span>
     </div>
   );
 }
 
 export default OfflineBanner;
-

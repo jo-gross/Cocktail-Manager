@@ -1,4 +1,4 @@
-import React, { createContext, useCallback, useContext, useEffect, useState, ReactNode } from 'react';
+import React, { createContext, ReactNode, useCallback, useContext, useEffect, useState } from 'react';
 import { cacheService, CacheStoreName } from '../offline/CacheService';
 
 interface OfflineContextProps {
@@ -134,4 +134,3 @@ export function useOffline() {
   }
   return context;
 }
-

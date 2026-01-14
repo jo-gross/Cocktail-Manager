@@ -1,7 +1,7 @@
 import { alertService } from '../alertService';
 import { CocktailRecipeFull } from '../../models/CocktailRecipeFull';
 import { CocktailRecipeFullWithImage } from '../../models/CocktailRecipeFullWithImage';
-import { fetchWithCache, fetchListWithCache } from './fetchWithCache';
+import { fetchListWithCache, fetchWithCache } from './fetchWithCache';
 
 export function fetchCocktail(
   workspaceId: string | string[] | undefined,
@@ -136,10 +136,7 @@ export async function fetchCocktails(
 /**
  * Prefetch all cocktails for offline search
  */
-export async function prefetchAllCocktails(
-  workspaceId: string,
-  onProgress?: (loaded: number, total: number) => void,
-): Promise<void> {
+export async function prefetchAllCocktails(workspaceId: string, onProgress?: (loaded: number, total: number) => void): Promise<void> {
   try {
     // First, fetch the list of all cocktails
     const response = await fetch(`/api/workspaces/${workspaceId}/cocktails?search=`);

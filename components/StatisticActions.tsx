@@ -46,7 +46,7 @@ export default function StatisticActions({
     <div className={'grid grid-cols-2 gap-2 md:grid-cols-2 2xl:grid-cols-3'}>
       <div className={isOffline ? 'tooltip' : ''} data-tip={isOffline ? 'Nicht verfügbar im Offline-Modus' : undefined}>
         <button
-          className={'btn btn-outline flex-1 w-full'}
+          className={'btn btn-outline w-full flex-1'}
           onClick={() =>
             addCocktailToQueue({
               workspaceId: workspaceId,
@@ -64,7 +64,7 @@ export default function StatisticActions({
 
       <div className={isOffline ? 'tooltip' : ''} data-tip={isOffline ? 'Nicht verfügbar im Offline-Modus' : undefined}>
         <button
-          className={'btn btn-outline flex-1 w-full'}
+          className={'btn btn-outline w-full flex-1'}
           onClick={() =>
             modalContext.openModal(
               <AddCocktailToQueueModal
@@ -83,7 +83,10 @@ export default function StatisticActions({
           {submittingQueue ? <span className={'loading loading-spinner'}></span> : <></>}
         </button>
       </div>
-      <div className={isOffline ? 'tooltip col-span-2 2xl:col-span-1' : 'col-span-2 2xl:col-span-1'} data-tip={isOffline ? 'Nicht verfügbar im Offline-Modus' : undefined}>
+      <div
+        className={isOffline ? 'tooltip col-span-2 2xl:col-span-1' : 'col-span-2 2xl:col-span-1'}
+        data-tip={isOffline ? 'Nicht verfügbar im Offline-Modus' : undefined}
+      >
         <button
           className={'btn btn-outline btn-primary w-full'}
           onClick={() =>

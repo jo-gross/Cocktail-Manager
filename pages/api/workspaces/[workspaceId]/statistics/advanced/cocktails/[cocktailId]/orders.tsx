@@ -2,10 +2,10 @@ import prisma from '../../../../../../../../prisma/prisma';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
 import { withHttpMethods } from '@middleware/api/handleMethods';
-import { Role, Permission, WorkspaceSettingKey } from '@generated/prisma/client';
+import { Permission, Role, WorkspaceSettingKey } from '@generated/prisma/client';
 import HTTPMethod from 'http-method-enum';
 import '../../../../../../../../lib/DateUtils';
-import { getStartOfDay, getEndOfDay } from '../../../../../../../../lib/dateHelpers';
+import { getEndOfDay, getStartOfDay } from '../../../../../../../../lib/dateHelpers';
 
 export default withHttpMethods({
   [HTTPMethod.GET]: withWorkspacePermission([Role.USER], Permission.STATISTICS_READ, async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
@@ -129,7 +129,7 @@ export default withHttpMethods({
         const cardStr = order.cocktailCard ? order.cocktailCard.name.toLowerCase() : '';
         // Search in notes
         const notesStr = (order.notes || '').toLowerCase();
-        
+
         return (
           dateFormattedStr.includes(searchLower) ||
           dateShortStr.includes(searchLower) ||
@@ -168,4 +168,3 @@ export default withHttpMethods({
     });
   }),
 });
-

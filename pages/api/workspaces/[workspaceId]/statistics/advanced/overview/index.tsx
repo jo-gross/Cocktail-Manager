@@ -2,10 +2,10 @@ import prisma from '../../../../../../../prisma/prisma';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
 import { withHttpMethods } from '@middleware/api/handleMethods';
-import { Role, Permission, WorkspaceSettingKey } from '@generated/prisma/client';
+import { Permission, Role, WorkspaceSettingKey } from '@generated/prisma/client';
 import HTTPMethod from 'http-method-enum';
 import '../../../../../../../lib/DateUtils';
-import { getStartOfDay, getEndOfDay, getStartOfWeek, getStartOfMonth, getLogicalDate } from '../../../../../../../lib/dateHelpers';
+import { getEndOfDay, getLogicalDate, getStartOfDay, getStartOfMonth, getStartOfWeek } from '../../../../../../../lib/dateHelpers';
 
 async function getStatisticsForPeriod(workspaceId: string, startDate: Date, endDate: Date, dayStartTime?: string) {
   const stats = await prisma.cocktailStatisticItem.findMany({
@@ -312,7 +312,7 @@ export default withHttpMethods({
     const weekChartData = await getChartDataForPeriod(workspace.id, weekStart, weekEnd);
     const monthChartData = await getChartDataForPeriod(workspace.id, monthStart, monthEnd);
     const periodChartData = await getChartDataForPeriod(workspace.id, selectedStartDate, selectedEndDate);
-    
+
     let allTimeChartData = { timeSeries: [], topCocktails: [], hourDistribution: [] };
     if (firstStat) {
       const allTimeStart = getStartOfDay(firstStat.date, dayStartTime);
@@ -352,7 +352,8 @@ export default withHttpMethods({
           },
           period: {
             total: periodTotal,
-            topCocktail: periodChartData.topCocktails.length > 0 ? { name: periodChartData.topCocktails[0].name, count: periodChartData.topCocktails[0].count } : null,
+            topCocktail:
+              periodChartData.topCocktails.length > 0 ? { name: periodChartData.topCocktails[0].name, count: periodChartData.topCocktails[0].count } : null,
             revenue: periodRevenue,
           },
           avgPerHour: {

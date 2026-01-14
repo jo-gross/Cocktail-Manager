@@ -29,7 +29,15 @@ interface AnalysisCocktailTableProps {
   endDate?: Date;
 }
 
-export function AnalysisCocktailTable({ cocktails, details, totalRevenue, previousTotalRevenue = 0, workspaceId, startDate, endDate }: AnalysisCocktailTableProps) {
+export function AnalysisCocktailTable({
+  cocktails,
+  details,
+  totalRevenue,
+  previousTotalRevenue = 0,
+  workspaceId,
+  startDate,
+  endDate,
+}: AnalysisCocktailTableProps) {
   const [sortBy, setSortBy] = useState<'name' | 'total' | 'rank' | 'revenue' | 'revenuePercentage' | 'delta'>('total');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const modalContext = useContext(ModalContext);
@@ -154,7 +162,7 @@ export function AnalysisCocktailTable({ cocktails, details, totalRevenue, previo
                     </span>
                     {workspaceId && total > 0 && (
                       <button
-                        className="btn btn-ghost btn-xs btn-circle"
+                        className="btn btn-circle btn-ghost btn-xs"
                         onClick={() => {
                           modalContext.openModal(
                             <CocktailOrderTimesModal

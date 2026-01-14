@@ -2,7 +2,7 @@ import { ManageEntityLayout } from '@components/layout/ManageEntityLayout';
 import { useRouter } from 'next/router';
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { TimeRange, TimeRangePicker } from '@components/statistics/TimeRangePicker';
-import { getEndOfDay, getOrderedHourLabels, getStartOfWeek, reorderHourDistribution, getLogicalDate } from '@lib/dateHelpers';
+import { getEndOfDay, getLogicalDate, getOrderedHourLabels, getStartOfWeek, reorderHourDistribution } from '@lib/dateHelpers';
 import { DAY_NAMES_SHORT_MONDAY_FIRST, DAY_ORDER_MONDAY_FIRST, reorderDaysMondayFirst } from '@lib/dayConstants';
 import { StatCard } from '@components/statistics/StatCard';
 import { TimeSeriesChart } from '@components/statistics/TimeSeriesChart';
@@ -415,7 +415,14 @@ const StatisticsAdvancedPage = () => {
   }, []);
 
   const processDataGroupByDaily = useCallback(
-    (data: CocktailStatisticItemFull[], showEmptyDays: boolean, hiddenIds: Set<string>, startDate: Date, endDate: Date, dayStartTime?: string): ProcessedData => {
+    (
+      data: CocktailStatisticItemFull[],
+      showEmptyDays: boolean,
+      hiddenIds: Set<string>,
+      startDate: Date,
+      endDate: Date,
+      dayStartTime?: string,
+    ): ProcessedData => {
       const dailyCocktails: Record<string, Record<string, number>> = {};
 
       data
@@ -2048,7 +2055,7 @@ const StatisticsAdvancedPage = () => {
                         formatValue={(val) => (typeof val === 'number' ? val.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' }) : String(val))}
                         desc={
                           setDetailData.kpis.totalRevenue !== undefined && setDetailData.kpis.totalRevenue > 0
-                            ? `${((setDetailData.kpis.revenue || 0) / setDetailData.kpis.totalRevenue * 100).toFixed(1)}% vom Gesamtumsatz`
+                            ? `${(((setDetailData.kpis.revenue || 0) / setDetailData.kpis.totalRevenue) * 100).toFixed(1)}% vom Gesamtumsatz`
                             : undefined
                         }
                         loading={setDetailLoading}

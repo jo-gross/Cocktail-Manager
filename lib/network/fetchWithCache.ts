@@ -168,4 +168,3 @@ export async function prefetchImage(workspaceId: string, imageUrl: string): Prom
     return false;
   }
 }
-
