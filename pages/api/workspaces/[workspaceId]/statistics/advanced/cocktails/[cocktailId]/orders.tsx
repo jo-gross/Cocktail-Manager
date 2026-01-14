@@ -107,7 +107,6 @@ export default withHttpMethods({
         weekday: ['So.', 'Mo.', 'Di.', 'Mi.', 'Do.', 'Fr.', 'Sa.'][orderDate.getDay()],
         user: order.user ? { name: order.user.name, email: order.user.email } : null,
         cocktailCard: order.cocktailCard ? { name: order.cocktailCard.name } : null,
-        notes: order.notes,
       };
     });
 
@@ -127,17 +126,13 @@ export default withHttpMethods({
         const userStr = order.user ? `${order.user.name} ${order.user.email || ''}`.toLowerCase() : '';
         // Search in card name
         const cardStr = order.cocktailCard ? order.cocktailCard.name.toLowerCase() : '';
-        // Search in notes
-        const notesStr = (order.notes || '').toLowerCase();
-
         return (
           dateFormattedStr.includes(searchLower) ||
           dateShortStr.includes(searchLower) ||
           weekdayStr.includes(searchLower) ||
           dateFullStr.includes(searchLower) ||
           userStr.includes(searchLower) ||
-          cardStr.includes(searchLower) ||
-          notesStr.includes(searchLower)
+          cardStr.includes(searchLower)
         );
       });
     }
@@ -154,7 +149,6 @@ export default withHttpMethods({
       date: order.date,
       user: order.user,
       cocktailCard: order.cocktailCard,
-      notes: order.notes,
     }));
 
     return res.json({

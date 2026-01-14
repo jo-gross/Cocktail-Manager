@@ -134,7 +134,7 @@ export async function prefetchCardData(workspaceId: string, card: CocktailCardFu
 
         // Cache garnish images
         body.data.garnishes?.forEach((g: { garnish?: { id: string; _count?: { GarnishImage: number } } }) => {
-          if (g.garnish?._count?.GarnishImage > 0) {
+          if (g.garnish && g.garnish._count && g.garnish._count.GarnishImage > 0) {
             const garnishImageUrl = `/api/workspaces/${workspaceId}/garnishes/${g.garnish.id}/image`;
             imageUrls.push(garnishImageUrl);
           }

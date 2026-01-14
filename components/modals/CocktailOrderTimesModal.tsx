@@ -8,7 +8,6 @@ interface OrderTime {
   date: string;
   user: { name: string; email: string } | null;
   cocktailCard: { name: string } | null;
-  notes: string | null;
 }
 
 interface CocktailOrderTimesModalProps {
@@ -127,7 +126,7 @@ export default function CocktailOrderTimesModal({ workspaceId, cocktailId, cockt
         <input
           className="input join-item input-bordered flex-1"
           type="text"
-          placeholder="Suchen nach Datum, Benutzer, Karte oder Notiz..."
+          placeholder="Suchen nach Datum, Benutzer oder Karte..."
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
         />
@@ -162,7 +161,6 @@ export default function CocktailOrderTimesModal({ workspaceId, cocktailId, cockt
                   <th>Uhrzeit</th>
                   <th>Benutzer</th>
                   <th>Karte</th>
-                  <th>Notiz</th>
                 </tr>
               </thead>
               <tbody>
@@ -172,7 +170,6 @@ export default function CocktailOrderTimesModal({ workspaceId, cocktailId, cockt
                     <td>{new Date(order.date).toFormatTimeString()}</td>
                     <td>{order.user ? order.user.name : '-'}</td>
                     <td>{order.cocktailCard ? order.cocktailCard.name : '-'}</td>
-                    <td>{order.notes || '-'}</td>
                   </tr>
                 ))}
               </tbody>

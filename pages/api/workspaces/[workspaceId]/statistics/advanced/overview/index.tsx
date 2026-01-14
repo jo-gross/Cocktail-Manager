@@ -313,7 +313,15 @@ export default withHttpMethods({
     const monthChartData = await getChartDataForPeriod(workspace.id, monthStart, monthEnd);
     const periodChartData = await getChartDataForPeriod(workspace.id, selectedStartDate, selectedEndDate);
 
-    let allTimeChartData = { timeSeries: [], topCocktails: [], hourDistribution: [] };
+    let allTimeChartData: {
+      timeSeries: { date: string; count: number }[];
+      topCocktails: { cocktailId: string; name: string; count: number }[];
+      hourDistribution: { hour: number; count: number }[];
+    } = {
+      timeSeries: [],
+      topCocktails: [],
+      hourDistribution: [],
+    };
     if (firstStat) {
       const allTimeStart = getStartOfDay(firstStat.date, dayStartTime);
       const allTimeEnd = getEndOfDay(now, dayStartTime);
