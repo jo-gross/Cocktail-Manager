@@ -1,13 +1,14 @@
 import { FaEllipsisV, FaRegClone, FaRegEdit, FaTrashAlt } from 'react-icons/fa';
 import { useRouter } from 'next/router';
 import { alertService } from '@lib/alertService';
-import { useContext, useState } from 'react';
+import { useContext, useState, useRef, useEffect, useCallback } from 'react';
 import { UserContext } from '@lib/context/UserContextProvider';
 import Link from 'next/link';
 import { Role } from '@generated/prisma/client';
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import { DeleteConfirmationModal } from './modals/DeleteConfirmationModal';
 import InputModal from './modals/InputModal';
+import { createPortal } from 'react-dom';
 
 interface ManageColumnProps {
   id: string;
@@ -30,6 +31,87 @@ export function ManageColumn(props: ManageColumnProps) {
   const modalContext = useContext(ModalContext);
   const [isCheckingReferences, setIsCheckingReferences] = useState(false);
   const [isDuplicating, setIsDuplicating] = useState(false);
+
+  // Dropdown state for portal-based rendering
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const dropdownRef = useRef<HTMLUListElement>(null);
+
+  const calculateDropdownPosition = useCallback(() => {
+    if (buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      const dropdownWidth = 208; // w-52 = 13rem = 208px
+      const viewportHeight = window.innerHeight;
+      const viewportWidth = window.innerWidth;
+
+      // Get actual dropdown height if it exists, otherwise estimate
+      const actualDropdownHeight = dropdownRef.current?.getBoundingClientRect().height || 120;
+      const margin = 8; // Consistent margin (mt-2)
+
+      let top = rect.bottom + margin; // Position below button
+      let left = rect.right - dropdownWidth; // Align to the right (dropdown-end)
+
+      // Check if dropdown would overflow bottom of viewport - open upward instead
+      if (top + actualDropdownHeight > viewportHeight) {
+        top = rect.top - actualDropdownHeight - margin;
+      }
+
+      // Ensure dropdown doesn't overflow left side of viewport
+      if (left < 8) {
+        left = 8;
+      }
+
+      // Ensure dropdown doesn't overflow right side of viewport
+      if (left + dropdownWidth > viewportWidth - 8) {
+        left = viewportWidth - dropdownWidth - 8;
+      }
+
+      setDropdownPosition({ top, left });
+    }
+  }, []);
+
+  const handleToggleDropdown = useCallback(() => {
+    if (!isDropdownOpen) {
+      calculateDropdownPosition();
+      // Recalculate after render to get actual dropdown height
+      requestAnimationFrame(() => {
+        calculateDropdownPosition();
+      });
+    }
+    setIsDropdownOpen(!isDropdownOpen);
+  }, [isDropdownOpen, calculateDropdownPosition]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        isDropdownOpen &&
+        dropdownRef.current &&
+        buttonRef.current &&
+        !dropdownRef.current.contains(event.target as Node) &&
+        !buttonRef.current.contains(event.target as Node)
+      ) {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    const handleScroll = () => {
+      if (isDropdownOpen) {
+        calculateDropdownPosition();
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    window.addEventListener('scroll', handleScroll, true);
+    window.addEventListener('resize', calculateDropdownPosition);
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      window.removeEventListener('scroll', handleScroll, true);
+      window.removeEventListener('resize', calculateDropdownPosition);
+    };
+  }, [isDropdownOpen, calculateDropdownPosition]);
 
   const handleDeleteClick = async () => {
     // Prüfe Referenzen nur für ingredients und glasses
@@ -200,23 +282,39 @@ export function ManageColumn(props: ManageColumnProps) {
     return <td></td>;
   }
 
-  return (
-    <td>
-      <div className={'flex items-center justify-end'}>
-        <div className="dropdown dropdown-end">
-          <label tabIndex={0} className="btn btn-ghost btn-sm">
-            <FaEllipsisV />
-          </label>
-          <ul tabIndex={0} className="menu dropdown-content menu-sm z-[1] mt-2 w-52 gap-1 rounded-box border border-base-200 bg-base-100 p-2 shadow">
+  const dropdownMenu =
+    isDropdownOpen && typeof document !== 'undefined'
+      ? createPortal(
+          <ul
+            ref={dropdownRef}
+            className="menu menu-sm z-[9999] w-52 gap-1 rounded-box border border-base-200 bg-base-100 p-2 shadow-lg"
+            style={{
+              position: 'fixed',
+              top: dropdownPosition.top,
+              left: dropdownPosition.left,
+            }}
+          >
             <li>
-              <Link href={`/workspaces/${workspaceId}/manage/${props.entity}/${props.id}`} className="flex items-center gap-2">
+              <Link
+                href={`/workspaces/${workspaceId}/manage/${props.entity}/${props.id}`}
+                className="flex items-center gap-2"
+                onClick={() => setIsDropdownOpen(false)}
+              >
                 <FaRegEdit />
                 Bearbeiten
               </Link>
             </li>
             {canDuplicate && (
               <li>
-                <button type="button" className="flex items-center gap-2" onClick={handleDuplicateClick} disabled={isDuplicating}>
+                <button
+                  type="button"
+                  className="flex items-center gap-2"
+                  onClick={() => {
+                    setIsDropdownOpen(false);
+                    handleDuplicateClick();
+                  }}
+                  disabled={isDuplicating}
+                >
                   {isDuplicating ? <span className={'loading loading-spinner loading-sm'} /> : <FaRegClone />}
                   Duplizieren
                 </button>
@@ -224,14 +322,32 @@ export function ManageColumn(props: ManageColumnProps) {
             )}
             {canDelete && (
               <li>
-                <button type="button" className="flex items-center gap-2 text-error" onClick={handleDeleteClick} disabled={isCheckingReferences}>
+                <button
+                  type="button"
+                  className="flex items-center gap-2 text-error"
+                  onClick={() => {
+                    setIsDropdownOpen(false);
+                    handleDeleteClick();
+                  }}
+                  disabled={isCheckingReferences}
+                >
                   {isCheckingReferences ? <span className={'loading loading-spinner loading-sm'} /> : <FaTrashAlt />}
                   Löschen
                 </button>
               </li>
             )}
-          </ul>
-        </div>
+          </ul>,
+          document.body,
+        )
+      : null;
+
+  return (
+    <td>
+      <div className={'flex items-center justify-end'}>
+        <button ref={buttonRef} type="button" className="btn btn-ghost btn-sm" onClick={handleToggleDropdown}>
+          <FaEllipsisV />
+        </button>
+        {dropdownMenu}
       </div>
     </td>
   );
