@@ -1,3 +1,16 @@
+# [1.19.0](https://github.com/jo-gross/Cocktail-Manager/compare/v1.18.1...v1.19.0) (2026-01-16)
+
+
+### Bug Fixes
+
+* table item context menu is now always on top ([4e1efe8](https://github.com/jo-gross/Cocktail-Manager/commit/4e1efe8089130cb013f2baf28abc12e720246d2d))
+
+
+### Features
+
+* added advanced statistics ([#864](https://github.com/jo-gross/Cocktail-Manager/issues/864)) ([9ea4731](https://github.com/jo-gross/Cocktail-Manager/commit/9ea4731077e3b168105de61c5326aaa15f852869))
+* Offline Notification ([#678](https://github.com/jo-gross/Cocktail-Manager/issues/678)) ([7eddb08](https://github.com/jo-gross/Cocktail-Manager/commit/7eddb082897e86493fd1baeb655b6c8612704d24))
+
 ## [1.18.1](https://github.com/jo-gross/Cocktail-Manager/compare/v1.18.0...v1.18.1) (2026-01-01)
 
 
