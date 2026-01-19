@@ -12,7 +12,7 @@ import { getEndOfDay, getStartOfDay } from '../../../../../../lib/dateHelpers';
 
 export default withHttpMethods({
   [HTTPMethod.GET]: withWorkspacePermission([Role.USER], Permission.STATISTICS_READ, async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
-    const { startDate, endDate, page, limit } = req.query;
+    const { startDate, endDate, page, limit, search } = req.query;
 
     // Load workspace day start time setting
     const dayStartTimeSetting = await prisma.workspaceSetting.findUnique({
@@ -28,8 +28,6 @@ export default withHttpMethods({
     // Parse pagination parameters
     const pageNumber = page ? parseInt(page as string, 10) : 1;
     const pageSize = limit ? parseInt(limit as string, 10) : 50;
-    const skip = (pageNumber - 1) * pageSize;
-    const take = pageSize;
 
     // Build where clause
     const where: any = {
@@ -46,10 +44,25 @@ export default withHttpMethods({
       }
     }
 
-    // Get total count for pagination
+    // Add search filter (server-side)
+    const searchTerm = search && typeof search === 'string' ? search.trim().toLowerCase() : null;
+
+    if (searchTerm) {
+      where.OR = [
+        { cocktail: { name: { contains: searchTerm, mode: 'insensitive' } } },
+        { cocktailCard: { name: { contains: searchTerm, mode: 'insensitive' } } },
+        { user: { name: { contains: searchTerm, mode: 'insensitive' } } },
+      ];
+    }
+
+    // Get total count for pagination (with search filter applied)
     const total = await prisma.cocktailStatisticItem.count({
       where,
     });
+
+    const totalPages = Math.ceil(total / pageSize);
+    const skip = (pageNumber - 1) * pageSize;
+    const take = pageSize;
 
     // Get paginated results
     const cocktailStatistics: CocktailStatisticItemFull[] = await prisma.cocktailStatisticItem.findMany({
@@ -65,8 +78,6 @@ export default withHttpMethods({
       skip,
       take,
     });
-
-    const totalPages = Math.ceil(total / pageSize);
 
     return res.json({
       data: cocktailStatistics,

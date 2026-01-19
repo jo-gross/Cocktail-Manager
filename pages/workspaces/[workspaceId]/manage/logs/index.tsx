@@ -10,6 +10,7 @@ import ListSearchField from '../../../../../components/ListSearchField';
 import { NextPageWithPullToRefresh } from '../../../../../types/next';
 import { TimeRange, TimeRangePicker } from '@components/statistics/TimeRangePicker';
 import '../../../../../lib/DateUtils';
+import { getStartOfDay, getEndOfDay } from '@lib/dateHelpers';
 
 interface PaginationInfo {
   page: number;
@@ -23,18 +24,19 @@ const LogsPage: NextPageWithPullToRefresh = () => {
   const { workspaceId } = router.query;
   const userContext = useContext(UserContext);
 
-  // Default to last 24 hours
-  const getInitialTimeRange = useCallback((): TimeRange => {
+  // Default to today (respecting dayStartTime)
+  const getInitialTimeRange = useCallback((dayStartTimeParam?: string): TimeRange => {
     const now = new Date();
-    const last24Hours = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    const todayStart = getStartOfDay(now, dayStartTimeParam);
+    const todayEnd = getEndOfDay(now, dayStartTimeParam);
     return {
-      startDate: last24Hours,
-      endDate: now,
-      preset: 'custom',
+      startDate: todayStart,
+      endDate: todayEnd,
+      preset: 'today',
     };
   }, []);
 
-  const [timeRange, setTimeRange] = useState<TimeRange>(getInitialTimeRange);
+  const [timeRange, setTimeRange] = useState<TimeRange>(getInitialTimeRange());
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [dayStartTime, setDayStartTime] = useState<string | undefined>(undefined);
 
@@ -51,11 +53,19 @@ const LogsPage: NextPageWithPullToRefresh = () => {
       .catch(console.error);
   }, [workspaceId]);
 
+  // Update timeRange when dayStartTime is loaded
+  useEffect(() => {
+    if (dayStartTime !== undefined) {
+      const newRange = getInitialTimeRange(dayStartTime);
+      setTimeRange(newRange);
+    }
+  }, [dayStartTime, getInitialTimeRange]);
+
   const [cocktailStatisticItems, setCocktailStatisticItems] = useState<CocktailStatisticItemFull[]>([]);
   const [pagination, setPagination] = useState<PaginationInfo | null>(null);
   const [loading, setLoading] = useState(false);
   const [itemDeleting, setItemDeleting] = useState<Record<string, boolean>>({});
-  const [filterString, setFilterString] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
 
   const loadLogs = useCallback(async () => {
     if (!workspaceId) return;
@@ -66,6 +76,9 @@ const LogsPage: NextPageWithPullToRefresh = () => {
       params.append('limit', '50');
       params.append('startDate', timeRange.startDate.toISOString());
       params.append('endDate', timeRange.endDate.toISOString());
+      if (searchQuery.trim()) {
+        params.append('search', searchQuery.trim());
+      }
 
       const response = await fetch(`/api/workspaces/${workspaceId}/statistics/logs?${params.toString()}`);
       if (response.ok) {
@@ -83,7 +96,7 @@ const LogsPage: NextPageWithPullToRefresh = () => {
     } finally {
       setLoading(false);
     }
-  }, [workspaceId, currentPage, timeRange.startDate, timeRange.endDate]);
+  }, [workspaceId, currentPage, timeRange.startDate, timeRange.endDate, searchQuery]);
 
   useEffect(() => {
     loadLogs();
@@ -98,16 +111,14 @@ const LogsPage: NextPageWithPullToRefresh = () => {
     setCurrentPage(1); // Reset to first page when time range changes
   }, []);
 
+  const handleSearchChange = useCallback((newSearch: string) => {
+    setSearchQuery(newSearch);
+    setCurrentPage(1); // Reset to first page when search changes
+  }, []);
+
   const handlePageChange = async (newPage: number) => {
     setCurrentPage(newPage);
   };
-
-  const filteredItems = cocktailStatisticItems.filter(
-    (item) =>
-      item.cocktail?.name?.toLowerCase().includes(filterString.toLowerCase()) ||
-      item.cocktailCard?.name?.toLowerCase().includes(filterString.toLowerCase()) ||
-      item.user?.name?.toLowerCase().includes(filterString.toLowerCase()),
-  );
 
   return (
     <ManageEntityLayout
@@ -126,7 +137,7 @@ const LogsPage: NextPageWithPullToRefresh = () => {
         <div className={'card'}>
           <div className={'card-body'}>
             <div className={'card-title flex w-full justify-between'}>Bestell-Logs</div>
-            <ListSearchField onFilterChange={(filterString) => setFilterString(filterString)} />
+            <ListSearchField onFilterChange={handleSearchChange} />
 
             <div className="overflow-x-auto">
               <table className="table-compact table table-zebra w-full">
@@ -146,14 +157,14 @@ const LogsPage: NextPageWithPullToRefresh = () => {
                         <Loading />
                       </td>
                     </tr>
-                  ) : filteredItems.length === 0 ? (
+                  ) : cocktailStatisticItems.length === 0 ? (
                     <tr>
                       <td colSpan={5} className={'text-center'}>
                         Keine Einträge gefunden
                       </td>
                     </tr>
                   ) : (
-                    filteredItems.map((item) => (
+                    cocktailStatisticItems.map((item) => (
                       <tr key={'statistic-item-' + item.id}>
                         <td>{new Date(item.date).toFormatDateTimeString()}</td>
                         <td>{item.cocktail?.name || 'Gelöschter Cocktail'}</td>

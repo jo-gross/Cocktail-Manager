@@ -104,7 +104,7 @@ async function getStatisticsForPeriod(workspaceId: string, startDate: Date, endD
   };
 }
 
-async function getChartDataForPeriod(workspaceId: string, startDate: Date, endDate: Date) {
+async function getChartDataForPeriod(workspaceId: string, startDate: Date, endDate: Date, dayStartTime?: string) {
   const stats = await prisma.cocktailStatisticItem.findMany({
     where: {
       workspaceId,
@@ -118,10 +118,11 @@ async function getChartDataForPeriod(workspaceId: string, startDate: Date, endDa
     },
   });
 
-  // Group by day for time series
+  // Group by logical day for time series (respecting dayStartTime)
   const dayGroups: Record<string, number> = {};
   stats.forEach((stat) => {
-    const dateKey = new Date(stat.date).toISOString().split('T')[0];
+    const logicalDate = getLogicalDate(new Date(stat.date), dayStartTime);
+    const dateKey = logicalDate.toISOString().split('T')[0];
     dayGroups[dateKey] = (dayGroups[dateKey] || 0) + 1;
   });
 
@@ -308,10 +309,10 @@ export default withHttpMethods({
     const avgPerHourDelta = yesterdayStats.avgPerHour > 0 ? ((todayStats.avgPerHour - yesterdayStats.avgPerHour) / yesterdayStats.avgPerHour) * 100 : 0;
 
     // Get chart data for each period
-    const todayChartData = await getChartDataForPeriod(workspace.id, todayStart, todayEnd);
-    const weekChartData = await getChartDataForPeriod(workspace.id, weekStart, weekEnd);
-    const monthChartData = await getChartDataForPeriod(workspace.id, monthStart, monthEnd);
-    const periodChartData = await getChartDataForPeriod(workspace.id, selectedStartDate, selectedEndDate);
+    const todayChartData = await getChartDataForPeriod(workspace.id, todayStart, todayEnd, dayStartTime);
+    const weekChartData = await getChartDataForPeriod(workspace.id, weekStart, weekEnd, dayStartTime);
+    const monthChartData = await getChartDataForPeriod(workspace.id, monthStart, monthEnd, dayStartTime);
+    const periodChartData = await getChartDataForPeriod(workspace.id, selectedStartDate, selectedEndDate, dayStartTime);
 
     let allTimeChartData: {
       timeSeries: { date: string; count: number }[];
@@ -325,7 +326,7 @@ export default withHttpMethods({
     if (firstStat) {
       const allTimeStart = getStartOfDay(firstStat.date, dayStartTime);
       const allTimeEnd = getEndOfDay(now, dayStartTime);
-      allTimeChartData = await getChartDataForPeriod(workspace.id, allTimeStart, allTimeEnd);
+      allTimeChartData = await getChartDataForPeriod(workspace.id, allTimeStart, allTimeEnd, dayStartTime);
     }
 
     return res.json({

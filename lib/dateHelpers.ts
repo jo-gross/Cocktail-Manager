@@ -15,24 +15,30 @@ export function parseTimeString(timeString: string | undefined | null): { hours:
 
 /**
  * Get the start of a day, optionally with a custom day start time
+ * If the current time is before dayStartTime, the "day" is considered to be the previous calendar day
  * @param date The reference date
  * @param dayStartTime Optional time string (HH:mm) when a day starts (e.g., "18:00" for bar business)
  */
 export function getStartOfDay(date: Date, dayStartTime?: string): Date {
   const { hours, minutes } = parseTimeString(dayStartTime);
-  const d = new Date(date);
+  // First, get the logical date (accounts for times before dayStartTime)
+  const logicalDate = getLogicalDate(date, dayStartTime);
+  const d = new Date(logicalDate);
   d.setHours(hours, minutes, 0, 0);
   return d;
 }
 
 /**
  * Get the end of a day, optionally with a custom day start time
+ * If the current time is before dayStartTime, the "day" is considered to be the previous calendar day
  * @param date The reference date
  * @param dayStartTime Optional time string (HH:mm) when a day starts
  */
 export function getEndOfDay(date: Date, dayStartTime?: string): Date {
   const { hours, minutes } = parseTimeString(dayStartTime);
-  const d = new Date(date);
+  // First, get the logical date (accounts for times before dayStartTime)
+  const logicalDate = getLogicalDate(date, dayStartTime);
+  const d = new Date(logicalDate);
   // End of day is one day later minus 1 millisecond from the start time
   d.setDate(d.getDate() + 1);
   d.setHours(hours, minutes, 0, 0);
@@ -62,23 +68,38 @@ export function getLogicalDate(date: Date, dayStartTime?: string): Date {
 }
 
 export function getStartOfWeek(date: Date, dayStartTime?: string): Date {
-  const d = new Date(date);
+  // First, get the logical date to determine which calendar day we're in
+  const logicalDate = getLogicalDate(date, dayStartTime);
+  const d = new Date(logicalDate);
   const day = d.getDay();
   const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Adjust to Monday
   d.setDate(diff);
-  return getStartOfDay(d, dayStartTime);
+  // Set the time to the day start time
+  const { hours, minutes } = parseTimeString(dayStartTime);
+  d.setHours(hours, minutes, 0, 0);
+  return d;
 }
 
 export function getStartOfMonth(date: Date, dayStartTime?: string): Date {
-  const d = new Date(date);
+  // First, get the logical date to determine which calendar day we're in
+  const logicalDate = getLogicalDate(date, dayStartTime);
+  const d = new Date(logicalDate);
   d.setDate(1);
-  return getStartOfDay(d, dayStartTime);
+  // Set the time to the day start time
+  const { hours, minutes } = parseTimeString(dayStartTime);
+  d.setHours(hours, minutes, 0, 0);
+  return d;
 }
 
 export function getStartOfYear(date: Date, dayStartTime?: string): Date {
-  const d = new Date(date);
+  // First, get the logical date to determine which calendar day we're in
+  const logicalDate = getLogicalDate(date, dayStartTime);
+  const d = new Date(logicalDate);
   d.setMonth(0, 1);
-  return getStartOfDay(d, dayStartTime);
+  // Set the time to the day start time
+  const { hours, minutes } = parseTimeString(dayStartTime);
+  d.setHours(hours, minutes, 0, 0);
+  return d;
 }
 
 /**
