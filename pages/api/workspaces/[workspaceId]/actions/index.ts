@@ -8,7 +8,17 @@ import WorkspaceCocktailRecipeStepActionCreateInput = Prisma.WorkspaceCocktailRe
 
 export default withHttpMethods({
   [HTTPMethod.GET]: withWorkspacePermission([Role.USER], async (req, res, user, workspace) => {
-    const actions = await prisma.workspaceCocktailRecipeStepAction.findMany({ where: { workspaceId: workspace.id } });
+    const search = typeof req.query.search === 'string' ? req.query.search : '';
+    const where: Prisma.WorkspaceCocktailRecipeStepActionWhereInput = {
+      workspaceId: workspace.id,
+    };
+    if (search) {
+      where.name = {
+        contains: search,
+        mode: 'insensitive',
+      };
+    }
+    const actions = await prisma.workspaceCocktailRecipeStepAction.findMany({ where });
     return res.json({ data: actions });
   }),
   [HTTPMethod.POST]: withWorkspacePermission([Role.ADMIN], async (req, res, user, workspace) => {

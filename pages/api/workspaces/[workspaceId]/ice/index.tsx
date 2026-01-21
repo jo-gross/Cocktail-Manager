@@ -4,14 +4,24 @@ import prisma from '../../../../../prisma/prisma';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
 import { withHttpMethods } from '@middleware/api/handleMethods';
-import { Role, Permission } from '@generated/prisma/client';
+import { Prisma, Role, Permission } from '@generated/prisma/client';
 import HTTPMethod from 'http-method-enum';
 import { updateTranslation } from '../admin/translation';
 
 export default withHttpMethods({
   [HTTPMethod.GET]: withWorkspacePermission([Role.USER], Permission.ICE_READ, async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
+    const search = typeof req.query.search === 'string' ? req.query.search : '';
+    const where: Prisma.IceWhereInput = {
+      workspaceId: workspace.id,
+    };
+    if (search) {
+      where.name = {
+        contains: search,
+        mode: 'insensitive',
+      };
+    }
     const ice = await prisma.ice.findMany({
-      where: { workspaceId: workspace.id },
+      where,
     });
     return res.json({ data: ice });
   }),
