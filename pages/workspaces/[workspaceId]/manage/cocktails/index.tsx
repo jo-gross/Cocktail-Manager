@@ -8,7 +8,7 @@ import { useRouter } from 'next/router';
 import { alertService } from '@lib/alertService';
 import { UserContext } from '@lib/context/UserContextProvider';
 import AvatarImage from '../../../../../components/AvatarImage';
-import { FaArrowDown, FaArrowUp, FaFileDownload, FaPlus } from 'react-icons/fa';
+import { FaArrowDown, FaArrowUp, FaChevronDown, FaFileDownload, FaFileUpload, FaPlus } from 'react-icons/fa';
 import ListSearchField from '../../../../../components/ListSearchField';
 import { CocktailRecipeModel } from '../../../../../models/CocktailRecipeModel';
 import ImageModal from '../../../../../components/modals/ImageModal';
@@ -18,6 +18,7 @@ import { cocktailFilter } from '@lib/cocktailFilter';
 import { NextPageWithPullToRefresh } from '../../../../../types/next';
 import '../../../../../lib/NumberUtils';
 import CocktailExportOptionsModal, { CocktailExportOptions } from '../../../../../components/modals/CocktailExportOptionsModal';
+import CocktailImportWizardModal from '../../../../../components/modals/CocktailImportWizardModal';
 
 const CocktailsOverviewPage: NextPageWithPullToRefresh = () => {
   const router = useRouter();
@@ -32,6 +33,8 @@ const CocktailsOverviewPage: NextPageWithPullToRefresh = () => {
   const [filterString, setFilterString] = useState('');
   const [selectedCocktailIds, setSelectedCocktailIds] = useState<Set<string>>(new Set());
   const [exportingPdf, setExportingPdf] = useState(false);
+  const [exportingJson, setExportingJson] = useState(false);
+  const [exportingSingleId, setExportingSingleId] = useState<{ id: string; type: 'json' | 'pdf' } | null>(null);
   const [chromiumAvailable, setChromiumAvailable] = useState(false);
 
   const [collapsedArchived, setCollapsedArchived] = useState(true);
@@ -158,6 +161,149 @@ const CocktailsOverviewPage: NextPageWithPullToRefresh = () => {
     );
   }, [workspaceId, selectedCocktailIds, modalContext]);
 
+  const handleExportJson = useCallback(async () => {
+    if (!workspaceId || selectedCocktailIds.size === 0) return;
+    setExportingJson(true);
+    try {
+      const response = await fetch(`/api/workspaces/${workspaceId}/cocktails/export-json`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          cocktailIds: Array.from(selectedCocktailIds),
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ message: 'Fehler beim Exportieren' }));
+        alertService.error(error.message ?? 'Fehler beim Exportieren des JSON', response.status, response.statusText);
+        return;
+      }
+
+      const exportData = await response.json();
+      const jsonString = JSON.stringify(exportData, null, 2);
+      const blob = new Blob([jsonString], { type: 'application/json' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const dateStr = new Date().toISOString().split('T')[0];
+      a.download = `cocktails-export-${dateStr}.json`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      alertService.success('JSON erfolgreich exportiert');
+      setSelectedCocktailIds(new Set());
+    } catch (error) {
+      console.error('JSON export error:', error);
+      alertService.error('Fehler beim Exportieren des JSON');
+    } finally {
+      setExportingJson(false);
+    }
+  }, [workspaceId, selectedCocktailIds]);
+
+  const handleExportSingleJson = useCallback(
+    async (cocktailId: string) => {
+      if (!workspaceId) return;
+      setExportingSingleId({ id: cocktailId, type: 'json' });
+      try {
+        const response = await fetch(`/api/workspaces/${workspaceId}/cocktails/export-json`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            cocktailIds: [cocktailId],
+          }),
+        });
+
+        if (!response.ok) {
+          const error = await response.json().catch(() => ({ message: 'Fehler beim Exportieren' }));
+          alertService.error(error.message ?? 'Fehler beim Exportieren des JSON', response.status, response.statusText);
+          return;
+        }
+
+        const exportData = await response.json();
+        const jsonString = JSON.stringify(exportData, null, 2);
+        const blob = new Blob([jsonString], { type: 'application/json' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        const dateStr = new Date().toISOString().split('T')[0];
+        const cocktailName = cocktailRecipes.find((c) => c.id === cocktailId)?.name || 'cocktail';
+        a.download = `${cocktailName}-export-${dateStr}.json`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        alertService.success('JSON erfolgreich exportiert');
+      } catch (error) {
+        console.error('JSON export error:', error);
+        alertService.error('Fehler beim Exportieren des JSON');
+      } finally {
+        setExportingSingleId(null);
+      }
+    },
+    [workspaceId, cocktailRecipes],
+  );
+
+  const handleExportSinglePdf = useCallback(
+    (cocktailId: string) => {
+      if (!workspaceId) return;
+      modalContext.openModal(
+        <CocktailExportOptionsModal
+          onExport={async (options: CocktailExportOptions) => {
+            setExportingSingleId({ id: cocktailId, type: 'pdf' });
+            try {
+              alertService.info('Export läuft und wird gleich zur Verfügung stehen.');
+              const response = await fetch(`/api/workspaces/${workspaceId}/cocktails/export-pdf`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  cocktailIds: [cocktailId],
+                  exportImage: options.exportImage,
+                  exportDescription: options.exportDescription,
+                  exportNotes: options.exportNotes,
+                  exportHistory: options.exportHistory,
+                  newPagePerCocktail: options.newPagePerCocktail,
+                  showHeader: options.showHeader,
+                  showFooter: options.showFooter,
+                }),
+              });
+
+              if (!response.ok) {
+                const error = await response.json().catch(() => ({ message: 'Fehler beim Exportieren' }));
+                alertService.error(error.message ?? 'Fehler beim Exportieren des PDFs', response.status, response.statusText);
+                return;
+              }
+
+              const blob = await response.blob();
+              const url = window.URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              const cocktailName = cocktailRecipes.find((c) => c.id === cocktailId)?.name || 'cocktail';
+              a.download = `${cocktailName}-export-${Date.now()}.pdf`;
+              document.body.appendChild(a);
+              a.click();
+              window.URL.revokeObjectURL(url);
+              document.body.removeChild(a);
+              alertService.success('PDF erfolgreich exportiert');
+            } catch (error) {
+              console.error('PDF export error:', error);
+              alertService.error('Fehler beim Exportieren des PDFs');
+            } finally {
+              setExportingSingleId(null);
+            }
+          }}
+        />,
+      );
+    },
+    [workspaceId, modalContext, cocktailRecipes],
+  );
+
   const renderTableRows = (recipes: CocktailRecipeModel[], isArchived: boolean) => {
     return recipes
       .filter(cocktailFilter(filterString))
@@ -207,7 +353,16 @@ const CocktailsOverviewPage: NextPageWithPullToRefresh = () => {
           </td>
           <td>{cocktailRecipe.glass?.name}</td>
           <td>{cocktailRecipe.garnishes.map((garnish) => garnish.garnish.name).join(', ')}</td>
-          <ManageColumn entity={'cocktails'} id={cocktailRecipe.id} name={cocktailRecipe.name} onRefresh={refreshCocktails} />
+          <ManageColumn
+            entity={'cocktails'}
+            id={cocktailRecipe.id}
+            name={cocktailRecipe.name}
+            onRefresh={refreshCocktails}
+            onExportJson={handleExportSingleJson}
+            onExportPdf={chromiumAvailable ? handleExportSinglePdf : undefined}
+            exportingJson={exportingSingleId?.id === cocktailRecipe.id && exportingSingleId.type === 'json'}
+            exportingPdf={exportingSingleId?.id === cocktailRecipe.id && exportingSingleId.type === 'pdf'}
+          />
         </tr>
       ));
   };
@@ -218,17 +373,60 @@ const CocktailsOverviewPage: NextPageWithPullToRefresh = () => {
       title={'Cocktails'}
       actions={
         <div className={'flex items-center gap-2'}>
-          {chromiumAvailable && selectedCocktailIds.size > 0 && (
-            <button
-              className={'btn btn-outline btn-sm md:btn-md'}
-              onClick={handleExportPdf}
-              disabled={exportingPdf}
-              title="Ausgewählte Cocktails als PDF exportieren"
-            >
-              {exportingPdf ? <span className={'loading loading-spinner'} /> : <FaFileDownload />}
-              Als PDF exportieren ({selectedCocktailIds.size})
-            </button>
+          {selectedCocktailIds.size > 0 && (
+            <div className="dropdown dropdown-end">
+              <button tabIndex={0} className={'btn btn-outline btn-sm md:btn-md'} title="Import/Export Optionen">
+                <FaFileDownload />
+                {selectedCocktailIds.size} ausgewählt
+                <FaChevronDown />
+              </button>
+              <ul tabIndex={0} className="menu dropdown-content z-[1] mt-2 w-64 gap-1 rounded-box border border-base-200 bg-base-100 p-2 shadow-lg">
+                <li>
+                  <button type="button" className="flex items-center gap-2" onClick={handleExportJson} disabled={exportingJson}>
+                    {exportingJson ? <span className={'loading loading-spinner loading-sm'} /> : <FaFileDownload />}
+                    Als JSON exportieren ({selectedCocktailIds.size})
+                  </button>
+                </li>
+                {chromiumAvailable && (
+                  <li>
+                    <button type="button" className="flex items-center gap-2" onClick={handleExportPdf} disabled={exportingPdf}>
+                      {exportingPdf ? <span className={'loading loading-spinner loading-sm'} /> : <FaFileDownload />}
+                      Als PDF exportieren ({selectedCocktailIds.size})
+                    </button>
+                  </li>
+                )}
+              </ul>
+            </div>
           )}
+          <div className="dropdown dropdown-end">
+            <button tabIndex={0} className={'btn btn-outline btn-sm md:btn-md'} title="Import/Export Optionen">
+              <FaFileUpload />
+              Import/Export
+              <FaChevronDown />
+            </button>
+            <ul tabIndex={0} className="menu dropdown-content z-[1] mt-2 w-52 gap-1 rounded-box border border-base-200 bg-base-100 p-2 shadow-lg">
+              <li>
+                <button
+                  type="button"
+                  className="flex items-center gap-2"
+                  onClick={() => {
+                    if (!workspaceId) return;
+                    modalContext.openModal(
+                      <CocktailImportWizardModal
+                        workspaceId={workspaceId as string}
+                        onImportComplete={() => {
+                          refreshCocktails();
+                        }}
+                      />,
+                    );
+                  }}
+                >
+                  <FaFileUpload />
+                  Aus JSON importieren
+                </button>
+              </li>
+            </ul>
+          </div>
           {userContext.isUserPermitted(Role.MANAGER) && (
             <Link href={`/workspaces/${workspaceId}/manage/cocktails/create`}>
               <div className={'btn btn-square btn-primary btn-sm md:btn-md'}>

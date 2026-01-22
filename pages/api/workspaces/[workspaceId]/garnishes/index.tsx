@@ -10,10 +10,18 @@ import GarnishCreateInput = Prisma.GarnishCreateInput;
 
 export default withHttpMethods({
   [HTTPMethod.GET]: withWorkspacePermission([Role.USER], Permission.GARNISHES_READ, async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
+    const search = typeof req.query.search === 'string' ? req.query.search : '';
+    const where: Prisma.GarnishWhereInput = {
+      workspaceId: workspace.id,
+    };
+    if (search) {
+      where.name = {
+        contains: search,
+        mode: 'insensitive',
+      };
+    }
     const garnishes = await prisma.garnish.findMany({
-      where: {
-        workspaceId: workspace.id,
-      },
+      where,
       include: {
         _count: { select: { GarnishImage: true } },
       },

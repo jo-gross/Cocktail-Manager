@@ -1,4 +1,4 @@
-import { FaEllipsisV, FaRegClone, FaRegEdit, FaTrashAlt } from 'react-icons/fa';
+import { FaEllipsisV, FaFileDownload, FaRegClone, FaRegEdit, FaTrashAlt } from 'react-icons/fa';
 import { useRouter } from 'next/router';
 import { alertService } from '@lib/alertService';
 import { useContext, useState, useRef, useEffect, useCallback } from 'react';
@@ -17,6 +17,10 @@ interface ManageColumnProps {
   onRefresh: () => void;
   editRole?: Role;
   deleteRole?: Role;
+  onExportJson?: (id: string) => void;
+  onExportPdf?: (id: string) => void;
+  exportingJson?: boolean;
+  exportingPdf?: boolean;
 }
 
 interface Reference {
@@ -304,6 +308,38 @@ export function ManageColumn(props: ManageColumnProps) {
                 Bearbeiten
               </Link>
             </li>
+            {props.onExportJson && (
+              <li>
+                <button
+                  type="button"
+                  className="flex items-center gap-2"
+                  onClick={() => {
+                    setIsDropdownOpen(false);
+                    props.onExportJson?.(props.id);
+                  }}
+                  disabled={props.exportingJson}
+                >
+                  {props.exportingJson ? <span className={'loading loading-spinner loading-sm'} /> : <FaFileDownload />}
+                  Als JSON exportieren
+                </button>
+              </li>
+            )}
+            {props.onExportPdf && (
+              <li>
+                <button
+                  type="button"
+                  className="flex items-center gap-2"
+                  onClick={() => {
+                    setIsDropdownOpen(false);
+                    props.onExportPdf?.(props.id);
+                  }}
+                  disabled={props.exportingPdf}
+                >
+                  {props.exportingPdf ? <span className={'loading loading-spinner loading-sm'} /> : <FaFileDownload />}
+                  Als PDF exportieren
+                </button>
+              </li>
+            )}
             {canDuplicate && (
               <li>
                 <button

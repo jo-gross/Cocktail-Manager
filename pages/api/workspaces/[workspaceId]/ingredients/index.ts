@@ -13,10 +13,28 @@ export default withHttpMethods({
     [Role.USER],
     Permission.INGREDIENTS_READ,
     async (req: NextApiRequest, res: NextApiResponse, user, workspace: Workspace) => {
+      const search = typeof req.query.search === 'string' ? req.query.search : '';
+      const where: Prisma.IngredientWhereInput = {
+        workspaceId: workspace.id,
+      };
+      if (search) {
+        where.OR = [
+          {
+            name: {
+              contains: search,
+              mode: 'insensitive',
+            },
+          },
+          {
+            shortName: {
+              contains: search,
+              mode: 'insensitive',
+            },
+          },
+        ];
+      }
       const ingredients = await prisma.ingredient.findMany({
-        where: {
-          workspaceId: workspace.id,
-        },
+        where,
         include: {
           IngredientVolume: {
             include: {
