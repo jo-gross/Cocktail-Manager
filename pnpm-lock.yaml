@@ -63,8 +63,8 @@ importers:
         specifier: ^5.6.0
         version: 5.6.0
       lodash:
-        specifier: 4.17.21
-        version: 4.17.21
+        specifier: 4.17.23
+        version: 4.17.23
       marked:
         specifier: 17.0.1
         version: 17.0.1
@@ -157,8 +157,8 @@ importers:
         specifier: 4.17.23
         version: 4.17.23
       '@types/node':
-        specifier: 25.0.8
-        version: 25.0.8
+        specifier: 25.0.9
+        version: 25.0.9
       '@types/pg':
         specifier: ^8.11.10
         version: 8.16.0
@@ -1491,8 +1491,8 @@ packages:
   '@types/ms@2.1.0':
     resolution: {integrity: sha512-GsCCIZDE/p3i96vtEqx+7dBUGXrc7zeSK3wwPHIaRThS+9OhWIXRqzs4d6k1SVU8g91DrNRWxWUGhp5KXQb2VA==}
 
-  '@types/node@25.0.8':
-    resolution: {integrity: sha512-powIePYMmC3ibL0UJ2i2s0WIbq6cg6UyVFQxSCpaPxxzAaziRfimGivjdF943sSGV6RADVbk0Nvlm5P/FB44Zg==}
+  '@types/node@25.0.9':
+    resolution: {integrity: sha512-/rpCXHlCWeqClNBwUhDcusJxXYDjZTyE8v5oTO7WbL8eij2nKhUeU89/6xgjU7N4/Vh3He0BtyhJdQbDyhiXAw==}
 
   '@types/normalize-package-data@2.4.4':
     resolution: {integrity: sha512-37i+OaWTh9qeK4LSHPsyRC7NahnGotNuZvjLSgcPzblpHB3rrCJxAOgI5gCdKm7coonsaX1Of0ILiTcnZjbfxA==}
@@ -3735,6 +3735,9 @@ packages:
 
   lodash@4.17.21:
     resolution: {integrity: sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg==}
+
+  lodash@4.17.23:
+    resolution: {integrity: sha512-LgVTMpQtIopCi79SJeDiP0TfWi5CNEc/L/aRdTh3yIvmZXTnheWpKjSZhnvMl8iXbC1tFg9gdHHDMLoV7CnG+w==}
 
   long@5.3.2:
     resolution: {integrity: sha512-mNAgZ1GmyNhD7AuqnTG3/VQ26o760+ZYBPKjPvugO8+nLbYfX6TVpJPseBvopbdY+qpZ/lKUnmEc1LeZYS3QAA==}
@@ -7169,7 +7172,7 @@ snapshots:
       '@semantic-release/error': 3.0.0
       aggregate-error: 3.1.0
       fs-extra: 11.3.0
-      lodash: 4.17.21
+      lodash: 4.17.23
       semantic-release: 25.0.2(typescript@5.8.3)
 
   '@semantic-release/commit-analyzer@13.0.1(semantic-release@25.0.2(typescript@5.8.3))':
@@ -7197,7 +7200,7 @@ snapshots:
       debug: 4.4.1
       dir-glob: 3.0.1
       execa: 5.1.1
-      lodash: 4.17.21
+      lodash: 4.17.23
       micromatch: 4.0.8
       p-reduce: 2.1.0
       semantic-release: 25.0.2(typescript@5.8.3)
@@ -7290,7 +7293,7 @@ snapshots:
 
   '@types/bcrypt@6.0.0':
     dependencies:
-      '@types/node': 25.0.8
+      '@types/node': 25.0.9
 
   '@types/d3-array@3.2.2': {}
 
@@ -7333,7 +7336,7 @@ snapshots:
   '@types/glob@7.2.0':
     dependencies:
       '@types/minimatch': 5.1.2
-      '@types/node': 25.0.8
+      '@types/node': 25.0.9
 
   '@types/hast@3.0.4':
     dependencies:
@@ -7353,7 +7356,7 @@ snapshots:
   '@types/jsonwebtoken@9.0.10':
     dependencies:
       '@types/ms': 2.1.0
-      '@types/node': 25.0.8
+      '@types/node': 25.0.9
 
   '@types/lodash@4.17.23': {}
 
@@ -7365,7 +7368,7 @@ snapshots:
 
   '@types/ms@2.1.0': {}
 
-  '@types/node@25.0.8':
+  '@types/node@25.0.9':
     dependencies:
       undici-types: 7.16.0
 
@@ -7375,7 +7378,7 @@ snapshots:
 
   '@types/pg@8.16.0':
     dependencies:
-      '@types/node': 25.0.8
+      '@types/node': 25.0.9
       pg-protocol: 1.10.3
       pg-types: 2.2.0
 
@@ -7400,7 +7403,7 @@ snapshots:
 
   '@types/resolve@1.17.1':
     dependencies:
-      '@types/node': 25.0.8
+      '@types/node': 25.0.9
 
   '@types/trusted-types@2.0.7': {}
 
@@ -7412,7 +7415,7 @@ snapshots:
 
   '@types/yauzl@2.10.3':
     dependencies:
-      '@types/node': 25.0.8
+      '@types/node': 25.0.9
     optional: true
 
   '@typescript-eslint/eslint-plugin@8.35.0(@typescript-eslint/parser@8.35.0(eslint@9.39.2(jiti@1.21.7))(typescript@5.8.3))(eslint@9.39.2(jiti@1.21.7))(typescript@5.8.3)':
@@ -8900,7 +8903,7 @@ snapshots:
 
   express-validator@7.3.1:
     dependencies:
-      lodash: 4.17.21
+      lodash: 4.17.23
       validator: 13.15.23
 
   exsolve@1.0.8: {}
@@ -9037,7 +9040,7 @@ snapshots:
       '@types/hoist-non-react-statics': 3.3.7(@types/react@18.3.12)
       deepmerge: 2.2.1
       hoist-non-react-statics: 3.3.2
-      lodash: 4.17.21
+      lodash: 4.17.23
       lodash-es: 4.17.21
       react: 18.3.1
       react-fast-compare: 2.0.4
@@ -9604,13 +9607,13 @@ snapshots:
 
   jest-worker@26.6.2:
     dependencies:
-      '@types/node': 25.0.8
+      '@types/node': 25.0.9
       merge-stream: 2.0.0
       supports-color: 7.2.0
 
   jest-worker@27.5.1:
     dependencies:
-      '@types/node': 25.0.8
+      '@types/node': 25.0.9
       merge-stream: 2.0.0
       supports-color: 8.1.1
 
@@ -9789,6 +9792,8 @@ snapshots:
   lodash.uniqby@4.7.0: {}
 
   lodash@4.17.21: {}
+
+  lodash@4.17.23: {}
 
   long@5.3.2: {}
 
@@ -12031,7 +12036,7 @@ snapshots:
       fast-json-stable-stringify: 2.1.0
       fs-extra: 9.1.0
       glob: 7.2.3
-      lodash: 4.17.21
+      lodash: 4.17.23
       pretty-bytes: 5.6.0
       rollup: 2.79.2
       rollup-plugin-terser: 7.0.2(rollup@2.79.2)
