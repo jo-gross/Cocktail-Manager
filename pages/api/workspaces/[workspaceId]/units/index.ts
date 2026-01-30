@@ -8,7 +8,17 @@ import UnitCreateInput = Prisma.UnitCreateInput;
 
 export default withHttpMethods({
   [HTTPMethod.GET]: withWorkspacePermission([Role.USER], Permission.UNITS_READ, async (req, res, user, workspace) => {
-    const actions = await prisma.unit.findMany({ where: { workspaceId: workspace.id } });
+    const search = typeof req.query.search === 'string' ? req.query.search : '';
+    const where: Prisma.UnitWhereInput = {
+      workspaceId: workspace.id,
+    };
+    if (search) {
+      where.name = {
+        contains: search,
+        mode: 'insensitive',
+      };
+    }
+    const actions = await prisma.unit.findMany({ where });
     return res.json({ data: actions });
   }),
   [HTTPMethod.POST]: withWorkspacePermission([Role.ADMIN], null, async (req, res, user, workspace) => {

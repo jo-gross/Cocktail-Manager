@@ -10,8 +10,18 @@ import GlassCreateInput = Prisma.GlassCreateInput;
 
 export default withHttpMethods({
   [HTTPMethod.GET]: withWorkspacePermission([Role.USER], Permission.GLASSES_READ, async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
+    const search = typeof req.query.search === 'string' ? req.query.search : '';
+    const where: Prisma.GlassWhereInput = {
+      workspaceId: workspace.id,
+    };
+    if (search) {
+      where.name = {
+        contains: search,
+        mode: 'insensitive',
+      };
+    }
     const glasses = await prisma.glass.findMany({
-      where: { workspaceId: workspace.id },
+      where,
       include: {
         _count: { select: { GlassImage: true } },
       },
