@@ -69,6 +69,12 @@ function getPresetRange(preset: TimeRangePreset, dayStartTime?: string): { start
   }
 }
 
+/** Parse YYYY-MM-DD as local date at noon so getLogicalDate/dayStartTime does not shift to previous day */
+function parseDateStringLocal(dateStr: string): Date {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  return new Date(y, m - 1, d, 12, 0, 0, 0);
+}
+
 function formatDateRange(startDate: Date, endDate: Date): string {
   const formatDate = (date: Date) => {
     return date.toLocaleDateString('de-DE', {
@@ -147,9 +153,12 @@ export function TimeRangePicker({
     }
   };
 
-  const handleCustomDateChange = () => {
-    const start = getStartOfDay(new Date(customStart), dayStartTime);
-    const end = getEndOfDay(new Date(customEnd), dayStartTime);
+  const applyCustomRange = (overrides?: { start?: string; end?: string }) => {
+    const startStr = overrides?.start ?? customStart;
+    const endStr = overrides?.end ?? customEnd;
+    if (!startStr || !endStr) return;
+    const start = getStartOfDay(parseDateStringLocal(startStr), dayStartTime);
+    const end = getEndOfDay(parseDateStringLocal(endStr), dayStartTime);
     if (start.getTime() <= end.getTime()) {
       onChange({ startDate: start, endDate: end, preset: 'custom' });
     }
@@ -204,14 +213,16 @@ export function TimeRangePicker({
                   className="input input-sm input-bordered w-full"
                   value={customStart}
                   onChange={(e) => {
-                    setCustomStart(e.target.value);
-                    const start = new Date(e.target.value);
-                    const end = new Date(customEnd);
+                    const newStart = e.target.value;
+                    setCustomStart(newStart);
+                    const start = parseDateStringLocal(newStart);
+                    const end = parseDateStringLocal(customEnd);
+                    const newEnd = start.getTime() > end.getTime() ? newStart : customEnd;
                     if (start.getTime() > end.getTime()) {
-                      setCustomEnd(e.target.value);
+                      setCustomEnd(newStart);
                     }
+                    applyCustomRange({ start: newStart, end: newEnd });
                   }}
-                  onBlur={handleCustomDateChange}
                 />
                 <label className="text-xs text-base-content/70">Bis</label>
                 <input
@@ -219,14 +230,16 @@ export function TimeRangePicker({
                   className="input input-sm input-bordered w-full"
                   value={customEnd}
                   onChange={(e) => {
-                    setCustomEnd(e.target.value);
-                    const start = new Date(customStart);
-                    const end = new Date(e.target.value);
+                    const newEnd = e.target.value;
+                    setCustomEnd(newEnd);
+                    const start = parseDateStringLocal(customStart);
+                    const end = parseDateStringLocal(newEnd);
+                    const newStart = end.getTime() < start.getTime() ? newEnd : customStart;
                     if (end.getTime() < start.getTime()) {
-                      setCustomStart(e.target.value);
+                      setCustomStart(newEnd);
                     }
+                    applyCustomRange({ start: newStart, end: newEnd });
                   }}
-                  onBlur={handleCustomDateChange}
                 />
               </div>
             )}
@@ -270,14 +283,16 @@ export function TimeRangePicker({
               className="input input-sm input-bordered"
               value={customStart}
               onChange={(e) => {
-                setCustomStart(e.target.value);
-                const start = new Date(e.target.value);
-                const end = new Date(customEnd);
+                const newStart = e.target.value;
+                setCustomStart(newStart);
+                const start = parseDateStringLocal(newStart);
+                const end = parseDateStringLocal(customEnd);
+                const newEnd = start.getTime() > end.getTime() ? newStart : customEnd;
                 if (start.getTime() > end.getTime()) {
-                  setCustomEnd(e.target.value);
+                  setCustomEnd(newStart);
                 }
+                applyCustomRange({ start: newStart, end: newEnd });
               }}
-              onBlur={handleCustomDateChange}
             />
             <span className="text-sm">bis</span>
             <input
@@ -285,14 +300,16 @@ export function TimeRangePicker({
               className="input input-sm input-bordered"
               value={customEnd}
               onChange={(e) => {
-                setCustomEnd(e.target.value);
-                const start = new Date(customStart);
-                const end = new Date(e.target.value);
+                const newEnd = e.target.value;
+                setCustomEnd(newEnd);
+                const start = parseDateStringLocal(customStart);
+                const end = parseDateStringLocal(newEnd);
+                const newStart = end.getTime() < start.getTime() ? newEnd : customStart;
                 if (end.getTime() < start.getTime()) {
-                  setCustomStart(e.target.value);
+                  setCustomStart(newEnd);
                 }
+                applyCustomRange({ start: newStart, end: newEnd });
               }}
-              onBlur={handleCustomDateChange}
             />
           </>
         )}

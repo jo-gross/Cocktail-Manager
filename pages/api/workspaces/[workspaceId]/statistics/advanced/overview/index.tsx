@@ -5,7 +5,7 @@ import { withHttpMethods } from '@middleware/api/handleMethods';
 import { Permission, Role, WorkspaceSettingKey } from '@generated/prisma/client';
 import HTTPMethod from 'http-method-enum';
 import '../../../../../../../lib/DateUtils';
-import { getEndOfDay, getLogicalDate, getStartOfDay, getStartOfMonth, getStartOfWeek } from '../../../../../../../lib/dateHelpers';
+import { formatDateLocal, getEndOfDay, getLogicalDate, getStartOfDay, getStartOfMonth, getStartOfWeek } from '../../../../../../../lib/dateHelpers';
 
 async function getStatisticsForPeriod(workspaceId: string, startDate: Date, endDate: Date, dayStartTime?: string) {
   const stats = await prisma.cocktailStatisticItem.findMany({
@@ -119,10 +119,11 @@ async function getChartDataForPeriod(workspaceId: string, startDate: Date, endDa
   });
 
   // Group by logical day for time series (respecting dayStartTime)
+  // Use local date for key so it matches getLogicalDate (which uses local getHours/getMinutes)
   const dayGroups: Record<string, number> = {};
   stats.forEach((stat) => {
     const logicalDate = getLogicalDate(new Date(stat.date), dayStartTime);
-    const dateKey = logicalDate.toISOString().split('T')[0];
+    const dateKey = formatDateLocal(logicalDate);
     dayGroups[dateKey] = (dayGroups[dateKey] || 0) + 1;
   });
 

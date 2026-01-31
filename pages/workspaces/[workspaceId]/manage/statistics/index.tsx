@@ -384,7 +384,7 @@ const StatisticsAdvancedPage = () => {
       .forEach((entry) => {
         const date = new Date(entry.date);
         const hour = date.getHours();
-        const dateString = date.toFormatDateString();
+        const dateString = date.toFormatDateStringShort();
         const formattedHour = `${dateString} ${hour}:00 - ${hour + 1}:00`;
         const cocktailName = entry.cocktail.name;
 
@@ -435,7 +435,10 @@ const StatisticsAdvancedPage = () => {
           const nextDate = new Date(adjustedDate);
           nextDate.setDate(adjustedDate.getDate() + 1);
 
-          const dateString = `${adjustedDate.toFormatDateString()}/${nextDate.toFormatDateString()}`;
+          const sameYear = adjustedDate.getFullYear() === nextDate.getFullYear();
+          const dateString = sameYear
+            ? `${adjustedDate.toFormatDateStringNoYear()}/${nextDate.toFormatDateStringShort()}`
+            : `${adjustedDate.toFormatDateStringShort()}/${nextDate.toFormatDateStringShort()}`;
           const cocktailName = entry.cocktail.name;
 
           if (!dailyCocktails[dateString]) {
@@ -460,7 +463,10 @@ const StatisticsAdvancedPage = () => {
         while (loopStartDate <= loopEndDate) {
           const nextDate = new Date(loopStartDate);
           nextDate.setDate(loopStartDate.getDate() + 1);
-          const dateString = `${loopStartDate.toFormatDateString()}/${nextDate.toFormatDateString()}`;
+          const sameYear = loopStartDate.getFullYear() === nextDate.getFullYear();
+          const dateString = sameYear
+            ? `${loopStartDate.toFormatDateStringNoYear()}/${nextDate.toFormatDateStringShort()}`
+            : `${loopStartDate.toFormatDateStringShort()}/${nextDate.toFormatDateStringShort()}`;
           allDates.push(dateString);
           loopStartDate.setDate(loopStartDate.getDate() + 1);
         }
@@ -920,6 +926,14 @@ const StatisticsAdvancedPage = () => {
     if (activeTab === 'cocktails') {
       loadCocktailsData();
       loadCocktailStatisticItems();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [timeRange.startDate.getTime(), timeRange.endDate.getTime(), activeTab]);
+
+  // Reload overview data when timeRange changes (preset or custom dates)
+  useEffect(() => {
+    if (activeTab === 'overview') {
+      loadOverviewData();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timeRange.startDate.getTime(), timeRange.endDate.getTime(), activeTab]);
@@ -1579,14 +1593,32 @@ const StatisticsAdvancedPage = () => {
                           </div>
                         </div>
 
-                        {/* Chart */}
+                        {/* Chart: X = Zeitraum, Y = Anzahl. X-Achsen-Labels fest bei 60° geneigt */}
                         {groupedChartData && groupedChartData.length > 0 && groupedChartCategories.length > 0 ? (
                           <div className="h-[50vh] w-full lg:h-[70vh]">
                             <ResponsiveContainer width="100%" height="100%">
-                              <BarChart data={groupedChartData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+                              <BarChart data={groupedChartData} margin={{ top: 20, right: 30, left: 20, bottom: 100 }}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(0, 0, 0, 0.05)" />
-                                <XAxis dataKey="name" angle={-45} textAnchor="end" height={80} tick={{ fontSize: 11 }} interval={0} />
-                                <YAxis tick={{ fontSize: 11 }} />
+                                <XAxis
+                                  dataKey="name"
+                                  axisLine={false}
+                                  tickLine={false}
+                                  interval={0}
+                                  height={85}
+                                  tick={(props: any) => {
+                                    const { x, y, payload } = props;
+                                    const label = payload?.value ?? '';
+                                    const yOffset = 28;
+                                    return (
+                                      <g transform={`translate(${x}, ${y + yOffset})`}>
+                                        <text textAnchor="end" fill="currentColor" fontSize={12} transform="rotate(-60, 0, 0)">
+                                          {label}
+                                        </text>
+                                      </g>
+                                    );
+                                  }}
+                                />
+                                <YAxis tick={{ fontSize: 12 }} width={36} />
                                 <Tooltip
                                   content={({ active, payload }: any) => {
                                     if (!active || !payload || !payload.length) return null;

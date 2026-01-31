@@ -5,7 +5,7 @@ import { withHttpMethods } from '@middleware/api/handleMethods';
 import { Role, Permission, WorkspaceSettingKey } from '@generated/prisma/client';
 import HTTPMethod from 'http-method-enum';
 import '../../../../../../../../lib/DateUtils';
-import { getStartOfDay, getEndOfDay, getLogicalDate } from '../../../../../../../../lib/dateHelpers';
+import { formatDateLocal, getStartOfDay, getEndOfDay, getLogicalDate, getStartOfWeek } from '../../../../../../../../lib/dateHelpers';
 
 function determineGranularity(startDate: Date, endDate: Date): 'hour' | 'day' | 'week' | 'month' {
   const diffMs = endDate.getTime() - startDate.getTime();
@@ -154,11 +154,12 @@ export default withHttpMethods({
     const previousTotal = previousStats.length;
     const delta = previousTotal > 0 ? ((total - previousTotal) / previousTotal) * 100 : total > 0 ? 100 : 0;
 
-    // Calculate average per active hour
+    // Calculate average per active hour (use logical date so hours before dayStartTime count on previous day)
     const activeHours = new Set<string>();
     currentStats.forEach((stat) => {
       const date = new Date(stat.date);
-      const hourKey = `${date.toISOString().split('T')[0]}_${date.getHours()}`;
+      const logicalDate = getLogicalDate(date, dayStartTime);
+      const hourKey = `${formatDateLocal(logicalDate)}_${date.getHours()}`;
       activeHours.add(hourKey);
     });
     const avgPerActiveHour = activeHours.size > 0 ? total / activeHours.size : 0;
@@ -185,26 +186,24 @@ export default withHttpMethods({
 
     const rank = allCocktailStats.findIndex((stat) => stat.cocktailId === cocktailId) + 1;
 
-    // Time series data
+    // Time series data: group by logical day (respecting dayStartTime) so orders before dayStartTime count on previous day
     const granularity = determineGranularity(start, end);
     const timeSeriesMap: Record<string, number> = {};
 
     currentStats.forEach((stat) => {
       const date = new Date(stat.date);
+      const logicalDate = getLogicalDate(date, dayStartTime);
       let key: string;
 
       if (granularity === 'hour') {
-        key = `${date.toISOString().split('T')[0]}T${date.getHours().toString().padStart(2, '0')}:00:00`;
+        key = `${formatDateLocal(logicalDate)}T${date.getHours().toString().padStart(2, '0')}:00:00`;
       } else if (granularity === 'day') {
-        key = date.toISOString().split('T')[0];
+        key = formatDateLocal(logicalDate);
       } else if (granularity === 'week') {
-        const weekStart = new Date(date);
-        const day = weekStart.getDay();
-        const diff = weekStart.getDate() - day + (day === 0 ? -6 : 1);
-        weekStart.setDate(diff);
-        key = weekStart.toISOString().split('T')[0];
+        const weekStart = getStartOfWeek(logicalDate, dayStartTime);
+        key = formatDateLocal(weekStart);
       } else {
-        key = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}`;
+        key = `${logicalDate.getFullYear()}-${(logicalDate.getMonth() + 1).toString().padStart(2, '0')}`;
       }
 
       timeSeriesMap[key] = (timeSeriesMap[key] || 0) + 1;

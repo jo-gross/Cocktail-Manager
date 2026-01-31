@@ -47,6 +47,17 @@ export function getEndOfDay(date: Date, dayStartTime?: string): Date {
 }
 
 /**
+ * Format a date as YYYY-MM-DD using local date components (not UTC).
+ * Use this for grouping keys so the day matches getLogicalDate/getStartOfDay logic.
+ */
+export function formatDateLocal(date: Date): string {
+  const y = date.getFullYear();
+  const m = (date.getMonth() + 1).toString().padStart(2, '0');
+  const d = date.getDate().toString().padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+/**
  * Get the logical day for a given date based on the day start time
  * If current time is before dayStartTime, it belongs to the previous day
  * @param date The reference date
