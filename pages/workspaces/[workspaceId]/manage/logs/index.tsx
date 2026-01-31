@@ -96,7 +96,7 @@ const LogsPage: NextPageWithPullToRefresh = () => {
     } finally {
       setLoading(false);
     }
-  }, [workspaceId, currentPage, timeRange.startDate, timeRange.endDate, searchQuery]);
+  }, [workspaceId, currentPage, timeRange.startDate.getTime(), timeRange.endDate.getTime(), searchQuery]);
 
   useEffect(() => {
     loadLogs();
