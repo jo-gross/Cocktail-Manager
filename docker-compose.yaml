@@ -67,6 +67,11 @@ services:
       # - DEMO_MODE=true
       # - DEMO_WORKSPACE_CONFIG_PATH=/app/config/demo-workspace-config.json
       # - DEMO_TTL_HOURS=24
+      # Email (e.g. for join requests; with fake-smtp: SMTP_HOST=fake-smtp, SMTP_PORT=8025; EMAIL_TEMPLATE_CONFIG JSON with appUrl, supportEmail)
+      # - SMTP_HOST=fake-smtp
+      # - SMTP_PORT=8025
+      # - MAIL_FROM=noreply@localhost
+      # - EMAIL_TEMPLATE_CONFIG={"appUrl":"http://localhost:3000","supportEmail":"support@cocktail-manager.de"}
     networks:
       - cocktail-recipe-network
 
@@ -86,6 +91,18 @@ services:
     ports:
       - '9222:9222'
     restart: unless-stopped
+
+  # Fake SMTP server for local testing of email notifications (e.g. join requests)
+  # Web UI: http://localhost:8080 – SMTP port: 8025
+  # See docs/EMAIL.md for configuration
+  fake-smtp:
+    image: gessnerfl/fake-smtp-server:latest
+    container_name: cocktail-recipe-fake-smtp
+    ports:
+      - '8025:8025'
+      - '8080:8080'
+    networks:
+      - cocktail-recipe-network
 
 networks:
   cocktail-recipe-network:

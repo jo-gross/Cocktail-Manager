@@ -76,6 +76,29 @@ The `API_KEY_REVOKED_CACHE_TTL_MINUTES` controls how long revoked API keys are c
 - Demo mode configuration is loaded at runtime. Changes take effect after restarting the container (no rebuild
   required).
 
+### E-Mail / SMTP
+
+Email notifications (e.g. for workspace join requests) are only sent when SMTP is configured and `EMAIL_TEMPLATE_CONFIG` is set and valid. If `SMTP_HOST` is not set, no email is sent. If SMTP is set but `EMAIL_TEMPLATE_CONFIG` is missing or invalid, an error is logged and no email is sent.
+
+| Variable        | Description                                                                 | Default | Example              |
+| --------------- | --------------------------------------------------------------------------- | ------- | -------------------- |
+| `SMTP_HOST`     | SMTP server hostname or address                                             | -       | `localhost`, `fake-smtp` |
+| `SMTP_PORT`     | SMTP port                                                                   | `8025`  | `8025`, `587`        |
+| `SMTP_SECURE`   | Use TLS (set to `"true"` for TLS)                                           | `false` | `"true"`             |
+| `SMTP_USER`     | SMTP username (optional, e.g. for auth)                                     | -       | `user`               |
+| `SMTP_PASSWORD` | SMTP password (optional)                                                    | -       | `secret`             |
+| `MAIL_FROM`     | Sender email address                                                        | `noreply@localhost` | `noreply@example.com` |
+| `MAIL_FROM_NAME`| Sender display name                                                         | `Cocktail Manager` | `Cocktail Manager` |
+| `EMAIL_TEMPLATE_CONFIG` | **JSON object** (as string). Required when SMTP is enabled. Contains: `appUrl` (app base URL, for links and logo), `supportEmail` (support email, used as `mailto:` link), optional `impressumUrl` (default: `appUrl`). If a required value is missing, no email is sent. See [Email documentation](EMAIL.md). | -       | See example below    |
+
+**Example `EMAIL_TEMPLATE_CONFIG`** (single line in `.env` or escaped JSON in the environment):
+
+```json
+{"appUrl":"http://localhost:3000","supportEmail":"support@cocktail-manager.de","impressumUrl":"http://localhost:3000"}
+```
+
+**Local testing:** For local testing you can use [fake-smtp-server](https://github.com/gessnerfl/fake-smtp-server) via Docker (see [Email documentation](EMAIL.md)). A `fake-smtp` service is defined in `docker-compose.yaml`; SMTP port 8025, Web UI on port 8080. Set e.g. `SMTP_HOST=localhost` (when the app runs locally) or `SMTP_HOST=fake-smtp` (when the app runs in the Docker network), `SMTP_PORT=8025`, and `EMAIL_TEMPLATE_CONFIG` as in the example above.
+
 ## Configuration Files
 
 ### .env File
