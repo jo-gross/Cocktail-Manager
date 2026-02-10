@@ -38,7 +38,24 @@ export default withHttpMethods({
       },
     });
 
-    return res.json({ data: { ...workspace, WorkspaceSetting: settings, users: workspaceUsers } });
+    // Check if workspace is externally managed
+    let isExternallyManaged = false;
+    if (process.env.EXTERNAL_WORKSPACE_MANAGEMENT === 'true') {
+      const mappingsJson = process.env.EXTERNAL_WORKSPACE_MAPPINGS;
+      if (mappingsJson) {
+        try {
+          const workspaces = JSON.parse(mappingsJson);
+          if (Array.isArray(workspaces)) {
+            // @ts-ignore
+            isExternallyManaged = workspaces.some((config: any) => config.workspaceId === workspace.id);
+          }
+        } catch (e) {
+          console.error('Failed to parse EXTERNAL_WORKSPACE_MAPPINGS', e);
+        }
+      }
+    }
+
+    return res.json({ data: { ...workspace, WorkspaceSetting: settings, users: workspaceUsers, isExternallyManaged } });
   }),
   [HTTPMethod.DELETE]: withWorkspacePermission([Role.ADMIN], async (req, res, user, workspace) => {
     const result = await prisma.workspace.delete({

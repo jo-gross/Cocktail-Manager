@@ -5,7 +5,7 @@ import { UserContext } from '@lib/context/UserContextProvider';
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import { Role, User, WorkspaceJoinCode, WorkspaceJoinRequest, WorkspaceUser } from '@generated/prisma/client';
 import { alertService } from '@lib/alertService';
-import { FaCheck, FaCopy, FaPlus, FaShareAlt, FaSync, FaTimes, FaTrashAlt } from 'react-icons/fa';
+import { FaCheck, FaCopy, FaPlus, FaShareAlt, FaSync, FaTimes, FaTrashAlt, FaExclamationTriangle } from 'react-icons/fa';
 import AddWorkspaceJoinCodeModal from '../../../../../components/modals/AddWorkspaceJoinCodeModal';
 import { FaRegCircle } from 'react-icons/fa6';
 import { DeleteConfirmationModal } from '@components/modals/DeleteConfirmationModal';
@@ -18,7 +18,7 @@ export default function ManageUsersPage() {
 
   const { workspaceId } = router.query;
 
-  const [workspaceUsers, setWorkspaceUsers] = useState<(WorkspaceUser & { user: User })[]>([]);
+  const [workspaceUsers, setWorkspaceUsers] = useState<(WorkspaceUser & { user: User & { accounts: { provider: string }[] } })[]>([]);
   const [workspaceUsersLoading, setWorkspaceUsersLoading] = useState<boolean>(false);
 
   const [WorkspaceJoinRequest, setWorkspaceJoinRequest] = useState<(WorkspaceJoinRequest & { user: User })[]>([]);
@@ -104,6 +104,18 @@ export default function ManageUsersPage() {
   return (
     <ManageEntityLayout backLink={`/workspaces/${workspaceId}/manage`} title={'Workspace-Einstellungen'}>
       <div className={'grid grid-cols-1 gap-2 md:grid-cols-2'}>
+        {userContext.workspace?.isExternallyManaged && (
+          <div role="alert" className="alert alert-warning md:col-span-2">
+            <FaExclamationTriangle />
+            <div>
+              <h3 className="font-bold">Extern verwaltete Workspace</h3>
+              <div className="text-xs">
+                Diese Workspace wird von einem externen Dienst (OpenID) verwaltet. Nutzer und Rollen werden ausschließlich bei der Anmeldung aktualisiert und
+                können hier nicht bearbeitet werden.
+              </div>
+            </div>
+          </div>
+        )}
         <div className={'card overflow-y-auto md:col-span-2'}>
           <div className={'card-body'}>
             <div className={'card-title'}>Workspace Nutzer verwalten</div>
@@ -113,13 +125,14 @@ export default function ManageUsersPage() {
                   <th>Name</th>
                   <th>Email</th>
                   <th>Rolle</th>
+                  <th>Auth Provider</th>
                   <th></th>
                 </tr>
               </thead>
               <tbody>
                 {workspaceUsersLoading ? (
                   <tr>
-                    <td colSpan={4} className={'w-full text-center'}>
+                    <td colSpan={5} className={'w-full text-center'}>
                       Lade...
                     </td>
                   </tr>
@@ -136,7 +149,11 @@ export default function ManageUsersPage() {
                         <td>
                           {userContext.isUserPermitted(Role.ADMIN) ? (
                             <select
-                              disabled={workspaceUser.user.id == userContext.user?.id || workspaceUser.role == Role.OWNER}
+                              disabled={
+                                workspaceUser.user.id == userContext.user?.id ||
+                                workspaceUser.role == Role.OWNER ||
+                                (userContext.workspace?.isExternallyManaged && workspaceUser.user.accounts?.some((acc: any) => acc.provider === 'custom_oidc'))
+                              }
                               value={workspaceUser.role}
                               className={'select select-bordered select-sm w-full min-w-fit max-w-xs'}
                               onChange={(event) => {
@@ -171,11 +188,21 @@ export default function ManageUsersPage() {
                             workspaceUser.role
                           )}
                         </td>
+                        <td>
+                          {workspaceUser.user.accounts && workspaceUser.user.accounts.length > 0
+                            ? workspaceUser.user.accounts[0].provider === 'custom_oidc'
+                              ? 'OIDC'
+                              : workspaceUser.user.accounts[0].provider
+                            : 'Email'}
+                        </td>
                         <td className={'flex justify-end'}>
                           {userContext.isUserPermitted(Role.ADMIN) && workspaceUser.user.id != userContext.user?.id ? (
                             <button
                               className={'btn btn-error btn-sm ml-2'}
-                              disabled={workspaceUser.role == Role.OWNER}
+                              disabled={
+                                workspaceUser.role == Role.OWNER ||
+                                (userContext.workspace?.isExternallyManaged && workspaceUser.user.accounts?.some((acc: any) => acc.provider === 'custom_oidc'))
+                              }
                               onClick={() => {
                                 setLeaveLoading({ ...leaveLoading, [workspaceUser.userId]: true });
                                 fetch(`/api/workspaces/${workspaceId}/users/${workspaceUser.userId}`, {
@@ -207,7 +234,10 @@ export default function ManageUsersPage() {
                             <button
                               className={'btn btn-error btn-sm ml-2'}
                               disabled={
-                                workspaceUser.role == Role.OWNER || workspaceUser.user.id != userContext.user?.id || leaveLoading[workspaceUser.user.id]
+                                workspaceUser.role == Role.OWNER ||
+                                workspaceUser.user.id != userContext.user?.id ||
+                                leaveLoading[workspaceUser.user.id] ||
+                                (userContext.workspace?.isExternallyManaged && workspaceUser.user.accounts?.some((acc: any) => acc.provider === 'custom_oidc'))
                               }
                               onClick={() => {
                                 setLeaveLoading({ ...leaveLoading, [workspaceUser.user.id]: true });

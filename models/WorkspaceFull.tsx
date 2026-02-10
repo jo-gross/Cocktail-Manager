@@ -9,4 +9,6 @@ export type WorkspaceFull = Prisma.WorkspaceGetPayload<{
       };
     };
   };
-}>;
+}> & {
+  isExternallyManaged?: boolean;
+};
