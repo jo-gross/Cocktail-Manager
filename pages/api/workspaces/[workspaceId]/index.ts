@@ -4,6 +4,7 @@ import { withWorkspacePermission } from '@middleware/api/authenticationMiddlewar
 import HTTPMethod from 'http-method-enum';
 import prisma from '../../../../prisma/prisma';
 import WorkspaceUpdateInput = Prisma.WorkspaceUpdateInput;
+import { isWorkspaceExternallyManaged } from '../../../../lib/config/externalWorkspace';
 
 export default withHttpMethods({
   [HTTPMethod.GET]: withWorkspacePermission([Role.USER], Permission.WORKSPACE_READ, async (req, res, user, workspace) => {
@@ -39,21 +40,7 @@ export default withHttpMethods({
     });
 
     // Check if workspace is externally managed
-    let isExternallyManaged = false;
-    if (process.env.EXTERNAL_WORKSPACE_MANAGEMENT === 'true') {
-      const mappingsJson = process.env.EXTERNAL_WORKSPACE_MAPPINGS;
-      if (mappingsJson) {
-        try {
-          const workspaces = JSON.parse(mappingsJson);
-          if (Array.isArray(workspaces)) {
-            // @ts-ignore
-            isExternallyManaged = workspaces.some((config: any) => config.workspaceId === workspace.id);
-          }
-        } catch (e) {
-          console.error('Failed to parse EXTERNAL_WORKSPACE_MAPPINGS', e);
-        }
-      }
-    }
+    const isExternallyManaged = isWorkspaceExternallyManaged(workspace.id);
 
     return res.json({ data: { ...workspace, WorkspaceSetting: settings, users: workspaceUsers, isExternallyManaged } });
   }),

@@ -5,6 +5,7 @@ import Credentials from 'next-auth/providers/credentials';
 import prisma from '../../../prisma/prisma';
 import { PrismaAdapter } from '@next-auth/prisma-adapter';
 import { AdapterAccount } from 'next-auth/adapters';
+import { getExternalWorkspaceMappings } from '../../../lib/config/externalWorkspace';
 
 const providers: any[] = [];
 
@@ -120,11 +121,9 @@ export const authOptions: NextAuthOptions = {
         // Check for External Workspace Management
         if (process.env.EXTERNAL_WORKSPACE_MANAGEMENT === 'true' && account?.provider === 'custom_oidc' && profile) {
           const groupKey = process.env.CUSTOM_OIDC_GROUPS_KEY;
-          const mappingsJson = process.env.EXTERNAL_WORKSPACE_MAPPINGS;
-
-          if (groupKey && mappingsJson) {
+          if (groupKey) {
             try {
-              const workspaces = JSON.parse(mappingsJson);
+              const workspaces = getExternalWorkspaceMappings();
               // @ts-ignore
               const userGroups = profile[groupKey] || [];
               const groupList = Array.isArray(userGroups) ? userGroups : [userGroups];
