@@ -312,6 +312,7 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                       >
                         <div className={'flex flex-row justify-between gap-2'}>
                           <div className={`font-bold ${garnish.optional ? 'italic' : ''}`}>
+                            {(garnish as any).isAlternative && <span className={'font-normal italic'}>oder </span>}
                             {garnish.garnish.name} {garnish.optional ? '(Optional)' : ''}
                           </div>
                         </div>

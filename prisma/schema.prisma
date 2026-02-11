@@ -292,6 +292,7 @@ model CocktailRecipeGarnish {
   description   String?
   garnishNumber Int
   optional      Boolean? @default(false)
+  isAlternative Boolean? @default(false)
 
   @@id([garnishId, cocktailRecipeId])
 }

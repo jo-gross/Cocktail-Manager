@@ -191,6 +191,7 @@ export default withHttpMethods({
             garnishNumber: garnish.garnishNumber,
             description: garnish.description,
             optional: garnish.optional,
+            isAlternative: (garnish as any).isAlternative,
           },
         });
       });

@@ -58,6 +58,7 @@ interface StepError {
 interface GarnishError {
   garnishId?: string;
   optional?: string;
+  isAlternative?: string;
 }
 
 export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
@@ -929,18 +930,24 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                       ) : (
                         <div className={'col-span-2 text-center font-thin italic'}>Keine Garnituren</div>
                       )}
-                      {(values.garnishes as CocktailRecipeGarnishFull[]).map((garnish) => (
-                        <>
-                          <div key={`price-calculation-step-garnish-name`}>{garnish?.garnish?.name}</div>
-                          <div key={`price-calculation-step-garnish-price`} className={'grid grid-cols-2'}>
-                            <div>1 x {(garnish?.garnish?.price ?? 0).formatPrice()}</div>
-                            <div className={'text-end'}>
-                              {(values.steps as CocktailRecipeStepFull[]).some((step) => step.ingredients.length > 0) ? '+ ' : ''}
-                              {(garnish?.garnish?.price ?? 0).formatPrice()}€
+                      {(values.garnishes as CocktailRecipeGarnishFull[]).map((garnish) => {
+                        const isAlternative = (garnish as any).isAlternative;
+                        return (
+                          <React.Fragment key={`price-calculation-step-garnish-${garnish.garnishId}`}>
+                            <div className={`${isAlternative ? 'line-through opacity-50' : ''}`}>{garnish?.garnish?.name}</div>
+                            <div className={`grid grid-cols-2 ${isAlternative ? 'line-through opacity-50' : ''}`}>
+                              <div>1 x {(garnish?.garnish?.price ?? 0).formatPrice()}</div>
+                              <div className={'text-end'}>
+                                {(values.steps as CocktailRecipeStepFull[]).some((step) => step.ingredients.length > 0) ? '+ ' : ''}
+                                {(garnish?.garnish?.price ?? 0).formatPrice()}€
+                              </div>
                             </div>
-                          </div>
-                        </>
-                      ))}
+                          </React.Fragment>
+                        );
+                      })}
+                      {(values.garnishes as CocktailRecipeGarnishFull[]).some((g) => (g as any).isAlternative) && (
+                        <div className={'col-span-2 mt-1 text-xs font-thin italic'}>* Alternative Garnituren werden nicht in die Berechnung einbezogen.</div>
+                      )}
                     </>
                     <div className={'divider-sm col-span-2'}></div>
                     <div>Summe</div>
@@ -1336,6 +1343,12 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                   const value = values.garnishes[indexGarnish];
                                   const reorderedGroups = (values.garnishes as CocktailRecipeGarnishFull[]).filter((_, i) => i != indexGarnish);
                                   reorderedGroups.splice(indexGarnish - 1, 0, value);
+
+                                  // Ensure the item at index 0 has isAlternative = false
+                                  if ((reorderedGroups[0] as any).isAlternative) {
+                                    (reorderedGroups[0] as any).isAlternative = false;
+                                  }
+
                                   setFieldValue(
                                     `garnishes`,
                                     reorderedGroups.map((garnish, garnishIndex) => ({
@@ -1355,6 +1368,12 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                   const value = values.garnishes[indexGarnish];
                                   const reorderedGroups = (values.garnishes as CocktailRecipeGarnishFull[]).filter((_, i) => i != indexGarnish);
                                   reorderedGroups.splice(indexGarnish + 1, 0, value);
+
+                                  // Ensure the item at index 0 has isAlternative = false
+                                  if ((reorderedGroups[0] as any).isAlternative) {
+                                    (reorderedGroups[0] as any).isAlternative = false;
+                                  }
+
                                   setFieldValue(
                                     `garnishes`,
                                     reorderedGroups.map((garnishes, garnishIndex) => ({
@@ -1456,6 +1475,24 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                 />
                               </label>
                             </div>
+                            {indexGarnish > 0 && (
+                              <div className={'form-control'}>
+                                <label className={'label w-fit flex-col justify-start gap-1'}>
+                                  <span className={'label-text'}>Alternativ</span>
+                                  <span className={'label-text-alt text-error'}>
+                                    {(errors.garnishes as GarnishError[])?.[indexGarnish]?.isAlternative &&
+                                      (errors.garnishes as GarnishError[])?.[indexGarnish]?.isAlternative}
+                                  </span>
+                                  <Field
+                                    type={'checkbox'}
+                                    name={`garnishes.${indexGarnish}.isAlternative`}
+                                    onChange={handleChange}
+                                    onBlur={handleBlur}
+                                    className={'toggle toggle-secondary'}
+                                  />
+                                </label>
+                              </div>
+                            )}
                           </div>
                           <div className={'flex-1'}>
                             <div
