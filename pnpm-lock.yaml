@@ -166,8 +166,8 @@ importers:
         specifier: 4.17.23
         version: 4.17.23
       '@types/node':
-        specifier: 25.2.0
-        version: 25.2.0
+        specifier: 25.2.3
+        version: 25.2.3
       '@types/nodemailer':
         specifier: 7.0.9
         version: 7.0.9
@@ -1512,8 +1512,8 @@ packages:
   '@types/ms@2.1.0':
     resolution: {integrity: sha512-GsCCIZDE/p3i96vtEqx+7dBUGXrc7zeSK3wwPHIaRThS+9OhWIXRqzs4d6k1SVU8g91DrNRWxWUGhp5KXQb2VA==}
 
-  '@types/node@25.2.0':
-    resolution: {integrity: sha512-DZ8VwRFUNzuqJ5khrvwMXHmvPe+zGayJhr2CDNiKB1WBE1ST8Djl00D0IC4vvNmHMdj6DlbYRIaFE7WHjlDl5w==}
+  '@types/node@25.2.3':
+    resolution: {integrity: sha512-m0jEgYlYz+mDJZ2+F4v8D1AyQb+QzsNqRuI7xg1VQX/KlKS0qT9r1Mo16yo5F/MtifXFgaofIFsdFMox2SxIbQ==}
 
   '@types/nodemailer@7.0.9':
     resolution: {integrity: sha512-vI8oF1M+8JvQhsId0Pc38BdUP2evenIIys7c7p+9OZXSPOH5c1dyINP1jT8xQ2xPuBUXmIC87s+91IZMDjH8Ow==}
@@ -7239,7 +7239,7 @@ snapshots:
 
   '@types/bcrypt@6.0.0':
     dependencies:
-      '@types/node': 25.2.0
+      '@types/node': 25.2.3
 
   '@types/d3-array@3.2.2': {}
 
@@ -7294,7 +7294,7 @@ snapshots:
   '@types/glob@7.2.0':
     dependencies:
       '@types/minimatch': 6.0.0
-      '@types/node': 25.2.0
+      '@types/node': 25.2.3
 
   '@types/hast@3.0.4':
     dependencies:
@@ -7314,7 +7314,7 @@ snapshots:
   '@types/jsonwebtoken@9.0.10':
     dependencies:
       '@types/ms': 2.1.0
-      '@types/node': 25.2.0
+      '@types/node': 25.2.3
 
   '@types/lodash@4.17.23': {}
 
@@ -7328,13 +7328,13 @@ snapshots:
 
   '@types/ms@2.1.0': {}
 
-  '@types/node@25.2.0':
+  '@types/node@25.2.3':
     dependencies:
       undici-types: 7.16.0
 
   '@types/nodemailer@7.0.9':
     dependencies:
-      '@types/node': 25.2.0
+      '@types/node': 25.2.3
 
   '@types/normalize-package-data@2.4.4': {}
 
@@ -7342,7 +7342,7 @@ snapshots:
 
   '@types/pg@8.16.0':
     dependencies:
-      '@types/node': 25.2.0
+      '@types/node': 25.2.3
       pg-protocol: 1.11.0
       pg-types: 2.2.0
 
@@ -7367,7 +7367,7 @@ snapshots:
 
   '@types/resolve@1.17.1':
     dependencies:
-      '@types/node': 25.2.0
+      '@types/node': 25.2.3
 
   '@types/trusted-types@2.0.7': {}
 
@@ -7379,7 +7379,7 @@ snapshots:
 
   '@types/yauzl@2.10.3':
     dependencies:
-      '@types/node': 25.2.0
+      '@types/node': 25.2.3
     optional: true
 
   '@typescript-eslint/eslint-plugin@8.54.0(@typescript-eslint/parser@8.54.0(eslint@9.39.2(jiti@1.21.7))(typescript@5.9.3))(eslint@9.39.2(jiti@1.21.7))(typescript@5.9.3)':
@@ -9558,13 +9558,13 @@ snapshots:
 
   jest-worker@26.6.2:
     dependencies:
-      '@types/node': 25.2.0
+      '@types/node': 25.2.3
       merge-stream: 2.0.0
       supports-color: 7.2.0
 
   jest-worker@27.5.1:
     dependencies:
-      '@types/node': 25.2.0
+      '@types/node': 25.2.3
       merge-stream: 2.0.0
       supports-color: 8.1.1
 
