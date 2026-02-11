@@ -138,6 +138,7 @@ export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeIns
                     key={`cocktail-${props.cocktailRecipe.id}-garnish-${garnish.garnishNumber}-garnishId-${garnish.garnishId}`}
                     className={`pl-2 ${garnish.optional ? 'italic' : ''}`}
                   >
+                    {(garnish as any).isAlternative && <span className="font-bold">oder </span>}
                     {garnish?.garnish?.name}
                     {garnish.optional ? ' (optional)' : ''}
                   </div>

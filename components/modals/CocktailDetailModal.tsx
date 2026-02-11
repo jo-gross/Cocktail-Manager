@@ -111,7 +111,7 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
   }, [workspaceId, loadedCocktail, modalContext]);
 
   useEffect(() => {
-    fetchIngredients(workspaceId, setIngredients, () => {});
+    fetchIngredients(workspaceId, setIngredients, () => { });
     fetchCocktail(workspaceId, props.cocktailId, setLoadedCocktail, setLoading);
     fetchCocktailRatings(workspaceId, props.cocktailId, setCocktailRatings, setRatingsLoading, setRatingsError);
 
@@ -151,9 +151,9 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                     {loadedCocktail.price.formatPriceEfficent() + ' €'}
                     {amountAdjustment != 100
                       ? ` ${(loadedCocktail.price * (amountAdjustment / 100) - loadedCocktail.price)
-                          .formatPriceEfficent({ signDisplay: 'exceptZero' })
-                          .replace('-', '- ')
-                          .replace('+', '+ ')} € = ${(
+                        .formatPriceEfficent({ signDisplay: 'exceptZero' })
+                        .replace('-', '- ')
+                        .replace('+', '+ ')} € = ${(
                           loadedCocktail.price +
                           (loadedCocktail.price * (amountAdjustment / 100) - loadedCocktail.price)
                         ).formatPriceEfficent()} €`
@@ -312,6 +312,7 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                       >
                         <div className={'flex flex-row justify-between gap-2'}>
                           <div className={`font-bold ${garnish.optional ? 'italic' : ''}`}>
+                            {(garnish as any).isAlternative && <span className="font-bold">oder </span>}
                             {garnish.garnish.name} {garnish.optional ? '(Optional)' : ''}
                           </div>
                         </div>
@@ -335,24 +336,23 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                     comment:
                       amountAdjustment != 100 && loadedCocktail
                         ? `Angepasste Menge (${amountAdjustment}%):\n${loadedCocktail.steps
-                            .sort((a, b) => a.stepNumber - b.stepNumber)
-                            .map((step) => {
-                              return `${step.ingredients
-                                .sort((a, b) => a.ingredientNumber - b.ingredientNumber)
-                                .map((stepIngredient) => {
-                                  return `- ${((stepIngredient.amount ?? 0) * (amountAdjustment / 100))?.toLocaleString(undefined, {
-                                    minimumFractionDigits: 0,
-                                    maximumFractionDigits: 2,
-                                  })} ${userContext.getTranslation(stepIngredient.unit?.name ?? '', 'de')} ${stepIngredient.ingredient?.shortName ?? stepIngredient.ingredient?.name}${stepIngredient.optional ? '(optional)' : ''}`;
-                                })
-                                .join('\n')}`;
-                            })
-                            .join('\n')}\nBasispreis ± angepasste Menge = Verkaufspreis (${amountAdjustment}%):\n${
-                            loadedCocktail.price?.formatPriceEfficent() + ' €'
-                          } ${((loadedCocktail.price ?? 0) * (amountAdjustment / 100) - (loadedCocktail.price ?? 0))
-                            .formatPriceEfficent({ signDisplay: 'exceptZero' })
-                            .replace('-', '- ')
-                            .replace('+', '+ ')} € = ${(
+                          .sort((a, b) => a.stepNumber - b.stepNumber)
+                          .map((step) => {
+                            return `${step.ingredients
+                              .sort((a, b) => a.ingredientNumber - b.ingredientNumber)
+                              .map((stepIngredient) => {
+                                return `- ${((stepIngredient.amount ?? 0) * (amountAdjustment / 100))?.toLocaleString(undefined, {
+                                  minimumFractionDigits: 0,
+                                  maximumFractionDigits: 2,
+                                })} ${userContext.getTranslation(stepIngredient.unit?.name ?? '', 'de')} ${stepIngredient.ingredient?.shortName ?? stepIngredient.ingredient?.name}${stepIngredient.optional ? '(optional)' : ''}`;
+                              })
+                              .join('\n')}`;
+                          })
+                          .join('\n')}\nBasispreis ± angepasste Menge = Verkaufspreis (${amountAdjustment}%):\n${loadedCocktail.price?.formatPriceEfficent() + ' €'
+                        } ${((loadedCocktail.price ?? 0) * (amountAdjustment / 100) - (loadedCocktail.price ?? 0))
+                          .formatPriceEfficent({ signDisplay: 'exceptZero' })
+                          .replace('-', '- ')
+                          .replace('+', '+ ')} € = ${(
                             (loadedCocktail.price ?? 0) +
                             ((loadedCocktail.price ?? 0) * (amountAdjustment / 100) - (loadedCocktail!.price ?? 0))
                           ).formatPriceEfficent()} €`
@@ -365,12 +365,12 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                   onMarkedAsDone={
                     props.openReferer === 'QUEUE'
                       ? () => {
-                          if (localQueueAmount === 1) {
-                            modalContext.closeAllModals();
-                          } else {
-                            setLocalQueueAmount((prev) => (prev ?? 0) - 1);
-                          }
+                        if (localQueueAmount === 1) {
+                          modalContext.closeAllModals();
+                        } else {
+                          setLocalQueueAmount((prev) => (prev ?? 0) - 1);
                         }
+                      }
                       : undefined
                   }
                 />
@@ -594,12 +594,12 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                     {calcCocktailTotalPrice(loadedCocktail, ingredients).formatPrice() + ' €'}
                     {amountAdjustment != 100
                       ? ` ${(
-                          calcCocktailTotalPrice(loadedCocktail, ingredients) * (amountAdjustment / 100) -
-                          calcCocktailTotalPrice(loadedCocktail, ingredients)
-                        )
-                          .formatPrice({ signDisplay: 'exceptZero' })
-                          .replace('-', '- ')
-                          .replace('+', '+ ')} € = ${(
+                        calcCocktailTotalPrice(loadedCocktail, ingredients) * (amountAdjustment / 100) -
+                        calcCocktailTotalPrice(loadedCocktail, ingredients)
+                      )
+                        .formatPrice({ signDisplay: 'exceptZero' })
+                        .replace('-', '- ')
+                        .replace('+', '+ ')} € = ${(
                           calcCocktailTotalPrice(loadedCocktail, ingredients) +
                           (calcCocktailTotalPrice(loadedCocktail, ingredients) * (amountAdjustment / 100) - calcCocktailTotalPrice(loadedCocktail, ingredients))
                         ).formatPrice()} € (${amountAdjustment}%)`

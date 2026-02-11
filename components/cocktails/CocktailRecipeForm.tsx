@@ -58,6 +58,7 @@ interface StepError {
 interface GarnishError {
   garnishId?: string;
   optional?: string;
+  isAlternative?: string;
 }
 
 export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
@@ -1146,10 +1147,9 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                           >
                                             <input
                                               id={`ingredient-${indexIngredient}-name`}
-                                              className={`input join-item input-bordered w-full cursor-pointer ${
-                                                ((errors.steps as StepError[])?.[indexStep] as any)?.ingredients?.[indexIngredient]?.ingredientId &&
+                                              className={`input join-item input-bordered w-full cursor-pointer ${((errors.steps as StepError[])?.[indexStep] as any)?.ingredients?.[indexIngredient]?.ingredientId &&
                                                 'input-error'
-                                              }`}
+                                                }`}
                                               value={
                                                 ingredientsLoading
                                                   ? 'Lade...'
@@ -1205,9 +1205,8 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                             <div className={'tooltip'}></div>
                                             <select
                                               name={`steps.${indexStep}.ingredients.${indexIngredient}.unitId`}
-                                              className={`join-item select select-bordered w-full ${
-                                                ((errors.steps as StepError[])?.[indexStep] as any)?.ingredients?.[indexIngredient]?.unit ? 'select-error' : ''
-                                              }`}
+                                              className={`join-item select select-bordered w-full ${((errors.steps as StepError[])?.[indexStep] as any)?.ingredients?.[indexIngredient]?.unit ? 'select-error' : ''
+                                                }`}
                                               onChange={async (e) => {
                                                 handleChange(e);
                                                 await setFieldValue(
@@ -1223,9 +1222,9 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                               </option>
 
                                               {values.steps[indexStep].ingredients[indexIngredient].unitId &&
-                                              ingredients
-                                                .find((ingredient) => ingredient.id == values.steps[indexStep].ingredients[indexIngredient]?.ingredientId)
-                                                ?.IngredientVolume.find((unit) => unit.unitId == values.steps[indexStep].ingredients[indexIngredient].unitId) ==
+                                                ingredients
+                                                  .find((ingredient) => ingredient.id == values.steps[indexStep].ingredients[indexIngredient]?.ingredientId)
+                                                  ?.IngredientVolume.find((unit) => unit.unitId == values.steps[indexStep].ingredients[indexIngredient].unitId) ==
                                                 undefined ? (
                                                 <option
                                                   className="tooltip"
@@ -1336,6 +1335,12 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                   const value = values.garnishes[indexGarnish];
                                   const reorderedGroups = (values.garnishes as CocktailRecipeGarnishFull[]).filter((_, i) => i != indexGarnish);
                                   reorderedGroups.splice(indexGarnish - 1, 0, value);
+
+                                  // Ensure the item at index 0 has isAlternative = false
+                                  if ((reorderedGroups[0] as any).isAlternative) {
+                                    (reorderedGroups[0] as any).isAlternative = false;
+                                  }
+
                                   setFieldValue(
                                     `garnishes`,
                                     reorderedGroups.map((garnish, garnishIndex) => ({
@@ -1355,6 +1360,12 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                   const value = values.garnishes[indexGarnish];
                                   const reorderedGroups = (values.garnishes as CocktailRecipeGarnishFull[]).filter((_, i) => i != indexGarnish);
                                   reorderedGroups.splice(indexGarnish + 1, 0, value);
+
+                                  // Ensure the item at index 0 has isAlternative = false
+                                  if ((reorderedGroups[0] as any).isAlternative) {
+                                    (reorderedGroups[0] as any).isAlternative = false;
+                                  }
+
                                   setFieldValue(
                                     `garnishes`,
                                     reorderedGroups.map((garnishes, garnishIndex) => ({
@@ -1379,9 +1390,8 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                               </label>
                               <div className={'join w-full'}>
                                 <input
-                                  className={`input join-item input-bordered w-full cursor-pointer ${
-                                    (errors.garnishes as GarnishError[])?.[indexGarnish]?.garnishId && 'input-error'
-                                  }`}
+                                  className={`input join-item input-bordered w-full cursor-pointer ${(errors.garnishes as GarnishError[])?.[indexGarnish]?.garnishId && 'input-error'
+                                    }`}
                                   value={garnishesLoading ? 'Lade...' : (values.garnishes[indexGarnish].garnish?.name ?? 'Wähle eine Garnitur aus...')}
                                   readOnly={true}
                                   onClick={() => {
@@ -1456,6 +1466,24 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                 />
                               </label>
                             </div>
+                            {indexGarnish > 0 && (
+                              <div className={'form-control'}>
+                                <label className={'label w-fit flex-col justify-start gap-1'}>
+                                  <span className={'label-text'}>Alternativ</span>
+                                  <span className={'label-text-alt text-error'}>
+                                    {(errors.garnishes as GarnishError[])?.[indexGarnish]?.isAlternative &&
+                                      (errors.garnishes as GarnishError[])?.[indexGarnish]?.isAlternative}
+                                  </span>
+                                  <Field
+                                    type={'checkbox'}
+                                    name={`garnishes.${indexGarnish}.isAlternative`}
+                                    onChange={handleChange}
+                                    onBlur={handleBlur}
+                                    className={'toggle toggle-secondary'}
+                                  />
+                                </label>
+                              </div>
+                            )}
                           </div>
                           <div className={'flex-1'}>
                             <div
