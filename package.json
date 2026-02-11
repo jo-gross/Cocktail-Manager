@@ -80,7 +80,7 @@
     "daisyui": "4.12.23",
     "dotenv": "^17.2.4",
     "eslint": "9.39.2",
-    "eslint-config-next": "15.3.4",
+    "eslint-config-next": "16.1.6",
     "eslint-config-prettier": "10.1.8",
     "postcss": "8.5.6",
     "prettier": "3.8.1",
