@@ -117,7 +117,7 @@ export function calcCocktailTotalPrice(cocktail: CocktailRecipeFull, ingredients
         })
         .reduce((summ, sum) => summ + sum, 0) +
         cocktail.garnishes
-          .filter((garnish) => garnish.garnish != undefined)
+          .filter((garnish) => garnish.garnish != undefined && !(garnish as any).isAlternative)
           .flat()
           .map((garnish) => garnish.garnish?.price ?? 0)
           .reduce((summ, sum) => summ + sum, 0)

@@ -230,18 +230,20 @@ export default function CalculationPage() {
     let calculationItems: GarnishCalculationItem[] = [];
 
     cocktailCalculationItems.forEach((item) => {
-      item.cocktail.garnishes.forEach((garnish) => {
-        let existingItem = calculationItems.find((calculationItem) => calculationItem.garnish.id == garnish.garnishId);
-        if (existingItem) {
-          existingItem.amount += item.plannedAmount;
-          calculationItems = [...calculationItems.filter((item) => item.garnish.id != existingItem?.garnish.id), existingItem];
-        } else {
-          calculationItems.push({
-            garnish: garnish.garnish,
-            amount: item.plannedAmount,
-          });
-        }
-      });
+      item.cocktail.garnishes
+        .filter((g) => !(g as any).isAlternative)
+        .forEach((garnish) => {
+          let existingItem = calculationItems.find((calculationItem) => calculationItem.garnish.id == garnish.garnishId);
+          if (existingItem) {
+            existingItem.amount += item.plannedAmount;
+            calculationItems = [...calculationItems.filter((item) => item.garnish.id != existingItem?.garnish.id), existingItem];
+          } else {
+            calculationItems.push({
+              garnish: garnish.garnish,
+              amount: item.plannedAmount,
+            });
+          }
+        });
     });
     setGarnishCalculationItems(calculationItems);
   }, [cocktailCalculationItems]);
