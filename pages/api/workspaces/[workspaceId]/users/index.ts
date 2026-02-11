@@ -11,7 +11,15 @@ export default withHttpMethods({
         workspaceId: workspace.id,
       },
       include: {
-        user: true,
+        user: {
+          include: {
+            accounts: {
+              select: {
+                provider: true,
+              },
+            },
+          },
+        },
       },
     });
     return res.json({ data: result });

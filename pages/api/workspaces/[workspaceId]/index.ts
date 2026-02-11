@@ -4,6 +4,7 @@ import { withWorkspacePermission } from '@middleware/api/authenticationMiddlewar
 import HTTPMethod from 'http-method-enum';
 import prisma from '../../../../prisma/prisma';
 import WorkspaceUpdateInput = Prisma.WorkspaceUpdateInput;
+import { isWorkspaceExternallyManaged } from '../../../../lib/config/externalWorkspace';
 
 export default withHttpMethods({
   [HTTPMethod.GET]: withWorkspacePermission([Role.USER], Permission.WORKSPACE_READ, async (req, res, user, workspace) => {
@@ -38,7 +39,10 @@ export default withHttpMethods({
       },
     });
 
-    return res.json({ data: { ...workspace, WorkspaceSetting: settings, users: workspaceUsers } });
+    // Check if workspace is externally managed
+    const isExternallyManaged = isWorkspaceExternallyManaged(workspace.id);
+
+    return res.json({ data: { ...workspace, WorkspaceSetting: settings, users: workspaceUsers, isExternallyManaged } });
   }),
   [HTTPMethod.DELETE]: withWorkspacePermission([Role.ADMIN], async (req, res, user, workspace) => {
     const result = await prisma.workspace.delete({

@@ -803,8 +803,8 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                           <Image className={'w-fit rounded-lg'} src={values.image} layout={'fill'} objectFit={'contain'} alt={'Cocktail image'} />
                         </div>
                         <div className={'pt-2 font-thin italic'}>
-                          Info: Durch Speichern des Cocktails wird das Bild dauerhaft zugeschnitten. Das Original wird nicht gespeichert. Falls du später also
-                          doch andere Bereiche auswählen möchtest, musst du das Bild dann erneut auswählen.
+                          Info: Durch Speichern des Cocktails wird das Bild dauerhaft zugeschnitten. Das Original wird nicht gespeichert. Falls du später einen
+                          anderen Bereich des Bildes auswählen möchtest, musst du das Bild erneut hochladen.
                         </div>
                       </div>
                     )}

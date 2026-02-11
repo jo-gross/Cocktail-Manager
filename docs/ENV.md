@@ -32,6 +32,46 @@ For authentication-related environment variables, see [Authentication Methods](A
 
 **Note:** The workspace creation configuration is loaded at runtime via the `/api/config/workspace-creation` endpoint. Changes to these variables in `docker-compose.yaml` or `.env` files take effect after restarting the container (no rebuild required).
 
+### External Workspace Management
+
+| Variable                        | Description                                                                    | Default | Example                             |
+| ------------------------------- | ------------------------------------------------------------------------------ | ------- | ----------------------------------- |
+| `EXTERNAL_WORKSPACE_MANAGEMENT` | Enables external workspace management via OIDC (set to `"true"` to enable)     | `false` | `"true"`                            |
+| `CUSTOM_OIDC_GROUPS_KEY`        | The claim key in the OIDC user profile that contains the user's groups or roles | -       | `"groups"`, `"roles"`, `"memberOf"` |
+| `EXTERNAL_WORKSPACE_MAPPINGS`   | JSON configuration mapping OIDC groups to workspaces and roles                 | -       | See example below                   |
+
+**EXTERNAL_WORKSPACE_MAPPINGS Configuration:**
+
+This variable accepts a JSON array of workspace configurations. Each configuration specifies a `workspaceId`, an optional `workspaceName`, and a list of `mappings` between OIDC groups and application roles.
+
+**Example:**
+
+```json
+[
+  {
+    "workspaceId": "ws-admin-1",
+    "workspaceName": "Admin Workspace",
+    "mappings": [
+      { "oidcGroup": "cocktail-admins", "role": "ADMIN" },
+      { "oidcGroup": "finance-team", "role": "MANAGER" }
+    ]
+  },
+  {
+    "workspaceId": "ws-user-1",
+    "workspaceName": "User Workspace",
+    "mappings": [
+      { "oidcGroup": "cocktail-users", "role": "USER" }
+    ]
+  }
+]
+```
+
+**Behavior:**
+
+- **Workspace Creation**: If a mapped workspace ID does not exist, it is automatically created with the specified `workspaceName` (or `workspaceId` if name is missing).
+- **Role Assignment**: When a user logs in, their OIDC groups are checked against the mappings. The user is added to the workspace with the highest resolved role.
+- **Role Updates**: User roles in externally managed workspaces are **only** updated upon login. Local role management is disabled for these workspaces.
+
 ### PDF Export / Chromium Service
 
 | Variable        | Description                                 | Default | Example            |
