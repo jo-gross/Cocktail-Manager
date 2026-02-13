@@ -1,4 +1,5 @@
 import prisma from '../../../../../../prisma/prisma';
+import { createCocktailRecipeAuditLog } from '../../../../../../lib/auditLog';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { Permission, Prisma, Role } from '@generated/prisma/client';
 import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
@@ -97,105 +98,221 @@ export default withHttpMethods({
     const cocktailId = req.query.cocktailId as string | undefined;
     if (!cocktailId) return res.status(400).json({ message: 'No cocktail id' });
 
-    const { name, description, tags, price, iceId, image, glassId, garnishes, steps, notes, history } = req.body;
+    const { name, description, tags, price, iceId, image, glassId, garnishes = [], steps = [], notes, history } = req.body;
 
-    const input: CocktailRecipeUpdateInput = {
-      name: name,
-      description: description,
-      notes: notes,
-      history: history,
-      tags: tags,
-      price: price,
-      ice: { connect: { id: iceId } },
-      glass: { connect: { id: glassId } },
-      workspace: { connect: { id: workspace.id } },
-    };
-
-    await prisma.cocktailRecipeImage.deleteMany({
-      where: {
-        cocktailRecipeId: cocktailId,
-      },
-    });
-
-    if (image != undefined) {
-      await prisma.cocktailRecipeImage.create({
-        data: {
-          cocktailRecipe: { connect: { id: cocktailId } },
-          image: image,
+    const result = await prisma.$transaction(async (tx) => {
+      const oldCocktail = await tx.cocktailRecipe.findUnique({
+        where: { id: cocktailId },
+        include: {
+          ice: true,
+          glass: true,
+          garnishes: { include: { garnish: true } },
+          steps: { include: { action: true, ingredients: { include: { ingredient: true, unit: true } } } },
+          CocktailRecipeImage: true,
         },
       });
-    }
 
-    await prisma.cocktailRecipeIngredient.deleteMany({
-      where: {
-        cocktailRecipeStep: {
-          cocktailRecipe: {
-            id: cocktailId,
-          },
-        },
-      },
-    });
+      const input: CocktailRecipeUpdateInput = {
+        name: name,
+        description: description,
+        notes: notes,
+        history: history,
+        tags: tags,
+        price: price,
+        ice: { connect: { id: iceId } },
+        glass: { connect: { id: glassId } },
+        workspace: { connect: { id: workspace.id } },
+      };
 
-    await prisma.cocktailRecipeGarnish.deleteMany({
-      where: {
-        cocktailRecipe: {
+      // Basisdaten des Cocktails aktualisieren
+      const updatedCocktail = await tx.cocktailRecipe.update({
+        where: {
           id: cocktailId,
         },
-      },
-    });
+        data: input,
+      });
 
-    await prisma.cocktailRecipeStep.deleteMany({
-      where: {
-        cocktailRecipe: {
-          id: cocktailId,
+      // Bild-Handling beibehalten (max. ein Bild)
+      await tx.cocktailRecipeImage.deleteMany({
+        where: {
+          cocktailRecipeId: cocktailId,
         },
-      },
-    });
+      });
 
-    const result = await prisma.cocktailRecipe.update({
-      where: {
-        id: cocktailId,
-      },
-      data: input,
-    });
-
-    if (steps.length > 0 && result != undefined) {
-      await steps.forEach(async (step: CocktailRecipeStepFull) => {
-        await prisma.cocktailRecipeStep.create({
+      if (image != undefined) {
+        await tx.cocktailRecipeImage.create({
           data: {
-            action: { connect: { id: step.actionId } },
+            cocktailRecipeId: cocktailId,
+            image: image,
+          },
+        });
+      }
+
+      // Steps & Ingredients differenziell aktualisieren
+      const existingSteps = oldCocktail?.steps ?? [];
+      const existingStepMap = new Map(existingSteps.map((s) => [s.id, s]));
+
+      const incomingSteps = (steps as CocktailRecipeStepFull[]) ?? [];
+      const existingIncomingSteps = incomingSteps.filter((s: any) => s.id && s.id !== '');
+      const incomingStepIds = new Set(existingIncomingSteps.map((s: any) => s.id));
+
+      // Zu löschende Steps
+      const stepsToDelete = existingSteps.filter((s) => !incomingStepIds.has(s.id));
+      for (const step of stepsToDelete) {
+        await tx.cocktailRecipeStep.delete({
+          where: { id: step.id },
+        });
+      }
+
+      // Vorhandene Steps aktualisieren
+      for (const step of existingIncomingSteps) {
+        const updatedStep = await tx.cocktailRecipeStep.update({
+          where: { id: step.id },
+          data: {
             stepNumber: step.stepNumber,
             optional: step.optional,
-            cocktailRecipe: { connect: { id: result!.id } },
-            ingredients: {
-              create: step.ingredients.map((stepIngredient) => {
-                return {
-                  amount: stepIngredient.amount,
-                  optional: stepIngredient.optional,
-                  ingredientNumber: stepIngredient.ingredientNumber,
-                  unit: { connect: { id: stepIngredient.unitId } },
-                  ingredient: { connect: { id: stepIngredient.ingredientId } },
-                };
-              }),
+            actionId: step.actionId,
+          },
+        });
+
+        const oldStep = existingStepMap.get(step.id);
+        const existingIngredients = oldStep?.ingredients ?? [];
+        const existingIngredientIds = new Set(existingIngredients.map((i) => i.id));
+
+        const incomingIngredients = (step.ingredients ?? []) as any[];
+        const incomingExistingIngredients = incomingIngredients.filter((i) => i.id && i.id !== '');
+        const incomingIngredientIds = new Set(incomingExistingIngredients.map((i) => i.id));
+
+        // Ingredients löschen, die es nicht mehr gibt
+        const ingredientsToDelete = existingIngredients.filter((i) => !incomingIngredientIds.has(i.id));
+        for (const ing of ingredientsToDelete) {
+          await tx.cocktailRecipeIngredient.delete({
+            where: { id: ing.id },
+          });
+        }
+
+        // Vorhandene Ingredients aktualisieren
+        for (const ing of incomingExistingIngredients) {
+          await tx.cocktailRecipeIngredient.update({
+            where: { id: ing.id },
+            data: {
+              amount: ing.amount,
+              optional: ing.optional,
+              ingredientNumber: ing.ingredientNumber,
+              unitId: ing.unitId,
+              ingredientId: ing.ingredientId,
             },
-          },
-        });
-      });
-    }
-    if (garnishes.length > 0 && result != undefined) {
-      await garnishes.forEach(async (garnish: CocktailRecipeGarnishFull) => {
-        await prisma.cocktailRecipeGarnish.create({
+          });
+        }
+
+        // Neue Ingredients anlegen
+        const newIngredients = incomingIngredients.filter((i) => !i.id || i.id === '');
+        for (const ing of newIngredients) {
+          await tx.cocktailRecipeIngredient.create({
+            data: {
+              amount: ing.amount,
+              optional: ing.optional,
+              ingredientNumber: ing.ingredientNumber,
+              unitId: ing.unitId,
+              ingredientId: ing.ingredientId,
+              cocktailRecipeStepId: updatedStep.id,
+            },
+          });
+        }
+      }
+
+      // Neue Steps anlegen (ohne vorhandene ID)
+      const newSteps = incomingSteps.filter((s: any) => !s.id || s.id === '');
+      for (const step of newSteps) {
+        const createdStep = await tx.cocktailRecipeStep.create({
           data: {
-            cocktailRecipe: { connect: { id: result!.id } },
-            garnish: { connect: { id: garnish.garnishId } },
-            garnishNumber: garnish.garnishNumber,
-            description: garnish.description,
-            optional: garnish.optional,
-            isAlternative: (garnish as any).isAlternative,
+            actionId: step.actionId,
+            stepNumber: step.stepNumber,
+            optional: step.optional,
+            cocktailRecipeId: updatedCocktail.id,
           },
         });
+
+        const incomingIngredients = (step.ingredients ?? []) as any[];
+        for (const ing of incomingIngredients) {
+          await tx.cocktailRecipeIngredient.create({
+            data: {
+              amount: ing.amount,
+              optional: ing.optional,
+              ingredientNumber: ing.ingredientNumber,
+              unitId: ing.unitId,
+              ingredientId: ing.ingredientId,
+              cocktailRecipeStepId: createdStep.id,
+            },
+          });
+        }
+      }
+
+      // Garnishes differenziell über Composite Key aktualisieren
+      const existingGarnishes = oldCocktail?.garnishes ?? [];
+      const existingGarnishIds = new Set(existingGarnishes.map((g) => g.garnishId));
+
+      const incomingGarnishes = (garnishes as CocktailRecipeGarnishFull[]) ?? [];
+      const incomingGarnishIds = new Set(incomingGarnishes.map((g) => g.garnishId));
+
+      // Garnishes löschen, die es nicht mehr gibt
+      const garnishIdsToDelete = Array.from(existingGarnishIds).filter((id) => !incomingGarnishIds.has(id));
+      if (garnishIdsToDelete.length > 0) {
+        await tx.cocktailRecipeGarnish.deleteMany({
+          where: {
+            cocktailRecipeId: cocktailId,
+            garnishId: { in: garnishIdsToDelete },
+          },
+        });
+      }
+
+      // Vorhandene Garnishes aktualisieren
+      for (const garnish of incomingGarnishes) {
+        if (existingGarnishIds.has(garnish.garnishId)) {
+          await tx.cocktailRecipeGarnish.update({
+            where: {
+              garnishId_cocktailRecipeId: {
+                garnishId: garnish.garnishId,
+                cocktailRecipeId: cocktailId,
+              },
+            },
+            data: {
+              garnishNumber: garnish.garnishNumber,
+              description: garnish.description,
+              optional: garnish.optional,
+              isAlternative: (garnish as any).isAlternative,
+            },
+          });
+        } else {
+          // Neue Garnish-Beziehung anlegen
+          await tx.cocktailRecipeGarnish.create({
+            data: {
+              cocktailRecipeId: cocktailId,
+              garnishId: garnish.garnishId,
+              garnishNumber: garnish.garnishNumber,
+              description: garnish.description,
+              optional: garnish.optional,
+              isAlternative: (garnish as any).isAlternative,
+            },
+          });
+        }
+      }
+
+      const fullNewCocktail = await tx.cocktailRecipe.findUnique({
+        where: { id: cocktailId },
+        include: {
+          ice: true,
+          glass: true,
+          garnishes: { include: { garnish: true } },
+          steps: { include: { action: true, ingredients: { include: { ingredient: true, unit: true } } } },
+          CocktailRecipeImage: true,
+        },
       });
-    }
+
+      await createCocktailRecipeAuditLog(tx, workspace.id, user.id, cocktailId, 'UPDATE', oldCocktail, fullNewCocktail);
+
+      return updatedCocktail;
+    });
 
     return res.json(result);
   }),
@@ -206,25 +323,41 @@ export default withHttpMethods({
       const cocktailId = req.query.cocktailId as string | undefined;
       if (!cocktailId) return res.status(400).json({ message: 'No cocktail id' });
 
-      await prisma.cocktailRecipeIngredient.deleteMany({
-        where: {
-          cocktailRecipeStep: {
+      await prisma.$transaction(async (tx) => {
+        const oldCocktail = await tx.cocktailRecipe.findUnique({
+          where: { id: cocktailId },
+          include: {
+            ice: true,
+            glass: true,
+            garnishes: { include: { garnish: true } },
+            steps: { include: { action: true, ingredients: { include: { ingredient: true, unit: true } } } },
+            CocktailRecipeImage: true,
+          },
+        });
+
+        await tx.cocktailRecipeIngredient.deleteMany({
+          where: {
+            cocktailRecipeStep: {
+              cocktailRecipeId: cocktailId,
+            },
+          },
+        });
+        await tx.cocktailRecipeStep.deleteMany({
+          where: {
             cocktailRecipeId: cocktailId,
           },
-        },
+        });
+        await tx.cocktailRecipe.delete({
+          where: {
+            id: cocktailId,
+            workspaceId: workspace.id,
+          },
+        });
+
+        await createCocktailRecipeAuditLog(tx, workspace.id, user.id, cocktailId, 'DELETE', oldCocktail, null);
       });
-      await prisma.cocktailRecipeStep.deleteMany({
-        where: {
-          cocktailRecipeId: cocktailId,
-        },
-      });
-      const result = await prisma.cocktailRecipe.delete({
-        where: {
-          id: cocktailId,
-          workspaceId: workspace.id,
-        },
-      });
-      return res.json({ data: result });
+
+      return res.json({ data: { count: 1 } }); // Return success
     },
   ),
 });

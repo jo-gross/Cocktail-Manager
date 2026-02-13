@@ -1194,7 +1194,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                       </div>
                     </div>
                     <div className={'divider'}></div>
-                    <div className={isOffline ? 'tooltip' : ''} data-tip={isOffline ? 'Nicht verfügbar im Offline-Modus' : undefined}>
+                    <div className={isOffline ? 'tooltip self-center' : 'self-center'} data-tip={isOffline ? 'Nicht verfügbar im Offline-Modus' : undefined}>
                       <ThemeChanger disabled={isOffline} />
                     </div>
                     {isOffline && <span className="text-xs text-warning">Nicht verfügbar im Offline-Modus</span>}

@@ -47,15 +47,12 @@ const CocktailRecipeCardItem = forwardRef<CocktailRecipeOverviewItemRef, Cocktai
   const [cocktailRatingsLoading, setCocktailRatingsLoading] = useState(false);
   const [cocktailRatingsError, setCocktailRatingsError] = useState<boolean>(false);
 
+  const cocktailId = typeof props.cocktailRecipe === 'string' ? props.cocktailRecipe : props.cocktailRecipe.id;
+
   const refresh = useCallback(() => {
-    if (typeof props.cocktailRecipe === 'string') {
-      fetchCocktail(workspaceId, props.cocktailRecipe, setLoadedCocktailRecipe, setCocktailRecipeLoading);
-      fetchCocktailRatings(workspaceId, props.cocktailRecipe, setCocktailRatings, setCocktailRatingsLoading, setCocktailRatingsError);
-    } else {
-      fetchCocktail(workspaceId, props.cocktailRecipe.id, setLoadedCocktailRecipe, setCocktailRecipeLoading);
-      fetchCocktailRatings(workspaceId, props.cocktailRecipe.id, setCocktailRatings, setCocktailRatingsLoading, setCocktailRatingsError);
-    }
-  }, [workspaceId, props.cocktailRecipe]);
+    fetchCocktail(workspaceId, cocktailId, setLoadedCocktailRecipe, setCocktailRecipeLoading);
+    fetchCocktailRatings(workspaceId, cocktailId, setCocktailRatings, setCocktailRatingsLoading, setCocktailRatingsError);
+  }, [workspaceId, cocktailId]);
 
   useEffect(() => {
     refresh();

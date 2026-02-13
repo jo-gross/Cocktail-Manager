@@ -60,6 +60,7 @@ model User {
   CocktailStatisticItem CocktailStatisticItem[]
   WorkspaceJoinRequest  WorkspaceJoinRequest[]
   WorkspaceApiKey       WorkspaceApiKey[]
+  AuditLog              AuditLog[]
 }
 
 enum Setting {
@@ -200,6 +201,7 @@ model Workspace {
   WorkspaceJoinRequest              WorkspaceJoinRequest[]
   WorkspaceApiKey                   WorkspaceApiKey[]
   StatisticSavedSet                 StatisticSavedSet[]
+  AuditLog                          AuditLog[]
 }
 
 model Signage {
@@ -636,4 +638,22 @@ model StatisticSavedSet {
 
   @@index([workspaceId])
   @@index([workspaceId, type])
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  userId      String?
+  user        User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  entityType  String
+  entityId    String
+  action      String
+  changes     Json?
+  snapshot    Json?
+  createdAt   DateTime  @default(now())
+
+  @@index([workspaceId])
+  @@index([entityId])
+  @@index([entityType])
 }

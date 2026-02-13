@@ -50,11 +50,13 @@ export function AuthBoundary(props: AlertBoundaryProps) {
   }, []);
 
   useEffect(() => {
-    if (session.data?.user != undefined && session.data?.user?.email != user?.email && !userLoading) {
+    // Cast to any to access id which is added in the session callback
+    const sessionUser = session.data?.user as any;
+    if (sessionUser?.id != undefined && sessionUser?.id != user?.id && !userLoading) {
       setUserLoading(true);
       fetchUser();
     }
-  }, [fetchUser, session.data?.user, user?.email, userLoading]);
+  }, [fetchUser, session.data?.user, user?.id, userLoading]);
 
   const fetchWorkspace = useCallback(() => {
     if (router.query.workspaceId && router.query.workspaceId != workspace?.id) {

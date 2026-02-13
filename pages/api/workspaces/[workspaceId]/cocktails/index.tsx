@@ -1,6 +1,7 @@
 // pages/api/post/index.ts
 
 import prisma from '../../../../../prisma/prisma';
+import { createCocktailRecipeAuditLog } from '../../../../../lib/auditLog';
 import { CocktailRecipeFull } from '../../../../../models/CocktailRecipeFull';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { Prisma, Role, Permission } from '@generated/prisma/client';
@@ -76,74 +77,91 @@ export default withHttpMethods({
     [Role.MANAGER],
     Permission.COCKTAILS_CREATE,
     async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
-      const { name, description, tags, price, iceId, image, glassId, garnishes, steps, notes, history } = req.body;
+      const { name, description, tags, price, iceId, image, glassId, garnishes = [], steps = [], notes, history } = req.body;
 
-      const input: CocktailRecipeCreateInput = {
-        name: name,
-        description: description,
-        notes: notes,
-        history: history,
-        tags: tags,
-        price: price,
-        ice: { connect: { id: iceId } },
-        glass: { connect: { id: glassId } },
-        workspace: { connect: { id: workspace.id } },
-      };
+      const result = await prisma.$transaction(async (tx) => {
+        const input: CocktailRecipeCreateInput = {
+          name: name,
+          description: description,
+          notes: notes,
+          history: history,
+          tags: tags,
+          price: price,
+          ice: { connect: { id: iceId } },
+          glass: { connect: { id: glassId } },
+          workspace: { connect: { id: workspace.id } },
+        };
 
-      const result = await prisma.cocktailRecipe.create({
-        data: input,
-      });
+        const createdCocktail = await tx.cocktailRecipe.create({
+          data: input,
+        });
 
-      if (image) {
-        await prisma.cocktailRecipeImage.create({
-          data: {
-            image: image,
-            cocktailRecipe: {
-              connect: {
-                id: result.id,
-              },
+        if (image) {
+          await tx.cocktailRecipeImage.create({
+            data: {
+              image: image,
+              cocktailRecipeId: createdCocktail.id,
             },
+          });
+        }
+
+        if (steps.length > 0) {
+          for (const step of steps as CocktailRecipeStepFull[]) {
+            const createdStep = await tx.cocktailRecipeStep.create({
+              data: {
+                actionId: step.actionId,
+                stepNumber: step.stepNumber,
+                optional: step.optional,
+                cocktailRecipeId: createdCocktail.id,
+              },
+            });
+
+            const incomingIngredients = (step.ingredients ?? []) as any[];
+            for (const ing of incomingIngredients) {
+              await tx.cocktailRecipeIngredient.create({
+                data: {
+                  amount: ing.amount,
+                  optional: ing.optional,
+                  ingredientNumber: ing.ingredientNumber,
+                  unitId: ing.unitId,
+                  ingredientId: ing.ingredientId,
+                  cocktailRecipeStepId: createdStep.id,
+                },
+              });
+            }
+          }
+        }
+
+        if (garnishes.length > 0) {
+          for (const garnish of garnishes as CocktailRecipeGarnishFull[]) {
+            await tx.cocktailRecipeGarnish.create({
+              data: {
+                cocktailRecipeId: createdCocktail.id,
+                garnishId: garnish.garnishId,
+                garnishNumber: garnish.garnishNumber,
+                description: garnish.description,
+                optional: garnish.optional,
+                isAlternative: (garnish as any).isAlternative,
+              },
+            });
+          }
+        }
+
+        const fullCocktail = await tx.cocktailRecipe.findUnique({
+          where: { id: createdCocktail.id },
+          include: {
+            ice: true,
+            glass: true,
+            garnishes: { include: { garnish: true } },
+            steps: { include: { action: true, ingredients: { include: { ingredient: true, unit: true } } } },
+            CocktailRecipeImage: true,
           },
         });
-      }
 
-      if (steps.length > 0 && result != undefined) {
-        await steps.forEach(async (step: CocktailRecipeStepFull) => {
-          await prisma.cocktailRecipeStep.create({
-            data: {
-              action: { connect: { id: step.actionId } },
-              stepNumber: step.stepNumber,
-              optional: step.optional,
-              cocktailRecipe: { connect: { id: result!.id } },
-              ingredients: {
-                create: step.ingredients.map((stepIngredient) => {
-                  return {
-                    amount: stepIngredient.amount,
-                    optional: stepIngredient.optional,
-                    ingredientNumber: stepIngredient.ingredientNumber,
-                    unit: { connect: { id: stepIngredient.unitId } },
-                    ingredient: { connect: { id: stepIngredient.ingredientId } },
-                  };
-                }),
-              },
-            },
-          });
-        });
-      }
-      if (garnishes.length > 0 && result != undefined) {
-        await garnishes.forEach(async (garnish: CocktailRecipeGarnishFull) => {
-          await prisma.cocktailRecipeGarnish.create({
-            data: {
-              cocktailRecipe: { connect: { id: result!.id } },
-              garnish: { connect: { id: garnish.garnishId } },
-              garnishNumber: garnish.garnishNumber,
-              description: garnish.description,
-              optional: garnish.optional,
-              isAlternative: (garnish as any).isAlternative,
-            },
-          });
-        });
-      }
+        await createCocktailRecipeAuditLog(tx, workspace.id, user.id, createdCocktail.id, 'CREATE', null, fullCocktail);
+
+        return createdCocktail;
+      });
 
       return res.json({ data: result });
     },
