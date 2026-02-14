@@ -1,63 +1,373 @@
-import { Prisma, PrismaClient } from '@generated/prisma/client';
+import { Prisma } from '@generated/prisma/client';
 import { diff, Diff } from 'deep-diff';
 
 type AuditAction = 'CREATE' | 'UPDATE' | 'DELETE';
 
-/**
- * Type-safe snapshot model for cocktail recipes in the audit log.
- * Property names are German display labels used in the frontend UI.
- */
+// ────────────── COCKTAIL RECIPE SNAPSHOTS ──────────────
+
 export interface CocktailStepIngredientSnapshot {
-  Menge?: number;
-  Einheit?: string;
-  Optional?: 'Ja';
-  Position: number;
+  amount?: number;
+  unit?: string;
+  optional?: true;
+  position: number;
 }
 
 export interface CocktailStepSnapshot {
-  Aktion: string;
-  Position: number;
-  Optional?: 'Ja';
-  Zutaten?: Record<string, CocktailStepIngredientSnapshot>; // Key = ingredient name
+  action: string;
+  position: number;
+  optional?: true;
+  ingredients?: Record<string, CocktailStepIngredientSnapshot>; // Key = ingredient name
 }
 
 export interface CocktailGarnishSnapshot {
-  Menge?: number;
-  Einheit?: string;
-  Optional?: 'Ja';
-  Alternative?: 'Ja';
-  Notiz?: string;
-  Position: number;
+  amount?: number;
+  unit?: string;
+  optional?: true;
+  alternative?: true;
+  note?: string;
+  position: number;
 }
 
 export interface CocktailRecipeAuditSnapshot {
-  Name: string;
-  Beschreibung?: string | null;
+  name: string;
+  description?: string | null;
   /** Tags stored as Record for content-based diffing (key = tag content) */
-  Tags?: Record<string, true>;
-  Zubereitung?: string | null;
-  Geschichte?: string | null;
-  Preis?: number | null;
-  Glas?: string;
-  Eis?: string;
-  Bild?: 'Vorhanden';
-  Schritte?: Record<string, CocktailStepSnapshot>; // Key = stable step key ("Schritt 1", "Schritt 2", ...)
-  Garnituren?: Record<string, CocktailGarnishSnapshot>; // Key = garnish name ("Zeste", "Zeste (2)", ...)
+  tags?: Record<string, true>;
+  preparation?: string | null;
+  history?: string | null;
+  price?: number | null;
+  glass?: string;
+  ice?: string;
+  image?: true;
+  steps?: Record<string, CocktailStepSnapshot>;
+  garnishes?: Record<string, CocktailGarnishSnapshot>;
 }
 
 export type CocktailRecipeAuditDiff = Diff<CocktailRecipeAuditSnapshot, CocktailRecipeAuditSnapshot>[];
 
+// ────────────── GLASS SNAPSHOT ──────────────
+
+export interface GlassAuditSnapshot {
+  name: string;
+  notes?: string;
+  volume?: string;
+  deposit?: string;
+  image?: true;
+}
+
+// ────────────── GARNISH SNAPSHOT ──────────────
+
+export interface GarnishAuditSnapshot {
+  name: string;
+  description?: string;
+  notes?: string;
+  price?: string;
+  image?: true;
+}
+
+// ────────────── INGREDIENT SNAPSHOT ──────────────
+
+export interface IngredientAuditSnapshot {
+  name: string;
+  shortName?: string;
+  description?: string;
+  notes?: string;
+  price?: string;
+  link?: string;
+  tags?: Record<string, true>;
+  units?: Record<string, string>; // unit name -> volume
+  image?: true;
+}
+
+// ────────────── COCKTAIL CALCULATION SNAPSHOT ──────────────
+
+export interface CocktailCalculationItemSnapshot {
+  plannedAmount: number;
+  customPrice?: number;
+}
+
+export interface ShoppingUnitSnapshot {
+  unit: string;
+  checked?: true;
+}
+
+export interface CocktailCalculationAuditSnapshot {
+  name: string;
+  showSalesInfo?: true;
+  cocktails?: Record<string, CocktailCalculationItemSnapshot>;
+  shoppingUnits?: Record<string, ShoppingUnitSnapshot>; // Key = ingredient name
+}
+
+// ────────────── HELPER: remove undefined keys ──────────────
+
+function cleanUndefined(obj: Record<string, any>): void {
+  Object.keys(obj).forEach((k) => {
+    if (obj[k] === undefined) delete obj[k];
+  });
+}
+
+// ────────────── HELPER: strip base64 image data for export storage ──────────────
+
+const IMAGE_KEYS = ['image', 'CocktailRecipeImage', 'GlassImage', 'GarnishImage', 'IngredientImage'];
+
+function stripImages(data: any): any {
+  if (!data) return data;
+  if (Array.isArray(data)) return data.map(stripImages);
+  if (typeof data !== 'object') return data;
+
+  const result: any = {};
+  for (const [key, value] of Object.entries(data)) {
+    if (IMAGE_KEYS.includes(key)) continue;
+    if (key === '_count') continue;
+    result[key] = typeof value === 'object' && value !== null ? stripImages(value) : value;
+  }
+  return result;
+}
+
+// ────────────── SNAPSHOT BUILDERS ──────────────
+
+function buildCocktailSnapshot(data: any): CocktailRecipeAuditSnapshot | null {
+  if (!data) return null;
+
+  const result: CocktailRecipeAuditSnapshot = {
+    name: data.name,
+    description: data.description ?? undefined,
+    tags: data.tags?.length ? data.tags.reduce((acc: Record<string, true>, t: string) => ({ ...acc, [t]: true }), {}) : undefined,
+    preparation: data.notes ?? undefined,
+    history: data.history ?? undefined,
+    price: data.price ?? undefined,
+  };
+
+  if (data.glass) {
+    result.glass = data.glass.name;
+  }
+  if (data.ice) {
+    result.ice = data.ice.name;
+  }
+
+  // Only store image as a presence flag
+  const imageData = data.CocktailRecipeImage?.[0]?.image || data.image;
+  if (imageData) {
+    result.image = true;
+  }
+
+  if (data.steps && Array.isArray(data.steps)) {
+    const stepsMap: Record<string, CocktailStepSnapshot> = {};
+
+    data.steps.forEach((step: any) => {
+      // Use database ID as stable key so reordering is detected as a position change
+      const stepKey = step.id || `step-${step.stepNumber}`;
+      const actionName = step.action?.name || 'Unknown';
+
+      const ingredientsMap: Record<string, CocktailStepIngredientSnapshot> = {};
+      if (step.ingredients && Array.isArray(step.ingredients)) {
+        step.ingredients.forEach((ing: any) => {
+          const ingName = ing.ingredient?.name || `Ingredient ${ing.ingredientNumber}`;
+          const ingSnapshot: CocktailStepIngredientSnapshot = {
+            amount: ing.amount ?? undefined,
+            unit: ing.unit?.name ?? undefined,
+            optional: ing.optional ? true : undefined,
+            position: ing.ingredientNumber,
+          };
+          cleanUndefined(ingSnapshot as any);
+          ingredientsMap[ingName] = ingSnapshot;
+        });
+      }
+
+      const stepSnapshot: CocktailStepSnapshot = {
+        action: actionName,
+        position: step.stepNumber,
+        optional: step.optional ? true : undefined,
+        ingredients: Object.keys(ingredientsMap).length > 0 ? ingredientsMap : undefined,
+      };
+      // Only clean optional fields, keep action and position always
+      Object.keys(stepSnapshot).forEach((k) => {
+        if (k !== 'action' && k !== 'position') {
+          if ((stepSnapshot as any)[k] === undefined) delete (stepSnapshot as any)[k];
+        }
+      });
+
+      stepsMap[stepKey] = stepSnapshot;
+    });
+
+    if (Object.keys(stepsMap).length > 0) {
+      result.steps = stepsMap;
+    }
+  }
+
+  if (data.garnishes && Array.isArray(data.garnishes)) {
+    const garnishesMap: Record<string, CocktailGarnishSnapshot> = {};
+    const garnishCounts: Record<string, number> = {};
+
+    data.garnishes.forEach((garnish: any) => {
+      const baseName = garnish.garnish?.name || `Garnish ${garnish.garnishNumber}`;
+      garnishCounts[baseName] = (garnishCounts[baseName] || 0) + 1;
+      const garnishKey = garnishCounts[baseName] > 1 ? `${baseName} (${garnishCounts[baseName]})` : baseName;
+
+      const gSnapshot: CocktailGarnishSnapshot = {
+        amount: (garnish as any).amount ?? undefined,
+        unit: (garnish as any).unit?.name ?? undefined,
+        optional: garnish.optional ? true : undefined,
+        alternative: garnish.isAlternative ? true : undefined,
+        note: garnish.description || undefined,
+        position: garnish.garnishNumber,
+      };
+      cleanUndefined(gSnapshot as any);
+      garnishesMap[garnishKey] = gSnapshot;
+    });
+
+    if (Object.keys(garnishesMap).length > 0) {
+      result.garnishes = garnishesMap;
+    }
+  }
+
+  return result;
+}
+
+function buildGlassSnapshot(data: any): GlassAuditSnapshot | null {
+  if (!data) return null;
+
+  const result: GlassAuditSnapshot = {
+    name: data.name,
+    notes: data.notes ?? undefined,
+    volume: data.volume != null ? `${data.volume} ml` : undefined,
+    deposit: data.deposit != null ? `${data.deposit} €` : undefined,
+  };
+
+  const imageData = data.GlassImage?.[0]?.image ?? data.image;
+  if (imageData) {
+    result.image = true;
+  }
+
+  cleanUndefined(result as any);
+  return result;
+}
+
+function buildGarnishEntitySnapshot(data: any): GarnishAuditSnapshot | null {
+  if (!data) return null;
+
+  const result: GarnishAuditSnapshot = {
+    name: data.name,
+    description: data.description ?? undefined,
+    notes: data.notes ?? undefined,
+    price: data.price != null ? `${data.price} €` : undefined,
+  };
+
+  const imageData = data.GarnishImage?.[0]?.image ?? data.image;
+  if (imageData) {
+    result.image = true;
+  }
+
+  cleanUndefined(result as any);
+  return result;
+}
+
+function buildIngredientSnapshot(data: any): IngredientAuditSnapshot | null {
+  if (!data) return null;
+
+  const result: IngredientAuditSnapshot = {
+    name: data.name,
+    shortName: data.shortName ?? undefined,
+    description: data.description ?? undefined,
+    notes: data.notes ?? undefined,
+    price: data.price != null ? `${data.price} €` : undefined,
+    link: data.link ?? undefined,
+    tags: data.tags?.length ? data.tags.reduce((acc: Record<string, true>, t: string) => ({ ...acc, [t]: true }), {}) : undefined,
+  };
+
+  // Build units map: unit name -> volume
+  const volumes = data.IngredientVolume || data.units;
+  if (volumes && Array.isArray(volumes)) {
+    const unitsMap: Record<string, string> = {};
+    volumes.forEach((v: any) => {
+      const unitName = v.unit?.name;
+      if (unitName) {
+        unitsMap[unitName] = v.volume != null ? String(v.volume) : '1';
+      }
+    });
+    if (Object.keys(unitsMap).length > 0) {
+      result.units = unitsMap;
+    }
+  }
+
+  const imageData = data.IngredientImage?.[0]?.image ?? data.image;
+  if (imageData) {
+    result.image = true;
+  }
+
+  cleanUndefined(result as any);
+  return result;
+}
+
+function buildCalculationSnapshot(data: any): CocktailCalculationAuditSnapshot | null {
+  if (!data) return null;
+
+  const result: CocktailCalculationAuditSnapshot = {
+    name: data.name,
+    showSalesInfo: data.showSalesStuff ? true : undefined,
+  };
+
+  const items = data.cocktailCalculationItems;
+  if (items && Array.isArray(items) && items.length > 0) {
+    const cocktailsMap: Record<string, CocktailCalculationItemSnapshot> = {};
+    items.forEach((item: any) => {
+      const cocktailName = item.cocktail?.name || item.cocktailId;
+      const itemSnapshot: CocktailCalculationItemSnapshot = {
+        plannedAmount: item.plannedAmount,
+        customPrice: item.customPrice ?? undefined,
+      };
+      cleanUndefined(itemSnapshot as any);
+      cocktailsMap[cocktailName] = itemSnapshot;
+    });
+    if (Object.keys(cocktailsMap).length > 0) {
+      result.cocktails = cocktailsMap;
+    }
+  }
+
+  const shoppingUnitsData = data.ingredientShoppingUnits;
+  if (shoppingUnitsData && Array.isArray(shoppingUnitsData) && shoppingUnitsData.length > 0) {
+    const unitsMap: Record<string, ShoppingUnitSnapshot> = {};
+    shoppingUnitsData.forEach((su: any) => {
+      const ingredientName = su.ingredient?.name || su.ingredientId;
+      const snapshot: ShoppingUnitSnapshot = {
+        unit: su.unit?.name || su.unitId,
+        checked: su.checked ? true : undefined,
+      };
+      cleanUndefined(snapshot as any);
+      unitsMap[ingredientName] = snapshot;
+    });
+    if (Object.keys(unitsMap).length > 0) {
+      result.shoppingUnits = unitsMap;
+    }
+  }
+
+  cleanUndefined(result as any);
+  return result;
+}
+
+/**
+ * Dispatches to the correct snapshot builder based on entity type.
+ */
+function buildSnapshot(entityType: string, data: any): any {
+  switch (entityType) {
+    case 'Glass':
+      return buildGlassSnapshot(data);
+    case 'Garnish':
+      return buildGarnishEntitySnapshot(data);
+    case 'Ingredient':
+      return buildIngredientSnapshot(data);
+    case 'CocktailCalculation':
+      return buildCalculationSnapshot(data);
+    default:
+      return data ? JSON.parse(JSON.stringify(data)) : null;
+  }
+}
+
+// ────────────── AUDIT LOG CREATION ──────────────
+
 /**
  * Creates an audit log entry within a Prisma transaction.
- *
- * @param tx - The Prisma transaction client.
- * @param workspaceId - The ID of the workspace.
- * @param userId - The ID of the user performing the action (optional for system actions).
- * @param entityType - The type of the entity (e.g., 'CocktailRecipe', 'Ingredient').
- * @param entityId - The ID of the entity.
- * @param action - The action performed ('CREATE', 'UPDATE', 'DELETE').
- * @param oldData - The previous state of the entity (for updates/deletes).
- * @param newData - The new state of the entity (for creates/updates).
+ * Builds a typed snapshot and computes a deep-diff for updates.
  */
 export async function createLog(
   tx: Prisma.TransactionClient,
@@ -69,27 +379,27 @@ export async function createLog(
   oldData: any,
   newData: any,
 ) {
-  let changes: any = null;
+  const oldSnapshot = buildSnapshot(entityType, oldData);
+  const newSnapshot = buildSnapshot(entityType, newData);
 
-  // Store the snapshot for CREATE and UPDATE
-  if (action === 'CREATE' || action === 'UPDATE') {
-    const snapshot = newData ? JSON.parse(JSON.stringify(newData)) : null;
+  let changes: any = undefined;
+  let snapshot: any = undefined;
+  let exportData: any = undefined;
 
-    await tx.auditLog.create({
-      data: {
-        workspaceId,
-        userId,
-        entityType,
-        entityId,
-        action,
-        changes: changes ?? undefined,
-        snapshot: snapshot ?? undefined,
-      },
-    });
-    return;
+  if (action === 'CREATE') {
+    snapshot = newSnapshot;
+    exportData = stripImages(newData);
+  } else if (action === 'DELETE') {
+    snapshot = oldSnapshot;
+    exportData = stripImages(oldData);
+  } else if (action === 'UPDATE') {
+    const d = diff(oldSnapshot ?? {}, newSnapshot ?? {});
+    if (!d || d.length === 0) return; // No changes detected, skip log entry
+    snapshot = newSnapshot;
+    changes = d;
+    exportData = stripImages(newData);
   }
 
-  // DELETE: store old data as snapshot
   await tx.auditLog.create({
     data: {
       workspaceId,
@@ -97,111 +407,11 @@ export async function createLog(
       entityType,
       entityId,
       action,
-      changes: changes ?? undefined,
-      snapshot: oldData ?? undefined,
+      changes: changes ? (changes as any) : undefined,
+      snapshot: snapshot ? (snapshot as any) : undefined,
+      exportData: exportData ? (exportData as any) : undefined,
     },
   });
-}
-
-/**
- * Builds a type-safe snapshot object from a full cocktail recipe entity
- * for use in the audit log (only for CocktailRecipe).
- */
-function buildCocktailSnapshot(data: any): CocktailRecipeAuditSnapshot | null {
-  if (!data) return null;
-
-  const result: CocktailRecipeAuditSnapshot = {
-    Name: data.name,
-    Beschreibung: data.description ?? undefined,
-    Tags: data.tags?.length ? data.tags.reduce((acc: Record<string, true>, t: string) => ({ ...acc, [t]: true }), {}) : undefined,
-    Zubereitung: data.notes ?? undefined,
-    Geschichte: data.history ?? undefined,
-    Preis: data.price ?? undefined,
-  };
-
-  if (data.glass) {
-    result.Glas = data.glass.name;
-  }
-  if (data.ice) {
-    result.Eis = data.ice.name;
-  }
-
-  // Only store image as a flag
-  const image = data.CocktailRecipeImage?.[0]?.image || data.image;
-  if (image) {
-    result.Bild = 'Vorhanden';
-  }
-
-  if (data.steps && Array.isArray(data.steps)) {
-    const steps: Record<string, CocktailStepSnapshot> = {};
-
-    data.steps.forEach((step: any) => {
-      // Use database ID as stable key so reordering is detected as a Position change
-      const stepKey = step.id || `step-${step.stepNumber}`;
-      const actionName = step.action?.name || `Unbekannt`;
-
-      const ingredients: Record<string, CocktailStepIngredientSnapshot> = {};
-      if (step.ingredients && Array.isArray(step.ingredients)) {
-        step.ingredients.forEach((ing: any) => {
-          const ingName = ing.ingredient?.name || `Zutat ${ing.ingredientNumber}`;
-          const ingSnapshot: CocktailStepIngredientSnapshot = {
-            Menge: ing.amount ?? undefined,
-            Einheit: ing.unit?.name ?? undefined,
-            Optional: ing.optional ? 'Ja' : undefined,
-            Position: ing.ingredientNumber,
-          };
-          Object.keys(ingSnapshot).forEach((k) => (ingSnapshot as any)[k] === undefined && delete (ingSnapshot as any)[k]);
-          ingredients[ingName] = ingSnapshot;
-        });
-      }
-
-      const stepSnapshot: CocktailStepSnapshot = {
-        Aktion: actionName,
-        Position: step.stepNumber,
-        Optional: step.optional ? 'Ja' : undefined,
-        Zutaten: Object.keys(ingredients).length > 0 ? ingredients : undefined,
-      };
-      Object.keys(stepSnapshot).forEach((k) => {
-        if (k !== 'Aktion' && k !== 'Position') {
-          if ((stepSnapshot as any)[k] === undefined) delete (stepSnapshot as any)[k];
-        }
-      });
-
-      steps[stepKey] = stepSnapshot;
-    });
-
-    if (Object.keys(steps).length > 0) {
-      result.Schritte = steps;
-    }
-  }
-
-  if (data.garnishes && Array.isArray(data.garnishes)) {
-    const garnishes: Record<string, CocktailGarnishSnapshot> = {};
-    const garnishCounts: { [key: string]: number } = {};
-
-    data.garnishes.forEach((garnish: any) => {
-      const baseName = garnish.garnish?.name || `Garnitur ${garnish.garnishNumber}`;
-      garnishCounts[baseName] = (garnishCounts[baseName] || 0) + 1;
-      const garnishKey = garnishCounts[baseName] > 1 ? `${baseName} (${garnishCounts[baseName]})` : baseName;
-
-      const gSnapshot: CocktailGarnishSnapshot = {
-        Menge: (garnish as any).amount ?? undefined,
-        Einheit: (garnish as any).unit?.name ?? undefined,
-        Optional: garnish.optional ? 'Ja' : undefined,
-        Alternative: garnish.isAlternative ? 'Ja' : undefined,
-        Notiz: garnish.description || undefined,
-        Position: garnish.garnishNumber,
-      };
-      Object.keys(gSnapshot).forEach((k) => (gSnapshot as any)[k] === undefined && delete (gSnapshot as any)[k]);
-      garnishes[garnishKey] = gSnapshot;
-    });
-
-    if (Object.keys(garnishes).length > 0) {
-      result.Garnituren = garnishes;
-    }
-  }
-
-  return result;
 }
 
 /**
@@ -222,17 +432,20 @@ export async function createCocktailRecipeAuditLog(
 
   let changes: CocktailRecipeAuditDiff | undefined;
   let snapshot: CocktailRecipeAuditSnapshot | undefined;
+  let exportData: any = undefined;
 
   if (action === 'CREATE') {
     snapshot = newSnapshot ?? undefined;
+    exportData = stripImages(newData);
   } else if (action === 'DELETE') {
     snapshot = oldSnapshot ?? undefined;
+    exportData = stripImages(oldData);
   } else if (action === 'UPDATE') {
-    snapshot = newSnapshot ?? undefined;
     const d = diff(oldSnapshot ?? {}, newSnapshot ?? {}) as CocktailRecipeAuditDiff | undefined;
-    if (d && d.length > 0) {
-      changes = d;
-    }
+    if (!d || d.length === 0) return; // No changes detected, skip log entry
+    snapshot = newSnapshot ?? undefined;
+    changes = d;
+    exportData = stripImages(newData);
   }
 
   await tx.auditLog.create({
@@ -242,139 +455,9 @@ export async function createCocktailRecipeAuditLog(
       entityType: 'CocktailRecipe',
       entityId,
       action,
-      // Cast to any for Prisma JSON field compatibility
       changes: changes && changes.length > 0 ? (changes as any) : undefined,
       snapshot: snapshot ? (snapshot as any) : undefined,
+      exportData: exportData ? (exportData as any) : undefined,
     },
   });
-}
-
-function transformDataForLog(entityType: string, data: any): any {
-  if (!data) return null;
-
-  if (entityType === 'CocktailRecipe') {
-    const result: any = {
-      Name: data.name,
-      Beschreibung: data.description,
-      Tags: data.tags,
-      Zubereitung: data.notes,
-      Geschichte: data.history,
-      Preis: data.price,
-    };
-
-    if (data.glass) {
-      result['Glas'] = data.glass.name;
-    }
-    if (data.ice) {
-      result['Eis'] = data.ice.name;
-    }
-
-    // Image tracking - store presence flag, not the actual data
-    const image = data.CocktailRecipeImage?.[0]?.image || data.image;
-    if (image) {
-      result['Bild'] = 'Vorhanden';
-    }
-
-    if (data.steps && Array.isArray(data.steps)) {
-      const steps: any = {};
-      const actionCounts: { [key: string]: number } = {};
-
-      data.steps.forEach((step: any) => {
-        const baseActionName = step.action?.name || `Schritt ${step.stepNumber}`;
-        actionCounts[baseActionName] = (actionCounts[baseActionName] || 0) + 1;
-        const stepKey = actionCounts[baseActionName] > 1 ? `${baseActionName} (${actionCounts[baseActionName]})` : baseActionName;
-
-        const ingredients: any = {};
-        if (step.ingredients && Array.isArray(step.ingredients)) {
-          step.ingredients.forEach((ing: any) => {
-            const ingName = ing.ingredient?.name || `Zutat ${ing.ingredientNumber}`;
-            ingredients[ingName] = {
-              Menge: ing.amount,
-              Einheit: ing.unit?.name,
-              Optional: ing.optional ? 'Ja' : undefined,
-              Position: ing.ingredientNumber,
-            };
-            Object.keys(ingredients[ingName]).forEach((key) => ingredients[ingName][key] === undefined && delete ingredients[ingName][key]);
-          });
-        }
-
-        steps[stepKey] = {
-          Position: step.stepNumber,
-          Optional: step.optional ? 'Ja' : undefined,
-          Zutaten: Object.keys(ingredients).length > 0 ? ingredients : undefined,
-        };
-        Object.keys(steps[stepKey]).forEach((key) => steps[stepKey][key] === undefined && delete steps[stepKey][key]);
-      });
-      if (Object.keys(steps).length > 0) {
-        result['Schritte'] = steps;
-      }
-    }
-
-    if (data.garnishes && Array.isArray(data.garnishes)) {
-      const garnishes: any = {};
-      const garnishCounts: { [key: string]: number } = {};
-
-      data.garnishes.forEach((garnish: any) => {
-        const baseName = garnish.garnish?.name || `Garnitur ${garnish.garnishNumber}`;
-        garnishCounts[baseName] = (garnishCounts[baseName] || 0) + 1;
-        const garnishKey = garnishCounts[baseName] > 1 ? `${baseName} (${garnishCounts[baseName]})` : baseName;
-
-        garnishes[garnishKey] = {
-          Menge: garnish.amount,
-          Einheit: garnish.unit?.name,
-          Optional: garnish.optional ? 'Ja' : undefined,
-          Alternative: garnish.isAlternative ? 'Ja' : undefined,
-          Notiz: garnish.description || undefined,
-          Position: garnish.garnishNumber,
-        };
-        Object.keys(garnishes[garnishKey]).forEach((k) => garnishes[garnishKey][k] === undefined && delete garnishes[garnishKey][k]);
-      });
-      if (Object.keys(garnishes).length > 0) {
-        result['Garnituren'] = garnishes;
-      }
-    }
-
-    return result;
-  }
-
-  if (entityType === 'Ingredient') {
-    const result: any = {
-      Name: data.name,
-      Beschreibung: data.description,
-      Notizen: data.notes,
-      Preis: data.price,
-      Tags: data.tags,
-      Kurzname: data.shortName,
-      Link: data.link,
-      Alkoholgehalt: data.alcoholContent,
-    };
-    // Remove undefined fields
-    Object.keys(result).forEach((key) => result[key] === undefined && delete result[key]);
-    if (result.Preis) result.Preis = `${result.Preis} €`;
-    if (result.Alkoholgehalt) result.Alkoholgehalt = `${result.Alkoholgehalt} %`;
-
-    if (data.units && Array.isArray(data.units)) {
-      const units: any = {};
-      data.units.forEach((u: any) => {
-        if (u.unit?.name) {
-          units[u.unit.name] = u.volume || '1';
-        }
-      });
-      if (Object.keys(units).length > 0) {
-        result['Einheiten'] = units;
-      }
-    }
-
-    return result;
-  }
-
-  // Default fallback: shallow copy without internal fields
-  const copy = { ...data };
-  delete copy.id;
-  delete copy.workspaceId;
-  delete copy.createdAt;
-  delete copy.updatedAt;
-  delete copy.deletedAt;
-
-  return copy;
 }

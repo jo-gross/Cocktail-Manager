@@ -2,18 +2,20 @@ import { Role } from '@generated/prisma/client';
 import Link from 'next/link';
 import { ManageEntityLayout } from '@components/layout/ManageEntityLayout';
 import { ManageColumn } from '@components/ManageColumn';
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { Loading } from '@components/Loading';
 import { useRouter } from 'next/router';
 import { UserContext } from '@lib/context/UserContextProvider';
 import DefaultGlassIcon from '../../../../../components/DefaultGlassIcon';
-import { FaPlus } from 'react-icons/fa';
+import { FaChevronDown, FaFileDownload, FaFileUpload, FaPlus } from 'react-icons/fa';
 import ListSearchField from '../../../../../components/ListSearchField';
 import { GlassModel } from '../../../../../models/GlassModel';
 import AvatarImage from '../../../../../components/AvatarImage';
 import { fetchGlasses } from '@lib/network/glasses';
 import ImageModal from '../../../../../components/modals/ImageModal';
 import { ModalContext } from '@lib/context/ModalContextProvider';
+import { alertService } from '@lib/alertService';
+import EntityImportModal from '../../../../../components/modals/EntityImportModal';
 import '../../../../../lib/NumberUtils';
 import { NextPageWithPullToRefresh } from '../../../../../types/next';
 
@@ -28,6 +30,9 @@ const ManageGlassesOverviewPage: NextPageWithPullToRefresh = () => {
   const [loading, setLoading] = useState(true);
 
   const [filterString, setFilterString] = useState('');
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [exportingJson, setExportingJson] = useState(false);
+  const [exportingSingleId, setExportingSingleId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchGlasses(workspaceId, setGlasses, setLoading);
@@ -37,18 +42,164 @@ const ManageGlassesOverviewPage: NextPageWithPullToRefresh = () => {
     fetchGlasses(workspaceId, setGlasses, setLoading);
   };
 
+  const filteredGlasses = glasses.filter((glass) => glass.name.toLowerCase().includes(filterString.toLowerCase())).sort((a, b) => a.name.localeCompare(b.name));
+
+  const handleToggleSelect = useCallback(
+    (id: string) => {
+      const newSelected = new Set(selectedIds);
+      if (newSelected.has(id)) {
+        newSelected.delete(id);
+      } else {
+        newSelected.add(id);
+      }
+      setSelectedIds(newSelected);
+    },
+    [selectedIds],
+  );
+
+  const handleToggleSelectAll = useCallback(() => {
+    const allSelected = filteredGlasses.every((g) => selectedIds.has(g.id));
+    if (allSelected) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredGlasses.map((g) => g.id)));
+    }
+  }, [selectedIds, filteredGlasses]);
+
+  const handleExportJson = useCallback(async () => {
+    if (!workspaceId || selectedIds.size === 0) return;
+    setExportingJson(true);
+    try {
+      const response = await fetch(`/api/workspaces/${workspaceId}/glasses/export-json`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: Array.from(selectedIds) }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ message: 'Fehler beim Exportieren' }));
+        alertService.error(error.message ?? 'Fehler beim Exportieren');
+        return;
+      }
+
+      const exportData = await response.json();
+      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `glasses-export-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      alertService.success('JSON erfolgreich exportiert');
+      setSelectedIds(new Set());
+    } catch (error) {
+      console.error('JSON export error:', error);
+      alertService.error('Fehler beim Exportieren');
+    } finally {
+      setExportingJson(false);
+    }
+  }, [workspaceId, selectedIds]);
+
+  const handleExportSingleJson = useCallback(
+    async (id: string) => {
+      if (!workspaceId) return;
+      setExportingSingleId(id);
+      try {
+        const response = await fetch(`/api/workspaces/${workspaceId}/glasses/export-json`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ids: [id] }),
+        });
+
+        if (!response.ok) {
+          const error = await response.json().catch(() => ({ message: 'Fehler beim Exportieren' }));
+          alertService.error(error.message ?? 'Fehler beim Exportieren');
+          return;
+        }
+
+        const exportData = await response.json();
+        const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        const glassName = glasses.find((g) => g.id === id)?.name || 'glass';
+        a.download = `${glassName}-export-${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        alertService.success('JSON erfolgreich exportiert');
+      } catch (error) {
+        console.error('JSON export error:', error);
+        alertService.error('Fehler beim Exportieren');
+      } finally {
+        setExportingSingleId(null);
+      }
+    },
+    [workspaceId, glasses],
+  );
+
   return (
     <ManageEntityLayout
       backLink={`/workspaces/${workspaceId}/manage`}
       title={'Gläser'}
       actions={
-        userContext.isUserPermitted(Role.MANAGER) ? (
-          <Link href={`/workspaces/${workspaceId}/manage/glasses/create`}>
-            <div className={'btn btn-square btn-primary btn-sm md:btn-md'}>
-              <FaPlus />
+        <div className={'flex items-center gap-2'}>
+          {selectedIds.size > 0 && (
+            <div className="dropdown dropdown-end">
+              <button tabIndex={0} className={'btn btn-outline btn-sm md:btn-md'}>
+                <FaFileDownload />
+                {selectedIds.size} ausgewählt
+                <FaChevronDown />
+              </button>
+              <ul tabIndex={0} className="menu dropdown-content z-[1] mt-2 w-64 gap-1 rounded-box border border-base-200 bg-base-100 p-2 shadow-lg">
+                <li>
+                  <button type="button" className="flex items-center gap-2" onClick={handleExportJson} disabled={exportingJson}>
+                    {exportingJson ? <span className={'loading loading-spinner loading-sm'} /> : <FaFileDownload />}
+                    Als JSON exportieren ({selectedIds.size})
+                  </button>
+                </li>
+              </ul>
             </div>
-          </Link>
-        ) : undefined
+          )}
+          <div className="dropdown dropdown-end">
+            <button tabIndex={0} className={'btn btn-outline btn-sm md:btn-md'}>
+              <FaFileUpload />
+              Import/Export
+              <FaChevronDown />
+            </button>
+            <ul tabIndex={0} className="menu dropdown-content z-[1] mt-2 w-52 gap-1 rounded-box border border-base-200 bg-base-100 p-2 shadow-lg">
+              <li>
+                <button
+                  type="button"
+                  className="flex items-center gap-2"
+                  onClick={() => {
+                    if (!workspaceId) return;
+                    modalContext.openModal(
+                      <EntityImportModal
+                        workspaceId={workspaceId as string}
+                        entityType="glasses"
+                        onImportComplete={() => fetchGlasses(workspaceId, setGlasses, setLoading)}
+                      />,
+                    );
+                  }}
+                >
+                  <FaFileUpload />
+                  Aus JSON importieren
+                </button>
+              </li>
+            </ul>
+          </div>
+          {userContext.isUserPermitted(Role.MANAGER) && (
+            <Link href={`/workspaces/${workspaceId}/manage/glasses/create`}>
+              <div className={'btn btn-square btn-primary btn-sm md:btn-md'}>
+                <FaPlus />
+              </div>
+            </Link>
+          )}
+        </div>
       }
     >
       <div className={'card'}>
@@ -58,7 +209,16 @@ const ManageGlassesOverviewPage: NextPageWithPullToRefresh = () => {
             <table className="table-compact table table-zebra w-full">
               <thead>
                 <tr>
-                  <th className=""></th>
+                  <th className="w-0">
+                    <input
+                      type="checkbox"
+                      className="checkbox checkbox-sm"
+                      checked={filteredGlasses.length > 0 && filteredGlasses.every((g) => selectedIds.has(g.id))}
+                      onChange={handleToggleSelectAll}
+                      title="Alle auswählen"
+                    />
+                  </th>
+                  <th className="w-0"></th>
                   <th className="">Name</th>
                   <th className="">Pfand</th>
                   <th className="flex justify-end"></th>
@@ -67,51 +227,55 @@ const ManageGlassesOverviewPage: NextPageWithPullToRefresh = () => {
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={4}>
+                    <td colSpan={5}>
                       <Loading />
                     </td>
                   </tr>
-                ) : glasses.filter((glass) => glass.name.toLowerCase().includes(filterString.toLowerCase())).length == 0 ? (
+                ) : filteredGlasses.length == 0 ? (
                   <tr>
-                    <td colSpan={4} className={'text-center'}>
+                    <td colSpan={5} className={'text-center'}>
                       Keine Einträge gefunden
                     </td>
                   </tr>
                 ) : (
-                  glasses
-                    .filter((glass) => glass.name.toLowerCase().includes(filterString.toLowerCase()))
-                    .sort((a, b) => a.name.localeCompare(b.name))
-                    .map((glass) => (
-                      <tr className={'p-4'} key={glass.id}>
-                        <td>
-                          <div className="flex items-center space-x-3">
-                            <div className="mask mask-squircle h-12 w-12">
-                              {glass._count?.GlassImage == 0 ? (
-                                <DefaultGlassIcon />
-                              ) : (
-                                <div
-                                  className="h-12 w-12 cursor-pointer"
-                                  onClick={() =>
-                                    modalContext.openModal(<ImageModal image={`/api/workspaces/${glass.workspaceId}/glasses/${glass.id}/image`} />)
-                                  }
-                                >
-                                  <AvatarImage
-                                    src={`/api/workspaces/${glass.workspaceId}/glasses/${glass.id}/image`}
-                                    alt="Glass"
-                                    altComponent={<DefaultGlassIcon />}
-                                  />
-                                </div>
-                              )}
-                            </div>
+                  filteredGlasses.map((glass) => (
+                    <tr className={'p-4'} key={glass.id}>
+                      <td className="w-0">
+                        <input
+                          type="checkbox"
+                          className="checkbox checkbox-sm"
+                          checked={selectedIds.has(glass.id)}
+                          onChange={() => handleToggleSelect(glass.id)}
+                        />
+                      </td>
+                      <td className="w-0 p-0">
+                        {glass._count?.GlassImage !== 0 && (
+                          <div
+                            className="mask mask-squircle h-12 w-12 cursor-pointer"
+                            onClick={() => modalContext.openModal(<ImageModal image={`/api/workspaces/${glass.workspaceId}/glasses/${glass.id}/image`} />)}
+                          >
+                            <AvatarImage
+                              src={`/api/workspaces/${glass.workspaceId}/glasses/${glass.id}/image`}
+                              alt="Glass"
+                              altComponent={<DefaultGlassIcon />}
+                            />
                           </div>
-                        </td>
-                        <td>
-                          <div className="font-bold">{glass.name}</div>
-                        </td>
-                        <td>{glass.deposit.formatPrice()} €</td>
-                        <ManageColumn entity={'glasses'} id={glass.id} name={glass.name} onRefresh={() => fetchGlasses(workspaceId, setGlasses, setLoading)} />
-                      </tr>
-                    ))
+                        )}
+                      </td>
+                      <td>
+                        <div className="font-bold">{glass.name}</div>
+                      </td>
+                      <td>{glass.deposit.formatPrice()} €</td>
+                      <ManageColumn
+                        entity={'glasses'}
+                        id={glass.id}
+                        name={glass.name}
+                        onRefresh={() => fetchGlasses(workspaceId, setGlasses, setLoading)}
+                        onExportJson={handleExportSingleJson}
+                        exportingJson={exportingSingleId === glass.id}
+                      />
+                    </tr>
+                  ))
                 )}
               </tbody>
             </table>

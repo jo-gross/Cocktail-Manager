@@ -19,6 +19,8 @@ import { NextPageWithPullToRefresh } from '../../../../../types/next';
 import '../../../../../lib/NumberUtils';
 import CocktailExportOptionsModal, { CocktailExportOptions } from '../../../../../components/modals/CocktailExportOptionsModal';
 import CocktailImportWizardModal from '../../../../../components/modals/CocktailImportWizardModal';
+import { ConfirmActionModal } from '../../../../../components/modals/ConfirmActionModal';
+import { FaArchive } from 'react-icons/fa';
 
 const CocktailsOverviewPage: NextPageWithPullToRefresh = () => {
   const router = useRouter();
@@ -107,6 +109,29 @@ const CocktailsOverviewPage: NextPageWithPullToRefresh = () => {
     },
     [selectedCocktailIds],
   );
+
+  const handleBulkArchive = useCallback(() => {
+    if (!workspaceId || selectedCocktailIds.size === 0) return;
+    const count = selectedCocktailIds.size;
+    const ids = Array.from(selectedCocktailIds);
+    modalContext.openModal(
+      <ConfirmActionModal
+        title="Archivieren"
+        message={`Möchtest du die ${count} ausgewählten Cocktail${count === 1 ? '' : 's'} wirklich archivieren?`}
+        confirmLabel="Archivieren"
+        confirmVariant="primary"
+        onConfirm={async () => {
+          for (const id of ids) {
+            const res = await fetch(`/api/workspaces/${workspaceId}/cocktails/${id}/archive`, { method: 'PUT' });
+            if (!res.ok) throw new Error('Archivieren fehlgeschlagen');
+          }
+          setSelectedCocktailIds(new Set());
+          refreshCocktails();
+          alertService.success(`${count} Cocktail${count === 1 ? '' : 's'} archiviert`);
+        }}
+      />,
+    );
+  }, [workspaceId, selectedCocktailIds, modalContext, refreshCocktails]);
 
   const handleExportPdf = useCallback(() => {
     if (!workspaceId || selectedCocktailIds.size === 0) return;
@@ -311,7 +336,7 @@ const CocktailsOverviewPage: NextPageWithPullToRefresh = () => {
       .map((cocktailRecipe) => (
         <tr key={cocktailRecipe.id} id={cocktailRecipe.id}>
           {chromiumAvailable && (
-            <td>
+            <td className="w-0">
               <input
                 type="checkbox"
                 className="checkbox checkbox-sm"
@@ -320,23 +345,17 @@ const CocktailsOverviewPage: NextPageWithPullToRefresh = () => {
               />
             </td>
           )}
-          <td>
-            <div className="flex items-center space-x-3">
-              <div className={'h-12 w-12'}>
-                {cocktailRecipe._count.CocktailRecipeImage == 0 ? (
-                  <></>
-                ) : (
-                  <div
-                    className="h-12 w-12 cursor-pointer"
-                    onClick={() =>
-                      modalContext.openModal(<ImageModal image={`/api/workspaces/${cocktailRecipe.workspaceId}/cocktails/${cocktailRecipe.id}/image`} />)
-                    }
-                  >
-                    <AvatarImage src={`/api/workspaces/${cocktailRecipe.workspaceId}/cocktails/${cocktailRecipe.id}/image`} alt={'Cocktail'} />
-                  </div>
-                )}
+          <td className="w-0 p-0">
+            {cocktailRecipe._count.CocktailRecipeImage !== 0 && (
+              <div
+                className="h-12 w-12 cursor-pointer"
+                onClick={() =>
+                  modalContext.openModal(<ImageModal image={`/api/workspaces/${cocktailRecipe.workspaceId}/cocktails/${cocktailRecipe.id}/image`} />)
+                }
+              >
+                <AvatarImage src={`/api/workspaces/${cocktailRecipe.workspaceId}/cocktails/${cocktailRecipe.id}/image`} alt={'Cocktail'} />
               </div>
-            </div>
+            )}
           </td>
           <td className={isArchived ? 'italic' : ''}>
             {cocktailRecipe.name} {isArchived && '(Archiviert)'}
@@ -395,6 +414,14 @@ const CocktailsOverviewPage: NextPageWithPullToRefresh = () => {
                     </button>
                   </li>
                 )}
+                {userContext.isUserPermitted(Role.MANAGER) && (
+                  <li>
+                    <button type="button" className="flex items-center gap-2" onClick={handleBulkArchive}>
+                      <FaArchive />
+                      Archivieren ({selectedCocktailIds.size})
+                    </button>
+                  </li>
+                )}
               </ul>
             </div>
           )}
@@ -445,7 +472,7 @@ const CocktailsOverviewPage: NextPageWithPullToRefresh = () => {
               <thead>
                 <tr>
                   {chromiumAvailable && (
-                    <th>
+                    <th className="w-0">
                       <input
                         type="checkbox"
                         className="checkbox checkbox-sm"
@@ -462,7 +489,7 @@ const CocktailsOverviewPage: NextPageWithPullToRefresh = () => {
                       />
                     </th>
                   )}
-                  <th></th>
+                  <th className="w-0"></th>
                   <th>Name</th>
                   <th>Preis</th>
                   <th>Tags</th>

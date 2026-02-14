@@ -61,7 +61,10 @@ export default withHttpMethods({
       await prisma.$transaction(async (tx) => {
         const oldCalculation = await tx.cocktailCalculation.findUnique({
           where: { id: calculationId },
-          include: { cocktailCalculationItems: true, ingredientShoppingUnits: true },
+          include: {
+            cocktailCalculationItems: { include: { cocktail: { select: { name: true } } } },
+            ingredientShoppingUnits: { include: { ingredient: { select: { name: true } }, unit: { select: { name: true } } } },
+          },
         });
 
         await tx.cocktailCalculation.delete({
@@ -85,7 +88,10 @@ export default withHttpMethods({
     const result = await prisma.$transaction(async (tx) => {
       const oldCalculation = await tx.cocktailCalculation.findUnique({
         where: { id: calculationId },
-        include: { cocktailCalculationItems: true, ingredientShoppingUnits: true },
+        include: {
+          cocktailCalculationItems: { include: { cocktail: { select: { name: true } } } },
+          ingredientShoppingUnits: { include: { ingredient: { select: { name: true } }, unit: { select: { name: true } } } },
+        },
       });
 
       const input: CocktailCalculationUpdateInput = {
@@ -135,8 +141,8 @@ export default withHttpMethods({
         },
         data: input,
         include: {
-          cocktailCalculationItems: true,
-          ingredientShoppingUnits: true,
+          cocktailCalculationItems: { include: { cocktail: { select: { name: true } } } },
+          ingredientShoppingUnits: { include: { ingredient: { select: { name: true } }, unit: { select: { name: true } } } },
         },
       });
 

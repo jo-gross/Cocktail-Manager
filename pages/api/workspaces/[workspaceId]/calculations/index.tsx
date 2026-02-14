@@ -69,8 +69,8 @@ export default withHttpMethods({
         const createdCalculation = await tx.cocktailCalculation.create({
           data: input,
           include: {
-            cocktailCalculationItems: true,
-            ingredientShoppingUnits: true,
+            cocktailCalculationItems: { include: { cocktail: { select: { name: true } } } },
+            ingredientShoppingUnits: { include: { ingredient: { select: { name: true } }, unit: { select: { name: true } } } },
           },
         });
 

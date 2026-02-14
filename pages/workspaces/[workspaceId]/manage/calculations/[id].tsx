@@ -653,7 +653,7 @@ export default function CalculationPage() {
                                                   });
                                                   setCocktailCalculationItems(temp);
 
-                                                  modalContext.closeModal();
+                                                  modalContext.closeAllModals();
                                                 }}
                                               >
                                                 + {Math.floor(item.more)} Anpassen
@@ -676,7 +676,7 @@ export default function CalculationPage() {
                                                   });
                                                   setCocktailCalculationItems(temp);
 
-                                                  modalContext.closeModal();
+                                                  modalContext.closeAllModals();
                                                 }}
                                               >
                                                 {Math.floor(item.less)} Anpassen
@@ -687,7 +687,7 @@ export default function CalculationPage() {
                                     </div>,
                                   );
                                 }}
-                                className={'btn-ghoast btn btn-sm'}
+                                className={'btn btn-outline btn-sm'}
                               >
                                 <FaInfoCircle />
                                 <span>Anzeigen</span>
@@ -896,7 +896,7 @@ export default function CalculationPage() {
                   <table className={'table-compact table w-full'}>
                     <thead>
                       <tr>
-                        <th className={'w-6'}>
+                        <th className="w-0">
                           <div className="tooltip tooltip-right tooltip-info before:max-w-fit" data-tip={'Diese Kästchen sollen z.B. beim Einkaufen helfen'}>
                             <FaInfoCircle />
                           </div>
@@ -920,7 +920,7 @@ export default function CalculationPage() {
                           .sortBy((group) => group[0].ingredient.name)
                           .map((items, key) => (
                             <tr key={`shopping-ingredient-${key}`}>
-                              <td>
+                              <td className="w-0">
                                 <input
                                   key={`shopping-ingredient-${key}-checkbox-${items[0].ingredient.id}`}
                                   type="checkbox"
