@@ -1,4 +1,5 @@
 import prisma from '../../../../../prisma/prisma';
+import { createLog } from '../../../../../lib/auditLog';
 import { NextApiRequest, NextApiResponse } from 'next';
 import HTTPMethod from 'http-method-enum';
 import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
@@ -56,13 +57,27 @@ export default withHttpMethods({
     async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
       const calculationId = req.query.calculationId as string | undefined;
       if (!calculationId) return res.status(400).json({ message: 'No cocktailCalculation id' });
-      const result = await prisma.cocktailCalculation.delete({
-        where: {
-          id: calculationId,
-          workspaceId: workspace.id,
-        },
+
+      await prisma.$transaction(async (tx) => {
+        const oldCalculation = await tx.cocktailCalculation.findUnique({
+          where: { id: calculationId },
+          include: {
+            cocktailCalculationItems: { include: { cocktail: { select: { name: true } } } },
+            ingredientShoppingUnits: { include: { ingredient: { select: { name: true } }, unit: { select: { name: true } } } },
+          },
+        });
+
+        await tx.cocktailCalculation.delete({
+          where: {
+            id: calculationId,
+            workspaceId: workspace.id,
+          },
+        });
+
+        await createLog(tx, workspace.id, user.id, 'CocktailCalculation', calculationId, 'DELETE', oldCalculation, null);
       });
-      return res.json({ data: result });
+
+      return res.json({ data: { count: 1 } });
     },
   ),
   [HTTPMethod.PUT]: withWorkspacePermission([Role.USER], Permission.CALCULATIONS_UPDATE, async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
@@ -70,53 +85,72 @@ export default withHttpMethods({
     if (!calculationId) return res.status(400).json({ message: 'No calculationId id' });
     const { name, calculationItems, showSalesStuff, ingredientShoppingUnits } = req.body;
 
-    const input: CocktailCalculationUpdateInput = {
-      id: calculationId,
-      name: name,
-      showSalesStuff: showSalesStuff,
-      updatedByUser: {
-        connect: {
-          id: user.id,
+    const result = await prisma.$transaction(async (tx) => {
+      const oldCalculation = await tx.cocktailCalculation.findUnique({
+        where: { id: calculationId },
+        include: {
+          cocktailCalculationItems: { include: { cocktail: { select: { name: true } } } },
+          ingredientShoppingUnits: { include: { ingredient: { select: { name: true } }, unit: { select: { name: true } } } },
         },
-      },
-      cocktailCalculationItems: {
-        create: calculationItems.map((item: any) => ({
-          plannedAmount: item.plannedAmount,
-          customPrice: item.customPrice,
-          cocktail: {
-            connect: {
-              id: item.cocktailId,
-            },
-          },
-        })),
-      },
-      ingredientShoppingUnits: {
-        create: ingredientShoppingUnits.map((ingredientShoppingUnit: any) => ({
-          ingredient: { connect: { id: ingredientShoppingUnit.ingredientId } },
-          unit: { connect: { id: ingredientShoppingUnit.unitId } },
-          checked: ingredientShoppingUnit.checked,
-        })),
-      },
-    };
+      });
 
-    await prisma.cocktailCalculationItems.deleteMany({
-      where: {
-        calculationId: calculationId,
-      },
-    });
-
-    await prisma.calculationIngredientShoppingUnit.deleteMany({
-      where: {
-        cocktailCalculationId: calculationId,
-      },
-    });
-
-    const result = await prisma.cocktailCalculation.update({
-      where: {
+      const input: CocktailCalculationUpdateInput = {
         id: calculationId,
-      },
-      data: input,
+        name: name,
+        showSalesStuff: showSalesStuff,
+        updatedByUser: {
+          connect: {
+            id: user.id,
+          },
+        },
+        cocktailCalculationItems: {
+          create: calculationItems.map((item: any) => ({
+            plannedAmount: item.plannedAmount,
+            customPrice: item.customPrice,
+            cocktail: {
+              connect: {
+                id: item.cocktailId,
+              },
+            },
+          })),
+        },
+        ingredientShoppingUnits: {
+          create: ingredientShoppingUnits.map((ingredientShoppingUnit: any) => ({
+            ingredient: { connect: { id: ingredientShoppingUnit.ingredientId } },
+            unit: { connect: { id: ingredientShoppingUnit.unitId } },
+            checked: ingredientShoppingUnit.checked,
+          })),
+        },
+      };
+
+      await tx.cocktailCalculationItems.deleteMany({
+        where: {
+          calculationId: calculationId,
+        },
+      });
+
+      await tx.calculationIngredientShoppingUnit.deleteMany({
+        where: {
+          cocktailCalculationId: calculationId,
+        },
+      });
+
+      const updatedCalculation = await tx.cocktailCalculation.update({
+        where: {
+          id: calculationId,
+        },
+        data: input,
+        include: {
+          cocktailCalculationItems: { include: { cocktail: { select: { name: true } } } },
+          ingredientShoppingUnits: { include: { ingredient: { select: { name: true } }, unit: { select: { name: true } } } },
+        },
+      });
+
+      await createLog(tx, workspace.id, user.id, 'CocktailCalculation', calculationId, 'UPDATE', oldCalculation, updatedCalculation);
+
+      return updatedCalculation;
     });
+
     return res.json({ data: result });
   }),
 });

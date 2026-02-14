@@ -1,4 +1,4 @@
-import { FaEllipsisV, FaFileDownload, FaRegClone, FaRegEdit, FaTrashAlt } from 'react-icons/fa';
+import { FaEllipsisV, FaFileDownload, FaHistory, FaRegClone, FaRegEdit, FaTrashAlt } from 'react-icons/fa';
 import { useRouter } from 'next/router';
 import { alertService } from '@lib/alertService';
 import { useContext, useState, useRef, useEffect, useCallback } from 'react';
@@ -9,6 +9,7 @@ import { ModalContext } from '@lib/context/ModalContextProvider';
 import { DeleteConfirmationModal } from './modals/DeleteConfirmationModal';
 import InputModal from './modals/InputModal';
 import { createPortal } from 'react-dom';
+import { AuditLogHistoryModal } from './modals/AuditLogHistoryModal';
 
 interface ManageColumnProps {
   id: string;
@@ -372,6 +373,35 @@ export function ManageColumn(props: ManageColumnProps) {
                 </button>
               </li>
             )}
+            <li>
+              <button
+                type="button"
+                className="flex items-center gap-2"
+                onClick={() => {
+                  setIsDropdownOpen(false);
+                  modalContext.openModal(
+                    <AuditLogHistoryModal
+                      entityType={
+                        props.entity === 'cocktails'
+                          ? 'CocktailRecipe'
+                          : props.entity === 'ingredients'
+                            ? 'Ingredient'
+                            : props.entity === 'glasses'
+                              ? 'Glass'
+                              : props.entity === 'garnishes'
+                                ? 'Garnish'
+                                : 'CocktailCalculation'
+                      }
+                      entityId={props.id}
+                      entityName={props.name}
+                    />,
+                  );
+                }}
+              >
+                <FaHistory />
+                Verlauf anzeigen
+              </button>
+            </li>
           </ul>,
           document.body,
         )

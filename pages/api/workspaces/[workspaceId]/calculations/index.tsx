@@ -1,6 +1,7 @@
 // pages/api/post/index.ts
 
 import prisma from '../../../../../prisma/prisma';
+import { createLog } from '../../../../../lib/auditLog';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
 import { withHttpMethods } from '@middleware/api/handleMethods';
@@ -30,41 +31,54 @@ export default withHttpMethods({
     Permission.CALCULATIONS_CREATE,
     async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
       const { name, calculationItems, showSalesStuff, ingredientShoppingUnits } = req.body;
-      const input: CocktailCalculationCreateInput = {
-        name: name,
-        showSalesStuff: showSalesStuff,
-        cocktailCalculationItems: {
-          create: calculationItems.map((item: any) => ({
-            plannedAmount: item.plannedAmount,
-            customPrice: item.customPrice,
-            cocktail: {
-              connect: {
-                id: item.cocktailId,
+
+      const result = await prisma.$transaction(async (tx) => {
+        const input: CocktailCalculationCreateInput = {
+          name: name,
+          showSalesStuff: showSalesStuff,
+          cocktailCalculationItems: {
+            create: calculationItems.map((item: any) => ({
+              plannedAmount: item.plannedAmount,
+              customPrice: item.customPrice,
+              cocktail: {
+                connect: {
+                  id: item.cocktailId,
+                },
               },
+            })),
+          },
+          workspace: {
+            connect: {
+              id: workspace.id,
             },
-          })),
-        },
-        workspace: {
-          connect: {
-            id: workspace.id,
           },
-        },
-        ingredientShoppingUnits: {
-          create: ingredientShoppingUnits.map((ingredientShoppingUnit: any) => ({
-            ingredient: { connect: { id: ingredientShoppingUnit.ingredientId } },
-            unit: { connect: { id: ingredientShoppingUnit.unitId } },
-            checked: ingredientShoppingUnit.checked,
-          })),
-        },
-        updatedByUser: {
-          connect: {
-            id: user.id,
+          ingredientShoppingUnits: {
+            create: ingredientShoppingUnits.map((ingredientShoppingUnit: any) => ({
+              ingredient: { connect: { id: ingredientShoppingUnit.ingredientId } },
+              unit: { connect: { id: ingredientShoppingUnit.unitId } },
+              checked: ingredientShoppingUnit.checked,
+            })),
           },
-        },
-      };
-      const result = await prisma.cocktailCalculation.create({
-        data: input,
+          updatedByUser: {
+            connect: {
+              id: user.id,
+            },
+          },
+        };
+
+        const createdCalculation = await tx.cocktailCalculation.create({
+          data: input,
+          include: {
+            cocktailCalculationItems: { include: { cocktail: { select: { name: true } } } },
+            ingredientShoppingUnits: { include: { ingredient: { select: { name: true } }, unit: { select: { name: true } } } },
+          },
+        });
+
+        await createLog(tx, workspace.id, user.id, 'CocktailCalculation', createdCalculation.id, 'CREATE', null, createdCalculation);
+
+        return createdCalculation;
       });
+
       return res.json({ data: result });
     },
   ),

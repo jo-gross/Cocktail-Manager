@@ -13,8 +13,9 @@ import { UserContext } from '@lib/context/UserContextProvider';
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import { NotSavedArchiveConfirmation } from '@components/modals/NotSavedArchiveConfirmation';
 import { fetchCocktailWithImage } from '@lib/network/cocktails';
-import { FaFileDownload } from 'react-icons/fa';
+import { FaFileDownload, FaHistory } from 'react-icons/fa';
 import CocktailExportOptionsModal, { CocktailExportOptions } from '@components/modals/CocktailExportOptionsModal';
+import { AuditLogHistoryModal } from '@components/modals/AuditLogHistoryModal';
 
 function EditCocktailRecipe() {
   const router = useRouter();
@@ -120,6 +121,17 @@ function EditCocktailRecipe() {
                 PDF exportieren
               </button>
             )}
+            <button
+              type={'button'}
+              className={'btn btn-outline btn-sm'}
+              title="Verlauf anzeigen"
+              onClick={() =>
+                modalContext.openModal(<AuditLogHistoryModal entityType={'CocktailRecipe'} entityId={cocktailRecipe.id} entityName={cocktailRecipe.name} />)
+              }
+            >
+              <FaHistory />
+              Verlauf
+            </button>
             <button
               type={'button'}
               className={'btn btn-outline btn-sm'}

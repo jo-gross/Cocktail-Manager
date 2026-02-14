@@ -1,6 +1,7 @@
 // pages/api/post/index.ts
 
 import prisma from '../../../../../prisma/prisma';
+import { createLog } from '../../../../../lib/auditLog';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { withHttpMethods } from '@middleware/api/handleMethods';
 import HTTPMethod from 'http-method-enum';
@@ -34,35 +35,46 @@ export default withHttpMethods({
     async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
       const { name, price, id, image, description, notes } = req.body;
 
-      const input: GarnishCreateInput = {
-        id: id,
-        name: name,
-        price: price,
-        description: description,
-        notes: notes,
-        workspace: {
-          connect: {
-            id: workspace.id,
-          },
-        },
-      };
-
-      const result = await prisma.garnish.create({
-        data: input,
-      });
-
-      if (image) {
-        const imageResult = await prisma.garnishImage.create({
-          data: {
-            image: image,
-            garnish: {
-              connect: {
-                id: result.id,
-              },
+      const result = await prisma.$transaction(async (tx) => {
+        const input: GarnishCreateInput = {
+          id: id,
+          name: name,
+          price: price,
+          description: description,
+          notes: notes,
+          workspace: {
+            connect: {
+              id: workspace.id,
             },
           },
+        };
+
+        const createdGarnish = await tx.garnish.create({
+          data: input,
         });
-      }
+
+        if (image) {
+          await tx.garnishImage.create({
+            data: {
+              image: image,
+              garnish: {
+                connect: {
+                  id: createdGarnish.id,
+                },
+              },
+            },
+          });
+        }
+
+        const fullGarnish = await tx.garnish.findUnique({
+          where: { id: createdGarnish.id },
+          include: { GarnishImage: true },
+        });
+
+        await createLog(tx, workspace.id, user.id, 'Garnish', createdGarnish.id, 'CREATE', null, fullGarnish);
+
+        return createdGarnish;
+      });
 
       return res.json({ data: result });
     },

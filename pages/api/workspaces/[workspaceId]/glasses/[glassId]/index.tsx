@@ -1,4 +1,5 @@
 import prisma from '../../../../../../prisma/prisma';
+import { createLog } from '../../../../../../lib/auditLog';
 import { NextApiRequest, NextApiResponse } from 'next';
 import HTTPMethod from 'http-method-enum';
 import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
@@ -52,50 +53,79 @@ export default withHttpMethods({
       });
     }
 
-    const result = await prisma.glass.delete({
-      where: {
-        id: glassId,
-        workspaceId: workspace.id,
-      },
+    await prisma.$transaction(async (tx) => {
+      const oldGlass = await tx.glass.findUnique({
+        where: { id: glassId },
+        include: { GlassImage: true },
+      });
+
+      await tx.glass.delete({
+        where: {
+          id: glassId,
+          workspaceId: workspace.id,
+        },
+      });
+
+      await createLog(tx, workspace.id, user.id, 'Glass', glassId, 'DELETE', oldGlass, null);
     });
-    return res.json({ data: result });
+
+    return res.json({ data: { count: 1 } });
   }),
   [HTTPMethod.PUT]: withWorkspacePermission([Role.MANAGER], Permission.GLASSES_UPDATE, async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
     const glassId = req.query.glassId as string | undefined;
     if (!glassId) return res.status(400).json({ message: 'No glass id' });
 
     const { name, image, deposit, volume } = req.body;
-    const input: GlassUpdateInput = {
-      id: glassId,
-      name: name,
-      volume: volume,
-      deposit: deposit,
-      workspace: {
-        connect: {
-          id: workspace.id,
-        },
-      },
-    };
-    const result = await prisma.glass.update({
-      where: {
-        id: glassId,
-      },
-      data: input,
-    });
 
-    await prisma.glassImage.deleteMany({
-      where: {
-        glassId: glassId,
-      },
-    });
-    if (image) {
-      await prisma.glassImage.create({
-        data: {
+    const result = await prisma.$transaction(async (tx) => {
+      const oldGlass = await tx.glass.findUnique({
+        where: { id: glassId },
+        include: { GlassImage: true },
+      });
+
+      const input: GlassUpdateInput = {
+        id: glassId,
+        name: name,
+        volume: volume,
+        deposit: deposit,
+        workspace: {
+          connect: {
+            id: workspace.id,
+          },
+        },
+      };
+
+      const updatedGlass = await tx.glass.update({
+        where: {
+          id: glassId,
+        },
+        data: input,
+      });
+
+      await tx.glassImage.deleteMany({
+        where: {
           glassId: glassId,
-          image: image,
         },
       });
-    }
+
+      if (image) {
+        await tx.glassImage.create({
+          data: {
+            glassId: glassId,
+            image: image,
+          },
+        });
+      }
+
+      const fullNewGlass = await tx.glass.findUnique({
+        where: { id: glassId },
+        include: { GlassImage: true },
+      });
+
+      await createLog(tx, workspace.id, user.id, 'Glass', glassId, 'UPDATE', oldGlass, fullNewGlass);
+
+      return updatedGlass;
+    });
 
     return res.json({ data: result });
   }),

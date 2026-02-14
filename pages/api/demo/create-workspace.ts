@@ -28,6 +28,10 @@ interface DemoConfig {
     price?: number;
     tags?: string[];
     image?: string;
+    /** Mengeneinheit (z. B. CL, PIECE, DASH) – muss zu einem Workspace-Unit passen. Fallback: CL */
+    unitName?: string;
+    /** Menge pro Einheit (z. B. 70 für 70 cl pro Flasche). Fallback: 70 */
+    volume?: number;
   }>;
   garnishes: Array<{
     name: string;
@@ -412,6 +416,22 @@ export default withHttpMethods({
           },
         });
         ingredientMap.set(ingredientConfig.name, ingredient.id);
+
+        // Mengeneinheit: IngredientVolume anlegen (realistische Mengenangabe pro Einheit)
+        const unitName = ingredientConfig.unitName ?? 'CL';
+        const volume = ingredientConfig.volume ?? 70;
+        const unit = units.find((u) => u.name === unitName);
+        if (unit) {
+          await prisma.ingredientVolume.create({
+            data: {
+              id: randomUUID(),
+              ingredientId: ingredient.id,
+              unitId: unit.id,
+              workspaceId: workspace.id,
+              volume,
+            },
+          });
+        }
 
         // Create image if provided
         if (ingredientConfig.image) {

@@ -6,6 +6,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import prisma from '../../../../../../prisma/prisma';
 import { CocktailRecipeStepFull } from '../../../../../../models/CocktailRecipeStepFull';
 import { CocktailRecipeGarnishFull } from '../../../../../../models/CocktailRecipeGarnishFull';
+import { createCocktailRecipeAuditLog } from '../../../../../../lib/auditLog';
 
 export default withHttpMethods({
   [HTTPMethod.POST]: withWorkspacePermission(
@@ -124,6 +125,20 @@ export default withHttpMethods({
             });
           }
         }
+
+        // Fetch the full cloned cocktail for audit log
+        const fullClone = await transaction.cocktailRecipe.findUnique({
+          where: { id: createClone.id },
+          include: {
+            ice: true,
+            glass: true,
+            garnishes: { include: { garnish: true } },
+            steps: { include: { action: true, ingredients: { include: { ingredient: true, unit: true } } } },
+            CocktailRecipeImage: true,
+          },
+        });
+
+        await createCocktailRecipeAuditLog(transaction, workspace.id, user.id, createClone.id, 'CREATE', null, fullClone);
 
         return res.json({ data: createClone });
       });

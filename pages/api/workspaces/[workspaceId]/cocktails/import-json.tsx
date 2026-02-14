@@ -6,6 +6,7 @@ import { Role } from '@generated/prisma/client';
 import { withHttpMethods } from '@middleware/api/handleMethods';
 import HTTPMethod from 'http-method-enum';
 import { randomUUID } from 'crypto';
+import { createCocktailRecipeAuditLog } from '../../../../../lib/auditLog';
 
 export const config = {
   api: {
@@ -829,6 +830,19 @@ export default withHttpMethods({
                     });
                   }
                 }
+                // Fetch the full imported cocktail for audit log
+                const fullImported = await transaction.cocktailRecipe.findUnique({
+                  where: { id: cocktailId },
+                  include: {
+                    ice: true,
+                    glass: true,
+                    garnishes: { include: { garnish: true } },
+                    steps: { include: { action: true, ingredients: { include: { ingredient: true, unit: true } } } },
+                    CocktailRecipeImage: true,
+                  },
+                });
+
+                await createCocktailRecipeAuditLog(transaction, workspace.id, user.id, cocktailId, 'CREATE', null, fullImported);
               } catch (err: any) {
                 errors.push({
                   step: 'cocktails',

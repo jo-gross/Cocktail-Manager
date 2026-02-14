@@ -39,98 +39,126 @@
       "shortName": "Wodka",
       "description": "Klassischer Wodka",
       "price": 15.99,
-      "tags": ["alkohol", "basis"]
+      "tags": ["alkohol", "basis"],
+      "unitName": "CL",
+      "volume": 70
     },
     {
       "name": "Gin",
       "shortName": "Gin",
       "description": "London Dry Gin",
       "price": 18.99,
-      "tags": ["alkohol", "basis"]
+      "tags": ["alkohol", "basis"],
+      "unitName": "CL",
+      "volume": 70
     },
     {
       "name": "Rum",
       "shortName": "Rum",
       "description": "Weißer Rum",
       "price": 16.99,
-      "tags": ["alkohol", "basis"]
+      "tags": ["alkohol", "basis"],
+      "unitName": "CL",
+      "volume": 70
     },
     {
       "name": "Tequila",
       "shortName": "Tequila",
       "description": "Blanco Tequila",
       "price": 19.99,
-      "tags": ["alkohol", "basis"]
+      "tags": ["alkohol", "basis"],
+      "unitName": "CL",
+      "volume": 70
     },
     {
       "name": "Triple Sec",
       "shortName": "Triple Sec",
       "description": "Orangenlikör",
       "price": 12.99,
-      "tags": ["likör", "süß"]
+      "tags": ["likör", "süß"],
+      "unitName": "CL",
+      "volume": 50
     },
     {
       "name": "Limettensaft",
       "shortName": "Lime",
       "description": "Frisch gepresster Limettensaft",
       "price": 0.5,
-      "tags": ["saft", "sauer"]
+      "tags": ["saft", "sauer"],
+      "unitName": "CL",
+      "volume": 2
     },
     {
       "name": "Zitronensaft",
       "shortName": "Lemon",
       "description": "Frisch gepresster Zitronensaft",
       "price": 0.5,
-      "tags": ["saft", "sauer"]
+      "tags": ["saft", "sauer"],
+      "unitName": "CL",
+      "volume": 2
     },
     {
       "name": "Cranberry-Saft",
       "shortName": "Cranberry",
       "description": "Cranberry-Saft",
       "price": 1.5,
-      "tags": ["saft", "süß"]
+      "tags": ["saft", "süß"],
+      "unitName": "CL",
+      "volume": 100
     },
     {
       "name": "Orangensaft",
       "shortName": "Orange",
       "description": "Frisch gepresster Orangensaft",
       "price": 0.8,
-      "tags": ["saft", "süß"]
+      "tags": ["saft", "süß"],
+      "unitName": "CL",
+      "volume": 100
     },
     {
       "name": "Zuckersirup",
       "shortName": "Simple",
       "description": "Einfacher Zuckersirup",
       "price": 0.2,
-      "tags": ["süß", "sirup"]
+      "tags": ["süß", "sirup"],
+      "unitName": "CL",
+      "volume": 35
     },
     {
       "name": "Soda",
       "shortName": "Soda",
       "description": "Sodawasser",
       "price": 0.3,
-      "tags": ["mischgetränk", "sprudel"]
+      "tags": ["mischgetränk", "sprudel"],
+      "unitName": "CL",
+      "volume": 33
     },
     {
       "name": "Tonic Water",
       "shortName": "Tonic",
       "description": "Tonic Water",
       "price": 0.5,
-      "tags": ["mischgetränk", "sprudel"]
+      "tags": ["mischgetränk", "sprudel"],
+      "unitName": "CL",
+      "volume": 25
     },
     {
       "name": "Bitters",
       "shortName": "Bitters",
       "description": "Angostura Bitters",
       "price": 8.99,
-      "tags": ["gewürz", "aroma"]
+      "tags": ["gewürz", "aroma"],
+      "unitName": "DASH",
+      "volume": 1
     },
     {
       "name": "Minze",
       "shortName": "Minze",
       "description": "Frische Minzblätter",
       "price": 0.1,
-      "tags": ["kräuter", "garnitur"]
+      "tags": ["kräuter", "garnitur"],
+      "unitName": "PIECE",
+      "volume": 1
     }
   ],
   "garnishes": [

@@ -1,4 +1,5 @@
 import prisma from '../../../../../../prisma/prisma';
+import { createLog } from '../../../../../../lib/auditLog';
 
 import { NextApiRequest, NextApiResponse } from 'next';
 import HTTPMethod from 'http-method-enum';
@@ -44,6 +45,14 @@ export default withHttpMethods({
       try {
         await prisma.$transaction(async (transaction) => {
           const { name, price, id, shortName, link, tags, image, notes, description, units } = req.body;
+
+          const oldIngredient = await transaction.ingredient.findUnique({
+            where: { id: id },
+            include: {
+              IngredientVolume: { include: { unit: true } },
+              IngredientImage: true,
+            },
+          });
 
           const input: IngredientUpdateInput = {
             id: id,
@@ -110,6 +119,16 @@ export default withHttpMethods({
             }
           }
 
+          const fullNewIngredient = await transaction.ingredient.findUnique({
+            where: { id: result.id },
+            include: {
+              IngredientVolume: { include: { unit: true } },
+              IngredientImage: true,
+            },
+          });
+
+          await createLog(transaction, workspace.id, user.id, 'Ingredient', result.id, 'UPDATE', oldIngredient, fullNewIngredient);
+
           return res.json({ data: result });
         });
       } catch (error) {
@@ -165,13 +184,26 @@ export default withHttpMethods({
         });
       }
 
-      const result = await prisma.ingredient.delete({
-        where: {
-          id: ingredientId,
-          workspaceId: workspace.id,
-        },
+      await prisma.$transaction(async (tx) => {
+        const oldIngredient = await tx.ingredient.findUnique({
+          where: { id: ingredientId },
+          include: {
+            IngredientVolume: { include: { unit: true } },
+            IngredientImage: true,
+          },
+        });
+
+        await tx.ingredient.delete({
+          where: {
+            id: ingredientId,
+            workspaceId: workspace.id,
+          },
+        });
+
+        await createLog(tx, workspace.id, user.id, 'Ingredient', ingredientId, 'DELETE', oldIngredient, null);
       });
-      return res.json({ data: result });
+
+      return res.json({ data: { count: 1 } });
     },
   ),
 });

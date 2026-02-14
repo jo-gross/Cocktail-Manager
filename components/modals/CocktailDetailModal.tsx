@@ -1,6 +1,6 @@
 import { CocktailRecipeFull } from '../../models/CocktailRecipeFull';
 import Link from 'next/link';
-import { FaArrowLeft, FaFileDownload, FaInfo, FaPencilAlt, FaPlus, FaSyncAlt, FaTimes } from 'react-icons/fa';
+import { FaArrowLeft, FaFileDownload, FaHistory, FaInfo, FaPencilAlt, FaPlus, FaSyncAlt, FaTimes } from 'react-icons/fa';
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
@@ -24,6 +24,7 @@ import { FaArrowRotateLeft } from 'react-icons/fa6';
 import { alertService } from '@lib/alertService';
 import '../../lib/NumberUtils';
 import CocktailExportOptionsModal, { CocktailExportOptions } from './CocktailExportOptionsModal';
+import { AuditLogHistoryModal } from './AuditLogHistoryModal';
 
 interface CocktailDetailModalProps {
   cocktailId: string;
@@ -178,6 +179,15 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                 <FaFileDownload />
               </button>
             )}
+            <button
+              className={'btn btn-square btn-outline btn-sm'}
+              title="Verlauf anzeigen"
+              onClick={() =>
+                modalContext.openModal(<AuditLogHistoryModal entityType={'CocktailRecipe'} entityId={loadedCocktail.id} entityName={loadedCocktail.name} />)
+              }
+            >
+              <FaHistory />
+            </button>
             <>
               {userContext.isUserPermitted(Role.MANAGER) && (
                 <Link href={`/workspaces/${workspaceId}/manage/cocktails/${loadedCocktail.id}`}>

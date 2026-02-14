@@ -1,6 +1,7 @@
 // pages/api/post/index.ts
 
 import prisma from '../../../../../prisma/prisma';
+import { createLog } from '../../../../../lib/auditLog';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
 import { Permission, Prisma, Role, Workspace } from '@generated/prisma/client';
@@ -104,7 +105,7 @@ export default withHttpMethods({
           }
 
           if (image) {
-            const imageResult = await transaction.ingredientImage.create({
+            await transaction.ingredientImage.create({
               data: {
                 image: image,
                 ingredient: {
@@ -115,6 +116,16 @@ export default withHttpMethods({
               },
             });
           }
+
+          const fullIngredient = await transaction.ingredient.findUnique({
+            where: { id: result.id },
+            include: {
+              IngredientVolume: { include: { unit: true } },
+              IngredientImage: true,
+            },
+          });
+
+          await createLog(transaction, workspace.id, user.id, 'Ingredient', result.id, 'CREATE', null, fullIngredient);
 
           return res.json({ data: result });
         });
