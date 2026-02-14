@@ -1,3 +1,20 @@
+# [1.20.0](https://github.com/jo-gross/Cocktail-Manager/compare/v1.19.0...v1.20.0) (2026-02-14)
+
+
+### Bug Fixes
+
+* fixed statistics refresh on selected date change ([#893](https://github.com/jo-gross/Cocktail-Manager/issues/893)) ([ce6c7a3](https://github.com/jo-gross/Cocktail-Manager/commit/ce6c7a3a8bb93baabb07b8fabf98ba30d1f070f5))
+* statistic charts with workspace start time ([af38b31](https://github.com/jo-gross/Cocktail-Manager/commit/af38b31aab136e5d60f0e82dd0c729bb0119aa74))
+
+
+### Features
+
+* added "alternative" option to cocktail garnishes ([#907](https://github.com/jo-gross/Cocktail-Manager/issues/907)) ([7999f06](https://github.com/jo-gross/Cocktail-Manager/commit/7999f0614217c3f71ecd5e8dfa90b5004fd77ae1))
+* added audit log to entities (cockctail recipes, glasses, garnishes, ingredients and calculations) ([#908](https://github.com/jo-gross/Cocktail-Manager/issues/908)) ([447ee8f](https://github.com/jo-gross/Cocktail-Manager/commit/447ee8f0cdc31adaf2e5b9f4db8ffe18fdbf4a70))
+* added email notifications for join behavior ([#894](https://github.com/jo-gross/Cocktail-Manager/issues/894)) ([5bbb68b](https://github.com/jo-gross/Cocktail-Manager/commit/5bbb68b3955bfcb54e1a289f7e2ae82ce39ae3b3))
+* added openid group mapping ([#901](https://github.com/jo-gross/Cocktail-Manager/issues/901)) ([9df3dd0](https://github.com/jo-gross/Cocktail-Manager/commit/9df3dd082ae402788e55cfc295e0ba58adc627ad))
+* export selected cocktails and advanced import ([#880](https://github.com/jo-gross/Cocktail-Manager/issues/880)) ([5071963](https://github.com/jo-gross/Cocktail-Manager/commit/5071963b9de4cf03b848e7d6258578d25d0c5383))
+
 # [1.19.0](https://github.com/jo-gross/Cocktail-Manager/compare/v1.18.1...v1.19.0) (2026-01-16)
 
 
