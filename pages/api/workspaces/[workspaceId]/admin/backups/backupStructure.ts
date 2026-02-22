@@ -1,5 +1,6 @@
 import {
   CocktailCalculation,
+  CocktailCalculationGroup,
   CocktailCalculationItems,
   CocktailCard,
   CocktailCardGroup,
@@ -44,6 +45,7 @@ export interface BackupStructure {
   cocktailCardGroup: CocktailCardGroup[];
   cocktailCardGroupItem: CocktailCardGroupItem[];
   calculation: CocktailCalculation[];
+  calculationGroups: CocktailCalculationGroup[];
   calculationItems: CocktailCalculationItems[];
   ice: Ice[];
 }

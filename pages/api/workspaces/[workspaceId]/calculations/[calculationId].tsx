@@ -20,6 +20,7 @@ export default withHttpMethods({
         workspaceId: workspace.id,
       },
       include: {
+        group: true,
         updatedByUser: true,
         cocktailCalculationItems: {
           include: {
@@ -83,9 +84,21 @@ export default withHttpMethods({
   [HTTPMethod.PUT]: withWorkspacePermission([Role.USER], Permission.CALCULATIONS_UPDATE, async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
     const calculationId = req.query.calculationId as string | undefined;
     if (!calculationId) return res.status(400).json({ message: 'No calculationId id' });
-    const { name, calculationItems, showSalesStuff, ingredientShoppingUnits } = req.body;
+    const { name, calculationItems, showSalesStuff, ingredientShoppingUnits, groupId } = req.body;
 
     const result = await prisma.$transaction(async (tx) => {
+      let targetGroupId: string | null = null;
+      if (groupId) {
+        const group = await tx.cocktailCalculationGroup.findFirst({
+          where: { id: groupId, workspaceId: workspace.id },
+          select: { id: true },
+        });
+        if (!group) {
+          throw new Error('Ungültige Gruppe');
+        }
+        targetGroupId = group.id;
+      }
+
       const oldCalculation = await tx.cocktailCalculation.findUnique({
         where: { id: calculationId },
         include: {
@@ -121,6 +134,13 @@ export default withHttpMethods({
             checked: ingredientShoppingUnit.checked,
           })),
         },
+        group: targetGroupId
+          ? {
+              connect: { id: targetGroupId },
+            }
+          : {
+              disconnect: true,
+            },
       };
 
       await tx.cocktailCalculationItems.deleteMany({

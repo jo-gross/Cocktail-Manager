@@ -344,7 +344,19 @@ export default function CalculationPage() {
           });
       }
     },
-    [ingredientShoppingUnits, id, calculationName, showSalesStuff, cocktailCalculationItems, workspaceId, router],
+    [
+      ingredientShoppingUnits,
+      id,
+      calculationName,
+      showSalesStuff,
+      cocktailCalculationItems,
+      workspaceId,
+      router,
+      originalItems,
+      originalIngredientShoppingUnits,
+      originalName,
+      originalShowSalesStuff,
+    ],
   );
 
   useEffect(() => {

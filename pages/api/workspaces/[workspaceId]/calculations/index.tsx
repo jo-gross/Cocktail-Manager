@@ -16,6 +16,7 @@ export default withHttpMethods({
         workspaceId: workspace.id,
       },
       include: {
+        group: true,
         updatedByUser: true,
         cocktailCalculationItems: {
           include: {
@@ -30,9 +31,21 @@ export default withHttpMethods({
     [Role.USER],
     Permission.CALCULATIONS_CREATE,
     async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
-      const { name, calculationItems, showSalesStuff, ingredientShoppingUnits } = req.body;
+      const { name, calculationItems, showSalesStuff, ingredientShoppingUnits, groupId } = req.body;
 
       const result = await prisma.$transaction(async (tx) => {
+        let targetGroupId: string | null = null;
+        if (groupId) {
+          const group = await tx.cocktailCalculationGroup.findFirst({
+            where: { id: groupId, workspaceId: workspace.id },
+            select: { id: true },
+          });
+          if (!group) {
+            throw new Error('Ungültige Gruppe');
+          }
+          targetGroupId = group.id;
+        }
+
         const input: CocktailCalculationCreateInput = {
           name: name,
           showSalesStuff: showSalesStuff,
@@ -64,6 +77,13 @@ export default withHttpMethods({
               id: user.id,
             },
           },
+          ...(targetGroupId
+            ? {
+                group: {
+                  connect: { id: targetGroupId },
+                },
+              }
+            : {}),
         };
 
         const createdCalculation = await tx.cocktailCalculation.create({

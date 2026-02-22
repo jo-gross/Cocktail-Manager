@@ -6,9 +6,25 @@ import { Role } from '@generated/prisma/client';
 import { withHttpMethods } from '@middleware/api/handleMethods';
 import HTTPMethod from 'http-method-enum';
 
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '500mb',
+    },
+    responseLimit: false,
+  },
+};
+
 export default withHttpMethods({
   [HTTPMethod.GET]: withWorkspacePermission([Role.USER], async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
     const workspaceId = workspace.id;
+    const workspaceSettings = await prisma.workspaceSetting.findMany({ where: { workspaceId } });
+    const translationsSetting = workspaceSettings.find((setting) => setting.setting === 'translations');
+    console.info(`[BackupExport][${workspaceId}] Export started`, {
+      workspaceSettings: workspaceSettings.length,
+      hasTranslations: Boolean(translationsSetting?.value),
+      translationsSize: translationsSetting?.value?.length ?? 0,
+    });
     const cocktailRecipes = await prisma.cocktailRecipe.findMany({ where: { workspaceId } });
     const cocktailRecipeSteps = await prisma.cocktailRecipeStep.findMany({
       where: {
@@ -28,12 +44,13 @@ export default withHttpMethods({
     });
 
     const calculations = await prisma.cocktailCalculation.findMany({ where: { workspaceId } });
+    const calculationGroups = await prisma.cocktailCalculationGroup.findMany({ where: { workspaceId } });
 
     const backup: BackupStructure = {
       ice: await prisma.ice.findMany({ where: { workspaceId } }),
       units: await prisma.unit.findMany({ where: { workspaceId } }),
       unitConversions: await prisma.unitConversion.findMany({ where: { workspaceId } }),
-      workspaceSettings: await prisma.workspaceSetting.findMany({ where: { workspaceId } }),
+      workspaceSettings,
       stepActions: await prisma.workspaceCocktailRecipeStepAction.findMany({ where: { workspaceId } }),
       garnish: await prisma.garnish.findMany({ where: { workspaceId } }),
       garnishImages: await prisma.garnishImage.findMany({
@@ -99,6 +116,7 @@ export default withHttpMethods({
         },
       }),
       calculation: calculations,
+      calculationGroups,
       calculationItems: await prisma.cocktailCalculationItems.findMany({
         where: {
           calculationId: {
@@ -108,6 +126,11 @@ export default withHttpMethods({
       }),
     };
 
+    console.info(`[BackupExport][${workspaceId}] Export finished`, {
+      cocktails: backup.cocktailRecipe.length,
+      ingredients: backup.ingredient.length,
+      calculations: backup.calculation.length,
+    });
     return res.json(backup);
   }),
 });

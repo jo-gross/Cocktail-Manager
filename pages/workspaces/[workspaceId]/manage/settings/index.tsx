@@ -326,7 +326,7 @@ function WorkspaceSettingPage() {
   }, [workspaceId]);
 
   return (
-    <ManageEntityLayout backLink={`/workspaces/${workspaceId}/manage`} title={'Workspace-Einstellungen'}>
+    <ManageEntityLayout backLink={`/workspaces/${workspaceId}/manage`} title={`Workspace-Einstellungen - ${userContext.workspace?.name}`}>
       <div className={'grid grid-flow-row-dense grid-cols-1 gap-2 md:grid-cols-2 md:gap-4'}>
         {/*Cocktail Recipe Actions*/}
         {userContext.isUserPermitted(Role.ADMIN) ? (
@@ -823,7 +823,7 @@ function WorkspaceSettingPage() {
                   {importing ? <span className="loading loading-spinner"></span> : <></>}
                   Import
                 </button>
-                <button className={`btn btn-primary`} onClick={exportAll} disabled={exporting}>
+                <button className={`btn btn-primary`} type={'button'} onClick={exportAll} disabled={exporting}>
                   {exporting ? <span className="loading loading-spinner"></span> : <></>}
                   Export All
                 </button>
@@ -842,7 +842,7 @@ function WorkspaceSettingPage() {
               <div className={'card-body'}>
                 <div className={'card-title'}>Gefahrenbereich</div>
                 <label className={'label cursor-pointer'}>
-                  <span className={'label-text'}>Gefahrenbereich verlassen</span>
+                  <span className={'label-text'}>Workspace umbenennen</span>
                 </label>
                 <div className={'join'}>
                   <input

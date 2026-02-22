@@ -258,7 +258,7 @@ export default withHttpMethods({
                 },
                 {
                   id: dropperDropId,
-                  name: 'DROPPER_DROP',
+                  name: 'DROPPER_DROPS',
                 },
                 {
                   id: dropperCmId,
@@ -342,7 +342,7 @@ export default withHttpMethods({
                   CL: 'cl',
                   PIECE: 'Stück',
                   GRAMM: 'Gramm',
-                  DROPPER_DROP: 'Pip. Tropfen',
+                  DROPPER_DROPS: 'Pip. Tropfen',
                   DROPPER_CM: 'Pip. cm',
                   DASH: 'Dash',
                   BAR_SPOON: 'Barlöffel',
