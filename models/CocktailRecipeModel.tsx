@@ -5,5 +5,14 @@ export type CocktailRecipeModel = Prisma.CocktailRecipeGetPayload<{
     _count: { select: { CocktailRecipeImage: true } };
     glass: true;
     garnishes: { include: { garnish: true } };
+    steps: {
+      include: {
+        ingredients: {
+          include: {
+            ingredient: true;
+          };
+        };
+      };
+    };
   };
 }>;
