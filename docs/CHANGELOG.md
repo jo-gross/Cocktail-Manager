@@ -1,3 +1,12 @@
+## [1.20.1](https://github.com/jo-gross/Cocktail-Manager/compare/v1.20.0...v1.20.1) (2026-02-22)
+
+
+### Bug Fixes
+
+* accodion overlaping expand menu button ([1237db3](https://github.com/jo-gross/Cocktail-Manager/commit/1237db369e1fedbf7ab7f349bd1a490e6b51cf02))
+* cocktail overview filter ([#917](https://github.com/jo-gross/Cocktail-Manager/issues/917)) ([a9579ef](https://github.com/jo-gross/Cocktail-Manager/commit/a9579ef13e5e3ae8137b117f1a54d141786d2f57))
+* user can now import calculations ([#915](https://github.com/jo-gross/Cocktail-Manager/issues/915)) ([0411854](https://github.com/jo-gross/Cocktail-Manager/commit/04118548c36468d99e6409ec4373325a1990ba8d))
+
 # [1.20.0](https://github.com/jo-gross/Cocktail-Manager/compare/v1.19.0...v1.20.0) (2026-02-14)
 
 
