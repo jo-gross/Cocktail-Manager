@@ -31,6 +31,11 @@ interface MappingEntity {
   decision: 'import' | 'overwrite' | 'rename' | 'skip';
   existingId?: string;
   newName?: string;
+  groupDecision?: 'keep-exported' | 'use-existing' | 'create-new' | 'no-group';
+  existingGroupId?: string;
+  newGroupName?: string;
+  newGroupDefaultExpanded?: boolean;
+  exportedGroupName?: string | null;
 }
 
 interface DependencyMatch {
@@ -49,6 +54,12 @@ interface ImportResult {
   name: string;
   status: string;
   message?: string;
+}
+
+interface CalculationGroupOption {
+  id: string;
+  name: string;
+  isDefaultExpanded: boolean;
 }
 
 // ────────────── Constants ──────────────
@@ -214,6 +225,7 @@ export default function EntityImportModal({ workspaceId, entityType, onImportCom
   const [cocktailMappings, setCocktailMappings] = useState<DependencyMapping[]>([]);
   const [ingredientMappings, setIngredientMappings] = useState<DependencyMapping[]>([]);
   const [unitMappings, setUnitMappings] = useState<DependencyMapping[]>([]);
+  const [calculationGroups, setCalculationGroups] = useState<CalculationGroupOption[]>([]);
 
   const [results, setResults] = useState<ImportResult[]>([]);
   const [importing, setImporting] = useState(false);
@@ -291,12 +303,18 @@ export default function EntityImportModal({ workspaceId, entityType, onImportCom
         decision: entity.conflicts?.length > 0 ? 'overwrite' : 'import',
         existingId: entity.conflicts?.[0]?.id,
         newName: '',
+        groupDecision: entity.data?.calculation?.groupName ? 'keep-exported' : 'no-group',
+        existingGroupId: undefined,
+        newGroupName: '',
+        newGroupDefaultExpanded: false,
+        exportedGroupName: entity.data?.calculation?.groupName ?? null,
       }));
 
       setMappingEntities(entities);
 
       // Handle calculation-specific dependency mapping
       if (isCalculation) {
+        setCalculationGroups(result.calculationGroups || []);
         setCocktailMatches(result.cocktailMatches || []);
         setIngredientMatches(result.ingredientMatches || []);
         setUnitMatches(result.unitMatches || []);
@@ -344,6 +362,10 @@ export default function EntityImportModal({ workspaceId, entityType, onImportCom
         decision: entity.decision,
         existingId: entity.decision === 'overwrite' ? entity.existingId : undefined,
         newName: entity.decision === 'rename' ? entity.newName : undefined,
+        groupDecision: isCalculation ? entity.groupDecision : undefined,
+        existingGroupId: isCalculation && entity.groupDecision === 'use-existing' ? entity.existingGroupId : undefined,
+        newGroupName: isCalculation && entity.groupDecision === 'create-new' ? entity.newGroupName : undefined,
+        newGroupDefaultExpanded: isCalculation && entity.groupDecision === 'create-new' ? entity.newGroupDefaultExpanded : undefined,
         data: entity.data,
       }));
 
@@ -433,6 +455,14 @@ export default function EntityImportModal({ workspaceId, entityType, onImportCom
     (cocktailMappings.some((m) => m.decision === 'skip') ||
       ingredientMappings.some((m) => m.decision === 'skip') ||
       unitMappings.some((m) => m.decision === 'skip'));
+  const hasInvalidGroupAssignments =
+    isCalculation &&
+    mappingEntities.some((entity) => {
+      if (entity.decision === 'skip') return false;
+      if (entity.groupDecision === 'use-existing') return !entity.existingGroupId;
+      if (entity.groupDecision === 'create-new') return !entity.newGroupName || entity.newGroupName.trim() === '';
+      return false;
+    });
   const singleEntity = mappingEntities.length === 1;
 
   const stepLabels = isCalculation ? ['Upload', 'Konflikte', 'Zuordnung', 'Import'] : ['Upload', 'Konflikte', 'Import'];
@@ -657,6 +687,104 @@ export default function EntityImportModal({ workspaceId, entityType, onImportCom
                         )}
                       </div>
                     )}
+
+                    {isCalculation && (
+                      <div className="mt-3 rounded-md border border-base-300 bg-base-200/40 p-2">
+                        <div className="mb-2 text-sm font-semibold">Ordner-Zuordnung</div>
+                        <div className="flex flex-col gap-1">
+                          <label className="flex cursor-pointer items-center gap-2">
+                            <input
+                              type="radio"
+                              className="radio radio-sm"
+                              name={`group-decision-${idx}`}
+                              checked={entity.groupDecision === 'keep-exported'}
+                              disabled={!entity.exportedGroupName}
+                              onChange={() => updateMappingDecision(idx, { groupDecision: 'keep-exported' })}
+                            />
+                            <span className="text-sm">
+                              Export-Ordner verwenden
+                              {entity.exportedGroupName ? ` (${entity.exportedGroupName})` : ' (kein Ordner im Export)'}
+                            </span>
+                          </label>
+                          <label className="flex cursor-pointer items-center gap-2">
+                            <input
+                              type="radio"
+                              className="radio radio-sm"
+                              name={`group-decision-${idx}`}
+                              checked={entity.groupDecision === 'use-existing'}
+                              onChange={() =>
+                                updateMappingDecision(idx, {
+                                  groupDecision: 'use-existing',
+                                  existingGroupId: entity.existingGroupId ?? calculationGroups[0]?.id,
+                                })
+                              }
+                            />
+                            <span className="text-sm">Bestehenden Ordner auswählen</span>
+                          </label>
+                          {entity.groupDecision === 'use-existing' && (
+                            <select
+                              className="select select-bordered select-sm ml-6 mt-1 w-full max-w-xs"
+                              value={entity.existingGroupId ?? ''}
+                              onChange={(event) => updateMappingDecision(idx, { existingGroupId: event.target.value })}
+                            >
+                              <option value={''} disabled>
+                                Ordner auswählen
+                              </option>
+                              {calculationGroups.map((group) => (
+                                <option key={group.id} value={group.id}>
+                                  {group.name}
+                                </option>
+                              ))}
+                            </select>
+                          )}
+                          <label className="flex cursor-pointer items-center gap-2">
+                            <input
+                              type="radio"
+                              className="radio radio-sm"
+                              name={`group-decision-${idx}`}
+                              checked={entity.groupDecision === 'create-new'}
+                              onChange={() =>
+                                updateMappingDecision(idx, {
+                                  groupDecision: 'create-new',
+                                  newGroupName: entity.newGroupName || entity.exportedGroupName || `${entity.name} Gruppe`,
+                                })
+                              }
+                            />
+                            <span className="text-sm">Neuen Ordner erstellen</span>
+                          </label>
+                          {entity.groupDecision === 'create-new' && (
+                            <div className="ml-6 mt-1 flex max-w-md flex-col gap-2">
+                              <input
+                                type="text"
+                                className="input input-sm input-bordered w-full"
+                                placeholder="Ordnername"
+                                value={entity.newGroupName || ''}
+                                onChange={(event) => updateMappingDecision(idx, { newGroupName: event.target.value })}
+                              />
+                              <label className="flex cursor-pointer items-center gap-2">
+                                <input
+                                  type="checkbox"
+                                  className="checkbox checkbox-sm"
+                                  checked={Boolean(entity.newGroupDefaultExpanded)}
+                                  onChange={(event) => updateMappingDecision(idx, { newGroupDefaultExpanded: event.target.checked })}
+                                />
+                                <span className="text-xs">Standardmäßig aufgeklappt</span>
+                              </label>
+                            </div>
+                          )}
+                          <label className="flex cursor-pointer items-center gap-2">
+                            <input
+                              type="radio"
+                              className="radio radio-sm"
+                              name={`group-decision-${idx}`}
+                              checked={entity.groupDecision === 'no-group'}
+                              onChange={() => updateMappingDecision(idx, { groupDecision: 'no-group' })}
+                            />
+                            <span className="text-sm">Ohne Ordner importieren</span>
+                          </label>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -666,7 +794,7 @@ export default function EntityImportModal({ workspaceId, entityType, onImportCom
               <button className="btn btn-outline" onClick={() => setCurrentStep(1)}>
                 Zurück
               </button>
-              <button className="btn btn-primary" onClick={() => setCurrentStep(hasDependencyMappings ? 3 : totalSteps)}>
+              <button className="btn btn-primary" onClick={() => setCurrentStep(hasDependencyMappings ? 3 : totalSteps)} disabled={hasInvalidGroupAssignments}>
                 Weiter
               </button>
             </div>
@@ -810,6 +938,18 @@ export default function EntityImportModal({ workspaceId, entityType, onImportCom
                           {entity.name}
                           {entity.decision === 'rename' && entity.newName && ` → ${entity.newName}`}
                         </span>
+                        {isCalculation && entity.decision !== 'skip' && (
+                          <span className="text-xs text-base-content/60">
+                            {' · '}
+                            {entity.groupDecision === 'no-group'
+                              ? 'ohne Ordner'
+                              : entity.groupDecision === 'use-existing'
+                                ? `Ordner: ${calculationGroups.find((g) => g.id === entity.existingGroupId)?.name ?? 'bestehend'}`
+                                : entity.groupDecision === 'create-new'
+                                  ? `Neuer Ordner: ${entity.newGroupName || '–'}`
+                                  : `Export-Ordner: ${entity.exportedGroupName || '–'}`}
+                          </span>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -861,6 +1001,12 @@ export default function EntityImportModal({ workspaceId, entityType, onImportCom
                 <span>Einige Cocktails, Zutaten oder Einheiten konnten nicht zugeordnet werden und werden beim Import übersprungen.</span>
               </div>
             )}
+            {isCalculation && hasInvalidGroupAssignments && (
+              <div className="flex items-start gap-2 rounded-lg border border-error p-2 text-sm text-error">
+                <FaTimesCircle className="mt-0.5 shrink-0" />
+                <span>Bitte vervollständigen Sie die Ordnerzuordnung (bestehenden Ordner wählen oder neuen Namen angeben).</span>
+              </div>
+            )}
 
             {importing ? (
               <div className="flex flex-col items-center justify-center gap-4 py-8">
@@ -873,7 +1019,11 @@ export default function EntityImportModal({ workspaceId, entityType, onImportCom
                 <button className="btn btn-outline" onClick={() => setCurrentStep(isCalculation ? 3 : 2)}>
                   Zurück
                 </button>
-                <button className="btn btn-primary" onClick={handleExecute} disabled={mappingEntities.every((e) => e.decision === 'skip')}>
+                <button
+                  className="btn btn-primary"
+                  onClick={handleExecute}
+                  disabled={mappingEntities.every((e) => e.decision === 'skip') || hasInvalidGroupAssignments}
+                >
                   Import starten
                 </button>
               </div>

@@ -19,6 +19,7 @@ export default withHttpMethods({
       const calculations = await prisma.cocktailCalculation.findMany({
         where: { id: { in: ids }, workspaceId: workspace.id },
         include: {
+          group: true,
           cocktailCalculationItems: {
             include: { cocktail: { select: { name: true } } },
           },
@@ -44,6 +45,8 @@ export default withHttpMethods({
           showSalesStuff: calc.showSalesStuff,
           workspaceId: calc.workspaceId,
           updatedByUserId: calc.updatedByUserId,
+          groupId: calc.groupId,
+          groupName: calc.group?.name ?? null,
         },
         cocktailCalculationItems: calc.cocktailCalculationItems.map((item) => ({
           calculationId: calc.id,

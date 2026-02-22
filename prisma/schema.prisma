@@ -188,6 +188,7 @@ model Workspace {
   Ingredient                        Ingredient[]
   CocktailCard                      CocktailCard[]
   CocktailCalculation               CocktailCalculation[]
+  CocktailCalculationGroup          CocktailCalculationGroup[]
   Signage                           Signage[]
   WorkspaceCocktailRecipeStepAction WorkspaceCocktailRecipeStepAction[]
   WorkspaceSetting                  WorkspaceSetting[]
@@ -421,6 +422,9 @@ model CocktailCalculation {
   name String
 
   showSalesStuff Boolean @default(true)
+  updatedAt      DateTime @default(now()) @updatedAt
+  groupId        String?
+  group          CocktailCalculationGroup? @relation(fields: [groupId], references: [id], onDelete: SetNull)
 
   workspaceId              String
   workspace                Workspace                           @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
@@ -428,6 +432,21 @@ model CocktailCalculation {
   updatedByUser            User                                @relation(fields: [updatedByUserId], references: [id], onDelete: Cascade)
   cocktailCalculationItems CocktailCalculationItems[]
   ingredientShoppingUnits  CalculationIngredientShoppingUnit[]
+}
+
+model CocktailCalculationGroup {
+  id                String               @id @default(cuid())
+  name              String
+  isDefaultExpanded Boolean              @default(false)
+  workspaceId       String
+  workspace         Workspace            @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  calculations      CocktailCalculation[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@unique([workspaceId, name])
+  @@index([workspaceId])
 }
 
 model CocktailStatisticItem {

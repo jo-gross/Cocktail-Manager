@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "CocktailCalculation"
+    ADD COLUMN "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;

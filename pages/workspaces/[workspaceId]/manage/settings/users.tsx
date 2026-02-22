@@ -102,7 +102,7 @@ export default function ManageUsersPage() {
   }, [fetchWorkspaceUsers, workspaceId]);
 
   return (
-    <ManageEntityLayout backLink={`/workspaces/${workspaceId}/manage`} title={'Workspace-Einstellungen'}>
+    <ManageEntityLayout backLink={`/workspaces/${workspaceId}/manage`} title={`Workspace-Einstellungen - ${userContext.workspace?.name}`}>
       <div className={'grid grid-cols-1 gap-2 md:grid-cols-2'}>
         {userContext.workspace?.isExternallyManaged && (
           <div role="alert" className="alert alert-warning md:col-span-2">

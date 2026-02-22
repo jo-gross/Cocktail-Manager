@@ -2,6 +2,7 @@ import { Prisma } from '@generated/prisma/client';
 
 export type CocktailCalculationOverview = Prisma.CocktailCalculationGetPayload<{
   include: {
+    group: true;
     updatedByUser: true;
     cocktailCalculationItems: {
       include: {
@@ -9,4 +10,6 @@ export type CocktailCalculationOverview = Prisma.CocktailCalculationGetPayload<{
       };
     };
   };
-}>;
+}> & {
+  updatedAt: Date;
+};

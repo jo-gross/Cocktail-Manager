@@ -2,6 +2,7 @@ import { FaEllipsisV, FaFileDownload, FaHistory, FaRegClone, FaRegEdit, FaTrashA
 import { useRouter } from 'next/router';
 import { alertService } from '@lib/alertService';
 import { useContext, useState, useRef, useEffect, useCallback } from 'react';
+import { ReactNode } from 'react';
 import { UserContext } from '@lib/context/UserContextProvider';
 import Link from 'next/link';
 import { Role } from '@generated/prisma/client';
@@ -22,6 +23,13 @@ interface ManageColumnProps {
   onExportPdf?: (id: string) => void;
   exportingJson?: boolean;
   exportingPdf?: boolean;
+  customActions?: {
+    label: string;
+    icon?: ReactNode;
+    onClick: (id: string) => void;
+    disabled?: boolean;
+    isDanger?: boolean;
+  }[];
 }
 
 interface Reference {
@@ -282,6 +290,9 @@ export function ManageColumn(props: ManageColumnProps) {
   const canDuplicate =
     (props.entity === 'cocktails' || props.entity === 'ingredients' || props.entity === 'glasses' || props.entity === 'garnishes') &&
     userContext.isUserPermitted(Role.MANAGER);
+  const hasExportActions = Boolean(props.onExportJson || props.onExportPdf);
+  const hasCustomActions = Boolean(props.customActions && props.customActions.length > 0);
+  const hasDuplicateOrExportActions = canDuplicate || hasExportActions;
 
   if (!canEdit) {
     return <td></td>;
@@ -309,6 +320,23 @@ export function ManageColumn(props: ManageColumnProps) {
                 Bearbeiten
               </Link>
             </li>
+            {props.customActions?.map((action, index) => (
+              <li key={`custom-action-${index}`}>
+                <button
+                  type="button"
+                  className={`flex items-center gap-2 ${action.isDanger ? 'text-error' : ''}`}
+                  onClick={() => {
+                    setIsDropdownOpen(false);
+                    action.onClick(props.id);
+                  }}
+                  disabled={action.disabled}
+                >
+                  {action.icon}
+                  {action.label}
+                </button>
+              </li>
+            ))}
+            {hasDuplicateOrExportActions && <div className="divider-sm my-1" />}
             {props.onExportJson && (
               <li>
                 <button
@@ -357,22 +385,7 @@ export function ManageColumn(props: ManageColumnProps) {
                 </button>
               </li>
             )}
-            {canDelete && (
-              <li>
-                <button
-                  type="button"
-                  className="flex items-center gap-2 text-error"
-                  onClick={() => {
-                    setIsDropdownOpen(false);
-                    handleDeleteClick();
-                  }}
-                  disabled={isCheckingReferences}
-                >
-                  {isCheckingReferences ? <span className={'loading loading-spinner loading-sm'} /> : <FaTrashAlt />}
-                  Löschen
-                </button>
-              </li>
-            )}
+            <div className="divider-sm my-1" />
             <li>
               <button
                 type="button"
@@ -402,6 +415,23 @@ export function ManageColumn(props: ManageColumnProps) {
                 Verlauf anzeigen
               </button>
             </li>
+            {canDelete && <div className="divider-sm my-1" />}
+            {canDelete && (
+              <li>
+                <button
+                  type="button"
+                  className="flex items-center gap-2 text-error"
+                  onClick={() => {
+                    setIsDropdownOpen(false);
+                    handleDeleteClick();
+                  }}
+                  disabled={isCheckingReferences}
+                >
+                  {isCheckingReferences ? <span className={'loading loading-spinner loading-sm'} /> : <FaTrashAlt />}
+                  Löschen
+                </button>
+              </li>
+            )}
           </ul>,
           document.body,
         )

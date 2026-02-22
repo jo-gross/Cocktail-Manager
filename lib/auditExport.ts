@@ -65,6 +65,8 @@ export interface CocktailCalculationExportStructure {
     showSalesStuff?: boolean;
     workspaceId: string;
     updatedByUserId: string;
+    groupId?: string | null;
+    groupName?: string | null;
   };
   cocktailCalculationItems: Array<{
     calculationId: string;
@@ -372,6 +374,8 @@ export function buildCalculationExport(rawData: any, version: string): CocktailC
       showSalesStuff: rawData.showSalesStuff ?? false,
       workspaceId: rawData.workspaceId,
       updatedByUserId: rawData.updatedByUserId,
+      groupId: rawData.groupId ?? null,
+      groupName: rawData.group?.name ?? null,
     },
     cocktailCalculationItems,
     ingredientShoppingUnits,
