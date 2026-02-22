@@ -218,7 +218,7 @@ const CocktailCalculationOverviewPage: NextPageWithPullToRefresh = () => {
           <div className="dropdown dropdown-end">
             <button tabIndex={0} className={'btn btn-outline btn-sm md:btn-md'}>
               <FaFileUpload />
-              Import/Export
+              Import
               <FaChevronDown />
             </button>
             <ul tabIndex={0} className="menu dropdown-content z-[1] mt-2 w-52 gap-1 rounded-box border border-base-200 bg-base-100 p-2 shadow-lg">
