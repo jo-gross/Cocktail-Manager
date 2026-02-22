@@ -802,7 +802,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
         </div>
 
         {!isMenuExpanded && !showSettingsAtBottom ? (
-          <div className={'fixed bottom-2 right-2'}>
+          <div className={'fixed bottom-2 right-2 z-30 print:hidden'}>
             <button
               type={'button'}
               className={'btn btn-square btn-primary btn-sm'}
@@ -817,7 +817,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
           <div
             ref={actionButtonRef}
             className={
-              'bottom-2 right-2 z-10 flex space-y-2 md:bottom-5 md:right-5 print:hidden' + (showSettingsAtBottom ? ' mx-2 justify-end' : ' fixed flex-col')
+              'bottom-2 right-2 z-30 flex space-y-2 md:bottom-5 md:right-5 print:hidden' + (showSettingsAtBottom ? ' mx-2 justify-end' : ' fixed flex-col')
             }
           >
             <div className={'dropdown dropdown-end dropdown-top pt-2' + (showSettingsAtBottom ? ' mr-1' : '')}>
@@ -826,7 +826,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
               </label>
               <div
                 tabIndex={0}
-                className={`dropdown-content h-min w-64 rounded-box bg-base-100 p-2 shadow`}
+                className={`dropdown-content z-[31] h-min w-64 rounded-box bg-base-100 p-2 shadow`}
                 style={{
                   maxHeight: maxDropdownHeight + 'px',
                 }}
