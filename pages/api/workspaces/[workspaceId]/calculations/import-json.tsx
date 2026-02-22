@@ -27,7 +27,7 @@ interface EntityMapping {
 
 export default withHttpMethods({
   [HTTPMethod.POST]: withWorkspacePermission(
-    [Role.MANAGER],
+    [Role.USER],
     Permission.CALCULATIONS_READ,
     async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
       const { phase, exportData, decisions, cocktailMappings, ingredientMappings, unitMappings } = req.body as {
