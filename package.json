@@ -77,7 +77,7 @@
     "@types/react": "18.3.12",
     "@types/react-dom": "18.3.1",
     "@types/react-is": "19.2.0",
-    "autoprefixer": "10.4.24",
+    "autoprefixer": "10.4.27",
     "daisyui": "4.12.23",
     "dotenv": "^17.3.1",
     "eslint": "9.39.2",
