@@ -10,7 +10,7 @@ import { DeleteConfirmationModal } from '@components/modals/DeleteConfirmationMo
 import { alertService } from '@lib/alertService';
 import { FaPlus, FaTrash } from 'react-icons/fa';
 import { Loading } from '@components/Loading';
-import '../../../../../lib/DateUtils';
+import { formatDate as formatDateUtil } from '@lib/DateUtils';
 
 interface ApiKey {
   id: string;
@@ -102,7 +102,7 @@ function ApiKeysPage() {
   const formatDate = (dateString: string | null) => {
     if (!dateString) return 'Nie';
     try {
-      return new Date(dateString).toFormatDateString();
+      return formatDateUtil(new Date(dateString));
     } catch {
       return dateString;
     }

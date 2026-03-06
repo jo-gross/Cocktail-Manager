@@ -4,7 +4,6 @@ import { withWorkspacePermission } from '@middleware/api/authenticationMiddlewar
 import { withHttpMethods } from '@middleware/api/handleMethods';
 import { Role, Permission, WorkspaceSettingKey } from '@generated/prisma/client';
 import HTTPMethod from 'http-method-enum';
-import '../../../../../../../../lib/DateUtils';
 import { formatDateLocal, getStartOfDay, getEndOfDay, getLogicalDate, getStartOfWeek } from '../../../../../../../../lib/dateHelpers';
 
 function determineGranularity(startDate: Date, endDate: Date): 'hour' | 'day' | 'week' | 'month' {

@@ -3,7 +3,7 @@ import { Role } from '@generated/prisma/client';
 import { useRouter } from 'next/router';
 import { useEffect, useRef, useState } from 'react';
 import { Loading } from '@components/Loading';
-import { IngredientForm } from '@components/ingredients/IngredientForm';
+import { IngredientForm, FormValue } from '@components/ingredients/IngredientForm';
 import { alertService } from '@lib/alertService';
 import { withPagePermission } from '@middleware/ui/withPagePermission';
 import { FormikProps } from 'formik';
@@ -19,7 +19,7 @@ function EditCocktailRecipe() {
   const [ingredient, setIngredient] = useState<IngredientWithImage | undefined>(undefined);
 
   const [unsavedChanges, setUnsavedChanges] = useState(false);
-  const formRef: any = useRef<FormikProps<any>>(null);
+  const formRef = useRef<FormikProps<FormValue>>(null);
 
   useEffect(() => {
     if (!id) return;

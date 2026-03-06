@@ -82,7 +82,7 @@ export default function ManagePage() {
               <div className={'divider-sm'}></div>
               <div className={'text-center'}>
                 v{packageInfo.version} -{' '}
-                <Link className={'link'} href={'https://github.com/jo-gross/Cocktail-Manager/blob/master/docs/CHANGELOG.md'} target={'_blank'}>
+                <Link className={'link'} href={'https://github.com/jo-gross/Cocktail-Manager/releases'} target={'_blank'}>
                   Changelog
                 </Link>{' '}
               </div>

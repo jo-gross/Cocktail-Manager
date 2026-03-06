@@ -166,7 +166,7 @@ environment:
 
 ## Runtime vs Build-time Variables
 
-Most environment variables are read at runtime. However, some variables (like `DEPLOYMENT`) may be embedded at build time if exposed through `next.config.js`.
+Most environment variables are read at runtime. However, some variables (like `DEPLOYMENT`) may be embedded at build time if exposed through `next.config.mjs`.
 
 For runtime configuration changes:
 

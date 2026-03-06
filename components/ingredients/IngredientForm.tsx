@@ -26,7 +26,7 @@ import { FormValidationWarningModal } from '../modals/FormValidationWarningModal
 interface IngredientFormProps {
   ingredient?: IngredientWithImage;
   setUnsavedChanges?: (unsavedChanges: boolean) => void;
-  formRef?: React.RefObject<FormikProps<any>>;
+  formRef?: React.RefObject<FormikProps<FormValue>>;
   onSaved?: (id: string) => void;
 }
 
@@ -35,17 +35,20 @@ interface FormUnitValue {
   volume: number;
 }
 
-interface FormValue {
+export interface FormValue {
   name: string;
   shortName: string;
   notes: string;
   description: string;
-  price: number | undefined;
+  price: number | undefined | string;
   units: FormUnitValue[];
   link: string;
   tags: string[];
   image: string | undefined;
   originalImage?: File | undefined;
+  fetchingExternalData?: boolean;
+  volume?: number;
+  selectedUnit?: string;
 }
 
 export function IngredientForm(props: IngredientFormProps) {
@@ -55,7 +58,7 @@ export function IngredientForm(props: IngredientFormProps) {
   const userContext = useContext(UserContext);
   const routingContext = useContext(RoutingContext);
 
-  const formRef = props.formRef || React.createRef<FormikProps<any>>();
+  const formRef = props.formRef || React.createRef<FormikProps<FormValue>>();
 
   const [loadingUnits, setUnitsLoading] = useState(false);
   const [allUnits, setAllUnits] = useState<Unit[]>([]);
@@ -131,7 +134,7 @@ export function IngredientForm(props: IngredientFormProps) {
             shortName: values.shortName?.trim() == '' ? null : values.shortName?.trim(),
             notes: values.notes?.trim() == '' ? null : values.notes?.trim(),
             description: values.description?.trim() == '' ? null : values.description?.trim(),
-            price: values.price == '' ? null : values.price,
+            price: values.price === '' || values.price === undefined ? null : values.price,
             units: values.units || [],
             link: values.link?.trim() == '' ? null : values.link?.trim(),
             tags: values.tags,
@@ -474,7 +477,10 @@ export function IngredientForm(props: IngredientFormProps) {
                                   </td>
                                   <td>{userContext.getTranslation(allUnits.find((availableUnit) => availableUnit.id == unit.unitId)?.name ?? 'N/A', 'de')}</td>
                                   <td>
-                                    {values.price != undefined ? (values.price / unit.volume).toFixed(2).replace(/\D00(?=\D*$)/, '') : '-'} €/
+                                    {values.price != undefined && typeof values.price === 'number'
+                                      ? (values.price / unit.volume).toFixed(2).replace(/\D00(?=\D*$)/, '')
+                                      : '-'}{' '}
+                                    €/
                                     {userContext.getTranslation(allUnits.find((availableUnit) => availableUnit.id == unit.unitId)?.name ?? 'N/A', 'de')}
                                   </td>
                                   <td className={'flex flex-row items-center justify-center'}>
@@ -552,10 +558,11 @@ export function IngredientForm(props: IngredientFormProps) {
                             className={'btn btn-primary join-item btn-sm'}
                             type={'button'}
                             disabled={
-                              loadingUnits || values.volume == 0 || values.selectedUnit == '' || isNaN(values.volume) || values.selectedUnit == undefined
+                              loadingUnits || values.volume == 0 || values.selectedUnit == '' || isNaN(values.volume ?? 0) || values.selectedUnit == undefined
                             }
                             onClick={async () => {
-                              pushUnit({ unitId: values.selectedUnit, volume: values.volume });
+                              const volume = values.volume ?? 0;
+                              pushUnit({ unitId: values.selectedUnit ?? '', volume } as FormUnitValue);
                               await setFieldValue('selectedUnit', '');
                             }}
                           >
@@ -570,12 +577,13 @@ export function IngredientForm(props: IngredientFormProps) {
                             defaultConversions
                               .filter((conversion) => (formRef?.current?.values.units as FormUnitValue[]).map((u) => u.unitId).includes(conversion.fromUnitId))
                               .filter((conversion) => !(formRef?.current?.values.units as FormUnitValue[]).map((u) => u.unitId).includes(conversion.toUnitId))
-                              .map((suggestion) => ({
-                                unitId: suggestion.toUnitId,
-                                volume:
-                                  suggestion.factor *
-                                  (formRef?.current?.values.units as FormUnitValue[]).find((u) => u.unitId == suggestion.fromUnitId)!.volume,
-                              })),
+                              .map((suggestion) => {
+                                const fromUnit = (formRef?.current?.values.units as FormUnitValue[]).find((u) => u.unitId == suggestion.fromUnitId);
+                                return {
+                                  unitId: suggestion.toUnitId,
+                                  volume: suggestion.factor * (fromUnit?.volume ?? 0),
+                                };
+                              }),
                             function (e) {
                               return e.unitId;
                             },
@@ -670,7 +678,7 @@ export function IngredientForm(props: IngredientFormProps) {
                         </div>
                       </div>
                       <div className={'bg-transparent-pattern relative h-32 w-32 rounded-lg'}>
-                        <Image className={'w-fit rounded-lg'} src={values.image} layout={'fill'} objectFit={'contain'} alt={'Ingredient Image'} />
+                        <Image className={'w-fit rounded-lg'} src={values.image ?? ''} layout={'fill'} objectFit={'contain'} alt={'Ingredient Image'} />
                       </div>
                       <div className={'pt-2 font-thin italic'}>
                         Info: Durch Speichern der Zutat wird das Bild dauerhaft zugeschnitten. Das Original wird nicht gespeichert. Falls du später einen

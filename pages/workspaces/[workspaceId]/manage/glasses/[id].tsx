@@ -1,4 +1,4 @@
-import { GlassForm } from '@components/glasses/GlassForm';
+import { GlassForm, GlassFormValues } from '@components/glasses/GlassForm';
 import { ManageEntityLayout } from '@components/layout/ManageEntityLayout';
 import { useRouter } from 'next/router';
 import { useEffect, useRef, useState } from 'react';
@@ -19,7 +19,7 @@ function EditGlassPage() {
   const [glass, setGlass] = useState<GlassWithImage | undefined>(undefined);
 
   const [unsavedChanges, setUnsavedChanges] = useState(false);
-  const formRef: any = useRef<FormikProps<any>>(null);
+  const formRef = useRef<FormikProps<GlassFormValues>>(null);
 
   useEffect(() => {
     if (!id) return;

@@ -262,9 +262,9 @@ export const OrderView = React.memo(function OrderView({ cocktailCards, workspac
   const cocktailsOnSelectedCardIds = selectedCard
     ? new Set<string>(
         selectedCard.groups
-          .flatMap((group: any) => group.items ?? [])
-          .map((item: any) => item.cocktailId)
-          .filter((id: string | undefined) => !!id),
+          .flatMap((group) => group.items ?? [])
+          .map((item) => item.cocktailId)
+          .filter((id: string | undefined): id is string => !!id),
       )
     : new Set<string>();
 
@@ -286,10 +286,11 @@ export const OrderView = React.memo(function OrderView({ cocktailCards, workspac
     );
   };
 
-  const getCocktailsForGroup = (group: any): CocktailRecipeFull[] => {
+  type CocktailCardGroup = CocktailCardFull['groups'][number];
+  const getCocktailsForGroup = (group: CocktailCardGroup): CocktailRecipeFull[] => {
     return group.items
-      .sort((a: any, b: any) => (a.itemNumber ?? 0) - (b.itemNumber ?? 0))
-      .map((item: any) => cocktails.find((c) => c.id === item.cocktailId))
+      .sort((a, b) => (a.itemNumber ?? 0) - (b.itemNumber ?? 0))
+      .map((item) => cocktails.find((c) => c.id === item.cocktailId))
       .filter((cocktail: CocktailRecipeFull | undefined): cocktail is CocktailRecipeFull => !!cocktail && matchesSearchTerm(cocktail));
   };
 
@@ -416,8 +417,8 @@ export const OrderView = React.memo(function OrderView({ cocktailCards, workspac
               ) : (
                 <div className="flex h-full items-stretch gap-2">
                   {selectedCard.groups
-                    .sort((a: any, b: any) => (a.groupNumber ?? 0) - (b.groupNumber ?? 0))
-                    .map((group: any) => {
+                    .sort((a, b) => (a.groupNumber ?? 0) - (b.groupNumber ?? 0))
+                    .map((group) => {
                       const cocktailsInGroup = getCocktailsForGroup(group);
                       if (cocktailsInGroup.length === 0) {
                         return null;

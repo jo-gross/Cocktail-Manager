@@ -12,7 +12,7 @@ import { Loading } from '@components/Loading';
 import ThemeChanger from '../../../components/ThemeChanger';
 import Head from 'next/head';
 import { UserContext } from '@lib/context/UserContextProvider';
-import '../../../lib/DateUtils';
+import { formatDateTimeShort, formatTime } from '@lib/DateUtils';
 import { addCocktailToStatistic, changeQueueProcess, removeCocktailFromQueue } from '@lib/network/cocktailTracking';
 import { CocktailDetailModal } from '@components/modals/CocktailDetailModal';
 import _ from 'lodash';
@@ -59,7 +59,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
 
   // Search modal shortcut (Shift + F)
   useEffect(() => {
-    const handleSearchShortCut = (event: any) => {
+    const handleSearchShortCut = (event: KeyboardEvent) => {
       if (event.shiftKey && event.key === 'F' && modalContext.content.length == 0) {
         // Prüfe, ob der Fokus auf einem Input-Element liegt
         const activeElement = document.activeElement;
@@ -70,7 +70,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
             activeElement.tagName === 'SELECT' ||
             (activeElement as HTMLElement).isContentEditable);
 
-        if (!isInputFocused && !(document.querySelector('#globalModal') as any)?.checked) {
+        if (!isInputFocused && !(document.querySelector('#globalModal') as HTMLDialogElement | null)?.open) {
           modalContext.openModal(<SearchModal showStatisticActions={showStatisticActions} />);
         }
       }
@@ -375,7 +375,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
       ) : (
         ''
       )}
-      {currentTime?.toFormatDateTimeShort()} Uhr
+      {currentTime ? formatDateTimeShort(currentTime) : ''} Uhr
     </div>
   );
 
@@ -453,7 +453,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
             ) : (
               <></>
             )}
-            <span>(seit {new Date(cocktailQueueItem?.oldestTimestamp).toFormatTimeString()} Uhr)</span>
+            <span>(seit {formatTime(new Date(cocktailQueueItem?.oldestTimestamp))} Uhr)</span>
           </div>
           {cocktailQueueItem.notes && <span className={'long-text-format italic lg:pb-1'}>Notiz: {cocktailQueueItem.notes}</span>}
         </div>
@@ -725,7 +725,11 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                   </div>
                 </div>
                 <div className={'h-min w-full flex-1'}>
-                  {showTime && !showStatisticActions ? <div className={'w-full pb-2 text-center'}>{currentTime?.toFormatDateTimeShort()} Uhr</div> : <></>}
+                  {showTime && !showStatisticActions ? (
+                    <div className={'w-full pb-2 text-center'}>{currentTime ? formatDateTimeShort(currentTime) : ''} Uhr</div>
+                  ) : (
+                    <></>
+                  )}
 
                   {selectedCocktail ? (
                     <CocktailRecipeCardItem

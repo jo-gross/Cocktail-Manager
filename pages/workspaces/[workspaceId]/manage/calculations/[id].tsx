@@ -17,7 +17,7 @@ import { IngredientModel } from '../../../../../models/IngredientModel';
 import { fetchIngredients } from '@lib/network/ingredients';
 import _ from 'lodash';
 import { fetchUnits } from '@lib/network/units';
-import '../../../../../lib/DateUtils';
+import { formatDate } from '@lib/DateUtils';
 import { RoutingContext } from '@lib/context/RoutingContextProvider';
 import '../../../../../lib/NumberUtils';
 
@@ -205,7 +205,7 @@ export default function CalculationPage() {
       item.cocktail.steps.forEach((step) => {
         step.ingredients.forEach((stepIngredient) => {
           if (stepIngredient.ingredient != null) {
-            let existingItem = calculationItems.find(
+            const existingItem = calculationItems.find(
               (calculationItem) => calculationItem.ingredient.id == stepIngredient.ingredientId && calculationItem.unit.id == stepIngredient.unitId,
             );
             if (existingItem) {
@@ -231,9 +231,9 @@ export default function CalculationPage() {
 
     cocktailCalculationItems.forEach((item) => {
       item.cocktail.garnishes
-        .filter((g) => !(g as any).isAlternative)
+        .filter((g) => !(g as unknown as { isAlternative?: boolean }).isAlternative)
         .forEach((garnish) => {
-          let existingItem = calculationItems.find((calculationItem) => calculationItem.garnish.id == garnish.garnishId);
+          const existingItem = calculationItems.find((calculationItem) => calculationItem.garnish.id == garnish.garnishId);
           if (existingItem) {
             existingItem.amount += item.plannedAmount;
             calculationItems = [...calculationItems.filter((item) => item.garnish.id != existingItem?.garnish.id), existingItem];
@@ -433,9 +433,10 @@ export default function CalculationPage() {
 
   const calculateRecommendedAmount = useCallback(
     (calculationItem: CocktailCalculationItem) => {
-      const summedIngredientPerCocktails: { ingredient: any; amountInPercent: number }[] = [];
+      const summedIngredientPerCocktails: { ingredient: Ingredient; amountInPercent: number }[] = [];
       calculationItem.cocktail.steps
         .flatMap((step) => step.ingredients)
+        .filter((stepIngredient) => stepIngredient.ingredient != null)
         .forEach((stepIngredient) => {
           const existingItem = summedIngredientPerCocktails.find((item) => item.ingredient.id == stepIngredient.ingredientId);
           if (existingItem) {
@@ -446,7 +447,7 @@ export default function CalculationPage() {
                 ?.IngredientVolume.find((volume) => volume.unitId == stepIngredient.unitId)?.volume ?? 1);
           } else {
             summedIngredientPerCocktails.push({
-              ingredient: stepIngredient.ingredient,
+              ingredient: stepIngredient.ingredient!,
               amountInPercent:
                 (stepIngredient.amount ?? 0) /
                 (ingredients
@@ -457,11 +458,11 @@ export default function CalculationPage() {
         });
 
       return summedIngredientPerCocktails.map((summedIngredientPerCocktail) => {
-        let ingredient = summedIngredientPerCocktail.ingredient;
+        const ingredient = summedIngredientPerCocktail.ingredient;
 
         const totalNeededBottles = Math.ceil(calculateTotalIngredientAmountByUnit(ingredient.id) ?? 0);
         const totalNeededAmount = calculateTotalIngredientAmountByUnit(ingredient.id) ?? 0;
-        let cocktailIngredientAmount = summedIngredientPerCocktail.amountInPercent;
+        const cocktailIngredientAmount = summedIngredientPerCocktail.amountInPercent;
 
         return {
           ingredient: ingredient,
@@ -530,7 +531,7 @@ export default function CalculationPage() {
 
             <span>{'-'}</span>
             <span>Kalkulation</span>
-            <div className={'hidden print:flex'}>({new Date().toFormatDateString()})</div>
+            <div className={'hidden print:flex'}>({formatDate(new Date())})</div>
           </div>
         )
       }

@@ -101,7 +101,7 @@ function EditCocktailCard() {
           date: card?.date != undefined ? new Date(card.date).toISOString().split('T')[0] : '',
         }}
         validate={(values) => {
-          var reducedCard: any = _.omit(card, ['workspaceId', 'id', 'groups[*].items[*].cocktail']);
+          const reducedCard = _.omit(card, ['workspaceId', 'id', 'groups[*].items[*].cocktail']) as Record<string, unknown>;
           if (reducedCard.date == null) {
             reducedCard.date = '';
           }
@@ -112,15 +112,15 @@ function EditCocktailCard() {
             errors.name = 'Required';
           }
 
-          let groupErrors: CocktailCardGroupError[] = [];
+          const groupErrors: CocktailCardGroupError[] = [];
           values.groups.forEach((group, groupIndex) => {
             const groupError: CocktailCardGroupError = {};
             if (!group.name || group.name.trim() == '') {
               groupErrors[groupIndex] = { name: 'Required' };
             }
-            let itemErrors: any = [];
+            const itemErrors: Record<string, string>[] = [];
             group.items.forEach((item) => {
-              const itemError: any = {};
+              const itemError: Record<string, string> = {};
               if (!item.cocktailId || item.cocktailId.trim() == '') {
                 itemError.cocktailId = 'Required';
               }
@@ -129,7 +129,7 @@ function EditCocktailCard() {
             groupErrors.push(groupError);
           });
 
-          if (groupErrors.filter((lineItemErrors: any) => Object.keys(lineItemErrors).length > 0).length > 0) {
+          if (groupErrors.filter((lineItemErrors) => Object.keys(lineItemErrors).length > 0).length > 0) {
             errors.groups = groupErrors;
           }
 

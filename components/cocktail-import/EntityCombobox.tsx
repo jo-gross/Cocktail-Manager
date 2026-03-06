@@ -1,12 +1,18 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { FaCheck, FaChevronDown, FaSearch } from 'react-icons/fa';
+
+interface ComboboxOption {
+  id: string;
+  name: string;
+  [key: string]: unknown;
+}
 
 interface EntityComboboxProps {
   value: string | null;
   onChange: (value: string | null) => void;
-  fetchOptions: (search: string) => Promise<any[]>;
-  getOptionLabel: (option: any) => string;
-  getOptionValue: (option: any) => string;
+  fetchOptions: (search: string) => Promise<ComboboxOption[]>;
+  getOptionLabel: (option: ComboboxOption) => string;
+  getOptionValue: (option: ComboboxOption) => string;
   placeholder?: string;
   disabled?: boolean;
 }
@@ -22,9 +28,9 @@ export function EntityCombobox({
 }: EntityComboboxProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState('');
-  const [options, setOptions] = useState<any[]>([]);
+  const [options, setOptions] = useState<ComboboxOption[]>([]);
   const [loading, setLoading] = useState(false);
-  const [selectedOption, setSelectedOption] = useState<any | null>(null);
+  const [selectedOption, setSelectedOption] = useState<ComboboxOption | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -159,7 +165,7 @@ export function EntityCombobox({
     }
   }, [isOpen]);
 
-  const handleSelect = (option: any) => {
+  const handleSelect = (option: ComboboxOption) => {
     const optionValue = getOptionValue(option);
     setSelectedOption(option);
     onChange(optionValue);

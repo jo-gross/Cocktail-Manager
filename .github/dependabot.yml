@@ -1,32 +1,62 @@
-# To get started with Dependabot version updates, you'll need to specify which
-# package ecosystems to update and where the package manifests are located.
-# Please see the documentation for all configuration options:
-# https://docs.github.com/github/administering-a-repository/configuration-options-for-dependency-updates
-
 version: 2
 updates:
-  - package-ecosystem: 'docker' # See documentation for possible values
-    directory: '/' # Location of package manifests
+  - package-ecosystem: 'docker'
+    directory: '/'
     schedule:
       interval: 'weekly'
     labels:
       - dependencies
     commit-message:
-      prefix: "build"
-      include: "scope"
-  - package-ecosystem: 'npm' # See documentation for possible values
-    directory: '/' # Location of package manifests
+      prefix: 'build'
+      include: 'scope'
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: 'npm'
+    directory: '/'
     open-pull-requests-limit: 25
     schedule:
       interval: 'weekly'
     labels:
       - dependencies
     commit-message:
-      prefix: "build"
-      include: "scope"
+      prefix: 'build'
+      include: 'scope'
     groups:
       prisma-packages:
         patterns:
-          - "prisma"
-          - "@prisma/client"
-          - "@prisma/adapter-pg"
+          - 'prisma'
+          - '@prisma/client'
+          - '@prisma/adapter-pg'
+      nextjs-react:
+        patterns:
+          - 'next'
+          - 'next-auth'
+          - '@next-auth/*'
+          - 'react'
+          - 'react-dom'
+          - 'eslint-config-next'
+      typescript-eslint:
+        patterns:
+          - 'typescript'
+          - 'eslint'
+          - 'eslint-*'
+          - 'typescript-eslint'
+          - '@typescript-eslint/*'
+      serwist:
+        patterns:
+          - 'serwist'
+          - '@serwist/*'
+      testing:
+        patterns:
+          - 'vitest'
+          - '@vitest/*'
+
+  - package-ecosystem: 'github-actions'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+    labels:
+      - dependencies
+    commit-message:
+      prefix: 'ci'
+      include: 'scope'

@@ -20,10 +20,22 @@ interface ImportError {
   error: string;
 }
 
+interface ImportResult {
+  imported: { cocktails: number };
+  created: {
+    glasses: number;
+    garnishes: number;
+    ingredients: number;
+    units: number;
+    ice: number;
+    stepActions: number;
+  };
+}
+
 export function ConfirmationStep({ workspaceId, exportData, mappingDecisions, selectedCocktailIds, onComplete, onBack }: ConfirmationStepProps) {
   const [importing, setImporting] = useState(false);
   const [importComplete, setImportComplete] = useState(false);
-  const [importResult, setImportResult] = useState<any>(null);
+  const [importResult, setImportResult] = useState<ImportResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [errors, setErrors] = useState<ImportError[]>([]);
   const [showDetailsCollapsed, setShowDetailsCollapsed] = useState(false);
@@ -41,7 +53,7 @@ export function ConfirmationStep({ workspaceId, exportData, mappingDecisions, se
 
   // Get entity names for display
   const getEntityName = (exportId: string, entityType: 'glasses' | 'garnishes' | 'ingredients' | 'units' | 'ice' | 'stepActions') => {
-    const entity = exportData[entityType].find((e: any) => e.id === exportId);
+    const entity = exportData[entityType].find((e: { id: string; name: string; [key: string]: unknown }) => e.id === exportId);
     return entity?.name || exportId;
   };
 

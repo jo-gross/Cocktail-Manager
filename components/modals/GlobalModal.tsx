@@ -11,7 +11,7 @@ export function GlobalModal(props: GlobalModalProps) {
   const modalContext = useContext(ModalContext);
 
   useEffect(() => {
-    const handleEsc = (event: any) => {
+    const handleEsc = (event: KeyboardEvent) => {
       if (event.keyCode === 27) {
         modalContext.closeModal();
       }

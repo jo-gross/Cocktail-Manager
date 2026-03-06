@@ -16,10 +16,18 @@ import { Glass } from '@generated/prisma/client';
 import { RoutingContext } from '@lib/context/RoutingContextProvider';
 import { resizeImage } from '@lib/ImageCompressor';
 
+export interface GlassFormValues {
+  name: string;
+  deposit: number;
+  image: string | undefined;
+  originalImage: File | undefined;
+  volume: number;
+}
+
 interface GlassFormProps {
   glass?: GlassWithImage;
   setUnsavedChanges?: (unsavedChanges: boolean) => void;
-  formRef?: React.RefObject<FormikProps<any>>;
+  formRef?: React.RefObject<FormikProps<GlassFormValues>>;
   onSaved?: (id: string) => void;
 }
 
@@ -34,7 +42,7 @@ export function GlassForm(props: GlassFormProps) {
   const [similarGlass, setSimilarGlass] = useState<Glass | undefined>(undefined);
 
   return (
-    <Formik
+    <Formik<GlassFormValues>
       innerRef={formRef}
       initialValues={{
         name: props.glass?.name ?? '',
@@ -278,7 +286,7 @@ export function GlassForm(props: GlassFormProps) {
                   </div>
                 </div>
                 <div className={'bg-transparent-pattern relative h-32 w-32 rounded-lg'}>
-                  <Image className={'w-fit rounded-lg'} src={values.image} layout={'fill'} objectFit={'contain'} alt={'Glass Image'} />
+                  <Image className={'w-fit rounded-lg'} src={values.image ?? ''} layout={'fill'} objectFit={'contain'} alt={'Glass Image'} />
                 </div>
                 <div className={'pt-2 font-thin italic'}>
                   Info: Durch Speichern des Glases wird das Bild dauerhaft zugeschnitten. Das Original wird nicht gespeichert. Falls du später einen anderen

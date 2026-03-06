@@ -24,7 +24,7 @@ import InputModal from '@components/modals/InputModal';
 import { AnalysisCocktailSelector } from '@components/statistics/AnalysisCocktailSelector';
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { CocktailStatisticItemFull } from '../../../../../models/CocktailStatisticItemFull';
-import '@lib/DateUtils';
+import { formatDateShort, formatDateNoYear } from '@lib/DateUtils';
 import '@lib/StringUtils';
 import { AmountWithUnit, calculateAggregatedIngredientAmount, IngredientVolumeInfo } from '@lib/CocktailRecipeCalculation';
 
@@ -384,7 +384,7 @@ const StatisticsAdvancedPage = () => {
       .forEach((entry) => {
         const date = new Date(entry.date);
         const hour = date.getHours();
-        const dateString = date.toFormatDateStringShort();
+        const dateString = formatDateShort(date);
         const formattedHour = `${dateString} ${hour}:00 - ${hour + 1}:00`;
         const cocktailName = entry.cocktail.name;
 
@@ -437,8 +437,8 @@ const StatisticsAdvancedPage = () => {
 
           const sameYear = adjustedDate.getFullYear() === nextDate.getFullYear();
           const dateString = sameYear
-            ? `${adjustedDate.toFormatDateStringNoYear()}/${nextDate.toFormatDateStringShort()}`
-            : `${adjustedDate.toFormatDateStringShort()}/${nextDate.toFormatDateStringShort()}`;
+            ? `${formatDateNoYear(adjustedDate)}/${formatDateShort(nextDate)}`
+            : `${formatDateShort(adjustedDate)}/${formatDateShort(nextDate)}`;
           const cocktailName = entry.cocktail.name;
 
           if (!dailyCocktails[dateString]) {
@@ -465,8 +465,8 @@ const StatisticsAdvancedPage = () => {
           nextDate.setDate(loopStartDate.getDate() + 1);
           const sameYear = loopStartDate.getFullYear() === nextDate.getFullYear();
           const dateString = sameYear
-            ? `${loopStartDate.toFormatDateStringNoYear()}/${nextDate.toFormatDateStringShort()}`
-            : `${loopStartDate.toFormatDateStringShort()}/${nextDate.toFormatDateStringShort()}`;
+            ? `${formatDateNoYear(loopStartDate)}/${formatDateShort(nextDate)}`
+            : `${formatDateShort(loopStartDate)}/${formatDateShort(nextDate)}`;
           allDates.push(dateString);
           loopStartDate.setDate(loopStartDate.getDate() + 1);
         }
@@ -1605,8 +1605,8 @@ const StatisticsAdvancedPage = () => {
                                   tickLine={false}
                                   interval={0}
                                   height={85}
-                                  tick={(props: any) => {
-                                    const { x, y, payload } = props;
+                                  tick={(props: Record<string, unknown>) => {
+                                    const { x, y, payload } = props as { x: number; y: number; payload: { value: string } };
                                     const label = payload?.value ?? '';
                                     const yOffset = 28;
                                     return (
@@ -1620,24 +1620,27 @@ const StatisticsAdvancedPage = () => {
                                 />
                                 <YAxis tick={{ fontSize: 12 }} width={36} />
                                 <Tooltip
-                                  content={({ active, payload }: any) => {
+                                  content={(contentProps: Record<string, unknown>) => {
+                                    const { active, payload } = contentProps as {
+                                      active?: boolean;
+                                      payload?: Array<{ value: number; dataKey: string; payload?: { name: string } }>;
+                                    };
                                     if (!active || !payload || !payload.length) return null;
 
-                                    // Filter out entries with value 0 and sort by value descending
                                     const filteredPayload = payload
-                                      .filter((entry: any) => entry.value && entry.value > 0)
-                                      .sort((a: any, b: any) => (b.value || 0) - (a.value || 0));
+                                      .filter((entry: { value: number; dataKey: string }) => entry.value && entry.value > 0)
+                                      .sort((a: { value: number }, b: { value: number }) => (b.value || 0) - (a.value || 0));
 
                                     if (filteredPayload.length === 0) return null;
 
-                                    const total = filteredPayload.reduce((sum: number, entry: any) => sum + (entry.value || 0), 0);
+                                    const total = filteredPayload.reduce((sum: number, entry: { value: number }) => sum + (entry.value || 0), 0);
                                     const label = payload[0]?.payload?.name || '';
 
                                     return (
                                       <div className="rounded-lg border border-base-300 bg-base-100 p-3 shadow-lg">
                                         <p className="mb-2 text-sm font-semibold text-base-content">{label}</p>
                                         <div className="space-y-1">
-                                          {filteredPayload.map((entry: any, index: number) => {
+                                          {filteredPayload.map((entry: { value: number; dataKey: string }, index: number) => {
                                             const percentage = total > 0 ? ((entry.value / total) * 100).toFixed(1) : '0';
                                             const entryColor = groupedChartColors.get(entry.dataKey) || '#000';
                                             return (

@@ -1,0 +1,39 @@
+[
+  {
+    "version": "1.20.1",
+    "date": "2026-02-22",
+    "highlights": [
+      "Bug fix: Cocktail-Filter in der Übersicht funktioniert jetzt korrekt",
+      "Bug fix: Kalkulationen können nun erfolgreich importiert werden"
+    ]
+  },
+  {
+    "version": "1.20.0",
+    "date": "2026-02-14",
+    "highlights": [
+      "Cocktail-Garnishes können nun als \"Alternative\" markiert werden",
+      "Änderungshistorie für Cocktails, Gläser, Garnituren, Zutaten und Kalkulationen",
+      "E-Mail-Benachrichtigungen bei Beitrittsanfragen",
+      "OpenID Group-Mapping für automatische Rollenzuweisung",
+      "Erweiterter Cocktail-Export und -Import"
+    ]
+  },
+  {
+    "version": "1.19.0",
+    "date": "2026-01-16",
+    "highlights": [
+      "Erweiterte Statistiken mit detaillierten Auswertungen",
+      "Offline-Benachrichtigung bei fehlender Internetverbindung"
+    ]
+  },
+  {
+    "version": "1.18.0",
+    "date": "2026-01-01",
+    "highlights": [
+      "Demo-Modus für Instanzen",
+      "Entitäten duplizieren (Cocktails, Zutaten, Gläser, Garnituren, Kalkulationen)",
+      "Warnung beim Löschen von genutzten Zutaten oder Gläsern",
+      "API-Schlüssel für Workspaces und Instanzen"
+    ]
+  }
+]

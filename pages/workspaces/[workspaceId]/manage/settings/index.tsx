@@ -8,7 +8,7 @@ import { UserContext } from '@lib/context/UserContextProvider';
 import { FaArrowDown, FaArrowUp, FaTrashAlt } from 'react-icons/fa';
 import { DeleteConfirmationModal } from '@components/modals/DeleteConfirmationModal';
 import { ModalContext } from '@lib/context/ModalContextProvider';
-import '../../../../../lib/DateUtils';
+import { formatDate } from '@lib/DateUtils';
 import { Loading } from '@components/Loading';
 import _ from 'lodash';
 import CocktailStepActionModal from '../../../../../components/modals/CocktailStepActionModal';
@@ -106,7 +106,7 @@ function WorkspaceSettingPage() {
         const element = document.createElement('a');
         const file = new Blob([content], { type: 'application/json' });
         element.href = URL.createObjectURL(file);
-        element.download = `The Cocktail-Manager ${userContext.workspace?.name} Backup ${new Date().toFormatDateString()}.json`;
+        element.download = `The Cocktail-Manager ${userContext.workspace?.name} Backup ${formatDate(new Date())}.json`;
         document.body.appendChild(element); // Required for this to work in FireFox
         element.click();
       })

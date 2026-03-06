@@ -4,7 +4,6 @@ import { withWorkspacePermission } from '@middleware/api/authenticationMiddlewar
 import { withHttpMethods } from '@middleware/api/handleMethods';
 import { Permission, Role, WorkspaceSettingKey } from '@generated/prisma/client';
 import HTTPMethod from 'http-method-enum';
-import '../../../../../../../../lib/DateUtils';
 import { getEndOfDay, getStartOfDay } from '../../../../../../../../lib/dateHelpers';
 
 export default withHttpMethods({

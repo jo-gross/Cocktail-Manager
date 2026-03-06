@@ -1,14 +1,9 @@
 import { useRouter } from 'next/router';
 import { useEffect, useRef, useState } from 'react';
 import { FaCheckCircle, FaExclamationCircle, FaExclamationTriangle, FaInfoCircle } from 'react-icons/fa';
-import PropTypes from 'prop-types';
 import { Alert, alertService, AlertType } from '@lib/alertService';
 
 export { AlertsContainer };
-
-AlertsContainer.propTypes = {
-  id: PropTypes.string,
-};
 
 interface AlertsContainerProps {
   id?: string;

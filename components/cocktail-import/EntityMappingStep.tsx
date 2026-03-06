@@ -9,6 +9,28 @@ interface EntityMapping {
   existingId?: string;
 }
 
+interface CocktailMapping {
+  exportId: string;
+  decision: 'import' | 'skip' | 'rename' | 'overwrite';
+  newName?: string;
+  overwriteId?: string;
+}
+
+interface EntityMatchResult {
+  exportId: string;
+  exportName: string;
+  matches: Array<{ id: string; name: string; actionGroup?: string }>;
+}
+
+interface ExistingMatchesMap {
+  units: EntityMatchResult[];
+  ice: EntityMatchResult[];
+  stepActions: EntityMatchResult[];
+  glasses: EntityMatchResult[];
+  garnishes: EntityMatchResult[];
+  ingredients: EntityMatchResult[];
+}
+
 export interface MappingDecisions {
   glasses: EntityMapping[];
   garnishes: EntityMapping[];
@@ -16,7 +38,7 @@ export interface MappingDecisions {
   units: EntityMapping[];
   ice: EntityMapping[];
   stepActions: EntityMapping[];
-  cocktails: any[];
+  cocktails: CocktailMapping[];
 }
 
 interface EntityMappingStepProps {
@@ -36,7 +58,7 @@ export function EntityMappingStep({ workspaceId, exportData, selectedCocktailIds
   const [iceMappings, setIceMappings] = useState<EntityMapping[]>([]);
   const [stepActionMappings, setStepActionMappings] = useState<EntityMapping[]>([]);
 
-  const [existingMatches, setExistingMatches] = useState<any>(null);
+  const [existingMatches, setExistingMatches] = useState<ExistingMatchesMap | null>(null);
 
   useEffect(() => {
     const fetchMappingData = async () => {

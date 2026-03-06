@@ -1,8 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import CreatableSelect from 'react-select/creatable';
+import { MultiValue } from 'react-select';
 import classNames from 'classnames';
 import '../lib/ArrayUtils';
 import { useRouter } from 'next/router';
+
+interface TagOption {
+  value: string;
+  label: string;
+}
 
 interface DaisyUITagInputProps {
   value: string[];
@@ -16,8 +22,8 @@ export function DaisyUITagInput(props: DaisyUITagInputProps) {
   // Hilfsfunktion: Wandelt das Format von `react-select` zurück in ein Array von Strings
   const parseTags = (options: { value: string; label: string }[]) => options.map((option) => option.value);
 
-  const handleChange = (options: any) => {
-    const newTags = options ? parseTags(options) : [];
+  const handleChange = (options: MultiValue<TagOption>) => {
+    const newTags = options ? options.map((option) => option.value) : [];
     props.onChange(newTags);
   };
 

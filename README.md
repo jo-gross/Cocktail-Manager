@@ -46,12 +46,12 @@ cocktail, with the detailed recipe making and the compact view for the bartender
 
 ## 🧩 Features
 
-- **Multiple seperated Bars** - You can manage multiple bars with different recipes and users without sharing data
+- **Multiple separated Bars** - You can manage multiple bars with different recipes and users without sharing data
   between them.
 - **User management** - Invite and manage users with different roles
 - **Cocktail recipe management** - Add, edit and delete cocktail recipes - in very detailed form.
-- **Optimal and optimized for bartenders** - Option for easy search and compact view with the necessary steps for an
-  cocktail
+- **Optimal and optimized for bartenders** - Option for easy search and compact view with the necessary steps for
+  a cocktail
 - **Party/Event appraisal** - Calculate the amount of ingredients for a specific event or party, based on the cocktails
   you want to serve
 - **Financial and statistics** - See the costs of your cocktails and create statistics of the shaked cocktails easily
@@ -86,9 +86,10 @@ cocktail, with the detailed recipe making and the compact view for the bartender
 
 **System Requirements:**
 
-- Docker
-- Google Cloud Project (for authentication) or an other OIDC provider
-- Node.js (only for local development)
+- Node.js 24
+- pnpm 9.x (enabled via `corepack enable`)
+- Docker (optional, for containerized deployment or local database)
+- Google Cloud Project (for authentication) or another OIDC provider
 
 **Setting up the application:**
 
@@ -106,18 +107,18 @@ cocktail, with the detailed recipe making and the compact view for the bartender
     ```sh
     docker compose up -d
     ```
-5. When the application is running, you should be able to access it at [http://localhost:3000](http://localhost:3000)
+4. When the application is running, you should be able to access it at [http://localhost:3000](http://localhost:3000)
 
 ---
 
 ### 🐳 Docker
 
-#### Using `docker-compose`
+#### Using `docker compose`
 
 > Run with prebuild images from ghcr.io
 >
 > ```sh
-> docker-compose up -d
+> docker compose up -d
 > ```
 
 #### Using `locally build`
@@ -125,7 +126,7 @@ cocktail, with the detailed recipe making and the compact view for the bartender
 > Build the images
 >
 > ```sh
-> docker-compose up -d --build
+> docker compose up -d --build
 > ```
 
 ---
@@ -145,7 +146,7 @@ Starting development:
 > Start the database
 >
 > ```sh
-> docker-compose up postgres -d
+> docker compose up postgres -d
 > ```
 >
 > Install all dependencies

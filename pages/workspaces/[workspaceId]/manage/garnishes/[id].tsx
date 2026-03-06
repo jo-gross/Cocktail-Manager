@@ -1,4 +1,4 @@
-import { GarnishForm } from '@components/garnishes/GarnishForm';
+import { GarnishForm, GarnishFormValues } from '@components/garnishes/GarnishForm';
 import { ManageEntityLayout } from '@components/layout/ManageEntityLayout';
 import { useRouter } from 'next/router';
 import { useEffect, useRef, useState } from 'react';
@@ -19,7 +19,7 @@ function EditGarnishPage() {
   const [loading, setLoading] = useState(true);
 
   const [unsavedChanges, setUnsavedChanges] = useState(false);
-  const formRef: any = useRef<FormikProps<any>>(null);
+  const formRef = useRef<FormikProps<GarnishFormValues>>(null);
 
   useEffect(() => {
     if (!id) return;

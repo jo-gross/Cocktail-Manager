@@ -14,7 +14,7 @@ interface EntityImportModalProps {
 
 interface ParsedEntity {
   name: string;
-  data: any;
+  data: Record<string, unknown>;
   valid: boolean;
   selected: boolean;
 }
@@ -26,7 +26,7 @@ interface Conflict {
 
 interface MappingEntity {
   name: string;
-  data: any;
+  data: Record<string, unknown>;
   conflicts: Conflict[];
   decision: 'import' | 'overwrite' | 'rename' | 'skip';
   existingId?: string;
@@ -244,12 +244,12 @@ export default function EntityImportModal({ workspaceId, entityType, onImportCom
           const content = JSON.parse(e.target?.result as string);
           const dataArray = Array.isArray(content) ? content : [content];
 
-          const parsed: ParsedEntity[] = dataArray.map((item: any) => {
-            const entityData = item[labels.nameKey];
+          const parsed: ParsedEntity[] = dataArray.map((item: Record<string, unknown>) => {
+            const entityData = item[labels.nameKey] as Record<string, unknown> | undefined;
             if (!entityData?.name) {
               return { name: 'Unbekannt', data: item, valid: false, selected: false };
             }
-            return { name: entityData.name, data: item, valid: true, selected: true };
+            return { name: String(entityData.name), data: item, valid: true, selected: true };
           });
 
           setParsedEntities(parsed);
@@ -296,19 +296,22 @@ export default function EntityImportModal({ workspaceId, entityType, onImportCom
       const result = await response.json();
 
       // Build mapping entities with conflict info (default: overwrite when conflict so a choice is always selected)
-      const entities: MappingEntity[] = result.entities.map((entity: any) => ({
-        name: entity.name,
-        data: entity.data,
-        conflicts: entity.conflicts || [],
-        decision: entity.conflicts?.length > 0 ? 'overwrite' : 'import',
-        existingId: entity.conflicts?.[0]?.id,
-        newName: '',
-        groupDecision: entity.data?.calculation?.groupName ? 'keep-exported' : 'no-group',
-        existingGroupId: undefined,
-        newGroupName: '',
-        newGroupDefaultExpanded: false,
-        exportedGroupName: entity.data?.calculation?.groupName ?? null,
-      }));
+      const entities: MappingEntity[] = result.entities.map((entity: { name: string; data: Record<string, unknown>; conflicts?: Conflict[] }) => {
+        const calcData = entity.data?.calculation as Record<string, unknown> | undefined;
+        return {
+          name: entity.name,
+          data: entity.data,
+          conflicts: entity.conflicts || [],
+          decision: (entity.conflicts?.length ?? 0) > 0 ? ('overwrite' as const) : ('import' as const),
+          existingId: entity.conflicts?.[0]?.id,
+          newName: '',
+          groupDecision: calcData?.groupName ? ('keep-exported' as const) : ('no-group' as const),
+          existingGroupId: undefined,
+          newGroupName: '',
+          newGroupDefaultExpanded: false,
+          exportedGroupName: calcData?.groupName ? String(calcData.groupName) : null,
+        };
+      });
 
       setMappingEntities(entities);
 
@@ -369,7 +372,7 @@ export default function EntityImportModal({ workspaceId, entityType, onImportCom
         data: entity.data,
       }));
 
-      const body: any = { phase: 'execute', decisions };
+      const body: Record<string, unknown> = { phase: 'execute', decisions };
 
       if (isCalculation) {
         body.cocktailMappings = cocktailMappings;

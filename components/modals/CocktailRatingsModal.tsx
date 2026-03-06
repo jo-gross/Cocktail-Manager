@@ -8,7 +8,7 @@ import { CocktailRating, Role } from '@generated/prisma/client';
 import { DeleteConfirmationModal } from './DeleteConfirmationModal';
 import { alertService } from '@lib/alertService';
 import AddCocktailRatingModal from './AddCocktailRatingModal';
-import '../../lib/DateUtils';
+import { formatDate, formatDateTime } from '@lib/DateUtils';
 
 interface CocktailRatingModalProps {
   cocktailId: string;
@@ -107,7 +107,7 @@ export default function CocktailRatingsModal(props: CocktailRatingModalProps) {
                 <div className={'flex flex-row justify-between gap-2'}>
                   <div className={'font-bold'}>{rating.name}</div>
                   <div className={'flex flex-row items-center gap-2 font-thin italic'}>
-                    <div className={'font-thin italic'}>{new Date(rating.createdAt).toFormatDateString()}</div>
+                    <div className={'font-thin italic'}>{formatDate(new Date(rating.createdAt))}</div>
                     {userContext.isUserPermitted(Role.MANAGER) && (
                       <button
                         type={'button'}
@@ -115,7 +115,7 @@ export default function CocktailRatingsModal(props: CocktailRatingModalProps) {
                           modalContext.openModal(
                             <DeleteConfirmationModal
                               spelling={'DELETE'}
-                              entityName={`die ${rating.rating} Sterne Bewertung ${rating.name ? `von ${rating.name} ` : ''}vom ${new Date(rating.createdAt).toFormatDateTimeString()}`}
+                              entityName={`die ${rating.rating} Sterne Bewertung ${rating.name ? `von ${rating.name} ` : ''}vom ${formatDateTime(new Date(rating.createdAt))}`}
                               onApprove={async () => handleDelete(rating.id)}
                             />,
                           )
@@ -132,7 +132,7 @@ export default function CocktailRatingsModal(props: CocktailRatingModalProps) {
                 <StarsComponent rating={rating.rating} />
                 {!rating.name && (
                   <div className={'flex flex-row items-center gap-2 font-thin italic'}>
-                    {new Date(rating.createdAt).toFormatDateString()}
+                    {formatDate(new Date(rating.createdAt))}
                     {userContext.isUserPermitted(Role.MANAGER) && (
                       <button
                         type={'button'}
@@ -140,7 +140,7 @@ export default function CocktailRatingsModal(props: CocktailRatingModalProps) {
                           modalContext.openModal(
                             <DeleteConfirmationModal
                               spelling={'DELETE'}
-                              entityName={`die ${rating.rating} Sterne Bewertung ${rating.name ? `von ${rating.name} ` : ''}vom ${new Date(rating.createdAt).toFormatDateTimeString()}`}
+                              entityName={`die ${rating.rating} Sterne Bewertung ${rating.name ? `von ${rating.name} ` : ''}vom ${formatDateTime(new Date(rating.createdAt))}`}
                               onApprove={async () => handleDelete(rating.id)}
                             />,
                           )

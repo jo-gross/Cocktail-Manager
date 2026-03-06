@@ -1,8 +1,20 @@
 import React, { useRef, useState } from 'react';
 import { Bar } from 'react-chartjs-2';
-import { BarElement, CategoryScale, Chart as ChartJS, Legend, LinearScale, Title, Tooltip } from 'chart.js';
+import { BarElement, CategoryScale, Chart as ChartJS, Legend, LinearScale, Title, Tooltip, TooltipModel } from 'chart.js';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
+
+interface BarTooltipDataPoint {
+  parsed: { y: number };
+  dataset: { label: string; backgroundColor: string };
+}
+
+interface TooltipItem {
+  label: string;
+  value: number;
+  color: string;
+  percentage: string;
+}
 
 interface StackedDataset {
   label: string;
@@ -60,7 +72,7 @@ export function StackedDistributionChart({
       },
       tooltip: {
         enabled: false, // Disable default tooltip, we use custom
-        external: (context: any) => {
+        external: (context: { chart: ChartJS; tooltip: TooltipModel<'bar'> }) => {
           const { chart, tooltip } = context;
 
           if (tooltip.opacity === 0) {
@@ -68,17 +80,16 @@ export function StackedDistributionChart({
             return;
           }
 
-          const dataPoints = tooltip.dataPoints || [];
+          const dataPoints = (tooltip.dataPoints || []) as BarTooltipDataPoint[];
           if (dataPoints.length === 0) {
             setTooltipData(null);
             return;
           }
 
-          // Filter and sort items
           const items = dataPoints
-            .filter((dp: any) => dp.parsed.y > 0)
-            .sort((a: any, b: any) => (b.parsed.y || 0) - (a.parsed.y || 0))
-            .map((dp: any) => ({
+            .filter((dp) => dp.parsed.y > 0)
+            .sort((a, b) => (b.parsed.y || 0) - (a.parsed.y || 0))
+            .map((dp) => ({
               label: dp.dataset.label,
               value: dp.parsed.y,
               color: dp.dataset.backgroundColor,
@@ -90,8 +101,8 @@ export function StackedDistributionChart({
             return;
           }
 
-          const total = items.reduce((sum: number, item: any) => sum + item.value, 0);
-          items.forEach((item: any) => {
+          const total = items.reduce((sum: number, item: TooltipItem) => sum + item.value, 0);
+          items.forEach((item: TooltipItem) => {
             item.percentage = total > 0 ? ((item.value / total) * 100).toFixed(1) : '0';
           });
 

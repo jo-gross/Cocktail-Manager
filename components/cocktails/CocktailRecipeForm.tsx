@@ -15,9 +15,10 @@ import _, { orderBy } from 'lodash';
 import { resizeImage } from '@lib/ImageCompressor';
 import { SelectModal } from '../modals/SelectModal';
 import FormModal from '../modals/FormModal';
-import { GarnishForm } from '../garnishes/GarnishForm';
-import { IngredientForm } from '../ingredients/IngredientForm';
+import { GarnishForm, GarnishFormValues } from '../garnishes/GarnishForm';
+import { IngredientForm, FormValue as IngredientFormValues } from '../ingredients/IngredientForm';
 import { GlassForm } from '../glasses/GlassForm';
+import { CocktailRecipeFull } from '../../models/CocktailRecipeFull';
 import { CocktailRecipeFullWithImage } from '../../models/CocktailRecipeFullWithImage';
 import { UserContext } from '@lib/context/UserContextProvider';
 import { GlassModel } from '../../models/GlassModel';
@@ -38,16 +39,37 @@ import DeepDiff from 'deep-diff';
 import { RoutingContext } from '@lib/context/RoutingContextProvider';
 import '../../lib/NumberUtils';
 
+export interface CocktailRecipeFormValues {
+  id: string;
+  name: string;
+  description: string;
+  notes: string;
+  history: string;
+  price: number | undefined | string;
+  tags: string[];
+  iceId: string | null;
+  image: string | undefined;
+  originalImage: File | undefined;
+  glassId: string | undefined;
+  ice: Ice | null;
+  glass: GlassModel | null;
+  garnishes: CocktailRecipeGarnishFull[];
+  steps: CocktailRecipeStepFull[];
+  workspaceId: string;
+  isArchived: boolean;
+}
+
 interface CocktailRecipeFormProps {
   cocktailRecipe?: CocktailRecipeFullWithImage;
   setUnsavedChanges?: (unsavedChanges: boolean) => void;
-  formRef: React.RefObject<FormikProps<any>>;
+  formRef: React.RefObject<FormikProps<CocktailRecipeFormValues>>;
 }
 
 interface IngredientError {
   amount?: string;
   unit?: string;
   ingredientId?: string;
+  optional?: string;
 }
 
 interface StepError {
@@ -59,6 +81,16 @@ interface GarnishError {
   garnishId?: string;
   optional?: string;
   isAlternative?: string;
+}
+
+interface CocktailRecipeFormErrors {
+  name?: string;
+  glassId?: string;
+  iceId?: string;
+  image?: string;
+  tags?: string;
+  steps?: StepError[];
+  garnishes?: GarnishError[];
 }
 
 export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
@@ -91,7 +123,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
   const [similarCocktailRecipe, setSimilarCocktailRecipe] = useState<CocktailRecipe | undefined>(undefined);
 
   const openIngredientSelectModal = useCallback(
-    (setFieldValue: any, indexStep: number, indexIngredient: number) => {
+    (setFieldValue: FormikProps<CocktailRecipeFormValues>['setFieldValue'], indexStep: number, indexIngredient: number) => {
       modalContext.openModal(
         <SelectModal<IngredientModel>
           title={'Zutat auswählen'}
@@ -129,7 +161,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
   );
 
   const openGarnishSelectModal = useCallback(
-    (setFieldValue: any, indexGarnish: number) => {
+    (setFieldValue: FormikProps<CocktailRecipeFormValues>['setFieldValue'], indexGarnish: number) => {
       modalContext.openModal(
         <SelectModal<Garnish>
           title={'Garnitur auswählen'}
@@ -178,7 +210,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
     } else {
       formRef.current?.setFieldValue(
         'garnishes',
-        formRef.current?.values.garnishes.map((garnish: any) => {
+        formRef.current?.values.garnishes.map((garnish: CocktailRecipeGarnishFull) => {
           return {
             ...garnish,
             garnish: garnishes.find((g) => g.id == garnish.garnishId) ?? undefined,
@@ -210,10 +242,10 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
     } else {
       formRef.current?.setFieldValue(
         'steps',
-        formRef.current?.values.steps.map((step: any) => {
+        formRef.current?.values.steps.map((step: CocktailRecipeStepFull) => {
           return {
             ...step,
-            ingredients: step.ingredients.map((ingredient: any) => {
+            ingredients: step.ingredients.map((ingredient: CocktailRecipeStepFull['ingredients'][number]) => {
               return {
                 ...ingredient,
                 ingredient: ingredients.find((i) => i.id == ingredient.ingredientId) ?? undefined,
@@ -270,7 +302,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
       innerRef={formRef}
       initialValues={initValue}
       validate={(values) => {
-        const errors: any = {};
+        const errors: CocktailRecipeFormErrors = {};
 
         if (props.cocktailRecipe) {
           const reducedCocktailRecipe = _.omit(props.cocktailRecipe, ['CocktailRecipeImage', 'ice', 'isArchived', '_count', 'ratings']);
@@ -297,7 +329,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
           }
           if (values.steps != undefined) {
             values.steps = orderBy(values.steps, ['stepNumber'], ['asc']);
-            (values.steps as any[]).forEach((step) => {
+            (values.steps as CocktailRecipeStepFull[]).forEach((step) => {
               step.ingredients = orderBy(step.ingredients, ['ingredientNumber'], ['asc']);
 
               step.ingredients = _.map(step.ingredients, (obj) => {
@@ -324,7 +356,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
         if (!values.glassId || values.glassId == '') {
           errors.glassId = 'Required';
         }
-        if (!values.iceId || values.ice == '') {
+        if (!values.iceId || values.iceId === '') {
           errors.iceId = 'Required';
         }
         if (values.originalImage != undefined && values.image == undefined) {
@@ -404,7 +436,6 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
             price: values.price == '' ? null : values.price,
             iceId: values.iceId,
             glassId: values.glassId,
-            garnishId: values.garnishId,
             image: values.image == '' ? null : values.image,
             tags: values.tags,
             steps: (values.steps as CocktailRecipeStepFull[]).map((step, index) => {
@@ -718,7 +749,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                         );
                       }}
                       onBlur={handleBlur}
-                      value={values.iceId}
+                      value={values.iceId ?? ''}
                     >
                       <option value={''}>Auswählen</option>
                       {Object.values(iceOptions)
@@ -801,7 +832,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                           </div>
                         </div>
                         <div className={'bg-transparent-pattern relative h-32 w-[4.5rem] rounded-lg'}>
-                          <Image className={'w-fit rounded-lg'} src={values.image} layout={'fill'} objectFit={'contain'} alt={'Cocktail image'} />
+                          <Image className={'w-fit rounded-lg'} src={values.image ?? ''} layout={'fill'} objectFit={'contain'} alt={'Cocktail image'} />
                         </div>
                         <div className={'pt-2 font-thin italic'}>
                           Info: Durch Speichern des Cocktails wird das Bild dauerhaft zugeschnitten. Das Original wird nicht gespeichert. Falls du später einen
@@ -821,25 +852,27 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
 
                   <CocktailRecipeCardItem
                     image={values.image}
-                    cocktailRecipe={{
-                      _count: { CocktailRecipeImage: values.image != undefined ? 1 : 0 },
-                      id: values.id,
-                      name: values.name,
-                      description: values.description.trim() == '' ? null : values.description.trim(),
-                      notes: values.notes.trim() == '' ? null : values.notes.trim(),
-                      history: values.history.trim() == '' ? null : values.history.trim(),
-                      tags: values.tags,
-                      price: !values.price && values.price == '' ? null : values.price,
-                      iceId: values.iceId,
-                      ice: iceOptions.find((ice) => ice.id === values.iceId) ?? null,
-                      glassId: values.glassID ?? null,
-                      isArchived: false,
-                      glass: glasses.find((glass) => glass.id === values.glassId) ?? null,
-                      garnishes: values.garnishes,
-                      steps: values.steps,
-                      workspaceId: workspaceId!,
-                      ratings: [],
-                    }}
+                    cocktailRecipe={
+                      {
+                        _count: { CocktailRecipeImage: values.image != undefined ? 1 : 0 },
+                        id: values.id,
+                        name: values.name,
+                        description: values.description.trim() == '' ? null : values.description.trim(),
+                        notes: values.notes.trim() == '' ? null : values.notes.trim(),
+                        history: values.history.trim() == '' ? null : values.history.trim(),
+                        tags: values.tags,
+                        price: !values.price && values.price == '' ? null : (values.price as number | null),
+                        iceId: values.iceId,
+                        ice: iceOptions.find((ice) => ice.id === values.iceId) ?? null,
+                        glassId: values.glassId ?? null,
+                        isArchived: false,
+                        glass: glasses.find((glass) => glass.id === values.glassId) ?? null,
+                        garnishes: values.garnishes,
+                        steps: values.steps,
+                        workspaceId: workspaceId!,
+                        ratings: [],
+                      } as unknown as CocktailRecipeFull
+                    }
                     showInfo={false}
                     showTags={true}
                     showImage={true}
@@ -931,7 +964,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                         <div className={'col-span-2 text-center font-thin italic'}>Keine Garnituren</div>
                       )}
                       {(values.garnishes as CocktailRecipeGarnishFull[]).map((garnish) => {
-                        const isAlternative = (garnish as any).isAlternative;
+                        const isAlternative = (garnish as CocktailRecipeGarnishFull & { isAlternative?: boolean }).isAlternative;
                         return (
                           <React.Fragment key={`price-calculation-step-garnish-${garnish.garnishId}`}>
                             <div className={`${isAlternative ? 'line-through opacity-50' : ''}`}>{garnish?.garnish?.name}</div>
@@ -945,7 +978,9 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                           </React.Fragment>
                         );
                       })}
-                      {(values.garnishes as CocktailRecipeGarnishFull[]).some((g) => (g as any).isAlternative) && (
+                      {(values.garnishes as CocktailRecipeGarnishFull[]).some(
+                        (g) => (g as CocktailRecipeGarnishFull & { isAlternative?: boolean }).isAlternative,
+                      ) && (
                         <div className={'col-span-2 mt-1 text-xs font-thin italic'}>* Alternative Garnituren werden nicht in die Berechnung einbezogen.</div>
                       )}
                     </>
@@ -954,7 +989,9 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                     <div className={'grid grid-cols-3'}>
                       <div></div>
                       <div></div>
-                      <div className={'text-end font-bold'}>{calcCocktailTotalPrice(values, ingredients).formatPrice() + ' €'}</div>
+                      <div className={'text-end font-bold'}>
+                        {calcCocktailTotalPrice(values as unknown as CocktailRecipeFull, ingredients).formatPrice() + ' €'}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1135,8 +1172,8 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                             <label className={'label w-fit flex-row justify-start gap-1 md:flex-col'}>
                                               <span className={'label-text'}>Optional</span>
                                               <span className={'label-text-alt text-error'}>
-                                                {((errors.steps as StepError[])?.[indexStep] as any)?.ingredients?.[indexIngredient]?.optional &&
-                                                  ((errors.steps as StepError[])?.[indexStep] as any)?.ingredients?.[indexIngredient]?.optional}
+                                                {(errors.steps as StepError[])?.[indexStep]?.ingredients?.[indexIngredient]?.optional &&
+                                                  (errors.steps as StepError[])?.[indexStep]?.ingredients?.[indexIngredient]?.optional}
                                               </span>
                                               <Field
                                                 type={'checkbox'}
@@ -1154,8 +1191,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                             <input
                                               id={`ingredient-${indexIngredient}-name`}
                                               className={`input join-item input-bordered w-full cursor-pointer ${
-                                                ((errors.steps as StepError[])?.[indexStep] as any)?.ingredients?.[indexIngredient]?.ingredientId &&
-                                                'input-error'
+                                                (errors.steps as StepError[])?.[indexStep]?.ingredients?.[indexIngredient]?.ingredientId && 'input-error'
                                               }`}
                                               value={
                                                 ingredientsLoading
@@ -1184,7 +1220,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                                   <FormModal<Ingredient>
                                                     form={
                                                       <IngredientForm
-                                                        formRef={createRef<FormikProps<any>>()}
+                                                        formRef={createRef<FormikProps<IngredientFormValues>>()}
                                                         onSaved={async (id) => {
                                                           modalContext.closeAllModals();
                                                           await setFieldValue(`steps.${indexStep}.ingredients.${indexIngredient}.ingredientId`, id);
@@ -1207,13 +1243,13 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                               className={'input join-item input-bordered w-full min-w-20'}
                                               onChange={handleChange}
                                               onBlur={handleBlur}
-                                              value={values.steps[indexStep].ingredients[indexIngredient].amount}
+                                              value={values.steps[indexStep].ingredients[indexIngredient].amount ?? ''}
                                             />
                                             <div className={'tooltip'}></div>
                                             <select
                                               name={`steps.${indexStep}.ingredients.${indexIngredient}.unitId`}
                                               className={`join-item select select-bordered w-full ${
-                                                ((errors.steps as StepError[])?.[indexStep] as any)?.ingredients?.[indexIngredient]?.unit ? 'select-error' : ''
+                                                (errors.steps as StepError[])?.[indexStep]?.ingredients?.[indexIngredient]?.unit ? 'select-error' : ''
                                               }`}
                                               onChange={async (e) => {
                                                 handleChange(e);
@@ -1223,7 +1259,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                                 );
                                               }}
                                               onBlur={handleBlur}
-                                              value={values.steps[indexStep].ingredients[indexIngredient].unitId}
+                                              value={values.steps[indexStep].ingredients[indexIngredient].unitId ?? ''}
                                             >
                                               <option value={''} disabled>
                                                 Auswählen
@@ -1268,7 +1304,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                                 modalContext.openModal(
                                                   <DeleteConfirmationModal
                                                     spelling={'REMOVE'}
-                                                    entityName={`die Zutat '${values.steps[indexStep].ingredients[indexIngredient].ingredient.name}'`}
+                                                    entityName={`die Zutat '${values.steps[indexStep].ingredients[indexIngredient].ingredient?.name ?? ''}'`}
                                                     onApprove={async () => removeIngredient(indexIngredient)}
                                                   />,
                                                 )
@@ -1345,8 +1381,9 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                   reorderedGroups.splice(indexGarnish - 1, 0, value);
 
                                   // Ensure the item at index 0 has isAlternative = false
-                                  if ((reorderedGroups[0] as any).isAlternative) {
-                                    (reorderedGroups[0] as any).isAlternative = false;
+                                  const firstGarnish = reorderedGroups[0] as CocktailRecipeGarnishFull & { isAlternative?: boolean };
+                                  if (firstGarnish.isAlternative) {
+                                    firstGarnish.isAlternative = false;
                                   }
 
                                   setFieldValue(
@@ -1370,8 +1407,9 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                   reorderedGroups.splice(indexGarnish + 1, 0, value);
 
                                   // Ensure the item at index 0 has isAlternative = false
-                                  if ((reorderedGroups[0] as any).isAlternative) {
-                                    (reorderedGroups[0] as any).isAlternative = false;
+                                  const firstGarnish = reorderedGroups[0] as CocktailRecipeGarnishFull & { isAlternative?: boolean };
+                                  if (firstGarnish.isAlternative) {
+                                    firstGarnish.isAlternative = false;
                                   }
 
                                   setFieldValue(
@@ -1424,7 +1462,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                       <FormModal<Garnish>
                                         form={
                                           <GarnishForm
-                                            formRef={createRef<FormikProps<any>>()}
+                                            formRef={createRef<FormikProps<GarnishFormValues>>()}
                                             onSaved={async (id) => {
                                               modalContext.closeAllModals();
                                               await setFieldValue(`garnishes.${indexGarnish}.garnishId`, id);
@@ -1447,7 +1485,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                 <span className={'label-text-alt text-error'}>{/*{errors.garnishDescription  && errors.garnishDescription}*/}</span>
                               </label>
                               <textarea
-                                value={values.garnishes[indexGarnish].description}
+                                value={values.garnishes[indexGarnish].description ?? ''}
                                 name={`garnishes.${indexGarnish}.description`}
                                 className={
                                   'textarea textarea-bordered h-24 w-full'

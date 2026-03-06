@@ -1,16 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import { Formik, useFormikContext } from 'formik';
-import { useRouter } from 'next/router';
 
-interface BaseEntityFormProps {
-  initialData?: any;
-  onDataChange: (data: any) => void;
-  entity: any;
+interface EntityFormEntity {
+  id: string;
+  name: string;
+  actionGroup?: string;
+  [key: string]: unknown;
 }
 
-// Inner component to handle useEffect properly
-function UnitFormContent({ onDataChange }: { onDataChange: (data: any) => void }) {
-  const { values, handleChange, errors, touched } = useFormikContext<any>();
+interface BaseEntityFormProps {
+  initialData?: Record<string, unknown>;
+  onDataChange: (data: Record<string, unknown>) => void;
+  entity: EntityFormEntity;
+}
+
+interface UnitFormValues {
+  identifier: string;
+  lableDE: string;
+}
+
+function UnitFormContent({ onDataChange }: { onDataChange: (data: Record<string, unknown>) => void }) {
+  const { values, handleChange, errors, touched } = useFormikContext<UnitFormValues>();
 
   useEffect(() => {
     onDataChange({
@@ -50,10 +60,10 @@ function UnitFormContent({ onDataChange }: { onDataChange: (data: any) => void }
 
 export function UnitForm({ initialData, onDataChange, entity }: BaseEntityFormProps) {
   return (
-    <Formik
+    <Formik<UnitFormValues>
       initialValues={{
-        identifier: initialData?.name || entity.name || '',
-        lableDE: initialData?.lableDE || '',
+        identifier: String(initialData?.name ?? entity.name ?? ''),
+        lableDE: String(initialData?.lableDE ?? ''),
       }}
       validate={(values) => {
         const errors: { [key: string]: string } = {};
@@ -80,8 +90,15 @@ export function UnitForm({ initialData, onDataChange, entity }: BaseEntityFormPr
   );
 }
 
-function IceFormContent({ onDataChange }: { onDataChange: (data: any) => void }) {
-  const { values, handleChange, errors, touched } = useFormikContext<any>();
+interface IceFormValues {
+  identifier: string;
+  lableDE: string;
+}
+
+export type { IceFormValues };
+
+function IceFormContent({ onDataChange }: { onDataChange: (data: Record<string, unknown>) => void }) {
+  const { values, handleChange, errors, touched } = useFormikContext<IceFormValues>();
 
   useEffect(() => {
     onDataChange({
@@ -121,10 +138,10 @@ function IceFormContent({ onDataChange }: { onDataChange: (data: any) => void })
 
 export function IceForm({ initialData, onDataChange, entity }: BaseEntityFormProps) {
   return (
-    <Formik
+    <Formik<IceFormValues>
       initialValues={{
-        identifier: initialData?.name || entity.name || '',
-        lableDE: initialData?.lableDE || '',
+        identifier: String(initialData?.name ?? entity.name ?? ''),
+        lableDE: String(initialData?.lableDE ?? ''),
       }}
       validate={(values) => {
         const errors: { [key: string]: string } = {};
@@ -155,18 +172,25 @@ interface StepActionFormProps extends BaseEntityFormProps {
   existingGroups?: string[];
 }
 
+interface StepActionFormValues {
+  action: string;
+  actionGroup: string;
+  newActionGroup: string;
+  lableDE: string;
+}
+
 function StepActionFormContent({
   onDataChange,
   existingGroups = [],
   newGroupMode,
   setNewGroupMode,
 }: {
-  onDataChange: (data: any) => void;
+  onDataChange: (data: Record<string, unknown>) => void;
   existingGroups: string[];
   newGroupMode: boolean;
   setNewGroupMode: (value: boolean) => void;
 }) {
-  const { values, handleChange, errors, touched, setFieldValue } = useFormikContext<any>();
+  const { values, handleChange, errors, touched, setFieldValue } = useFormikContext<StepActionFormValues>();
 
   useEffect(() => {
     const finalActionGroup = newGroupMode ? values.newActionGroup : values.actionGroup;
@@ -266,12 +290,12 @@ export function StepActionForm({ initialData, onDataChange, entity, existingGrou
   const [newGroupMode, setNewGroupMode] = useState(false);
 
   return (
-    <Formik
+    <Formik<StepActionFormValues>
       initialValues={{
-        actionGroup: initialData?.actionGroup || entity.actionGroup || '',
-        action: initialData?.name || entity.name || '',
+        actionGroup: String(initialData?.actionGroup ?? entity.actionGroup ?? ''),
+        action: String(initialData?.name ?? entity.name ?? ''),
         newActionGroup: '',
-        lableDE: initialData?.lableDE || '',
+        lableDE: String(initialData?.lableDE ?? ''),
       }}
       validate={(values) => {
         const errors: { [key: string]: string } = {};
