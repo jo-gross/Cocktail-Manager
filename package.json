@@ -51,7 +51,7 @@
     "next": "15.5.12",
     "next-auth": "4.24.13",
     "node-html-parser": "7.1.0",
-    "nodemailer": "7.0.13",
+    "nodemailer": "8.0.1",
     "pdf-lib": "^1.17.1",
     "pg": "^8.20.0",
     "puppeteer-core": "^24.38.0",
