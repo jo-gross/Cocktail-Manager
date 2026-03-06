@@ -61,7 +61,7 @@ services:
     environment:
       - DATABASE_URL=postgres://postgres:postgres@postgres:5432/cocktail_recipe
       - CHROMIUM_HOST=chromium-service
-      - DISABLE_WORKSPACE_CREATION=true
+      - DISABLE_WORKSPACE_CREATION=false
       - WORKSPACE_CREATION_DISABLED_MESSAGE=Du benötigst eine Workspace?<br/>Schreibe einfach eine <a href="mailto:info@cocktail-manager.de">Mail ans Team</a>!
       # Demo Mode Configuration (uncomment to enable)
       # - DEMO_MODE=true

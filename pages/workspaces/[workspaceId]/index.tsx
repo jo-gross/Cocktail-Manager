@@ -101,15 +101,24 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
     fetchSelectedCard();
   }, [fetchSelectedCard]);
 
-  // Prefetch card data for offline use when a card is loaded
+  // Prefetch complete card data and cocktails for offline use
   useEffect(() => {
-    if (selectedCard && workspaceId && isOnline) {
-      // Prefetch in background without blocking UI
-      prefetchCardData(workspaceId as string, selectedCard).catch(console.error);
+    if (workspaceId && isOnline && cocktailCards.length > 0) {
+      // Prefetch all cards in background without blocking UI
+      cocktailCards.forEach((cardSummary) => {
+        fetchCard(
+          workspaceId as string,
+          cardSummary.id,
+          (fullCard) => {
+            prefetchCardData(workspaceId as string, fullCard).catch(console.error);
+          },
+          () => {}, // ignore loading state for background fetch
+        );
+      });
       // Also prefetch all cocktails for search
       prefetchAllCocktails(workspaceId as string).catch(console.error);
     }
-  }, [selectedCard, workspaceId, isOnline]);
+  }, [cocktailCards, workspaceId, isOnline]);
 
   const sortCards = useCallback((a: CocktailCard, b: CocktailCard) => {
     const today = new Date().toISOString().slice(0, 10);
@@ -163,24 +172,32 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
       if (todayCardId) {
         setSelectedCardId(todayCardId);
         router
-          .replace({
-            pathname: '/workspaces/[workspaceId]',
-            query: {
-              card: todayCardId,
-              workspaceId: workspaceId,
+          .replace(
+            {
+              pathname: '/workspaces/[workspaceId]',
+              query: {
+                card: todayCardId,
+                workspaceId: workspaceId,
+              },
             },
-          })
+            undefined,
+            { shallow: true },
+          )
           .then();
       } else {
         setSelectedCardId(cocktailCards[0].id);
         router
-          .replace({
-            pathname: '/workspaces/[workspaceId]',
-            query: {
-              card: cocktailCards[0].id,
-              workspaceId: workspaceId,
+          .replace(
+            {
+              pathname: '/workspaces/[workspaceId]',
+              query: {
+                card: cocktailCards[0].id,
+                workspaceId: workspaceId,
+              },
             },
-          })
+            undefined,
+            { shallow: true },
+          )
           .then();
       }
     }
@@ -851,10 +868,14 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                         onClick={() => {
                           setSelectedCardId('search');
                           router
-                            .replace({
-                              pathname: '/workspaces/[workspaceId]',
-                              query: { card: 'search', workspaceId: workspaceId },
-                            })
+                            .replace(
+                              {
+                                pathname: '/workspaces/[workspaceId]',
+                                query: { card: 'search', workspaceId: workspaceId },
+                              },
+                              undefined,
+                              { shallow: true },
+                            )
                             .then();
                         }}
                       />
@@ -871,10 +892,14 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                         onClick={() => {
                           setSelectedCardId('order');
                           router
-                            .replace({
-                              pathname: '/workspaces/[workspaceId]',
-                              query: { card: 'order', workspaceId: workspaceId },
-                            })
+                            .replace(
+                              {
+                                pathname: '/workspaces/[workspaceId]',
+                                query: { card: 'order', workspaceId: workspaceId },
+                              },
+                              undefined,
+                              { shallow: true },
+                            )
                             .then();
                         }}
                       />
@@ -918,10 +943,14 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                               onClick={() => {
                                 setSelectedCardId(card.id);
                                 router
-                                  .replace({
-                                    pathname: '/workspaces/[workspaceId]',
-                                    query: { card: card.id, workspaceId: workspaceId },
-                                  })
+                                  .replace(
+                                    {
+                                      pathname: '/workspaces/[workspaceId]',
+                                      query: { card: card.id, workspaceId: workspaceId },
+                                    },
+                                    undefined,
+                                    { shallow: true },
+                                  )
                                   .then();
                               }}
                             />

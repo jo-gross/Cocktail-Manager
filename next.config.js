@@ -31,30 +31,10 @@ const nextConfig = {
   },
 };
 
-const withPWA = require('next-pwa')({
-  dest: 'public',
-  runtimeCaching: [
-    {
-      urlPattern: /\/queue$/,
-      handler: 'NetworkOnly', // don't cache queue requests, always fetch from network
-    },
-    {
-      urlPattern: /\/ratings$/,
-      handler: 'NetworkOnly', // don't cache queue requests, always fetch from network
-    },
-    {
-      urlPattern: /^https?.*/,
-      handler: 'StaleWhileRevalidate', // always cache first, but go to network (if available) for new data and update cache
-      method: 'GET', // only cache GET requests
-      options: {
-        cacheName: 'http-cache',
-        expiration: {
-          maxEntries: 200,
-          maxAgeSeconds: 14 * 24 * 60 * 60, // 14 days
-        },
-      },
-    },
-  ],
+const withSerwist = require('@serwist/next').default({
+  swSrc: 'service-worker/index.ts',
+  swDest: 'public/sw.js',
+  disable: process.env.NODE_ENV === 'development',
 });
 
-module.exports = withPWA(nextConfig);
+module.exports = withSerwist(nextConfig);
