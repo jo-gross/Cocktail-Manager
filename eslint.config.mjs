@@ -1,18 +1,13 @@
-import { dirname } from 'path';
-import { fileURLToPath } from 'url';
-import { FlatCompat } from '@eslint/eslintrc';
-import tseslint from 'typescript-eslint';
+import { defineConfig, globalIgnores } from 'eslint/config';
+import nextVitals from 'eslint-config-next/core-web-vitals';
+import nextTs from 'eslint-config-next/typescript';
+import prettier from 'eslint-config-prettier/flat';
 import unusedImports from 'eslint-plugin-unused-imports';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-const compat = new FlatCompat({
-  baseDirectory: __dirname,
-});
-
-const eslintConfig = tseslint.config(
-  ...compat.extends('next/core-web-vitals', 'next/typescript', 'prettier'),
+const eslintConfig = defineConfig([
+  ...nextVitals,
+  ...nextTs,
+  prettier,
   {
     plugins: {
       'unused-imports': unusedImports,
@@ -30,6 +25,10 @@ const eslintConfig = tseslint.config(
           argsIgnorePattern: '^_',
         },
       ],
+      'react-hooks/refs': 'warn',
+      'react-hooks/set-state-in-effect': 'warn',
+      'react-hooks/immutability': 'warn',
+      'react-hooks/purity': 'warn',
     },
   },
   {
@@ -38,9 +37,15 @@ const eslintConfig = tseslint.config(
       '@typescript-eslint/no-require-imports': 'off',
     },
   },
-  {
-    ignores: ['node_modules/', '.next/', 'public/', 'generated/', 'docs/', 'scripts/cleanup-demo-workspaces.js', 'next-env.d.ts'],
-  },
-);
+  globalIgnores([
+    '.next/**',
+    'node_modules/**',
+    'public/**',
+    'generated/**',
+    'docs/**',
+    'scripts/cleanup-demo-workspaces.js',
+    'next-env.d.ts',
+  ]),
+]);
 
 export default eslintConfig;

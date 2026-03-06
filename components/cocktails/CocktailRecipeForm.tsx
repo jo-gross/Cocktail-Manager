@@ -62,7 +62,7 @@ export interface CocktailRecipeFormValues {
 interface CocktailRecipeFormProps {
   cocktailRecipe?: CocktailRecipeFullWithImage;
   setUnsavedChanges?: (unsavedChanges: boolean) => void;
-  formRef: React.RefObject<FormikProps<CocktailRecipeFormValues>>;
+  formRef: React.RefObject<FormikProps<CocktailRecipeFormValues> | null>;
 }
 
 interface IngredientError {

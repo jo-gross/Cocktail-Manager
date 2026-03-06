@@ -26,7 +26,7 @@ import { FormValidationWarningModal } from '../modals/FormValidationWarningModal
 interface IngredientFormProps {
   ingredient?: IngredientWithImage;
   setUnsavedChanges?: (unsavedChanges: boolean) => void;
-  formRef?: React.RefObject<FormikProps<FormValue>>;
+  formRef?: React.RefObject<FormikProps<FormValue> | null>;
   onSaved?: (id: string) => void;
 }
 

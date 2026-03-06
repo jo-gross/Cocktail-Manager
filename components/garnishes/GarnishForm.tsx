@@ -27,7 +27,7 @@ export interface GarnishFormValues {
 interface GarnishFormProps {
   garnish?: GarnishWithImage;
   setUnsavedChanges?: (unsavedChanges: boolean) => void;
-  formRef?: React.RefObject<FormikProps<GarnishFormValues>>;
+  formRef?: React.RefObject<FormikProps<GarnishFormValues> | null>;
   onSaved?: (id: string) => void;
 }
 

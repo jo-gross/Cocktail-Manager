@@ -17,7 +17,7 @@ interface ManageEntityLayoutProps {
   subtitle?: string | React.ReactNode;
   actions?: React.ReactNode;
   unsavedChanges?: boolean;
-  formRef?: React.RefObject<FormikRefLike>;
+  formRef?: React.RefObject<FormikRefLike | null>;
   // Remove after calculation is migrated to formik
   onSave?: () => void;
 }

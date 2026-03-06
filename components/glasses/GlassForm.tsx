@@ -27,7 +27,7 @@ export interface GlassFormValues {
 interface GlassFormProps {
   glass?: GlassWithImage;
   setUnsavedChanges?: (unsavedChanges: boolean) => void;
-  formRef?: React.RefObject<FormikProps<GlassFormValues>>;
+  formRef?: React.RefObject<FormikProps<GlassFormValues> | null>;
   onSaved?: (id: string) => void;
 }
 
