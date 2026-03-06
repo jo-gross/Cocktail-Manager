@@ -38,7 +38,7 @@
     "chartjs-plugin-datalabels": "^2.2.0",
     "classnames": "^2.5.1",
     "deep-diff": "1.0.2",
-    "ejs": "^4.0.1",
+    "ejs": "^5.0.1",
     "formik": "2.4.9",
     "framer-motion": "^12.35.0",
     "graph-data-structure": "4.5.0",
