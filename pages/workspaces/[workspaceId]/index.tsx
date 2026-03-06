@@ -181,7 +181,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
               },
             },
             undefined,
-            { shallow: true }
+            { shallow: true },
           )
           .then();
       } else {
@@ -196,7 +196,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
               },
             },
             undefined,
-            { shallow: true }
+            { shallow: true },
           )
           .then();
       }
@@ -874,7 +874,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                                 query: { card: 'search', workspaceId: workspaceId },
                               },
                               undefined,
-                              { shallow: true }
+                              { shallow: true },
                             )
                             .then();
                         }}
@@ -898,7 +898,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                                 query: { card: 'order', workspaceId: workspaceId },
                               },
                               undefined,
-                              { shallow: true }
+                              { shallow: true },
                             )
                             .then();
                         }}
@@ -949,7 +949,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                                       query: { card: card.id, workspaceId: workspaceId },
                                     },
                                     undefined,
-                                    { shallow: true }
+                                    { shallow: true },
                                   )
                                   .then();
                               }}
