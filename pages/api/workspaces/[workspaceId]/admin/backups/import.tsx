@@ -69,7 +69,7 @@ function convertIce(ice: string): string {
   }
 }
 
-export default withWorkspacePermission([Role.USER], async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
+export default withWorkspacePermission([Role.USER], async (req: NextApiRequest, res: NextApiResponse, user, _workspace) => {
   const workspaceId = req.query.workspaceId as string | undefined;
   if (!workspaceId) return res.status(400).json({ message: 'No workspace id' });
 
@@ -181,14 +181,14 @@ export default withWorkspacePermission([Role.USER], async (req: NextApiRequest, 
             importLogger.step('Importing garnishes', { count: data.garnish.length });
             data.garnish?.forEach((g) => {
               const garnishMappingItem = { id: g.id, newId: randomUUID() };
-              // @ts-ignore causing older backup version support
+              // @ts-expect-error causing older backup version support
               if (g.image != undefined) {
-                // @ts-ignore causing older backup version support
+                // @ts-expect-error causing older backup version support
                 garnishImageMapping.push({ garnishId: garnishMappingItem.newId, image: g.image });
               }
               g.id = garnishMappingItem.newId;
               g.workspaceId = workspaceId;
-              // @ts-ignore causing older backup version support
+              // @ts-expect-error causing older backup version support
               g.image = undefined;
               garnishMapping.push(garnishMappingItem);
             });
@@ -214,22 +214,20 @@ export default withWorkspacePermission([Role.USER], async (req: NextApiRequest, 
 
             for (const g of data.ingredient) {
               const ingredientMappingItem = { id: g.id, newId: randomUUID() };
-              // @ts-ignore causing older backup version support
+              // @ts-expect-error causing older backup version support
               if (g.image != undefined) {
-                // @ts-ignore causing older backup version support
+                // @ts-expect-error causing older backup version support
                 ingredientImageMapping.push({ ingredientId: ingredientMappingItem.newId, image: g.image });
               }
               g.id = ingredientMappingItem.newId;
               g.workspaceId = workspaceId;
-              // @ts-ignore causing older backup version support
+              // @ts-expect-error causing older backup version support
               g.image = undefined;
               // Enable older backup imports
-              // @ts-ignore causing older backup version support
+              // @ts-expect-error causing older backup version support
               if (g.volume != undefined && g.unit != undefined) {
-                // @ts-ignore causing older backup version support
+                // @ts-expect-error causing older backup version support
                 const unitIdentifier = convertUnit(g.unit);
-                // @ts-ignore causing older backup version support
-                // @ts-ignore causing older backup version support
                 const unit = await transaction.unit.findFirst({ where: { name: unitIdentifier, workspaceId: workspaceId } });
                 let unitId = unit?.id;
                 if (unitId == undefined) {
@@ -238,14 +236,14 @@ export default withWorkspacePermission([Role.USER], async (req: NextApiRequest, 
                 }
                 oldVolumes.push({
                   ingredientId: g.id,
-                  // @ts-ignore causing older backup version support
+                  // @ts-expect-error causing older backup version support
                   volume: g.volume,
                   unitId: unitId,
                 });
               }
-              // @ts-ignore causing older backup version support
+              // @ts-expect-error causing older backup version support
               g.volume = undefined;
-              // @ts-ignore causing older backup version support
+              // @ts-expect-error causing older backup version support
               g.unit = undefined;
               ingredientMapping.push(ingredientMappingItem);
             }
@@ -304,14 +302,14 @@ export default withWorkspacePermission([Role.USER], async (req: NextApiRequest, 
             importLogger.step('Importing glasses', { count: data.glass.length });
             data.glass?.forEach((g) => {
               const glassMappingItem = { id: g.id, newId: randomUUID() };
-              // @ts-ignore causing older backup version support
+              // @ts-expect-error causing older backup version support
               if (g.image != undefined) {
-                // @ts-ignore causing older backup version support
+                // @ts-expect-error causing older backup version support
                 glassImageMapping.push({ glassId: glassMappingItem.newId, image: g.image });
               }
               g.id = glassMappingItem.newId;
               g.workspaceId = workspaceId;
-              // @ts-ignore causing older backup version support
+              // @ts-expect-error causing older backup version support
               g.image = undefined;
               glassMapping.push(glassMappingItem);
             });
@@ -349,9 +347,9 @@ export default withWorkspacePermission([Role.USER], async (req: NextApiRequest, 
           let oldIceMapping: { name: string; newId: string }[] = [];
           if (data.cocktailRecipe?.length > 0) {
             for (const cocktail of data.cocktailRecipe) {
-              // @ts-ignore causing older backup version support
+              // @ts-expect-error causing older backup version support
               if (cocktail.glassWithIce != undefined) {
-                // @ts-ignore causing older backup version support
+                // @ts-expect-error causing older backup version support
                 const iceIdentifier = convertIce(cocktail.glassWithIce);
                 if (oldIceMapping.find((ice) => ice.name == iceIdentifier) == undefined) {
                   const ice = await transaction.ice.findFirst({ where: { name: iceIdentifier, workspaceId: workspaceId } });
@@ -373,16 +371,16 @@ export default withWorkspacePermission([Role.USER], async (req: NextApiRequest, 
             importLogger.step('Importing cocktail recipes', { count: data.cocktailRecipe.length });
             data.cocktailRecipe?.forEach((g) => {
               const cocktailRecipeMappingItem = { id: g.id, newId: randomUUID() };
-              // @ts-ignore causing older backup version support
+              // @ts-expect-error causing older backup version support
               if (g.image != undefined) {
-                // @ts-ignore causing older backup version support
+                // @ts-expect-error causing older backup version support
                 cocktailRecipeImageMapping.push({ cocktailRecipeId: cocktailRecipeMappingItem.newId, image: g.image });
               }
               g.id = cocktailRecipeMappingItem.newId;
-              // @ts-ignore causing older backup version support
+              // @ts-expect-error causing older backup version support
               g.iceId = iceMapping.find((ice) => ice.id === g.iceId)?.newId;
               if (g.iceId == undefined) {
-                // @ts-ignore causing older backup version support
+                // @ts-expect-error causing older backup version support
                 g.iceId = oldIceMapping.find((ice) => ice.name == convertIce(g.glassWithIce))?.newId;
 
                 if (g.iceId == undefined) {
@@ -390,11 +388,11 @@ export default withWorkspacePermission([Role.USER], async (req: NextApiRequest, 
                   throw new Error('IceId is undefined');
                 }
               }
-              g.glassId = glassMapping.find((gm) => gm.id === g.glassId)?.newId!;
+              g.glassId = glassMapping.find((gm) => gm.id === g.glassId)!.newId;
               g.workspaceId = workspaceId;
-              // @ts-ignore causing older backup version support
+              // @ts-expect-error causing older backup version support
               g.image = undefined;
-              // @ts-ignore causing older backup version support
+              // @ts-expect-error causing older backup version support
               g.glassWithIce = undefined;
               cocktailRecipeMapping.push(cocktailRecipeMappingItem);
             });
@@ -432,7 +430,7 @@ export default withWorkspacePermission([Role.USER], async (req: NextApiRequest, 
             data.cocktailRecipeStep?.forEach((g) => {
               const cocktailRecipeStepMappingItem = { id: g.id, newId: randomUUID() };
               g.id = cocktailRecipeStepMappingItem.newId;
-              g.cocktailRecipeId = cocktailRecipeMapping.find((gm) => gm.id === g.cocktailRecipeId)?.newId!;
+              g.cocktailRecipeId = cocktailRecipeMapping.find((gm) => gm.id === g.cocktailRecipeId)!.newId;
               cocktailRecipeStepMapping.push(cocktailRecipeStepMappingItem);
             });
             const cocktailRecipeSteps = data.cocktailRecipeStep?.map((step) => {
@@ -442,12 +440,12 @@ export default withWorkspacePermission([Role.USER], async (req: NextApiRequest, 
                   stepNumber: step.stepNumber,
                   cocktailRecipeId: step.cocktailRecipeId,
                   actionId: actions.find(
-                    // @ts-ignore - For old versions, where the actionId does not exist
+                    // @ts-expect-error - For old versions, where the actionId does not exist
                     (action) => action.name == (step.tool == 'PESTLE' ? 'MUDDLE' : step.tool == 'POUR' ? 'WITHOUT' : step.tool),
-                  )?.id!,
+                  )!.id,
                 };
               } else {
-                step.actionId = actionMapping.find((gm) => gm.id === step.actionId)?.newId!;
+                step.actionId = actionMapping.find((gm) => gm.id === step.actionId)!.newId;
               }
               return step;
             });
@@ -457,8 +455,8 @@ export default withWorkspacePermission([Role.USER], async (req: NextApiRequest, 
           if (data.cocktailRecipeGarnish?.length > 0) {
             importLogger.step('Importing cocktail recipe garnishes', { count: data.cocktailRecipeGarnish.length });
             data.cocktailRecipeGarnish?.forEach((g) => {
-              g.cocktailRecipeId = cocktailRecipeMapping.find((gm) => gm.id === g.cocktailRecipeId)?.newId!;
-              g.garnishId = garnishMapping.find((gm) => gm.id === g.garnishId)?.newId!;
+              g.cocktailRecipeId = cocktailRecipeMapping.find((gm) => gm.id === g.cocktailRecipeId)!.newId;
+              g.garnishId = garnishMapping.find((gm) => gm.id === g.garnishId)!.newId;
             });
 
             await transaction.cocktailRecipeGarnish.createMany({
@@ -470,14 +468,14 @@ export default withWorkspacePermission([Role.USER], async (req: NextApiRequest, 
             importLogger.step('Importing cocktail recipe ingredients', { count: data.cocktailRecipeIngredient.length });
             for (const g of data.cocktailRecipeIngredient) {
               g.id = randomUUID();
-              g.cocktailRecipeStepId = cocktailRecipeStepMapping.find((gm) => gm.id === g.cocktailRecipeStepId)?.newId!;
-              g.ingredientId = ingredientMapping.find((gm) => gm.id === g.ingredientId)?.newId!;
+              g.cocktailRecipeStepId = cocktailRecipeStepMapping.find((gm) => gm.id === g.cocktailRecipeStepId)!.newId;
+              g.ingredientId = ingredientMapping.find((gm) => gm.id === g.ingredientId)!.newId;
               if (g.unitId != undefined) {
-                g.unitId = unitMapping.find((gm) => gm.id === g.unitId)?.newId!;
+                g.unitId = unitMapping.find((gm) => gm.id === g.unitId)!.newId;
               }
-              // @ts-ignore causing older backup version support
+              // @ts-expect-error causing older backup version support
               if (g.unit != undefined) {
-                // @ts-ignore causing older backup version support
+                // @ts-expect-error causing older backup version support
                 const unitIdentifier = convertUnit(g.unit);
                 const unit = await transaction.unit.findFirst({ where: { name: unitIdentifier, workspaceId: workspaceId } });
                 let unitId = unit?.id;
@@ -487,7 +485,7 @@ export default withWorkspacePermission([Role.USER], async (req: NextApiRequest, 
                 }
                 g.unitId = unitId;
               }
-              // @ts-ignore causing older backup version support
+              // @ts-expect-error causing older backup version support
               g.unit = undefined;
             }
             await transaction.cocktailRecipeIngredient.createMany({
@@ -514,7 +512,7 @@ export default withWorkspacePermission([Role.USER], async (req: NextApiRequest, 
             data.cocktailCardGroup?.forEach((g) => {
               const cocktailCardGroupMappingItem = { id: g.id, newId: randomUUID() };
               g.id = cocktailCardGroupMappingItem.newId;
-              g.cocktailCardId = cocktailCardMapping.find((gm) => gm.id === g.cocktailCardId)?.newId!;
+              g.cocktailCardId = cocktailCardMapping.find((gm) => gm.id === g.cocktailCardId)!.newId;
               cocktailCardGroupMapping.push(cocktailCardGroupMappingItem);
             });
             await transaction.cocktailCardGroup.createMany({ data: data.cocktailCardGroup, skipDuplicates: true });
@@ -523,8 +521,8 @@ export default withWorkspacePermission([Role.USER], async (req: NextApiRequest, 
           if (data.cocktailCardGroupItem?.length > 0) {
             importLogger.step('Importing cocktail card group items', { count: data.cocktailCardGroupItem.length });
             data.cocktailCardGroupItem?.forEach((g) => {
-              g.cocktailId = cocktailRecipeMapping.find((gm) => gm.id === g.cocktailId)?.newId!;
-              g.cocktailCardGroupId = cocktailCardGroupMapping.find((gm) => gm.id === g.cocktailCardGroupId)?.newId!;
+              g.cocktailId = cocktailRecipeMapping.find((gm) => gm.id === g.cocktailId)!.newId;
+              g.cocktailCardGroupId = cocktailCardGroupMapping.find((gm) => gm.id === g.cocktailCardGroupId)!.newId;
             });
             await transaction.cocktailCardGroupItem.createMany({
               data: data.cocktailCardGroupItem,
@@ -577,8 +575,8 @@ export default withWorkspacePermission([Role.USER], async (req: NextApiRequest, 
           if (data.calculationItems?.length > 0) {
             importLogger.step('Importing calculation items', { count: data.calculationItems.length });
             data.calculationItems?.forEach((g) => {
-              g.cocktailId = cocktailRecipeMapping.find((gm) => gm.id === g.cocktailId)?.newId!;
-              g.calculationId = cocktailCalculationMapping.find((gm) => gm.id === g.calculationId)?.newId!;
+              g.cocktailId = cocktailRecipeMapping.find((gm) => gm.id === g.cocktailId)!.newId;
+              g.calculationId = cocktailCalculationMapping.find((gm) => gm.id === g.calculationId)!.newId;
             });
             await transaction.cocktailCalculationItems.createMany({ data: data.calculationItems, skipDuplicates: true });
           }

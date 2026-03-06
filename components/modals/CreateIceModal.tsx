@@ -6,7 +6,7 @@ import { alertService } from '@lib/alertService';
 import { useRouter } from 'next/router';
 
 export default function CreateIceModal() {
-  const userContext = useContext(UserContext);
+  const _userContext = useContext(UserContext);
   const modalContext = useContext(ModalContext);
 
   const router = useRouter();
@@ -67,7 +67,7 @@ export default function CreateIceModal() {
           return errors;
         }}
       >
-        {({ values, handleChange, handleSubmit, isSubmitting, errors, touched, setFieldValue }) => (
+        {({ values, handleChange, handleSubmit, isSubmitting, errors, touched, setFieldValue: _setFieldValue }) => (
           <form onSubmit={handleSubmit} className={'flex flex-col gap-2'}>
             <div className={'grid grid-cols-2 gap-2'}>
               <div className={'form-control'}>

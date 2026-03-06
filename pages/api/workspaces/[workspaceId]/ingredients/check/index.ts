@@ -47,7 +47,7 @@ export default withHttpMethods({
           } else if (typeof link === 'string') {
             const similarProduct = allIngredients
               .filter((ingredient) => ingredient.link != null)
-              .find((ingredient) => 1 - levenshtein(ingredient.link!!, link) / Math.max(ingredient.link!!.length, link.length) > 0.8);
+              .find((ingredient) => 1 - levenshtein(ingredient.link!, link) / Math.max(ingredient.link!.length, link.length) > 0.8);
             return res.status(200).json({ data: similarProduct });
           } else {
             return res.status(400).json({ msg: 'Invalid query' });

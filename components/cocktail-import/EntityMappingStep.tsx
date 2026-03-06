@@ -49,7 +49,7 @@ interface EntityMappingStepProps {
   onBack: () => void;
 }
 
-export function EntityMappingStep({ workspaceId, exportData, selectedCocktailIds, onComplete, onBack }: EntityMappingStepProps) {
+export function EntityMappingStep({ workspaceId, exportData, selectedCocktailIds: _selectedCocktailIds, onComplete, onBack }: EntityMappingStepProps) {
   const [loading, setLoading] = useState(true);
   const [glassMappings, setGlassMappings] = useState<EntityMapping[]>([]);
   const [garnishMappings, setGarnishMappings] = useState<EntityMapping[]>([]);

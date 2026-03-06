@@ -242,8 +242,8 @@ function EditCocktailCard() {
                                 <div className={'label-text'}>Gruppe</div>
                                 <div className={'label-text-alt text-error'}>
                                   <span>
-                                    {(errors?.groups?.[groupIndex] as any)?.name && touched?.groups?.[groupIndex]?.name
-                                      ? (errors?.groups?.[groupIndex] as any)?.name
+                                    {(errors?.groups?.[groupIndex] as FormikErrors<CocktailCardGroupError>)?.name && touched?.groups?.[groupIndex]?.name
+                                      ? (errors?.groups?.[groupIndex] as FormikErrors<CocktailCardGroupError>)?.name
                                       : ''}
                                   </span>
                                   <span>*</span>
@@ -253,7 +253,9 @@ function EditCocktailCard() {
                                 type="text"
                                 disabled={card?.archived}
                                 className={`input input-bordered w-full ${
-                                  (errors?.groups?.[groupIndex] as any)?.name && touched?.groups?.[groupIndex]?.name ? 'input-error' : ''
+                                  (errors?.groups?.[groupIndex] as FormikErrors<CocktailCardGroupError>)?.name && touched?.groups?.[groupIndex]?.name
+                                    ? 'input-error'
+                                    : ''
                                 }`}
                                 name={`groups.${groupIndex}.name`}
                                 onChange={handleChange}
@@ -266,8 +268,9 @@ function EditCocktailCard() {
                                 <div className={'label-text'}>Gruppen Preis</div>
                                 <div className={'label-text-alt text-error'}>
                                   <span>
-                                    {(errors?.groups?.[groupIndex] as any)?.groupPrice && touched?.groups?.[groupIndex]?.groupPrice
-                                      ? (errors?.groups?.[groupIndex] as any)?.groupPrice
+                                    {(errors?.groups?.[groupIndex] as FormikErrors<CocktailCardGroupError>)?.groupPrice &&
+                                    touched?.groups?.[groupIndex]?.groupPrice
+                                      ? (errors?.groups?.[groupIndex] as FormikErrors<CocktailCardGroupError>)?.groupPrice
                                       : ''}
                                   </span>
                                 </div>
@@ -279,7 +282,10 @@ function EditCocktailCard() {
                                   min={0}
                                   step={0.01}
                                   className={`input join-item input-bordered w-full ${
-                                    (errors?.groups?.[groupIndex] as any)?.groupPrice && touched?.groups?.[groupIndex]?.groupPrice ? 'input-error' : ''
+                                    (errors?.groups?.[groupIndex] as FormikErrors<CocktailCardGroupError>)?.groupPrice &&
+                                    touched?.groups?.[groupIndex]?.groupPrice
+                                      ? 'input-error'
+                                      : ''
                                   }`}
                                   name={`groups.${groupIndex}.groupPrice`}
                                   onChange={handleChange}

@@ -23,7 +23,7 @@ export const DAY_ORDER_MONDAY_FIRST = [1, 2, 3, 4, 5, 6, 0] as const;
  */
 export function getDayName(day: number, short: boolean = true, mondayFirst: boolean = true): string {
   if (mondayFirst) {
-    const index = DAY_ORDER_MONDAY_FIRST.indexOf(day as any);
+    const index = DAY_ORDER_MONDAY_FIRST.indexOf(day as (typeof DAY_ORDER_MONDAY_FIRST)[number]);
     if (index === -1) return '';
     return short ? DAY_NAMES_SHORT_MONDAY_FIRST[index] : DAY_NAMES_FULL[day];
   } else {

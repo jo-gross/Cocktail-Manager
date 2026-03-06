@@ -32,7 +32,7 @@ interface ManageColumnProps {
   }[];
 }
 
-interface Reference {
+interface _Reference {
   id: string;
   name: string;
 }
@@ -291,7 +291,7 @@ export function ManageColumn(props: ManageColumnProps) {
     (props.entity === 'cocktails' || props.entity === 'ingredients' || props.entity === 'glasses' || props.entity === 'garnishes') &&
     userContext.isUserPermitted(Role.MANAGER);
   const hasExportActions = Boolean(props.onExportJson || props.onExportPdf);
-  const hasCustomActions = Boolean(props.customActions && props.customActions.length > 0);
+  const _hasCustomActions = Boolean(props.customActions && props.customActions.length > 0);
   const hasDuplicateOrExportActions = canDuplicate || hasExportActions;
 
   if (!canEdit) {

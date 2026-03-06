@@ -12,7 +12,7 @@ interface AlertsContainerProps {
 
 const duration = 3000;
 
-function AlertsContainer({ id = 'default-alert', fade }: AlertsContainerProps) {
+function AlertsContainer({ id = 'default-alert', fade: _fade }: AlertsContainerProps) {
   const mounted = useRef(false);
   const router = useRouter();
 

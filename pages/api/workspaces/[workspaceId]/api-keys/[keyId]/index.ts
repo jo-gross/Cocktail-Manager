@@ -1,7 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
 import { withHttpMethods } from '@middleware/api/handleMethods';
-import { Role, Permission } from '@generated/prisma/client';
+import { Role } from '@generated/prisma/client';
 import HTTPMethod from 'http-method-enum';
 import prisma from '../../../../../../prisma/prisma';
 import { invalidateKeyCache } from '@middleware/api/jwtApiKeyMiddleware';

@@ -96,7 +96,7 @@ export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeIns
         <div className={`${props.showImage == true && props.cocktailRecipe._count.CocktailRecipeImage > 0 ? 'col-span-3' : 'col-span-5'}`}>
           {props.cocktailRecipe.steps
             ?.sort((a, b) => a.stepNumber - b.stepNumber)
-            ?.map((step, index) => (
+            ?.map((step, _index) => (
               <div key={`step-${step.id}`} className={'break-words pb-2'}>
                 <span className={`font-bold ${step.optional && 'italic'}`}>
                   {userContext.getTranslation(step.action.name, 'de')}
@@ -138,7 +138,7 @@ export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeIns
                     key={`cocktail-${props.cocktailRecipe.id}-garnish-${garnish.garnishNumber}-garnishId-${garnish.garnishId}`}
                     className={`pl-2 ${garnish.optional ? 'italic' : ''}`}
                   >
-                    {(garnish as any).isAlternative && <span className="font-bold">oder </span>}
+                    {garnish.isAlternative && <span className="font-bold">oder </span>}
                     {garnish?.garnish?.name}
                     {garnish.optional ? ' (optional)' : ''}
                   </div>

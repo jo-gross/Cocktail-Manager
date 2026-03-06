@@ -33,7 +33,13 @@ const eslintConfig = tseslint.config(
     },
   },
   {
-    ignores: ['node_modules/', '.next/', 'public/', 'generated/', 'docs/'],
+    files: ['**/*.js'],
+    rules: {
+      '@typescript-eslint/no-require-imports': 'off',
+    },
+  },
+  {
+    ignores: ['node_modules/', '.next/', 'public/', 'generated/', 'docs/', 'scripts/cleanup-demo-workspaces.js', 'next-env.d.ts'],
   },
 );
 

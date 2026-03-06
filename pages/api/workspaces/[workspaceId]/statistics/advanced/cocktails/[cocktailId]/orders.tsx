@@ -2,7 +2,7 @@ import prisma from '../../../../../../../../prisma/prisma';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
 import { withHttpMethods } from '@middleware/api/handleMethods';
-import { Permission, Role, WorkspaceSettingKey } from '@generated/prisma/client';
+import { Permission, Prisma, Role, WorkspaceSettingKey } from '@generated/prisma/client';
 import HTTPMethod from 'http-method-enum';
 import { getEndOfDay, getStartOfDay } from '../../../../../../../../lib/dateHelpers';
 
@@ -48,19 +48,20 @@ export default withHttpMethods({
     const take = pageSize;
 
     // Build where clause
-    const where: any = {
+    const where: Prisma.CocktailStatisticItemWhereInput = {
       workspaceId: workspace.id,
       cocktailId: cocktailId as string,
     };
 
     if (startDate || endDate) {
-      where.date = {};
+      const dateFilter: Prisma.DateTimeFilter = {};
       if (startDate) {
-        where.date.gte = getStartOfDay(new Date(startDate as string), dayStartTime);
+        dateFilter.gte = getStartOfDay(new Date(startDate as string), dayStartTime);
       }
       if (endDate) {
-        where.date.lte = getEndOfDay(new Date(endDate as string), dayStartTime);
+        dateFilter.lte = getEndOfDay(new Date(endDate as string), dayStartTime);
       }
+      where.date = dateFilter;
     }
 
     // Get all results first (we'll filter client-side for search)

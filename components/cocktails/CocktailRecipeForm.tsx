@@ -103,7 +103,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
   const routingContext = useContext(RoutingContext);
 
   const [iceOptions, setIceOptions] = useState<Ice[]>([]);
-  const [iceOptionsLoading, setIceOptionsLoading] = useState(false);
+  const [_iceOptionsLoading, setIceOptionsLoading] = useState(false);
 
   const [ingredients, setIngredients] = useState<IngredientModel[]>([]);
   const [ingredientsLoading, setIngredientsLoading] = useState(false);
@@ -118,7 +118,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
   const [actionsLoading, setActionsLoading] = useState(false);
 
   const [units, setUnits] = useState<Unit[]>([]);
-  const [unitsLoading, setUnitsLoading] = useState(false);
+  const [_unitsLoading, setUnitsLoading] = useState(false);
 
   const [similarCocktailRecipe, setSimilarCocktailRecipe] = useState<CocktailRecipe | undefined>(undefined);
 

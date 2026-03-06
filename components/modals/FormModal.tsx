@@ -1,4 +1,4 @@
-interface FormModalProps<T> {
+interface FormModalProps<_T> {
   form: JSX.Element;
   title: string;
 }

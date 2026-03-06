@@ -30,7 +30,7 @@ export default withHttpMethods({
       }
 
       const exportData: IngredientExportStructure[] = ingredients.map((ingredient) => {
-        const unitsMap = new Map<string, any>();
+        const unitsMap = new Map<string, { id: string; name: string; workspaceId: string }>();
         const ingredientVolumes = ingredient.IngredientVolume.map((v) => {
           if (v.unit) {
             unitsMap.set(v.unit.id, {

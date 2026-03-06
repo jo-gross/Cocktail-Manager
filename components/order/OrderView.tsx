@@ -31,8 +31,8 @@ interface OrderViewProps {
 }
 
 export const OrderView = React.memo(function OrderView({ cocktailCards, workspaceId }: OrderViewProps) {
-  const router = useRouter();
-  const modalContext = useContext(ModalContext);
+  const _router = useRouter();
+  const _modalContext = useContext(ModalContext);
   const [selectedCardId, setSelectedCardId] = useState<string>('');
   const [searchTerm, setSearchTerm] = useState('');
   const [cocktails, setCocktails] = useState<CocktailRecipeFull[]>([]);
@@ -241,7 +241,7 @@ export const OrderView = React.memo(function OrderView({ cocktailCards, workspac
   const totalReturnedDeposit = orderItems.reduce((sum, item) => sum + item.deposit * item.returnedDeposit, 0);
 
   const totalPrice = totalCocktailPrice + totalNewDeposit - totalReturnedDeposit;
-  const depositReturn = totalReturnedDeposit;
+  const _depositReturn = totalReturnedDeposit;
 
   // Group glasses by deposit
   const groupedGlasses = glasses.reduce(

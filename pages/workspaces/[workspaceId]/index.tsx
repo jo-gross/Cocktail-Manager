@@ -637,7 +637,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                   : _(cocktailQueue)
                       .filter((item) => item.inProgress)
                       .sortBy('timestamp') // Sortiere nach timestamp (desc)
-                      .map((item, key) => {
+                      .map((item, _key) => {
                         return {
                           queueItemId: item.queueItemId,
                           cocktailId: item.cocktailId,

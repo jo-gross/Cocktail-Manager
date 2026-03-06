@@ -114,7 +114,7 @@ export function GarnishForm(props: GarnishFormProps) {
           props.setUnsavedChanges?.(true);
         }
 
-        const errors: any = {};
+        const errors: Partial<Record<keyof GarnishFormValues, string>> = {};
         if (!values.name) {
           errors.name = 'Required';
         }

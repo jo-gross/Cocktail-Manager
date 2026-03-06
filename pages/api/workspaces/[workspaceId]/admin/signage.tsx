@@ -17,7 +17,7 @@ export default withHttpMethods({
     });
 
     if (verticalContent != undefined && verticalContent != '') {
-      const verticalSignage = await prisma.signage.create({
+      await prisma.signage.create({
         data: {
           workspaceId: workspace.id,
           format: MonitorFormat.PORTRAIT,
@@ -28,7 +28,7 @@ export default withHttpMethods({
     }
 
     if (horizontalContent != undefined && horizontalContent != '') {
-      const horizontalSignage = await prisma.signage.create({
+      await prisma.signage.create({
         data: {
           workspaceId: workspace.id,
           format: MonitorFormat.LANDSCAPE,

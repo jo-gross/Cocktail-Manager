@@ -30,7 +30,7 @@ interface ApiKey {
 function ApiKeysPage() {
   const router = useRouter();
   const { workspaceId } = router.query;
-  const userContext = useContext(UserContext);
+  const _userContext = useContext(UserContext);
   const modalContext = useContext(ModalContext);
 
   const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
@@ -164,7 +164,7 @@ function ApiKeysPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {apiKeys.map((apiKey, index) => {
+                    {apiKeys.map((apiKey, _index) => {
                       const expired = isExpired(apiKey.expiresAt);
                       return (
                         <tr key={apiKey.id}>

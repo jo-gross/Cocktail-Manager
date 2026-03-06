@@ -113,7 +113,7 @@ export function GlassForm(props: GlassFormProps) {
           props.setUnsavedChanges?.(true);
         }
 
-        const errors: any = {};
+        const errors: Partial<Record<keyof GlassFormValues, string>> = {};
         if (!values.name) {
           errors.name = 'Required';
         }

@@ -23,7 +23,7 @@ export function TagList({ items, selectedIds = new Set(), onToggleSelect, onClea
   const [sortBy, setSortBy] = useState<SortOption>('count-desc');
 
   const sortedAndFilteredItems = useMemo(() => {
-    let filtered = items.filter((item) => item.tag.toLowerCase().includes(filter.toLowerCase()));
+    const filtered = items.filter((item) => item.tag.toLowerCase().includes(filter.toLowerCase()));
 
     switch (sortBy) {
       case 'count-desc':

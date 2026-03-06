@@ -40,7 +40,7 @@ export function ConfirmationStep({ workspaceId, exportData, mappingDecisions, se
   const [errors, setErrors] = useState<ImportError[]>([]);
   const [showDetailsCollapsed, setShowDetailsCollapsed] = useState(false);
 
-  const selectedCocktails = exportData.cocktailRecipes.filter((c) => selectedCocktailIds.has(c.id));
+  const _selectedCocktails = exportData.cocktailRecipes.filter((c) => selectedCocktailIds.has(c.id));
   const cocktailsToImport = mappingDecisions.cocktails.filter((m) => m.decision !== 'skip').length;
 
   // Calculate what will be created

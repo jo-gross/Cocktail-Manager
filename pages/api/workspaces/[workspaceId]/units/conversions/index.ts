@@ -24,7 +24,7 @@ export default withHttpMethods({
       },
     };
 
-    const unitConversion = await prisma.unitConversion.create({ data: input });
+    await prisma.unitConversion.create({ data: input });
     await prisma.unitConversion.create({
       data: {
         fromUnit: { connect: { id: toUnitId } },
@@ -82,7 +82,7 @@ export async function regenerateUnitConversions(workspaceId: string): Promise<Un
       const path = shortestPath(graph, combination[0], combination[1]);
       // const path = graph.shortestPath(combination[0], combination[1]);
       allConnections.push(path.nodes);
-    } catch (e) {}
+    } catch {}
   });
 
   const allConversions: UnitConversion[] = paths;

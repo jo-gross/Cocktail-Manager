@@ -50,7 +50,7 @@ export default withHttpMethods({
         ratings: true,
       },
     });
-    let searchParam = req.query.search as string | undefined;
+    const searchParam = req.query.search as string | undefined;
     if (searchParam == undefined) {
       return res.json({ data: cocktailRecipes });
     } else {
@@ -116,7 +116,7 @@ export default withHttpMethods({
               },
             });
 
-            const incomingIngredients = (step.ingredients ?? []) as any[];
+            const incomingIngredients = step.ingredients ?? [];
             for (const ing of incomingIngredients) {
               await tx.cocktailRecipeIngredient.create({
                 data: {
@@ -141,7 +141,7 @@ export default withHttpMethods({
                 garnishNumber: garnish.garnishNumber,
                 description: garnish.description,
                 optional: garnish.optional,
-                isAlternative: (garnish as any).isAlternative,
+                isAlternative: garnish.isAlternative,
               },
             });
           }

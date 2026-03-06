@@ -2,22 +2,20 @@ import prisma from '../../../../../../../prisma/prisma';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
 import { withHttpMethods } from '@middleware/api/handleMethods';
-import { Role, Permission, SavedSetType, SavedSetLogic } from '@generated/prisma/client';
+import { Role, Permission, Prisma, SavedSetType, SavedSetLogic } from '@generated/prisma/client';
 import HTTPMethod from 'http-method-enum';
 
 export default withHttpMethods({
   [HTTPMethod.GET]: withWorkspacePermission([Role.USER], Permission.STATISTICS_READ, async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
     const { type, types } = req.query;
 
-    const where: any = {
+    const where: Prisma.StatisticSavedSetWhereInput = {
       workspaceId: workspace.id,
     };
 
     if (type) {
-      // Single type filter
       where.type = type as SavedSetType;
     } else if (types) {
-      // Multiple types filter (comma-separated)
       const typeList = (types as string).split(',').filter((t) => Object.values(SavedSetType).includes(t as SavedSetType));
       if (typeList.length > 0) {
         where.type = { in: typeList as SavedSetType[] };
@@ -81,7 +79,7 @@ export default withHttpMethods({
       return res.status(404).json({ message: 'Set not found' });
     }
 
-    const updateData: any = {};
+    const updateData: Prisma.StatisticSavedSetUpdateInput = {};
     if (name !== undefined) updateData.name = name;
     if (logic !== undefined) updateData.logic = logic ? (logic as SavedSetLogic) : null;
     if (items !== undefined) updateData.items = items;

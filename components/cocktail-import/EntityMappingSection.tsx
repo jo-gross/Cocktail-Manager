@@ -329,7 +329,7 @@ export function EntityMappingSection({
               const mapping = getMapping(entity.id);
               const matches = getMatches(entity.id);
               const isAutoMatched = mapping?.decision === 'use-existing' && mapping.existingId;
-              const selectedMatch = matches.find((m) => m.id === mapping?.existingId);
+              const _selectedMatch = matches.find((m) => m.id === mapping?.existingId);
 
               return (
                 <div key={entity.id} className={'rounded-lg border border-base-300 p-3'}>

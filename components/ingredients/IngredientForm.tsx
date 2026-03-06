@@ -63,7 +63,7 @@ export function IngredientForm(props: IngredientFormProps) {
   const [loadingUnits, setUnitsLoading] = useState(false);
   const [allUnits, setAllUnits] = useState<Unit[]>([]);
 
-  const [loadingDefaultConversions, setLoadingDefaultConversions] = useState(false);
+  const [_loadingDefaultConversions, setLoadingDefaultConversions] = useState(false);
   const [defaultConversions, setDefaultConversions] = useState<UnitConversion[]>([]);
 
   const [similarIngredient, setSimilarIngredient] = useState<Ingredient | undefined>(undefined);
@@ -205,7 +205,7 @@ export function IngredientForm(props: IngredientFormProps) {
         } else {
           props.setUnsavedChanges?.(true);
         }
-        const errors: any = {};
+        const errors: Partial<Record<keyof FormValue, string>> = {};
         if (!values.name) {
           errors.name = 'Required';
         }

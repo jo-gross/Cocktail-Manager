@@ -181,7 +181,7 @@ export async function authenticateApiKey(req: NextApiRequest): Promise<ApiKeyAut
       workspace: keyRecord.workspace,
       permissions: decoded.permissions,
     };
-  } catch (error) {
+  } catch {
     // JWT verification failed (invalid signature, expired, etc.)
     return null;
   }

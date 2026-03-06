@@ -3,8 +3,12 @@ import Head from 'next/head';
 import React, { useContext } from 'react';
 import { NotSavedLeaveConfirmation } from '../modals/NotSavedLeaveConfirmation';
 import { ModalContext } from '@lib/context/ModalContextProvider';
-import { FormikProps } from 'formik';
 import { RoutingContext } from '@lib/context/RoutingContextProvider';
+
+interface FormikRefLike {
+  isSubmitting?: boolean;
+  submitForm: () => Promise<void>;
+}
 
 interface ManageEntityLayoutProps {
   children: React.ReactNode;
@@ -13,7 +17,7 @@ interface ManageEntityLayoutProps {
   subtitle?: string | React.ReactNode;
   actions?: React.ReactNode;
   unsavedChanges?: boolean;
-  formRef?: React.RefObject<FormikProps<any>>;
+  formRef?: React.RefObject<FormikRefLike>;
   // Remove after calculation is migrated to formik
   onSave?: () => void;
 }
@@ -38,18 +42,20 @@ export function ManageEntityLayout(props: ManageEntityLayoutProps) {
             <div
               className={'btn btn-square btn-primary btn-sm md:btn-md'}
               onClick={() => {
-                (props.unsavedChanges ?? false)
-                  ? modalContext.openModal(
-                      <NotSavedLeaveConfirmation
-                        isSaving={props.formRef?.current?.isSubmitting}
-                        onSave={async () => {
-                          props.onSave?.();
-                          await props.formRef?.current?.submitForm();
-                        }}
-                        onNotSave={() => routingContext.conditionalBack(props.backLink)}
-                      />,
-                    )
-                  : routingContext.conditionalBack(props.backLink);
+                if (props.unsavedChanges ?? false) {
+                  modalContext.openModal(
+                    <NotSavedLeaveConfirmation
+                      isSaving={props.formRef?.current?.isSubmitting}
+                      onSave={async () => {
+                        props.onSave?.();
+                        await props.formRef?.current?.submitForm();
+                      }}
+                      onNotSave={() => routingContext.conditionalBack(props.backLink)}
+                    />,
+                  );
+                } else {
+                  routingContext.conditionalBack(props.backLink);
+                }
               }}
             >
               <FaArrowLeft />

@@ -482,7 +482,7 @@ export default function CalculationPage() {
         .groupBy('ingredient.id')
         .sortBy((group) => group[0].ingredient.name)
         .map(
-          (items, key) =>
+          (items, _key) =>
             `${ingredientShoppingUnits.find((ingredient) => ingredient.ingredientId == items[0].ingredient.id)?.checked ? 'true' : 'false'},${items[0].ingredient.name},${calculateTotalIngredientAmount(
               items,
             ).toLocaleString(undefined, {

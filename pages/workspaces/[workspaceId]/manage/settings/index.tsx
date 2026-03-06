@@ -434,7 +434,7 @@ function WorkspaceSettingPage() {
                             <td colSpan={3}>Keine Einträge vorhanden</td>
                           </tr>
                         ) : (
-                          Object.entries(_.groupBy(workspaceActions, 'actionGroup')).map(([group, groupActions]) => (
+                          Object.entries(_.groupBy(workspaceActions, 'actionGroup')).map(([group, _groupActions]) => (
                             <tr key={`action-group-${group}`}>
                               <td>{group}</td>
                               <td>{userContext.getTranslation(group, 'de')}</td>

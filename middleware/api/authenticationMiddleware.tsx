@@ -4,7 +4,7 @@ import { Role, User, Workspace, WorkspaceUser, Permission } from '@generated/pri
 import { constants as HttpStatus } from 'http2';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '../../pages/api/auth/[...nextauth]';
-import { authenticateApiKey, checkMasterApiKey, ApiKeyAuthResult } from './jwtApiKeyMiddleware';
+import { authenticateApiKey, checkMasterApiKey } from './jwtApiKeyMiddleware';
 import { hasPermission } from '@lib/permissions/apiKeyPermissions';
 
 export function withAuthentication(fn: (fnReq: NextApiRequest, fnRes: NextApiResponse, fnUser: User) => void) {

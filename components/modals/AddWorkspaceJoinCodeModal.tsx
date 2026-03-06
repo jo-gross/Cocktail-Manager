@@ -10,7 +10,7 @@ interface AddWorkspaceJoinCodeModalProps {
 }
 
 export default function AddWorkspaceJoinCodeModal(props: AddWorkspaceJoinCodeModalProps) {
-  const userContext = useContext(UserContext);
+  const _userContext = useContext(UserContext);
   const modalContext = useContext(ModalContext);
 
   const router = useRouter();

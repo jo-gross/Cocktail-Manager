@@ -106,8 +106,8 @@ export function StackedDistributionChart({
             item.percentage = total > 0 ? ((item.value / total) * 100).toFixed(1) : '0';
           });
 
-          const position = chart.canvas.getBoundingClientRect();
-          const containerRect = containerRef.current?.getBoundingClientRect();
+          const _position = chart.canvas.getBoundingClientRect();
+          const _containerRect = containerRef.current?.getBoundingClientRect();
 
           setTooltipData({
             show: true,

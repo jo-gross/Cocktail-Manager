@@ -173,7 +173,7 @@ export function EntityCombobox({
     setSearch('');
   };
 
-  const handleClear = (e: React.MouseEvent) => {
+  const _handleClear = (e: React.MouseEvent) => {
     e.stopPropagation();
     setSelectedOption(null);
     onChange(null);

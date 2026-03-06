@@ -99,7 +99,7 @@ export function CocktailReviewStep({ workspaceId, exportData, selectedCocktailId
 
   const handleNext = () => {
     // Validate all conflicts are resolved
-    const unresolvedConflicts = cocktailMappings.filter((m) => {
+    const _unresolvedConflicts = cocktailMappings.filter((m) => {
       const conflict = getConflict(m.exportId);
       return conflict && conflict.conflicts.length > 0 && m.decision === 'skip';
     });

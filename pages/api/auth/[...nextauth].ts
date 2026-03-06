@@ -7,7 +7,9 @@ import { PrismaAdapter } from '@next-auth/prisma-adapter';
 import { AdapterAccount } from 'next-auth/adapters';
 import { getExternalWorkspaceMappings } from '../../../lib/config/externalWorkspace';
 
-const providers: any[] = [];
+import { Provider } from 'next-auth/providers';
+
+const providers: Provider[] = [];
 
 // Google OAuth Provider
 // Required: GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET
@@ -36,7 +38,7 @@ if (process.env.CUSTOM_OIDC_NAME as string) {
     clientSecret: process.env.CUSTOM_OIDC_CLIENT_SECRET as string,
     idToken: true,
     checks: ['pkce', 'state'],
-    profile(profile: any) {
+    profile(profile: Record<string, string>) {
       return {
         id: profile[(process.env.CUSTOM_OIDC_ID_KEY as string) || 'sub'],
         name: profile[(process.env.CUSTOM_OIDC_NAME_KEY as string) || 'name'],
@@ -84,7 +86,6 @@ if (process.env.DEMO_MODE === 'true') {
 
 // Some providers have custom options in their tokens. This causes problems if these fields are not present in the account db model.
 // This is a custom adapter that removes all fields from the account object that are not present in the account model.
-// @ts-ignore
 const adapter = PrismaAdapter(prisma);
 const _linkAccount = adapter.linkAccount;
 adapter.linkAccount = (account: AdapterAccount) => {
@@ -124,7 +125,7 @@ export const authOptions: NextAuthOptions = {
           if (groupKey) {
             try {
               const workspaces = getExternalWorkspaceMappings();
-              // @ts-ignore
+              // @ts-expect-error profile has dynamic OIDC keys not in type definition
               const userGroups = profile[groupKey] || [];
               const groupList = Array.isArray(userGroups) ? userGroups : [userGroups];
 

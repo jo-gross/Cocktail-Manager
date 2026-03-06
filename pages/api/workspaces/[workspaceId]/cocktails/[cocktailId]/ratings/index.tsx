@@ -9,7 +9,7 @@ import prisma from '../../../../../../../prisma/prisma';
 import CocktailRatingCreateInput = Prisma.CocktailRatingCreateInput;
 
 export default withHttpMethods({
-  [HTTPMethod.GET]: withWorkspacePermission([Role.USER], Permission.RATINGS_READ, async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
+  [HTTPMethod.GET]: withWorkspacePermission([Role.USER], Permission.RATINGS_READ, async (req: NextApiRequest, res: NextApiResponse, _user, _workspace) => {
     const { cocktailId } = req.query;
     const cocktailRecipes: CocktailRating[] = await prisma.cocktailRating.findMany({
       where: {
@@ -19,7 +19,7 @@ export default withHttpMethods({
 
     return res.json({ data: cocktailRecipes });
   }),
-  [HTTPMethod.POST]: withWorkspacePermission([Role.USER], Permission.RATINGS_CREATE, async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
+  [HTTPMethod.POST]: withWorkspacePermission([Role.USER], Permission.RATINGS_CREATE, async (req: NextApiRequest, res: NextApiResponse, _user, _workspace) => {
     const { name, rating, comment } = req.body;
     const { cocktailId } = req.query;
 

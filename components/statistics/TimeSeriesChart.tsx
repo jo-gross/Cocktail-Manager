@@ -237,7 +237,7 @@ export function TimeSeriesChart({
       tooltip: {
         enabled: false, // Disable default tooltip, we use custom
         external: (context: { chart: ChartJS; tooltip: TooltipModel<'line'> }) => {
-          const { chart, tooltip } = context;
+          const { chart: _chart, tooltip } = context;
 
           if (tooltip.opacity === 0) {
             setTooltipData(null);

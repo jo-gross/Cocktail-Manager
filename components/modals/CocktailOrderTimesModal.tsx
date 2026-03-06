@@ -58,7 +58,7 @@ export default function CocktailOrderTimesModal({ workspaceId, cocktailId, cockt
         let body;
         try {
           body = await response.json();
-        } catch (jsonError) {
+        } catch {
           const text = await response.text();
           console.error('CocktailOrderTimesModal -> fetchOrders - Non-JSON response', text);
           alertService.error('Fehler beim Laden der Bestellungen', response.status, response.statusText);

@@ -30,7 +30,7 @@ export default function StatisticActions({
   notes,
   initData,
   onMarkedAsDone,
-  onAddToQueue,
+  onAddToQueue: _onAddToQueue,
   cocktailName,
 }: StatisticActionsProps) {
   const [submittingQueue, setSubmittingQueue] = useState(false);

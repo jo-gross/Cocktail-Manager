@@ -2,7 +2,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import prisma from '../../../../../prisma/prisma';
 import { createLog } from '../../../../../lib/auditLog';
 import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
-import { Permission, Role } from '@generated/prisma/client';
+import { Permission, Prisma, Role } from '@generated/prisma/client';
 import { withHttpMethods } from '@middleware/api/handleMethods';
 import HTTPMethod from 'http-method-enum';
 import { IngredientExportStructure } from '../../../../../lib/auditExport';
@@ -16,7 +16,7 @@ interface EntityDecision {
   decision: 'import' | 'overwrite' | 'rename' | 'skip';
   existingId?: string;
   newName?: string;
-  data: any;
+  data: IngredientExportStructure;
 }
 
 export default withHttpMethods({
@@ -96,7 +96,7 @@ export default withHttpMethods({
                     where: { ingredientId: decision.existingId },
                   });
 
-                  const updated = await tx.ingredient.update({
+                  await tx.ingredient.update({
                     where: { id: decision.existingId },
                     data: {
                       name: finalName,
@@ -143,8 +143,8 @@ export default withHttpMethods({
                   await createLog(tx, workspaceId, user.id, 'Ingredient', created.id, 'CREATE', null, fullCreated);
                   results.push({ name: finalName, status: 'created' });
                 }
-              } catch (err: any) {
-                results.push({ name: finalName, status: 'error', message: err.message });
+              } catch (err: unknown) {
+                results.push({ name: finalName, status: 'error', message: err instanceof Error ? err.message : 'Unbekannter Fehler' });
               }
             }
           });
@@ -153,15 +153,15 @@ export default withHttpMethods({
         }
 
         return res.status(400).json({ message: 'Ungültige Phase' });
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('Ingredient import error:', error);
-        return res.status(500).json({ message: error.message || 'Import failed' });
+        return res.status(500).json({ message: error instanceof Error ? error.message : 'Import failed' });
       }
     },
   ),
 });
 
-async function createVolumes(tx: any, ingredientId: string, workspaceId: string, itemData: IngredientExportStructure) {
+async function createVolumes(tx: Prisma.TransactionClient, ingredientId: string, workspaceId: string, itemData: IngredientExportStructure) {
   if (!itemData.ingredientVolumes || !itemData.units) return;
 
   for (const vol of itemData.ingredientVolumes) {

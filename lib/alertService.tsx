@@ -36,20 +36,20 @@ function onAlert(id = defaultId) {
 }
 
 // convenience methods
-function success(message: string, options?: any) {
-  alert({ ...options, type: AlertType.Success, message });
+function success(message: string, options?: Partial<Omit<Alert, 'message' | 'type'>>) {
+  alert({ alertContainerId: defaultId, itemId: 0, ...options, type: AlertType.Success, message });
 }
 
-function error(message: string, status?: number, statusText?: string, options?: any) {
-  alert({ ...options, type: AlertType.Error, status: status, statusText: statusText, message: message });
+function error(message: string, status?: number, statusText?: string, options?: Partial<Omit<Alert, 'message' | 'type'>>) {
+  alert({ alertContainerId: defaultId, itemId: 0, ...options, type: AlertType.Error, status: status, statusText: statusText, message: message });
 }
 
-function info(message: string, options?: any) {
-  alert({ ...options, type: AlertType.Info, message });
+function info(message: string, options?: Partial<Omit<Alert, 'message' | 'type'>>) {
+  alert({ alertContainerId: defaultId, itemId: 0, ...options, type: AlertType.Info, message });
 }
 
-function warn(message: string, options?: any) {
-  alert({ ...options, type: AlertType.Warning, message });
+function warn(message: string, options?: Partial<Omit<Alert, 'message' | 'type'>>) {
+  alert({ alertContainerId: defaultId, itemId: 0, ...options, type: AlertType.Warning, message });
 }
 
 // core alert method

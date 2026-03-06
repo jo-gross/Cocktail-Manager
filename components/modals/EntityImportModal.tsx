@@ -451,7 +451,7 @@ export default function EntityImportModal({ workspaceId, entityType, onImportCom
   );
 
   const selectedCount = parsedEntities.filter((e) => e.selected && e.valid).length;
-  const hasConflicts = mappingEntities.some((e) => e.conflicts.length > 0);
+  const _hasConflicts = mappingEntities.some((e) => e.conflicts.length > 0);
   const hasDependencyMappings = isCalculation && (cocktailMatches.length > 0 || ingredientMatches.length > 0 || unitMatches.length > 0);
   const hasUnmappedDeps =
     isCalculation &&

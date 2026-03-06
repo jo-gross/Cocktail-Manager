@@ -50,8 +50,7 @@ export function AuthBoundary(props: AlertBoundaryProps) {
   }, []);
 
   useEffect(() => {
-    // Cast to any to access id which is added in the session callback
-    const sessionUser = session.data?.user as any;
+    const sessionUser = session.data?.user as { id?: string } | undefined;
     if (sessionUser?.id != undefined && sessionUser?.id != user?.id && !userLoading) {
       setUserLoading(true);
       fetchUser();

@@ -1,13 +1,25 @@
 import prisma from '../../../../../prisma/prisma';
 import { NextApiRequest, NextApiResponse } from 'next';
-import { $Enums, Role, Permission } from '@generated/prisma/client';
+import { $Enums, Prisma, Role, Permission } from '@generated/prisma/client';
+
+type CocktailRecipeWithDetails = Prisma.CocktailRecipeGetPayload<{
+  include: {
+    _count: { select: { CocktailRecipeImage: true } };
+    CocktailRecipeImage: { select: { image: true } };
+    ice: true;
+    glass: { include: { _count: { select: { GlassImage: true } } } };
+    garnishes: { include: { garnish: { include: { _count: { select: { GarnishImage: true } } } } } };
+    steps: { include: { action: true; ingredients: { include: { ingredient: { include: { _count: { select: { IngredientImage: true } } } }; unit: true } } } };
+    ratings: true;
+  };
+}>;
 import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
 import HTTPMethod from 'http-method-enum';
 import { withHttpMethods } from '@middleware/api/handleMethods';
 import React from 'react';
-// @ts-ignore - react-dom/server types may not be available
 import { renderToString } from 'react-dom/server';
 import puppeteer, { Browser } from 'puppeteer-core';
+import { promises as dnsPromises } from 'dns';
 import { CocktailPdfPage } from '../../../../../components/pdf/CocktailPdfPage';
 import { PDFDocument } from 'pdf-lib';
 
@@ -35,10 +47,9 @@ async function generatePdf(html: string, numberOfCocktails: number, showHeader: 
   try {
     if (chromiumHost && chromiumHost !== 'localhost' && chromiumHost !== '127.0.0.1') {
       console.debug('Fetching WebSocket URL from Chromium...');
-      const dns = require('dns').promises;
 
       try {
-        const { address: chromeIP } = await dns.lookup(chromiumHost);
+        const { address: chromeIP } = await dnsPromises.lookup(chromiumHost);
         console.debug('Chromium IP:', chromeIP);
 
         const browserURL = `http://${chromeIP}:9222`;
@@ -105,7 +116,7 @@ async function generatePdf(html: string, numberOfCocktails: number, showHeader: 
     // Verify that the page has rendered correctly
     await page.evaluate(() => {
       // Force a reflow to ensure all styles are applied
-      document.body.offsetHeight;
+      void document.body.offsetHeight;
     });
 
     // Create a timeout promise
@@ -208,7 +219,7 @@ function getTranslation(translations: Record<string, Record<string, string>>, ke
 }
 
 function generateHtmlForCocktails(
-  cocktails: any[],
+  cocktails: CocktailRecipeWithDetails[],
   translations: Record<string, Record<string, string>>,
   options: {
     exportImage: boolean;
@@ -387,7 +398,7 @@ export default withHttpMethods({
 
       // Always use max 10 cocktails per batch to prevent browser tab overflow
       const batchSize = 10;
-      const batches: any[][] = [];
+      const batches: CocktailRecipeWithDetails[][] = [];
 
       for (let i = 0; i < cocktails.length; i += batchSize) {
         batches.push(cocktails.slice(i, i + batchSize));

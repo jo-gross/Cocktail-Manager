@@ -9,7 +9,6 @@ import prisma from '../../../../../prisma/prisma';
 
 export default withHttpMethods({
   [HTTPMethod.GET]: withWorkspacePermission([Role.USER], Permission.QUEUE_READ, async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
-    // @ts-ignore
     // const cocktailQueue: CocktailQueue[] = await prisma.cocktailQueue.groupBy({
     //   by: 'cocktailId',
     //   _count: {
@@ -26,7 +25,7 @@ export default withHttpMethods({
     //
     //     return {
     //       cocktailRecipe: cocktailRecipe,
-    //       // @ts-ignore
+    //       // @ts-expect-error
     //       count: queueItem._count.cocktailId,
     //     };
     //   }),

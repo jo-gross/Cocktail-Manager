@@ -12,7 +12,7 @@ export default withHttpMethods({
     [Role.MANAGER],
     Permission.RATINGS_DELETE,
     async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
-      const { cocktailId, ratingId } = req.query;
+      const { cocktailId: _cocktailId, ratingId } = req.query;
       // Verify that the rating belongs to a cocktail in this workspace
       const rating = await prisma.cocktailRating.findFirst({
         where: {

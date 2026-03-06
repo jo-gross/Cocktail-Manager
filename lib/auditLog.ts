@@ -100,7 +100,7 @@ export interface CocktailCalculationAuditSnapshot {
 
 // ────────────── HELPER: remove undefined keys ──────────────
 
-function cleanUndefined(obj: Record<string, any>): void {
+function cleanUndefined(obj: Record<string, unknown>): void {
   Object.keys(obj).forEach((k) => {
     if (obj[k] === undefined) delete obj[k];
   });
@@ -110,13 +110,13 @@ function cleanUndefined(obj: Record<string, any>): void {
 
 const IMAGE_KEYS = ['image', 'CocktailRecipeImage', 'GlassImage', 'GarnishImage', 'IngredientImage'];
 
-function stripImages(data: any): any {
+function stripImages(data: unknown): unknown {
   if (!data) return data;
   if (Array.isArray(data)) return data.map(stripImages);
   if (typeof data !== 'object') return data;
 
-  const result: any = {};
-  for (const [key, value] of Object.entries(data)) {
+  const result: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(data as Record<string, unknown>)) {
     if (IMAGE_KEYS.includes(key)) continue;
     if (key === '_count') continue;
     result[key] = typeof value === 'object' && value !== null ? stripImages(value) : value;
@@ -126,27 +126,36 @@ function stripImages(data: any): any {
 
 // ────────────── SNAPSHOT BUILDERS ──────────────
 
-function buildCocktailSnapshot(data: any): CocktailRecipeAuditSnapshot | null {
+function buildCocktailSnapshot(data: Record<string, unknown> | null): CocktailRecipeAuditSnapshot | null {
   if (!data) return null;
 
+  const tags = data.tags as string[] | undefined;
   const result: CocktailRecipeAuditSnapshot = {
-    name: data.name,
-    description: data.description ?? undefined,
-    tags: data.tags?.length ? data.tags.reduce((acc: Record<string, true>, t: string) => ({ ...acc, [t]: true }), {}) : undefined,
-    preparation: data.notes ?? undefined,
-    history: data.history ?? undefined,
-    price: data.price ?? undefined,
+    name: data.name as string,
+    description: (data.description as string) ?? undefined,
+    tags: tags?.length
+      ? tags.reduce<Record<string, true>>((acc, t) => {
+          acc[t] = true;
+          return acc;
+        }, {})
+      : undefined,
+    preparation: (data.notes as string) ?? undefined,
+    history: (data.history as string) ?? undefined,
+    price: (data.price as number) ?? undefined,
   };
 
-  if (data.glass) {
-    result.glass = data.glass.name;
+  const glass = data.glass as Record<string, unknown> | undefined;
+  if (glass) {
+    result.glass = glass.name as string;
   }
-  if (data.ice) {
-    result.ice = data.ice.name;
+  const ice = data.ice as Record<string, unknown> | undefined;
+  if (ice) {
+    result.ice = ice.name as string;
   }
 
   // Only store image as a presence flag
-  const imageData = data.CocktailRecipeImage?.[0]?.image || data.image;
+  const cocktailImages = data.CocktailRecipeImage as Array<Record<string, unknown>> | undefined;
+  const imageData = cocktailImages?.[0]?.image || data.image;
   if (imageData) {
     result.image = true;
   }
@@ -154,36 +163,38 @@ function buildCocktailSnapshot(data: any): CocktailRecipeAuditSnapshot | null {
   if (data.steps && Array.isArray(data.steps)) {
     const stepsMap: Record<string, CocktailStepSnapshot> = {};
 
-    data.steps.forEach((step: any) => {
-      // Use database ID as stable key so reordering is detected as a position change
-      const stepKey = step.id || `step-${step.stepNumber}`;
-      const actionName = step.action?.name || 'Unknown';
+    (data.steps as Record<string, unknown>[]).forEach((step) => {
+      const stepAction = step.action as Record<string, unknown> | undefined;
+      const stepKey = (step.id as string) || `step-${step.stepNumber}`;
+      const actionName = (stepAction?.name as string) || 'Unknown';
 
       const ingredientsMap: Record<string, CocktailStepIngredientSnapshot> = {};
       if (step.ingredients && Array.isArray(step.ingredients)) {
-        step.ingredients.forEach((ing: any) => {
-          const ingName = ing.ingredient?.name || `Ingredient ${ing.ingredientNumber}`;
+        (step.ingredients as Record<string, unknown>[]).forEach((ing) => {
+          const ingIngredient = ing.ingredient as Record<string, unknown> | undefined;
+          const ingUnit = ing.unit as Record<string, unknown> | undefined;
+          const ingName = (ingIngredient?.name as string) || `Ingredient ${ing.ingredientNumber}`;
           const ingSnapshot: CocktailStepIngredientSnapshot = {
-            amount: ing.amount ?? undefined,
-            unit: ing.unit?.name ?? undefined,
+            amount: (ing.amount as number) ?? undefined,
+            unit: (ingUnit?.name as string) ?? undefined,
             optional: ing.optional ? true : undefined,
-            position: ing.ingredientNumber,
+            position: ing.ingredientNumber as number,
           };
-          cleanUndefined(ingSnapshot as any);
+          cleanUndefined(ingSnapshot as unknown as Record<string, unknown>);
           ingredientsMap[ingName] = ingSnapshot;
         });
       }
 
       const stepSnapshot: CocktailStepSnapshot = {
         action: actionName,
-        position: step.stepNumber,
+        position: step.stepNumber as number,
         optional: step.optional ? true : undefined,
         ingredients: Object.keys(ingredientsMap).length > 0 ? ingredientsMap : undefined,
       };
-      // Only clean optional fields, keep action and position always
-      Object.keys(stepSnapshot).forEach((k) => {
+      const snapshotRecord = stepSnapshot as unknown as Record<string, unknown>;
+      Object.keys(snapshotRecord).forEach((k) => {
         if (k !== 'action' && k !== 'position') {
-          if ((stepSnapshot as any)[k] === undefined) delete (stepSnapshot as any)[k];
+          if (snapshotRecord[k] === undefined) delete snapshotRecord[k];
         }
       });
 
@@ -199,20 +210,22 @@ function buildCocktailSnapshot(data: any): CocktailRecipeAuditSnapshot | null {
     const garnishesMap: Record<string, CocktailGarnishSnapshot> = {};
     const garnishCounts: Record<string, number> = {};
 
-    data.garnishes.forEach((garnish: any) => {
-      const baseName = garnish.garnish?.name || `Garnish ${garnish.garnishNumber}`;
+    (data.garnishes as Record<string, unknown>[]).forEach((garnish) => {
+      const garnishEntity = garnish.garnish as Record<string, unknown> | undefined;
+      const garnishUnit = garnish.unit as Record<string, unknown> | undefined;
+      const baseName = (garnishEntity?.name as string) || `Garnish ${garnish.garnishNumber}`;
       garnishCounts[baseName] = (garnishCounts[baseName] || 0) + 1;
       const garnishKey = garnishCounts[baseName] > 1 ? `${baseName} (${garnishCounts[baseName]})` : baseName;
 
       const gSnapshot: CocktailGarnishSnapshot = {
-        amount: (garnish as any).amount ?? undefined,
-        unit: (garnish as any).unit?.name ?? undefined,
+        amount: (garnish.amount as number) ?? undefined,
+        unit: (garnishUnit?.name as string) ?? undefined,
         optional: garnish.optional ? true : undefined,
         alternative: garnish.isAlternative ? true : undefined,
-        note: garnish.description || undefined,
-        position: garnish.garnishNumber,
+        note: (garnish.description as string) || undefined,
+        position: garnish.garnishNumber as number,
       };
-      cleanUndefined(gSnapshot as any);
+      cleanUndefined(gSnapshot as unknown as Record<string, unknown>);
       garnishesMap[garnishKey] = gSnapshot;
     });
 
@@ -224,63 +237,71 @@ function buildCocktailSnapshot(data: any): CocktailRecipeAuditSnapshot | null {
   return result;
 }
 
-function buildGlassSnapshot(data: any): GlassAuditSnapshot | null {
+function buildGlassSnapshot(data: Record<string, unknown> | null): GlassAuditSnapshot | null {
   if (!data) return null;
 
   const result: GlassAuditSnapshot = {
-    name: data.name,
-    notes: data.notes ?? undefined,
+    name: data.name as string,
+    notes: (data.notes as string) ?? undefined,
     volume: data.volume != null ? `${data.volume} ml` : undefined,
     deposit: data.deposit != null ? `${data.deposit} €` : undefined,
   };
 
-  const imageData = data.GlassImage?.[0]?.image ?? data.image;
+  const glassImages = data.GlassImage as Array<Record<string, unknown>> | undefined;
+  const imageData = glassImages?.[0]?.image ?? data.image;
   if (imageData) {
     result.image = true;
   }
 
-  cleanUndefined(result as any);
+  cleanUndefined(result as unknown as Record<string, unknown>);
   return result;
 }
 
-function buildGarnishEntitySnapshot(data: any): GarnishAuditSnapshot | null {
+function buildGarnishEntitySnapshot(data: Record<string, unknown> | null): GarnishAuditSnapshot | null {
   if (!data) return null;
 
   const result: GarnishAuditSnapshot = {
-    name: data.name,
-    description: data.description ?? undefined,
-    notes: data.notes ?? undefined,
+    name: data.name as string,
+    description: (data.description as string) ?? undefined,
+    notes: (data.notes as string) ?? undefined,
     price: data.price != null ? `${data.price} €` : undefined,
   };
 
-  const imageData = data.GarnishImage?.[0]?.image ?? data.image;
+  const garnishImages = data.GarnishImage as Array<Record<string, unknown>> | undefined;
+  const imageData = garnishImages?.[0]?.image ?? data.image;
   if (imageData) {
     result.image = true;
   }
 
-  cleanUndefined(result as any);
+  cleanUndefined(result as unknown as Record<string, unknown>);
   return result;
 }
 
-function buildIngredientSnapshot(data: any): IngredientAuditSnapshot | null {
+function buildIngredientSnapshot(data: Record<string, unknown> | null): IngredientAuditSnapshot | null {
   if (!data) return null;
 
+  const tags = data.tags as string[] | undefined;
   const result: IngredientAuditSnapshot = {
-    name: data.name,
-    shortName: data.shortName ?? undefined,
-    description: data.description ?? undefined,
-    notes: data.notes ?? undefined,
+    name: data.name as string,
+    shortName: (data.shortName as string) ?? undefined,
+    description: (data.description as string) ?? undefined,
+    notes: (data.notes as string) ?? undefined,
     price: data.price != null ? `${data.price} €` : undefined,
-    link: data.link ?? undefined,
-    tags: data.tags?.length ? data.tags.reduce((acc: Record<string, true>, t: string) => ({ ...acc, [t]: true }), {}) : undefined,
+    link: (data.link as string) ?? undefined,
+    tags: tags?.length
+      ? tags.reduce<Record<string, true>>((acc, t) => {
+          acc[t] = true;
+          return acc;
+        }, {})
+      : undefined,
   };
 
-  // Build units map: unit name -> volume
-  const volumes = data.IngredientVolume || data.units;
+  const volumes = (data.IngredientVolume || data.units) as Array<Record<string, unknown>> | undefined;
   if (volumes && Array.isArray(volumes)) {
     const unitsMap: Record<string, string> = {};
-    volumes.forEach((v: any) => {
-      const unitName = v.unit?.name;
+    volumes.forEach((v) => {
+      const vUnit = v.unit as Record<string, unknown> | undefined;
+      const unitName = vUnit?.name as string | undefined;
       if (unitName) {
         unitsMap[unitName] = v.volume != null ? String(v.volume) : '1';
       }
@@ -290,33 +311,35 @@ function buildIngredientSnapshot(data: any): IngredientAuditSnapshot | null {
     }
   }
 
-  const imageData = data.IngredientImage?.[0]?.image ?? data.image;
+  const ingredientImages = data.IngredientImage as Array<Record<string, unknown>> | undefined;
+  const imageData = ingredientImages?.[0]?.image ?? data.image;
   if (imageData) {
     result.image = true;
   }
 
-  cleanUndefined(result as any);
+  cleanUndefined(result as unknown as Record<string, unknown>);
   return result;
 }
 
-function buildCalculationSnapshot(data: any): CocktailCalculationAuditSnapshot | null {
+function buildCalculationSnapshot(data: Record<string, unknown> | null): CocktailCalculationAuditSnapshot | null {
   if (!data) return null;
 
   const result: CocktailCalculationAuditSnapshot = {
-    name: data.name,
+    name: data.name as string,
     showSalesInfo: data.showSalesStuff ? true : undefined,
   };
 
-  const items = data.cocktailCalculationItems;
+  const items = data.cocktailCalculationItems as Array<Record<string, unknown>> | undefined;
   if (items && Array.isArray(items) && items.length > 0) {
     const cocktailsMap: Record<string, CocktailCalculationItemSnapshot> = {};
-    items.forEach((item: any) => {
-      const cocktailName = item.cocktail?.name || item.cocktailId;
+    items.forEach((item) => {
+      const itemCocktail = item.cocktail as Record<string, unknown> | undefined;
+      const cocktailName = (itemCocktail?.name as string) || (item.cocktailId as string);
       const itemSnapshot: CocktailCalculationItemSnapshot = {
-        plannedAmount: item.plannedAmount,
-        customPrice: item.customPrice ?? undefined,
+        plannedAmount: item.plannedAmount as number,
+        customPrice: (item.customPrice as number) ?? undefined,
       };
-      cleanUndefined(itemSnapshot as any);
+      cleanUndefined(itemSnapshot as unknown as Record<string, unknown>);
       cocktailsMap[cocktailName] = itemSnapshot;
     });
     if (Object.keys(cocktailsMap).length > 0) {
@@ -324,16 +347,18 @@ function buildCalculationSnapshot(data: any): CocktailCalculationAuditSnapshot |
     }
   }
 
-  const shoppingUnitsData = data.ingredientShoppingUnits;
+  const shoppingUnitsData = data.ingredientShoppingUnits as Array<Record<string, unknown>> | undefined;
   if (shoppingUnitsData && Array.isArray(shoppingUnitsData) && shoppingUnitsData.length > 0) {
     const unitsMap: Record<string, ShoppingUnitSnapshot> = {};
-    shoppingUnitsData.forEach((su: any) => {
-      const ingredientName = su.ingredient?.name || su.ingredientId;
+    shoppingUnitsData.forEach((su) => {
+      const suIngredient = su.ingredient as Record<string, unknown> | undefined;
+      const suUnit = su.unit as Record<string, unknown> | undefined;
+      const ingredientName = (suIngredient?.name as string) || (su.ingredientId as string);
       const snapshot: ShoppingUnitSnapshot = {
-        unit: su.unit?.name || su.unitId,
+        unit: (suUnit?.name as string) || (su.unitId as string),
         checked: su.checked ? true : undefined,
       };
-      cleanUndefined(snapshot as any);
+      cleanUndefined(snapshot as unknown as Record<string, unknown>);
       unitsMap[ingredientName] = snapshot;
     });
     if (Object.keys(unitsMap).length > 0) {
@@ -341,23 +366,23 @@ function buildCalculationSnapshot(data: any): CocktailCalculationAuditSnapshot |
     }
   }
 
-  cleanUndefined(result as any);
+  cleanUndefined(result as unknown as Record<string, unknown>);
   return result;
 }
 
 /**
  * Dispatches to the correct snapshot builder based on entity type.
  */
-function buildSnapshot(entityType: string, data: any): any {
+function buildSnapshot(entityType: string, data: Record<string, unknown> | null): Record<string, unknown> | null {
   switch (entityType) {
     case 'Glass':
-      return buildGlassSnapshot(data);
+      return buildGlassSnapshot(data) as unknown as Record<string, unknown> | null;
     case 'Garnish':
-      return buildGarnishEntitySnapshot(data);
+      return buildGarnishEntitySnapshot(data) as unknown as Record<string, unknown> | null;
     case 'Ingredient':
-      return buildIngredientSnapshot(data);
+      return buildIngredientSnapshot(data) as unknown as Record<string, unknown> | null;
     case 'CocktailCalculation':
-      return buildCalculationSnapshot(data);
+      return buildCalculationSnapshot(data) as unknown as Record<string, unknown> | null;
     default:
       return data ? JSON.parse(JSON.stringify(data)) : null;
   }
@@ -376,15 +401,15 @@ export async function createLog(
   entityType: string,
   entityId: string,
   action: AuditAction,
-  oldData: any,
-  newData: any,
+  oldData: Record<string, unknown> | null,
+  newData: Record<string, unknown> | null,
 ) {
   const oldSnapshot = buildSnapshot(entityType, oldData);
   const newSnapshot = buildSnapshot(entityType, newData);
 
-  let changes: any = undefined;
-  let snapshot: any = undefined;
-  let exportData: any = undefined;
+  let changes: Diff<Record<string, unknown>, Record<string, unknown>>[] | undefined = undefined;
+  let snapshot: Record<string, unknown> | null | undefined = undefined;
+  let exportData: unknown = undefined;
 
   if (action === 'CREATE') {
     snapshot = newSnapshot;
@@ -394,7 +419,7 @@ export async function createLog(
     exportData = stripImages(oldData);
   } else if (action === 'UPDATE') {
     const d = diff(oldSnapshot ?? {}, newSnapshot ?? {});
-    if (!d || d.length === 0) return; // No changes detected, skip log entry
+    if (!d || d.length === 0) return;
     snapshot = newSnapshot;
     changes = d;
     exportData = stripImages(newData);
@@ -407,9 +432,9 @@ export async function createLog(
       entityType,
       entityId,
       action,
-      changes: changes ? (changes as any) : undefined,
-      snapshot: snapshot ? (snapshot as any) : undefined,
-      exportData: exportData ? (exportData as any) : undefined,
+      changes: changes ? (changes as unknown as Prisma.InputJsonValue) : undefined,
+      snapshot: snapshot ? (snapshot as Prisma.InputJsonValue) : undefined,
+      exportData: exportData ? (exportData as Prisma.InputJsonValue) : undefined,
     },
   });
 }
@@ -424,15 +449,15 @@ export async function createCocktailRecipeAuditLog(
   userId: string | undefined,
   entityId: string,
   action: AuditAction,
-  oldData: any,
-  newData: any,
+  oldData: Record<string, unknown> | null,
+  newData: Record<string, unknown> | null,
 ) {
   const oldSnapshot = buildCocktailSnapshot(oldData);
   const newSnapshot = buildCocktailSnapshot(newData);
 
   let changes: CocktailRecipeAuditDiff | undefined;
   let snapshot: CocktailRecipeAuditSnapshot | undefined;
-  let exportData: any = undefined;
+  let exportData: unknown = undefined;
 
   if (action === 'CREATE') {
     snapshot = newSnapshot ?? undefined;
@@ -442,7 +467,7 @@ export async function createCocktailRecipeAuditLog(
     exportData = stripImages(oldData);
   } else if (action === 'UPDATE') {
     const d = diff(oldSnapshot ?? {}, newSnapshot ?? {}) as CocktailRecipeAuditDiff | undefined;
-    if (!d || d.length === 0) return; // No changes detected, skip log entry
+    if (!d || d.length === 0) return;
     snapshot = newSnapshot ?? undefined;
     changes = d;
     exportData = stripImages(newData);
@@ -455,9 +480,9 @@ export async function createCocktailRecipeAuditLog(
       entityType: 'CocktailRecipe',
       entityId,
       action,
-      changes: changes && changes.length > 0 ? (changes as any) : undefined,
-      snapshot: snapshot ? (snapshot as any) : undefined,
-      exportData: exportData ? (exportData as any) : undefined,
+      changes: changes && changes.length > 0 ? (changes as unknown as Prisma.InputJsonValue) : undefined,
+      snapshot: snapshot ? (snapshot as unknown as Prisma.InputJsonValue) : undefined,
+      exportData: exportData ? (exportData as Prisma.InputJsonValue) : undefined,
     },
   });
 }
