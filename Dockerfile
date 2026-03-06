@@ -61,4 +61,4 @@ ENV LC_ALL=C.UTF-8
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1
 
-CMD corepack enable pnpm && corepack prepare --activate && pnpm prisma migrate deploy && HOSTNAME="0.0.0.0" node server.js
+CMD npx prisma migrate deploy && HOSTNAME="0.0.0.0" node server.js

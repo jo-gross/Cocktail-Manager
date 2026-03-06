@@ -7,7 +7,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: jo-gross/cocktail-manager
+  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
   release:
