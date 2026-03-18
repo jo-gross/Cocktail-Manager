@@ -40,7 +40,7 @@
     "next": "15.5.12",
     "next-auth": "4.24.13",
     "@serwist/next": "^9.0.0",
-    "serwist": "^9.0.0",
+    "serwist": "^9.5.7",
     "node-html-parser": "7.1.0",
     "nodemailer": "7.0.13",
     "pdf-lib": "^1.17.1",
