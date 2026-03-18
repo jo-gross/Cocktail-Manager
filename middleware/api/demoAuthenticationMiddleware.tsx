@@ -2,8 +2,24 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import prisma from '../../prisma/prisma';
 import { User, Workspace } from '@generated/prisma/client';
 import { constants as HttpStatus } from 'http2';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '../../pages/api/auth/[...nextauth]';
+import { auth } from '@lib/auth';
+
+/**
+ * Helper function to get session from BetterAuth
+ * Converts NextApiRequest headers to Web Headers format
+ */
+async function getBetterAuthSession(req: NextApiRequest) {
+  // Convert Node.js headers to Web Headers
+  const headers = new Headers();
+  for (const [key, value] of Object.entries(req.headers)) {
+    if (value) {
+      headers.set(key, Array.isArray(value) ? value.join(', ') : value);
+    }
+  }
+
+  // Get session from BetterAuth
+  return auth.api.getSession({ headers });
+}
 
 /**
  * Middleware for demo mode authentication
@@ -17,15 +33,15 @@ export function withDemoAuthentication(fn: (fnReq: NextApiRequest, fnRes: NextAp
     }
 
     // Try to get session (could be demo session or normal session)
-    const serverSession = await getServerSession(req, res, authOptions);
+    const session = await getBetterAuthSession(req);
 
-    if (serverSession == null) {
+    if (session == null) {
       return res.status(HttpStatus.HTTP_STATUS_UNAUTHORIZED).json({ message: 'not authenticated' });
     }
 
     const userResult = await prisma.user.findUnique({
       where: {
-        id: serverSession.user?.id,
+        id: session.user?.id,
       },
     });
 

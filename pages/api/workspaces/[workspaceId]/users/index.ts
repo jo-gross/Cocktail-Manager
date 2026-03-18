@@ -15,7 +15,7 @@ export default withHttpMethods({
           include: {
             accounts: {
               select: {
-                provider: true,
+                providerId: true,
               },
             },
           },

@@ -3,7 +3,7 @@ import { ManageEntityLayout } from '@components/layout/ManageEntityLayout';
 import { useRouter } from 'next/router';
 import { UserContext } from '@lib/context/UserContextProvider';
 import React, { useContext } from 'react';
-import { signOut } from 'next-auth/react';
+import { authClient } from '@lib/auth-client';
 import LoadingText from '../../../../components/LoadingText';
 import Link from 'next/link';
 import AvatarImage from '../../../../components/AvatarImage';
@@ -56,7 +56,7 @@ export default function ManagePage() {
                 )}
               </div>
             </label>
-            <ul tabIndex={0} className="menu dropdown-content menu-sm z-[1] mt-2 w-52 gap-2 rounded-box border border-base-200 bg-base-100 p-2 shadow">
+            <ul tabIndex={0} className="menu dropdown-content menu-sm rounded-box border-base-200 bg-base-100 z-[1] mt-2 w-52 gap-2 border p-2 shadow">
               <div className={'pt-1 text-center md:hidden'}>
                 <div className="text-lg font-bold">{userContext.user?.name || 'Demo Nutzer'}</div>
                 {userContext.workspace?.users && (
@@ -74,7 +74,7 @@ export default function ManagePage() {
                 className={'btn btn-outline btn-error btn-sm'}
                 onClick={async () => {
                   await router.replace('/');
-                  await signOut();
+                  await authClient.signOut();
                 }}
               >
                 Abmelden

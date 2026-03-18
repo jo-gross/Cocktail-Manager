@@ -1,4 +1,4 @@
-import { signIn, signOut } from 'next-auth/react';
+import { authClient } from '@lib/auth-client';
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { Setting, Workspace, WorkspaceJoinRequest } from '@generated/prisma/client';
 import { Loading } from '@components/Loading';
@@ -139,13 +139,14 @@ const WorkspacesPage: NextPageWithPullToRefresh = () => {
         return;
       }
 
-      // Sign in as demo user
-      const signInResponse = await signIn('demo', {
-        userId: body.data.userId,
-        redirect: false,
+      // Sign in as demo user via custom demo-login endpoint
+      const signInResponse = await fetch('/api/auth/demo-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: body.data.userId }),
       });
 
-      if (signInResponse?.ok) {
+      if (signInResponse.ok) {
         // Redirect to workspace
         router.push(`/workspaces/${body.data.workspaceId}`);
       } else {
@@ -246,7 +247,7 @@ const WorkspacesPage: NextPageWithPullToRefresh = () => {
             )}
             {recentEntries.length > 1 && (
               <details className={'mt-2'}>
-                <summary className={'cursor-pointer text-sm text-base-content/60'}>Vorherige Versionen</summary>
+                <summary className={'text-base-content/60 cursor-pointer text-sm'}>Vorherige Versionen</summary>
                 <div className={'mt-2 flex flex-col gap-3'}>
                   {recentEntries
                     .filter((e) => e.version !== packageInfo.version)
@@ -362,7 +363,7 @@ const WorkspacesPage: NextPageWithPullToRefresh = () => {
                 {userContext.user ? (
                   <>
                     <span>Hi {userContext.user.name}</span>
-                    <button className={'btn btn-outline btn-sm'} onClick={() => signOut()}>
+                    <button className={'btn btn-outline btn-sm'} onClick={() => authClient.signOut()}>
                       Sign out
                     </button>
                   </>
@@ -378,7 +379,7 @@ const WorkspacesPage: NextPageWithPullToRefresh = () => {
                     )}
                   </button>
                 ) : (
-                  <button className={'btn btn-outline btn-sm'} onClick={() => signIn()}>
+                  <button className={'btn btn-outline btn-sm'} onClick={() => authClient.signIn.social({ provider: 'google' })}>
                     Sign in
                   </button>
                 )}
