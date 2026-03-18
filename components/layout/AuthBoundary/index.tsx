@@ -56,7 +56,12 @@ export function AuthBoundary(props: AlertBoundaryProps) {
       setUserLoading(true);
       fetchUser();
     }
-  }, [fetchUser, session?.user, user?.id, userLoading, sessionLoading]);
+    // Clear user state when session is gone (after signOut)
+    if (!sessionUser?.id && !sessionLoading && user) {
+      setUser(undefined);
+      setWorkspace(undefined);
+    }
+  }, [fetchUser, session?.user, user, userLoading, sessionLoading]);
 
   const fetchWorkspace = useCallback(() => {
     if (router.query.workspaceId && router.query.workspaceId != workspace?.id) {

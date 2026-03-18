@@ -10,14 +10,14 @@ datasource db {
 model Account {
   id                    String    @id @default(cuid())
   userId                String    @map("user_id")
-  providerId            String    @map("provider_id")
-  accountId             String    @map("account_id")
-  scope                 String?
+  providerId            String    @map("provider")
+  accountId             String    @map("provider_account_id")
   accessToken           String?   @map("access_token")
   refreshToken          String?   @map("refresh_token")
   idToken               String?   @map("id_token")
-  accessTokenExpiresAt  DateTime? @map("access_token_expires_at")
+  accessTokenExpiresAt  DateTime? @map("expires_at")
   refreshTokenExpiresAt DateTime? @map("refresh_token_expires_at")
+  scope                 String?
   password              String?
   createdAt             DateTime  @default(now()) @map("created_at")
   updatedAt             DateTime  @default(now()) @updatedAt @map("updated_at")
@@ -25,14 +25,14 @@ model Account {
 
   @@unique([providerId, accountId])
   @@index([userId])
-  @@map("account")
+  @@map("Account")
 }
 
 model Session {
   id        String   @id @default(cuid())
-  token     String   @unique
+  token     String   @unique @map("session_token")
   userId    String   @map("user_id")
-  expiresAt DateTime @map("expires_at")
+  expiresAt DateTime @map("expires")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
   ipAddress String?  @map("ip_address")
@@ -40,17 +40,17 @@ model Session {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
-  @@map("session")
+  @@map("Session")
 }
 
 model User {
   id            String   @id @default(cuid())
   name          String?
   email         String?  @unique
+  emailVerified Boolean  @default(false) @map("email_verified")
   image         String?
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @default(now()) @updatedAt @map("updated_at")
-  emailVerified Boolean  @default(false) @map("email_verified")
 
   accounts Account[]
   sessions Session[]
@@ -63,7 +63,7 @@ model User {
   WorkspaceApiKey       WorkspaceApiKey[]
   AuditLog              AuditLog[]
 
-  @@map("user")
+  @@map("User")
 }
 
 enum Setting {
@@ -143,13 +143,14 @@ model WorkspaceJoinRequest {
 model Verification {
   id         String   @id @default(cuid())
   identifier String
-  value      String
-  expiresAt  DateTime @map("expires_at")
+  value      String   @unique @map("token")
+  expiresAt  DateTime @map("expires")
   createdAt  DateTime @default(now()) @map("created_at")
   updatedAt  DateTime @default(now()) @updatedAt @map("updated_at")
 
+  @@unique([identifier, value])
   @@index([identifier])
-  @@map("verification")
+  @@map("VerificationToken")
 }
 
 enum Role {

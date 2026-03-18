@@ -421,7 +421,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
 
   function renderCocktailQueueItem(cocktailQueueItem: GroupedItem, index: number) {
     return (
-      <div key={`cocktailQueue-item-${index}`} className={'flex w-full flex-row flex-wrap justify-between gap-2 pt-1 pb-1 lg:flex-col'}>
+      <div key={`cocktailQueue-item-${index}`} className={'flex w-full flex-row flex-wrap justify-between gap-2 pb-1 pt-1 lg:flex-col'}>
         <div
           className={'cursor-pointer'}
           onClick={() => {
@@ -606,16 +606,16 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
         >
           {showStatisticActions && cocktailQueue.length > 0 && !isOffline ? (
             <aside
-              className={`bg-base-300 sticky order-first col-span-5 flex w-full flex-col rounded-xl p-2 pb-0 lg:order-last lg:col-span-2 xl:col-span-1 print:hidden ${process.env.NODE_ENV == 'development' || process.env.DEPLOYMENT == 'staging' ? 'md:top-12' : 'md:top-2'} h-fit ${process.env.NODE_ENV == 'development' || process.env.DEPLOYMENT == 'staging' ? 'max-h-[calc(100vh-3.5rem)]' : 'max-h-[calc(100vh-1rem)]'}`}
+              className={`sticky order-first col-span-5 flex w-full flex-col rounded-xl bg-base-300 p-2 pb-0 lg:order-last lg:col-span-2 xl:col-span-1 print:hidden ${process.env.NODE_ENV == 'development' || process.env.DEPLOYMENT == 'staging' ? 'md:top-12' : 'md:top-2'} h-fit ${process.env.NODE_ENV == 'development' || process.env.DEPLOYMENT == 'staging' ? 'max-h-[calc(100vh-3.5rem)]' : 'max-h-[calc(100vh-1rem)]'}`}
             >
               {showTime ? <div className={'pb-2'}>{timeComponent}</div> : <></>}
-              <div className="border-base-content flex w-full flex-row flex-wrap items-center justify-center border-b pb-1 text-center">
+              <div className="flex w-full flex-row flex-wrap items-center justify-center border-b border-base-content pb-1 text-center">
                 <span className="truncate">Wird gemacht</span>
                 <span className="ml-1">(A-Z)</span>
               </div>
 
               {/*<div className={'divider'}></div>*/}
-              <div className={'border-base-content flex max-h-1/3 flex-col divide-y overflow-y-auto border-b'}>
+              <div className={'max-h-1/3 flex flex-col divide-y overflow-y-auto border-b border-base-content'}>
                 {(queueGrouping == 'ALPHABETIC' || true
                   ? _(cocktailQueue)
                       .filter((item) => item.inProgress)
@@ -657,7 +657,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                   )}
               </div>
               <div className={'h-2'}></div>
-              <div className="border-base-content flex w-full flex-row flex-wrap items-center justify-center border-b pb-1 text-center">
+              <div className="flex w-full flex-row flex-wrap items-center justify-center border-b border-base-content pb-1 text-center">
                 <span className="truncate">Warteschlange</span>
                 <span className="ml-1">({queueGrouping == 'ALPHABETIC' ? 'A-Z' : 'Uhr'})</span>
               </div>
@@ -766,7 +766,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                     .map((group) => (
                       <div
                         key={`card-${selectedCard.id}-group-${group.id}`}
-                        className={`collapse-arrow border-base-300 bg-base-200 collapse rounded-xl border p-1 print:p-1`}
+                        className={`collapse collapse-arrow rounded-xl border border-base-300 bg-base-200 p-1 print:p-1`}
                       >
                         <input type={'checkbox'} defaultChecked={true} />
                         <div className={'collapse-title text-center text-2xl font-bold'}>
@@ -823,7 +823,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
         </div>
 
         {!isMenuExpanded && !showSettingsAtBottom ? (
-          <div className={'fixed right-2 bottom-2 z-30 print:hidden'}>
+          <div className={'fixed bottom-2 right-2 z-30 print:hidden'}>
             <button
               type={'button'}
               className={'btn btn-square btn-primary btn-sm'}
@@ -838,16 +838,16 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
           <div
             ref={actionButtonRef}
             className={
-              'right-2 bottom-2 z-30 flex space-y-2 md:right-5 md:bottom-5 print:hidden' + (showSettingsAtBottom ? ' mx-2 justify-end' : ' fixed flex-col')
+              'bottom-2 right-2 z-30 flex space-y-2 md:bottom-5 md:right-5 print:hidden' + (showSettingsAtBottom ? ' mx-2 justify-end' : ' fixed flex-col')
             }
           >
             <div className={'dropdown dropdown-end dropdown-top pt-2' + (showSettingsAtBottom ? ' mr-1' : '')}>
-              <label tabIndex={0} className={'btn btn-square btn-primary md:btn-lg rounded-xl'}>
+              <label tabIndex={0} className={'btn btn-square btn-primary rounded-xl md:btn-lg'}>
                 <FaEye />
               </label>
               <div
                 tabIndex={0}
-                className={`dropdown-content rounded-box bg-base-100 z-[31] h-min w-64 p-2 shadow`}
+                className={`dropdown-content z-[31] h-min w-64 rounded-box bg-base-100 p-2 shadow`}
                 style={{
                   maxHeight: maxDropdownHeight + 'px',
                 }}
@@ -970,7 +970,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                         <div>{showRecipeOptions ? <FaAngleUp /> : <FaAngleDown />}</div>
                       </div>
                       <div className={`flex flex-col gap-2 ${showRecipeOptions ? '' : 'hidden'}`}>
-                        {isOffline && <span className="text-warning text-xs">Nicht verfügbar im Offline-Modus</span>}
+                        {isOffline && <span className="text-xs text-warning">Nicht verfügbar im Offline-Modus</span>}
                         <div className="form-control">
                           <label className={`label ${isOffline ? 'opacity-50' : ''}`}>
                             Bilder anzeigen
@@ -1101,7 +1101,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                         <div>{showQueueOptions ? <FaAngleUp /> : <FaAngleDown />}</div>
                       </div>
                       <div className={`flex flex-col gap-2 ${showQueueOptions ? '' : 'hidden'}`}>
-                        {isOffline && <span className="text-warning text-xs">Nicht verfügbar im Offline-Modus</span>}
+                        {isOffline && <span className="text-xs text-warning">Nicht verfügbar im Offline-Modus</span>}
                         <div className="form-control">
                           <div className={`${isOffline ? 'opacity-50' : ''}`}>Gruppierung</div>
                           <div key={'grouping-alphabetic'} className="form-control">
@@ -1170,7 +1170,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                         <div>{showLayoutOptions ? <FaAngleUp /> : <FaAngleDown />}</div>
                       </div>
                       <div className={`flex flex-col gap-2 ${showLayoutOptions ? '' : 'hidden'}`}>
-                        {isOffline && <span className="text-warning text-xs">Nicht verfügbar im Offline-Modus</span>}
+                        {isOffline && <span className="text-xs text-warning">Nicht verfügbar im Offline-Modus</span>}
                         <div className="form-control">
                           <label className={`label ${isOffline ? 'opacity-50' : ''}`}>
                             Uhrzeit anzeigen
@@ -1230,7 +1230,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                     <div className={isOffline ? 'tooltip self-center' : 'self-center'} data-tip={isOffline ? 'Nicht verfügbar im Offline-Modus' : undefined}>
                       <ThemeChanger disabled={isOffline} />
                     </div>
-                    {isOffline && <span className="text-warning text-xs">Nicht verfügbar im Offline-Modus</span>}
+                    {isOffline && <span className="text-xs text-warning">Nicht verfügbar im Offline-Modus</span>}
                   </div>
                 </div>
                 {isDropdownScrollable && (
@@ -1245,7 +1245,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
               {selectedCardId != 'search' && selectedCardId != 'order' && selectedCardId != undefined ? (
                 <div className={'tooltip' + (showSettingsAtBottom ? ' mr-1' : '')} data-tip={'Suche (Shift + F)'}>
                   <div
-                    className={'btn btn-square btn-primary md:btn-lg rounded-xl'}
+                    className={'btn btn-square btn-primary rounded-xl md:btn-lg'}
                     onClick={() => modalContext.openModal(<SearchModal showStatisticActions={showStatisticActions} />)}
                   >
                     <FaSearch />
@@ -1257,13 +1257,13 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
             </>
             {isOffline ? (
               <div className={'tooltip tooltip-left'} data-tip="Nicht verfügbar im Offline-Modus">
-                <div className={'btn btn-disabled btn-square md:btn-lg rounded-xl'}>
+                <div className={'btn btn-disabled btn-square rounded-xl md:btn-lg'}>
                   <BsFillGearFill />
                 </div>
               </div>
             ) : (
               <Link href={`/workspaces/${workspaceId}/manage`}>
-                <div className={'btn btn-square btn-primary md:btn-lg rounded-xl'}>
+                <div className={'btn btn-square btn-primary rounded-xl md:btn-lg'}>
                   <BsFillGearFill />
                 </div>
               </Link>

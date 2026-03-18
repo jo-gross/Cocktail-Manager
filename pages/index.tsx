@@ -3,7 +3,7 @@ import { useCallback, useContext, useEffect, useState } from 'react';
 import { Setting, Workspace, WorkspaceJoinRequest } from '@generated/prisma/client';
 import { Loading } from '@components/Loading';
 import Image from 'next/image';
-import { FaArrowRight } from 'react-icons/fa';
+import { FaArrowRight, FaGoogle, FaKey } from 'react-icons/fa';
 import Link from 'next/link';
 import { UserContext } from '@lib/context/UserContextProvider';
 import { alertService } from '@lib/alertService';
@@ -16,6 +16,12 @@ import { useRouter } from 'next/router';
 import { MdOutlineCancel } from 'react-icons/md';
 import { DeleteConfirmationModal } from '@components/modals/DeleteConfirmationModal';
 import { NextPageWithPullToRefresh } from '../types/next';
+
+interface AuthProvider {
+  id: string;
+  name: string;
+  type: 'social' | 'oidc';
+}
 
 const WorkspacesPage: NextPageWithPullToRefresh = () => {
   const themeContext = useContext(ThemeContext);
@@ -42,6 +48,7 @@ const WorkspacesPage: NextPageWithPullToRefresh = () => {
   const [changeLogFetch, setChangelogFetch] = useState(false);
   const [workspaceCreationConfig, setWorkspaceCreationConfig] = useState<{ disabled: boolean; message: string | null } | null>(null);
   const [creatingDemoWorkspace, setCreatingDemoWorkspace] = useState(false);
+  const [authProviders, setAuthProviders] = useState<AuthProvider[]>([]);
 
   const fetchWorkspaces = useCallback(() => {
     if (!userContext.user) return;
@@ -99,6 +106,19 @@ const WorkspacesPage: NextPageWithPullToRefresh = () => {
         console.error('WorkspacesOverview -> fetchWorkspaceCreationConfig', error);
         // Fallback: Wenn der Endpoint fehlschlägt, erlauben wir die Erstellung
         setWorkspaceCreationConfig({ disabled: false, message: null });
+      });
+  }, []);
+
+  const fetchAuthProviders = useCallback(() => {
+    fetch('/api/config/auth-providers', { method: 'GET' })
+      .then(async (response) => {
+        const body = await response.json();
+        if (response.ok) {
+          setAuthProviders(body.data);
+        }
+      })
+      .catch((error) => {
+        console.error('WorkspacesOverview -> fetchAuthProviders', error);
       });
   }, []);
 
@@ -247,7 +267,7 @@ const WorkspacesPage: NextPageWithPullToRefresh = () => {
             )}
             {recentEntries.length > 1 && (
               <details className={'mt-2'}>
-                <summary className={'text-base-content/60 cursor-pointer text-sm'}>Vorherige Versionen</summary>
+                <summary className={'cursor-pointer text-sm text-base-content/60'}>Vorherige Versionen</summary>
                 <div className={'mt-2 flex flex-col gap-3'}>
                   {recentEntries
                     .filter((e) => e.version !== packageInfo.version)
@@ -285,12 +305,23 @@ const WorkspacesPage: NextPageWithPullToRefresh = () => {
     fetchWorkspaces();
     fetchOpenWorkspaceJoinRequest();
     fetchWorkspaceCreationConfig();
-  }, [fetchOpenWorkspaceJoinRequest, fetchWorkspaces, fetchWorkspaceCreationConfig]);
+    fetchAuthProviders();
+  }, [fetchOpenWorkspaceJoinRequest, fetchWorkspaces, fetchWorkspaceCreationConfig, fetchAuthProviders]);
 
   WorkspacesPage.pullToRefresh = () => {
     fetchWorkspaces();
     fetchOpenWorkspaceJoinRequest();
     fetchWorkspaceCreationConfig();
+    fetchAuthProviders();
+  };
+
+  const handleSignIn = (providerId: string, providerType: 'social' | 'oidc') => {
+    if (providerType === 'social') {
+      authClient.signIn.social({ provider: providerId as 'google' });
+    } else {
+      // For generic OAuth/OIDC providers
+      authClient.signIn.oauth2({ providerId });
+    }
   };
 
   useEffect(() => {
@@ -378,10 +409,17 @@ const WorkspacesPage: NextPageWithPullToRefresh = () => {
                       'Demo starten'
                     )}
                   </button>
+                ) : authProviders.length > 0 ? (
+                  <div className={'flex flex-wrap justify-center gap-2'}>
+                    {authProviders.map((provider) => (
+                      <button key={provider.id} className={'btn btn-outline btn-sm gap-2'} onClick={() => handleSignIn(provider.id, provider.type)}>
+                        {provider.id === 'google' ? <FaGoogle /> : <FaKey />}
+                        {provider.name}
+                      </button>
+                    ))}
+                  </div>
                 ) : (
-                  <button className={'btn btn-outline btn-sm'} onClick={() => authClient.signIn.social({ provider: 'google' })}>
-                    Sign in
-                  </button>
+                  <span className={'text-sm text-base-content/60'}>Keine Anmeldung konfiguriert</span>
                 )}
               </>
             </div>

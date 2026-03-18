@@ -37,15 +37,7 @@ const eslintConfig = defineConfig([
       '@typescript-eslint/no-require-imports': 'off',
     },
   },
-  globalIgnores([
-    '.next/**',
-    'node_modules/**',
-    'public/**',
-    'generated/**',
-    'docs/**',
-    'scripts/cleanup-demo-workspaces.js',
-    'next-env.d.ts',
-  ]),
+  globalIgnores(['.next/**', 'node_modules/**', 'public/**', 'generated/**', 'docs/**', 'scripts/cleanup-demo-workspaces.js', 'next-env.d.ts']),
 ]);
 
 export default eslintConfig;

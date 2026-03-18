@@ -60,10 +60,6 @@ async function getBetterAuthSession(req: NextApiRequest) {
             token: dbSession.token,
             userId: dbSession.userId,
             expiresAt: dbSession.expiresAt,
-            createdAt: dbSession.createdAt,
-            updatedAt: dbSession.updatedAt,
-            ipAddress: dbSession.ipAddress,
-            userAgent: dbSession.userAgent,
           },
           user: {
             id: dbSession.user.id,
@@ -71,8 +67,6 @@ async function getBetterAuthSession(req: NextApiRequest) {
             email: dbSession.user.email,
             image: dbSession.user.image,
             emailVerified: dbSession.user.emailVerified,
-            createdAt: dbSession.user.createdAt,
-            updatedAt: dbSession.user.updatedAt,
           },
         };
       }
