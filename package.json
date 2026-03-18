@@ -4,7 +4,7 @@
   "private": true,
   "description": "Web application for managing cocktail recipes, ingredients, and bar workspaces",
   "scripts": {
-    "dev": "next",
+    "dev": "next dev --webpack",
     "build": "prisma generate && next build --webpack",
     "start": "next start",
     "lint": "eslint .",
