@@ -68,7 +68,7 @@
     "react-three-state-checkbox": "3.0.0",
     "recharts": "3.8.0",
     "rxjs": "7.8.2",
-    "serwist": "^9.5.6",
+    "serwist": "^9.5.7",
     "use-pull-to-refresh": "^2.4.1"
   },
   "devDependencies": {
