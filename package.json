@@ -52,7 +52,7 @@
     "@serwist/next": "^9.5.7",
     "serwist": "^9.5.7",
     "node-html-parser": "7.1.0",
-    "nodemailer": "8.0.1",
+    "nodemailer": "8.0.3",
     "pdf-lib": "^1.17.1",
     "pg": "^8.20.0",
     "prop-types": "15.8.1",
