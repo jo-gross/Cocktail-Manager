@@ -17,7 +17,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set image name
         run: echo "IMAGE_NAME=${GITHUB_REPOSITORY,,}-demo" >> "$GITHUB_ENV"
