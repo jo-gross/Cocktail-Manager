@@ -30,8 +30,6 @@ updates:
       nextjs-react:
         patterns:
           - 'next'
-          - 'next-auth'
-          - '@next-auth/*'
           - 'react'
           - 'react-dom'
           - 'eslint-config-next'
