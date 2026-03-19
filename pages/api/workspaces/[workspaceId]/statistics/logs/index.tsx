@@ -4,10 +4,9 @@ import prisma from '../../../../../../prisma/prisma';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
 import { withHttpMethods } from '@middleware/api/handleMethods';
-import { Permission, Role, WorkspaceSettingKey } from '@generated/prisma/client';
+import { Permission, Prisma, Role, WorkspaceSettingKey } from '@generated/prisma/client';
 import HTTPMethod from 'http-method-enum';
 import { CocktailStatisticItemFull } from '../../../../../../models/CocktailStatisticItemFull';
-import '../../../../../../lib/DateUtils';
 import { getEndOfDay, getStartOfDay } from '../../../../../../lib/dateHelpers';
 
 export default withHttpMethods({
@@ -30,18 +29,19 @@ export default withHttpMethods({
     const pageSize = limit ? parseInt(limit as string, 10) : 50;
 
     // Build where clause
-    const where: any = {
+    const where: Prisma.CocktailStatisticItemWhereInput = {
       workspaceId: workspace.id,
     };
 
     if (startDate || endDate) {
-      where.date = {};
+      const dateFilter: Prisma.DateTimeFilter = {};
       if (startDate) {
-        where.date.gte = getStartOfDay(new Date(startDate as string), dayStartTime);
+        dateFilter.gte = getStartOfDay(new Date(startDate as string), dayStartTime);
       }
       if (endDate) {
-        where.date.lte = getEndOfDay(new Date(endDate as string), dayStartTime);
+        dateFilter.lte = getEndOfDay(new Date(endDate as string), dayStartTime);
       }
+      where.date = dateFilter;
     }
 
     // Add search filter (server-side)

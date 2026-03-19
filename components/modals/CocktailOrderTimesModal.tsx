@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Loading } from '../Loading';
 import { alertService } from '@lib/alertService';
-import '@lib/DateUtils';
+import { formatTime } from '@lib/DateUtils';
 
 interface OrderTime {
   id: string;
@@ -58,7 +58,7 @@ export default function CocktailOrderTimesModal({ workspaceId, cocktailId, cockt
         let body;
         try {
           body = await response.json();
-        } catch (jsonError) {
+        } catch {
           const text = await response.text();
           console.error('CocktailOrderTimesModal -> fetchOrders - Non-JSON response', text);
           alertService.error('Fehler beim Laden der Bestellungen', response.status, response.statusText);
@@ -167,7 +167,7 @@ export default function CocktailOrderTimesModal({ workspaceId, cocktailId, cockt
                 {orders.map((order) => (
                   <tr key={order.id}>
                     <td className="font-medium">{formatDateWithWeekday(order.date)}</td>
-                    <td>{new Date(order.date).toFormatTimeString()}</td>
+                    <td>{formatTime(new Date(order.date))}</td>
                     <td>{order.user ? order.user.name : '-'}</td>
                     <td>{order.cocktailCard ? order.cocktailCard.name : '-'}</td>
                   </tr>

@@ -16,11 +16,27 @@ export const config = {
   },
 };
 
+interface ImportEntityData {
+  id?: string;
+  name: string;
+  workspaceId?: string;
+  actionGroup?: string;
+  lableDE?: string;
+  deposit?: number | null;
+  volume?: number | null;
+  notes?: string | null;
+  description?: string | null;
+  price?: number | null;
+  link?: string | null;
+  shortName?: string | null;
+  tags?: string[];
+}
+
 interface EntityMapping {
   exportId: string;
   decision: 'use-existing' | 'create-new';
   existingId?: string;
-  newEntityData?: any;
+  newEntityData?: ImportEntityData;
 }
 
 interface CocktailMapping {
@@ -347,19 +363,18 @@ export default withHttpMethods({
                           workspaceId,
                         },
                       });
-                      // Add translation if provided
-                      if (entityData.lableDE) {
-                        addTranslation(unitName, entityData.lableDE);
+                      if (decision.newEntityData?.lableDE) {
+                        addTranslation(unitName, decision.newEntityData.lableDE);
                       }
                       unitMapping.set(decision.exportId, newId);
                       created.units++;
                     }
-                  } catch (err: any) {
+                  } catch (err: unknown) {
                     errors.push({
                       step: 'units',
                       entityType: 'Einheit',
                       entityName: unitName,
-                      error: err.message || 'Unbekannter Fehler',
+                      error: err instanceof Error ? err.message : 'Unbekannter Fehler',
                     });
                   }
                 }
@@ -396,19 +411,18 @@ export default withHttpMethods({
                           workspaceId,
                         },
                       });
-                      // Add translation if provided
-                      if (entityData.lableDE) {
-                        addTranslation(iceName, entityData.lableDE);
+                      if (decision.newEntityData?.lableDE) {
+                        addTranslation(iceName, decision.newEntityData.lableDE);
                       }
                       iceMapping.set(decision.exportId, newId);
                       created.ice++;
                     }
-                  } catch (err: any) {
+                  } catch (err: unknown) {
                     errors.push({
                       step: 'ice',
                       entityType: 'Eis-Typ',
                       entityName: iceName,
-                      error: err.message || 'Unbekannter Fehler',
+                      error: err instanceof Error ? err.message : 'Unbekannter Fehler',
                     });
                   }
                 }
@@ -423,7 +437,7 @@ export default withHttpMethods({
                 const entityData = decision.newEntityData || exportData.stepActions.find((a) => a.id === decision.exportId);
                 if (entityData) {
                   const actionName = entityData.name;
-                  const actionGroup = entityData.actionGroup;
+                  const actionGroup = entityData.actionGroup ?? '';
                   try {
                     // Check for unique constraint (name + actionGroup + workspaceId)
                     const existing = await transaction.workspaceCocktailRecipeStepAction.findFirst({
@@ -451,19 +465,18 @@ export default withHttpMethods({
                           workspaceId,
                         },
                       });
-                      // Add translation if provided
-                      if (entityData.lableDE) {
-                        addTranslation(actionName, entityData.lableDE);
+                      if (decision.newEntityData?.lableDE) {
+                        addTranslation(actionName, decision.newEntityData.lableDE);
                       }
                       stepActionMapping.set(decision.exportId, newId);
                       created.stepActions++;
                     }
-                  } catch (err: any) {
+                  } catch (err: unknown) {
                     errors.push({
                       step: 'stepActions',
                       entityType: 'Aktion',
                       entityName: `${actionName} (${actionGroup})`,
-                      error: err.message || 'Unbekannter Fehler',
+                      error: err instanceof Error ? err.message : 'Unbekannter Fehler',
                     });
                   }
                 }
@@ -498,7 +511,7 @@ export default withHttpMethods({
                           id: newId,
                           name: glassName,
                           workspaceId,
-                          deposit: entityData.deposit ?? null,
+                          deposit: entityData.deposit ?? 0,
                           volume: entityData.volume ?? null,
                           notes: entityData.notes ?? null,
                         },
@@ -519,12 +532,12 @@ export default withHttpMethods({
                         });
                       }
                     }
-                  } catch (err: any) {
+                  } catch (err: unknown) {
                     errors.push({
                       step: 'glasses',
                       entityType: 'Glas',
                       entityName: glassName,
-                      error: err.message || 'Unbekannter Fehler',
+                      error: err instanceof Error ? err.message : 'Unbekannter Fehler',
                     });
                   }
                 }
@@ -580,12 +593,12 @@ export default withHttpMethods({
                         });
                       }
                     }
-                  } catch (err: any) {
+                  } catch (err: unknown) {
                     errors.push({
                       step: 'garnishes',
                       entityType: 'Garnitur',
                       entityName: garnishName,
-                      error: err.message || 'Unbekannter Fehler',
+                      error: err instanceof Error ? err.message : 'Unbekannter Fehler',
                     });
                   }
                 }
@@ -669,23 +682,23 @@ export default withHttpMethods({
                                 },
                               });
                             }
-                          } catch (volErr: any) {
+                          } catch (volErr: unknown) {
                             errors.push({
                               step: 'ingredientVolumes',
                               entityType: 'Zutaten-Volumen',
                               entityName: ingredientName,
-                              error: volErr.message || 'Fehler beim Erstellen des Volumens',
+                              error: volErr instanceof Error ? volErr.message : 'Fehler beim Erstellen des Volumens',
                             });
                           }
                         }
                       }
                     }
-                  } catch (err: any) {
+                  } catch (err: unknown) {
                     errors.push({
                       step: 'ingredients',
                       entityType: 'Zutat',
                       entityName: ingredientName,
-                      error: err.message || 'Unbekannter Fehler',
+                      error: err instanceof Error ? err.message : 'Unbekannter Fehler',
                     });
                   }
                 }
@@ -843,12 +856,12 @@ export default withHttpMethods({
                 });
 
                 await createCocktailRecipeAuditLog(transaction, workspace.id, user.id, cocktailId, 'CREATE', null, fullImported);
-              } catch (err: any) {
+              } catch (err: unknown) {
                 errors.push({
                   step: 'cocktails',
                   entityType: 'Cocktail',
                   entityName: exportCocktail.name,
-                  error: err.message || 'Unbekannter Fehler',
+                  error: err instanceof Error ? err.message : 'Unbekannter Fehler',
                 });
               }
             }
@@ -880,22 +893,29 @@ export default withHttpMethods({
             created,
             ...(errors.length > 0 && { errors }),
           });
-        } catch (transactionError: any) {
+        } catch (transactionError: unknown) {
           console.error('Transaction error:', transactionError);
           return res.status(500).json({
             message: 'Fehler beim Importieren der Cocktails',
             errors:
               errors.length > 0
                 ? errors
-                : [{ step: 'transaction', entityType: 'System', entityName: '', error: transactionError.message || 'Transaktionsfehler' }],
+                : [
+                    {
+                      step: 'transaction',
+                      entityType: 'System',
+                      entityName: '',
+                      error: transactionError instanceof Error ? transactionError.message : 'Transaktionsfehler',
+                    },
+                  ],
           });
         }
       }
 
       return res.status(400).json({ message: 'Ungültige Phase' });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Import error:', error);
-      return res.status(500).json({ message: error.message || 'Fehler beim Importieren der Cocktails' });
+      return res.status(500).json({ message: error instanceof Error ? error.message : 'Fehler beim Importieren der Cocktails' });
     }
   }),
 });

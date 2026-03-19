@@ -6,6 +6,11 @@ export default function Document() {
       <Head>
         <meta name="author" content="Johannes Groß" />
         <meta name="description" content="Cocktailverwaltung" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('theme');if(t){t=JSON.parse(t);if(t==='dark')document.documentElement.setAttribute('data-theme','halloween');else if(t==='light')document.documentElement.setAttribute('data-theme','autumn')}}catch(e){}})()`,
+          }}
+        />
 
         <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon/apple-touch-icon.png" />
         <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon/favicon-32x32.png" />

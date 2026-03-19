@@ -4,7 +4,6 @@ import { withWorkspacePermission } from '@middleware/api/authenticationMiddlewar
 import { withHttpMethods } from '@middleware/api/handleMethods';
 import { Permission, Role, WorkspaceSettingKey } from '@generated/prisma/client';
 import HTTPMethod from 'http-method-enum';
-import '../../../../../../../lib/DateUtils';
 import { formatDateLocal, getEndOfDay, getLogicalDate, getStartOfDay, getStartOfMonth, getStartOfWeek } from '../../../../../../../lib/dateHelpers';
 
 async function getStatisticsForPeriod(workspaceId: string, startDate: Date, endDate: Date, dayStartTime?: string) {

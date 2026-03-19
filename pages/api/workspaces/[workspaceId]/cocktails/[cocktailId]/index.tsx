@@ -153,8 +153,8 @@ export default withHttpMethods({
       const existingStepMap = new Map(existingSteps.map((s) => [s.id, s]));
 
       const incomingSteps = (steps as CocktailRecipeStepFull[]) ?? [];
-      const existingIncomingSteps = incomingSteps.filter((s: any) => s.id && s.id !== '');
-      const incomingStepIds = new Set(existingIncomingSteps.map((s: any) => s.id));
+      const existingIncomingSteps = incomingSteps.filter((s) => s.id && s.id !== '');
+      const incomingStepIds = new Set(existingIncomingSteps.map((s) => s.id));
 
       // Zu löschende Steps
       const stepsToDelete = existingSteps.filter((s) => !incomingStepIds.has(s.id));
@@ -177,9 +177,9 @@ export default withHttpMethods({
 
         const oldStep = existingStepMap.get(step.id);
         const existingIngredients = oldStep?.ingredients ?? [];
-        const existingIngredientIds = new Set(existingIngredients.map((i) => i.id));
+        const _existingIngredientIds = new Set(existingIngredients.map((i) => i.id));
 
-        const incomingIngredients = (step.ingredients ?? []) as any[];
+        const incomingIngredients = step.ingredients ?? [];
         const incomingExistingIngredients = incomingIngredients.filter((i) => i.id && i.id !== '');
         const incomingIngredientIds = new Set(incomingExistingIngredients.map((i) => i.id));
 
@@ -222,7 +222,7 @@ export default withHttpMethods({
       }
 
       // Neue Steps anlegen (ohne vorhandene ID)
-      const newSteps = incomingSteps.filter((s: any) => !s.id || s.id === '');
+      const newSteps = incomingSteps.filter((s) => !s.id || s.id === '');
       for (const step of newSteps) {
         const createdStep = await tx.cocktailRecipeStep.create({
           data: {
@@ -233,7 +233,7 @@ export default withHttpMethods({
           },
         });
 
-        const incomingIngredients = (step.ingredients ?? []) as any[];
+        const incomingIngredients = step.ingredients ?? [];
         for (const ing of incomingIngredients) {
           await tx.cocktailRecipeIngredient.create({
             data: {
@@ -280,7 +280,7 @@ export default withHttpMethods({
               garnishNumber: garnish.garnishNumber,
               description: garnish.description,
               optional: garnish.optional,
-              isAlternative: (garnish as any).isAlternative,
+              isAlternative: garnish.isAlternative,
             },
           });
         } else {
@@ -292,7 +292,7 @@ export default withHttpMethods({
               garnishNumber: garnish.garnishNumber,
               description: garnish.description,
               optional: garnish.optional,
-              isAlternative: (garnish as any).isAlternative,
+              isAlternative: garnish.isAlternative,
             },
           });
         }

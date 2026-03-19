@@ -1,0 +1,119 @@
+name: Generate Documentation Screenshots
+
+on:
+  workflow_dispatch:
+    inputs:
+      commit_screenshots:
+        description: 'Commit screenshots to the repository'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+
+jobs:
+  generate-screenshots:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: cocktail_recipe
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        run: npx playwright install chromium --with-deps
+
+      - name: Build application
+        run: pnpm build
+        env:
+          DEMO_MODE: 'true'
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/cocktail_recipe
+
+      - name: Run database migrations
+        run: npx prisma migrate deploy
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/cocktail_recipe
+
+      - name: Start application
+        run: |
+          HOSTNAME="0.0.0.0" node .next/standalone/server.js &
+          echo $! > /tmp/app.pid
+        env:
+          NODE_ENV: production
+          PORT: 3000
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/cocktail_recipe
+          BETTER_AUTH_URL: http://localhost:3000
+          BETTER_AUTH_SECRET: screenshot-generation-secret
+          DEMO_MODE: 'true'
+          DEMO_WORKSPACE_CONFIG_PATH: ${{ github.workspace }}/config/demo-workspace-config.json
+
+      - name: Wait for application to be ready
+        run: |
+          for i in $(seq 1 30); do
+            if curl -s http://localhost:3000/api/health > /dev/null 2>&1; then
+              echo "Application is ready"
+              exit 0
+            fi
+            echo "Waiting for application... ($i/30)"
+            sleep 2
+          done
+          echo "Application did not start in time"
+          exit 1
+
+      - name: Generate screenshots
+        run: npx tsx scripts/generate-screenshots.ts
+        env:
+          BASE_URL: http://localhost:3000
+          OUTPUT_DIR: docs/screenshots
+
+      - name: Stop application
+        if: always()
+        run: |
+          if [ -f /tmp/app.pid ]; then
+            kill $(cat /tmp/app.pid) || true
+          fi
+
+      - name: Upload screenshots as artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: documentation-screenshots
+          path: docs/screenshots/
+          retention-days: 30
+
+      - name: Commit screenshots to repository
+        if: ${{ inputs.commit_screenshots == 'true' }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/screenshots/
+          git diff --staged --quiet || git commit -m "docs: update documentation screenshots"
+          git push

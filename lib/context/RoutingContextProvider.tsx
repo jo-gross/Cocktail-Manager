@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useEffect, useState } from 'react';
+import React, { createContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { usePathname, useSearchParams } from 'next/navigation';
 
@@ -8,7 +8,7 @@ export const RoutingContext = createContext<{ conditionalBack: (fallbackUrl: str
   conditionalBack: async () => {},
 });
 
-export function RoutingContextProvider({ children }: { children: JSX.Element }) {
+export function RoutingContextProvider({ children }: { children: React.JSX.Element }) {
   const router = useRouter();
 
   const pathname = usePathname();

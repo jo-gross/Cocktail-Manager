@@ -1,8 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import CreatableSelect from 'react-select/creatable';
+import { MultiValue } from 'react-select';
 import classNames from 'classnames';
 import '../lib/ArrayUtils';
 import { useRouter } from 'next/router';
+
+interface TagOption {
+  value: string;
+  label: string;
+}
 
 interface DaisyUITagInputProps {
   value: string[];
@@ -14,10 +20,10 @@ export function DaisyUITagInput(props: DaisyUITagInputProps) {
   // Hilfsfunktion: Wandelt die Tags in das Format von `react-select` um
   const formatTags = (tags: string[]) => tags.map((tag) => ({ value: tag, label: tag }));
   // Hilfsfunktion: Wandelt das Format von `react-select` zurück in ein Array von Strings
-  const parseTags = (options: { value: string; label: string }[]) => options.map((option) => option.value);
+  const _parseTags = (options: { value: string; label: string }[]) => options.map((option) => option.value);
 
-  const handleChange = (options: any) => {
-    const newTags = options ? parseTags(options) : [];
+  const handleChange = (options: MultiValue<TagOption>) => {
+    const newTags = options ? options.map((option) => option.value) : [];
     props.onChange(newTags);
   };
 
@@ -69,7 +75,7 @@ export function DaisyUITagInput(props: DaisyUITagInputProps) {
         // Apply DaisyUI classes
         unstyled // Remove all non-essential styles
         classNames={{
-          control: ({ isDisabled, isFocused }) => classNames('select', 'select-bordered'),
+          control: ({ isDisabled: _isDisabled, isFocused: _isFocused }) => classNames('select', 'select-bordered'),
           indicatorsContainer: () => classNames('invisible'),
           menu: () => classNames('dropdown', 'dropdown-open', 'w-full'),
           menuList: () => classNames('dropdown-content', 'w-full', 'bg-base-100', 'rounded-lg'),

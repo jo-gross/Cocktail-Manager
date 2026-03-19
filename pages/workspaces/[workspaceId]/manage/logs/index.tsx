@@ -9,7 +9,7 @@ import { Loading } from '@components/Loading';
 import ListSearchField from '../../../../../components/ListSearchField';
 import { NextPageWithPullToRefresh } from '../../../../../types/next';
 import { TimeRange, TimeRangePicker } from '@components/statistics/TimeRangePicker';
-import '../../../../../lib/DateUtils';
+import { formatDateTime } from '@lib/DateUtils';
 import { getStartOfDay, getEndOfDay } from '@lib/dateHelpers';
 
 interface PaginationInfo {
@@ -166,7 +166,7 @@ const LogsPage: NextPageWithPullToRefresh = () => {
                   ) : (
                     cocktailStatisticItems.map((item) => (
                       <tr key={'statistic-item-' + item.id}>
-                        <td>{new Date(item.date).toFormatDateTimeString()}</td>
+                        <td>{formatDateTime(new Date(item.date))}</td>
                         <td>{item.cocktail?.name || 'Gelöschter Cocktail'}</td>
                         <td>{item.cocktailCard?.name || '-'}</td>
                         <td>{item.user?.name || '-'}</td>

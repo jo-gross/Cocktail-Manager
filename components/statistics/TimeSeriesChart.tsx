@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Line } from 'react-chartjs-2';
-import { CategoryScale, Chart as ChartJS, Legend, LinearScale, LineElement, PointElement, TimeScale, Title, Tooltip } from 'chart.js';
+import { CategoryScale, Chart as ChartJS, Legend, LinearScale, LineElement, PointElement, TimeScale, Title, Tooltip, TooltipModel } from 'chart.js';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, TimeScale);
 
@@ -13,6 +13,28 @@ interface TimeSeriesDataset {
   label: string;
   data: TimeSeriesDataPoint[];
   color?: string;
+}
+
+interface ChartDataset {
+  label: string;
+  data: number[];
+  borderColor: string;
+  backgroundColor: string;
+  fill: boolean;
+  tension: number;
+  borderDash?: number[];
+}
+
+interface TooltipDataPoint {
+  parsed: { y: number };
+  dataset: { label: string; borderColor: string };
+}
+
+interface TooltipItem {
+  label: string;
+  value: number;
+  color: string;
+  percentage: string;
 }
 
 interface TimeSeriesChartProps {
@@ -119,7 +141,7 @@ export function TimeSeriesChart({
   };
 
   // If datasets are provided, use them; otherwise use the old format
-  let chartDatasets: any[];
+  let chartDatasets: ChartDataset[];
   let chartLabels: string[];
   let formattedLabels: string[];
 
@@ -214,25 +236,24 @@ export function TimeSeriesChart({
       },
       tooltip: {
         enabled: false, // Disable default tooltip, we use custom
-        external: (context: any) => {
-          const { chart, tooltip } = context;
+        external: (context: { chart: ChartJS; tooltip: TooltipModel<'line'> }) => {
+          const { chart: _chart, tooltip } = context;
 
           if (tooltip.opacity === 0) {
             setTooltipData(null);
             return;
           }
 
-          const dataPoints = tooltip.dataPoints || [];
+          const dataPoints = (tooltip.dataPoints || []) as TooltipDataPoint[];
           if (dataPoints.length === 0) {
             setTooltipData(null);
             return;
           }
 
-          // Filter and sort items
           const items = dataPoints
-            .filter((dp: any) => dp.parsed.y > 0)
-            .sort((a: any, b: any) => (b.parsed.y || 0) - (a.parsed.y || 0))
-            .map((dp: any) => ({
+            .filter((dp) => dp.parsed.y > 0)
+            .sort((a, b) => (b.parsed.y || 0) - (a.parsed.y || 0))
+            .map((dp) => ({
               label: dp.dataset.label,
               value: dp.parsed.y,
               color: dp.dataset.borderColor,
@@ -244,8 +265,8 @@ export function TimeSeriesChart({
             return;
           }
 
-          const total = items.reduce((sum: number, item: any) => sum + item.value, 0);
-          items.forEach((item: any) => {
+          const total = items.reduce((sum: number, item: TooltipItem) => sum + item.value, 0);
+          items.forEach((item: TooltipItem) => {
             item.percentage = total > 0 ? ((item.value / total) * 100).toFixed(1) : '0';
           });
 

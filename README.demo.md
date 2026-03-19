@@ -166,7 +166,7 @@ echo $GITHUB_TOKEN | docker login ghcr.io -u USERNAME --password-stdin
 
 For production deployment, ensure:
 
-1. Set a strong `NEXTAUTH_SECRET`
-2. Set the correct `NEXTAUTH_URL`
+1. Set a strong `BETTER_AUTH_SECRET`
+2. Set the correct `BETTER_AUTH_URL`
 3. Use proper database credentials
 4. Configure authentication providers if needed (see `docs/AUTH.md`)

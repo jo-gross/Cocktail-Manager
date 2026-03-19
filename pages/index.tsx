@@ -1,9 +1,9 @@
-import { signIn, signOut } from 'next-auth/react';
+import { authClient } from '@lib/auth-client';
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { Setting, Workspace, WorkspaceJoinRequest } from '@generated/prisma/client';
 import { Loading } from '@components/Loading';
 import Image from 'next/image';
-import { FaArrowRight } from 'react-icons/fa';
+import { FaArrowRight, FaGoogle, FaKey } from 'react-icons/fa';
 import Link from 'next/link';
 import { UserContext } from '@lib/context/UserContextProvider';
 import { alertService } from '@lib/alertService';
@@ -11,12 +11,17 @@ import Head from 'next/head';
 import packageInfo from '../package.json';
 import { ThemeContext } from '@lib/context/ThemeContextProvider';
 import { ModalContext } from '@lib/context/ModalContextProvider';
-import { marked } from 'marked';
-import '../lib/DateUtils';
+import { formatDateTime } from '@lib/DateUtils';
 import { useRouter } from 'next/router';
 import { MdOutlineCancel } from 'react-icons/md';
 import { DeleteConfirmationModal } from '@components/modals/DeleteConfirmationModal';
 import { NextPageWithPullToRefresh } from '../types/next';
+
+interface AuthProvider {
+  id: string;
+  name: string;
+  type: 'social' | 'oidc';
+}
 
 const WorkspacesPage: NextPageWithPullToRefresh = () => {
   const themeContext = useContext(ThemeContext);
@@ -43,6 +48,7 @@ const WorkspacesPage: NextPageWithPullToRefresh = () => {
   const [changeLogFetch, setChangelogFetch] = useState(false);
   const [workspaceCreationConfig, setWorkspaceCreationConfig] = useState<{ disabled: boolean; message: string | null } | null>(null);
   const [creatingDemoWorkspace, setCreatingDemoWorkspace] = useState(false);
+  const [authProviders, setAuthProviders] = useState<AuthProvider[]>([]);
 
   const fetchWorkspaces = useCallback(() => {
     if (!userContext.user) return;
@@ -103,6 +109,19 @@ const WorkspacesPage: NextPageWithPullToRefresh = () => {
       });
   }, []);
 
+  const fetchAuthProviders = useCallback(() => {
+    fetch('/api/config/auth-providers', { method: 'GET' })
+      .then(async (response) => {
+        const body = await response.json();
+        if (response.ok) {
+          setAuthProviders(body.data);
+        }
+      })
+      .catch((error) => {
+        console.error('WorkspacesOverview -> fetchAuthProviders', error);
+      });
+  }, []);
+
   const createNewWorkspace = useCallback(() => {
     if (!userContext.user) return;
     setCreatingWorkspace(true);
@@ -140,13 +159,14 @@ const WorkspacesPage: NextPageWithPullToRefresh = () => {
         return;
       }
 
-      // Sign in as demo user
-      const signInResponse = await signIn('demo', {
-        userId: body.data.userId,
-        redirect: false,
+      // Sign in as demo user via custom demo-login endpoint
+      const signInResponse = await fetch('/api/auth/demo-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: body.data.userId }),
       });
 
-      if (signInResponse?.ok) {
+      if (signInResponse.ok) {
         // Redirect to workspace
         router.push(`/workspaces/${body.data.workspaceId}`);
       } else {
@@ -218,63 +238,90 @@ const WorkspacesPage: NextPageWithPullToRefresh = () => {
   );
 
   useEffect(() => {
-    if (userContext.user && (document.getElementById('changelog-modal')?.innerHTML == '' || !document.getElementById('changelog-modal'))) {
-      if (userContext.user.settings?.find((userSetting) => userSetting.setting == Setting.lastSeenVersion)?.value != packageInfo.version && !changeLogFetch) {
-        setChangelogFetch(true);
-        fetch('https://raw.githubusercontent.com/jo-gross/Cocktail-Manager/main/docs/CHANGELOG.md')
-          .then((response) => {
-            if (response.ok) {
-              return response.text();
-            }
-          })
-          .then((text) => {
-            if (text) {
-              return marked(text);
-            }
-          })
-          .then((innerHtml) => {
-            if (innerHtml) {
-              innerHtml = innerHtml.replaceAll('<h1', '<div class="text-2xl font-bold" ');
-              innerHtml = innerHtml.replaceAll('/h1>', '/div>');
-              innerHtml = innerHtml.replaceAll('<h2', '<div class="text-xl font-bold" ');
-              innerHtml = innerHtml.replaceAll('/h2>', '/div>');
-              innerHtml = innerHtml.replaceAll('<h3', '<div class="text-lg font-bold" ');
-              innerHtml = innerHtml.replaceAll('/h3>', '/div>');
-              innerHtml = innerHtml.replaceAll('<ul>', '<ul class="list-disc pl-4">');
-              innerHtml = innerHtml.replaceAll('<a', '<a class="link"');
+    if (!userContext.user || changeLogFetch) return;
 
-              modalContext.openModal(
-                <div className={'flex flex-col'}>
-                  <div className={'w-full text-center text-2xl font-bold'}>Neue Version ({packageInfo.version})</div>
-                  <div className={'w-full text-center italic'}>
-                    <Link href={'https://github.com/jo-gross/Cocktail-Manager/releases'} className={'link'} target={'_blank'}>
-                      Changelog ansehen
-                    </Link>
-                  </div>
-                  <div dangerouslySetInnerHTML={{ __html: innerHtml }} />{' '}
-                </div>,
-              );
+    const lastSeenVersion = userContext.user.settings?.find((s) => s.setting == Setting.lastSeenVersion)?.value;
+    if (lastSeenVersion === packageInfo.version) return;
 
-              userContext.updateUserSetting(Setting.lastSeenVersion, packageInfo.version);
-            }
-          })
-          .catch((error) => {
-            console.error('WorkspacesOverview -> useEffect -> fetch', error);
-          });
-      }
-    }
+    setChangelogFetch(true);
+    fetch('/user-changelog.json')
+      .then((response) => {
+        if (!response.ok) throw new Error('Failed to fetch changelog');
+        return response.json();
+      })
+      .then((entries: Array<{ version: string; date: string; highlights: string[] }>) => {
+        const currentEntry = entries.find((e) => e.version === packageInfo.version);
+        const recentEntries = entries.slice(0, 3);
+
+        modalContext.openModal(
+          <div className={'flex flex-col gap-4'}>
+            <div className={'w-full text-center text-2xl font-bold'}>Neue Version ({packageInfo.version})</div>
+            {currentEntry && (
+              <div className={'flex flex-col gap-2'}>
+                <ul className={'list-disc space-y-1 pl-5'}>
+                  {currentEntry.highlights.map((highlight, i) => (
+                    <li key={i}>{highlight}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {recentEntries.length > 1 && (
+              <details className={'mt-2'}>
+                <summary className={'cursor-pointer text-sm text-base-content/60'}>Vorherige Versionen</summary>
+                <div className={'mt-2 flex flex-col gap-3'}>
+                  {recentEntries
+                    .filter((e) => e.version !== packageInfo.version)
+                    .map((entry) => (
+                      <div key={entry.version} className={'flex flex-col gap-1'}>
+                        <div className={'text-sm font-semibold'}>
+                          v{entry.version} ({entry.date})
+                        </div>
+                        <ul className={'list-disc space-y-0.5 pl-5 text-sm'}>
+                          {entry.highlights.map((h, i) => (
+                            <li key={i}>{h}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    ))}
+                </div>
+              </details>
+            )}
+            <div className={'w-full text-center text-sm italic'}>
+              <Link href={'https://github.com/jo-gross/Cocktail-Manager/releases'} className={'link'} target={'_blank'}>
+                Alle Änderungen ansehen
+              </Link>
+            </div>
+          </div>,
+        );
+
+        userContext.updateUserSetting(Setting.lastSeenVersion, packageInfo.version);
+      })
+      .catch((error) => {
+        console.error('Failed to load user changelog', error);
+      });
   }, [changeLogFetch, modalContext, userContext, userContext.user]);
 
   useEffect(() => {
     fetchWorkspaces();
     fetchOpenWorkspaceJoinRequest();
     fetchWorkspaceCreationConfig();
-  }, [fetchOpenWorkspaceJoinRequest, fetchWorkspaces, fetchWorkspaceCreationConfig]);
+    fetchAuthProviders();
+  }, [fetchOpenWorkspaceJoinRequest, fetchWorkspaces, fetchWorkspaceCreationConfig, fetchAuthProviders]);
 
   WorkspacesPage.pullToRefresh = () => {
     fetchWorkspaces();
     fetchOpenWorkspaceJoinRequest();
     fetchWorkspaceCreationConfig();
+    fetchAuthProviders();
+  };
+
+  const handleSignIn = (providerId: string, providerType: 'social' | 'oidc') => {
+    if (providerType === 'social') {
+      authClient.signIn.social({ provider: providerId as 'google' });
+    } else {
+      // For generic OAuth/OIDC providers
+      authClient.signIn.oauth2({ providerId });
+    }
   };
 
   useEffect(() => {
@@ -347,7 +394,7 @@ const WorkspacesPage: NextPageWithPullToRefresh = () => {
                 {userContext.user ? (
                   <>
                     <span>Hi {userContext.user.name}</span>
-                    <button className={'btn btn-outline btn-sm'} onClick={() => signOut()}>
+                    <button className={'btn btn-outline btn-sm'} onClick={() => authClient.signOut()}>
                       Sign out
                     </button>
                   </>
@@ -362,10 +409,17 @@ const WorkspacesPage: NextPageWithPullToRefresh = () => {
                       'Demo starten'
                     )}
                   </button>
+                ) : authProviders.length > 0 ? (
+                  <div className={'flex flex-wrap justify-center gap-2'}>
+                    {authProviders.map((provider) => (
+                      <button key={provider.id} className={'btn btn-outline btn-sm gap-2'} onClick={() => handleSignIn(provider.id, provider.type)}>
+                        {provider.id === 'google' ? <FaGoogle /> : <FaKey />}
+                        {provider.name}
+                      </button>
+                    ))}
+                  </div>
                 ) : (
-                  <button className={'btn btn-outline btn-sm'} onClick={() => signIn()}>
-                    Sign in
-                  </button>
+                  <span className={'text-sm text-base-content/60'}>Keine Anmeldung konfiguriert</span>
                 )}
               </>
             </div>
@@ -411,7 +465,7 @@ const WorkspacesPage: NextPageWithPullToRefresh = () => {
                           <span className={'italic'}>Angefragt: </span>
                           {workspaceJoinRequest.workspace.name}
                         </div>
-                        <div className={'text-center font-thin'}>Datum der Anfrage: {new Date(workspaceJoinRequest.date).toFormatDateTimeString()}</div>
+                        <div className={'text-center font-thin'}>Datum der Anfrage: {formatDateTime(new Date(workspaceJoinRequest.date))}</div>
                         <div className={'h-full'}></div>
                         <div className={'card-actions justify-center'}>
                           <button type={'button'} className={'btn btn-outline btn-primary'} disabled={true}>

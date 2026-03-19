@@ -20,7 +20,7 @@ export default withHttpMethods({
 
     return res.json({ data: actions });
   }),
-  [HTTPMethod.DELETE]: withWorkspacePermission([Role.ADMIN], async (req, res, user, workspace) => {
+  [HTTPMethod.DELETE]: withWorkspacePermission([Role.ADMIN], async (req, res, _user, _workspace) => {
     const actionId = req.query.actionId as string | undefined;
     if (!actionId) return res.status(400).json({ message: 'No action id' });
 

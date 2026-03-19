@@ -10,7 +10,7 @@ import { DeleteConfirmationModal } from '@components/modals/DeleteConfirmationMo
 import { alertService } from '@lib/alertService';
 import { FaPlus, FaTrash } from 'react-icons/fa';
 import { Loading } from '@components/Loading';
-import '../../../../../lib/DateUtils';
+import { formatDate as formatDateUtil } from '@lib/DateUtils';
 
 interface ApiKey {
   id: string;
@@ -30,7 +30,7 @@ interface ApiKey {
 function ApiKeysPage() {
   const router = useRouter();
   const { workspaceId } = router.query;
-  const userContext = useContext(UserContext);
+  const _userContext = useContext(UserContext);
   const modalContext = useContext(ModalContext);
 
   const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
@@ -102,7 +102,7 @@ function ApiKeysPage() {
   const formatDate = (dateString: string | null) => {
     if (!dateString) return 'Nie';
     try {
-      return new Date(dateString).toFormatDateString();
+      return formatDateUtil(new Date(dateString));
     } catch {
       return dateString;
     }
@@ -164,7 +164,7 @@ function ApiKeysPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {apiKeys.map((apiKey, index) => {
+                    {apiKeys.map((apiKey, _index) => {
                       const expired = isExpired(apiKey.expiresAt);
                       return (
                         <tr key={apiKey.id}>

@@ -64,19 +64,19 @@ export default withHttpMethods({
       data: input,
     });
 
-    if (groups.length > 0) {
-      await groups.forEach(async (group: any) => {
-        const groupResult = await prisma.cocktailCardGroup.create({
-          data: {
-            id: group.id,
-            name: group.name,
-            groupNumber: group.groupNumber,
-            groupPrice: group.groupPrice == '' ? null : group.groupPrice,
-            cocktailCard: { connect: { id: cocktailCardResult.id } },
-          },
-        });
+    for (const group of groups) {
+      const groupResult = await prisma.cocktailCardGroup.create({
+        data: {
+          id: group.id,
+          name: group.name,
+          groupNumber: group.groupNumber,
+          groupPrice: group.groupPrice == '' ? null : group.groupPrice,
+          cocktailCard: { connect: { id: cocktailCardResult.id } },
+        },
+      });
 
-        if (group.items.length > 0) {
+      if (group.items.length > 0) {
+        await Promise.all(
           group.items.map(async (item: CocktailCardGroupItem) => {
             const input: CocktailCardGroupItemCreateInput = {
               cocktail: { connect: { id: item.cocktailId } },
@@ -87,9 +87,9 @@ export default withHttpMethods({
             await prisma.cocktailCardGroupItem.create({
               data: input,
             });
-          });
-        }
-      });
+          }),
+        );
+      }
     }
 
     return res.json(cocktailCardResult);

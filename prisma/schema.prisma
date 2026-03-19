@@ -8,50 +8,51 @@ datasource db {
 }
 
 model Account {
-  id                 String  @id @default(cuid())
-  userId             String  @map("user_id")
-  type               String
-  provider           String
-  providerAccountId  String  @map("provider_account_id")
-  refresh_token      String?
-  access_token       String?
-  expires_at         Int?
-  token_type         String?
-  scope              String?
-  id_token           String?
-  session_state      String?
-  oauth_token_secret String?
-  oauth_token        String?
-  user               User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                    String    @id @default(cuid())
+  userId                String    @map("user_id")
+  providerId            String    @map("provider")
+  accountId             String    @map("provider_account_id")
+  accessToken           String?   @map("access_token")
+  refreshToken          String?   @map("refresh_token")
+  idToken               String?   @map("id_token")
+  accessTokenExpiresAt  DateTime? @map("expires_at")
+  refreshTokenExpiresAt DateTime? @map("refresh_token_expires_at")
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @default(now()) @updatedAt @map("updated_at")
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([provider, providerAccountId])
+  @@unique([providerId, accountId])
+  @@index([userId])
+  @@map("Account")
 }
 
 model Session {
-  id String @id @default(cuid())
+  id        String   @id @default(cuid())
+  token     String   @unique @map("session_token")
+  userId    String   @map("user_id")
+  expiresAt DateTime @map("expires")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  ipAddress String?  @map("ip_address")
+  userAgent String?  @map("user_agent")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  sessionToken String @unique @map("session_token")
-
-  userId String @map("user_id")
-
-  expires DateTime
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId])
+  @@map("Session")
 }
 
 model User {
-  id String @id @default(cuid())
-
-  name String?
-
-  email String? @unique
-
-  emailVerified DateTime?
-
-  image String?
+  id            String   @id @default(cuid())
+  name          String?
+  email         String?  @unique
+  emailVerified Boolean  @default(false) @map("email_verified")
+  image         String?
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @default(now()) @updatedAt @map("updated_at")
 
   accounts Account[]
-
   sessions Session[]
 
   workspaces            WorkspaceUser[]
@@ -61,6 +62,8 @@ model User {
   WorkspaceJoinRequest  WorkspaceJoinRequest[]
   WorkspaceApiKey       WorkspaceApiKey[]
   AuditLog              AuditLog[]
+
+  @@map("User")
 }
 
 enum Setting {
@@ -137,16 +140,17 @@ model WorkspaceJoinRequest {
   @@id([userId, workspaceId])
 }
 
-model VerificationToken {
-  id Int @id @default(autoincrement())
-
+model Verification {
+  id         String   @id @default(cuid())
   identifier String
+  value      String   @unique @map("token")
+  expiresAt  DateTime @map("expires")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @default(now()) @updatedAt @map("updated_at")
 
-  token String @unique
-
-  expires DateTime
-
-  @@unique([identifier, token])
+  @@unique([identifier, value])
+  @@index([identifier])
+  @@map("VerificationToken")
 }
 
 enum Role {

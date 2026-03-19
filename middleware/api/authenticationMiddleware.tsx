@@ -2,22 +2,93 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import prisma from '../../prisma/prisma';
 import { Role, User, Workspace, WorkspaceUser, Permission } from '@generated/prisma/client';
 import { constants as HttpStatus } from 'http2';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '../../pages/api/auth/[...nextauth]';
-import { authenticateApiKey, checkMasterApiKey, ApiKeyAuthResult } from './jwtApiKeyMiddleware';
+import { auth } from '@lib/auth';
+import { authenticateApiKey, checkMasterApiKey } from './jwtApiKeyMiddleware';
 import { hasPermission } from '@lib/permissions/apiKeyPermissions';
+
+/**
+ * Helper function to get session from BetterAuth
+ * Converts NextApiRequest headers to Web Headers format
+ */
+async function getBetterAuthSession(req: NextApiRequest) {
+  // Convert Node.js headers to Web Headers
+  const headers = new Headers();
+  for (const [key, value] of Object.entries(req.headers)) {
+    if (value) {
+      headers.set(key, Array.isArray(value) ? value.join(', ') : value);
+    }
+  }
+
+  // Try BetterAuth first
+  try {
+    const session = await auth.api.getSession({ headers });
+    if (session) {
+      return session;
+    }
+  } catch (error) {
+    console.error('BetterAuth getSession error:', error);
+  }
+
+  // Fallback: Check for demo session directly via cookie
+  // This is needed because demo sessions are created manually, not through BetterAuth
+  const cookieHeader = req.headers.cookie;
+  if (cookieHeader) {
+    const cookies = cookieHeader.split(';').reduce(
+      (acc, cookie) => {
+        const [key, value] = cookie.trim().split('=');
+        acc[key] = value;
+        return acc;
+      },
+      {} as Record<string, string>,
+    );
+
+    const sessionToken = cookies['better-auth.session_token'];
+    if (sessionToken) {
+      // Look up session directly in database
+      const dbSession = await prisma.session.findFirst({
+        where: {
+          token: sessionToken,
+          expiresAt: { gt: new Date() },
+        },
+        include: { user: true },
+      });
+
+      if (dbSession) {
+        return {
+          session: {
+            id: dbSession.id,
+            token: dbSession.token,
+            userId: dbSession.userId,
+            expiresAt: dbSession.expiresAt,
+          },
+          user: {
+            id: dbSession.user.id,
+            name: dbSession.user.name,
+            email: dbSession.user.email,
+            image: dbSession.user.image,
+            emailVerified: dbSession.user.emailVerified,
+          },
+        };
+      }
+    }
+  }
+
+  return null;
+}
 
 export function withAuthentication(fn: (fnReq: NextApiRequest, fnRes: NextApiResponse, fnUser: User) => void) {
   return async (req: NextApiRequest, res: NextApiResponse) => {
-    const serverSession = await getServerSession(req, res, authOptions);
+    const session = await getBetterAuthSession(req);
 
-    if (serverSession == null) {
+    if (session == null) {
+      // Debug: Log cookies for troubleshooting
+      console.log('Auth failed - no session. Cookies:', req.headers.cookie);
       return res.status(HttpStatus.HTTP_STATUS_UNAUTHORIZED).json({ message: 'not authenticated' });
     }
 
     const userResult = await prisma.user.findUnique({
       where: {
-        id: serverSession.user?.id,
+        id: session.user?.id,
       },
     });
     if (userResult == null) {
@@ -69,8 +140,10 @@ export function withWorkspacePermission(
         id: 'master-api-key',
         name: 'Master API Key',
         email: null,
-        emailVerified: null,
+        emailVerified: false,
         image: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
       };
       return handler(req, res, dummyUser, workspaceResult);
     }
@@ -97,8 +170,10 @@ export function withWorkspacePermission(
         id: apiKeyAuth.apiKey.id,
         name: apiKeyAuth.apiKey.name,
         email: null,
-        emailVerified: null,
+        emailVerified: false,
         image: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
       };
       return handler(req, res, dummyUser, apiKeyAuth.workspace);
     }

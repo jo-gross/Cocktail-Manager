@@ -6,8 +6,8 @@ interface FormatProps {
 
 declare global {
   interface Number {
-    formatPriceEfficent(props?: FormatProps): String;
-    formatPrice(props?: FormatProps): String;
+    formatPriceEfficent(props?: FormatProps): string;
+    formatPrice(props?: FormatProps): string;
   }
 }
 
@@ -19,7 +19,7 @@ Number.prototype.formatPriceEfficent = function (props: FormatProps) {
   });
 };
 
-Number.prototype.formatPrice = function (props: FormatProps): String {
+Number.prototype.formatPrice = function (props: FormatProps): string {
   return this.toLocaleString(undefined, {
     signDisplay: props?.signDisplay,
     minimumFractionDigits: 2,

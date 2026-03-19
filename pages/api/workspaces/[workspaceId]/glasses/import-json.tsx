@@ -16,7 +16,7 @@ interface EntityDecision {
   decision: 'import' | 'overwrite' | 'rename' | 'skip';
   existingId?: string;
   newName?: string;
-  data: any;
+  data: GlassExportStructure;
 }
 
 export default withHttpMethods({
@@ -119,8 +119,8 @@ export default withHttpMethods({
                 await createLog(tx, workspaceId, user.id, 'Glass', created.id, 'CREATE', null, created);
                 results.push({ name: finalName, status: 'created' });
               }
-            } catch (err: any) {
-              results.push({ name: finalName, status: 'error', message: err.message });
+            } catch (err: unknown) {
+              results.push({ name: finalName, status: 'error', message: err instanceof Error ? err.message : 'Unbekannter Fehler' });
             }
           }
         });
@@ -129,9 +129,9 @@ export default withHttpMethods({
       }
 
       return res.status(400).json({ message: 'Ungültige Phase' });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Glass import error:', error);
-      return res.status(500).json({ message: error.message || 'Import failed' });
+      return res.status(500).json({ message: error instanceof Error ? error.message : 'Import failed' });
     }
   }),
 });

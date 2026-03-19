@@ -24,11 +24,59 @@ import InputModal from '@components/modals/InputModal';
 import { AnalysisCocktailSelector } from '@components/statistics/AnalysisCocktailSelector';
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { CocktailStatisticItemFull } from '../../../../../models/CocktailStatisticItemFull';
-import '@lib/DateUtils';
+import { formatDateShort, formatDateNoYear } from '@lib/DateUtils';
 import '@lib/StringUtils';
 import { AmountWithUnit, calculateAggregatedIngredientAmount, IngredientVolumeInfo } from '@lib/CocktailRecipeCalculation';
 
 type Tab = 'overview' | 'cocktails' | 'comparisons' | 'analysis';
+
+interface CocktailDetailData {
+  cocktail: { name: string; tags?: string[] };
+  total: number;
+  delta: number;
+  previousTotal: number;
+  avgPerActiveHour: number;
+  rank: number;
+  revenue?: number;
+  previousRevenue?: number;
+  timeSeries: Array<{ date: string; count: number }>;
+  hourDistribution: Array<{ hour: number; count: number }>;
+  dayDistribution: Array<{ day: number; count: number }>;
+  ingredients?: string[];
+}
+
+interface CocktailDetailSetData {
+  set: { name: string };
+  kpis: { total: number; cocktailCount: number; percentage: number };
+  cocktails: Array<{ name: string; count: number }>;
+}
+
+interface SetDetailData {
+  set: { name: string; type: string };
+  kpis: {
+    total: number;
+    totalStats?: number;
+    cocktailCount?: number;
+    totalCocktailsInWorkspace?: number;
+    cocktailPercentageAll?: number;
+    revenue?: number;
+    totalRevenue?: number;
+  };
+  cocktails: Array<{ name: string; count: number }>;
+}
+
+interface AnalysisCocktailDetail {
+  total: number;
+  delta: number;
+  previousTotal: number;
+  avgPerActiveHour: number;
+  rank: number;
+  revenue?: number;
+  previousRevenue?: number;
+  timeSeries: Array<{ date: string; count: number }>;
+  hourDistribution: Array<{ hour: number; count: number }>;
+  dayDistribution: Array<{ day: number; count: number }>;
+}
 
 interface OverviewData {
   kpis: {
@@ -188,13 +236,13 @@ const StatisticsAdvancedPage = () => {
     }>
   >([]);
   const [selectedCocktailId, setSelectedCocktailId] = useState<string | undefined>();
-  const [cocktailDetailData, setCocktailDetailData] = useState<any>(null);
+  const [cocktailDetailData, setCocktailDetailData] = useState<CocktailDetailData | null>(null);
   const [hiddenCocktailIds, setHiddenCocktailIds] = useState<Set<string>>(new Set());
   const [cocktailsLoading, setCocktailsLoading] = useState(false);
   const [cocktailDetailLoading, setCocktailDetailLoading] = useState(false);
   const [selectedCocktailDetailSetId, setSelectedCocktailDetailSetId] = useState<string | undefined>();
-  const [cocktailDetailSetData, setCocktailDetailSetData] = useState<any>(null);
-  const [cocktailDetailSetLoading, setCocktailDetailSetLoading] = useState(false);
+  const [cocktailDetailSetData, _setCocktailDetailSetData] = useState<CocktailDetailSetData | null>(null);
+  const [cocktailDetailSetLoading, _setCocktailDetailSetLoading] = useState(false);
 
   // Tab 2: Grouped statistics
   const [cocktailStatisticItems, setCocktailStatisticItems] = useState<CocktailStatisticItemFull[]>([]);
@@ -213,7 +261,7 @@ const StatisticsAdvancedPage = () => {
   const [selectedSetId, setSelectedSetId] = useState<string | undefined>();
   const [originalComparisonSetItems, setOriginalComparisonSetItems] = useState<Set<string>>(new Set()); // Original items from selected set
   const [originalComparisonSetLogic, setOriginalComparisonSetLogic] = useState<'AND' | 'OR'>('AND'); // Original logic from selected set
-  const [setDetailData, setSetDetailData] = useState<any>(null);
+  const [setDetailData, setSetDetailData] = useState<SetDetailData | null>(null);
   const [comparisonsLoading, setComparisonsLoading] = useState(false);
   const [setDetailLoading, setSetDetailLoading] = useState(false);
   const [savedSetsRefreshKey, setSavedSetsRefreshKey] = useState(0);
@@ -221,7 +269,7 @@ const StatisticsAdvancedPage = () => {
   // Tab 4: Analysis
   const [selectedAnalysisCocktailIds, setSelectedAnalysisCocktailIds] = useState<Set<string>>(new Set()); // Current selection (from checkboxes or set)
   const [originalAnalysisSetItems, setOriginalAnalysisSetItems] = useState<Set<string>>(new Set()); // Original items from selected set
-  const [analysisCocktailDetails, setAnalysisCocktailDetails] = useState<Map<string, any>>(new Map());
+  const [analysisCocktailDetails, setAnalysisCocktailDetails] = useState<Map<string, AnalysisCocktailDetail>>(new Map());
   const [analysisLoading, setAnalysisLoading] = useState(false);
   const [allCocktails, setAllCocktails] = useState<Array<{ id: string; name: string; count: number }>>([]);
   const [allCocktailsLoading, setAllCocktailsLoading] = useState(false);
@@ -243,7 +291,7 @@ const StatisticsAdvancedPage = () => {
         let body;
         try {
           body = await response.json();
-        } catch (jsonError) {
+        } catch {
           const text = await response.text();
           console.error('StatisticsAdvancedPage -> loadOverviewData - Non-JSON response', text);
           alertService.error('Fehler beim Laden der Übersichtsdaten', response.status, response.statusText);
@@ -384,7 +432,7 @@ const StatisticsAdvancedPage = () => {
       .forEach((entry) => {
         const date = new Date(entry.date);
         const hour = date.getHours();
-        const dateString = date.toFormatDateStringShort();
+        const dateString = formatDateShort(date);
         const formattedHour = `${dateString} ${hour}:00 - ${hour + 1}:00`;
         const cocktailName = entry.cocktail.name;
 
@@ -437,8 +485,8 @@ const StatisticsAdvancedPage = () => {
 
           const sameYear = adjustedDate.getFullYear() === nextDate.getFullYear();
           const dateString = sameYear
-            ? `${adjustedDate.toFormatDateStringNoYear()}/${nextDate.toFormatDateStringShort()}`
-            : `${adjustedDate.toFormatDateStringShort()}/${nextDate.toFormatDateStringShort()}`;
+            ? `${formatDateNoYear(adjustedDate)}/${formatDateShort(nextDate)}`
+            : `${formatDateShort(adjustedDate)}/${formatDateShort(nextDate)}`;
           const cocktailName = entry.cocktail.name;
 
           if (!dailyCocktails[dateString]) {
@@ -465,8 +513,8 @@ const StatisticsAdvancedPage = () => {
           nextDate.setDate(loopStartDate.getDate() + 1);
           const sameYear = loopStartDate.getFullYear() === nextDate.getFullYear();
           const dateString = sameYear
-            ? `${loopStartDate.toFormatDateStringNoYear()}/${nextDate.toFormatDateStringShort()}`
-            : `${loopStartDate.toFormatDateStringShort()}/${nextDate.toFormatDateStringShort()}`;
+            ? `${formatDateNoYear(loopStartDate)}/${formatDateShort(nextDate)}`
+            : `${formatDateShort(loopStartDate)}/${formatDateShort(nextDate)}`;
           allDates.push(dateString);
           loopStartDate.setDate(loopStartDate.getDate() + 1);
         }
@@ -1011,7 +1059,7 @@ const StatisticsAdvancedPage = () => {
     if (activeTab === 'analysis' && selectedAnalysisCocktailIds.size > 0) {
       const loadDetails = async () => {
         setAnalysisLoading(true);
-        const details = new Map<string, any>();
+        const details = new Map<string, AnalysisCocktailDetail>();
 
         const cocktailIds = Array.from(selectedAnalysisCocktailIds);
         for (const cocktailId of cocktailIds) {
@@ -1127,7 +1175,7 @@ const StatisticsAdvancedPage = () => {
       if (selectedAnalysisCocktailIds.size > 0) {
         const loadDetails = async () => {
           setAnalysisLoading(true);
-          const details = new Map<string, any>();
+          const details = new Map<string, AnalysisCocktailDetail>();
 
           const cocktailIds = Array.from(selectedAnalysisCocktailIds);
           for (const cocktailId of cocktailIds) {
@@ -1162,13 +1210,13 @@ const StatisticsAdvancedPage = () => {
 
   // Convert Chart.js data format to Tremor format
   // Convert to Recharts format: [{ name: 'label1', cocktail1: value1, cocktail2: value2, ... }, ...]
-  const convertToRechartsData = useCallback((chartData: ProcessedData | null): Array<Record<string, any>> | null => {
+  const convertToRechartsData = useCallback((chartData: ProcessedData | null): Array<Record<string, string | number>> | null => {
     if (!chartData || chartData.labels.length === 0 || chartData.datasets.length === 0) {
       return null;
     }
 
     return chartData.labels.map((label) => {
-      const dataPoint: Record<string, any> = { name: label };
+      const dataPoint: Record<string, string | number> = { name: label };
       chartData.datasets.forEach((dataset) => {
         const labelIndex = chartData.labels.indexOf(label);
         dataPoint[dataset.label] = dataset.data[labelIndex] || 0;
@@ -1605,8 +1653,8 @@ const StatisticsAdvancedPage = () => {
                                   tickLine={false}
                                   interval={0}
                                   height={85}
-                                  tick={(props: any) => {
-                                    const { x, y, payload } = props;
+                                  tick={(props: Record<string, unknown>) => {
+                                    const { x, y, payload } = props as { x: number; y: number; payload: { value: string } };
                                     const label = payload?.value ?? '';
                                     const yOffset = 28;
                                     return (
@@ -1620,24 +1668,27 @@ const StatisticsAdvancedPage = () => {
                                 />
                                 <YAxis tick={{ fontSize: 12 }} width={36} />
                                 <Tooltip
-                                  content={({ active, payload }: any) => {
+                                  content={(contentProps: Record<string, unknown>) => {
+                                    const { active, payload } = contentProps as {
+                                      active?: boolean;
+                                      payload?: Array<{ value: number; dataKey: string; payload?: { name: string } }>;
+                                    };
                                     if (!active || !payload || !payload.length) return null;
 
-                                    // Filter out entries with value 0 and sort by value descending
                                     const filteredPayload = payload
-                                      .filter((entry: any) => entry.value && entry.value > 0)
-                                      .sort((a: any, b: any) => (b.value || 0) - (a.value || 0));
+                                      .filter((entry: { value: number; dataKey: string }) => entry.value && entry.value > 0)
+                                      .sort((a: { value: number }, b: { value: number }) => (b.value || 0) - (a.value || 0));
 
                                     if (filteredPayload.length === 0) return null;
 
-                                    const total = filteredPayload.reduce((sum: number, entry: any) => sum + (entry.value || 0), 0);
+                                    const total = filteredPayload.reduce((sum: number, entry: { value: number }) => sum + (entry.value || 0), 0);
                                     const label = payload[0]?.payload?.name || '';
 
                                     return (
                                       <div className="rounded-lg border border-base-300 bg-base-100 p-3 shadow-lg">
                                         <p className="mb-2 text-sm font-semibold text-base-content">{label}</p>
                                         <div className="space-y-1">
-                                          {filteredPayload.map((entry: any, index: number) => {
+                                          {filteredPayload.map((entry: { value: number; dataKey: string }, index: number) => {
                                             const percentage = total > 0 ? ((entry.value / total) * 100).toFixed(1) : '0';
                                             const entryColor = groupedChartColors.get(entry.dataKey) || '#000';
                                             return (
@@ -1717,31 +1768,31 @@ const StatisticsAdvancedPage = () => {
                   ) : cocktailDetailData ? (
                     <div className="card bg-base-100 shadow">
                       <div className="card-body">
-                        <h3 className="card-title mb-4 text-lg">{cocktailDetailData.cocktail.name} – Detailansicht</h3>
+                        <h3 className="card-title mb-4 text-lg">{cocktailDetailData?.cocktail?.name ?? ''} – Detailansicht</h3>
 
                         <div className="stats stats-vertical w-full shadow lg:stats-horizontal">
                           <StatCard
                             title="Bestellungen"
-                            value={cocktailDetailData.total}
-                            delta={cocktailDetailData.delta}
-                            previousValue={cocktailDetailData.previousTotal}
+                            value={cocktailDetailData?.total ?? 0}
+                            delta={cocktailDetailData?.delta}
+                            previousValue={cocktailDetailData?.previousTotal}
                             loading={cocktailDetailLoading}
                           />
                           <StatCard
                             title="Ø pro aktiver Stunde"
-                            value={cocktailDetailData.avgPerActiveHour.toFixed(1)}
+                            value={(cocktailDetailData?.avgPerActiveHour ?? 0).toFixed(1)}
                             desc="/ Std"
                             loading={cocktailDetailLoading}
                           />
-                          <StatCard title="Rang" value={`#${cocktailDetailData.rank}`} loading={cocktailDetailLoading} />
+                          <StatCard title="Rang" value={`#${cocktailDetailData?.rank ?? 0}`} loading={cocktailDetailLoading} />
                         </div>
 
                         <div className="mb-4">
                           <h4 className="text-md mb-2 font-semibold">Verteilung über Zeit</h4>
                           {cocktailDetailLoading ? (
                             <div className="skeleton w-full" style={{ height: '200px' }}></div>
-                          ) : cocktailDetailData.timeSeries && cocktailDetailData.timeSeries.length > 0 ? (
-                            <TimeSeriesChart data={cocktailDetailData.timeSeries} label="Bestellungen" height={200} />
+                          ) : (cocktailDetailData?.timeSeries?.length ?? 0) > 0 ? (
+                            <TimeSeriesChart data={cocktailDetailData?.timeSeries ?? []} label="Bestellungen" height={200} />
                           ) : (
                             <div className="py-8 text-center text-base-content/70">Keine Cocktails vorhanden</div>
                           )}
@@ -1752,10 +1803,9 @@ const StatisticsAdvancedPage = () => {
                             <h4 className="text-md mb-2 font-semibold">Verteilung nach Stunde</h4>
                             {cocktailDetailLoading ? (
                               <div className="skeleton w-full" style={{ height: '200px' }}></div>
-                            ) : cocktailDetailData.hourDistribution &&
-                              cocktailDetailData.hourDistribution.some((d: { hour: number; count: number }) => d.count > 0) ? (
+                            ) : cocktailDetailData?.hourDistribution?.some((d: { hour: number; count: number }) => d.count > 0) ? (
                               <DistributionChart
-                                data={reorderHourDistribution(cocktailDetailData.hourDistribution, dayStartTime).map((d) => ({
+                                data={reorderHourDistribution(cocktailDetailData?.hourDistribution ?? [], dayStartTime).map((d) => ({
                                   label: `${d.hour}:00`,
                                   value: d.count || 0,
                                 }))}
@@ -1771,11 +1821,10 @@ const StatisticsAdvancedPage = () => {
                             <h4 className="text-md mb-2 font-semibold">Verteilung nach Wochentag</h4>
                             {cocktailDetailLoading ? (
                               <div className="skeleton w-full" style={{ height: '200px' }}></div>
-                            ) : cocktailDetailData.dayDistribution &&
-                              cocktailDetailData.dayDistribution.some((d: { day: number; count: number }) => d.count > 0) ? (
+                            ) : cocktailDetailData?.dayDistribution?.some((d: { day: number; count: number }) => d.count > 0) ? (
                               <DistributionChart
-                                data={reorderDaysMondayFirst(cocktailDetailData.dayDistribution).map((d: { day: number; count?: number }) => {
-                                  const displayIndex = DAY_ORDER_MONDAY_FIRST.indexOf(d.day as any);
+                                data={reorderDaysMondayFirst(cocktailDetailData?.dayDistribution ?? []).map((d: { day: number; count?: number }) => {
+                                  const displayIndex = DAY_ORDER_MONDAY_FIRST.indexOf(d.day as (typeof DAY_ORDER_MONDAY_FIRST)[number]);
                                   return {
                                     label: DAY_NAMES_SHORT_MONDAY_FIRST[displayIndex] || '',
                                     value: d.count || 0,
@@ -1791,11 +1840,11 @@ const StatisticsAdvancedPage = () => {
                           </div>
                         </div>
 
-                        {cocktailDetailData.cocktail.tags && cocktailDetailData.cocktail.tags.length > 0 && (
+                        {(cocktailDetailData?.cocktail?.tags?.length ?? 0) > 0 && (
                           <div className="mb-4">
                             <h4 className="text-md mb-2 font-semibold">Tags</h4>
                             <div className="flex flex-wrap gap-2">
-                              {cocktailDetailData.cocktail.tags.map((tag: string) => (
+                              {(cocktailDetailData?.cocktail?.tags ?? []).map((tag: string) => (
                                 <span key={tag} className="badge badge-primary">
                                   {tag}
                                 </span>
@@ -1804,11 +1853,11 @@ const StatisticsAdvancedPage = () => {
                           </div>
                         )}
 
-                        {cocktailDetailData.ingredients && cocktailDetailData.ingredients.length > 0 && (
+                        {(cocktailDetailData?.ingredients?.length ?? 0) > 0 && (
                           <div className="mb-4">
                             <h4 className="text-md mb-2 font-semibold">Zutaten</h4>
                             <div className="flex flex-wrap gap-2">
-                              {cocktailDetailData.ingredients.map((ingredient: string) => (
+                              {(cocktailDetailData?.ingredients ?? []).map((ingredient: string) => (
                                 <span key={ingredient} className="badge badge-secondary">
                                   {ingredient}
                                 </span>
@@ -1831,22 +1880,26 @@ const StatisticsAdvancedPage = () => {
                           </div>
                         ) : selectedCocktailDetailSetId && cocktailDetailSetData ? (
                           <div className="mt-4">
-                            <h4 className="text-md mb-2 font-semibold">{cocktailDetailSetData.set.name}</h4>
+                            <h4 className="text-md mb-2 font-semibold">{cocktailDetailSetData?.set?.name ?? ''}</h4>
                             <div className="stats stats-vertical w-full shadow lg:stats-horizontal">
-                              <StatCard title="Bestellungen" value={cocktailDetailSetData.kpis.total} loading={cocktailDetailSetLoading} />
-                              <StatCard title="Cocktails" value={cocktailDetailSetData.kpis.cocktailCount} loading={cocktailDetailSetLoading} />
-                              <StatCard title="Anteil" value={`${cocktailDetailSetData.kpis.percentage.toFixed(1)}%`} loading={cocktailDetailSetLoading} />
+                              <StatCard title="Bestellungen" value={cocktailDetailSetData?.kpis?.total ?? 0} loading={cocktailDetailSetLoading} />
+                              <StatCard title="Cocktails" value={cocktailDetailSetData?.kpis?.cocktailCount ?? 0} loading={cocktailDetailSetLoading} />
+                              <StatCard
+                                title="Anteil"
+                                value={`${(cocktailDetailSetData?.kpis?.percentage ?? 0).toFixed(1)}%`}
+                                loading={cocktailDetailSetLoading}
+                              />
                             </div>
                             <div className="mb-4">
                               <h5 className="mb-2 text-sm font-semibold">Cocktails im Set</h5>
-                              {cocktailDetailSetData.cocktails && cocktailDetailSetData.cocktails.length > 0 ? (
+                              {(cocktailDetailSetData?.cocktails?.length ?? 0) > 0 ? (
                                 <DistributionChart
-                                  data={cocktailDetailSetData.cocktails.map((c: { name: string; count: number }) => ({
+                                  data={(cocktailDetailSetData?.cocktails ?? []).map((c: { name: string; count: number }) => ({
                                     label: c.name,
                                     value: c.count,
                                   }))}
                                   horizontal
-                                  height={Math.max(200, cocktailDetailSetData.cocktails.length * 40)}
+                                  height={Math.max(200, (cocktailDetailSetData?.cocktails ?? []).length * 40)}
                                   yLabel="Cocktail"
                                   xLabel="Anzahl"
                                 />

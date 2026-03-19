@@ -2,8 +2,10 @@
 
 import { NextApiRequest, NextApiResponse } from 'next';
 
-// @ts-ignore
+// @ts-expect-error jssoup has no type declarations
 import JSSoup from 'jssoup';
+import puppeteer from 'puppeteer-core';
+import { promises as dnsPromises } from 'dns';
 import { withAuthentication } from '@middleware/api/authenticationMiddleware';
 import { User } from '@generated/prisma';
 
@@ -75,17 +77,15 @@ export default withAuthentication(async (req: NextApiRequest, res: NextApiRespon
     } else if (req.query?.url?.includes('metro.de')) {
       console.debug(req.query.url);
 
-      const puppeteer = require('puppeteer-core');
       const chromiumHost = process.env.CHROMIUM_HOST;
 
       let browser;
       if (chromiumHost && chromiumHost !== 'localhost' && chromiumHost !== '127.0.0.1') {
         // Connect to remote Chromium service using DNS lookup
         console.log('Fetching WebSocket URL from Chromium...');
-        const dns = require('dns').promises;
 
         try {
-          const { address: chromeIP } = await dns.lookup(chromiumHost);
+          const { address: chromeIP } = await dnsPromises.lookup(chromiumHost);
           console.log('Chromium IP:', chromeIP);
 
           browser = await puppeteer.connect({
@@ -125,7 +125,7 @@ export default withAuthentication(async (req: NextApiRequest, res: NextApiRespon
       await browser.disconnect();
 
       const imageResponse = imageUrl
-        ? await fetch(imageUrl).catch((error) => {
+        ? await fetch(imageUrl).catch((_error) => {
             return undefined;
           })
         : undefined;

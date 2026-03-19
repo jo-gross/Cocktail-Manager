@@ -24,7 +24,7 @@ export function CocktailList({ items, selectedId, onSelect, hiddenIds = new Set(
   const [sortBy, setSortBy] = useState<'name' | 'count' | 'percentage' | 'rank'>('count');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [filter, setFilter] = useState('');
-  const [showHidden, setShowHidden] = useState(false);
+  const [_showHidden, _setShowHidden] = useState(false);
 
   const filteredItems = items.filter((item) => item.name.toLowerCase().includes(filter.toLowerCase()));
 

@@ -1,0 +1,103 @@
+name: Release
+
+on:
+  release:
+    types:
+      - published
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.release.target_commitish }}
+
+      - name: Set image name
+        run: echo "IMAGE_NAME=${GITHUB_REPOSITORY,,}" >> "$GITHUB_ENV"
+
+      - name: Extract version from tag
+        id: version
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          MAJOR_MINOR="${VERSION%.*}"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "major_minor=$MAJOR_MINOR" >> "$GITHUB_OUTPUT"
+          echo "Releasing version: $VERSION (major.minor: $MAJOR_MINOR)"
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Bump version in package.json
+        run: |
+          npm version "${{ steps.version.outputs.version }}" --no-git-tag-version
+
+      - name: Update technical changelog
+        run: |
+          RELEASE_DATE=$(date +%Y-%m-%d)
+          RELEASE_BODY="${{ github.event.release.body }}"
+          VERSION="${{ steps.version.outputs.version }}"
+
+          ENTRY="## [${VERSION}](https://github.com/${{ github.repository }}/releases/tag/v${VERSION}) (${RELEASE_DATE})"
+          ENTRY="${ENTRY}"$'\n\n'"${RELEASE_BODY}"$'\n\n'
+
+          if [ -f docs/CHANGELOG.md ]; then
+            echo -e "${ENTRY}$(cat docs/CHANGELOG.md)" > docs/CHANGELOG.md
+          else
+            echo -e "${ENTRY}" > docs/CHANGELOG.md
+          fi
+
+      - name: Commit version bump and changelog
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add package.json docs/CHANGELOG.md
+          git commit -m "chore(release): v${{ steps.version.outputs.version }} [skip ci]"
+          git push
+
+      - name: Build application
+        run: pnpm build
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.major_minor }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

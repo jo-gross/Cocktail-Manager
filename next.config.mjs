@@ -1,9 +1,11 @@
+import withSerwistInit from '@serwist/next';
+import withBundleAnalyzer from '@next/bundle-analyzer';
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
   output: 'standalone',
   images: {
-    dangerouslyAllowSVG: true,
     remotePatterns: [
       {
         protocol: 'https',
@@ -18,7 +20,6 @@ const nextConfig = {
   },
   webpack: (config, { isServer }) => {
     if (isServer) {
-      // Ensure Node.js modules are not bundled for server-side code
       config.externals = config.externals || [];
       config.externals.push({
         'node:crypto': 'commonjs crypto',
@@ -31,10 +32,14 @@ const nextConfig = {
   },
 };
 
-const withSerwist = require('@serwist/next').default({
+const withSerwist = withSerwistInit({
   swSrc: 'service-worker/index.ts',
   swDest: 'public/sw.js',
   disable: process.env.NODE_ENV === 'development',
 });
 
-module.exports = withSerwist(nextConfig);
+const withAnalyzer = withBundleAnalyzer({
+  enabled: process.env.ANALYZE === 'true',
+});
+
+export default withAnalyzer(withSerwist(nextConfig));

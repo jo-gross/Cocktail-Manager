@@ -8,7 +8,7 @@ interface EntityMapping {
   exportId: string;
   decision: 'use-existing' | 'create-new';
   existingId?: string;
-  newEntityData?: any;
+  newEntityData?: Record<string, unknown>;
 }
 
 interface EntityMatch {
@@ -20,7 +20,7 @@ interface EntityMatch {
 interface EntityMappingSectionProps {
   title: string;
   entityType: 'units' | 'ice' | 'stepActions' | 'glasses' | 'garnishes' | 'ingredients';
-  entities: Array<{ id: string; name: string; actionGroup?: string; [key: string]: any }>;
+  entities: Array<{ id: string; name: string; actionGroup?: string; [key: string]: unknown }>;
   mappings: EntityMapping[];
   existingMatches: EntityMatch[];
   autoMatchedCount: number;
@@ -47,14 +47,14 @@ export function EntityMappingSection({
       fetch(`/api/workspaces/${workspaceId}/actions`)
         .then((res) => res.json())
         .then((data) => {
-          const groups = Array.from(new Set(data.data.map((action: any) => action.actionGroup).filter(Boolean))) as string[];
+          const groups = Array.from(new Set(data.data.map((action: { actionGroup?: string }) => action.actionGroup).filter(Boolean))) as string[];
           setActionGroups(groups);
         })
         .catch((err) => console.error('Error loading action groups:', err));
     }
   }, [entityType, workspaceId]);
 
-  const handleDecisionChange = (exportId: string, decision: 'use-existing' | 'create-new', existingId?: string, newEntityData?: any) => {
+  const handleDecisionChange = (exportId: string, decision: 'use-existing' | 'create-new', existingId?: string, newEntityData?: Record<string, unknown>) => {
     const newMappings = mappings.map((m) =>
       m.exportId === exportId
         ? {
@@ -108,7 +108,7 @@ export function EntityMappingSection({
   );
 
   const getOptionLabel = useCallback(
-    (option: any) => {
+    (option: { id: string; name: string; actionGroup?: string }) => {
       if (entityType === 'stepActions' && option.actionGroup) {
         return `${option.name} (${option.actionGroup})`;
       }
@@ -117,23 +117,27 @@ export function EntityMappingSection({
     [entityType],
   );
 
-  const getOptionValue = useCallback((option: any) => option.id, []);
+  const getOptionValue = useCallback((option: { id: string; name: string }) => option.id, []);
 
-  const getEntityDisplayName = (entity: any) => {
+  const getEntityDisplayName = (entity: { id: string; name: string; actionGroup?: string }) => {
     if (entityType === 'stepActions' && entity.actionGroup) {
       return `${entity.name} (${entity.actionGroup})`;
     }
     return entity.name;
   };
 
-  const renderNewEntityForm = (exportId: string, entity: any, mapping: EntityMapping) => {
+  const renderNewEntityForm = (
+    exportId: string,
+    entity: { id: string; name: string; actionGroup?: string; [key: string]: unknown },
+    mapping: EntityMapping,
+  ) => {
     const currentData = mapping.newEntityData || {};
 
-    const handleDataChange = (newData: any) => {
+    const handleDataChange = (newData: Record<string, unknown>) => {
       handleDecisionChange(exportId, 'create-new', undefined, newData);
     };
 
-    const handleFieldChange = (field: string, value: any) => {
+    const handleFieldChange = (field: string, value: unknown) => {
       const newData = { ...currentData, [field]: value };
       handleDataChange(newData);
     };
@@ -161,7 +165,7 @@ export function EntityMappingSection({
                 type="text"
                 className="input input-sm"
                 placeholder="Name"
-                value={currentData.name || entity.name || ''}
+                value={String(currentData.name ?? entity.name ?? '')}
                 onChange={(e) => handleFieldChange('name', e.target.value)}
               />
             </div>
@@ -174,7 +178,7 @@ export function EntityMappingSection({
                   type="number"
                   className="input input-sm"
                   placeholder="Volumen"
-                  value={currentData.volume ?? entity.volume ?? ''}
+                  value={String(currentData.volume ?? entity.volume ?? '')}
                   onChange={(e) => handleFieldChange('volume', e.target.value ? parseFloat(e.target.value) : null)}
                 />
               </div>
@@ -187,7 +191,7 @@ export function EntityMappingSection({
                   step="0.01"
                   className="input input-sm"
                   placeholder="Pfand"
-                  value={currentData.deposit ?? entity.deposit ?? ''}
+                  value={String(currentData.deposit ?? entity.deposit ?? '')}
                   onChange={(e) => handleFieldChange('deposit', e.target.value ? parseFloat(e.target.value) : null)}
                 />
               </div>
@@ -207,7 +211,7 @@ export function EntityMappingSection({
                 type="text"
                 className="input input-sm"
                 placeholder="Name"
-                value={currentData.name || entity.name || ''}
+                value={String(currentData.name ?? entity.name ?? '')}
                 onChange={(e) => handleFieldChange('name', e.target.value)}
               />
             </div>
@@ -219,7 +223,7 @@ export function EntityMappingSection({
                 type="text"
                 className="input input-sm"
                 placeholder="Beschreibung (optional)"
-                value={currentData.description || entity.description || ''}
+                value={String(currentData.description ?? entity.description ?? '')}
                 onChange={(e) => handleFieldChange('description', e.target.value || null)}
               />
             </div>
@@ -232,7 +236,7 @@ export function EntityMappingSection({
                 step="0.01"
                 className="input input-sm"
                 placeholder="Preis (optional)"
-                value={currentData.price ?? entity.price ?? ''}
+                value={String(currentData.price ?? entity.price ?? '')}
                 onChange={(e) => handleFieldChange('price', e.target.value ? parseFloat(e.target.value) : null)}
               />
             </div>
@@ -252,7 +256,7 @@ export function EntityMappingSection({
                   type="text"
                   className="input input-sm"
                   placeholder="Name"
-                  value={currentData.name || entity.name || ''}
+                  value={String(currentData.name ?? entity.name ?? '')}
                   onChange={(e) => handleFieldChange('name', e.target.value)}
                 />
               </div>
@@ -264,7 +268,7 @@ export function EntityMappingSection({
                   type="text"
                   className="input input-sm"
                   placeholder="Kurzname (optional)"
-                  value={currentData.shortName || entity.shortName || ''}
+                  value={String(currentData.shortName ?? entity.shortName ?? '')}
                   onChange={(e) => handleFieldChange('shortName', e.target.value || null)}
                 />
               </div>
@@ -277,7 +281,7 @@ export function EntityMappingSection({
                 type="text"
                 className="input input-sm"
                 placeholder="Beschreibung (optional)"
-                value={currentData.description || entity.description || ''}
+                value={String(currentData.description ?? entity.description ?? '')}
                 onChange={(e) => handleFieldChange('description', e.target.value || null)}
               />
             </div>
@@ -290,7 +294,7 @@ export function EntityMappingSection({
                 step="0.01"
                 className="input input-sm"
                 placeholder="Preis (optional)"
-                value={currentData.price ?? entity.price ?? ''}
+                value={String(currentData.price ?? entity.price ?? '')}
                 onChange={(e) => handleFieldChange('price', e.target.value ? parseFloat(e.target.value) : null)}
               />
             </div>
@@ -325,7 +329,7 @@ export function EntityMappingSection({
               const mapping = getMapping(entity.id);
               const matches = getMatches(entity.id);
               const isAutoMatched = mapping?.decision === 'use-existing' && mapping.existingId;
-              const selectedMatch = matches.find((m) => m.id === mapping?.existingId);
+              const _selectedMatch = matches.find((m) => m.id === mapping?.existingId);
 
               return (
                 <div key={entity.id} className={'rounded-lg border border-base-300 p-3'}>
@@ -341,7 +345,7 @@ export function EntityMappingSection({
                         className={'radio radio-sm'}
                         checked={mapping?.decision === 'create-new'}
                         onChange={() => {
-                          const initialData: any = { name: entity.name };
+                          const initialData: Record<string, unknown> = { name: entity.name };
                           if (entityType === 'stepActions') {
                             initialData.actionGroup = entity.actionGroup;
                           }

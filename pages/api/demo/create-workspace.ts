@@ -131,7 +131,7 @@ export default withHttpMethods({
 
       // Create demo user (without email)
       const demoUserId = randomUUID();
-      const demoUser = await prisma.user.create({
+      const _demoUser = await prisma.user.create({
         data: {
           id: demoUserId,
           name: 'Demo Nutzer',

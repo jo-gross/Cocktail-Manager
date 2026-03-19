@@ -36,7 +36,7 @@ export default withHttpMethods({
     });
 
     // If date range is provided, calculate order counts
-    let cocktailOrderCounts: Record<string, number> = {};
+    const cocktailOrderCounts: Record<string, number> = {};
     let total = 0;
 
     if (startDate && endDate) {

@@ -1,7 +1,7 @@
 import { withHttpMethods } from '@middleware/api/handleMethods';
 import HTTPMethod from 'http-method-enum';
 import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
-import { Role, Permission } from '@generated/prisma/client';
+import { Role, Permission, Prisma } from '@generated/prisma/client';
 import { NextApiRequest, NextApiResponse } from 'next';
 import prisma from '../../../../../../prisma/prisma';
 
@@ -37,7 +37,7 @@ export default withHttpMethods({
         if (!existing) return res.status(404).json({ message: 'Ingredient not found' });
 
         // Erstelle den neuen Ingredient
-        const createData: any = {
+        const createData: Prisma.IngredientCreateInput = {
           name: name,
           shortName: existing.shortName,
           notes: existing.notes,

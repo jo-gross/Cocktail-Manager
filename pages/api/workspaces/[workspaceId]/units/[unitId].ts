@@ -1,11 +1,11 @@
 import { withHttpMethods } from '@middleware/api/handleMethods';
 import HTTPMethod from 'http-method-enum';
 import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
-import { Role, Permission } from '@generated/prisma/client';
+import { Role } from '@generated/prisma/client';
 import prisma from '../../../../../prisma/prisma';
 
 export default withHttpMethods({
-  [HTTPMethod.DELETE]: withWorkspacePermission([Role.ADMIN], null, async (req, res, user, workspace) => {
+  [HTTPMethod.DELETE]: withWorkspacePermission([Role.ADMIN], null, async (req, res, _user, _workspace) => {
     const unitId = req.query.unitId as string | undefined;
     if (!unitId) return res.status(400).json({ message: 'No unit id' });
 

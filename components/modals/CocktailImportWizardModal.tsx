@@ -10,7 +10,7 @@ interface EntityMapping {
   exportId: string;
   decision: 'use-existing' | 'create-new';
   existingId?: string;
-  newEntityData?: any; // Data for creating new entity (if decision is 'create-new')
+  newEntityData?: Record<string, unknown>;
 }
 
 interface CocktailMapping {

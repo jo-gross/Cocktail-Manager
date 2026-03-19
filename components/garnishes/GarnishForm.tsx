@@ -15,11 +15,19 @@ import _ from 'lodash';
 import { RoutingContext } from '@lib/context/RoutingContextProvider';
 import { resizeImage } from '@lib/ImageCompressor';
 
+export interface GarnishFormValues {
+  name: string;
+  price: number | undefined | string;
+  description: string;
+  notes: string;
+  image: string | undefined;
+  originalImage: File | undefined;
+}
+
 interface GarnishFormProps {
   garnish?: GarnishWithImage;
   setUnsavedChanges?: (unsavedChanges: boolean) => void;
-  formRef?: React.RefObject<FormikProps<any>>;
-
+  formRef?: React.RefObject<FormikProps<GarnishFormValues> | null>;
   onSaved?: (id: string) => void;
 }
 
@@ -29,12 +37,12 @@ export function GarnishForm(props: GarnishFormProps) {
   const modalContext = useContext(ModalContext);
   const routingContext = useContext(RoutingContext);
 
-  const formRef = props.formRef || React.createRef<FormikProps<any>>();
+  const formRef = props.formRef || React.createRef<FormikProps<GarnishFormValues>>();
 
   const [similarGarnish, setSimilarGarnish] = useState<GarnishWithImage | undefined>();
 
   return (
-    <Formik
+    <Formik<GarnishFormValues>
       innerRef={formRef}
       initialValues={{
         name: props.garnish?.name ?? '',
@@ -49,7 +57,7 @@ export function GarnishForm(props: GarnishFormProps) {
           const body = {
             id: props.garnish == undefined ? undefined : props.garnish.id,
             name: values.name,
-            price: values.price == '' ? null : values.price,
+            price: values.price === '' || values.price === undefined ? null : values.price,
             description: values.description?.trim() == '' ? null : values.description?.trim(),
             notes: values.notes?.trim() == '' ? null : values.notes?.trim(),
             image: values.image == '' ? null : values.image,
@@ -106,7 +114,7 @@ export function GarnishForm(props: GarnishFormProps) {
           props.setUnsavedChanges?.(true);
         }
 
-        const errors: any = {};
+        const errors: Partial<Record<keyof GarnishFormValues, string>> = {};
         if (!values.name) {
           errors.name = 'Required';
         }
@@ -255,7 +263,7 @@ export function GarnishForm(props: GarnishFormProps) {
                   </div>
                 </div>
                 <div className={'bg-transparent-pattern relative h-32 w-32 rounded-lg'}>
-                  <Image className={'w-fit rounded-lg'} src={values.image} layout={'fill'} objectFit={'contain'} alt={'Garnish image'} />
+                  <Image className={'w-fit rounded-lg'} src={values.image ?? ''} layout={'fill'} objectFit={'contain'} alt={'Garnish image'} />
                 </div>
                 <div className={'pt-2 font-thin italic'}>
                   Info: Durch Speichern der Garnitur wird das Bild dauerhaft zugeschnitten. Das Original wird nicht gespeichert. Falls du später einen anderen

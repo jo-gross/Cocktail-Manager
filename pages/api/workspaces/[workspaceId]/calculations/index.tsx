@@ -50,7 +50,7 @@ export default withHttpMethods({
           name: name,
           showSalesStuff: showSalesStuff,
           cocktailCalculationItems: {
-            create: calculationItems.map((item: any) => ({
+            create: calculationItems.map((item: { plannedAmount: number; customPrice?: number; cocktailId: string }) => ({
               plannedAmount: item.plannedAmount,
               customPrice: item.customPrice,
               cocktail: {
@@ -66,7 +66,7 @@ export default withHttpMethods({
             },
           },
           ingredientShoppingUnits: {
-            create: ingredientShoppingUnits.map((ingredientShoppingUnit: any) => ({
+            create: ingredientShoppingUnits.map((ingredientShoppingUnit: { ingredientId: string; unitId: string; checked: boolean }) => ({
               ingredient: { connect: { id: ingredientShoppingUnit.ingredientId } },
               unit: { connect: { id: ingredientShoppingUnit.unitId } },
               checked: ingredientShoppingUnit.checked,

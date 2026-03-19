@@ -3,7 +3,7 @@ import { ManageEntityLayout } from '@components/layout/ManageEntityLayout';
 import { useRouter } from 'next/router';
 import { UserContext } from '@lib/context/UserContextProvider';
 import React, { useContext } from 'react';
-import { signOut } from 'next-auth/react';
+import { authClient } from '@lib/auth-client';
 import LoadingText from '../../../../components/LoadingText';
 import Link from 'next/link';
 import AvatarImage from '../../../../components/AvatarImage';
@@ -74,7 +74,7 @@ export default function ManagePage() {
                 className={'btn btn-outline btn-error btn-sm'}
                 onClick={async () => {
                   await router.replace('/');
-                  await signOut();
+                  await authClient.signOut();
                 }}
               >
                 Abmelden
@@ -82,7 +82,7 @@ export default function ManagePage() {
               <div className={'divider-sm'}></div>
               <div className={'text-center'}>
                 v{packageInfo.version} -{' '}
-                <Link className={'link'} href={'https://github.com/jo-gross/Cocktail-Manager/blob/master/docs/CHANGELOG.md'} target={'_blank'}>
+                <Link className={'link'} href={'https://github.com/jo-gross/Cocktail-Manager/releases'} target={'_blank'}>
                   Changelog
                 </Link>{' '}
               </div>

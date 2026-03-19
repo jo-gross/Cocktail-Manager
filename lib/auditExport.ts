@@ -85,89 +85,124 @@ export interface CocktailCalculationExportStructure {
   }>;
 }
 
+// ────────────── HELPER ──────────────
+
+function rec(value: unknown): Record<string, unknown> {
+  return (value ?? {}) as Record<string, unknown>;
+}
+
+function str(value: unknown): string {
+  return (value ?? '') as string;
+}
+
+function strNull(value: unknown): string | null {
+  return (value ?? null) as string | null;
+}
+
+function numNull(value: unknown): number | null {
+  return (value ?? null) as number | null;
+}
+
 // ────────────── CONVERSION FUNCTIONS ──────────────
 
 /**
  * Converts raw Prisma cocktail data (stored as exportData) into a CocktailExportStructure
  * compatible with the existing import-json endpoint.
  */
-export function buildCocktailExport(rawData: any, version: string): CocktailExportStructure {
+export function buildCocktailExport(rawData: Record<string, unknown>, version: string): CocktailExportStructure {
   if (!rawData) {
     return emptyExport(version);
   }
 
   const recipe = rawData;
-  const cocktailRecipe = {
-    id: recipe.id,
-    name: recipe.name,
-    description: recipe.description ?? null,
-    notes: recipe.notes ?? null,
-    history: recipe.history ?? null,
-    tags: recipe.tags ?? [],
-    price: recipe.price ?? null,
-    iceId: recipe.iceId ?? null,
-    glassId: recipe.glassId ?? null,
-    isArchived: recipe.isArchived ?? false,
-    workspaceId: recipe.workspaceId,
+  const cocktailRecipe: CocktailExportStructure['cocktailRecipes'][number] = {
+    id: str(recipe.id),
+    name: str(recipe.name),
+    description: strNull(recipe.description),
+    notes: strNull(recipe.notes),
+    history: strNull(recipe.history),
+    tags: (recipe.tags ?? []) as string[],
+    price: numNull(recipe.price),
+    iceId: strNull(recipe.iceId),
+    glassId: strNull(recipe.glassId),
+    isArchived: (recipe.isArchived ?? false) as boolean,
+    workspaceId: str(recipe.workspaceId),
   };
 
-  // Extract steps
-  const cocktailRecipeSteps: any[] = [];
-  const cocktailRecipeIngredients: any[] = [];
-  const unitsMap = new Map<string, any>();
-  const ingredientsMap = new Map<string, any>();
-  const stepActionsMap = new Map<string, any>();
+  type StepEntry = CocktailExportStructure['cocktailRecipeSteps'][number];
+  type IngredientEntry = CocktailExportStructure['cocktailRecipeIngredients'][number];
+  type GarnishEntry = CocktailExportStructure['cocktailRecipeGarnishes'][number];
+  type GlassEntry = CocktailExportStructure['glasses'][number];
+  type IceEntry = CocktailExportStructure['ice'][number];
+  type UnitEntry = CocktailExportStructure['units'][number];
+  type StepActionEntry = CocktailExportStructure['stepActions'][number];
+  type IngEntry = CocktailExportStructure['ingredients'][number];
+  type GarnEntry = CocktailExportStructure['garnishes'][number];
+
+  const cocktailRecipeSteps: StepEntry[] = [];
+  const cocktailRecipeIngredients: IngredientEntry[] = [];
+  const unitsMap = new Map<string, UnitEntry>();
+  const ingredientsMap = new Map<string, IngEntry>();
+  const stepActionsMap = new Map<string, StepActionEntry>();
 
   if (recipe.steps && Array.isArray(recipe.steps)) {
-    for (const step of recipe.steps) {
+    for (const rawStep of recipe.steps) {
+      const step = rec(rawStep);
       cocktailRecipeSteps.push({
-        id: step.id,
-        stepNumber: step.stepNumber,
-        optional: step.optional ?? false,
-        actionId: step.actionId,
-        cocktailRecipeId: recipe.id,
+        id: str(step.id),
+        stepNumber: (step.stepNumber ?? 0) as number,
+        optional: (step.optional ?? false) as boolean,
+        actionId: str(step.actionId),
+        cocktailRecipeId: str(recipe.id),
       });
 
       if (step.action) {
-        stepActionsMap.set(step.action.id || step.actionId, {
-          id: step.action.id || step.actionId,
-          name: step.action.name,
-          actionGroup: step.action.actionGroup,
-          workspaceId: step.action.workspaceId || recipe.workspaceId,
+        const action = rec(step.action);
+        const actionId = str(action.id || step.actionId);
+        stepActionsMap.set(actionId, {
+          id: actionId,
+          name: str(action.name),
+          actionGroup: str(action.actionGroup),
+          workspaceId: str(action.workspaceId || recipe.workspaceId),
         });
       }
 
       if (step.ingredients && Array.isArray(step.ingredients)) {
-        for (const ing of step.ingredients) {
+        for (const rawIng of step.ingredients) {
+          const ing = rec(rawIng);
           cocktailRecipeIngredients.push({
-            id: ing.id,
-            ingredientNumber: ing.ingredientNumber,
-            optional: ing.optional ?? false,
-            amount: ing.amount ?? null,
-            unitId: ing.unitId ?? null,
-            ingredientId: ing.ingredientId ?? null,
-            cocktailRecipeStepId: step.id,
+            id: str(ing.id),
+            ingredientNumber: (ing.ingredientNumber ?? 0) as number,
+            optional: (ing.optional ?? false) as boolean,
+            amount: numNull(ing.amount),
+            unitId: strNull(ing.unitId),
+            ingredientId: strNull(ing.ingredientId),
+            cocktailRecipeStepId: str(step.id),
           });
 
           if (ing.unit) {
-            unitsMap.set(ing.unit.id || ing.unitId, {
-              id: ing.unit.id || ing.unitId,
-              name: ing.unit.name,
-              workspaceId: ing.unit.workspaceId || recipe.workspaceId,
+            const unit = rec(ing.unit);
+            const unitId = str(unit.id || ing.unitId);
+            unitsMap.set(unitId, {
+              id: unitId,
+              name: str(unit.name),
+              workspaceId: str(unit.workspaceId || recipe.workspaceId),
             });
           }
 
           if (ing.ingredient) {
-            ingredientsMap.set(ing.ingredient.id || ing.ingredientId, {
-              id: ing.ingredient.id || ing.ingredientId,
-              name: ing.ingredient.name,
-              shortName: ing.ingredient.shortName ?? null,
-              description: ing.ingredient.description ?? null,
-              notes: ing.ingredient.notes ?? null,
-              price: ing.ingredient.price ?? null,
-              link: ing.ingredient.link ?? null,
-              tags: ing.ingredient.tags ?? [],
-              workspaceId: ing.ingredient.workspaceId || recipe.workspaceId,
+            const ingredient = rec(ing.ingredient);
+            const ingredientId = str(ingredient.id || ing.ingredientId);
+            ingredientsMap.set(ingredientId, {
+              id: ingredientId,
+              name: str(ingredient.name),
+              shortName: strNull(ingredient.shortName),
+              description: strNull(ingredient.description),
+              notes: strNull(ingredient.notes),
+              price: numNull(ingredient.price),
+              link: strNull(ingredient.link),
+              tags: (ingredient.tags ?? []) as string[],
+              workspaceId: str(ingredient.workspaceId || recipe.workspaceId),
             });
           }
         }
@@ -175,54 +210,56 @@ export function buildCocktailExport(rawData: any, version: string): CocktailExpo
     }
   }
 
-  // Extract garnishes
-  const cocktailRecipeGarnishes: any[] = [];
-  const garnishesMap = new Map<string, any>();
+  const cocktailRecipeGarnishes: GarnishEntry[] = [];
+  const garnishesMap = new Map<string, GarnEntry>();
 
   if (recipe.garnishes && Array.isArray(recipe.garnishes)) {
-    for (const g of recipe.garnishes) {
+    for (const rawG of recipe.garnishes) {
+      const g = rec(rawG);
       cocktailRecipeGarnishes.push({
-        cocktailRecipeId: recipe.id,
-        garnishId: g.garnishId,
-        description: g.description ?? null,
-        garnishNumber: g.garnishNumber,
-        optional: g.optional ?? false,
-        isAlternative: g.isAlternative ?? false,
+        cocktailRecipeId: str(recipe.id),
+        garnishId: str(g.garnishId),
+        description: strNull(g.description),
+        garnishNumber: (g.garnishNumber ?? 0) as number,
+        optional: (g.optional ?? false) as boolean,
+        isAlternative: (g.isAlternative ?? false) as boolean | null,
       });
 
       if (g.garnish) {
-        garnishesMap.set(g.garnish.id || g.garnishId, {
-          id: g.garnish.id || g.garnishId,
-          name: g.garnish.name,
-          description: g.garnish.description ?? null,
-          notes: g.garnish.notes ?? null,
-          price: g.garnish.price ?? null,
-          workspaceId: g.garnish.workspaceId || recipe.workspaceId,
+        const garnish = rec(g.garnish);
+        const garnishId = str(garnish.id || g.garnishId);
+        garnishesMap.set(garnishId, {
+          id: garnishId,
+          name: str(garnish.name),
+          description: strNull(garnish.description),
+          notes: strNull(garnish.notes),
+          price: numNull(garnish.price),
+          workspaceId: str(garnish.workspaceId || recipe.workspaceId),
         });
       }
     }
   }
 
-  // Glass
-  const glasses: any[] = [];
+  const glasses: GlassEntry[] = [];
   if (recipe.glass) {
+    const glass = rec(recipe.glass);
     glasses.push({
-      id: recipe.glass.id || recipe.glassId,
-      name: recipe.glass.name,
-      notes: recipe.glass.notes ?? null,
-      volume: recipe.glass.volume ?? null,
-      deposit: recipe.glass.deposit ?? 0,
-      workspaceId: recipe.glass.workspaceId || recipe.workspaceId,
+      id: str(glass.id || recipe.glassId),
+      name: str(glass.name),
+      notes: strNull(glass.notes),
+      volume: numNull(glass.volume),
+      deposit: (glass.deposit ?? 0) as number,
+      workspaceId: str(glass.workspaceId || recipe.workspaceId),
     });
   }
 
-  // Ice
-  const ice: any[] = [];
+  const ice: IceEntry[] = [];
   if (recipe.ice) {
+    const iceData = rec(recipe.ice);
     ice.push({
-      id: recipe.ice.id || recipe.iceId,
-      name: recipe.ice.name,
-      workspaceId: recipe.ice.workspaceId || recipe.workspaceId,
+      id: str(iceData.id || recipe.iceId),
+      name: str(iceData.name),
+      workspaceId: str(iceData.workspaceId || recipe.workspaceId),
     });
   }
 
@@ -230,10 +267,10 @@ export function buildCocktailExport(rawData: any, version: string): CocktailExpo
     exportVersion: version,
     exportDate: new Date().toISOString(),
     exportedFrom: {
-      workspaceId: recipe.workspaceId,
+      workspaceId: str(recipe.workspaceId),
       workspaceName: '',
     },
-    cocktailRecipes: [cocktailRecipe as any],
+    cocktailRecipes: [cocktailRecipe],
     cocktailRecipeImages: [],
     cocktailRecipeSteps,
     cocktailRecipeGarnishes,
@@ -254,17 +291,17 @@ export function buildCocktailExport(rawData: any, version: string): CocktailExpo
 /**
  * Converts raw Glass entity data to an importable export structure.
  */
-export function buildGlassExport(rawData: any, version: string): GlassExportStructure {
+export function buildGlassExport(rawData: Record<string, unknown>, version: string): GlassExportStructure {
   return {
     exportVersion: version,
     exportDate: new Date().toISOString(),
     glass: {
-      id: rawData.id,
-      name: rawData.name,
-      notes: rawData.notes ?? null,
-      volume: rawData.volume ?? null,
-      deposit: rawData.deposit ?? null,
-      workspaceId: rawData.workspaceId,
+      id: str(rawData.id),
+      name: str(rawData.name),
+      notes: strNull(rawData.notes),
+      volume: numNull(rawData.volume),
+      deposit: numNull(rawData.deposit),
+      workspaceId: str(rawData.workspaceId),
     },
   };
 }
@@ -272,17 +309,17 @@ export function buildGlassExport(rawData: any, version: string): GlassExportStru
 /**
  * Converts raw Garnish entity data to an importable export structure.
  */
-export function buildGarnishExport(rawData: any, version: string): GarnishExportStructure {
+export function buildGarnishExport(rawData: Record<string, unknown>, version: string): GarnishExportStructure {
   return {
     exportVersion: version,
     exportDate: new Date().toISOString(),
     garnish: {
-      id: rawData.id,
-      name: rawData.name,
-      description: rawData.description ?? null,
-      notes: rawData.notes ?? null,
-      price: rawData.price ?? null,
-      workspaceId: rawData.workspaceId,
+      id: str(rawData.id),
+      name: str(rawData.name),
+      description: strNull(rawData.description),
+      notes: strNull(rawData.notes),
+      price: numNull(rawData.price),
+      workspaceId: str(rawData.workspaceId),
     },
   };
 }
@@ -290,25 +327,28 @@ export function buildGarnishExport(rawData: any, version: string): GarnishExport
 /**
  * Converts raw Ingredient entity data to an importable export structure.
  */
-export function buildIngredientExport(rawData: any, version: string): IngredientExportStructure {
+export function buildIngredientExport(rawData: Record<string, unknown>, version: string): IngredientExportStructure {
   const ingredientVolumes: IngredientExportStructure['ingredientVolumes'] = [];
-  const unitsMap = new Map<string, any>();
+  const unitsMap = new Map<string, { id: string; name: string; workspaceId: string }>();
 
   const volumes = rawData.IngredientVolume || rawData.units;
   if (volumes && Array.isArray(volumes)) {
-    for (const v of volumes) {
+    for (const rawV of volumes) {
+      const v = rec(rawV);
       ingredientVolumes.push({
-        id: v.id,
-        volume: v.volume,
-        ingredientId: rawData.id,
-        unitId: v.unitId,
-        workspaceId: v.workspaceId || rawData.workspaceId,
+        id: str(v.id),
+        volume: (v.volume ?? 0) as number,
+        ingredientId: str(rawData.id),
+        unitId: str(v.unitId),
+        workspaceId: str(v.workspaceId || rawData.workspaceId),
       });
       if (v.unit) {
-        unitsMap.set(v.unit.id || v.unitId, {
-          id: v.unit.id || v.unitId,
-          name: v.unit.name,
-          workspaceId: v.unit.workspaceId || rawData.workspaceId,
+        const unit = rec(v.unit);
+        const unitId = str(unit.id || v.unitId);
+        unitsMap.set(unitId, {
+          id: unitId,
+          name: str(unit.name),
+          workspaceId: str(unit.workspaceId || rawData.workspaceId),
         });
       }
     }
@@ -318,15 +358,15 @@ export function buildIngredientExport(rawData: any, version: string): Ingredient
     exportVersion: version,
     exportDate: new Date().toISOString(),
     ingredient: {
-      id: rawData.id,
-      name: rawData.name,
-      shortName: rawData.shortName ?? null,
-      description: rawData.description ?? null,
-      notes: rawData.notes ?? null,
-      price: rawData.price ?? null,
-      link: rawData.link ?? null,
-      tags: rawData.tags ?? [],
-      workspaceId: rawData.workspaceId,
+      id: str(rawData.id),
+      name: str(rawData.name),
+      shortName: strNull(rawData.shortName),
+      description: strNull(rawData.description),
+      notes: strNull(rawData.notes),
+      price: numNull(rawData.price),
+      link: strNull(rawData.link),
+      tags: (rawData.tags ?? []) as string[],
+      workspaceId: str(rawData.workspaceId),
     },
     ingredientVolumes,
     units: Array.from(unitsMap.values()),
@@ -336,46 +376,52 @@ export function buildIngredientExport(rawData: any, version: string): Ingredient
 /**
  * Converts raw CocktailCalculation entity data to an importable export structure.
  */
-export function buildCalculationExport(rawData: any, version: string): CocktailCalculationExportStructure {
+export function buildCalculationExport(rawData: Record<string, unknown>, version: string): CocktailCalculationExportStructure {
   const cocktailCalculationItems: CocktailCalculationExportStructure['cocktailCalculationItems'] = [];
   const ingredientShoppingUnits: CocktailCalculationExportStructure['ingredientShoppingUnits'] = [];
 
   if (rawData.cocktailCalculationItems && Array.isArray(rawData.cocktailCalculationItems)) {
-    for (const item of rawData.cocktailCalculationItems) {
+    for (const rawItem of rawData.cocktailCalculationItems) {
+      const item = rec(rawItem);
+      const cocktail = rec(item.cocktail);
       cocktailCalculationItems.push({
-        calculationId: rawData.id,
-        cocktailId: item.cocktailId,
-        cocktailName: item.cocktail?.name || item.cocktailId,
-        plannedAmount: item.plannedAmount,
-        customPrice: item.customPrice ?? null,
+        calculationId: str(rawData.id),
+        cocktailId: str(item.cocktailId),
+        cocktailName: str(cocktail.name || item.cocktailId),
+        plannedAmount: (item.plannedAmount ?? 0) as number,
+        customPrice: numNull(item.customPrice),
       });
     }
   }
 
   if (rawData.ingredientShoppingUnits && Array.isArray(rawData.ingredientShoppingUnits)) {
-    for (const su of rawData.ingredientShoppingUnits) {
+    for (const rawSu of rawData.ingredientShoppingUnits) {
+      const su = rec(rawSu);
+      const ingredient = rec(su.ingredient);
+      const unit = rec(su.unit);
       ingredientShoppingUnits.push({
-        ingredientId: su.ingredientId,
-        ingredientName: su.ingredient?.name || su.ingredientId,
-        unitId: su.unitId,
-        unitName: su.unit?.name || su.unitId,
-        checked: su.checked ?? false,
-        cocktailCalculationId: rawData.id,
+        ingredientId: str(su.ingredientId),
+        ingredientName: str(ingredient.name || su.ingredientId),
+        unitId: str(su.unitId),
+        unitName: str(unit.name || su.unitId),
+        checked: (su.checked ?? false) as boolean,
+        cocktailCalculationId: str(rawData.id),
       });
     }
   }
 
+  const group = rec(rawData.group);
   return {
     exportVersion: version,
     exportDate: new Date().toISOString(),
     calculation: {
-      id: rawData.id,
-      name: rawData.name,
-      showSalesStuff: rawData.showSalesStuff ?? false,
-      workspaceId: rawData.workspaceId,
-      updatedByUserId: rawData.updatedByUserId,
-      groupId: rawData.groupId ?? null,
-      groupName: rawData.group?.name ?? null,
+      id: str(rawData.id),
+      name: str(rawData.name),
+      showSalesStuff: (rawData.showSalesStuff ?? false) as boolean,
+      workspaceId: str(rawData.workspaceId),
+      updatedByUserId: str(rawData.updatedByUserId),
+      groupId: strNull(rawData.groupId),
+      groupName: strNull(group.name),
     },
     cocktailCalculationItems,
     ingredientShoppingUnits,
@@ -385,7 +431,18 @@ export function buildCalculationExport(rawData: any, version: string): CocktailC
 /**
  * Dispatches to the correct export builder based on entity type.
  */
-export function buildExportData(entityType: string, rawData: any, version: string): any {
+export function buildExportData(
+  entityType: string,
+  rawData: Record<string, unknown> | null,
+  version: string,
+):
+  | CocktailExportStructure
+  | GlassExportStructure
+  | GarnishExportStructure
+  | IngredientExportStructure
+  | CocktailCalculationExportStructure
+  | Record<string, unknown>
+  | null {
   if (!rawData) return null;
   switch (entityType) {
     case 'CocktailRecipe':

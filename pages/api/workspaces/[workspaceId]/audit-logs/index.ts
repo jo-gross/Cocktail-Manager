@@ -1,7 +1,7 @@
 import prisma from '../../../../../prisma/prisma';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
-import { Permission, Role, Workspace } from '@generated/prisma/client';
+import { Permission, Prisma, Role, Workspace } from '@generated/prisma/client';
 import { withHttpMethods } from '@middleware/api/handleMethods';
 import HTTPMethod from 'http-method-enum';
 
@@ -16,7 +16,7 @@ export default withHttpMethods({
       const limitInt = parseInt(limit as string);
       const skip = (pageInt - 1) * limitInt;
 
-      const where: any = {
+      const where: Prisma.AuditLogWhereInput = {
         workspaceId: workspace.id,
       };
 

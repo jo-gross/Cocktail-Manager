@@ -38,9 +38,9 @@ const revokedKeysCache = new Keyv({ ttl: getRevokedKeysCacheTtl() });
  * Gets JWT secret from environment
  */
 function getJwtSecret(): string {
-  const secret = process.env.API_KEY_JWT_SECRET || process.env.NEXTAUTH_SECRET;
+  const secret = process.env.API_KEY_JWT_SECRET || process.env.BETTER_AUTH_SECRET || process.env.NEXTAUTH_SECRET;
   if (!secret) {
-    throw new Error('API_KEY_JWT_SECRET or NEXTAUTH_SECRET must be set');
+    throw new Error('API_KEY_JWT_SECRET or BETTER_AUTH_SECRET or NEXTAUTH_SECRET must be set');
   }
   return secret;
 }
@@ -181,7 +181,7 @@ export async function authenticateApiKey(req: NextApiRequest): Promise<ApiKeyAut
       workspace: keyRecord.workspace,
       permissions: decoded.permissions,
     };
-  } catch (error) {
+  } catch {
     // JWT verification failed (invalid signature, expired, etc.)
     return null;
   }

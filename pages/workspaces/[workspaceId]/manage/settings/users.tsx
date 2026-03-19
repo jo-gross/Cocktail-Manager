@@ -9,7 +9,7 @@ import { FaCheck, FaCopy, FaPlus, FaShareAlt, FaSync, FaTimes, FaTrashAlt, FaExc
 import AddWorkspaceJoinCodeModal from '../../../../../components/modals/AddWorkspaceJoinCodeModal';
 import { FaRegCircle } from 'react-icons/fa6';
 import { DeleteConfirmationModal } from '@components/modals/DeleteConfirmationModal';
-import '../../../../../lib/DateUtils';
+import { formatDateTime, formatDate } from '@lib/DateUtils';
 
 export default function ManageUsersPage() {
   const router = useRouter();
@@ -152,7 +152,8 @@ export default function ManageUsersPage() {
                               disabled={
                                 workspaceUser.user.id == userContext.user?.id ||
                                 workspaceUser.role == Role.OWNER ||
-                                (userContext.workspace?.isExternallyManaged && workspaceUser.user.accounts?.some((acc: any) => acc.provider === 'custom_oidc'))
+                                (userContext.workspace?.isExternallyManaged &&
+                                  workspaceUser.user.accounts?.some((acc: { provider: string }) => acc.provider === 'custom_oidc'))
                               }
                               value={workspaceUser.role}
                               className={'select select-bordered select-sm w-full min-w-fit max-w-xs'}
@@ -201,7 +202,8 @@ export default function ManageUsersPage() {
                               className={'btn btn-error btn-sm ml-2'}
                               disabled={
                                 workspaceUser.role == Role.OWNER ||
-                                (userContext.workspace?.isExternallyManaged && workspaceUser.user.accounts?.some((acc: any) => acc.provider === 'custom_oidc'))
+                                (userContext.workspace?.isExternallyManaged &&
+                                  workspaceUser.user.accounts?.some((acc: { provider: string }) => acc.provider === 'custom_oidc'))
                               }
                               onClick={() => {
                                 setLeaveLoading({ ...leaveLoading, [workspaceUser.userId]: true });
@@ -237,7 +239,8 @@ export default function ManageUsersPage() {
                                 workspaceUser.role == Role.OWNER ||
                                 workspaceUser.user.id != userContext.user?.id ||
                                 leaveLoading[workspaceUser.user.id] ||
-                                (userContext.workspace?.isExternallyManaged && workspaceUser.user.accounts?.some((acc: any) => acc.provider === 'custom_oidc'))
+                                (userContext.workspace?.isExternallyManaged &&
+                                  workspaceUser.user.accounts?.some((acc: { provider: string }) => acc.provider === 'custom_oidc'))
                               }
                               onClick={() => {
                                 setLeaveLoading({ ...leaveLoading, [workspaceUser.user.id]: true });
@@ -305,7 +308,7 @@ export default function ManageUsersPage() {
                         <tr key={`workspace-join-request-${joinRequest.user.id}`}>
                           <td>{joinRequest.user.name}</td>
                           <td>{joinRequest.user.email}</td>
-                          <td>{new Date(joinRequest.date).toFormatDateTimeString()}</td>
+                          <td>{formatDateTime(new Date(joinRequest.date))}</td>
                           <td className={'join flex justify-end'}>
                             <button
                               className={'btn-green btn join-item btn-sm'}
@@ -433,8 +436,8 @@ export default function ManageUsersPage() {
                                 </button>
                                 {workspaceJoinCode.code}
                               </td>
-                              <td>{new Date(workspaceJoinCode.createdAt).toFormatDateString()}</td>
-                              <td>{workspaceJoinCode.expires ? new Date(workspaceJoinCode.expires).toFormatDateString() : '-'}</td>
+                              <td>{formatDate(new Date(workspaceJoinCode.createdAt))}</td>
+                              <td>{workspaceJoinCode.expires ? formatDate(new Date(workspaceJoinCode.expires)) : '-'}</td>
                               <td>
                                 {workspaceJoinCode.onlyUseOnce ? (
                                   <div style={{ position: 'relative', display: 'inline-block' }}>

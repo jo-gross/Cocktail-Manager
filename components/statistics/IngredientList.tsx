@@ -23,7 +23,7 @@ export function IngredientList({ items, selectedIds = new Set(), onToggleSelect,
   const [sortBy, setSortBy] = useState<SortOption>('count-desc');
 
   const sortedAndFilteredItems = useMemo(() => {
-    let filtered = items.filter((item) => item.ingredient.toLowerCase().includes(filter.toLowerCase()));
+    const filtered = items.filter((item) => item.ingredient.toLowerCase().includes(filter.toLowerCase()));
 
     switch (sortBy) {
       case 'count-desc':

@@ -26,10 +26,6 @@ export async function autoCropImage(file: File, aspect: number = 1, backgroundCo
       const imgAspect = imgWidth / imgHeight;
       let canvasWidth: number;
       let canvasHeight: number;
-      let imgX: number;
-      let imgY: number;
-      let drawWidth: number;
-      let drawHeight: number;
 
       // Berechne die Canvas-Dimensionen basierend auf dem gewünschten Aspect-Ratio
       // Das gesamte Bild soll sichtbar bleiben
@@ -67,10 +63,10 @@ export async function autoCropImage(file: File, aspect: number = 1, backgroundCo
       }
 
       // Berechne die Position und Größe des Bildes im Canvas (zentriert)
-      drawWidth = imgWidth;
-      drawHeight = imgHeight;
-      imgX = (canvasWidth - drawWidth) / 2;
-      imgY = (canvasHeight - drawHeight) / 2;
+      const drawWidth = imgWidth;
+      const drawHeight = imgHeight;
+      const imgX = (canvasWidth - drawWidth) / 2;
+      const imgY = (canvasHeight - drawHeight) / 2;
 
       // Erstelle ein Canvas mit den berechneten Dimensionen
       const canvas = document.createElement('canvas');

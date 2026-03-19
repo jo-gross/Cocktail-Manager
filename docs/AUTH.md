@@ -12,6 +12,8 @@ with the following settings:
 
 - Redirect URIs: http://localhost:3000/api/auth/callback/google
 
+> **Production note:** For production deployments, replace `http://localhost:3000` with your actual domain (e.g. `https://cocktails.example.com/api/auth/callback/google`). You can add multiple redirect URIs in the Google Developer Console to support both local development and production.
+
 #### Configuring the .env file
 
 Set the following environment variables in the `.env` file:
@@ -30,6 +32,8 @@ The custom OpenID Connect authentication method can be used with any compliant O
 When configuring the client in the OIDC provider, use the following settings:
 
 - Redirect URIs: http://localhost:3000/api/auth/callback/custom_oidc
+
+> **Production note:** For production deployments, replace `http://localhost:3000` with your actual domain (e.g. `https://cocktails.example.com/api/auth/callback/custom_oidc`). Most OIDC providers allow multiple redirect URIs to support both local development and production.
 
 #### Configuring the .env file
 

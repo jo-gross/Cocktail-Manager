@@ -37,8 +37,8 @@ export default withHttpMethods({
           },
         });
         return res.json({ data: group });
-      } catch (error: any) {
-        if (error?.code === 'P2002') {
+      } catch (error: unknown) {
+        if (error != null && typeof error === 'object' && 'code' in error && error.code === 'P2002') {
           return res.status(409).json({ message: 'Eine Gruppe mit diesem Namen existiert bereits' });
         }
         console.error('CalculationGroup -> create', error);

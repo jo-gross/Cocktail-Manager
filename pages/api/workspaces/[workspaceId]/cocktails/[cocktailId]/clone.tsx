@@ -1,11 +1,9 @@
 import { withHttpMethods } from '@middleware/api/handleMethods';
 import HTTPMethod from 'http-method-enum';
 import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
-import { Role, Permission } from '@generated/prisma/client';
+import { Role, Permission, Prisma } from '@generated/prisma/client';
 import { NextApiRequest, NextApiResponse } from 'next';
 import prisma from '../../../../../../prisma/prisma';
-import { CocktailRecipeStepFull } from '../../../../../../models/CocktailRecipeStepFull';
-import { CocktailRecipeGarnishFull } from '../../../../../../models/CocktailRecipeGarnishFull';
 import { createCocktailRecipeAuditLog } from '../../../../../../lib/auditLog';
 
 export default withHttpMethods({
@@ -53,7 +51,7 @@ export default withHttpMethods({
         if (!existing) return res.status(404).json({ message: 'Cocktail not found' });
 
         // Erstelle den neuen Cocktail
-        const createData: any = {
+        const createData: Prisma.CocktailRecipeCreateInput = {
           name: name,
           description: existing.description,
           notes: existing.notes,

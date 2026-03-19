@@ -11,9 +11,9 @@ export default function ImportPhotoByUrl({ onImport }: ImportPhotoByUrlProps) {
 
   useEffect(() => {
     try {
-      const url = new URL(imageUrl);
+      const _url = new URL(imageUrl);
       setIsDisabled(false);
-    } catch (error) {
+    } catch {
       setIsDisabled(true);
     }
   }, [imageUrl]);

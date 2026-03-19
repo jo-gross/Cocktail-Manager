@@ -20,7 +20,7 @@ interface EntityDecision {
   existingGroupId?: string;
   newGroupName?: string;
   newGroupDefaultExpanded?: boolean;
-  data: any;
+  data: Record<string, unknown>;
 }
 
 interface EntityMapping {
@@ -214,7 +214,7 @@ export default withHttpMethods({
               continue;
             }
 
-            const itemData = decision.data as CocktailCalculationExportStructure;
+            const itemData = decision.data as unknown as CocktailCalculationExportStructure;
             if (!itemData?.calculation) continue;
 
             const finalName = decision.decision === 'rename' && decision.newName ? decision.newName : itemData.calculation.name;
@@ -373,10 +373,10 @@ export default withHttpMethods({
               });
 
               const action = decision.decision === 'overwrite' ? 'UPDATE' : 'CREATE';
-              await createLog(tx, workspaceId, user.id, 'CocktailCalculation', calcId, action as any, null, fullResult);
+              await createLog(tx, workspaceId, user.id, 'CocktailCalculation', calcId, action as 'CREATE' | 'UPDATE', null, fullResult);
               results.push({ name: finalName, status: decision.decision === 'overwrite' ? 'overwritten' : 'created' });
-            } catch (err: any) {
-              results.push({ name: finalName, status: 'error', message: err.message });
+            } catch (err: unknown) {
+              results.push({ name: finalName, status: 'error', message: err instanceof Error ? err.message : 'Unbekannter Fehler' });
             }
           }
         });
@@ -385,9 +385,9 @@ export default withHttpMethods({
       }
 
       return res.status(400).json({ message: 'Ungültige Phase' });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Calculation import error:', error);
-      return res.status(500).json({ message: error.message || 'Import failed' });
+      return res.status(500).json({ message: error instanceof Error ? error.message : 'Import failed' });
     }
   }),
 });

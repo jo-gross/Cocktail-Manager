@@ -1,5 +1,7 @@
-interface FormModalProps<T> {
-  form: JSX.Element;
+import React from 'react';
+
+interface FormModalProps<_T> {
+  form: React.JSX.Element;
   title: string;
 }
 

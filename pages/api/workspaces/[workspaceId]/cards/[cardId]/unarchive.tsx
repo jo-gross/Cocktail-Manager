@@ -6,7 +6,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import prisma from '../../../../../../prisma/prisma';
 
 export default withHttpMethods({
-  [HTTPMethod.PUT]: withWorkspacePermission([Role.MANAGER], Permission.CARDS_UPDATE, async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
+  [HTTPMethod.PUT]: withWorkspacePermission([Role.MANAGER], Permission.CARDS_UPDATE, async (req: NextApiRequest, res: NextApiResponse, _user, _workspace) => {
     const { cardId } = req.query;
 
     if (!cardId) return res.status(400).json({ message: 'No card id' });

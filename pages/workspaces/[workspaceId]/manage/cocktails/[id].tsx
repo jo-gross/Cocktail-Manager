@@ -1,4 +1,4 @@
-import { CocktailRecipeForm } from '@components/cocktails/CocktailRecipeForm';
+import { CocktailRecipeForm, CocktailRecipeFormValues } from '@components/cocktails/CocktailRecipeForm';
 import { ManageEntityLayout } from '@components/layout/ManageEntityLayout';
 import React, { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
@@ -30,7 +30,7 @@ function EditCocktailRecipe() {
   const [chromiumAvailable, setChromiumAvailable] = useState(false);
 
   const [unsavedChanges, setUnsavedChanges] = useState(false);
-  const formRef: any = useRef<FormikProps<any>>(null);
+  const formRef = useRef<FormikProps<CocktailRecipeFormValues>>(null);
 
   const handleExportPdf = useCallback(() => {
     if (!workspaceId || !cocktailRecipe) return;

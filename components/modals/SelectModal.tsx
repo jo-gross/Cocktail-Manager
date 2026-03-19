@@ -9,7 +9,7 @@ interface SelectModalProps<T> {
   onElementSelected?: (t: T) => void;
   selectionLabel?: string;
   fetchElements: (search: string) => Promise<T[]>;
-  elementComponent: (t: T) => JSX.Element;
+  elementComponent: (t: T) => React.JSX.Element;
   compareFunction?: (t1: T, t2: T) => number;
   getElementId?: (t: T) => string; // Function to extract ID from element
   selectedIds?: Set<string> | string[]; // IDs that are already selected and should be disabled

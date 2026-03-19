@@ -11,7 +11,7 @@ export default withHttpMethods({
   [HTTPMethod.POST]: withWorkspacePermission([Role.USER], Permission.STATISTICS_CREATE, async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
     const { cocktailId, cocktailCardId, actionSource, notes, ignoreQueue } = req.body;
 
-    var cardId = cocktailCardId as string | undefined;
+    let cardId = cocktailCardId as string | undefined;
     if (cardId == 'search') {
       cardId = undefined;
     }

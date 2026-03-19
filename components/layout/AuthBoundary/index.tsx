@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { signOut, useSession } from 'next-auth/react';
+import { authClient } from '@lib/auth-client';
 import { Role, User, UserSetting, WorkspaceSetting, WorkspaceSettingKey } from '@generated/prisma/client';
 import { PageCenter } from '../PageCenter';
 import { Loading } from '../../Loading';
@@ -13,7 +13,8 @@ interface AlertBoundaryProps {
 }
 
 export function AuthBoundary(props: AlertBoundaryProps) {
-  const session = useSession();
+  // Use BetterAuth's useSession hook
+  const { data: session, isPending: sessionLoading } = authClient.useSession();
   const [user, setUser] = useState<(User & { settings: UserSetting[] }) | undefined>();
   const [userLoading, setUserLoading] = useState<boolean>(false);
 
@@ -23,7 +24,7 @@ export function AuthBoundary(props: AlertBoundaryProps) {
   const router = useRouter();
 
   const cancelLogin = useCallback(async () => {
-    await signOut();
+    await authClient.signOut();
     setUserLoading(false);
   }, []);
 
@@ -36,13 +37,13 @@ export function AuthBoundary(props: AlertBoundaryProps) {
         } else {
           console.error('AuthBoundary -> fetchUser', response);
           alertService.error(body.message ?? 'Fehler beim Laden des Nutzers', response.status, response.statusText);
-          await signOut();
+          await authClient.signOut();
         }
       })
       .catch(async (error) => {
         console.error('AuthBoundary -> fetchUser', error);
         alertService.error('Fehler beim Laden des Nutzers');
-        await signOut();
+        await authClient.signOut();
       })
       .finally(async () => {
         setUserLoading(false);
@@ -50,13 +51,17 @@ export function AuthBoundary(props: AlertBoundaryProps) {
   }, []);
 
   useEffect(() => {
-    // Cast to any to access id which is added in the session callback
-    const sessionUser = session.data?.user as any;
-    if (sessionUser?.id != undefined && sessionUser?.id != user?.id && !userLoading) {
+    const sessionUser = session?.user as { id?: string } | undefined;
+    if (sessionUser?.id != undefined && sessionUser?.id != user?.id && !userLoading && !sessionLoading) {
       setUserLoading(true);
       fetchUser();
     }
-  }, [fetchUser, session.data?.user, user?.id, userLoading]);
+    // Clear user state when session is gone (after signOut)
+    if (!sessionUser?.id && !sessionLoading && user) {
+      setUser(undefined);
+      setWorkspace(undefined);
+    }
+  }, [fetchUser, session?.user, user, userLoading, sessionLoading]);
 
   const fetchWorkspace = useCallback(() => {
     if (router.query.workspaceId && router.query.workspaceId != workspace?.id) {

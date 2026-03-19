@@ -97,7 +97,7 @@ export default function UnitModal(props: UnitModalProps) {
           return errors;
         }}
       >
-        {({ values, handleChange, handleSubmit, isSubmitting, errors, touched, setFieldValue }) => (
+        {({ values, handleChange, handleSubmit, isSubmitting, errors, touched, setFieldValue: _setFieldValue }) => (
           <form onSubmit={handleSubmit} className={'flex flex-col gap-2'}>
             <div className={'grid grid-cols-2 gap-2'}>
               <div className={'form-control'}>

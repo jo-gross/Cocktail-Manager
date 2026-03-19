@@ -22,7 +22,7 @@ export function AnalysisCocktailSelector({ items, selectedIds, onToggleSelect, o
   const [sortBy, setSortBy] = useState<SortOption>('count-desc');
 
   const sortedAndFilteredItems = useMemo(() => {
-    let filtered = items.filter((item) => item.name.toLowerCase().includes(filter.toLowerCase()));
+    const filtered = items.filter((item) => item.name.toLowerCase().includes(filter.toLowerCase()));
 
     switch (sortBy) {
       case 'count-desc':

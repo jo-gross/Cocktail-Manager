@@ -6,7 +6,7 @@ import prisma from '../../../../../../prisma/prisma';
 import { withHttpMethods } from '@middleware/api/handleMethods';
 
 export default withHttpMethods({
-  [HTTPMethod.PUT]: withWorkspacePermission([Role.USER], Permission.QUEUE_UPDATE, async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
+  [HTTPMethod.PUT]: withWorkspacePermission([Role.USER], Permission.QUEUE_UPDATE, async (req: NextApiRequest, res: NextApiResponse, _user, _workspace) => {
     const { queueItemId } = req.query;
     const { inProgress } = req.body;
 

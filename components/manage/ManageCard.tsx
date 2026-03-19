@@ -1,8 +1,9 @@
 import Link from 'next/link';
+import React from 'react';
 
 interface ManageCardProps {
   title: string;
-  icon?: JSX.Element;
+  icon?: React.JSX.Element;
   link: string;
 }
 
