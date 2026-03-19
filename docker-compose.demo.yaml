@@ -41,8 +41,8 @@ services:
       - DEMO_MODE=true
       - DEMO_WORKSPACE_CONFIG_PATH=/app/config/demo-workspace-config.json
       - DEMO_TTL_HOURS=24
-      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET:-demo-secret-change-in-production}
-      - NEXTAUTH_URL=${NEXTAUTH_URL:-http://localhost:3001}
+      - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET:-demo-secret-change-in-production}
+      - BETTER_AUTH_URL=${BETTER_AUTH_URL:-http://localhost:3001}
     volumes:
       - ./config:/app/config:ro # Mount config directory
     networks:

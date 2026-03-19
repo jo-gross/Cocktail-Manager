@@ -71,8 +71,8 @@ jobs:
           NODE_ENV: production
           PORT: 3000
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/cocktail_recipe
-          NEXTAUTH_URL: http://localhost:3000
-          NEXTAUTH_SECRET: screenshot-generation-secret
+          BETTER_AUTH_URL: http://localhost:3000
+          BETTER_AUTH_SECRET: screenshot-generation-secret
           DEMO_MODE: 'true'
           DEMO_WORKSPACE_CONFIG_PATH: ${{ github.workspace }}/config/demo-workspace-config.json
 
