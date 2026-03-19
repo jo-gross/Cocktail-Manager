@@ -114,4 +114,4 @@ jobs:
     steps:
       - name: PR title check
         id: check-for-cc
-        uses: agenthunt/conventional-commit-checker-action@v2.0.0
+        uses: agenthunt/conventional-commit-checker-action@v2.0.1
