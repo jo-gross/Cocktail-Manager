@@ -89,7 +89,7 @@
     "autoprefixer": "10.4.27",
     "daisyui": "4.12.24",
     "dotenv": "^17.3.1",
-    "eslint": "9.39.4",
+    "eslint": "10.1.0",
     "eslint-config-next": "16.2.1",
     "eslint-config-prettier": "10.1.8",
     "eslint-plugin-unused-imports": "^4.4.1",
