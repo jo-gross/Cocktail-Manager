@@ -12,7 +12,7 @@ const eslintConfig = defineConfig([
   ...nextTs,
   prettier,
   {
-  //// eslint-plugin-react was not able to detect the correct React version (incompatible with eslint v10)
+    //// eslint-plugin-react was not able to detect the correct React version (incompatible with eslint v10)
     settings: {
       react: {
         version: reactVersion,
