@@ -1,9 +1,10 @@
 name: Release
 
 on:
-  release:
-    types:
-      - published
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
 
 env:
   REGISTRY: ghcr.io
@@ -12,7 +13,7 @@ jobs:
   release:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
       packages: write
 
     steps:
@@ -20,7 +21,6 @@ jobs:
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
-          ref: ${{ github.event.release.target_commitish }}
 
       - name: Set image name
         run: echo "IMAGE_NAME=${GITHUB_REPOSITORY,,}" >> "$GITHUB_ENV"
@@ -28,7 +28,11 @@ jobs:
       - name: Extract version from tag
         id: version
         run: |
-          VERSION="${GITHUB_REF_NAME#v}"
+          if [ "${{ github.event_name }}" = "push" ]; then
+            VERSION="${GITHUB_REF_NAME#v}"
+          else
+            VERSION=$(node -p "require('./package.json').version")
+          fi
           MAJOR_MINOR="${VERSION%.*}"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "major_minor=$MAJOR_MINOR" >> "$GITHUB_OUTPUT"
@@ -45,33 +49,6 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-
-      - name: Bump version in package.json
-        run: |
-          npm version "${{ steps.version.outputs.version }}" --no-git-tag-version
-
-      - name: Update technical changelog
-        run: |
-          RELEASE_DATE=$(date +%Y-%m-%d)
-          RELEASE_BODY="${{ github.event.release.body }}"
-          VERSION="${{ steps.version.outputs.version }}"
-
-          ENTRY="## [${VERSION}](https://github.com/${{ github.repository }}/releases/tag/v${VERSION}) (${RELEASE_DATE})"
-          ENTRY="${ENTRY}"$'\n\n'"${RELEASE_BODY}"$'\n\n'
-
-          if [ -f docs/CHANGELOG.md ]; then
-            echo -e "${ENTRY}$(cat docs/CHANGELOG.md)" > docs/CHANGELOG.md
-          else
-            echo -e "${ENTRY}" > docs/CHANGELOG.md
-          fi
-
-      - name: Commit version bump and changelog
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add package.json docs/CHANGELOG.md
-          git commit -m "chore(release): v${{ steps.version.outputs.version }} [skip ci]"
-          git push
 
       - name: Build application
         run: pnpm build

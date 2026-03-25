@@ -1,0 +1,126 @@
+name: Prepare Release
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: prepare-release-main
+  cancel-in-progress: false
+
+jobs:
+  prepare-release:
+    if: ${{ !contains(github.event.head_commit.message, 'chore(release):') && !contains(github.event.head_commit.message, '[skip ci]') }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Generate app token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.SEMANTIC_RELEASE_APP_ID }}
+          private-key: ${{ secrets.SEMANTIC_RELEASE_APP_PRIVATE_KEY }}
+
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - name: Draft next release
+        id: draft-release
+        uses: release-drafter/release-drafter@v7
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+
+      - name: Check whether a new release is needed
+        id: release-needed
+        env:
+          RESOLVED_VERSION: ${{ steps.draft-release.outputs.resolved_version }}
+        run: |
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          if [ -z "$RESOLVED_VERSION" ] || [ "$RESOLVED_VERSION" = "$CURRENT_VERSION" ]; then
+            echo "should_release=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "should_release=true" >> "$GITHUB_OUTPUT"
+
+      - name: Update version and changelog
+        if: steps.release-needed.outputs.should_release == 'true'
+        env:
+          RELEASE_VERSION: ${{ steps.draft-release.outputs.resolved_version }}
+          RELEASE_TAG: ${{ steps.draft-release.outputs.tag_name }}
+          RELEASE_BODY: ${{ steps.draft-release.outputs.body }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          npm version "$RELEASE_VERSION" --no-git-tag-version
+          python3 <<'PY'
+          import os
+          from pathlib import Path
+
+          changelog_path = Path("docs/CHANGELOG.md")
+          version = os.environ["RELEASE_VERSION"]
+          tag = os.environ["RELEASE_TAG"]
+          body = os.environ["RELEASE_BODY"].strip()
+          repository = os.environ["REPOSITORY"]
+          release_date = os.popen("date +%Y-%m-%d").read().strip()
+
+          entry = f"## [{version}](https://github.com/{repository}/releases/tag/{tag}) ({release_date})\n\n{body}\n\n"
+          previous_content = changelog_path.read_text() if changelog_path.exists() else ""
+          changelog_path.write_text(entry + previous_content)
+          Path(".release-notes.md").write_text(body + "\n")
+          PY
+
+      - name: Commit and tag release
+        if: steps.release-needed.outputs.should_release == 'true'
+        env:
+          RELEASE_VERSION: ${{ steps.draft-release.outputs.resolved_version }}
+        run: |
+          git config user.name "JG-Semantic-Release-Bot[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json docs/CHANGELOG.md
+          git commit -m "chore(release): v$RELEASE_VERSION [skip ci]"
+          git tag "v$RELEASE_VERSION"
+          git push origin HEAD:main --follow-tags
+
+      - name: Publish GitHub release
+        if: steps.release-needed.outputs.should_release == 'true'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          RELEASE_ID: ${{ steps.draft-release.outputs.id }}
+          RELEASE_VERSION: ${{ steps.draft-release.outputs.resolved_version }}
+          RELEASE_TAG: ${{ steps.draft-release.outputs.tag_name }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          python3 <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          payload = {
+              "tag_name": os.environ["RELEASE_TAG"],
+              "target_commitish": os.popen("git rev-parse HEAD").read().strip(),
+              "name": os.environ["RELEASE_TAG"],
+              "body": Path(".release-notes.md").read_text(),
+              "draft": False,
+              "prerelease": False,
+              "make_latest": "true",
+          }
+
+          Path(".release-payload.json").write_text(json.dumps(payload))
+          PY
+          gh api \
+            --method PATCH \
+            "repos/$REPOSITORY/releases/$RELEASE_ID" \
+            --input .release-payload.json
