@@ -1,3 +1,12 @@
+## [1.20.5](https://github.com/jo-gross/Cocktail-Manager/releases/tag/v1.20.5) (2026-03-25)
+
+## What's Changed
+
+No changes since last release.
+
+**Full Changelog**: https://github.com/jo-gross/Cocktail-Manager/compare/v1.20.4...v1.20.5
+
+
 ## [1.20.4](https://github.com/jo-gross/Cocktail-Manager/releases/tag/v1.20.4) (2026-03-25)
 
 ## What's Changed
