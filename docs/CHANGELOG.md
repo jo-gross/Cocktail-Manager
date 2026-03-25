@@ -1,3 +1,12 @@
+## [1.20.6](https://github.com/jo-gross/Cocktail-Manager/releases/tag/v1.20.6) (2026-03-25)
+
+## What's Changed
+
+- chore(deps): update actions/create-github-app-token action to v3 (#994) @[renovate[bot]](https://github.com/apps/renovate)
+
+**Full Changelog**: https://github.com/jo-gross/Cocktail-Manager/compare/v1.20.5...v1.20.6
+
+
 ## [1.20.5](https://github.com/jo-gross/Cocktail-Manager/releases/tag/v1.20.5) (2026-03-25)
 
 ## What's Changed
