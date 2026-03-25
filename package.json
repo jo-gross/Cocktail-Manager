@@ -1,6 +1,6 @@
 {
   "name": "cocktail-manager",
-  "version": "1.20.3",
+  "version": "1.20.4",
   "private": true,
   "description": "Web application for managing cocktail recipes, ingredients, and bar workspaces",
   "scripts": {
