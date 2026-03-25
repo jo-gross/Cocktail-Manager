@@ -34,8 +34,17 @@ jobs:
           --health-retries 5
 
     steps:
+      - name: Generate app token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.JG_SEMANTIC_RELEASE_BOT_APP_ID }}
+          private-key: ${{ secrets.JG_SEMANTIC_RELEASE_BOT_PRIVATE_KEY }}
+
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          token: ${{ steps.app-token.outputs.token }}
 
       - name: Install pnpm
         uses: pnpm/action-setup@v5
@@ -111,6 +120,8 @@ jobs:
 
       - name: Commit screenshots to repository
         if: ${{ inputs.commit_screenshots == 'true' }}
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
