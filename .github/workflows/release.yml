@@ -1,10 +1,9 @@
 name: Release
 
 on:
-  push:
-    tags:
-      - 'v*'
-  workflow_dispatch:
+  release:
+    types:
+      - published
 
 env:
   REGISTRY: ghcr.io
@@ -13,14 +12,23 @@ jobs:
   release:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       packages: write
 
     steps:
+      - name: Generate app token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.JG_SEMANTIC_RELEASE_BOT_APP_ID }}
+          private-key: ${{ secrets.JG_SEMANTIC_RELEASE_BOT_PRIVATE_KEY }}
+
       - name: Checkout
         uses: actions/checkout@v6
         with:
+          token: ${{ steps.app-token.outputs.token }}
           fetch-depth: 0
+          ref: ${{ github.event.release.target_commitish }}
 
       - name: Set image name
         run: echo "IMAGE_NAME=${GITHUB_REPOSITORY,,}" >> "$GITHUB_ENV"
@@ -28,11 +36,8 @@ jobs:
       - name: Extract version from tag
         id: version
         run: |
-          if [ "${{ github.event_name }}" = "push" ]; then
-            VERSION="${GITHUB_REF_NAME#v}"
-          else
-            VERSION=$(node -p "require('./package.json').version")
-          fi
+          VERSION="${{ github.event.release.tag_name }}"
+          VERSION="${VERSION#v}"
           MAJOR_MINOR="${VERSION%.*}"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "major_minor=$MAJOR_MINOR" >> "$GITHUB_OUTPUT"
@@ -49,6 +54,42 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Bump version in package.json
+        run: npm version "${{ steps.version.outputs.version }}" --no-git-tag-version
+
+      - name: Update technical changelog
+        run: |
+          RELEASE_DATE=$(date +%Y-%m-%d)
+          RELEASE_BODY="${{ github.event.release.body }}"
+          VERSION="${{ steps.version.outputs.version }}"
+
+          ENTRY="## [${VERSION}](https://github.com/${{ github.repository }}/releases/tag/v${VERSION}) (${RELEASE_DATE})"
+          ENTRY="${ENTRY}"$'\n\n'"${RELEASE_BODY}"$'\n\n'
+
+          if [ -f docs/CHANGELOG.md ]; then
+            echo -e "${ENTRY}$(cat docs/CHANGELOG.md)" > docs/CHANGELOG.md
+          else
+            echo -e "${ENTRY}" > docs/CHANGELOG.md
+          fi
+
+      - name: Commit release metadata
+        env:
+          TARGET_BRANCH: ${{ github.event.repository.default_branch }}
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          git config user.name "JG-Semantic-Release-Bot[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json docs/CHANGELOG.md
+          git diff --staged --quiet || git commit -m "chore(release): v${{ steps.version.outputs.version }} [skip ci]"
+          git push origin HEAD:"$TARGET_BRANCH"
+
+      - name: Move release tag to release commit
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          git tag -f "$RELEASE_TAG"
+          git push --force origin "refs/tags/$RELEASE_TAG"
 
       - name: Build application
         run: pnpm build
