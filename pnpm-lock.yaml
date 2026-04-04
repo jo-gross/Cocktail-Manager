@@ -114,8 +114,8 @@ importers:
         specifier: 5.10.2
         version: 5.10.2(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       react-three-state-checkbox:
-        specifier: 3.0.0
-        version: 3.0.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+        specifier: 4.0.0
+        version: 4.0.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       recharts:
         specifier: 3.8.1
         version: 3.8.1(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react-is@19.2.4)(react@19.2.4)(redux@5.0.1)
@@ -4403,11 +4403,12 @@ packages:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
       react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
 
-  react-three-state-checkbox@3.0.0:
-    resolution: {integrity: sha512-siWkrmaSTokUSgU3LISdnHbbX4Ignnvo85YhJrKtIs/9H+KnOWfsmmg4NnWnhWd+mj5Cca91gQVcDGKtH++T9Q==}
+  react-three-state-checkbox@4.0.0:
+    resolution: {integrity: sha512-UFT0FxfHqeKZv64AlgpuBgvFskN2IFyPKMjekO9E62ir1QDDvxgkCOU4+HkWKK088lwmgcGbPhPBfBA/CregBw==}
+    engines: {node: '>=22'}
     peerDependencies:
-      react: 16 || 17 || 18
-      react-dom: 16 || 17 || 18
+      react: 18 || 19
+      react-dom: 18 || 19
 
   react-transition-group@4.4.5:
     resolution: {integrity: sha512-pZcd1MCJoiKiBR2NRxeCRg13uCXbydPnmB4EOeRrY7480qNWO8IIgQG6zlDkm6uRMsURXPuKq0GWtiM59a5Q6g==}
@@ -9484,7 +9485,7 @@ snapshots:
       - '@types/react'
       - supports-color
 
-  react-three-state-checkbox@3.0.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4):
+  react-three-state-checkbox@4.0.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4):
     dependencies:
       react: 19.2.4
       react-dom: 19.2.4(react@19.2.4)

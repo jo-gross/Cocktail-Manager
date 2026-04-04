@@ -64,7 +64,7 @@
     "react-image-crop": "11.0.10",
     "react-markdown": "10.1.0",
     "react-select": "5.10.2",
-    "react-three-state-checkbox": "3.0.0",
+    "react-three-state-checkbox": "4.0.0",
     "recharts": "3.8.1",
     "rxjs": "7.8.2",
     "use-pull-to-refresh": "^2.4.1"
