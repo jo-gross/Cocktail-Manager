@@ -114,8 +114,8 @@ importers:
         specifier: 5.10.2
         version: 5.10.2(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       react-three-state-checkbox:
-        specifier: 4.0.0
-        version: 4.0.0(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
+        specifier: 4.0.1
+        version: 4.0.1(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       recharts:
         specifier: 3.8.1
         version: 3.8.1(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react-is@19.2.4)(react@19.2.5)(redux@5.0.1)
@@ -4395,8 +4395,8 @@ packages:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
       react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
 
-  react-three-state-checkbox@4.0.0:
-    resolution: {integrity: sha512-UFT0FxfHqeKZv64AlgpuBgvFskN2IFyPKMjekO9E62ir1QDDvxgkCOU4+HkWKK088lwmgcGbPhPBfBA/CregBw==}
+  react-three-state-checkbox@4.0.1:
+    resolution: {integrity: sha512-z+FFZt1U5iu5y4f3M459WXvNvWiFUUBu7tY058yYqUaxCstvbyT6Q7nPvDu8FcSpxus5eWm7yeFa4Y8muhxHyA==}
     engines: {node: '>=22'}
     peerDependencies:
       react: 18 || 19
@@ -9462,7 +9462,7 @@ snapshots:
       - '@types/react'
       - supports-color
 
-  react-three-state-checkbox@4.0.0(react-dom@19.2.5(react@19.2.5))(react@19.2.5):
+  react-three-state-checkbox@4.0.1(react-dom@19.2.5(react@19.2.5))(react@19.2.5):
     dependencies:
       react: 19.2.5
       react-dom: 19.2.5(react@19.2.5)
