@@ -124,7 +124,7 @@ importers:
         version: 7.8.2
       serwist:
         specifier: ^9.5.7
-        version: 9.5.7(browserslist@4.28.2)(typescript@6.0.3)
+        version: 9.5.8(browserslist@4.28.2)(typescript@6.0.3)
       use-pull-to-refresh:
         specifier: ^2.4.1
         version: 2.4.1(react@19.2.5)
@@ -1460,6 +1460,14 @@ packages:
       browserslist:
         optional: true
 
+  '@serwist/utils@9.5.8':
+    resolution: {integrity: sha512-aZICPnSd9KJkCQrHQjNM4nWHTY4f0aP4b5Z4f+QIgiuPq+d5SYS5X0YsEwk6GDjPBGa6JAWQqUh+5aZDefRv8A==}
+    peerDependencies:
+      browserslist: '>=4'
+    peerDependenciesMeta:
+      browserslist:
+        optional: true
+
   '@serwist/webpack-plugin@9.5.7':
     resolution: {integrity: sha512-wnpXoB7PIq8opP/jsVph4GFEl1GzGHzXysFil7vmUDSBRyG8VediSTfxq1F4ag6E+HoaXQtASypG6MDZ/hBkzg==}
     engines: {node: '>=18.0.0'}
@@ -1926,6 +1934,9 @@ packages:
 
   ajv@8.18.0:
     resolution: {integrity: sha512-PlXPeEWMXMZ7sPYOHqmDyCJzcfNrUr3fGNKtezX14ykXOEIvyK81d+qydx89KY5O71FKMPaQ2vBfBFI5NHR63A==}
+
+  ajv@8.20.0:
+    resolution: {integrity: sha512-Thbli+OlOj+iMPYFBVBfJ3OmCAnaSyNn4M1vz9T6Gka5Jt9ba/HIR56joy65tY6kx/FCF5VXNB819Y7/GUrBGA==}
 
   ansi-escapes@7.3.0:
     resolution: {integrity: sha512-BvU8nYgGQBxcmMuEeUEmNTvrMVjJNSH7RgW24vXexN4Ven6qCvy4TntnvlnwnMLTVlcRQQdbRY8NKnaIoeWDNg==}
@@ -2661,6 +2672,9 @@ packages:
 
   es-module-lexer@2.0.0:
     resolution: {integrity: sha512-5POEcUuZybH7IdmGsD8wlf0AI55wMecM9rVBTI/qEAy2c1kTOm3DjFYjrBdI2K3BaJjJYfYFeRtM0t9ssnRuxw==}
+
+  es-module-lexer@2.1.0:
+    resolution: {integrity: sha512-n27zTYMjYu1aj4MjCWzSP7G9r75utsaoc8m61weK+W8JMBGGQybd43GstCXZ3WNmSFtGT9wi59qQTW6mhTR5LQ==}
 
   es-object-atoms@1.1.1:
     resolution: {integrity: sha512-FGgH2h8zKNim9ljj7dankFPcICIK9Cp5bm+c2gQSYePhpaG5+esrLODihIorn+Pe6FGJzWhXQotPv73jTaldXA==}
@@ -3563,8 +3577,8 @@ packages:
     resolution: {integrity: sha512-ME4Fb83LgEgwNw96RKNvKV4VTLuXfoKudAmm2lP8Kk87KaMK0/Xrx/aAkMWmT8mDb+3MlFDspfbCs7adjRxA2g==}
     engines: {node: '>=20.0.0'}
 
-  loader-runner@4.3.1:
-    resolution: {integrity: sha512-IWqP2SCPhyVFTBtRcgMHdzlf9ul25NwaFx4wCEH/KjAXuuHY4yNjvPXsBokp8jCB936PyWRaPKUNh8NvylLp2Q==}
+  loader-runner@4.3.2:
+    resolution: {integrity: sha512-DFEqQ3ihfS9blba08cLfYf1NRAIEm+dDjic073DRDc3/JspI/8wYmtDsHwd3+4hwvdxSK7PGaElfTmm0awWJ4w==}
     engines: {node: '>=6.11.5'}
 
   locate-path@6.0.0:
@@ -4536,6 +4550,14 @@ packages:
       typescript:
         optional: true
 
+  serwist@9.5.8:
+    resolution: {integrity: sha512-64yeCt0Mjufy+GhfotIQw/KRcJmUOqzUaGNUQkF7sl1upmau6sH/H3M29do0ilWgeELRYP5PAEYdSZtp3pHncQ==}
+    peerDependencies:
+      typescript: '>=5.0.0'
+    peerDependenciesMeta:
+      typescript:
+        optional: true
+
   set-cookie-parser@3.1.0:
     resolution: {integrity: sha512-kjnC1DXBHcxaOaOXBHBeRtltsDG2nUiUni+jP92M9gYdW12rsmx92UsfpH7o5tDRs7I1ZZPSQJQGv3UaRfCiuw==}
 
@@ -5099,8 +5121,8 @@ packages:
     engines: {node: '>= 10.13.0'}
     hasBin: true
 
-  webpack-sources@3.4.0:
-    resolution: {integrity: sha512-gHwIe1cgBvvfLeu1Yz/dcFpmHfKDVxxyqI+kzqmuxZED81z2ChxpyqPaWcNqigPywhaEke7AjSGga+kxY55gjQ==}
+  webpack-sources@3.4.1:
+    resolution: {integrity: sha512-eACpxRN02yaawnt+uUNIF7Qje6A9zArxBbcAJjK1PK3S9Ycg5jIuJ8pW4q8EMnwNZCEGltcjkRx1QzOxOkKD8A==}
     engines: {node: '>=10.13.0'}
 
   webpack@5.104.1:
@@ -6233,7 +6255,7 @@ snapshots:
     optionalDependencies:
       browserslist: 4.28.1
 
-  '@serwist/utils@9.5.7(browserslist@4.28.2)':
+  '@serwist/utils@9.5.8(browserslist@4.28.2)':
     optionalDependencies:
       browserslist: 4.28.2
 
@@ -6734,14 +6756,14 @@ snapshots:
 
   agent-base@7.1.4: {}
 
-  ajv-formats@2.1.1(ajv@8.18.0):
+  ajv-formats@2.1.1(ajv@8.20.0):
     optionalDependencies:
-      ajv: 8.18.0
+      ajv: 8.20.0
     optional: true
 
-  ajv-keywords@5.1.0(ajv@8.18.0):
+  ajv-keywords@5.1.0(ajv@8.20.0):
     dependencies:
-      ajv: 8.18.0
+      ajv: 8.20.0
       fast-deep-equal: 3.1.3
     optional: true
 
@@ -6758,6 +6780,14 @@ snapshots:
       fast-uri: 3.1.0
       json-schema-traverse: 1.0.0
       require-from-string: 2.0.2
+
+  ajv@8.20.0:
+    dependencies:
+      fast-deep-equal: 3.1.3
+      fast-uri: 3.1.0
+      json-schema-traverse: 1.0.0
+      require-from-string: 2.0.2
+    optional: true
 
   ansi-escapes@7.3.0:
     dependencies:
@@ -7503,6 +7533,9 @@ snapshots:
       safe-array-concat: 1.1.3
 
   es-module-lexer@2.0.0: {}
+
+  es-module-lexer@2.1.0:
+    optional: true
 
   es-object-atoms@1.1.1:
     dependencies:
@@ -8527,7 +8560,7 @@ snapshots:
       rfdc: 1.4.1
       wrap-ansi: 9.0.2
 
-  loader-runner@4.3.1:
+  loader-runner@4.3.2:
     optional: true
 
   locate-path@6.0.0:
@@ -9613,9 +9646,9 @@ snapshots:
   schema-utils@4.3.3:
     dependencies:
       '@types/json-schema': 7.0.15
-      ajv: 8.18.0
-      ajv-formats: 2.1.1(ajv@8.18.0)
-      ajv-keywords: 5.1.0(ajv@8.18.0)
+      ajv: 8.20.0
+      ajv-formats: 2.1.1(ajv@8.20.0)
+      ajv-keywords: 5.1.0(ajv@8.20.0)
     optional: true
 
   semver@6.3.1: {}
@@ -9633,9 +9666,9 @@ snapshots:
     transitivePeerDependencies:
       - browserslist
 
-  serwist@9.5.7(browserslist@4.28.2)(typescript@6.0.3):
+  serwist@9.5.8(browserslist@4.28.2)(typescript@6.0.3):
     dependencies:
-      '@serwist/utils': 9.5.7(browserslist@4.28.2)
+      '@serwist/utils': 9.5.8(browserslist@4.28.2)
       idb: 8.0.3
     optionalDependencies:
       typescript: 6.0.3
@@ -10362,7 +10395,7 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
-  webpack-sources@3.4.0:
+  webpack-sources@3.4.1:
     optional: true
 
   webpack@5.104.1:
@@ -10378,20 +10411,20 @@ snapshots:
       browserslist: 4.28.2
       chrome-trace-event: 1.0.4
       enhanced-resolve: 5.21.0
-      es-module-lexer: 2.0.0
+      es-module-lexer: 2.1.0
       eslint-scope: 5.1.1
       events: 3.3.0
       glob-to-regexp: 0.4.1
       graceful-fs: 4.2.11
       json-parse-even-better-errors: 2.3.1
-      loader-runner: 4.3.1
+      loader-runner: 4.3.2
       mime-types: 2.1.35
       neo-async: 2.6.2
       schema-utils: 4.3.3
       tapable: 2.3.3
       terser-webpack-plugin: 5.5.0(webpack@5.104.1)
       watchpack: 2.5.1
-      webpack-sources: 3.4.0
+      webpack-sources: 3.4.1
     transitivePeerDependencies:
       - '@swc/core'
       - esbuild
