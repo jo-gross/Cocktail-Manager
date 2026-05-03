@@ -124,7 +124,7 @@ importers:
         version: 7.8.2
       serwist:
         specifier: ^9.5.7
-        version: 9.5.10(browserslist@4.28.2)(typescript@6.0.3)
+        version: 9.5.11(browserslist@4.28.2)(typescript@6.0.3)
       use-pull-to-refresh:
         specifier: ^2.4.1
         version: 2.4.1(react@19.2.5)
@@ -1446,6 +1446,14 @@ packages:
 
   '@serwist/utils@9.5.10':
     resolution: {integrity: sha512-xrGGvz8KSoyyUUSjD2Ba4b9IJOYLJBGN1tKr8t6npFPwrI6x4Eo3AaqQAWx52Jao+fmNKPKkLO8WBRvq7qRg7A==}
+    peerDependencies:
+      browserslist: '>=4'
+    peerDependenciesMeta:
+      browserslist:
+        optional: true
+
+  '@serwist/utils@9.5.11':
+    resolution: {integrity: sha512-zqxmwuHqWA3OwN82Wo8gFZ9QBemygJP3cap5JWAOG4UyJZgUZfmBXAXj+IMaD4eKZ/6pqrxHHDZ9uSWZmJ1mXA==}
     peerDependencies:
       browserslist: '>=4'
     peerDependenciesMeta:
@@ -4507,6 +4515,14 @@ packages:
       typescript:
         optional: true
 
+  serwist@9.5.11:
+    resolution: {integrity: sha512-Bq6uwJFd4ET60BWI77v3VbazKHv6k7lECOiiCFwKyBu/slaCn0GHJ5L5RfsuJUKrnbD9lYUCDo6sqaKRM5M2vA==}
+    peerDependencies:
+      typescript: '>=5.0.0'
+    peerDependenciesMeta:
+      typescript:
+        optional: true
+
   set-cookie-parser@3.1.0:
     resolution: {integrity: sha512-kjnC1DXBHcxaOaOXBHBeRtltsDG2nUiUni+jP92M9gYdW12rsmx92UsfpH7o5tDRs7I1ZZPSQJQGv3UaRfCiuw==}
 
@@ -6196,6 +6212,10 @@ snapshots:
       - webpack
 
   '@serwist/utils@9.5.10(browserslist@4.28.2)':
+    optionalDependencies:
+      browserslist: 4.28.2
+
+  '@serwist/utils@9.5.11(browserslist@4.28.2)':
     optionalDependencies:
       browserslist: 4.28.2
 
@@ -9561,6 +9581,15 @@ snapshots:
   serwist@9.5.10(browserslist@4.28.2)(typescript@6.0.3):
     dependencies:
       '@serwist/utils': 9.5.10(browserslist@4.28.2)
+      idb: 8.0.3
+    optionalDependencies:
+      typescript: 6.0.3
+    transitivePeerDependencies:
+      - browserslist
+
+  serwist@9.5.11(browserslist@4.28.2)(typescript@6.0.3):
+    dependencies:
+      '@serwist/utils': 9.5.11(browserslist@4.28.2)
       idb: 8.0.3
     optionalDependencies:
       typescript: 6.0.3
