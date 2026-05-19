@@ -98,7 +98,7 @@ async function generatePdf(html: string, numberOfCocktails: number, showHeader: 
     await page.addStyleTag({ url: 'https://cdn.jsdelivr.net/npm/daisyui@4.12.23/dist/full.min.css' });
 
     // Set content and wait for everything to load
-    await page.setContent(html, { waitUntil: 'networkidle0', timeout: timeoutMs });
+    await page.setContent(html, { waitUntil: 'load', timeout: timeoutMs });
 
     // Set DaisyUI theme to "autumn" and ensure white background
     await page.evaluate(() => {
