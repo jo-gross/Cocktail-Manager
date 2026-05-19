@@ -126,8 +126,8 @@ importers:
         specifier: ^9.5.11
         version: 9.5.11(browserslist@4.28.2)(typescript@6.0.3)
       use-pull-to-refresh:
-        specifier: ^2.4.1
-        version: 2.4.1(react@19.2.6)
+        specifier: ^3.0.0
+        version: 3.0.3(react@19.2.6)
     devDependencies:
       '@next/bundle-analyzer':
         specifier: ^16.2.2
@@ -4971,8 +4971,8 @@ packages:
       '@types/react':
         optional: true
 
-  use-pull-to-refresh@2.4.1:
-    resolution: {integrity: sha512-mI3utetwSPT3ovZHUJ4LBW29EtmkrzpK/O38msP5WnI8ocFmM5boy3QZALosgeQwqwdmtQgC+8xnJIYHXeABew==}
+  use-pull-to-refresh@3.0.3:
+    resolution: {integrity: sha512-LVXQRIxRFl1W6qJQD0yS6dCzffitxOBsD1MdzhYGOnlA1MId6XvGIozI0Z/19fN2G1fxJNikewdTCqdVnGrQ3g==}
     peerDependencies:
       react: 18.x || 19.x
 
@@ -10197,7 +10197,7 @@ snapshots:
     optionalDependencies:
       '@types/react': 19.2.14
 
-  use-pull-to-refresh@2.4.1(react@19.2.6):
+  use-pull-to-refresh@3.0.3(react@19.2.6):
     dependencies:
       react: 19.2.6
 
