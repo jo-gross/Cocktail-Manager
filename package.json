@@ -70,7 +70,7 @@
     "use-pull-to-refresh": "^3.0.0"
   },
   "devDependencies": {
-    "@next/bundle-analyzer": "^16.2.2",
+    "@next/bundle-analyzer": "^16.2.7",
     "@playwright/test": "^1.60.0",
     "@types/bcrypt": "^6.0.0",
     "@types/deep-diff": "1.0.5",
