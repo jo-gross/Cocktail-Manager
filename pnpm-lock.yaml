@@ -75,8 +75,8 @@ importers:
         specifier: 7.1.0
         version: 7.1.0
       nodemailer:
-        specifier: 8.0.11
-        version: 8.0.11
+        specifier: 9.0.0
+        version: 9.0.0
       pdf-lib:
         specifier: ^1.17.1
         version: 1.17.1
@@ -3751,8 +3751,8 @@ packages:
   node-releases@2.0.38:
     resolution: {integrity: sha512-3qT/88Y3FbH/Kx4szpQQ4HzUbVrHPKTLVpVocKiLfoYvw9XSGOX2FmD2d6DrXbVYyAQTF2HeF6My8jmzx7/CRw==}
 
-  nodemailer@8.0.11:
-    resolution: {integrity: sha512-nrO/pDAUKl+wXX+lx16tDLbnm0fW6sK/x8mgohaCpg+CdCEl482bD4tCuAZk2DyliruiNTIZxRCoWkDqJEnAiA==}
+  nodemailer@9.0.0:
+    resolution: {integrity: sha512-tbPTid7d/p9jAA8CRZ3iomvrMaST0o6NYuY7v6JQZHpPRZ61mLFSPKYd7342NtOFuej9/+L48SOIxwfu2uDvtw==}
     engines: {node: '>=6.0.0'}
 
   normalize-path@3.0.0:
@@ -8626,7 +8626,7 @@ snapshots:
 
   node-releases@2.0.38: {}
 
-  nodemailer@8.0.11: {}
+  nodemailer@9.0.0: {}
 
   normalize-path@3.0.0: {}
 
