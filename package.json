@@ -94,7 +94,7 @@
     "husky": "^9.1.7",
     "lint-staged": "^17.0.7",
     "playwright": "^1.60.0",
-    "postcss": "8.5.15",
+    "postcss": "8.5.16",
     "prettier": "3.8.4",
     "prettier-plugin-prisma": "5.0.0",
     "prettier-plugin-tailwindcss": "0.8.0",
