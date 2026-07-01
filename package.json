@@ -50,7 +50,7 @@
     "lodash": "4.18.1",
     "next": "16.2.9",
     "serwist": "^9.5.11",
-    "node-html-parser": "8.0.2",
+    "node-html-parser": "8.0.4",
     "nodemailer": "9.0.3",
     "pdf-lib": "^1.17.1",
     "pg": "^8.20.0",
