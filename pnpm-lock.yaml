@@ -172,8 +172,8 @@ importers:
         specifier: ^4.1.8
         version: 4.1.9(vitest@4.1.9)
       autoprefixer:
-        specifier: 10.5.0
-        version: 10.5.0(postcss@8.5.16)
+        specifier: 10.5.2
+        version: 10.5.2(postcss@8.5.16)
       daisyui:
         specifier: 4.12.24
         version: 4.12.24(postcss@8.5.16)
@@ -2004,8 +2004,8 @@ packages:
     resolution: {integrity: sha512-hsU18Ae8CDTR6Kgu9DYf0EbCr/a5iGL0rytQDobUcdpYOKokk8LEjVphnXkDkgpi0wYVsqrXuP0bZxJaTqdgoA==}
     engines: {node: '>= 0.4'}
 
-  autoprefixer@10.5.0:
-    resolution: {integrity: sha512-FMhOoZV4+qR6aTUALKX2rEqGG+oyATvwBt9IIzVR5rMa2HRWPkxf+P+PAJLD1I/H5/II+HuZcBJYEFBpq39ong==}
+  autoprefixer@10.5.2:
+    resolution: {integrity: sha512-rD5t5DwOjJdmSORcTq64j8MawTC+tbQ+HHqjR4NDumamy/ambn1UJrlKL+KdwujWxMkFjPM3pPHOEA9tl4767Q==}
     engines: {node: ^10 || ^12 || >=14}
     hasBin: true
     peerDependencies:
@@ -2196,9 +2196,6 @@ packages:
   camelcase-css@2.0.1:
     resolution: {integrity: sha512-QOSvevhslijgYwRx6Rv7zKdMF8lbRmx+uQGx2+vDc+KI/eBnsy9kit5aj23AgGu3pa4t9AgwbnXWqS+iOY+2aA==}
     engines: {node: '>= 6'}
-
-  caniuse-lite@1.0.30001788:
-    resolution: {integrity: sha512-6q8HFp+lOQtcf7wBK+uEenxymVWkGKkjFpCvw5W25cmMwEDU45p1xQFBQv8JDlMMry7eNxyBaR+qxgmTUZkIRQ==}
 
   caniuse-lite@1.0.30001791:
     resolution: {integrity: sha512-yk0l/YSrOnFZk3UROpDLQD9+kC1l4meK/wed583AXrzoarMGJcbRi2Q4RaUYbKxYAsZ8sWmaSa/DsLmdBeI1vQ==}
@@ -5140,7 +5137,7 @@ snapshots:
     dependencies:
       '@babel/compat-data': 7.29.0
       '@babel/helper-validator-option': 7.27.1
-      browserslist: 4.28.2
+      browserslist: 4.28.4
       lru-cache: 5.1.1
       semver: 6.3.1
 
@@ -6694,10 +6691,10 @@ snapshots:
 
   async-function@1.0.0: {}
 
-  autoprefixer@10.5.0(postcss@8.5.16):
+  autoprefixer@10.5.2(postcss@8.5.16):
     dependencies:
-      browserslist: 4.28.2
-      caniuse-lite: 1.0.30001788
+      browserslist: 4.28.4
+      caniuse-lite: 1.0.30001800
       fraction.js: 5.3.4
       picocolors: 1.1.1
       postcss: 8.5.16
@@ -6727,8 +6724,7 @@ snapshots:
 
   baseline-browser-mapping@2.10.27: {}
 
-  baseline-browser-mapping@2.10.40:
-    optional: true
+  baseline-browser-mapping@2.10.40: {}
 
   bcrypt@6.0.0:
     dependencies:
@@ -6803,7 +6799,7 @@ snapshots:
   browserslist@4.28.2:
     dependencies:
       baseline-browser-mapping: 2.10.27
-      caniuse-lite: 1.0.30001791
+      caniuse-lite: 1.0.30001800
       electron-to-chromium: 1.5.351
       node-releases: 2.0.38
       update-browserslist-db: 1.2.3(browserslist@4.28.2)
@@ -6815,7 +6811,6 @@ snapshots:
       electron-to-chromium: 1.5.383
       node-releases: 2.0.50
       update-browserslist-db: 1.2.3(browserslist@4.28.4)
-    optional: true
 
   bson@7.3.1:
     optional: true
@@ -6863,12 +6858,9 @@ snapshots:
 
   camelcase-css@2.0.1: {}
 
-  caniuse-lite@1.0.30001788: {}
-
   caniuse-lite@1.0.30001791: {}
 
-  caniuse-lite@1.0.30001800:
-    optional: true
+  caniuse-lite@1.0.30001800: {}
 
   ccount@2.0.1: {}
 
@@ -7170,8 +7162,7 @@ snapshots:
 
   electron-to-chromium@1.5.351: {}
 
-  electron-to-chromium@1.5.383:
-    optional: true
+  electron-to-chromium@1.5.383: {}
 
   emoji-regex@10.6.0: {}
 
@@ -8668,8 +8659,7 @@ snapshots:
 
   node-releases@2.0.38: {}
 
-  node-releases@2.0.50:
-    optional: true
+  node-releases@2.0.50: {}
 
   nodemailer@9.0.3: {}
 
@@ -9836,7 +9826,6 @@ snapshots:
       browserslist: 4.28.4
       escalade: 3.2.0
       picocolors: 1.1.1
-    optional: true
 
   uri-js@4.4.1:
     dependencies:
