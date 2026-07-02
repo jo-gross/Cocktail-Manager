@@ -1054,7 +1054,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                         <Card key={`form-recipe-step-${indexStep}`} variant="inset" className={'flex w-full flex-col justify-between p-4'}>
                           <div className={'grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4'}>
                             <div className={'col-span-2 flex flex-row items-center justify-between gap-2 md:col-span-1 md:justify-start'}>
-                              <div className={'font-bold'}>Schritt {indexStep + 1}</div>
+                              <div className={'font-bold whitespace-nowrap'}>Schritt {indexStep + 1}</div>
                               <FormControl>
                                 <Label className="w-fit flex-row items-center justify-start gap-1">
                                   <LabelText>Optional</LabelText>
