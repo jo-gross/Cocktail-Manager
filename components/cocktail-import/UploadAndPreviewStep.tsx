@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { CocktailExportStructure } from '../../types/CocktailExportStructure';
 import { alertService } from '@lib/alertService';
 import { FaUpload } from 'react-icons/fa';
+import { Alert, Button, Card, CardBody, Checkbox, Loading, Table, TableBody, TableCell, TableHead, TableHeaderCell, TableRow } from '@components/ui';
 
 interface UploadAndPreviewStepProps {
   workspaceId: string;
@@ -113,71 +114,67 @@ export function UploadAndPreviewStep({ workspaceId, onComplete, onCancel }: Uplo
           </label>
 
           {validationError && (
-            <div className={'alert alert-error'}>
+            <Alert variant="error">
               <span>{validationError}</span>
-            </div>
+            </Alert>
           )}
 
           {loading && (
             <div className={'flex items-center justify-center gap-2'}>
-              <span className={'loading loading-spinner'}></span>
+              <Loading />
               <span>Datei wird geladen...</span>
             </div>
           )}
         </div>
       ) : (
         <div className={'flex flex-col gap-4'}>
-          <div className={'rounded-lg bg-base-200 p-4'}>
-            <div className={'text-sm font-semibold'}>Import-Details</div>
-            <div className={'mt-2 text-sm text-base-content/70'}>
-              <div>Quelle: {exportData.exportedFrom.workspaceName}</div>
-              <div>Export-Datum: {new Date(exportData.exportDate).toLocaleString('de-DE')}</div>
-              <div>Version: {exportData.exportVersion}</div>
-              <div>Anzahl Cocktails: {exportData.cocktailRecipes.length}</div>
-            </div>
-          </div>
+          <Card variant="elevated">
+            <CardBody>
+              <div className={'text-sm font-semibold'}>Import-Details</div>
+              <div className={'mt-2 text-sm text-base-content/70'}>
+                <div>Quelle: {exportData.exportedFrom.workspaceName}</div>
+                <div>Export-Datum: {new Date(exportData.exportDate).toLocaleString('de-DE')}</div>
+                <div>Version: {exportData.exportVersion}</div>
+                <div>Anzahl Cocktails: {exportData.cocktailRecipes.length}</div>
+              </div>
+            </CardBody>
+          </Card>
 
           <div className={'text-sm font-semibold'}>Cocktails auswählen</div>
           <div className={'text-sm text-base-content/70'}>Wählen Sie die Cocktails aus, die Sie importieren möchten.</div>
 
           <div className={'max-h-[300px] overflow-y-auto rounded-lg border border-base-300'}>
-            <table className={'table table-sm'}>
-              <thead>
-                <tr>
-                  <th>
-                    <input
-                      type={'checkbox'}
-                      className={'checkbox checkbox-sm'}
+            <Table compact>
+              <TableHead>
+                <TableRow>
+                  <TableHeaderCell>
+                    <Checkbox
+                      checkboxSize="sm"
                       checked={selectedCocktailIds.size === exportData.cocktailRecipes.length && exportData.cocktailRecipes.length > 0}
                       onChange={handleToggleSelectAll}
                     />
-                  </th>
-                  <th>Name</th>
-                  <th>Glas</th>
-                  <th>Preis</th>
-                </tr>
-              </thead>
-              <tbody>
+                  </TableHeaderCell>
+                  <TableHeaderCell>Name</TableHeaderCell>
+                  <TableHeaderCell>Glas</TableHeaderCell>
+                  <TableHeaderCell>Preis</TableHeaderCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
                 {exportData.cocktailRecipes.map((cocktail) => {
                   const glass = exportData.glasses.find((g) => g.id === cocktail.glassId);
                   return (
-                    <tr key={cocktail.id}>
-                      <td>
-                        <input
-                          type={'checkbox'}
-                          className={'checkbox checkbox-sm'}
-                          checked={selectedCocktailIds.has(cocktail.id)}
-                          onChange={() => handleToggleSelect(cocktail.id)}
-                        />
-                      </td>
-                      <td>{cocktail.name}</td>
-                      <td>{glass?.name || '-'}</td>
-                      <td>{cocktail.price ? `${cocktail.price} €` : '-'}</td>
-                    </tr>
+                    <TableRow key={cocktail.id}>
+                      <TableCell>
+                        <Checkbox checkboxSize="sm" checked={selectedCocktailIds.has(cocktail.id)} onChange={() => handleToggleSelect(cocktail.id)} />
+                      </TableCell>
+                      <TableCell>{cocktail.name}</TableCell>
+                      <TableCell>{glass?.name || '-'}</TableCell>
+                      <TableCell>{cocktail.price ? `${cocktail.price} €` : '-'}</TableCell>
+                    </TableRow>
                   );
                 })}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </div>
 
           <div className={'text-sm text-base-content/70'}>
@@ -187,12 +184,12 @@ export function UploadAndPreviewStep({ workspaceId, onComplete, onCancel }: Uplo
       )}
 
       <div className={'flex justify-end gap-2'}>
-        <button className={'btn btn-outline btn-error'} onClick={onCancel}>
+        <Button variant="outline" className="border-error text-error hover:bg-error/10" onClick={onCancel}>
           Abbrechen
-        </button>
-        <button className={'btn btn-primary'} onClick={handleNext} disabled={!exportData || selectedCocktailIds.size === 0}>
+        </Button>
+        <Button variant="primary" onClick={handleNext} disabled={!exportData || selectedCocktailIds.size === 0}>
           Weiter
-        </button>
+        </Button>
       </div>
     </div>
   );

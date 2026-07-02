@@ -14,6 +14,7 @@ import { FaCropSimple } from 'react-icons/fa6';
 import _ from 'lodash';
 import { RoutingContext } from '@lib/context/RoutingContextProvider';
 import { resizeImage } from '@lib/ImageCompressor';
+import { Button, ButtonGroup, Divider, FormControl, Input, Label, LabelText, LabelTextAlt, Loading, Textarea } from '@components/ui';
 
 export interface GarnishFormValues {
   name: string;
@@ -30,6 +31,8 @@ interface GarnishFormProps {
   formRef?: React.RefObject<FormikProps<GarnishFormValues> | null>;
   onSaved?: (id: string) => void;
 }
+
+const fieldErrorClass = 'border-error focus:border-error focus:ring-error/25';
 
 export function GarnishForm(props: GarnishFormProps) {
   const router = useRouter();
@@ -127,22 +130,22 @@ export function GarnishForm(props: GarnishFormProps) {
       {({ values, errors, handleChange, handleBlur, handleSubmit, isSubmitting, isValid, setFieldValue }) => (
         <form onSubmit={handleSubmit} className={'grid grid-cols-1 gap-2 md:grid-cols-2'}>
           <div className={'col-span-full flex flex-row flex-wrap gap-2'}>
-            <div className={'form-control flex-1'}>
-              <label className={'label'} htmlFor={'name'}>
-                <span className={'label-text'}>Name</span>
-                <span className={'label-text-alt space-x-2 text-error'}>
+            <FormControl className={'flex-1'}>
+              <Label htmlFor={'name'} className="flex-row items-center justify-between">
+                <LabelText>Name</LabelText>
+                <LabelTextAlt className={'space-x-2 text-error'}>
                   <span>
                     <>{errors.name && errors.name}</>
                   </span>
                   <span>*</span>
-                </span>
-              </label>
-              <input
+                </LabelTextAlt>
+              </Label>
+              <Input
                 id={'name'}
                 type={'text'}
                 autoComplete={'off'}
                 placeholder={'Name'}
-                className={`input input-bordered ${errors.name && 'input-error'} w-full`}
+                className={errors.name ? fieldErrorClass : undefined}
                 onChange={(event) => {
                   if (event.target.value.length > 2) {
                     fetch(`/api/workspaces/${workspaceId}/garnishes/check?name=${event.target.value}`)
@@ -169,38 +172,45 @@ export function GarnishForm(props: GarnishFormProps) {
                 name={'name'}
               />
               {similarGarnish && (
-                <div className="label">
-                  <span className="label-text-alt text-warning">
+                <Label className="flex-row">
+                  <LabelTextAlt className="text-warning">
                     Eine ähnliche Garnitur mit dem Namen <strong>{similarGarnish.name}</strong> existiert bereits.
-                  </span>
-                </div>
+                  </LabelTextAlt>
+                </Label>
               )}
-            </div>
+            </FormControl>
 
-            <div className={'form-control'}>
-              <label className={'label'} htmlFor={'price'}>
-                <span className={'label-text'}>Preis</span>
-                <span className={'label-text-alt space-x-2 text-error'}>
+            <FormControl>
+              <Label htmlFor={'price'} className="flex-row items-center justify-between">
+                <LabelText>Preis</LabelText>
+                <LabelTextAlt className={'space-x-2 text-error'}>
                   <>{errors.price && errors.price}</>
-                </span>
-              </label>
-              <div className={'join'}>
-                <input
+                </LabelTextAlt>
+              </Label>
+              <ButtonGroup className="w-full">
+                <Input
                   id={'price'}
                   type={'number'}
                   placeholder={'Preis'}
-                  className={`input join-item input-bordered ${errors.price && 'input-error'} w-full`}
+                  className={errors.price ? fieldErrorClass : undefined}
+                  joinItem
                   value={values.price}
                   onChange={handleChange}
                   onBlur={handleBlur}
                   name={'price'}
                 />
-                <span className={'btn btn-secondary join-item'}>€</span>
-              </div>
-            </div>
+                <Button type="button" variant="secondary" joinItem>
+                  €
+                </Button>
+              </ButtonGroup>
+            </FormControl>
           </div>
           <div className={''}>
-            <div className={'divider'}>Vorschau Bild</div>
+            <div className="flex items-center gap-3 py-2">
+              <Divider className="my-0 flex-1" />
+              <span className="shrink-0 text-sm font-medium text-base-content/70">Vorschau Bild</span>
+              <Divider className="my-0 flex-1" />
+            </div>
             {values.image == undefined && values.originalImage == undefined ? (
               <UploadDropZone
                 onSelectedFilesChanged={async (file) => {
@@ -235,17 +245,24 @@ export function GarnishForm(props: GarnishFormProps) {
               </div>
             ) : (
               <div className={'relative'}>
-                <div className={'absolute right-2 top-2 flex flex-row gap-2'}>
-                  <div
-                    className={'btn btn-square btn-outline btn-sm'}
+                <div className={'absolute top-2 right-2 flex flex-row gap-2'}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    shape="square"
+                    size="sm"
                     onClick={async () => {
                       await setFieldValue('image', undefined);
                     }}
                   >
                     <FaCropSimple />
-                  </div>
-                  <div
-                    className={'btn btn-square btn-outline btn-error btn-sm'}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    shape="square"
+                    size="sm"
+                    className="border-error text-error hover:bg-error/10"
                     onClick={() => {
                       modalContext.openModal(
                         <DeleteConfirmationModal
@@ -260,7 +277,7 @@ export function GarnishForm(props: GarnishFormProps) {
                     }}
                   >
                     <FaTrashAlt />
-                  </div>
+                  </Button>
                 </div>
                 <div className={'bg-transparent-pattern relative h-32 w-32 rounded-lg'}>
                   <Image className={'w-fit rounded-lg'} src={values.image ?? ''} layout={'fill'} objectFit={'contain'} alt={'Garnish image'} />
@@ -274,18 +291,18 @@ export function GarnishForm(props: GarnishFormProps) {
           </div>
 
           <div className={'flex flex-col gap-2'}>
-            <div className={'form-control'}>
-              <label className={'label'} htmlFor={'notes'}>
-                <span className={'label-text'}>Notizen</span>
-                <span className={'label-text-alt space-x-2 text-error'}>
+            <FormControl>
+              <Label htmlFor={'notes'} className="flex-row items-center justify-between">
+                <LabelText>Notizen</LabelText>
+                <LabelTextAlt className={'space-x-2 text-error'}>
                   <span>
                     <>{errors.notes && errors.notes}</>
                   </span>
-                </span>
-              </label>
-              <textarea
+                </LabelTextAlt>
+              </Label>
+              <Textarea
                 id={'notes'}
-                className={`textarea textarea-bordered ${errors.notes && 'textarea-error'} w-full`}
+                className={errors.notes ? fieldErrorClass : undefined}
                 value={values.notes}
                 onChange={handleChange}
                 onBlur={handleBlur}
@@ -293,20 +310,20 @@ export function GarnishForm(props: GarnishFormProps) {
                 placeholder={'Lagerort, Lieferant, etc.'}
                 rows={5}
               />
-            </div>
+            </FormControl>
 
-            <div className={'form-control'}>
-              <label className={'label'} htmlFor={'description'}>
-                <span className={'label-text'}>Allgemeine Beschreibung</span>
-                <span className={'label-text-alt space-x-2 text-error'}>
+            <FormControl>
+              <Label htmlFor={'description'} className="flex-row items-center justify-between">
+                <LabelText>Allgemeine Beschreibung</LabelText>
+                <LabelTextAlt className={'space-x-2 text-error'}>
                   <span>
                     <>{errors.description && errors.description}</>
                   </span>
-                </span>
-              </label>
-              <textarea
+                </LabelTextAlt>
+              </Label>
+              <Textarea
                 id={'description'}
-                className={`textarea textarea-bordered ${errors.description && 'textarea-error'} w-full`}
+                className={errors.description ? fieldErrorClass : undefined}
                 value={values.description}
                 onChange={handleChange}
                 onBlur={handleBlur}
@@ -314,16 +331,16 @@ export function GarnishForm(props: GarnishFormProps) {
                 placeholder={'Das Öl der Zeste hilft, den Geschmack des Cocktails zu intensivieren, ...'}
                 rows={5}
               />
-            </div>
+            </FormControl>
             <div className={'w-full items-center justify-end'}>
-              <div className={'form-control'}>
-                <button disabled={isSubmitting || !isValid} type={'submit'} className={`btn btn-primary w-full`}>
-                  {isSubmitting ? <span className={'loading loading-spinner'} /> : null}
+              <FormControl>
+                <Button disabled={isSubmitting || !isValid} type={'submit'} variant="primary" wide>
+                  {isSubmitting ? <Loading size="sm" /> : null}
                   Speichern
-                </button>
-              </div>
+                </Button>
+              </FormControl>
               {!isValid && (
-                <div className={'font-thin italic text-error'}>
+                <div className={'font-thin text-error italic'}>
                   Nicht alle Felder sind korrekt ausgefüllt. Kontrolliere daher alle Felder. (Name gesetzt, Bild zugeschnitten, ... ?)
                 </div>
               )}

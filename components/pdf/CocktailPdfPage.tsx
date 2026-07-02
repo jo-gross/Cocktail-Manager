@@ -1,5 +1,6 @@
 import { CocktailRecipeFull } from 'models/CocktailRecipeFull';
 import React from 'react';
+import { Badge } from '@components/ui';
 
 interface CocktailPdfPageProps {
   cocktail: CocktailRecipeFull;
@@ -39,9 +40,9 @@ export function CocktailPdfPage({
                 {cocktail.tags.length > 0 && (
                   <div className="flex flex-wrap gap-1">
                     {cocktail.tags.map((tag) => (
-                      <div key={`pdf-tag-${tag}`} className="badge badge-primary badge-sm">
+                      <Badge key={`pdf-tag-${tag}`} variant="primary" size="sm">
                         {tag}
-                      </div>
+                      </Badge>
                     ))}
                   </div>
                 )}
@@ -116,21 +117,21 @@ export function CocktailPdfPage({
         {exportNotes && cocktail.notes && (
           <div className="mb-1">
             <div className="mb-1 text-lg font-bold">Zubereitungsnotizen</div>
-            <div className="long-text-format whitespace-pre-line text-xs">{cocktail.notes}</div>
+            <div className="long-text-format text-xs whitespace-pre-line">{cocktail.notes}</div>
           </div>
         )}
 
         {exportDescription && cocktail.description && (
           <div className="mb-1">
             <h2 className="mb-1 text-lg font-bold">Allgemeine Beschreibung</h2>
-            <div className="long-text-format whitespace-pre-line text-justify text-xs">{cocktail.description}</div>
+            <div className="long-text-format text-justify text-xs whitespace-pre-line">{cocktail.description}</div>
           </div>
         )}
 
         {exportHistory && cocktail.history && (
           <div className="mb-1">
             <h2 className="mb-1 text-lg font-bold">Geschichte und Entstehung</h2>
-            <div className="long-text-format whitespace-pre-line text-justify text-xs">{cocktail.history}</div>
+            <div className="long-text-format text-justify text-xs whitespace-pre-line">{cocktail.history}</div>
           </div>
         )}
       </div>

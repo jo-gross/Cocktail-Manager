@@ -2,7 +2,6 @@ import Link from 'next/link';
 import { ManageEntityLayout } from '@components/layout/ManageEntityLayout';
 import { ManageColumn } from '@components/ManageColumn';
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { Loading } from '@components/Loading';
 import { useRouter } from 'next/router';
 import { alertService } from '@lib/alertService';
 import { CocktailCalculationOverview } from '../../../../../models/CocktailCalculationOverview';
@@ -14,6 +13,33 @@ import { UserContext } from '@lib/context/UserContextProvider';
 import EntityImportModal from '../../../../../components/modals/EntityImportModal';
 import { ConfirmActionModal } from '../../../../../components/modals/ConfirmActionModal';
 import { NextPageWithPullToRefresh } from '../../../../../types/next';
+import {
+  Button,
+  Card,
+  CardBody,
+  Checkbox,
+  DataTable,
+  Dropdown,
+  DropdownContent,
+  Input,
+  Label,
+  LabelText,
+  Loading as UiLoading,
+  Menu,
+  Select,
+  SkeletonTableRows,
+  SortableHeaderCell,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeaderCell,
+  TableRow,
+  toggleSort,
+  Tooltip,
+  useSortableData,
+} from '@components/ui';
+import type { SortDirection } from '@components/ui';
 
 interface CalculationGroup {
   id: string;
@@ -38,6 +64,30 @@ const CocktailCalculationOverviewPage: NextPageWithPullToRefresh = () => {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [exportingJson, setExportingJson] = useState(false);
   const [exportingSingleId, setExportingSingleId] = useState<string | null>(null);
+  const [sortKey, setSortKey] = useState('name');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+
+  const handleSort = useCallback(
+    (key: string) => {
+      const next = toggleSort(sortKey, sortDirection, key);
+      setSortKey(next.key);
+      setSortDirection(next.direction);
+    },
+    [sortKey, sortDirection],
+  );
+
+  const getCalculationSortValue = useCallback((calc: CocktailCalculationOverview, key: string) => {
+    switch (key) {
+      case 'name':
+        return calc.name;
+      case 'cocktails':
+        return calc.cocktailCalculationItems.length;
+      case 'updatedAt':
+        return new Date(calc.updatedAt);
+      default:
+        return null;
+    }
+  }, []);
 
   const formatUpdatedAt = useCallback((dateString: string | Date) => {
     return new Date(dateString).toLocaleString('de-DE', {
@@ -91,21 +141,23 @@ const CocktailCalculationOverviewPage: NextPageWithPullToRefresh = () => {
   };
 
   const filteredCalculations = useMemo(
-    () => cocktailCalculations.filter((calc) => calc.name.toLowerCase().includes(filterString.toLowerCase())).sort((a, b) => a.name.localeCompare(b.name)),
+    () => cocktailCalculations.filter((calc) => calc.name.toLowerCase().includes(filterString.toLowerCase())),
     [cocktailCalculations, filterString],
   );
+
+  const sortedCalculations = useSortableData(filteredCalculations, { key: sortKey, direction: sortDirection }, getCalculationSortValue);
 
   const groupedCalculations = useMemo(() => {
     const grouped = calculationGroups
       .map((group) => ({
         group,
-        items: filteredCalculations.filter((calc) => calc.groupId === group.id),
+        items: sortedCalculations.filter((calc) => calc.groupId === group.id),
       }))
       .filter((entry) => entry.items.length > 0);
 
-    const ungrouped = filteredCalculations.filter((calc) => !calc.groupId);
+    const ungrouped = sortedCalculations.filter((calc) => !calc.groupId);
     return { grouped, ungrouped };
-  }, [calculationGroups, filteredCalculations]);
+  }, [calculationGroups, sortedCalculations]);
 
   const handleToggleSelect = useCallback(
     (id: string) => {
@@ -121,13 +173,13 @@ const CocktailCalculationOverviewPage: NextPageWithPullToRefresh = () => {
   );
 
   const handleToggleSelectAll = useCallback(() => {
-    const allSelected = filteredCalculations.every((c) => selectedIds.has(c.id));
+    const allSelected = sortedCalculations.every((c) => selectedIds.has(c.id));
     if (allSelected) {
       setSelectedIds(new Set());
     } else {
-      setSelectedIds(new Set(filteredCalculations.map((c) => c.id)));
+      setSelectedIds(new Set(sortedCalculations.map((c) => c.id)));
     }
-  }, [selectedIds, filteredCalculations]);
+  }, [selectedIds, sortedCalculations]);
 
   const handleToggleGroupCollapsed = useCallback((groupId: string) => {
     setCollapsedGroupIds((previous) => {
@@ -170,8 +222,8 @@ const CocktailCalculationOverviewPage: NextPageWithPullToRefresh = () => {
       modalContext.openModal(
         <div className={'grid grid-cols-1 gap-3 p-2'}>
           <div className={'text-xl font-bold'}>Gruppe zuordnen</div>
-          <select
-            className={'select select-bordered w-full'}
+          <Select
+            className="w-full"
             defaultValue={''}
             onChange={async (event) => {
               if (event.target.value === '') return;
@@ -187,7 +239,7 @@ const CocktailCalculationOverviewPage: NextPageWithPullToRefresh = () => {
                 {group.name}
               </option>
             ))}
-          </select>
+          </Select>
           <div className={'text-xs opacity-70'}>Tipp: In der Kalkulation selbst kannst du die Gruppe auch per Suchfeld auswählen.</div>
         </div>,
       );
@@ -200,14 +252,14 @@ const CocktailCalculationOverviewPage: NextPageWithPullToRefresh = () => {
     modalContext.openModal(
       <div className={'grid grid-cols-1 gap-3 p-2'}>
         <div className={'text-xl font-bold'}>Neue Gruppe</div>
-        <input id={'new-calculation-group-name'} className={'input input-bordered w-full'} placeholder={'Gruppenname'} autoFocus />
-        <label className={'label cursor-pointer justify-start gap-2'}>
-          <input id={'new-calculation-group-expanded'} type={'checkbox'} className={'checkbox checkbox-sm'} />
-          <span className={'label-text'}>Standardmäßig aufgeklappt</span>
-        </label>
-        <button
+        <Input id={'new-calculation-group-name'} className="w-full" placeholder={'Gruppenname'} autoFocus />
+        <Label className="cursor-pointer flex-row items-center justify-start gap-2">
+          <Checkbox id={'new-calculation-group-expanded'} checkboxSize="sm" />
+          <LabelText>Standardmäßig aufgeklappt</LabelText>
+        </Label>
+        <Button
           type={'button'}
-          className={'btn btn-primary'}
+          variant="primary"
           onClick={async () => {
             const nameInput = document.getElementById('new-calculation-group-name') as HTMLInputElement | null;
             const expandedInput = document.getElementById('new-calculation-group-expanded') as HTMLInputElement | null;
@@ -232,7 +284,7 @@ const CocktailCalculationOverviewPage: NextPageWithPullToRefresh = () => {
           }}
         >
           Erstellen
-        </button>
+        </Button>
       </div>,
     );
   }, [workspaceId, modalContext, refreshCocktailCalculations]);
@@ -385,195 +437,200 @@ const CocktailCalculationOverviewPage: NextPageWithPullToRefresh = () => {
       actions={
         <div className={'flex items-center gap-2'}>
           {selectedIds.size > 0 && (
-            <div className="dropdown dropdown-end">
-              <button tabIndex={0} className={'btn btn-outline btn-sm md:btn-md'}>
+            <Dropdown align="end">
+              <Button type="button" variant="outline" size="sm" className="md:h-10 md:min-h-10 md:px-4" tabIndex={0}>
                 <FaFileDownload />
                 {selectedIds.size} ausgewählt
                 <FaChevronDown />
-              </button>
-              <ul tabIndex={0} className="menu dropdown-content z-[1] mt-2 w-72 gap-1 rounded-box border border-base-200 bg-base-100 p-2 shadow-lg">
-                <li>
-                  <button type="button" className="flex items-center gap-2" onClick={handleExportJson} disabled={exportingJson}>
-                    {exportingJson ? <span className={'loading loading-spinner loading-sm'} /> : <FaFileDownload />}
-                    Als JSON exportieren ({selectedIds.size})
-                  </button>
-                </li>
-                <li>
-                  <button type="button" className="flex items-center gap-2" onClick={() => openAssignGroupModal(Array.from(selectedIds))}>
-                    <FaLayerGroup />
-                    Gruppe zuordnen ({selectedIds.size})
-                  </button>
-                </li>
-                <li>
-                  <button type="button" className="flex items-center gap-2" onClick={() => assignGroup(Array.from(selectedIds), null)}>
-                    <FaLayerGroup />
-                    Gruppenzuordnung entfernen ({selectedIds.size})
-                  </button>
-                </li>
-                {userContext.isUserPermitted(Role.ADMIN) && (
+              </Button>
+              <DropdownContent tabIndex={0} className="z-[1] mt-2 block w-72">
+                <Menu
+                  size="sm"
+                  className="gap-1 [&_button]:flex [&_button]:w-full [&_button]:items-center [&_button]:gap-2 [&_button]:rounded-field [&_button]:px-3 [&_button]:py-2 [&_button]:text-left [&_button]:hover:bg-base-200"
+                >
                   <li>
-                    <button type="button" className="flex items-center gap-2 text-error" onClick={handleBulkDelete}>
-                      <FaTrashAlt />
-                      Löschen ({selectedIds.size})
+                    <button type="button" onClick={handleExportJson} disabled={exportingJson}>
+                      {exportingJson ? <UiLoading size="sm" /> : <FaFileDownload />}
+                      Als JSON exportieren ({selectedIds.size})
                     </button>
                   </li>
-                )}
-              </ul>
-            </div>
+                  <li>
+                    <button type="button" onClick={() => openAssignGroupModal(Array.from(selectedIds))}>
+                      <FaLayerGroup />
+                      Gruppe zuordnen ({selectedIds.size})
+                    </button>
+                  </li>
+                  <li>
+                    <button type="button" onClick={() => assignGroup(Array.from(selectedIds), null)}>
+                      <FaLayerGroup />
+                      Gruppenzuordnung entfernen ({selectedIds.size})
+                    </button>
+                  </li>
+                  {userContext.isUserPermitted(Role.ADMIN) && (
+                    <li>
+                      <button type="button" className="text-error" onClick={handleBulkDelete}>
+                        <FaTrashAlt />
+                        Löschen ({selectedIds.size})
+                      </button>
+                    </li>
+                  )}
+                </Menu>
+              </DropdownContent>
+            </Dropdown>
           )}
-          <div className="dropdown dropdown-end">
-            <button tabIndex={0} className={'btn btn-outline btn-sm md:btn-md'}>
+          <Dropdown align="end">
+            <Button type="button" variant="outline" size="sm" className="md:h-10 md:min-h-10 md:px-4" tabIndex={0}>
               <FaLayerGroup />
               Gruppen
               <FaChevronDown />
-            </button>
-            <ul tabIndex={0} className="menu dropdown-content z-[1] mt-2 w-80 gap-1 rounded-box border border-base-200 bg-base-100 p-2 shadow-lg">
-              <li>
-                <button type={'button'} className={'flex items-center gap-2'} onClick={openCreateGroupModal}>
-                  <FaPlus />
-                  Neue Gruppe anlegen
-                </button>
-              </li>
-              <li className={'menu-title'}>
-                <span>Vorhandene Gruppen</span>
-              </li>
-              {calculationGroups.length === 0 ? (
+            </Button>
+            <DropdownContent tabIndex={0} className="z-[1] mt-2 block w-80">
+              <Menu
+                size="sm"
+                className="gap-1 [&_button]:flex [&_button]:w-full [&_button]:items-center [&_button]:gap-2 [&_button]:rounded-field [&_button]:px-3 [&_button]:py-2 [&_button]:text-left [&_button]:hover:bg-base-200"
+              >
                 <li>
-                  <span className={'opacity-70'}>Noch keine Gruppen vorhanden</span>
+                  <button type={'button'} onClick={openCreateGroupModal}>
+                    <FaPlus />
+                    Neue Gruppe anlegen
+                  </button>
                 </li>
-              ) : (
-                calculationGroups.map((group) => (
-                  <li key={group.id}>
-                    <div className={'flex items-center justify-between gap-2'}>
-                      <span className={'truncate'}>{group.name}</span>
-                      <div className={'flex items-center gap-1'}>
-                        <button
-                          type={'button'}
-                          className={'btn btn-ghost btn-xs'}
-                          title={'Standardmäßig aufgeklappt'}
-                          onClick={() => handleToggleGroupDefaultExpanded(group)}
-                        >
-                          {group.isDefaultExpanded ? 'Standard: Auf' : 'Standard: Zu'}
-                        </button>
-                        <button
-                          type={'button'}
-                          className={'btn btn-ghost btn-xs text-error'}
-                          title={`Gruppe "${group.name}" löschen`}
-                          onClick={() => handleDeleteGroup(group)}
-                        >
-                          <FaTrashAlt />
-                        </button>
-                      </div>
-                    </div>
+                <li className="pointer-events-none px-3 py-1 text-xs font-semibold uppercase opacity-60">
+                  <span>Vorhandene Gruppen</span>
+                </li>
+                {calculationGroups.length === 0 ? (
+                  <li>
+                    <span className={'opacity-70'}>Noch keine Gruppen vorhanden</span>
                   </li>
-                ))
-              )}
-            </ul>
-          </div>
-          <div className="dropdown dropdown-end">
-            <button tabIndex={0} className={'btn btn-outline btn-sm md:btn-md'}>
+                ) : (
+                  calculationGroups.map((group) => (
+                    <li key={group.id}>
+                      <div className={'flex items-center justify-between gap-2'}>
+                        <span className={'truncate'}>{group.name}</span>
+                        <div className={'flex items-center gap-1'}>
+                          <Button type={'button'} variant="ghost" size="xs" onClick={() => handleToggleGroupDefaultExpanded(group)}>
+                            {group.isDefaultExpanded ? 'Standard: Auf' : 'Standard: Zu'}
+                          </Button>
+                          <Tooltip tip={`Gruppe "${group.name}" löschen`}>
+                            <Button type={'button'} variant="ghost" size="xs" className="text-error" onClick={() => handleDeleteGroup(group)}>
+                              <FaTrashAlt />
+                            </Button>
+                          </Tooltip>
+                        </div>
+                      </div>
+                    </li>
+                  ))
+                )}
+              </Menu>
+            </DropdownContent>
+          </Dropdown>
+          <Dropdown align="end">
+            <Button type="button" variant="outline" size="sm" className="md:h-10 md:min-h-10 md:px-4" tabIndex={0}>
               <FaFileUpload />
               Import
               <FaChevronDown />
-            </button>
-            <ul tabIndex={0} className="menu dropdown-content z-[1] mt-2 w-52 gap-1 rounded-box border border-base-200 bg-base-100 p-2 shadow-lg">
-              <li>
-                <button
-                  type="button"
-                  className="flex items-center gap-2"
-                  onClick={() => {
-                    if (!workspaceId) return;
-                    modalContext.openModal(
-                      <EntityImportModal workspaceId={workspaceId as string} entityType="calculations" onImportComplete={refreshCocktailCalculations} />,
-                    );
-                  }}
-                >
-                  <FaFileUpload />
-                  Aus JSON importieren
-                </button>
-              </li>
-            </ul>
-          </div>
+            </Button>
+            <DropdownContent tabIndex={0} className="z-[1] mt-2 block w-52">
+              <Menu
+                size="sm"
+                className="gap-1 [&_button]:flex [&_button]:w-full [&_button]:items-center [&_button]:gap-2 [&_button]:rounded-field [&_button]:px-3 [&_button]:py-2 [&_button]:text-left [&_button]:hover:bg-base-200"
+              >
+                <li>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!workspaceId) return;
+                      modalContext.openModal(
+                        <EntityImportModal workspaceId={workspaceId as string} entityType="calculations" onImportComplete={refreshCocktailCalculations} />,
+                      );
+                    }}
+                  >
+                    <FaFileUpload />
+                    Aus JSON importieren
+                  </button>
+                </li>
+              </Menu>
+            </DropdownContent>
+          </Dropdown>
           <Link href={`/workspaces/${workspaceId}/manage/calculations/create`}>
-            <div className={'btn btn-square btn-primary btn-sm md:btn-md'}>
+            <Button variant="primary" shape="square" size="sm" className="md:h-10 md:min-h-10 md:w-10">
               <FaPlus />
-            </div>
+            </Button>
           </Link>
         </div>
       }
     >
-      <div className={'card'}>
-        <div className={'card-body'}>
-          <ListSearchField onFilterChange={(value) => setFilterString(value)} />
-          <div className="overflow-x-auto">
-            <table className="table-compact table table-zebra w-full">
-              <thead>
-                <tr>
-                  <th className="w-0">
-                    <input
-                      type="checkbox"
-                      className="checkbox checkbox-sm"
-                      checked={filteredCalculations.length > 0 && filteredCalculations.every((c) => selectedIds.has(c.id))}
+      <Card>
+        <CardBody>
+          <DataTable toolbar={<ListSearchField onFilterChange={(value) => setFilterString(value)} />}>
+            <Table zebra className="w-full">
+              <TableHead>
+                <TableRow>
+                  <TableHeaderCell className="w-0">
+                    <Checkbox
+                      checkboxSize="sm"
+                      checked={sortedCalculations.length > 0 && sortedCalculations.every((c) => selectedIds.has(c.id))}
                       onChange={handleToggleSelectAll}
-                      title="Alle auswählen"
+                      aria-label="Alle auswählen"
                     />
-                  </th>
-                  <th className="">Name</th>
-                  <th className="">Cocktails</th>
-                  <th className="">Zuletzt bearbeitet</th>
-                  <th className="flex justify-end"></th>
-                </tr>
-              </thead>
-              <tbody>
+                  </TableHeaderCell>
+                  <SortableHeaderCell sortKey="name" activeSortKey={sortKey} direction={sortDirection} onSort={handleSort}>
+                    Name
+                  </SortableHeaderCell>
+                  <SortableHeaderCell sortKey="cocktails" activeSortKey={sortKey} direction={sortDirection} onSort={handleSort}>
+                    Cocktails
+                  </SortableHeaderCell>
+                  <SortableHeaderCell sortKey="updatedAt" activeSortKey={sortKey} direction={sortDirection} onSort={handleSort}>
+                    Zuletzt bearbeitet
+                  </SortableHeaderCell>
+                  <TableHeaderCell className="flex justify-end"></TableHeaderCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
                 {loading ? (
-                  <tr className={'w-full'}>
-                    <td colSpan={5}>
-                      <Loading />
-                    </td>
-                  </tr>
-                ) : filteredCalculations.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className={'text-center'}>
+                  <SkeletonTableRows columns={5} avatarColumn={-1} />
+                ) : sortedCalculations.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className={'text-center'}>
                       Keine Einträge gefunden
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ) : (
                   <>
                     {groupedCalculations.grouped.map(({ group, items }) => (
                       <React.Fragment key={`group-${group.id}`}>
-                        <tr className={'bg-base-200'}>
-                          <td colSpan={5}>
-                            <button type={'button'} className={'btn btn-ghost btn-sm gap-2'} onClick={() => handleToggleGroupCollapsed(group.id)}>
+                        <TableRow className={'bg-base-200'}>
+                          <TableCell colSpan={5}>
+                            <Button type={'button'} variant="ghost" size="sm" className="gap-2" onClick={() => handleToggleGroupCollapsed(group.id)}>
                               {collapsedGroupIds.has(group.id) ? <FaChevronRight /> : <FaChevronDown />}
                               <span className={'font-semibold'}>{group.name}</span>
                               <span className={'opacity-70'}>({items.length})</span>
-                            </button>
-                          </td>
-                        </tr>
+                            </Button>
+                          </TableCell>
+                        </TableRow>
                         {!collapsedGroupIds.has(group.id) &&
                           items.map((cocktailCalculation) => (
-                            <tr key={cocktailCalculation.id}>
-                              <td className="w-0">
-                                <input
-                                  type="checkbox"
-                                  className="checkbox checkbox-sm"
+                            <TableRow key={cocktailCalculation.id}>
+                              <TableCell className="w-0">
+                                <Checkbox
+                                  checkboxSize="sm"
                                   checked={selectedIds.has(cocktailCalculation.id)}
                                   onChange={() => handleToggleSelect(cocktailCalculation.id)}
                                 />
-                              </td>
-                              <td>{cocktailCalculation.name}</td>
-                              <td>
+                              </TableCell>
+                              <TableCell>{cocktailCalculation.name}</TableCell>
+                              <TableCell>
                                 {cocktailCalculation.cocktailCalculationItems
                                   .map((calculationItem) => calculationItem.cocktail.name)
                                   .sort((a, b) => a.localeCompare(b))
                                   .join(', ')}
-                              </td>
-                              <td>
+                              </TableCell>
+                              <TableCell>
                                 <div className="flex flex-col leading-tight">
                                   <span>von {cocktailCalculation.updatedByUser.name}</span>
                                   <span className="text-xs opacity-70">{formatUpdatedAt(cocktailCalculation.updatedAt)}</span>
                                 </div>
-                              </td>
+                              </TableCell>
                               <ManageColumn
                                 entity={'calculations'}
                                 name={cocktailCalculation.name}
@@ -596,40 +653,39 @@ const CocktailCalculationOverviewPage: NextPageWithPullToRefresh = () => {
                                   },
                                 ]}
                               />
-                            </tr>
+                            </TableRow>
                           ))}
                       </React.Fragment>
                     ))}
                     {groupedCalculations.ungrouped.length > 0 && (
                       <>
-                        <tr className={'bg-base-200'}>
-                          <td colSpan={5}>
+                        <TableRow className={'bg-base-200'}>
+                          <TableCell colSpan={5}>
                             <div className={'px-2 py-1 font-semibold'}>Ohne Gruppe ({groupedCalculations.ungrouped.length})</div>
-                          </td>
-                        </tr>
+                          </TableCell>
+                        </TableRow>
                         {groupedCalculations.ungrouped.map((cocktailCalculation) => (
-                          <tr key={cocktailCalculation.id}>
-                            <td className="w-0">
-                              <input
-                                type="checkbox"
-                                className="checkbox checkbox-sm"
+                          <TableRow key={cocktailCalculation.id}>
+                            <TableCell className="w-0">
+                              <Checkbox
+                                checkboxSize="sm"
                                 checked={selectedIds.has(cocktailCalculation.id)}
                                 onChange={() => handleToggleSelect(cocktailCalculation.id)}
                               />
-                            </td>
-                            <td>{cocktailCalculation.name}</td>
-                            <td>
+                            </TableCell>
+                            <TableCell>{cocktailCalculation.name}</TableCell>
+                            <TableCell>
                               {cocktailCalculation.cocktailCalculationItems
                                 .map((calculationItem) => calculationItem.cocktail.name)
                                 .sort((a, b) => a.localeCompare(b))
                                 .join(', ')}
-                            </td>
-                            <td>
+                            </TableCell>
+                            <TableCell>
                               <div className="flex flex-col leading-tight">
                                 <span>von {cocktailCalculation.updatedByUser.name}</span>
                                 <span className="text-xs opacity-70">{formatUpdatedAt(cocktailCalculation.updatedAt)}</span>
                               </div>
-                            </td>
+                            </TableCell>
                             <ManageColumn
                               entity={'calculations'}
                               name={cocktailCalculation.name}
@@ -647,17 +703,17 @@ const CocktailCalculationOverviewPage: NextPageWithPullToRefresh = () => {
                                 },
                               ]}
                             />
-                          </tr>
+                          </TableRow>
                         ))}
                       </>
                     )}
                   </>
                 )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
+              </TableBody>
+            </Table>
+          </DataTable>
+        </CardBody>
+      </Card>
     </ManageEntityLayout>
   );
 };

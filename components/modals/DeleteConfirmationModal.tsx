@@ -1,6 +1,7 @@
 import { useContext, useState } from 'react';
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import { alertService } from '@lib/alertService';
+import { Button, Loading } from '@components/ui';
 
 interface Reference {
   id: string;
@@ -53,20 +54,20 @@ export function DeleteConfirmationModal(props: DeleteConfirmationModalProps) {
       </div>
       <div className="flex flex-row space-x-4">
         <div className={'flex-1'}></div>
-        <button
+        <Button
           disabled={isDeleting}
-          className={`btn btn-outline`}
+          variant="outline"
           onClick={() => {
             props.onCancel?.();
             modalContext.closeModal();
           }}
         >
           {hasReferences ? 'Schließen' : 'Abbrechen'}
-        </button>
+        </Button>
         {!hasReferences && (
-          <button
+          <Button
             disabled={isDeleting}
-            className={`btn-red btn`}
+            variant="error"
             onClick={async () => {
               setIsDeleting(true);
               try {
@@ -80,9 +81,9 @@ export function DeleteConfirmationModal(props: DeleteConfirmationModalProps) {
               }
             }}
           >
-            {isDeleting ? <span className={'loading loading-spinner'} /> : <></>}
+            {isDeleting ? <Loading size="sm" /> : null}
             {props.spelling == 'DELETE' ? 'Löschen' : props.spelling == 'REMOVE' ? 'Entfernen' : 'Abbruch bestätigen'}
-          </button>
+          </Button>
         )}
       </div>
     </div>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { FaCheck, FaChevronDown, FaSearch } from 'react-icons/fa';
+import { Button, Input, Loading, Menu, MenuItem } from '@components/ui';
 
 interface ComboboxOption {
   id: string;
@@ -183,23 +184,24 @@ export function EntityCombobox({
   return (
     <div ref={containerRef} className="relative w-full">
       {/* Trigger Button */}
-      <div className={`btn btn-sm w-full justify-between ${disabled ? 'btn-disabled' : ''}`} onClick={() => !disabled && setIsOpen(!isOpen)}>
+      <Button type="button" size="sm" variant="outline" className="w-full justify-between" disabled={disabled} onClick={() => !disabled && setIsOpen(!isOpen)}>
         <span className="truncate">{selectedOption ? getOptionLabelRef.current(selectedOption) : placeholder}</span>
         <FaChevronDown className={`ml-2 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
-      </div>
+      </Button>
 
       {/* Dropdown */}
       {isOpen && !disabled && (
         <div className="absolute z-[100] mt-2 w-full rounded-lg border border-base-300 bg-base-100 shadow-lg">
           {/* Search Input */}
           <div className="border-b border-base-300 p-2">
-            <div className="input input-sm flex items-center gap-2">
+            <div className="flex items-center gap-2 rounded-field border border-base-content/20 bg-base-100 px-3 py-1">
               <FaSearch className="opacity-50" />
-              <input
+              <Input
                 ref={inputRef}
                 type="text"
+                bordered={false}
                 placeholder="Suchen..."
-                className="grow"
+                className="h-8 min-h-8 flex-1 border-0 px-0 focus:ring-0"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 onClick={(e) => e.stopPropagation()}
@@ -211,25 +213,29 @@ export function EntityCombobox({
           <div className="max-h-60 overflow-y-auto p-2">
             {loading ? (
               <div className="flex items-center justify-center py-4">
-                <span className="loading loading-spinner loading-sm" />
+                <Loading size="sm" />
               </div>
             ) : options.length === 0 ? (
               <div className="py-4 text-center text-sm text-base-content/50">Keine Ergebnisse gefunden</div>
             ) : (
-              <ul className="menu menu-sm gap-1 p-0">
+              <Menu size="sm" className="gap-1 p-0">
                 {options.map((option, index) => {
                   const optionValue = getOptionValue(option);
                   const isSelected = value === optionValue;
                   return (
-                    <li key={index}>
-                      <button type="button" className={`flex items-center justify-between ${isSelected ? 'active' : ''}`} onClick={() => handleSelect(option)}>
+                    <MenuItem key={index}>
+                      <button
+                        type="button"
+                        className={`flex w-full items-center justify-between rounded-field px-3 py-2 text-left hover:bg-base-200 ${isSelected ? 'bg-base-200 font-medium' : ''}`}
+                        onClick={() => handleSelect(option)}
+                      >
                         <span>{getOptionLabel(option)}</span>
                         {isSelected && <FaCheck className="text-primary" />}
                       </button>
-                    </li>
+                    </MenuItem>
                   );
                 })}
-              </ul>
+              </Menu>
             )}
           </div>
         </div>

@@ -3,7 +3,6 @@ import Link from 'next/link';
 import { ManageEntityLayout } from '@components/layout/ManageEntityLayout';
 import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import { Loading } from '@components/Loading';
 import { FaCheck, FaChevronDown, FaFileDownload, FaFileUpload, FaInfoCircle, FaPlus, FaTimes } from 'react-icons/fa';
 import { ManageColumn } from '@components/ManageColumn';
 import { UserContext } from '@lib/context/UserContextProvider';
@@ -18,6 +17,30 @@ import EntityImportModal from '../../../../../components/modals/EntityImportModa
 import '../../../../../lib/NumberUtils';
 import { NextPageWithPullToRefresh } from '../../../../../types/next';
 import { normalizeString } from '@lib/StringUtils';
+import {
+  Badge,
+  Button,
+  Card,
+  CardBody,
+  Checkbox,
+  DataTable,
+  Dropdown,
+  DropdownContent,
+  Loading as UiLoading,
+  Menu,
+  SkeletonTableRows,
+  SortableHeaderCell,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeaderCell,
+  TableImageCell,
+  TableRow,
+  toggleSort,
+  useSortableData,
+} from '@components/ui';
+import type { SortDirection } from '@components/ui';
 
 const IngredientsOverviewPage: NextPageWithPullToRefresh = () => {
   const router = useRouter();
@@ -33,6 +56,17 @@ const IngredientsOverviewPage: NextPageWithPullToRefresh = () => {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [exportingJson, setExportingJson] = useState(false);
   const [exportingSingleId, setExportingSingleId] = useState<string | null>(null);
+  const [sortKey, setSortKey] = useState('name');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+
+  const handleSort = useCallback(
+    (key: string) => {
+      const next = toggleSort(sortKey, sortDirection, key);
+      setSortKey(next.key);
+      setSortDirection(next.direction);
+    },
+    [sortKey, sortDirection],
+  );
 
   useEffect(() => {
     fetchIngredients(workspaceId, setIngredients, setLoading);
@@ -42,14 +76,29 @@ const IngredientsOverviewPage: NextPageWithPullToRefresh = () => {
     fetchIngredients(workspaceId, setIngredients, setLoading);
   };
 
-  const filteredIngredients = ingredients
-    .filter(
-      (ingredient) =>
-        normalizeString(ingredient.name).includes(normalizeString(filterString)) ||
-        (ingredient.shortName != null && normalizeString(ingredient.shortName).includes(normalizeString(filterString))) ||
-        ingredient.tags.some((tag) => normalizeString(tag).includes(normalizeString(filterString))),
-    )
-    .sort((a, b) => a.name.localeCompare(b.name));
+  const getIngredientSortValue = useCallback((ingredient: IngredientModel, key: string) => {
+    switch (key) {
+      case 'name':
+        return ingredient.name;
+      case 'shortName':
+        return ingredient.shortName ?? null;
+      case 'price':
+        return ingredient.price ?? null;
+      case 'link':
+        return ingredient.link ?? null;
+      default:
+        return null;
+    }
+  }, []);
+
+  const filteredIngredients = ingredients.filter(
+    (ingredient) =>
+      normalizeString(ingredient.name).includes(normalizeString(filterString)) ||
+      (ingredient.shortName != null && normalizeString(ingredient.shortName).includes(normalizeString(filterString))) ||
+      ingredient.tags.some((tag) => normalizeString(tag).includes(normalizeString(filterString))),
+  );
+
+  const sortedIngredients = useSortableData(filteredIngredients, { key: sortKey, direction: sortDirection }, getIngredientSortValue);
 
   const handleToggleSelect = useCallback(
     (id: string) => {
@@ -65,13 +114,13 @@ const IngredientsOverviewPage: NextPageWithPullToRefresh = () => {
   );
 
   const handleToggleSelectAll = useCallback(() => {
-    const allSelected = filteredIngredients.every((i) => selectedIds.has(i.id));
+    const allSelected = sortedIngredients.every((i) => selectedIds.has(i.id));
     if (allSelected) {
       setSelectedIds(new Set());
     } else {
-      setSelectedIds(new Set(filteredIngredients.map((i) => i.id)));
+      setSelectedIds(new Set(sortedIngredients.map((i) => i.id)));
     }
-  }, [selectedIds, filteredIngredients]);
+  }, [selectedIds, sortedIngredients]);
 
   const handleExportJson = useCallback(async () => {
     if (!workspaceId || selectedIds.size === 0) return;
@@ -155,130 +204,135 @@ const IngredientsOverviewPage: NextPageWithPullToRefresh = () => {
       actions={
         <div className={'flex items-center gap-2'}>
           {selectedIds.size > 0 && (
-            <div className="dropdown dropdown-end">
-              <button tabIndex={0} className={'btn btn-outline btn-sm md:btn-md'}>
+            <Dropdown align="end">
+              <Button type="button" variant="outline" size="sm" className="md:h-10 md:min-h-10 md:px-4" tabIndex={0}>
                 <FaFileDownload />
                 {selectedIds.size} ausgewählt
                 <FaChevronDown />
-              </button>
-              <ul tabIndex={0} className="menu dropdown-content z-[1] mt-2 w-64 gap-1 rounded-box border border-base-200 bg-base-100 p-2 shadow-lg">
-                <li>
-                  <button type="button" className="flex items-center gap-2" onClick={handleExportJson} disabled={exportingJson}>
-                    {exportingJson ? <span className={'loading loading-spinner loading-sm'} /> : <FaFileDownload />}
-                    Als JSON exportieren ({selectedIds.size})
-                  </button>
-                </li>
-              </ul>
-            </div>
+              </Button>
+              <DropdownContent tabIndex={0} className="z-[1] mt-2 block w-64">
+                <Menu
+                  size="sm"
+                  className="gap-1 [&_button]:flex [&_button]:w-full [&_button]:items-center [&_button]:gap-2 [&_button]:rounded-field [&_button]:px-3 [&_button]:py-2 [&_button]:text-left [&_button]:hover:bg-base-200"
+                >
+                  <li>
+                    <button type="button" onClick={handleExportJson} disabled={exportingJson}>
+                      {exportingJson ? <UiLoading size="sm" /> : <FaFileDownload />}
+                      Als JSON exportieren ({selectedIds.size})
+                    </button>
+                  </li>
+                </Menu>
+              </DropdownContent>
+            </Dropdown>
           )}
-          <div className="dropdown dropdown-end">
-            <button tabIndex={0} className={'btn btn-outline btn-sm md:btn-md'}>
+          <Dropdown align="end">
+            <Button type="button" variant="outline" size="sm" className="md:h-10 md:min-h-10 md:px-4" tabIndex={0}>
               <FaFileUpload />
               Import/Export
               <FaChevronDown />
-            </button>
-            <ul tabIndex={0} className="menu dropdown-content z-[1] mt-2 w-52 gap-1 rounded-box border border-base-200 bg-base-100 p-2 shadow-lg">
-              <li>
-                <button
-                  type="button"
-                  className="flex items-center gap-2"
-                  onClick={() => {
-                    if (!workspaceId) return;
-                    modalContext.openModal(
-                      <EntityImportModal
-                        workspaceId={workspaceId as string}
-                        entityType="ingredients"
-                        onImportComplete={() => fetchIngredients(workspaceId, setIngredients, setLoading)}
-                      />,
-                    );
-                  }}
-                >
-                  <FaFileUpload />
-                  Aus JSON importieren
-                </button>
-              </li>
-            </ul>
-          </div>
+            </Button>
+            <DropdownContent tabIndex={0} className="z-[1] mt-2 block w-52">
+              <Menu
+                size="sm"
+                className="gap-1 [&_button]:flex [&_button]:w-full [&_button]:items-center [&_button]:gap-2 [&_button]:rounded-field [&_button]:px-3 [&_button]:py-2 [&_button]:text-left [&_button]:hover:bg-base-200"
+              >
+                <li>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!workspaceId) return;
+                      modalContext.openModal(
+                        <EntityImportModal
+                          workspaceId={workspaceId as string}
+                          entityType="ingredients"
+                          onImportComplete={() => fetchIngredients(workspaceId, setIngredients, setLoading)}
+                        />,
+                      );
+                    }}
+                  >
+                    <FaFileUpload />
+                    Aus JSON importieren
+                  </button>
+                </li>
+              </Menu>
+            </DropdownContent>
+          </Dropdown>
           {userContext.isUserPermitted(Role.MANAGER) && (
             <Link href={`/workspaces/${workspaceId}/manage/ingredients/create`}>
-              <div className={'btn btn-square btn-primary btn-sm md:btn-md'}>
+              <Button variant="primary" shape="square" size="sm" className="md:h-10 md:min-h-10 md:w-10">
                 <FaPlus />
-              </div>
+              </Button>
             </Link>
           )}
         </div>
       }
     >
-      <div className={'card'}>
-        <div className={'card-body'}>
-          <ListSearchField onFilterChange={(filterString) => setFilterString(filterString)} />
-          <div className="overflow-x-auto">
-            <table className="table-compact table table-zebra w-full">
-              <thead>
-                <tr>
-                  <th className="w-0">
-                    <input
-                      type="checkbox"
-                      className="checkbox checkbox-sm"
-                      checked={filteredIngredients.length > 0 && filteredIngredients.every((i) => selectedIds.has(i.id))}
+      <Card>
+        <CardBody>
+          <DataTable toolbar={<ListSearchField onFilterChange={(filterString) => setFilterString(filterString)} />}>
+            <Table zebra className="w-full">
+              <TableHead>
+                <TableRow>
+                  <TableHeaderCell className="w-0">
+                    <Checkbox
+                      checkboxSize="sm"
+                      checked={sortedIngredients.length > 0 && sortedIngredients.every((i) => selectedIds.has(i.id))}
                       onChange={handleToggleSelectAll}
-                      title="Alle auswählen"
+                      aria-label="Alle auswählen"
                     />
-                  </th>
-                  <th className="w-0"></th>
-                  <th>Zutat</th>
-                  <th>Eigene Bezeichnung</th>
-                  <th>Notizen</th>
-                  <th>Preis</th>
-                  <th>Verfügbare Menge(n)</th>
-                  <th>Preis/Menge</th>
-                  <th>Tags</th>
-                  <th>Link</th>
-                  <th>Seite</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
+                  </TableHeaderCell>
+                  <TableHeaderCell className="w-0"></TableHeaderCell>
+                  <SortableHeaderCell sortKey="name" activeSortKey={sortKey} direction={sortDirection} onSort={handleSort}>
+                    Zutat
+                  </SortableHeaderCell>
+                  <SortableHeaderCell sortKey="shortName" activeSortKey={sortKey} direction={sortDirection} onSort={handleSort}>
+                    Eigene Bezeichnung
+                  </SortableHeaderCell>
+                  <TableHeaderCell>Notizen</TableHeaderCell>
+                  <SortableHeaderCell sortKey="price" activeSortKey={sortKey} direction={sortDirection} onSort={handleSort}>
+                    Preis
+                  </SortableHeaderCell>
+                  <TableHeaderCell>Verfügbare Menge(n)</TableHeaderCell>
+                  <TableHeaderCell>Preis/Menge</TableHeaderCell>
+                  <TableHeaderCell>Tags</TableHeaderCell>
+                  <SortableHeaderCell sortKey="link" activeSortKey={sortKey} direction={sortDirection} onSort={handleSort}>
+                    Link
+                  </SortableHeaderCell>
+                  <TableHeaderCell>Seite</TableHeaderCell>
+                  <TableHeaderCell></TableHeaderCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
                 {loading ? (
-                  <tr>
-                    <td colSpan={12}>
-                      <Loading />
-                    </td>
-                  </tr>
-                ) : filteredIngredients.length == 0 ? (
-                  <tr>
-                    <td colSpan={12} className="text-center">
+                  <SkeletonTableRows columns={12} avatarColumn={1} />
+                ) : sortedIngredients.length == 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={12} className="text-center">
                       Keine Einträge gefunden
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ) : (
-                  filteredIngredients.map((ingredient) => (
-                    <tr key={ingredient.id}>
-                      <td className="w-0">
-                        <input
-                          type="checkbox"
-                          className="checkbox checkbox-sm"
-                          checked={selectedIds.has(ingredient.id)}
-                          onChange={() => handleToggleSelect(ingredient.id)}
-                        />
-                      </td>
-                      <td className="w-0 p-0">
-                        {ingredient._count.IngredientImage !== 0 && (
-                          <div
-                            className="h-12 w-12 cursor-pointer"
-                            onClick={() =>
-                              modalContext.openModal(<ImageModal image={`/api/workspaces/${ingredient.workspaceId}/ingredients/${ingredient.id}/image`} />)
-                            }
-                          >
-                            <AvatarImage src={`/api/workspaces/${ingredient.workspaceId}/ingredients/${ingredient.id}/image`} alt={'Zutat'} />
-                          </div>
-                        )}
-                      </td>
-                      <td className={''}>{ingredient.name}</td>
-                      <td>{ingredient.shortName}</td>
-                      <td>
-                        <button
-                          className={'btn btn-ghost btn-sm flex flex-row items-center gap-2'}
+                  sortedIngredients.map((ingredient) => (
+                    <TableRow key={ingredient.id}>
+                      <TableCell className="w-0">
+                        <Checkbox checkboxSize="sm" checked={selectedIds.has(ingredient.id)} onChange={() => handleToggleSelect(ingredient.id)} />
+                      </TableCell>
+                      <TableImageCell
+                        hasImage={ingredient._count.IngredientImage !== 0}
+                        onImageClick={() =>
+                          modalContext.openModal(<ImageModal image={`/api/workspaces/${ingredient.workspaceId}/ingredients/${ingredient.id}/image`} />)
+                        }
+                      >
+                        <AvatarImage src={`/api/workspaces/${ingredient.workspaceId}/ingredients/${ingredient.id}/image`} alt={'Zutat'} />
+                      </TableImageCell>
+                      <TableCell className={''}>{ingredient.name}</TableCell>
+                      <TableCell>{ingredient.shortName}</TableCell>
+                      <TableCell>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="flex flex-row items-center gap-2"
                           onClick={() => {
                             modalContext.openModal(
                               <div className={'flex flex-col gap-2'}>
@@ -293,38 +347,38 @@ const IngredientsOverviewPage: NextPageWithPullToRefresh = () => {
                         >
                           <FaInfoCircle />
                           <span>Anzeigen</span>
-                        </button>
-                      </td>
-                      <td className={'whitespace-nowrap'}>{ingredient.price?.formatPrice() ?? '-'} €</td>
-                      <td className={''}>
+                        </Button>
+                      </TableCell>
+                      <TableCell className={'whitespace-nowrap'}>{ingredient.price?.formatPrice() ?? '-'} €</TableCell>
+                      <TableCell className={''}>
                         {ingredient.IngredientVolume.map((volume) => (
                           <div key={`ingredient-${ingredient.id}-volume-unit-${volume.id}`} className={'whitespace-nowrap'}>
                             {volume.volume.toFixed(2).replace(/\D00(?=\D*$)/, '')} {userContext.getTranslation(volume.unit.name, 'de')}
                           </div>
                         ))}
-                      </td>
-                      <td>
+                      </TableCell>
+                      <TableCell>
                         {ingredient.IngredientVolume.map((volume) => (
                           <div key={`ingredient-${ingredient.id}-volume-unit-price-${volume.id}`} className={'whitespace-nowrap'}>
                             {((ingredient.price ?? 0) / volume.volume).formatPrice()} €/{userContext.getTranslation(volume.unit.name, 'de')}
                           </div>
                         ))}
-                      </td>
-                      <td>
+                      </TableCell>
+                      <TableCell>
                         {ingredient.tags.map((tag) => (
-                          <div key={`ingredient-${ingredient.id}-tags-${tag}`} className={'badge badge-primary badge-outline m-1'}>
+                          <Badge key={`ingredient-${ingredient.id}-tags-${tag}`} variant="primary" outline size="sm" className="m-1">
                             {tag}
-                          </div>
+                          </Badge>
                         ))}
-                      </td>
-                      <td>
+                      </TableCell>
+                      <TableCell>
                         {ingredient.link
                           ?.replace('https://', '')
                           .replace('http://', '')
                           .replace('www.', '')
                           .substring(0, ingredient.link?.replace('https://', '').replace('http://', '').replace('www.', '').indexOf('/')) ?? ''}
-                      </td>
-                      <td>
+                      </TableCell>
+                      <TableCell>
                         {ingredient.link == undefined ? (
                           <div className={'text-red-500'}>
                             <FaTimes />
@@ -334,7 +388,7 @@ const IngredientsOverviewPage: NextPageWithPullToRefresh = () => {
                             <FaCheck />
                           </div>
                         )}
-                      </td>
+                      </TableCell>
                       <ManageColumn
                         entity={'ingredients'}
                         id={ingredient.id}
@@ -343,14 +397,14 @@ const IngredientsOverviewPage: NextPageWithPullToRefresh = () => {
                         onExportJson={handleExportSingleJson}
                         exportingJson={exportingSingleId === ingredient.id}
                       />
-                    </tr>
+                    </TableRow>
                   ))
                 )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
+              </TableBody>
+            </Table>
+          </DataTable>
+        </CardBody>
+      </Card>
     </ManageEntityLayout>
   );
 };

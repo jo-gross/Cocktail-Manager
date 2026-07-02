@@ -4,23 +4,24 @@ import { MultiValue } from 'react-select';
 import classNames from 'classnames';
 import '../lib/ArrayUtils';
 import { useRouter } from 'next/router';
+import { Badge, Button } from '@components/ui';
 
 interface TagOption {
   value: string;
   label: string;
 }
 
-interface DaisyUITagInputProps {
+interface TagInputProps {
   value: string[];
   onChange: (tags: string[]) => void;
   validate?: (tag: string) => boolean;
 }
 
-export function DaisyUITagInput(props: DaisyUITagInputProps) {
-  // Hilfsfunktion: Wandelt die Tags in das Format von `react-select` um
+const inputControlClasses =
+  'w-full min-h-10 h-10 rounded-field border border-base-content/20 bg-base-100 px-3 text-sm text-base-content outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/25';
+
+export function TagInput(props: TagInputProps) {
   const formatTags = (tags: string[]) => tags.map((tag) => ({ value: tag, label: tag }));
-  // Hilfsfunktion: Wandelt das Format von `react-select` zurück in ein Array von Strings
-  const _parseTags = (options: { value: string; label: string }[]) => options.map((option) => option.value);
 
   const handleChange = (options: MultiValue<TagOption>) => {
     const newTags = options ? options.map((option) => option.value) : [];
@@ -29,7 +30,6 @@ export function DaisyUITagInput(props: DaisyUITagInputProps) {
 
   const handleCreate = (inputValue: string) => {
     if (props.validate && !props.validate(inputValue)) {
-      // Validierung schlägt fehl, also Abbruch
       return;
     }
     const newTags = [...props.value, inputValue];
@@ -46,11 +46,9 @@ export function DaisyUITagInput(props: DaisyUITagInputProps) {
     });
   }, [workspaceId]);
 
-  // Keep placeholder visible: https://github.com/JedWatson/react-select/issues/1828
   const [menuIsOpen, setMenuIsOpen] = useState(false);
 
   return (
-    // <div className="input-bordered w-full rounded-box border p-2">
     <div className="w-full">
       <CreatableSelect
         isMulti
@@ -68,42 +66,45 @@ export function DaisyUITagInput(props: DaisyUITagInputProps) {
         formatCreateLabel={(inputValue) => `Erstelle "${inputValue}"`}
         hideSelectedOptions={false}
         backspaceRemovesValue={false}
-        // Keep placeholder visible: https://github.com/JedWatson/react-select/issues/1828
         controlShouldRenderValue={menuIsOpen}
         onMenuOpen={() => setMenuIsOpen(true)}
         onMenuClose={() => setMenuIsOpen(false)}
-        // Apply DaisyUI classes
-        unstyled // Remove all non-essential styles
+        unstyled
         classNames={{
-          control: ({ isDisabled: _isDisabled, isFocused: _isFocused }) => classNames('select', 'select-bordered'),
+          control: () => inputControlClasses,
           indicatorsContainer: () => classNames('invisible'),
-          menu: () => classNames('dropdown', 'dropdown-open', 'w-full'),
-          menuList: () => classNames('dropdown-content', 'w-full', 'bg-base-100', 'rounded-lg'),
+          menu: () => classNames('absolute z-50 mt-1 w-full'),
+          menuList: () => classNames('w-full rounded-field border border-base-content/20 bg-base-100 shadow-lg'),
           multiValue: () => classNames('invisible', 'w-0'),
           option: ({ isDisabled, isFocused, isSelected }) =>
             classNames(
-              isFocused ? 'bg-secondary' : isSelected ? 'bg-primary' : 'bg-transparent',
-              isDisabled ? 'text-neutral-200' : isFocused ? 'text-secondary-content' : isSelected ? 'text-primary-content' : 'text-inherit',
-              'py-2',
-              'px-3',
+              'cursor-pointer px-3 py-2',
+              isDisabled && 'text-base-content/30',
+              isFocused && 'bg-secondary text-secondary-content',
+              isSelected && !isFocused && 'bg-primary text-primary-content',
+              !isFocused && !isSelected && !isDisabled && 'text-base-content',
             ),
-          placeholder: () => classNames('text-neutral-500', 'mx-0.5'),
+          placeholder: () => classNames('mx-0.5 text-base-content/50'),
         }}
       />
-      <div className={'pt-2'}>
+      <div className="flex flex-wrap gap-1 pt-2">
         {props.value.map((tag) => (
-          <span key={tag} className="badge badge-primary mr-1">
+          <Badge key={tag} variant="primary" className="gap-1">
             {tag}
-            <button
-              className="btn btn-square btn-ghost btn-xs"
+            <Button
+              type="button"
+              variant="ghost"
+              shape="square"
+              size="xs"
+              className="h-4 min-h-4 w-4 text-inherit hover:bg-primary-content/20"
               onClick={() => {
                 const newTags = props.value.filter((t) => t !== tag);
                 props.onChange(newTags);
               }}
             >
               &times;
-            </button>
-          </span>
+            </Button>
+          </Badge>
         ))}
       </div>
     </div>

@@ -8,7 +8,7 @@ export default function Document() {
         <meta name="description" content="Cocktailverwaltung" />
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem('theme');if(t){t=JSON.parse(t);if(t==='dark')document.documentElement.setAttribute('data-theme','halloween');else if(t==='light')document.documentElement.setAttribute('data-theme','autumn')}}catch(e){}})()`,
+            __html: `(function(){try{var t=localStorage.getItem('theme');if(t){t=JSON.parse(t);if(t==='dark')document.documentElement.setAttribute('data-theme','dark');else if(t==='light')document.documentElement.setAttribute('data-theme','light')}}catch(e){}})()`,
           }}
         />
 

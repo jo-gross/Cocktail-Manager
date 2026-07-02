@@ -1,4 +1,5 @@
 import React, { useContext } from 'react';
+import { Button, ButtonGroup } from '@components/ui';
 import { ThemeContext } from '@lib/context/ThemeContextProvider';
 import { MdOutlineBrightnessAuto } from 'react-icons/md';
 import { FaMoon, FaSun } from 'react-icons/fa';
@@ -14,9 +15,10 @@ export default function ThemeChanger({ disabled = false }: ThemeChangerProps) {
   const themeContext = useContext(ThemeContext);
 
   return (
-    <div className={`join self-center ${disabled ? 'opacity-50' : ''}`}>
-      <button
-        className={`btn join-item ${themeContext.theme == 'dark' ? 'btn-primary' : 'btn-outline'}`}
+    <ButtonGroup className={`self-center ${disabled ? 'opacity-50' : ''}`}>
+      <Button
+        joinItem
+        variant={themeContext.theme == 'dark' ? 'primary' : 'outline'}
         disabled={disabled}
         onClick={() => {
           if (!disabled) {
@@ -25,9 +27,10 @@ export default function ThemeChanger({ disabled = false }: ThemeChangerProps) {
         }}
       >
         <FaMoon />
-      </button>
-      <button
-        className={`btn join-item ${themeContext.theme == 'auto' ? 'btn-primary' : 'btn-outline'}`}
+      </Button>
+      <Button
+        joinItem
+        variant={themeContext.theme == 'auto' ? 'primary' : 'outline'}
         disabled={disabled}
         onClick={() => {
           if (!disabled) {
@@ -36,9 +39,10 @@ export default function ThemeChanger({ disabled = false }: ThemeChangerProps) {
         }}
       >
         <MdOutlineBrightnessAuto />
-      </button>
-      <button
-        className={`btn join-item ${themeContext.theme == 'light' ? 'btn-primary' : 'btn-outline'}`}
+      </Button>
+      <Button
+        joinItem
+        variant={themeContext.theme == 'light' ? 'primary' : 'outline'}
         disabled={disabled}
         onClick={() => {
           if (!disabled) {
@@ -47,7 +51,7 @@ export default function ThemeChanger({ disabled = false }: ThemeChangerProps) {
         }}
       >
         <FaSun />
-      </button>
-    </div>
+      </Button>
+    </ButtonGroup>
   );
 }

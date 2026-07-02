@@ -1,5 +1,6 @@
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import React, { useContext, useState } from 'react';
+import { Button, ButtonGroup, Input, Loading } from '@components/ui';
 
 interface InputModalProps {
   title: string;
@@ -20,15 +21,11 @@ export default function InputModal(props: InputModalProps) {
     <div className={'flex w-full flex-col space-y-2'}>
       <div className={'text-2xl font-bold'}>{props.title}</div>
       <div>{props.description}</div>
-      <div className={'join'}>
-        <input
-          value={inputValue}
-          autoFocus={true}
-          className={'input join-item input-bordered w-full'}
-          onChange={(event) => setInputValue(event.target.value)}
-        />
-        <button
-          className={'btn btn-primary join-item'}
+      <ButtonGroup className="w-full">
+        <Input joinItem value={inputValue} autoFocus={true} className="w-full" onChange={(event) => setInputValue(event.target.value)} />
+        <Button
+          joinItem
+          variant="primary"
           disabled={isSubmitting || (!props.allowEmpty && inputValue.trim().length == 0)}
           onClick={async () => {
             try {
@@ -44,10 +41,10 @@ export default function InputModal(props: InputModalProps) {
             }
           }}
         >
-          {isSubmitting ? <span className={'loading loading-spinner'} /> : <></>}
+          {isSubmitting ? <Loading size="sm" /> : null}
           Speichern
-        </button>
-      </div>
+        </Button>
+      </ButtonGroup>
     </div>
   );
 }

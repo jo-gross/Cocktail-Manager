@@ -14,6 +14,7 @@ import { UserContext } from '@lib/context/UserContextProvider';
 import { withPagePermission } from '@middleware/ui/withPagePermission';
 import { NextPageWithPullToRefresh } from '../../../../../types/next';
 import MonitorFormat = $Enums.MonitorFormat;
+import { Button, Card, CardBody, CardTitle, FormControl, Input, Label, LabelText, Loading as UiLoading } from '@components/ui';
 
 const ManageMonitorPage: NextPageWithPullToRefresh = () => {
   const router = useRouter();
@@ -99,11 +100,14 @@ const ManageMonitorPage: NextPageWithPullToRefresh = () => {
     <ManageEntityLayout title={'Monitor'} backLink={`/workspaces/${workspaceId}/manage`}>
       {/*Signage*/}
       {userContext.isUserPermitted(Role.MANAGER) ? (
-        <div className={'card'}>
-          <div className={'card-body'}>
-            <div className={'card-title w-full justify-between'}>
+        <Card>
+          <CardBody>
+            <CardTitle className="w-full justify-between">
               <div>Statische Karte</div>
-              <button
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
                 onClick={async () => {
                   setCopyToClipboardLoading(true);
                   await navigator.clipboard.writeText(`${window.location.origin}/signage?id=${workspaceId}`);
@@ -111,18 +115,17 @@ const ManageMonitorPage: NextPageWithPullToRefresh = () => {
                   alertService.info('In Zwischenablage kopiert');
                 }}
                 disabled={copyToClipboardLoading}
-                className={'btn btn-outline btn-sm'}
               >
-                {copyToClipboardLoading ? <span className={'loading loading-spinner'} /> : <></>}
+                {copyToClipboardLoading ? <UiLoading size="sm" /> : null}
                 <FaShareAlt /> Link kopieren
-              </button>
-            </div>
+              </Button>
+            </CardTitle>
             <div className={'grid grid-cols-2 gap-2'}>
               <div className={'flex flex-col gap-2'}>
                 <div>Horizontal</div>
                 {signageLoading ? (
                   <div className={'justify-center-center flex w-full flex-col items-center gap-2'}>
-                    <div className={'loading loading-spinner'}></div>
+                    <UiLoading />
                     <div>Lade Einstellungen...</div>
                   </div>
                 ) : (
@@ -142,8 +145,12 @@ const ManageMonitorPage: NextPageWithPullToRefresh = () => {
                       />
                     ) : (
                       <div className={'relative h-full min-h-40'}>
-                        <div
-                          className={'btn btn-square btn-outline btn-error btn-sm absolute right-2 top-2 z-10'}
+                        <Button
+                          type="button"
+                          variant="outline"
+                          shape="square"
+                          size="sm"
+                          className="absolute top-2 right-2 z-10 border-error text-error hover:bg-error/10"
                           onClick={() =>
                             modalContext.openModal(
                               <DeleteConfirmationModal spelling={'REMOVE'} entityName={'das Bild'} onApprove={async () => setHorizontalImage(undefined)} />,
@@ -151,7 +158,7 @@ const ManageMonitorPage: NextPageWithPullToRefresh = () => {
                           }
                         >
                           <FaTrashAlt />
-                        </div>
+                        </Button>
                         <Image
                           className={'w-fit rounded-lg'}
                           src={horizontalImage}
@@ -161,20 +168,20 @@ const ManageMonitorPage: NextPageWithPullToRefresh = () => {
                         />
                       </div>
                     )}
-                    <div className={'form-control'}>
-                      <label className={'label'}>
-                        <span className={'label-text'}>Hintergrundfarbe</span>
-                      </label>
-                      <input
+                    <FormControl>
+                      <Label>
+                        <LabelText>Hintergrundfarbe</LabelText>
+                      </Label>
+                      <Input
                         type={'color'}
                         disabled={horizontalImage == undefined}
                         value={horizontalImageColor}
                         onChange={(event) => {
                           setHorizontalImageColor(event.target.value);
                         }}
-                        className={'input w-full'}
+                        className={'w-full'}
                       />
-                    </div>
+                    </FormControl>
                   </>
                 )}
               </div>
@@ -183,7 +190,7 @@ const ManageMonitorPage: NextPageWithPullToRefresh = () => {
                 <div>Vertikal</div>
                 {signageLoading ? (
                   <div className={'justify-center-center flex w-full flex-col items-center gap-2'}>
-                    <div className={'loading loading-spinner'}></div>
+                    <UiLoading />
                     <div>Lade Einstellungen...</div>
                   </div>
                 ) : (
@@ -203,8 +210,12 @@ const ManageMonitorPage: NextPageWithPullToRefresh = () => {
                       />
                     ) : (
                       <div className={'relative h-full min-h-40'}>
-                        <div
-                          className={'btn btn-square btn-outline btn-error btn-sm absolute right-2 top-2 z-10'}
+                        <Button
+                          type="button"
+                          variant="outline"
+                          shape="square"
+                          size="sm"
+                          className="absolute top-2 right-2 z-10 border-error text-error hover:bg-error/10"
                           onClick={() =>
                             modalContext.openModal(
                               <DeleteConfirmationModal spelling={'REMOVE'} entityName={'das Bild'} onApprove={async () => setVerticalImage(undefined)} />,
@@ -212,7 +223,7 @@ const ManageMonitorPage: NextPageWithPullToRefresh = () => {
                           }
                         >
                           <FaTrashAlt />
-                        </div>
+                        </Button>
                         <Image
                           className={'rounded-lg'}
                           src={verticalImage}
@@ -222,30 +233,30 @@ const ManageMonitorPage: NextPageWithPullToRefresh = () => {
                         />
                       </div>
                     )}
-                    <div className={'form-control'}>
-                      <label className={'label'}>
-                        <span className={'label-text'}>Hintergrundfarbe</span>
-                      </label>
-                      <input
+                    <FormControl>
+                      <Label>
+                        <LabelText>Hintergrundfarbe</LabelText>
+                      </Label>
+                      <Input
                         type={'color'}
                         disabled={verticalImage == undefined}
                         value={verticalImageColor}
                         onChange={(event) => {
                           setVerticalImageColor(event.target.value);
                         }}
-                        className={'input w-full'}
+                        className={'w-full'}
                       />
-                    </div>
+                    </FormControl>
                   </>
                 )}
               </div>
             </div>
-            <button className={`btn btn-primary`} disabled={updatingSignage || signageLoading} onClick={handleUpdateSignage}>
-              {updatingSignage ? <span className={'loading loading-spinner'} /> : <></>}
+            <Button type="button" variant="primary" disabled={updatingSignage || signageLoading} onClick={handleUpdateSignage}>
+              {updatingSignage ? <UiLoading size="sm" /> : null}
               Speichern
-            </button>
-          </div>
-        </div>
+            </Button>
+          </CardBody>
+        </Card>
       ) : (
         <></>
       )}

@@ -1,6 +1,7 @@
 import React from 'react';
 import { CocktailRecipeFull } from '../../models/CocktailRecipeFull';
 import '../../lib/NumberUtils';
+import { Button, Card, CardActions, CardBody, CardTitle } from '@components/ui';
 
 interface CompactCocktailCardProps {
   cocktail: CocktailRecipeFull;
@@ -13,9 +14,9 @@ export function CompactCocktailCard({ cocktail, onAdd, onAddWithDeposit }: Compa
   const deposit = cocktail.glass?.deposit ?? 0;
 
   return (
-    <div className="card bg-base-100 shadow-md">
-      <div className="card-body p-4">
-        <h3 className="card-title text-lg">{cocktail.name}</h3>
+    <Card variant="elevated">
+      <CardBody>
+        <CardTitle className="text-lg">{cocktail.name}</CardTitle>
         <div className="flex flex-col gap-1 text-sm">
           <div className="flex justify-between">
             <span>Preis:</span>
@@ -28,17 +29,17 @@ export function CompactCocktailCard({ cocktail, onAdd, onAddWithDeposit }: Compa
             </div>
           )}
         </div>
-        <div className="card-actions mt-2 flex gap-2">
-          <button className="btn btn-primary btn-sm flex-1" onClick={onAdd}>
+        <CardActions className="mt-2 flex gap-2">
+          <Button type="button" variant="primary" size="sm" className="flex-1" onClick={onAdd}>
             + Hinzufügen
-          </button>
+          </Button>
           {deposit > 0 && (
-            <button className="btn btn-outline btn-primary btn-sm flex-1" onClick={onAddWithDeposit}>
+            <Button type="button" variant="outline" size="sm" className="flex-1 border-primary text-primary hover:bg-primary/10" onClick={onAddWithDeposit}>
               Glas zurück
-            </button>
+            </Button>
           )}
-        </div>
-      </div>
-    </div>
+        </CardActions>
+      </CardBody>
+    </Card>
   );
 }

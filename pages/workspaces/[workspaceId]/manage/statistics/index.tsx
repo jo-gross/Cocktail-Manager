@@ -27,6 +27,30 @@ import { CocktailStatisticItemFull } from '../../../../../models/CocktailStatist
 import { formatDateShort, formatDateNoYear } from '@lib/DateUtils';
 import '@lib/StringUtils';
 import { AmountWithUnit, calculateAggregatedIngredientAmount, IngredientVolumeInfo } from '@lib/CocktailRecipeCalculation';
+import {
+  Badge,
+  Button,
+  ButtonGroup,
+  Card,
+  CardBody,
+  CardTitle,
+  Divider,
+  FormControl,
+  Label,
+  LabelText,
+  Select,
+  Tab,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeaderCell,
+  TableRow,
+  Tabs,
+  Toggle,
+  Skeleton,
+  Tooltip as UiTooltip,
+} from '@components/ui';
 
 type Tab = 'overview' | 'cocktails' | 'comparisons' | 'analysis';
 
@@ -1278,53 +1302,51 @@ const StatisticsAdvancedPage = () => {
       actions={
         <div className="flex items-center gap-2">
           <TimeRangePicker value={timeRange} onChange={handleTimeRangeChange} compact dayStartTime={dayStartTime} />
-          <button className="btn btn-square btn-primary btn-sm md:btn-md" onClick={handleRefresh} title="Aktualisieren">
-            <FaSyncAlt />
-          </button>
+          <UiTooltip tip="Aktualisieren">
+            <Button type="button" shape="square" variant="primary" size="sm" className="md:h-10 md:w-10" onClick={handleRefresh}>
+              <FaSyncAlt />
+            </Button>
+          </UiTooltip>
         </div>
       }
     >
       <div className="flex flex-col gap-2">
         {/* Tab Navigation - Sticky with offset for header */}
         <div className="sticky top-16 z-10 bg-base-100 py-2">
-          <div className="overflow-x-auto">
-            <div className="tabs-boxed tabs min-w-max flex-nowrap">
-              {tabs.map((tab) => (
-                <button key={tab.id} className={`tab flex-shrink-0 ${activeTab === tab.id ? 'tab-active' : ''}`} onClick={() => handleTabChange(tab.id)}>
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-          </div>
+          <Tabs variant="boxed" fullWidth>
+            {tabs.map((tab) => (
+              <Tab key={tab.id} active={activeTab === tab.id} variant="boxed" onClick={() => handleTabChange(tab.id)}>
+                {tab.label}
+              </Tab>
+            ))}
+          </Tabs>
         </div>
 
         {/* Tab Content */}
         {activeTab === 'overview' && (
-          <div className="flex flex-col gap-4">
+          <div className="flex animate-fade-in-up flex-col gap-4 motion-reduce:animate-none">
             {/* Period Tabs */}
-            <div className="overflow-x-auto">
-              <div className="tabs tabs-bordered min-w-max flex-nowrap">
-                <button className={`tab flex-shrink-0 ${overviewPeriodTab === 'today' ? 'tab-active' : ''}`} onClick={() => setOverviewPeriodTab('today')}>
-                  Heute
-                </button>
-                <button className={`tab flex-shrink-0 ${overviewPeriodTab === 'week' ? 'tab-active' : ''}`} onClick={() => setOverviewPeriodTab('week')}>
-                  Woche
-                </button>
-                <button className={`tab flex-shrink-0 ${overviewPeriodTab === 'month' ? 'tab-active' : ''}`} onClick={() => setOverviewPeriodTab('month')}>
-                  Monat
-                </button>
-                <button className={`tab flex-shrink-0 ${overviewPeriodTab === 'period' ? 'tab-active' : ''}`} onClick={() => setOverviewPeriodTab('period')}>
-                  Zeitraum
-                </button>
-                <button className={`tab flex-shrink-0 ${overviewPeriodTab === 'allTime' ? 'tab-active' : ''}`} onClick={() => setOverviewPeriodTab('allTime')}>
-                  Allzeit
-                </button>
-              </div>
-            </div>
+            <Tabs variant="bordered" fullWidth>
+              <Tab active={overviewPeriodTab === 'today'} variant="bordered" onClick={() => setOverviewPeriodTab('today')}>
+                Heute
+              </Tab>
+              <Tab active={overviewPeriodTab === 'week'} variant="bordered" onClick={() => setOverviewPeriodTab('week')}>
+                Woche
+              </Tab>
+              <Tab active={overviewPeriodTab === 'month'} variant="bordered" onClick={() => setOverviewPeriodTab('month')}>
+                Monat
+              </Tab>
+              <Tab active={overviewPeriodTab === 'period'} variant="bordered" onClick={() => setOverviewPeriodTab('period')}>
+                Zeitraum
+              </Tab>
+              <Tab active={overviewPeriodTab === 'allTime'} variant="bordered" onClick={() => setOverviewPeriodTab('allTime')}>
+                Allzeit
+              </Tab>
+            </Tabs>
 
             {/* Stats Cards */}
             {overviewData ? (
-              <div className="stats stats-vertical w-full shadow lg:stats-horizontal">
+              <div className="grid w-full grid-cols-1 gap-4 lg:grid-cols-3">
                 {overviewPeriodTab === 'today' && (
                   <>
                     <StatCard
@@ -1438,7 +1460,7 @@ const StatisticsAdvancedPage = () => {
                 )}
               </div>
             ) : (
-              <div className="stats stats-vertical w-full shadow lg:stats-horizontal">
+              <div className="grid w-full grid-cols-1 gap-4 lg:grid-cols-3">
                 <StatCard title="Anzahl" value={0} loading={true} />
                 <StatCard title="Top Cocktail" value="-" loading={true} />
                 <StatCard title="Umsatz" value={0} loading={true} />
@@ -1461,24 +1483,24 @@ const StatisticsAdvancedPage = () => {
                   return (
                     <>
                       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                        <div className="card shadow">
-                          <div className="card-body">
-                            <h3 className="card-title text-lg">Cocktails im Zeitverlauf</h3>
+                        <Card variant="elevated">
+                          <CardBody>
+                            <CardTitle className="text-lg">Cocktails im Zeitverlauf</CardTitle>
                             {loading ? (
-                              <div className="skeleton w-full" style={{ height: '260px' }}></div>
+                              <Skeleton className="h-[260px] w-full" />
                             ) : chartData.timeSeries.length > 0 ? (
                               <TimeSeriesChart data={chartData.timeSeries} label="Bestellungen" height={260} />
                             ) : (
                               <div className="py-8 text-center text-base-content/70">Keine Cocktails vorhanden</div>
                             )}
-                          </div>
-                        </div>
+                          </CardBody>
+                        </Card>
 
-                        <div className="card shadow">
-                          <div className="card-body">
-                            <h3 className="card-title text-lg">Cocktails nach Uhrzeit</h3>
+                        <Card variant="elevated">
+                          <CardBody>
+                            <CardTitle className="text-lg">Cocktails nach Uhrzeit</CardTitle>
                             {loading ? (
-                              <div className="skeleton w-full" style={{ height: '260px' }}></div>
+                              <Skeleton className="h-[260px] w-full" />
                             ) : chartData.hourDistribution.some((d) => d.count > 0) ? (
                               <DistributionChart
                                 data={reorderHourDistribution(chartData.hourDistribution, dayStartTime).map((d) => ({
@@ -1492,15 +1514,15 @@ const StatisticsAdvancedPage = () => {
                             ) : (
                               <div className="py-8 text-center text-base-content/70">Keine Cocktails vorhanden</div>
                             )}
-                          </div>
-                        </div>
+                          </CardBody>
+                        </Card>
                       </div>
 
-                      <div className="card shadow">
-                        <div className="card-body">
-                          <h3 className="card-title text-lg">Top-Cocktails</h3>
+                      <Card variant="elevated">
+                        <CardBody>
+                          <CardTitle className="text-lg">Top-Cocktails</CardTitle>
                           {loading ? (
-                            <div className="skeleton w-full" style={{ height: '200px' }}></div>
+                            <Skeleton className="h-[200px] w-full" />
                           ) : chartData.topCocktails.length > 0 ? (
                             <DistributionChart
                               data={chartData.topCocktails.map((c) => ({
@@ -1515,8 +1537,8 @@ const StatisticsAdvancedPage = () => {
                           ) : (
                             <div className="py-8 text-center text-base-content/70">Keine Cocktails vorhanden</div>
                           )}
-                        </div>
-                      </div>
+                        </CardBody>
+                      </Card>
                     </>
                   );
                 })()}
@@ -1526,7 +1548,7 @@ const StatisticsAdvancedPage = () => {
         )}
 
         {activeTab === 'cocktails' && (
-          <div className="flex flex-col gap-4">
+          <div className="flex animate-fade-in-up flex-col gap-4 motion-reduce:animate-none">
             {cocktailsLoading ? (
               <Loading />
             ) : (
@@ -1590,7 +1612,7 @@ const StatisticsAdvancedPage = () => {
                       });
 
                       return (
-                        <div className="stats stats-vertical w-full shadow lg:stats-horizontal">
+                        <div className="grid w-full grid-cols-1 gap-4 lg:grid-cols-3">
                           <StatCard
                             title="Totale Anzahl"
                             value={totalCount}
@@ -1609,37 +1631,33 @@ const StatisticsAdvancedPage = () => {
                       );
                     })()}
 
-                    <div className="card bg-base-100 shadow">
-                      <div className="card-body">
-                        <div className="card-title flex items-center justify-between">
+                    <Card variant="elevated">
+                      <CardBody>
+                        <CardTitle className="flex items-center justify-between">
                           <div>Gruppierte Ansicht </div>
                           <div className="flex items-center gap-2">
-                            <div className={`form-control ${groupBy != 'day' ? 'hidden' : ''}`}>
-                              <label className="label cursor-pointer gap-2">
-                                <span className="label-text text-sm">Alle Tage anzeigen</span>
-                                <input
+                            <FormControl className={groupBy != 'day' ? 'hidden' : ''}>
+                              <Label className="cursor-pointer flex-row items-center gap-2">
+                                <LabelText className="text-sm">Alle Tage anzeigen</LabelText>
+                                <Toggle
+                                  toggleSize="sm"
                                   disabled={groupBy != 'day'}
-                                  className="toggle toggle-primary toggle-sm"
-                                  type="checkbox"
                                   checked={showAllDays}
+                                  readOnly
                                   onClick={() => setShowAllDays(!showAllDays)}
                                 />
-                              </label>
-                            </div>
-                            <div className="form-control">
-                              <select
-                                className="select select-bordered select-sm"
-                                value={groupBy}
-                                onChange={(event) => setGroupBy(event.target.value as 'day' | 'hour')}
-                              >
+                              </Label>
+                            </FormControl>
+                            <FormControl>
+                              <Select selectSize="sm" value={groupBy} onChange={(event) => setGroupBy(event.target.value as 'day' | 'hour')}>
                                 <option value="hour">Stunden</option>
                                 <option value="day" disabled={timeRange.endDate.getTime() - timeRange.startDate.getTime() < 24 * 3600 * 1000}>
                                   Tagen
                                 </option>
-                              </select>
-                            </div>
+                              </Select>
+                            </FormControl>
                           </div>
-                        </div>
+                        </CardTitle>
 
                         {/* Chart: X = Zeitraum, Y = Anzahl. X-Achsen-Labels fest bei 60° geneigt */}
                         {groupedChartData && groupedChartData.length > 0 && groupedChartCategories.length > 0 ? (
@@ -1725,8 +1743,8 @@ const StatisticsAdvancedPage = () => {
                         ) : (
                           <div className="py-8 text-center text-base-content/70">Keine Cocktails vorhanden</div>
                         )}
-                      </div>
-                    </div>
+                      </CardBody>
+                    </Card>
                   </div>
                 }
               />
@@ -1760,17 +1778,17 @@ const StatisticsAdvancedPage = () => {
                 }
                 detail={
                   cocktailDetailLoading ? (
-                    <div className="card bg-base-100 shadow">
-                      <div className="card-body">
+                    <Card variant="elevated">
+                      <CardBody>
                         <Loading />
-                      </div>
-                    </div>
+                      </CardBody>
+                    </Card>
                   ) : cocktailDetailData ? (
-                    <div className="card bg-base-100 shadow">
-                      <div className="card-body">
-                        <h3 className="card-title mb-4 text-lg">{cocktailDetailData?.cocktail?.name ?? ''} – Detailansicht</h3>
+                    <Card variant="elevated">
+                      <CardBody>
+                        <CardTitle className="mb-4 text-lg">{cocktailDetailData?.cocktail?.name ?? ''} – Detailansicht</CardTitle>
 
-                        <div className="stats stats-vertical w-full shadow lg:stats-horizontal">
+                        <div className="grid w-full grid-cols-1 gap-4 lg:grid-cols-3">
                           <StatCard
                             title="Bestellungen"
                             value={cocktailDetailData?.total ?? 0}
@@ -1790,7 +1808,7 @@ const StatisticsAdvancedPage = () => {
                         <div className="mb-4">
                           <h4 className="text-md mb-2 font-semibold">Verteilung über Zeit</h4>
                           {cocktailDetailLoading ? (
-                            <div className="skeleton w-full" style={{ height: '200px' }}></div>
+                            <Skeleton className="h-[200px] w-full" />
                           ) : (cocktailDetailData?.timeSeries?.length ?? 0) > 0 ? (
                             <TimeSeriesChart data={cocktailDetailData?.timeSeries ?? []} label="Bestellungen" height={200} />
                           ) : (
@@ -1802,7 +1820,7 @@ const StatisticsAdvancedPage = () => {
                           <div>
                             <h4 className="text-md mb-2 font-semibold">Verteilung nach Stunde</h4>
                             {cocktailDetailLoading ? (
-                              <div className="skeleton w-full" style={{ height: '200px' }}></div>
+                              <Skeleton className="h-[200px] w-full" />
                             ) : cocktailDetailData?.hourDistribution?.some((d: { hour: number; count: number }) => d.count > 0) ? (
                               <DistributionChart
                                 data={reorderHourDistribution(cocktailDetailData?.hourDistribution ?? [], dayStartTime).map((d) => ({
@@ -1820,7 +1838,7 @@ const StatisticsAdvancedPage = () => {
                           <div>
                             <h4 className="text-md mb-2 font-semibold">Verteilung nach Wochentag</h4>
                             {cocktailDetailLoading ? (
-                              <div className="skeleton w-full" style={{ height: '200px' }}></div>
+                              <Skeleton className="h-[200px] w-full" />
                             ) : cocktailDetailData?.dayDistribution?.some((d: { day: number; count: number }) => d.count > 0) ? (
                               <DistributionChart
                                 data={reorderDaysMondayFirst(cocktailDetailData?.dayDistribution ?? []).map((d: { day: number; count?: number }) => {
@@ -1845,9 +1863,9 @@ const StatisticsAdvancedPage = () => {
                             <h4 className="text-md mb-2 font-semibold">Tags</h4>
                             <div className="flex flex-wrap gap-2">
                               {(cocktailDetailData?.cocktail?.tags ?? []).map((tag: string) => (
-                                <span key={tag} className="badge badge-primary">
+                                <Badge key={tag} variant="primary">
                                   {tag}
-                                </span>
+                                </Badge>
                               ))}
                             </div>
                           </div>
@@ -1858,15 +1876,15 @@ const StatisticsAdvancedPage = () => {
                             <h4 className="text-md mb-2 font-semibold">Zutaten</h4>
                             <div className="flex flex-wrap gap-2">
                               {(cocktailDetailData?.ingredients ?? []).map((ingredient: string) => (
-                                <span key={ingredient} className="badge badge-secondary">
+                                <Badge key={ingredient} variant="secondary">
                                   {ingredient}
-                                </span>
+                                </Badge>
                               ))}
                             </div>
                           </div>
                         )}
 
-                        <div className="divider">Gespeicherte Sets</div>
+                        <Divider>Gespeicherte Sets</Divider>
                         <SavedSetSelector
                           workspaceId={workspaceId as string}
                           type="COCKTAIL_SET"
@@ -1881,7 +1899,7 @@ const StatisticsAdvancedPage = () => {
                         ) : selectedCocktailDetailSetId && cocktailDetailSetData ? (
                           <div className="mt-4">
                             <h4 className="text-md mb-2 font-semibold">{cocktailDetailSetData?.set?.name ?? ''}</h4>
-                            <div className="stats stats-vertical w-full shadow lg:stats-horizontal">
+                            <div className="grid w-full grid-cols-1 gap-4 lg:grid-cols-3">
                               <StatCard title="Bestellungen" value={cocktailDetailSetData?.kpis?.total ?? 0} loading={cocktailDetailSetLoading} />
                               <StatCard title="Cocktails" value={cocktailDetailSetData?.kpis?.cocktailCount ?? 0} loading={cocktailDetailSetLoading} />
                               <StatCard
@@ -1909,14 +1927,14 @@ const StatisticsAdvancedPage = () => {
                             </div>
                           </div>
                         ) : null}
-                      </div>
-                    </div>
+                      </CardBody>
+                    </Card>
                   ) : (
-                    <div className="card bg-base-100 shadow">
-                      <div className="card-body">
+                    <Card variant="elevated">
+                      <CardBody>
                         <div className="text-center text-base-content/70">Bitte wählen Sie einen Cocktail aus</div>
-                      </div>
-                    </div>
+                      </CardBody>
+                    </Card>
                   )
                 }
               />
@@ -1925,7 +1943,7 @@ const StatisticsAdvancedPage = () => {
         )}
 
         {activeTab === 'comparisons' && (
-          <div className="flex flex-col gap-4">
+          <div className="flex animate-fade-in-up flex-col gap-4 motion-reduce:animate-none">
             <ListDetailLayout
               list={
                 <div className="w-full space-y-4">
@@ -1986,62 +2004,76 @@ const StatisticsAdvancedPage = () => {
                     }}
                   />
 
-                  <div className="divider">Ergebnisse im Zeitraum</div>
+                  <Divider>Ergebnisse im Zeitraum</Divider>
 
                   {/* Mode Selector */}
                   <div className="flex w-full flex-col gap-2">
                     {/* Tags / Zutaten - full width, equal size */}
-                    <div className="join w-full">
-                      <button
-                        className={`btn join-item btn-sm flex-1 ${comparisonMode === 'tags' ? 'btn-primary' : ''}`}
+                    <ButtonGroup className="w-full">
+                      <Button
+                        type="button"
+                        joinItem
+                        size="sm"
+                        className="flex-1"
+                        variant={comparisonMode === 'tags' ? 'primary' : 'outline'}
                         onClick={() => setComparisonMode('tags')}
                         disabled={!!selectedSetId}
                       >
                         Tags
-                      </button>
-                      <button
-                        className={`btn join-item btn-sm flex-1 ${comparisonMode === 'ingredients' ? 'btn-primary' : ''}`}
+                      </Button>
+                      <Button
+                        type="button"
+                        joinItem
+                        size="sm"
+                        className="flex-1"
+                        variant={comparisonMode === 'ingredients' ? 'primary' : 'outline'}
                         onClick={() => setComparisonMode('ingredients')}
                         disabled={!!selectedSetId}
                       >
                         Zutaten
-                      </button>
-                    </div>
+                      </Button>
+                    </ButtonGroup>
 
                     {/* AND/OR and Save - shown when items are selected */}
                     {((comparisonMode === 'tags' && selectedTags.size > 0) || (comparisonMode === 'ingredients' && selectedIngredients.size > 0)) && (
                       <div className="flex w-full flex-col gap-2">
                         <div className="flex gap-2">
-                          <div className="join">
-                            <button
-                              className={`btn join-item btn-sm ${comparisonLogic === 'AND' ? 'btn-secondary' : ''}`}
+                          <ButtonGroup>
+                            <Button
+                              type="button"
+                              joinItem
+                              size="sm"
+                              variant={comparisonLogic === 'AND' ? 'secondary' : 'outline'}
                               onClick={() => setComparisonLogic('AND')}
                             >
                               AND
-                            </button>
-                            <button
-                              className={`btn join-item btn-sm ${comparisonLogic === 'OR' ? 'btn-secondary' : ''}`}
+                            </Button>
+                            <Button
+                              type="button"
+                              joinItem
+                              size="sm"
+                              variant={comparisonLogic === 'OR' ? 'secondary' : 'outline'}
                               onClick={() => setComparisonLogic('OR')}
                             >
                               OR
-                            </button>
-                          </div>
+                            </Button>
+                          </ButtonGroup>
                           {/* Reset and Update buttons - only when set is selected AND changed */}
                           {selectedSetId && hasComparisonSetChanges && (
                             <>
-                              <button className="btn btn-warning btn-sm" onClick={handleResetComparisonSet}>
+                              <Button type="button" variant="warning" size="sm" onClick={handleResetComparisonSet}>
                                 Zurücksetzen
-                              </button>
-                              <button className="btn btn-primary btn-sm flex-1" onClick={handleUpdateComparisonSet}>
+                              </Button>
+                              <Button type="button" variant="primary" size="sm" className="flex-1" onClick={handleUpdateComparisonSet}>
                                 Aktualisieren
-                              </button>
+                              </Button>
                             </>
                           )}
                         </div>
                         {/* Save as new set button */}
-                        <button className="btn btn-secondary btn-sm w-full" onClick={handleSaveSet}>
+                        <Button type="button" variant="secondary" size="sm" wide onClick={handleSaveSet}>
                           {selectedSetId ? 'Als neues Set speichern' : 'Set speichern'}
-                        </button>
+                        </Button>
                       </div>
                     )}
                   </div>
@@ -2100,18 +2132,18 @@ const StatisticsAdvancedPage = () => {
               }
               detail={
                 setDetailLoading ? (
-                  <div className="card bg-base-100 shadow">
-                    <div className="card-body">
+                  <Card variant="elevated">
+                    <CardBody>
                       <Loading />
-                    </div>
-                  </div>
+                    </CardBody>
+                  </Card>
                 ) : setDetailData ? (
                   <div className="flex flex-col gap-4">
                     {/* Header outside cards */}
                     <h3 className="text-xl font-bold">{setDetailData.set.name}</h3>
 
                     {/* Stats Card */}
-                    <div className="stats stats-vertical w-full shadow lg:stats-horizontal">
+                    <div className="grid w-full grid-cols-1 gap-4 lg:grid-cols-3">
                       <StatCard
                         title="Cocktails"
                         value={setDetailData.cocktails ? setDetailData.cocktails.filter((c: { count: number }) => c.count > 0).length : 0}
@@ -2148,9 +2180,9 @@ const StatisticsAdvancedPage = () => {
                     </div>
 
                     {/* Cocktails Card */}
-                    <div className="card shadow">
-                      <div className="card-body">
-                        <h4 className="card-title text-lg">Cocktails</h4>
+                    <Card variant="elevated">
+                      <CardBody>
+                        <CardTitle className="text-lg">Cocktails</CardTitle>
                         {setDetailData.cocktails && setDetailData.cocktails.length > 0 ? (
                           <DistributionChart
                             data={setDetailData.cocktails
@@ -2167,42 +2199,42 @@ const StatisticsAdvancedPage = () => {
                         ) : (
                           <div className="py-8 text-center text-base-content/70">Keine Cocktails vorhanden</div>
                         )}
-                      </div>
-                    </div>
+                      </CardBody>
+                    </Card>
 
                     {/* Aggregated Ingredients Card - Only for TAG_SETs */}
                     {setDetailData.set.type === 'TAG_SET' && (
-                      <div className="card shadow">
-                        <div className="card-body">
-                          <h4 className="card-title text-lg">Zutaten (aggregiert)</h4>
+                      <Card variant="elevated">
+                        <CardBody>
+                          <CardTitle className="text-lg">Zutaten (aggregiert)</CardTitle>
                           {cocktailsLoading ? (
                             <Loading />
                           ) : aggregatedIngredientsData.length === 0 ? (
                             <div className="py-4 text-center text-base-content/70">Keine Zutaten im Zeitraum</div>
                           ) : (
                             <div className="overflow-x-auto">
-                              <table className="table-compact table w-full">
-                                <thead>
-                                  <tr>
-                                    <th>Zutat</th>
-                                    <th>Ausgabe-Einheit</th>
-                                    <th className="text-right">Menge</th>
-                                    <th className="text-right">Kosten</th>
-                                  </tr>
-                                </thead>
-                                <tbody>
+                              <Table compact className="w-full">
+                                <TableHead>
+                                  <TableRow>
+                                    <TableHeaderCell>Zutat</TableHeaderCell>
+                                    <TableHeaderCell>Ausgabe-Einheit</TableHeaderCell>
+                                    <TableHeaderCell className="text-right">Menge</TableHeaderCell>
+                                    <TableHeaderCell className="text-right">Kosten</TableHeaderCell>
+                                  </TableRow>
+                                </TableHead>
+                                <TableBody>
                                   {aggregatedIngredientsData.map((ingredient) => {
                                     const selectedUnit = selectedOutputUnits[ingredient.ingredientId];
                                     const calculated = calculateAggregatedAmount(ingredient, selectedUnit);
                                     const cost = calculateIngredientCost(ingredient);
 
                                     return (
-                                      <tr key={ingredient.ingredientId}>
-                                        <td className="font-medium">{ingredient.ingredientName}</td>
-                                        <td>
+                                      <TableRow key={ingredient.ingredientId}>
+                                        <TableCell className="font-medium">{ingredient.ingredientName}</TableCell>
+                                        <TableCell>
                                           {ingredient.availableUnits.length > 0 ? (
-                                            <select
-                                              className="select select-bordered select-sm"
+                                            <Select
+                                              selectSize="sm"
                                               value={selectedUnit || ''}
                                               onChange={(e) => {
                                                 setSelectedOutputUnits((prev) => ({
@@ -2216,35 +2248,35 @@ const StatisticsAdvancedPage = () => {
                                                   {userContext.getTranslation(unit.unitName, 'de')}
                                                 </option>
                                               ))}
-                                            </select>
+                                            </Select>
                                           ) : (
                                             <span className="text-base-content/50">-</span>
                                           )}
-                                        </td>
-                                        <td className="text-right">
+                                        </TableCell>
+                                        <TableCell className="text-right">
                                           {calculated.amount.toLocaleString('de-DE', {
                                             minimumFractionDigits: 0,
                                             maximumFractionDigits: 2,
                                           })}{' '}
                                           {userContext.getTranslation(calculated.unitName, 'de')}
-                                        </td>
-                                        <td className="text-right">
+                                        </TableCell>
+                                        <TableCell className="text-right">
                                           {cost.toLocaleString('de-DE', {
                                             minimumFractionDigits: 2,
                                             maximumFractionDigits: 2,
                                           })}{' '}
                                           €
-                                        </td>
-                                      </tr>
+                                        </TableCell>
+                                      </TableRow>
                                     );
                                   })}
-                                </tbody>
+                                </TableBody>
                                 <tfoot>
-                                  <tr className="font-bold">
-                                    <td colSpan={3} className="text-right">
+                                  <TableRow className="font-bold">
+                                    <TableCell colSpan={3} className="text-right">
                                       Gesamt:
-                                    </td>
-                                    <td className="text-right">
+                                    </TableCell>
+                                    <TableCell className="text-right">
                                       {aggregatedIngredientsData
                                         .reduce((sum, ing) => sum + calculateIngredientCost(ing), 0)
                                         .toLocaleString('de-DE', {
@@ -2252,22 +2284,22 @@ const StatisticsAdvancedPage = () => {
                                           maximumFractionDigits: 2,
                                         })}{' '}
                                       €
-                                    </td>
-                                  </tr>
+                                    </TableCell>
+                                  </TableRow>
                                 </tfoot>
-                              </table>
+                              </Table>
                             </div>
                           )}
-                        </div>
-                      </div>
+                        </CardBody>
+                      </Card>
                     )}
                   </div>
                 ) : (
-                  <div className="card bg-base-100 shadow">
-                    <div className="card-body">
+                  <Card variant="elevated">
+                    <CardBody>
                       <div className="text-center text-base-content/70">Bitte wählen Sie ein Set aus</div>
-                    </div>
-                  </div>
+                    </CardBody>
+                  </Card>
                 )
               }
             />
@@ -2275,7 +2307,7 @@ const StatisticsAdvancedPage = () => {
         )}
 
         {activeTab === 'analysis' && (
-          <div className="flex flex-col gap-4">
+          <div className="flex animate-fade-in-up flex-col gap-4 motion-reduce:animate-none">
             <ListDetailLayout
               list={
                 <div className="w-full space-y-4">
@@ -2312,7 +2344,7 @@ const StatisticsAdvancedPage = () => {
                     }}
                   />
 
-                  <div className="divider">Cocktails auswählen</div>
+                  <Divider>Cocktails auswählen</Divider>
 
                   {/* Set Action Buttons - shown when items are selected */}
                   {selectedAnalysisCocktailIds.size > 0 && (
@@ -2321,19 +2353,19 @@ const StatisticsAdvancedPage = () => {
                         {/* Reset and Update buttons - only when set is selected AND changed */}
                         {selectedAnalysisSetId && hasAnalysisSetChanges && (
                           <>
-                            <button className="btn btn-warning btn-sm" onClick={handleResetAnalysisSet}>
+                            <Button type="button" variant="warning" size="sm" onClick={handleResetAnalysisSet}>
                               Zurücksetzen
-                            </button>
-                            <button className="btn btn-primary btn-sm flex-1" onClick={handleUpdateAnalysisSet}>
+                            </Button>
+                            <Button type="button" variant="primary" size="sm" className="flex-1" onClick={handleUpdateAnalysisSet}>
                               Aktualisieren
-                            </button>
+                            </Button>
                           </>
                         )}
                       </div>
                       {/* Save as new set button */}
-                      <button className="btn btn-secondary btn-sm w-full" onClick={handleSaveAnalysisSet}>
+                      <Button type="button" variant="secondary" size="sm" wide onClick={handleSaveAnalysisSet}>
                         {selectedAnalysisSetId ? 'Als neues Set speichern' : 'Set speichern'}
-                      </button>
+                      </Button>
                     </div>
                   )}
 
@@ -2366,17 +2398,17 @@ const StatisticsAdvancedPage = () => {
                 selectedAnalysisCocktailIds.size > 0 ? (
                   <div className="space-y-4">
                     {analysisLoading ? (
-                      <div className="card bg-base-100 shadow">
-                        <div className="card-body">
+                      <Card variant="elevated">
+                        <CardBody>
                           <Loading />
-                        </div>
-                      </div>
+                        </CardBody>
+                      </Card>
                     ) : analysisCocktailDetails.size > 0 ? (
                       <>
                         {/* Overview Card */}
-                        <div className="card shadow">
-                          <div className="card-body">
-                            <h3 className="card-title text-lg">Übersicht</h3>
+                        <Card variant="elevated">
+                          <CardBody>
+                            <CardTitle className="text-lg">Übersicht</CardTitle>
                             {(() => {
                               // Calculate previous period for comparison
                               const periodLength = timeRange.endDate.getTime() - timeRange.startDate.getTime();
@@ -2434,13 +2466,13 @@ const StatisticsAdvancedPage = () => {
                                 </>
                               );
                             })()}
-                          </div>
-                        </div>
+                          </CardBody>
+                        </Card>
 
                         {/* Time Series Card */}
-                        <div className="card shadow">
-                          <div className="card-body">
-                            <h3 className="card-title text-lg">Zeitverlauf</h3>
+                        <Card variant="elevated">
+                          <CardBody>
+                            <CardTitle className="text-lg">Zeitverlauf</CardTitle>
                             {(() => {
                               const datasets = Array.from(selectedAnalysisCocktailIds)
                                 .map((id) => {
@@ -2460,14 +2492,14 @@ const StatisticsAdvancedPage = () => {
                               }
                               return <div className="py-8 text-center text-base-content/70">Keine Daten vorhanden</div>;
                             })()}
-                          </div>
-                        </div>
+                          </CardBody>
+                        </Card>
 
                         {/* Distribution Cards */}
                         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                          <div className="card shadow">
-                            <div className="card-body">
-                              <h4 className="card-title text-lg">Verteilung nach Stunde</h4>
+                          <Card variant="elevated">
+                            <CardBody>
+                              <CardTitle className="text-lg">Verteilung nach Stunde</CardTitle>
                               {(() => {
                                 const orderedHourLabels = getOrderedHourLabels(dayStartTime);
                                 const datasets = Array.from(selectedAnalysisCocktailIds)
@@ -2497,11 +2529,11 @@ const StatisticsAdvancedPage = () => {
                                 }
                                 return <div className="py-8 text-center text-base-content/70">Keine Daten vorhanden</div>;
                               })()}
-                            </div>
-                          </div>
-                          <div className="card shadow">
-                            <div className="card-body">
-                              <h4 className="card-title text-lg">Verteilung nach Wochentag</h4>
+                            </CardBody>
+                          </Card>
+                          <Card variant="elevated">
+                            <CardBody>
+                              <CardTitle className="text-lg">Verteilung nach Wochentag</CardTitle>
                               {(() => {
                                 const labels = Array.from(DAY_NAMES_SHORT_MONDAY_FIRST);
 
@@ -2531,24 +2563,24 @@ const StatisticsAdvancedPage = () => {
                                 }
                                 return <div className="py-8 text-center text-base-content/70">Keine Daten vorhanden</div>;
                               })()}
-                            </div>
-                          </div>
+                            </CardBody>
+                          </Card>
                         </div>
                       </>
                     ) : (
-                      <div className="card bg-base-100 shadow">
-                        <div className="card-body">
+                      <Card variant="elevated">
+                        <CardBody>
                           <div className="text-center text-base-content/70">Lade Daten...</div>
-                        </div>
-                      </div>
+                        </CardBody>
+                      </Card>
                     )}
                   </div>
                 ) : (
-                  <div className="card bg-base-100 shadow">
-                    <div className="card-body">
+                  <Card variant="elevated">
+                    <CardBody>
                       <div className="text-center text-base-content/70">Bitte wählen Sie Cocktails aus oder laden Sie ein Set</div>
-                    </div>
-                  </div>
+                    </CardBody>
+                  </Card>
                 )
               }
             />

@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { FaTimes } from 'react-icons/fa';
+import { Button, Card, CardBody, CardTitle, Checkbox, Input, Loading, Select } from '@components/ui';
 
 type SortOption = 'count-desc' | 'count-asc' | 'alpha-asc' | 'alpha-desc';
 
@@ -39,16 +40,18 @@ export function AnalysisCocktailSelector({ items, selectedIds, onToggleSelect, o
   }, [items, filter, sortBy]);
 
   return (
-    <div className="card">
-      <div className="card-body">
-        <div className="card-title flex items-center justify-between">
+    <Card>
+      <CardBody>
+        <CardTitle className="flex items-center justify-between">
           <span className="flex items-center gap-2">
             Cocktails
-            {loading && <span className="loading loading-spinner loading-xs"></span>}
+            {loading && <Loading size="xs" />}
           </span>
           {selectedIds.size > 0 && onClear && (
-            <button
-              className="btn btn-ghost btn-xs"
+            <Button
+              type="button"
+              variant="ghost"
+              size="xs"
               onClick={(e) => {
                 e.stopPropagation();
                 onClear();
@@ -56,24 +59,18 @@ export function AnalysisCocktailSelector({ items, selectedIds, onToggleSelect, o
               title="Auswahl leeren"
             >
               <FaTimes />
-            </button>
+            </Button>
           )}
-        </div>
+        </CardTitle>
 
         <div className="flex flex-wrap gap-2">
-          <input
-            type="text"
-            placeholder="Filter..."
-            className="input input-sm input-bordered w-full flex-1"
-            value={filter}
-            onChange={(e) => setFilter(e.target.value)}
-          />
-          <select className="select select-bordered select-sm w-fit" value={sortBy} onChange={(e) => setSortBy(e.target.value as SortOption)}>
+          <Input type="text" placeholder="Filter..." inputSize="sm" className="w-full flex-1" value={filter} onChange={(e) => setFilter(e.target.value)} />
+          <Select selectSize="sm" className="w-fit" value={sortBy} onChange={(e) => setSortBy(e.target.value as SortOption)}>
             <option value="count-desc">↓ Bestellungen</option>
             <option value="count-asc">↑ Bestellungen</option>
             <option value="alpha-asc">A-Z</option>
             <option value="alpha-desc">Z-A</option>
-          </select>
+          </Select>
         </div>
 
         <div className="max-h-[60vh] space-y-2 overflow-y-auto">
@@ -90,19 +87,13 @@ export function AnalysisCocktailSelector({ items, selectedIds, onToggleSelect, o
                   <div className="font-semibold">{item.name}</div>
                   <div className="text-sm text-base-content/70">{item.count} Bestellungen</div>
                 </div>
-                <input
-                  type="checkbox"
-                  className="checkbox-primary checkbox"
-                  checked={selectedIds.has(item.id)}
-                  onChange={() => onToggleSelect(item.id)}
-                  onClick={(e) => e.stopPropagation()}
-                />
+                <Checkbox checked={selectedIds.has(item.id)} onChange={() => onToggleSelect(item.id)} onClick={(e) => e.stopPropagation()} />
               </div>
             </div>
           ))}
         </div>
         {sortedAndFilteredItems.length === 0 && <div className="py-4 text-center text-base-content/70">Keine Cocktails gefunden</div>}
-      </div>
-    </div>
+      </CardBody>
+    </Card>
   );
 }

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { CocktailExportStructure } from '../../types/CocktailExportStructure';
 import { alertService } from '@lib/alertService';
 import { FaExclamationTriangle } from 'react-icons/fa';
+import { Alert, Badge, Button, Input, Loading, Radio, Select } from '@components/ui';
 
 interface CocktailMapping {
   exportId: string;
@@ -124,7 +125,7 @@ export function CocktailReviewStep({ workspaceId, exportData, selectedCocktailId
   if (loading) {
     return (
       <div className={'flex flex-col items-center justify-center gap-4 py-8'}>
-        <span className={'loading loading-spinner loading-lg'}></span>
+        <Loading size="lg" />
         <span>Konflikte werden analysiert...</span>
       </div>
     );
@@ -142,12 +143,12 @@ export function CocktailReviewStep({ workspaceId, exportData, selectedCocktailId
       <div className={'text-sm text-base-content/70'}>Überprüfen Sie die zu importierenden Cocktails und lösen Sie eventuelle Namenskonflikte.</div>
 
       {conflictCount > 0 && (
-        <div className={'alert alert-warning'}>
+        <Alert variant="warning">
           <FaExclamationTriangle />
           <span>
             {conflictCount} Cocktail{conflictCount > 1 ? 's haben' : ' hat'} Namenskonflikte und {conflictCount > 1 ? 'müssen' : 'muss'} überprüft werden
           </span>
-        </div>
+        </Alert>
       )}
 
       <div className={'max-h-[400px] overflow-y-auto'}>
@@ -161,7 +162,11 @@ export function CocktailReviewStep({ workspaceId, exportData, selectedCocktailId
               <div key={cocktail.id} className={`rounded-lg border ${hasConflict ? 'border-warning' : 'border-base-300'} p-3`}>
                 <div className={'flex items-center justify-between'}>
                   <div className={'font-semibold'}>{cocktail.name}</div>
-                  {hasConflict && <span className={'badge badge-warning badge-sm'}>Konflikt</span>}
+                  {hasConflict && (
+                    <Badge variant="warning" size="sm">
+                      Konflikt
+                    </Badge>
+                  )}
                 </div>
 
                 {hasConflict && (
@@ -172,32 +177,23 @@ export function CocktailReviewStep({ workspaceId, exportData, selectedCocktailId
 
                 <div className={'mt-3 flex flex-col gap-2'}>
                   <label className={'flex cursor-pointer items-center gap-2'}>
-                    <input
-                      type={'radio'}
-                      className={'radio radio-sm'}
-                      checked={mapping?.decision === 'import'}
-                      onChange={() => handleDecisionChange(cocktail.id, 'import')}
-                    />
+                    <Radio radioSize="sm" checked={mapping?.decision === 'import'} onChange={() => handleDecisionChange(cocktail.id, 'import')} />
                     <span className={'text-sm'}>{hasConflict ? 'Trotzdem importieren' : 'Importieren'}</span>
                   </label>
 
                   {hasConflict && (
                     <>
                       <label className={'flex cursor-pointer items-center gap-2'}>
-                        <input
-                          type={'radio'}
-                          className={'radio radio-sm'}
-                          checked={mapping?.decision === 'rename'}
-                          onChange={() => handleDecisionChange(cocktail.id, 'rename')}
-                        />
+                        <Radio radioSize="sm" checked={mapping?.decision === 'rename'} onChange={() => handleDecisionChange(cocktail.id, 'rename')} />
                         <span className={'text-sm'}>Umbenennen und importieren</span>
                       </label>
 
                       {mapping?.decision === 'rename' && (
                         <div className={'ml-6'}>
-                          <input
+                          <Input
                             type={'text'}
-                            className={'input input-sm input-bordered w-full max-w-xs'}
+                            inputSize="sm"
+                            className="w-full max-w-xs"
                             placeholder={'Neuer Name'}
                             value={mapping.newName || ''}
                             onChange={(e) => handleDecisionChange(cocktail.id, 'rename', e.target.value)}
@@ -206,9 +202,8 @@ export function CocktailReviewStep({ workspaceId, exportData, selectedCocktailId
                       )}
 
                       <label className={'flex cursor-pointer items-center gap-2'}>
-                        <input
-                          type={'radio'}
-                          className={'radio radio-sm'}
+                        <Radio
+                          radioSize="sm"
                           checked={mapping?.decision === 'overwrite'}
                           onChange={() => handleDecisionChange(cocktail.id, 'overwrite', undefined, conflict.conflicts[0]?.id)}
                         />
@@ -217,8 +212,9 @@ export function CocktailReviewStep({ workspaceId, exportData, selectedCocktailId
 
                       {mapping?.decision === 'overwrite' && (
                         <div className={'ml-6'}>
-                          <select
-                            className={'select select-bordered select-sm w-full max-w-xs'}
+                          <Select
+                            selectSize="sm"
+                            className="w-full max-w-xs"
                             value={mapping.overwriteId || ''}
                             onChange={(e) => handleDecisionChange(cocktail.id, 'overwrite', undefined, e.target.value)}
                           >
@@ -227,7 +223,7 @@ export function CocktailReviewStep({ workspaceId, exportData, selectedCocktailId
                                 {c.name}
                               </option>
                             ))}
-                          </select>
+                          </Select>
                           <div className={'mt-1 text-xs text-error'}>
                             Achtung: Der ausgewählte Cocktail wird vollständig durch den importierten Cocktail ersetzt!
                           </div>
@@ -237,12 +233,7 @@ export function CocktailReviewStep({ workspaceId, exportData, selectedCocktailId
                   )}
 
                   <label className={'flex cursor-pointer items-center gap-2'}>
-                    <input
-                      type={'radio'}
-                      className={'radio radio-sm'}
-                      checked={mapping?.decision === 'skip'}
-                      onChange={() => handleDecisionChange(cocktail.id, 'skip')}
-                    />
+                    <Radio radioSize="sm" checked={mapping?.decision === 'skip'} onChange={() => handleDecisionChange(cocktail.id, 'skip')} />
                     <span className={'text-sm'}>Überspringen</span>
                   </label>
                 </div>
@@ -257,12 +248,12 @@ export function CocktailReviewStep({ workspaceId, exportData, selectedCocktailId
       </div>
 
       <div className={'flex justify-end gap-2'}>
-        <button className={'btn btn-outline'} onClick={onBack}>
+        <Button variant="outline" onClick={onBack}>
           Zurück
-        </button>
-        <button className={'btn btn-primary'} onClick={handleNext}>
+        </Button>
+        <Button variant="primary" onClick={handleNext}>
           Weiter
-        </button>
+        </Button>
       </div>
     </div>
   );

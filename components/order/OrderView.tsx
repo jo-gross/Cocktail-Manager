@@ -13,6 +13,26 @@ import AvatarImage from '../AvatarImage';
 import DefaultGlassIcon from '../DefaultGlassIcon';
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import '../../lib/NumberUtils';
+import {
+  Button,
+  ButtonGroup,
+  Card,
+  CardActions,
+  CardBody,
+  CardTitle,
+  FormControl,
+  Input,
+  Label,
+  LabelText,
+  Loading as UiLoading,
+  Select,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeaderCell,
+  TableRow,
+} from '@components/ui';
 
 interface OrderItem {
   type: 'cocktail' | 'glass';
@@ -330,18 +350,18 @@ export const OrderView = React.memo(function OrderView({ cocktailCards, workspac
     <div className="flex h-screen flex-col gap-2">
       {/* Erste Zeile: Kombinierte Suche & Cocktails nach Karte (volle Breite, nur horizontal scrollend) */}
       <div className="flex max-h-[calc(50vh-2rem)] flex-1 flex-col overflow-hidden">
-        <div className="card h-full bg-base-100 shadow-md">
-          <div className="card-body flex h-full flex-col">
+        <Card className="h-full bg-base-100 shadow-md">
+          <CardBody className="flex h-full flex-col">
             {/* Header: Titel, Suche, Kartenauswahl */}
             <div className="flex flex-col items-start gap-2 md:flex-row md:justify-between">
               <div className={'h-full items-center'}>
-                <h2 className="card-title text-xl">Übersicht</h2>
+                <CardTitle className="text-xl">Übersicht</CardTitle>
                 <p className="text-sm text-base-content/70">Füge Cocktails einfach zur Bestellung hinzu.</p>
               </div>
               <div className="flex w-full flex-row items-end gap-2 md:w-2/3">
                 <div className="flex-1">
-                  <label className="label flex items-baseline justify-between py-1">
-                    <span className="label-text text-xs xl:text-base">Cocktail suchen</span>
+                  <Label className="flex-row items-baseline justify-between py-1">
+                    <LabelText className="text-xs xl:text-base">Cocktail suchen</LabelText>
                     <span className="text-xs text-base-content/60">
                       {cocktailsLoading
                         ? 'Lade Cocktails...'
@@ -349,39 +369,40 @@ export const OrderView = React.memo(function OrderView({ cocktailCards, workspac
                           ? `${filteredCocktails.length} Cocktail${filteredCocktails.length === 1 ? '' : 's'} gefunden`
                           : 'Keine Cocktails gefunden'}
                     </span>
-                  </label>
-                  <div className="join w-full">
-                    <input
-                      className="input input-sm join-item input-bordered w-full xl:input-md"
+                  </Label>
+                  <ButtonGroup className="w-full">
+                    <Input
+                      joinItem
+                      inputSize="sm"
+                      className="w-full xl:h-10 xl:min-h-10"
                       placeholder="Name, Beschreibung oder Tags..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                     />
-                    <button
+                    <Button
                       type="button"
-                      className={`btn ${cocktailsLoading ? 'w-fit px-2' : 'btn-square'} btn-outline btn-primary join-item btn-sm xl:btn-md`}
+                      variant="outline"
+                      joinItem
+                      size="sm"
+                      className={`border-primary text-primary hover:bg-primary/10 xl:h-10 xl:min-h-10 ${cocktailsLoading ? 'w-fit px-2' : 'aspect-square p-0'}`}
                       disabled={cocktailsLoading}
                     >
-                      {cocktailsLoading ? <span className="loading loading-spinner loading-xs"></span> : <BsSearch />}
-                    </button>
-                  </div>
+                      {cocktailsLoading ? <UiLoading size="xs" /> : <BsSearch />}
+                    </Button>
+                  </ButtonGroup>
                 </div>
                 <div className="flex-1">
-                  <label className="label py-1">
-                    <span className="label-text text-xs xl:text-base">Karte auswählen</span>
-                  </label>
-                  <select
-                    className="select select-bordered select-sm w-full xl:select-md"
-                    value={selectedCardId}
-                    onChange={(e) => setSelectedCardId(e.target.value)}
-                  >
+                  <Label className="py-1">
+                    <LabelText className="text-xs xl:text-base">Karte auswählen</LabelText>
+                  </Label>
+                  <Select selectSize="sm" className="w-full xl:h-10 xl:min-h-10" value={selectedCardId} onChange={(e) => setSelectedCardId(e.target.value)}>
                     <option value="all">Alle Cocktails</option>
                     {cocktailCards.map((card) => (
                       <option key={card.id} value={card.id}>
                         {card.name}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                 </div>
               </div>
             </div>
@@ -455,17 +476,17 @@ export const OrderView = React.memo(function OrderView({ cocktailCards, workspac
                 </div>
               )}
             </div>
-          </div>
-        </div>
+          </CardBody>
+        </Card>
       </div>
 
       {/* Zweite Zeile: Gläser (1/2) & Bestellung (1/2) */}
       <div className="flex max-h-[calc(50vh-2rem)] flex-1 flex-col gap-2 overflow-y-auto md:flex-row md:overflow-hidden">
         {/* Gläser */}
         <div className="w-full md:w-1/2">
-          <div className="card h-full">
-            <div className="card-body flex h-full flex-col">
-              <h2 className="card-title text-xl">Gläser</h2>
+          <Card className="h-full">
+            <CardBody className="flex h-full flex-col">
+              <CardTitle className="text-xl">Gläser</CardTitle>
               <div className="min-h-0 flex-1 space-y-4 overflow-y-auto">
                 {glassesLoading ? (
                   <Loading />
@@ -478,7 +499,7 @@ export const OrderView = React.memo(function OrderView({ cocktailCards, workspac
                       <div key={deposit} className="">
                         <div className="p-4">
                           <div className="mb-2">
-                            <h3 className="card-title text-lg">Pfand: {parseFloat(deposit).formatPrice()} €</h3>
+                            <CardTitle className="text-lg">Pfand: {parseFloat(deposit).formatPrice()} €</CardTitle>
                           </div>
                           <div className="flex flex-wrap justify-between gap-2">
                             {glassesInGroup.map((glass) => (
@@ -498,7 +519,7 @@ export const OrderView = React.memo(function OrderView({ cocktailCards, workspac
                                     />
                                   )}
                                 </div>
-                                <span className="max-w-[4rem] break-words text-center text-xs">{glass.name}</span>
+                                <span className="max-w-[4rem] text-center text-xs break-words">{glass.name}</span>
                               </div>
                             ))}
                           </div>
@@ -507,18 +528,21 @@ export const OrderView = React.memo(function OrderView({ cocktailCards, workspac
                     ))
                 )}
               </div>
-            </div>
-          </div>
+            </CardBody>
+          </Card>
         </div>
 
         {/* Bestellung */}
         <div className="w-full md:w-1/2">
-          <div className="card h-full">
-            <div className="card-body flex h-full flex-col">
+          <Card className="h-full">
+            <CardBody className="flex h-full flex-col">
               <div className="flex items-start justify-between gap-2">
-                <h2 className="card-title text-2xl">Bestellung</h2>
-                <button
-                  className="btn btn-outline btn-error btn-xs xl:btn-sm"
+                <CardTitle className="text-2xl">Bestellung</CardTitle>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="xs"
+                  className="border-error text-error hover:bg-error/10 xl:h-8 xl:min-h-8 xl:px-3"
                   onClick={() => {
                     clearOrder();
                     setGlobalNotes('');
@@ -527,7 +551,7 @@ export const OrderView = React.memo(function OrderView({ cocktailCards, workspac
                 >
                   <FaTrash />
                   Bestellung leeren
-                </button>
+                </Button>
               </div>
               {orderItems.length === 0 ? (
                 <div className="flex flex-1 items-center justify-center py-8 text-center text-base-content/70">
@@ -536,17 +560,17 @@ export const OrderView = React.memo(function OrderView({ cocktailCards, workspac
               ) : (
                 <>
                   <div className="min-h-0 flex-1 overflow-x-auto overflow-y-auto">
-                    <table className="table table-zebra table-xs xl:table-md">
-                      <thead>
-                        <tr>
-                          <th>Item</th>
-                          <th>Anzahl</th>
-                          <th>Preis</th>
-                          <th>Pfand</th>
-                          <th className={'text-right'}>Gesamt</th>
-                        </tr>
-                      </thead>
-                      <tbody>
+                    <Table zebra compact className="xl:text-base">
+                      <TableHead>
+                        <TableRow>
+                          <TableHeaderCell>Item</TableHeaderCell>
+                          <TableHeaderCell>Anzahl</TableHeaderCell>
+                          <TableHeaderCell>Preis</TableHeaderCell>
+                          <TableHeaderCell>Pfand</TableHeaderCell>
+                          <TableHeaderCell className="text-right">Gesamt</TableHeaderCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
                         {orderItems
                           .filter((item) => item.amount > 0 || item.returnedDeposit > 0)
                           .map((item, index) => {
@@ -555,33 +579,51 @@ export const OrderView = React.memo(function OrderView({ cocktailCards, workspac
                             const itemTotal = item.type === 'cocktail' ? item.price * item.amount + newDeposit - returnedDeposit : -returnedDeposit;
 
                             return (
-                              <tr key={`${item.type}-${item.id}-${index}`}>
-                                <td>{item.name}</td>
-                                <td>
+                              <TableRow key={`${item.type}-${item.id}-${index}`}>
+                                <TableCell>{item.name}</TableCell>
+                                <TableCell>
                                   {(item.amount > 0 || item.returnedDeposit > 0) && (
                                     <div className="flex">
                                       {item.amount > 0 && (
                                         <div className="flex flex-row justify-center gap-1">
-                                          <div className={'join'}>
-                                            <button
-                                              className="btn btn-outline btn-secondary join-item btn-xs xl:btn-sm"
+                                          <ButtonGroup>
+                                            <Button
+                                              type="button"
+                                              variant="outline"
+                                              size="xs"
+                                              joinItem
+                                              className="xl:h-8 xl:min-h-8"
                                               onClick={() => updateItemAmount(item, -1)}
                                             >
                                               <FaMinus />
-                                            </button>
-                                            <span className="btn btn-outline btn-primary join-item btn-xs pointer-events-none xl:btn-sm">{item.amount}</span>
-                                            <button
-                                              className="btn btn-outline btn-secondary join-item btn-xs border-l-primary xl:btn-sm"
+                                            </Button>
+                                            <Button
+                                              type="button"
+                                              variant="outline"
+                                              size="xs"
+                                              joinItem
+                                              className="pointer-events-none border-primary text-primary xl:h-8 xl:min-h-8"
+                                            >
+                                              {item.amount}
+                                            </Button>
+                                            <Button
+                                              type="button"
+                                              variant="outline"
+                                              size="xs"
+                                              joinItem
+                                              className="border-l-primary xl:h-8 xl:min-h-8"
                                               onClick={() => updateItemAmount(item, 1)}
                                             >
                                               <FaPlus />
-                                            </button>
-                                          </div>
+                                            </Button>
+                                          </ButtonGroup>
                                           {item.type === 'cocktail' && item.deposit > 0 && (
-                                            <button
-                                              className="btn btn-outline btn-xs w-fit xl:btn-sm"
+                                            <Button
+                                              type="button"
+                                              variant="outline"
+                                              size="xs"
+                                              className="w-fit xl:h-8 xl:min-h-8"
                                               onClick={() => {
-                                                // Finde das entsprechende Glas und erstelle ein separates Glas-Item
                                                 const cocktail = cocktails.find((c) => c.id === item.id);
                                                 if (cocktail?.glass) {
                                                   const glass = glasses.find((g) => g.id === cocktail.glass?.id);
@@ -592,48 +634,62 @@ export const OrderView = React.memo(function OrderView({ cocktailCards, workspac
                                               }}
                                             >
                                               <FaReply /> Glas
-                                            </button>
+                                            </Button>
                                           )}
                                         </div>
                                       )}
                                       {item.amount === 0 && item.returnedDeposit > 0 && (
-                                        <div className="join">
-                                          <button
-                                            className="btn btn-outline btn-secondary join-item btn-xs xl:btn-sm"
+                                        <ButtonGroup>
+                                          <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="xs"
+                                            joinItem
+                                            className="xl:h-8 xl:min-h-8"
                                             onClick={() => removeReturnedDeposit(item, 1)}
                                           >
                                             <FaMinus />
-                                          </button>
-                                          <span className="btn btn-outline btn-primary join-item btn-xs pointer-events-none xl:btn-sm">
+                                          </Button>
+                                          <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="xs"
+                                            joinItem
+                                            className="pointer-events-none border-primary text-primary xl:h-8 xl:min-h-8"
+                                          >
                                             {item.returnedDeposit}
-                                          </span>
-                                          <button
-                                            className="btn btn-outline btn-secondary join-item btn-xs border-l-primary xl:btn-sm"
+                                          </Button>
+                                          <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="xs"
+                                            joinItem
+                                            className="border-l-primary xl:h-8 xl:min-h-8"
                                             onClick={() => addReturnedDeposit(item)}
                                           >
                                             <FaPlus />
-                                          </button>
-                                        </div>
+                                          </Button>
+                                        </ButtonGroup>
                                       )}
                                     </div>
                                   )}
-                                </td>
-                                <td className={'text-nowrap'}>
+                                </TableCell>
+                                <TableCell className="text-nowrap">
                                   {item.type === 'cocktail' && item.amount > 0 ? (item.price * item.amount).formatPrice() : '0.00'} €
-                                </td>
-                                <td>
+                                </TableCell>
+                                <TableCell>
                                   <div className="flex flex-col gap-1">
                                     {newDeposit > 0 && <span className="text-nowrap">+{newDeposit.formatPrice()} €</span>}
                                     {returnedDeposit > 0 && <span className="text-nowrap text-success">-{returnedDeposit.formatPrice()} €</span>}
                                     {newDeposit === 0 && returnedDeposit === 0 && <span className="text-nowrap">0.00 €</span>}
                                   </div>
-                                </td>
-                                <td className="text-nowrap text-right font-bold">{itemTotal.formatPrice()} €</td>
-                              </tr>
+                                </TableCell>
+                                <TableCell className="text-right font-bold text-nowrap">{itemTotal.formatPrice()} €</TableCell>
+                              </TableRow>
                             );
                           })}
-                      </tbody>
-                    </table>
+                      </TableBody>
+                    </Table>
                   </div>
                   <div className={'grid grid-cols-1 xl:grid-cols-2'}>
                     <div className="hidden xl:block"></div>
@@ -661,32 +717,36 @@ export const OrderView = React.memo(function OrderView({ cocktailCards, workspac
                     </div>
                   </div>
                   <div className="gap-2">
-                    <div className="card-actions flex gap-2">
-                      <div className="form-control flex-1">
-                        <label className="label text-xs xl:text-base">
-                          <span className="label-text">Notiz für alle Cocktails</span>
-                        </label>
-                        <input
+                    <CardActions className="flex gap-2">
+                      <FormControl className="flex-1">
+                        <Label className="text-xs xl:text-base">
+                          <LabelText>Notiz für alle Cocktails</LabelText>
+                        </Label>
+                        <Input
                           type="text"
-                          className="input input-sm input-bordered w-full xl:input-md"
+                          inputSize="sm"
+                          className="w-full xl:h-10 xl:min-h-10"
                           placeholder="z.B. Für Tim und Freunde ..."
                           value={globalNotes}
                           onChange={(e) => setGlobalNotes(e.target.value)}
                         />
-                      </div>
-                      <button
-                        className="btn btn-primary btn-sm self-end xl:btn-md"
+                      </FormControl>
+                      <Button
+                        type="button"
+                        variant="primary"
+                        size="sm"
+                        className="self-end xl:h-10 xl:min-h-10"
                         onClick={addToQueue}
                         disabled={submitting || orderItems.filter((item) => item.type === 'cocktail').length === 0}
                       >
-                        {submitting ? <span className="loading loading-spinner"></span> : 'Zur Warteschlange hinzufügen'}
-                      </button>
-                    </div>
+                        {submitting ? <UiLoading size="sm" /> : 'Zur Warteschlange hinzufügen'}
+                      </Button>
+                    </CardActions>
                   </div>
                 </>
               )}
-            </div>
-          </div>
+            </CardBody>
+          </Card>
         </div>
       </div>
     </div>

@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import React from 'react';
+import { Button, Card, CardBody, CardTitle } from '@components/ui';
 
 interface ManageCardProps {
   title: string;
@@ -9,16 +10,16 @@ interface ManageCardProps {
 
 export function ManageCard(props: ManageCardProps) {
   return (
-    <div className={'card'}>
-      <div className={'card-body flex flex-row justify-between'}>
-        <div className={'card-title'}>
+    <Card>
+      <CardBody className="flex flex-row justify-between">
+        <CardTitle>
           {props.icon}
           {props.title}
-        </div>
+        </CardTitle>
         <Link href={props.link}>
-          <div className={'btn btn-primary'}>Verwalten</div>
+          <Button variant="primary">Verwalten</Button>
         </Link>
-      </div>
-    </div>
+      </CardBody>
+    </Card>
   );
 }

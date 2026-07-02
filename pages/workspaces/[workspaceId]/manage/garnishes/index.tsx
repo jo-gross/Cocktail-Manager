@@ -3,7 +3,6 @@ import Link from 'next/link';
 import { ManageEntityLayout } from '@components/layout/ManageEntityLayout';
 import { ManageColumn } from '@components/ManageColumn';
 import React, { useCallback, useContext, useEffect, useState } from 'react';
-import { Loading } from '@components/Loading';
 import { useRouter } from 'next/router';
 import { UserContext } from '@lib/context/UserContextProvider';
 import { FaChevronDown, FaFileDownload, FaFileUpload, FaPlus } from 'react-icons/fa';
@@ -17,6 +16,29 @@ import { alertService } from '@lib/alertService';
 import EntityImportModal from '../../../../../components/modals/EntityImportModal';
 import { NextPageWithPullToRefresh } from '../../../../../types/next';
 import '../../../../../lib/NumberUtils';
+import {
+  Button,
+  Card,
+  CardBody,
+  Checkbox,
+  DataTable,
+  Dropdown,
+  DropdownContent,
+  Loading as UiLoading,
+  Menu,
+  SkeletonTableRows,
+  SortableHeaderCell,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeaderCell,
+  TableImageCell,
+  TableRow,
+  toggleSort,
+  useSortableData,
+} from '@components/ui';
+import type { SortDirection } from '@components/ui';
 
 const ManageGarnishesOverviewPage: NextPageWithPullToRefresh = () => {
   const router = useRouter();
@@ -32,6 +54,22 @@ const ManageGarnishesOverviewPage: NextPageWithPullToRefresh = () => {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [exportingJson, setExportingJson] = useState(false);
   const [exportingSingleId, setExportingSingleId] = useState<string | null>(null);
+  const [sortKey, setSortKey] = useState('name');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+
+  const handleSort = useCallback(
+    (key: string) => {
+      const next = toggleSort(sortKey, sortDirection, key);
+      setSortKey(next.key);
+      setSortDirection(next.direction);
+    },
+    [sortKey, sortDirection],
+  );
+
+  const getGarnishSortValue = useCallback((garnish: GarnishModel, key: string) => (key === 'price' ? (garnish.price ?? null) : garnish.name), []);
+
+  const filteredGarnishes = garnishes.filter((garnish) => garnish.name.toLowerCase().includes(filterString.toLowerCase()));
+  const sortedGarnishes = useSortableData(filteredGarnishes, { key: sortKey, direction: sortDirection }, getGarnishSortValue);
 
   useEffect(() => {
     fetchGarnishes(workspaceId, setGarnishes, setLoading);
@@ -40,10 +78,6 @@ const ManageGarnishesOverviewPage: NextPageWithPullToRefresh = () => {
   ManageGarnishesOverviewPage.pullToRefresh = () => {
     fetchGarnishes(workspaceId, setGarnishes, setLoading);
   };
-
-  const filteredGarnishes = garnishes
-    .filter((garnish) => garnish.name.toLowerCase().includes(filterString.toLowerCase()))
-    .sort((a, b) => a.name.localeCompare(b.name));
 
   const handleToggleSelect = useCallback(
     (id: string) => {
@@ -59,13 +93,13 @@ const ManageGarnishesOverviewPage: NextPageWithPullToRefresh = () => {
   );
 
   const handleToggleSelectAll = useCallback(() => {
-    const allSelected = filteredGarnishes.every((g) => selectedIds.has(g.id));
+    const allSelected = sortedGarnishes.every((g) => selectedIds.has(g.id));
     if (allSelected) {
       setSelectedIds(new Set());
     } else {
-      setSelectedIds(new Set(filteredGarnishes.map((g) => g.id)));
+      setSelectedIds(new Set(sortedGarnishes.map((g) => g.id)));
     }
-  }, [selectedIds, filteredGarnishes]);
+  }, [selectedIds, sortedGarnishes]);
 
   const handleExportJson = useCallback(async () => {
     if (!workspaceId || selectedIds.size === 0) return;
@@ -149,122 +183,120 @@ const ManageGarnishesOverviewPage: NextPageWithPullToRefresh = () => {
       actions={
         <div className={'flex items-center gap-2'}>
           {selectedIds.size > 0 && (
-            <div className="dropdown dropdown-end">
-              <button tabIndex={0} className={'btn btn-outline btn-sm md:btn-md'}>
+            <Dropdown align="end">
+              <Button type="button" variant="outline" size="sm" className="md:h-10 md:min-h-10 md:px-4" tabIndex={0}>
                 <FaFileDownload />
                 {selectedIds.size} ausgewählt
                 <FaChevronDown />
-              </button>
-              <ul tabIndex={0} className="menu dropdown-content z-[1] mt-2 w-64 gap-1 rounded-box border border-base-200 bg-base-100 p-2 shadow-lg">
-                <li>
-                  <button type="button" className="flex items-center gap-2" onClick={handleExportJson} disabled={exportingJson}>
-                    {exportingJson ? <span className={'loading loading-spinner loading-sm'} /> : <FaFileDownload />}
-                    Als JSON exportieren ({selectedIds.size})
-                  </button>
-                </li>
-              </ul>
-            </div>
+              </Button>
+              <DropdownContent tabIndex={0} className="z-[1] mt-2 block w-64">
+                <Menu
+                  size="sm"
+                  className="gap-1 [&_button]:flex [&_button]:w-full [&_button]:items-center [&_button]:gap-2 [&_button]:rounded-field [&_button]:px-3 [&_button]:py-2 [&_button]:text-left [&_button]:hover:bg-base-200"
+                >
+                  <li>
+                    <button type="button" onClick={handleExportJson} disabled={exportingJson}>
+                      {exportingJson ? <UiLoading size="sm" /> : <FaFileDownload />}
+                      Als JSON exportieren ({selectedIds.size})
+                    </button>
+                  </li>
+                </Menu>
+              </DropdownContent>
+            </Dropdown>
           )}
-          <div className="dropdown dropdown-end">
-            <button tabIndex={0} className={'btn btn-outline btn-sm md:btn-md'}>
+          <Dropdown align="end">
+            <Button type="button" variant="outline" size="sm" className="md:h-10 md:min-h-10 md:px-4" tabIndex={0}>
               <FaFileUpload />
               Import/Export
               <FaChevronDown />
-            </button>
-            <ul tabIndex={0} className="menu dropdown-content z-[1] mt-2 w-52 gap-1 rounded-box border border-base-200 bg-base-100 p-2 shadow-lg">
-              <li>
-                <button
-                  type="button"
-                  className="flex items-center gap-2"
-                  onClick={() => {
-                    if (!workspaceId) return;
-                    modalContext.openModal(
-                      <EntityImportModal
-                        workspaceId={workspaceId as string}
-                        entityType="garnishes"
-                        onImportComplete={() => fetchGarnishes(workspaceId, setGarnishes, setLoading)}
-                      />,
-                    );
-                  }}
-                >
-                  <FaFileUpload />
-                  Aus JSON importieren
-                </button>
-              </li>
-            </ul>
-          </div>
+            </Button>
+            <DropdownContent tabIndex={0} className="z-[1] mt-2 block w-52">
+              <Menu
+                size="sm"
+                className="gap-1 [&_button]:flex [&_button]:w-full [&_button]:items-center [&_button]:gap-2 [&_button]:rounded-field [&_button]:px-3 [&_button]:py-2 [&_button]:text-left [&_button]:hover:bg-base-200"
+              >
+                <li>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!workspaceId) return;
+                      modalContext.openModal(
+                        <EntityImportModal
+                          workspaceId={workspaceId as string}
+                          entityType="garnishes"
+                          onImportComplete={() => fetchGarnishes(workspaceId, setGarnishes, setLoading)}
+                        />,
+                      );
+                    }}
+                  >
+                    <FaFileUpload />
+                    Aus JSON importieren
+                  </button>
+                </li>
+              </Menu>
+            </DropdownContent>
+          </Dropdown>
           {userContext.isUserPermitted(Role.MANAGER) && (
             <Link href={`/workspaces/${workspaceId}/manage/garnishes/create`}>
-              <div className={'btn btn-square btn-primary btn-sm md:btn-md'}>
+              <Button variant="primary" shape="square" size="sm" className="md:h-10 md:min-h-10 md:w-10">
                 <FaPlus />
-              </div>
+              </Button>
             </Link>
           )}
         </div>
       }
     >
-      <div className={'card'}>
-        <div className={'card-body'}>
-          <ListSearchField onFilterChange={(filterString) => setFilterString(filterString)} />
-          <div className="overflow-x-auto">
-            <table className="table-compact table table-zebra w-full">
-              <thead>
-                <tr>
-                  <th className="w-0">
-                    <input
-                      type="checkbox"
-                      className="checkbox checkbox-sm"
-                      checked={filteredGarnishes.length > 0 && filteredGarnishes.every((g) => selectedIds.has(g.id))}
+      <Card>
+        <CardBody>
+          <DataTable toolbar={<ListSearchField onFilterChange={(filterString) => setFilterString(filterString)} />}>
+            <Table zebra className="w-full">
+              <TableHead>
+                <TableRow>
+                  <TableHeaderCell className="w-0">
+                    <Checkbox
+                      checkboxSize="sm"
+                      checked={sortedGarnishes.length > 0 && sortedGarnishes.every((g) => selectedIds.has(g.id))}
                       onChange={handleToggleSelectAll}
-                      title="Alle auswählen"
+                      aria-label="Alle auswählen"
                     />
-                  </th>
-                  <th className="w-0"></th>
-                  <th className="">Name</th>
-                  <th className="">Preis</th>
-                  <th className="flex justify-end"></th>
-                </tr>
-              </thead>
-              <tbody>
+                  </TableHeaderCell>
+                  <TableHeaderCell className="w-0"></TableHeaderCell>
+                  <SortableHeaderCell sortKey="name" activeSortKey={sortKey} direction={sortDirection} onSort={handleSort}>
+                    Name
+                  </SortableHeaderCell>
+                  <SortableHeaderCell sortKey="price" activeSortKey={sortKey} direction={sortDirection} onSort={handleSort}>
+                    Preis
+                  </SortableHeaderCell>
+                  <TableHeaderCell className="flex justify-end"></TableHeaderCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
                 {loading ? (
-                  <tr>
-                    <td colSpan={5}>
-                      <Loading />
-                    </td>
-                  </tr>
-                ) : filteredGarnishes.length == 0 ? (
-                  <tr>
-                    <td colSpan={5} className={'text-center'}>
+                  <SkeletonTableRows columns={5} avatarColumn={1} />
+                ) : sortedGarnishes.length == 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className={'text-center'}>
                       Keine Einträge gefunden
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ) : (
-                  filteredGarnishes.map((garnish) => (
-                    <tr className={'p-4'} key={garnish.id}>
-                      <td className="w-0">
-                        <input
-                          type="checkbox"
-                          className="checkbox checkbox-sm"
-                          checked={selectedIds.has(garnish.id)}
-                          onChange={() => handleToggleSelect(garnish.id)}
-                        />
-                      </td>
-                      <td className="w-0 p-0">
-                        {garnish._count.GarnishImage !== 0 && (
-                          <div
-                            className="h-12 w-12 cursor-pointer"
-                            onClick={() =>
-                              modalContext.openModal(<ImageModal image={`/api/workspaces/${garnish.workspaceId}/garnishes/${garnish.id}/image`} />)
-                            }
-                          >
-                            <AvatarImage src={`/api/workspaces/${garnish.workspaceId}/garnishes/${garnish.id}/image`} alt="Garnitur" />
-                          </div>
-                        )}
-                      </td>
-                      <td>
+                  sortedGarnishes.map((garnish) => (
+                    <TableRow key={garnish.id}>
+                      <TableCell className="w-0">
+                        <Checkbox checkboxSize="sm" checked={selectedIds.has(garnish.id)} onChange={() => handleToggleSelect(garnish.id)} />
+                      </TableCell>
+                      <TableImageCell
+                        hasImage={garnish._count.GarnishImage !== 0}
+                        onImageClick={() =>
+                          modalContext.openModal(<ImageModal image={`/api/workspaces/${garnish.workspaceId}/garnishes/${garnish.id}/image`} />)
+                        }
+                      >
+                        <AvatarImage src={`/api/workspaces/${garnish.workspaceId}/garnishes/${garnish.id}/image`} alt="Garnitur" />
+                      </TableImageCell>
+                      <TableCell>
                         <div className="font-bold">{garnish.name}</div>
-                      </td>
-                      <td>{garnish.price?.formatPrice() ?? '-'} €</td>
+                      </TableCell>
+                      <TableCell>{garnish.price?.formatPrice() ?? '-'} €</TableCell>
                       <ManageColumn
                         entity={'garnishes'}
                         id={garnish.id}
@@ -273,14 +305,14 @@ const ManageGarnishesOverviewPage: NextPageWithPullToRefresh = () => {
                         onExportJson={handleExportSingleJson}
                         exportingJson={exportingSingleId === garnish.id}
                       />
-                    </tr>
+                    </TableRow>
                   ))
                 )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
+              </TableBody>
+            </Table>
+          </DataTable>
+        </CardBody>
+      </Card>
     </ManageEntityLayout>
   );
 };

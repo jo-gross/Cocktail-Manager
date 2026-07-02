@@ -16,6 +16,20 @@ import { useRouter } from 'next/router';
 import { MdOutlineCancel } from 'react-icons/md';
 import { DeleteConfirmationModal } from '@components/modals/DeleteConfirmationModal';
 import { NextPageWithPullToRefresh } from '../types/next';
+import {
+  Button,
+  ButtonGroup,
+  Card,
+  CardActions,
+  CardBody,
+  CardTitle,
+  Divider,
+  FormControl,
+  Input,
+  Label,
+  LabelText,
+  Loading as UiLoading,
+} from '@components/ui';
 
 interface AuthProvider {
   id: string;
@@ -337,27 +351,29 @@ const WorkspacesPage: NextPageWithPullToRefresh = () => {
               modalContext.closeAllModals();
             }}
           >
-            <div className={'form-control'}>
-              <label className={'label'}>
-                <div className={'label-text'}>Beitrittscode</div>
-              </label>
-              <div className={'join w-full'}>
-                <input
-                  className={'input join-item input-bordered w-full'}
+            <FormControl>
+              <Label>
+                <LabelText>Beitrittscode</LabelText>
+              </Label>
+              <ButtonGroup className="w-full">
+                <Input
+                  joinItem
+                  className="w-full"
                   placeholder={'Beitrittscode'}
                   value={code as string}
                   onChange={(event) => setJoinWorkspaceId(event.target.value)}
                 />
-                <button
-                  className={`btn btn-outline join-item w-fit min-w-12`}
+                <Button
+                  variant="outline"
+                  joinItem
+                  className="w-fit min-w-12"
                   disabled={(code as string).trim().length == 0 || joiningWorkspace}
                   type={'submit'}
                 >
-                  {joiningWorkspace ? <span className={'loading loading-spinner'} /> : <></>}
-                  <FaArrowRight />
-                </button>
-              </div>
-            </div>
+                  {joiningWorkspace ? <UiLoading size="sm" /> : <FaArrowRight />}
+                </Button>
+              </ButtonGroup>
+            </FormControl>
           </form>
         </div>,
       );
@@ -394,28 +410,28 @@ const WorkspacesPage: NextPageWithPullToRefresh = () => {
                 {userContext.user ? (
                   <>
                     <span>Hi {userContext.user.name}</span>
-                    <button className={'btn btn-outline btn-sm'} onClick={() => authClient.signOut()}>
+                    <Button variant="outline" size="sm" onClick={() => authClient.signOut()}>
                       Sign out
-                    </button>
+                    </Button>
                   </>
                 ) : process.env.NEXT_PUBLIC_DEMO_MODE === 'true' ? (
-                  <button className={'btn btn-primary btn-sm'} onClick={createDemoWorkspace} disabled={creatingDemoWorkspace}>
+                  <Button variant="primary" size="sm" onClick={createDemoWorkspace} disabled={creatingDemoWorkspace}>
                     {creatingDemoWorkspace ? (
                       <>
-                        <span className={'loading loading-spinner'} />
+                        <UiLoading size="sm" />
                         Demo wird erstellt...
                       </>
                     ) : (
                       'Demo starten'
                     )}
-                  </button>
+                  </Button>
                 ) : authProviders.length > 0 ? (
                   <div className={'flex flex-wrap justify-center gap-2'}>
                     {authProviders.map((provider) => (
-                      <button key={provider.id} className={'btn btn-outline btn-sm gap-2'} onClick={() => handleSignIn(provider.id, provider.type)}>
+                      <Button key={provider.id} variant="outline" size="sm" className="gap-2" onClick={() => handleSignIn(provider.id, provider.type)}>
                         {provider.id === 'google' ? <FaGoogle /> : <FaKey />}
                         {provider.name}
-                      </button>
+                      </Button>
                     ))}
                   </div>
                 ) : (
@@ -427,7 +443,7 @@ const WorkspacesPage: NextPageWithPullToRefresh = () => {
         </div>
         {userContext.user && (
           <div className={'col-span-3 grid grid-cols-1 gap-2 p-4 md:gap-4 md:p-12 lg:grid-cols-4'}>
-            <div className={'divider col-span-full'}>Meine Workspaces</div>
+            <Divider className="col-span-full">Meine Workspaces</Divider>
             {workspacesLoading ? (
               <div className={'col-span-full'}>
                 <Loading />
@@ -436,44 +452,48 @@ const WorkspacesPage: NextPageWithPullToRefresh = () => {
               <div className={'col-span-full text-center'}>Keine Workspaces</div>
             ) : (
               workspaces.map((workspace) => (
-                <div key={`workspace-${workspace.id}`} className={'card h-40'}>
-                  <div className={'card-body'}>
+                <Card key={`workspace-${workspace.id}`} className="h-40">
+                  <CardBody>
                     <div className={'text-center text-3xl font-bold'}>{workspace.name}</div>
                     <div className={'h-full'}></div>
-                    <div className={'card-actions justify-center'}>
+                    <CardActions className="justify-center">
                       <Link href={'/workspaces/' + workspace.id} replace={true}>
-                        <span className={'btn btn-outline btn-primary'}>Öffnen</span>
+                        <Button variant="outline" className="border-primary text-primary hover:bg-primary/10">
+                          Öffnen
+                        </Button>
                       </Link>
-                    </div>
-                  </div>
-                </div>
+                    </CardActions>
+                  </CardBody>
+                </Card>
               ))
             )}
 
             {(openWorkspaceJoinRequest.length > 0 || openWorkspaceJoinRequestLoading) && (
               <>
-                <div className={'divider col-span-full'}>Beitrittsanfragen</div>
+                <Divider className="col-span-full">Beitrittsanfragen</Divider>
                 {openWorkspaceJoinRequestLoading ? (
                   <div className={'col-span-full'}>
                     <Loading />
                   </div>
                 ) : (
                   openWorkspaceJoinRequest.map((workspaceJoinRequest) => (
-                    <div key={`join-request-${workspaceJoinRequest.workspace.id}`} className={'card'}>
-                      <div className={'card-body'}>
+                    <Card key={`join-request-${workspaceJoinRequest.workspace.id}`}>
+                      <CardBody>
                         <div className={'text-center text-3xl font-bold'}>
                           <span className={'italic'}>Angefragt: </span>
                           {workspaceJoinRequest.workspace.name}
                         </div>
                         <div className={'text-center font-thin'}>Datum der Anfrage: {formatDateTime(new Date(workspaceJoinRequest.date))}</div>
                         <div className={'h-full'}></div>
-                        <div className={'card-actions justify-center'}>
-                          <button type={'button'} className={'btn btn-outline btn-primary'} disabled={true}>
+                        <CardActions className="justify-center">
+                          <Button type="button" variant="outline" className="border-primary text-primary hover:bg-primary/10" disabled>
                             Warte auf Annahme
-                          </button>
-                          <button
-                            type={'button'}
-                            className={'btn btn-square btn-outline btn-error'}
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            shape="square"
+                            className="border-error text-error hover:bg-error/10"
                             onClick={() =>
                               modalContext.openModal(
                                 <DeleteConfirmationModal
@@ -506,99 +526,103 @@ const WorkspacesPage: NextPageWithPullToRefresh = () => {
                             disabled={joinRequestCanceling[workspaceJoinRequest.workspaceId]}
                           >
                             <MdOutlineCancel />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
+                          </Button>
+                        </CardActions>
+                      </CardBody>
+                    </Card>
                   ))
                 )}
               </>
             )}
             {workspaceCreationConfig && (!workspaceCreationConfig.disabled || workspaceCreationConfig.message) ? (
               <>
-                <div className={'divider col-span-full'}>Workspace hinzufügen</div>
+                <Divider className="col-span-full">Workspace hinzufügen</Divider>
                 {workspaceCreationConfig.disabled && workspaceCreationConfig.message ? (
-                  <div className={'card'}>
-                    <div className={'card-body flex h-full flex-col items-center justify-center space-y-2'}>
-                      <div className={'card-title'}>Workspace erstellen</div>
+                  <Card>
+                    <CardBody className="flex h-full flex-col items-center justify-center space-y-2">
+                      <CardTitle>Workspace erstellen</CardTitle>
                       <div
                         className={'text-center'}
                         dangerouslySetInnerHTML={{
                           __html: workspaceCreationConfig.message.replaceAll('<a', '<a class="link"'),
                         }}
                       />
-                    </div>
-                  </div>
+                    </CardBody>
+                  </Card>
                 ) : (
-                  <div className={'card'}>
-                    <div className={'card-body flex h-full flex-col items-center justify-center space-y-2'}>
-                      <div className={'card-title'}>Workspace erstellen</div>
+                  <Card>
+                    <CardBody className="flex h-full flex-col items-center justify-center space-y-2">
+                      <CardTitle>Workspace erstellen</CardTitle>
                       <form
                         onSubmit={(e) => {
                           e.preventDefault();
                           createNewWorkspace();
                         }}
                       >
-                        <div className={'form-control'}>
-                          <label className={'label'}>
-                            <div className={'label-text'}>Name der Workspace</div>
-                          </label>
-                          <div className={'join w-full'}>
-                            <input
-                              className={'input join-item input-bordered w-full'}
+                        <FormControl>
+                          <Label>
+                            <LabelText>Name der Workspace</LabelText>
+                          </Label>
+                          <ButtonGroup className="w-full">
+                            <Input
+                              joinItem
+                              className="w-full"
                               placeholder={'Name der Workspace'}
                               value={newWorkspaceName}
                               onChange={(event) => setNewWorkspaceName(event.target.value)}
                             />
-                            <button
-                              className={`btn btn-outline join-item w-fit min-w-12`}
+                            <Button
+                              variant="outline"
+                              joinItem
+                              className="w-fit min-w-12"
                               disabled={newWorkspaceName.trim().length == 0 || creatingWorkspace}
                               type={'submit'}
                             >
-                              {creatingWorkspace ? <span className={'loading loading-spinner'} /> : <></>}
-                              <FaArrowRight />
-                            </button>
-                          </div>
-                        </div>
+                              {creatingWorkspace ? <UiLoading size="sm" /> : <FaArrowRight />}
+                            </Button>
+                          </ButtonGroup>
+                        </FormControl>
                       </form>
-                    </div>
-                  </div>
+                    </CardBody>
+                  </Card>
                 )}
               </>
             ) : null}
-            <div className={'card'}>
-              <div className={'card-body flex flex-col items-center justify-center gap-2'}>
-                <div className={'card-title'}>Workspace beitreten</div>
+            <Card>
+              <CardBody className="flex flex-col items-center justify-center gap-2">
+                <CardTitle>Workspace beitreten</CardTitle>
                 <form
                   onSubmit={(e) => {
                     e.preventDefault();
                     joinWorkspace(joinWorkspaceId);
                   }}
                 >
-                  <div className={'form-control'}>
-                    <label className={'label'}>
-                      <div className={'label-text'}>Beitrittscode</div>
-                    </label>
-                    <div className={'join w-full'}>
-                      <input
-                        className={'input join-item input-bordered w-full'}
+                  <FormControl>
+                    <Label>
+                      <LabelText>Beitrittscode</LabelText>
+                    </Label>
+                    <ButtonGroup className="w-full">
+                      <Input
+                        joinItem
+                        className="w-full"
                         placeholder={'Beitrittscode'}
                         value={joinWorkspaceId}
                         onChange={(event) => setJoinWorkspaceId(event.target.value)}
                       />
-                      <button
-                        className={`btn btn-outline join-item w-fit min-w-12`}
+                      <Button
+                        variant="outline"
+                        joinItem
+                        className="w-fit min-w-12"
                         disabled={joinWorkspaceId.trim().length == 0 || joiningWorkspace}
                         type={'submit'}
                       >
-                        {joiningWorkspace ? <span className={'loading loading-spinner'} /> : <></>}
-                        <FaArrowRight />
-                      </button>
-                    </div>
-                  </div>
+                        {joiningWorkspace ? <UiLoading size="sm" /> : <FaArrowRight />}
+                      </Button>
+                    </ButtonGroup>
+                  </FormControl>
                 </form>
-              </div>
-            </div>
+              </CardBody>
+            </Card>
           </div>
         )}
       </div>

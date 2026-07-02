@@ -1,43 +1,225 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
 
-.rti--tag {
-  @apply badge badge-outline space-x-2 p-4 !important;
+/* Ensure Tailwind scans the app sources for utility classes. */
+@source '../pages';
+@source '../components';
+
+/*
+ * Dark mode is driven by the `data-theme` attribute on <html>:
+ *   - data-theme="dark"  -> forced dark
+ *   - data-theme="light" -> forced light
+ *   - no attribute       -> auto (follows prefers-color-scheme)
+ */
+@custom-variant dark {
+  &:where([data-theme='dark'], [data-theme='dark'] *) {
+    @slot;
+  }
+  @media (prefers-color-scheme: dark) {
+    &:where(:root:not([data-theme]), :root:not([data-theme]) *) {
+      @slot;
+    }
+  }
 }
 
+/* Hide utilities when printing. */
+@custom-variant no-print (@media not print);
+
+/*
+ * Semantic color tokens. Names are kept identical to the previous DaisyUI theme
+ * so existing color classes (bg-base-100, text-base-content, bg-primary, ...)
+ * keep working. Each token maps to a runtime CSS variable that is switched for
+ * light/dark/auto below, hence `@theme inline`.
+ *
+ * ── Base elevation ramp (base-100 → base-400) ─────────────────────────────
+ *   base-100  Page background, elevated Card surfaces
+ *   base-200  Section surfaces (Collapse, surface Card, table header)
+ *   base-300  Borders, inputs, dividers, hover states
+ *   base-400  Strong borders, pressed/deeper surfaces, skeleton fills
+ *
+ * ── Component mapping ─────────────────────────────────────────────────────
+ *   Collapse container          → bg-base-200
+ *   Card variant="elevated"     → bg-base-100
+ *   Card variant="surface"      → bg-base-200
+ *   Table zebra / row hover     → bg-base-200/30 (or bg-base-200/40 on hover)
+ *
+ * ── Semantic roles ────────────────────────────────────────────────────────
+ *   primary    Brand CTAs, main actions (orange in light + dark; dark text on orange)
+ *   secondary  Secondary actions, complementary UI accents
+ *   accent     Highlights, badges, warm emphasis
+ *   neutral    Tooltips, popovers, muted chrome
+ *   info/success/warning/error  Status feedback (alerts, validation)
+ *
+ * Muted text: prefer Tailwind opacity on base-content (e.g. text-base-content/60).
+ */
+@theme inline {
+  --color-base-100: var(--base-100);
+  --color-base-200: var(--base-200);
+  --color-base-300: var(--base-300);
+  --color-base-400: var(--base-400);
+  --color-base-content: var(--base-content);
+
+  --color-primary: var(--primary);
+  --color-primary-content: var(--primary-content);
+  --color-secondary: var(--secondary);
+  --color-secondary-content: var(--secondary-content);
+  --color-accent: var(--accent);
+  --color-accent-content: var(--accent-content);
+  --color-neutral: var(--neutral);
+  --color-neutral-content: var(--neutral-content);
+
+  --color-info: var(--info);
+  --color-info-content: var(--info-content);
+  --color-success: var(--success);
+  --color-success-content: var(--success-content);
+  --color-warning: var(--warning);
+  --color-warning-content: var(--warning-content);
+  --color-error: var(--error);
+  --color-error-content: var(--error-content);
+
+  /* Component radius tokens (kept name-compatible with the previous DaisyUI setup
+     so utilities like rounded-field / rounded-box keep working). */
+  --radius-field: 0.5rem;
+  --radius-box: 1rem;
+  --radius-selector: 0.5rem;
+}
+
+/* Light palette (default + explicit light theme). */
+:root,
+[data-theme='light'] {
+  --base-100: #ffffff;
+  --base-200: #eef1f5;
+  --base-300: #d4dae4;
+  --base-400: #b8c2d0;
+  --base-content: #1c2128;
+
+  --primary: #d96e0c;
+  --primary-content: #fff8ef;
+  --secondary: #2a6f97;
+  --secondary-content: #f0f7fb;
+  --accent: #c07d0a;
+  --accent-content: #fff8ef;
+  --neutral: #2a2f37;
+  --neutral-content: #f2f4f7;
+
+  --info: #0284c7;
+  --info-content: #f0f9ff;
+  --success: #15803d;
+  --success-content: #f0fdf4;
+  --warning: #ca8a04;
+  --warning-content: #fffbeb;
+  --error: #dc2626;
+  --error-content: #fef2f2;
+}
+
+/* Dark palette. */
+[data-theme='dark'] {
+  --base-100: #111620;
+  --base-200: #1a2130;
+  --base-300: #252e3f;
+  --base-400: #323d52;
+  --base-content: #e8ebf2;
+
+  --primary: #f28c18;
+  --primary-content: #1c0f00;
+  --secondary: #4aa3cf;
+  --secondary-content: #04283b;
+  --accent: #e0a92e;
+  --accent-content: #2a1505;
+  --neutral: #3d4659;
+  --neutral-content: #eef1f5;
+
+  --info: #38bdf8;
+  --info-content: #04283b;
+  --success: #4ade80;
+  --success-content: #052e16;
+  --warning: #eab308;
+  --warning-content: #2a1c02;
+  --error: #ef4444;
+  --error-content: #300a0a;
+}
+
+/* Auto mode: follow the OS preference when no theme is explicitly set. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --base-100: #111620;
+    --base-200: #1a2130;
+    --base-300: #252e3f;
+    --base-400: #323d52;
+    --base-content: #e8ebf2;
+
+    --primary: #f28c18;
+    --primary-content: #1c0f00;
+    --secondary: #4aa3cf;
+    --secondary-content: #04283b;
+    --accent: #e0a92e;
+    --accent-content: #2a1505;
+    --neutral: #3d4659;
+    --neutral-content: #eef1f5;
+
+    --info: #38bdf8;
+    --info-content: #04283b;
+    --success: #4ade80;
+    --success-content: #052e16;
+    --warning: #eab308;
+    --warning-content: #2a1c02;
+    --error: #ef4444;
+    --error-content: #300a0a;
+  }
+}
+
+/* Base document colors. */
+@layer base {
+  html,
+  body {
+    background-color: var(--color-base-100);
+    color: var(--color-base-content);
+  }
+
+  /*
+   * Reset native `<dialog>` sizing so Tailwind utilities can fill the viewport.
+   * UA styles use fit-content + margin:auto, which prevents flex/grid centering.
+   */
+  dialog {
+    margin: 0;
+    max-width: none;
+    max-height: none;
+  }
+
+  dialog:modal {
+    width: auto;
+    height: auto;
+  }
+}
+
+/*
+ * Tag input (react-tag-input / react-select) fallback styling. Kept as neutral,
+ * token-based styling so the control is not fully unstyled after removing DaisyUI.
+ */
 .rti--container {
-  @apply textarea textarea-bordered !important;
+  border: 1px solid var(--color-base-300);
+  border-radius: var(--radius-lg);
+  padding: 0.5rem;
+  background-color: var(--color-base-100);
 }
 
 .rti--input {
-  @apply input input-bordered !important;
+  border: 1px solid var(--color-base-300);
+  border-radius: var(--radius-lg);
+  padding: 0.5rem 0.75rem;
+  background-color: var(--color-base-100);
+  color: var(--color-base-content);
 }
 
-.card-body {
-  @apply p-3 !important;
+.rti--tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid var(--color-base-300);
+  border-radius: var(--radius-md);
+  padding: 0.25rem 0.5rem;
 }
 
-.card {
-  @apply bg-base-200 shadow-lg !important;
-}
-
-.collapse {
-  @apply bg-base-300 !important;
-}
-
-.collapse-content {
-  @apply p-0 !important;
-}
-
-.table > thead {
-  /*@apply bg-base-100;*/
-}
-
-.divider-sm {
-  @apply divider mb-0.5 mt-0.5 !important;
-}
-
+/* Legacy danger/success button colors used by not-yet-migrated views. */
 .btn-red {
   @apply border-red-800 bg-red-700 text-white hover:bg-red-800;
 }
@@ -47,13 +229,13 @@
 }
 
 .long-text-format {
-  @apply whitespace-pre-line text-pretty break-normal text-justify;
+  @apply text-justify text-pretty break-normal whitespace-pre-line;
 }
 
 /*
-Remove arrows from input field
-https://stackoverflow.com/a/74043438/12160393
-*/
+ * Remove arrows from number input fields.
+ * https://stackoverflow.com/a/74043438/12160393
+ */
 @layer base {
   input[type='number']::-webkit-outer-spin-button,
   input[type='number']::-webkit-inner-spin-button,
@@ -64,41 +246,6 @@ https://stackoverflow.com/a/74043438/12160393
   }
 }
 
-@media print {
-  .card {
-    @apply border shadow-none !important;
-  }
-
-  .table {
-    @apply border !important;
-  }
-
-  thead > tr {
-    @apply border bg-base-200 !important;
-    print-color-adjust: exact;
-  }
-
-  @layer base {
-    input[type='number']::-webkit-inner-spin-button,
-    input[type='number']::-webkit-outer-spin-button {
-      -webkit-appearance: none;
-      margin: 0;
-    }
-  }
-}
-
-thead {
-  @apply bg-base-100;
-}
-
-.modal {
-  @apply z-40;
-}
-
-.modal-box {
-  max-width: unset !important;
-}
-
 :root {
   --button-height: 64px; /* h-12 */
   --button-margin: 32px; /* my-4 */
@@ -107,6 +254,61 @@ thead {
 
 .max-h-custom {
   max-height: var(--max-height);
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@utility animate-fade-in-up {
+  animation: fade-in-up 200ms ease-out;
+}
+
+@utility animate-fade-in {
+  animation: fade-in 150ms ease-out;
+}
+
+@utility animate-slide-down {
+  animation: slide-down 150ms ease-out;
+}
+
+@utility skeleton {
+  @apply animate-pulse rounded-lg bg-base-300 motion-reduce:animate-none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-in,
+  .animate-fade-in-up,
+  .animate-slide-down {
+    animation: none;
+  }
 }
 
 .bg-transparent-pattern {
@@ -120,4 +322,27 @@ thead {
     0 10px,
     10px -10px,
     -10px 0px;
+}
+
+@media print {
+  .card {
+    @apply border shadow-none;
+  }
+
+  .table {
+    @apply border;
+  }
+
+  thead > tr {
+    @apply border bg-base-200;
+    print-color-adjust: exact;
+  }
+
+  @layer base {
+    input[type='number']::-webkit-inner-spin-button,
+    input[type='number']::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+  }
 }

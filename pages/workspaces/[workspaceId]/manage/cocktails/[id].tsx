@@ -16,6 +16,7 @@ import { fetchCocktailWithImage } from '@lib/network/cocktails';
 import { FaFileDownload, FaHistory } from 'react-icons/fa';
 import CocktailExportOptionsModal, { CocktailExportOptions } from '@components/modals/CocktailExportOptionsModal';
 import { AuditLogHistoryModal } from '@components/modals/AuditLogHistoryModal';
+import { Button, Divider, Loading as UiLoading } from '@components/ui';
 
 function EditCocktailRecipe() {
   const router = useRouter();
@@ -87,7 +88,6 @@ function EditCocktailRecipe() {
   useEffect(() => {
     fetchCocktailWithImage(workspaceId as string, id as string, setCocktailRecipe, setLoading);
 
-    // Check if Chromium service is available
     fetch('/api/chromium-status')
       .then((res) => res.json())
       .then((data) => {
@@ -113,28 +113,29 @@ function EditCocktailRecipe() {
       <CocktailRecipeForm cocktailRecipe={cocktailRecipe} setUnsavedChanges={setUnsavedChanges} formRef={formRef} />
       {cocktailRecipe != undefined && userContext.isUserPermitted(Role.MANAGER) ? (
         <>
-          <div className={'divider'}></div>
+          <Divider />
           <div className={'flex items-center justify-end gap-2'}>
             {chromiumAvailable && (
-              <button type={'button'} className={'btn btn-outline btn-sm'} onClick={handleExportPdf} disabled={exportingPdf} title="Als PDF exportieren">
-                {exportingPdf ? <span className={'loading loading-spinner'} /> : <FaFileDownload />}
+              <Button type="button" variant="outline" size="sm" onClick={handleExportPdf} disabled={exportingPdf}>
+                {exportingPdf ? <UiLoading size="sm" /> : <FaFileDownload />}
                 PDF exportieren
-              </button>
+              </Button>
             )}
-            <button
-              type={'button'}
-              className={'btn btn-outline btn-sm'}
-              title="Verlauf anzeigen"
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
               onClick={() =>
                 modalContext.openModal(<AuditLogHistoryModal entityType={'CocktailRecipe'} entityId={cocktailRecipe.id} entityName={cocktailRecipe.name} />)
               }
             >
               <FaHistory />
               Verlauf
-            </button>
-            <button
-              type={'button'}
-              className={'btn btn-outline btn-sm'}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
               onClick={async () => {
                 const archiveFunction = async () => {
                   const response = await fetch(
@@ -167,7 +168,7 @@ function EditCocktailRecipe() {
               }}
             >
               {cocktailRecipe?.isArchived ? 'Cocktail entarchivieren' : 'Cocktail archivieren'}
-            </button>
+            </Button>
           </div>
         </>
       ) : (

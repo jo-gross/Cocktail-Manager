@@ -6,6 +6,7 @@ import { ModalContext } from '@lib/context/ModalContextProvider';
 import AddCocktailToQueueModal from './modals/AddCocktailToQueueModal';
 import SelectSpecifyCocktailForStatisticModal from './modals/SelectSpecifyCocktailForStatisticModal';
 import { useOffline } from '@lib/context/OfflineContextProvider';
+import { Button, Loading, Tooltip } from '@components/ui';
 
 interface StatisticActionsProps {
   workspaceId: string;
@@ -39,14 +40,16 @@ export default function StatisticActions({
   const modalContext = useContext(ModalContext);
   const { isOnline, isOfflineMode } = useOffline();
 
-  // Disable all actions when offline
   const isOffline = !isOnline || isOfflineMode;
+  const offlineTip = isOffline ? 'Nicht verfügbar im Offline-Modus' : undefined;
 
   return (
-    <div className={'grid grid-cols-2 gap-2 md:grid-cols-2 2xl:grid-cols-3'}>
-      <div className={isOffline ? 'tooltip' : ''} data-tip={isOffline ? 'Nicht verfügbar im Offline-Modus' : undefined}>
-        <button
-          className={'btn btn-outline w-full flex-1'}
+    <div className="grid grid-cols-2 gap-2 md:grid-cols-2 2xl:grid-cols-3">
+      <Tooltip tip={offlineTip} className="w-full">
+        <Button
+          variant="outline"
+          className="w-full flex-1"
+          type="button"
           onClick={() =>
             addCocktailToQueue({
               workspaceId: workspaceId,
@@ -58,13 +61,15 @@ export default function StatisticActions({
         >
           <MdPlaylistAdd />
           Liste
-          {submittingQueue ? <span className={'loading loading-spinner'}></span> : <></>}
-        </button>
-      </div>
+          {submittingQueue ? <Loading size="sm" /> : null}
+        </Button>
+      </Tooltip>
 
-      <div className={isOffline ? 'tooltip' : ''} data-tip={isOffline ? 'Nicht verfügbar im Offline-Modus' : undefined}>
-        <button
-          className={'btn btn-outline w-full flex-1'}
+      <Tooltip tip={offlineTip} className="w-full">
+        <Button
+          variant="outline"
+          className="w-full flex-1"
+          type="button"
           onClick={() =>
             modalContext.openModal(
               <AddCocktailToQueueModal
@@ -80,15 +85,15 @@ export default function StatisticActions({
         >
           <MdPlaylistAdd />
           mit Notiz
-          {submittingQueue ? <span className={'loading loading-spinner'}></span> : <></>}
-        </button>
-      </div>
-      <div
-        className={isOffline ? 'tooltip col-span-2 2xl:col-span-1' : 'col-span-2 2xl:col-span-1'}
-        data-tip={isOffline ? 'Nicht verfügbar im Offline-Modus' : undefined}
-      >
-        <button
-          className={'btn btn-outline btn-primary w-full'}
+          {submittingQueue ? <Loading size="sm" /> : null}
+        </Button>
+      </Tooltip>
+
+      <Tooltip tip={offlineTip} className="col-span-2 w-full 2xl:col-span-1">
+        <Button
+          variant="outline"
+          className="w-full border-primary text-primary hover:bg-primary/10"
+          type="button"
           onClick={() =>
             addCocktailToStatistic({
               workspaceId: workspaceId,
@@ -117,9 +122,9 @@ export default function StatisticActions({
         >
           <FaCheck />
           Gemacht
-          {submittingStatistic ? <span className={'loading loading-spinner'}></span> : <></>}
-        </button>
-      </div>
+          {submittingStatistic ? <Loading size="sm" /> : null}
+        </Button>
+      </Tooltip>
     </div>
   );
 }

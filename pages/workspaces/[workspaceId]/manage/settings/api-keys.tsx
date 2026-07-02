@@ -11,6 +11,7 @@ import { alertService } from '@lib/alertService';
 import { FaPlus, FaTrash } from 'react-icons/fa';
 import { Loading } from '@components/Loading';
 import { formatDate as formatDateUtil } from '@lib/DateUtils';
+import { Badge, Button, Card, CardBody, Loading as UiLoading, Table, TableBody, TableCell, TableHead, TableHeaderCell, TableRow } from '@components/ui';
 
 interface ApiKey {
   id: string;
@@ -126,15 +127,15 @@ function ApiKeysPage() {
       backLink={`/workspaces/${workspaceId}/manage`}
       title="API Keys"
       actions={[
-        <button key="create" className="btn btn-primary" onClick={handleCreate}>
+        <Button key="create" type="button" variant="primary" onClick={handleCreate}>
           <FaPlus />
           API Key erstellen
-        </button>,
+        </Button>,
       ]}
     >
       <div className="flex flex-col gap-4">
-        <div className="card">
-          <div className="card-body">
+        <Card>
+          <CardBody>
             <div className="text-lg font-bold">API Keys verwalten</div>
             <div className="text-sm text-base-content/70">
               Erstellen Sie API Keys, um externen Diensten kontrollierten Zugriff auf Ihr Workspace zu gewähren. Jeder Key kann spezifische Berechtigungen
@@ -144,48 +145,50 @@ function ApiKeysPage() {
             {apiKeys.length === 0 ? (
               <div className="mt-4 text-center">
                 <div className="text-lg">Keine API Keys vorhanden</div>
-                <button className="btn btn-outline btn-primary mt-4" onClick={handleCreate}>
+                <Button type="button" variant="outline" className="mt-4 border-primary text-primary hover:bg-primary/10" onClick={handleCreate}>
                   <FaPlus />
                   Ersten API Key erstellen
-                </button>
+                </Button>
               </div>
             ) : (
               <div className="mt-4 overflow-x-auto">
-                <table className="table table-zebra">
-                  <thead>
-                    <tr>
-                      <th>Name</th>
-                      <th>Erstellt am</th>
-                      <th>Ablaufdatum</th>
-                      <th>Zuletzt verwendet</th>
-                      <th>Erstellt von</th>
-                      <th>Berechtigungen</th>
-                      <th>Aktionen</th>
-                    </tr>
-                  </thead>
-                  <tbody>
+                <Table zebra className="w-full">
+                  <TableHead>
+                    <TableRow>
+                      <TableHeaderCell>Name</TableHeaderCell>
+                      <TableHeaderCell>Erstellt am</TableHeaderCell>
+                      <TableHeaderCell>Ablaufdatum</TableHeaderCell>
+                      <TableHeaderCell>Zuletzt verwendet</TableHeaderCell>
+                      <TableHeaderCell>Erstellt von</TableHeaderCell>
+                      <TableHeaderCell>Berechtigungen</TableHeaderCell>
+                      <TableHeaderCell>Aktionen</TableHeaderCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
                     {apiKeys.map((apiKey, _index) => {
                       const expired = isExpired(apiKey.expiresAt);
                       return (
-                        <tr key={apiKey.id}>
-                          <td className={expired ? 'opacity-50' : ''}>
+                        <TableRow key={apiKey.id}>
+                          <TableCell className={expired ? 'opacity-50' : ''}>
                             <div className="font-semibold">{apiKey.name}</div>
                             <div className="font-mono text-xs text-base-content/60">{apiKey.keyPrefix}</div>
-                          </td>
-                          <td className={expired ? 'opacity-50' : ''}>{formatDate(apiKey.createdAt)}</td>
-                          <td className={expired ? 'opacity-50' : ''}>
+                          </TableCell>
+                          <TableCell className={expired ? 'opacity-50' : ''}>{formatDate(apiKey.createdAt)}</TableCell>
+                          <TableCell className={expired ? 'opacity-50' : ''}>
                             {apiKey.expiresAt ? (
                               <span className={expired ? 'text-error' : ''}>{formatDate(apiKey.expiresAt)}</span>
                             ) : (
                               <span className="text-base-content/60">Nie</span>
                             )}
-                          </td>
-                          <td className={expired ? 'opacity-50' : ''}>{formatDate(apiKey.lastUsedAt)}</td>
-                          <td className={expired ? 'opacity-50' : ''}>{apiKey.createdBy.name || apiKey.createdBy.email || 'Unbekannt'}</td>
-                          <td className={expired ? 'opacity-50' : ''}>
+                          </TableCell>
+                          <TableCell className={expired ? 'opacity-50' : ''}>{formatDate(apiKey.lastUsedAt)}</TableCell>
+                          <TableCell className={expired ? 'opacity-50' : ''}>{apiKey.createdBy.name || apiKey.createdBy.email || 'Unbekannt'}</TableCell>
+                          <TableCell className={expired ? 'opacity-50' : ''}>
                             {apiKey.permissions.length > 0 ? (
-                              <div
-                                className="badge badge-primary badge-sm cursor-help"
+                              <Badge
+                                variant="primary"
+                                size="sm"
+                                className="cursor-help"
                                 onClick={() => {
                                   modalContext.openModal(
                                     <CreateApiKeyModal
@@ -199,33 +202,29 @@ function ApiKeysPage() {
                                 }}
                               >
                                 {apiKey.permissions.length} Berechtigung{apiKey.permissions.length !== 1 ? 'en' : ''}
-                              </div>
+                              </Badge>
                             ) : (
-                              <div className="badge badge-primary badge-sm">
+                              <Badge variant="primary" size="sm">
                                 {apiKey.permissions.length} Berechtigung{apiKey.permissions.length !== 1 ? 'en' : ''}
-                              </div>
+                              </Badge>
                             )}
-                          </td>
-                          <td>
+                          </TableCell>
+                          <TableCell>
                             <div className="flex gap-2">
-                              <button
-                                className={`btn btn-error btn-sm ${deleting === apiKey.id ? 'loading loading-spinner' : ''}`}
-                                onClick={() => handleDelete(apiKey)}
-                                disabled={deleting === apiKey.id}
-                              >
-                                {deleting === apiKey.id ? <span className="loading loading-spinner" /> : <FaTrash />}
-                              </button>
+                              <Button type="button" variant="error" size="sm" onClick={() => handleDelete(apiKey)} disabled={deleting === apiKey.id}>
+                                {deleting === apiKey.id ? <UiLoading size="sm" /> : <FaTrash />}
+                              </Button>
                             </div>
-                          </td>
-                        </tr>
+                          </TableCell>
+                        </TableRow>
                       );
                     })}
-                  </tbody>
-                </table>
+                  </TableBody>
+                </Table>
               </div>
             )}
-          </div>
-        </div>
+          </CardBody>
+        </Card>
       </div>
     </ManageEntityLayout>
   );

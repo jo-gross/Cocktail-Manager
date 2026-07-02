@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Permission } from '@generated/prisma/client';
 import { FaInfoCircle } from 'react-icons/fa';
+import { Checkbox, Divider, Tooltip } from '@components/ui';
 
 interface ApiKeyPermissionSelectorProps {
   selectedPermissions: Permission[];
@@ -293,9 +294,7 @@ export default function ApiKeyPermissionSelector(props: ApiKeyPermissionSelector
         <div className="flex flex-col gap-1">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                className="checkbox"
+              <Checkbox
                 checked={isCategoryFullySelected('ALL')}
                 onChange={() => toggleCategory('ALL')}
                 disabled={props.disabled}
@@ -308,23 +307,21 @@ export default function ApiKeyPermissionSelector(props: ApiKeyPermissionSelector
               <label className={props.disabled ? 'font-semibold uppercase' : 'cursor-pointer font-semibold uppercase'} onClick={() => toggleCategory('ALL')}>
                 ALL
               </label>
-              <div className="tooltip tooltip-left" data-tip={allPermissions.map((p) => permissionLabels[p]).join(', ')}>
+              <Tooltip tip={allPermissions.map((p) => permissionLabels[p]).join(', ')}>
                 <span className="cursor-help text-xs text-base-content/60">({allPermissions.length} Berechtigungen)</span>
-              </div>
+              </Tooltip>
             </div>
-            <div className="tooltip tooltip-left pr-4" data-tip="Alle Berechtigungen auswählen - gewährt vollständigen Zugriff auf alle Endpunkte">
+            <Tooltip tip="Alle Berechtigungen auswählen - gewährt vollständigen Zugriff auf alle Endpunkte" className="pr-4">
               <FaInfoCircle className="cursor-help" size={14} />
-            </div>
+            </Tooltip>
           </div>
-          <div className="divider my-1" />
+          <Divider size="sm" className="my-1" />
         </div>
         {Object.entries(permissionCategories).map(([categoryKey, category]) => (
           <div key={categoryKey} className="flex flex-col gap-1">
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  className="checkbox"
+                <Checkbox
                   checked={isCategoryFullySelected(categoryKey)}
                   onChange={() => toggleCategory(categoryKey)}
                   disabled={props.disabled}
@@ -340,38 +337,32 @@ export default function ApiKeyPermissionSelector(props: ApiKeyPermissionSelector
                 >
                   {category.label}
                 </label>
-                <div className="tooltip tooltip-left" data-tip={category.permissions.map((p) => permissionLabels[p]).join(', ')}>
+                <Tooltip tip={category.permissions.map((p) => permissionLabels[p]).join(', ')}>
                   <span className="cursor-help text-xs text-base-content/60">({category.permissions.length} Berechtigungen)</span>
-                </div>
+                </Tooltip>
               </div>
-              <div className="tooltip tooltip-left pr-4" data-tip={`Alle ${category.label}-Berechtigungen auswählen`}>
+              <Tooltip tip={`Alle ${category.label}-Berechtigungen auswählen`} className="pr-4">
                 <FaInfoCircle className="cursor-help" size={14} />
-              </div>
+              </Tooltip>
             </div>
             {
               <div className="ml-6 flex flex-col gap-1">
                 {category.permissions.map((perm) => (
                   <div key={perm} className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        className="checkbox checkbox-sm"
-                        checked={isPermissionSelected(perm)}
-                        onChange={() => togglePermission(perm)}
-                        disabled={props.disabled}
-                      />
+                      <Checkbox checkboxSize="sm" checked={isPermissionSelected(perm)} onChange={() => togglePermission(perm)} disabled={props.disabled} />
                       <label className={props.disabled ? 'text-sm uppercase' : 'cursor-pointer text-sm uppercase'} onClick={() => togglePermission(perm)}>
                         {permissionLabels[perm]}
                       </label>
                     </div>
-                    <div className="tooltip tooltip-left pr-4" data-tip={permissionDescriptions[perm]}>
+                    <Tooltip tip={permissionDescriptions[perm]} className="pr-4">
                       <FaInfoCircle className="cursor-help" size={12} />
-                    </div>
+                    </Tooltip>
                   </div>
                 ))}
               </div>
             }
-            <div className="divider my-1" />
+            <Divider size="sm" className="my-1" />
           </div>
         ))}
       </div>

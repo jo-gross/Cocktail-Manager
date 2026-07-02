@@ -8,7 +8,7 @@ import { UserContext } from '@lib/context/UserContextProvider';
 import { CocktailRating, Role } from '@generated/prisma/client';
 import Image from 'next/image';
 import AvatarImage from '../AvatarImage';
-import { Loading } from '../Loading';
+import { Alert, Badge, Button, ButtonGroup, CardBody, CardTitle, Divider, FormControl, Input, Label, Loading, Tooltip } from '@components/ui';
 import ImageModal from './ImageModal';
 import { calcCocktailTotalPrice } from '@lib/CocktailRecipeCalculation';
 import { fetchIngredients } from '@lib/network/ingredients';
@@ -135,15 +135,15 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
   ) : (
     <>
       <div className={'md:max-w-5xl'}>
-        <div className={'card-body bg-base-100'}>
+        <CardBody className="bg-base-100">
           <div className={'w-full pb-4 text-center text-2xl font-bold no-print:hidden'}>{loadedCocktail.name}</div>
           <div className={'flex flex-row space-x-2 print:hidden'}>
             {modalContext.content.length > 1 && (
-              <button className={'btn btn-square btn-outline btn-sm'} onClick={() => modalContext.closeModal()}>
+              <Button variant="outline" size="sm" shape="square" onClick={() => modalContext.closeModal()}>
                 <FaArrowLeft />
-              </button>
+              </Button>
             )}
-            <h2 className={'card-title flex-1'}>
+            <CardTitle className="flex-1">
               {loadedCocktail.name}
               {loadedCocktail.price != undefined ? (
                 <>
@@ -164,45 +164,51 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
               ) : (
                 <></>
               )}
-            </h2>
+            </CardTitle>
             {chromiumAvailable ? (
-              <button className={'btn btn-square btn-outline btn-sm'} onClick={handleExportPdf} disabled={exportingPdf} title="Als PDF exportieren">
-                {exportingPdf ? <span className={'loading loading-spinner'} /> : <FaFileDownload />}
-              </button>
+              <Tooltip tip="Als PDF exportieren">
+                <Button variant="outline" size="sm" shape="square" onClick={handleExportPdf} disabled={exportingPdf}>
+                  {exportingPdf ? <Loading size="sm" /> : <FaFileDownload />}
+                </Button>
+              </Tooltip>
             ) : (
-              <button
-                className={'btn btn-square btn-outline btn-sm'}
+              <Button
+                variant="outline"
+                size="sm"
+                shape="square"
                 onClick={() => {
                   window.print();
                 }}
               >
                 <FaFileDownload />
-              </button>
+              </Button>
             )}
-            <button
-              className={'btn btn-square btn-outline btn-sm'}
+            <Button
+              variant="outline"
+              size="sm"
+              shape="square"
               title="Verlauf anzeigen"
               onClick={() =>
                 modalContext.openModal(<AuditLogHistoryModal entityType={'CocktailRecipe'} entityId={loadedCocktail.id} entityName={loadedCocktail.name} />)
               }
             >
               <FaHistory />
-            </button>
+            </Button>
             <>
               {userContext.isUserPermitted(Role.MANAGER) && (
                 <Link href={`/workspaces/${workspaceId}/manage/cocktails/${loadedCocktail.id}`}>
-                  <div className={'btn btn-square btn-outline btn-secondary btn-sm'} onClick={() => modalContext.closeAllModals()}>
+                  <Button variant="outline" size="sm" shape="square" className="border-secondary text-secondary" onClick={() => modalContext.closeAllModals()}>
                     <FaPencilAlt />
-                  </div>
+                  </Button>
                 </Link>
               )}
             </>
-            <button className={'btn btn-square btn-outline btn-sm'} onClick={() => modalContext.closeAllModals()}>
+            <Button variant="outline" size="sm" shape="square" onClick={() => modalContext.closeAllModals()}>
               <FaTimes />
-            </button>
+            </Button>
           </div>
           {(props.queueNotes || localQueueAmount) && (
-            <div className={'alert alert-warning grid grid-cols-2'}>
+            <Alert variant="warning" className="grid grid-cols-2">
               {localQueueAmount && (
                 <div>
                   Anzahl: <strong>{localQueueAmount}x</strong>
@@ -213,7 +219,7 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                   Warteschlangennotiz: <strong>{props.queueNotes}</strong>
                 </div>
               )}
-            </div>
+            </Alert>
           )}
           <div className={'grid grid-cols-1 gap-4 md:grid-cols-2'}>
             {/*Left side*/}
@@ -223,9 +229,9 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                   {(loadedCocktail?.tags.length ?? 0) > 0 && (
                     <div className={'gap-2'}>
                       {loadedCocktail?.tags.map((tag) => (
-                        <div key={`cocktail-details-${loadedCocktail.id}-tags-${tag}`} className={'badge badge-primary mr-1'}>
+                        <Badge key={`cocktail-details-${loadedCocktail.id}-tags-${tag}`} variant="primary" size="sm" className="mr-1">
                           {tag}
-                        </div>
+                        </Badge>
                       ))}
                     </div>
                   )}
@@ -256,14 +262,14 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                   <div className={'flex flex-row items-baseline justify-between gap-2'}>
                     <div className={'font-bold'}>Zubereitung</div>
                     {amountAdjustment != 100 && (
-                      <div className={'badge badge-secondary badge-outline'}>
+                      <Badge variant="secondary" outline size="sm">
                         {'Menge '}
                         {amountAdjustment.toLocaleString(undefined, {
                           minimumFractionDigits: 0,
                           maximumFractionDigits: 0,
                         })}{' '}
                         %
-                      </div>
+                      </Badge>
                     )}
                   </div>
                   {loadedCocktail.steps
@@ -337,7 +343,7 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                 </>
               )}
 
-              <div className={'divider-sm print:hidden'}></div>
+              <Divider size="sm" className="print:hidden" />
               <div className={'print:hidden'}>
                 <StatisticActions
                   workspaceId={router.query.workspaceId as string}
@@ -386,29 +392,30 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                   }
                 />
               </div>
-              <div className={'divider-sm'}></div>
-              <details className="collapse collapse-arrow border">
-                <summary className="collapse-title font-bold">Menge anpassen</summary>
-                <div className="collapse-content">
-                  <div className={'flex flex-col gap-2 pb-2 pl-4 pr-3'}>
+              <Divider size="sm" />
+              <details className="rounded-box border border-base-300">
+                <summary className="cursor-pointer px-4 py-3 font-bold">Menge anpassen</summary>
+                <div className="px-4 pb-4">
+                  <div className={'flex flex-col gap-2 pr-3 pb-2 pl-4'}>
                     <div className={'flex items-end gap-2'}>
-                      <div className={'form-control w-full'}>
-                        <label className={'label'}>Menge</label>
-                        <div className={'join w-full'}>
-                          <input
+                      <FormControl className="w-full">
+                        <Label>Menge</Label>
+                        <ButtonGroup className="w-full">
+                          <Input
+                            joinItem
                             inputMode={'numeric'}
-                            className={'input join-item input-bordered w-full'}
+                            className="w-full"
                             step={1}
                             min={1}
                             value={amountAdjustment}
                             onChange={(e) => setAmountAdjustment(toInteger(e.target.value))}
                           />
-                          <span className={'base-content join-item flex w-12 items-center justify-center bg-primary text-primary-content'}>%</span>
-                        </div>
-                      </div>
-                      <button type={'button'} className={'btn btn-square btn-secondary'} onClick={() => setAmountAdjustment(100)}>
+                          <span className="join-item flex w-12 items-center justify-center bg-primary text-primary-content">%</span>
+                        </ButtonGroup>
+                      </FormControl>
+                      <Button type={'button'} variant="secondary" shape="square" onClick={() => setAmountAdjustment(100)}>
                         <FaArrowRotateLeft />
-                      </button>
+                      </Button>
                     </div>
                     {amountAdjustment != 100 && <div className={'font-thin'}>Die geänderte Menge fließt nicht in die Statistik mit ein</div>}
                   </div>
@@ -423,10 +430,10 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                   {ratingError ? (
                     <>
                       <div>Fehler beim Laden der Bewertungen</div>
-                      <button type={'button'} className={`btn btn-square btn-outline btn-sm`} disabled={ratingsLoading} onClick={refreshRatings}>
-                        {ratingsLoading && <span className="loading loading-spinner"></span>}
+                      <Button type={'button'} variant="outline" size="sm" shape="square" disabled={ratingsLoading} onClick={refreshRatings}>
+                        {ratingsLoading && <Loading size="sm" />}
                         <FaSyncAlt />
-                      </button>
+                      </Button>
                     </>
                   ) : (
                     <>
@@ -445,9 +452,12 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                       />
                       ({cocktailRatings.length})
                       {cocktailRatings.length != 0 ? (
-                        <button
+                        <Button
                           type={'button'}
-                          className={'btn btn-square btn-outline btn-info btn-sm print:hidden'}
+                          variant="outline"
+                          size="sm"
+                          shape="square"
+                          className="border-info text-info print:hidden"
                           disabled={cocktailRatings.length === 0}
                           onClick={() =>
                             modalContext.openModal(
@@ -456,14 +466,16 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                           }
                         >
                           <FaInfo />
-                        </button>
+                        </Button>
                       ) : (
                         <></>
                       )}
                       <div className={'flex-grow'}></div>
-                      <button
+                      <Button
                         type={'button'}
-                        className={'btn btn-outline btn-sm print:hidden'}
+                        variant="outline"
+                        size="sm"
+                        className="print:hidden"
                         onClick={() =>
                           modalContext.openModal(
                             <AddCocktailRatingModal cocktailId={props.cocktailId} cocktailName={loadedCocktail.name} onCreated={refreshRatings} />,
@@ -471,7 +483,7 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                         }
                       >
                         <FaPlus /> Bewertung hinzufügen
-                      </button>
+                      </Button>
                     </>
                   )}
                 </div>
@@ -545,12 +557,14 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                         {(ingredient.ingredient?.tags.length ?? 0) > 0 && (
                           <div className={'gap-2'}>
                             {ingredient.ingredient?.tags.map((tag) => (
-                              <div
+                              <Badge
                                 key={`cocktail-details-${loadedCocktail.id}-ingredients-${ingredient.id}-tags-${tag}`}
-                                className={'badge badge-primary mr-1 print:badge-outline'}
+                                variant="primary"
+                                size="sm"
+                                className="mr-1 print:border-current print:bg-transparent"
                               >
                                 {tag}
-                              </div>
+                              </Badge>
                             ))}
                           </div>
                         )}
@@ -620,7 +634,7 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
               )}
             </div>
           </div>
-        </div>
+        </CardBody>
       </div>
     </>
   );

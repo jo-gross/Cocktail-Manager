@@ -1,6 +1,7 @@
 import { useContext, useState } from 'react';
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import { alertService } from '@lib/alertService';
+import { Button, Loading } from '@components/ui';
 
 interface ConfirmActionModalProps {
   title: string;
@@ -20,21 +21,21 @@ export function ConfirmActionModal({ title, message, confirmLabel, confirmVarian
       <div className="text-2xl font-bold">{title}</div>
       <div className="max-w-xl text-justify">{message}</div>
       <div className="flex justify-end gap-2">
-        <button
+        <Button
           type="button"
           disabled={loading}
-          className="btn btn-outline"
+          variant="outline"
           onClick={() => {
             onCancel?.();
             modalContext.closeModal();
           }}
         >
           Abbrechen
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
           disabled={loading}
-          className={confirmVariant === 'error' ? 'btn btn-error' : 'btn btn-primary'}
+          variant={confirmVariant}
           onClick={async () => {
             setLoading(true);
             try {
@@ -48,9 +49,9 @@ export function ConfirmActionModal({ title, message, confirmLabel, confirmVarian
             }
           }}
         >
-          {loading ? <span className="loading loading-spinner loading-sm" /> : null}
+          {loading ? <Loading size="sm" /> : null}
           {confirmLabel}
-        </button>
+        </Button>
       </div>
     </div>
   );

@@ -3,7 +3,6 @@ import Link from 'next/link';
 import { ManageEntityLayout } from '@components/layout/ManageEntityLayout';
 import { ManageColumn } from '@components/ManageColumn';
 import React, { useCallback, useContext, useEffect, useState } from 'react';
-import { Loading } from '@components/Loading';
 import { useRouter } from 'next/router';
 import { alertService } from '@lib/alertService';
 import { UserContext } from '@lib/context/UserContextProvider';
@@ -21,6 +20,30 @@ import CocktailExportOptionsModal, { CocktailExportOptions } from '../../../../.
 import CocktailImportWizardModal from '../../../../../components/modals/CocktailImportWizardModal';
 import { ConfirmActionModal } from '../../../../../components/modals/ConfirmActionModal';
 import { FaArchive } from 'react-icons/fa';
+import {
+  Badge,
+  Button,
+  Card,
+  CardBody,
+  Checkbox,
+  DataTable,
+  Dropdown,
+  DropdownContent,
+  Loading as UiLoading,
+  Menu,
+  SkeletonTableRows,
+  SortableHeaderCell,
+  sortRows,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeaderCell,
+  TableImageCell,
+  TableRow,
+  toggleSort,
+} from '@components/ui';
+import type { SortDirection } from '@components/ui';
 
 const CocktailsOverviewPage: NextPageWithPullToRefresh = () => {
   const router = useRouter();
@@ -40,6 +63,30 @@ const CocktailsOverviewPage: NextPageWithPullToRefresh = () => {
   const [chromiumAvailable, setChromiumAvailable] = useState(false);
 
   const [collapsedArchived, setCollapsedArchived] = useState(true);
+  const [sortKey, setSortKey] = useState('name');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+
+  const handleSort = useCallback(
+    (key: string) => {
+      const next = toggleSort(sortKey, sortDirection, key);
+      setSortKey(next.key);
+      setSortDirection(next.direction);
+    },
+    [sortKey, sortDirection],
+  );
+
+  const getCocktailSortValue = useCallback((recipe: CocktailRecipeModel, key: string) => {
+    switch (key) {
+      case 'name':
+        return recipe.name;
+      case 'price':
+        return recipe.price ?? null;
+      case 'glass':
+        return recipe.glass?.name ?? null;
+      default:
+        return null;
+    }
+  }, []);
 
   const refreshCocktails = useCallback(() => {
     if (!workspaceId) return;
@@ -330,60 +377,48 @@ const CocktailsOverviewPage: NextPageWithPullToRefresh = () => {
   );
 
   const renderTableRows = (recipes: CocktailRecipeModel[], isArchived: boolean) => {
-    return recipes
-      .filter(cocktailFilter(filterString))
-      .sort((a, b) => a.name.localeCompare(b.name))
-      .map((cocktailRecipe) => (
-        <tr key={cocktailRecipe.id} id={cocktailRecipe.id}>
-          {chromiumAvailable && (
-            <td className="w-0">
-              <input
-                type="checkbox"
-                className="checkbox checkbox-sm"
-                checked={selectedCocktailIds.has(cocktailRecipe.id)}
-                onChange={() => handleToggleSelect(cocktailRecipe.id)}
-              />
-            </td>
-          )}
-          <td className="w-0 p-0">
-            {cocktailRecipe._count.CocktailRecipeImage !== 0 && (
-              <div
-                className="h-12 w-12 cursor-pointer"
-                onClick={() =>
-                  modalContext.openModal(<ImageModal image={`/api/workspaces/${cocktailRecipe.workspaceId}/cocktails/${cocktailRecipe.id}/image`} />)
-                }
-              >
-                <AvatarImage src={`/api/workspaces/${cocktailRecipe.workspaceId}/cocktails/${cocktailRecipe.id}/image`} alt={'Cocktail'} />
-              </div>
-            )}
-          </td>
-          <td className={isArchived ? 'italic' : ''}>
-            {cocktailRecipe.name} {isArchived && '(Archiviert)'}
-          </td>
-          <td className={''}>
-            <span className={'whitespace-nowrap'}>{cocktailRecipe.price?.formatPrice() ?? '-'} €</span>
-          </td>
-          <td className={'flex items-center gap-1'}>
-            {cocktailRecipe.tags.map((tag) => (
-              <div key={`cocktail-${cocktailRecipe.id}-tags-${tag}`} className={'badge badge-primary'}>
-                {tag}
-              </div>
-            ))}
-          </td>
-          <td>{cocktailRecipe.glass?.name}</td>
-          <td>{cocktailRecipe.garnishes.map((garnish) => garnish.garnish.name).join(', ')}</td>
-          <ManageColumn
-            entity={'cocktails'}
-            id={cocktailRecipe.id}
-            name={cocktailRecipe.name}
-            onRefresh={refreshCocktails}
-            onExportJson={handleExportSingleJson}
-            onExportPdf={chromiumAvailable ? handleExportSinglePdf : undefined}
-            exportingJson={exportingSingleId?.id === cocktailRecipe.id && exportingSingleId.type === 'json'}
-            exportingPdf={exportingSingleId?.id === cocktailRecipe.id && exportingSingleId.type === 'pdf'}
-          />
-        </tr>
-      ));
+    return sortRows(recipes.filter(cocktailFilter(filterString)), { key: sortKey, direction: sortDirection }, getCocktailSortValue).map((cocktailRecipe) => (
+      <TableRow key={cocktailRecipe.id} id={cocktailRecipe.id}>
+        {chromiumAvailable && (
+          <TableCell className="w-0">
+            <Checkbox checkboxSize="sm" checked={selectedCocktailIds.has(cocktailRecipe.id)} onChange={() => handleToggleSelect(cocktailRecipe.id)} />
+          </TableCell>
+        )}
+        <TableImageCell
+          hasImage={cocktailRecipe._count.CocktailRecipeImage !== 0}
+          onImageClick={() =>
+            modalContext.openModal(<ImageModal image={`/api/workspaces/${cocktailRecipe.workspaceId}/cocktails/${cocktailRecipe.id}/image`} />)
+          }
+        >
+          <AvatarImage src={`/api/workspaces/${cocktailRecipe.workspaceId}/cocktails/${cocktailRecipe.id}/image`} alt={'Cocktail'} />
+        </TableImageCell>
+        <TableCell className={isArchived ? 'italic' : ''}>
+          {cocktailRecipe.name} {isArchived && '(Archiviert)'}
+        </TableCell>
+        <TableCell>
+          <span className={'whitespace-nowrap'}>{cocktailRecipe.price?.formatPrice() ?? '-'} €</span>
+        </TableCell>
+        <TableCell className={'flex items-center gap-1'}>
+          {cocktailRecipe.tags.map((tag) => (
+            <Badge key={`cocktail-${cocktailRecipe.id}-tags-${tag}`} variant="primary">
+              {tag}
+            </Badge>
+          ))}
+        </TableCell>
+        <TableCell>{cocktailRecipe.glass?.name}</TableCell>
+        <TableCell>{cocktailRecipe.garnishes.map((garnish) => garnish.garnish.name).join(', ')}</TableCell>
+        <ManageColumn
+          entity={'cocktails'}
+          id={cocktailRecipe.id}
+          name={cocktailRecipe.name}
+          onRefresh={refreshCocktails}
+          onExportJson={handleExportSingleJson}
+          onExportPdf={chromiumAvailable ? handleExportSinglePdf : undefined}
+          exportingJson={exportingSingleId?.id === cocktailRecipe.id && exportingSingleId.type === 'json'}
+          exportingPdf={exportingSingleId?.id === cocktailRecipe.id && exportingSingleId.type === 'pdf'}
+        />
+      </TableRow>
+    ));
   };
 
   return (
@@ -393,89 +428,96 @@ const CocktailsOverviewPage: NextPageWithPullToRefresh = () => {
       actions={
         <div className={'flex items-center gap-2'}>
           {selectedCocktailIds.size > 0 && (
-            <div className="dropdown dropdown-end">
-              <button tabIndex={0} className={'btn btn-outline btn-sm md:btn-md'} title="Import/Export Optionen">
+            <Dropdown align="end">
+              <Button type="button" variant="outline" size="sm" className="md:h-10 md:min-h-10 md:px-4" tabIndex={0}>
                 <FaFileDownload />
                 {selectedCocktailIds.size} ausgewählt
                 <FaChevronDown />
-              </button>
-              <ul tabIndex={0} className="menu dropdown-content z-[1] mt-2 w-64 gap-1 rounded-box border border-base-200 bg-base-100 p-2 shadow-lg">
-                <li>
-                  <button type="button" className="flex items-center gap-2" onClick={handleExportJson} disabled={exportingJson}>
-                    {exportingJson ? <span className={'loading loading-spinner loading-sm'} /> : <FaFileDownload />}
-                    Als JSON exportieren ({selectedCocktailIds.size})
-                  </button>
-                </li>
-                {chromiumAvailable && (
+              </Button>
+              <DropdownContent tabIndex={0} className="z-[1] mt-2 block w-64">
+                <Menu
+                  size="sm"
+                  className="gap-1 [&_button]:flex [&_button]:w-full [&_button]:items-center [&_button]:gap-2 [&_button]:rounded-field [&_button]:px-3 [&_button]:py-2 [&_button]:text-left [&_button]:hover:bg-base-200"
+                >
                   <li>
-                    <button type="button" className="flex items-center gap-2" onClick={handleExportPdf} disabled={exportingPdf}>
-                      {exportingPdf ? <span className={'loading loading-spinner loading-sm'} /> : <FaFileDownload />}
-                      Als PDF exportieren ({selectedCocktailIds.size})
+                    <button type="button" onClick={handleExportJson} disabled={exportingJson}>
+                      {exportingJson ? <UiLoading size="sm" /> : <FaFileDownload />}
+                      Als JSON exportieren ({selectedCocktailIds.size})
                     </button>
                   </li>
-                )}
-                {userContext.isUserPermitted(Role.MANAGER) && (
-                  <li>
-                    <button type="button" className="flex items-center gap-2" onClick={handleBulkArchive}>
-                      <FaArchive />
-                      Archivieren ({selectedCocktailIds.size})
-                    </button>
-                  </li>
-                )}
-              </ul>
-            </div>
+                  {chromiumAvailable && (
+                    <li>
+                      <button type="button" onClick={handleExportPdf} disabled={exportingPdf}>
+                        {exportingPdf ? <UiLoading size="sm" /> : <FaFileDownload />}
+                        Als PDF exportieren ({selectedCocktailIds.size})
+                      </button>
+                    </li>
+                  )}
+                  {userContext.isUserPermitted(Role.MANAGER) && (
+                    <li>
+                      <button type="button" onClick={handleBulkArchive}>
+                        <FaArchive />
+                        Archivieren ({selectedCocktailIds.size})
+                      </button>
+                    </li>
+                  )}
+                </Menu>
+              </DropdownContent>
+            </Dropdown>
           )}
-          <div className="dropdown dropdown-end">
-            <button tabIndex={0} className={'btn btn-outline btn-sm md:btn-md'} title="Import/Export Optionen">
+          <Dropdown align="end">
+            <Button type="button" variant="outline" size="sm" className="md:h-10 md:min-h-10 md:px-4" tabIndex={0}>
               <FaFileUpload />
               Import/Export
               <FaChevronDown />
-            </button>
-            <ul tabIndex={0} className="menu dropdown-content z-[1] mt-2 w-52 gap-1 rounded-box border border-base-200 bg-base-100 p-2 shadow-lg">
-              <li>
-                <button
-                  type="button"
-                  className="flex items-center gap-2"
-                  onClick={() => {
-                    if (!workspaceId) return;
-                    modalContext.openModal(
-                      <CocktailImportWizardModal
-                        workspaceId={workspaceId as string}
-                        onImportComplete={() => {
-                          refreshCocktails();
-                        }}
-                      />,
-                    );
-                  }}
-                >
-                  <FaFileUpload />
-                  Aus JSON importieren
-                </button>
-              </li>
-            </ul>
-          </div>
+            </Button>
+            <DropdownContent tabIndex={0} className="z-[1] mt-2 block w-52">
+              <Menu
+                size="sm"
+                className="gap-1 [&_button]:flex [&_button]:w-full [&_button]:items-center [&_button]:gap-2 [&_button]:rounded-field [&_button]:px-3 [&_button]:py-2 [&_button]:text-left [&_button]:hover:bg-base-200"
+              >
+                <li>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!workspaceId) return;
+                      modalContext.openModal(
+                        <CocktailImportWizardModal
+                          workspaceId={workspaceId as string}
+                          onImportComplete={() => {
+                            refreshCocktails();
+                          }}
+                        />,
+                      );
+                    }}
+                  >
+                    <FaFileUpload />
+                    Aus JSON importieren
+                  </button>
+                </li>
+              </Menu>
+            </DropdownContent>
+          </Dropdown>
           {userContext.isUserPermitted(Role.MANAGER) && (
             <Link href={`/workspaces/${workspaceId}/manage/cocktails/create`}>
-              <div className={'btn btn-square btn-primary btn-sm md:btn-md'}>
+              <Button variant="primary" shape="square" size="sm" className="md:h-10 md:min-h-10 md:w-10">
                 <FaPlus />
-              </div>
+              </Button>
             </Link>
           )}
         </div>
       }
     >
-      <div className={'card'}>
-        <div className={'card-body'}>
-          <ListSearchField onFilterChange={(filterString) => setFilterString(filterString)} />
-          <div className="overflow-x-auto">
-            <table className="table table-zebra w-full">
-              <thead>
-                <tr>
+      <Card>
+        <CardBody>
+          <DataTable toolbar={<ListSearchField onFilterChange={(filterString) => setFilterString(filterString)} />}>
+            <Table zebra className="w-full">
+              <TableHead>
+                <TableRow>
                   {chromiumAvailable && (
-                    <th className="w-0">
-                      <input
-                        type="checkbox"
-                        className="checkbox checkbox-sm"
+                    <TableHeaderCell className="w-0">
+                      <Checkbox
+                        checkboxSize="sm"
                         checked={
                           groupedCocktails['false']?.filter(cocktailFilter(filterString)).length > 0 &&
                           groupedCocktails['false']?.filter(cocktailFilter(filterString)).every((cocktail) => selectedCocktailIds.has(cocktail.id)) &&
@@ -485,57 +527,59 @@ const CocktailsOverviewPage: NextPageWithPullToRefresh = () => {
                             : true)
                         }
                         onChange={handleToggleSelectAll}
-                        title="Alle auswählen"
+                        aria-label="Alle auswählen"
                       />
-                    </th>
+                    </TableHeaderCell>
                   )}
-                  <th className="w-0"></th>
-                  <th>Name</th>
-                  <th>Preis</th>
-                  <th>Tags</th>
-                  <th>Glas</th>
-                  <th>Garnitur(en)</th>
-                  <th className="flex justify-end"></th>
-                </tr>
-              </thead>
-              <tbody>
+                  <TableHeaderCell className="w-0"></TableHeaderCell>
+                  <SortableHeaderCell sortKey="name" activeSortKey={sortKey} direction={sortDirection} onSort={handleSort}>
+                    Name
+                  </SortableHeaderCell>
+                  <SortableHeaderCell sortKey="price" activeSortKey={sortKey} direction={sortDirection} onSort={handleSort}>
+                    Preis
+                  </SortableHeaderCell>
+                  <TableHeaderCell>Tags</TableHeaderCell>
+                  <SortableHeaderCell sortKey="glass" activeSortKey={sortKey} direction={sortDirection} onSort={handleSort}>
+                    Glas
+                  </SortableHeaderCell>
+                  <TableHeaderCell>Garnitur(en)</TableHeaderCell>
+                  <TableHeaderCell className="flex justify-end"></TableHeaderCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
                 {loading ? (
-                  <tr className={'w-full'}>
-                    <td colSpan={chromiumAvailable ? 8 : 7}>
-                      <Loading />
-                    </td>
-                  </tr>
+                  <SkeletonTableRows columns={chromiumAvailable ? 8 : 7} avatarColumn={chromiumAvailable ? 1 : 0} />
                 ) : (
                   <>
                     {groupedCocktails['false']?.filter(cocktailFilter(filterString)).length == 0 ? (
-                      <tr>
-                        <td colSpan={chromiumAvailable ? 8 : 7} className={'text-center'}>
+                      <TableRow>
+                        <TableCell colSpan={chromiumAvailable ? 8 : 7} className={'text-center'}>
                           Keine Cocktails gefunden
-                        </td>
-                      </tr>
+                        </TableCell>
+                      </TableRow>
                     ) : (
                       <>{renderTableRows(groupedCocktails['false'] || [], false)}</>
                     )}
                     {(groupedCocktails['true'] || []).filter(cocktailFilter(filterString)).length > 0 && (
                       <>
-                        <tr className={'cursor-pointer'} onClick={() => setCollapsedArchived(!collapsedArchived)}>
-                          <td colSpan={chromiumAvailable ? 7 : 6} className={'bg-base-100 font-bold'}>
+                        <TableRow className={'cursor-pointer'} onClick={() => setCollapsedArchived(!collapsedArchived)}>
+                          <TableCell colSpan={chromiumAvailable ? 7 : 6} className={'bg-base-100 font-bold'}>
                             Archiviert
-                          </td>
-                          <td className={'flex items-center justify-end bg-base-100'}>
+                          </TableCell>
+                          <TableCell className={'flex items-center justify-end bg-base-100'}>
                             <div className={'p-2'}>{!collapsedArchived ? <FaArrowUp /> : <FaArrowDown />}</div>
-                          </td>
-                        </tr>
+                          </TableCell>
+                        </TableRow>
                         {!collapsedArchived && renderTableRows(groupedCocktails['true'], true)}
                       </>
                     )}
                   </>
                 )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
+              </TableBody>
+            </Table>
+          </DataTable>
+        </CardBody>
+      </Card>
     </ManageEntityLayout>
   );
 };

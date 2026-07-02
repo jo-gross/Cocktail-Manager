@@ -10,6 +10,22 @@ import AddWorkspaceJoinCodeModal from '../../../../../components/modals/AddWorks
 import { FaRegCircle } from 'react-icons/fa6';
 import { DeleteConfirmationModal } from '@components/modals/DeleteConfirmationModal';
 import { formatDateTime, formatDate } from '@lib/DateUtils';
+import {
+  Alert,
+  Button,
+  ButtonGroup,
+  Card,
+  CardBody,
+  CardTitle,
+  Loading as UiLoading,
+  Select,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeaderCell,
+  TableRow,
+} from '@components/ui';
 
 export default function ManageUsersPage() {
   const router = useRouter();
@@ -105,7 +121,7 @@ export default function ManageUsersPage() {
     <ManageEntityLayout backLink={`/workspaces/${workspaceId}/manage`} title={`Workspace-Einstellungen - ${userContext.workspace?.name}`}>
       <div className={'grid grid-cols-1 gap-2 md:grid-cols-2'}>
         {userContext.workspace?.isExternallyManaged && (
-          <div role="alert" className="alert alert-warning md:col-span-2">
+          <Alert variant="warning" className="md:col-span-2">
             <FaExclamationTriangle />
             <div>
               <h3 className="font-bold">Extern verwaltete Workspace</h3>
@@ -114,41 +130,43 @@ export default function ManageUsersPage() {
                 können hier nicht bearbeitet werden.
               </div>
             </div>
-          </div>
+          </Alert>
         )}
-        <div className={'card overflow-y-auto md:col-span-2'}>
-          <div className={'card-body'}>
-            <div className={'card-title'}>Workspace Nutzer verwalten</div>
-            <table className={'table table-zebra w-full rounded-xl border border-base-200'}>
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Email</th>
-                  <th>Rolle</th>
-                  <th>Auth Provider</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
+        <Card className="overflow-y-auto md:col-span-2">
+          <CardBody>
+            <CardTitle>Workspace Nutzer verwalten</CardTitle>
+            <Table zebra className="w-full rounded-xl border border-base-200">
+              <TableHead>
+                <TableRow>
+                  <TableHeaderCell>Name</TableHeaderCell>
+                  <TableHeaderCell>Email</TableHeaderCell>
+                  <TableHeaderCell>Rolle</TableHeaderCell>
+                  <TableHeaderCell>Auth Provider</TableHeaderCell>
+                  <TableHeaderCell></TableHeaderCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
                 {workspaceUsersLoading ? (
-                  <tr>
-                    <td colSpan={5} className={'w-full text-center'}>
+                  <TableRow>
+                    <TableCell colSpan={5} className="w-full text-center">
                       Lade...
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ) : (
                   workspaceUsers
                     ?.sort((a, b) => (a.user.name ?? '').localeCompare(b.user.name ?? ''))
                     .map((workspaceUser) => (
-                      <tr key={workspaceUser.user.id}>
-                        <td className={'whitespace-nowrap'}>
+                      <TableRow key={workspaceUser.user.id}>
+                        <TableCell className="whitespace-nowrap">
                           {workspaceUser.user.name}
                           {workspaceUser.user.id == userContext.user?.id ? ' (du)' : ''}
-                        </td>
-                        <td>{workspaceUser.user.email}</td>
-                        <td>
+                        </TableCell>
+                        <TableCell>{workspaceUser.user.email}</TableCell>
+                        <TableCell>
                           {userContext.isUserPermitted(Role.ADMIN) ? (
-                            <select
+                            <Select
+                              selectSize="sm"
+                              className="w-full max-w-xs min-w-fit"
                               disabled={
                                 workspaceUser.user.id == userContext.user?.id ||
                                 workspaceUser.role == Role.OWNER ||
@@ -156,7 +174,6 @@ export default function ManageUsersPage() {
                                   workspaceUser.user.accounts?.some((acc: { provider: string }) => acc.provider === 'custom_oidc'))
                               }
                               value={workspaceUser.role}
-                              className={'select select-bordered select-sm w-full min-w-fit max-w-xs'}
                               onChange={(event) => {
                                 fetch(`/api/workspaces/${workspaceId}/users/${workspaceUser.userId}`, {
                                   method: 'PUT',
@@ -184,22 +201,24 @@ export default function ManageUsersPage() {
                                 .map((role) => (
                                   <option key={role}>{role}</option>
                                 ))}
-                            </select>
+                            </Select>
                           ) : (
                             workspaceUser.role
                           )}
-                        </td>
-                        <td>
+                        </TableCell>
+                        <TableCell>
                           {workspaceUser.user.accounts && workspaceUser.user.accounts.length > 0
                             ? workspaceUser.user.accounts[0].provider === 'custom_oidc'
                               ? 'OIDC'
                               : workspaceUser.user.accounts[0].provider
                             : 'Email'}
-                        </td>
-                        <td className={'flex justify-end'}>
+                        </TableCell>
+                        <TableCell className="flex justify-end">
                           {userContext.isUserPermitted(Role.ADMIN) && workspaceUser.user.id != userContext.user?.id ? (
-                            <button
-                              className={'btn btn-error btn-sm ml-2'}
+                            <Button
+                              variant="error"
+                              size="sm"
+                              className="ml-2"
                               disabled={
                                 workspaceUser.role == Role.OWNER ||
                                 (userContext.workspace?.isExternallyManaged &&
@@ -229,12 +248,14 @@ export default function ManageUsersPage() {
                                   });
                               }}
                             >
-                              {leaveLoading[workspaceUser.userId] ? <span className={'loading loading-spinner'} /> : <></>}
-                              <>{workspaceUser.user.id == userContext.user?.id ? 'Verlassen' : 'Entfernen'}</>
-                            </button>
+                              {leaveLoading[workspaceUser.userId] ? <UiLoading size="sm" /> : null}
+                              {workspaceUser.user.id == userContext.user?.id ? 'Verlassen' : 'Entfernen'}
+                            </Button>
                           ) : (
-                            <button
-                              className={'btn btn-error btn-sm ml-2'}
+                            <Button
+                              variant="error"
+                              size="sm"
+                              className="ml-2"
                               disabled={
                                 workspaceUser.role == Role.OWNER ||
                                 workspaceUser.user.id != userContext.user?.id ||
@@ -266,52 +287,62 @@ export default function ManageUsersPage() {
                                   });
                               }}
                             >
-                              {leaveLoading[workspaceUser.user.id] ? <span className={'loading loading-spinner'} /> : <></>}
-                              <>{workspaceUser.user.id == userContext.user?.id ? 'Verlassen' : 'Entfernen'}</>
-                            </button>
+                              {leaveLoading[workspaceUser.user.id] ? <UiLoading size="sm" /> : null}
+                              {workspaceUser.user.id == userContext.user?.id ? 'Verlassen' : 'Entfernen'}
+                            </Button>
                           )}
-                        </td>
-                      </tr>
+                        </TableCell>
+                      </TableRow>
                     ))
                 )}
-              </tbody>
-            </table>
-          </div>
-        </div>
+              </TableBody>
+            </Table>
+          </CardBody>
+        </Card>
         {userContext.isUserPermitted(Role.MANAGER) && WorkspaceJoinRequest.length > 0 && (
-          <div className={'card overflow-y-auto md:col-span-2'}>
-            <div className={'card-body'}>
-              <div className={'card-title'}>Beitrittsanfragen</div>
-              <table className={'table table-zebra w-full rounded-xl border border-base-200'}>
-                <thead>
-                  <tr>
-                    <th>Name</th>
-                    <th>Email</th>
-                    <th>Datum</th>
-                    <th className={'flex justify-end'}>
-                      <button type={'button'} className={'btn btn-square btn-outline btn-primary btn-sm'} onClick={fetchWorkspaceJoinRequest}>
+          <Card className="overflow-y-auto md:col-span-2">
+            <CardBody>
+              <CardTitle>Beitrittsanfragen</CardTitle>
+              <Table zebra className="w-full rounded-xl border border-base-200">
+                <TableHead>
+                  <TableRow>
+                    <TableHeaderCell>Name</TableHeaderCell>
+                    <TableHeaderCell>Email</TableHeaderCell>
+                    <TableHeaderCell>Datum</TableHeaderCell>
+                    <TableHeaderCell className="flex justify-end">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        shape="square"
+                        size="sm"
+                        className="border-primary text-primary hover:bg-primary/10"
+                        onClick={fetchWorkspaceJoinRequest}
+                      >
                         <FaSync />
-                      </button>
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
+                      </Button>
+                    </TableHeaderCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
                   {joinRequestsLoading ? (
-                    <tr>
-                      <td colSpan={4} className={'text-center'}>
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-center">
                         Lade...
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   ) : (
-                    <>
-                      {WorkspaceJoinRequest.sort((a, b) => a.date.getTime() - b.date.getTime()).map((joinRequest) => (
-                        <tr key={`workspace-join-request-${joinRequest.user.id}`}>
-                          <td>{joinRequest.user.name}</td>
-                          <td>{joinRequest.user.email}</td>
-                          <td>{formatDateTime(new Date(joinRequest.date))}</td>
-                          <td className={'join flex justify-end'}>
-                            <button
-                              className={'btn-green btn join-item btn-sm'}
+                    WorkspaceJoinRequest.sort((a, b) => a.date.getTime() - b.date.getTime()).map((joinRequest) => (
+                      <TableRow key={`workspace-join-request-${joinRequest.user.id}`}>
+                        <TableCell>{joinRequest.user.name}</TableCell>
+                        <TableCell>{joinRequest.user.email}</TableCell>
+                        <TableCell>{formatDateTime(new Date(joinRequest.date))}</TableCell>
+                        <TableCell>
+                          <ButtonGroup className="flex justify-end">
+                            <Button
+                              type="button"
+                              variant="success"
+                              joinItem
+                              size="sm"
                               disabled={workspaceJoinRequestAcceptLoading[joinRequest.user.id] || workspaceJoinRequestRejectLoading[joinRequest.user.id]}
                               onClick={() => {
                                 setWorkspaceJoinRequestAcceptLoading({ ...workspaceJoinRequestAcceptLoading, [joinRequest.user.id]: true });
@@ -339,9 +370,13 @@ export default function ManageUsersPage() {
                               }}
                             >
                               <FaCheck /> Annehmen
-                            </button>
-                            <button
-                              className={'btn-red btn btn-outline join-item btn-sm'}
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              joinItem
+                              size="sm"
+                              className="border-error text-error hover:bg-error/10"
                               disabled={workspaceJoinRequestRejectLoading[joinRequest.user.id] || workspaceJoinRequestAcceptLoading[joinRequest.user.id]}
                               onClick={() => {
                                 setWorkspaceJoinRequestRejectLoading({ ...workspaceJoinRequestRejectLoading, [joinRequest.user.id]: true });
@@ -369,172 +404,175 @@ export default function ManageUsersPage() {
                               }}
                             >
                               <FaTimes /> Ablehnen
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </>
+                            </Button>
+                          </ButtonGroup>
+                        </TableCell>
+                      </TableRow>
+                    ))
                   )}
-                </tbody>
-              </table>
-            </div>
-          </div>
+                </TableBody>
+              </Table>
+            </CardBody>
+          </Card>
         )}
         {userContext.isUserPermitted(Role.MANAGER) && (
-          <div className={'card overflow-y-auto md:col-span-2'}>
-            <div className={'card-body'}>
-              <div className={'card-title'}>Einladungscode</div>
-              <table className={'table table-zebra w-full rounded-xl border border-base-200'}>
-                <thead>
-                  <tr>
-                    <th>Code</th>
-                    <th>Erstelldatum</th>
-                    <th>Ablaufdatum</th>
-                    <th>Einmal-Code</th>
-                    <th>Verwendet</th>
-                    <th className={'flex justify-end'}>
-                      <button
-                        type={'button'}
-                        className={'btn btn-outline btn-primary btn-sm'}
+          <Card className="overflow-y-auto md:col-span-2">
+            <CardBody>
+              <CardTitle>Einladungscode</CardTitle>
+              <Table zebra className="w-full rounded-xl border border-base-200">
+                <TableHead>
+                  <TableRow>
+                    <TableHeaderCell>Code</TableHeaderCell>
+                    <TableHeaderCell>Erstelldatum</TableHeaderCell>
+                    <TableHeaderCell>Ablaufdatum</TableHeaderCell>
+                    <TableHeaderCell>Einmal-Code</TableHeaderCell>
+                    <TableHeaderCell>Verwendet</TableHeaderCell>
+                    <TableHeaderCell className="flex justify-end">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="border-primary text-primary hover:bg-primary/10"
                         onClick={() => modalContext.openModal(<AddWorkspaceJoinCodeModal onCreated={() => fetchWorkspaceJoinCodes()} />)}
                       >
                         <FaPlus /> Erstellen
-                      </button>
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
+                      </Button>
+                    </TableHeaderCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
                   {workspaceJoinCodeLoading ? (
-                    <tr>
-                      <td colSpan={6} className={'text-center'}>
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center">
                         Lade...
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
+                  ) : workspaceJoinCodes.length == 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center">
+                        Keine Einladungscode vorhanden
+                      </TableCell>
+                    </TableRow>
                   ) : (
-                    <>
-                      {workspaceJoinCodes.length == 0 ? (
-                        <tr>
-                          <td colSpan={6} className={'text-center'}>
-                            Keine Einladungscode vorhanden
-                          </td>
-                        </tr>
-                      ) : (
-                        workspaceJoinCodes
-                          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-                          .map((workspaceJoinCode) => (
-                            <tr key={`workspace-join-request-${workspaceJoinCode.code}`}>
-                              <td>
-                                <button
-                                  className={'btn btn-ghost btn-primary btn-sm'}
-                                  onClick={() => {
-                                    navigator.clipboard.writeText(workspaceJoinCode.code).then(() => {
-                                      alertService.info('Erfolgreich kopiert');
-                                    });
+                    workspaceJoinCodes
+                      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                      .map((workspaceJoinCode) => (
+                        <TableRow key={`workspace-join-request-${workspaceJoinCode.code}`}>
+                          <TableCell>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="text-primary"
+                              onClick={() => {
+                                navigator.clipboard.writeText(workspaceJoinCode.code).then(() => {
+                                  alertService.info('Erfolgreich kopiert');
+                                });
+                              }}
+                            >
+                              <FaCopy />
+                            </Button>
+                            {workspaceJoinCode.code}
+                          </TableCell>
+                          <TableCell>{formatDate(new Date(workspaceJoinCode.createdAt))}</TableCell>
+                          <TableCell>{workspaceJoinCode.expires ? formatDate(new Date(workspaceJoinCode.expires)) : '-'}</TableCell>
+                          <TableCell>
+                            {workspaceJoinCode.onlyUseOnce ? (
+                              <div style={{ position: 'relative', display: 'inline-block' }}>
+                                <FaRegCircle style={{ fontSize: '24px' }} />
+                                <span
+                                  style={{
+                                    position: 'absolute',
+                                    top: '50%',
+                                    left: '50%',
+                                    transform: 'translate(-50%, -50%)',
+                                    fontSize: '12px',
+                                    fontWeight: 'bold',
                                   }}
                                 >
-                                  <FaCopy />
-                                </button>
-                                {workspaceJoinCode.code}
-                              </td>
-                              <td>{formatDate(new Date(workspaceJoinCode.createdAt))}</td>
-                              <td>{workspaceJoinCode.expires ? formatDate(new Date(workspaceJoinCode.expires)) : '-'}</td>
-                              <td>
-                                {workspaceJoinCode.onlyUseOnce ? (
-                                  <div style={{ position: 'relative', display: 'inline-block' }}>
-                                    <FaRegCircle style={{ fontSize: '24px' }} />
-                                    <span
-                                      style={{
-                                        position: 'absolute',
-                                        top: '50%',
-                                        left: '50%',
-                                        transform: 'translate(-50%, -50%)',
-                                        fontSize: '12px',
-                                        fontWeight: 'bold',
-                                      }}
-                                    >
-                                      1
-                                    </span>
-                                  </div>
-                                ) : (
-                                  '-'
-                                )}
-                              </td>
-                              <td>
-                                {workspaceJoinCode.onlyUseOnce ? (
-                                  workspaceJoinCode.used > 0 ? (
-                                    <FaCheck />
-                                  ) : (
-                                    '-'
-                                  )
-                                ) : workspaceJoinCode.used == 0 ? (
-                                  '-'
-                                ) : (
-                                  workspaceJoinCode.used
-                                )}
-                              </td>
-                              <td className={'flex justify-end gap-2'}>
-                                <button
-                                  className={'btn btn-outline btn-primary btn-sm'}
-                                  onClick={() => {
-                                    navigator.clipboard.writeText(window.location.origin + '/?code=' + workspaceJoinCode.code).then(() => {
-                                      alertService.info('Erfolgreich kopiert');
-                                    });
-                                  }}
-                                >
-                                  <FaShareAlt />
-                                  <div>Link kopieren</div>
-                                </button>
-                                <button
-                                  className={'btn-red btn btn-outline btn-sm'}
-                                  disabled={workspaceJoinCodeDeleting[workspaceJoinCode.code]}
-                                  onClick={() => {
-                                    modalContext.openModal(
-                                      <DeleteConfirmationModal
-                                        onApprove={async () => {
-                                          setWorkspaceJoinCodeDeleting({ ...workspaceJoinCodeDeleting, [workspaceJoinCode.code]: true });
-                                          fetch(`/api/workspaces/${workspaceId}/join-codes/${workspaceJoinCode.code}`, {
-                                            method: 'DELETE',
-                                          })
-                                            .then(async (response) => {
-                                              if (response.ok) {
-                                                fetchWorkspaceJoinCodes();
-                                                alertService.success('Erfolgreich entfernt');
-                                              } else {
-                                                const body = await response.json();
-                                                console.error('SettingsPage -> deleteWorkspaceJoinCode', response);
-                                                alertService.error(
-                                                  body.message ?? 'Fehler beim Löschen des Beitrittcodes',
-                                                  response.status,
-                                                  response.statusText,
-                                                );
-                                              }
-                                            })
-                                            .catch((error) => {
-                                              console.error('SettingsPage -> deleteWorkspaceJoinCode', error);
-                                              alertService.error('Es ist ein Fehler aufgetreten');
-                                            })
-                                            .finally(() => {
-                                              setWorkspaceJoinCodeDeleting({ ...workspaceJoinCodeDeleting, [workspaceJoinCode.code]: false });
-                                            });
-                                        }}
-                                        spelling={'DELETE'}
-                                        entityName={`den Beitrittscode '${workspaceJoinCode.code}'`}
-                                      />,
-                                    );
-                                  }}
-                                >
-                                  <FaTrashAlt />
-                                </button>
-                              </td>
-                            </tr>
-                          ))
-                      )}
-                    </>
+                                  1
+                                </span>
+                              </div>
+                            ) : (
+                              '-'
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {workspaceJoinCode.onlyUseOnce ? (
+                              workspaceJoinCode.used > 0 ? (
+                                <FaCheck />
+                              ) : (
+                                '-'
+                              )
+                            ) : workspaceJoinCode.used == 0 ? (
+                              '-'
+                            ) : (
+                              workspaceJoinCode.used
+                            )}
+                          </TableCell>
+                          <TableCell className="flex justify-end gap-2">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="border-primary text-primary hover:bg-primary/10"
+                              onClick={() => {
+                                navigator.clipboard.writeText(window.location.origin + '/?code=' + workspaceJoinCode.code).then(() => {
+                                  alertService.info('Erfolgreich kopiert');
+                                });
+                              }}
+                            >
+                              <FaShareAlt />
+                              <div>Link kopieren</div>
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="border-error text-error hover:bg-error/10"
+                              disabled={workspaceJoinCodeDeleting[workspaceJoinCode.code]}
+                              onClick={() => {
+                                modalContext.openModal(
+                                  <DeleteConfirmationModal
+                                    onApprove={async () => {
+                                      setWorkspaceJoinCodeDeleting({ ...workspaceJoinCodeDeleting, [workspaceJoinCode.code]: true });
+                                      fetch(`/api/workspaces/${workspaceId}/join-codes/${workspaceJoinCode.code}`, {
+                                        method: 'DELETE',
+                                      })
+                                        .then(async (response) => {
+                                          if (response.ok) {
+                                            fetchWorkspaceJoinCodes();
+                                            alertService.success('Erfolgreich entfernt');
+                                          } else {
+                                            const body = await response.json();
+                                            console.error('SettingsPage -> deleteWorkspaceJoinCode', response);
+                                            alertService.error(body.message ?? 'Fehler beim Löschen des Beitrittcodes', response.status, response.statusText);
+                                          }
+                                        })
+                                        .catch((error) => {
+                                          console.error('SettingsPage -> deleteWorkspaceJoinCode', error);
+                                          alertService.error('Es ist ein Fehler aufgetreten');
+                                        })
+                                        .finally(() => {
+                                          setWorkspaceJoinCodeDeleting({ ...workspaceJoinCodeDeleting, [workspaceJoinCode.code]: false });
+                                        });
+                                    }}
+                                    spelling={'DELETE'}
+                                    entityName={`den Beitrittscode '${workspaceJoinCode.code}'`}
+                                  />,
+                                );
+                              }}
+                            >
+                              <FaTrashAlt />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))
                   )}
-                </tbody>
-              </table>
-            </div>
-          </div>
+                </TableBody>
+              </Table>
+            </CardBody>
+          </Card>
         )}
       </div>
     </ManageEntityLayout>

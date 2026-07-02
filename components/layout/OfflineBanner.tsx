@@ -21,7 +21,7 @@ export function OfflineBanner({ className = '' }: OfflineBannerProps) {
 
   return (
     <div
-      className={`sticky top-0 z-50 flex w-full items-center justify-center gap-2 bg-warning px-4 py-2 text-white shadow-md ${className}`}
+      className={`sticky top-0 z-50 flex w-full items-center justify-center gap-2 bg-warning px-4 py-2.5 text-white shadow-md ${className}`}
       role="alert"
       aria-live="polite"
     >

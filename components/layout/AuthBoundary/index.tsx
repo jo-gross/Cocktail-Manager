@@ -3,6 +3,7 @@ import { authClient } from '@lib/auth-client';
 import { Role, User, UserSetting, WorkspaceSetting, WorkspaceSettingKey } from '@generated/prisma/client';
 import { PageCenter } from '../PageCenter';
 import { Loading } from '../../Loading';
+import { Button } from '@components/ui';
 import { UserContext } from '@lib/context/UserContextProvider';
 import { alertService } from '@lib/alertService';
 import { useRouter } from 'next/router';
@@ -174,9 +175,9 @@ export function AuthBoundary(props: AlertBoundaryProps) {
           <PageCenter>
             <div className={'flex flex-col items-center justify-center gap-4'}>
               <Loading name={'Lade Nutzer...'} />
-              <button className={'btn btn-outline btn-error btn-xs'} onClick={cancelLogin}>
+              <Button variant="outline" size="xs" className="border-error text-error hover:bg-error/10" onClick={cancelLogin}>
                 Abbrechen
-              </button>
+              </Button>
             </div>
           </PageCenter>
         ) : (

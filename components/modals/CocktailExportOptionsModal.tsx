@@ -1,5 +1,6 @@
 import React, { useContext, useState } from 'react';
 import { ModalContext } from '@lib/context/ModalContextProvider';
+import { Button, Divider, FormControl, Label, LabelText, Toggle } from '@components/ui';
 
 export interface CocktailExportOptions {
   exportImage: boolean;
@@ -52,80 +53,71 @@ export default function CocktailExportOptionsModal({ onExport }: CocktailExportO
         <div className={'flex flex-col gap-2'}>
           <div className={'text-lg font-semibold'}>Inhalt</div>
           <div className={'flex flex-col gap-2 pl-2'}>
-            <div className="form-control">
-              <label className="label cursor-pointer justify-start gap-2">
-                <input type={'checkbox'} className={'toggle toggle-primary'} checked={exportImage} onChange={(e) => setExportImage(e.target.checked)} />
-                <span className={'label-text'}>Bild anzeigen</span>
-              </label>
-            </div>
-            <div className="form-control">
-              <label className="label cursor-pointer justify-start gap-2">
-                <input
-                  type={'checkbox'}
-                  className={'toggle toggle-primary'}
-                  checked={exportDescription}
-                  onChange={(e) => setExportDescription(e.target.checked)}
-                />
-                <span className={'label-text'}>Allgemeine Beschreibung anzeigen</span>
-              </label>
-            </div>
-            <div className="form-control">
-              <label className="label cursor-pointer justify-start gap-2">
-                <input type={'checkbox'} className={'toggle toggle-primary'} checked={exportNotes} onChange={(e) => setExportNotes(e.target.checked)} />
-                <span className={'label-text'}>Zubereitungsnotizen anzeigen</span>
-              </label>
-            </div>
-            <div className="form-control">
-              <label className="label cursor-pointer justify-start gap-2">
-                <input type={'checkbox'} className={'toggle toggle-primary'} checked={exportHistory} onChange={(e) => setExportHistory(e.target.checked)} />
-                <span className={'label-text'}>Geschichte und Entstehung anzeigen</span>
-              </label>
-            </div>
+            <FormControl>
+              <Label className="cursor-pointer flex-row items-center justify-start gap-2">
+                <Toggle checked={exportImage} onChange={(e) => setExportImage(e.target.checked)} />
+                <LabelText>Bild anzeigen</LabelText>
+              </Label>
+            </FormControl>
+            <FormControl>
+              <Label className="cursor-pointer flex-row items-center justify-start gap-2">
+                <Toggle checked={exportDescription} onChange={(e) => setExportDescription(e.target.checked)} />
+                <LabelText>Allgemeine Beschreibung anzeigen</LabelText>
+              </Label>
+            </FormControl>
+            <FormControl>
+              <Label className="cursor-pointer flex-row items-center justify-start gap-2">
+                <Toggle checked={exportNotes} onChange={(e) => setExportNotes(e.target.checked)} />
+                <LabelText>Zubereitungsnotizen anzeigen</LabelText>
+              </Label>
+            </FormControl>
+            <FormControl>
+              <Label className="cursor-pointer flex-row items-center justify-start gap-2">
+                <Toggle checked={exportHistory} onChange={(e) => setExportHistory(e.target.checked)} />
+                <LabelText>Geschichte und Entstehung anzeigen</LabelText>
+              </Label>
+            </FormControl>
           </div>
         </div>
-        <div className={'divider my-0'}></div>
+        <Divider className="my-0" />
         <div className={'flex flex-col gap-2'}>
           <div className={'text-lg font-semibold'}>Layout</div>
           <div className={'flex flex-col gap-2 pl-2'}>
-            <div className="form-control">
-              <label className="label cursor-pointer justify-start gap-2">
-                <input
-                  type={'checkbox'}
-                  className={'toggle toggle-primary'}
-                  checked={newPagePerCocktail}
-                  onChange={(e) => setNewPagePerCocktail(e.target.checked)}
-                />
-                <span className={'label-text'}>Neue Seite für jeden Cocktail</span>
-              </label>
-            </div>
-            <div className="form-control">
-              <label className="label cursor-pointer justify-start gap-2">
-                <input type={'checkbox'} className={'toggle toggle-primary'} checked={showHeader} onChange={(e) => setShowHeader(e.target.checked)} />
-                <span className={'label-text'}>Header anzeigen</span>
-              </label>
-            </div>
-            <div className="form-control">
-              <label className="label cursor-pointer justify-start gap-2">
-                <input type={'checkbox'} className={'toggle toggle-primary'} checked={showFooter} onChange={(e) => setShowFooter(e.target.checked)} />
-                <span className={'label-text'}>Seitenzahl anzeigen</span>
-              </label>
-            </div>
+            <FormControl>
+              <Label className="cursor-pointer flex-row items-center justify-start gap-2">
+                <Toggle checked={newPagePerCocktail} onChange={(e) => setNewPagePerCocktail(e.target.checked)} />
+                <LabelText>Neue Seite für jeden Cocktail</LabelText>
+              </Label>
+            </FormControl>
+            <FormControl>
+              <Label className="cursor-pointer flex-row items-center justify-start gap-2">
+                <Toggle checked={showHeader} onChange={(e) => setShowHeader(e.target.checked)} />
+                <LabelText>Header anzeigen</LabelText>
+              </Label>
+            </FormControl>
+            <FormControl>
+              <Label className="cursor-pointer flex-row items-center justify-start gap-2">
+                <Toggle checked={showFooter} onChange={(e) => setShowFooter(e.target.checked)} />
+                <LabelText>Seitenzahl anzeigen</LabelText>
+              </Label>
+            </FormControl>
           </div>
         </div>
       </div>
       <div className={'flex justify-end gap-2'}>
-        <button
-          className={'btn btn-outline btn-error'}
+        <Button
+          variant="outline"
+          className="border-error text-error hover:bg-error/10"
           type={'button'}
           onClick={() => {
             modalContext.closeModal();
           }}
         >
           Abbrechen
-        </button>
-        <button className={'btn btn-primary'} type={'button'} onClick={handleExport}>
+        </Button>
+        <Button variant="primary" type={'button'} onClick={handleExport}>
           Exportieren
-        </button>
+        </Button>
       </div>
     </div>
   );

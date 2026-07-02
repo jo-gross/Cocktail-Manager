@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { getEndOfDay, getStartOfDay, getStartOfMonth, getStartOfWeek, getStartOfYear } from '@lib/dateHelpers';
+import { Button, Divider, Dropdown, DropdownContent, Input, Select } from '@components/ui';
 
 export type TimeRangePreset = 'today' | 'yesterday' | 'thisWeek' | 'lastWeek' | 'thisMonth' | 'lastMonth' | 'thisYear' | 'allTime' | 'custom';
 
@@ -182,8 +183,8 @@ export function TimeRangePicker({
 
   if (compact) {
     return (
-      <div className="dropdown dropdown-end">
-        <div tabIndex={0} role="button" className="btn btn-ghost gap-1">
+      <Dropdown align="end">
+        <Button type="button" variant="ghost" className="gap-1" tabIndex={0}>
           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path
               strokeLinecap="round"
@@ -193,24 +194,25 @@ export function TimeRangePicker({
             />
           </svg>
           <span className="hidden sm:inline">{formatDateRange(value.startDate, value.endDate)}</span>
-        </div>
-        <div tabIndex={0} className="menu dropdown-content z-[1000] w-[calc(100vw-2rem)] rounded-box bg-base-100 p-4 shadow-lg md:w-80">
+        </Button>
+        <DropdownContent tabIndex={0} className="z-[1000] block w-[calc(100vw-2rem)] md:w-80">
           <div className="flex flex-col gap-3">
             <div className="text-sm font-semibold">Zeitraum auswählen</div>
-            <select className="select select-bordered select-sm w-full" value={preset} onChange={(e) => handlePresetChange(e.target.value as TimeRangePreset)}>
+            <Select selectSize="sm" className="w-full" value={preset} onChange={(e) => handlePresetChange(e.target.value as TimeRangePreset)}>
               {presets.map((p) => (
                 <option key={p.value} value={p.value}>
                   {p.label}
                 </option>
               ))}
-            </select>
+            </Select>
 
             {isCustom && (
               <div className="flex flex-col gap-2">
                 <label className="text-xs text-base-content/70">Von</label>
-                <input
+                <Input
                   type="date"
-                  className="input input-sm input-bordered w-full"
+                  inputSize="sm"
+                  className="w-full"
                   value={customStart}
                   onChange={(e) => {
                     const newStart = e.target.value;
@@ -225,9 +227,10 @@ export function TimeRangePicker({
                   }}
                 />
                 <label className="text-xs text-base-content/70">Bis</label>
-                <input
+                <Input
                   type="date"
-                  className="input input-sm input-bordered w-full"
+                  inputSize="sm"
+                  className="w-full"
                   value={customEnd}
                   onChange={(e) => {
                     const newEnd = e.target.value;
@@ -244,7 +247,7 @@ export function TimeRangePicker({
               </div>
             )}
 
-            <div className="divider-sm"></div>
+            <Divider size="sm" />
 
             <div className="text-xs text-base-content/70">
               <div className="mb-1 font-medium">Gewählter Zeitraum:</div>
@@ -260,27 +263,27 @@ export function TimeRangePicker({
               </div>
             )}
           </div>
-        </div>
-      </div>
+        </DropdownContent>
+      </Dropdown>
     );
   }
 
   return (
     <div className="flex flex-col gap-2">
       <div className="flex flex-wrap items-center gap-2">
-        <select className="select select-bordered select-sm" value={preset} onChange={(e) => handlePresetChange(e.target.value as TimeRangePreset)}>
+        <Select selectSize="sm" value={preset} onChange={(e) => handlePresetChange(e.target.value as TimeRangePreset)}>
           {presets.map((p) => (
             <option key={p.value} value={p.value}>
               {p.label}
             </option>
           ))}
-        </select>
+        </Select>
 
         {isCustom && (
           <>
-            <input
+            <Input
               type="date"
-              className="input input-sm input-bordered"
+              inputSize="sm"
               value={customStart}
               onChange={(e) => {
                 const newStart = e.target.value;
@@ -295,9 +298,9 @@ export function TimeRangePicker({
               }}
             />
             <span className="text-sm">bis</span>
-            <input
+            <Input
               type="date"
-              className="input input-sm input-bordered"
+              inputSize="sm"
               value={customEnd}
               onChange={(e) => {
                 const newEnd = e.target.value;

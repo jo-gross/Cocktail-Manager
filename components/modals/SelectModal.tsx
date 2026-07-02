@@ -1,8 +1,8 @@
 import { BsSearch } from 'react-icons/bs';
 import React, { useCallback, useContext, useEffect, useState } from 'react';
-import { Loading } from '../Loading';
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import { alertService } from '@lib/alertService';
+import { Button, ButtonGroup, Input, Loading } from '@components/ui';
 
 interface SelectModalProps<T> {
   title: string;
@@ -11,8 +11,8 @@ interface SelectModalProps<T> {
   fetchElements: (search: string) => Promise<T[]>;
   elementComponent: (t: T) => React.JSX.Element;
   compareFunction?: (t1: T, t2: T) => number;
-  getElementId?: (t: T) => string; // Function to extract ID from element
-  selectedIds?: Set<string> | string[]; // IDs that are already selected and should be disabled
+  getElementId?: (t: T) => string;
+  selectedIds?: Set<string> | string[];
 }
 
 export function SelectModal<T>(props: SelectModalProps<T>) {
@@ -22,7 +22,6 @@ export function SelectModal<T>(props: SelectModalProps<T>) {
   const [elements, setElements] = useState<T[]>([]);
   const [isLoading, setLoading] = useState(false);
 
-  // Convert selectedIds to Set for efficient lookup
   const selectedIdsSet = React.useMemo(() => {
     if (!props.selectedIds) return new Set<string>();
     if (Array.isArray(props.selectedIds)) {
@@ -31,7 +30,6 @@ export function SelectModal<T>(props: SelectModalProps<T>) {
     return props.selectedIds;
   }, [props.selectedIds]);
 
-  // Check if an element is already selected
   const isElementSelected = (element: T): boolean => {
     if (!props.getElementId || selectedIdsSet.size === 0) return false;
     const id = props.getElementId(element);
@@ -58,9 +56,10 @@ export function SelectModal<T>(props: SelectModalProps<T>) {
   return (
     <div className={'grid w-full grid-cols-1 gap-2 p-0.5 md:p-2'}>
       <div className={'w-max text-2xl font-bold'}>{props.title}</div>
-      <div className={'join pb-2'}>
-        <input
-          className={'input join-item input-bordered w-full'}
+      <ButtonGroup className="pb-2">
+        <Input
+          joinItem
+          className="w-full"
           value={search}
           autoFocus={true}
           onChange={async (e) => {
@@ -70,10 +69,10 @@ export function SelectModal<T>(props: SelectModalProps<T>) {
             }
           }}
         />
-        <span className={'btn btn-square btn-outline btn-primary join-item'}>
+        <Button joinItem variant="outline" shape="square" type="button" tabIndex={-1}>
           <BsSearch />
-        </span>
-      </div>
+        </Button>
+      </ButtonGroup>
       <>
         {isLoading ? (
           <Loading />
@@ -94,10 +93,11 @@ export function SelectModal<T>(props: SelectModalProps<T>) {
               >
                 <div className={`md:p-3' flex justify-between p-2 text-xl font-medium`}>
                   {props.elementComponent(element)}
-                  <button
+                  <Button
                     type="button"
                     disabled={isSelected}
-                    className={'btn btn-primary btn-sm'}
+                    variant="primary"
+                    size="sm"
                     onClick={() => {
                       props.onElementSelected?.(element);
                       setSearch('');
@@ -105,7 +105,7 @@ export function SelectModal<T>(props: SelectModalProps<T>) {
                     }}
                   >
                     {props.selectionLabel ?? 'Auswählen'}
-                  </button>
+                  </Button>
                 </div>
               </div>
             );

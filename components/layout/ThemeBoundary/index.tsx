@@ -25,11 +25,10 @@ function getInitialTheme(): 'dark' | 'auto' | 'light' {
 function applyThemeToDOM(theme: 'dark' | 'auto' | 'light') {
   if (typeof document === 'undefined') return;
   if (theme === 'dark') {
-    document.documentElement.setAttribute('data-theme', 'halloween');
+    document.documentElement.setAttribute('data-theme', 'dark');
   } else if (theme === 'light') {
-    document.documentElement.setAttribute('data-theme', 'autumn');
+    document.documentElement.setAttribute('data-theme', 'light');
   } else {
-    // auto: remove data-theme so daisyUI uses prefers-color-scheme with darkTheme config
     document.documentElement.removeAttribute('data-theme');
   }
 }

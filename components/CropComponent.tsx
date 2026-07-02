@@ -2,6 +2,7 @@ import ReactCrop, { Crop } from 'react-image-crop';
 import { useEffect, useRef, useState } from 'react';
 import 'react-image-crop/dist/ReactCrop.css';
 import { FaTrashAlt } from 'react-icons/fa';
+import { Button, FormControl, Input, Label, Loading, Radio } from '@components/ui';
 
 interface CropComponentProps {
   imageToCrop: File;
@@ -128,7 +129,7 @@ export default function CropComponent(props: CropComponentProps) {
                 ref={(imgRef) => setImageRef(imgRef)}
                 src={URL.createObjectURL(props.imageToCrop)}
                 alt="Crop"
-                className={'absolute bottom-0 left-0 right-0 top-0 m-auto max-h-96 max-w-96 object-contain'}
+                className={'absolute top-0 right-0 bottom-0 left-0 m-auto max-h-96 max-w-96 object-contain'}
                 onLoad={() => {
                   setImageLoaded(true);
                 }}
@@ -138,55 +139,42 @@ export default function CropComponent(props: CropComponentProps) {
         </div>
         <div>
           <div className={'font-bold'}>Hintergrundfarbe</div>
-          <div className={'form-control'}>
-            <label className={'label'}>
+          <FormControl>
+            <Label className="flex-row items-center justify-between">
               Transparent
-              <input
-                type={'radio'}
-                className={'radio'}
-                name={'bg-color'}
-                value={'transparent'}
-                checked={backgroundColor === 'transparent'}
-                onChange={() => setBackgroundColor('transparent')}
-              />
-            </label>
-          </div>
-          <div className={'form-control'}>
-            <label className={'label'}>
+              <Radio name="bg-color" value="transparent" checked={backgroundColor === 'transparent'} onChange={() => setBackgroundColor('transparent')} />
+            </Label>
+          </FormControl>
+          <FormControl>
+            <Label className="flex-row items-center justify-between">
               Eigene Farbe
-              <input
-                type={'radio'}
-                className={'radio'}
-                name={'bg-color'}
-                value={'custom'}
-                checked={backgroundColor === 'custom'}
-                onChange={() => setBackgroundColor('custom')}
-              />
-            </label>
-            <input
-              className={`input ${backgroundColor === 'custom' ? '' : 'hidden'} w-full`}
-              type={'color'}
+              <Radio name="bg-color" value="custom" checked={backgroundColor === 'custom'} onChange={() => setBackgroundColor('custom')} />
+            </Label>
+            <Input
+              className={backgroundColor === 'custom' ? 'w-full' : 'hidden w-full'}
+              type="color"
               value={customColor}
               onChange={(e) => setCustomColor(e.target.value)}
               disabled={backgroundColor !== 'custom'}
             />
-          </div>
+          </FormControl>
         </div>
       </div>
       <div className="flex w-full flex-row items-center justify-end gap-2">
-        <button
+        <Button
           disabled={!crop || crop?.width === 0 || crop?.height === 0 || isCropping}
           type="button"
+          variant="primary"
+          className="flex-1"
           onClick={async () => await generateCroppedImage()}
-          className="btn btn-primary flex-1"
         >
-          {isCropping ? <span className={'loading loading-spinner'} /> : null}
+          {isCropping ? <Loading size="sm" /> : null}
           Zuschneiden und Bild übernehmen
-        </button>
+        </Button>
         {props.onCropCancel && (
-          <button className="btn btn-square btn-outline btn-error" onClick={props.onCropCancel}>
+          <Button type="button" variant="outline" shape="square" className="border-error text-error hover:bg-error/10" onClick={props.onCropCancel}>
             <FaTrashAlt />
-          </button>
+          </Button>
         )}
       </div>
     </div>

@@ -11,6 +11,7 @@ import { DeleteConfirmationModal } from './modals/DeleteConfirmationModal';
 import InputModal from './modals/InputModal';
 import { createPortal } from 'react-dom';
 import { AuditLogHistoryModal } from './modals/AuditLogHistoryModal';
+import { Button, Divider, Loading, Menu } from '@components/ui';
 
 interface ManageColumnProps {
   id: string;
@@ -49,7 +50,7 @@ export function ManageColumn(props: ManageColumnProps) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
   const buttonRef = useRef<HTMLButtonElement>(null);
-  const dropdownRef = useRef<HTMLUListElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const calculateDropdownPosition = useCallback(() => {
     if (buttonRef.current) {
@@ -301,138 +302,142 @@ export function ManageColumn(props: ManageColumnProps) {
   const dropdownMenu =
     isDropdownOpen && typeof document !== 'undefined'
       ? createPortal(
-          <ul
+          <div
             ref={dropdownRef}
-            className="menu menu-sm z-[9999] w-52 gap-1 rounded-box border border-base-200 bg-base-100 p-2 shadow-lg"
             style={{
               position: 'fixed',
               top: dropdownPosition.top,
               left: dropdownPosition.left,
             }}
           >
-            <li>
-              <Link
-                href={`/workspaces/${workspaceId}/manage/${props.entity}/${props.id}`}
-                className="flex items-center gap-2"
-                onClick={() => setIsDropdownOpen(false)}
-              >
-                <FaRegEdit />
-                Bearbeiten
-              </Link>
-            </li>
-            {props.customActions?.map((action, index) => (
-              <li key={`custom-action-${index}`}>
-                <button
-                  type="button"
-                  className={`flex items-center gap-2 ${action.isDanger ? 'text-error' : ''}`}
-                  onClick={() => {
-                    setIsDropdownOpen(false);
-                    action.onClick(props.id);
-                  }}
-                  disabled={action.disabled}
+            <Menu
+              size="sm"
+              className="z-[9999] w-52 gap-1 rounded-box border border-base-200 bg-base-100 p-2 shadow-lg [&_a]:flex [&_a]:items-center [&_a]:gap-2 [&_a]:rounded-field [&_a]:px-3 [&_a]:py-2 [&_a]:hover:bg-base-200 [&_button]:flex [&_button]:w-full [&_button]:items-center [&_button]:gap-2 [&_button]:rounded-field [&_button]:px-3 [&_button]:py-2 [&_button]:text-left [&_button]:hover:bg-base-200"
+            >
+              <li>
+                <Link
+                  href={`/workspaces/${workspaceId}/manage/${props.entity}/${props.id}`}
+                  className="flex items-center gap-2"
+                  onClick={() => setIsDropdownOpen(false)}
                 >
-                  {action.icon}
-                  {action.label}
-                </button>
+                  <FaRegEdit />
+                  Bearbeiten
+                </Link>
               </li>
-            ))}
-            {hasDuplicateOrExportActions && <div className="divider-sm my-1" />}
-            {props.onExportJson && (
+              {props.customActions?.map((action, index) => (
+                <li key={`custom-action-${index}`}>
+                  <button
+                    type="button"
+                    className={`flex items-center gap-2 ${action.isDanger ? 'text-error' : ''}`}
+                    onClick={() => {
+                      setIsDropdownOpen(false);
+                      action.onClick(props.id);
+                    }}
+                    disabled={action.disabled}
+                  >
+                    {action.icon}
+                    {action.label}
+                  </button>
+                </li>
+              ))}
+              {hasDuplicateOrExportActions && <Divider size="sm" className="my-1" />}
+              {props.onExportJson && (
+                <li>
+                  <button
+                    type="button"
+                    className="flex items-center gap-2"
+                    onClick={() => {
+                      setIsDropdownOpen(false);
+                      props.onExportJson?.(props.id);
+                    }}
+                    disabled={props.exportingJson}
+                  >
+                    {props.exportingJson ? <Loading size="sm" /> : <FaFileDownload />}
+                    Als JSON exportieren
+                  </button>
+                </li>
+              )}
+              {props.onExportPdf && (
+                <li>
+                  <button
+                    type="button"
+                    className="flex items-center gap-2"
+                    onClick={() => {
+                      setIsDropdownOpen(false);
+                      props.onExportPdf?.(props.id);
+                    }}
+                    disabled={props.exportingPdf}
+                  >
+                    {props.exportingPdf ? <Loading size="sm" /> : <FaFileDownload />}
+                    Als PDF exportieren
+                  </button>
+                </li>
+              )}
+              {canDuplicate && (
+                <li>
+                  <button
+                    type="button"
+                    className="flex items-center gap-2"
+                    onClick={() => {
+                      setIsDropdownOpen(false);
+                      handleDuplicateClick();
+                    }}
+                    disabled={isDuplicating}
+                  >
+                    {isDuplicating ? <Loading size="sm" /> : <FaRegClone />}
+                    Duplizieren
+                  </button>
+                </li>
+              )}
+              <Divider size="sm" className="my-1" />
               <li>
                 <button
                   type="button"
                   className="flex items-center gap-2"
                   onClick={() => {
                     setIsDropdownOpen(false);
-                    props.onExportJson?.(props.id);
+                    modalContext.openModal(
+                      <AuditLogHistoryModal
+                        entityType={
+                          props.entity === 'cocktails'
+                            ? 'CocktailRecipe'
+                            : props.entity === 'ingredients'
+                              ? 'Ingredient'
+                              : props.entity === 'glasses'
+                                ? 'Glass'
+                                : props.entity === 'garnishes'
+                                  ? 'Garnish'
+                                  : 'CocktailCalculation'
+                        }
+                        entityId={props.id}
+                        entityName={props.name}
+                      />,
+                    );
                   }}
-                  disabled={props.exportingJson}
                 >
-                  {props.exportingJson ? <span className={'loading loading-spinner loading-sm'} /> : <FaFileDownload />}
-                  Als JSON exportieren
+                  <FaHistory />
+                  Verlauf anzeigen
                 </button>
               </li>
-            )}
-            {props.onExportPdf && (
-              <li>
-                <button
-                  type="button"
-                  className="flex items-center gap-2"
-                  onClick={() => {
-                    setIsDropdownOpen(false);
-                    props.onExportPdf?.(props.id);
-                  }}
-                  disabled={props.exportingPdf}
-                >
-                  {props.exportingPdf ? <span className={'loading loading-spinner loading-sm'} /> : <FaFileDownload />}
-                  Als PDF exportieren
-                </button>
-              </li>
-            )}
-            {canDuplicate && (
-              <li>
-                <button
-                  type="button"
-                  className="flex items-center gap-2"
-                  onClick={() => {
-                    setIsDropdownOpen(false);
-                    handleDuplicateClick();
-                  }}
-                  disabled={isDuplicating}
-                >
-                  {isDuplicating ? <span className={'loading loading-spinner loading-sm'} /> : <FaRegClone />}
-                  Duplizieren
-                </button>
-              </li>
-            )}
-            <div className="divider-sm my-1" />
-            <li>
-              <button
-                type="button"
-                className="flex items-center gap-2"
-                onClick={() => {
-                  setIsDropdownOpen(false);
-                  modalContext.openModal(
-                    <AuditLogHistoryModal
-                      entityType={
-                        props.entity === 'cocktails'
-                          ? 'CocktailRecipe'
-                          : props.entity === 'ingredients'
-                            ? 'Ingredient'
-                            : props.entity === 'glasses'
-                              ? 'Glass'
-                              : props.entity === 'garnishes'
-                                ? 'Garnish'
-                                : 'CocktailCalculation'
-                      }
-                      entityId={props.id}
-                      entityName={props.name}
-                    />,
-                  );
-                }}
-              >
-                <FaHistory />
-                Verlauf anzeigen
-              </button>
-            </li>
-            {canDelete && <div className="divider-sm my-1" />}
-            {canDelete && (
-              <li>
-                <button
-                  type="button"
-                  className="flex items-center gap-2 text-error"
-                  onClick={() => {
-                    setIsDropdownOpen(false);
-                    handleDeleteClick();
-                  }}
-                  disabled={isCheckingReferences}
-                >
-                  {isCheckingReferences ? <span className={'loading loading-spinner loading-sm'} /> : <FaTrashAlt />}
-                  Löschen
-                </button>
-              </li>
-            )}
-          </ul>,
+              {canDelete && <Divider size="sm" className="my-1" />}
+              {canDelete && (
+                <li>
+                  <button
+                    type="button"
+                    className="flex items-center gap-2 text-error"
+                    onClick={() => {
+                      setIsDropdownOpen(false);
+                      handleDeleteClick();
+                    }}
+                    disabled={isCheckingReferences}
+                  >
+                    {isCheckingReferences ? <Loading size="sm" /> : <FaTrashAlt />}
+                    Löschen
+                  </button>
+                </li>
+              )}
+            </Menu>
+          </div>,
           document.body,
         )
       : null;
@@ -440,9 +445,9 @@ export function ManageColumn(props: ManageColumnProps) {
   return (
     <td>
       <div className={'flex items-center justify-end'}>
-        <button ref={buttonRef} type="button" className="btn btn-ghost btn-sm" onClick={handleToggleDropdown}>
+        <Button ref={buttonRef} type="button" variant="ghost" size="sm" onClick={handleToggleDropdown}>
           <FaEllipsisV />
-        </button>
+        </Button>
         {dropdownMenu}
       </div>
     </td>

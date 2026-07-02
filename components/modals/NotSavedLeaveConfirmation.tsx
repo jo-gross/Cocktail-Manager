@@ -1,6 +1,7 @@
 import { useContext, useState } from 'react';
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import { alertService } from '@lib/alertService';
+import { Button, Loading } from '@components/ui';
 
 interface NotSavedConfirmationProps {
   onSave: () => Promise<void>;
@@ -22,27 +23,27 @@ export function NotSavedLeaveConfirmation(props: NotSavedConfirmationProps) {
       </div>
       <div className="flex flex-row space-x-4">
         <div className={'flex-1'}></div>
-        <div
-          className={`btn btn-outline`}
+        <Button
+          variant="outline"
           onClick={() => {
             props.onCancel?.();
             modalContext.closeModal();
           }}
         >
           Abbrechen
-        </div>
-        <div
-          className={`btn btn-outline`}
+        </Button>
+        <Button
+          variant="outline"
           onClick={() => {
             props.onNotSave?.();
             modalContext.closeModal();
           }}
         >
           Nicht speichern
-        </div>
-        <button
+        </Button>
+        <Button
           disabled={isSaving || props.isSaving}
-          className={`btn btn-primary`}
+          variant="primary"
           onClick={async () => {
             setIsSaving(true);
             try {
@@ -56,9 +57,9 @@ export function NotSavedLeaveConfirmation(props: NotSavedConfirmationProps) {
             }
           }}
         >
-          {isSaving || props.isSaving ? <span className={'loading loading-spinner'} /> : <></>}
+          {isSaving || props.isSaving ? <Loading size="sm" /> : null}
           Speichern
-        </button>
+        </Button>
       </div>
     </div>
   );

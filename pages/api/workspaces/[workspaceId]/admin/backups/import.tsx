@@ -115,6 +115,7 @@ export default withWorkspacePermission([Role.USER], async (req: NextApiRequest, 
             importLogger.step('Importing units', { count: data.units.length });
 
             for (const g of data.units) {
+              const originalUnitId = g.id;
               const existingUnit = await transaction.unit.findFirst({
                 where: { name: g.name, workspaceId: workspaceId },
               });
@@ -122,9 +123,9 @@ export default withWorkspacePermission([Role.USER], async (req: NextApiRequest, 
                 g.id = randomUUID();
                 g.workspaceId = workspaceId;
                 await transaction.unit.create({ data: g });
-                unitMapping.push({ id: g.id, newId: g.id });
+                unitMapping.push({ id: originalUnitId, newId: g.id });
               } else {
-                unitMapping.push({ id: g.id, newId: existingUnit.id });
+                unitMapping.push({ id: originalUnitId, newId: existingUnit.id });
               }
             }
           }
@@ -328,19 +329,22 @@ export default withWorkspacePermission([Role.USER], async (req: NextApiRequest, 
           const iceMapping: { id: string; newId: string }[] = [];
           if (data.ice?.length > 0) {
             importLogger.step('Importing ice', { count: data.ice.length });
+            const iceToCreate: typeof data.ice = [];
             for (const ice of data.ice) {
-              const existing = (await transaction.ice.findFirst({ where: { workspaceId: workspaceId, name: ice.name } }))?.id;
+              const existing = await transaction.ice.findFirst({ where: { workspaceId: workspaceId, name: ice.name } });
               if (existing) {
-                iceMapping.push({ id: ice.id, newId: existing });
+                iceMapping.push({ id: ice.id, newId: existing.id });
+              } else {
+                const originalIceId = ice.id;
+                ice.id = randomUUID();
+                ice.workspaceId = workspaceId;
+                iceMapping.push({ id: originalIceId, newId: ice.id });
+                iceToCreate.push(ice);
               }
             }
-            data.ice?.forEach((i) => {
-              const iceMappingItem = { id: i.id, newId: randomUUID() };
-              i.id = iceMappingItem.newId;
-              i.workspaceId = workspaceId;
-              iceMapping.push(iceMappingItem);
-            });
-            await transaction.ice.createMany({ data: data.ice, skipDuplicates: true });
+            if (iceToCreate.length > 0) {
+              await transaction.ice.createMany({ data: iceToCreate, skipDuplicates: true });
+            }
           }
 
           // ensure that all oldIce is imported
@@ -471,7 +475,16 @@ export default withWorkspacePermission([Role.USER], async (req: NextApiRequest, 
               g.cocktailRecipeStepId = cocktailRecipeStepMapping.find((gm) => gm.id === g.cocktailRecipeStepId)!.newId;
               g.ingredientId = ingredientMapping.find((gm) => gm.id === g.ingredientId)!.newId;
               if (g.unitId != undefined) {
-                g.unitId = unitMapping.find((gm) => gm.id === g.unitId)!.newId;
+                const mappedUnitId = unitMapping.find((gm) => gm.id === g.unitId)?.newId;
+                if (mappedUnitId != undefined) {
+                  g.unitId = mappedUnitId;
+                } else {
+                  importLogger.step('Missing unit reference while importing cocktail recipe ingredient', {
+                    unitId: g.unitId,
+                    cocktailRecipeStepId: g.cocktailRecipeStepId,
+                  });
+                  g.unitId = null;
+                }
               }
               // @ts-expect-error causing older backup version support
               if (g.unit != undefined) {

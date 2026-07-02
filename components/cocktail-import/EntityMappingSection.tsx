@@ -3,6 +3,7 @@ import { FaCheckCircle, FaChevronDown, FaChevronUp } from 'react-icons/fa';
 import { EntityCombobox } from './EntityCombobox';
 import { useRouter } from 'next/router';
 import { UnitForm, IceForm, StepActionForm } from './EntityForms';
+import { Badge, Card, CardBody, FormControl, Input, Label, LabelText, Radio } from '@components/ui';
 
 interface EntityMapping {
   exportId: string;
@@ -155,150 +156,156 @@ export function EntityMappingSection({
 
       case 'glasses':
         return (
-          <div className="ml-6 rounded-lg border border-base-300 bg-base-200 p-3">
-            <div className="mb-2 text-sm font-semibold">Neues Glas erstellen</div>
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text text-xs">Name</span>
-              </label>
-              <input
-                type="text"
-                className="input input-sm"
-                placeholder="Name"
-                value={String(currentData.name ?? entity.name ?? '')}
-                onChange={(e) => handleFieldChange('name', e.target.value)}
-              />
-            </div>
-            <div className="mt-2 grid grid-cols-2 gap-2">
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text text-xs">Volumen (ml)</span>
-                </label>
-                <input
-                  type="number"
-                  className="input input-sm"
-                  placeholder="Volumen"
-                  value={String(currentData.volume ?? entity.volume ?? '')}
-                  onChange={(e) => handleFieldChange('volume', e.target.value ? parseFloat(e.target.value) : null)}
-                />
-              </div>
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text text-xs">Pfand (€)</span>
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  className="input input-sm"
-                  placeholder="Pfand"
-                  value={String(currentData.deposit ?? entity.deposit ?? '')}
-                  onChange={(e) => handleFieldChange('deposit', e.target.value ? parseFloat(e.target.value) : null)}
-                />
-              </div>
-            </div>
-          </div>
-        );
-
-      case 'garnishes':
-        return (
-          <div className="ml-6 rounded-lg border border-base-300 bg-base-200 p-3">
-            <div className="mb-2 text-sm font-semibold">Neue Garnitur erstellen</div>
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text text-xs">Name</span>
-              </label>
-              <input
-                type="text"
-                className="input input-sm"
-                placeholder="Name"
-                value={String(currentData.name ?? entity.name ?? '')}
-                onChange={(e) => handleFieldChange('name', e.target.value)}
-              />
-            </div>
-            <div className="form-control mt-2">
-              <label className="label">
-                <span className="label-text text-xs">Beschreibung</span>
-              </label>
-              <input
-                type="text"
-                className="input input-sm"
-                placeholder="Beschreibung (optional)"
-                value={String(currentData.description ?? entity.description ?? '')}
-                onChange={(e) => handleFieldChange('description', e.target.value || null)}
-              />
-            </div>
-            <div className="form-control mt-2">
-              <label className="label">
-                <span className="label-text text-xs">Preis (€)</span>
-              </label>
-              <input
-                type="number"
-                step="0.01"
-                className="input input-sm"
-                placeholder="Preis (optional)"
-                value={String(currentData.price ?? entity.price ?? '')}
-                onChange={(e) => handleFieldChange('price', e.target.value ? parseFloat(e.target.value) : null)}
-              />
-            </div>
-          </div>
-        );
-
-      case 'ingredients':
-        return (
-          <div className="ml-6 rounded-lg border border-base-300 bg-base-200 p-3">
-            <div className="mb-2 text-sm font-semibold">Neue Zutat erstellen</div>
-            <div className="grid grid-cols-2 gap-2">
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text text-xs">Name</span>
-                </label>
-                <input
+          <Card variant="elevated" className="ml-6 rounded-lg">
+            <CardBody compact>
+              <div className="mb-2 text-sm font-semibold">Neues Glas erstellen</div>
+              <FormControl>
+                <Label className="flex-row">
+                  <LabelText className="text-xs">Name</LabelText>
+                </Label>
+                <Input
                   type="text"
-                  className="input input-sm"
+                  inputSize="sm"
                   placeholder="Name"
                   value={String(currentData.name ?? entity.name ?? '')}
                   onChange={(e) => handleFieldChange('name', e.target.value)}
                 />
+              </FormControl>
+              <div className="mt-2 grid grid-cols-2 gap-2">
+                <FormControl>
+                  <Label className="flex-row">
+                    <LabelText className="text-xs">Volumen (ml)</LabelText>
+                  </Label>
+                  <Input
+                    type="number"
+                    inputSize="sm"
+                    placeholder="Volumen"
+                    value={String(currentData.volume ?? entity.volume ?? '')}
+                    onChange={(e) => handleFieldChange('volume', e.target.value ? parseFloat(e.target.value) : null)}
+                  />
+                </FormControl>
+                <FormControl>
+                  <Label className="flex-row">
+                    <LabelText className="text-xs">Pfand (€)</LabelText>
+                  </Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    inputSize="sm"
+                    placeholder="Pfand"
+                    value={String(currentData.deposit ?? entity.deposit ?? '')}
+                    onChange={(e) => handleFieldChange('deposit', e.target.value ? parseFloat(e.target.value) : null)}
+                  />
+                </FormControl>
               </div>
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text text-xs">Kurzname</span>
-                </label>
-                <input
+            </CardBody>
+          </Card>
+        );
+
+      case 'garnishes':
+        return (
+          <Card variant="elevated" className="ml-6 rounded-lg">
+            <CardBody compact>
+              <div className="mb-2 text-sm font-semibold">Neue Garnitur erstellen</div>
+              <FormControl>
+                <Label className="flex-row">
+                  <LabelText className="text-xs">Name</LabelText>
+                </Label>
+                <Input
                   type="text"
-                  className="input input-sm"
-                  placeholder="Kurzname (optional)"
-                  value={String(currentData.shortName ?? entity.shortName ?? '')}
-                  onChange={(e) => handleFieldChange('shortName', e.target.value || null)}
+                  inputSize="sm"
+                  placeholder="Name"
+                  value={String(currentData.name ?? entity.name ?? '')}
+                  onChange={(e) => handleFieldChange('name', e.target.value)}
                 />
+              </FormControl>
+              <FormControl className="mt-2">
+                <Label className="flex-row">
+                  <LabelText className="text-xs">Beschreibung</LabelText>
+                </Label>
+                <Input
+                  type="text"
+                  inputSize="sm"
+                  placeholder="Beschreibung (optional)"
+                  value={String(currentData.description ?? entity.description ?? '')}
+                  onChange={(e) => handleFieldChange('description', e.target.value || null)}
+                />
+              </FormControl>
+              <FormControl className="mt-2">
+                <Label className="flex-row">
+                  <LabelText className="text-xs">Preis (€)</LabelText>
+                </Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  inputSize="sm"
+                  placeholder="Preis (optional)"
+                  value={String(currentData.price ?? entity.price ?? '')}
+                  onChange={(e) => handleFieldChange('price', e.target.value ? parseFloat(e.target.value) : null)}
+                />
+              </FormControl>
+            </CardBody>
+          </Card>
+        );
+
+      case 'ingredients':
+        return (
+          <Card variant="elevated" className="ml-6 rounded-lg">
+            <CardBody compact>
+              <div className="mb-2 text-sm font-semibold">Neue Zutat erstellen</div>
+              <div className="grid grid-cols-2 gap-2">
+                <FormControl>
+                  <Label className="flex-row">
+                    <LabelText className="text-xs">Name</LabelText>
+                  </Label>
+                  <Input
+                    type="text"
+                    inputSize="sm"
+                    placeholder="Name"
+                    value={String(currentData.name ?? entity.name ?? '')}
+                    onChange={(e) => handleFieldChange('name', e.target.value)}
+                  />
+                </FormControl>
+                <FormControl>
+                  <Label className="flex-row">
+                    <LabelText className="text-xs">Kurzname</LabelText>
+                  </Label>
+                  <Input
+                    type="text"
+                    inputSize="sm"
+                    placeholder="Kurzname (optional)"
+                    value={String(currentData.shortName ?? entity.shortName ?? '')}
+                    onChange={(e) => handleFieldChange('shortName', e.target.value || null)}
+                  />
+                </FormControl>
               </div>
-            </div>
-            <div className="form-control mt-2">
-              <label className="label">
-                <span className="label-text text-xs">Beschreibung</span>
-              </label>
-              <input
-                type="text"
-                className="input input-sm"
-                placeholder="Beschreibung (optional)"
-                value={String(currentData.description ?? entity.description ?? '')}
-                onChange={(e) => handleFieldChange('description', e.target.value || null)}
-              />
-            </div>
-            <div className="form-control mt-2">
-              <label className="label">
-                <span className="label-text text-xs">Preis (€)</span>
-              </label>
-              <input
-                type="number"
-                step="0.01"
-                className="input input-sm"
-                placeholder="Preis (optional)"
-                value={String(currentData.price ?? entity.price ?? '')}
-                onChange={(e) => handleFieldChange('price', e.target.value ? parseFloat(e.target.value) : null)}
-              />
-            </div>
-          </div>
+              <FormControl className="mt-2">
+                <Label className="flex-row">
+                  <LabelText className="text-xs">Beschreibung</LabelText>
+                </Label>
+                <Input
+                  type="text"
+                  inputSize="sm"
+                  placeholder="Beschreibung (optional)"
+                  value={String(currentData.description ?? entity.description ?? '')}
+                  onChange={(e) => handleFieldChange('description', e.target.value || null)}
+                />
+              </FormControl>
+              <FormControl className="mt-2">
+                <Label className="flex-row">
+                  <LabelText className="text-xs">Preis (€)</LabelText>
+                </Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  inputSize="sm"
+                  placeholder="Preis (optional)"
+                  value={String(currentData.price ?? entity.price ?? '')}
+                  onChange={(e) => handleFieldChange('price', e.target.value ? parseFloat(e.target.value) : null)}
+                />
+              </FormControl>
+            </CardBody>
+          </Card>
         );
 
       default:
@@ -308,15 +315,18 @@ export function EntityMappingSection({
 
   return (
     <div className={'rounded-lg border border-base-300'}>
-      <div className={'flex cursor-pointer items-center justify-between bg-base-200 p-3'} onClick={() => setCollapsed(!collapsed)}>
+      <div
+        className={'flex cursor-pointer items-center justify-between border-b border-base-300/60 bg-base-100 px-3 py-3 md:px-4'}
+        onClick={() => setCollapsed(!collapsed)}
+      >
         <div className={'flex items-center gap-2'}>
           <span className={'font-semibold'}>{title}</span>
-          <span className={'badge badge-sm'}>{entities.length}</span>
+          <Badge size="sm">{entities.length}</Badge>
           {autoMatchedCount > 0 && (
-            <span className={'badge badge-success badge-sm gap-1'}>
+            <Badge variant="success" size="sm" className="gap-1">
               <FaCheckCircle className={'text-xs'} />
               {autoMatchedCount} auto-matched
-            </span>
+            </Badge>
           )}
         </div>
         <div>{collapsed ? <FaChevronDown /> : <FaChevronUp />}</div>
@@ -332,65 +342,69 @@ export function EntityMappingSection({
               const _selectedMatch = matches.find((m) => m.id === mapping?.existingId);
 
               return (
-                <div key={entity.id} className={'rounded-lg border border-base-300 p-3'}>
-                  <div className={'flex items-center justify-between'}>
-                    <div className={'font-semibold'}>{getEntityDisplayName(entity)}</div>
-                    {isAutoMatched && <span className={'badge badge-success badge-sm'}>Auto-matched</span>}
-                  </div>
+                <Card key={entity.id} variant="elevated" className="rounded-lg">
+                  <CardBody compact>
+                    <div className={'flex items-center justify-between'}>
+                      <div className={'font-semibold'}>{getEntityDisplayName(entity)}</div>
+                      {isAutoMatched && (
+                        <Badge variant="success" size="sm">
+                          Auto-matched
+                        </Badge>
+                      )}
+                    </div>
 
-                  <div className={'mt-2 flex flex-col gap-2'}>
-                    <label className={'flex cursor-pointer items-center gap-2'}>
-                      <input
-                        type={'radio'}
-                        className={'radio radio-sm'}
-                        checked={mapping?.decision === 'create-new'}
-                        onChange={() => {
-                          const initialData: Record<string, unknown> = { name: entity.name };
-                          if (entityType === 'stepActions') {
-                            initialData.actionGroup = entity.actionGroup;
-                          }
-                          handleDecisionChange(entity.id, 'create-new', undefined, initialData);
-                        }}
-                      />
-                      <span className={'text-sm'}>Neu erstellen</span>
-                    </label>
-
-                    {mapping?.decision === 'create-new' && renderNewEntityForm(entity.id, entity, mapping)}
-
-                    <label className={'flex cursor-pointer items-center gap-2'}>
-                      <input
-                        type={'radio'}
-                        className={'radio radio-sm'}
-                        checked={mapping?.decision === 'use-existing'}
-                        onChange={() => {
-                          if (matches.length > 0) {
-                            handleDecisionChange(entity.id, 'use-existing', matches[0].id);
-                          } else {
-                            handleDecisionChange(entity.id, 'use-existing');
-                          }
-                        }}
-                      />
-                      <span className={'text-sm'}>Bestehende verwenden</span>
-                    </label>
-
-                    {mapping?.decision === 'use-existing' && (
-                      <div className={'ml-6'}>
-                        <EntityCombobox
-                          value={mapping.existingId || null}
-                          onChange={(value) => handleDecisionChange(entity.id, 'use-existing', value || undefined)}
-                          fetchOptions={fetchOptions}
-                          getOptionLabel={getOptionLabel}
-                          getOptionValue={getOptionValue}
-                          placeholder={`${title.slice(0, -1)} auswählen`}
+                    <div className={'mt-2 flex flex-col gap-2'}>
+                      <label className={'flex cursor-pointer items-center gap-2'}>
+                        <Radio
+                          radioSize="sm"
+                          checked={mapping?.decision === 'create-new'}
+                          onChange={() => {
+                            const initialData: Record<string, unknown> = { name: entity.name };
+                            if (entityType === 'stepActions') {
+                              initialData.actionGroup = entity.actionGroup;
+                            }
+                            handleDecisionChange(entity.id, 'create-new', undefined, initialData);
+                          }}
                         />
-                      </div>
-                    )}
+                        <span className={'text-sm'}>Neu erstellen</span>
+                      </label>
 
-                    {matches.length === 0 && mapping?.decision === 'use-existing' && !mapping.existingId && (
-                      <div className={'ml-6 text-xs text-base-content/50'}>Keine bestehenden Übereinstimmungen gefunden</div>
-                    )}
-                  </div>
-                </div>
+                      {mapping?.decision === 'create-new' && renderNewEntityForm(entity.id, entity, mapping)}
+
+                      <label className={'flex cursor-pointer items-center gap-2'}>
+                        <Radio
+                          radioSize="sm"
+                          checked={mapping?.decision === 'use-existing'}
+                          onChange={() => {
+                            if (matches.length > 0) {
+                              handleDecisionChange(entity.id, 'use-existing', matches[0].id);
+                            } else {
+                              handleDecisionChange(entity.id, 'use-existing');
+                            }
+                          }}
+                        />
+                        <span className={'text-sm'}>Bestehende verwenden</span>
+                      </label>
+
+                      {mapping?.decision === 'use-existing' && (
+                        <div className={'ml-6'}>
+                          <EntityCombobox
+                            value={mapping.existingId || null}
+                            onChange={(value) => handleDecisionChange(entity.id, 'use-existing', value || undefined)}
+                            fetchOptions={fetchOptions}
+                            getOptionLabel={getOptionLabel}
+                            getOptionValue={getOptionValue}
+                            placeholder={`${title.slice(0, -1)} auswählen`}
+                          />
+                        </div>
+                      )}
+
+                      {matches.length === 0 && mapping?.decision === 'use-existing' && !mapping.existingId && (
+                        <div className={'ml-6 text-xs text-base-content/50'}>Keine bestehenden Übereinstimmungen gefunden</div>
+                      )}
+                    </div>
+                  </CardBody>
+                </Card>
               );
             })}
           </div>

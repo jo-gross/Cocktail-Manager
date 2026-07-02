@@ -20,6 +20,28 @@ import { fetchUnits } from '@lib/network/units';
 import { formatDate } from '@lib/DateUtils';
 import { RoutingContext } from '@lib/context/RoutingContextProvider';
 import '../../../../../lib/NumberUtils';
+import {
+  Button,
+  ButtonGroup,
+  Card,
+  CardBody,
+  Checkbox,
+  Divider,
+  FormControl,
+  Input,
+  Label,
+  LabelText,
+  Loading as UiLoading,
+  Select,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeaderCell,
+  TableRow,
+  Toggle,
+  Tooltip,
+} from '@components/ui';
 
 interface CocktailCalculationItem {
   cocktail: CocktailRecipeFull;
@@ -524,9 +546,16 @@ export default function CalculationPage() {
           <div className={'flex flex-col items-center justify-center md:flex-row md:gap-2 print:flex-row'}>
             <div className={'flex'}>
               <div>{calculationName}</div>
-              <div className={'btn btn-circle btn-outline btn-info btn-xs flex items-center justify-center border print:hidden'} onClick={openNameModal}>
+              <Button
+                type="button"
+                variant="outline"
+                shape="circle"
+                size="xs"
+                className="border-info text-info hover:bg-info/10 print:hidden"
+                onClick={openNameModal}
+              >
                 <FaPencilAlt />
-              </div>
+              </Button>
             </div>
 
             <span>{'-'}</span>
@@ -536,13 +565,16 @@ export default function CalculationPage() {
         )
       }
       actions={[
-        <div key={'print-calculation'} className={'btn btn-square btn-outline btn-sm md:btn-md'} onClick={() => window.print()}>
+        <Button key={'print-calculation'} type="button" variant="outline" shape="square" size="sm" className="md:h-10 md:w-10" onClick={() => window.print()}>
           <FaPrint />
-        </div>,
-        <button
+        </Button>,
+        <Button
           key={'save-calculation'}
+          type="button"
+          variant="primary"
+          size="sm"
+          className="md:h-10"
           disabled={saving}
-          className={'btn btn-primary btn-sm md:btn-md'}
           onClick={() => {
             if (saving) return;
             if (id == 'create' && calculationName.trim() == '') {
@@ -552,9 +584,9 @@ export default function CalculationPage() {
             }
           }}
         >
-          {saving ? <span className={'loading loading-spinner'} /> : <></>}
+          {saving ? <UiLoading size="sm" /> : null}
           Speichern
-        </button>,
+        </Button>,
       ]}
     >
       {loading || ingredientsLoading || unitsLoading ? (
@@ -564,30 +596,30 @@ export default function CalculationPage() {
       ) : (
         <div className={'grid grid-cols-1 gap-2 md:grid-cols-2 xl:gap-4 print:grid-cols-1 print:gap-1'}>
           <div className={'col-span-1 row-span-3 w-full'}>
-            <div className={'card'}>
-              <div className={'card-body'}>
+            <Card>
+              <CardBody>
                 <div className={'text-center text-2xl font-bold print:text-xl'}>Getränke Übersicht</div>
                 <div className={'print:hidden'}>
-                  <div className={'divider-sm'}></div>
+                  <Divider size="sm" />
                 </div>
                 <div className="overflow-x-auto">
-                  <table className="table-compact table w-full">
-                    <thead>
-                      <tr>
-                        <th className={'w-20'}>Geplante Menge</th>
-                        <th className={'w-full'}>Name</th>
-                        <th className={'print:hidden'}>Mengenvorschläge</th>
+                  <Table compact className="w-full">
+                    <TableHead>
+                      <TableRow>
+                        <TableHeaderCell className="w-20">Geplante Menge</TableHeaderCell>
+                        <TableHeaderCell className="w-full">Name</TableHeaderCell>
+                        <TableHeaderCell className="print:hidden">Mengenvorschläge</TableHeaderCell>
                         {showSalesStuff ? (
                           <>
-                            <th className={'min-w-20'}>Preis</th>
-                            <th>Sonderpreis</th>
+                            <TableHeaderCell className="min-w-20">Preis</TableHeaderCell>
+                            <TableHeaderCell>Sonderpreis</TableHeaderCell>
                           </>
-                        ) : (
-                          <></>
-                        )}
-                        <th className={'flex justify-end print:hidden'}>
-                          <div
-                            className={'btn btn-primary btn-sm'}
+                        ) : null}
+                        <TableHeaderCell className="flex justify-end print:hidden">
+                          <Button
+                            type="button"
+                            variant="primary"
+                            size="sm"
                             onClick={() =>
                               modalContext.openModal(
                                 <SearchModal
@@ -599,22 +631,23 @@ export default function CalculationPage() {
                             }
                           >
                             Hinzufügen
-                          </div>
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
+                          </Button>
+                        </TableHeaderCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
                       {cocktailCalculationItems.length == 0 ? (
-                        <tr className={'text-center'}>
-                          <td colSpan={4 + (showSalesStuff ? 1 : 0)}>Keine Einträge vorhanden</td>
-                        </tr>
+                        <TableRow className="text-center">
+                          <TableCell colSpan={showSalesStuff ? 6 : 4}>Keine Einträge vorhanden</TableCell>
+                        </TableRow>
                       ) : (
                         cocktailCalculationItems.map((cocktail) => (
-                          <tr key={'cocktail-' + cocktail.cocktail.id}>
-                            <td>
-                              <input
-                                className={'input input-sm input-bordered w-full print:hidden'}
-                                type={'number'}
+                          <TableRow key={'cocktail-' + cocktail.cocktail.id}>
+                            <TableCell>
+                              <Input
+                                inputSize="sm"
+                                className="w-full print:hidden"
+                                type="number"
                                 min={1}
                                 step={1}
                                 value={cocktail.plannedAmount}
@@ -632,31 +665,36 @@ export default function CalculationPage() {
                                   setCocktailCalculationItems(updatedItems);
                                 }}
                               />
-                              <div className={'hidden print:flex'}>{cocktail.plannedAmount}</div>
-                            </td>
-                            <td className={'items-center'}>
-                              <span className={'font-bold'}>{cocktail.cocktail.name}</span>
-                            </td>
-                            <td className={'print:hidden'}>
-                              <button
+                              <div className="hidden print:flex">{cocktail.plannedAmount}</div>
+                            </TableCell>
+                            <TableCell className="items-center">
+                              <span className="font-bold">{cocktail.cocktail.name}</span>
+                            </TableCell>
+                            <TableCell className="print:hidden">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
                                 onClick={() => {
                                   modalContext.openModal(
-                                    <div className={'flex flex-col gap-2'}>
-                                      <div className={'card-title'}>Mengenvorschläge</div>
+                                    <div className="flex flex-col gap-2">
+                                      <div className="text-lg font-semibold">Mengenvorschläge</div>
                                       <div>
                                         Wie viel Einheiten noch benötigt werden, um die Zutat vollständig zu benutzen (links, in grün) und (rechts, in rot) wie
                                         viel weniger Einheiten, um die angebrochene Auszugleichen.
                                       </div>
-                                      <div className={'divider font-bold'}>Zutaten</div>
-                                      <div className={'grid grid-cols-3 items-center gap-2'}>
+                                      <Divider className="font-bold">Zutaten</Divider>
+                                      <div className="grid grid-cols-3 items-center gap-2">
                                         {calculateRecommendedAmount(cocktail)
                                           .sort((a, b) => a.ingredient.name.localeCompare(b.ingredient.name))
                                           .map((item, index) => (
-                                            <>
-                                              <span key={`cocktail-${cocktail.cocktail.id}-ingredient-${index}-name`}>{item.ingredient.name}</span>
-                                              <span
-                                                key={`cocktail-${cocktail.cocktail.id}-ingredient-${index}-more`}
-                                                className={'btn btn-outline btn-sm text-green-500'}
+                                            <React.Fragment key={`cocktail-${cocktail.cocktail.id}-ingredient-${index}`}>
+                                              <span>{item.ingredient.name}</span>
+                                              <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="sm"
+                                                className="text-green-500"
                                                 onClick={() => {
                                                   const temp = cocktailCalculationItems.map((calcItem) => {
                                                     if (calcItem.cocktail.id == cocktail.cocktail.id) {
@@ -665,15 +703,16 @@ export default function CalculationPage() {
                                                     return calcItem;
                                                   });
                                                   setCocktailCalculationItems(temp);
-
                                                   modalContext.closeAllModals();
                                                 }}
                                               >
                                                 + {Math.floor(item.more)} Anpassen
-                                              </span>
-                                              <button
-                                                key={`cocktail-${cocktail.cocktail.id}-ingredient-${index}-less`}
-                                                className={'btn btn-outline btn-sm text-red-500'}
+                                              </Button>
+                                              <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="sm"
+                                                className="text-red-500"
                                                 disabled={
                                                   (cocktailCalculationItems.find((cocktailItem) => cocktailItem.cocktail.id == cocktail.cocktail.id)
                                                     ?.plannedAmount ?? 0) +
@@ -688,34 +727,34 @@ export default function CalculationPage() {
                                                     return calcItem;
                                                   });
                                                   setCocktailCalculationItems(temp);
-
                                                   modalContext.closeAllModals();
                                                 }}
                                               >
                                                 {Math.floor(item.less)} Anpassen
-                                              </button>
-                                            </>
+                                              </Button>
+                                            </React.Fragment>
                                           ))}
                                       </div>
                                     </div>,
                                   );
                                 }}
-                                className={'btn btn-outline btn-sm'}
                               >
                                 <FaInfoCircle />
                                 <span>Anzeigen</span>
-                              </button>
-                            </td>
+                              </Button>
+                            </TableCell>
                             {showSalesStuff ? (
                               <>
-                                <td>
+                                <TableCell>
                                   <span>{`${cocktail.cocktail.price?.formatPrice() ?? '-'} €`}</span>
-                                </td>
-                                <td>
-                                  <div className={'join print:hidden'}>
-                                    <input
-                                      type={'number'}
-                                      className={'input input-sm join-item input-bordered w-20'}
+                                </TableCell>
+                                <TableCell>
+                                  <ButtonGroup className="print:hidden">
+                                    <Input
+                                      type="number"
+                                      inputSize="sm"
+                                      joinItem
+                                      className="w-20"
                                       step={0.01}
                                       value={cocktail.customPrice ?? ''}
                                       onChange={(event) => {
@@ -732,22 +771,25 @@ export default function CalculationPage() {
                                         setCocktailCalculationItems(updatedItems);
                                       }}
                                     />
-                                    <span className={'btn btn-secondary join-item btn-sm'}> €</span>
-                                  </div>
-                                  <div className={'hidden print:flex'}>{cocktail.customPrice?.formatPrice() ?? '-'} €</div>
-                                </td>
+                                    <Button type="button" variant="secondary" joinItem size="sm" tabIndex={-1}>
+                                      €
+                                    </Button>
+                                  </ButtonGroup>
+                                  <div className="hidden print:flex">{cocktail.customPrice?.formatPrice() ?? '-'} €</div>
+                                </TableCell>
                               </>
-                            ) : (
-                              <></>
-                            )}
-                            <td className={'print:hidden'}>
-                              <div className={'flex items-center justify-end'}>
-                                <div
-                                  className={'btn btn-square btn-error btn-sm'}
+                            ) : null}
+                            <TableCell className="print:hidden">
+                              <div className="flex items-center justify-end">
+                                <Button
+                                  type="button"
+                                  variant="error"
+                                  shape="square"
+                                  size="sm"
                                   onClick={() => {
                                     modalContext.openModal(
                                       <DeleteConfirmationModal
-                                        spelling={'REMOVE'}
+                                        spelling="REMOVE"
                                         entityName={`den Cocktail '${cocktail.cocktail.name}'`}
                                         onApprove={async () => {
                                           setCocktailCalculationItems(cocktailCalculationItems.filter((item) => item.cocktail.id != cocktail.cocktail.id));
@@ -758,91 +800,82 @@ export default function CalculationPage() {
                                   }}
                                 >
                                   <FaTrashAlt />
-                                </div>
+                                </Button>
                               </div>
-                            </td>
-                          </tr>
+                            </TableCell>
+                          </TableRow>
                         ))
                       )}
-                    </tbody>
-                  </table>
+                    </TableBody>
+                  </Table>
                 </div>
-              </div>
-            </div>
+              </CardBody>
+            </Card>
           </div>
           <div className={'col-span-1 w-full'}>
-            <div className={'card'}>
-              <div className={'card-body'}>
+            <Card>
+              <CardBody>
                 <div className={'text-center text-2xl font-bold print:text-xl'}>Finanzen</div>
                 <div className={'print:hidden'}>
-                  <div className={'divider-sm'}></div>
-                  <div className={'form-control'}>
-                    <label className={'label'}>
-                      <span className={'label-text'}>Betriebswirtschaftliche Ansicht</span>
-                    </label>
-                    <input
-                      checked={showSalesStuff}
-                      onChange={(event) => setShowSalesStuff(event.target.checked)}
-                      className={'toggle toggle-primary'}
-                      type={'checkbox'}
-                    />
-                  </div>
+                  <Divider size="sm" />
+                  <FormControl>
+                    <Label className="flex-row items-center justify-between">
+                      <LabelText>Betriebswirtschaftliche Ansicht</LabelText>
+                      <Toggle checked={showSalesStuff} onChange={(event) => setShowSalesStuff(event.target.checked)} />
+                    </Label>
+                  </FormControl>
                 </div>
                 <div className={'overflow-x-auto'}>
-                  <table className={'table-compact table w-full'}>
-                    <thead>
-                      <tr>
-                        <th>Zutat</th>
-                        <th>Menge</th>
-                        <th>Produktions-Preis</th>
-                        <th>Produktion-Summe</th>
+                  <Table compact className="w-full">
+                    <TableHead>
+                      <TableRow>
+                        <TableHeaderCell>Zutat</TableHeaderCell>
+                        <TableHeaderCell>Menge</TableHeaderCell>
+                        <TableHeaderCell>Produktions-Preis</TableHeaderCell>
+                        <TableHeaderCell>Produktion-Summe</TableHeaderCell>
                         {showSalesStuff ? (
                           <>
-                            <th>Erwarteter Umsatz</th>
-                            <th>Erwarteter Gewinn</th>
+                            <TableHeaderCell>Erwarteter Umsatz</TableHeaderCell>
+                            <TableHeaderCell>Erwarteter Gewinn</TableHeaderCell>
                           </>
-                        ) : (
-                          <></>
-                        )}
-                      </tr>
-                    </thead>
-                    <tbody>
+                        ) : null}
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
                       {cocktailCalculationItems.length == 0 ? (
-                        <tr>
-                          <td className={'text-center'} colSpan={6}>
+                        <TableRow>
+                          <TableCell className="text-center" colSpan={showSalesStuff ? 6 : 4}>
                             -
-                          </td>
-                        </tr>
+                          </TableCell>
+                        </TableRow>
                       ) : (
                         cocktailCalculationItems
                           .sort((a, b) => a.cocktail.name.localeCompare(b.cocktail.name))
                           .map((cocktail) => (
-                            <tr key={'cocktail-' + cocktail.cocktail.id}>
-                              <td>{cocktail.cocktail.name}</td>
-                              <td>{cocktail.plannedAmount} x</td>
-                              <td>{calcCocktailTotalPrice(cocktail.cocktail, ingredients).formatPrice()} €</td>
-                              <td>{(cocktail.plannedAmount * calcCocktailTotalPrice(cocktail.cocktail, ingredients)).formatPrice()} €</td>
+                            <TableRow key={'cocktail-' + cocktail.cocktail.id}>
+                              <TableCell>{cocktail.cocktail.name}</TableCell>
+                              <TableCell>{cocktail.plannedAmount} x</TableCell>
+                              <TableCell>{calcCocktailTotalPrice(cocktail.cocktail, ingredients).formatPrice()} €</TableCell>
+                              <TableCell>{(cocktail.plannedAmount * calcCocktailTotalPrice(cocktail.cocktail, ingredients)).formatPrice()} €</TableCell>
                               {showSalesStuff ? (
                                 <>
-                                  <td>{(cocktail.plannedAmount * (cocktail.customPrice ?? cocktail.cocktail.price ?? 0)).formatPrice()}€</td>
-                                  <td>
+                                  <TableCell>{(cocktail.plannedAmount * (cocktail.customPrice ?? cocktail.cocktail.price ?? 0)).formatPrice()}€</TableCell>
+                                  <TableCell>
                                     {(
                                       cocktail.plannedAmount * (cocktail.customPrice ?? cocktail.cocktail.price ?? 0) -
                                       cocktail.plannedAmount * calcCocktailTotalPrice(cocktail.cocktail, ingredients)
                                     ).formatPrice()}{' '}
                                     €
-                                  </td>
+                                  </TableCell>
                                 </>
-                              ) : (
-                                <></>
-                              )}
-                            </tr>
+                              ) : null}
+                            </TableRow>
                           ))
                       )}
-                      <tr className={''}></tr>
-                      <tr className="bg-base-200">
-                        <td className={'font-bold'}>Gesamt</td>
-                        <td>
+                      <TableRow />
+                      <TableRow className="bg-base-200">
+                        <TableCell className="font-bold">Gesamt</TableCell>
+                        <TableCell>
                           {cocktailCalculationItems
                             .map((cocktail) => cocktail.plannedAmount)
                             .reduce((acc, curr) => acc + curr, 0)
@@ -851,25 +884,25 @@ export default function CalculationPage() {
                               maximumFractionDigits: 0,
                             })}{' '}
                           x
-                        </td>
-                        <td></td>
-                        <td>
+                        </TableCell>
+                        <TableCell />
+                        <TableCell>
                           {cocktailCalculationItems
                             .map((cocktail) => cocktail.plannedAmount * calcCocktailTotalPrice(cocktail.cocktail, ingredients))
                             .reduce((acc, curr) => acc + curr, 0)
                             .formatPrice()}{' '}
                           €
-                        </td>
+                        </TableCell>
                         {showSalesStuff ? (
                           <>
-                            <td>
+                            <TableCell>
                               {cocktailCalculationItems
                                 .map((cocktail) => cocktail.plannedAmount * (cocktail.customPrice ?? cocktail.cocktail.price ?? 0))
                                 .reduce((acc, curr) => acc + curr, 0)
                                 .formatPrice()}{' '}
                               €
-                            </td>
-                            <td>
+                            </TableCell>
+                            <TableCell>
                               {cocktailCalculationItems
                                 .map(
                                   (cocktail) =>
@@ -879,65 +912,63 @@ export default function CalculationPage() {
                                 .reduce((acc, curr) => acc + curr, 0)
                                 .formatPrice()}{' '}
                               €
-                            </td>
+                            </TableCell>
                           </>
-                        ) : (
-                          <></>
-                        )}
-                      </tr>
-                    </tbody>
-                  </table>
+                        ) : null}
+                      </TableRow>
+                    </TableBody>
+                  </Table>
                 </div>
-              </div>
-            </div>
+              </CardBody>
+            </Card>
           </div>
           <div className={'col-span-1 w-full'}>
-            <div className={'card'}>
-              <div className={'card-body'}>
+            <Card>
+              <CardBody>
                 <div className={'text-center text-2xl font-bold print:text-xl'}>Einkaufsliste</div>
                 <div className={'print:hidden'}>
-                  <div className={'divider-sm'}></div>
+                  <Divider size="sm" />
                 </div>
                 <div className={'flex items-center justify-between'}>
                   <div className={'text-lg font-bold'}>Zutaten</div>
-                  <div className={'btn btn-outline btn-sm'} onClick={handleCSVExport}>
+                  <Button type="button" variant="outline" size="sm" onClick={handleCSVExport}>
                     <FaSave />
                     Als CSV exportieren
-                  </div>
+                  </Button>
                 </div>
                 <div className={'overflow-x-auto'}>
-                  <table className={'table-compact table w-full'}>
-                    <thead>
-                      <tr>
-                        <th className="w-0">
-                          <div className="tooltip tooltip-right tooltip-info before:max-w-fit" data-tip={'Diese Kästchen sollen z.B. beim Einkaufen helfen'}>
+                  <Table compact className="w-full">
+                    <TableHead>
+                      <TableRow>
+                        <TableHeaderCell className="w-0">
+                          <Tooltip tip="Diese Kästchen sollen z.B. beim Einkaufen helfen">
                             <FaInfoCircle />
-                          </div>
-                        </th>
-                        <th>Zutat</th>
-                        <th>Gesamt Menge</th>
-                        <th className={'print:hidden'}>Ausgabe Einheit</th>
-                        <th>Anzahl</th>
-                      </tr>
-                    </thead>
-                    <tbody>
+                          </Tooltip>
+                        </TableHeaderCell>
+                        <TableHeaderCell>Zutat</TableHeaderCell>
+                        <TableHeaderCell>Gesamt Menge</TableHeaderCell>
+                        <TableHeaderCell className="print:hidden">Ausgabe Einheit</TableHeaderCell>
+                        <TableHeaderCell>Anzahl</TableHeaderCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
                       {ingredientCalculationItems.length == 0 ? (
-                        <tr>
-                          <td colSpan={5} className={'text-center'}>
+                        <TableRow>
+                          <TableCell colSpan={5} className="text-center">
                             Keine Zutaten benötigt
-                          </td>
-                        </tr>
+                          </TableCell>
+                        </TableRow>
                       ) : (
                         _.chain(ingredientCalculationItems)
                           .groupBy('ingredient.id')
                           .sortBy((group) => group[0].ingredient.name)
                           .map((items, key) => (
-                            <tr key={`shopping-ingredient-${key}`}>
-                              <td className="w-0">
-                                <input
+                            <TableRow key={`shopping-ingredient-${key}`}>
+                              <TableCell className="w-0">
+                                <Checkbox
                                   key={`shopping-ingredient-${key}-checkbox-${items[0].ingredient.id}`}
-                                  type="checkbox"
-                                  className={'checkbox checkbox-sm w-min justify-self-center'}
+                                  checkboxSize="sm"
+                                  className="w-min justify-self-center"
                                   disabled={
                                     ingredientShoppingUnits.find((item) => item.ingredientId == items[0].ingredient.id) == undefined ||
                                     ingredientShoppingUnits.find((item) => item.ingredientId == items[0].ingredient.id)?.unitId == ''
@@ -961,9 +992,9 @@ export default function CalculationPage() {
                                       : ingredientShoppingUnits.find((item) => item.ingredientId == items[0].ingredient.id)?.checked
                                   }
                                 />
-                              </td>
-                              <td>{items[0].ingredient.name}</td>
-                              <td className={'flex flex-col'}>
+                              </TableCell>
+                              <TableCell>{items[0].ingredient.name}</TableCell>
+                              <TableCell className="flex flex-col">
                                 {items.map((item) => (
                                   <div key={`shopping-ingredient-${key}-unit-${item.unit.id}`}>
                                     {item.amount.toLocaleString(undefined, {
@@ -973,14 +1004,13 @@ export default function CalculationPage() {
                                     {userContext.getTranslation(item.unit.name ?? 'N/A', 'de')}
                                   </div>
                                 ))}
-                              </td>
-                              <td className={'print:hidden'}>
-                                <select
-                                  className={'select select-sm'}
+                              </TableCell>
+                              <TableCell className="print:hidden">
+                                <Select
+                                  selectSize="sm"
                                   value={
                                     ingredientShoppingUnits.find((ingredientShoppingUnit) => ingredientShoppingUnit.ingredientId == items[0].ingredient.id)
                                       ?.unitId ??
-                                    // if only one unit is available, select it
                                     (ingredients.find((ingredient) => ingredient.id == items[0].ingredient.id)?.IngredientVolume.length == 1
                                       ? ingredients.find((ingredient) => ingredient.id == items[0].ingredient.id)?.IngredientVolume[0].unitId
                                       : '')
@@ -995,7 +1025,7 @@ export default function CalculationPage() {
                                     setIngredientShoppingUnits(updatedItems);
                                   }}
                                 >
-                                  <option value={''} disabled={true}>
+                                  <option value="" disabled>
                                     Auswählen
                                   </option>
                                   {ingredients
@@ -1005,9 +1035,9 @@ export default function CalculationPage() {
                                         {userContext.getTranslation(unit.unit.name ?? 'N/A', 'de')}
                                       </option>
                                     ))}
-                                </select>
-                              </td>
-                              <td>
+                                </Select>
+                              </TableCell>
+                              <TableCell>
                                 {calculateTotalIngredientAmount(items).toLocaleString(undefined, {
                                   minimumFractionDigits: 0,
                                   maximumFractionDigits: 2,
@@ -1019,50 +1049,50 @@ export default function CalculationPage() {
                                   )?.name ?? 'N/A',
                                   'de',
                                 )}
-                              </td>
-                            </tr>
+                              </TableCell>
+                            </TableRow>
                           ))
                           .value()
                       )}
-                    </tbody>
-                  </table>
+                    </TableBody>
+                  </Table>
                 </div>
                 <div className={'text-lg font-bold'}>Garnituren</div>
                 <div className={'overflow-x-auto'}>
-                  <table className={'table-compact table w-full'}>
-                    <thead>
-                      <tr>
-                        <th>Garnitur</th>
-                        <th>Menge</th>
-                      </tr>
-                    </thead>
-                    <tbody>
+                  <Table compact className="w-full">
+                    <TableHead>
+                      <TableRow>
+                        <TableHeaderCell>Garnitur</TableHeaderCell>
+                        <TableHeaderCell>Menge</TableHeaderCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
                       {garnishCalculationItems.length == 0 ? (
-                        <tr>
-                          <td colSpan={2} className={'text-center'}>
+                        <TableRow>
+                          <TableCell colSpan={2} className="text-center">
                             Keine Garnituren benötigt
-                          </td>
-                        </tr>
+                          </TableCell>
+                        </TableRow>
                       ) : (
                         garnishCalculationItems
                           .sort((a, b) => a.garnish.name.localeCompare(b.garnish.name))
                           .map((garnishCalculationItem) => (
-                            <tr key={'garnishCalculation-' + garnishCalculationItem.garnish.id}>
-                              <td>{garnishCalculationItem.garnish.name}</td>
-                              <td>
+                            <TableRow key={'garnishCalculation-' + garnishCalculationItem.garnish.id}>
+                              <TableCell>{garnishCalculationItem.garnish.name}</TableCell>
+                              <TableCell>
                                 {garnishCalculationItem.amount.toLocaleString(undefined, {
                                   minimumFractionDigits: 0,
                                   maximumFractionDigits: 0,
                                 })}
-                              </td>
-                            </tr>
+                              </TableCell>
+                            </TableRow>
                           ))
                       )}
-                    </tbody>
-                  </table>
+                    </TableBody>
+                  </Table>
                 </div>
-              </div>
-            </div>
+              </CardBody>
+            </Card>
           </div>
         </div>
       )}
