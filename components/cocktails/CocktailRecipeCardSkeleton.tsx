@@ -32,7 +32,7 @@ export function CocktailRecipeCardSkeleton({ showImage = false }: CocktailRecipe
       <CardBody className="w-full">
         <div className="grid grid-cols-4 gap-1">
           <Skeleton className="col-span-2 h-7 w-4/5" />
-          <Skeleton className="col-span-2 h-7 w-16 justify-self-end" />
+          <Skeleton className="col-span-1 h-7 w-16 justify-self-end" />
 
           <Skeleton className="row-span-2 h-16 w-12 justify-self-center rounded-lg" />
 
