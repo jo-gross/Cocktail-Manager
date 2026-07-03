@@ -507,10 +507,11 @@ const CocktailsOverviewPage: NextPageWithPullToRefresh = () => {
           )}
         </div>
       }
+      fullHeight
     >
-      <Card>
-        <CardBody>
-          <DataTable toolbar={<ListSearchField onFilterChange={(filterString) => setFilterString(filterString)} />}>
+      <Card className="flex min-h-0 flex-1 flex-col">
+        <CardBody className="min-h-0 flex-1">
+          <DataTable fillHeight toolbar={<ListSearchField onFilterChange={(filterString) => setFilterString(filterString)} />}>
             <Table zebra className="w-full">
               <TableHead>
                 <TableRow>

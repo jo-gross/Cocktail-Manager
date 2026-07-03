@@ -178,12 +178,13 @@ const LogsPage: NextPageWithPullToRefresh = () => {
           </Tooltip>
         </div>
       }
+      fullHeight
     >
-      <div className={'flex flex-col gap-4'}>
-        <Card>
-          <CardBody>
+      <div className="flex min-h-0 flex-1 flex-col gap-4">
+        <Card className="flex min-h-0 flex-1 flex-col">
+          <CardBody className="min-h-0 flex-1">
             <CardTitle className="flex w-full justify-between">Bestell-Logs</CardTitle>
-            <DataTable toolbar={<ListSearchField onFilterChange={handleSearchChange} />}>
+            <DataTable fillHeight toolbar={<ListSearchField onFilterChange={handleSearchChange} />}>
               <Table zebra compact className="w-full">
                 <TableHead>
                   <TableRow>

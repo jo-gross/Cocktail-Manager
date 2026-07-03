@@ -53,7 +53,7 @@ export const TableHead = forwardRef<HTMLTableSectionElement, React.HTMLAttribute
       ref={ref}
       className={cn(
         'bg-base-100 text-left',
-        inDataTable && 'sticky top-0 z-10 border-b-2 border-base-300 bg-base-300/95 backdrop-blur-sm',
+        inDataTable && 'border-b-2 border-base-300',
         !inDataTable && 'border-b-2 border-base-300 bg-base-300/80 backdrop-blur-sm',
         className,
       )}
@@ -68,8 +68,10 @@ export const TableBody = forwardRef<HTMLTableSectionElement, React.HTMLAttribute
   { className, children, ...props },
   ref,
 ) {
+  const inDataTable = useDataTableContext();
+
   return (
-    <tbody ref={ref} className={cn(className)} {...props}>
+    <tbody ref={ref} className={cn(inDataTable && 'relative z-0', className)} {...props}>
       {children}
     </tbody>
   );
@@ -89,8 +91,18 @@ export const TableHeaderCell = forwardRef<HTMLTableCellElement, React.ThHTMLAttr
   { className, children, ...props },
   ref,
 ) {
+  const inDataTable = useDataTableContext();
+
   return (
-    <th ref={ref} className={cn('px-3 py-3 text-left text-xs font-semibold tracking-wide text-base-content/70 uppercase', className)} {...props}>
+    <th
+      ref={ref}
+      className={cn(
+        'px-3 py-3 text-left text-xs font-semibold tracking-wide text-base-content/70 uppercase',
+        inDataTable && 'sticky top-0 z-20 border-b-2 border-base-300 bg-base-300/95 backdrop-blur-sm',
+        className,
+      )}
+      {...props}
+    >
       {children}
     </th>
   );
@@ -107,6 +119,7 @@ export const SortableHeaderCell = forwardRef<HTMLTableCellElement, SortableHeade
   { sortKey, activeSortKey, direction, onSort, className, children, ...props },
   ref,
 ) {
+  const inDataTable = useDataTableContext();
   const isActive = activeSortKey === sortKey;
   const ariaSort = isActive ? (direction === 'asc' ? 'ascending' : 'descending') : 'none';
 
@@ -117,6 +130,7 @@ export const SortableHeaderCell = forwardRef<HTMLTableCellElement, SortableHeade
       aria-sort={ariaSort}
       className={cn(
         'cursor-pointer px-3 py-3 text-left text-xs font-semibold tracking-wide text-base-content/70 uppercase transition-colors select-none hover:text-base-content',
+        inDataTable && 'sticky top-0 z-20 border-b-2 border-base-300 bg-base-300/95 backdrop-blur-sm',
         isActive && 'text-base-content',
         className,
       )}

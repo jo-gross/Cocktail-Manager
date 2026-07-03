@@ -15,6 +15,7 @@ import { formatDateTime } from '@lib/DateUtils';
 import { useRouter } from 'next/router';
 import { MdOutlineCancel } from 'react-icons/md';
 import { DeleteConfirmationModal } from '@components/modals/DeleteConfirmationModal';
+import ThemeChanger from '@components/ThemeChanger';
 import { NextPageWithPullToRefresh } from '../types/next';
 import {
   Button,
@@ -46,6 +47,7 @@ const WorkspacesPage: NextPageWithPullToRefresh = () => {
 
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [workspacesLoading, setWorkspacesLoading] = useState(false);
+  const [workspacesFetched, setWorkspacesFetched] = useState(false);
 
   const [openWorkspaceJoinRequestLoading, setOpenWorkspaceJoinRequestLoading] = useState(false);
   const [openWorkspaceJoinRequest, setOpenWorkspaceJoinRequest] = useState<(WorkspaceJoinRequest & { workspace: Workspace })[]>([]);
@@ -81,7 +83,10 @@ const WorkspacesPage: NextPageWithPullToRefresh = () => {
         console.error('WorkspacesOverview -> fetchWorkspaces', error);
         alertService.error('Fehler beim Laden der Workspaces');
       })
-      .finally(() => setWorkspacesLoading(false));
+      .finally(() => {
+        setWorkspacesLoading(false);
+        setWorkspacesFetched(true);
+      });
   }, [userContext.user]);
 
   const fetchOpenWorkspaceJoinRequest = useCallback(() => {
@@ -316,11 +321,19 @@ const WorkspacesPage: NextPageWithPullToRefresh = () => {
   }, [changeLogFetch, modalContext, userContext, userContext.user]);
 
   useEffect(() => {
+    if (!userContext.user) {
+      setWorkspaces([]);
+      setWorkspacesFetched(false);
+      return;
+    }
     fetchWorkspaces();
     fetchOpenWorkspaceJoinRequest();
+  }, [userContext.user?.id, fetchWorkspaces, fetchOpenWorkspaceJoinRequest]);
+
+  useEffect(() => {
     fetchWorkspaceCreationConfig();
     fetchAuthProviders();
-  }, [fetchOpenWorkspaceJoinRequest, fetchWorkspaces, fetchWorkspaceCreationConfig, fetchAuthProviders]);
+  }, [fetchWorkspaceCreationConfig, fetchAuthProviders]);
 
   WorkspacesPage.pullToRefresh = () => {
     fetchWorkspaces();
@@ -380,42 +393,39 @@ const WorkspacesPage: NextPageWithPullToRefresh = () => {
     }
   }, []);
 
+  const logoClassName = themeContext.theme == 'light' ? 'invert' : themeContext.theme == 'auto' ? 'invert dark:invert-0' : '';
+
+  const versionLine = (
+    <div className="text-center text-sm text-base-content/70">
+      <Link href={'https://github.com/jo-gross/Cocktail-Manager/'} target={'_blank'} className={'link'}>
+        v{packageInfo.version}
+      </Link>
+      {` ${process.env.DEPLOYMENT == 'development' ? '(DEV)' : ''} - by `}
+      <Link className={'link'} target={'_blank'} href={'https://github.com/jo-gross'}>
+        Johannes Groß
+      </Link>
+    </div>
+  );
+
   return (
     <>
       <Head>
         <title>The Cocktail-Manager</title>
       </Head>
-      <div className={'grid grid-cols-1 md:grid-cols-3'}>
-        <div className={'col-span-3 items-center'}>
-          <div className={'flex flex-col items-center justify-center space-y-2'}>
-            <Image
-              src={'/images/The Cocktail Manager Logo.png'}
-              alt="The Cocktail Manager"
-              className={`pt-4 ${themeContext.theme == 'light' ? 'invert' : themeContext.theme == 'auto' ? 'invert dark:invert-0' : ''}`}
-              height={211}
-              width={247}
-            />
-            <h1 className={'text-center text-4xl font-bold'}>The Cocktail-Manager</h1>
-            <div>
-              <Link href={'https://github.com/jo-gross/Cocktail-Manager/'} target={'_blank'} className={'link'}>
-                v{packageInfo.version}
-              </Link>
-              {` ${process.env.DEPLOYMENT == 'development' ? '(DEV)' : ''} - by `}
-              <Link className={'link'} target={'_blank'} href={'https://github.com/jo-gross'}>
-                Johannes Groß
-              </Link>
-            </div>
-            <div className={'flex items-center space-x-2'}>
-              <>
-                {userContext.user ? (
-                  <>
-                    <span>Hi {userContext.user.name}</span>
-                    <Button variant="outline" size="sm" onClick={() => authClient.signOut()}>
-                      Sign out
-                    </Button>
-                  </>
-                ) : process.env.NEXT_PUBLIC_DEMO_MODE === 'true' ? (
-                  <Button variant="primary" size="sm" onClick={createDemoWorkspace} disabled={creatingDemoWorkspace}>
+      <div className="relative">
+        <div className="absolute top-4 right-4 z-10">
+          <ThemeChanger />
+        </div>
+        {!userContext.user ? (
+          <div className="flex min-h-dvh flex-col items-center justify-center p-4">
+            <Card variant="elevated" className="w-full max-w-md">
+              <CardBody className="flex flex-col items-center gap-4">
+                <Image src={'/images/The Cocktail Manager Logo.png'} alt="The Cocktail Manager" className={logoClassName} height={180} width={211} />
+                <h1 className="text-center text-3xl font-bold">The Cocktail-Manager</h1>
+                {versionLine}
+                <Divider className="w-full">Anmelden</Divider>
+                {process.env.NEXT_PUBLIC_DEMO_MODE === 'true' ? (
+                  <Button variant="primary" className="w-full" onClick={createDemoWorkspace} disabled={creatingDemoWorkspace}>
                     {creatingDemoWorkspace ? (
                       <>
                         <UiLoading size="sm" />
@@ -426,203 +436,217 @@ const WorkspacesPage: NextPageWithPullToRefresh = () => {
                     )}
                   </Button>
                 ) : authProviders.length > 0 ? (
-                  <div className={'flex flex-wrap justify-center gap-2'}>
+                  <div className="flex w-full flex-col gap-2">
                     {authProviders.map((provider) => (
-                      <Button key={provider.id} variant="outline" size="sm" className="gap-2" onClick={() => handleSignIn(provider.id, provider.type)}>
+                      <Button key={provider.id} variant="outline" className="w-full gap-2" onClick={() => handleSignIn(provider.id, provider.type)}>
                         {provider.id === 'google' ? <FaGoogle /> : <FaKey />}
                         {provider.name}
                       </Button>
                     ))}
                   </div>
                 ) : (
-                  <span className={'text-sm text-base-content/60'}>Keine Anmeldung konfiguriert</span>
+                  <span className="text-sm text-base-content/60">Keine Anmeldung konfiguriert</span>
                 )}
-              </>
-            </div>
-          </div>
-        </div>
-        {userContext.user && (
-          <div className={'col-span-3 grid grid-cols-1 gap-2 p-4 md:gap-4 md:p-12 lg:grid-cols-4'}>
-            <Divider className="col-span-full">Meine Workspaces</Divider>
-            {workspacesLoading ? (
-              <div className={'col-span-full'}>
-                <Loading />
-              </div>
-            ) : workspaces.length == 0 ? (
-              <div className={'col-span-full text-center'}>Keine Workspaces</div>
-            ) : (
-              workspaces.map((workspace) => (
-                <Card key={`workspace-${workspace.id}`} className="h-40">
-                  <CardBody>
-                    <div className={'text-center text-3xl font-bold'}>{workspace.name}</div>
-                    <div className={'h-full'}></div>
-                    <CardActions className="justify-center">
-                      <Link href={'/workspaces/' + workspace.id} replace={true}>
-                        <Button variant="outline" className="border-primary text-primary hover:bg-primary/10">
-                          Öffnen
-                        </Button>
-                      </Link>
-                    </CardActions>
-                  </CardBody>
-                </Card>
-              ))
-            )}
-
-            {(openWorkspaceJoinRequest.length > 0 || openWorkspaceJoinRequestLoading) && (
-              <>
-                <Divider className="col-span-full">Beitrittsanfragen</Divider>
-                {openWorkspaceJoinRequestLoading ? (
-                  <div className={'col-span-full'}>
-                    <Loading />
-                  </div>
-                ) : (
-                  openWorkspaceJoinRequest.map((workspaceJoinRequest) => (
-                    <Card key={`join-request-${workspaceJoinRequest.workspace.id}`}>
-                      <CardBody>
-                        <div className={'text-center text-3xl font-bold'}>
-                          <span className={'italic'}>Angefragt: </span>
-                          {workspaceJoinRequest.workspace.name}
-                        </div>
-                        <div className={'text-center font-thin'}>Datum der Anfrage: {formatDateTime(new Date(workspaceJoinRequest.date))}</div>
-                        <div className={'h-full'}></div>
-                        <CardActions className="justify-center">
-                          <Button type="button" variant="outline" className="border-primary text-primary hover:bg-primary/10" disabled>
-                            Warte auf Annahme
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            shape="square"
-                            className="border-error text-error hover:bg-error/10"
-                            onClick={() =>
-                              modalContext.openModal(
-                                <DeleteConfirmationModal
-                                  onApprove={async () => {
-                                    setJoinRequestCanceling({ ...joinRequestCanceling, [workspaceJoinRequest.workspaceId]: true });
-                                    fetch(`/api/workspaces/${workspaceJoinRequest.workspaceId}/join-requests`, {
-                                      method: 'DELETE',
-                                    })
-                                      .then((response) => {
-                                        if (response.ok) {
-                                          alertService.success('Beitrittsanfrage abgebrochen');
-                                        } else {
-                                          alertService.error('Fehler beim Abbrechen der Beitrittsanfrage');
-                                        }
-                                      })
-                                      .then(() => fetchOpenWorkspaceJoinRequest())
-                                      .catch((error) => {
-                                        console.error('WorkspacesOverview -> openWorkspaceJoinRequest -> cancel', error);
-                                        alertService.error('Fehler beim Abbrechen der Beitrittsanfrage');
-                                      })
-                                      .finally(() => {
-                                        setJoinRequestCanceling({ ...joinRequestCanceling, [workspaceJoinRequest.workspaceId]: false });
-                                      });
-                                  }}
-                                  spelling={'ABORT'}
-                                  entityName={`den Beitritt zu '${workspaceJoinRequest.workspace.name}'`}
-                                />,
-                              )
-                            }
-                            disabled={joinRequestCanceling[workspaceJoinRequest.workspaceId]}
-                          >
-                            <MdOutlineCancel />
-                          </Button>
-                        </CardActions>
-                      </CardBody>
-                    </Card>
-                  ))
-                )}
-              </>
-            )}
-            {workspaceCreationConfig && (!workspaceCreationConfig.disabled || workspaceCreationConfig.message) ? (
-              <>
-                <Divider className="col-span-full">Workspace hinzufügen</Divider>
-                {workspaceCreationConfig.disabled && workspaceCreationConfig.message ? (
-                  <Card>
-                    <CardBody className="flex h-full flex-col items-center justify-center space-y-2">
-                      <CardTitle>Workspace erstellen</CardTitle>
-                      <div
-                        className={'text-center'}
-                        dangerouslySetInnerHTML={{
-                          __html: workspaceCreationConfig.message.replaceAll('<a', '<a class="link"'),
-                        }}
-                      />
-                    </CardBody>
-                  </Card>
-                ) : (
-                  <Card>
-                    <CardBody className="flex h-full flex-col items-center justify-center space-y-2">
-                      <CardTitle>Workspace erstellen</CardTitle>
-                      <form
-                        onSubmit={(e) => {
-                          e.preventDefault();
-                          createNewWorkspace();
-                        }}
-                      >
-                        <FormControl>
-                          <Label>
-                            <LabelText>Name der Workspace</LabelText>
-                          </Label>
-                          <ButtonGroup className="w-full">
-                            <Input
-                              joinItem
-                              className="w-full"
-                              placeholder={'Name der Workspace'}
-                              value={newWorkspaceName}
-                              onChange={(event) => setNewWorkspaceName(event.target.value)}
-                            />
-                            <Button
-                              variant="outline"
-                              joinItem
-                              className="w-fit min-w-12"
-                              disabled={newWorkspaceName.trim().length == 0 || creatingWorkspace}
-                              type={'submit'}
-                            >
-                              {creatingWorkspace ? <UiLoading size="sm" /> : <FaArrowRight />}
-                            </Button>
-                          </ButtonGroup>
-                        </FormControl>
-                      </form>
-                    </CardBody>
-                  </Card>
-                )}
-              </>
-            ) : null}
-            <Card>
-              <CardBody className="flex flex-col items-center justify-center gap-2">
-                <CardTitle>Workspace beitreten</CardTitle>
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    joinWorkspace(joinWorkspaceId);
-                  }}
-                >
-                  <FormControl>
-                    <Label>
-                      <LabelText>Beitrittscode</LabelText>
-                    </Label>
-                    <ButtonGroup className="w-full">
-                      <Input
-                        joinItem
-                        className="w-full"
-                        placeholder={'Beitrittscode'}
-                        value={joinWorkspaceId}
-                        onChange={(event) => setJoinWorkspaceId(event.target.value)}
-                      />
-                      <Button
-                        variant="outline"
-                        joinItem
-                        className="w-fit min-w-12"
-                        disabled={joinWorkspaceId.trim().length == 0 || joiningWorkspace}
-                        type={'submit'}
-                      >
-                        {joiningWorkspace ? <UiLoading size="sm" /> : <FaArrowRight />}
-                      </Button>
-                    </ButtonGroup>
-                  </FormControl>
-                </form>
               </CardBody>
             </Card>
+          </div>
+        ) : (
+          <div className={'grid grid-cols-1 md:grid-cols-3'}>
+            <div className={'col-span-3 items-center'}>
+              <div className={'flex flex-col items-center justify-center space-y-2 pt-4'}>
+                <Image src={'/images/The Cocktail Manager Logo.png'} alt="The Cocktail Manager" className={logoClassName} height={211} width={247} />
+                <h1 className={'text-center text-4xl font-bold'}>The Cocktail-Manager</h1>
+                {versionLine}
+                <div className={'flex items-center space-x-2'}>
+                  <span>Hi {userContext.user.name}</span>
+                  <Button variant="outline" size="sm" onClick={() => authClient.signOut()}>
+                    Sign out
+                  </Button>
+                </div>
+              </div>
+            </div>
+            <div className={'col-span-3 grid grid-cols-1 gap-2 p-4 md:gap-4 md:p-12 lg:grid-cols-4'}>
+              <Divider className="col-span-full">Meine Workspaces</Divider>
+              {userContext.user && (workspacesLoading || !workspacesFetched) ? (
+                <div className={'col-span-full'}>
+                  <Loading />
+                </div>
+              ) : workspaces.length == 0 ? (
+                <div className={'col-span-full text-center'}>Keine Workspaces</div>
+              ) : (
+                workspaces.map((workspace) => (
+                  <Card key={`workspace-${workspace.id}`} className="h-40">
+                    <CardBody>
+                      <div className={'text-center text-3xl font-bold'}>{workspace.name}</div>
+                      <div className={'h-full'}></div>
+                      <CardActions className="justify-center">
+                        <Link href={'/workspaces/' + workspace.id} replace={true}>
+                          <Button variant="outline" className="border-primary text-primary hover:bg-primary/10">
+                            Öffnen
+                          </Button>
+                        </Link>
+                      </CardActions>
+                    </CardBody>
+                  </Card>
+                ))
+              )}
+
+              {(openWorkspaceJoinRequest.length > 0 || openWorkspaceJoinRequestLoading) && (
+                <>
+                  <Divider className="col-span-full">Beitrittsanfragen</Divider>
+                  {openWorkspaceJoinRequestLoading ? (
+                    <div className={'col-span-full'}>
+                      <Loading />
+                    </div>
+                  ) : (
+                    openWorkspaceJoinRequest.map((workspaceJoinRequest) => (
+                      <Card key={`join-request-${workspaceJoinRequest.workspace.id}`}>
+                        <CardBody>
+                          <div className={'text-center text-3xl font-bold'}>
+                            <span className={'italic'}>Angefragt: </span>
+                            {workspaceJoinRequest.workspace.name}
+                          </div>
+                          <div className={'text-center font-thin'}>Datum der Anfrage: {formatDateTime(new Date(workspaceJoinRequest.date))}</div>
+                          <div className={'h-full'}></div>
+                          <CardActions className="justify-center">
+                            <Button type="button" variant="outline" className="border-primary text-primary hover:bg-primary/10" disabled>
+                              Warte auf Annahme
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              shape="square"
+                              className="border-error text-error hover:bg-error/10"
+                              onClick={() =>
+                                modalContext.openModal(
+                                  <DeleteConfirmationModal
+                                    onApprove={async () => {
+                                      setJoinRequestCanceling({ ...joinRequestCanceling, [workspaceJoinRequest.workspaceId]: true });
+                                      fetch(`/api/workspaces/${workspaceJoinRequest.workspaceId}/join-requests`, {
+                                        method: 'DELETE',
+                                      })
+                                        .then((response) => {
+                                          if (response.ok) {
+                                            alertService.success('Beitrittsanfrage abgebrochen');
+                                          } else {
+                                            alertService.error('Fehler beim Abbrechen der Beitrittsanfrage');
+                                          }
+                                        })
+                                        .then(() => fetchOpenWorkspaceJoinRequest())
+                                        .catch((error) => {
+                                          console.error('WorkspacesOverview -> openWorkspaceJoinRequest -> cancel', error);
+                                          alertService.error('Fehler beim Abbrechen der Beitrittsanfrage');
+                                        })
+                                        .finally(() => {
+                                          setJoinRequestCanceling({ ...joinRequestCanceling, [workspaceJoinRequest.workspaceId]: false });
+                                        });
+                                    }}
+                                    spelling={'ABORT'}
+                                    entityName={`den Beitritt zu '${workspaceJoinRequest.workspace.name}'`}
+                                  />,
+                                )
+                              }
+                              disabled={joinRequestCanceling[workspaceJoinRequest.workspaceId]}
+                            >
+                              <MdOutlineCancel />
+                            </Button>
+                          </CardActions>
+                        </CardBody>
+                      </Card>
+                    ))
+                  )}
+                </>
+              )}
+              {workspaceCreationConfig && (!workspaceCreationConfig.disabled || workspaceCreationConfig.message) ? (
+                <>
+                  <Divider className="col-span-full">Workspace hinzufügen</Divider>
+                  {workspaceCreationConfig.disabled && workspaceCreationConfig.message ? (
+                    <Card>
+                      <CardBody className="flex h-full flex-col items-center justify-center space-y-2">
+                        <CardTitle>Workspace erstellen</CardTitle>
+                        <div
+                          className={'text-center'}
+                          dangerouslySetInnerHTML={{
+                            __html: workspaceCreationConfig.message.replaceAll('<a', '<a class="link"'),
+                          }}
+                        />
+                      </CardBody>
+                    </Card>
+                  ) : (
+                    <Card>
+                      <CardBody className="flex h-full flex-col items-center justify-center space-y-2">
+                        <CardTitle>Workspace erstellen</CardTitle>
+                        <form
+                          onSubmit={(e) => {
+                            e.preventDefault();
+                            createNewWorkspace();
+                          }}
+                        >
+                          <FormControl>
+                            <Label>
+                              <LabelText>Name der Workspace</LabelText>
+                            </Label>
+                            <ButtonGroup className="w-full">
+                              <Input
+                                joinItem
+                                className="w-full"
+                                placeholder={'Name der Workspace'}
+                                value={newWorkspaceName}
+                                onChange={(event) => setNewWorkspaceName(event.target.value)}
+                              />
+                              <Button
+                                variant="outline"
+                                joinItem
+                                className="w-fit min-w-12"
+                                disabled={newWorkspaceName.trim().length == 0 || creatingWorkspace}
+                                type={'submit'}
+                              >
+                                {creatingWorkspace ? <UiLoading size="sm" /> : <FaArrowRight />}
+                              </Button>
+                            </ButtonGroup>
+                          </FormControl>
+                        </form>
+                      </CardBody>
+                    </Card>
+                  )}
+                </>
+              ) : null}
+              <Card>
+                <CardBody className="flex flex-col items-center justify-center gap-2">
+                  <CardTitle>Workspace beitreten</CardTitle>
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      joinWorkspace(joinWorkspaceId);
+                    }}
+                  >
+                    <FormControl>
+                      <Label>
+                        <LabelText>Beitrittscode</LabelText>
+                      </Label>
+                      <ButtonGroup className="w-full">
+                        <Input
+                          joinItem
+                          className="w-full"
+                          placeholder={'Beitrittscode'}
+                          value={joinWorkspaceId}
+                          onChange={(event) => setJoinWorkspaceId(event.target.value)}
+                        />
+                        <Button
+                          variant="outline"
+                          joinItem
+                          className="w-fit min-w-12"
+                          disabled={joinWorkspaceId.trim().length == 0 || joiningWorkspace}
+                          type={'submit'}
+                        >
+                          {joiningWorkspace ? <UiLoading size="sm" /> : <FaArrowRight />}
+                        </Button>
+                      </ButtonGroup>
+                    </FormControl>
+                  </form>
+                </CardBody>
+              </Card>
+            </div>
           </div>
         )}
       </div>

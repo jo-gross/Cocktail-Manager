@@ -124,7 +124,7 @@ export function DistributionChart({
 
   return (
     <div ref={containerRef} style={{ height: `${height}px` }}>
-      {loading ? <div className="skeleton h-full w-full"></div> : <Bar data={chartData} options={options} />}
+      {loading ? <div className="h-full w-full skeleton"></div> : <Bar data={chartData} options={options} />}
     </div>
   );
 }

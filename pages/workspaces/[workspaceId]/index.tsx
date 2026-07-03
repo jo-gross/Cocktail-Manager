@@ -225,20 +225,39 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
     }
   }, [cocktailCards, router, selectedCardId, sortCards, workspaceId, logicalToday, cardDateKey]);
 
+  const initialSettingsSyncDone = useRef(false);
+
+  const toggleBooleanSetting = useCallback(
+    (key: Setting, current: boolean, setter: (value: boolean) => void) => {
+      const next = !current;
+      setter(next);
+      userContext.updateUserSetting(key, next ? 'true' : 'false');
+    },
+    [userContext],
+  );
+
   useEffect(() => {
-    setShowImage(userContext.user?.settings?.find((s) => s.setting == Setting.showImage)?.value == 'true');
-    setShowTags(userContext.user?.settings?.find((s) => s.setting == Setting.showTags)?.value == 'true');
-    setLessItems(userContext.user?.settings?.find((s) => s.setting == Setting.lessItems)?.value == 'true');
-    setShowStatisticActions(userContext.user?.settings?.find((s) => s.setting == Setting.showStatisticActions)?.value == 'true');
-    setShowDescription(userContext.user?.settings?.find((s) => s.setting == Setting.showDescription)?.value == 'true');
-    setShowNotes(userContext.user?.settings?.find((s) => s.setting == Setting.showNotes)?.value == 'true');
-    setShowHistory(userContext.user?.settings?.find((s) => s.setting == Setting.showHistory)?.value == 'true');
-    setShowTime(userContext.user?.settings?.find((s) => s.setting == Setting.showTime)?.value == 'true');
-    setShowRating(userContext.user?.settings?.find((s) => s.setting == Setting.showRating)?.value == 'true');
-    setQueueGrouping(userContext.user?.settings?.find((s) => s.setting == Setting.queueGrouping)?.value as 'ALPHABETIC' | 'NONE');
-    setShowFastQueueCheck(userContext.user?.settings?.find((s) => s.setting == Setting.showFastQueueCheck)?.value == 'true');
-    setShowSettingsAtBottom(userContext.user?.settings?.find((s) => s.setting == Setting.showSettingsAtBottom)?.value == 'true');
-  }, [userContext.user?.settings]);
+    if (!userContext.user) {
+      initialSettingsSyncDone.current = false;
+      return;
+    }
+    if (initialSettingsSyncDone.current) return;
+
+    const settings = userContext.user.settings;
+    setShowImage(settings?.find((s) => s.setting == Setting.showImage)?.value == 'true');
+    setShowTags(settings?.find((s) => s.setting == Setting.showTags)?.value == 'true');
+    setLessItems(settings?.find((s) => s.setting == Setting.lessItems)?.value == 'true');
+    setShowStatisticActions(settings?.find((s) => s.setting == Setting.showStatisticActions)?.value == 'true');
+    setShowDescription(settings?.find((s) => s.setting == Setting.showDescription)?.value == 'true');
+    setShowNotes(settings?.find((s) => s.setting == Setting.showNotes)?.value == 'true');
+    setShowHistory(settings?.find((s) => s.setting == Setting.showHistory)?.value == 'true');
+    setShowTime(settings?.find((s) => s.setting == Setting.showTime)?.value == 'true');
+    setShowRating(settings?.find((s) => s.setting == Setting.showRating)?.value == 'true');
+    setQueueGrouping(settings?.find((s) => s.setting == Setting.queueGrouping)?.value as 'ALPHABETIC' | 'NONE');
+    setShowFastQueueCheck(settings?.find((s) => s.setting == Setting.showFastQueueCheck)?.value == 'true');
+    setShowSettingsAtBottom(settings?.find((s) => s.setting == Setting.showSettingsAtBottom)?.value == 'true');
+    initialSettingsSyncDone.current = true;
+  }, [userContext.user?.id]);
 
   // ========================
   // Clock
@@ -959,8 +978,11 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                         }}
                       />
                     </Label>
-                    <Divider>Karte(n)</Divider>
-                    {loadingCards ? (
+                    <Divider>
+                      Karte(n)
+                      {loadingCards && <UiLoading size="xs" />}
+                    </Divider>
+                    {loadingCards && cocktailCards.length == 0 ? (
                       <Loading />
                     ) : cocktailCards.length == 0 ? (
                       <div className={'flex items-center justify-between'}>
@@ -1024,7 +1046,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                               disabled={isOffline}
                               onClick={() => {
                                 if (!isOffline) {
-                                  userContext.updateUserSetting(Setting.showImage, !showImage ? 'true' : 'false');
+                                  toggleBooleanSetting(Setting.showImage, showImage, setShowImage);
                                 }
                               }}
                             />
@@ -1039,7 +1061,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                               disabled={isOffline}
                               onClick={() => {
                                 if (!isOffline) {
-                                  userContext.updateUserSetting(Setting.showTags, !showTags ? 'true' : 'false');
+                                  toggleBooleanSetting(Setting.showTags, showTags, setShowTags);
                                 }
                               }}
                             />
@@ -1054,7 +1076,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                               disabled={isOffline}
                               onClick={() => {
                                 if (!isOffline) {
-                                  userContext.updateUserSetting(Setting.showDescription, !showDescription ? 'true' : 'false');
+                                  toggleBooleanSetting(Setting.showDescription, showDescription, setShowDescription);
                                 }
                               }}
                             />
@@ -1069,7 +1091,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                               disabled={isOffline}
                               onClick={() => {
                                 if (!isOffline) {
-                                  userContext.updateUserSetting(Setting.showNotes, !showNotes ? 'true' : 'false');
+                                  toggleBooleanSetting(Setting.showNotes, showNotes, setShowNotes);
                                 }
                               }}
                             />
@@ -1084,7 +1106,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                               disabled={isOffline}
                               onClick={() => {
                                 if (!isOffline) {
-                                  userContext.updateUserSetting(Setting.showHistory, !showHistory ? 'true' : 'false');
+                                  toggleBooleanSetting(Setting.showHistory, showHistory, setShowHistory);
                                 }
                               }}
                             />
@@ -1099,7 +1121,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                               disabled={isOffline}
                               onClick={() => {
                                 if (!isOffline) {
-                                  userContext.updateUserSetting(Setting.showRating, !showRating ? 'true' : 'false');
+                                  toggleBooleanSetting(Setting.showRating, showRating, setShowRating);
                                 }
                               }}
                             />
@@ -1114,7 +1136,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                               disabled={isOffline}
                               onClick={() => {
                                 if (!isOffline) {
-                                  userContext.updateUserSetting(Setting.showStatisticActions, !showStatisticActions ? 'true' : 'false');
+                                  toggleBooleanSetting(Setting.showStatisticActions, showStatisticActions, setShowStatisticActions);
                                 }
                               }}
                             />
@@ -1178,7 +1200,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                               disabled={isOffline}
                               onClick={() => {
                                 if (!isOffline) {
-                                  userContext.updateUserSetting(Setting.showFastQueueCheck, !showFastQueueCheck ? 'true' : 'false');
+                                  toggleBooleanSetting(Setting.showFastQueueCheck, showFastQueueCheck, setShowFastQueueCheck);
                                 }
                               }}
                             />
@@ -1204,7 +1226,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                               disabled={isOffline}
                               onClick={() => {
                                 if (!isOffline) {
-                                  userContext.updateUserSetting(Setting.showTime, !showTime ? 'true' : 'false');
+                                  toggleBooleanSetting(Setting.showTime, showTime, setShowTime);
                                 }
                               }}
                             />
@@ -1220,7 +1242,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                                 disabled={isOffline}
                                 onClick={() => {
                                   if (!isOffline) {
-                                    userContext.updateUserSetting(Setting.lessItems, !lessItems ? 'true' : 'false');
+                                    toggleBooleanSetting(Setting.lessItems, lessItems, setLessItems);
                                   }
                                 }}
                               />
@@ -1236,7 +1258,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                               disabled={isOffline}
                               onClick={() => {
                                 if (!isOffline) {
-                                  userContext.updateUserSetting(Setting.showSettingsAtBottom, !showSettingsAtBottom ? 'true' : 'false');
+                                  toggleBooleanSetting(Setting.showSettingsAtBottom, showSettingsAtBottom, setShowSettingsAtBottom);
                                 }
                               }}
                             />
