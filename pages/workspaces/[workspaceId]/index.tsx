@@ -741,6 +741,12 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
           <main className={`order-1 col-span-5 flex w-full flex-col space-y-2 overflow-y-auto rounded-xl lg:col-span-6 xl:col-span-5`}>
             {selectedCardId == 'order' ? (
               <OrderView cocktailCards={cocktailCards} workspaceId={workspaceId as string} />
+            ) : selectedCardId == undefined && (loadingCards || cocktailCards.length > 0) ? (
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+                {Array.from({ length: 6 }).map((_, index) => (
+                  <CocktailRecipeCardSkeleton key={`initial-card-skeleton-${index}`} showImage={showImage} />
+                ))}
+              </div>
             ) : selectedCardId == 'search' || selectedCardId == undefined ? (
               <div className={'flex flex-col-reverse gap-2 md:flex-row'}>
                 <Card className="w-full flex-1">
