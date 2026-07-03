@@ -269,7 +269,7 @@ const ManageGlassesOverviewPage: NextPageWithPullToRefresh = () => {
                   <SortableHeaderCell sortKey="deposit" activeSortKey={sortKey} direction={sortDirection} onSort={handleSort}>
                     Pfand
                   </SortableHeaderCell>
-                  <TableHeaderCell className="flex justify-end"></TableHeaderCell>
+                  <TableHeaderCell></TableHeaderCell>
                 </TableRow>
               </TableHead>
               <TableBody>

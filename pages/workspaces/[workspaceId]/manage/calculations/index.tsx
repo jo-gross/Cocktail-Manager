@@ -584,7 +584,7 @@ const CocktailCalculationOverviewPage: NextPageWithPullToRefresh = () => {
                   <SortableHeaderCell sortKey="updatedAt" activeSortKey={sortKey} direction={sortDirection} onSort={handleSort}>
                     Zuletzt bearbeitet
                   </SortableHeaderCell>
-                  <TableHeaderCell className="flex justify-end"></TableHeaderCell>
+                  <TableHeaderCell></TableHeaderCell>
                 </TableRow>
               </TableHead>
               <TableBody>

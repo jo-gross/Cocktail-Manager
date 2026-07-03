@@ -544,7 +544,7 @@ const CocktailsOverviewPage: NextPageWithPullToRefresh = () => {
                     Glas
                   </SortableHeaderCell>
                   <TableHeaderCell>Garnitur(en)</TableHeaderCell>
-                  <TableHeaderCell className="flex justify-end"></TableHeaderCell>
+                  <TableHeaderCell></TableHeaderCell>
                 </TableRow>
               </TableHead>
               <TableBody>

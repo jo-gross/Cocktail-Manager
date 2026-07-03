@@ -268,7 +268,7 @@ const ManageGarnishesOverviewPage: NextPageWithPullToRefresh = () => {
                   <SortableHeaderCell sortKey="price" activeSortKey={sortKey} direction={sortDirection} onSort={handleSort}>
                     Preis
                   </SortableHeaderCell>
-                  <TableHeaderCell className="flex justify-end"></TableHeaderCell>
+                  <TableHeaderCell></TableHeaderCell>
                 </TableRow>
               </TableHead>
               <TableBody>
