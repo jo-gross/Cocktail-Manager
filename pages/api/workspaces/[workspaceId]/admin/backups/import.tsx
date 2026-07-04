@@ -1,9 +1,10 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { BackupStructure } from './backupStructure';
+import { BackupStructure, SignageBackupRecord, SignageSlideBackupRecord } from './backupStructure';
 import prisma from '../../../../../../prisma/prisma';
 import { randomUUID } from 'crypto';
 import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
-import { Role } from '@generated/prisma/client';
+import { MonitorFormat, Role } from '@generated/prisma/client';
+import { ensureSignageContainer } from '@lib/signage/signageApiHelpers';
 
 const IMPORT_TRANSACTION_TIMEOUT_MS = 30 * 60 * 1000;
 
@@ -54,6 +55,40 @@ function convertUnit(unit: string): string {
   }
 }
 
+function parseBackupDate(value: string | Date | null | undefined): Date | null {
+  if (value == null || value === '') {
+    return null;
+  }
+  const parsed = value instanceof Date ? value : new Date(value);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+function normalizeSignageSlide(slide: SignageSlideBackupRecord, workspaceId: string) {
+  return {
+    id: randomUUID(),
+    workspaceId,
+    format: slide.format,
+    content: slide.content,
+    order: slide.order,
+    enabled: slide.enabled ?? true,
+    weekdays: slide.weekdays ?? [],
+    validFrom: parseBackupDate(slide.validFrom),
+    validTo: parseBackupDate(slide.validTo),
+    dateExclusive: slide.dateExclusive ?? false,
+  };
+}
+
+function normalizeSignageRecord(signage: SignageBackupRecord, workspaceId: string) {
+  return {
+    workspaceId,
+    format: signage.format,
+    backgroundColor: signage.backgroundColor ?? null,
+    backgroundMode: signage.backgroundMode ?? 'COLOR',
+    slideDurationSeconds: signage.slideDurationSeconds ?? 10,
+    mirrorSourceFormat: signage.mirrorSourceFormat ?? null,
+  };
+}
+
 function convertIce(ice: string): string {
   switch (ice) {
     case 'Crushed':
@@ -88,6 +123,8 @@ export default withWorkspacePermission([Role.USER], async (req: NextApiRequest, 
             ingredients: data.ingredient?.length ?? 0,
             cocktails: data.cocktailRecipe?.length ?? 0,
             calculations: data.calculation?.length ?? 0,
+            signage: data.signage?.length ?? 0,
+            signageSlides: data.signageSlides?.length ?? 0,
           });
 
           if (data.workspaceSettings?.length > 0) {
@@ -145,6 +182,7 @@ export default withWorkspacePermission([Role.USER], async (req: NextApiRequest, 
                   },
                 });
                 if (existingUnitConversion == null) {
+                  g.id = randomUUID();
                   g.fromUnitId = newFromId;
                   g.toUnitId = newToId;
                   g.workspaceId = workspaceId;
@@ -592,6 +630,55 @@ export default withWorkspacePermission([Role.USER], async (req: NextApiRequest, 
               g.calculationId = cocktailCalculationMapping.find((gm) => gm.id === g.calculationId)!.newId;
             });
             await transaction.cocktailCalculationItems.createMany({ data: data.calculationItems, skipDuplicates: true });
+          }
+
+          const signageRecords = data.signage ?? [];
+          if (signageRecords.length > 0) {
+            importLogger.step('Importing signage', { count: signageRecords.length });
+            for (const signageRecord of signageRecords) {
+              const normalizedSignage = normalizeSignageRecord(signageRecord, workspaceId);
+              await transaction.signage.upsert({
+                where: {
+                  workspaceId_format: {
+                    workspaceId,
+                    format: signageRecord.format,
+                  },
+                },
+                create: normalizedSignage,
+                update: {
+                  backgroundColor: normalizedSignage.backgroundColor,
+                  backgroundMode: normalizedSignage.backgroundMode,
+                  slideDurationSeconds: normalizedSignage.slideDurationSeconds,
+                  mirrorSourceFormat: normalizedSignage.mirrorSourceFormat,
+                },
+              });
+
+              const legacyContent = signageRecord.content;
+              const hasSlidesForFormat = data.signageSlides?.some((slide) => slide.format === signageRecord.format);
+              if (legacyContent && !hasSlidesForFormat) {
+                await transaction.signageSlide.create({
+                  data: normalizeSignageSlide(
+                    {
+                      format: signageRecord.format,
+                      content: legacyContent,
+                      order: 0,
+                    },
+                    workspaceId,
+                  ),
+                });
+              }
+            }
+          }
+
+          const signageSlideRecords = data.signageSlides ?? [];
+          if (signageSlideRecords.length > 0) {
+            importLogger.step('Importing signage slides', { count: signageSlideRecords.length });
+            for (const slide of signageSlideRecords) {
+              await ensureSignageContainer(transaction, workspaceId, slide.format as MonitorFormat);
+              await transaction.signageSlide.create({
+                data: normalizeSignageSlide(slide, workspaceId),
+              });
+            }
           }
 
           importLogger.step('Import transaction finished');

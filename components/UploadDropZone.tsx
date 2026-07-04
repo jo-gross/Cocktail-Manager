@@ -7,7 +7,12 @@ import { Button, Divider } from '@components/ui';
 
 interface UploadDropZoneProps {
   onSelectedFilesChanged: (file: File | undefined) => void;
+  onFilesSelected?: (files: File[]) => void;
   maxUploadSize?: string;
+  multiple?: boolean;
+  accept?: string;
+  label?: string;
+  hint?: string;
 }
 
 export function UploadDropZone(props: UploadDropZoneProps) {
@@ -15,6 +20,22 @@ export function UploadDropZone(props: UploadDropZoneProps) {
   const [showUrlInput, setShowUrlInput] = useState(false);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const accept = props.accept ?? 'image/*';
+  const label = props.label ?? 'Bild wählen';
+  const hint = props.hint ?? '(z.B. SVG, PNG, JPG oder GIF)';
+
+  const handleFiles = (fileList: FileList | null | undefined) => {
+    if (!fileList || fileList.length === 0) {
+      return;
+    }
+
+    if (props.multiple) {
+      props.onFilesSelected?.(Array.from(fileList));
+      return;
+    }
+
+    props.onSelectedFilesChanged(fileList[0]);
+  };
 
   const handleUrlImport = async (imageUrl: string) => {
     try {
@@ -52,10 +73,9 @@ export function UploadDropZone(props: UploadDropZoneProps) {
                   name="file"
                   className="hidden"
                   capture="environment"
-                  accept="image/*"
+                  accept={accept}
                   onChange={(event) => {
-                    const file = event?.target?.files?.[0];
-                    props.onSelectedFilesChanged(file);
+                    handleFiles(event?.target?.files);
                   }}
                 />
                 <Button variant="outline" type="button" onClick={() => fileInputRef.current?.click()}>
@@ -66,10 +86,10 @@ export function UploadDropZone(props: UploadDropZoneProps) {
                   type="file"
                   name="file"
                   className="hidden"
-                  accept="image/*"
+                  accept={accept}
+                  multiple={props.multiple}
                   onChange={(event) => {
-                    const file = event?.target?.files?.[0];
-                    props.onSelectedFilesChanged(file);
+                    handleFiles(event?.target?.files);
                   }}
                 />
                 <Button variant="outline" type="button" onClick={() => setShowUrlInput(true)}>
@@ -91,7 +111,7 @@ export function UploadDropZone(props: UploadDropZoneProps) {
               htmlFor={'dropzone-file-' + identifier}
               className="flex h-full w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-base-300 bg-base-200 hover:border-base-300 hover:bg-base-100 dark:bg-base-200 dark:hover:bg-base-100"
             >
-              <div className="text-2xl font-bold">Bild wählen</div>
+              <div className="text-2xl font-bold">{label}</div>
               <div className="flex flex-col items-center justify-center pt-5 pb-6">
                 <svg
                   aria-hidden="true"
@@ -111,7 +131,7 @@ export function UploadDropZone(props: UploadDropZoneProps) {
                 <p className="mb-2 text-sm text-base-content">
                   <span className="font-semibold">Klicken, zum auswählen</span> oder ziehen
                 </p>
-                <p className="text-xs text-base-content">(z.B. SVG, PNG, JPG oder GIF)</p>
+                <p className="text-xs text-base-content">{hint}</p>
                 {props.maxUploadSize && (
                   <p className="text-xs text-base-content">
                     Maximale Datei-Größe: <strong>{props.maxUploadSize}</strong>
@@ -123,19 +143,23 @@ export function UploadDropZone(props: UploadDropZoneProps) {
                 type="file"
                 name={`file-${identifier}`}
                 className="hidden"
-                accept="image/*"
+                accept={accept}
+                multiple={props.multiple}
                 onChange={(event) => {
-                  const file = event?.target?.files?.[0];
-                  props.onSelectedFilesChanged(file);
+                  handleFiles(event?.target?.files);
                 }}
               />
             </label>
-            <Divider className="my-4 flex items-center gap-4 before:content-none after:content-none">
-              <span className="h-px flex-1 bg-base-content/15" />
-              <span className="text-sm text-base-content/70">Bild über URL laden</span>
-              <span className="h-px flex-1 bg-base-content/15" />
-            </Divider>
-            <ImportPhotoByUrl onImport={handleUrlImport} />
+            {!props.multiple ? (
+              <>
+                <Divider className="my-4 flex items-center gap-4 before:content-none after:content-none">
+                  <span className="h-px flex-1 bg-base-content/15" />
+                  <span className="text-sm text-base-content/70">Bild über URL laden</span>
+                  <span className="h-px flex-1 bg-base-content/15" />
+                </Divider>
+                <ImportPhotoByUrl onImport={handleUrlImport} />
+              </>
+            ) : null}
           </div>
         )}
       </div>
