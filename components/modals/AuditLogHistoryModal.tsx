@@ -5,6 +5,7 @@ import { UserContext } from '@lib/context/UserContextProvider';
 import { FaFileDownload } from 'react-icons/fa';
 import { buildExportData } from '@lib/auditExport';
 import { formatDateTime, formatDateTimeCompact } from '@lib/DateUtils';
+import { Badge, Button, Loading } from '@components/ui';
 
 interface AuditLogHistoryModalProps {
   entityType: string;
@@ -151,22 +152,24 @@ export function AuditLogHistoryModal({ entityType, entityId, entityName }: Audit
           {allTags.map((tag) => {
             if (removedTags.has(tag)) {
               return (
-                <span key={tag} className="badge badge-error badge-outline badge-sm line-through opacity-70">
-                  {tag}
+                <span key={tag} className="line-through opacity-70">
+                  <Badge variant="error" size="sm" outline>
+                    {tag}
+                  </Badge>
                 </span>
               );
             }
             if (addedTags.has(tag)) {
               return (
-                <span key={tag} className="badge badge-success badge-outline badge-sm font-medium">
+                <Badge key={tag} variant="success" size="sm" outline className="font-medium">
                   + {tag}
-                </span>
+                </Badge>
               );
             }
             return (
-              <span key={tag} className="badge badge-outline badge-sm">
+              <Badge key={tag} size="sm" outline>
                 {tag}
-              </span>
+              </Badge>
             );
           })}
         </div>
@@ -205,7 +208,7 @@ export function AuditLogHistoryModal({ entityType, entityId, entityName }: Audit
       <div className="overflow-hidden rounded border bg-base-100">
         <div className="border-b bg-base-200 px-3 py-1 font-bold text-base-content">Schritte</div>
         <div className="flex flex-col p-2">
-          {hasPositionChange && <div className="mb-2 px-1 text-xs italic text-info">Reihenfolge der Schritte wurde geändert</div>}
+          {hasPositionChange && <div className="mb-2 px-1 text-xs text-info italic">Reihenfolge der Schritte wurde geändert</div>}
 
           {/* Removed steps */}
           {Array.from(removedSteps.entries()).map(([stepKey, stepData]) => (
@@ -260,10 +263,18 @@ export function AuditLogHistoryModal({ entityType, entityId, entityName }: Audit
                     const optChange = changedPaths.get(`steps.${stepKey}.optional`);
                     if (optChange) {
                       if (optChange.kind === 'N' || (optChange.kind === 'E' && stepData?.optional === true)) {
-                        return <span className="badge badge-success badge-outline badge-xs">+ optional</span>;
+                        return (
+                          <Badge variant="success" size="xs" outline>
+                            + optional
+                          </Badge>
+                        );
                       }
                       if (optChange.kind === 'D' || (optChange.kind === 'E' && stepData?.optional !== true)) {
-                        return <span className="badge badge-error badge-outline badge-xs line-through">optional</span>;
+                        return (
+                          <Badge variant="error" size="xs" outline className="line-through">
+                            optional
+                          </Badge>
+                        );
                       }
                     }
                     return stepData?.optional === true ? <span className="text-xs font-normal text-base-content/50">(optional)</span> : null;
@@ -273,7 +284,7 @@ export function AuditLogHistoryModal({ entityType, entityId, entityName }: Audit
                 {changes.some(
                   (c: AuditChange) =>
                     c.kind === 'E' && c.path?.[0] === 'steps' && c.path?.[1] === stepKey && c.path?.[2] === 'ingredients' && c.path?.[4] === 'position',
-                ) && <div className="pl-2 text-xs italic text-info">Reihenfolge der Zutaten wurde geändert</div>}
+                ) && <div className="pl-2 text-xs text-info italic">Reihenfolge der Zutaten wurde geändert</div>}
                 {/* Ingredients */}
                 {sortedIngredients.map(([ingName, ing]: [string, Record<string, unknown>]) => {
                   const ingBase = `steps.${stepKey}.ingredients.${ingName}`;
@@ -321,9 +332,13 @@ export function AuditLogHistoryModal({ entityType, entityId, entityName }: Audit
                       {/* Optional status */}
                       {optionalChange ? (
                         optionalChange.kind === 'N' || (optionalChange.kind === 'E' && ing?.optional === true) ? (
-                          <span className="badge badge-success badge-outline badge-xs">+ optional</span>
+                          <Badge variant="success" size="xs" outline>
+                            + optional
+                          </Badge>
                         ) : optionalChange.kind === 'D' || (optionalChange.kind === 'E' && ing?.optional !== true) ? (
-                          <span className="badge badge-error badge-outline badge-xs line-through">optional</span>
+                          <Badge variant="error" size="xs" outline className="line-through">
+                            optional
+                          </Badge>
                         ) : null
                       ) : (
                         ing?.optional === true && <span className="text-xs text-base-content/50">(optional)</span>
@@ -389,7 +404,7 @@ export function AuditLogHistoryModal({ entityType, entityId, entityName }: Audit
       <div className="overflow-hidden rounded border bg-base-100">
         <div className="border-b bg-base-200 px-3 py-1 font-bold text-base-content">Garnituren</div>
         <div className="flex flex-col gap-1.5 p-2">
-          {hasPositionChange && <div className="px-1 text-xs italic text-info">Reihenfolge der Garnituren wurde geändert</div>}
+          {hasPositionChange && <div className="px-1 text-xs text-info italic">Reihenfolge der Garnituren wurde geändert</div>}
           {/* Removed */}
           {Array.from(removedGarnishes.entries()).map(([name, data]: [string, Record<string, unknown>]) => (
             <div key={`removed-${name}`} className="flex flex-wrap items-center gap-1.5 pl-2 text-sm text-error/70 line-through">
@@ -415,9 +430,13 @@ export function AuditLogHistoryModal({ entityType, entityId, entityName }: Audit
                   {/* Alternative status */}
                   {alternativeChange ? (
                     alternativeChange.kind === 'N' || (alternativeChange.kind === 'E' && data?.alternative === true) ? (
-                      <span className="badge badge-success badge-outline badge-xs">+ oder</span>
+                      <Badge variant="success" size="xs" outline>
+                        + oder
+                      </Badge>
                     ) : alternativeChange.kind === 'D' || (alternativeChange.kind === 'E' && data?.alternative !== true) ? (
-                      <span className="badge badge-error badge-outline badge-xs line-through">oder</span>
+                      <Badge variant="error" size="xs" outline className="line-through">
+                        oder
+                      </Badge>
                     ) : (
                       Boolean(data?.alternative) && <span className="font-bold">oder</span>
                     )
@@ -428,9 +447,13 @@ export function AuditLogHistoryModal({ entityType, entityId, entityName }: Audit
                   {/* Optional status */}
                   {optionalChange ? (
                     optionalChange.kind === 'N' || (optionalChange.kind === 'E' && data?.optional === true) ? (
-                      <span className="badge badge-success badge-outline badge-xs">+ optional</span>
+                      <Badge variant="success" size="xs" outline>
+                        + optional
+                      </Badge>
                     ) : optionalChange.kind === 'D' || (optionalChange.kind === 'E' && data?.optional !== true) ? (
-                      <span className="badge badge-error badge-outline badge-xs line-through">optional</span>
+                      <Badge variant="error" size="xs" outline className="line-through">
+                        optional
+                      </Badge>
                     ) : null
                   ) : data?.optional === true ? (
                     <span className="text-xs text-base-content/50">(optional)</span>
@@ -735,15 +758,15 @@ export function AuditLogHistoryModal({ entityType, entityId, entityName }: Audit
           if (isLongText) {
             return (
               <div key={index} className="flex flex-col gap-1">
-                {subPath && <div className="text-[10px] uppercase tracking-wider text-base-content/50">{subPath}</div>}
-                {!lhsUndef && <div className="whitespace-pre-wrap break-words rounded bg-error/10 px-2 py-1 text-error line-through">− {lhsDisplay}</div>}
-                {!rhsUndef && <div className="whitespace-pre-wrap break-words rounded bg-success/10 px-2 py-1 text-success">+ {rhsDisplay}</div>}
+                {subPath && <div className="text-[10px] tracking-wider text-base-content/50 uppercase">{subPath}</div>}
+                {!lhsUndef && <div className="rounded bg-error/10 px-2 py-1 break-words whitespace-pre-wrap text-error line-through">− {lhsDisplay}</div>}
+                {!rhsUndef && <div className="rounded bg-success/10 px-2 py-1 break-words whitespace-pre-wrap text-success">+ {rhsDisplay}</div>}
               </div>
             );
           }
           return (
             <div key={index} className="flex flex-col gap-0.5">
-              {subPath && <div className="font-mono text-[10px] uppercase tracking-wider text-base-content/50">{subPath}</div>}
+              {subPath && <div className="font-mono text-[10px] tracking-wider text-base-content/50 uppercase">{subPath}</div>}
               <div className="flex flex-wrap items-center gap-2">
                 {!lhsUndef && <span className="rounded bg-error/10 px-1 text-error line-through">{lhsDisplay}</span>}
                 {!lhsUndef && !rhsUndef && <span className="text-base-content/50">→</span>}
@@ -757,14 +780,14 @@ export function AuditLogHistoryModal({ entityType, entityId, entityName }: Audit
           if (isLongText) {
             return (
               <div key={index} className="flex flex-col gap-1">
-                {subPath && <div className="text-[10px] uppercase tracking-wider text-base-content/50">{subPath}</div>}
-                <div className="whitespace-pre-wrap break-words rounded bg-success/10 px-2 py-1 text-success">+ {rhsDisplay}</div>
+                {subPath && <div className="text-[10px] tracking-wider text-base-content/50 uppercase">{subPath}</div>}
+                <div className="rounded bg-success/10 px-2 py-1 break-words whitespace-pre-wrap text-success">+ {rhsDisplay}</div>
               </div>
             );
           }
           return (
             <div key={index}>
-              {subPath && <div className="font-mono text-[10px] uppercase tracking-wider text-base-content/50">{subPath}</div>}
+              {subPath && <div className="font-mono text-[10px] tracking-wider text-base-content/50 uppercase">{subPath}</div>}
               <span className="font-medium text-success">+ {rhsDisplay}</span>
             </div>
           );
@@ -774,14 +797,14 @@ export function AuditLogHistoryModal({ entityType, entityId, entityName }: Audit
           if (isLongText) {
             return (
               <div key={index} className="flex flex-col gap-1">
-                {subPath && <div className="text-[10px] uppercase tracking-wider text-base-content/50">{subPath}</div>}
-                <div className="whitespace-pre-wrap break-words rounded bg-error/10 px-2 py-1 text-error line-through">− {lhsDisplay}</div>
+                {subPath && <div className="text-[10px] tracking-wider text-base-content/50 uppercase">{subPath}</div>}
+                <div className="rounded bg-error/10 px-2 py-1 break-words whitespace-pre-wrap text-error line-through">− {lhsDisplay}</div>
               </div>
             );
           }
           return (
             <div key={index}>
-              {subPath && <div className="font-mono text-[10px] uppercase tracking-wider text-base-content/50">{subPath}</div>}
+              {subPath && <div className="font-mono text-[10px] tracking-wider text-base-content/50 uppercase">{subPath}</div>}
               <span className="text-error line-through">− {lhsDisplay}</span>
             </div>
           );
@@ -792,7 +815,7 @@ export function AuditLogHistoryModal({ entityType, entityId, entityName }: Audit
           const ilhsUndef = isUndefinedish(item?.lhs);
           return (
             <div key={index} className="flex flex-col gap-0.5">
-              {subPath && <div className="font-mono text-[10px] uppercase tracking-wider text-base-content/50">{subPath}</div>}
+              {subPath && <div className="font-mono text-[10px] tracking-wider text-base-content/50 uppercase">{subPath}</div>}
               {item?.kind === 'N' && !irhsUndef && <span className="font-medium text-success">+ {String(item.rhs)}</span>}
               {item?.kind === 'D' && !ilhsUndef && <span className="text-error line-through">− {String(item.lhs)}</span>}
               {item?.kind === 'E' && (
@@ -813,7 +836,7 @@ export function AuditLogHistoryModal({ entityType, entityId, entityName }: Audit
 
     return (
       <div className="overflow-hidden rounded border bg-base-100">
-        <div className="border-b bg-base-200 px-3 py-1 font-bold capitalize text-base-content">{headerLabel}</div>
+        <div className="border-b bg-base-200 px-3 py-1 font-bold text-base-content capitalize">{headerLabel}</div>
         <div className="flex flex-col gap-2 p-2">{renderedChanges}</div>
       </div>
     );
@@ -899,7 +922,7 @@ export function AuditLogHistoryModal({ entityType, entityId, entityName }: Audit
       <div className="min-h-0 flex-1 overflow-y-auto">
         {loading ? (
           <div className="flex justify-center p-4">
-            <span className="loading loading-spinner loading-lg"></span>
+            <Loading size="lg" />
           </div>
         ) : logs.length === 0 ? (
           <div className="p-4 text-center text-base-content/60">Kein Verlauf gefunden.</div>
@@ -922,14 +945,14 @@ export function AuditLogHistoryModal({ entityType, entityId, entityName }: Audit
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span
-                        className={`badge badge-outline badge-sm ${log.action === 'CREATE' ? 'badge-success' : log.action === 'DELETE' ? 'badge-error' : 'badge-info'}`}
-                      >
+                      <Badge size="sm" outline variant={log.action === 'CREATE' ? 'success' : log.action === 'DELETE' ? 'error' : 'info'}>
                         {log.action === 'CREATE' ? 'Erstellt' : log.action === 'UPDATE' ? 'Aktualisiert' : 'Gelöscht'}
-                      </span>
+                      </Badge>
                       {(log.exportData || log.snapshot) && (
-                        <button
-                          className="btn btn-square btn-outline btn-xs"
+                        <Button
+                          variant="outline"
+                          size="xs"
+                          shape="square"
                           onClick={() => {
                             const exportContent: Record<string, unknown> = log.exportData
                               ? ((buildExportData(entityType, log.exportData, '1.0') ?? {}) as Record<string, unknown>)
@@ -944,7 +967,7 @@ export function AuditLogHistoryModal({ entityType, entityId, entityName }: Audit
                           title="Export"
                         >
                           <FaFileDownload />
-                        </button>
+                        </Button>
                       )}
                     </div>
                   </div>
@@ -956,9 +979,9 @@ export function AuditLogHistoryModal({ entityType, entityId, entityName }: Audit
       </div>
 
       <div className="flex shrink-0 justify-end border-base-200">
-        <button className="btn btn-outline" onClick={() => modalContext.closeModal()}>
+        <Button variant="outline" onClick={() => modalContext.closeModal()}>
           Schließen
-        </button>
+        </Button>
       </div>
     </div>
   );

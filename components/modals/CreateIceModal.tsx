@@ -4,6 +4,7 @@ import { UserContext } from '@lib/context/UserContextProvider';
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import { alertService } from '@lib/alertService';
 import { useRouter } from 'next/router';
+import { Button, FormControl, Input, Label, LabelText, LabelTextAlt, Loading } from '@components/ui';
 
 export default function CreateIceModal() {
   const _userContext = useContext(UserContext);
@@ -70,41 +71,42 @@ export default function CreateIceModal() {
         {({ values, handleChange, handleSubmit, isSubmitting, errors, touched, setFieldValue: _setFieldValue }) => (
           <form onSubmit={handleSubmit} className={'flex flex-col gap-2'}>
             <div className={'grid grid-cols-2 gap-2'}>
-              <div className={'form-control'}>
-                <label className={'label'} htmlFor={'identifier'}>
-                  <div className={'label-text'}>Identifier (A-Z,_)</div>
-                  <div className={'label-text-alt text-error'}>
+              <FormControl>
+                <Label htmlFor={'identifier'} className="flex-row items-center justify-between">
+                  <LabelText>Identifier (A-Z,_)</LabelText>
+                  <LabelTextAlt className="text-error">
                     <span>{errors.identifier && touched.identifier ? errors.identifier : ''}</span>
                     <span>*</span>
-                  </div>
-                </label>
-                <input id={'identifier'} name={'identifier'} value={values.identifier} onChange={handleChange} className={`input input-bordered`} />
-              </div>
-              <div className={'form-control'}>
-                <label className={'label'}>
-                  <div className={'label-text'}>Deutsch</div>
-                  <div className={'label-text-alt text-error'}>
+                  </LabelTextAlt>
+                </Label>
+                <Input id={'identifier'} name={'identifier'} value={values.identifier} onChange={handleChange} />
+              </FormControl>
+              <FormControl>
+                <Label className="flex-row items-center justify-between">
+                  <LabelText>Deutsch</LabelText>
+                  <LabelTextAlt className="text-error">
                     <span>{errors.lableDE && touched.lableDE ? errors.lableDE : ''}</span>
                     <span>*</span>
-                  </div>
-                </label>
-                <input id={'lableDE'} name={'lableDE'} value={values.lableDE} onChange={handleChange} className={'input input-bordered'} />
-              </div>
+                  </LabelTextAlt>
+                </Label>
+                <Input id={'lableDE'} name={'lableDE'} value={values.lableDE} onChange={handleChange} />
+              </FormControl>
             </div>
             <div className={'flex justify-end gap-2'}>
-              <button
-                className={'btn btn-outline btn-error'}
+              <Button
+                variant="outline"
+                className="border-error text-error hover:bg-error/10"
                 type={'button'}
                 onClick={() => {
                   modalContext.closeModal();
                 }}
               >
                 Abbrechen
-              </button>
-              <button className={'btn btn-primary'} type={'submit'}>
-                {isSubmitting ? <span className={'spinner loading-spinner'} /> : <></>}
+              </Button>
+              <Button variant="primary" type={'submit'}>
+                {isSubmitting ? <Loading size="sm" /> : null}
                 Erstellen
-              </button>
+              </Button>
             </div>
           </form>
         )}

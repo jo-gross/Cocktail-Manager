@@ -1,12 +1,12 @@
 import { CocktailRecipeFull } from '../../models/CocktailRecipeFull';
-import React, { useContext } from 'react';
+import React, { useContext, useState } from 'react';
 import { UserContext } from '@lib/context/UserContextProvider';
-import Image from 'next/image';
+import Image, { ImageProps } from 'next/image';
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import ImageModal from '../modals/ImageModal';
-import { Loading } from '../Loading';
 import StarsComponent from '../StarsComponent';
 import { CocktailRating } from '@generated/prisma/client';
+import { Skeleton } from '@components/ui';
 import '../../lib/NumberUtils';
 
 interface CompactCocktailRecipeInstructionProps {
@@ -17,6 +17,31 @@ interface CompactCocktailRecipeInstructionProps {
   image?: string;
 
   showRating?: { ratings: CocktailRating[]; loading: boolean; error: boolean };
+}
+
+interface ImageWithSkeletonProps extends Omit<ImageProps, 'onLoad' | 'onError'> {
+  skeletonClassName?: string;
+}
+
+function ImageWithSkeleton({ skeletonClassName, className, onClick, ...imageProps }: ImageWithSkeletonProps) {
+  const [loaded, setLoaded] = useState(false);
+  const [failed, setFailed] = useState(false);
+
+  if (failed) {
+    return null;
+  }
+
+  return (
+    <div className={`relative ${onClick ? 'cursor-pointer' : ''}`} onClick={onClick}>
+      {!loaded ? <Skeleton className={skeletonClassName ?? 'h-full w-full rounded-xl'} aria-hidden /> : null}
+      <Image
+        {...imageProps}
+        className={`${className ?? ''} ${loaded ? 'opacity-100' : 'absolute inset-0 opacity-0'}`}
+        onLoad={() => setLoaded(true)}
+        onError={() => setFailed(true)}
+      />
+    </div>
+  );
 }
 
 export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeInstructionProps) {
@@ -39,8 +64,9 @@ export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeIns
       )}
       {props.cocktailRecipe.glass && props.cocktailRecipe.glass._count.GlassImage != 0 && (
         <div className={`${props.showRating ? 'row-span-3' : 'row-span-2'} flex h-full items-center justify-center`}>
-          <Image
-            className={'h-16 w-fit cursor-pointer rounded-lg object-contain'}
+          <ImageWithSkeleton
+            className="h-16 w-fit object-contain"
+            skeletonClassName="h-16 w-12 rounded-lg"
             src={`/api/workspaces/${props.cocktailRecipe.workspaceId}/glasses/${props.cocktailRecipe.glass?.id}/image`}
             alt={props.cocktailRecipe.glass?.name ?? 'Cocktail-Glas'}
             onClick={() =>
@@ -63,7 +89,15 @@ export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeIns
           ) : (
             <>
               {props.showRating.loading ? (
-                <Loading />
+                <>
+                  <Skeleton className="h-4 w-8" />
+                  <div className="flex flex-row items-center gap-0.5">
+                    {Array.from({ length: 5 }).map((_, index) => (
+                      <Skeleton key={`rating-star-skeleton-${index}`} circle className="h-4 w-4" />
+                    ))}
+                  </div>
+                  <Skeleton className="h-4 w-6" />
+                </>
               ) : (
                 <>
                   {(props.showRating.ratings.length > 0
@@ -97,7 +131,7 @@ export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeIns
           {props.cocktailRecipe.steps
             ?.sort((a, b) => a.stepNumber - b.stepNumber)
             ?.map((step, _index) => (
-              <div key={`step-${step.id}`} className={'break-words pb-2'}>
+              <div key={`step-${step.id}`} className={'pb-2 break-words'}>
                 <span className={`font-bold ${step.optional && 'italic'}`}>
                   {userContext.getTranslation(step.action.name, 'de')}
                   {step.optional ? ' (optional)' : ''}
@@ -148,15 +182,16 @@ export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeIns
         </div>
         {props.showImage && props.cocktailRecipe._count.CocktailRecipeImage > 0 ? (
           <div className={'col-span-2 h-full w-full items-start self-start justify-self-center'}>
-            <Image
+            <ImageWithSkeleton
               onClick={() =>
                 modalContext.openModal(
                   <ImageModal image={props.image ?? `/api/workspaces/${props.cocktailRecipe.workspaceId}/cocktails/${props.cocktailRecipe.id}/image`} />,
                 )
               }
               src={props.image ?? `/api/workspaces/${props.cocktailRecipe.workspaceId}/cocktails/${props.cocktailRecipe.id}/image`}
-              className={'h-full w-full flex-grow cursor-pointer rounded-xl object-cover'}
-              alt={''}
+              className="h-full w-full flex-grow rounded-xl object-cover"
+              skeletonClassName="aspect-9/16 h-full w-full rounded-xl"
+              alt=""
               width={300}
               height={534}
               unoptimized={true}

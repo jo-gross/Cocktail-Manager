@@ -4,6 +4,7 @@ import { UserContext } from '@lib/context/UserContextProvider';
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import { alertService } from '@lib/alertService';
 import { useRouter } from 'next/router';
+import { Button, FormControl, Input, Label, LabelText, LabelTextAlt, Loading, Toggle } from '@components/ui';
 
 interface AddWorkspaceJoinCodeModalProps {
   onCreated?: () => void;
@@ -75,50 +76,51 @@ export default function AddWorkspaceJoinCodeModal(props: AddWorkspaceJoinCodeMod
         {({ values, handleChange, handleSubmit, isSubmitting, errors, touched, handleBlur }) => (
           <form onSubmit={handleSubmit} className={'flex flex-col gap-2'}>
             <div className={'flex flex-col gap-2'}>
-              <div className={'form-control'}>
-                <label className={'label'} htmlFor={'code'}>
-                  <div className={'label-text'}>
+              <FormControl>
+                <Label htmlFor={'code'} className="flex-row items-center justify-between">
+                  <LabelText>
                     Beitrittcode <span className={'italic'}>(unveränderbar)</span>
-                  </div>
-                  <div className={'label-text-alt text-error'}>
+                  </LabelText>
+                  <LabelTextAlt className="text-error">
                     <span>{errors.code && touched.code ? errors.code : ''}</span>
-                  </div>
-                </label>
-                <input id={'code'} name={'code'} value={values.code} disabled={true} className={`input input-bordered`} />
-              </div>
-              <div className={'form-control'}>
-                <label className={'label'}>
-                  <div className={'label-text'}>Ablaufdatum</div>
-                  <div className={'label-text-alt text-error'}>
+                  </LabelTextAlt>
+                </Label>
+                <Input id={'code'} name={'code'} value={values.code} disabled={true} />
+              </FormControl>
+              <FormControl>
+                <Label className="flex-row items-center justify-between">
+                  <LabelText>Ablaufdatum</LabelText>
+                  <LabelTextAlt className="text-error">
                     <span>{errors.expires && touched.expires ? errors.expires : ''}</span>
-                  </div>
-                </label>
-                <input id={'expires'} name={'expires'} type={'date'} value={values.expires} onChange={handleChange} className={`input input-bordered`} />
-              </div>
-              <div className={'form-control'}>
-                <label className={'label'}>
-                  <div className={'label-text'}>Einmal-Code</div>
-                  <div className={'label-text-alt text-error'}>
+                  </LabelTextAlt>
+                </Label>
+                <Input id={'expires'} name={'expires'} type={'date'} value={values.expires} onChange={handleChange} />
+              </FormControl>
+              <FormControl>
+                <Label className="flex-row items-center justify-between">
+                  <LabelText>Einmal-Code</LabelText>
+                  <LabelTextAlt className="text-error">
                     <span>{errors.onlyUseOnce && touched.onlyUseOnce ? errors.onlyUseOnce : ''}</span>
-                  </div>
-                </label>
-                <Field type={'checkbox'} name={`onlyUseOnce`} onChange={handleChange} onBlur={handleBlur} className={'toggle toggle-primary'} />
-              </div>
+                  </LabelTextAlt>
+                </Label>
+                <Field type={'checkbox'} as={Toggle} name={`onlyUseOnce`} onChange={handleChange} onBlur={handleBlur} />
+              </FormControl>
             </div>
             <div className={'flex justify-end gap-2'}>
-              <button
-                className={'btn btn-outline btn-error'}
+              <Button
+                variant="outline"
+                className="border-error text-error hover:bg-error/10"
                 type={'button'}
                 onClick={() => {
                   modalContext.closeAllModals();
                 }}
               >
                 Abbrechen
-              </button>
-              <button className={'btn btn-primary'} type={'submit'}>
-                {isSubmitting ? <span className={'spinner loading-spinner'} /> : <></>}
+              </Button>
+              <Button variant="primary" type={'submit'}>
+                {isSubmitting ? <Loading size="sm" /> : null}
                 Hinzufügen
-              </button>
+              </Button>
             </div>
           </form>
         )}

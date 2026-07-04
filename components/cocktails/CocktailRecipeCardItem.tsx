@@ -4,7 +4,7 @@ import { CompactCocktailRecipeInstruction } from './CompactCocktailRecipeInstruc
 import { ShowCocktailInfoButton } from './ShowCocktailInfoButton';
 import { useRouter } from 'next/router';
 import { FaExclamationTriangle } from 'react-icons/fa';
-import { Loading } from '../Loading';
+import { CocktailRecipeCardSkeleton } from './CocktailRecipeCardSkeleton';
 import { fetchCocktail } from '@lib/network/cocktails';
 import { CocktailRating } from '@generated/prisma/client';
 import { fetchCocktailRatings } from '@lib/network/cocktailRatings';
@@ -12,6 +12,7 @@ import StatisticActions from '../StatisticActions';
 import ExpandableText, { ExpandableTextHandle } from '../ExpandableText';
 import { CocktailDetailModal } from '../modals/CocktailDetailModal';
 import { ModalContext } from '@lib/context/ModalContextProvider';
+import { Badge, Card, CardBody } from '@components/ui';
 
 export type CocktailRecipeOverviewItemRef = {
   refresh: () => void;
@@ -79,12 +80,9 @@ const CocktailRecipeCardItem = forwardRef<CocktailRecipeOverviewItemRef, Cocktai
 
   return (
     <div className={'col-span-1'}>
-      <div className={'card card-side h-full'}>
+      <Card variant="elevated" className="h-full flex-row">
         {cocktailRecipeLoading ? (
-          <div className={'flex h-full min-h-40 w-full flex-col items-center justify-center gap-2'}>
-            <Loading />
-            <div>Lade Cocktail...</div>
-          </div>
+          <CocktailRecipeCardSkeleton />
         ) : cocktailRecipe ? (
           <>
             <ShowCocktailInfoButton
@@ -94,7 +92,7 @@ const CocktailRecipeCardItem = forwardRef<CocktailRecipeOverviewItemRef, Cocktai
                 fetchCocktailRatings(workspaceId, cocktailRecipe.id, setCocktailRatings, setCocktailRatingsLoading, setCocktailRatingsError)
               }
             />
-            <div className={'card-body'}>
+            <CardBody>
               <div
                 onClick={
                   (props.showDetailsOnClick ?? false)
@@ -179,9 +177,9 @@ const CocktailRecipeCardItem = forwardRef<CocktailRecipeOverviewItemRef, Cocktai
                   <div className={''}>
                     <div className={'mb-2 border-b border-base-100'}></div>
                     {cocktailRecipe.tags.map((tag) => (
-                      <span key={`cocktail-overview-item-${cocktailRecipe.id}-tag-${tag}`} className={'badge badge-primary badge-outline mr-1'}>
+                      <Badge key={`cocktail-overview-item-${cocktailRecipe.id}-tag-${tag}`} variant="primary" outline size="sm" className="mr-1">
                         {tag}
-                      </span>
+                      </Badge>
                     ))}
                   </div>
                 ) : (
@@ -202,7 +200,7 @@ const CocktailRecipeCardItem = forwardRef<CocktailRecipeOverviewItemRef, Cocktai
                   <></>
                 )}
               </>
-            </div>
+            </CardBody>
           </>
         ) : (
           <div className={'flex h-full min-h-40 w-full flex-col items-center justify-center gap-2'}>
@@ -210,7 +208,7 @@ const CocktailRecipeCardItem = forwardRef<CocktailRecipeOverviewItemRef, Cocktai
             <div>Fehler beim Laden des Cocktails</div>
           </div>
         )}
-      </div>
+      </Card>
     </div>
   );
 });

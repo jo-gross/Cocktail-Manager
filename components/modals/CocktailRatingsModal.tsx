@@ -9,6 +9,7 @@ import { DeleteConfirmationModal } from './DeleteConfirmationModal';
 import { alertService } from '@lib/alertService';
 import AddCocktailRatingModal from './AddCocktailRatingModal';
 import { formatDate, formatDateTime } from '@lib/DateUtils';
+import { Button, Input } from '@components/ui';
 
 interface CocktailRatingModalProps {
   cocktailId: string;
@@ -75,27 +76,24 @@ export default function CocktailRatingsModal(props: CocktailRatingModalProps) {
             })
           : 'N/A'}{' '}
         <StarsComponent rating={avgRating} /> ({cocktailRatings.length})<div className={'flex-grow'}></div>
-        <button
+        <Button
           type={'button'}
-          className={'btn btn-outline btn-sm print:hidden'}
+          variant="outline"
+          size="sm"
+          className="print:hidden"
           onClick={() =>
             modalContext.openModal(<AddCocktailRatingModal cocktailId={props.cocktailId} cocktailName={props.cocktailName} onCreated={fetchCocktailRating} />)
           }
         >
           <FaPlus /> Bewertung hinzufügen
-        </button>
+        </Button>
       </div>
 
-      <input
-        className={'input input-sm input-bordered'}
-        placeholder={'Nach Person suchen...'}
-        value={search}
-        onChange={(event) => setSearch(event.target.value)}
-      />
+      <Input inputSize="sm" placeholder={'Nach Person suchen...'} value={search} onChange={(event) => setSearch(event.target.value)} />
       <div className={'flex flex-col divide-y'}>
         {cocktailRatings.filter(
           (rating) => (rating.name ?? '').toLowerCase().includes(search.toLowerCase()) || (rating.comment ?? '').toLowerCase().includes(search.toLowerCase()),
-        )?.length === 0 && <div className={'text-center italic text-gray-500'}>Keine Bewertungen vorhanden</div>}
+        )?.length === 0 && <div className={'text-center text-gray-500 italic'}>Keine Bewertungen vorhanden</div>}
         {cocktailRatings
           .filter(
             (rating) => (rating.name ?? '').toLowerCase().includes(search.toLowerCase()) || (rating.comment ?? '').toLowerCase().includes(search.toLowerCase()),
@@ -109,8 +107,12 @@ export default function CocktailRatingsModal(props: CocktailRatingModalProps) {
                   <div className={'flex flex-row items-center gap-2 font-thin italic'}>
                     <div className={'font-thin italic'}>{formatDate(new Date(rating.createdAt))}</div>
                     {userContext.isUserPermitted(Role.MANAGER) && (
-                      <button
+                      <Button
                         type={'button'}
+                        variant="outline"
+                        size="xs"
+                        shape="square"
+                        className="border-error text-error hover:bg-error/10"
                         onClick={() =>
                           modalContext.openModal(
                             <DeleteConfirmationModal
@@ -120,10 +122,9 @@ export default function CocktailRatingsModal(props: CocktailRatingModalProps) {
                             />,
                           )
                         }
-                        className={'btn btn-square btn-outline btn-error btn-xs'}
                       >
                         <FaTrashAlt />
-                      </button>
+                      </Button>
                     )}
                   </div>
                 </div>
@@ -134,8 +135,12 @@ export default function CocktailRatingsModal(props: CocktailRatingModalProps) {
                   <div className={'flex flex-row items-center gap-2 font-thin italic'}>
                     {formatDate(new Date(rating.createdAt))}
                     {userContext.isUserPermitted(Role.MANAGER) && (
-                      <button
+                      <Button
                         type={'button'}
+                        variant="outline"
+                        size="xs"
+                        shape="square"
+                        className="border-error text-error hover:bg-error/10"
                         onClick={() =>
                           modalContext.openModal(
                             <DeleteConfirmationModal
@@ -145,10 +150,9 @@ export default function CocktailRatingsModal(props: CocktailRatingModalProps) {
                             />,
                           )
                         }
-                        className={'btn btn-square btn-outline btn-error btn-xs'}
                       >
                         <FaTrashAlt />
-                      </button>
+                      </Button>
                     )}
                   </div>
                 )}

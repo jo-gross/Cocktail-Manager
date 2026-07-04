@@ -1,5 +1,6 @@
 import { useContext } from 'react';
 import { ModalContext } from '@lib/context/ModalContextProvider';
+import { Button } from '@components/ui';
 
 interface FormValidationWarningProps {
   warnings: string[];
@@ -26,24 +27,24 @@ export function FormValidationWarningModal(props: FormValidationWarningProps) {
       </div>
       <div className="flex flex-row space-x-4">
         <div className={'flex-1'}></div>
-        <div
-          className={`btn btn-outline`}
+        <Button
+          variant="outline"
           onClick={() => {
             props.onCancel?.();
             modalContext.closeModal();
           }}
         >
           Abbrechen
-        </div>
-        <button
-          className={`btn btn-primary`}
+        </Button>
+        <Button
+          variant="primary"
           onClick={() => {
             props.onContinue?.();
             modalContext.closeModal();
           }}
         >
           Trotzdem speichern
-        </button>
+        </Button>
       </div>
     </div>
   );

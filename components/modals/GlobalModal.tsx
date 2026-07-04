@@ -1,4 +1,5 @@
 import React, { useContext, useEffect } from 'react';
+import { Button, Modal, ModalBackdrop, ModalBox } from '@components/ui';
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import { FaArrowLeft, FaTimes } from 'react-icons/fa';
 import { AlertsContainer } from '../layout/AlertBoundary/AlertsContainer';
@@ -23,31 +24,29 @@ export function GlobalModal(props: GlobalModalProps) {
     };
   }, [modalContext]);
 
+  const activeModalIndex = modalContext.content.length - 1;
+  const hideCloseButton = modalContext.hideCloseButton[activeModalIndex] ?? false;
+
   return (
     <div>
       <div className={modalContext.content.length >= 1 ? 'print:hidden' : ''}>{props.children}</div>
-      <dialog id="globalModal" className="modal">
-        <div className={'fixed bottom-2 left-1/2 z-50 w-full max-w-fit -translate-x-1/2 overflow-hidden print:hidden'}>
-          {/*<div className="fixed bottom-2 left-2 right-2 z-50 flex flex-col items-center justify-center overflow-hidden print:hidden">*/}
+      <Modal id="globalModal">
+        <div className={'pointer-events-none fixed bottom-2 left-1/2 z-50 w-full max-w-fit -translate-x-1/2 overflow-hidden print:hidden'}>
           <AlertsContainer />
         </div>
-        <div className={`modal-box relative w-fit p-1.5 md:p-4 print:top-0 print:shadow-none`}>
-          <form method="dialog" className={'print:hidden'}>
-            {modalContext.content.length > 1 && (
-              <div
-                onClick={() => modalContext.closeModal()}
-                className={`btn btn-circle btn-outline btn-sm absolute left-2 top-2 ${modalContext.hideCloseButton[modalContext.hideCloseButton.length - 1] ? 'hidden' : ''}`}
-              >
-                <FaArrowLeft />
-              </div>
-            )}
-            <div
-              onClick={() => modalContext.closeAllModals()}
-              className={`btn btn-circle btn-outline btn-sm absolute right-2 top-2 ${modalContext.hideCloseButton[modalContext.hideCloseButton.length - 1] ? 'hidden' : ''}`}
-            >
-              <FaTimes />
-            </div>
-          </form>
+        <ModalBox className="relative z-10 p-2 md:p-4 print:top-0 print:shadow-none">
+          {!hideCloseButton && (
+            <form method="dialog" className={'print:hidden'}>
+              {modalContext.content.length > 1 && (
+                <Button type="button" variant="outline" shape="circle" size="sm" onClick={() => modalContext.closeModal()} className="absolute top-2 left-2">
+                  <FaArrowLeft />
+                </Button>
+              )}
+              <Button type="button" variant="outline" shape="circle" size="sm" onClick={() => modalContext.closeAllModals()} className="absolute top-2 right-2">
+                <FaTimes />
+              </Button>
+            </form>
+          )}
           {modalContext.content.map((content, index) => (
             <div
               key={index}
@@ -62,11 +61,18 @@ export function GlobalModal(props: GlobalModalProps) {
               {content}
             </div>
           ))}
-        </div>
-        <form method="dialog" className="modal-backdrop">
-          <div onClick={() => modalContext.closeModal()}>close</div>
-        </form>
-      </dialog>
+        </ModalBox>
+        <ModalBackdrop>
+          <button
+            type="button"
+            aria-label="Close modal"
+            className="fixed inset-0 h-full w-full cursor-default border-0 bg-transparent p-0"
+            onClick={() => modalContext.closeModal()}
+          >
+            <span className="sr-only">close</span>
+          </button>
+        </ModalBackdrop>
+      </Modal>
     </div>
   );
 }

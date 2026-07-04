@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Button, Input, Loading } from '@components/ui';
 
 interface ImportPhotoByUrlProps {
   onImport: (imageUrl: string) => Promise<void>;
@@ -32,10 +33,10 @@ export default function ImportPhotoByUrl({ onImport }: ImportPhotoByUrlProps) {
 
   return (
     <>
-      <input
+      <Input
         type="text"
         placeholder="Bild-URL eingeben..."
-        className="input input-bordered mb-2 w-full"
+        className="mb-2 w-full"
         value={imageUrl}
         onChange={(e) => setImageUrl(e.target.value)}
         onKeyDown={(e) => {
@@ -45,10 +46,10 @@ export default function ImportPhotoByUrl({ onImport }: ImportPhotoByUrlProps) {
           }
         }}
       />
-      <button className="btn btn-secondary w-full" type={'button'} disabled={isDisabled || isLoading} onClick={handleImport}>
-        {isLoading ? <span className="loading-spinner-small loading"></span> : <></>}
+      <Button variant="secondary" className="w-full" type="button" disabled={isDisabled || isLoading} onClick={handleImport}>
+        {isLoading ? <Loading size="sm" /> : null}
         Bild herunterladen
-      </button>
+      </Button>
     </>
   );
 }

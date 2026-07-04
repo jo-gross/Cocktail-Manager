@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import '@lib/StringUtils';
+import { Button, Card, CardBody, Input, Loading, Table, TableBody, TableCell, TableHead, TableHeaderCell, TableRow } from '@components/ui';
 
 interface CocktailListItem {
   cocktailId: string;
@@ -28,7 +29,6 @@ export function CocktailList({ items, selectedId, onSelect, hiddenIds = new Set(
 
   const filteredItems = items.filter((item) => item.name.toLowerCase().includes(filter.toLowerCase()));
 
-  // Sort all items together to maintain order
   const sortedItems = [...filteredItems].sort((a, b) => {
     let comparison = 0;
     switch (sortBy) {
@@ -59,75 +59,77 @@ export function CocktailList({ items, selectedId, onSelect, hiddenIds = new Set(
 
   if (loading) {
     return (
-      <div className="card">
-        <div className="card-body">
+      <Card>
+        <CardBody>
           <div className="text-center text-base-content/70">Lade...</div>
-        </div>
-      </div>
+        </CardBody>
+      </Card>
     );
   }
 
   return (
-    <div className="card">
-      <div className="card-body">
+    <Card>
+      <CardBody>
         <div className="flex items-center justify-between">
           <span className="flex items-center gap-2">
             Cocktails
-            {loading && <span className="loading loading-spinner loading-xs"></span>}
+            {loading && <Loading size="xs" />}
           </span>
         </div>
 
-        <input type="text" placeholder="Filter..." className="input input-sm input-bordered" value={filter} onChange={(e) => setFilter(e.target.value)} />
+        <Input type="text" placeholder="Filter..." inputSize="sm" value={filter} onChange={(e) => setFilter(e.target.value)} />
 
         <div className="overflow-x-auto">
-          <table className="table table-sm">
-            <thead>
-              <tr>
-                <th>
-                  <button className="btn btn-ghost btn-xs" onClick={() => handleSort('rank')}>
+          <Table compact>
+            <TableHead>
+              <TableRow>
+                <TableHeaderCell>
+                  <Button type="button" variant="ghost" size="xs" onClick={() => handleSort('rank')}>
                     Rang {sortBy === 'rank' && (sortDirection === 'asc' ? '↑' : '↓')}
-                  </button>
-                </th>
-                <th>Farbe</th>
-                <th>
-                  <button className="btn btn-ghost btn-xs" onClick={() => handleSort('name')}>
+                  </Button>
+                </TableHeaderCell>
+                <TableHeaderCell>Farbe</TableHeaderCell>
+                <TableHeaderCell>
+                  <Button type="button" variant="ghost" size="xs" onClick={() => handleSort('name')}>
                     Name {sortBy === 'name' && (sortDirection === 'asc' ? '↑' : '↓')}
-                  </button>
-                </th>
-                <th>
-                  <button className="btn btn-ghost btn-xs" onClick={() => handleSort('count')}>
+                  </Button>
+                </TableHeaderCell>
+                <TableHeaderCell>
+                  <Button type="button" variant="ghost" size="xs" onClick={() => handleSort('count')}>
                     Anzahl {sortBy === 'count' && (sortDirection === 'asc' ? '↑' : '↓')}
-                  </button>
-                </th>
-                <th>
-                  <button className="btn btn-ghost btn-xs" onClick={() => handleSort('percentage')}>
+                  </Button>
+                </TableHeaderCell>
+                <TableHeaderCell>
+                  <Button type="button" variant="ghost" size="xs" onClick={() => handleSort('percentage')}>
                     Anteil {sortBy === 'percentage' && (sortDirection === 'asc' ? '↑' : '↓')}
-                  </button>
-                </th>
-                <th>Aktionen</th>
-              </tr>
-            </thead>
-            <tbody>
+                  </Button>
+                </TableHeaderCell>
+                <TableHeaderCell>Aktionen</TableHeaderCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
               {sortedItems.map((item) => {
                 const isHidden = hiddenIds.has(item.cocktailId);
                 return (
-                  <tr
+                  <TableRow
                     key={item.cocktailId}
-                    className={`${selectedId === item.cocktailId ? 'active' : ''} ${isHidden ? 'opacity-50' : ''}`}
+                    className={`${selectedId === item.cocktailId ? 'bg-primary/10' : ''} ${isHidden ? 'opacity-50' : ''}`}
                     onClick={() => onSelect(item.cocktailId)}
                     style={{ cursor: 'pointer' }}
                   >
-                    <td>#{item.rank}</td>
-                    <td>
+                    <TableCell>#{item.rank}</TableCell>
+                    <TableCell>
                       <div className="h-4 w-4 rounded" style={{ backgroundColor: item.name.string2color() }} title={item.name} />
-                    </td>
-                    <td className="font-semibold">{item.name}</td>
-                    <td>{item.count}</td>
-                    <td>{item.percentage.toFixed(1)}%</td>
-                    <td>
+                    </TableCell>
+                    <TableCell className="font-semibold">{item.name}</TableCell>
+                    <TableCell>{item.count}</TableCell>
+                    <TableCell>{item.percentage.toFixed(1)}%</TableCell>
+                    <TableCell>
                       {onToggleHidden && (
-                        <button
-                          className="btn btn-ghost btn-xs"
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="xs"
                           onClick={(e) => {
                             e.stopPropagation();
                             onToggleHidden(item.cocktailId);
@@ -135,18 +137,18 @@ export function CocktailList({ items, selectedId, onSelect, hiddenIds = new Set(
                           title={isHidden ? 'Einblenden' : 'Ausblenden'}
                         >
                           {isHidden ? <FaEyeSlash /> : <FaEye />}
-                        </button>
+                        </Button>
                       )}
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 );
               })}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
 
         {sortedItems.length === 0 && <div className="py-4 text-center text-base-content/70">Keine Cocktails gefunden</div>}
-      </div>
-    </div>
+      </CardBody>
+    </Card>
   );
 }

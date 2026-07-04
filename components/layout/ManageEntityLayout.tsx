@@ -1,6 +1,7 @@
 import { FaArrowLeft } from 'react-icons/fa';
 import Head from 'next/head';
 import React, { useContext } from 'react';
+import { Button } from '@components/ui';
 import { NotSavedLeaveConfirmation } from '../modals/NotSavedLeaveConfirmation';
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import { RoutingContext } from '@lib/context/RoutingContextProvider';
@@ -20,6 +21,8 @@ interface ManageEntityLayoutProps {
   formRef?: React.RefObject<FormikRefLike | null>;
   // Remove after calculation is migrated to formik
   onSave?: () => void;
+  /** Stretch content to fill the viewport height (for overview tables). */
+  fullHeight?: boolean;
 }
 
 export function ManageEntityLayout(props: ManageEntityLayoutProps) {
@@ -31,16 +34,18 @@ export function ManageEntityLayout(props: ManageEntityLayoutProps) {
       <Head>
         <>{typeof props.title === 'string' ? <title>{`The Cocktail-Manager • ${props.title}`}</title> : <title>The Cocktail-Manager</title>}</>
       </Head>
-      <div>
-        {/*<div className={'flex flex-col p-1 md:p-4 print:p-1'}>*/}
+      <div className={props.fullHeight ? 'flex h-dvh flex-col' : undefined}>
         <div
           className={
-            'sticky top-0 z-20 grid w-full grid-cols-3 items-center justify-center justify-items-center bg-base-100 p-1 md:p-2 print:grid-cols-1 print:p-1'
+            'sticky top-0 z-20 grid w-full grid-cols-3 items-center justify-center justify-items-center bg-base-100 p-2 md:p-3 print:grid-cols-1 print:p-2'
           }
         >
           <div className={'col-span-1 justify-self-start print:hidden'}>
-            <div
-              className={'btn btn-square btn-primary btn-sm md:btn-md'}
+            <Button
+              variant="primary"
+              shape="square"
+              size="md"
+              className="md:h-11 md:min-h-11 md:w-11"
               onClick={() => {
                 if (props.unsavedChanges ?? false) {
                   modalContext.openModal(
@@ -58,8 +63,8 @@ export function ManageEntityLayout(props: ManageEntityLayoutProps) {
                 }
               }}
             >
-              <FaArrowLeft />
-            </div>
+              <FaArrowLeft className="text-xl" />
+            </Button>
           </div>
           <div className={'justify-items-center'}>
             <div className="text-3xl font-bold print:text-2xl">{props.title}</div>
@@ -70,7 +75,7 @@ export function ManageEntityLayout(props: ManageEntityLayoutProps) {
             {props.actions}
           </div>
         </div>
-        <div className={'p-2 md:p-4 print:p-2'}>{props.children}</div>
+        <div className={props.fullHeight ? 'flex min-h-0 flex-1 flex-col p-4 md:p-5 print:p-2' : 'p-4 md:p-5 print:p-2'}>{props.children}</div>
       </div>
     </>
   );

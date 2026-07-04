@@ -1,6 +1,7 @@
 import { useContext, useState } from 'react';
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import { alertService } from '@lib/alertService';
+import { Button, Loading } from '@components/ui';
 
 interface NotSavedConfirmationProps {
   onArchive: () => void;
@@ -22,18 +23,18 @@ export function NotSavedArchiveConfirmation(props: NotSavedConfirmationProps) {
       </div>
       <div className="flex flex-row space-x-4">
         <div className={'flex-1'}></div>
-        <div
-          className={`btn btn-outline`}
+        <Button
+          variant="outline"
           onClick={() => {
             props.onCancel?.();
             modalContext.closeModal();
           }}
         >
           Abbrechen
-        </div>
-        <button
+        </Button>
+        <Button
           disabled={isSaving || props.isArchiving}
-          className={`btn btn-primary`}
+          variant="primary"
           onClick={async () => {
             setIsSaving(true);
             try {
@@ -47,9 +48,9 @@ export function NotSavedArchiveConfirmation(props: NotSavedConfirmationProps) {
             }
           }}
         >
-          {isSaving || props.isArchiving ? <span className={'loading loading-spinner'} /> : <></>}
+          {isSaving || props.isArchiving ? <Loading size="sm" /> : null}
           {props.archive ? 'Archivieren' : 'Entarchivieren'}
-        </button>
+        </Button>
       </div>
     </div>
   );

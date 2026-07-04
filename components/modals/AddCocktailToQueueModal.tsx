@@ -3,6 +3,7 @@ import { MdPlaylistAdd } from 'react-icons/md';
 import React, { useContext, useState } from 'react';
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import { FaMinus, FaPlus } from 'react-icons/fa';
+import { Button, ButtonGroup, Loading, Textarea } from '@components/ui';
 
 interface AddCocktailToQueueModalProps {
   workspaceId: string;
@@ -31,29 +32,31 @@ export default function AddCocktailToQueueModal({
         <strong>{cocktailName}</strong> hinzufügen
       </div>
       <div className={'flex'}>
-        <div className={'join'}>
-          <label className="input join-item input-bordered flex flex-1 items-center gap-2">
+        <ButtonGroup>
+          <div className="join-item flex flex-1 items-center gap-2 rounded-none border border-base-content/20 bg-base-100 px-3">
             <strong>Anzahl</strong>
             <input
               type="number"
-              className={'grow'}
+              className={'grow bg-transparent outline-none'}
               value={amount}
               min={1}
               onChange={(e) => {
                 setAmount(parseInt(e.target.value));
               }}
             />
-          </label>
-          <button
-            className={'btn btn-outline btn-primary join-item'}
+          </div>
+          <Button
+            joinItem
+            variant="outline"
             onClick={() => {
               setAmount(amount + 1);
             }}
           >
             <FaPlus />
-          </button>
-          <button
-            className={'btn btn-outline btn-secondary join-item'}
+          </Button>
+          <Button
+            joinItem
+            variant="outline"
             disabled={amount <= 1}
             onClick={() => {
               if (amount > 1) {
@@ -62,12 +65,13 @@ export default function AddCocktailToQueueModal({
             }}
           >
             <FaMinus />
-          </button>
-        </div>
+          </Button>
+        </ButtonGroup>
       </div>
-      <textarea className={'textarea textarea-bordered w-full'} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={'Notiz'}></textarea>
-      <button
-        className={'btn btn-outline btn-primary w-full flex-1'}
+      <Textarea className="w-full" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={'Notiz'} />
+      <Button
+        variant="outline"
+        className="w-full flex-1"
         onClick={() =>
           addCocktailToQueue({
             workspaceId: workspaceId,
@@ -85,8 +89,8 @@ export default function AddCocktailToQueueModal({
       >
         <MdPlaylistAdd />
         Hinzufügen
-        {submittingQueue ? <span className={'loading loading-spinner'}></span> : <></>}
-      </button>
+        {submittingQueue ? <Loading size="sm" /> : null}
+      </Button>
     </div>
   );
 }

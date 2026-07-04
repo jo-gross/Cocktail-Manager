@@ -1,13 +1,14 @@
 import { BsSearch } from 'react-icons/bs';
 import React, { forwardRef, useCallback, useContext, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { CocktailRecipeFull } from '../../models/CocktailRecipeFull';
-import { Loading } from '../Loading';
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import { useRouter } from 'next/router';
 import { alertService } from '@lib/alertService';
 import CocktailRecipeCardItem from '../cocktails/CocktailRecipeCardItem';
 import _ from 'lodash';
 import StatisticActions from '../StatisticActions';
+import { SearchResultRow } from '../search/SearchResultRow';
+import { Button, ButtonGroup, CardActions, Collapse, CollapseContent, CollapseTitle, Input, Loading, Skeleton } from '@components/ui';
 
 interface SearchModalProps {
   onCocktailSelectedObject?: (cocktail: CocktailRecipeFull) => void;
@@ -23,6 +24,19 @@ export type SearchModalRef = {
   refresh: (selectedCocktailId?: string) => Promise<void>;
 };
 
+function SearchSkeletonRows({ count = 6 }: { count?: number }) {
+  return (
+    <div className="flex flex-col gap-2">
+      {Array.from({ length: count }).map((_, index) => (
+        <div key={`search-skeleton-${index}`} className="flex min-h-14 items-center gap-3 rounded-lg border border-base-300/60 px-4 py-3">
+          <Skeleton className="h-5 flex-1" />
+          <Skeleton className="h-8 w-20 rounded-lg" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export const SearchModal = forwardRef<SearchModalRef, SearchModalProps>((props, ref) => {
   const router = useRouter();
   const workspaceId = router.query.workspaceId as string | undefined;
@@ -33,13 +47,15 @@ export const SearchModal = forwardRef<SearchModalRef, SearchModalProps>((props, 
   const [search, setSearch] = useState('');
   const [cocktails, setCocktails] = useState<CocktailRecipeFull[]>([]);
   const [isLoading, setLoading] = useState(false);
+  const [openCards, setOpenCards] = useState<Set<string>>(new Set());
+  const [archivedOpen, setArchivedOpen] = useState(false);
 
   const controllerRef = useRef<AbortController>(new AbortController());
 
   const fetchCocktails = useCallback(
     async (search: string) => {
       if (!workspaceId) return;
-      controllerRef.current.abort(); // Vorherige Anfrage abbrechen
+      controllerRef.current.abort();
       const newAbortController = new AbortController();
       controllerRef.current = newAbortController;
 
@@ -95,34 +111,54 @@ export const SearchModal = forwardRef<SearchModalRef, SearchModalProps>((props, 
     [cocktails, fetchCocktails, props, search],
   );
 
-  const renderCocktailCard = (cocktail: CocktailRecipeFull, index: number, isArchived: boolean, openCard: boolean = false) => (
-    <div
+  const toggleCard = (cocktailId: string) => {
+    setOpenCards((prev) => {
+      const next = new Set(prev);
+      if (next.has(cocktailId)) {
+        next.delete(cocktailId);
+      } else {
+        next.add(cocktailId);
+      }
+      return next;
+    });
+  };
+
+  const handleSelectCocktail = (cocktail: CocktailRecipeFull) => {
+    props.onCocktailSelectedObject?.(cocktail);
+    if (!props.notAsModal) {
+      setSearch('');
+      modalContext.closeModal();
+    }
+  };
+
+  const renderSelectionRow = (cocktail: CocktailRecipeFull, isArchived: boolean) => (
+    <SearchResultRow
       key={'search-modal-' + cocktail.id}
-      tabIndex={index}
-      className={` ${showRecipe ? `collapse ${openCard ? 'collapse-open' : 'collapse-arrow'}` : ''} rounded-box border border-base-300 bg-base-100`}
-    >
-      {showRecipe ? <input type="checkbox" /> : <></>}
-      <div className={`${showRecipe ? 'collapse-title' : 'p-2 md:p-3'} flex justify-between text-xl font-medium`}>
-        {cocktail.name} {isArchived && '(Archiviert)'}
-        {!showRecipe && props.onCocktailSelectedObject != undefined ? (
-          <button
-            type="button"
-            disabled={props.selectedCocktails?.includes(cocktail.id) ?? false}
-            className={'btn btn-primary btn-sm'}
-            onClick={() => {
-              props.onCocktailSelectedObject?.(cocktail);
-              setSearch('');
-              modalContext.closeModal();
-            }}
-          >
-            {props.selectionLabel ?? 'Hinzufügen'}
-          </button>
-        ) : (
-          <></>
-        )}
-      </div>
-      {showRecipe && (
-        <div className="collapse-content ml-2 mr-2 md:ml-3">
+      cocktail={cocktail}
+      isArchived={isArchived}
+      onSelect={handleSelectCocktail}
+      actionLabel={props.selectionLabel ?? 'Hinzufügen'}
+      actionDisabled={props.selectedCocktails?.includes(cocktail.id) ?? false}
+      showAction={props.onCocktailSelectedObject != undefined}
+    />
+  );
+
+  const renderCocktailCard = (cocktail: CocktailRecipeFull, index: number, isArchived: boolean, openCard: boolean = false) => {
+    if (!showRecipe) {
+      return renderSelectionRow(cocktail, isArchived);
+    }
+
+    const isOpen = openCards.has(cocktail.id) || openCard;
+
+    return (
+      <Collapse key={'search-modal-' + cocktail.id} open={isOpen} arrow>
+        <CollapseTitle tabIndex={index} className="text-base font-medium md:text-lg" onClick={() => toggleCard(cocktail.id)}>
+          <span className="min-w-0 truncate">
+            {cocktail.name}
+            {isArchived && ' (Archiviert)'}
+          </span>
+        </CollapseTitle>
+        <CollapseContent>
           <CocktailRecipeCardItem
             cocktailRecipe={cocktail}
             showImage={true}
@@ -137,23 +173,18 @@ export const SearchModal = forwardRef<SearchModalRef, SearchModalProps>((props, 
           />
 
           {props.onCocktailSelectedObject != undefined ? (
-            <div className={'card-actions flex flex-row justify-end py-2'}>
-              <button
+            <CardActions className="flex flex-row justify-end py-2">
+              <Button
                 type="button"
                 disabled={props.selectedCocktails?.includes(cocktail.id) ?? false}
-                className={'btn btn-primary btn-sm'}
-                onClick={() => {
-                  props.onCocktailSelectedObject?.(cocktail);
-                  setSearch('');
-                  modalContext.closeModal();
-                }}
+                variant="primary"
+                size="sm"
+                onClick={() => handleSelectCocktail(cocktail)}
               >
                 {props.selectionLabel ?? 'Hinzufügen'}
-              </button>
-            </div>
-          ) : (
-            <></>
-          )}
+              </Button>
+            </CardActions>
+          ) : null}
 
           {props.showStatisticActions ? (
             <div className={'mt-2 pb-2'}>
@@ -164,25 +195,25 @@ export const SearchModal = forwardRef<SearchModalRef, SearchModalProps>((props, 
                 actionSource={'SEARCH_MODAL'}
               />
             </div>
-          ) : (
-            <></>
-          )}
-        </div>
-      )}
-    </div>
-  );
+          ) : null}
+        </CollapseContent>
+      </Collapse>
+    );
+  };
 
   const groupedCocktails = _.groupBy(cocktails, 'isArchived');
 
   return (
-    <div className={`grid w-full grid-cols-1 gap-2 p-0.5 md:p-2 ${props.customWidthClassName ? props.customWidthClassName : 'md:max-w-2xl'}`}>
+    <div className={`grid w-full grid-cols-1 gap-3 ${props.customWidthClassName ? props.customWidthClassName : 'md:max-w-2xl'}`}>
       <div className={'sticky w-full'}>
         <div className={'w-max text-2xl font-bold'}>Cocktail suchen</div>
-        <div className={'join w-full pb-2'}>
-          <input
-            className={'input join-item input-bordered w-full'}
+        <ButtonGroup className="w-full pb-2">
+          <Input
+            joinItem
+            className="w-full"
             value={search}
             autoFocus={true}
+            placeholder="Tippe zum Suchen…"
             onChange={async (e) => {
               setSearch(e.target.value);
               if (e.target.value.trim().length != 0) {
@@ -190,27 +221,32 @@ export const SearchModal = forwardRef<SearchModalRef, SearchModalProps>((props, 
               }
             }}
           />
-          <button
+          <Button
             type={'button'}
+            joinItem
             disabled={isLoading}
-            className={`btn ${isLoading ? 'w-fit px-2' : 'btn-square'} btn-outline btn-primary join-item`}
+            variant="outline"
+            shape={isLoading ? 'default' : 'square'}
+            className={isLoading ? 'w-fit px-2' : undefined}
             onClick={async () => {
               await fetchCocktails(search);
             }}
           >
-            {isLoading ? <span className={'loading loading-spinner loading-xs'}></span> : <></>}
+            {isLoading ? <Loading size="xs" /> : null}
             <BsSearch />
-          </button>
-        </div>
+          </Button>
+        </ButtonGroup>
       </div>
       <div
-        className={`${props.notAsModal ? (process.env.NODE_ENV == 'development' || process.env.DEPLOYMENT == 'staging' ? 'h-[calc(100vh-12rem)]' : 'h-[calc(100vh-9.5rem)]') : ''} flex flex-col gap-1 overflow-y-auto`}
+        className={`${props.notAsModal ? (process.env.NODE_ENV == 'development' || process.env.DEPLOYMENT == 'staging' ? 'h-[calc(100vh-12rem)]' : 'h-[calc(100vh-9.5rem)]') : ''} flex flex-col gap-2 overflow-y-auto`}
       >
-        {cocktails.length == 0 ? (
+        {isLoading && cocktails.length === 0 ? (
+          <SearchSkeletonRows />
+        ) : cocktails.length == 0 ? (
           search != '' ? (
-            <div>Keine Einträge gefunden</div>
+            <div className="px-1 text-base-content/70">Keine Einträge gefunden</div>
           ) : (
-            <></>
+            <div className="px-1 text-base-content/70">Tippe zum Suchen…</div>
           )
         ) : (
           <>
@@ -219,19 +255,20 @@ export const SearchModal = forwardRef<SearchModalRef, SearchModalProps>((props, 
                 .sort((a, b) => a.name.localeCompare(b.name))
                 .map((cocktail, index) => renderCocktailCard(cocktail, index, false, groupedCocktails['false']?.length == 1))}
             {groupedCocktails['true']?.length > 0 && (
-              <div tabIndex={0} className="collapse collapse-arrow bg-base-200">
-                <input type="checkbox" />
-                <div className="collapse-title text-xl font-medium">Archiviert</div>
-                <div className="collapse-content">
-                  <div className={'flex flex-col gap-1 p-0.5'}>
+              <Collapse open={archivedOpen} arrow>
+                <CollapseTitle className="text-xl font-medium" onClick={() => setArchivedOpen(!archivedOpen)}>
+                  Archiviert
+                </CollapseTitle>
+                <CollapseContent>
+                  <div className={'flex flex-col gap-2'}>
                     {groupedCocktails['true'].sort((a, b) => a.name.localeCompare(b.name)).map((cocktail, index) => renderCocktailCard(cocktail, index, true))}
                   </div>
-                </div>
-              </div>
+                </CollapseContent>
+              </Collapse>
             )}
           </>
         )}
-        {isLoading ? <Loading /> : <></>}
+        {isLoading && cocktails.length > 0 ? <SearchSkeletonRows count={3} /> : null}
       </div>
     </div>
   );

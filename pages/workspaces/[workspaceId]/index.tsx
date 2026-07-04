@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { BsFillGearFill } from 'react-icons/bs';
 import { CocktailCardFull } from '../../../models/CocktailCardFull';
 import CocktailRecipeCardItem, { CocktailRecipeOverviewItemRef } from '../../../components/cocktails/CocktailRecipeCardItem';
+import { CocktailRecipeCardSkeleton } from '../../../components/cocktails/CocktailRecipeCardSkeleton';
 import { CocktailCard, Setting } from '@generated/prisma/client';
 import { useRouter } from 'next/router';
 import { ModalContext } from '@lib/context/ModalContextProvider';
@@ -25,6 +26,26 @@ import { OrderView } from '../../../components/order/OrderView';
 import { useOffline } from '@lib/context/OfflineContextProvider';
 import { fetchCard, fetchCards, prefetchCardData } from '@lib/network/cards';
 import { prefetchAllCocktails } from '@lib/network/cocktails';
+import { formatDateLocal, getLogicalDate } from '@lib/dateHelpers';
+import {
+  Button,
+  ButtonGroup,
+  Card,
+  CardBody,
+  Collapse,
+  CollapseContent,
+  CollapseTitle,
+  Divider,
+  Dropdown,
+  DropdownContent,
+  FormControl,
+  Label,
+  LabelText,
+  Loading as UiLoading,
+  Radio,
+  Toggle,
+  Tooltip,
+} from '@components/ui';
 
 const OverviewPage: NextPageWithPullToRefresh = () => {
   const modalContext = useContext(ModalContext);
@@ -50,12 +71,34 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
   const [queueGrouping, setQueueGrouping] = useState<'ALPHABETIC' | 'NONE'>('NONE');
   const [showFastQueueCheck, setShowFastQueueCheck] = useState(false);
   const [showSettingsAtBottom, setShowSettingsAtBottom] = useState(false);
+  const [collapsedGroupIds, setCollapsedGroupIds] = useState<Set<string>>(new Set());
 
   const [cocktailCards, setCocktailCards] = useState<CocktailCardFull[]>([]);
   const [loadingCards, setLoadingCards] = useState(true);
   const [loadingGroups, setLoadingGroups] = useState(false);
 
   const [selectedCocktail, setSelectedCocktail] = useState<string | undefined>(undefined);
+
+  // Workspace day start time (e.g. "18:00") used for logical "today" comparisons
+  const [dayStartTime, setDayStartTime] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    if (!workspaceId) return;
+    fetch(`/api/workspaces/${workspaceId}/settings`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.data?.statisticDayStartTime) {
+          setDayStartTime(data.data.statisticDayStartTime);
+        }
+      })
+      .catch(console.error);
+  }, [workspaceId]);
+
+  // Logical "today" as YYYY-MM-DD, accounting for the workspace day start time
+  const logicalToday = formatDateLocal(getLogicalDate(new Date(), dayStartTime));
+
+  // Card dates are stored as UTC midnight, so compare on the UTC date part
+  const cardDateKey = useCallback((date: Date | string) => new Date(date).toISOString().split('T')[0], []);
 
   // Search modal shortcut (Shift + F)
   useEffect(() => {
@@ -120,41 +163,34 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
     }
   }, [cocktailCards, workspaceId, isOnline]);
 
-  const sortCards = useCallback((a: CocktailCard, b: CocktailCard) => {
-    const today = new Date().toISOString().slice(0, 10);
+  const sortCards = useCallback(
+    (a: CocktailCard, b: CocktailCard) => {
+      const today = logicalToday;
 
-    if (
-      a.date != undefined &&
-      new Date(a.date).toISOString().slice(0, 10) == today &&
-      b.date != undefined &&
-      new Date(b.date).toISOString().slice(0, 10) != today
-    ) {
-      return -1; // a (heutiges Datum) kommt vor b
-    }
-    if (
-      a.date != undefined &&
-      new Date(a.date).toISOString().slice(0, 10) != today &&
-      b.date != undefined &&
-      new Date(b.date).toISOString().slice(0, 10) == today
-    ) {
-      return 1; // b (heutiges Datum) kommt vor a
-    }
-    if (a.date == undefined && b.date != undefined) {
-      return -1; // a (Datum Null) kommt vor b
-    }
-    if (a.date != undefined && b.date == undefined) {
-      return 1; // b (Datum Null) kommt vor a
-    }
+      if (a.date != undefined && cardDateKey(a.date) == today && b.date != undefined && cardDateKey(b.date) != today) {
+        return -1; // a (heutiges Datum) kommt vor b
+      }
+      if (a.date != undefined && cardDateKey(a.date) != today && b.date != undefined && cardDateKey(b.date) == today) {
+        return 1; // b (heutiges Datum) kommt vor a
+      }
+      if (a.date == undefined && b.date != undefined) {
+        return -1; // a (Datum Null) kommt vor b
+      }
+      if (a.date != undefined && b.date == undefined) {
+        return 1; // b (Datum Null) kommt vor a
+      }
 
-    if (new Date(a.date ?? new Date()).toISOString().slice(0, 10) > today && new Date(b.date ?? new Date()).toISOString().slice(0, 10) <= today) {
-      return -1; // a (zukünftiges Datum) kommt vor b
-    }
-    if (new Date(a.date ?? new Date()).toISOString().slice(0, 10) <= today && new Date(b.date ?? new Date()).toISOString().slice(0, 10) > today) {
-      return 1; // b (zukünftiges Datum) kommt vor a
-    }
+      if (cardDateKey(a.date ?? new Date()) > today && cardDateKey(b.date ?? new Date()) <= today) {
+        return -1; // a (zukünftiges Datum) kommt vor b
+      }
+      if (cardDateKey(a.date ?? new Date()) <= today && cardDateKey(b.date ?? new Date()) > today) {
+        return 1; // b (zukünftiges Datum) kommt vor a
+      }
 
-    return a.name.localeCompare(b.name);
-  }, []);
+      return a.name.localeCompare(b.name);
+    },
+    [logicalToday, cardDateKey],
+  );
 
   useEffect(() => {
     // Initialize selectedCardId from router query if available
@@ -165,33 +201,19 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
 
   useEffect(() => {
     if (selectedCardId == undefined && cocktailCards.length > 0 && router.query.card != 'search' && router.query.card != 'order') {
-      const todayCardId = cocktailCards
-        .filter((card) => card.date != undefined)
-        .find((card) => new Date(card.date!).toISOString().split('T')[0] == new Date().toISOString().split('T')[0])?.id;
+      const todayCardId = cocktailCards.filter((card) => card.date != undefined).find((card) => cardDateKey(card.date!) == logicalToday)?.id;
 
-      if (todayCardId) {
-        setSelectedCardId(todayCardId);
+      const fallbackCardId = [...cocktailCards].sort(sortCards)[0]?.id;
+      const nextCardId = todayCardId ?? fallbackCardId;
+
+      if (nextCardId) {
+        setSelectedCardId(nextCardId);
         router
           .replace(
             {
               pathname: '/workspaces/[workspaceId]',
               query: {
-                card: todayCardId,
-                workspaceId: workspaceId,
-              },
-            },
-            undefined,
-            { shallow: true },
-          )
-          .then();
-      } else {
-        setSelectedCardId(cocktailCards[0].id);
-        router
-          .replace(
-            {
-              pathname: '/workspaces/[workspaceId]',
-              query: {
-                card: cocktailCards[0].id,
+                card: nextCardId,
                 workspaceId: workspaceId,
               },
             },
@@ -201,22 +223,41 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
           .then();
       }
     }
-  }, [cocktailCards, router, selectedCardId, sortCards, workspaceId]);
+  }, [cocktailCards, router, selectedCardId, sortCards, workspaceId, logicalToday, cardDateKey]);
+
+  const initialSettingsSyncDone = useRef(false);
+
+  const toggleBooleanSetting = useCallback(
+    (key: Setting, current: boolean, setter: (value: boolean) => void) => {
+      const next = !current;
+      setter(next);
+      userContext.updateUserSetting(key, next ? 'true' : 'false');
+    },
+    [userContext],
+  );
 
   useEffect(() => {
-    setShowImage(userContext.user?.settings?.find((s) => s.setting == Setting.showImage)?.value == 'true');
-    setShowTags(userContext.user?.settings?.find((s) => s.setting == Setting.showTags)?.value == 'true');
-    setLessItems(userContext.user?.settings?.find((s) => s.setting == Setting.lessItems)?.value == 'true');
-    setShowStatisticActions(userContext.user?.settings?.find((s) => s.setting == Setting.showStatisticActions)?.value == 'true');
-    setShowDescription(userContext.user?.settings?.find((s) => s.setting == Setting.showDescription)?.value == 'true');
-    setShowNotes(userContext.user?.settings?.find((s) => s.setting == Setting.showNotes)?.value == 'true');
-    setShowHistory(userContext.user?.settings?.find((s) => s.setting == Setting.showHistory)?.value == 'true');
-    setShowTime(userContext.user?.settings?.find((s) => s.setting == Setting.showTime)?.value == 'true');
-    setShowRating(userContext.user?.settings?.find((s) => s.setting == Setting.showRating)?.value == 'true');
-    setQueueGrouping(userContext.user?.settings?.find((s) => s.setting == Setting.queueGrouping)?.value as 'ALPHABETIC' | 'NONE');
-    setShowFastQueueCheck(userContext.user?.settings?.find((s) => s.setting == Setting.showFastQueueCheck)?.value == 'true');
-    setShowSettingsAtBottom(userContext.user?.settings?.find((s) => s.setting == Setting.showSettingsAtBottom)?.value == 'true');
-  }, [userContext.user?.settings]);
+    if (!userContext.user) {
+      initialSettingsSyncDone.current = false;
+      return;
+    }
+    if (initialSettingsSyncDone.current) return;
+
+    const settings = userContext.user.settings;
+    setShowImage(settings?.find((s) => s.setting == Setting.showImage)?.value == 'true');
+    setShowTags(settings?.find((s) => s.setting == Setting.showTags)?.value == 'true');
+    setLessItems(settings?.find((s) => s.setting == Setting.lessItems)?.value == 'true');
+    setShowStatisticActions(settings?.find((s) => s.setting == Setting.showStatisticActions)?.value == 'true');
+    setShowDescription(settings?.find((s) => s.setting == Setting.showDescription)?.value == 'true');
+    setShowNotes(settings?.find((s) => s.setting == Setting.showNotes)?.value == 'true');
+    setShowHistory(settings?.find((s) => s.setting == Setting.showHistory)?.value == 'true');
+    setShowTime(settings?.find((s) => s.setting == Setting.showTime)?.value == 'true');
+    setShowRating(settings?.find((s) => s.setting == Setting.showRating)?.value == 'true');
+    setQueueGrouping(settings?.find((s) => s.setting == Setting.queueGrouping)?.value as 'ALPHABETIC' | 'NONE');
+    setShowFastQueueCheck(settings?.find((s) => s.setting == Setting.showFastQueueCheck)?.value == 'true');
+    setShowSettingsAtBottom(settings?.find((s) => s.setting == Setting.showSettingsAtBottom)?.value == 'true');
+    initialSettingsSyncDone.current = true;
+  }, [userContext.user?.id]);
 
   // ========================
   // Clock
@@ -421,7 +462,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
 
   function renderCocktailQueueItem(cocktailQueueItem: GroupedItem, index: number) {
     return (
-      <div key={`cocktailQueue-item-${index}`} className={'flex w-full flex-row flex-wrap justify-between gap-2 pb-1 pt-1 lg:flex-col'}>
+      <div key={`cocktailQueue-item-${index}`} className={'flex w-full flex-row flex-wrap justify-between gap-2 pt-1 pb-1 lg:flex-col'}>
         <div
           className={'cursor-pointer'}
           onClick={() => {
@@ -458,8 +499,11 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
           {cocktailQueueItem.notes && <span className={'long-text-format italic lg:pb-1'}>Notiz: {cocktailQueueItem.notes}</span>}
         </div>
         <div className={'flex w-full flex-row gap-2 pb-1'}>
-          <div
-            className={'btn btn-square btn-outline btn-sm'}
+          <Button
+            type="button"
+            variant="outline"
+            shape="square"
+            size="sm"
             onClick={() =>
               modalContext.openModal(
                 <CocktailDetailModal
@@ -474,11 +518,15 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
             }
           >
             <FaEye />
-          </div>
-          <div className={'join grid w-full grid-cols-3'}>
+          </Button>
+          <ButtonGroup className="grid w-full grid-cols-3">
             {(cocktailQueueItem.inProgress || showFastQueueCheck) && (
-              <button
-                className={`btn btn-success join-item btn-sm ${showFastQueueCheck && !cocktailQueueItem.inProgress ? '' : 'col-span-2'}`}
+              <Button
+                type="button"
+                variant="success"
+                joinItem
+                size="sm"
+                className={showFastQueueCheck && !cocktailQueueItem.inProgress ? '' : 'col-span-2'}
                 disabled={!!submittingQueue.find((i) => i.cocktailId == cocktailQueueItem.cocktailId)}
                 onClick={() =>
                   addCocktailToStatistic({
@@ -499,15 +547,17 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                   })
                 }
               >
-                {submittingQueue.find((i) => i.cocktailId == cocktailQueueItem.cocktailId && i.mode == 'ACCEPT') && (
-                  <span className={'loading loading-spinner'} />
-                )}
+                {submittingQueue.find((i) => i.cocktailId == cocktailQueueItem.cocktailId && i.mode == 'ACCEPT') && <UiLoading size="sm" />}
                 <FaCheck />
-              </button>
+              </Button>
             )}
             {!cocktailQueueItem.inProgress && (
-              <button
-                className={`btn ${showFastQueueCheck ? '' : 'col-span-2'} btn-info join-item btn-sm`}
+              <Button
+                type="button"
+                variant="info"
+                joinItem
+                size="sm"
+                className={showFastQueueCheck ? '' : 'col-span-2'}
                 disabled={!!submittingQueue.find((i) => i.cocktailId == cocktailQueueItem.cocktailId)}
                 onClick={() =>
                   changeQueueProcess({
@@ -527,15 +577,16 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                   })
                 }
               >
-                {submittingQueue.find((i) => i.cocktailId == cocktailQueueItem.cocktailId && i.mode == 'IN_PROGRESS') && (
-                  <span className={'loading loading-spinner'} />
-                )}
+                {submittingQueue.find((i) => i.cocktailId == cocktailQueueItem.cocktailId && i.mode == 'IN_PROGRESS') && <UiLoading size="sm" />}
                 <FaArrowTurnUp />
-              </button>
+              </Button>
             )}
             {cocktailQueueItem.inProgress ? (
-              <button
-                className={'btn btn-error join-item btn-sm'}
+              <Button
+                type="button"
+                variant="error"
+                joinItem
+                size="sm"
                 disabled={!!submittingQueue.find((i) => i.cocktailId == cocktailQueueItem.cocktailId)}
                 onClick={() =>
                   changeQueueProcess({
@@ -555,14 +606,15 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                   })
                 }
               >
-                {submittingQueue.find((i) => i.cocktailId == cocktailQueueItem.cocktailId && i.mode == 'NOT_ANYMORE_IN_PROGRESS') && (
-                  <span className={'loading loading-spinner'} />
-                )}
+                {submittingQueue.find((i) => i.cocktailId == cocktailQueueItem.cocktailId && i.mode == 'NOT_ANYMORE_IN_PROGRESS') && <UiLoading size="sm" />}
                 <FaArrowTurnDown />
-              </button>
+              </Button>
             ) : (
-              <button
-                className={'btn btn-error join-item btn-sm'}
+              <Button
+                type="button"
+                variant="error"
+                joinItem
+                size="sm"
                 disabled={!!submittingQueue.find((i) => i.cocktailId == cocktailQueueItem.cocktailId)}
                 onClick={() =>
                   removeCocktailFromQueue({
@@ -582,13 +634,11 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                   })
                 }
               >
-                {submittingQueue.find((i) => i.cocktailId == cocktailQueueItem.cocktailId && i.mode == 'REJECT') && (
-                  <span className={'loading loading-spinner'} />
-                )}
+                {submittingQueue.find((i) => i.cocktailId == cocktailQueueItem.cocktailId && i.mode == 'REJECT') && <UiLoading size="sm" />}
                 <FaTimes />
-              </button>
+              </Button>
             )}
-          </div>
+          </ButtonGroup>
         </div>
       </div>
     );
@@ -615,7 +665,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
               </div>
 
               {/*<div className={'divider'}></div>*/}
-              <div className={'max-h-1/3 flex flex-col divide-y overflow-y-auto border-b border-base-content'}>
+              <div className={'flex max-h-1/3 flex-col divide-y overflow-y-auto border-b border-base-content'}>
                 {(queueGrouping == 'ALPHABETIC' || true
                   ? _(cocktailQueue)
                       .filter((item) => item.inProgress)
@@ -710,10 +760,16 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
           <main className={`order-1 col-span-5 flex w-full flex-col space-y-2 overflow-y-auto rounded-xl lg:col-span-6 xl:col-span-5`}>
             {selectedCardId == 'order' ? (
               <OrderView cocktailCards={cocktailCards} workspaceId={workspaceId as string} />
+            ) : selectedCardId == undefined && (loadingCards || cocktailCards.length > 0) ? (
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+                {Array.from({ length: 6 }).map((_, index) => (
+                  <CocktailRecipeCardSkeleton key={`initial-card-skeleton-${index}`} showImage={showImage} />
+                ))}
+              </div>
             ) : selectedCardId == 'search' || selectedCardId == undefined ? (
               <div className={'flex flex-col-reverse gap-2 md:flex-row'}>
-                <div className={'card w-full flex-1'}>
-                  <div className={`card-body`}>
+                <Card className="w-full flex-1">
+                  <CardBody compact>
                     <SearchModal
                       ref={searchPageSearchRef}
                       onCocktailSelectedObject={(cocktail) => setSelectedCocktail(cocktail.id)}
@@ -722,8 +778,8 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                       customWidthClassName={'w-full'}
                       notAsModal={true}
                     />
-                  </div>
-                </div>
+                  </CardBody>
+                </Card>
                 <div className={'h-min w-full flex-1'}>
                   {showTime && !showStatisticActions ? (
                     <div className={'w-full pb-2 text-center'}>{currentTime ? formatDateTimeShort(currentTime) : ''} Uhr</div>
@@ -753,9 +809,11 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
               <div className="flex flex-col gap-1 md:gap-2">
                 {showTime && !showStatisticActions ? <div className={'pb-2'}>{timeComponent}</div> : <></>}
                 {loadingGroups ? (
-                  <PageCenter>
-                    <Loading />
-                  </PageCenter>
+                  <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+                    {Array.from({ length: 6 }).map((_, index) => (
+                      <CocktailRecipeCardSkeleton key={`card-skeleton-${index}`} showImage={showImage} />
+                    ))}
+                  </div>
                 ) : (selectedCard?.groups ?? []).length == 0 ? (
                   <PageCenter>
                     <div className={'text-center'}>Keine Gruppen in der Karte vorhanden</div>
@@ -764,18 +822,32 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                   selectedCard?.groups
                     ?.sort((a, b) => a.groupNumber - b.groupNumber)
                     .map((group) => (
-                      <div
+                      <Collapse
                         key={`card-${selectedCard.id}-group-${group.id}`}
-                        className={`collapse collapse-arrow rounded-xl border border-base-300 bg-base-200 p-1 print:p-1`}
+                        arrow
+                        open={!collapsedGroupIds.has(group.id)}
+                        className="rounded-xl print:p-1"
                       >
-                        <input type={'checkbox'} defaultChecked={true} />
-                        <div className={'collapse-title text-center text-2xl font-bold'}>
+                        <CollapseTitle
+                          className="text-center text-2xl font-bold"
+                          onClick={() =>
+                            setCollapsedGroupIds((previous) => {
+                              const next = new Set(previous);
+                              if (next.has(group.id)) {
+                                next.delete(group.id);
+                              } else {
+                                next.add(group.id);
+                              }
+                              return next;
+                            })
+                          }
+                        >
                           {group.name}
                           {group.groupPrice != undefined ? ` - Special Preis: ${group.groupPrice}€` : ''}
-                        </div>
-                        <div className={'collapse-content'}>
+                        </CollapseTitle>
+                        <CollapseContent>
                           <div
-                            className={`grid ${lessItems ? '2xl:grid-cols-5' : '2xl:grid-cols-6'} ${lessItems ? 'xl:grid-cols-3' : 'xl:grid-cols-4'} ${lessItems ? 'md:grid-cols-2' : 'md:grid-cols-3'} ${lessItems ? 'xs:grid-cols-1' : 'xs:grid-cols-2'} grid-cols-1 gap-2 p-1`}
+                            className={`grid ${lessItems ? '2xl:grid-cols-5' : '2xl:grid-cols-6'} ${lessItems ? 'xl:grid-cols-3' : 'xl:grid-cols-4'} ${lessItems ? 'md:grid-cols-2' : 'md:grid-cols-3'} ${lessItems ? 'xs:grid-cols-1' : 'xs:grid-cols-2'} grid-cols-1 gap-3 p-0`}
                           >
                             {group.items.length == 0 ? (
                               <div className={'col-span-full text-center'}>Keine Einträge vorhanden</div>
@@ -813,8 +885,8 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                                 })
                             )}
                           </div>
-                        </div>
-                      </div>
+                        </CollapseContent>
+                      </Collapse>
                     ))
                 )}
               </div>
@@ -823,34 +895,36 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
         </div>
 
         {!isMenuExpanded && !showSettingsAtBottom ? (
-          <div className={'fixed bottom-2 right-2 z-30 print:hidden'}>
-            <button
-              type={'button'}
-              className={'btn btn-square btn-primary btn-sm'}
+          <div className={'fixed right-2 bottom-2 z-30 print:hidden'}>
+            <Button
+              type="button"
+              shape="square"
+              variant="primary"
+              size="sm"
               onClick={async () => {
                 setIsMenuExpanded(true);
               }}
             >
               <CgArrowsExpandUpLeft />
-            </button>
+            </Button>
           </div>
         ) : (
           <div
             ref={actionButtonRef}
             className={
-              'bottom-2 right-2 z-30 flex space-y-2 md:bottom-5 md:right-5 print:hidden' + (showSettingsAtBottom ? ' mx-2 justify-end' : ' fixed flex-col')
+              'right-2 bottom-2 z-30 flex space-y-2 md:right-5 md:bottom-5 print:hidden' + (showSettingsAtBottom ? ' mx-2 justify-end' : ' fixed flex-col')
             }
           >
-            <div className={'dropdown dropdown-end dropdown-top pt-2' + (showSettingsAtBottom ? ' mr-1' : '')}>
-              <label tabIndex={0} className={'btn btn-square btn-primary rounded-xl md:btn-lg'}>
+            <Dropdown align="end" placement="top" className={'pt-2' + (showSettingsAtBottom ? ' mr-1' : '')}>
+              <Button type="button" shape="square" variant="primary" className="rounded-xl md:h-12 md:min-h-12 md:w-12 md:px-0" tabIndex={0}>
                 <FaEye />
-              </label>
-              <div
-                tabIndex={0}
-                className={`dropdown-content z-[31] h-min w-64 rounded-box bg-base-100 p-2 shadow`}
+              </Button>
+              <DropdownContent
+                className="z-[31] block h-min w-64 p-2 shadow"
                 style={{
                   maxHeight: maxDropdownHeight + 'px',
                 }}
+                onFocus={checkDropdownScroll}
               >
                 <div
                   ref={dropdownContentRef}
@@ -860,12 +934,10 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                   }}
                 >
                   <div className={'flex flex-col gap-2'}>
-                    <label className="label">
-                      <div className={'label-text font-bold'}>Cocktailsuche</div>
-                      <input
-                        name={'card-radio'}
-                        type={'radio'}
-                        className={'radio'}
+                    <Label className="flex-row items-center justify-between">
+                      <LabelText className="font-bold">Cocktailsuche</LabelText>
+                      <Radio
+                        name="card-radio"
                         value={'search'}
                         checked={selectedCardId == 'search' || selectedCardId == undefined}
                         readOnly={true}
@@ -883,13 +955,11 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                             .then();
                         }}
                       />
-                    </label>
-                    <label className="label">
-                      <div className={'label-text font-bold'}>Bestellen</div>
-                      <input
-                        name={'card-radio'}
-                        type={'radio'}
-                        className={'radio'}
+                    </Label>
+                    <Label className="flex-row items-center justify-between">
+                      <LabelText className="font-bold">Bestellen</LabelText>
+                      <Radio
+                        name="card-radio"
                         value={'order'}
                         checked={selectedCardId == 'order'}
                         readOnly={true}
@@ -907,40 +977,36 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                             .then();
                         }}
                       />
-                    </label>
-                    <div className={'divider'}>Karte(n)</div>
-                    {loadingCards ? (
+                    </Label>
+                    <Divider>
+                      Karte(n)
+                      {loadingCards && <UiLoading size="xs" />}
+                    </Divider>
+                    {loadingCards && cocktailCards.length == 0 ? (
                       <Loading />
                     ) : cocktailCards.length == 0 ? (
                       <div className={'flex items-center justify-between'}>
                         <div>Keine Karten vorhanden</div>
-                        <Link href={`/workspaces/${workspaceId}/manage/cards/create`} className={'btn btn-square btn-outline btn-sm'}>
-                          <FaPlus />
+                        <Link href={`/workspaces/${workspaceId}/manage/cards/create`}>
+                          <Button type="button" variant="outline" shape="square" size="sm" className="border-primary text-primary hover:bg-primary/10">
+                            <FaPlus />
+                          </Button>
                         </Link>
                       </div>
                     ) : (
                       cocktailCards.sort(sortCards).map((card) => (
-                        <div key={'card-' + card.id} className="form-control">
-                          <label className="label">
-                            <div className={'label-text font-bold'}>
+                        <FormControl key={'card-' + card.id}>
+                          <Label className="flex-row items-center justify-between">
+                            <LabelText className="font-bold">
                               {card.name}
                               {card.date != undefined ? (
-                                <span>
-                                  {' '}
-                                  - (
-                                  {new Date().toISOString().split('T')[0] == new Date(card.date).toISOString().split('T')[0]
-                                    ? 'Heute'
-                                    : new Date(card.date).toLocaleDateString('de')}
-                                  )
-                                </span>
+                                <span> - ({cardDateKey(card.date) == logicalToday ? 'Heute' : new Date(card.date).toLocaleDateString('de')})</span>
                               ) : (
                                 ''
                               )}
-                            </div>
-                            <input
-                              name={'card-radio'}
-                              type={'radio'}
-                              className={'radio'}
+                            </LabelText>
+                            <Radio
+                              name="card-radio"
                               value={card.id}
                               checked={selectedCardId === card.id}
                               readOnly={true}
@@ -958,12 +1024,12 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                                   .then();
                               }}
                             />
-                          </label>
-                        </div>
+                          </Label>
+                        </FormControl>
                       ))
                     )}
 
-                    <div className={'divider'}>Darstellung</div>
+                    <Divider>Darstellung</Divider>
                     <div className={`flex flex-col gap-2`}>
                       <div className={'flex cursor-pointer flex-row items-center justify-between'} onClick={() => setShowRecipeOptions(!showRecipeOptions)}>
                         <div className={'font-bold'}>Rezeptbereich</div>
@@ -971,129 +1037,115 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                       </div>
                       <div className={`flex flex-col gap-2 ${showRecipeOptions ? '' : 'hidden'}`}>
                         {isOffline && <span className="text-xs text-warning">Nicht verfügbar im Offline-Modus</span>}
-                        <div className="form-control">
-                          <label className={`label ${isOffline ? 'opacity-50' : ''}`}>
+                        <FormControl>
+                          <Label className={`flex-row items-center justify-between ${isOffline ? 'opacity-50' : ''}`}>
                             Bilder anzeigen
-                            <input
-                              type={'checkbox'}
-                              className={'toggle toggle-primary'}
+                            <Toggle
                               checked={showImage}
                               readOnly={true}
                               disabled={isOffline}
                               onClick={() => {
                                 if (!isOffline) {
-                                  userContext.updateUserSetting(Setting.showImage, !showImage ? 'true' : 'false');
+                                  toggleBooleanSetting(Setting.showImage, showImage, setShowImage);
                                 }
                               }}
                             />
-                          </label>
-                        </div>
-                        <div className="form-control">
-                          <label className={`label ${isOffline ? 'opacity-50' : ''}`}>
+                          </Label>
+                        </FormControl>
+                        <FormControl>
+                          <Label className={`flex-row items-center justify-between ${isOffline ? 'opacity-50' : ''}`}>
                             Tags anzeigen
-                            <input
-                              type={'checkbox'}
-                              className={'toggle toggle-primary'}
+                            <Toggle
                               checked={showTags}
                               readOnly={true}
                               disabled={isOffline}
                               onClick={() => {
                                 if (!isOffline) {
-                                  userContext.updateUserSetting(Setting.showTags, !showTags ? 'true' : 'false');
+                                  toggleBooleanSetting(Setting.showTags, showTags, setShowTags);
                                 }
                               }}
                             />
-                          </label>
-                        </div>
-                        <div className="form-control">
-                          <label className={`label ${isOffline ? 'opacity-50' : ''}`}>
+                          </Label>
+                        </FormControl>
+                        <FormControl>
+                          <Label className={`flex-row items-center justify-between ${isOffline ? 'opacity-50' : ''}`}>
                             Beschreibung anzeigen
-                            <input
-                              type={'checkbox'}
-                              className={'toggle toggle-primary'}
+                            <Toggle
                               checked={showDescription}
                               readOnly={true}
                               disabled={isOffline}
                               onClick={() => {
                                 if (!isOffline) {
-                                  userContext.updateUserSetting(Setting.showDescription, !showDescription ? 'true' : 'false');
+                                  toggleBooleanSetting(Setting.showDescription, showDescription, setShowDescription);
                                 }
                               }}
                             />
-                          </label>
-                        </div>
-                        <div className="form-control">
-                          <label className={`label ${isOffline ? 'opacity-50' : ''}`}>
+                          </Label>
+                        </FormControl>
+                        <FormControl>
+                          <Label className={`flex-row items-center justify-between ${isOffline ? 'opacity-50' : ''}`}>
                             Notizen anzeigen
-                            <input
-                              type={'checkbox'}
-                              className={'toggle toggle-primary'}
+                            <Toggle
                               checked={showNotes}
                               readOnly={true}
                               disabled={isOffline}
                               onClick={() => {
                                 if (!isOffline) {
-                                  userContext.updateUserSetting(Setting.showNotes, !showNotes ? 'true' : 'false');
+                                  toggleBooleanSetting(Setting.showNotes, showNotes, setShowNotes);
                                 }
                               }}
                             />
-                          </label>
-                        </div>
-                        <div className="form-control">
-                          <label className={`label ${isOffline ? 'opacity-50' : ''}`}>
+                          </Label>
+                        </FormControl>
+                        <FormControl>
+                          <Label className={`flex-row items-center justify-between ${isOffline ? 'opacity-50' : ''}`}>
                             Geschichte und Entstehung anzeigen
-                            <input
-                              type={'checkbox'}
-                              className={'toggle toggle-primary'}
+                            <Toggle
                               checked={showHistory}
                               readOnly={true}
                               disabled={isOffline}
                               onClick={() => {
                                 if (!isOffline) {
-                                  userContext.updateUserSetting(Setting.showHistory, !showHistory ? 'true' : 'false');
+                                  toggleBooleanSetting(Setting.showHistory, showHistory, setShowHistory);
                                 }
                               }}
                             />
-                          </label>
-                        </div>
-                        <div className="form-control">
-                          <label className={`label ${isOffline ? 'opacity-50' : ''}`}>
+                          </Label>
+                        </FormControl>
+                        <FormControl>
+                          <Label className={`flex-row items-center justify-between ${isOffline ? 'opacity-50' : ''}`}>
                             Bewertung anzeigen
-                            <input
-                              type={'checkbox'}
-                              className={'toggle toggle-primary'}
+                            <Toggle
                               checked={showRating}
                               readOnly={true}
                               disabled={isOffline}
                               onClick={() => {
                                 if (!isOffline) {
-                                  userContext.updateUserSetting(Setting.showRating, !showRating ? 'true' : 'false');
+                                  toggleBooleanSetting(Setting.showRating, showRating, setShowRating);
                                 }
                               }}
                             />
-                          </label>
-                        </div>
-                        <div className="form-control">
-                          <label className={`label ${isOffline ? 'opacity-50' : ''}`}>
+                          </Label>
+                        </FormControl>
+                        <FormControl>
+                          <Label className={`flex-row items-center justify-between ${isOffline ? 'opacity-50' : ''}`}>
                             Tracking aktivieren
-                            <input
-                              type={'checkbox'}
-                              className={'toggle toggle-primary'}
+                            <Toggle
                               checked={showStatisticActions}
                               readOnly={true}
                               disabled={isOffline}
                               onClick={() => {
                                 if (!isOffline) {
-                                  userContext.updateUserSetting(Setting.showStatisticActions, !showStatisticActions ? 'true' : 'false');
+                                  toggleBooleanSetting(Setting.showStatisticActions, showStatisticActions, setShowStatisticActions);
                                 }
                               }}
                             />
-                          </label>
-                        </div>
+                          </Label>
+                        </FormControl>
                       </div>
                     </div>
 
-                    <div className={'divider'}></div>
+                    <Divider />
 
                     <div className={`flex flex-col gap-2`}>
                       <div className={'flex cursor-pointer flex-row items-center justify-between'} onClick={() => setShowQueueOptions(!showQueueOptions)}>
@@ -1102,15 +1154,13 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                       </div>
                       <div className={`flex flex-col gap-2 ${showQueueOptions ? '' : 'hidden'}`}>
                         {isOffline && <span className="text-xs text-warning">Nicht verfügbar im Offline-Modus</span>}
-                        <div className="form-control">
+                        <FormControl>
                           <div className={`${isOffline ? 'opacity-50' : ''}`}>Gruppierung</div>
-                          <div key={'grouping-alphabetic'} className="form-control">
-                            <label className={`label ${isOffline ? 'opacity-50' : ''}`}>
-                              <div className={'label-text'}>Cocktailname (A-Z)</div>
-                              <input
-                                name={'queue-radio'}
-                                type={'radio'}
-                                className={'radio'}
+                          <FormControl key={'grouping-alphabetic'}>
+                            <Label className={`flex-row items-center justify-between ${isOffline ? 'opacity-50' : ''}`}>
+                              <LabelText>Cocktailname (A-Z)</LabelText>
+                              <Radio
+                                name="queue-radio"
                                 value={'ALPHABETIC'}
                                 checked={queueGrouping == 'ALPHABETIC'}
                                 readOnly={true}
@@ -1122,13 +1172,11 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                                   }
                                 }}
                               />
-                            </label>
-                            <label className={`label ${isOffline ? 'opacity-50' : ''}`}>
-                              <div className={'label-text'}>Keine (Chronologisch)</div>
-                              <input
-                                name={'queue-radio'}
-                                type={'radio'}
-                                className={'radio'}
+                            </Label>
+                            <Label className={`flex-row items-center justify-between ${isOffline ? 'opacity-50' : ''}`}>
+                              <LabelText>Keine (Chronologisch)</LabelText>
+                              <Radio
+                                name="queue-radio"
                                 value={'NONE'}
                                 checked={queueGrouping == 'NONE' || queueGrouping == undefined}
                                 readOnly={true}
@@ -1140,30 +1188,28 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                                   }
                                 }}
                               />
-                            </label>
-                          </div>
-                        </div>
-                        <div className="form-control">
-                          <label className={`label ${isOffline ? 'opacity-50' : ''}`}>
+                            </Label>
+                          </FormControl>
+                        </FormControl>
+                        <FormControl>
+                          <Label className={`flex-row items-center justify-between ${isOffline ? 'opacity-50' : ''}`}>
                             Schnelles abhaken anzeigen
-                            <input
-                              type={'checkbox'}
-                              className={'toggle toggle-primary'}
+                            <Toggle
                               checked={showFastQueueCheck}
                               readOnly={true}
                               disabled={isOffline}
                               onClick={() => {
                                 if (!isOffline) {
-                                  userContext.updateUserSetting(Setting.showFastQueueCheck, !showFastQueueCheck ? 'true' : 'false');
+                                  toggleBooleanSetting(Setting.showFastQueueCheck, showFastQueueCheck, setShowFastQueueCheck);
                                 }
                               }}
                             />
-                          </label>
-                        </div>
+                          </Label>
+                        </FormControl>
                       </div>
                     </div>
 
-                    <div className={'divider'}></div>
+                    <Divider />
                     <div className={`flex flex-col gap-2`}>
                       <div className={'flex cursor-pointer flex-row items-center justify-between'} onClick={() => setShowLayoutOptions(!showLayoutOptions)}>
                         <div className={'font-bold'}>Layout</div>
@@ -1171,65 +1217,59 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                       </div>
                       <div className={`flex flex-col gap-2 ${showLayoutOptions ? '' : 'hidden'}`}>
                         {isOffline && <span className="text-xs text-warning">Nicht verfügbar im Offline-Modus</span>}
-                        <div className="form-control">
-                          <label className={`label ${isOffline ? 'opacity-50' : ''}`}>
+                        <FormControl>
+                          <Label className={`flex-row items-center justify-between ${isOffline ? 'opacity-50' : ''}`}>
                             Uhrzeit anzeigen
-                            <input
-                              type={'checkbox'}
-                              className={'toggle toggle-primary'}
+                            <Toggle
                               checked={showTime}
                               readOnly={true}
                               disabled={isOffline}
                               onClick={() => {
                                 if (!isOffline) {
-                                  userContext.updateUserSetting(Setting.showTime, !showTime ? 'true' : 'false');
+                                  toggleBooleanSetting(Setting.showTime, showTime, setShowTime);
                                 }
                               }}
                             />
-                          </label>
-                        </div>
+                          </Label>
+                        </FormControl>
                         {router.query.card !== 'search' && (
-                          <div className="form-control">
-                            <label className={`label ${isOffline ? 'opacity-50' : ''}`}>
+                          <FormControl>
+                            <Label className={`flex-row items-center justify-between ${isOffline ? 'opacity-50' : ''}`}>
                               Weniger Spalten
-                              <input
-                                type={'checkbox'}
-                                className={'toggle toggle-primary'}
+                              <Toggle
                                 checked={lessItems}
                                 readOnly={true}
                                 disabled={isOffline}
                                 onClick={() => {
                                   if (!isOffline) {
-                                    userContext.updateUserSetting(Setting.lessItems, !lessItems ? 'true' : 'false');
+                                    toggleBooleanSetting(Setting.lessItems, lessItems, setLessItems);
                                   }
                                 }}
                               />
-                            </label>
-                          </div>
+                            </Label>
+                          </FormControl>
                         )}
-                        <div className="form-control">
-                          <label className={`label ${isOffline ? 'opacity-50' : ''}`}>
+                        <FormControl>
+                          <Label className={`flex-row items-center justify-between ${isOffline ? 'opacity-50' : ''}`}>
                             Einstellungen am Ende
-                            <input
-                              type={'checkbox'}
-                              className={'toggle toggle-primary'}
+                            <Toggle
                               checked={showSettingsAtBottom}
                               readOnly={true}
                               disabled={isOffline}
                               onClick={() => {
                                 if (!isOffline) {
-                                  userContext.updateUserSetting(Setting.showSettingsAtBottom, !showSettingsAtBottom ? 'true' : 'false');
+                                  toggleBooleanSetting(Setting.showSettingsAtBottom, showSettingsAtBottom, setShowSettingsAtBottom);
                                 }
                               }}
                             />
-                          </label>
-                        </div>
+                          </Label>
+                        </FormControl>
                       </div>
                     </div>
-                    <div className={'divider'}></div>
-                    <div className={isOffline ? 'tooltip self-center' : 'self-center'} data-tip={isOffline ? 'Nicht verfügbar im Offline-Modus' : undefined}>
+                    <Divider />
+                    <Tooltip tip={isOffline ? 'Nicht verfügbar im Offline-Modus' : undefined} className="self-center">
                       <ThemeChanger disabled={isOffline} />
-                    </div>
+                    </Tooltip>
                     {isOffline && <span className="text-xs text-warning">Nicht verfügbar im Offline-Modus</span>}
                   </div>
                 </div>
@@ -1238,34 +1278,37 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                     <FaArrowDown className="animate-bounce" />
                   </div>
                 )}
-              </div>
-            </div>
+              </DropdownContent>
+            </Dropdown>
 
             <>
               {selectedCardId != 'search' && selectedCardId != 'order' && selectedCardId != undefined ? (
-                <div className={'tooltip' + (showSettingsAtBottom ? ' mr-1' : '')} data-tip={'Suche (Shift + F)'}>
-                  <div
-                    className={'btn btn-square btn-primary rounded-xl md:btn-lg'}
+                <Tooltip tip="Suche (Shift + F)" className={showSettingsAtBottom ? 'mr-1' : ''}>
+                  <Button
+                    type="button"
+                    shape="square"
+                    variant="primary"
+                    className="rounded-xl md:h-12 md:min-h-12 md:w-12 md:px-0"
                     onClick={() => modalContext.openModal(<SearchModal showStatisticActions={showStatisticActions} />)}
                   >
                     <FaSearch />
-                  </div>
-                </div>
+                  </Button>
+                </Tooltip>
               ) : (
                 <></>
               )}
             </>
             {isOffline ? (
-              <div className={'tooltip tooltip-left'} data-tip="Nicht verfügbar im Offline-Modus">
-                <div className={'btn btn-disabled btn-square rounded-xl md:btn-lg'}>
+              <Tooltip tip="Nicht verfügbar im Offline-Modus">
+                <Button type="button" shape="square" variant="primary" className="rounded-xl md:h-12 md:min-h-12 md:w-12 md:px-0" disabled>
                   <BsFillGearFill />
-                </div>
-              </div>
+                </Button>
+              </Tooltip>
             ) : (
               <Link href={`/workspaces/${workspaceId}/manage`}>
-                <div className={'btn btn-square btn-primary rounded-xl md:btn-lg'}>
+                <Button type="button" shape="square" variant="primary" className="rounded-xl md:h-12 md:min-h-12 md:w-12 md:px-0">
                   <BsFillGearFill />
-                </div>
+                </Button>
               </Link>
             )}
           </div>

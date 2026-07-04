@@ -3,6 +3,23 @@ import { ModalContext } from '@lib/context/ModalContextProvider';
 import { alertService } from '@lib/alertService';
 import { FaUpload, FaCheckCircle, FaTimesCircle, FaExclamationTriangle, FaChevronDown, FaChevronUp } from 'react-icons/fa';
 import { EntityCombobox } from '../cocktail-import/EntityCombobox';
+import {
+  Badge,
+  Button,
+  Checkbox,
+  Divider,
+  Input,
+  Label,
+  Loading,
+  Radio,
+  Select,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeaderCell,
+  TableRow,
+} from '@components/ui';
 
 // ────────────── Types ──────────────
 
@@ -118,12 +135,12 @@ function DependencyMappingSection({
       <div className="flex cursor-pointer items-center justify-between bg-base-200 p-3" onClick={() => setCollapsed(!collapsed)}>
         <div className="flex items-center gap-2">
           <span className="font-semibold">{title}</span>
-          <span className="badge badge-sm">{matches.length}</span>
+          <Badge size="sm">{matches.length}</Badge>
           {autoMatchedCount > 0 && (
-            <span className="badge badge-success badge-sm gap-1">
+            <Badge variant="success" size="sm" className="gap-1">
               <FaCheckCircle className="text-xs" />
               {autoMatchedCount} auto-matched
-            </span>
+            </Badge>
           )}
         </div>
         <div>{collapsed ? <FaChevronDown /> : <FaChevronUp />}</div>
@@ -141,24 +158,29 @@ function DependencyMappingSection({
                 <div key={match.exportName} className="rounded-lg border border-base-300 p-3">
                   <div className="flex items-center justify-between">
                     <div className="font-semibold">{match.exportName}</div>
-                    {isAuto && <span className="badge badge-success badge-sm">Auto-matched</span>}
+                    {isAuto && (
+                      <Badge variant="success" size="sm">
+                        Auto-matched
+                      </Badge>
+                    )}
                     {!isAuto && isMapped && (
                       <button
                         type="button"
-                        className="badge badge-success badge-outline badge-sm cursor-pointer"
+                        className="cursor-pointer"
                         title="Klicken um automatische Zuordnung wiederherzustellen"
                         onClick={() => resetToAutoMatch(type, match.exportName)}
                       >
-                        Auto
+                        <Badge variant="success" size="sm" outline>
+                          Auto
+                        </Badge>
                       </button>
                     )}
                   </div>
 
                   <div className="mt-2 flex flex-col gap-2">
-                    <label className="flex cursor-pointer items-center gap-2">
-                      <input
-                        type="radio"
-                        className="radio radio-sm"
+                    <Label className="cursor-pointer flex-row items-center gap-2">
+                      <Radio
+                        radioSize="sm"
                         checked={mapping?.decision === 'use-existing'}
                         onChange={() => {
                           if (match.autoMatch) {
@@ -169,7 +191,7 @@ function DependencyMappingSection({
                         }}
                       />
                       <span className="text-sm">Bestehende verwenden</span>
-                    </label>
+                    </Label>
 
                     {mapping?.decision === 'use-existing' && (
                       <div className="ml-6">
@@ -184,10 +206,10 @@ function DependencyMappingSection({
                       </div>
                     )}
 
-                    <label className="flex cursor-pointer items-center gap-2">
-                      <input type="radio" className="radio radio-sm" checked={mapping?.decision === 'skip'} onChange={() => onUpdate(match.exportName, null)} />
+                    <Label className="cursor-pointer flex-row items-center gap-2">
+                      <Radio radioSize="sm" checked={mapping?.decision === 'skip'} onChange={() => onUpdate(match.exportName, null)} />
                       <span className="text-sm">Überspringen</span>
-                    </label>
+                    </Label>
                   </div>
                 </div>
               );
@@ -498,7 +520,7 @@ export default function EntityImportModal({ workspaceId, entityType, onImportCom
         ))}
       </div>
 
-      <div className="divider my-0" />
+      <Divider className="my-0" />
 
       <div className="min-h-[400px]">
         {/* Step 1: Upload */}
@@ -521,7 +543,7 @@ export default function EntityImportModal({ workspaceId, entityType, onImportCom
                 </label>
                 {loading && (
                   <div className="flex items-center justify-center gap-2">
-                    <span className="loading loading-spinner" />
+                    <Loading />
                     <span>Datei wird geladen...</span>
                   </div>
                 )}
@@ -541,45 +563,42 @@ export default function EntityImportModal({ workspaceId, entityType, onImportCom
                 <div className="text-sm text-base-content/70">Wählen Sie die {labels.plural} aus, die Sie importieren möchten.</div>
 
                 <div className="max-h-[300px] overflow-y-auto rounded-lg border border-base-300">
-                  <table className="table table-sm">
-                    <thead>
-                      <tr>
-                        <th className="w-0">
-                          <input
-                            type="checkbox"
-                            className="checkbox checkbox-sm"
+                  <Table compact>
+                    <TableHead>
+                      <TableRow>
+                        <TableHeaderCell className="w-0">
+                          <Checkbox
+                            checkboxSize="sm"
                             checked={parsedEntities.filter((e) => e.valid).every((e) => e.selected)}
                             onChange={handleToggleSelectAll}
                           />
-                        </th>
-                        <th>Name</th>
-                        <th>Status</th>
-                      </tr>
-                    </thead>
-                    <tbody>
+                        </TableHeaderCell>
+                        <TableHeaderCell>Name</TableHeaderCell>
+                        <TableHeaderCell>Status</TableHeaderCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
                       {parsedEntities.map((entity, idx) => (
-                        <tr key={idx}>
-                          <td className="w-0">
-                            <input
-                              type="checkbox"
-                              className="checkbox checkbox-sm"
-                              checked={entity.selected}
-                              disabled={!entity.valid}
-                              onChange={() => handleToggleSelect(idx)}
-                            />
-                          </td>
-                          <td>{entity.name}</td>
-                          <td>
+                        <TableRow key={idx}>
+                          <TableCell className="w-0">
+                            <Checkbox checkboxSize="sm" checked={entity.selected} disabled={!entity.valid} onChange={() => handleToggleSelect(idx)} />
+                          </TableCell>
+                          <TableCell>{entity.name}</TableCell>
+                          <TableCell>
                             {entity.valid ? (
-                              <span className="badge badge-ghost badge-sm">Bereit</span>
+                              <Badge variant="ghost" size="sm">
+                                Bereit
+                              </Badge>
                             ) : (
-                              <span className="badge badge-error badge-sm">Ungültig</span>
+                              <Badge variant="error" size="sm">
+                                Ungültig
+                              </Badge>
                             )}
-                          </td>
-                        </tr>
+                          </TableCell>
+                        </TableRow>
                       ))}
-                    </tbody>
-                  </table>
+                    </TableBody>
+                  </Table>
                 </div>
 
                 <div className="text-sm text-base-content/70">
@@ -589,13 +608,13 @@ export default function EntityImportModal({ workspaceId, entityType, onImportCom
             )}
 
             <div className="flex justify-end gap-2">
-              <button className="btn btn-outline btn-error" onClick={() => modalContext.closeModal()}>
+              <Button variant="outline" className="border-error text-error hover:bg-error/10" onClick={() => modalContext.closeModal()}>
                 Abbrechen
-              </button>
-              <button className="btn btn-primary" onClick={handlePrepareMapping} disabled={parsedEntities.length === 0 || selectedCount === 0 || loading}>
-                {loading ? <span className="loading loading-spinner loading-sm" /> : null}
+              </Button>
+              <Button variant="primary" onClick={handlePrepareMapping} disabled={parsedEntities.length === 0 || selectedCount === 0 || loading}>
+                {loading ? <Loading size="sm" /> : null}
                 Weiter
-              </button>
+              </Button>
             </div>
           </div>
         )}
@@ -615,28 +634,32 @@ export default function EntityImportModal({ workspaceId, entityType, onImportCom
                     <div className="flex items-center gap-2">
                       <span className="font-medium">{entity.name}</span>
                       {entity.conflicts.length > 0 && (
-                        <span className="badge badge-warning badge-sm">
+                        <Badge variant="warning" size="sm">
                           <FaExclamationTriangle className="mr-1" />
                           Konflikt
-                        </span>
+                        </Badge>
                       )}
-                      {entity.conflicts.length === 0 && <span className="badge badge-success badge-sm">Neu</span>}
+                      {entity.conflicts.length === 0 && (
+                        <Badge variant="success" size="sm">
+                          Neu
+                        </Badge>
+                      )}
                     </div>
 
                     {entity.conflicts.length > 0 && (
                       <div className="mt-2 flex flex-col gap-1">
-                        <label className="flex cursor-pointer items-center gap-2">
-                          <input
-                            type="radio"
-                            className="radio radio-sm"
+                        <Label className="cursor-pointer flex-row items-center gap-2">
+                          <Radio
+                            radioSize="sm"
                             name={`decision-${idx}`}
                             checked={entity.decision === 'overwrite'}
                             onChange={() => updateMappingDecision(idx, { decision: 'overwrite', existingId: entity.conflicts[0].id })}
                           />
                           <span className="text-sm">Überschreiben</span>
                           {entity.conflicts.length > 1 && entity.decision === 'overwrite' && (
-                            <select
-                              className="select select-bordered select-xs ml-2"
+                            <Select
+                              selectSize="sm"
+                              className="ml-2 w-auto"
                               value={entity.existingId || ''}
                               onChange={(e) => updateMappingDecision(idx, { existingId: e.target.value })}
                             >
@@ -645,48 +668,46 @@ export default function EntityImportModal({ workspaceId, entityType, onImportCom
                                   {c.name}
                                 </option>
                               ))}
-                            </select>
+                            </Select>
                           )}
-                        </label>
-                        <label className="flex cursor-pointer items-center gap-2">
-                          <input
-                            type="radio"
-                            className="radio radio-sm"
+                        </Label>
+                        <Label className="cursor-pointer flex-row items-center gap-2">
+                          <Radio
+                            radioSize="sm"
                             name={`decision-${idx}`}
                             checked={entity.decision === 'import'}
                             onChange={() => updateMappingDecision(idx, { decision: 'import' })}
                           />
                           <span className="text-sm">Trotzdem erstellen</span>
-                        </label>
-                        <label className="flex cursor-pointer items-center gap-2">
-                          <input
-                            type="radio"
-                            className="radio radio-sm"
+                        </Label>
+                        <Label className="cursor-pointer flex-row items-center gap-2">
+                          <Radio
+                            radioSize="sm"
                             name={`decision-${idx}`}
                             checked={entity.decision === 'rename'}
                             onChange={() => updateMappingDecision(idx, { decision: 'rename', newName: entity.name + ' (Import)' })}
                           />
                           <span className="text-sm">Umbenennen</span>
                           {entity.decision === 'rename' && (
-                            <input
+                            <Input
+                              inputSize="sm"
                               type="text"
-                              className="input input-xs input-bordered ml-2 w-48"
+                              className="ml-2 w-48"
                               value={entity.newName || ''}
                               onChange={(e) => updateMappingDecision(idx, { newName: e.target.value })}
                             />
                           )}
-                        </label>
+                        </Label>
                         {!singleEntity && (
-                          <label className="flex cursor-pointer items-center gap-2">
-                            <input
-                              type="radio"
-                              className="radio radio-sm"
+                          <Label className="cursor-pointer flex-row items-center gap-2">
+                            <Radio
+                              radioSize="sm"
                               name={`decision-${idx}`}
                               checked={entity.decision === 'skip'}
                               onChange={() => updateMappingDecision(idx, { decision: 'skip' })}
                             />
                             <span className="text-sm">Überspringen</span>
-                          </label>
+                          </Label>
                         )}
                       </div>
                     )}
@@ -695,10 +716,9 @@ export default function EntityImportModal({ workspaceId, entityType, onImportCom
                       <div className="mt-3 rounded-md border border-base-300 bg-base-200/40 p-2">
                         <div className="mb-2 text-sm font-semibold">Ordner-Zuordnung</div>
                         <div className="flex flex-col gap-1">
-                          <label className="flex cursor-pointer items-center gap-2">
-                            <input
-                              type="radio"
-                              className="radio radio-sm"
+                          <Label className="cursor-pointer flex-row items-center gap-2">
+                            <Radio
+                              radioSize="sm"
                               name={`group-decision-${idx}`}
                               checked={entity.groupDecision === 'keep-exported'}
                               disabled={!entity.exportedGroupName}
@@ -708,11 +728,10 @@ export default function EntityImportModal({ workspaceId, entityType, onImportCom
                               Export-Ordner verwenden
                               {entity.exportedGroupName ? ` (${entity.exportedGroupName})` : ' (kein Ordner im Export)'}
                             </span>
-                          </label>
-                          <label className="flex cursor-pointer items-center gap-2">
-                            <input
-                              type="radio"
-                              className="radio radio-sm"
+                          </Label>
+                          <Label className="cursor-pointer flex-row items-center gap-2">
+                            <Radio
+                              radioSize="sm"
                               name={`group-decision-${idx}`}
                               checked={entity.groupDecision === 'use-existing'}
                               onChange={() =>
@@ -723,10 +742,11 @@ export default function EntityImportModal({ workspaceId, entityType, onImportCom
                               }
                             />
                             <span className="text-sm">Bestehenden Ordner auswählen</span>
-                          </label>
+                          </Label>
                           {entity.groupDecision === 'use-existing' && (
-                            <select
-                              className="select select-bordered select-sm ml-6 mt-1 w-full max-w-xs"
+                            <Select
+                              selectSize="sm"
+                              className="mt-1 ml-6 w-full max-w-xs"
                               value={entity.existingGroupId ?? ''}
                               onChange={(event) => updateMappingDecision(idx, { existingGroupId: event.target.value })}
                             >
@@ -738,12 +758,11 @@ export default function EntityImportModal({ workspaceId, entityType, onImportCom
                                   {group.name}
                                 </option>
                               ))}
-                            </select>
+                            </Select>
                           )}
-                          <label className="flex cursor-pointer items-center gap-2">
-                            <input
-                              type="radio"
-                              className="radio radio-sm"
+                          <Label className="cursor-pointer flex-row items-center gap-2">
+                            <Radio
+                              radioSize="sm"
                               name={`group-decision-${idx}`}
                               checked={entity.groupDecision === 'create-new'}
                               onChange={() =>
@@ -754,37 +773,36 @@ export default function EntityImportModal({ workspaceId, entityType, onImportCom
                               }
                             />
                             <span className="text-sm">Neuen Ordner erstellen</span>
-                          </label>
+                          </Label>
                           {entity.groupDecision === 'create-new' && (
-                            <div className="ml-6 mt-1 flex max-w-md flex-col gap-2">
-                              <input
+                            <div className="mt-1 ml-6 flex max-w-md flex-col gap-2">
+                              <Input
+                                inputSize="sm"
                                 type="text"
-                                className="input input-sm input-bordered w-full"
+                                className="w-full"
                                 placeholder="Ordnername"
                                 value={entity.newGroupName || ''}
                                 onChange={(event) => updateMappingDecision(idx, { newGroupName: event.target.value })}
                               />
-                              <label className="flex cursor-pointer items-center gap-2">
-                                <input
-                                  type="checkbox"
-                                  className="checkbox checkbox-sm"
+                              <Label className="cursor-pointer flex-row items-center gap-2">
+                                <Checkbox
+                                  checkboxSize="sm"
                                   checked={Boolean(entity.newGroupDefaultExpanded)}
                                   onChange={(event) => updateMappingDecision(idx, { newGroupDefaultExpanded: event.target.checked })}
                                 />
                                 <span className="text-xs">Standardmäßig aufgeklappt</span>
-                              </label>
+                              </Label>
                             </div>
                           )}
-                          <label className="flex cursor-pointer items-center gap-2">
-                            <input
-                              type="radio"
-                              className="radio radio-sm"
+                          <Label className="cursor-pointer flex-row items-center gap-2">
+                            <Radio
+                              radioSize="sm"
                               name={`group-decision-${idx}`}
                               checked={entity.groupDecision === 'no-group'}
                               onChange={() => updateMappingDecision(idx, { groupDecision: 'no-group' })}
                             />
                             <span className="text-sm">Ohne Ordner importieren</span>
-                          </label>
+                          </Label>
                         </div>
                       </div>
                     )}
@@ -794,12 +812,12 @@ export default function EntityImportModal({ workspaceId, entityType, onImportCom
             </div>
 
             <div className="flex justify-end gap-2">
-              <button className="btn btn-outline" onClick={() => setCurrentStep(1)}>
+              <Button variant="outline" onClick={() => setCurrentStep(1)}>
                 Zurück
-              </button>
-              <button className="btn btn-primary" onClick={() => setCurrentStep(hasDependencyMappings ? 3 : totalSteps)} disabled={hasInvalidGroupAssignments}>
+              </Button>
+              <Button variant="primary" onClick={() => setCurrentStep(hasDependencyMappings ? 3 : totalSteps)} disabled={hasInvalidGroupAssignments}>
                 Weiter
-              </button>
+              </Button>
             </div>
           </div>
         )}
@@ -870,12 +888,12 @@ export default function EntityImportModal({ workspaceId, entityType, onImportCom
             </div>
 
             <div className="flex justify-end gap-2">
-              <button className="btn btn-outline" onClick={() => setCurrentStep(2)}>
+              <Button variant="outline" onClick={() => setCurrentStep(2)}>
                 Zurück
-              </button>
-              <button className="btn btn-primary" onClick={() => setCurrentStep(totalSteps)}>
+              </Button>
+              <Button variant="primary" onClick={() => setCurrentStep(totalSteps)}>
                 Weiter
-              </button>
+              </Button>
             </div>
           </div>
         )}
@@ -902,9 +920,9 @@ export default function EntityImportModal({ workspaceId, entityType, onImportCom
             </div>
 
             <div className="flex justify-end gap-2">
-              <button className="btn btn-primary" onClick={() => modalContext.closeModal()}>
+              <Button variant="primary" onClick={() => modalContext.closeModal()}>
                 Fertig
-              </button>
+              </Button>
             </div>
           </div>
         )}
@@ -933,10 +951,26 @@ export default function EntityImportModal({ workspaceId, entityType, onImportCom
                   <div className="flex flex-col gap-1">
                     {mappingEntities.map((entity, idx) => (
                       <div key={idx} className="flex items-center gap-2 text-sm">
-                        {entity.decision === 'import' && <span className="badge badge-success badge-xs">Erstellen</span>}
-                        {entity.decision === 'overwrite' && <span className="badge badge-warning badge-xs">Überschreiben</span>}
-                        {entity.decision === 'rename' && <span className="badge badge-info badge-xs">Umbenennen</span>}
-                        {entity.decision === 'skip' && <span className="badge badge-ghost badge-xs">Überspringen</span>}
+                        {entity.decision === 'import' && (
+                          <Badge variant="success" size="xs">
+                            Erstellen
+                          </Badge>
+                        )}
+                        {entity.decision === 'overwrite' && (
+                          <Badge variant="warning" size="xs">
+                            Überschreiben
+                          </Badge>
+                        )}
+                        {entity.decision === 'rename' && (
+                          <Badge variant="info" size="xs">
+                            Umbenennen
+                          </Badge>
+                        )}
+                        {entity.decision === 'skip' && (
+                          <Badge variant="ghost" size="xs">
+                            Überspringen
+                          </Badge>
+                        )}
                         <span className={entity.decision === 'skip' ? 'text-base-content/50 line-through' : ''}>
                           {entity.name}
                           {entity.decision === 'rename' && entity.newName && ` → ${entity.newName}`}
@@ -978,9 +1012,13 @@ export default function EntityImportModal({ workspaceId, entityType, onImportCom
                                 return (
                                   <div key={m.exportName} className="flex items-center gap-2 text-sm">
                                     {m.decision === 'use-existing' ? (
-                                      <span className="badge badge-success badge-xs">✓</span>
+                                      <Badge variant="success" size="xs">
+                                        ✓
+                                      </Badge>
                                     ) : (
-                                      <span className="badge badge-warning badge-xs">–</span>
+                                      <Badge variant="warning" size="xs">
+                                        –
+                                      </Badge>
                                     )}
                                     <span className={m.decision === 'skip' ? 'text-base-content/50' : ''}>
                                       {m.exportName}
@@ -1013,22 +1051,18 @@ export default function EntityImportModal({ workspaceId, entityType, onImportCom
 
             {importing ? (
               <div className="flex flex-col items-center justify-center gap-4 py-8">
-                <span className="loading loading-spinner loading-lg" />
+                <Loading size="lg" />
                 <span>Import läuft... Bitte warten Sie.</span>
                 <div className="text-xs text-base-content/50">Dies kann je nach Anzahl einige Sekunden dauern.</div>
               </div>
             ) : (
               <div className="flex justify-end gap-2">
-                <button className="btn btn-outline" onClick={() => setCurrentStep(isCalculation ? 3 : 2)}>
+                <Button variant="outline" onClick={() => setCurrentStep(isCalculation ? 3 : 2)}>
                   Zurück
-                </button>
-                <button
-                  className="btn btn-primary"
-                  onClick={handleExecute}
-                  disabled={mappingEntities.every((e) => e.decision === 'skip') || hasInvalidGroupAssignments}
-                >
+                </Button>
+                <Button variant="primary" onClick={handleExecute} disabled={mappingEntities.every((e) => e.decision === 'skip') || hasInvalidGroupAssignments}>
                   Import starten
-                </button>
+                </Button>
               </div>
             )}
           </div>

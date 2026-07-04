@@ -38,22 +38,24 @@ const App = ({ Component, pageProps: { session, ...pageProps } }: AppPropsWithPu
               }
 
               // The await has the effect in chrome, that the modal was not replaces otherwise
-              setModalContentStack([...modalContentStack, content]);
-              setModalHideCloseButton([...modalHideCloseButton, hideCloseButton ?? false]);
+              setModalContentStack((previousContent) => [...previousContent, content]);
+              setModalHideCloseButton((previousHideCloseButton) => [...previousHideCloseButton, hideCloseButton ?? false]);
             },
             async closeModal() {
-              if (modalContentStack.length > 0) {
-                setModalContentStack(modalContentStack.slice(0, modalContentStack.length - 1));
-                setModalHideCloseButton(modalHideCloseButton.slice(0, modalHideCloseButton.length - 1));
+              setModalContentStack((previousContent) => {
+                if (previousContent.length == 0) {
+                  return previousContent;
+                }
 
-                if (modalContentStack.length == 1 && (document.getElementById('globalModal') as HTMLDialogElement | null)?.open == true) {
+                if (previousContent.length == 1 && (document.getElementById('globalModal') as HTMLDialogElement | null)?.open == true) {
                   (document.getElementById('globalModal') as HTMLDialogElement).close();
                 }
-              } else {
-                if (modalContentStack.length == 0 && (document.getElementById('globalModal') as HTMLDialogElement | null)?.open == true) {
-                  (document.getElementById('globalModal') as HTMLDialogElement).close();
-                }
-              }
+
+                return previousContent.slice(0, -1);
+              });
+              setModalHideCloseButton((previousHideCloseButton) =>
+                previousHideCloseButton.length > 0 ? previousHideCloseButton.slice(0, -1) : previousHideCloseButton,
+              );
 
               forceUpdate();
             },

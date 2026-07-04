@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Loading } from '../Loading';
 import { alertService } from '@lib/alertService';
 import { formatTime } from '@lib/DateUtils';
+import { Button, ButtonGroup, Input, Loading, Table, TableBody, TableCell, TableHead, TableHeaderCell, TableRow, Tooltip } from '@components/ui';
 
 interface OrderTime {
   id: string;
@@ -79,20 +79,16 @@ export default function CocktailOrderTimesModal({ workspaceId, cocktailId, cockt
     fetchOrders();
   }, [fetchOrders]);
 
-  // Debounced search effect - updates search state after user stops typing
   useEffect(() => {
-    // Clear previous timer
     if (debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current);
     }
 
-    // Set new timer
     debounceTimerRef.current = setTimeout(() => {
       setSearch(searchInput);
-      setPage(1); // Reset to first page when searching
-    }, 300); // 300ms debounce delay
+      setPage(1);
+    }, 300);
 
-    // Cleanup on unmount
     return () => {
       if (debounceTimerRef.current) {
         clearTimeout(debounceTimerRef.current);
@@ -100,7 +96,6 @@ export default function CocktailOrderTimesModal({ workspaceId, cocktailId, cockt
     };
   }, [searchInput]);
 
-  // Format date with weekday (e.g., "Do. 08.01.25")
   const formatDateWithWeekday = (dateString: string): string => {
     const date = new Date(dateString);
     return date.toLocaleString('de-DE', {
@@ -121,28 +116,29 @@ export default function CocktailOrderTimesModal({ workspaceId, cocktailId, cockt
     <div className="flex max-h-[80vh] flex-col gap-4 p-4">
       <h3 className="flex-shrink-0 text-xl font-bold">Bestellzeitpunkte: {cocktailName}</h3>
 
-      {/* Search */}
-      <div className={'join w-full'}>
-        <input
-          className="input join-item input-bordered flex-1"
+      <ButtonGroup className="w-full">
+        <Input
+          joinItem
+          className="flex-1"
           type="text"
           placeholder="Suchen nach Datum, Benutzer oder Karte..."
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
         />
         {searchInput && (
-          <button className="btn btn-outline join-item" onClick={handleClearSearch} title="Suche zurücksetzen">
-            ✕
-          </button>
+          <Tooltip tip="Suche zurücksetzen">
+            <Button joinItem variant="outline" onClick={handleClearSearch}>
+              ✕
+            </Button>
+          </Tooltip>
         )}
         {loading && (
-          <span className="btn btn-square btn-ghost join-item">
-            <span className="loading loading-spinner loading-sm"></span>
-          </span>
+          <Button joinItem variant="ghost" shape="square" type="button" tabIndex={-1}>
+            <Loading size="sm" />
+          </Button>
         )}
-      </div>
+      </ButtonGroup>
 
-      {/* Orders List - Scrollable */}
       {loading ? (
         <div className="flex flex-1 items-center justify-center">
           <Loading />
@@ -154,40 +150,39 @@ export default function CocktailOrderTimesModal({ workspaceId, cocktailId, cockt
       ) : (
         <>
           <div className="min-h-0 flex-1 overflow-x-auto overflow-y-auto">
-            <table className="table table-zebra table-sm">
-              <thead className="sticky top-0 z-10 bg-base-200">
-                <tr>
-                  <th>Datum</th>
-                  <th>Uhrzeit</th>
-                  <th>Benutzer</th>
-                  <th>Karte</th>
-                </tr>
-              </thead>
-              <tbody>
+            <Table zebra compact>
+              <TableHead className="sticky top-0 z-10 bg-base-200">
+                <TableRow>
+                  <TableHeaderCell>Datum</TableHeaderCell>
+                  <TableHeaderCell>Uhrzeit</TableHeaderCell>
+                  <TableHeaderCell>Benutzer</TableHeaderCell>
+                  <TableHeaderCell>Karte</TableHeaderCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
                 {orders.map((order) => (
-                  <tr key={order.id}>
-                    <td className="font-medium">{formatDateWithWeekday(order.date)}</td>
-                    <td>{formatTime(new Date(order.date))}</td>
-                    <td>{order.user ? order.user.name : '-'}</td>
-                    <td>{order.cocktailCard ? order.cocktailCard.name : '-'}</td>
-                  </tr>
+                  <TableRow key={order.id}>
+                    <TableCell className="font-medium">{formatDateWithWeekday(order.date)}</TableCell>
+                    <TableCell>{formatTime(new Date(order.date))}</TableCell>
+                    <TableCell>{order.user ? order.user.name : '-'}</TableCell>
+                    <TableCell>{order.cocktailCard ? order.cocktailCard.name : '-'}</TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </div>
 
-          {/* Pagination - Always visible */}
           {totalPages > 1 && (
             <div className="flex flex-shrink-0 items-center justify-center gap-2 border-t border-base-300 pt-2">
-              <button className="btn btn-sm" onClick={() => setPage(Math.max(1, page - 1))} disabled={page === 1}>
+              <Button size="sm" onClick={() => setPage(Math.max(1, page - 1))} disabled={page === 1}>
                 Zurück
-              </button>
+              </Button>
               <span className="text-sm">
                 Seite {page} von {totalPages}
               </span>
-              <button className="btn btn-sm" onClick={() => setPage(Math.min(totalPages, page + 1))} disabled={page === totalPages}>
+              <Button size="sm" onClick={() => setPage(Math.min(totalPages, page + 1))} disabled={page === totalPages}>
                 Weiter
-              </button>
+              </Button>
             </div>
           )}
         </>

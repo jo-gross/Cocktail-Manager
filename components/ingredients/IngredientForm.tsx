@@ -14,7 +14,7 @@ import { Ingredient, Unit, UnitConversion } from '@generated/prisma/client';
 import { UserContext } from '@lib/context/UserContextProvider';
 import { fetchUnitConversions, fetchUnits } from '@lib/network/units';
 import Image from 'next/image';
-import { DaisyUITagInput } from '../DaisyUITagInput';
+import { TagInput } from '../TagInput';
 import CropComponent from '../CropComponent';
 import { FaCropSimple } from 'react-icons/fa6';
 import '../../lib/ArrayUtils';
@@ -22,6 +22,27 @@ import { RoutingContext } from '@lib/context/RoutingContextProvider';
 import { resizeImage } from '@lib/ImageCompressor';
 import { autoCropImage } from '@lib/ImageUtils';
 import { FormValidationWarningModal } from '../modals/FormValidationWarningModal';
+import {
+  Button,
+  ButtonGroup,
+  Divider,
+  FormControl,
+  Input,
+  Label,
+  LabelText,
+  LabelTextAlt,
+  Loading,
+  Select,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeaderCell,
+  TableRow,
+  Textarea,
+} from '@components/ui';
+
+const fieldErrorClass = 'border-error focus:border-error focus:ring-error/25';
 
 interface IngredientFormProps {
   ingredient?: IngredientWithImage;
@@ -246,21 +267,22 @@ export function IngredientForm(props: IngredientFormProps) {
 
         return (
           <form onSubmit={handleFormSubmit} className={'grid grid-cols-1 gap-2 md:grid-cols-2'}>
-            <div className={'form-control col-span-full'}>
-              <label className={'label'} htmlFor={'link'}>
-                <span className={'label-text'}>Über Link importieren</span>
-                <span className={'label-text-alt space-x-2 text-error'}>
+            <FormControl className={'col-span-full'}>
+              <Label htmlFor={'link'} className="flex-row items-center justify-between">
+                <LabelText>Über Link importieren</LabelText>
+                <LabelTextAlt className={'space-x-2 text-error'}>
                   <span>
                     <>{errors.link && errors.link}</>
                   </span>
-                </span>
-              </label>
-              <div className={'join'}>
-                <input
+                </LabelTextAlt>
+              </Label>
+              <ButtonGroup>
+                <Input
                   id={'link'}
                   type={'text'}
                   placeholder={''}
-                  className={`input join-item input-bordered w-full ${errors.link && 'input-error'}`}
+                  className={errors.link ? fieldErrorClass : undefined}
+                  joinItem
                   onChange={async (event) => {
                     checkSimilarLink(event.target.value);
                     handleChange(event);
@@ -269,14 +291,14 @@ export function IngredientForm(props: IngredientFormProps) {
                   value={values.link}
                   name={'link'}
                 />
-                <button
-                  className={`btn btn-primary join-item`}
+                <Button
+                  variant="primary"
+                  joinItem
                   type={'button'}
                   disabled={
                     !(
                       values.link.includes('expert24.com') ||
                       values.link.includes('conalco.de') ||
-                      // values.link.includes('metro.de') ||
                       values.link.includes('rumundco.de') ||
                       values.link.includes('delicando.com')
                     ) || values.fetchingExternalData
@@ -334,37 +356,37 @@ export function IngredientForm(props: IngredientFormProps) {
                       });
                   }}
                 >
-                  {values.fetchingExternalData ? <span className={'loading loading-spinner'}></span> : <></>}
+                  {values.fetchingExternalData ? <Loading size="sm" /> : null}
                   <FaSyncAlt />
-                </button>
-              </div>
+                </Button>
+              </ButtonGroup>
               {similarLinkIngredient && (
-                <div className="label">
-                  <span className="label-text-alt text-warning">
+                <Label className="flex-row">
+                  <LabelTextAlt className="text-warning">
                     Eine Zutat mit ähnlicher Url existiert bereits unter dem Namen <strong>{similarLinkIngredient.name}</strong>.
-                  </span>
-                </div>
+                  </LabelTextAlt>
+                </Label>
               )}
-            </div>
+            </FormControl>
 
-            <div className={'divider-sm col-span-full'}></div>
+            <Divider size="sm" className={'col-span-full'} />
 
             <div className={'grid grid-cols-1 gap-2 xl:grid-cols-2'}>
-              <div className={'form-control col-span-full'}>
-                <label className={'label'} htmlFor={'name'}>
-                  <span className={'label-text'}>Name der Zutat</span>
-                  <span className={'label-text-alt space-x-2 text-error'}>
+              <FormControl className={'col-span-full'}>
+                <Label htmlFor={'name'} className="flex-row items-center justify-between">
+                  <LabelText>Name der Zutat</LabelText>
+                  <LabelTextAlt className={'space-x-2 text-error'}>
                     <span>
                       <>{errors.name && errors.name}</>
                     </span>
                     <span>*</span>
-                  </span>
-                </label>
-                <input
+                  </LabelTextAlt>
+                </Label>
+                <Input
                   id={'name'}
                   type={'text'}
                   autoComplete={'off'}
-                  className={`input input-bordered ${errors.name && 'input-error'}`}
+                  className={errors.name ? fieldErrorClass : undefined}
                   onChange={(event) => {
                     if (event.target.value.length > 2) {
                       checkSimilarName(event.target.value);
@@ -378,64 +400,67 @@ export function IngredientForm(props: IngredientFormProps) {
                   name={'name'}
                 />
                 {similarIngredient && (
-                  <div className="label">
-                    <span className="label-text-alt text-warning">
+                  <Label className="flex-row">
+                    <LabelTextAlt className="text-warning">
                       Eine ähnliche Zutat mit dem Namen <strong>{similarIngredient.name}</strong> existiert bereits.
-                    </span>
-                  </div>
+                    </LabelTextAlt>
+                  </Label>
                 )}
-              </div>
+              </FormControl>
               <div className={'flex flex-col gap-2'}>
-                <div className={'form-control'}>
-                  <label className={'label'} htmlFor={'shortName'}>
-                    <span className={'label-text'}>Eigene Bezeichnung</span>
-                    <span className={'label-text-alt space-x-2 text-error'}>
+                <FormControl>
+                  <Label htmlFor={'shortName'} className="flex-row items-center justify-between">
+                    <LabelText>Eigene Bezeichnung</LabelText>
+                    <LabelTextAlt className={'space-x-2 text-error'}>
                       <span>
                         <>{errors.shortName && errors.shortName}</>
                       </span>
-                    </span>
-                  </label>
-                  <input
+                    </LabelTextAlt>
+                  </Label>
+                  <Input
                     id={'shortName'}
                     type={'text'}
-                    className={`input input-bordered ${errors.shortName && 'input-error'}`}
+                    className={errors.shortName ? fieldErrorClass : undefined}
                     onChange={handleChange}
                     onBlur={handleBlur}
                     value={values.shortName}
                     name={'shortName'}
                   />
-                </div>
-                <div className={'form-control'}>
-                  <label className={'label'} htmlFor={'price'}>
-                    <span className={'label-text'}>Preis</span>
-                    <span className={'label-text-alt space-x-2 text-error'}>
+                </FormControl>
+                <FormControl>
+                  <Label htmlFor={'price'} className="flex-row items-center justify-between">
+                    <LabelText>Preis</LabelText>
+                    <LabelTextAlt className={'space-x-2 text-error'}>
                       <span>
                         <>{errors.price && errors.price}</>
                       </span>
-                    </span>
-                  </label>
-                  <div className={'join'}>
-                    <input
+                    </LabelTextAlt>
+                  </Label>
+                  <ButtonGroup className="w-full">
+                    <Input
                       id={'price'}
                       type={'number'}
-                      className={`input join-item input-bordered w-full ${errors.price && 'input-error'}`}
+                      className={errors.price ? fieldErrorClass : undefined}
+                      joinItem
                       value={values.price}
                       onChange={handleChange}
                       onBlur={handleBlur}
                       name={'price'}
                     />
-                    <span className={'btn btn-secondary join-item'}>€</span>
-                  </div>
-                </div>
+                    <Button type="button" variant="secondary" joinItem>
+                      €
+                    </Button>
+                  </ButtonGroup>
+                </FormControl>
               </div>
               <div>
-                <div className={'label'}>
-                  <span className={'label-text'}>Tags</span>
-                  <span className={'label-text-alt text-error'}>
+                <Label className="flex-row items-center justify-between">
+                  <LabelText>Tags</LabelText>
+                  <LabelTextAlt className="text-error">
                     <>{errors.tags && errors.tags}</>
-                  </span>
-                </div>
-                <DaisyUITagInput
+                  </LabelTextAlt>
+                </Label>
+                <TagInput
                   value={values.tags}
                   onChange={(tags) =>
                     setFieldValue(
@@ -451,79 +476,87 @@ export function IngredientForm(props: IngredientFormProps) {
                 {({ push: pushUnit, remove: removeUnit }) => (
                   <>
                     <div>
-                      <div className={'label-text'}>Mengen</div>
+                      <LabelText>Mengen</LabelText>
                       <div className={'overflow-x-auto'}>
-                        <table className={'table table-zebra'}>
-                          <thead className={'bg-base-300'}>
-                            <tr>
-                              <td colSpan={4}>Verfügbare Einheiten</td>
-                            </tr>
-                          </thead>
-                          <tbody>
+                        <Table zebra className="bg-base-300">
+                          <TableHead>
+                            <TableRow>
+                              <TableHeaderCell colSpan={4}>Verfügbare Einheiten</TableHeaderCell>
+                            </TableRow>
+                          </TableHead>
+                          <TableBody>
                             {values.units.length == 0 ? (
-                              <tr>
-                                <td colSpan={4} className={'text-center'}>
+                              <TableRow>
+                                <TableCell colSpan={4} className={'text-center'}>
                                   Keine Einheiten hinzugefügt
-                                </td>
-                              </tr>
+                                </TableCell>
+                              </TableRow>
                             ) : (
                               (values.units as FormUnitValue[]).map((unit, index) => (
-                                <tr key={`selected-units-${unit.unitId}`}>
-                                  <td>
+                                <TableRow key={`selected-units-${unit.unitId}`}>
+                                  <TableCell>
                                     {unit.volume.toLocaleString(undefined, {
                                       minimumFractionDigits: 0,
                                       maximumFractionDigits: 2,
                                     })}
-                                  </td>
-                                  <td>{userContext.getTranslation(allUnits.find((availableUnit) => availableUnit.id == unit.unitId)?.name ?? 'N/A', 'de')}</td>
-                                  <td>
+                                  </TableCell>
+                                  <TableCell>
+                                    {userContext.getTranslation(allUnits.find((availableUnit) => availableUnit.id == unit.unitId)?.name ?? 'N/A', 'de')}
+                                  </TableCell>
+                                  <TableCell>
                                     {values.price != undefined && typeof values.price === 'number'
                                       ? (values.price / unit.volume).toFixed(2).replace(/\D00(?=\D*$)/, '')
                                       : '-'}{' '}
                                     €/
                                     {userContext.getTranslation(allUnits.find((availableUnit) => availableUnit.id == unit.unitId)?.name ?? 'N/A', 'de')}
-                                  </td>
-                                  <td className={'flex flex-row items-center justify-center'}>
-                                    <div
-                                      className={'btn btn-square btn-error btn-sm'}
-                                      // type={'button'}
+                                  </TableCell>
+                                  <TableCell className={'flex flex-row items-center justify-center'}>
+                                    <Button
+                                      type="button"
+                                      variant="error"
+                                      shape="square"
+                                      size="sm"
                                       onClick={() => {
                                         removeUnit(index);
                                       }}
                                     >
                                       <FaTrashAlt />
-                                    </div>
-                                  </td>
-                                </tr>
+                                    </Button>
+                                  </TableCell>
+                                </TableRow>
                               ))
                             )}
-                          </tbody>
-                        </table>
+                          </TableBody>
+                        </Table>
                       </div>
                     </div>
                     <div>
-                      <div className={'form-control'}>
-                        <label className={'label'} htmlFor={'anotherVolume'}>
-                          <span className={'label-text'}>Weitere Menge hinzufügen</span>
-                          <span className={'label-text-alt space-x-2 text-error'}>
+                      <FormControl>
+                        <Label htmlFor={'anotherVolume'} className="flex-row items-center justify-between">
+                          <LabelText>Weitere Menge hinzufügen</LabelText>
+                          <LabelTextAlt className={'space-x-2 text-error'}>
                             <span>
                               <>{errors.volume && errors.volume}</>
                             </span>
                             <span>*</span>
-                          </span>
-                        </label>
-                        <div className={'join'}>
-                          <input
+                          </LabelTextAlt>
+                        </Label>
+                        <ButtonGroup className="w-full">
+                          <Input
                             id={'anotherVolume'}
                             type={'number'}
-                            className={`input input-sm join-item input-bordered w-full ${errors.volume && 'input-error'}`}
+                            inputSize="sm"
+                            className={errors.volume ? fieldErrorClass : undefined}
+                            joinItem
                             value={values.volume}
                             onChange={handleChange}
                             onBlur={handleBlur}
                             name={'volume'}
                           />
-                          <select
-                            className={`join-item select select-bordered select-sm ${errors.selectedUnit && 'select-error'}`}
+                          <Select
+                            selectSize="sm"
+                            className={errors.selectedUnit ? `${fieldErrorClass} flex-1` : 'flex-1'}
+                            joinItem
                             onChange={handleChange}
                             onBlur={handleBlur}
                             name={'selectedUnit'}
@@ -553,9 +586,11 @@ export function IngredientForm(props: IngredientFormProps) {
                                   ))}
                               </>
                             )}
-                          </select>
-                          <button
-                            className={'btn btn-primary join-item btn-sm'}
+                          </Select>
+                          <Button
+                            variant="primary"
+                            size="sm"
+                            joinItem
                             type={'button'}
                             disabled={
                               loadingUnits || values.volume == 0 || values.selectedUnit == '' || isNaN(values.volume ?? 0) || values.selectedUnit == undefined
@@ -567,11 +602,11 @@ export function IngredientForm(props: IngredientFormProps) {
                             }}
                           >
                             Hinzufügen
-                          </button>
-                        </div>
-                      </div>
+                          </Button>
+                        </ButtonGroup>
+                      </FormControl>
                       <div>
-                        <div className={'label-text'}>Mengen vorschläge</div>
+                        <LabelText>Mengen vorschläge</LabelText>
                         <ul className={'list-inside list-disc'}>
                           {_.uniqBy(
                             defaultConversions
@@ -594,14 +629,16 @@ export function IngredientForm(props: IngredientFormProps) {
                                 <span className={'p-2'}>
                                   {userContext.getTranslation(allUnits.find((unit) => unit.id == suggestion.unitId)?.name ?? 'N/A', 'de')}
                                 </span>
-                                <span
-                                  className={'btn btn-ghost btn-sm'}
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
                                   onClick={async () => {
                                     pushUnit(suggestion);
                                   }}
                                 >
                                   Hinzufügen
-                                </span>
+                                </Button>
                               </li>
                             ),
                             <div className={'italic'}>Keine weiteren Vorschläge</div>,
@@ -614,7 +651,11 @@ export function IngredientForm(props: IngredientFormProps) {
               </FieldArray>
 
               <div className={'col-span-full'}>
-                <div className={'divider'}>Vorschau Bild</div>
+                <div className="flex items-center gap-3 py-2">
+                  <Divider className="my-0 flex-1" />
+                  <span className="shrink-0 text-sm font-medium text-base-content/70">Vorschau Bild</span>
+                  <Divider className="my-0 flex-1" />
+                </div>
                 {values.image == undefined && values.originalImage == undefined ? (
                   <UploadDropZone
                     onSelectedFilesChanged={async (file) => {
@@ -650,17 +691,24 @@ export function IngredientForm(props: IngredientFormProps) {
                 ) : (
                   <div className={'w-full'}>
                     <div className={'relative'}>
-                      <div className={'absolute right-2 top-2 z-20 flex flex-row gap-2'}>
-                        <div
-                          className={'btn btn-square btn-outline btn-secondary btn-sm'}
+                      <div className={'absolute top-2 right-2 z-20 flex flex-row gap-2'}>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          shape="square"
+                          size="sm"
                           onClick={async () => {
                             await setFieldValue('image', undefined);
                           }}
                         >
                           <FaCropSimple />
-                        </div>
-                        <div
-                          className={'btn btn-square btn-outline btn-error btn-sm'}
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          shape="square"
+                          size="sm"
+                          className="border-error text-error hover:bg-error/10"
                           onClick={() =>
                             modalContext.openModal(
                               <DeleteConfirmationModal
@@ -675,7 +723,7 @@ export function IngredientForm(props: IngredientFormProps) {
                           }
                         >
                           <FaTrashAlt />
-                        </div>
+                        </Button>
                       </div>
                       <div className={'bg-transparent-pattern relative h-32 w-32 rounded-lg'}>
                         <Image className={'w-fit rounded-lg'} src={values.image ?? ''} layout={'fill'} objectFit={'contain'} alt={'Ingredient Image'} />
@@ -690,18 +738,18 @@ export function IngredientForm(props: IngredientFormProps) {
               </div>
             </div>
             <div className={'flex h-full flex-col gap-2'}>
-              <div className={'form-control col-span-full'}>
-                <label className={'label'} htmlFor={'description'}>
-                  <span className={'label-text'}>Allgemeine Zutatenbeschreibung</span>
-                  <span className={'label-text-alt space-x-2 text-error'}>
+              <FormControl className={'col-span-full'}>
+                <Label htmlFor={'description'} className="flex-row items-center justify-between">
+                  <LabelText>Allgemeine Zutatenbeschreibung</LabelText>
+                  <LabelTextAlt className={'space-x-2 text-error'}>
                     <span>
                       <>{errors.description && errors.description}</>
                     </span>
-                  </span>
-                </label>
-                <textarea
+                  </LabelTextAlt>
+                </Label>
+                <Textarea
                   id={'description'}
-                  className={`textarea textarea-bordered ${errors.description && 'textarea-error'} w-full`}
+                  className={errors.description ? fieldErrorClass : undefined}
                   value={values.description}
                   onChange={handleChange}
                   onBlur={handleBlur}
@@ -709,20 +757,20 @@ export function IngredientForm(props: IngredientFormProps) {
                   placeholder={'Herkunft, Geschichte, etc.'}
                   rows={5}
                 />
-              </div>
+              </FormControl>
 
-              <div className={'form-control col-span-full'}>
-                <label className={'label'} htmlFor={'notes'}>
-                  <span className={'label-text'}>Notizen</span>
-                  <span className={'label-text-alt space-x-2 text-error'}>
+              <FormControl className={'col-span-full'}>
+                <Label htmlFor={'notes'} className="flex-row items-center justify-between">
+                  <LabelText>Notizen</LabelText>
+                  <LabelTextAlt className={'space-x-2 text-error'}>
                     <span>
                       <>{errors.notes && errors.notes}</>
                     </span>
-                  </span>
-                </label>
-                <textarea
+                  </LabelTextAlt>
+                </Label>
+                <Textarea
                   id={'notes'}
-                  className={`textarea textarea-bordered ${errors.notes && 'textarea-error'} w-full`}
+                  className={errors.notes ? fieldErrorClass : undefined}
                   value={values.notes}
                   onChange={handleChange}
                   onBlur={handleBlur}
@@ -730,17 +778,17 @@ export function IngredientForm(props: IngredientFormProps) {
                   placeholder={'Lagerort, Zubereitung, etc.'}
                   rows={5}
                 />
-              </div>
+              </FormControl>
               <div className={'flex-grow'}></div>
               <div className={'col-span-full'}>
-                <div className={'form-control'}>
-                  <button type={'submit'} className={`btn btn-primary`} disabled={isSubmitting || !isValid}>
-                    {isSubmitting ? <span className={'loading loading-spinner'} /> : <></>}
+                <FormControl>
+                  <Button type={'submit'} variant="primary" disabled={isSubmitting || !isValid}>
+                    {isSubmitting ? <Loading size="sm" /> : null}
                     Speichern
-                  </button>
-                </div>
+                  </Button>
+                </FormControl>
                 {!isValid && (
-                  <div className={'font-thin italic text-error'}>
+                  <div className={'font-thin text-error italic'}>
                     Nicht alle Felder sind korrekt ausgefüllt. Kontrolliere daher alle Felder. (Name gesetzt, Bild zugeschnitten, ... ?)
                   </div>
                 )}

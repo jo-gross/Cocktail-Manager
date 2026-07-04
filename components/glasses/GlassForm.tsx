@@ -15,6 +15,7 @@ import { FaCropSimple } from 'react-icons/fa6';
 import { Glass } from '@generated/prisma/client';
 import { RoutingContext } from '@lib/context/RoutingContextProvider';
 import { resizeImage } from '@lib/ImageCompressor';
+import { Button, ButtonGroup, Divider, FormControl, Input, Label, LabelText, LabelTextAlt, Loading } from '@components/ui';
 
 export interface GlassFormValues {
   name: string;
@@ -30,6 +31,8 @@ interface GlassFormProps {
   formRef?: React.RefObject<FormikProps<GlassFormValues> | null>;
   onSaved?: (id: string) => void;
 }
+
+const fieldErrorClass = 'border-error focus:border-error focus:ring-error/25';
 
 export function GlassForm(props: GlassFormProps) {
   const router = useRouter();
@@ -125,24 +128,24 @@ export function GlassForm(props: GlassFormProps) {
     >
       {({ values, setFieldValue, errors, handleChange, handleBlur, handleSubmit, isSubmitting, isValid }) => (
         <form onSubmit={handleSubmit} className={'grid w-full grid-cols-1 gap-2 md:max-w-4xl md:grid-cols-2'}>
-          <div className={'form-control col-span-full'}>
-            <label className={'label'} htmlFor={'name'}>
-              <span className={'label-text'}>Name</span>
-              <span className={'label-text-alt space-x-2 text-error'}>
+          <FormControl className={'col-span-full'}>
+            <Label htmlFor={'name'} className="flex-row items-center justify-between">
+              <LabelText>Name</LabelText>
+              <LabelTextAlt className={'space-x-2 text-error'}>
                 <span>
                   <>{errors.name && errors.name}</>
                 </span>
                 <span>*</span>
-              </span>
-            </label>
-            <input
+              </LabelTextAlt>
+            </Label>
+            <Input
               id={'name'}
               name={'name'}
               value={values.name}
               autoComplete={'off'}
               type={'text'}
               placeholder={'Name'}
-              className={`input input-bordered w-full ${errors.name && 'input-error'}`}
+              className={errors.name ? fieldErrorClass : undefined}
               onChange={(event) => {
                 if (event.target.value.length > 2) {
                   fetch(`/api/workspaces/${workspaceId}/glasses/check?name=${event.target.value}`)
@@ -166,61 +169,70 @@ export function GlassForm(props: GlassFormProps) {
               onBlur={handleBlur}
             />
             {similarGlass && (
-              <div className="label">
-                <span className="label-text-alt text-warning">
+              <Label className="flex-row">
+                <LabelTextAlt className="text-warning">
                   Ein ähnliches Glas mit dem Namen <strong>{similarGlass.name}</strong> existiert bereits.
-                </span>
-              </div>
+                </LabelTextAlt>
+              </Label>
             )}
-          </div>
+          </FormControl>
 
-          <div className={'form-control'}>
-            <label className={'label'} htmlFor={'deposit'}>
-              <span className={'label-text'}>Pfand</span>
-              <span className={'label-text-alt space-x-2 text-error'}>
+          <FormControl>
+            <Label htmlFor={'deposit'} className="flex-row items-center justify-between">
+              <LabelText>Pfand</LabelText>
+              <LabelTextAlt className={'space-x-2 text-error'}>
                 <span>
                   <>{errors.deposit && errors.deposit}</>
                 </span>
-              </span>
-            </label>
-            <div className={'join'}>
-              <input
+              </LabelTextAlt>
+            </Label>
+            <ButtonGroup className="w-full">
+              <Input
                 id={'deposit'}
                 type={'number'}
                 placeholder={'Deposit'}
-                className={`input join-item input-bordered w-full ${errors.deposit && 'input-error'}}`}
+                className={errors.deposit ? fieldErrorClass : undefined}
+                joinItem
                 value={values.deposit}
                 onChange={handleChange}
                 onBlur={handleBlur}
                 name={'deposit'}
               />
-              <span className={'btn btn-secondary join-item'}>€</span>
-            </div>
-          </div>
-          <div className={'form-control'}>
-            <label className={'label'} htmlFor={'volume'}>
-              <span className={'label-text'}>Volumen</span>
-            </label>
-            <div className={'join'}>
-              <input
+              <Button type="button" variant="secondary" joinItem>
+                €
+              </Button>
+            </ButtonGroup>
+          </FormControl>
+          <FormControl>
+            <Label htmlFor={'volume'} className="flex-row items-center justify-between">
+              <LabelText>Volumen</LabelText>
+            </Label>
+            <ButtonGroup className="w-full">
+              <Input
                 id={'volume'}
                 type={'number'}
                 placeholder={'38cl'}
-                className={'input join-item input-bordered w-full'}
+                joinItem
                 value={values.volume}
                 onChange={handleChange}
                 onBlur={handleBlur}
                 name={'volume'}
               />
-              <span className={'btn btn-secondary join-item'}>cl</span>
-            </div>
+              <Button type="button" variant="secondary" joinItem>
+                cl
+              </Button>
+            </ButtonGroup>
+          </FormControl>
+          <div className="col-span-full flex items-center gap-3 py-2">
+            <Divider className="my-0 flex-1" />
+            <span className="shrink-0 text-sm font-medium text-base-content/70">Darstellung</span>
+            <Divider className="my-0 flex-1" />
           </div>
-          <div className="divider col-span-full">Darstellung</div>
-          <div className={'form-control col-span-full'}>
+          <FormControl className={'col-span-full'}>
             {values.image != undefined ? (
-              <div className={'label'}>
-                <span className={'label-text'}>Vorschau Bild</span>
-              </div>
+              <Label className="flex-row">
+                <LabelText>Vorschau Bild</LabelText>
+              </Label>
             ) : (
               <></>
             )}
@@ -258,17 +270,24 @@ export function GlassForm(props: GlassFormProps) {
               </div>
             ) : (
               <div className={'relative'}>
-                <div className={'absolute right-2 top-2 flex flex-row gap-2'}>
-                  <div
-                    className={'btn btn-square btn-outline btn-sm'}
+                <div className={'absolute top-2 right-2 flex flex-row gap-2'}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    shape="square"
+                    size="sm"
                     onClick={async () => {
                       await setFieldValue('image', undefined);
                     }}
                   >
                     <FaCropSimple />
-                  </div>
-                  <div
-                    className={'btn btn-square btn-outline btn-error btn-sm'}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    shape="square"
+                    size="sm"
+                    className="border-error text-error hover:bg-error/10"
                     onClick={() =>
                       modalContext.openModal(
                         <DeleteConfirmationModal
@@ -283,7 +302,7 @@ export function GlassForm(props: GlassFormProps) {
                     }
                   >
                     <FaTrashAlt />
-                  </div>
+                  </Button>
                 </div>
                 <div className={'bg-transparent-pattern relative h-32 w-32 rounded-lg'}>
                   <Image className={'w-fit rounded-lg'} src={values.image ?? ''} layout={'fill'} objectFit={'contain'} alt={'Glass Image'} />
@@ -294,17 +313,17 @@ export function GlassForm(props: GlassFormProps) {
                 </div>
               </div>
             )}
-          </div>
-          <div className="divider col-span-full"></div>
+          </FormControl>
+          <Divider className="col-span-full" />
           <div className={'col-span-full'}>
-            <div className={'form-control'}>
-              <button disabled={isSubmitting || !isValid} type={'submit'} className={`btn btn-primary`}>
-                {isSubmitting ? <span className={'loading loading-spinner'} /> : <></>}
+            <FormControl>
+              <Button disabled={isSubmitting || !isValid} type={'submit'} variant="primary">
+                {isSubmitting ? <Loading size="sm" /> : null}
                 Speichern
-              </button>
-            </div>
+              </Button>
+            </FormControl>
             {!isValid && (
-              <div className={'font-thin italic text-error'}>
+              <div className={'font-thin text-error italic'}>
                 Nicht alle Felder sind korrekt ausgefüllt. Kontrolliere daher alle Felder. (Name gesetzt, Bild zugeschnitten, ... ?)
               </div>
             )}

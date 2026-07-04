@@ -1,5 +1,6 @@
 import { FaSearch } from 'react-icons/fa';
 import React from 'react';
+import { Input } from '@components/ui';
 
 interface ListSearchFieldProps {
   onFilterChange: (filterString: string) => void;
@@ -7,20 +8,19 @@ interface ListSearchFieldProps {
 
 export default function ListSearchField(props: ListSearchFieldProps) {
   const [filterString, setFilterString] = React.useState('');
+
   return (
-    <div className={'join w-full self-center'}>
-      <input
-        className={'input join-item input-bordered w-full'}
-        placeholder={'Suche...'}
+    <div className="relative w-full">
+      <FaSearch className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-base-content/40" aria-hidden />
+      <Input
+        className="w-full pl-9"
+        placeholder="Suche..."
         value={filterString}
         onChange={(e) => {
           setFilterString(e.target.value);
           props.onFilterChange(e.target.value);
         }}
       />
-      <span className={'btn btn-primary join-item'}>
-        <FaSearch />
-      </span>
     </div>
   );
 }

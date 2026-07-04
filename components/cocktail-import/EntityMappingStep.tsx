@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { CocktailExportStructure } from '../../types/CocktailExportStructure';
 import { alertService } from '@lib/alertService';
 import { EntityMappingSection } from './EntityMappingSection';
+import { Button, Loading } from '@components/ui';
 
 interface EntityMapping {
   exportId: string;
@@ -118,7 +119,7 @@ export function EntityMappingStep({ workspaceId, exportData, selectedCocktailIds
   if (loading) {
     return (
       <div className={'flex flex-col items-center justify-center gap-4 py-8'}>
-        <span className={'loading loading-spinner loading-lg'}></span>
+        <Loading size="lg" />
         <span>Mapping-Daten werden geladen...</span>
       </div>
     );
@@ -219,12 +220,12 @@ export function EntityMappingStep({ workspaceId, exportData, selectedCocktailIds
       </div>
 
       <div className={'flex justify-end gap-2'}>
-        <button className={'btn btn-outline'} onClick={onBack}>
+        <Button variant="outline" onClick={onBack}>
           Zurück
-        </button>
-        <button className={'btn btn-primary'} onClick={handleNext}>
+        </Button>
+        <Button variant="primary" onClick={handleNext}>
           Weiter
-        </button>
+        </Button>
       </div>
     </div>
   );

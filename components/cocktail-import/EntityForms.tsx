@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Formik, useFormikContext } from 'formik';
+import { Button, Card, CardBody, FormControl, Input, Label, LabelText, LabelTextAlt, Select } from '@components/ui';
 
 interface EntityFormEntity {
   id: string;
@@ -30,31 +31,33 @@ function UnitFormContent({ onDataChange }: { onDataChange: (data: Record<string,
   }, [values.identifier, values.lableDE, onDataChange]);
 
   return (
-    <div className="ml-6 rounded-lg border border-base-300 bg-base-200 p-3">
-      <div className="mb-2 text-sm font-semibold">Neue Einheit erstellen</div>
-      <div className="grid grid-cols-2 gap-2">
-        <div className="form-control">
-          <label className="label">
-            <div className="label-text text-xs">Identifier (A-Z,_)</div>
-            <div className="label-text-alt text-xs text-error">
-              <span>{errors.identifier && touched.identifier ? String(errors.identifier) : ''}</span>
-              <span>*</span>
-            </div>
-          </label>
-          <input id="identifier" name="identifier" value={values.identifier} onChange={handleChange} className="input input-sm input-bordered" />
+    <Card variant="elevated" className="ml-6 rounded-lg">
+      <CardBody compact>
+        <div className="mb-2 text-sm font-semibold">Neue Einheit erstellen</div>
+        <div className="grid grid-cols-2 gap-2">
+          <FormControl>
+            <Label htmlFor="identifier" className="flex-row items-center justify-between">
+              <LabelText className="text-xs">Identifier (A-Z,_)</LabelText>
+              <LabelTextAlt className="text-xs text-error">
+                <span>{errors.identifier && touched.identifier ? String(errors.identifier) : ''}</span>
+                <span>*</span>
+              </LabelTextAlt>
+            </Label>
+            <Input id="identifier" name="identifier" inputSize="sm" value={values.identifier} onChange={handleChange} />
+          </FormControl>
+          <FormControl>
+            <Label htmlFor="lableDE" className="flex-row items-center justify-between">
+              <LabelText className="text-xs">Deutsch</LabelText>
+              <LabelTextAlt className="text-xs text-error">
+                <span>{errors.lableDE && touched.lableDE ? String(errors.lableDE) : ''}</span>
+                <span>*</span>
+              </LabelTextAlt>
+            </Label>
+            <Input id="lableDE" name="lableDE" inputSize="sm" value={values.lableDE} onChange={handleChange} />
+          </FormControl>
         </div>
-        <div className="form-control">
-          <label className="label">
-            <div className="label-text text-xs">Deutsch</div>
-            <div className="label-text-alt text-xs text-error">
-              <span>{errors.lableDE && touched.lableDE ? String(errors.lableDE) : ''}</span>
-              <span>*</span>
-            </div>
-          </label>
-          <input id="lableDE" name="lableDE" value={values.lableDE} onChange={handleChange} className="input input-sm input-bordered" />
-        </div>
-      </div>
-    </div>
+      </CardBody>
+    </Card>
   );
 }
 
@@ -108,31 +111,33 @@ function IceFormContent({ onDataChange }: { onDataChange: (data: Record<string, 
   }, [values.identifier, values.lableDE, onDataChange]);
 
   return (
-    <div className="ml-6 rounded-lg border border-base-300 bg-base-200 p-3">
-      <div className="mb-2 text-sm font-semibold">Neues Eis erstellen</div>
-      <div className="grid grid-cols-2 gap-2">
-        <div className="form-control">
-          <label className="label">
-            <div className="label-text text-xs">Identifier (A-Z,_)</div>
-            <div className="label-text-alt text-xs text-error">
-              <span>{errors.identifier && touched.identifier ? String(errors.identifier) : ''}</span>
-              <span>*</span>
-            </div>
-          </label>
-          <input id="identifier" name="identifier" value={values.identifier} onChange={handleChange} className="input input-sm input-bordered" />
+    <Card variant="elevated" className="ml-6 rounded-lg">
+      <CardBody compact>
+        <div className="mb-2 text-sm font-semibold">Neues Eis erstellen</div>
+        <div className="grid grid-cols-2 gap-2">
+          <FormControl>
+            <Label htmlFor="identifier" className="flex-row items-center justify-between">
+              <LabelText className="text-xs">Identifier (A-Z,_)</LabelText>
+              <LabelTextAlt className="text-xs text-error">
+                <span>{errors.identifier && touched.identifier ? String(errors.identifier) : ''}</span>
+                <span>*</span>
+              </LabelTextAlt>
+            </Label>
+            <Input id="identifier" name="identifier" inputSize="sm" value={values.identifier} onChange={handleChange} />
+          </FormControl>
+          <FormControl>
+            <Label htmlFor="lableDE" className="flex-row items-center justify-between">
+              <LabelText className="text-xs">Deutsch</LabelText>
+              <LabelTextAlt className="text-xs text-error">
+                <span>{errors.lableDE && touched.lableDE ? String(errors.lableDE) : ''}</span>
+                <span>*</span>
+              </LabelTextAlt>
+            </Label>
+            <Input id="lableDE" name="lableDE" inputSize="sm" value={values.lableDE} onChange={handleChange} />
+          </FormControl>
         </div>
-        <div className="form-control">
-          <label className="label">
-            <div className="label-text text-xs">Deutsch</div>
-            <div className="label-text-alt text-xs text-error">
-              <span>{errors.lableDE && touched.lableDE ? String(errors.lableDE) : ''}</span>
-              <span>*</span>
-            </div>
-          </label>
-          <input id="lableDE" name="lableDE" value={values.lableDE} onChange={handleChange} className="input input-sm input-bordered" />
-        </div>
-      </div>
-    </div>
+      </CardBody>
+    </Card>
   );
 }
 
@@ -202,87 +207,90 @@ function StepActionFormContent({
   }, [values.action, values.actionGroup, values.newActionGroup, values.lableDE, newGroupMode, onDataChange]);
 
   return (
-    <div className="ml-6 rounded-lg border border-base-300 bg-base-200 p-3">
-      <div className="mb-2 text-sm font-semibold">Neue Aktion erstellen</div>
+    <Card variant="elevated" className="ml-6 rounded-lg">
+      <CardBody compact>
+        <div className="mb-2 text-sm font-semibold">Neue Aktion erstellen</div>
 
-      {/* Action Group Selection */}
-      <div className="form-control mb-2">
-        <label className="label">
-          <div className="label-text text-xs">Gruppe</div>
-          <div className="label-text-alt text-xs text-error">
-            <span>{errors.actionGroup && touched.actionGroup ? String(errors.actionGroup) : ''}</span>
-            <span>{errors.newActionGroup && touched.newActionGroup ? String(errors.newActionGroup) : ''}</span>
-            <span>*</span>
-          </div>
-        </label>
-        {!newGroupMode ? (
-          <div className="flex gap-2">
-            <select name="actionGroup" value={values.actionGroup} onChange={handleChange} className="select select-bordered select-sm flex-1">
-              <option value="">Gruppe auswählen...</option>
-              {existingGroups.map((group) => (
-                <option key={group} value={group}>
-                  {group}
-                </option>
-              ))}
-            </select>
-            <button
-              type="button"
-              className="btn btn-outline btn-sm"
-              onClick={() => {
-                setNewGroupMode(true);
-                setFieldValue('actionGroup', '');
-              }}
-            >
-              Neue Gruppe
-            </button>
-          </div>
-        ) : (
-          <div className="flex gap-2">
-            <input
-              name="newActionGroup"
-              value={values.newActionGroup}
-              onChange={handleChange}
-              placeholder="Gruppe-Identifier (A-Z,_)"
-              className="input input-sm input-bordered flex-1"
-            />
-            <button
-              type="button"
-              className="btn btn-outline btn-sm"
-              onClick={() => {
-                setNewGroupMode(false);
-                setFieldValue('newActionGroup', '');
-              }}
-            >
-              Abbrechen
-            </button>
-          </div>
-        )}
-      </div>
+        <FormControl className="mb-2">
+          <Label className="flex-row items-center justify-between">
+            <LabelText className="text-xs">Gruppe</LabelText>
+            <LabelTextAlt className="text-xs text-error">
+              <span>{errors.actionGroup && touched.actionGroup ? String(errors.actionGroup) : ''}</span>
+              <span>{errors.newActionGroup && touched.newActionGroup ? String(errors.newActionGroup) : ''}</span>
+              <span>*</span>
+            </LabelTextAlt>
+          </Label>
+          {!newGroupMode ? (
+            <div className="flex gap-2">
+              <Select name="actionGroup" selectSize="sm" value={values.actionGroup} onChange={handleChange} className="flex-1">
+                <option value="">Gruppe auswählen...</option>
+                {existingGroups.map((group) => (
+                  <option key={group} value={group}>
+                    {group}
+                  </option>
+                ))}
+              </Select>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setNewGroupMode(true);
+                  setFieldValue('actionGroup', '');
+                }}
+              >
+                Neue Gruppe
+              </Button>
+            </div>
+          ) : (
+            <div className="flex gap-2">
+              <Input
+                name="newActionGroup"
+                inputSize="sm"
+                value={values.newActionGroup}
+                onChange={handleChange}
+                placeholder="Gruppe-Identifier (A-Z,_)"
+                className="flex-1"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setNewGroupMode(false);
+                  setFieldValue('newActionGroup', '');
+                }}
+              >
+                Abbrechen
+              </Button>
+            </div>
+          )}
+        </FormControl>
 
-      {/* Action and Translation */}
-      <div className="grid grid-cols-2 gap-2">
-        <div className="form-control">
-          <label className="label">
-            <div className="label-text text-xs">Identifier (A-Z,_)</div>
-            <div className="label-text-alt text-xs text-error">
-              <span>{errors.action && touched.action ? String(errors.action) : ''}</span>
-              <span>*</span>
-            </div>
-          </label>
-          <input id="action" name="action" value={values.action} onChange={handleChange} className="input input-sm input-bordered" />
+        <div className="grid grid-cols-2 gap-2">
+          <FormControl>
+            <Label htmlFor="action" className="flex-row items-center justify-between">
+              <LabelText className="text-xs">Identifier (A-Z,_)</LabelText>
+              <LabelTextAlt className="text-xs text-error">
+                <span>{errors.action && touched.action ? String(errors.action) : ''}</span>
+                <span>*</span>
+              </LabelTextAlt>
+            </Label>
+            <Input id="action" name="action" inputSize="sm" value={values.action} onChange={handleChange} />
+          </FormControl>
+          <FormControl>
+            <Label htmlFor="lableDE" className="flex-row items-center justify-between">
+              <LabelText className="text-xs">Deutsch</LabelText>
+              <LabelTextAlt className="text-xs text-error">
+                <span>{errors.lableDE && touched.lableDE ? String(errors.lableDE) : ''}</span>
+                <span>*</span>
+              </LabelTextAlt>
+            </Label>
+            <Input id="lableDE" name="lableDE" inputSize="sm" value={values.lableDE} onChange={handleChange} />
+          </FormControl>
         </div>
-        <div className="form-control">
-          <label className="label">
-            <div className="label-text text-xs">Deutsch</div>
-            <div className="label-text-alt text-xs text-error">
-              <span>{errors.lableDE && touched.lableDE ? String(errors.lableDE) : ''}</span>
-              <span>*</span>
-            </div>
-          </label>
-          <input id="lableDE" name="lableDE" value={values.lableDE} onChange={handleChange} className="input input-sm input-bordered" />
-        </div>
-      </div>
-    </div>
+      </CardBody>
+    </Card>
   );
 }
 

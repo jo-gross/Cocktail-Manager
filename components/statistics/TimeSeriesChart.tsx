@@ -303,7 +303,7 @@ export function TimeSeriesChart({
   return (
     <div ref={containerRef} style={{ height: `${height}px`, position: 'relative' }}>
       {loading ? (
-        <div className="skeleton h-full w-full"></div>
+        <div className="h-full w-full skeleton"></div>
       ) : (
         <>
           <Line data={chartData} options={options} />

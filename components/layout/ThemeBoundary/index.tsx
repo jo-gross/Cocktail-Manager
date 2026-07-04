@@ -1,5 +1,5 @@
 import { ThemeContext } from '@lib/context/ThemeContextProvider';
-import { useContext, useEffect, useState } from 'react';
+import { useContext, useEffect, useRef, useState } from 'react';
 import { UserContext } from '@lib/context/UserContextProvider';
 
 interface ThemeBoundaryProps {
@@ -25,34 +25,35 @@ function getInitialTheme(): 'dark' | 'auto' | 'light' {
 function applyThemeToDOM(theme: 'dark' | 'auto' | 'light') {
   if (typeof document === 'undefined') return;
   if (theme === 'dark') {
-    document.documentElement.setAttribute('data-theme', 'halloween');
+    document.documentElement.setAttribute('data-theme', 'dark');
   } else if (theme === 'light') {
-    document.documentElement.setAttribute('data-theme', 'autumn');
+    document.documentElement.setAttribute('data-theme', 'light');
   } else {
-    // auto: remove data-theme so daisyUI uses prefers-color-scheme with darkTheme config
     document.documentElement.removeAttribute('data-theme');
   }
 }
 
 export default function ThemeBoundary(props: ThemeBoundaryProps) {
   const [theme, setTheme] = useState<'dark' | 'auto' | 'light'>(getInitialTheme);
+  const initialServerSyncDone = useRef(false);
 
   const userContext = useContext(UserContext);
 
-  // Sync theme from user settings (API) when available
+  // Apply server theme once on initial user load (not on every fetchUser)
   useEffect(() => {
-    userContext.user?.settings?.forEach((setting) => {
+    if (!userContext.user) {
+      initialServerSyncDone.current = false;
+      return;
+    }
+    if (initialServerSyncDone.current) return;
+
+    userContext.user.settings?.forEach((setting) => {
       if (setting.setting === 'theme' && setting.value != null) {
-        const serverTheme = JSON.parse(setting.value);
-        setTheme((prev) => {
-          if (prev !== serverTheme) {
-            return serverTheme;
-          }
-          return prev;
-        });
+        setTheme(JSON.parse(setting.value));
       }
     });
-  }, [userContext.user?.settings]);
+    initialServerSyncDone.current = true;
+  }, [userContext.user?.id]);
 
   // Apply theme to DOM and persist to localStorage whenever it changes
   useEffect(() => {
@@ -77,8 +78,10 @@ export default function ThemeBoundary(props: ThemeBoundaryProps) {
           } catch {
             // ignore
           }
-          // Persist to server
-          userContext.updateUserSetting('theme', JSON.stringify(newTheme));
+          // Persist to server only when a user is signed in
+          if (userContext.user) {
+            userContext.updateUserSetting('theme', JSON.stringify(newTheme));
+          }
         },
       }}
     >

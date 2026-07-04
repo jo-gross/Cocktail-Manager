@@ -13,6 +13,7 @@ import { PiBeerBottleBold, PiCards } from 'react-icons/pi';
 import { FaGear } from 'react-icons/fa6';
 import { IoMdStats } from 'react-icons/io';
 import packageInfo from '../../../../package.json';
+import { Button, Divider, Dropdown, DropdownContent, Menu } from '@components/ui';
 
 export default function ManagePage() {
   const router = useRouter();
@@ -38,13 +39,11 @@ export default function ManagePage() {
           )
         }
         actions={[
-          <div key={'profile'} className="dropdown dropdown-end">
-            <label tabIndex={0} className="btn btn-outline">
+          <Dropdown key="profile" align="end">
+            <Button type="button" variant="outline" tabIndex={0}>
               {userContext.user?.image && (
-                <div className="avatar">
-                  <div className="w-10 rounded-full">
-                    <AvatarImage alt={'Profile Image'} src={userContext.user.image} />
-                  </div>
+                <div className="h-10 w-10 overflow-hidden rounded-full">
+                  <AvatarImage alt="Profile Image" src={userContext.user.image} />
                 </div>
               )}
               <div className={'hidden md:flex md:flex-col md:items-start'}>
@@ -55,44 +54,54 @@ export default function ManagePage() {
                   </span>
                 )}
               </div>
-            </label>
-            <ul tabIndex={0} className="menu dropdown-content menu-sm z-[1] mt-2 w-52 gap-2 rounded-box border border-base-200 bg-base-100 p-2 shadow">
-              <div className={'pt-1 text-center md:hidden'}>
-                <div className="text-lg font-bold">{userContext.user?.name || 'Demo Nutzer'}</div>
-                {userContext.workspace?.users && (
-                  <div className="mt-1 text-xs font-normal opacity-70">
-                    {userContext.workspace.users.find((u) => u.userId === userContext.user?.id)?.role || 'MANAGER'}
-                  </div>
-                )}
-              </div>
-              <Link href={'/'} className={'btn btn-outline btn-sm'}>
-                Workspaces
-              </Link>
-
-              <div className={'divider-sm'}></div>
-              <button
-                className={'btn btn-outline btn-error btn-sm'}
-                onClick={async () => {
-                  await router.replace('/');
-                  await authClient.signOut();
-                }}
-              >
-                Abmelden
-              </button>
-              <div className={'divider-sm'}></div>
-              <div className={'text-center'}>
-                v{packageInfo.version} -{' '}
-                <Link className={'link'} href={'https://github.com/jo-gross/Cocktail-Manager/releases'} target={'_blank'}>
-                  Changelog
-                </Link>{' '}
-              </div>
-            </ul>
-          </div>,
+            </Button>
+            <DropdownContent tabIndex={0} className="z-[1] mt-2 block w-52">
+              <Menu size="sm" className="gap-2">
+                <div className={'pt-1 text-center md:hidden'}>
+                  <div className="text-lg font-bold">{userContext.user?.name || 'Demo Nutzer'}</div>
+                  {userContext.workspace?.users && (
+                    <div className="mt-1 text-xs font-normal opacity-70">
+                      {userContext.workspace.users.find((u) => u.userId === userContext.user?.id)?.role || 'MANAGER'}
+                    </div>
+                  )}
+                </div>
+                <li>
+                  <Link href="/">
+                    <Button variant="outline" size="sm" className="w-full">
+                      Workspaces
+                    </Button>
+                  </Link>
+                </li>
+                <Divider size="sm" />
+                <li>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="w-full border-error text-error hover:bg-error/10"
+                    onClick={async () => {
+                      await router.replace('/');
+                      await authClient.signOut();
+                    }}
+                  >
+                    Abmelden
+                  </Button>
+                </li>
+                <Divider size="sm" />
+                <li className="text-center">
+                  v{packageInfo.version} -{' '}
+                  <Link className={'link'} href={'https://github.com/jo-gross/Cocktail-Manager/releases'} target={'_blank'}>
+                    Changelog
+                  </Link>{' '}
+                </li>
+              </Menu>
+            </DropdownContent>
+          </Dropdown>,
         ]}
       >
         <div className={'grid grid-cols-1 gap-2 md:grid-cols-2 md:gap-4'}>
           <div className={'flex flex-col gap-2'}>
-            <div className={'divider col-span-full'}>Cocktails</div>
+            <Divider className="col-span-full">Cocktails</Divider>
 
             <ManageCard icon={<FaCocktail />} title={'Cocktails'} link={`/workspaces/${workspaceId}/manage/cocktails`} />
             <ManageCard icon={<PiBeerBottleBold />} title={'Zutaten'} link={`/workspaces/${workspaceId}/manage/ingredients`} />
@@ -103,7 +112,7 @@ export default function ManagePage() {
           {userContext.isUserPermitted('MANAGER') && (
             <>
               <div className={'flex flex-col gap-2'}>
-                <div className={'divider col-span-full'}>Darstellung</div>
+                <Divider className="col-span-full">Darstellung</Divider>
                 <ManageCard icon={<PiCards />} title={'Bartender-Karten'} link={`/workspaces/${workspaceId}/manage/cards`} />
                 <ManageCard icon={<LuMonitorPlay />} title={'Externer Monitor'} link={`/workspaces/${workspaceId}/manage/monitor`} />
               </div>
@@ -111,14 +120,14 @@ export default function ManagePage() {
           )}
 
           <div className={'flex flex-col gap-2'}>
-            <div className={'divider col-span-full'}>Zahlen</div>
+            <Divider className="col-span-full">Zahlen</Divider>
             <ManageCard icon={<IoMdStats />} title={'Statistik'} link={`/workspaces/${workspaceId}/manage/statistics`} />
             <ManageCard icon={<FaCalculator />} title={'Mengen-Kalkulation'} link={`/workspaces/${workspaceId}/manage/calculations`} />
             <ManageCard icon={<LuHistory />} title={'Buchungs-Logs'} link={`/workspaces/${workspaceId}/manage/logs`} />
           </div>
 
           <div className={'flex flex-col gap-2'}>
-            <div className={'divider col-span-full'}>Workspace</div>
+            <Divider className="col-span-full">Workspace</Divider>
             <ManageCard icon={<FaUsers />} title={'Nutzer'} link={`/workspaces/${workspaceId}/manage/settings/users`} />
             {userContext.isUserPermitted('ADMIN') && (
               <>

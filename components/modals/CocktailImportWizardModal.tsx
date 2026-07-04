@@ -1,5 +1,6 @@
 import React, { useContext, useState } from 'react';
 import { ModalContext } from '@lib/context/ModalContextProvider';
+import { Divider } from '@components/ui';
 import { CocktailExportStructure } from '../../types/CocktailExportStructure';
 import { UploadAndPreviewStep } from '../cocktail-import/UploadAndPreviewStep';
 import { EntityMappingStep } from '../cocktail-import/EntityMappingStep';
@@ -115,7 +116,7 @@ export default function CocktailImportWizardModal({ workspaceId, onImportComplet
         <div className={'flex-1 text-center'}>Import</div>
       </div>
 
-      <div className={'divider my-0'}></div>
+      <Divider className="my-0" />
 
       {/* Step content */}
       <div className={'min-h-[400px]'}>

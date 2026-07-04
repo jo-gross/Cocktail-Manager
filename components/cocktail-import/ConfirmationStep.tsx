@@ -3,6 +3,7 @@ import { CocktailExportStructure } from '../../types/CocktailExportStructure';
 import { MappingDecisions } from '../modals/CocktailImportWizardModal';
 import { alertService } from '@lib/alertService';
 import { FaCheckCircle, FaExclamationCircle, FaChevronDown, FaChevronUp } from 'react-icons/fa';
+import { Alert, Button, Card, CardBody, Loading } from '@components/ui';
 
 interface ConfirmationStepProps {
   workspaceId: string;
@@ -107,60 +108,62 @@ export function ConfirmationStep({ workspaceId, exportData, mappingDecisions, se
           <FaCheckCircle className={'text-6xl text-success'} />
         </div>
 
-        <div className={'rounded-lg bg-base-200 p-4'}>
-          <div className={'text-sm font-semibold'}>Zusammenfassung</div>
-          <div className={'mt-2 grid grid-cols-2 gap-2 text-sm'}>
-            <div className={'text-base-content/70'}>Cocktails importiert:</div>
-            <div className={'font-semibold'}>{importResult.imported.cocktails}</div>
+        <Card variant="elevated">
+          <CardBody>
+            <div className={'text-sm font-semibold'}>Zusammenfassung</div>
+            <div className={'mt-2 grid grid-cols-2 gap-2 text-sm'}>
+              <div className={'text-base-content/70'}>Cocktails importiert:</div>
+              <div className={'font-semibold'}>{importResult.imported.cocktails}</div>
 
-            {importResult.created.glasses > 0 && (
-              <>
-                <div className={'text-base-content/70'}>Neue Gläser:</div>
-                <div className={'font-semibold'}>{importResult.created.glasses}</div>
-              </>
-            )}
+              {importResult.created.glasses > 0 && (
+                <>
+                  <div className={'text-base-content/70'}>Neue Gläser:</div>
+                  <div className={'font-semibold'}>{importResult.created.glasses}</div>
+                </>
+              )}
 
-            {importResult.created.garnishes > 0 && (
-              <>
-                <div className={'text-base-content/70'}>Neue Garnituren:</div>
-                <div className={'font-semibold'}>{importResult.created.garnishes}</div>
-              </>
-            )}
+              {importResult.created.garnishes > 0 && (
+                <>
+                  <div className={'text-base-content/70'}>Neue Garnituren:</div>
+                  <div className={'font-semibold'}>{importResult.created.garnishes}</div>
+                </>
+              )}
 
-            {importResult.created.ingredients > 0 && (
-              <>
-                <div className={'text-base-content/70'}>Neue Zutaten:</div>
-                <div className={'font-semibold'}>{importResult.created.ingredients}</div>
-              </>
-            )}
+              {importResult.created.ingredients > 0 && (
+                <>
+                  <div className={'text-base-content/70'}>Neue Zutaten:</div>
+                  <div className={'font-semibold'}>{importResult.created.ingredients}</div>
+                </>
+              )}
 
-            {importResult.created.units > 0 && (
-              <>
-                <div className={'text-base-content/70'}>Neue Einheiten:</div>
-                <div className={'font-semibold'}>{importResult.created.units}</div>
-              </>
-            )}
+              {importResult.created.units > 0 && (
+                <>
+                  <div className={'text-base-content/70'}>Neue Einheiten:</div>
+                  <div className={'font-semibold'}>{importResult.created.units}</div>
+                </>
+              )}
 
-            {importResult.created.ice > 0 && (
-              <>
-                <div className={'text-base-content/70'}>Neue Eis-Typen:</div>
-                <div className={'font-semibold'}>{importResult.created.ice}</div>
-              </>
-            )}
+              {importResult.created.ice > 0 && (
+                <>
+                  <div className={'text-base-content/70'}>Neue Eis-Typen:</div>
+                  <div className={'font-semibold'}>{importResult.created.ice}</div>
+                </>
+              )}
 
-            {importResult.created.stepActions > 0 && (
-              <>
-                <div className={'text-base-content/70'}>Neue Aktionen:</div>
-                <div className={'font-semibold'}>{importResult.created.stepActions}</div>
-              </>
-            )}
-          </div>
-        </div>
+              {importResult.created.stepActions > 0 && (
+                <>
+                  <div className={'text-base-content/70'}>Neue Aktionen:</div>
+                  <div className={'font-semibold'}>{importResult.created.stepActions}</div>
+                </>
+              )}
+            </div>
+          </CardBody>
+        </Card>
 
         <div className={'flex justify-end gap-2'}>
-          <button className={'btn btn-primary'} onClick={onComplete}>
+          <Button variant="primary" onClick={onComplete}>
             Fertig
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -171,59 +174,64 @@ export function ConfirmationStep({ workspaceId, exportData, mappingDecisions, se
       <div className={'text-lg font-semibold'}>Schritt 4: Import bestätigen</div>
       <div className={'text-sm text-base-content/70'}>Überprüfen Sie die Import-Zusammenfassung und bestätigen Sie den Import.</div>
 
-      <div className={'rounded-lg bg-base-200 p-4'}>
-        <div className={'mb-3 text-sm font-semibold'}>Import-Zusammenfassung</div>
-        <div className={'grid grid-cols-2 gap-2 text-sm'}>
-          <div className={'text-base-content/70'}>Cocktails zu importieren:</div>
-          <div className={'font-semibold'}>{cocktailsToImport}</div>
+      <Card variant="elevated">
+        <CardBody>
+          <div className={'mb-3 text-sm font-semibold'}>Import-Zusammenfassung</div>
+          <div className={'grid grid-cols-2 gap-2 text-sm'}>
+            <div className={'text-base-content/70'}>Cocktails zu importieren:</div>
+            <div className={'font-semibold'}>{cocktailsToImport}</div>
 
-          {newGlasses.length > 0 && (
-            <>
-              <div className={'text-base-content/70'}>Neue Gläser:</div>
-              <div className={'font-semibold'}>{newGlasses.length}</div>
-            </>
-          )}
+            {newGlasses.length > 0 && (
+              <>
+                <div className={'text-base-content/70'}>Neue Gläser:</div>
+                <div className={'font-semibold'}>{newGlasses.length}</div>
+              </>
+            )}
 
-          {newGarnishes.length > 0 && (
-            <>
-              <div className={'text-base-content/70'}>Neue Garnituren:</div>
-              <div className={'font-semibold'}>{newGarnishes.length}</div>
-            </>
-          )}
+            {newGarnishes.length > 0 && (
+              <>
+                <div className={'text-base-content/70'}>Neue Garnituren:</div>
+                <div className={'font-semibold'}>{newGarnishes.length}</div>
+              </>
+            )}
 
-          {newIngredients.length > 0 && (
-            <>
-              <div className={'text-base-content/70'}>Neue Zutaten:</div>
-              <div className={'font-semibold'}>{newIngredients.length}</div>
-            </>
-          )}
+            {newIngredients.length > 0 && (
+              <>
+                <div className={'text-base-content/70'}>Neue Zutaten:</div>
+                <div className={'font-semibold'}>{newIngredients.length}</div>
+              </>
+            )}
 
-          {newUnits.length > 0 && (
-            <>
-              <div className={'text-base-content/70'}>Neue Einheiten:</div>
-              <div className={'font-semibold'}>{newUnits.length}</div>
-            </>
-          )}
+            {newUnits.length > 0 && (
+              <>
+                <div className={'text-base-content/70'}>Neue Einheiten:</div>
+                <div className={'font-semibold'}>{newUnits.length}</div>
+              </>
+            )}
 
-          {newIce.length > 0 && (
-            <>
-              <div className={'text-base-content/70'}>Neue Eis-Typen:</div>
-              <div className={'font-semibold'}>{newIce.length}</div>
-            </>
-          )}
+            {newIce.length > 0 && (
+              <>
+                <div className={'text-base-content/70'}>Neue Eis-Typen:</div>
+                <div className={'font-semibold'}>{newIce.length}</div>
+              </>
+            )}
 
-          {newStepActions.length > 0 && (
-            <>
-              <div className={'text-base-content/70'}>Neue Aktionen:</div>
-              <div className={'font-semibold'}>{newStepActions.length}</div>
-            </>
-          )}
-        </div>
-      </div>
+            {newStepActions.length > 0 && (
+              <>
+                <div className={'text-base-content/70'}>Neue Aktionen:</div>
+                <div className={'font-semibold'}>{newStepActions.length}</div>
+              </>
+            )}
+          </div>
+        </CardBody>
+      </Card>
 
       {/* Detailed Preview */}
       <div className={'rounded-lg border border-base-300'}>
-        <div className={'flex cursor-pointer items-center justify-between bg-base-200 p-3'} onClick={() => setShowDetailsCollapsed(!showDetailsCollapsed)}>
+        <div
+          className={'flex cursor-pointer items-center justify-between border-b border-base-300/60 bg-base-100 px-3 py-3 md:px-4'}
+          onClick={() => setShowDetailsCollapsed(!showDetailsCollapsed)}
+        >
           <span className={'text-sm font-semibold'}>Details anzeigen</span>
           {showDetailsCollapsed ? <FaChevronDown /> : <FaChevronUp />}
         </div>
@@ -320,14 +328,14 @@ export function ConfirmationStep({ workspaceId, exportData, mappingDecisions, se
       </div>
 
       {error && !errors.length && (
-        <div className={'alert alert-error'}>
+        <Alert variant="error">
           <FaExclamationCircle />
           <span>{error}</span>
-        </div>
+        </Alert>
       )}
 
       {errors.length > 0 && (
-        <div className={'alert alert-error'}>
+        <Alert variant="error">
           <div className="flex w-full flex-col">
             <div className="mb-2 flex items-center gap-2">
               <FaExclamationCircle />
@@ -341,23 +349,23 @@ export function ConfirmationStep({ workspaceId, exportData, mappingDecisions, se
               ))}
             </ul>
           </div>
-        </div>
+        </Alert>
       )}
 
       {importing ? (
         <div className={'flex flex-col items-center justify-center gap-4 py-8'}>
-          <span className={'loading loading-spinner loading-lg'}></span>
+          <Loading size="lg" />
           <span>Import läuft... Bitte warten Sie.</span>
           <div className={'text-xs text-base-content/50'}>Dies kann je nach Anzahl der Cocktails einige Sekunden dauern.</div>
         </div>
       ) : (
         <div className={'flex justify-end gap-2'}>
-          <button className={'btn btn-outline'} onClick={onBack} disabled={importing}>
+          <Button variant="outline" onClick={onBack} disabled={importing}>
             Zurück
-          </button>
-          <button className={'btn btn-primary'} onClick={handleImport} disabled={importing}>
+          </Button>
+          <Button variant="primary" onClick={handleImport} disabled={importing}>
             Import starten
-          </button>
+          </Button>
         </div>
       )}
     </div>

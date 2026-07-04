@@ -22,6 +22,7 @@ import puppeteer, { Browser } from 'puppeteer-core';
 import { promises as dnsPromises } from 'dns';
 import { CocktailPdfPage } from '../../../../../components/pdf/CocktailPdfPage';
 import { PDFDocument } from 'pdf-lib';
+import { pdfExportTailwindConfigScript, pdfExportThemeStyles } from '../../../../../lib/pdf/pdfExportStyles';
 
 const WorkspaceSettingKey = $Enums.WorkspaceSettingKey;
 
@@ -93,17 +94,15 @@ async function generatePdf(html: string, numberOfCocktails: number, showHeader: 
       deviceScaleFactor: 1,
     });
 
-    // Load Tailwind and DaisyUI first, then set content
+    // Load Tailwind with project theme, then set content
     await page.addScriptTag({ url: 'https://cdn.tailwindcss.com' });
-    await page.addStyleTag({ url: 'https://cdn.jsdelivr.net/npm/daisyui@4.12.23/dist/full.min.css' });
+    await page.addScriptTag({ content: pdfExportTailwindConfigScript });
 
     // Set content and wait for everything to load
     await page.setContent(html, { waitUntil: 'load', timeout: timeoutMs });
 
-    // Set DaisyUI theme to "autumn" and ensure white background
+    // Ensure white background for print
     await page.evaluate(() => {
-      document.documentElement.setAttribute('data-theme', 'autumn');
-      // Set white background explicitly
       document.body.style.backgroundColor = 'white';
       document.documentElement.style.backgroundColor = 'white';
     });
@@ -263,15 +262,16 @@ function generateHtmlForCocktails(
       : '';
 
   return `<!DOCTYPE html>
-<html lang="de" data-theme="autumn">
+<html lang="de">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Cocktail Export</title>
-  <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.24/dist/full.min.css" rel="stylesheet" type="text/css" />
-  <script src="https://cdn.tailwindcss.com"></script>  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>${pdfExportTailwindConfigScript}</script>
   
   <style>
+    ${pdfExportThemeStyles}
     html {
       -webkit-print-color-adjust: exact;
     }
@@ -299,11 +299,6 @@ function generateHtmlForCocktails(
     .pdf-page-no-break {
       background: white;
       margin-bottom: 2rem;
-    }
-    .long-text-format {
-      white-space: pre-line;
-      text-align: justify;
-      word-break: break-word;
     }
     ${headerFooterStyles}
   </style>

@@ -6,6 +6,7 @@ import { ModalContext } from '@lib/context/ModalContextProvider';
 import { useRouter } from 'next/router';
 import { FaArrowsLeftRight } from 'react-icons/fa6';
 import { alertService } from '@lib/alertService';
+import { Button, ButtonGroup, FormControl, Input, Label, LabelText, LabelTextAlt, Loading, Select } from '@components/ui';
 
 interface UnitConversionModalProps {
   unitConversion?: UnitConversion;
@@ -96,18 +97,21 @@ export default function UnitConversionModal(props: UnitConversionModalProps) {
         {({ values, handleChange, handleSubmit, isSubmitting, errors, touched, setFieldValue }) => (
           <form onSubmit={handleSubmit} className={'flex flex-col gap-2'}>
             <div className={'flex flex-row items-center justify-center gap-4'}>
-              <div className={'form-control w-full'}>
-                <label className={'label'}>
-                  <div className={'label-text'}>Von Einheit...</div>
-                  <div className={'label-text-alt text-error'}>
+              <FormControl className="w-full">
+                <Label className="flex-row items-center justify-between">
+                  <LabelText>Von Einheit...</LabelText>
+                  <LabelTextAlt className="text-error">
                     <span>{errors.fromUnitId && touched.fromUnitId ? errors.fromUnitId : ''}</span>
                     <span>*</span>
-                  </div>
-                </label>
-                <div className={'join'}>
-                  <div className={'btn btn-secondary join-item'}>1</div>
-                  <select
-                    className={'join-item select select-bordered w-full'}
+                  </LabelTextAlt>
+                </Label>
+                <ButtonGroup className="w-full">
+                  <Button joinItem variant="secondary" type="button" tabIndex={-1}>
+                    1
+                  </Button>
+                  <Select
+                    joinItem
+                    className="w-full"
                     name={'fromUnitId'}
                     disabled={props.unitConversion != undefined}
                     onChange={async (e) => {
@@ -126,34 +130,28 @@ export default function UnitConversionModal(props: UnitConversionModalProps) {
                         </option>
                       );
                     })}
-                  </select>
-                </div>
-              </div>
+                  </Select>
+                </ButtonGroup>
+              </FormControl>
 
               <div className={'flex flex-row items-center justify-center pt-8 text-2xl'}>
                 <FaArrowsLeftRight />
               </div>
 
-              <div className={'form-control w-full'}>
-                <label className={'label'}>
-                  <div className={'label-text'}>... zu Einheit</div>
-                  <div className={'label-text-alt text-error'}>
+              <FormControl className="w-full">
+                <Label className="flex-row items-center justify-between">
+                  <LabelText>... zu Einheit</LabelText>
+                  <LabelTextAlt className="text-error">
                     <span>{errors.toUnitId && touched.toUnitId ? errors.toUnitId : errors.factor && touched.factor ? errors.factor : ''}</span>
                     <span>*</span>
-                  </div>
-                </label>
-                <div className={'join'}>
-                  <input
-                    type={'number'}
-                    name={'factor'}
-                    onChange={handleChange}
-                    value={values.factor}
-                    placeholder={'x'}
-                    className={'input join-item input-secondary w-20'}
-                  />
-                  <select
+                  </LabelTextAlt>
+                </Label>
+                <ButtonGroup className="w-full">
+                  <Input joinItem type={'number'} name={'factor'} onChange={handleChange} value={values.factor} placeholder={'x'} className="w-20" />
+                  <Select
+                    joinItem
                     disabled={props.unitConversion != undefined}
-                    className={'join-item select select-bordered w-full'}
+                    className="w-full"
                     name={'toUnitId'}
                     onChange={handleChange}
                     value={values.toUnitId}
@@ -179,24 +177,25 @@ export default function UnitConversionModal(props: UnitConversionModalProps) {
                         </option>
                       );
                     })}
-                  </select>
-                </div>
-              </div>
+                  </Select>
+                </ButtonGroup>
+              </FormControl>
             </div>
             <div className={'flex justify-end gap-2'}>
-              <button
-                className={'btn btn-outline btn-error'}
+              <Button
+                variant="outline"
+                className="border-error text-error hover:bg-error/10"
                 type={'button'}
                 onClick={() => {
                   modalContext.closeModal();
                 }}
               >
                 Abbrechen
-              </button>
-              <button className={'btn btn-primary'} type={'submit'}>
-                {isSubmitting ? <span className={'spinner loading-spinner'} /> : <></>}
+              </Button>
+              <Button variant="primary" type={'submit'}>
+                {isSubmitting ? <Loading size="sm" /> : null}
                 Speichern
-              </button>
+              </Button>
             </div>
           </form>
         )}

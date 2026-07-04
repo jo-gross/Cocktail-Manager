@@ -2,6 +2,7 @@ import { addCocktailToStatistic } from '@lib/network/cocktailTracking';
 import { FaCheck } from 'react-icons/fa';
 import React, { useContext } from 'react';
 import { ModalContext } from '@lib/context/ModalContextProvider';
+import { Button, Loading } from '@components/ui';
 
 interface SelectSpecifyCocktailForStatisticModalProps {
   workspaceId: string;
@@ -42,8 +43,8 @@ export default function SelectSpecifyCocktailForStatisticModal({
                 <div>Normal, ohne Notiz</div>
               )}
             </div>
-            <button
-              className={'btn btn-outline btn-primary'}
+            <Button
+              variant="outline"
               disabled={Object.keys(submittingStatistic).length > 0}
               onClick={() => {
                 addCocktailToStatistic({
@@ -64,15 +65,15 @@ export default function SelectSpecifyCocktailForStatisticModal({
             >
               <FaCheck />
               Gemacht
-              {submittingStatistic[`option-${option._min.id}`] ? <span className={'loading loading-spinner'}></span> : <></>}
-            </button>
+              {submittingStatistic[`option-${option._min.id}`] ? <Loading size="sm" /> : null}
+            </Button>
           </div>
         ))}
 
         <div className={'flex flex-row items-center justify-between p-2'}>
           Ohne Warteschlange zu beeinflussen
-          <button
-            className={'btn btn-outline btn-primary'}
+          <Button
+            variant="outline"
             disabled={Object.keys(submittingStatistic).length > 0}
             onClick={() => {
               addCocktailToStatistic({
@@ -93,8 +94,8 @@ export default function SelectSpecifyCocktailForStatisticModal({
           >
             <FaCheck />
             Gemacht
-            {submittingStatistic['normal'] ? <span className={'loading loading-spinner'}></span> : <></>}
-          </button>
+            {submittingStatistic['normal'] ? <Loading size="sm" /> : null}
+          </Button>
         </div>
       </div>
     </div>

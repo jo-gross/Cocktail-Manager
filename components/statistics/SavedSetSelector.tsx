@@ -2,6 +2,7 @@ import React, { useContext, useEffect, useState } from 'react';
 import { FaEdit, FaTrash } from 'react-icons/fa';
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import { DeleteConfirmationModal } from '@components/modals/DeleteConfirmationModal';
+import { Button, Card, CardBody, CardTitle, Loading } from '@components/ui';
 
 type SavedSetType = 'TAG_SET' | 'INGREDIENT_SET' | 'COCKTAIL_SET';
 
@@ -15,14 +16,14 @@ interface SavedSet {
 
 interface SavedSetSelectorProps {
   workspaceId: string;
-  type?: SavedSetType; // Optional: If undefined, load all types
+  type?: SavedSetType;
   selectedSetId?: string;
   onSelect: (setId: string | undefined, setType?: SavedSetType) => void;
   onDelete?: (setId: string) => void;
   onEdit?: (set: SavedSet) => void;
-  refreshKey?: number; // Key to force refresh
-  showAllTypes?: boolean; // Show both TAG_SET and INGREDIENT_SET together (excludes COCKTAIL_SET)
-  excludeTypes?: SavedSetType[]; // Types to exclude from the list
+  refreshKey?: number;
+  showAllTypes?: boolean;
+  excludeTypes?: SavedSetType[];
 }
 
 export function SavedSetSelector({
@@ -45,10 +46,8 @@ export function SavedSetSelector({
 
     try {
       setLoading(true);
-      // If showAllTypes, don't filter by type (but exclude COCKTAIL_SET by default for comparisons)
       let url: string;
       if (showAllTypes) {
-        // For comparisons: only show TAG_SET and INGREDIENT_SET
         url = `/api/workspaces/${workspaceId}/statistics/advanced/sets?types=TAG_SET,INGREDIENT_SET`;
       } else if (type) {
         url = `/api/workspaces/${workspaceId}/statistics/advanced/sets?type=${type}`;
@@ -58,7 +57,6 @@ export function SavedSetSelector({
       const response = await fetch(url);
       if (response.ok) {
         const body = await response.json();
-        // Apply client-side filter for excludeTypes if specified
         let filteredSets = body.data || [];
         if (excludeTypes.length > 0) {
           filteredSets = filteredSets.filter((set: SavedSet) => !excludeTypes.includes(set.type));
@@ -111,14 +109,14 @@ export function SavedSetSelector({
   };
 
   return (
-    <div className="card">
-      <div className="card-body">
-        <div className="card-title flex items-center justify-between">
-          <span className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-base-content/70">
+    <Card>
+      <CardBody>
+        <CardTitle className="flex items-center justify-between">
+          <span className="flex items-center gap-2 text-sm font-semibold tracking-wide text-base-content/70 uppercase">
             Gespeicherte Sets
-            {loading && <span className="loading loading-spinner loading-xs"></span>}
+            {loading && <Loading size="xs" />}
           </span>
-        </div>
+        </CardTitle>
         <div className="space-y-2">
           {sets.length === 0 ? (
             <div className="text-sm text-base-content/70">Keine Sets gespeichert</div>
@@ -143,32 +141,37 @@ export function SavedSetSelector({
                   </div>
                   <div className="flex gap-2">
                     {onEdit && (
-                      <button
-                        className="btn btn-ghost btn-xs"
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="xs"
                         onClick={(e) => {
                           e.stopPropagation();
                           onEdit(set);
                         }}
                       >
                         <FaEdit />
-                      </button>
+                      </Button>
                     )}
-                    <button
-                      className="btn btn-ghost btn-xs text-error"
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="xs"
+                      className="text-error"
                       onClick={(e) => {
                         e.stopPropagation();
                         handleDelete(set);
                       }}
                     >
                       <FaTrash />
-                    </button>
+                    </Button>
                   </div>
                 </div>
               </div>
             ))
           )}
         </div>
-      </div>
-    </div>
+      </CardBody>
+    </Card>
   );
 }

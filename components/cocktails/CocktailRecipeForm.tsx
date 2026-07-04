@@ -32,12 +32,34 @@ import { calcCocktailTotalPrice } from '@lib/CocktailRecipeCalculation';
 import Image from 'next/image';
 import { fetchIce } from '@lib/network/ices';
 import { updateTags, validateTag } from '../../models/tags/TagUtils';
-import { DaisyUITagInput } from '../DaisyUITagInput';
+import { TagInput } from '../TagInput';
 import CropComponent from '../CropComponent';
 import { FaCropSimple } from 'react-icons/fa6';
 import DeepDiff from 'deep-diff';
 import { RoutingContext } from '@lib/context/RoutingContextProvider';
 import '../../lib/NumberUtils';
+import {
+  Badge,
+  Button,
+  ButtonGroup,
+  Card,
+  CardBody,
+  cn,
+  Divider,
+  FormControl,
+  Input,
+  Label,
+  LabelText,
+  LabelTextAlt,
+  Loading,
+  Select,
+  stackGap,
+  Textarea,
+  Toggle,
+  Tooltip,
+} from '@components/ui';
+
+const fieldErrorClass = 'border-error focus:border-error focus:ring-error/25';
 
 export interface CocktailRecipeFormValues {
   id: string;
@@ -494,25 +516,25 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
     >
       {({ values, setFieldValue, setFieldError, errors, handleChange, handleBlur, handleSubmit, isSubmitting, isValid }) => (
         <form onSubmit={handleSubmit}>
-          <div className={'grid grid-cols-1 gap-4 md:grid-cols-3'}>
-            <div className={'card grid-cols-1 md:col-span-2'}>
-              <div className={'card-body'}>
+          <div className={cn('grid grid-cols-1 md:grid-cols-3', stackGap)}>
+            <Card variant="surface" className="grid-cols-1 md:col-span-2">
+              <CardBody>
                 <div className={'text-center text-2xl font-bold'}>Cocktail erfassen</div>
-                <div className={'divider'}></div>
+                <Divider />
                 <div className={'grid grid-cols-2 gap-4'}>
                   <div className={'col-span-2'}>
-                    <label className={'label'} htmlFor={'name'}>
-                      <span className={'label-text'}>Name</span>
-                      <span className={'label-text-alt text-error'}>
+                    <Label htmlFor={'name'} className="flex-row items-center justify-between">
+                      <LabelText>Name</LabelText>
+                      <LabelTextAlt className="text-error">
                         <>{errors.name && errors.name}</> *
-                      </span>
-                    </label>
-                    <input
+                      </LabelTextAlt>
+                    </Label>
+                    <Input
                       type="text"
                       name="name"
                       autoComplete={'off'}
                       id={'name'}
-                      className={`input input-bordered w-full ${errors.name && 'input-error'}`}
+                      className={errors.name ? fieldErrorClass : undefined}
                       onChange={(event) => {
                         if (event.target.value.length > 2) {
                           fetch(`/api/workspaces/${workspaceId}/cocktails/check?name=${event.target.value}`)
@@ -538,24 +560,24 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                       value={values.name}
                     />
                     {similarCocktailRecipe && (
-                      <div className="label">
-                        <span className="label-text-alt text-warning">
+                      <Label className="flex-row">
+                        <LabelTextAlt className="text-warning">
                           Eine ähnlicher Cocktail mit dem Namen <strong>{similarCocktailRecipe.name}</strong> existiert bereits.
-                        </span>
-                      </div>
+                        </LabelTextAlt>
+                      </Label>
                     )}
                   </div>
                   <div className={'col-span-2'}>
-                    <label className={'label'} htmlFor={'notes'}>
-                      <span className={'label-text'}>Zubereitungsnotizen</span>
-                      <span className={'label-text-alt text-error'}>
+                    <Label htmlFor={'notes'} className="flex-row items-center justify-between">
+                      <LabelText>Zubereitungsnotizen</LabelText>
+                      <LabelTextAlt className="text-error">
                         <>{errors.notes && errors.notes}</>
-                      </span>
-                    </label>
-                    <textarea
+                      </LabelTextAlt>
+                    </Label>
+                    <Textarea
                       id={'notes'}
                       name="notes"
-                      className={`textarea textarea-bordered w-full ${errors.notes && 'textarea-error'}`}
+                      className={errors.notes ? fieldErrorClass : undefined}
                       placeholder={'Zubereitungshinweise, Tipps, etc.'}
                       onChange={handleChange}
                       onBlur={handleBlur}
@@ -564,16 +586,16 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                     />
                   </div>
                   <div className={'col-span-2'}>
-                    <label className={'label'} htmlFor={'description'}>
-                      <span className={'label-text'}>Allgemeine Beschreibung</span>
-                      <span className={'label-text-alt text-error'}>
+                    <Label htmlFor={'description'} className="flex-row items-center justify-between">
+                      <LabelText>Allgemeine Beschreibung</LabelText>
+                      <LabelTextAlt className="text-error">
                         <>{errors.description && errors.description}</>
-                      </span>
-                    </label>
-                    <textarea
+                      </LabelTextAlt>
+                    </Label>
+                    <Textarea
                       id={'description'}
                       name="description"
-                      className={`textarea textarea-bordered w-full ${errors.description && 'textarea-error'}`}
+                      className={errors.description ? fieldErrorClass : undefined}
                       placeholder={'Was zeichnet diesen Cocktail aus? Wie schmeckt er? Was macht ihn besonders? Was sollte man wissen?'}
                       onChange={handleChange}
                       onBlur={handleBlur}
@@ -582,16 +604,16 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                     />
                   </div>
                   <div className={'col-span-2'}>
-                    <label className={'label'} htmlFor={'history'}>
-                      <span className={'label-text'}>Geschichte und Entstehung</span>
-                      <span className={'label-text-alt text-error'}>
+                    <Label htmlFor={'history'} className="flex-row items-center justify-between">
+                      <LabelText>Geschichte und Entstehung</LabelText>
+                      <LabelTextAlt className="text-error">
                         <>{errors.history && errors.history}</>
-                      </span>
-                    </label>
-                    <textarea
+                      </LabelTextAlt>
+                    </Label>
+                    <Textarea
                       id={'history'}
                       name="history"
-                      className={`textarea textarea-bordered w-full ${errors.history && 'textarea-error'}`}
+                      className={errors.history ? fieldErrorClass : undefined}
                       placeholder={'Geschichte, Herkunft, etc.'}
                       onChange={handleChange}
                       onBlur={handleBlur}
@@ -600,36 +622,37 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                     />
                   </div>
                   <div className={'col-span-2 md:col-span-1'}>
-                    <label className={'label'} htmlFor={'price'}>
-                      <span className={'label-text'}>Preis</span>
-                      <span className={'label-text-alt text-error'}>
+                    <Label htmlFor={'price'} className="flex-row items-center justify-between">
+                      <LabelText>Preis</LabelText>
+                      <LabelTextAlt className="text-error">
                         <>{errors.price && errors.price}</>
-                      </span>
-                    </label>
-                    <div className={'join w-full'}>
-                      <input
+                      </LabelTextAlt>
+                    </Label>
+                    <ButtonGroup className="w-full">
+                      <Input
                         id={'price'}
                         type="number"
-                        className={`input join-item input-bordered w-full ${errors.price && 'input-error'}`}
+                        className={errors.price ? fieldErrorClass : undefined}
+                        joinItem
                         name="price"
                         onChange={handleChange}
                         onBlur={handleBlur}
                         value={values.price}
                       />
-                      <span className={'btn btn-secondary join-item'}>
+                      <Button type="button" variant="secondary" joinItem>
                         <FaEuroSign />
-                      </span>
-                    </div>
+                      </Button>
+                    </ButtonGroup>
                   </div>
                   <div className={'col-span-2 md:col-span-1'}>
-                    <div className={'label'}>
-                      <span className={'label-text'}>Tags</span>
-                      <span className={'label-text-alt text-error'}>
+                    <Label className="flex-row items-center justify-between">
+                      <LabelText>Tags</LabelText>
+                      <LabelTextAlt className="text-error">
                         <>{errors.tags && errors.tags}</>
-                      </span>
-                    </div>
+                      </LabelTextAlt>
+                    </Label>
                     <div id={'tags'}>
-                      <DaisyUITagInput
+                      <TagInput
                         value={values.tags}
                         onChange={(tags: string[]) =>
                           setFieldValue(
@@ -641,25 +664,29 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                       />
                       {inheritTagsFromIngredients(values.steps, values.tags).length > 0 && (
                         <>
-                          <div className={'tooltip'} data-tip={'Basierend auf den Tags der Zutaten'}>
-                            <div className={'label'}>
-                              <span className={'label-text'}>Tags aus Zutaten</span>
-                            </div>
-                          </div>
+                          <Tooltip tip="Basierend auf den Tags der Zutaten">
+                            <Label className="flex-row">
+                              <LabelText>Tags aus Zutaten</LabelText>
+                            </Label>
+                          </Tooltip>
                           <div className={'flex flex-row flex-wrap gap-2'}>
                             {inheritTagsFromIngredients(values.steps, values.tags).map((tag) => {
                               return (
-                                <div key={`tag-suggestion-${tag}`} className={'badge badge-outline'}>
-                                  {tag}{' '}
-                                  <div
-                                    className={'btn btn-square btn-ghost btn-xs'}
+                                <Badge key={`tag-suggestion-${tag}`} outline className="gap-1">
+                                  {tag}
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    shape="square"
+                                    size="xs"
+                                    className="h-4 min-h-4 w-4"
                                     onClick={() => {
                                       setFieldValue('tags', [...values.tags, tag]);
                                     }}
                                   >
                                     <FaPlus />
-                                  </div>
-                                </div>
+                                  </Button>
+                                </Badge>
                               );
                             })}
                           </div>
@@ -668,17 +695,18 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                     </div>
                   </div>
                   <div>
-                    <label className={'label'} htmlFor={'glassId'}>
-                      <span className={'label-text'}>Glas</span>
-                      <span className={'label-text-alt text-error'}>
+                    <Label htmlFor={'glassId'} className="flex-row items-center justify-between">
+                      <LabelText>Glas</LabelText>
+                      <LabelTextAlt className="text-error">
                         <>{errors.glassId && errors.glassId}</> *
-                      </span>
-                    </label>
-                    <div className={'join w-full'}>
-                      <select
+                      </LabelTextAlt>
+                    </Label>
+                    <ButtonGroup className="w-full">
+                      <Select
                         id={'glassId'}
                         name="glassId"
-                        className={`join-item select select-bordered w-full ${errors.glassId && 'select-error'}`}
+                        className={errors.glassId ? fieldErrorClass : undefined}
+                        joinItem
                         onChange={(event) => {
                           handleChange(event);
                           setFieldValue(
@@ -705,10 +733,12 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                               ))}
                           </>
                         )}
-                      </select>
-                      <button
-                        type={'button'}
-                        className={'btn btn-square btn-outline btn-secondary join-item'}
+                      </Select>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        shape="square"
+                        joinItem
                         onClick={() =>
                           modalContext.openModal(
                             <FormModal<Glass>
@@ -727,20 +757,20 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                         }
                       >
                         <FaPlus />
-                      </button>
-                    </div>
+                      </Button>
+                    </ButtonGroup>
                   </div>
                   <div>
-                    <label className={'label'} htmlFor={'iceId'}>
-                      <span className={'label-text'}>Eis</span>
-                      <span className={'label-text-alt text-error'}>
+                    <Label htmlFor={'iceId'} className="flex-row items-center justify-between">
+                      <LabelText>Eis</LabelText>
+                      <LabelTextAlt className="text-error">
                         <>{errors.iceId && errors.iceId}</> *
-                      </span>
-                    </label>
-                    <select
+                      </LabelTextAlt>
+                    </Label>
+                    <Select
                       id={'iceId'}
                       name="iceId"
-                      className={`select select-bordered w-full ${errors.iceId && 'select-error'}`}
+                      className={errors.iceId ? fieldErrorClass : undefined}
                       onChange={(event) => {
                         handleChange(event);
                         setFieldValue(
@@ -759,14 +789,18 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                             {userContext.getTranslation(iceType.name, 'de')}
                           </option>
                         ))}
-                    </select>
+                    </Select>
                   </div>
-                  <div className={'divider col-span-2'}>Darstellung</div>
+                  <div className="col-span-2 flex items-center gap-3 py-2">
+                    <Divider className="my-0 flex-1" />
+                    <span className="shrink-0 text-sm font-medium text-base-content/70">Darstellung</span>
+                    <Divider className="my-0 flex-1" />
+                  </div>
                   <div className={'col-span-2'}>
                     {values.image != undefined ? (
-                      <label className={'label'}>
-                        <span className={'label-text'}>Vorschau Bild</span>
-                      </label>
+                      <Label className="flex-row items-center justify-between">
+                        <LabelText>Vorschau Bild</LabelText>
+                      </Label>
                     ) : (
                       <></>
                     )}
@@ -804,17 +838,24 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                       </div>
                     ) : (
                       <div className={'relative'}>
-                        <div className={'absolute right-2 top-2 flex flex-row gap-2'}>
-                          <div
-                            className={'btn btn-square btn-outline btn-sm'}
+                        <div className={'absolute top-2 right-2 flex flex-row gap-2'}>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            shape="square"
+                            size="sm"
                             onClick={async () => {
                               await setFieldValue('image', undefined);
                             }}
                           >
                             <FaCropSimple />
-                          </div>
-                          <div
-                            className={'btn btn-square btn-outline btn-error btn-sm'}
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            shape="square"
+                            size="sm"
+                            className="border-error text-error hover:bg-error/10"
                             onClick={() =>
                               modalContext.openModal(
                                 <DeleteConfirmationModal
@@ -829,7 +870,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                             }
                           >
                             <FaTrashAlt />
-                          </div>
+                          </Button>
                         </div>
                         <div className={'bg-transparent-pattern relative h-32 w-[4.5rem] rounded-lg'}>
                           <Image className={'w-fit rounded-lg'} src={values.image ?? ''} layout={'fill'} objectFit={'contain'} alt={'Cocktail image'} />
@@ -842,13 +883,13 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                     )}
                   </div>
                 </div>
-              </div>
-            </div>
-            <div className={'flex flex-col gap-4'}>
-              <div className={'card'}>
-                <div className={'card-body'}>
+              </CardBody>
+            </Card>
+            <div className={cn('flex flex-col', stackGap)}>
+              <Card variant="surface">
+                <CardBody>
                   <div className={'text-center text-2xl font-bold'}>Vorschau</div>
-                  <div className={'divider'}></div>
+                  <Divider />
 
                   <CocktailRecipeCardItem
                     image={values.image}
@@ -880,27 +921,29 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                     showNotes={true}
                     showHistory={true}
                   />
-                </div>
-              </div>
+                </CardBody>
+              </Card>
               <div className={'hidden md:flex md:flex-col'}>
-                <button type="submit" className={`btn btn-primary w-full`} disabled={isSubmitting || !isValid}>
-                  {isSubmitting ? <span className={'loading loading-spinner'} /> : <></>}
+                <Button type="submit" variant="primary" wide disabled={isSubmitting || !isValid}>
+                  {isSubmitting ? <Loading size="sm" /> : <></>}
                   {props.cocktailRecipe == undefined ? 'Erstellen' : 'Aktualisieren'}
-                </button>
+                </Button>
                 {!isValid && (
-                  <div className={'font-thin italic text-error'}>
+                  <div className={'font-thin text-error italic'}>
                     Nicht alle Felder sind korrekt ausgefüllt. Kontrolliere daher alle Felder. (Name gesetzt, Bild zugeschnitten, ... ?)
                   </div>
                 )}
               </div>
 
-              <div className={'card'}>
-                <div className={'card-body'}>
+              <Card variant="surface">
+                <CardBody>
                   <div className={'text-center text-2xl font-bold'}>Finanzen</div>
-                  <div className={'divider'}></div>
+                  <Divider />
                   <div className={'grid grid-cols-2 gap-1'}>
                     <>
-                      <div className={'divider-sm col-span-2'}>Zutaten</div>
+                      <Divider size="sm" className="col-span-2">
+                        Zutaten
+                      </Divider>
                       {(values.steps as CocktailRecipeStepFull[]).filter((step) => step.ingredients.some((ingredient) => ingredient.ingredient != undefined))
                         .length > 0 ? (
                         <>
@@ -957,7 +1000,9 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                         <div className={'col-span-2 text-center font-thin italic'}>Keine Zutaten</div>
                       )}
 
-                      <div className={'divider-sm col-span-2'}>Garnituren</div>
+                      <Divider size="sm" className="col-span-2">
+                        Garnituren
+                      </Divider>
                       {(values.garnishes as CocktailRecipeGarnishFull[]).length > 0 ? (
                         <></>
                       ) : (
@@ -984,7 +1029,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                         <div className={'col-span-2 mt-1 text-xs font-thin italic'}>* Alternative Garnituren werden nicht in die Berechnung einbezogen.</div>
                       )}
                     </>
-                    <div className={'divider-sm col-span-2'}></div>
+                    <Divider size="sm" className="col-span-2"></Divider>
                     <div>Summe</div>
                     <div className={'grid grid-cols-3'}>
                       <div></div>
@@ -994,43 +1039,41 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                       </div>
                     </div>
                   </div>
-                </div>
-              </div>
+                </CardBody>
+              </Card>
             </div>
 
-            <div className={'card col-span-full'}>
-              <div className={'card-body'}>
+            <Card variant="surface" className="col-span-full">
+              <CardBody>
                 <div className={'text-center text-2xl font-bold'}>Zubereitung</div>
 
                 <FieldArray name={'steps'}>
                   {({ push: pushStep, remove: removeStep }) => (
-                    <div className={'col-span-2 gap-2 space-y-2'}>
+                    <div className={'col-span-2 space-y-4'}>
                       {(values.steps as CocktailRecipeStepFull[]).map((step, indexStep) => (
-                        <div
-                          key={`form-recipe-step-${indexStep}`}
-                          className={'flex w-full flex-col justify-between rounded-xl border border-base-100 p-3 md:p-4'}
-                        >
-                          <div className={'grid grid-cols-2 gap-2 md:grid-cols-3 md:gap-4'}>
+                        <Card key={`form-recipe-step-${indexStep}`} variant="inset" className={'flex w-full flex-col justify-between p-4'}>
+                          <div className={'grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4'}>
                             <div className={'col-span-2 flex flex-row items-center justify-between gap-2 md:col-span-1 md:justify-start'}>
-                              <div className={'font-bold'}>Schritt {indexStep + 1}</div>
-                              <div className={'form-control'}>
-                                <label className={'label w-fit justify-start gap-1'}>
-                                  <span className={'label-text'}>Optional</span>
+                              <div className={'font-bold whitespace-nowrap'}>Schritt {indexStep + 1}</div>
+                              <FormControl>
+                                <Label className="w-fit flex-row items-center justify-start gap-1">
+                                  <LabelText>Optional</LabelText>
                                   <Field
                                     type={'checkbox'}
                                     name={`steps.${indexStep}.optional`}
                                     onChange={handleChange}
                                     onBlur={handleBlur}
-                                    className={'toggle toggle-primary'}
+                                    as={Toggle}
+                                    variant="primary"
                                   />
-                                </label>
-                              </div>
+                                </Label>
+                              </FormControl>
                             </div>
-                            <div className={'form-control'}>
-                              <select
+                            <FormControl>
+                              <Select
                                 name={`steps.${indexStep}.actionId`}
                                 value={values.steps[indexStep].actionId}
-                                className={'select select-bordered select-sm w-full'}
+                                selectSize="sm"
                                 onChange={(event) => {
                                   handleChange(event);
                                   setFieldValue(
@@ -1056,13 +1099,15 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                     </optgroup>
                                   ))
                                 )}
-                              </select>
-                            </div>
+                              </Select>
+                            </FormControl>
                             <div className={'space-x-2 justify-self-end'}>
-                              <button
-                                type={'button'}
+                              <Button
                                 disabled={indexStep == 0}
-                                className={'btn btn-square btn-outline btn-sm'}
+                                type="button"
+                                variant="outline"
+                                shape="square"
+                                size="sm"
                                 onClick={() => {
                                   const value = values.steps[indexStep];
                                   const reorderedSteps = (values.steps as CocktailRecipeStepFull[]).filter((_, i) => i != indexStep);
@@ -1074,11 +1119,13 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                 }}
                               >
                                 <FaAngleUp />
-                              </button>
-                              <button
-                                type={'button'}
+                              </Button>
+                              <Button
                                 disabled={!(values.steps.length > 1) || indexStep == values.steps.length - 1}
-                                className={'btn btn-square btn-outline btn-sm'}
+                                type="button"
+                                variant="outline"
+                                shape="square"
+                                size="sm"
                                 onClick={() => {
                                   const value = values.steps[indexStep];
                                   const reorderedSteps = (values.steps as CocktailRecipeStepFull[]).filter((_, i) => i != indexStep);
@@ -1090,10 +1137,12 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                 }}
                               >
                                 <FaAngleDown />
-                              </button>
-                              <button
-                                type={'button'}
-                                className={'btn btn-square btn-error btn-sm'}
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="error"
+                                shape="square"
+                                size="sm"
                                 onClick={() =>
                                   modalContext.openModal(
                                     <DeleteConfirmationModal
@@ -1107,10 +1156,10 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                 }
                               >
                                 <FaTrashAlt />
-                              </button>
+                              </Button>
                             </div>
                           </div>
-                          <div className="divider col-span-full font-thin">Zutaten</div>
+                          <Divider className="col-span-full font-thin">Zutaten</Divider>
                           <FieldArray name={`steps.${indexStep}.ingredients`}>
                             {({ push: pushIngredient, remove: removeIngredient }) => (
                               <>
@@ -1118,13 +1167,16 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                   .sort((a, b) => a.ingredientNumber - b.ingredientNumber)
                                   .map((ingredient, indexIngredient) => (
                                     <>
-                                      {indexIngredient > 0 && <div className="divider-sm col-span-full"></div>}
-                                      <div key={`form-recipe-step-${indexStep}-ingredient-${indexIngredient}`} className={`flex flex-row items-center gap-2`}>
-                                        <div className={'join join-vertical w-min items-center justify-center'}>
-                                          <button
-                                            type={'button'}
+                                      {indexIngredient > 0 && <Divider size="sm" className="col-span-full" />}
+                                      <div key={`form-recipe-step-${indexStep}-ingredient-${indexIngredient}`} className="flex flex-row items-center gap-3">
+                                        <ButtonGroup vertical className="w-min items-center justify-center">
+                                          <Button
                                             disabled={indexIngredient == 0}
-                                            className={'btn btn-square btn-outline join-item btn-xs'}
+                                            type="button"
+                                            variant="outline"
+                                            shape="square"
+                                            size="xs"
+                                            joinItem
                                             onClick={() => {
                                               const value = values.steps[indexStep].ingredients[indexIngredient];
                                               const reorderedGroups = (values.steps as CocktailRecipeStepFull[])[indexStep].ingredients.filter(
@@ -1141,14 +1193,17 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                             }}
                                           >
                                             <FaAngleUp />
-                                          </button>
-                                          <button
-                                            type={'button'}
+                                          </Button>
+                                          <Button
                                             disabled={
                                               !(values.steps[indexStep].ingredients.length > 1) ||
                                               indexIngredient == values.steps[indexStep].ingredients.length - 1
                                             }
-                                            className={'btn btn-square btn-outline join-item btn-xs'}
+                                            type="button"
+                                            variant="outline"
+                                            shape="square"
+                                            size="xs"
+                                            joinItem
                                             onClick={() => {
                                               const value = values.steps[indexStep].ingredients[indexIngredient];
                                               const reorderedGroups = (values.steps as CocktailRecipeStepFull[])[indexStep].ingredients.filter(
@@ -1165,34 +1220,34 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                             }}
                                           >
                                             <FaAngleDown />
-                                          </button>
-                                        </div>
+                                          </Button>
+                                        </ButtonGroup>
                                         <div className={'grid w-full grid-cols-2 gap-1 md:grid-cols-4'}>
-                                          <div className={'form-control col-span-2 md:col-span-1'}>
-                                            <label className={'label w-fit flex-row justify-start gap-1 md:flex-col'}>
-                                              <span className={'label-text'}>Optional</span>
-                                              <span className={'label-text-alt text-error'}>
+                                          <FormControl className="col-span-2 md:col-span-1">
+                                            <Label className="w-fit flex-row items-center justify-start gap-1 md:flex-col">
+                                              <LabelText>Optional</LabelText>
+                                              <LabelTextAlt className="text-error">
                                                 {(errors.steps as StepError[])?.[indexStep]?.ingredients?.[indexIngredient]?.optional &&
                                                   (errors.steps as StepError[])?.[indexStep]?.ingredients?.[indexIngredient]?.optional}
-                                              </span>
+                                              </LabelTextAlt>
                                               <Field
                                                 type={'checkbox'}
                                                 name={`steps.${indexStep}.ingredients.${indexIngredient}.optional`}
                                                 onChange={handleChange}
                                                 onBlur={handleBlur}
-                                                className={'toggle toggle-primary'}
+                                                as={Toggle}
+                                                variant="primary"
                                               />
-                                            </label>
-                                          </div>
-                                          <div
+                                            </Label>
+                                          </FormControl>
+                                          <ButtonGroup
                                             key={`form-recipe-step${step.id}-ingredient-${ingredient.id}`}
-                                            className={'join col-span-2 flex w-full flex-row items-center'}
+                                            className="col-span-2 flex w-full flex-row items-center"
                                           >
-                                            <input
+                                            <Input
                                               id={`ingredient-${indexIngredient}-name`}
-                                              className={`input join-item input-bordered w-full cursor-pointer ${
-                                                (errors.steps as StepError[])?.[indexStep]?.ingredients?.[indexIngredient]?.ingredientId && 'input-error'
-                                              }`}
+                                              joinItem
+                                              className={`w-full cursor-pointer ${(errors.steps as StepError[])?.[indexStep]?.ingredients?.[indexIngredient]?.ingredientId ? fieldErrorClass : undefined}`}
                                               value={
                                                 ingredientsLoading
                                                   ? 'Lade...'
@@ -1203,18 +1258,21 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                                 openIngredientSelectModal(setFieldValue, indexStep, indexIngredient);
                                               }}
                                             />
-                                            <button
-                                              type={'button'}
-                                              className={'btn btn-outline btn-primary join-item'}
+                                            <Button
+                                              type="button"
+                                              variant="outline"
+                                              className="border-primary text-primary hover:bg-primary/10"
+                                              joinItem
                                               onClick={() => {
                                                 openIngredientSelectModal(setFieldValue, indexStep, indexIngredient);
                                               }}
                                             >
                                               <FaSearch />
-                                            </button>
-                                            <button
-                                              type={'button'}
-                                              className={'btn btn-outline btn-secondary join-item'}
+                                            </Button>
+                                            <Button
+                                              type="button"
+                                              variant="secondary"
+                                              joinItem
                                               onClick={() => {
                                                 modalContext.openModal(
                                                   <FormModal<Ingredient>
@@ -1234,23 +1292,25 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                               }}
                                             >
                                               <FaPlus />
-                                            </button>
-                                          </div>
-                                          <div className={'join col-span-2 flex w-full items-center md:col-span-1'}>
-                                            <input
+                                            </Button>
+                                          </ButtonGroup>
+                                          <ButtonGroup className="col-span-2 flex w-full items-center md:col-span-1">
+                                            <Input
                                               type="number"
                                               name={`steps.${indexStep}.ingredients.${indexIngredient}.amount`}
-                                              className={'input join-item input-bordered w-full min-w-20'}
+                                              joinItem
+                                              className="min-w-20"
                                               onChange={handleChange}
                                               onBlur={handleBlur}
                                               value={values.steps[indexStep].ingredients[indexIngredient].amount ?? ''}
                                             />
                                             <div className={'tooltip'}></div>
-                                            <select
+                                            <Select
                                               name={`steps.${indexStep}.ingredients.${indexIngredient}.unitId`}
-                                              className={`join-item select select-bordered w-full ${
-                                                (errors.steps as StepError[])?.[indexStep]?.ingredients?.[indexIngredient]?.unit ? 'select-error' : ''
-                                              }`}
+                                              joinItem
+                                              className={
+                                                (errors.steps as StepError[])?.[indexStep]?.ingredients?.[indexIngredient]?.unit ? fieldErrorClass : undefined
+                                              }
                                               onChange={async (e) => {
                                                 handleChange(e);
                                                 await setFieldValue(
@@ -1296,10 +1356,12 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                                     {userContext.getTranslation(value.unit.name, 'de')}
                                                   </option>
                                                 ))}
-                                            </select>
-                                            <button
-                                              type={'button'}
-                                              className={'btn btn-square btn-error join-item'}
+                                            </Select>
+                                            <Button
+                                              type="button"
+                                              variant="error"
+                                              shape="square"
+                                              joinItem
                                               onClick={() =>
                                                 modalContext.openModal(
                                                   <DeleteConfirmationModal
@@ -1311,17 +1373,19 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                               }
                                             >
                                               <FaTrashAlt />
-                                            </button>
-                                          </div>
+                                            </Button>
+                                          </ButtonGroup>
                                         </div>
                                       </div>
                                     </>
                                   ))}
 
                                 <div className={'flex w-full justify-end pt-2'}>
-                                  <button
-                                    type={'button'}
-                                    className={'btn btn-outline btn-secondary btn-sm space-x-2'}
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    className="gap-2"
                                     onClick={() =>
                                       pushIngredient({
                                         amount: 0,
@@ -1334,16 +1398,19 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                   >
                                     <FaPlus />
                                     <span>Zutat hinzufügen</span>
-                                  </button>
+                                  </Button>
                                 </div>
                               </>
                             )}
                           </FieldArray>
-                        </div>
+                        </Card>
                       ))}
                       <div className={'flex justify-center'}>
-                        <div
-                          className={'btn btn-primary btn-sm space-x-2'}
+                        <Button
+                          type="button"
+                          variant="primary"
+                          size="sm"
+                          className="gap-2"
                           onClick={() => {
                             const step = {
                               id: '',
@@ -1358,23 +1425,26 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                           }}
                         >
                           <FaPlus /> <span>Schritt hinzufügen</span>
-                        </div>
+                        </Button>
                       </div>
                     </div>
                   )}
                 </FieldArray>
-                <div className={'divider col-span-2'}>Garnitur</div>
+                <Divider className="col-span-2">Garnitur</Divider>
                 <FieldArray name={'garnishes'}>
                   {({ push: pushGarnish, remove: removeGarnish }) => (
-                    <div className={'col-span-2 space-y-2'}>
+                    <div className={'col-span-2 space-y-4'}>
                       {values.garnishes.map((garnish: CocktailRecipeGarnishFull, indexGarnish: number) => (
-                        <div key={`form-recipe-garnish-${indexGarnish}`} className={'flex flex-row space-x-2 rounded-xl border border-base-200 p-4'}>
+                        <Card key={`form-recipe-garnish-${indexGarnish}`} variant="inset" className="flex flex-row gap-3 p-4">
                           <div className={'flex flex-none items-center'}>
-                            <div className={'join join-vertical'}>
-                              <button
-                                type={'button'}
+                            <ButtonGroup vertical className="w-min items-center justify-center">
+                              <Button
                                 disabled={indexGarnish == 0}
-                                className={'btn btn-square btn-outline join-item btn-xs'}
+                                type="button"
+                                variant="outline"
+                                shape="square"
+                                size="xs"
+                                joinItem
                                 onClick={() => {
                                   const value = values.garnishes[indexGarnish];
                                   const reorderedGroups = (values.garnishes as CocktailRecipeGarnishFull[]).filter((_, i) => i != indexGarnish);
@@ -1396,11 +1466,14 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                 }}
                               >
                                 <FaAngleUp />
-                              </button>
-                              <button
-                                type={'button'}
+                              </Button>
+                              <Button
                                 disabled={!(values.garnishes.length > 1) || indexGarnish == values.garnishes.length - 1}
-                                className={'btn btn-square btn-outline join-item btn-xs'}
+                                type="button"
+                                variant="outline"
+                                shape="square"
+                                size="xs"
+                                joinItem
                                 onClick={() => {
                                   const value = values.garnishes[indexGarnish];
                                   const reorderedGroups = (values.garnishes as CocktailRecipeGarnishFull[]).filter((_, i) => i != indexGarnish);
@@ -1422,41 +1495,43 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                 }}
                               >
                                 <FaAngleDown />
-                              </button>
-                            </div>
+                              </Button>
+                            </ButtonGroup>
                           </div>
-                          <div className={'flex-2 grid w-full grid-cols-1 gap-3 md:grid-cols-2'}>
+                          <div className={'grid w-full flex-2 grid-cols-1 gap-3 md:grid-cols-2'}>
                             <div className={''}>
-                              <label className={'label'}>
-                                <span className={'label-text'}>Garnitur</span>
-                                <span className={'label-text-alt text-error'}>
+                              <Label className="flex-row items-center justify-between">
+                                <LabelText>Garnitur</LabelText>
+                                <LabelTextAlt className="text-error">
                                   {(errors.garnishes as GarnishError[])?.[indexGarnish]?.garnishId &&
                                     (errors.garnishes as GarnishError[])?.[indexGarnish]?.garnishId}
-                                </span>
-                              </label>
-                              <div className={'join w-full'}>
-                                <input
-                                  className={`input join-item input-bordered w-full cursor-pointer ${
-                                    (errors.garnishes as GarnishError[])?.[indexGarnish]?.garnishId && 'input-error'
-                                  }`}
+                                </LabelTextAlt>
+                              </Label>
+                              <ButtonGroup className="w-full">
+                                <Input
+                                  joinItem
+                                  className={`w-full cursor-pointer ${(errors.garnishes as GarnishError[])?.[indexGarnish]?.garnishId ? fieldErrorClass : undefined}`}
                                   value={garnishesLoading ? 'Lade...' : (values.garnishes[indexGarnish].garnish?.name ?? 'Wähle eine Garnitur aus...')}
                                   readOnly={true}
                                   onClick={() => {
                                     openGarnishSelectModal(setFieldValue, indexGarnish);
                                   }}
                                 />
-                                <button
-                                  type={'button'}
-                                  className={'btn btn-outline btn-primary join-item'}
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  className="border-primary text-primary hover:bg-primary/10"
+                                  joinItem
                                   onClick={() => {
                                     openGarnishSelectModal(setFieldValue, indexGarnish);
                                   }}
                                 >
                                   <FaSearch />
-                                </button>
-                                <button
-                                  type={'button'}
-                                  className={'btn btn-outline btn-secondary join-item'}
+                                </Button>
+                                <Button
+                                  type="button"
+                                  variant="secondary"
+                                  joinItem
                                   onClick={() => {
                                     modalContext.openModal(
                                       <FormModal<Garnish>
@@ -1476,65 +1551,65 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                   }}
                                 >
                                   <FaPlus />
-                                </button>
-                              </div>
+                                </Button>
+                              </ButtonGroup>
                             </div>
                             <div className={'row-span-2'}>
-                              <label className={'label'}>
-                                <span className={'label-text'}>Zusätzliche Beschreibung</span>
-                                <span className={'label-text-alt text-error'}>{/*{errors.garnishDescription  && errors.garnishDescription}*/}</span>
-                              </label>
-                              <textarea
+                              <Label className="flex-row items-center justify-between">
+                                <LabelText>Zusätzliche Beschreibung</LabelText>
+                                <LabelTextAlt className="text-error">{/*{errors.garnishDescription  && errors.garnishDescription}*/}</LabelTextAlt>
+                              </Label>
+                              <Textarea
                                 value={values.garnishes[indexGarnish].description ?? ''}
                                 name={`garnishes.${indexGarnish}.description`}
-                                className={
-                                  'textarea textarea-bordered h-24 w-full'
-                                  // ${
-                                  // errors.garnishDescription  && 'textarea-error'
-                                  // }`
-                                }
+                                className="h-24 w-full"
                                 onChange={handleChange}
                                 onBlur={handleBlur}
                               />
                             </div>
-                            <div className={'form-control'}>
-                              <label className={'label w-fit flex-col justify-start gap-1'}>
-                                <span className={'label-text'}>Optional</span>
-                                <span className={'label-text-alt text-error'}>
+                            <FormControl>
+                              <Label className="w-fit flex-col items-start justify-start gap-1">
+                                <LabelText>Optional</LabelText>
+                                <LabelTextAlt className="text-error">
                                   {(errors.garnishes as GarnishError[])?.[indexGarnish]?.optional &&
                                     (errors.garnishes as GarnishError[])?.[indexGarnish]?.optional}
-                                </span>
+                                </LabelTextAlt>
                                 <Field
                                   type={'checkbox'}
                                   name={`garnishes.${indexGarnish}.optional`}
                                   onChange={handleChange}
                                   onBlur={handleBlur}
-                                  className={'toggle toggle-primary'}
+                                  as={Toggle}
+                                  variant="primary"
                                 />
-                              </label>
-                            </div>
+                              </Label>
+                            </FormControl>
                             {indexGarnish > 0 && (
-                              <div className={'form-control'}>
-                                <label className={'label w-fit flex-col justify-start gap-1'}>
-                                  <span className={'label-text'}>Alternativ</span>
-                                  <span className={'label-text-alt text-error'}>
+                              <FormControl>
+                                <Label className="w-fit flex-col items-start justify-start gap-1">
+                                  <LabelText>Alternativ</LabelText>
+                                  <LabelTextAlt className="text-error">
                                     {(errors.garnishes as GarnishError[])?.[indexGarnish]?.isAlternative &&
                                       (errors.garnishes as GarnishError[])?.[indexGarnish]?.isAlternative}
-                                  </span>
+                                  </LabelTextAlt>
                                   <Field
                                     type={'checkbox'}
                                     name={`garnishes.${indexGarnish}.isAlternative`}
                                     onChange={handleChange}
                                     onBlur={handleBlur}
-                                    className={'toggle toggle-secondary'}
+                                    as={Toggle}
+                                    variant="secondary"
                                   />
-                                </label>
-                              </div>
+                                </Label>
+                              </FormControl>
                             )}
                           </div>
                           <div className={'flex-1'}>
-                            <div
-                              className={'btn btn-square btn-error btn-sm'}
+                            <Button
+                              type="button"
+                              variant="error"
+                              shape="square"
+                              size="sm"
                               onClick={() =>
                                 modalContext.openModal(
                                   <DeleteConfirmationModal
@@ -1546,14 +1621,17 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                               }
                             >
                               <FaTrashAlt />
-                            </div>
+                            </Button>
                           </div>
-                        </div>
+                        </Card>
                       ))}
 
                       <div className={'flex justify-center'}>
-                        <div
-                          className={'btn btn-primary btn-sm space-x-2'}
+                        <Button
+                          type="button"
+                          variant="primary"
+                          size="sm"
+                          className="gap-2"
                           onClick={() => {
                             const cocktailRecipeGarnish = {
                               cocktailRecipeId: '',
@@ -1567,21 +1645,21 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                           }}
                         >
                           <FaPlus /> <span>Garnitur hinzufügen</span>
-                        </div>
+                        </Button>
                       </div>
                     </div>
                   )}
                 </FieldArray>
-              </div>
-            </div>
+              </CardBody>
+            </Card>
 
             <div className={'md:hidden'}>
-              <button type="submit" className={`btn btn-primary w-full`} disabled={isSubmitting}>
-                {isSubmitting ? <span className={'loading loading-spinner'} /> : <></>}
+              <Button type="submit" variant="primary" wide disabled={isSubmitting}>
+                {isSubmitting ? <Loading size="sm" /> : <></>}
                 {props.cocktailRecipe == undefined ? 'Erstellen' : 'Aktualisieren'}
-              </button>
+              </Button>
               {!isValid && (
-                <div className={'font-thin italic text-error'}>
+                <div className={'font-thin text-error italic'}>
                   Nicht alle Felder sind korrekt ausgefüllt. Kontrolliere daher alle Felder. (Name gesetzt, Bild zugeschnitten, ... ?)
                 </div>
               )}

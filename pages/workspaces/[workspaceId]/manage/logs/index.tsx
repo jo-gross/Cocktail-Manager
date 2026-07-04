@@ -5,12 +5,31 @@ import { CocktailStatisticItemFull } from '../../../../../models/CocktailStatist
 import { alertService } from '@lib/alertService';
 import { FaSyncAlt, FaTrashAlt } from 'react-icons/fa';
 import { UserContext } from '@lib/context/UserContextProvider';
-import { Loading } from '@components/Loading';
 import ListSearchField from '../../../../../components/ListSearchField';
 import { NextPageWithPullToRefresh } from '../../../../../types/next';
 import { TimeRange, TimeRangePicker } from '@components/statistics/TimeRangePicker';
 import { formatDateTime } from '@lib/DateUtils';
 import { getStartOfDay, getEndOfDay } from '@lib/dateHelpers';
+import {
+  Button,
+  Card,
+  CardBody,
+  CardTitle,
+  DataTable,
+  Loading as UiLoading,
+  SkeletonTableRows,
+  SortableHeaderCell,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeaderCell,
+  TableRow,
+  toggleSort,
+  Tooltip,
+  useSortableData,
+} from '@components/ui';
+import type { SortDirection } from '@components/ui';
 
 interface PaginationInfo {
   page: number;
@@ -24,7 +43,6 @@ const LogsPage: NextPageWithPullToRefresh = () => {
   const { workspaceId } = router.query;
   const userContext = useContext(UserContext);
 
-  // Default to today (respecting dayStartTime)
   const getInitialTimeRange = useCallback((dayStartTimeParam?: string): TimeRange => {
     const now = new Date();
     const todayStart = getStartOfDay(now, dayStartTimeParam);
@@ -39,8 +57,9 @@ const LogsPage: NextPageWithPullToRefresh = () => {
   const [timeRange, setTimeRange] = useState<TimeRange>(getInitialTimeRange());
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [dayStartTime, setDayStartTime] = useState<string | undefined>(undefined);
+  const [sortKey, setSortKey] = useState('date');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
 
-  // Load workspace day start time setting
   useEffect(() => {
     if (!workspaceId) return;
     fetch(`/api/workspaces/${workspaceId}/settings`)
@@ -53,7 +72,6 @@ const LogsPage: NextPageWithPullToRefresh = () => {
       .catch(console.error);
   }, [workspaceId]);
 
-  // Update timeRange when dayStartTime is loaded
   useEffect(() => {
     if (dayStartTime !== undefined) {
       const newRange = getInitialTimeRange(dayStartTime);
@@ -66,6 +84,32 @@ const LogsPage: NextPageWithPullToRefresh = () => {
   const [loading, setLoading] = useState(false);
   const [itemDeleting, setItemDeleting] = useState<Record<string, boolean>>({});
   const [searchQuery, setSearchQuery] = useState('');
+
+  const handleSort = useCallback(
+    (key: string) => {
+      const next = toggleSort(sortKey, sortDirection, key);
+      setSortKey(next.key);
+      setSortDirection(next.direction);
+    },
+    [sortKey, sortDirection],
+  );
+
+  const getLogSortValue = useCallback((item: CocktailStatisticItemFull, key: string) => {
+    switch (key) {
+      case 'date':
+        return new Date(item.date);
+      case 'cocktail':
+        return item.cocktail?.name ?? '';
+      case 'card':
+        return item.cocktailCard?.name ?? '';
+      case 'user':
+        return item.user?.name ?? '';
+      default:
+        return null;
+    }
+  }, []);
+
+  const sortedLogItems = useSortableData(cocktailStatisticItems, { key: sortKey, direction: sortDirection }, getLogSortValue);
 
   const loadLogs = useCallback(async () => {
     if (!workspaceId) return;
@@ -108,12 +152,12 @@ const LogsPage: NextPageWithPullToRefresh = () => {
 
   const handleTimeRangeChange = useCallback((newRange: TimeRange) => {
     setTimeRange(newRange);
-    setCurrentPage(1); // Reset to first page when time range changes
+    setCurrentPage(1);
   }, []);
 
   const handleSearchChange = useCallback((newSearch: string) => {
     setSearchQuery(newSearch);
-    setCurrentPage(1); // Reset to first page when search changes
+    setCurrentPage(1);
   }, []);
 
   const handlePageChange = async (newPage: number) => {
@@ -127,53 +171,61 @@ const LogsPage: NextPageWithPullToRefresh = () => {
       actions={
         <div className="flex items-center gap-2">
           <TimeRangePicker value={timeRange} onChange={handleTimeRangeChange} compact dayStartTime={dayStartTime} />
-          <button className="btn btn-square btn-primary btn-sm md:btn-md" onClick={loadLogs} title="Aktualisieren">
-            {loading ? <span className="loading loading-spinner"></span> : <FaSyncAlt />}
-          </button>
+          <Tooltip tip="Aktualisieren">
+            <Button type="button" variant="primary" shape="square" size="sm" className="md:h-10 md:min-h-10 md:w-10" onClick={loadLogs}>
+              {loading ? <UiLoading size="sm" /> : <FaSyncAlt />}
+            </Button>
+          </Tooltip>
         </div>
       }
+      fullHeight
     >
-      <div className={'flex flex-col gap-4'}>
-        <div className={'card'}>
-          <div className={'card-body'}>
-            <div className={'card-title flex w-full justify-between'}>Bestell-Logs</div>
-            <ListSearchField onFilterChange={handleSearchChange} />
-
-            <div className="overflow-x-auto">
-              <table className="table-compact table table-zebra w-full">
-                <thead>
-                  <tr>
-                    <td>Zeitpunkt</td>
-                    <td>Cocktail</td>
-                    <td>Cocktail Karte</td>
-                    <td>Hinzugefügt von</td>
-                    <td></td>
-                  </tr>
-                </thead>
-                <tbody>
+      <div className="flex min-h-0 flex-1 flex-col gap-4">
+        <Card className="flex min-h-0 flex-1 flex-col">
+          <CardBody className="min-h-0 flex-1">
+            <CardTitle className="flex w-full justify-between">Bestell-Logs</CardTitle>
+            <DataTable fillHeight toolbar={<ListSearchField onFilterChange={handleSearchChange} />}>
+              <Table zebra compact className="w-full">
+                <TableHead>
+                  <TableRow>
+                    <SortableHeaderCell sortKey="date" activeSortKey={sortKey} direction={sortDirection} onSort={handleSort}>
+                      Zeitpunkt
+                    </SortableHeaderCell>
+                    <SortableHeaderCell sortKey="cocktail" activeSortKey={sortKey} direction={sortDirection} onSort={handleSort}>
+                      Cocktail
+                    </SortableHeaderCell>
+                    <SortableHeaderCell sortKey="card" activeSortKey={sortKey} direction={sortDirection} onSort={handleSort}>
+                      Cocktail Karte
+                    </SortableHeaderCell>
+                    <SortableHeaderCell sortKey="user" activeSortKey={sortKey} direction={sortDirection} onSort={handleSort}>
+                      Hinzugefügt von
+                    </SortableHeaderCell>
+                    <TableHeaderCell></TableHeaderCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
                   {loading ? (
-                    <tr>
-                      <td colSpan={5} className={'text-center'}>
-                        <Loading />
-                      </td>
-                    </tr>
-                  ) : cocktailStatisticItems.length === 0 ? (
-                    <tr>
-                      <td colSpan={5} className={'text-center'}>
+                    <SkeletonTableRows columns={5} avatarColumn={-1} rows={8} />
+                  ) : sortedLogItems.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={5} className={'text-center'}>
                         Keine Einträge gefunden
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   ) : (
-                    cocktailStatisticItems.map((item) => (
-                      <tr key={'statistic-item-' + item.id}>
-                        <td>{formatDateTime(new Date(item.date))}</td>
-                        <td>{item.cocktail?.name || 'Gelöschter Cocktail'}</td>
-                        <td>{item.cocktailCard?.name || '-'}</td>
-                        <td>{item.user?.name || '-'}</td>
-                        <td className={'flex items-center justify-end space-x-2'}>
-                          <button
+                    sortedLogItems.map((item) => (
+                      <TableRow key={'statistic-item-' + item.id}>
+                        <TableCell>{formatDateTime(new Date(item.date))}</TableCell>
+                        <TableCell>{item.cocktail?.name || 'Gelöschter Cocktail'}</TableCell>
+                        <TableCell>{item.cocktailCard?.name || '-'}</TableCell>
+                        <TableCell>{item.user?.name || '-'}</TableCell>
+                        <TableCell className={'flex items-center justify-end space-x-2'}>
+                          <Button
+                            type="button"
                             disabled={!userContext.isUserPermitted('MANAGER')}
-                            className={`btn ${itemDeleting[item.id] ? '' : 'btn-square'} btn-error btn-sm`}
+                            variant="error"
+                            size="sm"
+                            shape={itemDeleting[item.id] ? 'default' : 'square'}
                             onClick={async () => {
                               setItemDeleting({ ...itemDeleting, [item.id]: true });
                               try {
@@ -197,31 +249,31 @@ const LogsPage: NextPageWithPullToRefresh = () => {
                             }}
                           >
                             <FaTrashAlt />
-                            {itemDeleting[item.id] ? <span className="loading loading-spinner"></span> : <></>}
-                          </button>
-                        </td>
-                      </tr>
+                            {itemDeleting[item.id] ? <UiLoading size="sm" /> : null}
+                          </Button>
+                        </TableCell>
+                      </TableRow>
                     ))
                   )}
-                </tbody>
-              </table>
-            </div>
+                </TableBody>
+              </Table>
+            </DataTable>
 
             {pagination && (
               <div className={'mt-4 flex items-center justify-center gap-2'}>
-                <button className={'btn btn-sm'} disabled={currentPage === 1 || loading} onClick={() => handlePageChange(currentPage - 1)}>
+                <Button type="button" size="sm" disabled={currentPage === 1 || loading} onClick={() => handlePageChange(currentPage - 1)}>
                   Vorherige
-                </button>
+                </Button>
                 <span className={'text-sm'}>
                   Seite {pagination.page} von {pagination.totalPages} ({pagination.total} Einträge)
                 </span>
-                <button className={'btn btn-sm'} disabled={currentPage >= pagination.totalPages || loading} onClick={() => handlePageChange(currentPage + 1)}>
+                <Button type="button" size="sm" disabled={currentPage >= pagination.totalPages || loading} onClick={() => handlePageChange(currentPage + 1)}>
                   Nächste
-                </button>
+                </Button>
               </div>
             )}
-          </div>
-        </div>
+          </CardBody>
+        </Card>
       </div>
     </ManageEntityLayout>
   );

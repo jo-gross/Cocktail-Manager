@@ -21,6 +21,27 @@ import { fetchActions } from '@lib/network/actions';
 import { fetchIce } from '@lib/network/ices';
 import CreateIceModal from '../../../../../components/modals/CreateIceModal';
 import { withPagePermission } from '@middleware/ui/withPagePermission';
+import {
+  Button,
+  ButtonGroup,
+  Card,
+  CardBody,
+  CardTitle,
+  Divider,
+  FileInput,
+  FormControl,
+  Input,
+  Label,
+  LabelText,
+  LabelTextAlt,
+  Loading as UiLoading,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeaderCell,
+  TableRow,
+} from '@components/ui';
 
 function WorkspaceSettingPage() {
   const router = useRouter();
@@ -330,9 +351,9 @@ function WorkspaceSettingPage() {
       <div className={'grid grid-flow-row-dense grid-cols-1 gap-2 md:grid-cols-2 md:gap-4'}>
         {/*Cocktail Recipe Actions*/}
         {userContext.isUserPermitted(Role.ADMIN) ? (
-          <div className={'card h-min'}>
-            <div className={'card-body'}>
-              <div className={'card-title'}>Zubereitung</div>
+          <Card className="h-min">
+            <CardBody>
+              <CardTitle>Zubereitung</CardTitle>
               <div>
                 Bei der Zubereitung von Cocktails können unterschiedliche Aktionen durchgeführt werden. Hier lassen sich diese Anpassen und erstellen. Beachte,
                 dass das Löschen erst dann funktioniert, wenn eine Aktion nicht mehr verwendet wird.
@@ -345,15 +366,17 @@ function WorkspaceSettingPage() {
                 <>
                   <div className={'text-lg font-bold'}>Methoden</div>
                   <div className={'overflow-x-auto'}>
-                    <table className={'grid-col-full table table-zebra w-full table-auto'}>
-                      <thead>
-                        <tr>
-                          <td>Key</td>
-                          <td>Deutsch</td>
-                          <td>Gruppenbezeichner</td>
-                          <td className={'flex flex-row justify-end'}>
-                            <button
-                              className={'btn btn-primary btn-sm'}
+                    <Table zebra className="grid-col-full w-full table-auto">
+                      <TableHead>
+                        <TableRow>
+                          <TableHeaderCell>Key</TableHeaderCell>
+                          <TableHeaderCell>Deutsch</TableHeaderCell>
+                          <TableHeaderCell>Gruppenbezeichner</TableHeaderCell>
+                          <TableHeaderCell className="flex flex-row justify-end">
+                            <Button
+                              type="button"
+                              variant="primary"
+                              size="sm"
                               onClick={() => {
                                 modalContext.openModal(
                                   <CocktailStepActionModal
@@ -364,24 +387,27 @@ function WorkspaceSettingPage() {
                               }}
                             >
                               Hinzufügen
-                            </button>
-                          </td>
-                        </tr>
-                      </thead>
-                      <tbody>
+                            </Button>
+                          </TableHeaderCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
                         {workspaceActions.length == 0 ? (
-                          <tr>
-                            <td colSpan={4}>Keine Einträge vorhanden</td>
-                          </tr>
+                          <TableRow>
+                            <TableCell colSpan={4}>Keine Einträge vorhanden</TableCell>
+                          </TableRow>
                         ) : (
                           workspaceActions.map((action) => (
-                            <tr key={`action-${action.id}`}>
-                              <td>{action.name}</td>
-                              <td>{userContext.getTranslation(action.name, 'de')}</td>
-                              <td>{userContext.getTranslation(action.actionGroup, 'de')}</td>
-                              <td className={'flex flex-row justify-end gap-2'}>
-                                <button
-                                  className={'btn btn-outline btn-primary btn-sm'}
+                            <TableRow key={`action-${action.id}`}>
+                              <TableCell>{action.name}</TableCell>
+                              <TableCell>{userContext.getTranslation(action.name, 'de')}</TableCell>
+                              <TableCell>{userContext.getTranslation(action.actionGroup, 'de')}</TableCell>
+                              <TableCell className="flex flex-row justify-end gap-2">
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  className="border-primary text-primary hover:bg-primary/10"
                                   onClick={() => {
                                     modalContext.openModal(
                                       <CocktailStepActionModal
@@ -392,10 +418,13 @@ function WorkspaceSettingPage() {
                                   }}
                                 >
                                   Edit
-                                </button>
-                                <button
+                                </Button>
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  className="border-error text-error hover:bg-error/10"
                                   disabled={deleting[action.id] ?? false}
-                                  className={'btn-red btn btn-outline btn-sm'}
                                   onClick={() =>
                                     modalContext.openModal(
                                       <DeleteConfirmationModal
@@ -406,66 +435,69 @@ function WorkspaceSettingPage() {
                                     )
                                   }
                                 >
-                                  {(deleting[action.id] ?? false) ? <span className={'loading loading-spinner'} /> : <></>}
+                                  {(deleting[action.id] ?? false) ? <UiLoading size="sm" /> : null}
                                   <FaTrashAlt />
-                                </button>
-                              </td>
-                            </tr>
+                                </Button>
+                              </TableCell>
+                            </TableRow>
                           ))
                         )}
-                      </tbody>
-                    </table>
+                      </TableBody>
+                    </Table>
                   </div>
                   <div className={'text-lg font-bold'}>Gruppen</div>
                   <div>Diese können bei den Methoden erstellt werden, hier kannst du die passende Anzeige einstellen</div>
 
                   <div className={'overflow-x-auto'}>
-                    <table className={'grid-col-full table table-zebra w-full table-auto'}>
-                      <thead>
-                        <tr>
-                          <td>Key</td>
-                          <td>Deutsch</td>
-                          <td></td>
-                        </tr>
-                      </thead>
-                      <tbody>
+                    <Table zebra className="grid-col-full w-full table-auto">
+                      <TableHead>
+                        <TableRow>
+                          <TableHeaderCell>Key</TableHeaderCell>
+                          <TableHeaderCell>Deutsch</TableHeaderCell>
+                          <TableHeaderCell></TableHeaderCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
                         {Object.entries(_.groupBy(workspaceActions, 'actionGroup')).length == 0 ? (
-                          <tr>
-                            <td colSpan={3}>Keine Einträge vorhanden</td>
-                          </tr>
+                          <TableRow>
+                            <TableCell colSpan={3}>Keine Einträge vorhanden</TableCell>
+                          </TableRow>
                         ) : (
                           Object.entries(_.groupBy(workspaceActions, 'actionGroup')).map(([group, _groupActions]) => (
-                            <tr key={`action-group-${group}`}>
-                              <td>{group}</td>
-                              <td>{userContext.getTranslation(group, 'de')}</td>
-                              <td className={'flex flex-row justify-end gap-2'}>
-                                <button
-                                  className={'btn btn-outline btn-primary btn-sm'}
+                            <TableRow key={`action-group-${group}`}>
+                              <TableCell>{group}</TableCell>
+                              <TableCell>{userContext.getTranslation(group, 'de')}</TableCell>
+                              <TableCell className="flex flex-row justify-end gap-2">
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  className="border-primary text-primary hover:bg-primary/10"
                                   onClick={() => {
                                     modalContext.openModal(<EditTranslationModal identifier={group} slang={'Zubereitungsgruppe'} />);
                                   }}
                                 >
                                   Edit
-                                </button>
-                              </td>
-                            </tr>
+                                </Button>
+                              </TableCell>
+                            </TableRow>
                           ))
                         )}
-                      </tbody>
-                    </table>
+                      </TableBody>
+                    </Table>
                   </div>
                 </>
               )}
-            </div>
-          </div>
+            </CardBody>
+          </Card>
         ) : (
           <></>
         )}
         {/*Workspace Units*/}
         {userContext.isUserPermitted(Role.ADMIN) ? (
-          <div className={`${!collapsedGeneratedUnits ? 'row-span-2' : 'row-span-6'} card h-fit`}>
-            <div className={'card-body'}>
-              <div className={'card-title'}>Einheiten</div>
+          <Card className={`${!collapsedGeneratedUnits ? 'row-span-2' : 'row-span-6'} h-fit`}>
+            <CardBody>
+              <CardTitle>Einheiten</CardTitle>
               <div>Hier lassen sich alle Einheiten, die bei der Zubereitung eines Cocktails ausgewählt werden können angepasst werden.</div>
               {unitsLoading ? (
                 <div>
@@ -475,47 +507,55 @@ function WorkspaceSettingPage() {
                 <>
                   <div className={'text-lg font-bold'}>Einheiten</div>
                   <div className={'overflow-x-auto'}>
-                    <table className={'grid-col-full table table-zebra w-full table-auto'}>
-                      <thead>
-                        <tr>
-                          <td>Key</td>
-                          <td>Deutsch</td>
-                          <td className={'flex flex-row justify-end'}>
-                            <button
-                              className={'btn btn-primary btn-sm'}
+                    <Table zebra className="grid-col-full w-full table-auto">
+                      <TableHead>
+                        <TableRow>
+                          <TableHeaderCell>Key</TableHeaderCell>
+                          <TableHeaderCell>Deutsch</TableHeaderCell>
+                          <TableHeaderCell className="flex flex-row justify-end">
+                            <Button
+                              type="button"
+                              variant="primary"
+                              size="sm"
                               onClick={() => {
                                 modalContext.openModal(<UnitModal unit={undefined} onSaved={() => fetchUnits(workspaceId, setUnits, setUnitsLoading)} />);
                               }}
                             >
                               Hinzufügen
-                            </button>
-                          </td>
-                        </tr>
-                      </thead>
-                      <tbody>
+                            </Button>
+                          </TableHeaderCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
                         {units.length == 0 ? (
-                          <tr>
-                            <td colSpan={3} className={'text-center'}>
+                          <TableRow>
+                            <TableCell colSpan={3} className="text-center">
                               Keine Einträge vorhanden
-                            </td>
-                          </tr>
+                            </TableCell>
+                          </TableRow>
                         ) : (
                           units.map((unit) => (
-                            <tr key={`unit-${unit.id}`}>
-                              <td>{unit.name}</td>
-                              <td>{userContext.getTranslation(unit.name, 'de')}</td>
-                              <td className={'flex flex-row justify-end gap-2'}>
-                                <button
-                                  className={'btn btn-outline btn-primary btn-sm'}
+                            <TableRow key={`unit-${unit.id}`}>
+                              <TableCell>{unit.name}</TableCell>
+                              <TableCell>{userContext.getTranslation(unit.name, 'de')}</TableCell>
+                              <TableCell className="flex flex-row justify-end gap-2">
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  className="border-primary text-primary hover:bg-primary/10"
                                   onClick={() => {
                                     modalContext.openModal(<UnitModal unit={unit} />);
                                   }}
                                 >
                                   Edit
-                                </button>
-                                <button
+                                </Button>
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  className="border-error text-error hover:bg-error/10"
                                   disabled={deleting[unit.id] ?? false}
-                                  className={'btn-red btn btn-outline btn-sm'}
                                   onClick={() =>
                                     modalContext.openModal(
                                       <DeleteConfirmationModal
@@ -526,29 +566,31 @@ function WorkspaceSettingPage() {
                                     )
                                   }
                                 >
-                                  {(deleting[unit.id] ?? false) ? <span className={'loading loading-spinner'} /> : <></>}
+                                  {(deleting[unit.id] ?? false) ? <UiLoading size="sm" /> : null}
                                   <FaTrashAlt />
-                                </button>
-                              </td>
-                            </tr>
+                                </Button>
+                              </TableCell>
+                            </TableRow>
                           ))
                         )}
-                      </tbody>
-                    </table>
+                      </TableBody>
+                    </Table>
                   </div>
                   <div className={'text-lg font-bold'}>Umrechnungen</div>
                   <div>Hier können die standardmäßigen Umrechnungen der Einheiten angepasst werden.</div>
                   <div className={'overflow-x-auto'}>
-                    <table className={'grid-col-full table table-zebra w-full'}>
-                      <thead>
-                        <tr>
-                          <td>1 Einheit A</td>
-                          <td className={'text-right'}>= X</td>
-                          <td>Einheit B</td>
-                          <td></td>
-                          <td className={'flex justify-end'}>
-                            <button
-                              className={'btn btn-primary btn-sm'}
+                    <Table zebra className="grid-col-full w-full">
+                      <TableHead>
+                        <TableRow>
+                          <TableHeaderCell>1 Einheit A</TableHeaderCell>
+                          <TableHeaderCell className="text-right">= X</TableHeaderCell>
+                          <TableHeaderCell>Einheit B</TableHeaderCell>
+                          <TableHeaderCell></TableHeaderCell>
+                          <TableHeaderCell className="flex justify-end">
+                            <Button
+                              type="button"
+                              variant="primary"
+                              size="sm"
                               onClick={() => {
                                 modalContext.openModal(
                                   <UnitConversionModal
@@ -560,48 +602,51 @@ function WorkspaceSettingPage() {
                               }}
                             >
                               Hinzufügen
-                            </button>
-                          </td>
-                        </tr>
-                      </thead>
-                      <tbody>
+                            </Button>
+                          </TableHeaderCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
                         {unitConversionsLoading ? (
-                          <tr>
-                            <td colSpan={5} className={'text-center'}>
+                          <TableRow>
+                            <TableCell colSpan={5} className="text-center">
                               <Loading />
-                            </td>
-                          </tr>
+                            </TableCell>
+                          </TableRow>
                         ) : unitConversions.length == 0 ? (
-                          <tr>
-                            <td colSpan={5} className={'text-center'}>
+                          <TableRow>
+                            <TableCell colSpan={5} className="text-center">
                               Keine Einträge vorhanden
-                            </td>
-                          </tr>
+                            </TableCell>
+                          </TableRow>
                         ) : (
                           <>
                             {unitConversions
                               .filter((conversion) => !conversion.autoGenerated)
                               .map((conversion) => (
-                                <tr key={`unit-conversion-${conversion.id}`}>
-                                  <td>{userContext.getTranslation(units.find((unit) => unit.id == conversion.fromUnitId)?.name ?? '', 'de')}</td>
-                                  <td className={'text-right'}>
+                                <TableRow key={`unit-conversion-${conversion.id}`}>
+                                  <TableCell>{userContext.getTranslation(units.find((unit) => unit.id == conversion.fromUnitId)?.name ?? '', 'de')}</TableCell>
+                                  <TableCell className="text-right">
                                     {conversion.factor.toLocaleString(undefined, {
                                       minimumFractionDigits: 2,
                                       maximumFractionDigits: 2,
                                     })}
-                                  </td>
-                                  <td>{userContext.getTranslation(units.find((unit) => unit.id == conversion.toUnitId)?.name ?? '', 'de')}</td>
-                                  <td>
+                                  </TableCell>
+                                  <TableCell>{userContext.getTranslation(units.find((unit) => unit.id == conversion.toUnitId)?.name ?? '', 'de')}</TableCell>
+                                  <TableCell>
                                     1 {userContext.getTranslation(units.find((unit) => unit.id == conversion.toUnitId)?.name ?? '', 'de')} ={' '}
                                     {(1 / conversion.factor).toLocaleString(undefined, {
                                       minimumFractionDigits: 2,
                                       maximumFractionDigits: 2,
                                     })}{' '}
                                     {userContext.getTranslation(units.find((unit) => unit.id == conversion.fromUnitId)?.name ?? '', 'de')}
-                                  </td>
-                                  <td className={'flex flex-row justify-end gap-2'}>
-                                    <button
-                                      className={'btn btn-outline btn-primary btn-sm'}
+                                  </TableCell>
+                                  <TableCell className="flex flex-row justify-end gap-2">
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="sm"
+                                      className="border-primary text-primary hover:bg-primary/10"
                                       onClick={() => {
                                         modalContext.openModal(
                                           <UnitConversionModal
@@ -614,10 +659,13 @@ function WorkspaceSettingPage() {
                                       }}
                                     >
                                       Edit
-                                    </button>
-                                    <button
+                                    </Button>
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="sm"
+                                      className="border-error text-error hover:bg-error/10"
                                       disabled={deleting[conversion.id] ?? false}
-                                      className={'btn-red btn btn-outline btn-sm'}
                                       onClick={() =>
                                         modalContext.openModal(
                                           <DeleteConfirmationModal
@@ -632,67 +680,71 @@ function WorkspaceSettingPage() {
                                         )
                                       }
                                     >
-                                      {(deleting[conversion.id] ?? false) ? <span className={'loading loading-spinner'} /> : <></>}
+                                      {(deleting[conversion.id] ?? false) ? <UiLoading size="sm" /> : null}
                                       <FaTrashAlt />
-                                    </button>
-                                  </td>
-                                </tr>
+                                    </Button>
+                                  </TableCell>
+                                </TableRow>
                               ))}
-                            <tr onClick={() => setCollapsedGeneratedUnits(!collapsedGeneratedUnits)}>
-                              <td colSpan={4} className={'cursor-pointer italic'}>
-                                Automatisch generierte Umrechnungen <span className={'underline'}>{!collapsedGeneratedUnits ? 'anzeigen' : 'verbergen'}</span>
-                              </td>
-                              <td className={'flex items-center justify-end'}>
-                                <div className={'p-2'}>{collapsedGeneratedUnits ? <FaArrowUp /> : <FaArrowDown />}</div>
-                              </td>
-                            </tr>
+                            <TableRow onClick={() => setCollapsedGeneratedUnits(!collapsedGeneratedUnits)}>
+                              <TableCell colSpan={4} className="cursor-pointer italic">
+                                Automatisch generierte Umrechnungen <span className="underline">{!collapsedGeneratedUnits ? 'anzeigen' : 'verbergen'}</span>
+                              </TableCell>
+                              <TableCell className="flex items-center justify-end">
+                                <div className="p-2">{collapsedGeneratedUnits ? <FaArrowUp /> : <FaArrowDown />}</div>
+                              </TableCell>
+                            </TableRow>
 
                             {collapsedGeneratedUnits ? (
                               unitConversions
                                 .filter((conversion) => conversion.autoGenerated)
                                 .sort((a, b) => a.fromUnitId.localeCompare(b.fromUnitId) || a.toUnitId.localeCompare(b.toUnitId))
                                 .map((conversion) => (
-                                  <tr key={`unit-conversion-${conversion.id}`}>
-                                    <td>{userContext.getTranslation(units.find((unit) => unit.id == conversion.fromUnitId)?.name ?? 'N/A', 'de')}</td>
-                                    <td className={'text-right'}>
+                                  <TableRow key={`unit-conversion-${conversion.id}`}>
+                                    <TableCell>
+                                      {userContext.getTranslation(units.find((unit) => unit.id == conversion.fromUnitId)?.name ?? 'N/A', 'de')}
+                                    </TableCell>
+                                    <TableCell className="text-right">
                                       {conversion.factor.toLocaleString(undefined, {
                                         minimumFractionDigits: 2,
                                         maximumFractionDigits: 2,
                                       })}
-                                    </td>
-                                    <td>{userContext.getTranslation(units.find((unit) => unit.id == conversion.toUnitId)?.name ?? 'N/A', 'de')}</td>
-                                    <td>
+                                    </TableCell>
+                                    <TableCell>
+                                      {userContext.getTranslation(units.find((unit) => unit.id == conversion.toUnitId)?.name ?? 'N/A', 'de')}
+                                    </TableCell>
+                                    <TableCell>
                                       1 {userContext.getTranslation(units.find((unit) => unit.id == conversion.toUnitId)?.name ?? 'N/A', 'de')} ={' '}
                                       {(1 / conversion.factor).toLocaleString(undefined, {
                                         minimumFractionDigits: 2,
                                         maximumFractionDigits: 2,
                                       })}{' '}
                                       {userContext.getTranslation(units.find((unit) => unit.id == conversion.fromUnitId)?.name ?? 'N/A', 'de')}
-                                    </td>
-                                    <td className={''}></td>
-                                  </tr>
+                                    </TableCell>
+                                    <TableCell></TableCell>
+                                  </TableRow>
                                 ))
                             ) : (
                               <></>
                             )}
                           </>
                         )}
-                      </tbody>
-                    </table>
+                      </TableBody>
+                    </Table>
                   </div>
                 </>
               )}
-            </div>
-          </div>
+            </CardBody>
+          </Card>
         ) : (
           <></>
         )}
 
         {/*Ice*/}
         {userContext.isUserPermitted(Role.ADMIN) ? (
-          <div className={'card h-min'}>
-            <div className={'card-body'}>
-              <div className={'card-title'}>Eis</div>
+          <Card className="h-min">
+            <CardBody>
+              <CardTitle>Eis</CardTitle>
               <div>Hier lassen sich die unterschiedlichen Eiswürfeltypen anpassen. Beachte, dass das Löschen alle Verweise auf das Eis löscht.</div>
               {iceOptionsLoading ? (
                 <div>
@@ -701,45 +753,53 @@ function WorkspaceSettingPage() {
               ) : (
                 <>
                   <div className={'overflow-x-auto'}>
-                    <table className={'grid-col-full table table-zebra w-full table-auto'}>
-                      <thead>
-                        <tr>
-                          <td>Key</td>
-                          <td>Deutsch</td>
-                          <td className={'flex flex-row justify-end'}>
-                            <button
-                              className={'btn btn-primary btn-sm'}
+                    <Table zebra className="grid-col-full w-full table-auto">
+                      <TableHead>
+                        <TableRow>
+                          <TableHeaderCell>Key</TableHeaderCell>
+                          <TableHeaderCell>Deutsch</TableHeaderCell>
+                          <TableHeaderCell className="flex flex-row justify-end">
+                            <Button
+                              type="button"
+                              variant="primary"
+                              size="sm"
                               onClick={() => {
                                 modalContext.openModal(<CreateIceModal />);
                               }}
                             >
                               Hinzufügen
-                            </button>
-                          </td>
-                        </tr>
-                      </thead>
-                      <tbody>
+                            </Button>
+                          </TableHeaderCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
                         {iceOptions.length == 0 ? (
-                          <tr>
-                            <td colSpan={3}>Keine Einträge vorhanden</td>
-                          </tr>
+                          <TableRow>
+                            <TableCell colSpan={3}>Keine Einträge vorhanden</TableCell>
+                          </TableRow>
                         ) : (
                           iceOptions.map((iceOption, indexIceOption) => (
-                            <tr key={`ice-option-${indexIceOption}`}>
-                              <td>{iceOption.name}</td>
-                              <td>{userContext.getTranslation(iceOption.name, 'de')}</td>
-                              <td className={'flex flex-row justify-end gap-2'}>
-                                <button
-                                  className={'btn btn-outline btn-primary btn-sm'}
+                            <TableRow key={`ice-option-${indexIceOption}`}>
+                              <TableCell>{iceOption.name}</TableCell>
+                              <TableCell>{userContext.getTranslation(iceOption.name, 'de')}</TableCell>
+                              <TableCell className="flex flex-row justify-end gap-2">
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  className="border-primary text-primary hover:bg-primary/10"
                                   onClick={() => {
                                     modalContext.openModal(<EditTranslationModal identifier={iceOption.name} slang={'Eis'} />);
                                   }}
                                 >
                                   Edit
-                                </button>
-                                <button
+                                </Button>
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  className="border-error text-error hover:bg-error/10"
                                   disabled={deleting[iceOption.id] ?? false}
-                                  className={'btn-red btn btn-outline btn-sm'}
                                   onClick={() =>
                                     modalContext.openModal(
                                       <DeleteConfirmationModal
@@ -750,20 +810,20 @@ function WorkspaceSettingPage() {
                                     )
                                   }
                                 >
-                                  {(deleting[iceOption.id] ?? false) ? <span className={'loading loading-spinner'} /> : <></>}
+                                  {(deleting[iceOption.id] ?? false) ? <UiLoading size="sm" /> : null}
                                   <FaTrashAlt />
-                                </button>
-                              </td>
-                            </tr>
+                                </Button>
+                              </TableCell>
+                            </TableRow>
                           ))
                         )}
-                      </tbody>
-                    </table>
+                      </TableBody>
+                    </Table>
                   </div>
                 </>
               )}
-            </div>
-          </div>
+            </CardBody>
+          </Card>
         ) : (
           <></>
         )}
@@ -772,63 +832,52 @@ function WorkspaceSettingPage() {
         {userContext.isUserPermitted(Role.MANAGER) ? (
           <>
             <div className={'col-span-full'}></div>
-            <div className={'card'}>
-              <div className={'card-body'}>
-                <div className={'card-title'}>Statistik-Einstellungen</div>
-                <div className={'form-control'}>
-                  <label className={'label'}>
-                    <span className={'label-text font-semibold'}>Tagesstart-Uhrzeit</span>
-                  </label>
-                  <p className={'mb-2 text-sm text-base-content/70'}>
+            <Card>
+              <CardBody>
+                <CardTitle>Statistik-Einstellungen</CardTitle>
+                <FormControl>
+                  <Label>
+                    <LabelText className="font-semibold">Tagesstart-Uhrzeit</LabelText>
+                  </Label>
+                  <p className="mb-2 text-sm text-base-content/70">
                     Definiert, wann ein &quot;Tag&quot; für Statistik-Zwecke beginnt. Nützlich für Bars, deren Arbeitstag nicht um Mitternacht beginnt (z.B.
                     18:00 Uhr).
                   </p>
-                  <div className={'join'}>
-                    <input
-                      type={'time'}
-                      className={'input join-item input-bordered w-full'}
-                      value={statisticDayStartTime}
-                      onChange={(e) => setStatisticDayStartTime(e.target.value)}
-                    />
-                    <button className={'btn btn-primary join-item'} onClick={saveStatisticDayStartTime} disabled={statisticSettingsSaving}>
-                      {statisticSettingsSaving ? <span className={'loading loading-spinner'} /> : null}
+                  <ButtonGroup className="w-full">
+                    <Input type="time" joinItem className="w-full" value={statisticDayStartTime} onChange={(e) => setStatisticDayStartTime(e.target.value)} />
+                    <Button type="button" variant="primary" joinItem onClick={saveStatisticDayStartTime} disabled={statisticSettingsSaving}>
+                      {statisticSettingsSaving ? <UiLoading size="sm" /> : null}
                       Speichern
-                    </button>
-                  </div>
-                  <label className={'label'}>
-                    <span className={'label-text-alt'}>Aktuell: Ein Tag beginnt um {statisticDayStartTime} Uhr</span>
-                  </label>
-                </div>
-              </div>
-            </div>
+                    </Button>
+                  </ButtonGroup>
+                  <Label>
+                    <LabelTextAlt>Aktuell: Ein Tag beginnt um {statisticDayStartTime} Uhr</LabelTextAlt>
+                  </Label>
+                </FormControl>
+              </CardBody>
+            </Card>
           </>
         ) : null}
 
         {userContext.isUserPermitted(Role.ADMIN) ? (
           <>
             <div className={'col-span-full'}></div>
-            <div className={'card'}>
-              <div className={'card-body'}>
-                <div className={'card-title'}>Daten Transfer</div>
-                <div className={'form-control'}>
-                  <input
-                    type={'file'}
-                    disabled={importing}
-                    className={'file-input file-input-bordered'}
-                    ref={uploadImportFileRef}
-                    onChange={(event) => setUploadImportFile(event.target.files?.[0])}
-                  />
-                </div>
-                <button className={`btn btn-primary`} disabled={uploadImportFile == undefined || importing} type={'button'} onClick={importBackup}>
-                  {importing ? <span className="loading loading-spinner"></span> : <></>}
+            <Card>
+              <CardBody>
+                <CardTitle>Daten Transfer</CardTitle>
+                <FormControl>
+                  <FileInput disabled={importing} ref={uploadImportFileRef} onChange={(event) => setUploadImportFile(event.target.files?.[0])} />
+                </FormControl>
+                <Button type="button" variant="primary" disabled={uploadImportFile == undefined || importing} onClick={importBackup}>
+                  {importing ? <UiLoading size="sm" /> : null}
                   Import
-                </button>
-                <button className={`btn btn-primary`} type={'button'} onClick={exportAll} disabled={exporting}>
-                  {exporting ? <span className="loading loading-spinner"></span> : <></>}
+                </Button>
+                <Button type="button" variant="primary" onClick={exportAll} disabled={exporting}>
+                  {exporting ? <UiLoading size="sm" /> : null}
                   Export All
-                </button>
-              </div>
-            </div>
+                </Button>
+              </CardBody>
+            </Card>
           </>
         ) : (
           <></>
@@ -837,43 +886,43 @@ function WorkspaceSettingPage() {
         {/*Workspace Dangerous Actions*/}
         {userContext.isUserPermitted(Role.ADMIN) ? (
           <div className={'col-span-full'}>
-            <div className={'divider'}>Gefahrenbereich</div>
-            <div className={'card'}>
-              <div className={'card-body'}>
-                <div className={'card-title'}>Gefahrenbereich</div>
-                <label className={'label cursor-pointer'}>
-                  <span className={'label-text'}>Workspace umbenennen</span>
-                </label>
-                <div className={'join'}>
-                  <input
-                    type={'text'}
-                    className={'input join-item input-bordered w-full'}
-                    value={newWorkspaceName}
-                    onChange={(event) => setNewWorkspaceName(event.target.value)}
-                  />
-                  <button
-                    className={'btn btn-outline btn-error join-item'}
+            <Divider>Gefahrenbereich</Divider>
+            <Card>
+              <CardBody>
+                <CardTitle>Gefahrenbereich</CardTitle>
+                <Label className="cursor-pointer">
+                  <LabelText>Workspace umbenennen</LabelText>
+                </Label>
+                <ButtonGroup className="w-full">
+                  <Input type="text" joinItem className="w-full" value={newWorkspaceName} onChange={(event) => setNewWorkspaceName(event.target.value)} />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    joinItem
+                    className="border-error text-error hover:bg-error/10"
                     disabled={newWorkspaceName.length < 3 || newWorkspaceName.length > 50}
                     onClick={handleRenameWorkspace}
                   >
-                    {workspaceRenaming ? <span className={'loading loading-spinner'} /> : <></>}
+                    {workspaceRenaming ? <UiLoading size="sm" /> : null}
                     Umbenennen
-                  </button>
-                </div>
-                <div className={'divider'}></div>
-                <button
-                  className={'btn btn-outline btn-error'}
+                  </Button>
+                </ButtonGroup>
+                <Divider />
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="border-error text-error hover:bg-error/10"
                   onClick={() =>
                     modalContext.openModal(
                       <DeleteConfirmationModal onApprove={handleDeleteWorkspace} entityName={'diesen Arbeitsbereich'} spelling={'DELETE'} />,
                     )
                   }
                 >
-                  {workspaceDeleting ? <span className={'loading loading-spinner'} /> : <></>}
+                  {workspaceDeleting ? <UiLoading size="sm" /> : null}
                   Workspace löschen
-                </button>
-              </div>
-            </div>
+                </Button>
+              </CardBody>
+            </Card>
           </div>
         ) : (
           <></>
