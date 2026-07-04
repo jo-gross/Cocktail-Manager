@@ -124,12 +124,19 @@ export default withHttpMethods({
           },
         },
       }),
+      signage: await prisma.signage.findMany({ where: { workspaceId } }),
+      signageSlides: await prisma.signageSlide.findMany({
+        where: { workspaceId },
+        orderBy: [{ format: 'asc' }, { order: 'asc' }],
+      }),
     };
 
     console.info(`[BackupExport][${workspaceId}] Export finished`, {
       cocktails: backup.cocktailRecipe.length,
       ingredients: backup.ingredient.length,
       calculations: backup.calculation.length,
+      signage: backup.signage?.length ?? 0,
+      signageSlides: backup.signageSlides?.length ?? 0,
     });
     return res.json(backup);
   }),

@@ -165,6 +165,11 @@ enum MonitorFormat {
   PORTRAIT
 }
 
+enum SignageBackgroundMode {
+  COLOR
+  BLURRED
+}
+
 model WorkspaceUser {
   workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   workspaceId String // relation scalar field (used in the `@relation` attribute above)
@@ -210,13 +215,32 @@ model Workspace {
 }
 
 model Signage {
-  workspace       Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  workspaceId     String
-  format          MonitorFormat
-  content         String
-  backgroundColor String?
+  workspace            Workspace             @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspaceId          String
+  format               MonitorFormat
+  backgroundColor      String?
+  backgroundMode       SignageBackgroundMode @default(COLOR)
+  slideDurationSeconds Int                   @default(10)
+  mirrorSourceFormat   MonitorFormat?
+  slides               SignageSlide[]
 
   @@id([workspaceId, format])
+}
+
+model SignageSlide {
+  id            String        @id @default(cuid())
+  workspaceId   String
+  format        MonitorFormat
+  content       String
+  order         Int
+  enabled       Boolean       @default(true)
+  weekdays      Int[]
+  validFrom     DateTime?     @db.Date
+  validTo       DateTime?     @db.Date
+  dateExclusive Boolean       @default(false)
+  signage       Signage       @relation(fields: [workspaceId, format], references: [workspaceId, format], onDelete: Cascade)
+
+  @@index([workspaceId, format, order])
 }
 
 model Glass {
