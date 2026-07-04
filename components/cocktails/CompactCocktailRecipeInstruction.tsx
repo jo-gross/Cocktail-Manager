@@ -4,7 +4,6 @@ import { UserContext } from '@lib/context/UserContextProvider';
 import Image, { ImageProps } from 'next/image';
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import ImageModal from '../modals/ImageModal';
-import { Loading } from '../Loading';
 import StarsComponent from '../StarsComponent';
 import { CocktailRating } from '@generated/prisma/client';
 import { Skeleton } from '@components/ui';
@@ -90,7 +89,15 @@ export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeIns
           ) : (
             <>
               {props.showRating.loading ? (
-                <Loading />
+                <>
+                  <Skeleton className="h-4 w-8" />
+                  <div className="flex flex-row items-center gap-0.5">
+                    {Array.from({ length: 5 }).map((_, index) => (
+                      <Skeleton key={`rating-star-skeleton-${index}`} circle className="h-4 w-4" />
+                    ))}
+                  </div>
+                  <Skeleton className="h-4 w-6" />
+                </>
               ) : (
                 <>
                   {(props.showRating.ratings.length > 0
