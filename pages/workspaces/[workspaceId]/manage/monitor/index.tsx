@@ -681,4 +681,4 @@ const ManageMonitorPage: NextPageWithPullToRefresh = () => {
   );
 };
 
-export default withPagePermission(['MANAGER'], ManageMonitorPage, '/workspaces/[workspaceId]/manage');
+export default withPagePermission([Role.MANAGER], ManageMonitorPage, '/workspaces/[workspaceId]/manage');
