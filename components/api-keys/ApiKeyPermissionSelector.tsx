@@ -63,6 +63,10 @@ const permissionCategories: Record<string, { label: string; permissions: Permiss
     label: 'RATINGS',
     permissions: [Permission.RATINGS_READ, Permission.RATINGS_CREATE, Permission.RATINGS_DELETE],
   },
+  MONITOR: {
+    label: 'MONITOR',
+    permissions: [Permission.MONITOR_READ, Permission.MONITOR_UPDATE],
+  },
 };
 
 // Get all permissions for ALL category (all unique permissions from all categories)
@@ -117,6 +121,8 @@ const permissionLabels: Record<Permission, string> = {
   [Permission.RATINGS_READ]: 'RATINGS_READ',
   [Permission.RATINGS_CREATE]: 'RATINGS_CREATE',
   [Permission.RATINGS_DELETE]: 'RATINGS_DELETE',
+  [Permission.MONITOR_READ]: 'MONITOR_READ',
+  [Permission.MONITOR_UPDATE]: 'MONITOR_UPDATE',
 };
 
 // Permission descriptions
@@ -166,6 +172,8 @@ const permissionDescriptions: Record<Permission, string> = {
   [Permission.RATINGS_READ]: 'Bewertungen lesen und anzeigen',
   [Permission.RATINGS_CREATE]: 'Neue Bewertungen erstellen',
   [Permission.RATINGS_DELETE]: 'Bewertungen löschen',
+  [Permission.MONITOR_READ]: 'Monitor-/Signage-Einstellungen lesen',
+  [Permission.MONITOR_UPDATE]: 'Monitor-/Signage-Einstellungen setzen, ändern und entfernen',
 };
 
 export default function ApiKeyPermissionSelector(props: ApiKeyPermissionSelectorProps) {

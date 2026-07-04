@@ -617,6 +617,8 @@ enum Permission {
   RATINGS_READ
   RATINGS_CREATE
   RATINGS_DELETE
+  MONITOR_READ
+  MONITOR_UPDATE
 }
 
 model WorkspaceApiKey {

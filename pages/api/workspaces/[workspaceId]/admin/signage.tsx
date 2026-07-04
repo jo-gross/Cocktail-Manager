@@ -1,13 +1,22 @@
 import HTTPMethod from 'http-method-enum';
 import { withHttpMethods } from '@middleware/api/handleMethods';
 import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
-import { $Enums, Role } from '@generated/prisma/client';
+import { $Enums, Permission, Role } from '@generated/prisma/client';
 import prisma from '../../../../../prisma/prisma';
 import { NextApiRequest, NextApiResponse } from 'next';
 import MonitorFormat = $Enums.MonitorFormat;
 
 export default withHttpMethods({
-  [HTTPMethod.PUT]: withWorkspacePermission([Role.MANAGER], async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
+  [HTTPMethod.GET]: withWorkspacePermission([Role.USER], Permission.MONITOR_READ, async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
+    const signages = await prisma.signage.findMany({
+      where: {
+        workspaceId: workspace.id,
+      },
+    });
+
+    return res.status(200).json({ content: signages });
+  }),
+  [HTTPMethod.PUT]: withWorkspacePermission([Role.MANAGER], Permission.MONITOR_UPDATE, async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
     const { verticalContent, horizontalContent, verticalBgColor, horizontalBgColor } = JSON.parse(req.body);
 
     await prisma.signage.deleteMany({
