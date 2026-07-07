@@ -1,11 +1,12 @@
 import { withHttpMethods } from '@middleware/api/handleMethods';
 import HTTPMethod from 'http-method-enum';
 import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
+import { withDeprecation } from '@middleware/api/withDeprecation';
 import { Role, Permission } from '@generated/prisma/client';
 import prisma from '../../../../../prisma/prisma';
 import '../../../../../lib/ArrayUtils';
 
-export default withHttpMethods({
+const legacyHandler = withHttpMethods({
   [HTTPMethod.GET]: withWorkspacePermission([Role.USER], Permission.COCKTAILS_READ, async (req, res, user, workspace) => {
     const cocktailTags = await prisma.cocktailRecipe.findMany({
       where: { workspaceId: workspace.id },
@@ -29,3 +30,7 @@ export default withHttpMethods({
     return res.json({ data: tags });
   }),
 });
+
+// DEPRECATED: unversioned endpoint kept for backward compatibility. Behavior is
+// unchanged; only advertises the successor v1 path. Use /api/v1/... instead.
+export default withDeprecation({ successor: '/api/v1/workspaces/{workspaceId}/tags' }, legacyHandler);

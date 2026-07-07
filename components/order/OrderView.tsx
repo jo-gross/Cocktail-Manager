@@ -509,14 +509,10 @@ export const OrderView = React.memo(function OrderView({ cocktailCards, workspac
                                 onClick={() => addReturnedGlass(glass)}
                               >
                                 <div className="h-16 w-16 overflow-hidden rounded-full bg-base-300">
-                                  {glass._count?.GlassImage == 0 ? (
+                                  {!glass.hasImage ? (
                                     <DefaultGlassIcon />
                                   ) : (
-                                    <AvatarImage
-                                      src={`/api/workspaces/${workspaceId}/glasses/${glass.id}/image`}
-                                      alt={glass.name}
-                                      altComponent={<DefaultGlassIcon />}
-                                    />
+                                    <AvatarImage src={glass.imageUrl ?? ''} alt={glass.name} altComponent={<DefaultGlassIcon />} />
                                   )}
                                 </div>
                                 <span className="max-w-[4rem] text-center text-xs break-words">{glass.name}</span>

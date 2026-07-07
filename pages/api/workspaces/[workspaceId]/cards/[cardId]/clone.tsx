@@ -4,8 +4,9 @@ import { withWorkspacePermission } from '@middleware/api/authenticationMiddlewar
 import { Role, Permission } from '@generated/prisma/client';
 import { NextApiRequest, NextApiResponse } from 'next';
 import prisma from '../../../../../../prisma/prisma';
+import { withDeprecation } from '@middleware/api/withDeprecation';
 
-export default withHttpMethods({
+const legacyHandler = withHttpMethods({
   [HTTPMethod.POST]: withWorkspacePermission([Role.MANAGER], Permission.CARDS_CREATE, async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
     const cardId = req.query.cardId as string | undefined;
     if (!cardId) return res.status(400).json({ message: 'No card id' });
@@ -69,3 +70,7 @@ export default withHttpMethods({
     });
   }),
 });
+
+// DEPRECATED: unversioned endpoint kept for backward compatibility. Behavior is
+// unchanged; only advertises the successor v1 path. Use /api/v1/... instead.
+export default withDeprecation({ successor: '/api/v1/workspaces/{workspaceId}/cards/{cardId}/clone' }, legacyHandler);

@@ -2,7 +2,7 @@ import { FaAngleDown, FaAngleUp, FaEuroSign, FaPlus, FaSearch, FaTrashAlt } from
 import { Field, FieldArray, Formik, FormikProps } from 'formik';
 import React, { createRef, useCallback, useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import { CocktailRecipe, Garnish, Glass, Ice, Ingredient, Unit, WorkspaceCocktailRecipeStepAction } from '@generated/prisma/client';
+import { CocktailRecipe, Garnish, Glass, Ingredient, WorkspaceCocktailRecipeStepAction } from '@generated/prisma/client';
 import { UploadDropZone } from '../UploadDropZone';
 import { convertBase64ToFile, convertToBase64 } from '@lib/Base64Converter';
 import { CocktailRecipeStepFull } from '../../models/CocktailRecipeStepFull';
@@ -22,6 +22,9 @@ import { CocktailRecipeFull } from '../../models/CocktailRecipeFull';
 import { CocktailRecipeFullWithImage } from '../../models/CocktailRecipeFullWithImage';
 import { UserContext } from '@lib/context/UserContextProvider';
 import { GlassModel } from '../../models/GlassModel';
+import { GarnishModel } from '../../models/GarnishModel';
+import type { UnitDto } from '@lib/schemas/units';
+import type { IceDto } from '@lib/schemas/ices';
 import { IngredientModel } from '../../models/IngredientModel';
 import { fetchGlasses } from '@lib/network/glasses';
 import { fetchGarnishes } from '@lib/network/garnishes';
@@ -38,6 +41,8 @@ import { FaCropSimple } from 'react-icons/fa6';
 import DeepDiff from 'deep-diff';
 import { RoutingContext } from '@lib/context/RoutingContextProvider';
 import '../../lib/NumberUtils';
+import { z } from 'zod';
+import { zodFormikValidate } from '@lib/forms/zodFormikValidate';
 import {
   Badge,
   Button,
@@ -67,13 +72,13 @@ export interface CocktailRecipeFormValues {
   description: string;
   notes: string;
   history: string;
-  price: number | undefined | string;
+  price: number | null;
   tags: string[];
   iceId: string | null;
   image: string | undefined;
   originalImage: File | undefined;
   glassId: string | undefined;
-  ice: Ice | null;
+  ice: IceDto | null;
   glass: GlassModel | null;
   garnishes: CocktailRecipeGarnishFull[];
   steps: CocktailRecipeStepFull[];
@@ -105,15 +110,76 @@ interface GarnishError {
   isAlternative?: string;
 }
 
-interface CocktailRecipeFormErrors {
-  name?: string;
-  glassId?: string;
-  iceId?: string;
-  image?: string;
-  tags?: string;
-  steps?: StepError[];
-  garnishes?: GarnishError[];
-}
+/**
+ * Mirrors the former inline `validate` logic:
+ *  - name / glassId / iceId are required (non-empty),
+ *  - an image that was selected but not yet cropped is rejected,
+ *  - every step needs an action and, per ingredient line, a unit and an ingredient
+ *    (amount only errors when it is a present-but-not-a-number value),
+ *  - every garnish needs a garnishId.
+ * The adapter maps issue paths (e.g. `steps[0].ingredients[1].unit`) onto Formik's
+ * nested error object, so the field-level messages line up with the JSX exactly as before.
+ */
+const cocktailFormSchema = z
+  .object({
+    name: z.string().refine((v) => v.trim() != '', { message: 'Required' }),
+    glassId: z
+      .string()
+      .nullish()
+      .refine((v) => v != null && v != '', { message: 'Required' }),
+    iceId: z
+      .string()
+      .nullish()
+      .refine((v) => v != null && v != '', { message: 'Required' }),
+    image: z.string().optional(),
+    originalImage: z.any().optional(),
+    steps: z.array(
+      z.object({
+        actionId: z
+          .string()
+          .nullish()
+          .refine((v) => v != null && v != '', { message: 'Required' }),
+        ingredients: z.array(
+          z
+            .object({
+              // The number input feeds `handleChange` raw strings, so accept string | number | null.
+              amount: z.union([z.number(), z.string(), z.null()]).optional(),
+              unitId: z.string().nullish(),
+              ingredientId: z.string().nullish(),
+            })
+            // Object-level so we control the exact error sub-paths the JSX reads
+            // (`amount` / `unit` / `ingredientId`), mirroring the old inline logic.
+            .superRefine((ingredient, ctx) => {
+              // Old rule: `if (ingredient.amount && isNaN(ingredient.amount))` — only a
+              // truthy amount that is NaN when coerced errors; null / '' / 0 / valid numbers pass.
+              if (ingredient.amount != null && ingredient.amount !== '' && Number(ingredient.amount) != 0 && isNaN(Number(ingredient.amount))) {
+                ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Required', path: ['amount'] });
+              }
+              if (ingredient.unitId == null || ingredient.unitId == '') {
+                ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Required', path: ['unit'] });
+              }
+              if (ingredient.ingredientId == null || ingredient.ingredientId == '') {
+                ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Required', path: ['ingredientId'] });
+              }
+            }),
+        ),
+      }),
+    ),
+    garnishes: z.array(
+      z.object({
+        garnishId: z
+          .string()
+          .nullish()
+          .refine((v) => v != null && v != '', { message: 'Required' }),
+      }),
+    ),
+  })
+  .refine((values) => !(values.originalImage != undefined && values.image == undefined), {
+    message: 'Bild ausgewählt aber nicht zugeschnitten',
+    path: ['image'],
+  });
+
+const validateCocktail = zodFormikValidate(cocktailFormSchema);
 
 export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
   const formRef = props.formRef;
@@ -124,7 +190,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
   const userContext = useContext(UserContext);
   const routingContext = useContext(RoutingContext);
 
-  const [iceOptions, setIceOptions] = useState<Ice[]>([]);
+  const [iceOptions, setIceOptions] = useState<IceDto[]>([]);
   const [_iceOptionsLoading, setIceOptionsLoading] = useState(false);
 
   const [ingredients, setIngredients] = useState<IngredientModel[]>([]);
@@ -133,13 +199,13 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
   const [glasses, setGlasses] = useState<GlassModel[]>([]);
   const [glassesLoading, setGlassesLoading] = useState(false);
 
-  const [garnishes, setGarnishes] = useState<Garnish[]>([]);
+  const [garnishes, setGarnishes] = useState<GarnishModel[]>([]);
   const [garnishesLoading, setGarnishesLoading] = useState(false);
 
   const [actions, setActions] = useState<WorkspaceCocktailRecipeStepAction[]>([]);
   const [actionsLoading, setActionsLoading] = useState(false);
 
-  const [units, setUnits] = useState<Unit[]>([]);
+  const [units, setUnits] = useState<UnitDto[]>([]);
   const [_unitsLoading, setUnitsLoading] = useState(false);
 
   const [similarCocktailRecipe, setSimilarCocktailRecipe] = useState<CocktailRecipe | undefined>(undefined);
@@ -164,11 +230,11 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
             await setFieldValue(`steps.${indexStep}.ingredients.${indexIngredient}.ingredientId`, ingredient.id);
             await setFieldValue(`steps.${indexStep}.ingredients.${indexIngredient}.ingredient`, ingredient);
 
-            if (ingredient.IngredientVolume.length > 0) {
+            if (ingredient.volumes.length > 0) {
               const clUnit = units.find((unit) => unit.name.toLocaleLowerCase() == 'cl');
-              let unitClOrFirst = ingredient.IngredientVolume.find((ingredientUnit) => ingredientUnit.unitId == clUnit?.id)?.unit;
+              let unitClOrFirst = ingredient.volumes.find((ingredientUnit) => ingredientUnit.unit.id == clUnit?.id)?.unit;
               if (unitClOrFirst == undefined) {
-                unitClOrFirst = ingredient.IngredientVolume[0].unit;
+                unitClOrFirst = ingredient.volumes[0].unit;
               }
               if (unitClOrFirst) {
                 await setFieldValue(`steps.${indexStep}.ingredients.${indexIngredient}.unit`, unitClOrFirst);
@@ -185,7 +251,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
   const openGarnishSelectModal = useCallback(
     (setFieldValue: FormikProps<CocktailRecipeFormValues>['setFieldValue'], indexGarnish: number) => {
       modalContext.openModal(
-        <SelectModal<Garnish>
+        <SelectModal<GarnishModel>
           title={'Garnitur auswählen'}
           compareFunction={(a, b) => a.name.localeCompare(b.name)}
           fetchElements={async (search) => {
@@ -296,7 +362,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
     description: props.cocktailRecipe?.description ?? '',
     notes: props.cocktailRecipe?.notes ?? '',
     history: props.cocktailRecipe?.history ?? '',
-    price: props.cocktailRecipe?.price ?? undefined,
+    price: props.cocktailRecipe?.price ?? null,
     tags: props.cocktailRecipe?.tags ?? [],
     iceId: props.cocktailRecipe?.iceId ?? null,
     image: props.cocktailRecipe?.CocktailRecipeImage[0]?.image ?? undefined,
@@ -324,8 +390,6 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
       innerRef={formRef}
       initialValues={initValue}
       validate={(values) => {
-        const errors: CocktailRecipeFormErrors = {};
-
         if (props.cocktailRecipe) {
           const reducedCocktailRecipe = _.omit(props.cocktailRecipe, ['CocktailRecipeImage', 'ice', 'isArchived', '_count', 'ratings']);
           const reducedValues = _.omit(values, ['image', 'ice', 'isArchived', 'originalImage']);
@@ -337,10 +401,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
             reducedCocktailRecipe.notes = '';
           }
           if (reducedCocktailRecipe.price == null) {
-            reducedCocktailRecipe.price = undefined;
-          }
-          if (reducedValues.price == '') {
-            reducedValues.price = undefined;
+            reducedCocktailRecipe.price = null;
           }
 
           if (reducedCocktailRecipe.steps != undefined) {
@@ -355,7 +416,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
               step.ingredients = orderBy(step.ingredients, ['ingredientNumber'], ['asc']);
 
               step.ingredients = _.map(step.ingredients, (obj) => {
-                return _.assign({}, obj, { ingredient: _.omit(obj.ingredient, 'IngredientVolume') });
+                return _.assign({}, obj, { ingredient: _.omit(obj.ingredient, 'volumes') });
               });
             });
           }
@@ -372,80 +433,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
           props.setUnsavedChanges?.(true);
         }
 
-        if (!values.name || values.name.trim() == '') {
-          errors.name = 'Required';
-        }
-        if (!values.glassId || values.glassId == '') {
-          errors.glassId = 'Required';
-        }
-        if (!values.iceId || values.iceId === '') {
-          errors.iceId = 'Required';
-        }
-        if (values.originalImage != undefined && values.image == undefined) {
-          errors.image = 'Bild ausgewählt aber nicht zugeschnitten';
-        }
-
-        const stepsErrors: StepError[] = [];
-        (values.steps as CocktailRecipeStepFull[]).map((step) => {
-          const stepErrors: StepError = {};
-          if (step.action == undefined) {
-            stepErrors.action = 'Required';
-          }
-
-          const ingredientsErrors: IngredientError[] = [];
-
-          step.ingredients.map((ingredient) => {
-            const ingredientErrors: IngredientError = {};
-            if (ingredient.amount && isNaN(ingredient.amount)) {
-              ingredientErrors.amount = 'Required';
-            }
-            if (!ingredient.unitId || ingredient.unitId == '') {
-              ingredientErrors.unit = 'Required';
-            }
-            if (!ingredient.ingredientId || ingredient.ingredientId == '') {
-              ingredientErrors.ingredientId = 'Required';
-            }
-            ingredientsErrors.push(ingredientErrors);
-          });
-          stepErrors.ingredients = ingredientsErrors;
-
-          stepsErrors.push(stepErrors);
-        });
-
-        let hasErrors = false;
-        stepsErrors.map((stepErrors) => {
-          stepErrors.ingredients?.map((ingredientErrors) => {
-            if (Object.keys(ingredientErrors).length > 0) {
-              hasErrors = true;
-            }
-          });
-        });
-        if (hasErrors) {
-          errors.steps = stepsErrors;
-        }
-
-        hasErrors = false;
-        const garnishErrors: GarnishError[] = [];
-        (values.garnishes as CocktailRecipeGarnishFull[]).map((garnish) => {
-          const garnishError: GarnishError = {};
-          if (!garnish.garnishId || garnish.garnishId == '') {
-            garnishError.garnishId = 'Required';
-          }
-
-          garnishErrors.push(garnishError);
-        });
-
-        garnishErrors.map((garnishError) => {
-          if (Object.keys(garnishError).length > 0) {
-            hasErrors = true;
-          }
-        });
-        if (hasErrors) {
-          errors.garnishes = garnishErrors;
-        }
-
-        console.log('cocktail form errors', errors);
-        return errors;
+        return validateCocktail(values);
       }}
       onSubmit={async (values) => {
         try {
@@ -455,32 +443,44 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
             description: values.description.trim() === '' ? null : values.description.trim(),
             notes: values.notes.trim() === '' ? null : values.notes.trim(),
             history: values.history.trim() === '' ? null : values.history.trim(),
-            price: values.price == '' ? null : values.price,
+            price: values.price ?? null,
             iceId: values.iceId,
             glassId: values.glassId,
             image: values.image == '' ? null : values.image,
             tags: values.tags,
+            // Shaped to the v1 CocktailStepInputSchema. Optional `id` is sent through so the
+            // differential PUT can match existing rows (empty/missing id = new).
             steps: (values.steps as CocktailRecipeStepFull[]).map((step, index) => {
               return {
-                ...step,
+                id: step.id == '' ? undefined : step.id,
                 stepNumber: index,
-                ingredients: step.ingredients.map((ingredient, index) => {
+                optional: step.optional ?? false,
+                actionId: step.actionId,
+                ingredients: step.ingredients.map((ingredient, ingredientIndex) => {
                   return {
-                    ...ingredient,
-                    ingredientNumber: index,
+                    id: ingredient.id == '' ? undefined : ingredient.id,
+                    amount: ingredient.amount,
+                    optional: ingredient.optional ?? false,
+                    ingredientNumber: ingredientIndex,
+                    unitId: ingredient.unitId,
+                    ingredientId: ingredient.ingredientId,
                   };
                 }),
               };
             }),
+            // Shaped to the v1 CocktailGarnishInputSchema.
             garnishes: (values.garnishes as CocktailRecipeGarnishFull[]).map((garnish, index) => {
               return {
-                ...garnish,
+                garnishId: garnish.garnishId,
                 garnishNumber: index,
+                description: garnish.description,
+                optional: garnish.optional ?? false,
+                isAlternative: (garnish as CocktailRecipeGarnishFull & { isAlternative?: boolean }).isAlternative ?? false,
               };
             }),
           };
           if (props.cocktailRecipe == undefined) {
-            const response = await fetch(`/api/workspaces/${workspaceId}/cocktails`, {
+            const response = await fetch(`/api/v1/workspaces/${workspaceId}/cocktails`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(body),
@@ -494,7 +494,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
               alertService.error(body.message ?? 'Fehler beim Erstellen des Cocktails', response.status, response.statusText);
             }
           } else {
-            const response = await fetch(`/api/workspaces/${workspaceId}/cocktails/${props.cocktailRecipe.id}`, {
+            const response = await fetch(`/api/v1/workspaces/${workspaceId}/cocktails/${props.cocktailRecipe.id}`, {
               method: 'PUT',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(body),
@@ -537,7 +537,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                       className={errors.name ? fieldErrorClass : undefined}
                       onChange={(event) => {
                         if (event.target.value.length > 2) {
-                          fetch(`/api/workspaces/${workspaceId}/cocktails/check?name=${event.target.value}`)
+                          fetch(`/api/v1/workspaces/${workspaceId}/cocktails/check?name=${event.target.value}`)
                             .then((response) => response.json())
                             .then((data) => {
                               console.log(data);
@@ -637,7 +637,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                         name="price"
                         onChange={handleChange}
                         onBlur={handleBlur}
-                        value={values.price}
+                        value={values.price ?? ''}
                       />
                       <Button type="button" variant="secondary" joinItem>
                         <FaEuroSign />
@@ -902,7 +902,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                         notes: values.notes.trim() == '' ? null : values.notes.trim(),
                         history: values.history.trim() == '' ? null : values.history.trim(),
                         tags: values.tags,
-                        price: !values.price && values.price == '' ? null : (values.price as number | null),
+                        price: values.price,
                         iceId: values.iceId,
                         ice: iceOptions.find((ice) => ice.id === values.iceId) ?? null,
                         glassId: values.glassId ?? null,
@@ -958,7 +958,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                 <div key={`price-calculation-step-${indexIngredient}-price`} className={'grid grid-cols-2'}>
                                   {ingredients
                                     .find((ingredient) => ingredient.id == stepIngredient.ingredientId)
-                                    ?.IngredientVolume.find((volumeUnits) => volumeUnits.unitId == stepIngredient.unitId) != undefined ? (
+                                    ?.volumes.find((volumeUnits) => volumeUnits.unit.id == stepIngredient.unitId) != undefined ? (
                                     <>
                                       <div>
                                         {stepIngredient.amount?.toLocaleString(undefined, {
@@ -970,7 +970,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                           (stepIngredient.ingredient?.price ?? 0) /
                                           (ingredients
                                             .find((ingredient) => ingredient.id == stepIngredient.ingredientId)
-                                            ?.IngredientVolume.find((volumeUnits) => volumeUnits.unitId == stepIngredient.unitId)?.volume ?? 1)
+                                            ?.volumes.find((volumeUnits) => volumeUnits.unit.id == stepIngredient.unitId)?.volume ?? 1)
                                         ).formatPrice()}{' '}
                                         €/{userContext.getTranslation(stepIngredient?.unit?.name ?? '', 'de')}
                                       </div>
@@ -980,7 +980,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                           ((stepIngredient.ingredient?.price ?? 0) /
                                             (ingredients
                                               .find((ingredient) => ingredient.id == stepIngredient.ingredientId)
-                                              ?.IngredientVolume.find((volumeUnits) => volumeUnits.unitId == stepIngredient.unitId)?.volume ?? 1)) *
+                                              ?.volumes.find((volumeUnits) => volumeUnits.unit.id == stepIngredient.unitId)?.volume ?? 1)) *
                                           (stepIngredient.amount ?? 0)
                                         ).formatPrice()}
                                         €
@@ -1328,7 +1328,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                               {values.steps[indexStep].ingredients[indexIngredient].unitId &&
                                               ingredients
                                                 .find((ingredient) => ingredient.id == values.steps[indexStep].ingredients[indexIngredient]?.ingredientId)
-                                                ?.IngredientVolume.find((unit) => unit.unitId == values.steps[indexStep].ingredients[indexIngredient].unitId) ==
+                                                ?.volumes.find((unit) => unit.unit.id == values.steps[indexStep].ingredients[indexIngredient].unitId) ==
                                                 undefined ? (
                                                 <option
                                                   className="tooltip"
@@ -1348,11 +1348,14 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                               )}
                                               {ingredients
                                                 .find((ingredient) => ingredient.id == values.steps[indexStep].ingredients[indexIngredient]?.ingredientId)
-                                                ?.IngredientVolume?.sort((a, b) =>
+                                                ?.volumes?.sort((a, b) =>
                                                   userContext.getTranslation(a.unit.name, 'de').localeCompare(userContext.getTranslation(b.unit.name, 'de')),
                                                 )
                                                 ?.map((value) => (
-                                                  <option key={`steps.${indexStep}.ingredients.${indexIngredient}.units-${value.unitId}`} value={value.unitId}>
+                                                  <option
+                                                    key={`steps.${indexStep}.ingredients.${indexIngredient}.units-${value.unit.id}`}
+                                                    value={value.unit.id}
+                                                  >
                                                     {userContext.getTranslation(value.unit.name, 'de')}
                                                   </option>
                                                 ))}

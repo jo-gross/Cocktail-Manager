@@ -3,7 +3,9 @@ import { alertService } from '@lib/alertService';
 import { useRouter } from 'next/router';
 import { BackupStructure } from '../../../../api/workspaces/[workspaceId]/admin/backups/backupStructure';
 import { ManageEntityLayout } from '@components/layout/ManageEntityLayout';
-import { Ice, Role, Unit, UnitConversion, WorkspaceCocktailRecipeStepAction } from '@generated/prisma/client';
+import { Role, WorkspaceCocktailRecipeStepAction } from '@generated/prisma/client';
+import type { UnitDto, UnitConversionDto } from '@lib/schemas/units';
+import type { IceDto } from '@lib/schemas/ices';
 import { UserContext } from '@lib/context/UserContextProvider';
 import { FaArrowDown, FaArrowUp, FaTrashAlt } from 'react-icons/fa';
 import { DeleteConfirmationModal } from '@components/modals/DeleteConfirmationModal';
@@ -17,6 +19,8 @@ import UnitModal from '../../../../../components/modals/UnitModal';
 import UnitConversionModal from '../../../../../components/modals/UnitConversionModal';
 import { fetchUnitConversions, fetchUnits } from '@lib/network/units';
 import { fetchActions } from '@lib/network/actions';
+import { apiV1FetchSafe, apiV1Mutate } from '@lib/network/apiV1';
+import type { WorkspaceSettingsDto } from '@lib/schemas/workspace';
 
 import { fetchIce } from '@lib/network/ices';
 import CreateIceModal from '../../../../../components/modals/CreateIceModal';
@@ -64,13 +68,13 @@ function WorkspaceSettingPage() {
   const [workspaceActions, setWorkspaceActions] = useState<WorkspaceCocktailRecipeStepAction[]>([]);
   const [workspaceActionLoading, setWorkspaceActionLoading] = useState<boolean>(false);
 
-  const [units, setUnits] = useState<Unit[]>([]);
+  const [units, setUnits] = useState<UnitDto[]>([]);
   const [unitsLoading, setUnitsLoading] = useState<boolean>(false);
 
-  const [unitConversions, setUnitConversions] = useState<UnitConversion[]>([]);
+  const [unitConversions, setUnitConversions] = useState<UnitConversionDto[]>([]);
   const [unitConversionsLoading, setUnitConversionsLoading] = useState<boolean>(false);
 
-  const [iceOptions, setIceOptions] = useState<Ice[]>([]);
+  const [iceOptions, setIceOptions] = useState<IceDto[]>([]);
   const [iceOptionsLoading, setIceOptionsLoading] = useState<boolean>(false);
 
   const [deleting, setDeleting] = useState<{ [key: string]: boolean }>({});
@@ -84,11 +88,10 @@ function WorkspaceSettingPage() {
   // Lade Workspace-Settings beim Start
   useEffect(() => {
     if (!workspaceId) return;
-    fetch(`/api/workspaces/${workspaceId}/settings`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.data?.statisticDayStartTime) {
-          setStatisticDayStartTime(data.data.statisticDayStartTime);
+    apiV1FetchSafe<WorkspaceSettingsDto>(`/api/v1/workspaces/${workspaceId}/settings`)
+      .then((settings) => {
+        if (settings?.statisticDayStartTime) {
+          setStatisticDayStartTime(settings.statisticDayStartTime);
         }
       })
       .catch(console.error);
@@ -98,19 +101,11 @@ function WorkspaceSettingPage() {
     if (!workspaceId) return;
     setStatisticSettingsSaving(true);
     try {
-      const response = await fetch(`/api/workspaces/${workspaceId}/settings`, {
-        method: 'PUT',
-        body: JSON.stringify({
-          setting: 'statisticDayStartTime',
-          value: statisticDayStartTime,
-        }),
+      await apiV1Mutate<WorkspaceSettingsDto>(`/api/v1/workspaces/${workspaceId}/settings`, 'PUT', {
+        setting: 'statisticDayStartTime',
+        value: statisticDayStartTime,
       });
-      if (response.ok) {
-        alertService.success('Einstellung gespeichert');
-      } else {
-        const body = await response.json();
-        alertService.error(body.message ?? 'Fehler beim Speichern');
-      }
+      alertService.success('Einstellung gespeichert');
     } catch (error) {
       console.error('saveStatisticDayStartTime', error);
       alertService.error('Fehler beim Speichern');
@@ -176,7 +171,7 @@ function WorkspaceSettingPage() {
   const handleDeleteWorkspace = useCallback(async () => {
     if (!confirm('Workspace inkl. aller Zutaten und Rezepte wirklich löschen?')) return;
     setWorkspaceDeleting(true);
-    fetch(`/api/workspaces/${workspaceId}`, {
+    fetch(`/api/v1/workspaces/${workspaceId}`, {
       method: 'DELETE',
     })
       .then(async (response) => {
@@ -185,7 +180,7 @@ function WorkspaceSettingPage() {
           router.replace('/').then(() => alertService.success('Erfolgreich gelöscht'));
         } else {
           console.error('SettingsPage -> DeleteWorkspace', response);
-          alertService.error(body.message ?? 'Fehler beim Löschen der Workspace', response.status, response.statusText);
+          alertService.error(body.error?.message ?? 'Fehler beim Löschen der Workspace', response.status, response.statusText);
         }
       })
       .catch((error) => {
@@ -199,8 +194,9 @@ function WorkspaceSettingPage() {
 
   const handleRenameWorkspace = useCallback(async () => {
     setWorkspaceRenaming(true);
-    fetch(`/api/workspaces/${workspaceId}`, {
+    fetch(`/api/v1/workspaces/${workspaceId}`, {
       method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: newWorkspaceName }),
     })
       .then(async (response) => {
@@ -210,7 +206,7 @@ function WorkspaceSettingPage() {
           alertService.success(`Umbenennen erfolgreich`);
         } else {
           console.error('Admin -> RenameWorkspace', response);
-          alertService.error(body.message ?? 'Fehler beim Umbenennen der Workspace', response.status, response.statusText);
+          alertService.error(body.error?.message ?? 'Fehler beim Umbenennen der Workspace', response.status, response.statusText);
         }
       })
       .catch((error) => {
@@ -315,7 +311,7 @@ function WorkspaceSettingPage() {
       if (workspaceId == undefined) return;
       if (deleting[iceId] ?? false) return;
       setDeleting({ ...deleting, [iceId]: true });
-      fetch(`/api/workspaces/${workspaceId}/ice/${iceId}`, {
+      fetch(`/api/v1/workspaces/${workspaceId}/ice/${iceId}`, {
         method: 'DELETE',
       })
         .then(async (response) => {
@@ -325,7 +321,7 @@ function WorkspaceSettingPage() {
           } else {
             const body = await response.json();
             console.error('SettingsPage -> deleteIce', response);
-            alertService.error(body.message ?? 'Fehler beim Löschen', response.status, response.statusText);
+            alertService.error(body.error?.message ?? 'Fehler beim Löschen', response.status, response.statusText);
           }
         })
         .catch((error) => {

@@ -23,6 +23,7 @@ import { promises as dnsPromises } from 'dns';
 import { CocktailPdfPage } from '../../../../../components/pdf/CocktailPdfPage';
 import { PDFDocument } from 'pdf-lib';
 import { pdfExportTailwindConfigScript, pdfExportThemeStyles } from '../../../../../lib/pdf/pdfExportStyles';
+import { withDeprecation } from '@middleware/api/withDeprecation';
 
 const WorkspaceSettingKey = $Enums.WorkspaceSettingKey;
 
@@ -316,7 +317,7 @@ function generateHtmlForCocktails(
 </html>`;
 }
 
-export default withHttpMethods({
+const legacyHandler = withHttpMethods({
   [HTTPMethod.POST]: withWorkspacePermission([Role.USER], Permission.COCKTAILS_READ, async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
     try {
       const {
@@ -457,3 +458,7 @@ export default withHttpMethods({
     }
   }),
 });
+
+// DEPRECATED: unversioned endpoint kept for backward compatibility. Behavior is
+// unchanged; only advertises the successor v1 path. Use /api/v1/... instead.
+export default withDeprecation({ successor: '/api/v1/workspaces/{workspaceId}/cocktails/export/pdf' }, legacyHandler);

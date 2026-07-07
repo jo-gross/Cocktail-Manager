@@ -8,6 +8,7 @@ import { SearchModal } from '@components/modals/SearchModal';
 import { alertService } from '@lib/alertService';
 import { calcCocktailTotalPrice } from '@lib/CocktailRecipeCalculation';
 import { Garnish, Ingredient, Unit } from '@generated/prisma/client';
+import type { UnitDto } from '@lib/schemas/units';
 import InputModal from '../../../../../components/modals/InputModal';
 import { PageCenter } from '@components/layout/PageCenter';
 import { Loading } from '@components/Loading';
@@ -107,7 +108,7 @@ export default function CalculationPage() {
   const [ingredients, setIngredients] = useState<IngredientModel[]>([]);
   const [ingredientsLoading, setIngredientsLoading] = useState(false);
 
-  const [units, setUnits] = useState<Unit[]>([]);
+  const [units, setUnits] = useState<UnitDto[]>([]);
   const [unitsLoading, setUnitsLoading] = useState(false);
 
   const [shouldSave, triggerSave] = useState(false);
@@ -418,15 +419,13 @@ export default function CalculationPage() {
           (acc, curr) =>
             acc +
             curr.amount /
-              (ingredients.find((ingredient) => ingredient.id == curr.ingredient.id)?.IngredientVolume?.find((volume) => volume.unitId == curr.unit.id)
-                ?.volume ?? 0),
+              (ingredients.find((ingredient) => ingredient.id == curr.ingredient.id)?.volumes?.find((volume) => volume.unit.id == curr.unit.id)?.volume ?? 0),
           0,
         ) *
         (ingredients
           .find((ingredient) => ingredient.id == items[0].ingredient.id)
-          ?.IngredientVolume?.find(
-            (volume) => volume.unitId == ingredientShoppingUnits.find((ingredient) => ingredient.ingredientId == items[0].ingredient.id)?.unitId,
-          )?.volume ?? 0)
+          ?.volumes?.find((volume) => volume.unit.id == ingredientShoppingUnits.find((ingredient) => ingredient.ingredientId == items[0].ingredient.id)?.unitId)
+          ?.volume ?? 0)
       );
     },
     [ingredientShoppingUnits, ingredients],
@@ -442,8 +441,7 @@ export default function CalculationPage() {
             (acc, curr) =>
               acc +
               curr.amount /
-                (ingredients.find((ingredient) => ingredient.id == curr.ingredient.id)?.IngredientVolume?.find((volume) => volume.unitId == curr.unit.id)
-                  ?.volume ?? 0),
+                (ingredients.find((ingredient) => ingredient.id == curr.ingredient.id)?.volumes?.find((volume) => volume.unit.id == curr.unit.id)?.volume ?? 0),
             0,
           ),
         )
@@ -464,9 +462,8 @@ export default function CalculationPage() {
           if (existingItem) {
             existingItem.amountInPercent +=
               (stepIngredient.amount ?? 0) /
-              (ingredients
-                .find((ingredient) => ingredient.id == stepIngredient.ingredientId)
-                ?.IngredientVolume.find((volume) => volume.unitId == stepIngredient.unitId)?.volume ?? 1);
+              (ingredients.find((ingredient) => ingredient.id == stepIngredient.ingredientId)?.volumes.find((volume) => volume.unit.id == stepIngredient.unitId)
+                ?.volume ?? 1);
           } else {
             summedIngredientPerCocktails.push({
               ingredient: stepIngredient.ingredient!,
@@ -474,7 +471,7 @@ export default function CalculationPage() {
                 (stepIngredient.amount ?? 0) /
                 (ingredients
                   .find((ingredient) => ingredient.id == stepIngredient.ingredientId)
-                  ?.IngredientVolume.find((volume) => volume.unitId == stepIngredient.unitId)?.volume ?? 1),
+                  ?.volumes.find((volume) => volume.unit.id == stepIngredient.unitId)?.volume ?? 1),
             });
           }
         });
@@ -1011,8 +1008,8 @@ export default function CalculationPage() {
                                   value={
                                     ingredientShoppingUnits.find((ingredientShoppingUnit) => ingredientShoppingUnit.ingredientId == items[0].ingredient.id)
                                       ?.unitId ??
-                                    (ingredients.find((ingredient) => ingredient.id == items[0].ingredient.id)?.IngredientVolume.length == 1
-                                      ? ingredients.find((ingredient) => ingredient.id == items[0].ingredient.id)?.IngredientVolume[0].unitId
+                                    (ingredients.find((ingredient) => ingredient.id == items[0].ingredient.id)?.volumes.length == 1
+                                      ? ingredients.find((ingredient) => ingredient.id == items[0].ingredient.id)?.volumes[0].unit.id
                                       : '')
                                   }
                                   onChange={(event) => {
@@ -1030,8 +1027,8 @@ export default function CalculationPage() {
                                   </option>
                                   {ingredients
                                     .find((ingredient) => ingredient.id == items[0].ingredient.id)
-                                    ?.IngredientVolume.map((unit) => (
-                                      <option key={`ingredientCalculation-${items[0].ingredient.id}-output-unit-${unit.unitId}`} value={unit.unitId}>
+                                    ?.volumes.map((unit) => (
+                                      <option key={`ingredientCalculation-${items[0].ingredient.id}-output-unit-${unit.unit.id}`} value={unit.unit.id}>
                                         {userContext.getTranslation(unit.unit.name ?? 'N/A', 'de')}
                                       </option>
                                     ))}

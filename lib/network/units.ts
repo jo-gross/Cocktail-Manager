@@ -1,22 +1,12 @@
-import { alertService } from '../alertService';
-import { Unit, UnitConversion } from '@generated/prisma/client';
+import { apiV1FetchSafe } from './apiV1';
+import type { UnitDto, UnitConversionDto } from '@lib/schemas/units';
 
-export function fetchUnits(workspaceId: string | string[] | undefined, setUnits: (units: Unit[]) => void, setUnitsLoading: (loading: boolean) => void) {
+export function fetchUnits(workspaceId: string | string[] | undefined, setUnits: (units: UnitDto[]) => void, setUnitsLoading: (loading: boolean) => void) {
   if (workspaceId == undefined) return;
   setUnitsLoading(true);
-  fetch(`/api/workspaces/${workspaceId}/units`)
-    .then(async (response) => {
-      const body = await response.json();
-      if (response.ok) {
-        setUnits(body.data);
-      } else {
-        console.error('SettingsPage -> fetchUnits', response);
-        alertService.error(body.message ?? 'Fehler beim Laden der Einheiten', response.status, response.statusText);
-      }
-    })
-    .catch((error) => {
-      console.error('SettingsPage -> fetchUnits', error);
-      alertService.error('Fehler beim Laden der Einheiten');
+  apiV1FetchSafe<UnitDto[]>(`/api/v1/workspaces/${workspaceId}/units`, undefined, 'Fehler beim Laden der Einheiten')
+    .then((units) => {
+      if (units) setUnits(units);
     })
     .finally(() => setUnitsLoading(false));
 }
@@ -24,23 +14,13 @@ export function fetchUnits(workspaceId: string | string[] | undefined, setUnits:
 export const fetchUnitConversions = (
   workspaceId: string | string[] | undefined,
   setUnitConversionsLoading: (loading: boolean) => void,
-  setUnitConversions: (conversions: UnitConversion[]) => void,
+  setUnitConversions: (conversions: UnitConversionDto[]) => void,
 ) => {
   if (workspaceId == undefined) return;
   setUnitConversionsLoading(true);
-  fetch(`/api/workspaces/${workspaceId}/units/conversions`)
-    .then(async (response) => {
-      const body = await response.json();
-      if (response.ok) {
-        setUnitConversions(body.data);
-      } else {
-        console.error('SettingsPage -> fetchUnitConversions', response);
-        alertService.error(body.message ?? 'Fehler beim Laden der Einheiten', response.status, response.statusText);
-      }
-    })
-    .catch((error) => {
-      console.error('SettingsPage -> fetchUnitConversions', error);
-      alertService.error('Fehler beim Laden der Einheiten');
+  apiV1FetchSafe<UnitConversionDto[]>(`/api/v1/workspaces/${workspaceId}/units/conversions`, undefined, 'Fehler beim Laden der Einheiten')
+    .then((conversions) => {
+      if (conversions) setUnitConversions(conversions);
     })
     .finally(() => setUnitConversionsLoading(false));
 };

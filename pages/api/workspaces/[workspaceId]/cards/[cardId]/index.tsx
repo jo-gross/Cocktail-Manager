@@ -4,12 +4,13 @@ import { CocktailCardGroupItem, Prisma, Role, Permission } from '@generated/pris
 import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
 import HTTPMethod from 'http-method-enum';
 import { withHttpMethods } from '@middleware/api/handleMethods';
+import { withDeprecation } from '@middleware/api/withDeprecation';
 import CocktailCardUpdateInput = Prisma.CocktailCardUpdateInput;
 import CocktailCardGroupItemCreateInput = Prisma.CocktailCardGroupItemCreateInput;
 
 // DELETE /api/cocktails/:id
 
-export default withHttpMethods({
+const legacyHandler = withHttpMethods({
   [HTTPMethod.GET]: withWorkspacePermission([Role.USER], Permission.CARDS_READ, async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
     const cardId = req.query.cardId as string | undefined;
     if (!cardId) return res.status(400).json({ message: 'No card id' });
@@ -119,3 +120,7 @@ export default withHttpMethods({
     return res.json({ data: result });
   }),
 });
+
+// DEPRECATED: unversioned endpoint kept for backward compatibility. Behavior is
+// unchanged; only advertises the successor v1 path. Use /api/v1/... instead.
+export default withDeprecation({ successor: '/api/v1/workspaces/{workspaceId}/cards/{cardId}' }, legacyHandler);

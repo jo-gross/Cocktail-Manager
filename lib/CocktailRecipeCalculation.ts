@@ -102,7 +102,7 @@ export function calcCocktailTotalPrice(cocktail: CocktailRecipeFull, ingredients
           if (
             ingredients
               .find((ingredient) => ingredient.id == stepIngredient.ingredientId)
-              ?.IngredientVolume.find((volumeUnits) => volumeUnits.unitId == stepIngredient.unitId) == undefined
+              ?.volumes.find((volumeUnits) => volumeUnits.unit.id == stepIngredient.unitId) == undefined
           ) {
             return 0;
           } else {
@@ -110,7 +110,7 @@ export function calcCocktailTotalPrice(cocktail: CocktailRecipeFull, ingredients
               ((stepIngredient.ingredient?.price ?? 0) /
                 (ingredients
                   .find((ingredient) => ingredient.id == stepIngredient.ingredientId)
-                  ?.IngredientVolume.find((volumeUnits) => volumeUnits.unitId == stepIngredient.unitId)?.volume ?? 0)) *
+                  ?.volumes.find((volumeUnits) => volumeUnits.unit.id == stepIngredient.unitId)?.volume ?? 0)) *
               (stepIngredient.amount ?? 0)
             );
           }

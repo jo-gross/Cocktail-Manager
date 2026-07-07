@@ -5,11 +5,19 @@ import { ModalContext } from '@lib/context/ModalContextProvider';
 import { alertService } from '@lib/alertService';
 import { useRouter } from 'next/router';
 import { Button, FormControl, Input, Label, LabelText, LabelTextAlt, Loading } from '@components/ui';
+import { z } from 'zod';
+import { zodFormikValidate } from '@lib/forms/zodFormikValidate';
 
 interface TranslationModalProps {
   slang: string;
   identifier: string;
 }
+
+const translationSchema = z.object({
+  lableDE: z.string().trim().min(1, 'Ungültiger Bezeichner'),
+});
+
+const validateTranslation = zodFormikValidate(translationSchema);
 
 export default function EditTranslationModal(props: TranslationModalProps) {
   const userContext = useContext(UserContext);
@@ -53,15 +61,7 @@ export default function EditTranslationModal(props: TranslationModalProps) {
             alertService.error('Es ist ein Fehler aufgetreten');
           }
         }}
-        validate={(values) => {
-          const errors: { [key: string]: string } = {};
-
-          if (!values.lableDE || values.lableDE.trim() == '') {
-            errors.lableDE = 'Ungültiger Bezeichner';
-          }
-
-          return errors;
-        }}
+        validate={(values) => validateTranslation(values)}
       >
         {({ values, handleChange, handleSubmit, isSubmitting, errors, touched, setFieldValue: _setFieldValue }) => (
           <form onSubmit={handleSubmit} className={'flex flex-col gap-2'}>

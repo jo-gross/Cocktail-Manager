@@ -53,6 +53,31 @@ jobs:
       - name: 'Run tests'
         run: pnpm test
 
+  OpenAPI:
+    name: OpenAPI spec up to date
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v7
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: 'Node.js setup'
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: 'pnpm'
+
+      - name: 'Install dependencies'
+        run: pnpm install --frozen-lockfile
+
+      - name: 'Regenerate OpenAPI spec'
+        run: pnpm openapi:generate
+
+      - name: 'Fail if the committed spec drifted'
+        run: git diff --exit-code openapi/openapi.json || (echo "::error::openapi/openapi.json is stale — run 'pnpm openapi:generate' and commit the result." && exit 1)
+
   Build:
     runs-on: ubuntu-latest
 

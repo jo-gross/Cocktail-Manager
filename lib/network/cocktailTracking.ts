@@ -1,5 +1,4 @@
 import { alertService } from '../alertService';
-import { StatisticBadRequestMessage } from '../../models/StatisticBadRequest';
 
 export async function addCocktailToStatistic({
   workspaceId,
@@ -25,7 +24,7 @@ export async function addCocktailToStatistic({
   try {
     setSubmitting(true);
 
-    const response = await fetch(`/api/workspaces/${workspaceId}/statistics/cocktails/add`, {
+    const response = await fetch(`/api/v1/workspaces/${workspaceId}/statistics/cocktails/add`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -43,11 +42,11 @@ export async function addCocktailToStatistic({
       alertService.success('Cocktail als gemacht markiert');
     } else {
       const body = await response.json();
-      if (body.message == StatisticBadRequestMessage) {
-        onNotDecidableError?.(body.data);
+      if (body?.error?.code === 'STATISTIC_QUEUE_AMBIGUOUS') {
+        onNotDecidableError?.(body.error.issues);
       } else {
         console.error('addCocktailToStatistic', response);
-        alertService.error(body.message ?? 'Fehler beim Hinzufügen des Cocktails zur Statistik', response.status, response.statusText);
+        alertService.error(body?.error?.message ?? 'Fehler beim Hinzufügen des Cocktails zur Statistik', response.status, response.statusText);
       }
     }
   } catch (error) {
@@ -75,7 +74,7 @@ export async function addCocktailToQueue({
 }) {
   try {
     setSubmitting(true);
-    const response = await fetch(`/api/workspaces/${workspaceId}/queue/add`, {
+    const response = await fetch(`/api/v1/workspaces/${workspaceId}/queue/add`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -95,7 +94,7 @@ export async function addCocktailToQueue({
     } else {
       const body = await response.json();
       console.error('addCocktailToQueue', response);
-      alertService.error(body.message ?? 'Fehler beim Hinzufügen des Cocktails zur Warteschlange', response.status, response.statusText);
+      alertService.error(body?.error?.message ?? 'Fehler beim Hinzufügen des Cocktails zur Warteschlange', response.status, response.statusText);
     }
   } catch (error) {
     console.error('addCocktailToQueue', error);
@@ -120,7 +119,7 @@ export async function removeCocktailFromQueue({
 }) {
   try {
     setSubmitting(true);
-    const response = await fetch(`/api/workspaces/${workspaceId}/queue/remove`, {
+    const response = await fetch(`/api/v1/workspaces/${workspaceId}/queue/remove`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -136,7 +135,7 @@ export async function removeCocktailFromQueue({
     } else {
       const body = await response.json();
       console.error('addCocktailToQueue', response);
-      alertService.error(body.message ?? 'Fehler beim Entfernen des Cocktails von der Warteschlange', response.status, response.statusText);
+      alertService.error(body?.error?.message ?? 'Fehler beim Entfernen des Cocktails von der Warteschlange', response.status, response.statusText);
     }
   } catch (error) {
     console.error('addCocktailToQueue', error);
@@ -161,7 +160,7 @@ export async function changeQueueProcess({
 }) {
   try {
     setSubmitting(true);
-    const response = await fetch(`/api/workspaces/${workspaceId}/queue/${cocktailQueueItemId}`, {
+    const response = await fetch(`/api/v1/workspaces/${workspaceId}/queue/${cocktailQueueItemId}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -176,7 +175,7 @@ export async function changeQueueProcess({
     } else {
       const body = await response.json();
       console.error('changeQueueProcess', response);
-      alertService.error(body.message ?? 'Fehler beim aktualisieren des Eintrags', response.status, response.statusText);
+      alertService.error(body?.error?.message ?? 'Fehler beim aktualisieren des Eintrags', response.status, response.statusText);
     }
   } catch (error) {
     console.error('changeQueueProcess', error);

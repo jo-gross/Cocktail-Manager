@@ -319,12 +319,10 @@ const IngredientsOverviewPage: NextPageWithPullToRefresh = () => {
                         <Checkbox checkboxSize="sm" checked={selectedIds.has(ingredient.id)} onChange={() => handleToggleSelect(ingredient.id)} />
                       </TableCell>
                       <TableImageCell
-                        hasImage={ingredient._count.IngredientImage !== 0}
-                        onImageClick={() =>
-                          modalContext.openModal(<ImageModal image={`/api/workspaces/${ingredient.workspaceId}/ingredients/${ingredient.id}/image`} />)
-                        }
+                        hasImage={ingredient.hasImage}
+                        onImageClick={() => modalContext.openModal(<ImageModal image={ingredient.imageUrl ?? ''} />)}
                       >
-                        <AvatarImage src={`/api/workspaces/${ingredient.workspaceId}/ingredients/${ingredient.id}/image`} alt={'Zutat'} />
+                        <AvatarImage src={ingredient.imageUrl ?? ''} alt={'Zutat'} />
                       </TableImageCell>
                       <TableCell className={''}>{ingredient.name}</TableCell>
                       <TableCell>{ingredient.shortName}</TableCell>
@@ -352,14 +350,14 @@ const IngredientsOverviewPage: NextPageWithPullToRefresh = () => {
                       </TableCell>
                       <TableCell className={'whitespace-nowrap'}>{ingredient.price?.formatPrice() ?? '-'} €</TableCell>
                       <TableCell className={''}>
-                        {ingredient.IngredientVolume.map((volume) => (
+                        {ingredient.volumes.map((volume) => (
                           <div key={`ingredient-${ingredient.id}-volume-unit-${volume.id}`} className={'whitespace-nowrap'}>
                             {volume.volume.toFixed(2).replace(/\D00(?=\D*$)/, '')} {userContext.getTranslation(volume.unit.name, 'de')}
                           </div>
                         ))}
                       </TableCell>
                       <TableCell>
-                        {ingredient.IngredientVolume.map((volume) => (
+                        {ingredient.volumes.map((volume) => (
                           <div key={`ingredient-${ingredient.id}-volume-unit-price-${volume.id}`} className={'whitespace-nowrap'}>
                             {((ingredient.price ?? 0) / volume.volume).formatPrice()} €/{userContext.getTranslation(volume.unit.name, 'de')}
                           </div>

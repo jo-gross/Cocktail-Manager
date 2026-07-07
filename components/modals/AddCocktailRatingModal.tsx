@@ -6,12 +6,22 @@ import { alertService } from '@lib/alertService';
 import { useRouter } from 'next/router';
 import { toInteger } from 'lodash';
 import { Button, FormControl, Input, Label, LabelText, LabelTextAlt, Loading, StarRatingInput, Textarea } from '@components/ui';
+import { z } from 'zod';
+import { zodFormikValidate } from '@lib/forms/zodFormikValidate';
 
 interface CocktailRatingModalProps {
   cocktailId: string;
   cocktailName: string;
   onCreated?: () => void;
 }
+
+const cocktailRatingSchema = z.object({
+  name: z.string().optional(),
+  rating: z.coerce.number().min(1, 'Die Bewertung muss zwischen 1 und 5 liegen').max(5, 'Die Bewertung muss zwischen 1 und 5 liegen'),
+  comment: z.string().optional(),
+});
+
+const validateCocktailRating = zodFormikValidate(cocktailRatingSchema);
 
 export default function AddCocktailRatingModal(props: CocktailRatingModalProps) {
   const _userContext = useContext(UserContext);
@@ -38,7 +48,7 @@ export default function AddCocktailRatingModal(props: CocktailRatingModalProps) 
               comment: values.comment,
             };
 
-            const response = await fetch(`/api/workspaces/${workspaceId}/cocktails/${props.cocktailId}/ratings`, {
+            const response = await fetch(`/api/v1/workspaces/${workspaceId}/cocktails/${props.cocktailId}/ratings`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(body),
@@ -57,13 +67,7 @@ export default function AddCocktailRatingModal(props: CocktailRatingModalProps) 
             alertService.error('Es ist ein Fehler aufgetreten');
           }
         }}
-        validate={(values) => {
-          const errors: { [key: string]: string } = {};
-          if (values.rating < 1 || values.rating > 5) {
-            errors.rating = 'Die Bewertung muss zwischen 1 und 5 liegen';
-          }
-          return errors;
-        }}
+        validate={(values) => validateCocktailRating(values)}
       >
         {({ values, handleChange, handleSubmit, isSubmitting, errors, touched, setFieldValue: _setFieldValue }) => (
           <form onSubmit={handleSubmit} className={'flex flex-col gap-2'}>

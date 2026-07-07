@@ -1,4 +1,4 @@
-import { alertService } from '../alertService';
+import { apiV1FetchSafe } from './apiV1';
 import { GarnishModel } from '../../models/GarnishModel';
 
 export function fetchGarnishes(
@@ -8,21 +8,9 @@ export function fetchGarnishes(
 ) {
   if (!workspaceId) return;
   setGarnishesLoading(true);
-  fetch(`/api/workspaces/${workspaceId}/garnishes`)
-    .then(async (response) => {
-      const body = await response.json();
-      if (response.ok) {
-        setGarnishes(body.data);
-      } else {
-        console.error('CocktailRecipeForm -> fetchGarnishes', response);
-        alertService.error(body.message ?? 'Fehler beim Laden der Garnituren', response.status, response.statusText);
-      }
+  apiV1FetchSafe<GarnishModel[]>(`/api/v1/workspaces/${workspaceId}/garnishes`, undefined, 'Fehler beim Laden der Garnituren')
+    .then((garnishes) => {
+      if (garnishes) setGarnishes(garnishes);
     })
-    .catch((error) => {
-      console.error('CocktailRecipeForm -> fetchGarnishes', error);
-      alertService.error('Fehler beim Laden der Garnituren');
-    })
-    .finally(() => {
-      setGarnishesLoading(false);
-    });
+    .finally(() => setGarnishesLoading(false));
 }

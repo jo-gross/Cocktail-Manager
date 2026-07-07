@@ -4,9 +4,10 @@ import { Prisma, Role, Permission } from '@generated/prisma/client';
 import { NextApiRequest, NextApiResponse } from 'next';
 import prisma from '../../../../../prisma/prisma';
 import { withHttpMethods } from '@middleware/api/handleMethods';
+import { withDeprecation } from '@middleware/api/withDeprecation';
 import CocktailQueueCreateInput = Prisma.CocktailQueueCreateInput;
 
-export default withHttpMethods({
+const legacyHandler = withHttpMethods({
   [HTTPMethod.POST]: withWorkspacePermission([Role.USER], Permission.QUEUE_CREATE, async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
     const { cocktailId, notes, amount } = req.body;
 
@@ -35,3 +36,7 @@ export default withHttpMethods({
     return res.json({ data: results });
   }),
 });
+
+// DEPRECATED: unversioned endpoint kept for backward compatibility. Behavior is
+// unchanged; only advertises the successor v1 path. Use /api/v1/... instead.
+export default withDeprecation({ successor: '/api/v1/workspaces/{workspaceId}/queue/add' }, legacyHandler);

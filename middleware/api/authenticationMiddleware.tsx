@@ -165,9 +165,14 @@ export function withWorkspacePermission(
         }
       }
 
-      // Create a dummy user for compatibility
+      // Act as the real user who created the key. Handlers use `user.id` to
+      // write audit logs and to `connect` user relations (e.g. a calculation's
+      // updatedByUser), which are FK-constrained to a real User row — so a
+      // synthetic id would fail with P2003/P2025. createdByUserId is a required
+      // FK with onDelete: Cascade, so it always references an existing user for
+      // any key that still authenticates.
       const dummyUser: User = {
-        id: apiKeyAuth.apiKey.id,
+        id: apiKeyAuth.apiKey.createdByUserId,
         name: apiKeyAuth.apiKey.name,
         email: null,
         emailVerified: false,

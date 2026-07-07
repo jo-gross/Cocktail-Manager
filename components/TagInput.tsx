@@ -5,6 +5,7 @@ import classNames from 'classnames';
 import '../lib/ArrayUtils';
 import { useRouter } from 'next/router';
 import { Badge, Button } from '@components/ui';
+import { apiV1Fetch } from '@lib/network/apiV1';
 
 interface TagOption {
   value: string;
@@ -40,10 +41,10 @@ export function TagInput(props: TagInputProps) {
   const workspaceId = router.query.workspaceId as string;
   const [tagSuggestions, setTagSuggestions] = useState<string[]>([]);
   useEffect(() => {
-    fetch(`/api/workspaces/${workspaceId}/tags`).then(async (response) => {
-      const data = await response.json();
-      setTagSuggestions(data.data);
-    });
+    if (!workspaceId) return;
+    apiV1Fetch<string[]>(`/api/v1/workspaces/${workspaceId}/tags`)
+      .then(setTagSuggestions)
+      .catch((error) => console.error('TagInput -> loadTags', error));
   }, [workspaceId]);
 
   const [menuIsOpen, setMenuIsOpen] = useState(false);

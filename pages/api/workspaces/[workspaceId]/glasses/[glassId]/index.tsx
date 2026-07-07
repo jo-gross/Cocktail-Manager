@@ -5,11 +5,12 @@ import HTTPMethod from 'http-method-enum';
 import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
 import { Prisma, Role, Permission } from '@generated/prisma/client';
 import { withHttpMethods } from '@middleware/api/handleMethods';
+import { withDeprecation } from '@middleware/api/withDeprecation';
 import GlassUpdateInput = Prisma.GlassUpdateInput;
 
 // DELETE /api/glasses/:id
 
-export default withHttpMethods({
+const legacyHandler = withHttpMethods({
   [HTTPMethod.GET]: withWorkspacePermission([Role.USER], Permission.GLASSES_READ, async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
     const glassId = req.query.glassId as string | undefined;
     if (!glassId) return res.status(400).json({ message: 'No glass id' });
@@ -130,3 +131,7 @@ export default withHttpMethods({
     return res.json({ data: result });
   }),
 });
+
+// DEPRECATED: unversioned endpoint kept for backward compatibility. Behavior is
+// unchanged; only advertises the successor v1 path. Use /api/v1/... instead.
+export default withDeprecation({ successor: '/api/v1/workspaces/{workspaceId}/glasses/{glassId}' }, legacyHandler);

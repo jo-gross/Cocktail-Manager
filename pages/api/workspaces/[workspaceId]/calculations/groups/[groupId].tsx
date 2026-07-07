@@ -3,9 +3,10 @@ import prisma from '../../../../../../prisma/prisma';
 import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
 import { Permission, Role } from '@generated/prisma/client';
 import { withHttpMethods } from '@middleware/api/handleMethods';
+import { withDeprecation } from '@middleware/api/withDeprecation';
 import HTTPMethod from 'http-method-enum';
 
-export default withHttpMethods({
+const legacyHandler = withHttpMethods({
   [HTTPMethod.PUT]: withWorkspacePermission([Role.USER], Permission.CALCULATIONS_UPDATE, async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
     const groupId = req.query.groupId as string | undefined;
     if (!groupId) return res.status(400).json({ message: 'Keine Gruppen-ID' });
@@ -59,3 +60,7 @@ export default withHttpMethods({
     },
   ),
 });
+
+// DEPRECATED: unversioned endpoint kept for backward compatibility. Behavior is
+// unchanged; only advertises the successor v1 path. Use /api/v1/... instead.
+export default withDeprecation({ successor: '/api/v1/workspaces/{workspaceId}/calculations/groups/{groupId}' }, legacyHandler);

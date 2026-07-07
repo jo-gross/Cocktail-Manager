@@ -4,8 +4,9 @@ import { withWorkspacePermission } from '@middleware/api/authenticationMiddlewar
 import { Role, Permission } from '@generated/prisma/client';
 import prisma from '../../../../../../prisma/prisma';
 import { regenerateUnitConversions } from './index';
+import { withDeprecation } from '@middleware/api/withDeprecation';
 
-export default withHttpMethods({
+const legacyHandler = withHttpMethods({
   [HTTPMethod.PUT]: withWorkspacePermission([Role.ADMIN], Permission.UNITS_UPDATE, async (req, res, user, workspace) => {
     const unitConversionId = req.query.unitConversionId as string | undefined;
     if (!unitConversionId) return res.status(400).json({ message: 'No unitConversion id' });
@@ -29,3 +30,7 @@ export default withHttpMethods({
     return res.json({ data: unitConversion });
   }),
 });
+
+// DEPRECATED: unversioned endpoint kept for backward compatibility. Behavior is
+// unchanged; only advertises the successor v1 path. Use /api/v1/... instead.
+export default withDeprecation({ successor: '/api/v1/workspaces/{workspaceId}/units/conversions/{unitConversionId}' }, legacyHandler);

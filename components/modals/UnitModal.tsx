@@ -1,4 +1,4 @@
-import { Unit } from '@generated/prisma/client';
+import type { UnitDto } from '@lib/schemas/units';
 import { Formik } from 'formik';
 import React, { useContext } from 'react';
 import { UserContext } from '@lib/context/UserContextProvider';
@@ -6,11 +6,24 @@ import { ModalContext } from '@lib/context/ModalContextProvider';
 import { alertService } from '@lib/alertService';
 import { useRouter } from 'next/router';
 import { Button, FormControl, Input, Label, LabelText, LabelTextAlt, Loading } from '@components/ui';
+import { z } from 'zod';
+import { zodFormikValidate } from '@lib/forms/zodFormikValidate';
 
 interface UnitModalProps {
-  unit?: Unit;
+  unit?: UnitDto;
   onSaved?: () => void;
 }
+
+const unitFormSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(1, 'Ungültiger Identifier')
+    .regex(/^[A-Z_]+$/, 'Nur A-Z und _ erlaubt'),
+  lableDE: z.string().trim().min(1, 'Ungültiger Bezeichner'),
+});
+
+const validateUnit = zodFormikValidate(unitFormSchema);
 
 export default function UnitModal(props: UnitModalProps) {
   const userContext = useContext(UserContext);
@@ -37,7 +50,7 @@ export default function UnitModal(props: UnitModalProps) {
                   de: values.lableDE,
                 },
               };
-              const response = await fetch(`/api/workspaces/${workspaceId}/units`, {
+              const response = await fetch(`/api/v1/workspaces/${workspaceId}/units`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(body),
@@ -80,23 +93,7 @@ export default function UnitModal(props: UnitModalProps) {
             alertService.error('Es ist ein Fehler aufgetreten');
           }
         }}
-        validate={(values) => {
-          const errors: { [key: string]: string } = {};
-
-          if (values.name.trim() != '') {
-            if (!/^[A-Z_]+$/.test(values.name)) {
-              errors.name = 'Nur A-Z und _ erlaubt';
-            }
-          } else {
-            errors.name = 'Ungültiger Identifier';
-          }
-
-          if (!values.lableDE || values.lableDE.trim() == '') {
-            errors.lableDE = 'Ungültiger Bezeichner';
-          }
-
-          return errors;
-        }}
+        validate={(values) => validateUnit(values)}
       >
         {({ values, handleChange, handleSubmit, isSubmitting, errors, touched, setFieldValue: _setFieldValue }) => (
           <form onSubmit={handleSubmit} className={'flex flex-col gap-2'}>

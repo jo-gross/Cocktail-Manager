@@ -288,11 +288,11 @@ const ManageGlassesOverviewPage: NextPageWithPullToRefresh = () => {
                         <Checkbox checkboxSize="sm" checked={selectedIds.has(glass.id)} onChange={() => handleToggleSelect(glass.id)} />
                       </TableCell>
                       <TableImageCell
-                        hasImage={(glass._count?.GlassImage ?? 0) !== 0}
-                        onImageClick={() => modalContext.openModal(<ImageModal image={`/api/workspaces/${glass.workspaceId}/glasses/${glass.id}/image`} />)}
+                        hasImage={glass.hasImage}
+                        onImageClick={() => modalContext.openModal(<ImageModal image={glass.imageUrl ?? ''} />)}
                         className="[&>div]:rounded-[30%]"
                       >
-                        <AvatarImage src={`/api/workspaces/${glass.workspaceId}/glasses/${glass.id}/image`} alt="Glass" altComponent={<DefaultGlassIcon />} />
+                        <AvatarImage src={glass.imageUrl ?? ''} alt="Glass" altComponent={<DefaultGlassIcon />} />
                       </TableImageCell>
                       <TableCell>
                         <div className="font-bold">{glass.name}</div>

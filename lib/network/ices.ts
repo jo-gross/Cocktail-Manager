@@ -1,24 +1,12 @@
-import { alertService } from '../alertService';
-import { Ice } from '@generated/prisma/client';
+import { apiV1FetchSafe } from './apiV1';
+import type { IceDto } from '@lib/schemas/ices';
 
-export function fetchIce(workspaceId: string | string[] | undefined, setIce: (ice: Ice[]) => void, setIceLoading: (loading: boolean) => void) {
+export function fetchIce(workspaceId: string | string[] | undefined, setIce: (ice: IceDto[]) => void, setIceLoading: (loading: boolean) => void) {
   if (!workspaceId) return;
   setIceLoading(true);
-  fetch(`/api/workspaces/${workspaceId}/ice`)
-    .then(async (response) => {
-      const body = await response.json();
-      if (response.ok) {
-        setIce(body.data);
-      } else {
-        console.error('CocktailRecipeForm -> fetchIce', response);
-        alertService.error(body.message ?? 'Fehler beim Laden der Eis-Optionen', response.status, response.statusText);
-      }
+  apiV1FetchSafe<IceDto[]>(`/api/v1/workspaces/${workspaceId}/ice`, undefined, 'Fehler beim Laden der Eis-Optionen')
+    .then((ice) => {
+      if (ice) setIce(ice);
     })
-    .catch((error) => {
-      console.error('CocktailRecipeForm -> fetchIce', error);
-      alertService.error('Fehler beim laden der Eis-Optionen');
-    })
-    .finally(() => {
-      setIceLoading(false);
-    });
+    .finally(() => setIceLoading(false));
 }

@@ -175,10 +175,10 @@ export default function ManageUsersPage() {
                               }
                               value={workspaceUser.role}
                               onChange={(event) => {
-                                fetch(`/api/workspaces/${workspaceId}/users/${workspaceUser.userId}`, {
+                                fetch(`/api/v1/workspaces/${workspaceId}/users/${workspaceUser.userId}`, {
                                   method: 'PUT',
                                   headers: { 'Content-Type': 'application/json' },
-                                  body: JSON.stringify({ userId: workspaceUser.userId, role: event.target.value }),
+                                  body: JSON.stringify({ role: event.target.value }),
                                 })
                                   .then(async (response) => {
                                     if (response.ok) {
@@ -187,7 +187,7 @@ export default function ManageUsersPage() {
                                     } else {
                                       const body = await response.json();
                                       console.error('SettingsPage -> updateUserRole', response);
-                                      alertService.error(body.message ?? 'Fehler beim aktualisieren', response.status, response.statusText);
+                                      alertService.error(body.error?.message ?? 'Fehler beim aktualisieren', response.status, response.statusText);
                                     }
                                   })
                                   .catch((error) => {
@@ -226,7 +226,7 @@ export default function ManageUsersPage() {
                               }
                               onClick={() => {
                                 setLeaveLoading({ ...leaveLoading, [workspaceUser.userId]: true });
-                                fetch(`/api/workspaces/${workspaceId}/users/${workspaceUser.userId}`, {
+                                fetch(`/api/v1/workspaces/${workspaceId}/users/${workspaceUser.userId}`, {
                                   method: 'DELETE',
                                 })
                                   .then(async (response) => {
@@ -236,7 +236,7 @@ export default function ManageUsersPage() {
                                     } else {
                                       const body = await response.json();
                                       console.error('SettingsPage -> removeUser', response);
-                                      alertService.error(body.message ?? 'Fehler beim Entfernen', response.status, response.statusText);
+                                      alertService.error(body.error?.message ?? 'Fehler beim Entfernen', response.status, response.statusText);
                                     }
                                   })
                                   .catch((error) => {

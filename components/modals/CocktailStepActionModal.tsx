@@ -6,11 +6,43 @@ import { ModalContext } from '@lib/context/ModalContextProvider';
 import { alertService } from '@lib/alertService';
 import { useRouter } from 'next/router';
 import { Button, FormControl, Input, Label, LabelText, LabelTextAlt, Loading, Radio } from '@components/ui';
+import { z } from 'zod';
+import { zodFormikValidate } from '@lib/forms/zodFormikValidate';
 
 interface CocktailStepActionModalProps {
   cocktailStepAction?: WorkspaceCocktailRecipeStepAction;
   cocktailStepActionGroups?: string[];
 }
+
+const cocktailStepActionSchema = z
+  .object({
+    actionGroup: z.string(),
+    action: z.string(),
+    lableDE: z.string(),
+  })
+  .superRefine((values, ctx) => {
+    // The action-group identifier is edited via the "newActionGroup" field, so
+    // its error is reported on that path (mirrors the original inline validation).
+    if (values.actionGroup.trim() != '') {
+      if (!/^[A-Z_]+$/.test(values.actionGroup)) {
+        ctx.addIssue({ code: 'custom', message: 'Nur A-Z und _ erlaubt', path: ['newActionGroup'] });
+      }
+    } else {
+      ctx.addIssue({ code: 'custom', message: 'Ungültiger Identifier', path: ['newActionGroup'] });
+    }
+
+    if (!values.action || values.action.trim() == '') {
+      ctx.addIssue({ code: 'custom', message: 'Ungültiger Identifier', path: ['action'] });
+    } else if (!/^[A-Z_]+$/.test(values.action)) {
+      ctx.addIssue({ code: 'custom', message: 'Nur A-Z und _ erlaubt', path: ['action'] });
+    }
+
+    if (!values.lableDE || values.lableDE.trim() == '') {
+      ctx.addIssue({ code: 'custom', message: 'Ungültiger Bezeichner', path: ['lableDE'] });
+    }
+  });
+
+const validateCocktailStepAction = zodFormikValidate(cocktailStepActionSchema);
 
 export default function CocktailStepActionModal(props: CocktailStepActionModalProps) {
   const userContext = useContext(UserContext);
@@ -76,31 +108,7 @@ export default function CocktailStepActionModal(props: CocktailStepActionModalPr
             alertService.error('Es ist ein Fehler aufgetreten');
           }
         }}
-        validate={(values) => {
-          const errors: { [key: string]: string } = {};
-
-          if (values.actionGroup.trim() != '') {
-            if (!/^[A-Z_]+$/.test(values.actionGroup)) {
-              errors.newActionGroup = 'Nur A-Z und _ erlaubt';
-            }
-          } else {
-            errors.newActionGroup = 'Ungültiger Identifier';
-          }
-
-          if (!values.action || values.action.trim() == '') {
-            errors.action = 'Ungültiger Identifier';
-          } else {
-            if (!/^[A-Z_]+$/.test(values.action)) {
-              errors.action = 'Nur A-Z und _ erlaubt';
-            }
-          }
-
-          if (!values.lableDE || values.lableDE.trim() == '') {
-            errors.lableDE = 'Ungültiger Bezeichner';
-          }
-
-          return errors;
-        }}
+        validate={(values) => validateCocktailStepAction(values)}
       >
         {({ values, handleChange, handleSubmit, isSubmitting, errors, touched, setFieldValue }) => (
           <form onSubmit={handleSubmit} className={'flex flex-col gap-2'}>

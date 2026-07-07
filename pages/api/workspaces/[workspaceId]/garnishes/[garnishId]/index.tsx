@@ -5,11 +5,12 @@ import HTTPMethod from 'http-method-enum';
 import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
 import { Permission, Prisma, Role } from '@generated/prisma/client';
 import { withHttpMethods } from '@middleware/api/handleMethods';
+import { withDeprecation } from '@middleware/api/withDeprecation';
 import GarnishUpdateInput = Prisma.GarnishUpdateInput;
 
 // DELETE /api/garnish/:id
 
-export default withHttpMethods({
+const legacyHandler = withHttpMethods({
   [HTTPMethod.GET]: withWorkspacePermission([Role.USER], Permission.GARNISHES_READ, async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
     const garnishId = req.query.garnishId as string | undefined;
     if (!garnishId) return res.status(400).json({ message: 'No garnish id' });
@@ -114,3 +115,5 @@ export default withHttpMethods({
     return res.json({ dat: result });
   }),
 });
+
+export default withDeprecation({ successor: '/api/v1/workspaces/{workspaceId}/garnishes/{garnishId}' }, legacyHandler);

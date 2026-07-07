@@ -1,4 +1,4 @@
-import { alertService } from '../alertService';
+import { apiV1FetchSafe } from './apiV1';
 import { GlassModel } from '../../models/GlassModel';
 
 export function fetchGlasses(
@@ -8,21 +8,9 @@ export function fetchGlasses(
 ) {
   if (!workspaceId) return;
   setGlassesLoading(true);
-  fetch(`/api/workspaces/${workspaceId}/glasses`)
-    .then(async (response) => {
-      const body = await response.json();
-      if (response.ok) {
-        setGlasses(body.data);
-      } else {
-        console.error('CocktailRecipeForm -> fetchGlasses', response);
-        alertService.error(body.message ?? 'Fehler beim Laden der Gläser', response.status, response.statusText);
-      }
+  apiV1FetchSafe<GlassModel[]>(`/api/v1/workspaces/${workspaceId}/glasses`, undefined, 'Fehler beim Laden der Gläser')
+    .then((glasses) => {
+      if (glasses) setGlasses(glasses);
     })
-    .catch((error) => {
-      console.error('CocktailRecipeForm -> fetchGlasses', error);
-      alertService.error('Fehler beim laden der Gläser');
-    })
-    .finally(() => {
-      setGlassesLoading(false);
-    });
+    .finally(() => setGlassesLoading(false));
 }

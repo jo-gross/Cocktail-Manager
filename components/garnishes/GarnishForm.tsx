@@ -15,6 +15,8 @@ import _ from 'lodash';
 import { RoutingContext } from '@lib/context/RoutingContextProvider';
 import { resizeImage } from '@lib/ImageCompressor';
 import { Button, ButtonGroup, Divider, FormControl, Input, Label, LabelText, LabelTextAlt, Loading, Textarea } from '@components/ui';
+import { z } from 'zod';
+import { zodFormikValidate } from '@lib/forms/zodFormikValidate';
 
 export interface GarnishFormValues {
   name: string;
@@ -24,6 +26,22 @@ export interface GarnishFormValues {
   image: string | undefined;
   originalImage: File | undefined;
 }
+
+const garnishFormSchema = z
+  .object({
+    name: z.string().min(1, 'Required'),
+    price: z.union([z.coerce.number(), z.literal(''), z.undefined()]).optional(),
+    description: z.string().optional(),
+    notes: z.string().optional(),
+    image: z.string().optional(),
+    originalImage: z.instanceof(File).optional(),
+  })
+  .refine((values) => !(values.originalImage != undefined && values.image == undefined), {
+    message: 'Bild ausgewählt aber nicht zugeschnitten',
+    path: ['image'],
+  });
+
+const validateGarnish = zodFormikValidate(garnishFormSchema);
 
 interface GarnishFormProps {
   garnish?: GarnishWithImage;
@@ -60,13 +78,13 @@ export function GarnishForm(props: GarnishFormProps) {
           const body = {
             id: props.garnish == undefined ? undefined : props.garnish.id,
             name: values.name,
-            price: values.price === '' || values.price === undefined ? null : values.price,
+            price: values.price === '' || values.price === undefined ? null : Number(values.price),
             description: values.description?.trim() == '' ? null : values.description?.trim(),
             notes: values.notes?.trim() == '' ? null : values.notes?.trim(),
             image: values.image == '' ? null : values.image,
           };
           if (props.garnish == undefined) {
-            const response = await fetch(`/api/workspaces/${workspaceId}/garnishes`, {
+            const response = await fetch(`/api/v1/workspaces/${workspaceId}/garnishes`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(body),
@@ -84,7 +102,7 @@ export function GarnishForm(props: GarnishFormProps) {
               alertService.error(body.message ?? 'Fehler beim Erstellen der Garnitur', response.status, response.statusText);
             }
           } else {
-            const response = await fetch(`/api/workspaces/${workspaceId}/garnishes/${props.garnish.id}`, {
+            const response = await fetch(`/api/v1/workspaces/${workspaceId}/garnishes/${props.garnish.id}`, {
               method: 'PUT',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(body),
@@ -117,14 +135,7 @@ export function GarnishForm(props: GarnishFormProps) {
           props.setUnsavedChanges?.(true);
         }
 
-        const errors: Partial<Record<keyof GarnishFormValues, string>> = {};
-        if (!values.name) {
-          errors.name = 'Required';
-        }
-        if (values.originalImage != undefined && values.image == undefined) {
-          errors.image = 'Bild ausgewählt aber nicht zugeschnitten';
-        }
-        return errors;
+        return validateGarnish(values);
       }}
     >
       {({ values, errors, handleChange, handleBlur, handleSubmit, isSubmitting, isValid, setFieldValue }) => (
@@ -148,7 +159,7 @@ export function GarnishForm(props: GarnishFormProps) {
                 className={errors.name ? fieldErrorClass : undefined}
                 onChange={(event) => {
                   if (event.target.value.length > 2) {
-                    fetch(`/api/workspaces/${workspaceId}/garnishes/check?name=${event.target.value}`)
+                    fetch(`/api/v1/workspaces/${workspaceId}/garnishes/check?name=${event.target.value}`)
                       .then((response) => response.json())
                       .then((data) => {
                         console.log(data);

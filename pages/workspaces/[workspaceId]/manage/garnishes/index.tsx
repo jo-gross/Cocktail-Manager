@@ -286,13 +286,8 @@ const ManageGarnishesOverviewPage: NextPageWithPullToRefresh = () => {
                       <TableCell className="w-0">
                         <Checkbox checkboxSize="sm" checked={selectedIds.has(garnish.id)} onChange={() => handleToggleSelect(garnish.id)} />
                       </TableCell>
-                      <TableImageCell
-                        hasImage={garnish._count.GarnishImage !== 0}
-                        onImageClick={() =>
-                          modalContext.openModal(<ImageModal image={`/api/workspaces/${garnish.workspaceId}/garnishes/${garnish.id}/image`} />)
-                        }
-                      >
-                        <AvatarImage src={`/api/workspaces/${garnish.workspaceId}/garnishes/${garnish.id}/image`} alt="Garnitur" />
+                      <TableImageCell hasImage={garnish.hasImage} onImageClick={() => modalContext.openModal(<ImageModal image={garnish.imageUrl ?? ''} />)}>
+                        <AvatarImage src={garnish.imageUrl ?? ''} alt="Garnitur" />
                       </TableImageCell>
                       <TableCell>
                         <div className="font-bold">{garnish.name}</div>

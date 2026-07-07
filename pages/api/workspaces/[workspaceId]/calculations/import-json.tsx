@@ -4,6 +4,7 @@ import { createLog } from '../../../../../lib/auditLog';
 import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
 import { Permission, Role } from '@generated/prisma/client';
 import { withHttpMethods } from '@middleware/api/handleMethods';
+import { withDeprecation } from '@middleware/api/withDeprecation';
 import HTTPMethod from 'http-method-enum';
 import { CocktailCalculationExportStructure } from '../../../../../lib/auditExport';
 
@@ -29,7 +30,7 @@ interface EntityMapping {
   existingId?: string;
 }
 
-export default withHttpMethods({
+const legacyHandler = withHttpMethods({
   [HTTPMethod.POST]: withWorkspacePermission([Role.USER], Permission.CALCULATIONS_READ, async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
     const { phase, exportData, decisions, cocktailMappings, ingredientMappings, unitMappings } = req.body as {
       phase: 'validate' | 'prepare-mapping' | 'execute';
@@ -391,3 +392,7 @@ export default withHttpMethods({
     }
   }),
 });
+
+// DEPRECATED: unversioned endpoint kept for backward compatibility. Behavior is
+// unchanged; only advertises the successor v1 path. Use /api/v1/... instead.
+export default withDeprecation({ successor: '/api/v1/workspaces/{workspaceId}/calculations/import/json' }, legacyHandler);

@@ -4,8 +4,9 @@ import { withWorkspacePermission } from '@middleware/api/authenticationMiddlewar
 import { Role, Permission } from '@generated/prisma/client';
 import { NextApiRequest, NextApiResponse } from 'next';
 import prisma from '../../../../../../prisma/prisma';
+import { withDeprecation } from '@middleware/api/withDeprecation';
 
-export default withHttpMethods({
+const legacyHandler = withHttpMethods({
   [HTTPMethod.GET]: withWorkspacePermission([Role.USER], Permission.GARNISHES_READ, async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
     const garnishId = req.query.garnishId as string | undefined;
     if (!garnishId) return res.status(400).json({ message: 'No garnish id' });
@@ -35,3 +36,5 @@ export default withHttpMethods({
     return res.send(imageResp);
   }),
 });
+
+export default withDeprecation({ successor: '/api/v1/workspaces/{workspaceId}/garnishes/{garnishId}/image' }, legacyHandler);

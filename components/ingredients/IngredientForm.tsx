@@ -10,7 +10,8 @@ import { DeleteConfirmationModal } from '../modals/DeleteConfirmationModal';
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import _ from 'lodash';
 import { IngredientWithImage } from '../../models/IngredientWithImage';
-import { Ingredient, Unit, UnitConversion } from '@generated/prisma/client';
+import { Ingredient } from '@generated/prisma/client';
+import type { UnitDto, UnitConversionDto } from '@lib/schemas/units';
 import { UserContext } from '@lib/context/UserContextProvider';
 import { fetchUnitConversions, fetchUnits } from '@lib/network/units';
 import Image from 'next/image';
@@ -41,8 +42,37 @@ import {
   TableRow,
   Textarea,
 } from '@components/ui';
+import { z } from 'zod';
+import { zodFormikValidate } from '@lib/forms/zodFormikValidate';
 
 const fieldErrorClass = 'border-error focus:border-error focus:ring-error/25';
+
+const ingredientFormSchema = z
+  .object({
+    name: z.string().min(1, 'Required'),
+    shortName: z.string().optional(),
+    notes: z.string().optional(),
+    description: z.string().optional(),
+    price: z.coerce.number().nullish(),
+    units: z
+      .array(
+        z.object({
+          unitId: z.string(),
+          volume: z.coerce.number(),
+        }),
+      )
+      .optional(),
+    link: z.string().optional(),
+    tags: z.array(z.string()).optional(),
+    image: z.string().optional(),
+    originalImage: z.any().optional(),
+  })
+  .refine((values) => !(values.originalImage != undefined && values.image == undefined), {
+    message: 'Bild ausgewählt aber nicht zugeschnitten',
+    path: ['image'],
+  });
+
+const validateIngredient = zodFormikValidate(ingredientFormSchema);
 
 interface IngredientFormProps {
   ingredient?: IngredientWithImage;
@@ -61,7 +91,7 @@ export interface FormValue {
   shortName: string;
   notes: string;
   description: string;
-  price: number | undefined | string;
+  price: number | null;
   units: FormUnitValue[];
   link: string;
   tags: string[];
@@ -82,10 +112,10 @@ export function IngredientForm(props: IngredientFormProps) {
   const formRef = props.formRef || React.createRef<FormikProps<FormValue>>();
 
   const [loadingUnits, setUnitsLoading] = useState(false);
-  const [allUnits, setAllUnits] = useState<Unit[]>([]);
+  const [allUnits, setAllUnits] = useState<UnitDto[]>([]);
 
   const [_loadingDefaultConversions, setLoadingDefaultConversions] = useState(false);
-  const [defaultConversions, setDefaultConversions] = useState<UnitConversion[]>([]);
+  const [defaultConversions, setDefaultConversions] = useState<UnitConversionDto[]>([]);
 
   const [similarIngredient, setSimilarIngredient] = useState<Ingredient | undefined>(undefined);
 
@@ -101,7 +131,7 @@ export function IngredientForm(props: IngredientFormProps) {
     shortName: props.ingredient?.shortName ?? '',
     notes: props.ingredient?.notes ?? '',
     description: props.ingredient?.description ?? '',
-    price: props.ingredient?.price ?? undefined,
+    price: props.ingredient?.price ?? null,
     units: props.ingredient?.IngredientVolume ?? [],
     link: props.ingredient?.link ?? '',
     tags: props.ingredient?.tags ?? [],
@@ -111,7 +141,7 @@ export function IngredientForm(props: IngredientFormProps) {
 
   const checkSimilarName = useCallback(
     async (name: string) => {
-      const response = await fetch(`/api/workspaces/${workspaceId}/ingredients/check?name=${name}`);
+      const response = await fetch(`/api/v1/workspaces/${workspaceId}/ingredients/check?name=${name}`);
       const data = await response.json();
       if (data.data != null) {
         if (data.data.id != props.ingredient?.id) {
@@ -128,7 +158,7 @@ export function IngredientForm(props: IngredientFormProps) {
 
   const checkSimilarLink = useCallback(
     async (url: string) => {
-      const response = await fetch(`/api/workspaces/${workspaceId}/ingredients/check?link=${encodeURI(url)}`);
+      const response = await fetch(`/api/v1/workspaces/${workspaceId}/ingredients/check?link=${encodeURI(url)}`);
       const data = await response.json();
       if (data.data != null) {
         if (data.data.id != props.ingredient?.id) {
@@ -155,14 +185,14 @@ export function IngredientForm(props: IngredientFormProps) {
             shortName: values.shortName?.trim() == '' ? null : values.shortName?.trim(),
             notes: values.notes?.trim() == '' ? null : values.notes?.trim(),
             description: values.description?.trim() == '' ? null : values.description?.trim(),
-            price: values.price === '' || values.price === undefined ? null : values.price,
-            units: values.units || [],
+            price: values.price === null || values.price === undefined || Number.isNaN(values.price) ? null : Number(values.price),
+            units: (values.units || []).map((unit) => ({ unitId: unit.unitId, volume: Number(unit.volume) })),
             link: values.link?.trim() == '' ? null : values.link?.trim(),
             tags: values.tags,
             image: values.image?.trim() == '' ? null : values.image?.trim(),
           };
           if (props.ingredient == undefined) {
-            const response = await fetch(`/api/workspaces/${workspaceId}/ingredients`, {
+            const response = await fetch(`/api/v1/workspaces/${workspaceId}/ingredients`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(body),
@@ -180,7 +210,7 @@ export function IngredientForm(props: IngredientFormProps) {
               alertService.error(body.message ?? 'Fehler beim Erstellen der Zutat', response.status, response.statusText);
             }
           } else {
-            const response = await fetch(`/api/workspaces/${workspaceId}/ingredients/${props.ingredient.id}`, {
+            const response = await fetch(`/api/v1/workspaces/${workspaceId}/ingredients/${props.ingredient.id}`, {
               method: 'PUT',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(body),
@@ -226,14 +256,7 @@ export function IngredientForm(props: IngredientFormProps) {
         } else {
           props.setUnsavedChanges?.(true);
         }
-        const errors: Partial<Record<keyof FormValue, string>> = {};
-        if (!values.name) {
-          errors.name = 'Required';
-        }
-        if (values.originalImage != undefined && values.image == undefined) {
-          errors.image = 'Bild ausgewählt aber nicht zugeschnitten';
-        }
-        return errors;
+        return validateIngredient(values);
       }}
     >
       {({ values, setFieldValue, errors, setFieldError, handleChange, handleBlur, handleSubmit, isSubmitting, isValid, submitForm }) => {
@@ -442,7 +465,7 @@ export function IngredientForm(props: IngredientFormProps) {
                       type={'number'}
                       className={errors.price ? fieldErrorClass : undefined}
                       joinItem
-                      value={values.price}
+                      value={values.price ?? ''}
                       onChange={handleChange}
                       onBlur={handleBlur}
                       name={'price'}
