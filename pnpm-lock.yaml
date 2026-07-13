@@ -25,7 +25,7 @@ importers:
         version: 7.8.0(prisma@7.8.0(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(magicast@0.5.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(typescript@6.0.3))(typescript@6.0.3)
       '@serwist/next':
         specifier: ^9.5.11
-        version: 9.5.11(next@16.2.10(@babel/core@7.29.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.61.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react@19.2.7)(typescript@6.0.3)(webpack@5.104.1(lightningcss@1.32.0)(postcss@8.5.16))
+        version: 9.5.11(next@16.2.10(@babel/core@7.29.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.61.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react@19.2.7)(typescript@6.0.3)(webpack@5.104.1(lightningcss@1.32.0)(postcss@8.5.18))
       bcrypt:
         specifier: ^6.0.0
         version: 6.0.0
@@ -211,8 +211,8 @@ importers:
         specifier: ^1.60.0
         version: 1.61.1
       postcss:
-        specifier: 8.5.16
-        version: 8.5.16
+        specifier: 8.5.18
+        version: 8.5.18
       prettier:
         specifier: 3.9.4
         version: 3.9.4
@@ -4061,8 +4061,8 @@ packages:
     resolution: {integrity: sha512-PS08Iboia9mts/2ygV3eLpY5ghnUcfLV/EXTOW1E2qYxJKGGBUtNjN76FYHnMs36RmARn41bC0AZmn+rR0OVpQ==}
     engines: {node: ^10 || ^12 || >=14}
 
-  postcss@8.5.16:
-    resolution: {integrity: sha512-vuwillviilfKZsg0VGj5R/YwwcHx4SLsIOI/7K6mQkWx+l5cUHTjj5g0AasTBcyXsbfTgrwsUNmVUb5xVwyPwg==}
+  postcss@8.5.18:
+    resolution: {integrity: sha512-xdB1oSLHbz1vRWgCDalrCqEFTWzFlhqFC5tIHLMOSUIjhm3XXQ1qrFy8S/ESr1JYRRXqM3c1QFiMZUJdUTqyMQ==}
     engines: {node: ^10 || ^12 || >=14}
 
   postgres-array@2.0.0:
@@ -6123,11 +6123,11 @@ snapshots:
     transitivePeerDependencies:
       - browserslist
 
-  '@serwist/next@9.5.11(next@16.2.10(@babel/core@7.29.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.61.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react@19.2.7)(typescript@6.0.3)(webpack@5.104.1(lightningcss@1.32.0)(postcss@8.5.16))':
+  '@serwist/next@9.5.11(next@16.2.10(@babel/core@7.29.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.61.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react@19.2.7)(typescript@6.0.3)(webpack@5.104.1(lightningcss@1.32.0)(postcss@8.5.18))':
     dependencies:
       '@serwist/build': 9.5.11(browserslist@4.28.2)(typescript@6.0.3)
       '@serwist/utils': 9.5.11(browserslist@4.28.2)
-      '@serwist/webpack-plugin': 9.5.11(browserslist@4.28.2)(typescript@6.0.3)(webpack@5.104.1(lightningcss@1.32.0)(postcss@8.5.16))
+      '@serwist/webpack-plugin': 9.5.11(browserslist@4.28.2)(typescript@6.0.3)(webpack@5.104.1(lightningcss@1.32.0)(postcss@8.5.18))
       '@serwist/window': 9.5.11(browserslist@4.28.2)(typescript@6.0.3)
       browserslist: 4.28.2
       glob: 13.0.6
@@ -6146,7 +6146,7 @@ snapshots:
     optionalDependencies:
       browserslist: 4.28.2
 
-  '@serwist/webpack-plugin@9.5.11(browserslist@4.28.2)(typescript@6.0.3)(webpack@5.104.1(lightningcss@1.32.0)(postcss@8.5.16))':
+  '@serwist/webpack-plugin@9.5.11(browserslist@4.28.2)(typescript@6.0.3)(webpack@5.104.1(lightningcss@1.32.0)(postcss@8.5.18))':
     dependencies:
       '@serwist/build': 9.5.11(browserslist@4.28.2)(typescript@6.0.3)
       '@serwist/utils': 9.5.11(browserslist@4.28.2)
@@ -6154,7 +6154,7 @@ snapshots:
       zod: 4.4.1
     optionalDependencies:
       typescript: 6.0.3
-      webpack: 5.104.1(lightningcss@1.32.0)(postcss@8.5.16)
+      webpack: 5.104.1(lightningcss@1.32.0)(postcss@8.5.18)
     transitivePeerDependencies:
       - browserslist
 
@@ -6241,7 +6241,7 @@ snapshots:
       '@alloc/quick-lru': 5.2.0
       '@tailwindcss/node': 4.3.2
       '@tailwindcss/oxide': 4.3.2
-      postcss: 8.5.16
+      postcss: 8.5.18
       tailwindcss: 4.3.2
 
   '@tybys/wasm-util@0.10.1':
@@ -8908,7 +8908,7 @@ snapshots:
       picocolors: 1.1.1
       source-map-js: 1.2.1
 
-  postcss@8.5.16:
+  postcss@8.5.18:
     dependencies:
       nanoid: 3.3.15
       picocolors: 1.1.1
@@ -9551,16 +9551,16 @@ snapshots:
 
   tapable@2.3.3: {}
 
-  terser-webpack-plugin@5.6.1(lightningcss@1.32.0)(postcss@8.5.16)(webpack@5.104.1(lightningcss@1.32.0)(postcss@8.5.16)):
+  terser-webpack-plugin@5.6.1(lightningcss@1.32.0)(postcss@8.5.18)(webpack@5.104.1(lightningcss@1.32.0)(postcss@8.5.18)):
     dependencies:
       '@jridgewell/trace-mapping': 0.3.31
       jest-worker: 27.5.1
       schema-utils: 4.3.3
       terser: 5.46.0
-      webpack: 5.104.1(lightningcss@1.32.0)(postcss@8.5.16)
+      webpack: 5.104.1(lightningcss@1.32.0)(postcss@8.5.18)
     optionalDependencies:
       lightningcss: 1.32.0
-      postcss: 8.5.16
+      postcss: 8.5.18
     optional: true
 
   terser@5.46.0:
@@ -9818,7 +9818,7 @@ snapshots:
       esbuild: 0.27.7
       fdir: 6.5.0(picomatch@4.0.5)
       picomatch: 4.0.5
-      postcss: 8.5.16
+      postcss: 8.5.18
       rollup: 4.62.2
       tinyglobby: 0.2.17
     optionalDependencies:
@@ -9893,7 +9893,7 @@ snapshots:
   webpack-sources@3.5.1:
     optional: true
 
-  webpack@5.104.1(lightningcss@1.32.0)(postcss@8.5.16):
+  webpack@5.104.1(lightningcss@1.32.0)(postcss@8.5.18):
     dependencies:
       '@types/eslint-scope': 3.7.7
       '@types/estree': 1.0.9
@@ -9917,7 +9917,7 @@ snapshots:
       neo-async: 2.6.2
       schema-utils: 4.3.3
       tapable: 2.3.3
-      terser-webpack-plugin: 5.6.1(lightningcss@1.32.0)(postcss@8.5.16)(webpack@5.104.1(lightningcss@1.32.0)(postcss@8.5.16))
+      terser-webpack-plugin: 5.6.1(lightningcss@1.32.0)(postcss@8.5.18)(webpack@5.104.1(lightningcss@1.32.0)(postcss@8.5.18))
       watchpack: 2.5.2
       webpack-sources: 3.5.1
     transitivePeerDependencies:
