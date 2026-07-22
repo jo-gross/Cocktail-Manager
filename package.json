@@ -33,7 +33,7 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@prisma/adapter-pg": "7.9.0",
     "@prisma/client": "7.9.0",
-    "@serwist/next": "^9.5.11",
+    "@serwist/next": "^9.5.12",
     "bcrypt": "^6.0.0",
     "better-auth": "^1.6.23",
     "browser-image-compression": "^2.0.2",
@@ -70,7 +70,7 @@
     "react-three-state-checkbox": "4.0.1",
     "recharts": "3.9.2",
     "rxjs": "7.8.2",
-    "serwist": "^9.5.11",
+    "serwist": "^9.5.12",
     "use-pull-to-refresh": "^3.0.0"
   },
   "devDependencies": {
