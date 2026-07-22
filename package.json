@@ -74,7 +74,7 @@
     "use-pull-to-refresh": "^3.0.0"
   },
   "devDependencies": {
-    "@next/bundle-analyzer": "^16.2.9",
+    "@next/bundle-analyzer": "^16.2.11",
     "@playwright/test": "^1.60.0",
     "@tailwindcss/postcss": "^4.3.2",
     "@types/bcrypt": "^6.0.0",
