@@ -1,10 +1,10 @@
-name: Dependabot auto-merge patch updates
+name: Dependabot auto-merge patch and minor updates
 
 on:
-  pull_request:
+  pull_request_target:
 
 permissions:
-  contents: write
+  contents: read
   pull-requests: write
 
 jobs:
@@ -19,9 +19,17 @@ jobs:
         with:
           github-token: "${{ secrets.GITHUB_TOKEN }}"
 
-      - name: Approve Dependabot patch update
-        if: steps.metadata.outputs.update-type == 'version-update:semver-patch'
+      - name: Generate app token
+        if: contains(fromJSON('["version-update:semver-patch", "version-update:semver-minor"]'), steps.metadata.outputs.update-type)
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ secrets.JG_SEMANTIC_RELEASE_BOT_APP_ID }}
+          private-key: ${{ secrets.JG_SEMANTIC_RELEASE_BOT_PRIVATE_KEY }}
+
+      - name: Approve Dependabot patch or minor update
+        if: contains(fromJSON('["version-update:semver-patch", "version-update:semver-minor"]'), steps.metadata.outputs.update-type)
         run: gh pr review --approve "$PR_URL"
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
