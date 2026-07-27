@@ -73,7 +73,7 @@ export default function CocktailStepActionModal(props: CocktailStepActionModalPr
               },
             };
             if (props.cocktailStepAction == undefined) {
-              const response = await fetch(`/api/workspaces/${workspaceId}/actions`, {
+              const response = await fetch(`/api/v1/workspaces/${workspaceId}/actions`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(body),
@@ -88,7 +88,7 @@ export default function CocktailStepActionModal(props: CocktailStepActionModalPr
                 alertService.error(body.message ?? 'Fehler beim Erstellen der Zubereitungsmethode', response.status, response.statusText);
               }
             } else {
-              const response = await fetch(`/api/workspaces/${workspaceId}/actions/${props.cocktailStepAction.id}`, {
+              const response = await fetch(`/api/v1/workspaces/${workspaceId}/actions/${props.cocktailStepAction.id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(body),

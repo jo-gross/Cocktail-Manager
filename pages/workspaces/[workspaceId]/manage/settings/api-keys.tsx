@@ -43,7 +43,7 @@ function ApiKeysPage() {
 
     setLoading(true);
     try {
-      const response = await fetch(`/api/workspaces/${workspaceId}/api-keys`);
+      const response = await fetch(`/api/v1/workspaces/${workspaceId}/api-keys`);
       if (response.ok) {
         const data = await response.json();
         setApiKeys(data.data || []);
@@ -78,7 +78,7 @@ function ApiKeysPage() {
         onApprove={async () => {
           setDeleting(apiKey.id);
           try {
-            const response = await fetch(`/api/workspaces/${workspaceId}/api-keys/${apiKey.id}`, {
+            const response = await fetch(`/api/v1/workspaces/${workspaceId}/api-keys/${apiKey.id}`, {
               method: 'DELETE',
             });
             if (response.ok) {

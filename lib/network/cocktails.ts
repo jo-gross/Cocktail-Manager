@@ -1,12 +1,12 @@
 import { alertService } from '../alertService';
-import { CocktailRecipeFull } from '../../models/CocktailRecipeFull';
 import { CocktailRecipeFullWithImage } from '../../models/CocktailRecipeFullWithImage';
+import type { CocktailDto, CocktailSummaryDto } from '@lib/schemas/cocktails';
 import { fetchListWithCache, fetchWithCache } from './fetchWithCache';
 
 export function fetchCocktail(
   workspaceId: string | string[] | undefined,
   cocktailId: string,
-  setCocktail: (cocktail: CocktailRecipeFull) => void,
+  setCocktail: (cocktail: CocktailDto) => void,
   setCocktailLoading: (loading: boolean) => void,
   onCacheFallback?: () => void,
 ) {
@@ -15,11 +15,12 @@ export function fetchCocktail(
 
   setCocktailLoading(true);
 
-  fetchWithCache<CocktailRecipeFull>({
-    url: `/api/workspaces/${wsId}/cocktails/${cocktailId}`,
+  fetchWithCache<CocktailDto>({
+    url: `/api/v1/workspaces/${wsId}/cocktails/${cocktailId}`,
     storeName: 'cocktails',
     workspaceId: wsId,
-    resourceId: cocktailId,
+    // `-full` keeps the full detail entry from colliding with the slim summary the list caches under the bare id.
+    resourceId: `${cocktailId}-full`,
     onCacheFallback: () => {
       onCacheFallback?.();
     },
@@ -88,7 +89,7 @@ export function fetchCocktailWithImage(
 export async function fetchCocktails(
   workspaceId: string | string[] | undefined,
   search: string,
-  setCocktails: (cocktails: CocktailRecipeFull[]) => void,
+  setCocktails: (cocktails: CocktailSummaryDto[]) => void,
   setLoading: (loading: boolean) => void,
   signal?: AbortSignal,
   onCacheFallback?: () => void,
@@ -99,8 +100,8 @@ export async function fetchCocktails(
   setLoading(true);
 
   try {
-    const { data, fromCache, error } = await fetchListWithCache<CocktailRecipeFull>({
-      url: `/api/workspaces/${wsId}/cocktails?${new URLSearchParams({ search })}`,
+    const { data, fromCache, error } = await fetchListWithCache<CocktailSummaryDto>({
+      url: `/api/v1/workspaces/${wsId}/cocktails?${new URLSearchParams({ search })}`,
       storeName: 'cocktails',
       workspaceId: wsId,
       listKey: `search:${search}`,
@@ -138,12 +139,12 @@ export async function fetchCocktails(
  */
 export async function prefetchAllCocktails(workspaceId: string, onProgress?: (loaded: number, total: number) => void): Promise<void> {
   try {
-    // First, fetch the list of all cocktails
-    const response = await fetch(`/api/workspaces/${workspaceId}/cocktails?search=`);
+    // First, fetch the list of all cocktails (slim summaries — enough for offline search)
+    const response = await fetch(`/api/v1/workspaces/${workspaceId}/cocktails?search=`);
     if (!response.ok) return;
 
     const body = await response.json();
-    const cocktails = body.data as CocktailRecipeFull[];
+    const cocktails = body.data as CocktailSummaryDto[];
 
     if (!cocktails || cocktails.length === 0) return;
 

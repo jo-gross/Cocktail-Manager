@@ -1,6 +1,7 @@
 import { withHttpMethods } from '@middleware/api/handleMethods';
 import HTTPMethod from 'http-method-enum';
 import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
+import { withDeprecation } from '@middleware/api/withDeprecation';
 import { Role } from '@generated/prisma/client';
 import prisma from '../../../../../prisma/prisma';
 
@@ -33,7 +34,7 @@ export async function updateTranslation(workspaceId: string, key: string, transl
   });
 }
 
-export default withHttpMethods({
+const legacyHandler = withHttpMethods({
   [HTTPMethod.PUT]: withWorkspacePermission([Role.ADMIN], async (req, res, user, workspace) => {
     const { key, translations } = req.body;
 
@@ -42,3 +43,6 @@ export default withHttpMethods({
     return res.json({ data: response });
   }),
 });
+
+// DEPRECATED: unversioned endpoint kept for backward compatibility. Use /api/v1/... instead.
+export default withDeprecation({ successor: '/api/v1/workspaces/{workspaceId}/admin/translation' }, legacyHandler);

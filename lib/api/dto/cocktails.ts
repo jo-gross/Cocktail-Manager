@@ -23,12 +23,12 @@ import type {
   Unit,
   WorkspaceCocktailRecipeStepAction,
 } from '@generated/prisma/client';
-import type { CocktailDto, CocktailSummaryDto } from '@lib/schemas/cocktails';
+import type { CocktailDto, CocktailGarnishNameRef, CocktailIngredientNameRef, CocktailSummaryDto } from '@lib/schemas/cocktails';
 
 type GlassWithCount = Pick<Glass, 'id' | 'name' | 'deposit'> & { _count: { GlassImage: number } };
 
-type GarnishWithCount = Pick<Garnish, 'id' | 'name'> & { _count: { GarnishImage: number } };
-type IngredientWithCount = Pick<Ingredient, 'id' | 'name' | 'shortName'> & { _count: { IngredientImage: number } };
+type GarnishWithCount = Pick<Garnish, 'id' | 'name' | 'price' | 'description' | 'notes'> & { _count: { GarnishImage: number } };
+type IngredientWithCount = Pick<Ingredient, 'id' | 'name' | 'shortName' | 'description' | 'notes' | 'tags'> & { _count: { IngredientImage: number } };
 type UnitRef = Pick<Unit, 'id' | 'name'>;
 type ActionRef = Pick<WorkspaceCocktailRecipeStepAction, 'id' | 'name'>;
 
@@ -47,7 +47,7 @@ type GarnishWithGarnish = Pick<CocktailRecipeGarnish, 'garnishId' | 'garnishNumb
 };
 
 /** Minimal shape needed for the slim summary (list view). */
-type CocktailSummaryShape = Pick<CocktailRecipe, 'id' | 'name' | 'description' | 'tags' | 'price'> & {
+type CocktailSummaryShape = Pick<CocktailRecipe, 'id' | 'name' | 'description' | 'tags' | 'price' | 'isArchived'> & {
   _count?: { CocktailRecipeImage: number };
   glass?: GlassWithCount | null;
 };
@@ -70,8 +70,16 @@ function imageFields(hasImage: boolean, workspaceId: string, cocktailId: string)
   };
 }
 
-/** Slim summary for list views (and the `check` endpoint) — no nested steps/garnishes/ratings. */
-export function toCocktailSummaryDto(cocktail: CocktailSummaryShape, workspaceId: string): CocktailSummaryDto {
+/**
+ * Slim summary for list views (and the `check` endpoint) — no nested steps/garnishes/ratings.
+ * The optional `include` projections (garnish/ingredient name refs) are computed by the caller
+ * (`listCocktails`) only when requested via `?include=`, so this stays cheap for the common case.
+ */
+export function toCocktailSummaryDto(
+  cocktail: CocktailSummaryShape,
+  workspaceId: string,
+  include?: { garnishes?: CocktailGarnishNameRef[]; ingredients?: CocktailIngredientNameRef[] },
+): CocktailSummaryDto {
   const hasImage = (cocktail._count?.CocktailRecipeImage ?? 0) > 0;
   return {
     id: cocktail.id,
@@ -79,10 +87,13 @@ export function toCocktailSummaryDto(cocktail: CocktailSummaryShape, workspaceId
     description: cocktail.description,
     tags: cocktail.tags,
     price: cocktail.price,
+    isArchived: cocktail.isArchived,
     ...imageFields(hasImage, workspaceId, cocktail.id),
     glass: cocktail.glass
       ? { id: cocktail.glass.id, name: cocktail.glass.name, deposit: cocktail.glass.deposit, hasImage: cocktail.glass._count.GlassImage > 0 }
       : null,
+    ...(include?.garnishes ? { garnishes: include.garnishes } : {}),
+    ...(include?.ingredients ? { ingredients: include.ingredients } : {}),
   };
 }
 
@@ -106,6 +117,9 @@ export function toCocktailDto(cocktail: CocktailFullShape, workspaceId: string):
       garnish: {
         id: garnish.garnish.id,
         name: garnish.garnish.name,
+        price: garnish.garnish.price,
+        description: garnish.garnish.description,
+        notes: garnish.garnish.notes,
         hasImage: garnish.garnish._count.GarnishImage > 0,
       },
     })),
@@ -125,6 +139,9 @@ export function toCocktailDto(cocktail: CocktailFullShape, workspaceId: string):
               id: line.ingredient.id,
               name: line.ingredient.name,
               shortName: line.ingredient.shortName,
+              description: line.ingredient.description,
+              notes: line.ingredient.notes,
+              tags: line.ingredient.tags,
               hasImage: line.ingredient._count.IngredientImage > 0,
             }
           : null,

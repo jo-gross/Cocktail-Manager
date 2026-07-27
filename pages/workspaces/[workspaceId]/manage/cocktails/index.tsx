@@ -9,7 +9,7 @@ import { UserContext } from '@lib/context/UserContextProvider';
 import AvatarImage from '../../../../../components/AvatarImage';
 import { FaArrowDown, FaArrowUp, FaChevronDown, FaFileDownload, FaFileUpload, FaPlus } from 'react-icons/fa';
 import ListSearchField from '../../../../../components/ListSearchField';
-import { CocktailRecipeModel } from '../../../../../models/CocktailRecipeModel';
+import type { CocktailSummaryDto } from '@lib/schemas/cocktails';
 import ImageModal from '../../../../../components/modals/ImageModal';
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import _ from 'lodash';
@@ -52,7 +52,7 @@ const CocktailsOverviewPage: NextPageWithPullToRefresh = () => {
   const userContext = useContext(UserContext);
   const modalContext = useContext(ModalContext);
 
-  const [cocktailRecipes, setCocktailRecipes] = useState<CocktailRecipeModel[]>([]);
+  const [cocktailRecipes, setCocktailRecipes] = useState<CocktailSummaryDto[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [filterString, setFilterString] = useState('');
@@ -75,7 +75,7 @@ const CocktailsOverviewPage: NextPageWithPullToRefresh = () => {
     [sortKey, sortDirection],
   );
 
-  const getCocktailSortValue = useCallback((recipe: CocktailRecipeModel, key: string) => {
+  const getCocktailSortValue = useCallback((recipe: CocktailSummaryDto, key: string) => {
     switch (key) {
       case 'name':
         return recipe.name;
@@ -91,7 +91,7 @@ const CocktailsOverviewPage: NextPageWithPullToRefresh = () => {
   const refreshCocktails = useCallback(() => {
     if (!workspaceId) return;
     setLoading(true);
-    fetch(`/api/workspaces/${workspaceId}/cocktails`)
+    fetch(`/api/v1/workspaces/${workspaceId}/cocktails?include=garnishes,ingredients`)
       .then(async (response) => {
         const body = await response.json();
         if (response.ok) {
@@ -376,7 +376,7 @@ const CocktailsOverviewPage: NextPageWithPullToRefresh = () => {
     [workspaceId, modalContext, cocktailRecipes],
   );
 
-  const renderTableRows = (recipes: CocktailRecipeModel[], isArchived: boolean) => {
+  const renderTableRows = (recipes: CocktailSummaryDto[], isArchived: boolean) => {
     return sortRows(recipes.filter(cocktailFilter(filterString)), { key: sortKey, direction: sortDirection }, getCocktailSortValue).map((cocktailRecipe) => (
       <TableRow key={cocktailRecipe.id} id={cocktailRecipe.id}>
         {chromiumAvailable && (
@@ -384,13 +384,8 @@ const CocktailsOverviewPage: NextPageWithPullToRefresh = () => {
             <Checkbox checkboxSize="sm" checked={selectedCocktailIds.has(cocktailRecipe.id)} onChange={() => handleToggleSelect(cocktailRecipe.id)} />
           </TableCell>
         )}
-        <TableImageCell
-          hasImage={cocktailRecipe._count.CocktailRecipeImage !== 0}
-          onImageClick={() =>
-            modalContext.openModal(<ImageModal image={`/api/workspaces/${cocktailRecipe.workspaceId}/cocktails/${cocktailRecipe.id}/image`} />)
-          }
-        >
-          <AvatarImage src={`/api/workspaces/${cocktailRecipe.workspaceId}/cocktails/${cocktailRecipe.id}/image`} alt={'Cocktail'} />
+        <TableImageCell hasImage={cocktailRecipe.hasImage} onImageClick={() => modalContext.openModal(<ImageModal image={cocktailRecipe.imageUrl ?? ''} />)}>
+          <AvatarImage src={cocktailRecipe.imageUrl ?? ''} alt={'Cocktail'} />
         </TableImageCell>
         <TableCell className={isArchived ? 'italic' : ''}>
           {cocktailRecipe.name} {isArchived && '(Archiviert)'}
@@ -406,7 +401,7 @@ const CocktailsOverviewPage: NextPageWithPullToRefresh = () => {
           ))}
         </TableCell>
         <TableCell>{cocktailRecipe.glass?.name}</TableCell>
-        <TableCell>{cocktailRecipe.garnishes.map((garnish) => garnish.garnish.name).join(', ')}</TableCell>
+        <TableCell>{(cocktailRecipe.garnishes ?? []).map((garnish) => garnish.name).join(', ')}</TableCell>
         <ManageColumn
           entity={'cocktails'}
           id={cocktailRecipe.id}

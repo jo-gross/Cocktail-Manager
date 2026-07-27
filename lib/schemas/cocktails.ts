@@ -57,6 +57,9 @@ export const CocktailGarnishRefSchema = z
   .object({
     id: z.string(),
     name: z.string(),
+    price: z.number().nullable().openapi({ description: 'Garnish price in currency units (drives material cost).' }),
+    description: z.string().nullable(),
+    notes: z.string().nullable(),
     hasImage: z.boolean().openapi({ description: 'Whether the garnish has an image.' }),
   })
   .openapi('CocktailGarnishRef');
@@ -67,6 +70,9 @@ export const CocktailIngredientRefSchema = z
     id: z.string(),
     name: z.string(),
     shortName: z.string().nullable(),
+    description: z.string().nullable(),
+    notes: z.string().nullable(),
+    tags: z.array(z.string()),
     hasImage: z.boolean().openapi({ description: 'Whether the ingredient has an image.' }),
   })
   .openapi('CocktailIngredientRef');
@@ -106,23 +112,44 @@ export const CocktailGarnishDtoSchema = z
   })
   .openapi('CocktailGarnish');
 
-/** Slim cocktail DTO for list views — no nested steps/garnishes/ratings. */
-export const CocktailSummaryDtoSchema = z
-  .object({
-    id: z.string(),
-    name: z.string(),
-    description: z.string().nullable(),
-    tags: z.array(z.string()),
-    price: z.number().nullable(),
-    hasImage: z.boolean().openapi({ description: 'Whether the cocktail has an image.' }),
-    imageUrl: z.string().nullable().openapi({ description: 'URL to fetch the cocktail image bytes, or null when hasImage is false.' }),
-    glass: CocktailGlassRefSchema.nullable(),
-  })
-  .openapi('CocktailSummary');
+/** Ultra-slim garnish name ref, used only for the list `?include=garnishes` projection. */
+export const CocktailGarnishNameRefSchema = z.object({ id: z.string(), name: z.string() }).openapi('CocktailGarnishNameRef');
 
-/** Full cocktail DTO — summary plus nested steps, garnishes and rating aggregates. */
-export const CocktailDtoSchema = CocktailSummaryDtoSchema.extend({
+/** Ultra-slim ingredient name ref, used only for the list `?include=ingredients` projection. */
+export const CocktailIngredientNameRefSchema = z
+  .object({ id: z.string(), name: z.string(), shortName: z.string().nullable() })
+  .openapi('CocktailIngredientNameRef');
+
+/** Fields shared by the slim list summary and the full detail DTO. */
+const CocktailBaseSchema = z.object({
+  id: z.string(),
+  name: z.string(),
   description: z.string().nullable(),
+  tags: z.array(z.string()),
+  price: z.number().nullable(),
+  isArchived: z.boolean().openapi({ description: 'Whether the cocktail is archived.' }),
+  hasImage: z.boolean().openapi({ description: 'Whether the cocktail has an image.' }),
+  imageUrl: z.string().nullable().openapi({ description: 'URL to fetch the cocktail image bytes, or null when hasImage is false.' }),
+  glass: CocktailGlassRefSchema.nullable(),
+});
+
+/**
+ * Slim cocktail DTO for list views — no nested steps/garnishes/ratings. The `garnishes`/`ingredients`
+ * name projections are present ONLY when explicitly requested via `?include=garnishes,ingredients`.
+ */
+export const CocktailSummaryDtoSchema = CocktailBaseSchema.extend({
+  garnishes: z
+    .array(CocktailGarnishNameRefSchema)
+    .optional()
+    .openapi({ description: 'Garnish name refs; present only when requested via ?include=garnishes.' }),
+  ingredients: z
+    .array(CocktailIngredientNameRefSchema)
+    .optional()
+    .openapi({ description: 'Distinct ingredient name refs across all steps; present only when requested via ?include=ingredients.' }),
+}).openapi('CocktailSummary');
+
+/** Full cocktail DTO — summary base plus nested steps, garnishes and rating aggregates. */
+export const CocktailDtoSchema = CocktailBaseSchema.extend({
   notes: z.string().nullable(),
   history: z.string().nullable(),
   ice: CocktailIceRefSchema.nullable(),
@@ -136,6 +163,8 @@ export type CocktailGlassRef = z.infer<typeof CocktailGlassRefSchema>;
 export type CocktailStepIngredientDto = z.infer<typeof CocktailStepIngredientDtoSchema>;
 export type CocktailStepDto = z.infer<typeof CocktailStepDtoSchema>;
 export type CocktailGarnishDto = z.infer<typeof CocktailGarnishDtoSchema>;
+export type CocktailGarnishNameRef = z.infer<typeof CocktailGarnishNameRefSchema>;
+export type CocktailIngredientNameRef = z.infer<typeof CocktailIngredientNameRefSchema>;
 export type CocktailSummaryDto = z.infer<typeof CocktailSummaryDtoSchema>;
 export type CocktailDto = z.infer<typeof CocktailDtoSchema>;
 
@@ -207,6 +236,7 @@ export const CocktailUpdateSchema = z
 
 export const CocktailListQuerySchema = z.object({
   search: z.string().optional().openapi({ description: 'Case-insensitive filter over name, tags, garnishes and ingredients.' }),
+  include: z.string().optional().openapi({ description: 'Comma-separated extra projections to embed in each summary: `garnishes`, `ingredients`.' }),
 });
 
 export const CocktailCheckQuerySchema = z.object({

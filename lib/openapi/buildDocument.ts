@@ -27,12 +27,15 @@ export type ApiVariant = 'combined' | 'v1' | 'preview';
 const HTTP_METHODS = ['get', 'put', 'post', 'delete', 'patch', 'options', 'head', 'trace'];
 const errorContent = { 'application/json': { schema: ErrorResponse } };
 
-function permissionNote(permission: RouteSpec['permission']): string {
-  if (!permission) {
+function authNote(spec: RouteSpec): string {
+  if (spec.sessionOnly) {
+    return '**Authentication:** requires a logged-in workspace-member session. API keys (workspace or the instance master key) are NOT accepted for this operation.';
+  }
+  if (!spec.permission) {
     return '**Authentication:** requires a valid session or API key (no specific permission).';
   }
-  const description = PERMISSION_DESCRIPTIONS[permission];
-  return `**Required API-key permission:** \`${permission}\`${description ? ` — ${description}` : ''}`;
+  const description = PERMISSION_DESCRIPTIONS[spec.permission];
+  return `**Required API-key permission:** \`${spec.permission}\`${description ? ` — ${description}` : ''}`;
 }
 
 function successResponse(spec: RouteSpec) {
@@ -51,14 +54,35 @@ function successResponse(spec: RouteSpec) {
 export function buildOpenApiDocument(resources: ResourceApiDoc[], variant: ApiVariant = 'combined') {
   const registry = new OpenAPIRegistry();
 
-  registry.registerComponent('securitySchemes', 'ApiKeyAuth', {
+  registry.registerComponent('securitySchemes', 'WorkspaceApiKeyAuth', {
     type: 'http',
     scheme: 'bearer',
     bearerFormat: 'JWT',
     description:
-      'Workspace API key (JWT). Create one under Workspace → Settings → API Keys and send it as ' +
-      '`Authorization: Bearer <token>`. Each key carries a set of permissions; the required permission ' +
-      'is documented per operation (see the `Permission` schema for the full list).',
+      'Workspace API key (JWT), scoped to a single workspace. Create one under Workspace → Settings → API Keys ' +
+      'and send it as `Authorization: Bearer <token>`. Each key carries a set of permissions; the required ' +
+      'permission is documented per operation (see the `Permission` schema for the full list).',
+  });
+
+  registry.registerComponent('securitySchemes', 'InstanceApiKeyAuth', {
+    type: 'http',
+    scheme: 'bearer',
+    description:
+      'Instance master API key — the `INSTANCE_MASTER_API_KEY` server env value, sent as ' +
+      '`Authorization: Bearer <token>`. It is instance-wide (NOT scoped to a workspace) and bypasses the ' +
+      'per-operation permission checks, so it authorizes every workspace operation. Intended for self-hosting / ' +
+      'instance administration, not for third-party integrations. Call `GET /me` to introspect a token (its ' +
+      '`isMaster` flag is true for this key).',
+  });
+
+  registry.registerComponent('securitySchemes', 'SessionCookieAuth', {
+    type: 'apiKey',
+    in: 'cookie',
+    name: 'better-auth.session_token',
+    description:
+      'Logged-in user session (browser cookie). Used by the few workspace-member operations that act on the ' +
+      "caller's own identity (e.g. leaving a workspace, creating/revoking API keys) and therefore do NOT accept " +
+      'API keys — neither a workspace key nor the instance master key.',
   });
 
   // Documented in components even though it is referenced only from descriptions.
@@ -83,7 +107,7 @@ export function buildOpenApiDocument(resources: ResourceApiDoc[], variant: ApiVa
     }
 
     const description = [
-      permissionNote(spec.permission),
+      authNote(spec),
       deprecated
         ? `**Deprecated.** Use \`${successor}\` instead. This unversioned endpoint keeps its historic behavior but may be removed in a future release.`
         : spec.description,
@@ -98,7 +122,11 @@ export function buildOpenApiDocument(resources: ResourceApiDoc[], variant: ApiVa
       description,
       tags: spec.tags,
       deprecated: deprecated || undefined,
-      security: spec.permission ? [{ ApiKeyAuth: [spec.permission] }] : [{ ApiKeyAuth: [] }],
+      security: spec.sessionOnly
+        ? [{ SessionCookieAuth: [] }]
+        : spec.permission
+          ? [{ WorkspaceApiKeyAuth: [spec.permission] }, { InstanceApiKeyAuth: [] }]
+          : [{ WorkspaceApiKeyAuth: [] }, { InstanceApiKeyAuth: [] }],
       request: Object.keys(request).length > 0 ? request : undefined,
       responses: responses as Parameters<typeof registry.registerPath>[0]['responses'],
     });
@@ -157,7 +185,7 @@ export function buildOpenApiDocument(resources: ResourceApiDoc[], variant: ApiVa
       { url: 'https://staging.cocktail-manager.de', description: 'Staging' },
       { url: 'http://localhost:3000', description: 'Lokale Entwicklung' },
     ],
-    security: [{ ApiKeyAuth: [] }],
+    security: [{ WorkspaceApiKeyAuth: [] }, { InstanceApiKeyAuth: [] }],
   });
 
   // Mirror the required permission as a machine-readable extension (derived from
@@ -165,7 +193,7 @@ export function buildOpenApiDocument(resources: ResourceApiDoc[], variant: ApiVa
   for (const pathItem of Object.values(doc.paths ?? {}) as Array<Record<string, { security?: Array<Record<string, string[]>> }>>) {
     for (const [method, operation] of Object.entries(pathItem)) {
       if (!HTTP_METHODS.includes(method) || !operation || typeof operation !== 'object') continue;
-      const scope = operation.security?.[0]?.ApiKeyAuth?.[0];
+      const scope = operation.security?.[0]?.WorkspaceApiKeyAuth?.[0];
       if (scope) {
         (operation as Record<string, unknown>)['x-required-permission'] = scope;
       }

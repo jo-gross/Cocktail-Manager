@@ -4,9 +4,10 @@ import { withWorkspacePermission } from '@middleware/api/authenticationMiddlewar
 import { Prisma, Role } from '@generated/prisma/client';
 import prisma from '../../../../../prisma/prisma';
 import { updateTranslation } from '../admin/translation';
+import { withDeprecation } from '@middleware/api/withDeprecation';
 import WorkspaceCocktailRecipeStepActionCreateInput = Prisma.WorkspaceCocktailRecipeStepActionCreateInput;
 
-export default withHttpMethods({
+const legacyHandler = withHttpMethods({
   [HTTPMethod.GET]: withWorkspacePermission([Role.USER], async (req, res, user, workspace) => {
     const search = typeof req.query.search === 'string' ? req.query.search : '';
     const where: Prisma.WorkspaceCocktailRecipeStepActionWhereInput = {
@@ -38,3 +39,6 @@ export default withHttpMethods({
     return res.json({ data: action });
   }),
 });
+
+// DEPRECATED: unversioned endpoint kept for backward compatibility. Use /api/v1/... instead.
+export default withDeprecation({ successor: '/api/v1/workspaces/{workspaceId}/actions' }, legacyHandler);

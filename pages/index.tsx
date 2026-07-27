@@ -522,7 +522,7 @@ const WorkspacesPage: NextPageWithPullToRefresh = () => {
                                   <DeleteConfirmationModal
                                     onApprove={async () => {
                                       setJoinRequestCanceling({ ...joinRequestCanceling, [workspaceJoinRequest.workspaceId]: true });
-                                      fetch(`/api/workspaces/${workspaceJoinRequest.workspaceId}/join-requests`, {
+                                      fetch(`/api/v1/workspaces/${workspaceJoinRequest.workspaceId}/join-requests`, {
                                         method: 'DELETE',
                                       })
                                         .then((response) => {

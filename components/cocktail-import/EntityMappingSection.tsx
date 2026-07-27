@@ -45,7 +45,7 @@ export function EntityMappingSection({
   // Load action groups for stepActions
   useEffect(() => {
     if (entityType === 'stepActions' && workspaceId) {
-      fetch(`/api/workspaces/${workspaceId}/actions`)
+      fetch(`/api/v1/workspaces/${workspaceId}/actions`)
         .then((res) => res.json())
         .then((data) => {
           const groups = Array.from(new Set(data.data.map((action: { actionGroup?: string }) => action.actionGroup).filter(Boolean))) as string[];

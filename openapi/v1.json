@@ -21,16 +21,30 @@
   ],
   "security": [
     {
-      "ApiKeyAuth": []
+      "WorkspaceApiKeyAuth": []
+    },
+    {
+      "InstanceApiKeyAuth": []
     }
   ],
   "components": {
     "securitySchemes": {
-      "ApiKeyAuth": {
+      "WorkspaceApiKeyAuth": {
         "type": "http",
         "scheme": "bearer",
         "bearerFormat": "JWT",
-        "description": "Workspace API key (JWT). Create one under Workspace → Settings → API Keys and send it as `Authorization: Bearer <token>`. Each key carries a set of permissions; the required permission is documented per operation (see the `Permission` schema for the full list)."
+        "description": "Workspace API key (JWT), scoped to a single workspace. Create one under Workspace → Settings → API Keys and send it as `Authorization: Bearer <token>`. Each key carries a set of permissions; the required permission is documented per operation (see the `Permission` schema for the full list)."
+      },
+      "InstanceApiKeyAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Instance master API key — the `INSTANCE_MASTER_API_KEY` server env value, sent as `Authorization: Bearer <token>`. It is instance-wide (NOT scoped to a workspace) and bypasses the per-operation permission checks, so it authorizes every workspace operation. Intended for self-hosting / instance administration, not for third-party integrations. Call `GET /me` to introspect a token (its `isMaster` flag is true for this key)."
+      },
+      "SessionCookieAuth": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "better-auth.session_token",
+        "description": "Logged-in user session (browser cookie). Used by the few workspace-member operations that act on the caller's own identity (e.g. leaving a workspace, creating/revoking API keys) and therefore do NOT accept API keys — neither a workspace key nor the instance master key."
       }
     },
     "schemas": {
@@ -343,6 +357,69 @@
           "count"
         ]
       },
+      "Action": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "actionGroup": {
+            "type": "string",
+            "description": "Grouping bucket, e.g. \"MIXING\" or \"POURING\"."
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "actionGroup"
+        ]
+      },
+      "ActionCreateInput": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "actionGroup": {
+            "type": "string",
+            "minLength": 1
+          },
+          "translations": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Optional display-name translations keyed by language code, e.g. { \"en\": \"Shake\" }."
+          }
+        },
+        "required": [
+          "name",
+          "actionGroup"
+        ]
+      },
+      "ActionUpdateInput": {
+        "type": "object",
+        "properties": {
+          "actionGroup": {
+            "type": "string",
+            "minLength": 1
+          },
+          "translations": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Optional display-name translations keyed by language code, e.g. { \"en\": \"Shake\" }."
+          }
+        },
+        "required": [
+          "actionGroup"
+        ]
+      },
       "SignageFormat": {
         "type": "object",
         "properties": {
@@ -623,6 +700,195 @@
         },
         "required": [
           "slideIds"
+        ]
+      },
+      "TranslationUpdateResult": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "ok"
+        ]
+      },
+      "TranslationUpdateInput": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The translation key (e.g. an action/unit/ice name)."
+          },
+          "translations": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Display names keyed by language code, e.g. { \"de\": \"Shaken\" }."
+          }
+        },
+        "required": [
+          "key",
+          "translations"
+        ]
+      },
+      "ApiKey": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "keyPrefix": {
+            "type": "string",
+            "description": "First characters of the internal key id, for identification."
+          },
+          "revoked": {
+            "type": "boolean"
+          },
+          "expiresAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "example": "2026-07-04T12:00:00.000Z",
+            "description": "ISO 8601 timestamp"
+          },
+          "lastUsedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "example": "2026-07-04T12:00:00.000Z",
+            "description": "ISO 8601 timestamp"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-07-04T12:00:00.000Z",
+            "description": "ISO 8601 timestamp"
+          },
+          "createdBy": {
+            "$ref": "#/components/schemas/ApiKeyCreator"
+          },
+          "permissions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Permission"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "keyPrefix",
+          "revoked",
+          "expiresAt",
+          "lastUsedAt",
+          "createdAt",
+          "createdBy",
+          "permissions"
+        ]
+      },
+      "ApiKeyCreator": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "email": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "email"
+        ]
+      },
+      "ApiKeyCreateResult": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "key": {
+            "type": "string",
+            "description": "The signed API key (JWT). Returned ONLY once — store it now."
+          },
+          "expiresAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "example": "2026-07-04T12:00:00.000Z",
+            "description": "ISO 8601 timestamp"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-07-04T12:00:00.000Z",
+            "description": "ISO 8601 timestamp"
+          },
+          "permissions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Permission"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "key",
+          "expiresAt",
+          "createdAt",
+          "permissions"
+        ]
+      },
+      "ApiKeyCreateInput": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "expiresAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "ISO expiry timestamp, or null/omitted for no expiry."
+          },
+          "permissions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Permission"
+            },
+            "description": "Permission scopes to grant the key."
+          }
+        },
+        "required": [
+          "name"
         ]
       },
       "AuditLog": {
@@ -1505,6 +1771,10 @@
               "null"
             ]
           },
+          "isArchived": {
+            "type": "boolean",
+            "description": "Whether the cocktail is archived."
+          },
           "hasImage": {
             "type": "boolean",
             "description": "Whether the cocktail has an image."
@@ -1518,6 +1788,20 @@
           },
           "glass": {
             "$ref": "#/components/schemas/CocktailGlassRef"
+          },
+          "garnishes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CocktailGarnishNameRef"
+            },
+            "description": "Garnish name refs; present only when requested via ?include=garnishes."
+          },
+          "ingredients": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CocktailIngredientNameRef"
+            },
+            "description": "Distinct ingredient name refs across all steps; present only when requested via ?include=ingredients."
           }
         },
         "required": [
@@ -1526,6 +1810,7 @@
           "description",
           "tags",
           "price",
+          "isArchived",
           "hasImage",
           "imageUrl",
           "glass"
@@ -1559,63 +1844,144 @@
           "hasImage"
         ]
       },
-      "Cocktail": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/CocktailSummary"
+      "CocktailGarnishNameRef": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
           },
-          {
-            "type": "object",
-            "properties": {
-              "notes": {
-                "type": [
-                  "string",
-                  "null"
-                ]
-              },
-              "history": {
-                "type": [
-                  "string",
-                  "null"
-                ]
-              },
-              "ice": {
-                "$ref": "#/components/schemas/CocktailIceRef"
-              },
-              "garnishes": {
-                "type": "array",
-                "items": {
-                  "$ref": "#/components/schemas/CocktailGarnish"
-                }
-              },
-              "steps": {
-                "type": "array",
-                "items": {
-                  "$ref": "#/components/schemas/CocktailStep"
-                }
-              },
-              "averageRating": {
-                "type": [
-                  "number",
-                  "null"
-                ],
-                "description": "Mean of all rating values, or null when there are no ratings."
-              },
-              "ratingCount": {
-                "type": "integer",
-                "description": "Number of ratings."
-              }
-            },
-            "required": [
-              "notes",
-              "history",
-              "ice",
-              "garnishes",
-              "steps",
-              "averageRating",
-              "ratingCount"
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "CocktailIngredientNameRef": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "shortName": {
+            "type": [
+              "string",
+              "null"
             ]
           }
+        },
+        "required": [
+          "id",
+          "name",
+          "shortName"
+        ]
+      },
+      "Cocktail": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "price": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "isArchived": {
+            "type": "boolean",
+            "description": "Whether the cocktail is archived."
+          },
+          "hasImage": {
+            "type": "boolean",
+            "description": "Whether the cocktail has an image."
+          },
+          "imageUrl": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "URL to fetch the cocktail image bytes, or null when hasImage is false."
+          },
+          "glass": {
+            "$ref": "#/components/schemas/CocktailGlassRef"
+          },
+          "notes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "history": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "ice": {
+            "$ref": "#/components/schemas/CocktailIceRef"
+          },
+          "garnishes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CocktailGarnish"
+            }
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CocktailStep"
+            }
+          },
+          "averageRating": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Mean of all rating values, or null when there are no ratings."
+          },
+          "ratingCount": {
+            "type": "integer",
+            "description": "Number of ratings."
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "description",
+          "tags",
+          "price",
+          "isArchived",
+          "hasImage",
+          "imageUrl",
+          "glass",
+          "notes",
+          "history",
+          "ice",
+          "garnishes",
+          "steps",
+          "averageRating",
+          "ratingCount"
         ]
       },
       "CocktailIceRef": {
@@ -1680,6 +2046,25 @@
           "name": {
             "type": "string"
           },
+          "price": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Garnish price in currency units (drives material cost)."
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "notes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "hasImage": {
             "type": "boolean",
             "description": "Whether the garnish has an image."
@@ -1688,6 +2073,9 @@
         "required": [
           "id",
           "name",
+          "price",
+          "description",
+          "notes",
           "hasImage"
         ]
       },
@@ -1812,6 +2200,24 @@
               "null"
             ]
           },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "notes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
           "hasImage": {
             "type": "boolean",
             "description": "Whether the ingredient has an image."
@@ -1821,6 +2227,9 @@
           "id",
           "name",
           "shortName",
+          "description",
+          "notes",
+          "tags",
           "hasImage"
         ]
       },
@@ -3041,6 +3450,143 @@
           "ids"
         ]
       },
+      "JoinCode": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "expires": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "example": "2026-07-04T12:00:00.000Z",
+            "description": "ISO 8601 timestamp"
+          },
+          "onlyUseOnce": {
+            "type": "boolean"
+          },
+          "used": {
+            "type": "integer",
+            "description": "How many times the code has been used."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-07-04T12:00:00.000Z",
+            "description": "ISO 8601 timestamp"
+          }
+        },
+        "required": [
+          "code",
+          "expires",
+          "onlyUseOnce",
+          "used",
+          "createdAt"
+        ]
+      },
+      "JoinCodeCreateInput": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "minLength": 1
+          },
+          "expires": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "ISO expiry timestamp, or null/omitted for no expiry."
+          },
+          "onlyUseOnce": {
+            "type": "boolean",
+            "description": "Whether the code can only be used once (default false)."
+          }
+        },
+        "required": [
+          "code"
+        ]
+      },
+      "JoinRequest": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string"
+          },
+          "date": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-07-04T12:00:00.000Z",
+            "description": "ISO 8601 timestamp"
+          },
+          "user": {
+            "$ref": "#/components/schemas/JoinRequestUser"
+          }
+        },
+        "required": [
+          "userId",
+          "date",
+          "user"
+        ]
+      },
+      "JoinRequestUser": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "email": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Requester email — shown to managers to identify the person."
+          },
+          "image": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "email",
+          "image"
+        ]
+      },
+      "JoinRequestActionResult": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "ok"
+        ]
+      },
+      "LeaveResult": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "ok"
+        ]
+      },
       "QueueItem": {
         "type": "object",
         "properties": {
@@ -3852,7 +4398,10 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": []
+            "WorkspaceApiKeyAuth": []
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "responses": {
@@ -3916,9 +4465,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "WORKSPACE_READ"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -4004,9 +4556,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "WORKSPACE_UPDATE"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -4091,7 +4646,10 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": []
+            "WorkspaceApiKeyAuth": []
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -4159,6 +4717,401 @@
         }
       }
     },
+    "/api/v1/workspaces/{workspaceId}/actions": {
+      "get": {
+        "summary": "List step actions",
+        "description": "**Required API-key permission:** `COCKTAILS_READ` — Read cocktail recipes\n\nList all cocktail-recipe step actions of a workspace, optionally filtered by name.",
+        "tags": [
+          "Cocktails"
+        ],
+        "security": [
+          {
+            "WorkspaceApiKeyAuth": [
+              "COCKTAILS_READ"
+            ]
+          },
+          {
+            "InstanceApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "Workspace ID",
+              "example": "ckw0a1b2c3d4e5f6g7h8"
+            },
+            "required": true,
+            "description": "Workspace ID",
+            "name": "workspaceId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "description": "Case-insensitive name filter."
+            },
+            "required": false,
+            "description": "Case-insensitive name filter.",
+            "name": "search",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List step actions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Action"
+                      }
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-required-permission": "COCKTAILS_READ"
+      },
+      "post": {
+        "summary": "Create step action",
+        "description": "**Required API-key permission:** `COCKTAILS_UPDATE` — Update cocktail recipes",
+        "tags": [
+          "Cocktails"
+        ],
+        "security": [
+          {
+            "WorkspaceApiKeyAuth": [
+              "COCKTAILS_UPDATE"
+            ]
+          },
+          {
+            "InstanceApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "Workspace ID",
+              "example": "ckw0a1b2c3d4e5f6g7h8"
+            },
+            "required": true,
+            "description": "Workspace ID",
+            "name": "workspaceId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ActionCreateInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Create step action",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Action"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-required-permission": "COCKTAILS_UPDATE"
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/actions/{actionId}": {
+      "put": {
+        "summary": "Update step action",
+        "description": "**Required API-key permission:** `COCKTAILS_UPDATE` — Update cocktail recipes\n\nUpdates the action group and (optionally) the display-name translations.",
+        "tags": [
+          "Cocktails"
+        ],
+        "security": [
+          {
+            "WorkspaceApiKeyAuth": [
+              "COCKTAILS_UPDATE"
+            ]
+          },
+          {
+            "InstanceApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "Workspace ID",
+              "example": "ckw0a1b2c3d4e5f6g7h8"
+            },
+            "required": true,
+            "description": "Workspace ID",
+            "name": "workspaceId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "actionId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ActionUpdateInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Update step action",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Action"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Action not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-required-permission": "COCKTAILS_UPDATE"
+      },
+      "delete": {
+        "summary": "Delete step action",
+        "description": "**Required API-key permission:** `COCKTAILS_UPDATE` — Update cocktail recipes",
+        "tags": [
+          "Cocktails"
+        ],
+        "security": [
+          {
+            "WorkspaceApiKeyAuth": [
+              "COCKTAILS_UPDATE"
+            ]
+          },
+          {
+            "InstanceApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "Workspace ID",
+              "example": "ckw0a1b2c3d4e5f6g7h8"
+            },
+            "required": true,
+            "description": "Workspace ID",
+            "name": "workspaceId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "actionId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Delete step action",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Action"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Action not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-required-permission": "COCKTAILS_UPDATE"
+      }
+    },
     "/api/v1/workspaces/{workspaceId}/admin/signage": {
       "get": {
         "summary": "Get signage configuration",
@@ -4168,9 +5121,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "MONITOR_READ"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -4249,9 +5205,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "MONITOR_UPDATE"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -4341,9 +5300,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "MONITOR_UPDATE"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -4431,9 +5393,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "MONITOR_UPDATE"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -4543,9 +5508,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "MONITOR_UPDATE"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -4641,9 +5609,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "MONITOR_READ"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -4735,6 +5706,462 @@
         "x-required-permission": "MONITOR_READ"
       }
     },
+    "/api/v1/workspaces/{workspaceId}/admin/translation": {
+      "put": {
+        "summary": "Upsert a translation",
+        "description": "**Required API-key permission:** `WORKSPACE_UPDATE` — Update workspace settings\n\nMerges display-name translations for a key into the workspace translation settings.",
+        "tags": [
+          "Workspace"
+        ],
+        "security": [
+          {
+            "WorkspaceApiKeyAuth": [
+              "WORKSPACE_UPDATE"
+            ]
+          },
+          {
+            "InstanceApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "Workspace ID",
+              "example": "ckw0a1b2c3d4e5f6g7h8"
+            },
+            "required": true,
+            "description": "Workspace ID",
+            "name": "workspaceId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TranslationUpdateInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Upsert a translation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/TranslationUpdateResult"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-required-permission": "WORKSPACE_UPDATE"
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/api-keys": {
+      "get": {
+        "summary": "List API keys",
+        "description": "**Required API-key permission:** `WORKSPACE_READ` — Read workspace settings and audit logs\n\nLists the workspace API keys (metadata only — the key value is shown only once, on create).",
+        "tags": [
+          "Workspace"
+        ],
+        "security": [
+          {
+            "WorkspaceApiKeyAuth": [
+              "WORKSPACE_READ"
+            ]
+          },
+          {
+            "InstanceApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "Workspace ID",
+              "example": "ckw0a1b2c3d4e5f6g7h8"
+            },
+            "required": true,
+            "description": "Workspace ID",
+            "name": "workspaceId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List API keys",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ApiKey"
+                      }
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-required-permission": "WORKSPACE_READ"
+      },
+      "post": {
+        "summary": "Create API key",
+        "description": "**Authentication:** requires a logged-in workspace-member session. API keys (workspace or the instance master key) are NOT accepted for this operation.\n\nCreates a workspace API key and returns the signed token ONCE. Session-only — API keys cannot mint other keys.",
+        "tags": [
+          "Workspace"
+        ],
+        "security": [
+          {
+            "SessionCookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "Workspace ID",
+              "example": "ckw0a1b2c3d4e5f6g7h8"
+            },
+            "required": true,
+            "description": "Workspace ID",
+            "name": "workspaceId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApiKeyCreateInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Create API key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/ApiKeyCreateResult"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/api-keys/{keyId}": {
+      "get": {
+        "summary": "Get API key",
+        "description": "**Required API-key permission:** `WORKSPACE_READ` — Read workspace settings and audit logs",
+        "tags": [
+          "Workspace"
+        ],
+        "security": [
+          {
+            "WorkspaceApiKeyAuth": [
+              "WORKSPACE_READ"
+            ]
+          },
+          {
+            "InstanceApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "Workspace ID",
+              "example": "ckw0a1b2c3d4e5f6g7h8"
+            },
+            "required": true,
+            "description": "Workspace ID",
+            "name": "workspaceId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "keyId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Get API key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/ApiKey"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "API key not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-required-permission": "WORKSPACE_READ"
+      },
+      "delete": {
+        "summary": "Revoke API key",
+        "description": "**Authentication:** requires a logged-in workspace-member session. API keys (workspace or the instance master key) are NOT accepted for this operation.\n\nRevokes (deletes) a workspace API key. Session-only — API keys cannot revoke keys.",
+        "tags": [
+          "Workspace"
+        ],
+        "security": [
+          {
+            "SessionCookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "Workspace ID",
+              "example": "ckw0a1b2c3d4e5f6g7h8"
+            },
+            "required": true,
+            "description": "Workspace ID",
+            "name": "workspaceId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "keyId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Revoke API key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/DeletionResult"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "API key not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/workspaces/{workspaceId}/audit-logs": {
       "get": {
         "summary": "List audit logs",
@@ -4744,9 +6171,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "WORKSPACE_READ"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -4871,9 +6301,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "CALCULATIONS_READ"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -4952,9 +6385,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "CALCULATIONS_CREATE"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -5041,9 +6477,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "CALCULATIONS_READ"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -5137,9 +6576,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "CALCULATIONS_UPDATE"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -5232,9 +6674,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "CALCULATIONS_DELETE"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -5320,7 +6765,10 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": []
+            "WorkspaceApiKeyAuth": []
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -5423,9 +6871,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "CALCULATIONS_READ"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -5504,9 +6955,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "CALCULATIONS_UPDATE"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -5603,9 +7057,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "CALCULATIONS_UPDATE"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -5718,9 +7175,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "CALCULATIONS_UPDATE"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -5816,9 +7276,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "CALCULATIONS_UPDATE"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -5915,9 +7378,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "CALCULATIONS_READ"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -6011,9 +7477,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "CARDS_READ"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -6102,9 +7571,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "CARDS_CREATE"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -6191,9 +7663,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "CARDS_READ"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -6287,9 +7762,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "CARDS_UPDATE"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -6382,9 +7860,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "CARDS_DELETE"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -6470,9 +7951,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "CARDS_UPDATE"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -6568,9 +8052,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "CARDS_CREATE"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -6675,9 +8162,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "CARDS_UPDATE"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -6773,9 +8263,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "COCKTAILS_READ"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -6798,6 +8291,16 @@
             "required": false,
             "description": "Case-insensitive filter over name, tags, garnishes and ingredients.",
             "name": "search",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "description": "Comma-separated extra projections to embed in each summary: `garnishes`, `ingredients`."
+            },
+            "required": false,
+            "description": "Comma-separated extra projections to embed in each summary: `garnishes`, `ingredients`.",
+            "name": "include",
             "in": "query"
           }
         ],
@@ -6864,9 +8367,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "COCKTAILS_CREATE"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -6953,9 +8459,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "COCKTAILS_READ"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -7049,9 +8558,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "COCKTAILS_UPDATE"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -7154,9 +8666,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "COCKTAILS_DELETE"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -7242,9 +8757,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "COCKTAILS_UPDATE"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -7340,9 +8858,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "COCKTAILS_CREATE"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -7447,9 +8968,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "COCKTAILS_READ"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -7550,9 +9074,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "RATINGS_READ"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -7639,9 +9166,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "RATINGS_CREATE"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -7736,9 +9266,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "RATINGS_DELETE"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -7842,9 +9375,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "COCKTAILS_UPDATE"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -7940,9 +9476,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "COCKTAILS_READ"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -8037,7 +9576,10 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": []
+            "WorkspaceApiKeyAuth": []
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -8130,9 +9672,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "COCKTAILS_READ"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -8232,7 +9777,10 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": []
+            "WorkspaceApiKeyAuth": []
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -8325,9 +9873,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "GARNISHES_READ"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -8416,9 +9967,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "GARNISHES_CREATE"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -8505,9 +10059,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "GARNISHES_READ"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -8601,9 +10158,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "GARNISHES_UPDATE"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -8696,9 +10256,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "GARNISHES_DELETE"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -8784,9 +10347,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "GARNISHES_CREATE"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -8891,9 +10457,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "GARNISHES_READ"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -8994,9 +10563,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "GARNISHES_READ"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -9091,7 +10663,10 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": []
+            "WorkspaceApiKeyAuth": []
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -9174,9 +10749,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "GARNISHES_CREATE"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -9260,9 +10838,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "GLASSES_READ"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -9351,9 +10932,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "GLASSES_CREATE"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -9440,9 +11024,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "GLASSES_READ"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -9536,9 +11123,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "GLASSES_UPDATE"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -9631,9 +11221,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "GLASSES_DELETE"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -9729,9 +11322,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "GLASSES_CREATE"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -9836,9 +11432,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "GLASSES_READ"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -9939,9 +11538,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "GLASSES_READ"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -10030,9 +11632,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "GLASSES_READ"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -10127,7 +11732,10 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": []
+            "WorkspaceApiKeyAuth": []
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -10210,9 +11818,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "GLASSES_CREATE"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -10296,9 +11907,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "ICE_READ"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -10387,9 +12001,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "ICE_CREATE"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -10476,9 +12093,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "ICE_READ"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -10572,9 +12192,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "ICE_UPDATE"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -10667,9 +12290,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "ICE_DELETE"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -10765,9 +12391,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "INGREDIENTS_READ"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -10856,9 +12485,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "INGREDIENTS_CREATE"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -10945,9 +12577,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "INGREDIENTS_READ"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -11041,9 +12676,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "INGREDIENTS_UPDATE"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -11136,9 +12774,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "INGREDIENTS_DELETE"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -11234,9 +12875,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "INGREDIENTS_CREATE"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -11341,9 +12985,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "INGREDIENTS_READ"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -11444,9 +13091,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "INGREDIENTS_READ"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -11535,9 +13185,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "INGREDIENTS_READ"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -11642,7 +13295,10 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": []
+            "WorkspaceApiKeyAuth": []
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -11725,9 +13381,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "INGREDIENTS_CREATE"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -11802,6 +13461,733 @@
         "x-required-permission": "INGREDIENTS_CREATE"
       }
     },
+    "/api/v1/workspaces/{workspaceId}/join-codes": {
+      "get": {
+        "summary": "List join codes",
+        "description": "**Required API-key permission:** `USERS_READ` — Read workspace members",
+        "tags": [
+          "Workspace"
+        ],
+        "security": [
+          {
+            "WorkspaceApiKeyAuth": [
+              "USERS_READ"
+            ]
+          },
+          {
+            "InstanceApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "Workspace ID",
+              "example": "ckw0a1b2c3d4e5f6g7h8"
+            },
+            "required": true,
+            "description": "Workspace ID",
+            "name": "workspaceId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List join codes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/JoinCode"
+                      }
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-required-permission": "USERS_READ"
+      },
+      "post": {
+        "summary": "Create join code",
+        "description": "**Required API-key permission:** `USERS_UPDATE` — Update member roles",
+        "tags": [
+          "Workspace"
+        ],
+        "security": [
+          {
+            "WorkspaceApiKeyAuth": [
+              "USERS_UPDATE"
+            ]
+          },
+          {
+            "InstanceApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "Workspace ID",
+              "example": "ckw0a1b2c3d4e5f6g7h8"
+            },
+            "required": true,
+            "description": "Workspace ID",
+            "name": "workspaceId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JoinCodeCreateInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Create join code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/JoinCode"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-required-permission": "USERS_UPDATE"
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/join-codes/{code}": {
+      "delete": {
+        "summary": "Delete join code",
+        "description": "**Required API-key permission:** `USERS_UPDATE` — Update member roles",
+        "tags": [
+          "Workspace"
+        ],
+        "security": [
+          {
+            "WorkspaceApiKeyAuth": [
+              "USERS_UPDATE"
+            ]
+          },
+          {
+            "InstanceApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "Workspace ID",
+              "example": "ckw0a1b2c3d4e5f6g7h8"
+            },
+            "required": true,
+            "description": "Workspace ID",
+            "name": "workspaceId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "code",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Delete join code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/DeletionResult"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Join code not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-required-permission": "USERS_UPDATE"
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/join-requests": {
+      "get": {
+        "summary": "List join requests",
+        "description": "**Required API-key permission:** `USERS_READ` — Read workspace members",
+        "tags": [
+          "Workspace"
+        ],
+        "security": [
+          {
+            "WorkspaceApiKeyAuth": [
+              "USERS_READ"
+            ]
+          },
+          {
+            "InstanceApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "Workspace ID",
+              "example": "ckw0a1b2c3d4e5f6g7h8"
+            },
+            "required": true,
+            "description": "Workspace ID",
+            "name": "workspaceId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List join requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/JoinRequest"
+                      }
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-required-permission": "USERS_READ"
+      },
+      "delete": {
+        "summary": "Withdraw own join request",
+        "description": "**Authentication:** requires a logged-in workspace-member session. API keys (workspace or the instance master key) are NOT accepted for this operation.\n\nWithdraws the calling user's own pending join request. Session-only — API keys are not accepted.",
+        "tags": [
+          "Workspace"
+        ],
+        "security": [
+          {
+            "SessionCookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "Workspace ID",
+              "example": "ckw0a1b2c3d4e5f6g7h8"
+            },
+            "required": true,
+            "description": "Workspace ID",
+            "name": "workspaceId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Withdraw own join request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/DeletionResult"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No pending join request.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/join-requests/{userId}/accept": {
+      "post": {
+        "summary": "Accept join request",
+        "description": "**Required API-key permission:** `USERS_UPDATE` — Update member roles\n\nAccepts a pending join request: adds the user as a member (role USER) and notifies them.",
+        "tags": [
+          "Workspace"
+        ],
+        "security": [
+          {
+            "WorkspaceApiKeyAuth": [
+              "USERS_UPDATE"
+            ]
+          },
+          {
+            "InstanceApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "Workspace ID",
+              "example": "ckw0a1b2c3d4e5f6g7h8"
+            },
+            "required": true,
+            "description": "Workspace ID",
+            "name": "workspaceId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "userId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Accept join request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/JoinRequestActionResult"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No pending join request.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-required-permission": "USERS_UPDATE"
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/join-requests/{userId}/reject": {
+      "post": {
+        "summary": "Reject join request",
+        "description": "**Required API-key permission:** `USERS_UPDATE` — Update member roles\n\nRejects (deletes) a pending join request and notifies the user.",
+        "tags": [
+          "Workspace"
+        ],
+        "security": [
+          {
+            "WorkspaceApiKeyAuth": [
+              "USERS_UPDATE"
+            ]
+          },
+          {
+            "InstanceApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "Workspace ID",
+              "example": "ckw0a1b2c3d4e5f6g7h8"
+            },
+            "required": true,
+            "description": "Workspace ID",
+            "name": "workspaceId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "userId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Reject join request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/JoinRequestActionResult"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No pending join request.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-required-permission": "USERS_UPDATE"
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/leave": {
+      "post": {
+        "summary": "Leave workspace",
+        "description": "**Authentication:** requires a logged-in workspace-member session. API keys (workspace or the instance master key) are NOT accepted for this operation.\n\nRemoves the calling user from the workspace. Session-only — API keys are not accepted.",
+        "tags": [
+          "Workspace"
+        ],
+        "security": [
+          {
+            "SessionCookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "Workspace ID",
+              "example": "ckw0a1b2c3d4e5f6g7h8"
+            },
+            "required": true,
+            "description": "Workspace ID",
+            "name": "workspaceId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Leave workspace",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/LeaveResult"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/workspaces/{workspaceId}/queue": {
       "get": {
         "summary": "List queue",
@@ -11811,9 +14197,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "QUEUE_READ"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -11894,9 +14283,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "QUEUE_UPDATE"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -12001,9 +14393,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "QUEUE_CREATE"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -12093,9 +14488,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "QUEUE_DELETE"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -12192,9 +14590,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "WORKSPACE_READ"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -12270,9 +14671,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "WORKSPACE_UPDATE"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -12359,9 +14763,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "STATISTICS_READ"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -12459,9 +14866,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "STATISTICS_READ"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -12577,9 +14987,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "STATISTICS_READ"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -12725,9 +15138,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "STATISTICS_READ"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -12825,9 +15241,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "STATISTICS_READ"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -12963,9 +15382,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "STATISTICS_READ"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -13063,9 +15485,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "STATISTICS_READ"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -13163,9 +15588,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "STATISTICS_READ"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -13264,9 +15692,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "STATISTICS_READ"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -13351,9 +15782,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "STATISTICS_READ"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -13448,9 +15882,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "STATISTICS_READ"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -13548,9 +15985,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "STATISTICS_READ"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -13666,9 +16106,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "STATISTICS_READ"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -13766,9 +16209,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "STATISTICS_READ"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -13869,9 +16315,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "STATISTICS_DELETE"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -13967,9 +16416,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "STATISTICS_CREATE"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -14056,9 +16508,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "STATISTICS_READ"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -14193,9 +16648,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "STATISTICS_DELETE"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -14291,9 +16749,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "COCKTAILS_READ"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -14371,9 +16832,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "UNITS_READ"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -14462,7 +16926,10 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": []
+            "WorkspaceApiKeyAuth": []
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -14548,7 +17015,10 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": []
+            "WorkspaceApiKeyAuth": []
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -14633,7 +17103,10 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": []
+            "WorkspaceApiKeyAuth": []
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -14711,7 +17184,10 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": []
+            "WorkspaceApiKeyAuth": []
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -14800,9 +17276,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "UNITS_UPDATE"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -14895,7 +17374,10 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": []
+            "WorkspaceApiKeyAuth": []
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -14980,9 +17462,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "USERS_READ"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -15063,9 +17548,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "USERS_UPDATE"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [
@@ -15168,9 +17656,12 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": [
+            "WorkspaceApiKeyAuth": [
               "USERS_DELETE"
             ]
+          },
+          {
+            "InstanceApiKeyAuth": []
           }
         ],
         "parameters": [

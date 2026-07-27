@@ -68,7 +68,7 @@ export default function ManageUsersPage() {
   const fetchWorkspaceJoinRequest = useCallback(() => {
     if (workspaceId == undefined) return;
     setJoinRequestsLoading(true);
-    fetch(`/api/workspaces/${workspaceId}/join-requests`)
+    fetch(`/api/v1/workspaces/${workspaceId}/join-requests`)
       .then((response) => {
         if (!response.ok) throw new Error('Error while loading');
         return response.json();
@@ -86,7 +86,7 @@ export default function ManageUsersPage() {
   const fetchWorkspaceJoinCodes = useCallback(() => {
     if (workspaceId == undefined) return;
     setWorkspaceJoinCodeLoading(true);
-    fetch(`/api/workspaces/${workspaceId}/join-codes`)
+    fetch(`/api/v1/workspaces/${workspaceId}/join-codes`)
       .then((response) => {
         if (!response.ok) throw new Error('Error while loading');
         return response.json();
@@ -266,7 +266,7 @@ export default function ManageUsersPage() {
                               onClick={() => {
                                 setLeaveLoading({ ...leaveLoading, [workspaceUser.user.id]: true });
 
-                                fetch(`/api/workspaces/${workspaceId}/leave`, {
+                                fetch(`/api/v1/workspaces/${workspaceId}/leave`, {
                                   method: 'POST',
                                 })
                                   .then(async (response) => {
@@ -346,7 +346,7 @@ export default function ManageUsersPage() {
                               disabled={workspaceJoinRequestAcceptLoading[joinRequest.user.id] || workspaceJoinRequestRejectLoading[joinRequest.user.id]}
                               onClick={() => {
                                 setWorkspaceJoinRequestAcceptLoading({ ...workspaceJoinRequestAcceptLoading, [joinRequest.user.id]: true });
-                                fetch(`/api/workspaces/${workspaceId}/join-requests/${joinRequest.user.id}/accept`, {
+                                fetch(`/api/v1/workspaces/${workspaceId}/join-requests/${joinRequest.user.id}/accept`, {
                                   method: 'POST',
                                 })
                                   .then(async (response) => {
@@ -380,7 +380,7 @@ export default function ManageUsersPage() {
                               disabled={workspaceJoinRequestRejectLoading[joinRequest.user.id] || workspaceJoinRequestAcceptLoading[joinRequest.user.id]}
                               onClick={() => {
                                 setWorkspaceJoinRequestRejectLoading({ ...workspaceJoinRequestRejectLoading, [joinRequest.user.id]: true });
-                                fetch(`/api/workspaces/${workspaceId}/join-requests/${joinRequest.user.id}/reject`, {
+                                fetch(`/api/v1/workspaces/${workspaceId}/join-requests/${joinRequest.user.id}/reject`, {
                                   method: 'POST',
                                 })
                                   .then(async (response) => {
@@ -536,7 +536,7 @@ export default function ManageUsersPage() {
                                   <DeleteConfirmationModal
                                     onApprove={async () => {
                                       setWorkspaceJoinCodeDeleting({ ...workspaceJoinCodeDeleting, [workspaceJoinCode.code]: true });
-                                      fetch(`/api/workspaces/${workspaceId}/join-codes/${workspaceJoinCode.code}`, {
+                                      fetch(`/api/v1/workspaces/${workspaceId}/join-codes/${workspaceJoinCode.code}`, {
                                         method: 'DELETE',
                                       })
                                         .then(async (response) => {

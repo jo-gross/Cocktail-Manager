@@ -6,8 +6,9 @@ import HTTPMethod from 'http-method-enum';
 import prisma from '../../../../../prisma/prisma';
 import crypto from 'crypto';
 import { createApiKeyJwt } from '@middleware/api/jwtApiKeyMiddleware';
+import { withDeprecation } from '@middleware/api/withDeprecation';
 
-export default withHttpMethods({
+const legacyHandler = withHttpMethods({
   [HTTPMethod.GET]: withWorkspacePermission([Role.ADMIN, Role.OWNER], async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
     const apiKeys = await prisma.workspaceApiKey.findMany({
       where: {
@@ -106,3 +107,6 @@ export default withHttpMethods({
     });
   }),
 });
+
+// DEPRECATED: unversioned endpoint kept for backward compatibility. Use /api/v1/... instead.
+export default withDeprecation({ successor: '/api/v1/workspaces/{workspaceId}/api-keys' }, legacyHandler);

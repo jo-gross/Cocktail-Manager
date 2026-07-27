@@ -20,6 +20,7 @@ import { IngredientForm, FormValue as IngredientFormValues } from '../ingredient
 import { GlassForm } from '../glasses/GlassForm';
 import { CocktailRecipeFull } from '../../models/CocktailRecipeFull';
 import { CocktailRecipeFullWithImage } from '../../models/CocktailRecipeFullWithImage';
+import type { CocktailDto } from '@lib/schemas/cocktails';
 import { UserContext } from '@lib/context/UserContextProvider';
 import { GlassModel } from '../../models/GlassModel';
 import { GarnishModel } from '../../models/GarnishModel';
@@ -895,7 +896,8 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                     image={values.image}
                     cocktailRecipe={
                       {
-                        _count: { CocktailRecipeImage: values.image != undefined ? 1 : 0 },
+                        hasImage: values.image != undefined,
+                        imageUrl: null,
                         id: values.id,
                         name: values.name,
                         description: values.description.trim() == '' ? null : values.description.trim(),
@@ -903,16 +905,14 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                         history: values.history.trim() == '' ? null : values.history.trim(),
                         tags: values.tags,
                         price: values.price,
-                        iceId: values.iceId,
                         ice: iceOptions.find((ice) => ice.id === values.iceId) ?? null,
-                        glassId: values.glassId ?? null,
                         isArchived: false,
                         glass: glasses.find((glass) => glass.id === values.glassId) ?? null,
                         garnishes: values.garnishes,
                         steps: values.steps,
-                        workspaceId: workspaceId!,
-                        ratings: [],
-                      } as unknown as CocktailRecipeFull
+                        averageRating: null,
+                        ratingCount: 0,
+                      } as unknown as CocktailDto
                     }
                     showInfo={false}
                     showTags={true}

@@ -11,7 +11,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import HTTPMethod from 'http-method-enum';
 import { withHttpMethods } from '@middleware/api/handleMethods';
-import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
+import { withWorkspacePermission, withWorkspaceSession } from '@middleware/api/authenticationMiddleware';
 import { withValidation } from '@middleware/api/withValidation';
 import { withCors } from '@middleware/api/withCors';
 import type { ApiDoc, Handlers, RouteSpec } from '@lib/openapi/types';
@@ -22,7 +22,11 @@ export function defineApiHandlers<D extends ApiDoc>(doc: D, handlers: Handlers<D
   for (const method of Object.keys(doc) as Array<keyof D>) {
     const spec = doc[method] as RouteSpec;
     const handler = handlers[method] as Handlers<D>[keyof D];
-    methodMap[method as unknown as HTTPMethod] = withWorkspacePermission(spec.roles, spec.permission, withValidation(spec, handler as never));
+    const validated = withValidation(spec, handler as never);
+    // sessionOnly ops reject API keys (workspace + instance master) — session-member auth only.
+    methodMap[method as unknown as HTTPMethod] = spec.sessionOnly
+      ? withWorkspaceSession(spec.roles, validated)
+      : withWorkspacePermission(spec.roles, spec.permission, validated);
   }
 
   return withCors(withHttpMethods(methodMap), Object.keys(methodMap));

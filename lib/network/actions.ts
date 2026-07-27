@@ -8,7 +8,7 @@ export function fetchActions(
 ) {
   if (!workspaceId) return;
   setActionsLoading(true);
-  fetch(`/api/workspaces/${workspaceId}/actions`)
+  fetch(`/api/v1/workspaces/${workspaceId}/actions`)
     .then(async (response) => {
       const body = await response.json();
       if (response.ok) {

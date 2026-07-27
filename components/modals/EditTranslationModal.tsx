@@ -42,7 +42,7 @@ export default function EditTranslationModal(props: TranslationModalProps) {
                 de: values.lableDE,
               },
             };
-            const response = await fetch(`/api/workspaces/${workspaceId}/admin/translation`, {
+            const response = await fetch(`/api/v1/workspaces/${workspaceId}/admin/translation`, {
               method: 'PUT',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(body),

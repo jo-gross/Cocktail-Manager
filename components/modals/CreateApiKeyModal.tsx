@@ -40,7 +40,7 @@ export default function CreateApiKeyModal(props: CreateApiKeyModalProps) {
         permissions: permissions,
       };
 
-      const response = await fetch(`/api/workspaces/${workspaceId}/api-keys`, {
+      const response = await fetch(`/api/v1/workspaces/${workspaceId}/api-keys`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),

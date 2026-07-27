@@ -1,5 +1,6 @@
-import { CocktailRecipeFull } from '../../models/CocktailRecipeFull';
+import type { CocktailDto } from '@lib/schemas/cocktails';
 import React, { useContext, useState } from 'react';
+import { useRouter } from 'next/router';
 import { UserContext } from '@lib/context/UserContextProvider';
 import Image, { ImageProps } from 'next/image';
 import { ModalContext } from '@lib/context/ModalContextProvider';
@@ -10,7 +11,7 @@ import { Skeleton } from '@components/ui';
 import '../../lib/NumberUtils';
 
 interface CompactCocktailRecipeInstructionProps {
-  cocktailRecipe: CocktailRecipeFull;
+  cocktailRecipe: CocktailDto;
   showPrice?: boolean;
   specialPrice?: number;
   showImage?: boolean;
@@ -47,6 +48,8 @@ function ImageWithSkeleton({ skeletonClassName, className, onClick, ...imageProp
 export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeInstructionProps) {
   const userContext = useContext(UserContext);
   const modalContext = useContext(ModalContext);
+  const router = useRouter();
+  const workspaceId = router.query.workspaceId as string;
 
   return (
     <div className={'grid grid-cols-4 gap-1'}>
@@ -62,18 +65,14 @@ export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeIns
       ) : (
         <></>
       )}
-      {props.cocktailRecipe.glass && props.cocktailRecipe.glass._count.GlassImage != 0 && (
+      {props.cocktailRecipe.glass && props.cocktailRecipe.glass.hasImage && (
         <div className={`${props.showRating ? 'row-span-3' : 'row-span-2'} flex h-full items-center justify-center`}>
           <ImageWithSkeleton
             className="h-16 w-fit object-contain"
             skeletonClassName="h-16 w-12 rounded-lg"
-            src={`/api/workspaces/${props.cocktailRecipe.workspaceId}/glasses/${props.cocktailRecipe.glass?.id}/image`}
+            src={`/api/workspaces/${workspaceId}/glasses/${props.cocktailRecipe.glass?.id}/image`}
             alt={props.cocktailRecipe.glass?.name ?? 'Cocktail-Glas'}
-            onClick={() =>
-              modalContext.openModal(
-                <ImageModal image={`/api/workspaces/${props.cocktailRecipe.workspaceId}/glasses/${props.cocktailRecipe.glass?.id}/image`} />,
-              )
-            }
+            onClick={() => modalContext.openModal(<ImageModal image={`/api/workspaces/${workspaceId}/glasses/${props.cocktailRecipe.glass?.id}/image`} />)}
             width={200}
             height={200}
             unoptimized={true}
@@ -127,13 +126,13 @@ export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeIns
       </div>
       <div className={'col-span-4 border-b border-base-100'}></div>
       <div className={`col-span-4 grid grid-cols-5 gap-1`}>
-        <div className={`${props.showImage == true && props.cocktailRecipe._count.CocktailRecipeImage > 0 ? 'col-span-3' : 'col-span-5'}`}>
+        <div className={`${props.showImage == true && props.cocktailRecipe.hasImage ? 'col-span-3' : 'col-span-5'}`}>
           {props.cocktailRecipe.steps
             ?.sort((a, b) => a.stepNumber - b.stepNumber)
             ?.map((step, _index) => (
               <div key={`step-${step.id}`} className={'pb-2 break-words'}>
                 <span className={`font-bold ${step.optional && 'italic'}`}>
-                  {userContext.getTranslation(step.action.name, 'de')}
+                  {userContext.getTranslation(step.action?.name ?? '', 'de')}
                   {step.optional ? ' (optional)' : ''}
                 </span>
                 {step.ingredients
@@ -180,15 +179,11 @@ export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeIns
             </div>
           </div>
         </div>
-        {props.showImage && props.cocktailRecipe._count.CocktailRecipeImage > 0 ? (
+        {props.showImage && props.cocktailRecipe.hasImage ? (
           <div className={'col-span-2 h-full w-full items-start self-start justify-self-center'}>
             <ImageWithSkeleton
-              onClick={() =>
-                modalContext.openModal(
-                  <ImageModal image={props.image ?? `/api/workspaces/${props.cocktailRecipe.workspaceId}/cocktails/${props.cocktailRecipe.id}/image`} />,
-                )
-              }
-              src={props.image ?? `/api/workspaces/${props.cocktailRecipe.workspaceId}/cocktails/${props.cocktailRecipe.id}/image`}
+              onClick={() => modalContext.openModal(<ImageModal image={props.image ?? props.cocktailRecipe.imageUrl ?? ''} />)}
+              src={props.image ?? props.cocktailRecipe.imageUrl ?? ''}
               className="h-full w-full flex-grow rounded-xl object-cover"
               skeletonClassName="aspect-9/16 h-full w-full rounded-xl"
               alt=""

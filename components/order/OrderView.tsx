@@ -1,6 +1,6 @@
 import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import { CocktailRecipeFull } from '../../models/CocktailRecipeFull';
+import type { CocktailSummaryDto } from '@lib/schemas/cocktails';
 import { CocktailCardFull } from '../../models/CocktailCardFull';
 import { GlassModel } from '../../models/GlassModel';
 import { fetchGlasses } from '../../lib/network/glasses';
@@ -55,8 +55,8 @@ export const OrderView = React.memo(function OrderView({ cocktailCards, workspac
   const _modalContext = useContext(ModalContext);
   const [selectedCardId, setSelectedCardId] = useState<string>('');
   const [searchTerm, setSearchTerm] = useState('');
-  const [cocktails, setCocktails] = useState<CocktailRecipeFull[]>([]);
-  const [filteredCocktails, setFilteredCocktails] = useState<CocktailRecipeFull[]>([]);
+  const [cocktails, setCocktails] = useState<CocktailSummaryDto[]>([]);
+  const [filteredCocktails, setFilteredCocktails] = useState<CocktailSummaryDto[]>([]);
   const [glasses, setGlasses] = useState<GlassModel[]>([]);
   const [glassesLoading, setGlassesLoading] = useState(false);
   const [cocktailsLoading, setCocktailsLoading] = useState(false);
@@ -73,7 +73,7 @@ export const OrderView = React.memo(function OrderView({ cocktailCards, workspac
   useEffect(() => {
     if (!workspaceId) return;
     setCocktailsLoading(true);
-    fetch(`/api/workspaces/${workspaceId}/cocktails?search=`)
+    fetch(`/api/v1/workspaces/${workspaceId}/cocktails?search=`)
       .then(async (response) => {
         const body = await response.json();
         if (response.ok) {
@@ -134,7 +134,7 @@ export const OrderView = React.memo(function OrderView({ cocktailCards, workspac
   );
 
   const addCocktailToOrder = useCallback(
-    (cocktail: CocktailRecipeFull, isReturnedDeposit: boolean = false) => {
+    (cocktail: CocktailSummaryDto, isReturnedDeposit: boolean = false) => {
       if (isReturnedDeposit) {
         // Ein gleiches Glas wurde zurückgegeben - erstelle ein separates Glas-Item
         if (!cocktail.glass) {
@@ -294,7 +294,7 @@ export const OrderView = React.memo(function OrderView({ cocktailCards, workspac
       ? filteredCocktails.filter((cocktail) => !cocktailsOnSelectedCardIds.has(cocktail.id))
       : [];
 
-  const matchesSearchTerm = (cocktail: CocktailRecipeFull) => {
+  const matchesSearchTerm = (cocktail: CocktailSummaryDto) => {
     const searchLower = searchTerm.toLowerCase().trim();
     if (!searchLower) return !cocktail.isArchived;
     if (cocktail.isArchived) return false;
@@ -307,14 +307,14 @@ export const OrderView = React.memo(function OrderView({ cocktailCards, workspac
   };
 
   type CocktailCardGroup = CocktailCardFull['groups'][number];
-  const getCocktailsForGroup = (group: CocktailCardGroup): CocktailRecipeFull[] => {
+  const getCocktailsForGroup = (group: CocktailCardGroup): CocktailSummaryDto[] => {
     return group.items
       .sort((a, b) => (a.itemNumber ?? 0) - (b.itemNumber ?? 0))
       .map((item) => cocktails.find((c) => c.id === item.cocktailId))
-      .filter((cocktail: CocktailRecipeFull | undefined): cocktail is CocktailRecipeFull => !!cocktail && matchesSearchTerm(cocktail));
+      .filter((cocktail: CocktailSummaryDto | undefined): cocktail is CocktailSummaryDto => !!cocktail && matchesSearchTerm(cocktail));
   };
 
-  const CocktailTile = React.memo(function CocktailTile({ cocktail }: { cocktail: CocktailRecipeFull }) {
+  const CocktailTile = React.memo(function CocktailTile({ cocktail }: { cocktail: CocktailSummaryDto }) {
     const price = cocktail.price ?? 0;
     const deposit = cocktail.glass?.deposit ?? 0;
 
@@ -326,9 +326,9 @@ export const OrderView = React.memo(function OrderView({ cocktailCards, workspac
         onClick={() => addCocktailToOrder(cocktail, false)}
       >
         <div className="h-20 w-20 overflow-hidden rounded-full bg-base-300">
-          {cocktail._count?.CocktailRecipeImage && cocktail._count.CocktailRecipeImage > 0 ? (
+          {cocktail.hasImage ? (
             <AvatarImage
-              src={`/api/workspaces/${workspaceId}/cocktails/${cocktail.id}/image`}
+              src={cocktail.imageUrl ?? ''}
               alt={cocktail.name}
               altComponent={
                 <div className="flex h-full w-full items-center justify-center text-xs font-semibold">{cocktail.name.trim().charAt(0).toUpperCase()}</div>

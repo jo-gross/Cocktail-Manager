@@ -69,7 +69,7 @@ describe('OpenAPI spec generation', () => {
     }
   });
 
-  it('gives every v1 operation an API-key security requirement', async () => {
+  it('gives every v1 operation a security requirement and documents both API-key kinds', async () => {
     const doc = JSON.parse(await generateOpenApiJson());
     for (const path of Object.keys(doc.paths).filter((p) => p.startsWith('/api/v1/'))) {
       for (const method of Object.keys(doc.paths[path])) {
@@ -77,7 +77,10 @@ describe('OpenAPI spec generation', () => {
         expect(Array.isArray(op.security) && op.security.length > 0, `${method} ${path} security`).toBe(true);
       }
     }
-    expect(doc.components.securitySchemes.ApiKeyAuth).toBeDefined();
+    // Two distinct API-key kinds (workspace-scoped vs instance master) plus the session-only scheme.
+    expect(doc.components.securitySchemes.WorkspaceApiKeyAuth).toBeDefined();
+    expect(doc.components.securitySchemes.InstanceApiKeyAuth).toBeDefined();
+    expect(doc.components.securitySchemes.SessionCookieAuth).toBeDefined();
   });
 
   it('has a real pages/api/v1 route file behind every documented resource', async () => {
@@ -99,7 +102,7 @@ describe('OpenAPI spec generation', () => {
     for (const path of Object.keys(doc.paths).filter((p) => p.startsWith('/api/v1/'))) {
       for (const method of Object.keys(doc.paths[path])) {
         const op = doc.paths[path][method];
-        const scope = op.security?.[0]?.ApiKeyAuth?.[0];
+        const scope = op.security?.[0]?.WorkspaceApiKeyAuth?.[0];
         if (!scope) continue;
         expect(op['x-required-permission'], `${method} ${path} x-required-permission`).toBe(scope);
         expect(op.description, `${method} ${path} description mentions permission`).toContain(scope);

@@ -183,56 +183,59 @@ export function withWorkspacePermission(
       return handler(req, res, dummyUser, apiKeyAuth.workspace);
     }
 
-    // Fall back to session-based authentication
-    return withAuthentication(async (req: NextApiRequest, res: NextApiResponse, user: User) => {
-      if (permissions.includes(Role.USER)) {
-        if (!permissions.includes(Role.MANAGER)) {
-          permissions.push(Role.MANAGER);
-        }
-        if (!permissions.includes(Role.ADMIN)) {
-          permissions.push(Role.ADMIN);
-        }
-        if (!permissions.includes(Role.OWNER)) {
-          permissions.push(Role.OWNER);
-        }
-      }
+    // Fall back to a logged-in workspace-member session.
+    return withWorkspaceSession(permissions, handler)(req, res);
+  };
+}
 
-      if (permissions.includes(Role.MANAGER)) {
-        if (!permissions.includes(Role.ADMIN)) {
-          permissions.push(Role.ADMIN);
-        }
-        if (!permissions.includes(Role.OWNER)) {
-          permissions.push(Role.OWNER);
-        }
-      }
+/** Expand a role list down the hierarchy (USER ⊂ MANAGER ⊂ ADMIN ⊂ OWNER) without mutating the input. */
+function escalateRoles(roles: Role[]): Role[] {
+  const set = new Set(roles);
+  if (set.has(Role.USER)) {
+    set.add(Role.MANAGER);
+    set.add(Role.ADMIN);
+    set.add(Role.OWNER);
+  }
+  if (set.has(Role.MANAGER)) {
+    set.add(Role.ADMIN);
+    set.add(Role.OWNER);
+  }
+  if (set.has(Role.ADMIN)) {
+    set.add(Role.OWNER);
+  }
+  return Array.from(set);
+}
 
-      if (permissions.includes(Role.ADMIN)) {
-        if (!permissions.includes(Role.OWNER)) {
-          permissions.push(Role.OWNER);
-        }
-      }
+/**
+ * Session-only workspace auth: authenticates the caller by a logged-in workspace-member SESSION
+ * (role-hierarchy escalation + membership check). Unlike `withWorkspacePermission`, it does NOT accept
+ * API keys or the instance master key — use it for operations that act on the caller's own identity or
+ * write a real-user FK (leave, api-key create/delete, join-request self-cancel).
+ */
+export function withWorkspaceSession(
+  permissions: Role[],
+  fn: (req: NextApiRequest, res: NextApiResponse, user: User, workspace: Workspace) => void,
+): (req: NextApiRequest, res: NextApiResponse) => Promise<void> {
+  const allowedRoles = escalateRoles(permissions);
+  return async (req: NextApiRequest, res: NextApiResponse) => {
+    const workspaceId = req.query.workspaceId as string | undefined;
+    if (workspaceId == undefined) {
+      return res.status(HttpStatus.HTTP_STATUS_BAD_REQUEST).json({ message: 'workspaceId is required' });
+    }
 
+    return withAuthentication(async (sessionReq: NextApiRequest, sessionRes: NextApiResponse, user: User) => {
       const workspaceResult: (Workspace & { users: WorkspaceUser[] }) | null = await prisma.workspace.findFirst({
         where: {
           id: workspaceId,
-          users: {
-            some: {
-              user: user,
-              role: {
-                in: permissions,
-              },
-            },
-          },
+          users: { some: { user: user, role: { in: allowedRoles } } },
         },
-        include: {
-          users: true,
-        },
+        include: { users: true },
       });
       if (workspaceResult == null) {
-        return res.status(HttpStatus.HTTP_STATUS_FORBIDDEN).json({ message: 'User is not permitted' });
+        return sessionRes.status(HttpStatus.HTTP_STATUS_FORBIDDEN).json({ message: 'User is not permitted' });
       }
 
-      return handler(req, res, user, workspaceResult);
+      return fn(sessionReq, sessionRes, user, workspaceResult);
     })(req, res);
   };
 }

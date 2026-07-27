@@ -180,7 +180,7 @@ export function CardGroupSection({
               return (
                 <CocktailRecipeCardItem
                   key={`preview-item-${item.cocktailId}-${itemIndex}`}
-                  cocktailRecipe={cocktail}
+                  cocktailRecipe={cocktail.id}
                   showImage={false}
                   showTags={true}
                   showDetailsOnClick={true}

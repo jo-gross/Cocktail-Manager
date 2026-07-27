@@ -223,7 +223,7 @@ function WorkspaceSettingPage() {
       if (workspaceId == undefined) return;
       if (deleting[actionId] ?? false) return;
       setDeleting({ ...deleting, [actionId]: true });
-      fetch(`/api/workspaces/${workspaceId}/actions/${actionId}`, {
+      fetch(`/api/v1/workspaces/${workspaceId}/actions/${actionId}`, {
         method: 'DELETE',
       })
         .then(async (response) => {

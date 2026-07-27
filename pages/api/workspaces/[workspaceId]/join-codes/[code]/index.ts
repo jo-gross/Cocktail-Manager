@@ -3,8 +3,9 @@ import HTTPMethod from 'http-method-enum';
 import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
 import prisma from '../../../../../../prisma/prisma';
 import { Role } from '@generated/prisma/client';
+import { withDeprecation } from '@middleware/api/withDeprecation';
 
-export default withHttpMethods({
+const legacyHandler = withHttpMethods({
   [HTTPMethod.DELETE]: withWorkspacePermission([Role.MANAGER], async (req, res, user, workspace) => {
     try {
       await prisma.workspaceJoinCode.delete({
@@ -22,3 +23,6 @@ export default withHttpMethods({
     }
   }),
 });
+
+// DEPRECATED: unversioned endpoint kept for backward compatibility. Use /api/v1/... instead.
+export default withDeprecation({ successor: '/api/v1/workspaces/{workspaceId}/join-codes/{code}' }, legacyHandler);

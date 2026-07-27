@@ -52,7 +52,7 @@ const summaryInclude = {
   glass: { include: { _count: { select: { GlassImage: true } } } },
 } satisfies Prisma.CocktailRecipeInclude;
 
-export async function listCocktails(workspace: Workspace, opts: { search?: string }): Promise<CocktailSummaryDto[]> {
+export async function listCocktails(workspace: Workspace, opts: { search?: string; include?: string }): Promise<CocktailSummaryDto[]> {
   // Legacy semantics: fetch all of the workspace, then apply the free-text filter
   // in-memory over name/tags/garnishes/ingredients (see legacy cocktails/index.tsx).
   const cocktails = await prisma.cocktailRecipe.findMany({
@@ -86,7 +86,35 @@ export async function listCocktails(workspace: Workspace, opts: { search?: strin
           );
         })();
 
-  return filtered.map((cocktail) => toCocktailSummaryDto(cocktail, workspace.id));
+  // Optional `?include=` projections — the query above already loaded garnishes + step ingredients,
+  // so this only reshapes in memory (no extra DB round-trips).
+  const includeTokens = new Set(
+    (opts.include ?? '')
+      .split(',')
+      .map((token) => token.trim())
+      .filter(Boolean),
+  );
+  const wantGarnishes = includeTokens.has('garnishes');
+  const wantIngredients = includeTokens.has('ingredients');
+
+  return filtered.map((cocktail) => {
+    if (!wantGarnishes && !wantIngredients) return toCocktailSummaryDto(cocktail, workspace.id);
+
+    const distinctIngredients = new Map<string, { id: string; name: string; shortName: string | null }>();
+    if (wantIngredients) {
+      for (const step of cocktail.steps) {
+        for (const line of step.ingredients) {
+          if (line.ingredient)
+            distinctIngredients.set(line.ingredient.id, { id: line.ingredient.id, name: line.ingredient.name, shortName: line.ingredient.shortName });
+        }
+      }
+    }
+
+    return toCocktailSummaryDto(cocktail, workspace.id, {
+      garnishes: wantGarnishes ? cocktail.garnishes.map((g) => ({ id: g.garnish.id, name: g.garnish.name })) : undefined,
+      ingredients: wantIngredients ? Array.from(distinctIngredients.values()) : undefined,
+    });
+  });
 }
 
 export async function getCocktail(workspace: Workspace, cocktailId: string): Promise<CocktailDto | null> {

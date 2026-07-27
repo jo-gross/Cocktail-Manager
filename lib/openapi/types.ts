@@ -18,8 +18,14 @@ export interface RawResponse {
 export interface RouteSpec {
   /** Session roles accepted (role hierarchy escalates in withWorkspacePermission). */
   roles: Role[];
-  /** API-key permission scope required, or null for session-only endpoints. */
+  /** API-key permission scope required, or null for endpoints that accept any valid session/key. */
   permission: Permission | null;
+  /**
+   * When true, this operation is authenticated by a logged-in workspace-member SESSION only — API keys
+   * (workspace keys AND the instance master key) are rejected. Use for operations that act on the caller's
+   * own identity or write a real-user FK: `leave`, api-key create/delete, join-request self-cancel.
+   */
+  sessionOnly?: boolean;
   summary: string;
   description?: string;
   tags: string[];

@@ -57,7 +57,7 @@ export default function AddWorkspaceJoinCodeModal(props: AddWorkspaceJoinCodeMod
               onlyUseOnce: values.onlyUseOnce,
             };
 
-            const response = await fetch(`/api/workspaces/${workspaceId}/join-codes`, {
+            const response = await fetch(`/api/v1/workspaces/${workspaceId}/join-codes`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(body),
