@@ -18,6 +18,7 @@
  */
 import { z } from '@lib/openapi/zod';
 import { WorkspaceIdParam, DateTimeString, DeletionResult } from '@lib/schemas/common';
+import { ApiTags } from '@lib/openapi/tags';
 import type { ResourceApiDoc } from '@lib/openapi/types';
 
 /** Slim cocktail reference embedded in a calculation item (`CocktailRecipe` → `{ id, name }`). */
@@ -208,7 +209,7 @@ export const calculationsExportJsonApiDoc = {
     POST: {
       roles: ['USER'],
       permission: null,
-      tags: ['Calculations'],
+      tags: [ApiTags.calculationsImportExport],
       summary: 'Export calculations as JSON',
       description:
         'Returns a self-contained JSON dump of the selected calculations (metadata, cocktail items and ingredient shopping units, resolved to names) that can be re-imported via POST /calculations/import/json. A single selected calculation is returned as a bare object; multiple as an array. The exact dump shape is preserved verbatim for a lossless round-trip (not wrapped in a data envelope).',
@@ -229,7 +230,7 @@ export const calculationsImportJsonApiDoc = {
     POST: {
       roles: ['USER'],
       permission: 'CALCULATIONS_READ',
-      tags: ['Calculations'],
+      tags: [ApiTags.calculationsImportExport],
       summary: 'Import calculations from JSON',
       description:
         'Three-phase import (`validate` → `prepare-mapping` → `execute`) of an export dump produced by POST /calculations/export/json. The response shape depends on the phase and is returned verbatim (not wrapped in a data envelope).',
@@ -250,7 +251,7 @@ export const calculationsCollectionApiDoc = {
     GET: {
       roles: ['USER'],
       permission: 'CALCULATIONS_READ',
-      tags: ['Calculations'],
+      tags: [ApiTags.calculationsCore],
       summary: 'List calculations',
       description:
         'List all cocktail calculations of a workspace. Returns a slim summary (group ref + slim items); use GET /calculations/{calculationId} for the full calculation.',
@@ -260,7 +261,7 @@ export const calculationsCollectionApiDoc = {
     POST: {
       roles: ['USER'],
       permission: 'CALCULATIONS_CREATE',
-      tags: ['Calculations'],
+      tags: [ApiTags.calculationsCore],
       summary: 'Create calculation',
       params: WorkspaceIdParam,
       body: CalculationCreateSchema,
@@ -277,7 +278,7 @@ export const calculationsItemApiDoc = {
     GET: {
       roles: ['USER'],
       permission: 'CALCULATIONS_READ',
-      tags: ['Calculations'],
+      tags: [ApiTags.calculationsCore],
       summary: 'Get calculation',
       description: 'Returns the full calculation including fully-hydrated cocktail items and ingredient shopping units.',
       params: CalculationItemParams,
@@ -287,7 +288,7 @@ export const calculationsItemApiDoc = {
     PUT: {
       roles: ['USER'],
       permission: 'CALCULATIONS_UPDATE',
-      tags: ['Calculations'],
+      tags: [ApiTags.calculationsCore],
       summary: 'Update calculation',
       description: 'Replaces the calculation metadata and its full set of items and ingredient shopping units.',
       params: CalculationItemParams,
@@ -298,7 +299,7 @@ export const calculationsItemApiDoc = {
     DELETE: {
       roles: ['ADMIN'],
       permission: 'CALCULATIONS_DELETE',
-      tags: ['Calculations'],
+      tags: [ApiTags.calculationsCore],
       summary: 'Delete calculation',
       params: CalculationItemParams,
       response: DeletionResult,
@@ -313,7 +314,7 @@ export const calculationGroupsCollectionApiDoc = {
     GET: {
       roles: ['USER'],
       permission: 'CALCULATIONS_READ',
-      tags: ['Calculations'],
+      tags: [ApiTags.calculationsGroups],
       summary: 'List calculation groups',
       description: 'List all calculation groups of a workspace, ordered by name.',
       params: WorkspaceIdParam,
@@ -322,7 +323,7 @@ export const calculationGroupsCollectionApiDoc = {
     POST: {
       roles: ['USER'],
       permission: 'CALCULATIONS_UPDATE',
-      tags: ['Calculations'],
+      tags: [ApiTags.calculationsGroups],
       summary: 'Create calculation group',
       params: WorkspaceIdParam,
       body: CalculationGroupCreateSchema,
@@ -339,7 +340,7 @@ export const calculationGroupsItemApiDoc = {
     PUT: {
       roles: ['USER'],
       permission: 'CALCULATIONS_UPDATE',
-      tags: ['Calculations'],
+      tags: [ApiTags.calculationsGroups],
       summary: 'Update calculation group',
       params: CalculationGroupItemParams,
       body: CalculationGroupUpdateSchema,
@@ -349,7 +350,7 @@ export const calculationGroupsItemApiDoc = {
     DELETE: {
       roles: ['USER'],
       permission: 'CALCULATIONS_UPDATE',
-      tags: ['Calculations'],
+      tags: [ApiTags.calculationsGroups],
       summary: 'Delete calculation group',
       description: 'Deletes the group; its calculations are unassigned (group set to null).',
       params: CalculationGroupItemParams,
@@ -366,7 +367,7 @@ export const calculationGroupsAssignApiDoc = {
     POST: {
       roles: ['USER'],
       permission: 'CALCULATIONS_UPDATE',
-      tags: ['Calculations'],
+      tags: [ApiTags.calculationsGroups],
       summary: 'Assign calculations to a group',
       description: 'Assigns the given calculations to a group, or removes their group assignment when groupId is null.',
       params: WorkspaceIdParam,

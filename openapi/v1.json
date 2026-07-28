@@ -4394,7 +4394,7 @@
         "summary": "Get token identity",
         "description": "**Authentication:** requires a valid session or API key (no specific permission).\n\nReturns the workspace, granted permissions and key metadata for the authenticated API token. Use this to resolve the workspace ID from a token without knowing it up front.",
         "tags": [
-          "Workspace"
+          "Workspace / Core"
         ],
         "security": [
           {
@@ -4461,7 +4461,7 @@
         "summary": "Get workspace",
         "description": "**Required API-key permission:** `WORKSPACE_READ` — Read workspace settings and audit logs\n\nGet workspace details including settings and members. Expired demo workspaces are deleted and return 410.",
         "tags": [
-          "Workspace"
+          "Workspace / Core"
         ],
         "security": [
           {
@@ -4552,7 +4552,7 @@
         "summary": "Update workspace",
         "description": "**Required API-key permission:** `WORKSPACE_UPDATE` — Update workspace settings\n\nUpdate the workspace name.",
         "tags": [
-          "Workspace"
+          "Workspace / Core"
         ],
         "security": [
           {
@@ -4642,7 +4642,7 @@
         "summary": "Delete workspace",
         "description": "**Authentication:** requires a valid session or API key (no specific permission).\n\nPermanently delete the workspace and all its data.",
         "tags": [
-          "Workspace"
+          "Workspace / Core"
         ],
         "security": [
           {
@@ -4722,7 +4722,7 @@
         "summary": "List step actions",
         "description": "**Required API-key permission:** `COCKTAILS_READ` — Read cocktail recipes\n\nList all cocktail-recipe step actions of a workspace, optionally filtered by name.",
         "tags": [
-          "Cocktails"
+          "Cocktails / Step actions"
         ],
         "security": [
           {
@@ -4816,7 +4816,7 @@
         "summary": "Create step action",
         "description": "**Required API-key permission:** `COCKTAILS_UPDATE` — Update cocktail recipes",
         "tags": [
-          "Cocktails"
+          "Cocktails / Step actions"
         ],
         "security": [
           {
@@ -4908,7 +4908,7 @@
         "summary": "Update step action",
         "description": "**Required API-key permission:** `COCKTAILS_UPDATE` — Update cocktail recipes\n\nUpdates the action group and (optionally) the display-name translations.",
         "tags": [
-          "Cocktails"
+          "Cocktails / Step actions"
         ],
         "security": [
           {
@@ -5016,7 +5016,7 @@
         "summary": "Delete step action",
         "description": "**Required API-key permission:** `COCKTAILS_UPDATE` — Update cocktail recipes",
         "tags": [
-          "Cocktails"
+          "Cocktails / Step actions"
         ],
         "security": [
           {
@@ -5117,7 +5117,7 @@
         "summary": "Get signage configuration",
         "description": "**Required API-key permission:** `MONITOR_READ` — Read signage/monitor configuration and slides\n\nSignage configuration and slides per format (landscape / portrait).",
         "tags": [
-          "Monitor"
+          "Monitor / Configuration"
         ],
         "security": [
           {
@@ -5201,7 +5201,7 @@
         "summary": "Update signage configuration",
         "description": "**Required API-key permission:** `MONITOR_UPDATE` — Update signage/monitor configuration and slides",
         "tags": [
-          "Monitor"
+          "Monitor / Configuration"
         ],
         "security": [
           {
@@ -5296,7 +5296,7 @@
         "summary": "Upload signage slides",
         "description": "**Required API-key permission:** `MONITOR_UPDATE` — Update signage/monitor configuration and slides",
         "tags": [
-          "Monitor"
+          "Monitor / Slides"
         ],
         "security": [
           {
@@ -5389,7 +5389,7 @@
         "summary": "Update signage slides (schedule / enabled)",
         "description": "**Required API-key permission:** `MONITOR_UPDATE` — Update signage/monitor configuration and slides",
         "tags": [
-          "Monitor"
+          "Monitor / Slides"
         ],
         "security": [
           {
@@ -5504,7 +5504,7 @@
         "summary": "Delete signage slide",
         "description": "**Required API-key permission:** `MONITOR_UPDATE` — Update signage/monitor configuration and slides",
         "tags": [
-          "Monitor"
+          "Monitor / Slides"
         ],
         "security": [
           {
@@ -5605,7 +5605,7 @@
         "summary": "Get signage slide image",
         "description": "**Required API-key permission:** `MONITOR_READ` — Read signage/monitor configuration and slides\n\nReturns the slide image bytes (the `imageUrl` target).",
         "tags": [
-          "Monitor"
+          "Monitor / Slides"
         ],
         "security": [
           {
@@ -5711,7 +5711,7 @@
         "summary": "Upsert a translation",
         "description": "**Required API-key permission:** `WORKSPACE_UPDATE` — Update workspace settings\n\nMerges display-name translations for a key into the workspace translation settings.",
         "tags": [
-          "Workspace"
+          "Workspace / Settings"
         ],
         "security": [
           {
@@ -5803,7 +5803,7 @@
         "summary": "List API keys",
         "description": "**Required API-key permission:** `WORKSPACE_READ` — Read workspace settings and audit logs\n\nLists the workspace API keys (metadata only — the key value is shown only once, on create).",
         "tags": [
-          "Workspace"
+          "Workspace / API keys"
         ],
         "security": [
           {
@@ -5887,7 +5887,7 @@
         "summary": "Create API key",
         "description": "**Authentication:** requires a logged-in workspace-member session. API keys (workspace or the instance master key) are NOT accepted for this operation.\n\nCreates a workspace API key and returns the signed token ONCE. Session-only — API keys cannot mint other keys.",
         "tags": [
-          "Workspace"
+          "Workspace / API keys"
         ],
         "security": [
           {
@@ -5973,7 +5973,7 @@
         "summary": "Get API key",
         "description": "**Required API-key permission:** `WORKSPACE_READ` — Read workspace settings and audit logs",
         "tags": [
-          "Workspace"
+          "Workspace / API keys"
         ],
         "security": [
           {
@@ -6072,7 +6072,7 @@
         "summary": "Revoke API key",
         "description": "**Authentication:** requires a logged-in workspace-member session. API keys (workspace or the instance master key) are NOT accepted for this operation.\n\nRevokes (deletes) a workspace API key. Session-only — API keys cannot revoke keys.",
         "tags": [
-          "Workspace"
+          "Workspace / API keys"
         ],
         "security": [
           {
@@ -6167,7 +6167,7 @@
         "summary": "List audit logs",
         "description": "**Required API-key permission:** `WORKSPACE_READ` — Read workspace settings and audit logs\n\nList audit log entries of a workspace, newest first. Optionally filtered by entity type/ID. Paginated: the response is a `{ data, pagination }` envelope (not a bare array); `data` holds the `AuditLog[]` page.",
         "tags": [
-          "Audit Logs"
+          "Audit Logs / Core"
         ],
         "security": [
           {
@@ -6297,7 +6297,7 @@
         "summary": "List calculations",
         "description": "**Required API-key permission:** `CALCULATIONS_READ` — Read cost calculations\n\nList all cocktail calculations of a workspace. Returns a slim summary (group ref + slim items); use GET /calculations/{calculationId} for the full calculation.",
         "tags": [
-          "Calculations"
+          "Calculations / Core"
         ],
         "security": [
           {
@@ -6381,7 +6381,7 @@
         "summary": "Create calculation",
         "description": "**Required API-key permission:** `CALCULATIONS_CREATE` — Create cost calculations",
         "tags": [
-          "Calculations"
+          "Calculations / Core"
         ],
         "security": [
           {
@@ -6473,7 +6473,7 @@
         "summary": "Get calculation",
         "description": "**Required API-key permission:** `CALCULATIONS_READ` — Read cost calculations\n\nReturns the full calculation including fully-hydrated cocktail items and ingredient shopping units.",
         "tags": [
-          "Calculations"
+          "Calculations / Core"
         ],
         "security": [
           {
@@ -6572,7 +6572,7 @@
         "summary": "Update calculation",
         "description": "**Required API-key permission:** `CALCULATIONS_UPDATE` — Update cost calculations\n\nReplaces the calculation metadata and its full set of items and ingredient shopping units.",
         "tags": [
-          "Calculations"
+          "Calculations / Core"
         ],
         "security": [
           {
@@ -6670,7 +6670,7 @@
         "summary": "Delete calculation",
         "description": "**Required API-key permission:** `CALCULATIONS_DELETE` — Delete cost calculations",
         "tags": [
-          "Calculations"
+          "Calculations / Core"
         ],
         "security": [
           {
@@ -6761,7 +6761,7 @@
         "summary": "Export calculations as JSON",
         "description": "**Authentication:** requires a valid session or API key (no specific permission).\n\nReturns a self-contained JSON dump of the selected calculations (metadata, cocktail items and ingredient shopping units, resolved to names) that can be re-imported via POST /calculations/import/json. A single selected calculation is returned as a bare object; multiple as an array. The exact dump shape is preserved verbatim for a lossless round-trip (not wrapped in a data envelope).",
         "tags": [
-          "Calculations"
+          "Calculations / Import & export"
         ],
         "security": [
           {
@@ -6867,7 +6867,7 @@
         "summary": "List calculation groups",
         "description": "**Required API-key permission:** `CALCULATIONS_READ` — Read cost calculations\n\nList all calculation groups of a workspace, ordered by name.",
         "tags": [
-          "Calculations"
+          "Calculations / Groups"
         ],
         "security": [
           {
@@ -6951,7 +6951,7 @@
         "summary": "Create calculation group",
         "description": "**Required API-key permission:** `CALCULATIONS_UPDATE` — Update cost calculations",
         "tags": [
-          "Calculations"
+          "Calculations / Groups"
         ],
         "security": [
           {
@@ -7053,7 +7053,7 @@
         "summary": "Update calculation group",
         "description": "**Required API-key permission:** `CALCULATIONS_UPDATE` — Update cost calculations",
         "tags": [
-          "Calculations"
+          "Calculations / Groups"
         ],
         "security": [
           {
@@ -7171,7 +7171,7 @@
         "summary": "Delete calculation group",
         "description": "**Required API-key permission:** `CALCULATIONS_UPDATE` — Update cost calculations\n\nDeletes the group; its calculations are unassigned (group set to null).",
         "tags": [
-          "Calculations"
+          "Calculations / Groups"
         ],
         "security": [
           {
@@ -7272,7 +7272,7 @@
         "summary": "Assign calculations to a group",
         "description": "**Required API-key permission:** `CALCULATIONS_UPDATE` — Update cost calculations\n\nAssigns the given calculations to a group, or removes their group assignment when groupId is null.",
         "tags": [
-          "Calculations"
+          "Calculations / Groups"
         ],
         "security": [
           {
@@ -7374,7 +7374,7 @@
         "summary": "Import calculations from JSON",
         "description": "**Required API-key permission:** `CALCULATIONS_READ` — Read cost calculations\n\nThree-phase import (`validate` → `prepare-mapping` → `execute`) of an export dump produced by POST /calculations/export/json. The response shape depends on the phase and is returned verbatim (not wrapped in a data envelope).",
         "tags": [
-          "Calculations"
+          "Calculations / Import & export"
         ],
         "security": [
           {
@@ -7473,7 +7473,7 @@
         "summary": "List cards",
         "description": "**Required API-key permission:** `CARDS_READ` — Read cocktail cards (menus)\n\nList all cocktail cards of a workspace. Returns a slim summary without nested groups; use GET /cards/{cardId} for the full card.",
         "tags": [
-          "Cards"
+          "Cards / Core"
         ],
         "security": [
           {
@@ -7567,7 +7567,7 @@
         "summary": "Create card",
         "description": "**Required API-key permission:** `CARDS_CREATE` — Create cocktail cards",
         "tags": [
-          "Cards"
+          "Cards / Core"
         ],
         "security": [
           {
@@ -7659,7 +7659,7 @@
         "summary": "Get card",
         "description": "**Required API-key permission:** `CARDS_READ` — Read cocktail cards (menus)\n\nReturns the full card including nested groups and items.",
         "tags": [
-          "Cards"
+          "Cards / Core"
         ],
         "security": [
           {
@@ -7758,7 +7758,7 @@
         "summary": "Update card",
         "description": "**Required API-key permission:** `CARDS_UPDATE` — Update cocktail cards\n\nReplaces the card metadata and its full set of groups/items.",
         "tags": [
-          "Cards"
+          "Cards / Core"
         ],
         "security": [
           {
@@ -7856,7 +7856,7 @@
         "summary": "Delete card",
         "description": "**Required API-key permission:** `CARDS_DELETE` — Delete cocktail cards",
         "tags": [
-          "Cards"
+          "Cards / Core"
         ],
         "security": [
           {
@@ -7947,7 +7947,7 @@
         "summary": "Archive card",
         "description": "**Required API-key permission:** `CARDS_UPDATE` — Update cocktail cards",
         "tags": [
-          "Cards"
+          "Cards / Lifecycle"
         ],
         "security": [
           {
@@ -8048,7 +8048,7 @@
         "summary": "Clone card",
         "description": "**Required API-key permission:** `CARDS_CREATE` — Create cocktail cards\n\nCreates a deep copy of a card (groups and items) under a new name.",
         "tags": [
-          "Cards"
+          "Cards / Lifecycle"
         ],
         "security": [
           {
@@ -8158,7 +8158,7 @@
         "summary": "Unarchive card",
         "description": "**Required API-key permission:** `CARDS_UPDATE` — Update cocktail cards",
         "tags": [
-          "Cards"
+          "Cards / Lifecycle"
         ],
         "security": [
           {
@@ -8259,7 +8259,7 @@
         "summary": "List cocktails",
         "description": "**Required API-key permission:** `COCKTAILS_READ` — Read cocktail recipes\n\nList all cocktails of a workspace, optionally filtered by a free-text search over name, tags, garnishes and ingredients. Returns slim summaries; use GET /cocktails/{cocktailId} for the full recipe.",
         "tags": [
-          "Cocktails"
+          "Cocktails / Core"
         ],
         "security": [
           {
@@ -8363,7 +8363,7 @@
         "summary": "Create cocktail",
         "description": "**Required API-key permission:** `COCKTAILS_CREATE` — Create cocktail recipes",
         "tags": [
-          "Cocktails"
+          "Cocktails / Core"
         ],
         "security": [
           {
@@ -8455,7 +8455,7 @@
         "summary": "Get cocktail",
         "description": "**Required API-key permission:** `COCKTAILS_READ` — Read cocktail recipes\n\nReturns the full cocktail including nested steps, ingredients, garnishes and rating aggregates.",
         "tags": [
-          "Cocktails"
+          "Cocktails / Core"
         ],
         "security": [
           {
@@ -8554,7 +8554,7 @@
         "summary": "Update cocktail",
         "description": "**Required API-key permission:** `COCKTAILS_UPDATE` — Update cocktail recipes\n\nUpdates the cocktail metadata and differentially applies its steps, ingredients and garnishes.",
         "tags": [
-          "Cocktails"
+          "Cocktails / Core"
         ],
         "security": [
           {
@@ -8662,7 +8662,7 @@
         "summary": "Delete cocktail",
         "description": "**Required API-key permission:** `COCKTAILS_DELETE` — Delete cocktail recipes",
         "tags": [
-          "Cocktails"
+          "Cocktails / Core"
         ],
         "security": [
           {
@@ -8753,7 +8753,7 @@
         "summary": "Archive cocktail",
         "description": "**Required API-key permission:** `COCKTAILS_UPDATE` — Update cocktail recipes",
         "tags": [
-          "Cocktails"
+          "Cocktails / Lifecycle"
         ],
         "security": [
           {
@@ -8854,7 +8854,7 @@
         "summary": "Clone cocktail",
         "description": "**Required API-key permission:** `COCKTAILS_CREATE` — Create cocktail recipes\n\nCreates a deep copy of a cocktail (image, steps, ingredients and garnishes) under a new name.",
         "tags": [
-          "Cocktails"
+          "Cocktails / Lifecycle"
         ],
         "security": [
           {
@@ -8964,7 +8964,7 @@
         "summary": "Get cocktail image",
         "description": "**Required API-key permission:** `COCKTAILS_READ` — Read cocktail recipes\n\nReturns the cocktail image bytes (the `imageUrl` target). 404 when the cocktail has no image.",
         "tags": [
-          "Cocktails"
+          "Cocktails / Media"
         ],
         "security": [
           {
@@ -9070,7 +9070,7 @@
         "summary": "List ratings",
         "description": "**Required API-key permission:** `RATINGS_READ` — Read cocktail ratings\n\nList all ratings of a cocktail.",
         "tags": [
-          "Ratings"
+          "Ratings / Core"
         ],
         "security": [
           {
@@ -9162,7 +9162,7 @@
         "summary": "Create rating",
         "description": "**Required API-key permission:** `RATINGS_CREATE` — Create cocktail ratings",
         "tags": [
-          "Ratings"
+          "Ratings / Core"
         ],
         "security": [
           {
@@ -9262,7 +9262,7 @@
         "summary": "Delete rating",
         "description": "**Required API-key permission:** `RATINGS_DELETE` — Delete cocktail ratings",
         "tags": [
-          "Ratings"
+          "Ratings / Core"
         ],
         "security": [
           {
@@ -9371,7 +9371,7 @@
         "summary": "Unarchive cocktail",
         "description": "**Required API-key permission:** `COCKTAILS_UPDATE` — Update cocktail recipes",
         "tags": [
-          "Cocktails"
+          "Cocktails / Lifecycle"
         ],
         "security": [
           {
@@ -9472,7 +9472,7 @@
         "summary": "Find similar cocktail",
         "description": "**Required API-key permission:** `COCKTAILS_READ` — Read cocktail recipes\n\nReturns the most similar existing cocktail by name, or null.",
         "tags": [
-          "Cocktails"
+          "Cocktails / Core"
         ],
         "security": [
           {
@@ -9572,7 +9572,7 @@
         "summary": "Export cocktails as JSON",
         "description": "**Authentication:** requires a valid session or API key (no specific permission).\n\nReturns a self-contained JSON dump (cocktails plus their referenced glasses, garnishes, ingredients, units, ice and step actions, including images) that can be re-imported via POST /cocktails/import/json. The exact dump shape is preserved verbatim for a lossless round-trip.",
         "tags": [
-          "Cocktails"
+          "Cocktails / Import & export"
         ],
         "security": [
           {
@@ -9668,7 +9668,7 @@
         "summary": "Export cocktails as PDF",
         "description": "**Required API-key permission:** `COCKTAILS_READ` — Read cocktail recipes\n\nRenders the selected cocktails to a single PDF document. Requires the Chromium PDF service to be configured.",
         "tags": [
-          "Cocktails"
+          "Cocktails / Import & export"
         ],
         "security": [
           {
@@ -9773,7 +9773,7 @@
         "summary": "Import cocktails from JSON",
         "description": "**Authentication:** requires a valid session or API key (no specific permission).\n\nThree-phase import (`validate` → `prepare-mapping` → `execute`) of an export dump produced by POST /cocktails/export/json. The response shape depends on the phase and is returned verbatim (not wrapped in a data envelope).",
         "tags": [
-          "Cocktails"
+          "Cocktails / Import & export"
         ],
         "security": [
           {
@@ -9869,7 +9869,7 @@
         "summary": "List garnishes",
         "description": "**Required API-key permission:** `GARNISHES_READ` — Read garnishes\n\nList all garnishes of a workspace, optionally filtered by name.",
         "tags": [
-          "Garnishes"
+          "Garnishes / Core"
         ],
         "security": [
           {
@@ -9963,7 +9963,7 @@
         "summary": "Create garnish",
         "description": "**Required API-key permission:** `GARNISHES_CREATE` — Create garnishes",
         "tags": [
-          "Garnishes"
+          "Garnishes / Core"
         ],
         "security": [
           {
@@ -10055,7 +10055,7 @@
         "summary": "Get garnish",
         "description": "**Required API-key permission:** `GARNISHES_READ` — Read garnishes",
         "tags": [
-          "Garnishes"
+          "Garnishes / Core"
         ],
         "security": [
           {
@@ -10154,7 +10154,7 @@
         "summary": "Update garnish",
         "description": "**Required API-key permission:** `GARNISHES_UPDATE` — Update garnishes",
         "tags": [
-          "Garnishes"
+          "Garnishes / Core"
         ],
         "security": [
           {
@@ -10252,7 +10252,7 @@
         "summary": "Delete garnish",
         "description": "**Required API-key permission:** `GARNISHES_DELETE` — Delete garnishes",
         "tags": [
-          "Garnishes"
+          "Garnishes / Core"
         ],
         "security": [
           {
@@ -10343,7 +10343,7 @@
         "summary": "Clone garnish",
         "description": "**Required API-key permission:** `GARNISHES_CREATE` — Create garnishes\n\nCreates a copy of a garnish (including its image) under a new name.",
         "tags": [
-          "Garnishes"
+          "Garnishes / Lifecycle"
         ],
         "security": [
           {
@@ -10453,7 +10453,7 @@
         "summary": "Get garnish image",
         "description": "**Required API-key permission:** `GARNISHES_READ` — Read garnishes\n\nReturns the garnish image bytes (the `imageUrl` target). 404 when the garnish has no image.",
         "tags": [
-          "Garnishes"
+          "Garnishes / Media"
         ],
         "security": [
           {
@@ -10559,7 +10559,7 @@
         "summary": "Find similar garnish",
         "description": "**Required API-key permission:** `GARNISHES_READ` — Read garnishes\n\nReturns the most similar existing garnish by name, or null.",
         "tags": [
-          "Garnishes"
+          "Garnishes / Core"
         ],
         "security": [
           {
@@ -10659,7 +10659,7 @@
         "summary": "Export garnishes as JSON",
         "description": "**Authentication:** requires a valid session or API key (no specific permission).\n\nExports the selected garnishes in the portable JSON export format. A single garnish yields one export object; multiple garnishes yield an array. This payload is the exact input accepted by the import endpoint.",
         "tags": [
-          "Garnishes"
+          "Garnishes / Import & export"
         ],
         "security": [
           {
@@ -10745,7 +10745,7 @@
         "summary": "Import garnishes from JSON",
         "description": "**Required API-key permission:** `GARNISHES_CREATE` — Create garnishes\n\nImports garnishes from the portable JSON export format via a three-phase flow (validate / prepare-mapping / execute). Consumes exactly what the export endpoint produces.",
         "tags": [
-          "Garnishes"
+          "Garnishes / Import & export"
         ],
         "security": [
           {
@@ -10834,7 +10834,7 @@
         "summary": "List glasses",
         "description": "**Required API-key permission:** `GLASSES_READ` — Read glasses\n\nList all glasses of a workspace, optionally filtered by name.",
         "tags": [
-          "Glasses"
+          "Glasses / Core"
         ],
         "security": [
           {
@@ -10928,7 +10928,7 @@
         "summary": "Create glass",
         "description": "**Required API-key permission:** `GLASSES_CREATE` — Create glasses",
         "tags": [
-          "Glasses"
+          "Glasses / Core"
         ],
         "security": [
           {
@@ -11020,7 +11020,7 @@
         "summary": "Get glass",
         "description": "**Required API-key permission:** `GLASSES_READ` — Read glasses",
         "tags": [
-          "Glasses"
+          "Glasses / Core"
         ],
         "security": [
           {
@@ -11119,7 +11119,7 @@
         "summary": "Update glass",
         "description": "**Required API-key permission:** `GLASSES_UPDATE` — Update glasses",
         "tags": [
-          "Glasses"
+          "Glasses / Core"
         ],
         "security": [
           {
@@ -11217,7 +11217,7 @@
         "summary": "Delete glass",
         "description": "**Required API-key permission:** `GLASSES_DELETE` — Delete glasses",
         "tags": [
-          "Glasses"
+          "Glasses / Core"
         ],
         "security": [
           {
@@ -11318,7 +11318,7 @@
         "summary": "Clone glass",
         "description": "**Required API-key permission:** `GLASSES_CREATE` — Create glasses\n\nCreates a copy of a glass (including its image) under a new name.",
         "tags": [
-          "Glasses"
+          "Glasses / Lifecycle"
         ],
         "security": [
           {
@@ -11428,7 +11428,7 @@
         "summary": "Get glass image",
         "description": "**Required API-key permission:** `GLASSES_READ` — Read glasses\n\nReturns the glass image bytes (the `imageUrl` target). 404 when the glass has no image.",
         "tags": [
-          "Glasses"
+          "Glasses / Media"
         ],
         "security": [
           {
@@ -11534,7 +11534,7 @@
         "summary": "List glass references",
         "description": "**Required API-key permission:** `GLASSES_READ` — Read glasses\n\nLists the cocktails that reference this glass.",
         "tags": [
-          "Glasses"
+          "Glasses / References"
         ],
         "security": [
           {
@@ -11628,7 +11628,7 @@
         "summary": "Find similar glass",
         "description": "**Required API-key permission:** `GLASSES_READ` — Read glasses\n\nReturns the most similar existing glass by name, or null.",
         "tags": [
-          "Glasses"
+          "Glasses / Core"
         ],
         "security": [
           {
@@ -11728,7 +11728,7 @@
         "summary": "Export glasses as JSON",
         "description": "**Authentication:** requires a valid session or API key (no specific permission).\n\nExports the selected glasses in the portable JSON export format. A single glass yields one export object; multiple glasses yield an array. This payload is the exact input accepted by the import endpoint.",
         "tags": [
-          "Glasses"
+          "Glasses / Import & export"
         ],
         "security": [
           {
@@ -11814,7 +11814,7 @@
         "summary": "Import glasses from JSON",
         "description": "**Required API-key permission:** `GLASSES_CREATE` — Create glasses\n\nImports glasses from the portable JSON export format via a three-phase flow (validate / prepare-mapping / execute). Consumes exactly what the export endpoint produces.",
         "tags": [
-          "Glasses"
+          "Glasses / Import & export"
         ],
         "security": [
           {
@@ -11903,7 +11903,7 @@
         "summary": "List ice",
         "description": "**Required API-key permission:** `ICE_READ` — Read ice types\n\nList all ice of a workspace, optionally filtered by name.",
         "tags": [
-          "Ice"
+          "Ice / Core"
         ],
         "security": [
           {
@@ -11997,7 +11997,7 @@
         "summary": "Create ice",
         "description": "**Required API-key permission:** `ICE_CREATE` — Create ice types",
         "tags": [
-          "Ice"
+          "Ice / Core"
         ],
         "security": [
           {
@@ -12089,7 +12089,7 @@
         "summary": "Get ice",
         "description": "**Required API-key permission:** `ICE_READ` — Read ice types",
         "tags": [
-          "Ice"
+          "Ice / Core"
         ],
         "security": [
           {
@@ -12188,7 +12188,7 @@
         "summary": "Update ice",
         "description": "**Required API-key permission:** `ICE_UPDATE` — Update ice types",
         "tags": [
-          "Ice"
+          "Ice / Core"
         ],
         "security": [
           {
@@ -12286,7 +12286,7 @@
         "summary": "Delete ice",
         "description": "**Required API-key permission:** `ICE_DELETE` — Delete ice types",
         "tags": [
-          "Ice"
+          "Ice / Core"
         ],
         "security": [
           {
@@ -12387,7 +12387,7 @@
         "summary": "List ingredients",
         "description": "**Required API-key permission:** `INGREDIENTS_READ` — Read ingredients\n\nList all ingredients of a workspace, optionally filtered by name or short name.",
         "tags": [
-          "Ingredients"
+          "Ingredients / Core"
         ],
         "security": [
           {
@@ -12481,7 +12481,7 @@
         "summary": "Create ingredient",
         "description": "**Required API-key permission:** `INGREDIENTS_CREATE` — Create ingredients",
         "tags": [
-          "Ingredients"
+          "Ingredients / Core"
         ],
         "security": [
           {
@@ -12573,7 +12573,7 @@
         "summary": "Get ingredient",
         "description": "**Required API-key permission:** `INGREDIENTS_READ` — Read ingredients",
         "tags": [
-          "Ingredients"
+          "Ingredients / Core"
         ],
         "security": [
           {
@@ -12672,7 +12672,7 @@
         "summary": "Update ingredient",
         "description": "**Required API-key permission:** `INGREDIENTS_UPDATE` — Update ingredients",
         "tags": [
-          "Ingredients"
+          "Ingredients / Core"
         ],
         "security": [
           {
@@ -12770,7 +12770,7 @@
         "summary": "Delete ingredient",
         "description": "**Required API-key permission:** `INGREDIENTS_DELETE` — Delete ingredients",
         "tags": [
-          "Ingredients"
+          "Ingredients / Core"
         ],
         "security": [
           {
@@ -12871,7 +12871,7 @@
         "summary": "Clone ingredient",
         "description": "**Required API-key permission:** `INGREDIENTS_CREATE` — Create ingredients\n\nCreates a copy of an ingredient (including its image and unit volumes) under a new name.",
         "tags": [
-          "Ingredients"
+          "Ingredients / Lifecycle"
         ],
         "security": [
           {
@@ -12981,7 +12981,7 @@
         "summary": "Get ingredient image",
         "description": "**Required API-key permission:** `INGREDIENTS_READ` — Read ingredients\n\nReturns the ingredient image bytes (the `imageUrl` target). 404 when the ingredient has no image.",
         "tags": [
-          "Ingredients"
+          "Ingredients / Media"
         ],
         "security": [
           {
@@ -13087,7 +13087,7 @@
         "summary": "List ingredient references",
         "description": "**Required API-key permission:** `INGREDIENTS_READ` — Read ingredients\n\nLists the cocktails that reference this ingredient.",
         "tags": [
-          "Ingredients"
+          "Ingredients / References"
         ],
         "security": [
           {
@@ -13181,7 +13181,7 @@
         "summary": "Find similar ingredient",
         "description": "**Required API-key permission:** `INGREDIENTS_READ` — Read ingredients\n\nReturns the most similar existing ingredient by name or link, or null.",
         "tags": [
-          "Ingredients"
+          "Ingredients / Core"
         ],
         "security": [
           {
@@ -13291,7 +13291,7 @@
         "summary": "Export ingredients as JSON",
         "description": "**Authentication:** requires a valid session or API key (no specific permission).\n\nExports the selected ingredients (with their unit volumes and units) in the portable JSON export format. A single ingredient yields one export object; multiple ingredients yield an array. This payload is the exact input accepted by the import endpoint.",
         "tags": [
-          "Ingredients"
+          "Ingredients / Import & export"
         ],
         "security": [
           {
@@ -13377,7 +13377,7 @@
         "summary": "Import ingredients from JSON",
         "description": "**Required API-key permission:** `INGREDIENTS_CREATE` — Create ingredients\n\nImports ingredients from the portable JSON export format via a three-phase flow (validate / prepare-mapping / execute). Consumes exactly what the export endpoint produces; missing units are recreated by name.",
         "tags": [
-          "Ingredients"
+          "Ingredients / Import & export"
         ],
         "security": [
           {
@@ -13466,7 +13466,7 @@
         "summary": "List join codes",
         "description": "**Required API-key permission:** `USERS_READ` — Read workspace members",
         "tags": [
-          "Workspace"
+          "Workspace / Join codes"
         ],
         "security": [
           {
@@ -13550,7 +13550,7 @@
         "summary": "Create join code",
         "description": "**Required API-key permission:** `USERS_UPDATE` — Update member roles",
         "tags": [
-          "Workspace"
+          "Workspace / Join codes"
         ],
         "security": [
           {
@@ -13642,7 +13642,7 @@
         "summary": "Delete join code",
         "description": "**Required API-key permission:** `USERS_UPDATE` — Update member roles",
         "tags": [
-          "Workspace"
+          "Workspace / Join codes"
         ],
         "security": [
           {
@@ -13743,7 +13743,7 @@
         "summary": "List join requests",
         "description": "**Required API-key permission:** `USERS_READ` — Read workspace members",
         "tags": [
-          "Workspace"
+          "Workspace / Membership"
         ],
         "security": [
           {
@@ -13827,7 +13827,7 @@
         "summary": "Withdraw own join request",
         "description": "**Authentication:** requires a logged-in workspace-member session. API keys (workspace or the instance master key) are NOT accepted for this operation.\n\nWithdraws the calling user's own pending join request. Session-only — API keys are not accepted.",
         "tags": [
-          "Workspace"
+          "Workspace / Membership"
         ],
         "security": [
           {
@@ -13914,7 +13914,7 @@
         "summary": "Accept join request",
         "description": "**Required API-key permission:** `USERS_UPDATE` — Update member roles\n\nAccepts a pending join request: adds the user as a member (role USER) and notifies them.",
         "tags": [
-          "Workspace"
+          "Workspace / Membership"
         ],
         "security": [
           {
@@ -14015,7 +14015,7 @@
         "summary": "Reject join request",
         "description": "**Required API-key permission:** `USERS_UPDATE` — Update member roles\n\nRejects (deletes) a pending join request and notifies the user.",
         "tags": [
-          "Workspace"
+          "Workspace / Membership"
         ],
         "security": [
           {
@@ -14116,7 +14116,7 @@
         "summary": "Leave workspace",
         "description": "**Authentication:** requires a logged-in workspace-member session. API keys (workspace or the instance master key) are NOT accepted for this operation.\n\nRemoves the calling user from the workspace. Session-only — API keys are not accepted.",
         "tags": [
-          "Workspace"
+          "Workspace / Membership"
         ],
         "security": [
           {
@@ -14193,7 +14193,7 @@
         "summary": "List queue",
         "description": "**Required API-key permission:** `QUEUE_READ` — Read the cocktail queue\n\nList all cocktail queue items of a workspace.",
         "tags": [
-          "Queue"
+          "Queue / Core"
         ],
         "security": [
           {
@@ -14279,7 +14279,7 @@
         "summary": "Update queue item",
         "description": "**Required API-key permission:** `QUEUE_UPDATE` — Update queue items\n\nUpdate the in-progress state of a queue item.",
         "tags": [
-          "Queue"
+          "Queue / Core"
         ],
         "security": [
           {
@@ -14389,7 +14389,7 @@
         "summary": "Add to queue",
         "description": "**Required API-key permission:** `QUEUE_CREATE` — Add cocktails to the queue\n\nEnqueue one or more identical cocktail queue items.",
         "tags": [
-          "Queue"
+          "Queue / Core"
         ],
         "security": [
           {
@@ -14484,7 +14484,7 @@
         "summary": "Remove from queue",
         "description": "**Required API-key permission:** `QUEUE_DELETE` — Remove cocktails from the queue\n\nRemove the oldest queue item matching the given cocktail and notes.",
         "tags": [
-          "Queue"
+          "Queue / Core"
         ],
         "security": [
           {
@@ -14586,7 +14586,7 @@
         "summary": "Get workspace settings",
         "description": "**Required API-key permission:** `WORKSPACE_READ` — Read workspace settings and audit logs\n\nGet all workspace settings as a key→value map.",
         "tags": [
-          "Workspace"
+          "Workspace / Settings"
         ],
         "security": [
           {
@@ -14667,7 +14667,7 @@
         "summary": "Update workspace setting",
         "description": "**Required API-key permission:** `WORKSPACE_UPDATE` — Update workspace settings\n\nUpsert a single workspace setting and return the full settings map.",
         "tags": [
-          "Workspace"
+          "Workspace / Settings"
         ],
         "security": [
           {
@@ -14759,7 +14759,7 @@
         "summary": "Advanced cocktail ranking",
         "description": "**Required API-key permission:** `STATISTICS_READ` — Read sales statistics\n\nRanks cocktails by order count for the given date range, with share/delta vs. the previous equal-length period and each cocktail’s ingredient breakdown. Emits a `{ data, total }` envelope (not the standard `{ data }`). Requires startDate and endDate.",
         "tags": [
-          "Statistics"
+          "Statistics / Advanced"
         ],
         "security": [
           {
@@ -14862,7 +14862,7 @@
         "summary": "Advanced single-cocktail analytics",
         "description": "**Required API-key permission:** `STATISTICS_READ` — Read sales statistics\n\nDeep-dive analytics for one cocktail: totals, rank, deltas, revenue, time series and hour/day distributions. Emits a `{ data }` envelope. Uses the cocktail’s full order history when no date range is given.",
         "tags": [
-          "Statistics"
+          "Statistics / Advanced"
         ],
         "security": [
           {
@@ -14983,7 +14983,7 @@
         "summary": "Paginated order log for a cocktail",
         "description": "**Required API-key permission:** `STATISTICS_READ` — Read sales statistics\n\nNewest-first, searchable, paginated list of individual orders (statistic entries) for one cocktail. Search filters over formatted date/weekday, user and card. Emits a `{ data, pagination }` envelope with the legacy pagination block.",
         "tags": [
-          "Statistics"
+          "Statistics / Advanced"
         ],
         "security": [
           {
@@ -15134,7 +15134,7 @@
         "summary": "All cocktails with order counts",
         "description": "**Required API-key permission:** `STATISTICS_READ` — Read sales statistics\n\nLists every cocktail in the workspace (name-ordered) with its order count for the given range; cocktails without orders are included with count 0. Order counts are only computed when both startDate and endDate are supplied. Emits a `{ data, total }` envelope.",
         "tags": [
-          "Statistics"
+          "Statistics / Advanced"
         ],
         "security": [
           {
@@ -15237,7 +15237,7 @@
         "summary": "Compare an ad-hoc tag/ingredient set",
         "description": "**Required API-key permission:** `STATISTICS_READ` — Read sales statistics\n\nComputes KPIs, matching cocktails and a cross-aggregate for an ad-hoc tag or ingredient set (with AND/OR logic). Emits a `{ data }` envelope. Uses all-time when no date range is given.",
         "tags": [
-          "Statistics"
+          "Statistics / Advanced"
         ],
         "security": [
           {
@@ -15378,7 +15378,7 @@
         "summary": "Ingredient usage statistics",
         "description": "**Required API-key permission:** `STATISTICS_READ` — Read sales statistics\n\nLists every ingredient with its order-usage count, the number of distinct cocktails using it, and its share of period orders. Counts are only computed when both startDate and endDate are supplied. Emits a `{ data, total }` envelope.",
         "tags": [
-          "Statistics"
+          "Statistics / Advanced"
         ],
         "security": [
           {
@@ -15481,7 +15481,7 @@
         "summary": "Advanced statistics overview",
         "description": "**Required API-key permission:** `STATISTICS_READ` — Read sales statistics\n\nDashboard-style overview with per-period KPIs (today/week/month, a custom selected range, average-per-hour and all-time) plus their chart data. Defaults the selected range to the last 7 days when startDate/endDate are omitted.",
         "tags": [
-          "Statistics"
+          "Statistics / Advanced"
         ],
         "security": [
           {
@@ -15584,7 +15584,7 @@
         "summary": "List saved statistics sets",
         "description": "**Required API-key permission:** `STATISTICS_READ` — Read sales statistics\n\nLists saved statistics sets of a workspace (newest first), optionally filtered by type/types. Emits a `{ data }` envelope.",
         "tags": [
-          "Statistics"
+          "Statistics / Advanced"
         ],
         "security": [
           {
@@ -15688,7 +15688,7 @@
         "summary": "Create a saved statistics set",
         "description": "**Required API-key permission:** `STATISTICS_READ` — Read sales statistics",
         "tags": [
-          "Statistics"
+          "Statistics / Advanced"
         ],
         "security": [
           {
@@ -15778,7 +15778,7 @@
         "summary": "Update a saved statistics set",
         "description": "**Required API-key permission:** `STATISTICS_READ` — Read sales statistics",
         "tags": [
-          "Statistics"
+          "Statistics / Advanced"
         ],
         "security": [
           {
@@ -15878,7 +15878,7 @@
         "summary": "Delete a saved statistics set",
         "description": "**Required API-key permission:** `STATISTICS_READ` — Read sales statistics",
         "tags": [
-          "Statistics"
+          "Statistics / Advanced"
         ],
         "security": [
           {
@@ -15981,7 +15981,7 @@
         "summary": "Analytics for a saved set",
         "description": "**Required API-key permission:** `STATISTICS_READ` — Read sales statistics\n\nResolves a saved set to its matching cocktails and computes KPIs, per-cocktail counts and a cross-aggregate. Emits a `{ data }` envelope. Uses all-time when no date range is given.",
         "tags": [
-          "Statistics"
+          "Statistics / Advanced"
         ],
         "security": [
           {
@@ -16102,7 +16102,7 @@
         "summary": "Tag usage statistics",
         "description": "**Required API-key permission:** `STATISTICS_READ` — Read sales statistics\n\nLists every tag with its order-usage count, the number of distinct cocktails carrying it, and its share of period orders. Counts are only computed when both startDate and endDate are supplied. Emits a `{ data, total }` envelope.",
         "tags": [
-          "Statistics"
+          "Statistics / Advanced"
         ],
         "security": [
           {
@@ -16205,7 +16205,7 @@
         "summary": "List cocktail statistics",
         "description": "**Required API-key permission:** `STATISTICS_READ` — Read sales statistics\n\nList cocktail-statistic entries of a workspace, optionally filtered by a date range (day-start-time aware).",
         "tags": [
-          "Statistics"
+          "Statistics / Logging"
         ],
         "security": [
           {
@@ -16311,7 +16311,7 @@
         "summary": "Delete a cocktail statistic",
         "description": "**Required API-key permission:** `STATISTICS_DELETE` — Delete statistics entries",
         "tags": [
-          "Statistics"
+          "Statistics / Logging"
         ],
         "security": [
           {
@@ -16412,7 +16412,7 @@
         "summary": "Log a cocktail statistic",
         "description": "**Required API-key permission:** `STATISTICS_CREATE` — Record sales statistics\n\nRecords that a cocktail was made and reconciles the cocktail queue. Returns 400 when the queue contains ambiguous entries that require the caller to choose which one to remove.",
         "tags": [
-          "Statistics"
+          "Statistics / Logging"
         ],
         "security": [
           {
@@ -16504,7 +16504,7 @@
         "summary": "List statistic logs",
         "description": "**Required API-key permission:** `STATISTICS_READ` — Read sales statistics\n\nList cocktail-statistic entries of a workspace, newest first, filtered by date range and/or name search. Paginated: the response is a `{ data, pagination }` envelope (not a bare array); `data` holds the `CocktailStatisticItem[]` page.",
         "tags": [
-          "Statistics"
+          "Statistics / Logging"
         ],
         "security": [
           {
@@ -16644,7 +16644,7 @@
         "summary": "Delete a statistic log",
         "description": "**Required API-key permission:** `STATISTICS_DELETE` — Delete statistics entries",
         "tags": [
-          "Statistics"
+          "Statistics / Logging"
         ],
         "security": [
           {
@@ -16745,7 +16745,7 @@
         "summary": "List tags",
         "description": "**Required API-key permission:** `COCKTAILS_READ` — Read cocktail recipes\n\nList all distinct tags used across cocktails and ingredients of a workspace.",
         "tags": [
-          "Tags"
+          "Tags / Core"
         ],
         "security": [
           {
@@ -16828,7 +16828,7 @@
         "summary": "List units",
         "description": "**Required API-key permission:** `UNITS_READ` — Read units and unit conversions\n\nList all units of a workspace, optionally filtered by name.",
         "tags": [
-          "Units"
+          "Units / Core"
         ],
         "security": [
           {
@@ -16922,7 +16922,7 @@
         "summary": "Create unit",
         "description": "**Authentication:** requires a valid session or API key (no specific permission).",
         "tags": [
-          "Units"
+          "Units / Core"
         ],
         "security": [
           {
@@ -17011,7 +17011,7 @@
         "summary": "Delete unit",
         "description": "**Authentication:** requires a valid session or API key (no specific permission).",
         "tags": [
-          "Units"
+          "Units / Core"
         ],
         "security": [
           {
@@ -17099,7 +17099,7 @@
         "summary": "List unit conversions",
         "description": "**Authentication:** requires a valid session or API key (no specific permission).\n\nList all unit conversions of a workspace.",
         "tags": [
-          "Units"
+          "Units / Conversions"
         ],
         "security": [
           {
@@ -17180,7 +17180,7 @@
         "summary": "Create unit conversion",
         "description": "**Authentication:** requires a valid session or API key (no specific permission).\n\nCreate a unit conversion (plus its inverse) and regenerate all derived conversions.",
         "tags": [
-          "Units"
+          "Units / Conversions"
         ],
         "security": [
           {
@@ -17272,7 +17272,7 @@
         "summary": "Update unit conversion",
         "description": "**Required API-key permission:** `UNITS_UPDATE` — Create, update, and delete units and unit conversions\n\nUpdate a conversion factor and regenerate all derived conversions.",
         "tags": [
-          "Units"
+          "Units / Conversions"
         ],
         "security": [
           {
@@ -17370,7 +17370,7 @@
         "summary": "Delete unit conversion",
         "description": "**Authentication:** requires a valid session or API key (no specific permission).\n\nDelete a conversion and regenerate all derived conversions.",
         "tags": [
-          "Units"
+          "Units / Conversions"
         ],
         "security": [
           {
@@ -17458,7 +17458,7 @@
         "summary": "List workspace users",
         "description": "**Required API-key permission:** `USERS_READ` — Read workspace members\n\nList all users (memberships) of a workspace.",
         "tags": [
-          "Workspace Users"
+          "Workspace Users / Core"
         ],
         "security": [
           {
@@ -17544,7 +17544,7 @@
         "summary": "Update workspace user role",
         "description": "**Required API-key permission:** `USERS_UPDATE` — Update member roles",
         "tags": [
-          "Workspace Users"
+          "Workspace Users / Core"
         ],
         "security": [
           {
@@ -17652,7 +17652,7 @@
         "summary": "Remove workspace user",
         "description": "**Required API-key permission:** `USERS_DELETE` — Remove members from the workspace",
         "tags": [
-          "Workspace Users"
+          "Workspace Users / Core"
         ],
         "security": [
           {
@@ -17749,5 +17749,376 @@
       }
     }
   },
-  "webhooks": {}
+  "webhooks": {},
+  "tags": [
+    {
+      "name": "Workspace / Core",
+      "description": "Workspace identity and lifecycle.",
+      "x-displayName": "Core",
+      "x-position": 1
+    },
+    {
+      "name": "Workspace / Settings",
+      "description": "Workspace settings and translations.",
+      "x-displayName": "Settings",
+      "x-position": 2
+    },
+    {
+      "name": "Workspace / API keys",
+      "description": "Create, list and revoke workspace API keys.",
+      "x-displayName": "API keys",
+      "x-position": 3
+    },
+    {
+      "name": "Workspace / Join codes",
+      "description": "Invite codes for joining a workspace.",
+      "x-displayName": "Join codes",
+      "x-position": 4
+    },
+    {
+      "name": "Workspace / Membership",
+      "description": "Join requests and leaving a workspace.",
+      "x-displayName": "Membership",
+      "x-position": 5
+    },
+    {
+      "name": "Workspace Users / Core",
+      "description": "Workspace member list and roles.",
+      "x-displayName": "Core",
+      "x-position": 1
+    },
+    {
+      "name": "Audit Logs / Core",
+      "description": "Audit log entries.",
+      "x-displayName": "Core",
+      "x-position": 1
+    },
+    {
+      "name": "Cocktails / Core",
+      "description": "List, create, read, update and delete cocktail recipes.",
+      "x-displayName": "Core",
+      "x-position": 1
+    },
+    {
+      "name": "Cocktails / Step actions",
+      "description": "Cocktail-recipe step actions (SHAKE, STIR, …).",
+      "x-displayName": "Step actions",
+      "x-position": 2
+    },
+    {
+      "name": "Cocktails / Lifecycle",
+      "description": "Clone, archive and unarchive cocktails.",
+      "x-displayName": "Lifecycle",
+      "x-position": 3
+    },
+    {
+      "name": "Cocktails / Import & export",
+      "description": "JSON/PDF export and JSON import for cocktails.",
+      "x-displayName": "Import & export",
+      "x-position": 4
+    },
+    {
+      "name": "Cocktails / Media",
+      "description": "Cocktail image bytes.",
+      "x-displayName": "Media",
+      "x-position": 5
+    },
+    {
+      "name": "Ingredients / Core",
+      "description": "List, create, read, update and delete ingredients.",
+      "x-displayName": "Core",
+      "x-position": 1
+    },
+    {
+      "name": "Ingredients / Lifecycle",
+      "description": "Clone ingredients.",
+      "x-displayName": "Lifecycle",
+      "x-position": 2
+    },
+    {
+      "name": "Ingredients / Import & export",
+      "description": "JSON export and import for ingredients.",
+      "x-displayName": "Import & export",
+      "x-position": 3
+    },
+    {
+      "name": "Ingredients / Media",
+      "description": "Ingredient image bytes.",
+      "x-displayName": "Media",
+      "x-position": 4
+    },
+    {
+      "name": "Ingredients / References",
+      "description": "Cocktails that reference an ingredient.",
+      "x-displayName": "References",
+      "x-position": 5
+    },
+    {
+      "name": "Garnishes / Core",
+      "description": "List, create, read, update and delete garnishes.",
+      "x-displayName": "Core",
+      "x-position": 1
+    },
+    {
+      "name": "Garnishes / Lifecycle",
+      "description": "Clone garnishes.",
+      "x-displayName": "Lifecycle",
+      "x-position": 2
+    },
+    {
+      "name": "Garnishes / Import & export",
+      "description": "JSON export and import for garnishes.",
+      "x-displayName": "Import & export",
+      "x-position": 3
+    },
+    {
+      "name": "Garnishes / Media",
+      "description": "Garnish image bytes.",
+      "x-displayName": "Media",
+      "x-position": 4
+    },
+    {
+      "name": "Glasses / Core",
+      "description": "List, create, read, update and delete glasses.",
+      "x-displayName": "Core",
+      "x-position": 1
+    },
+    {
+      "name": "Glasses / Lifecycle",
+      "description": "Clone glasses.",
+      "x-displayName": "Lifecycle",
+      "x-position": 2
+    },
+    {
+      "name": "Glasses / Import & export",
+      "description": "JSON export and import for glasses.",
+      "x-displayName": "Import & export",
+      "x-position": 3
+    },
+    {
+      "name": "Glasses / Media",
+      "description": "Glass image bytes.",
+      "x-displayName": "Media",
+      "x-position": 4
+    },
+    {
+      "name": "Glasses / References",
+      "description": "Cocktails that reference a glass.",
+      "x-displayName": "References",
+      "x-position": 5
+    },
+    {
+      "name": "Ice / Core",
+      "description": "List, create, read, update and delete ice types.",
+      "x-displayName": "Core",
+      "x-position": 1
+    },
+    {
+      "name": "Tags / Core",
+      "description": "List cocktail tags.",
+      "x-displayName": "Core",
+      "x-position": 1
+    },
+    {
+      "name": "Units / Core",
+      "description": "List, create and delete measurement units.",
+      "x-displayName": "Core",
+      "x-position": 1
+    },
+    {
+      "name": "Units / Conversions",
+      "description": "Unit conversion factors.",
+      "x-displayName": "Conversions",
+      "x-position": 2
+    },
+    {
+      "name": "Cards / Core",
+      "description": "List, create, read, update and delete cocktail cards.",
+      "x-displayName": "Core",
+      "x-position": 1
+    },
+    {
+      "name": "Cards / Lifecycle",
+      "description": "Clone, archive and unarchive cards.",
+      "x-displayName": "Lifecycle",
+      "x-position": 2
+    },
+    {
+      "name": "Calculations / Core",
+      "description": "Price calculations CRUD.",
+      "x-displayName": "Core",
+      "x-position": 1
+    },
+    {
+      "name": "Calculations / Groups",
+      "description": "Calculation groups and assignments.",
+      "x-displayName": "Groups",
+      "x-position": 2
+    },
+    {
+      "name": "Calculations / Import & export",
+      "description": "JSON export and import for calculations.",
+      "x-displayName": "Import & export",
+      "x-position": 3
+    },
+    {
+      "name": "Monitor / Configuration",
+      "description": "Signage / monitor configuration.",
+      "x-displayName": "Configuration",
+      "x-position": 1
+    },
+    {
+      "name": "Monitor / Slides",
+      "description": "Signage slide upload, schedule and images.",
+      "x-displayName": "Slides",
+      "x-position": 2
+    },
+    {
+      "name": "Queue / Core",
+      "description": "Bar order queue.",
+      "x-displayName": "Core",
+      "x-position": 1
+    },
+    {
+      "name": "Statistics / Logging",
+      "description": "Cocktail statistics and logs.",
+      "x-displayName": "Logging",
+      "x-position": 1
+    },
+    {
+      "name": "Statistics / Advanced",
+      "description": "Advanced analytics, sets and comparisons.",
+      "x-displayName": "Advanced",
+      "x-position": 2
+    },
+    {
+      "name": "Ratings / Core",
+      "description": "Cocktail ratings.",
+      "x-displayName": "Core",
+      "x-position": 1
+    }
+  ],
+  "x-tagGroups": [
+    {
+      "name": "Workspace",
+      "tags": [
+        "Workspace / Core",
+        "Workspace / Settings",
+        "Workspace / API keys",
+        "Workspace / Join codes",
+        "Workspace / Membership"
+      ]
+    },
+    {
+      "name": "Workspace Users",
+      "tags": [
+        "Workspace Users / Core"
+      ]
+    },
+    {
+      "name": "Audit Logs",
+      "tags": [
+        "Audit Logs / Core"
+      ]
+    },
+    {
+      "name": "Cocktails",
+      "tags": [
+        "Cocktails / Core",
+        "Cocktails / Step actions",
+        "Cocktails / Lifecycle",
+        "Cocktails / Import & export",
+        "Cocktails / Media"
+      ]
+    },
+    {
+      "name": "Ingredients",
+      "tags": [
+        "Ingredients / Core",
+        "Ingredients / Lifecycle",
+        "Ingredients / Import & export",
+        "Ingredients / Media",
+        "Ingredients / References"
+      ]
+    },
+    {
+      "name": "Garnishes",
+      "tags": [
+        "Garnishes / Core",
+        "Garnishes / Lifecycle",
+        "Garnishes / Import & export",
+        "Garnishes / Media"
+      ]
+    },
+    {
+      "name": "Glasses",
+      "tags": [
+        "Glasses / Core",
+        "Glasses / Lifecycle",
+        "Glasses / Import & export",
+        "Glasses / Media",
+        "Glasses / References"
+      ]
+    },
+    {
+      "name": "Ice",
+      "tags": [
+        "Ice / Core"
+      ]
+    },
+    {
+      "name": "Tags",
+      "tags": [
+        "Tags / Core"
+      ]
+    },
+    {
+      "name": "Units",
+      "tags": [
+        "Units / Core",
+        "Units / Conversions"
+      ]
+    },
+    {
+      "name": "Cards",
+      "tags": [
+        "Cards / Core",
+        "Cards / Lifecycle"
+      ]
+    },
+    {
+      "name": "Calculations",
+      "tags": [
+        "Calculations / Core",
+        "Calculations / Groups",
+        "Calculations / Import & export"
+      ]
+    },
+    {
+      "name": "Monitor",
+      "tags": [
+        "Monitor / Configuration",
+        "Monitor / Slides"
+      ]
+    },
+    {
+      "name": "Queue",
+      "tags": [
+        "Queue / Core"
+      ]
+    },
+    {
+      "name": "Statistics",
+      "tags": [
+        "Statistics / Logging",
+        "Statistics / Advanced"
+      ]
+    },
+    {
+      "name": "Ratings",
+      "tags": [
+        "Ratings / Core"
+      ]
+    }
+  ]
 }

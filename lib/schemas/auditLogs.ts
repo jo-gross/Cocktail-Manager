@@ -6,6 +6,7 @@
  */
 import { z } from '@lib/openapi/zod';
 import { DateTimeString, WorkspaceIdParam } from '@lib/schemas/common';
+import { ApiTags } from '@lib/openapi/tags';
 import type { ResourceApiDoc } from '@lib/openapi/types';
 
 /** Embedded actor for an audit log entry — the flattened `user` relation, or null. */
@@ -47,7 +48,7 @@ export const auditLogsCollectionApiDoc = {
     GET: {
       roles: ['USER'],
       permission: 'WORKSPACE_READ',
-      tags: ['Audit Logs'],
+      tags: [ApiTags.auditLogsCore],
       summary: 'List audit logs',
       description:
         'List audit log entries of a workspace, newest first. Optionally filtered by entity type/ID. ' +

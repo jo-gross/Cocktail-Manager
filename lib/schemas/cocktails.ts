@@ -15,6 +15,7 @@
  * garnishes and rating aggregates.
  */
 import { z } from '@lib/openapi/zod';
+import { ApiTags } from '@lib/openapi/tags';
 import { WorkspaceIdParam, DeletionResult } from '@lib/schemas/common';
 import type { ResourceApiDoc } from '@lib/openapi/types';
 
@@ -305,7 +306,7 @@ export const cocktailsCollectionApiDoc = {
     GET: {
       roles: ['USER'],
       permission: 'COCKTAILS_READ',
-      tags: ['Cocktails'],
+      tags: [ApiTags.cocktailsCore],
       summary: 'List cocktails',
       description:
         'List all cocktails of a workspace, optionally filtered by a free-text search over name, tags, garnishes and ingredients. Returns slim summaries; use GET /cocktails/{cocktailId} for the full recipe.',
@@ -316,7 +317,7 @@ export const cocktailsCollectionApiDoc = {
     POST: {
       roles: ['MANAGER'],
       permission: 'COCKTAILS_CREATE',
-      tags: ['Cocktails'],
+      tags: [ApiTags.cocktailsCore],
       summary: 'Create cocktail',
       params: WorkspaceIdParam,
       body: CocktailCreateSchema,
@@ -332,7 +333,7 @@ export const cocktailsItemApiDoc = {
     GET: {
       roles: ['USER'],
       permission: 'COCKTAILS_READ',
-      tags: ['Cocktails'],
+      tags: [ApiTags.cocktailsCore],
       summary: 'Get cocktail',
       description: 'Returns the full cocktail including nested steps, ingredients, garnishes and rating aggregates.',
       params: CocktailItemParams,
@@ -342,7 +343,7 @@ export const cocktailsItemApiDoc = {
     PUT: {
       roles: ['MANAGER'],
       permission: 'COCKTAILS_UPDATE',
-      tags: ['Cocktails'],
+      tags: [ApiTags.cocktailsCore],
       summary: 'Update cocktail',
       description: 'Updates the cocktail metadata and differentially applies its steps, ingredients and garnishes.',
       params: CocktailItemParams,
@@ -353,7 +354,7 @@ export const cocktailsItemApiDoc = {
     DELETE: {
       roles: ['ADMIN'],
       permission: 'COCKTAILS_DELETE',
-      tags: ['Cocktails'],
+      tags: [ApiTags.cocktailsCore],
       summary: 'Delete cocktail',
       params: CocktailItemParams,
       response: DeletionResult,
@@ -368,7 +369,7 @@ export const cocktailsCheckApiDoc = {
     GET: {
       roles: ['USER'],
       permission: 'COCKTAILS_READ',
-      tags: ['Cocktails'],
+      tags: [ApiTags.cocktailsCore],
       summary: 'Find similar cocktail',
       description: 'Returns the most similar existing cocktail by name, or null.',
       params: WorkspaceIdParam,
@@ -385,7 +386,7 @@ export const cocktailsImageApiDoc = {
     GET: {
       roles: ['USER'],
       permission: 'COCKTAILS_READ',
-      tags: ['Cocktails'],
+      tags: [ApiTags.cocktailsMedia],
       summary: 'Get cocktail image',
       description: 'Returns the cocktail image bytes (the `imageUrl` target). 404 when the cocktail has no image.',
       params: CocktailItemParams,
@@ -402,7 +403,7 @@ export const cocktailsCloneApiDoc = {
     POST: {
       roles: ['MANAGER'],
       permission: 'COCKTAILS_CREATE',
-      tags: ['Cocktails'],
+      tags: [ApiTags.cocktailsLifecycle],
       summary: 'Clone cocktail',
       description: 'Creates a deep copy of a cocktail (image, steps, ingredients and garnishes) under a new name.',
       params: CocktailItemParams,
@@ -420,7 +421,7 @@ export const cocktailsArchiveApiDoc = {
     PUT: {
       roles: ['MANAGER'],
       permission: 'COCKTAILS_UPDATE',
-      tags: ['Cocktails'],
+      tags: [ApiTags.cocktailsLifecycle],
       summary: 'Archive cocktail',
       params: CocktailItemParams,
       response: CocktailDtoSchema,
@@ -436,7 +437,7 @@ export const cocktailsUnarchiveApiDoc = {
     PUT: {
       roles: ['MANAGER'],
       permission: 'COCKTAILS_UPDATE',
-      tags: ['Cocktails'],
+      tags: [ApiTags.cocktailsLifecycle],
       summary: 'Unarchive cocktail',
       params: CocktailItemParams,
       response: CocktailDtoSchema,
@@ -452,7 +453,7 @@ export const cocktailsExportJsonApiDoc = {
     POST: {
       roles: ['USER'],
       permission: null,
-      tags: ['Cocktails'],
+      tags: [ApiTags.cocktailsImportExport],
       summary: 'Export cocktails as JSON',
       description:
         'Returns a self-contained JSON dump (cocktails plus their referenced glasses, garnishes, ingredients, units, ice and step actions, including images) that can be re-imported via POST /cocktails/import/json. The exact dump shape is preserved verbatim for a lossless round-trip.',
@@ -471,7 +472,7 @@ export const cocktailsExportPdfApiDoc = {
     POST: {
       roles: ['USER'],
       permission: 'COCKTAILS_READ',
-      tags: ['Cocktails'],
+      tags: [ApiTags.cocktailsImportExport],
       summary: 'Export cocktails as PDF',
       description: 'Renders the selected cocktails to a single PDF document. Requires the Chromium PDF service to be configured.',
       params: WorkspaceIdParam,
@@ -489,7 +490,7 @@ export const cocktailsImportJsonApiDoc = {
     POST: {
       roles: ['USER'],
       permission: null,
-      tags: ['Cocktails'],
+      tags: [ApiTags.cocktailsImportExport],
       summary: 'Import cocktails from JSON',
       description:
         'Three-phase import (`validate` → `prepare-mapping` → `execute`) of an export dump produced by POST /cocktails/export/json. The response shape depends on the phase and is returned verbatim (not wrapped in a data envelope).',

@@ -9,6 +9,7 @@
  */
 import { z } from '@lib/openapi/zod';
 import { WorkspaceIdParam, DateTimeString } from '@lib/schemas/common';
+import { ApiTags } from '@lib/openapi/tags';
 import type { ResourceApiDoc } from '@lib/openapi/types';
 
 /** Lean cocktail reference embedded in a queue item — id + name only, no nesting. */
@@ -66,7 +67,7 @@ export const queueCollectionApiDoc = {
     GET: {
       roles: ['USER'],
       permission: 'QUEUE_READ',
-      tags: ['Queue'],
+      tags: [ApiTags.queueCore],
       summary: 'List queue',
       description: 'List all cocktail queue items of a workspace.',
       params: WorkspaceIdParam,
@@ -82,7 +83,7 @@ export const queueAddApiDoc = {
     POST: {
       roles: ['USER'],
       permission: 'QUEUE_CREATE',
-      tags: ['Queue'],
+      tags: [ApiTags.queueCore],
       summary: 'Add to queue',
       description: 'Enqueue one or more identical cocktail queue items.',
       params: WorkspaceIdParam,
@@ -99,7 +100,7 @@ export const queueRemoveApiDoc = {
     POST: {
       roles: ['USER'],
       permission: 'QUEUE_DELETE',
-      tags: ['Queue'],
+      tags: [ApiTags.queueCore],
       summary: 'Remove from queue',
       description: 'Remove the oldest queue item matching the given cocktail and notes.',
       params: WorkspaceIdParam,
@@ -117,7 +118,7 @@ export const queueItemApiDoc = {
     PUT: {
       roles: ['USER'],
       permission: 'QUEUE_UPDATE',
-      tags: ['Queue'],
+      tags: [ApiTags.queueCore],
       summary: 'Update queue item',
       description: 'Update the in-progress state of a queue item.',
       params: QueueItemParams,

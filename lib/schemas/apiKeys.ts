@@ -7,6 +7,7 @@
 import { z } from '@lib/openapi/zod';
 import { WorkspaceIdParam, DateTimeString, DeletionResult } from '@lib/schemas/common';
 import { PermissionEnum } from '@lib/schemas/permissions';
+import { ApiTags } from '@lib/openapi/tags';
 import type { ResourceApiDoc } from '@lib/openapi/types';
 
 export const ApiKeyCreatorRefSchema = z.object({ id: z.string(), name: z.string().nullable(), email: z.string().nullable() }).openapi('ApiKeyCreator');
@@ -59,7 +60,7 @@ export const apiKeysCollectionApiDoc = {
     GET: {
       roles: ['ADMIN'],
       permission: 'WORKSPACE_READ',
-      tags: ['Workspace'],
+      tags: [ApiTags.workspaceApiKeys],
       summary: 'List API keys',
       description: 'Lists the workspace API keys (metadata only — the key value is shown only once, on create).',
       params: WorkspaceIdParam,
@@ -69,7 +70,7 @@ export const apiKeysCollectionApiDoc = {
       roles: ['ADMIN'],
       permission: null,
       sessionOnly: true,
-      tags: ['Workspace'],
+      tags: [ApiTags.workspaceApiKeys],
       summary: 'Create API key',
       description: 'Creates a workspace API key and returns the signed token ONCE. Session-only — API keys cannot mint other keys.',
       params: WorkspaceIdParam,
@@ -86,7 +87,7 @@ export const apiKeysItemApiDoc = {
     GET: {
       roles: ['ADMIN'],
       permission: 'WORKSPACE_READ',
-      tags: ['Workspace'],
+      tags: [ApiTags.workspaceApiKeys],
       summary: 'Get API key',
       params: ApiKeyItemParams,
       response: ApiKeyDtoSchema,
@@ -96,7 +97,7 @@ export const apiKeysItemApiDoc = {
       roles: ['ADMIN'],
       permission: null,
       sessionOnly: true,
-      tags: ['Workspace'],
+      tags: [ApiTags.workspaceApiKeys],
       summary: 'Revoke API key',
       description: 'Revokes (deletes) a workspace API key. Session-only — API keys cannot revoke keys.',
       params: ApiKeyItemParams,

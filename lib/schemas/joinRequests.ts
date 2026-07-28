@@ -6,6 +6,7 @@
  */
 import { z } from '@lib/openapi/zod';
 import { WorkspaceIdParam, DateTimeString, DeletionResult } from '@lib/schemas/common';
+import { ApiTags } from '@lib/openapi/tags';
 import type { ResourceApiDoc } from '@lib/openapi/types';
 
 export const JoinRequestUserRefSchema = z
@@ -38,7 +39,7 @@ export const joinRequestsCollectionApiDoc = {
     GET: {
       roles: ['MANAGER'],
       permission: 'USERS_READ',
-      tags: ['Workspace'],
+      tags: [ApiTags.workspaceMembership],
       summary: 'List join requests',
       params: WorkspaceIdParam,
       response: z.array(JoinRequestDtoSchema),
@@ -47,7 +48,7 @@ export const joinRequestsCollectionApiDoc = {
       roles: ['USER'],
       permission: null,
       sessionOnly: true,
-      tags: ['Workspace'],
+      tags: [ApiTags.workspaceMembership],
       summary: 'Withdraw own join request',
       description: "Withdraws the calling user's own pending join request. Session-only — API keys are not accepted.",
       params: WorkspaceIdParam,
@@ -64,7 +65,7 @@ export const joinRequestsAcceptApiDoc = {
     POST: {
       roles: ['MANAGER'],
       permission: 'USERS_UPDATE',
-      tags: ['Workspace'],
+      tags: [ApiTags.workspaceMembership],
       summary: 'Accept join request',
       description: 'Accepts a pending join request: adds the user as a member (role USER) and notifies them.',
       params: JoinRequestUserParams,
@@ -81,7 +82,7 @@ export const joinRequestsRejectApiDoc = {
     POST: {
       roles: ['MANAGER'],
       permission: 'USERS_UPDATE',
-      tags: ['Workspace'],
+      tags: [ApiTags.workspaceMembership],
       summary: 'Reject join request',
       description: 'Rejects (deletes) a pending join request and notifies the user.',
       params: JoinRequestUserParams,

@@ -10,6 +10,7 @@
  * The full catalog is documented via the `Permission` component schema.
  */
 import { OpenAPIRegistry, OpenApiGeneratorV31 } from '@asteasolutions/zod-to-openapi';
+import { OPENAPI_TAG_GROUPS, OPENAPI_TAGS } from '@lib/openapi/tags';
 import type { HttpVerb, ResourceApiDoc, RouteSpec } from '@lib/openapi/types';
 import { ErrorResponse, dataEnvelope } from '@lib/schemas/common';
 import { PERMISSION_DESCRIPTIONS, PermissionEnum } from '@lib/schemas/permissions';
@@ -199,6 +200,10 @@ export function buildOpenApiDocument(resources: ResourceApiDoc[], variant: ApiVa
       }
     }
   }
+
+  const enriched = doc as Record<string, unknown>;
+  enriched.tags = OPENAPI_TAGS;
+  enriched['x-tagGroups'] = OPENAPI_TAG_GROUPS;
 
   return doc;
 }

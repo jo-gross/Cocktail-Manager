@@ -13,6 +13,7 @@
  * returns the FULL `CardDto` with nested groups and items.
  */
 import { z } from '@lib/openapi/zod';
+import { ApiTags } from '@lib/openapi/tags';
 import { WorkspaceIdParam, DateTimeString, DeletionResult } from '@lib/schemas/common';
 import type { ResourceApiDoc } from '@lib/openapi/types';
 
@@ -127,7 +128,7 @@ export const cardsCollectionApiDoc = {
     GET: {
       roles: ['USER'],
       permission: 'CARDS_READ',
-      tags: ['Cards'],
+      tags: [ApiTags.cardsCore],
       summary: 'List cards',
       description: 'List all cocktail cards of a workspace. Returns a slim summary without nested groups; use GET /cards/{cardId} for the full card.',
       params: WorkspaceIdParam,
@@ -137,7 +138,7 @@ export const cardsCollectionApiDoc = {
     POST: {
       roles: ['MANAGER'],
       permission: 'CARDS_CREATE',
-      tags: ['Cards'],
+      tags: [ApiTags.cardsCore],
       summary: 'Create card',
       params: WorkspaceIdParam,
       body: CardCreateSchema,
@@ -153,7 +154,7 @@ export const cardsItemApiDoc = {
     GET: {
       roles: ['USER'],
       permission: 'CARDS_READ',
-      tags: ['Cards'],
+      tags: [ApiTags.cardsCore],
       summary: 'Get card',
       description: 'Returns the full card including nested groups and items.',
       params: CardItemParams,
@@ -163,7 +164,7 @@ export const cardsItemApiDoc = {
     PUT: {
       roles: ['MANAGER'],
       permission: 'CARDS_UPDATE',
-      tags: ['Cards'],
+      tags: [ApiTags.cardsCore],
       summary: 'Update card',
       description: 'Replaces the card metadata and its full set of groups/items.',
       params: CardItemParams,
@@ -173,7 +174,7 @@ export const cardsItemApiDoc = {
     DELETE: {
       roles: ['ADMIN'],
       permission: 'CARDS_DELETE',
-      tags: ['Cards'],
+      tags: [ApiTags.cardsCore],
       summary: 'Delete card',
       params: CardItemParams,
       response: DeletionResult,
@@ -188,7 +189,7 @@ export const cardsArchiveApiDoc = {
     PUT: {
       roles: ['MANAGER'],
       permission: 'CARDS_UPDATE',
-      tags: ['Cards'],
+      tags: [ApiTags.cardsLifecycle],
       summary: 'Archive card',
       params: CardItemParams,
       response: CardSummaryDtoSchema,
@@ -204,7 +205,7 @@ export const cardsUnarchiveApiDoc = {
     PUT: {
       roles: ['MANAGER'],
       permission: 'CARDS_UPDATE',
-      tags: ['Cards'],
+      tags: [ApiTags.cardsLifecycle],
       summary: 'Unarchive card',
       params: CardItemParams,
       response: CardSummaryDtoSchema,
@@ -220,7 +221,7 @@ export const cardsCloneApiDoc = {
     POST: {
       roles: ['MANAGER'],
       permission: 'CARDS_CREATE',
-      tags: ['Cards'],
+      tags: [ApiTags.cardsLifecycle],
       summary: 'Clone card',
       description: 'Creates a deep copy of a card (groups and items) under a new name.',
       params: CardItemParams,

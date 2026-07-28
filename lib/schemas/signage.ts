@@ -5,6 +5,7 @@
  */
 import { z } from '@lib/openapi/zod';
 import { WorkspaceIdParam, DeletionResult } from '@lib/schemas/common';
+import { ApiTags } from '@lib/openapi/tags';
 import type { ResourceApiDoc } from '@lib/openapi/types';
 
 export const MonitorFormatEnum = z.enum(['LANDSCAPE', 'PORTRAIT']).openapi('MonitorFormat');
@@ -82,7 +83,7 @@ export const signageApiDoc = {
     GET: {
       roles: ['USER'],
       permission: 'MONITOR_READ',
-      tags: ['Monitor'],
+      tags: [ApiTags.monitorConfiguration],
       summary: 'Get signage configuration',
       description: 'Signage configuration and slides per format (landscape / portrait).',
       params: WorkspaceIdParam,
@@ -91,7 +92,7 @@ export const signageApiDoc = {
     PUT: {
       roles: ['MANAGER'],
       permission: 'MONITOR_UPDATE',
-      tags: ['Monitor'],
+      tags: [ApiTags.monitorConfiguration],
       summary: 'Update signage configuration',
       params: WorkspaceIdParam,
       body: SignageSettingsUpdateSchema,
@@ -107,7 +108,7 @@ export const signageSlidesApiDoc = {
     POST: {
       roles: ['MANAGER'],
       permission: 'MONITOR_UPDATE',
-      tags: ['Monitor'],
+      tags: [ApiTags.monitorSlides],
       summary: 'Upload signage slides',
       params: WorkspaceIdParam,
       body: SignageSlideCreateSchema,
@@ -118,7 +119,7 @@ export const signageSlidesApiDoc = {
     PATCH: {
       roles: ['MANAGER'],
       permission: 'MONITOR_UPDATE',
-      tags: ['Monitor'],
+      tags: [ApiTags.monitorSlides],
       summary: 'Update signage slides (schedule / enabled)',
       params: WorkspaceIdParam,
       body: SignageSlidePatchSchema,
@@ -135,7 +136,7 @@ export const signageSlideItemApiDoc = {
     DELETE: {
       roles: ['MANAGER'],
       permission: 'MONITOR_UPDATE',
-      tags: ['Monitor'],
+      tags: [ApiTags.monitorSlides],
       summary: 'Delete signage slide',
       params: SlideItemParams,
       response: DeletionResult,
@@ -151,7 +152,7 @@ export const signageSlideImageApiDoc = {
     GET: {
       roles: ['USER'],
       permission: 'MONITOR_READ',
-      tags: ['Monitor'],
+      tags: [ApiTags.monitorSlides],
       summary: 'Get signage slide image',
       description: 'Returns the slide image bytes (the `imageUrl` target).',
       params: SlideItemParams,

@@ -6,6 +6,7 @@
  */
 import { z } from '@lib/openapi/zod';
 import { WorkspaceIdParam, DeletionResult } from '@lib/schemas/common';
+import { ApiTags } from '@lib/openapi/tags';
 import type { ResourceApiDoc } from '@lib/openapi/types';
 
 /** Public glass DTO — no Prisma-isms: `hasImage`/`imageUrl` instead of `_count`/base64. */
@@ -78,7 +79,7 @@ export const glassesCollectionApiDoc = {
     GET: {
       roles: ['USER'],
       permission: 'GLASSES_READ',
-      tags: ['Glasses'],
+      tags: [ApiTags.glassesCore],
       summary: 'List glasses',
       description: 'List all glasses of a workspace, optionally filtered by name.',
       params: WorkspaceIdParam,
@@ -88,7 +89,7 @@ export const glassesCollectionApiDoc = {
     POST: {
       roles: ['MANAGER'],
       permission: 'GLASSES_CREATE',
-      tags: ['Glasses'],
+      tags: [ApiTags.glassesCore],
       summary: 'Create glass',
       params: WorkspaceIdParam,
       body: GlassCreateSchema,
@@ -104,7 +105,7 @@ export const glassesItemApiDoc = {
     GET: {
       roles: ['USER'],
       permission: 'GLASSES_READ',
-      tags: ['Glasses'],
+      tags: [ApiTags.glassesCore],
       summary: 'Get glass',
       params: GlassItemParams,
       response: GlassDtoSchema,
@@ -113,7 +114,7 @@ export const glassesItemApiDoc = {
     PUT: {
       roles: ['MANAGER'],
       permission: 'GLASSES_UPDATE',
-      tags: ['Glasses'],
+      tags: [ApiTags.glassesCore],
       summary: 'Update glass',
       params: GlassItemParams,
       body: GlassUpdateSchema,
@@ -122,7 +123,7 @@ export const glassesItemApiDoc = {
     DELETE: {
       roles: ['ADMIN'],
       permission: 'GLASSES_DELETE',
-      tags: ['Glasses'],
+      tags: [ApiTags.glassesCore],
       summary: 'Delete glass',
       params: GlassItemParams,
       response: DeletionResult,
@@ -138,7 +139,7 @@ export const glassesCheckApiDoc = {
     GET: {
       roles: ['USER'],
       permission: 'GLASSES_READ',
-      tags: ['Glasses'],
+      tags: [ApiTags.glassesCore],
       summary: 'Find similar glass',
       description: 'Returns the most similar existing glass by name, or null.',
       params: WorkspaceIdParam,
@@ -155,7 +156,7 @@ export const glassesCloneApiDoc = {
     POST: {
       roles: ['MANAGER'],
       permission: 'GLASSES_CREATE',
-      tags: ['Glasses'],
+      tags: [ApiTags.glassesLifecycle],
       summary: 'Clone glass',
       description: 'Creates a copy of a glass (including its image) under a new name.',
       params: GlassItemParams,
@@ -173,7 +174,7 @@ export const glassesReferencesApiDoc = {
     GET: {
       roles: ['USER'],
       permission: 'GLASSES_READ',
-      tags: ['Glasses'],
+      tags: [ApiTags.glassesReferences],
       summary: 'List glass references',
       description: 'Lists the cocktails that reference this glass.',
       params: GlassItemParams,
@@ -189,7 +190,7 @@ export const glassesExportJsonApiDoc = {
     POST: {
       roles: ['USER'],
       permission: null,
-      tags: ['Glasses'],
+      tags: [ApiTags.glassesImportExport],
       summary: 'Export glasses as JSON',
       description:
         'Exports the selected glasses in the portable JSON export format. A single glass yields one export object; multiple glasses yield an array. This payload is the exact input accepted by the import endpoint.',
@@ -207,7 +208,7 @@ export const glassesImportJsonApiDoc = {
     POST: {
       roles: ['MANAGER'],
       permission: 'GLASSES_CREATE',
-      tags: ['Glasses'],
+      tags: [ApiTags.glassesImportExport],
       summary: 'Import glasses from JSON',
       description:
         'Imports glasses from the portable JSON export format via a three-phase flow (validate / prepare-mapping / execute). Consumes exactly what the export endpoint produces.',
@@ -227,7 +228,7 @@ export const glassesImageApiDoc = {
     GET: {
       roles: ['USER'],
       permission: 'GLASSES_READ',
-      tags: ['Glasses'],
+      tags: [ApiTags.glassesMedia],
       summary: 'Get glass image',
       description: 'Returns the glass image bytes (the `imageUrl` target). 404 when the glass has no image.',
       params: GlassItemParams,

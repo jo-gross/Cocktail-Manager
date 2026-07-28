@@ -6,6 +6,7 @@
  * (SHAKE, STIR, …), so they reuse the `COCKTAILS_*` permission scopes.
  */
 import { z } from '@lib/openapi/zod';
+import { ApiTags } from '@lib/openapi/tags';
 import { WorkspaceIdParam } from '@lib/schemas/common';
 import type { ResourceApiDoc } from '@lib/openapi/types';
 
@@ -57,7 +58,7 @@ export const actionsCollectionApiDoc = {
     GET: {
       roles: ['USER'],
       permission: 'COCKTAILS_READ',
-      tags: ['Cocktails'],
+      tags: [ApiTags.cocktailsStepActions],
       summary: 'List step actions',
       description: 'List all cocktail-recipe step actions of a workspace, optionally filtered by name.',
       params: WorkspaceIdParam,
@@ -67,7 +68,7 @@ export const actionsCollectionApiDoc = {
     POST: {
       roles: ['ADMIN'],
       permission: 'COCKTAILS_UPDATE',
-      tags: ['Cocktails'],
+      tags: [ApiTags.cocktailsStepActions],
       summary: 'Create step action',
       params: WorkspaceIdParam,
       body: ActionCreateSchema,
@@ -83,7 +84,7 @@ export const actionsItemApiDoc = {
     PUT: {
       roles: ['ADMIN'],
       permission: 'COCKTAILS_UPDATE',
-      tags: ['Cocktails'],
+      tags: [ApiTags.cocktailsStepActions],
       summary: 'Update step action',
       description: 'Updates the action group and (optionally) the display-name translations.',
       params: ActionItemParams,
@@ -94,7 +95,7 @@ export const actionsItemApiDoc = {
     DELETE: {
       roles: ['ADMIN'],
       permission: 'COCKTAILS_UPDATE',
-      tags: ['Cocktails'],
+      tags: [ApiTags.cocktailsStepActions],
       summary: 'Delete step action',
       params: ActionItemParams,
       response: ActionDtoSchema,

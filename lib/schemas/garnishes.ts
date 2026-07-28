@@ -6,6 +6,7 @@
  */
 import { z } from '@lib/openapi/zod';
 import { WorkspaceIdParam, DeletionResult } from '@lib/schemas/common';
+import { ApiTags } from '@lib/openapi/tags';
 import type { ResourceApiDoc } from '@lib/openapi/types';
 
 /** Public garnish DTO — no Prisma-isms: `hasImage`/`imageUrl` instead of `_count`/base64. */
@@ -72,7 +73,7 @@ export const garnishesCollectionApiDoc = {
     GET: {
       roles: ['USER'],
       permission: 'GARNISHES_READ',
-      tags: ['Garnishes'],
+      tags: [ApiTags.garnishesCore],
       summary: 'List garnishes',
       description: 'List all garnishes of a workspace, optionally filtered by name.',
       params: WorkspaceIdParam,
@@ -82,7 +83,7 @@ export const garnishesCollectionApiDoc = {
     POST: {
       roles: ['MANAGER'],
       permission: 'GARNISHES_CREATE',
-      tags: ['Garnishes'],
+      tags: [ApiTags.garnishesCore],
       summary: 'Create garnish',
       params: WorkspaceIdParam,
       body: GarnishCreateSchema,
@@ -98,7 +99,7 @@ export const garnishesItemApiDoc = {
     GET: {
       roles: ['USER'],
       permission: 'GARNISHES_READ',
-      tags: ['Garnishes'],
+      tags: [ApiTags.garnishesCore],
       summary: 'Get garnish',
       params: GarnishItemParams,
       response: GarnishDtoSchema,
@@ -107,7 +108,7 @@ export const garnishesItemApiDoc = {
     PUT: {
       roles: ['MANAGER'],
       permission: 'GARNISHES_UPDATE',
-      tags: ['Garnishes'],
+      tags: [ApiTags.garnishesCore],
       summary: 'Update garnish',
       params: GarnishItemParams,
       body: GarnishUpdateSchema,
@@ -116,7 +117,7 @@ export const garnishesItemApiDoc = {
     DELETE: {
       roles: ['ADMIN'],
       permission: 'GARNISHES_DELETE',
-      tags: ['Garnishes'],
+      tags: [ApiTags.garnishesCore],
       summary: 'Delete garnish',
       params: GarnishItemParams,
       response: DeletionResult,
@@ -131,7 +132,7 @@ export const garnishesCheckApiDoc = {
     GET: {
       roles: ['USER'],
       permission: 'GARNISHES_READ',
-      tags: ['Garnishes'],
+      tags: [ApiTags.garnishesCore],
       summary: 'Find similar garnish',
       description: 'Returns the most similar existing garnish by name, or null.',
       params: WorkspaceIdParam,
@@ -148,7 +149,7 @@ export const garnishesCloneApiDoc = {
     POST: {
       roles: ['MANAGER'],
       permission: 'GARNISHES_CREATE',
-      tags: ['Garnishes'],
+      tags: [ApiTags.garnishesLifecycle],
       summary: 'Clone garnish',
       description: 'Creates a copy of a garnish (including its image) under a new name.',
       params: GarnishItemParams,
@@ -166,7 +167,7 @@ export const garnishesExportJsonApiDoc = {
     POST: {
       roles: ['USER'],
       permission: null,
-      tags: ['Garnishes'],
+      tags: [ApiTags.garnishesImportExport],
       summary: 'Export garnishes as JSON',
       description:
         'Exports the selected garnishes in the portable JSON export format. A single garnish yields one export object; multiple garnishes yield an array. This payload is the exact input accepted by the import endpoint.',
@@ -184,7 +185,7 @@ export const garnishesImportJsonApiDoc = {
     POST: {
       roles: ['MANAGER'],
       permission: 'GARNISHES_CREATE',
-      tags: ['Garnishes'],
+      tags: [ApiTags.garnishesImportExport],
       summary: 'Import garnishes from JSON',
       description:
         'Imports garnishes from the portable JSON export format via a three-phase flow (validate / prepare-mapping / execute). Consumes exactly what the export endpoint produces.',
@@ -204,7 +205,7 @@ export const garnishesImageApiDoc = {
     GET: {
       roles: ['USER'],
       permission: 'GARNISHES_READ',
-      tags: ['Garnishes'],
+      tags: [ApiTags.garnishesMedia],
       summary: 'Get garnish image',
       description: 'Returns the garnish image bytes (the `imageUrl` target). 404 when the garnish has no image.',
       params: GarnishItemParams,

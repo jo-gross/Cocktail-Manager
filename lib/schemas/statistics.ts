@@ -10,6 +10,7 @@
  */
 import { z } from '@lib/openapi/zod';
 import { DateTimeString, WorkspaceIdParam, DeletionResult } from '@lib/schemas/common';
+import { ApiTags } from '@lib/openapi/tags';
 import type { ResourceApiDoc } from '@lib/openapi/types';
 
 /** Slim embedded cocktail reference — just enough to identify/label the cocktail. */
@@ -94,7 +95,7 @@ export const statisticsCocktailsCollectionApiDoc = {
     GET: {
       roles: ['USER'],
       permission: 'STATISTICS_READ',
-      tags: ['Statistics'],
+      tags: [ApiTags.statisticsLogging],
       summary: 'List cocktail statistics',
       description: 'List cocktail-statistic entries of a workspace, optionally filtered by a date range (day-start-time aware).',
       params: WorkspaceIdParam,
@@ -111,7 +112,7 @@ export const statisticsCocktailsAddApiDoc = {
     POST: {
       roles: ['USER'],
       permission: 'STATISTICS_CREATE',
-      tags: ['Statistics'],
+      tags: [ApiTags.statisticsLogging],
       summary: 'Log a cocktail statistic',
       description:
         'Records that a cocktail was made and reconciles the cocktail queue. ' +
@@ -131,7 +132,7 @@ export const statisticsCocktailsItemApiDoc = {
     DELETE: {
       roles: ['MANAGER'],
       permission: 'STATISTICS_DELETE',
-      tags: ['Statistics'],
+      tags: [ApiTags.statisticsLogging],
       summary: 'Delete a cocktail statistic',
       params: StatisticItemParams,
       response: DeletionResult,
@@ -147,7 +148,7 @@ export const statisticsLogsCollectionApiDoc = {
     GET: {
       roles: ['USER'],
       permission: 'STATISTICS_READ',
-      tags: ['Statistics'],
+      tags: [ApiTags.statisticsLogging],
       summary: 'List statistic logs',
       description:
         'List cocktail-statistic entries of a workspace, newest first, filtered by date range and/or name search. ' +
@@ -166,7 +167,7 @@ export const statisticsLogsItemApiDoc = {
     DELETE: {
       roles: ['MANAGER'],
       permission: 'STATISTICS_DELETE',
-      tags: ['Statistics'],
+      tags: [ApiTags.statisticsLogging],
       summary: 'Delete a statistic log',
       params: StatisticItemParams,
       response: DeletionResult,

@@ -5,6 +5,7 @@
  * (see lib/api/dto/ingredients.ts), NOT the raw Prisma shape.
  */
 import { z } from '@lib/openapi/zod';
+import { ApiTags } from '@lib/openapi/tags';
 import { WorkspaceIdParam, DeletionResult } from '@lib/schemas/common';
 import type { ResourceApiDoc } from '@lib/openapi/types';
 
@@ -113,7 +114,7 @@ export const ingredientsCollectionApiDoc = {
     GET: {
       roles: ['USER'],
       permission: 'INGREDIENTS_READ',
-      tags: ['Ingredients'],
+      tags: [ApiTags.ingredientsCore],
       summary: 'List ingredients',
       description: 'List all ingredients of a workspace, optionally filtered by name or short name.',
       params: WorkspaceIdParam,
@@ -123,7 +124,7 @@ export const ingredientsCollectionApiDoc = {
     POST: {
       roles: ['MANAGER'],
       permission: 'INGREDIENTS_CREATE',
-      tags: ['Ingredients'],
+      tags: [ApiTags.ingredientsCore],
       summary: 'Create ingredient',
       params: WorkspaceIdParam,
       body: IngredientCreateSchema,
@@ -139,7 +140,7 @@ export const ingredientsItemApiDoc = {
     GET: {
       roles: ['USER'],
       permission: 'INGREDIENTS_READ',
-      tags: ['Ingredients'],
+      tags: [ApiTags.ingredientsCore],
       summary: 'Get ingredient',
       params: IngredientItemParams,
       response: IngredientDtoSchema,
@@ -148,7 +149,7 @@ export const ingredientsItemApiDoc = {
     PUT: {
       roles: ['MANAGER'],
       permission: 'INGREDIENTS_UPDATE',
-      tags: ['Ingredients'],
+      tags: [ApiTags.ingredientsCore],
       summary: 'Update ingredient',
       params: IngredientItemParams,
       body: IngredientUpdateSchema,
@@ -157,7 +158,7 @@ export const ingredientsItemApiDoc = {
     DELETE: {
       roles: ['ADMIN'],
       permission: 'INGREDIENTS_DELETE',
-      tags: ['Ingredients'],
+      tags: [ApiTags.ingredientsCore],
       summary: 'Delete ingredient',
       params: IngredientItemParams,
       response: DeletionResult,
@@ -173,7 +174,7 @@ export const ingredientsCheckApiDoc = {
     GET: {
       roles: ['USER'],
       permission: 'INGREDIENTS_READ',
-      tags: ['Ingredients'],
+      tags: [ApiTags.ingredientsCore],
       summary: 'Find similar ingredient',
       description: 'Returns the most similar existing ingredient by name or link, or null.',
       params: WorkspaceIdParam,
@@ -190,7 +191,7 @@ export const ingredientsCloneApiDoc = {
     POST: {
       roles: ['MANAGER'],
       permission: 'INGREDIENTS_CREATE',
-      tags: ['Ingredients'],
+      tags: [ApiTags.ingredientsLifecycle],
       summary: 'Clone ingredient',
       description: 'Creates a copy of an ingredient (including its image and unit volumes) under a new name.',
       params: IngredientItemParams,
@@ -208,7 +209,7 @@ export const ingredientsReferencesApiDoc = {
     GET: {
       roles: ['USER'],
       permission: 'INGREDIENTS_READ',
-      tags: ['Ingredients'],
+      tags: [ApiTags.ingredientsReferences],
       summary: 'List ingredient references',
       description: 'Lists the cocktails that reference this ingredient.',
       params: IngredientItemParams,
@@ -224,7 +225,7 @@ export const ingredientsExportJsonApiDoc = {
     POST: {
       roles: ['USER'],
       permission: null,
-      tags: ['Ingredients'],
+      tags: [ApiTags.ingredientsImportExport],
       summary: 'Export ingredients as JSON',
       description:
         'Exports the selected ingredients (with their unit volumes and units) in the portable JSON export format. A single ingredient yields one export object; multiple ingredients yield an array. This payload is the exact input accepted by the import endpoint.',
@@ -242,7 +243,7 @@ export const ingredientsImportJsonApiDoc = {
     POST: {
       roles: ['MANAGER'],
       permission: 'INGREDIENTS_CREATE',
-      tags: ['Ingredients'],
+      tags: [ApiTags.ingredientsImportExport],
       summary: 'Import ingredients from JSON',
       description:
         'Imports ingredients from the portable JSON export format via a three-phase flow (validate / prepare-mapping / execute). Consumes exactly what the export endpoint produces; missing units are recreated by name.',
@@ -262,7 +263,7 @@ export const ingredientsImageApiDoc = {
     GET: {
       roles: ['USER'],
       permission: 'INGREDIENTS_READ',
-      tags: ['Ingredients'],
+      tags: [ApiTags.ingredientsMedia],
       summary: 'Get ingredient image',
       description: 'Returns the ingredient image bytes (the `imageUrl` target). 404 when the ingredient has no image.',
       params: IngredientItemParams,

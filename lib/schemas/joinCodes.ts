@@ -4,6 +4,7 @@
  */
 import { z } from '@lib/openapi/zod';
 import { WorkspaceIdParam, DateTimeString, DeletionResult } from '@lib/schemas/common';
+import { ApiTags } from '@lib/openapi/tags';
 import type { ResourceApiDoc } from '@lib/openapi/types';
 
 /** Public join-code DTO — no `workspaceId` (implied by the path). */
@@ -38,7 +39,7 @@ export const joinCodesCollectionApiDoc = {
     GET: {
       roles: ['MANAGER'],
       permission: 'USERS_READ',
-      tags: ['Workspace'],
+      tags: [ApiTags.workspaceJoinCodes],
       summary: 'List join codes',
       params: WorkspaceIdParam,
       response: z.array(JoinCodeDtoSchema),
@@ -46,7 +47,7 @@ export const joinCodesCollectionApiDoc = {
     POST: {
       roles: ['MANAGER'],
       permission: 'USERS_UPDATE',
-      tags: ['Workspace'],
+      tags: [ApiTags.workspaceJoinCodes],
       summary: 'Create join code',
       params: WorkspaceIdParam,
       body: JoinCodeCreateSchema,
@@ -62,7 +63,7 @@ export const joinCodesItemApiDoc = {
     DELETE: {
       roles: ['MANAGER'],
       permission: 'USERS_UPDATE',
-      tags: ['Workspace'],
+      tags: [ApiTags.workspaceJoinCodes],
       summary: 'Delete join code',
       params: JoinCodeItemParams,
       response: DeletionResult,

@@ -6,6 +6,7 @@
  */
 import { z } from '@lib/openapi/zod';
 import { DateTimeString, WorkspaceIdParam } from '@lib/schemas/common';
+import { ApiTags } from '@lib/openapi/tags';
 import type { ResourceApiDoc } from '@lib/openapi/types';
 
 /** Public rating DTO — no Prisma-isms: no `cocktailId` (implied by the path). */
@@ -41,7 +42,7 @@ export const ratingsCollectionApiDoc = {
     GET: {
       roles: ['USER'],
       permission: 'RATINGS_READ',
-      tags: ['Ratings'],
+      tags: [ApiTags.ratingsCore],
       summary: 'List ratings',
       description: 'List all ratings of a cocktail.',
       params: RatingCollectionParams,
@@ -50,7 +51,7 @@ export const ratingsCollectionApiDoc = {
     POST: {
       roles: ['USER'],
       permission: 'RATINGS_CREATE',
-      tags: ['Ratings'],
+      tags: [ApiTags.ratingsCore],
       summary: 'Create rating',
       params: RatingCollectionParams,
       body: RatingCreateSchema,
@@ -66,7 +67,7 @@ export const ratingsItemApiDoc = {
     DELETE: {
       roles: ['MANAGER'],
       permission: 'RATINGS_DELETE',
-      tags: ['Ratings'],
+      tags: [ApiTags.ratingsCore],
       summary: 'Delete rating',
       params: RatingItemParams,
       response: RatingDtoSchema,

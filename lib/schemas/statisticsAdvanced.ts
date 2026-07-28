@@ -16,6 +16,7 @@
  */
 import { z } from '@lib/openapi/zod';
 import { WorkspaceIdParam, DateTimeString, DeletionResult } from '@lib/schemas/common';
+import { ApiTags } from '@lib/openapi/tags';
 import type { ResourceApiDoc } from '@lib/openapi/types';
 
 /** Optional inclusive date-range filter shared by most advanced reads (day-start-time aware). */
@@ -45,7 +46,7 @@ export const statisticsAdvancedOverviewApiDoc = {
     GET: {
       roles: ['USER'],
       permission: 'STATISTICS_READ',
-      tags: ['Statistics'],
+      tags: [ApiTags.statisticsAdvanced],
       summary: 'Advanced statistics overview',
       description:
         'Dashboard-style overview with per-period KPIs (today/week/month, a custom selected range, average-per-hour and all-time) plus their chart data. Defaults the selected range to the last 7 days when startDate/endDate are omitted.',
@@ -79,7 +80,7 @@ export const statisticsAdvancedCocktailsApiDoc = {
     GET: {
       roles: ['USER'],
       permission: 'STATISTICS_READ',
-      tags: ['Statistics'],
+      tags: [ApiTags.statisticsAdvanced],
       summary: 'Advanced cocktail ranking',
       description:
         'Ranks cocktails by order count for the given date range, with share/delta vs. the previous equal-length period and each cocktail’s ingredient breakdown. Emits a `{ data, total }` envelope (not the standard `{ data }`). Requires startDate and endDate.',
@@ -115,7 +116,7 @@ export const statisticsAdvancedCocktailsAllApiDoc = {
     GET: {
       roles: ['USER'],
       permission: 'STATISTICS_READ',
-      tags: ['Statistics'],
+      tags: [ApiTags.statisticsAdvanced],
       summary: 'All cocktails with order counts',
       description:
         'Lists every cocktail in the workspace (name-ordered) with its order count for the given range; cocktails without orders are included with count 0. Order counts are only computed when both startDate and endDate are supplied. Emits a `{ data, total }` envelope.',
@@ -146,7 +147,7 @@ export const statisticsAdvancedCocktailItemApiDoc = {
     GET: {
       roles: ['USER'],
       permission: 'STATISTICS_READ',
-      tags: ['Statistics'],
+      tags: [ApiTags.statisticsAdvanced],
       summary: 'Advanced single-cocktail analytics',
       description:
         'Deep-dive analytics for one cocktail: totals, rank, deltas, revenue, time series and hour/day distributions. Emits a `{ data }` envelope. Uses the cocktail’s full order history when no date range is given.',
@@ -204,7 +205,7 @@ export const statisticsAdvancedCocktailOrdersApiDoc = {
     GET: {
       roles: ['USER'],
       permission: 'STATISTICS_READ',
-      tags: ['Statistics'],
+      tags: [ApiTags.statisticsAdvanced],
       summary: 'Paginated order log for a cocktail',
       description:
         'Newest-first, searchable, paginated list of individual orders (statistic entries) for one cocktail. Search filters over formatted date/weekday, user and card. Emits a `{ data, pagination }` envelope with the legacy pagination block.',
@@ -241,7 +242,7 @@ export const statisticsAdvancedIngredientsApiDoc = {
     GET: {
       roles: ['USER'],
       permission: 'STATISTICS_READ',
-      tags: ['Statistics'],
+      tags: [ApiTags.statisticsAdvanced],
       summary: 'Ingredient usage statistics',
       description:
         'Lists every ingredient with its order-usage count, the number of distinct cocktails using it, and its share of period orders. Counts are only computed when both startDate and endDate are supplied. Emits a `{ data, total }` envelope.',
@@ -277,7 +278,7 @@ export const statisticsAdvancedTagsApiDoc = {
     GET: {
       roles: ['USER'],
       permission: 'STATISTICS_READ',
-      tags: ['Statistics'],
+      tags: [ApiTags.statisticsAdvanced],
       summary: 'Tag usage statistics',
       description:
         'Lists every tag with its order-usage count, the number of distinct cocktails carrying it, and its share of period orders. Counts are only computed when both startDate and endDate are supplied. Emits a `{ data, total }` envelope.',
@@ -314,7 +315,7 @@ export const statisticsAdvancedCompareApiDoc = {
     GET: {
       roles: ['USER'],
       permission: 'STATISTICS_READ',
-      tags: ['Statistics'],
+      tags: [ApiTags.statisticsAdvanced],
       summary: 'Compare an ad-hoc tag/ingredient set',
       description:
         'Computes KPIs, matching cocktails and a cross-aggregate for an ad-hoc tag or ingredient set (with AND/OR logic). Emits a `{ data }` envelope. Uses all-time when no date range is given.',
@@ -368,7 +369,7 @@ export const statisticsAdvancedSetsApiDoc = {
     GET: {
       roles: ['USER'],
       permission: 'STATISTICS_READ',
-      tags: ['Statistics'],
+      tags: [ApiTags.statisticsAdvanced],
       summary: 'List saved statistics sets',
       description: 'Lists saved statistics sets of a workspace (newest first), optionally filtered by type/types. Emits a `{ data }` envelope.',
       params: WorkspaceIdParam,
@@ -378,7 +379,7 @@ export const statisticsAdvancedSetsApiDoc = {
     POST: {
       roles: ['USER'],
       permission: 'STATISTICS_READ',
-      tags: ['Statistics'],
+      tags: [ApiTags.statisticsAdvanced],
       summary: 'Create a saved statistics set',
       params: WorkspaceIdParam,
       body: AdvancedSetCreateSchema,
@@ -388,7 +389,7 @@ export const statisticsAdvancedSetsApiDoc = {
     PUT: {
       roles: ['USER'],
       permission: 'STATISTICS_READ',
-      tags: ['Statistics'],
+      tags: [ApiTags.statisticsAdvanced],
       summary: 'Update a saved statistics set',
       params: WorkspaceIdParam,
       body: AdvancedSetUpdateSchema,
@@ -398,7 +399,7 @@ export const statisticsAdvancedSetsApiDoc = {
     DELETE: {
       roles: ['USER'],
       permission: 'STATISTICS_READ',
-      tags: ['Statistics'],
+      tags: [ApiTags.statisticsAdvanced],
       summary: 'Delete a saved statistics set',
       params: WorkspaceIdParam,
       query: AdvancedSetDeleteQuerySchema,
@@ -428,7 +429,7 @@ export const statisticsAdvancedSetItemApiDoc = {
     GET: {
       roles: ['USER'],
       permission: 'STATISTICS_READ',
-      tags: ['Statistics'],
+      tags: [ApiTags.statisticsAdvanced],
       summary: 'Analytics for a saved set',
       description:
         'Resolves a saved set to its matching cocktails and computes KPIs, per-cocktail counts and a cross-aggregate. Emits a `{ data }` envelope. Uses all-time when no date range is given.',

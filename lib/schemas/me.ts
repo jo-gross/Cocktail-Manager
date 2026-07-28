@@ -5,6 +5,7 @@
  * API token WITHOUT knowing the workspace ID up front.
  */
 import { z } from '@lib/openapi/zod';
+import { ApiTags } from '@lib/openapi/tags';
 import type { ResourceApiDoc } from '@lib/openapi/types';
 import { PermissionEnum } from '@lib/schemas/permissions';
 
@@ -36,7 +37,7 @@ export const meApiDoc = {
       roles: ['USER'],
       // Any valid API key (or the instance master key); no specific permission required.
       permission: null,
-      tags: ['Workspace'],
+      tags: [ApiTags.workspaceCore],
       summary: 'Get token identity',
       description:
         'Returns the workspace, granted permissions and key metadata for the authenticated API token. ' +

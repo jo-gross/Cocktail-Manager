@@ -5,6 +5,7 @@
  */
 import { z } from '@lib/openapi/zod';
 import { WorkspaceIdParam } from '@lib/schemas/common';
+import { ApiTags } from '@lib/openapi/tags';
 import type { ResourceApiDoc } from '@lib/openapi/types';
 
 export const TranslationUpdateSchema = z
@@ -25,7 +26,7 @@ export const translationsApiDoc = {
     PUT: {
       roles: ['ADMIN'],
       permission: 'WORKSPACE_UPDATE',
-      tags: ['Workspace'],
+      tags: [ApiTags.workspaceSettings],
       summary: 'Upsert a translation',
       description: 'Merges display-name translations for a key into the workspace translation settings.',
       params: WorkspaceIdParam,

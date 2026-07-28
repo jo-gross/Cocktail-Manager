@@ -6,6 +6,7 @@
  */
 import { z } from '@lib/openapi/zod';
 import { WorkspaceIdParam } from '@lib/schemas/common';
+import { ApiTags } from '@lib/openapi/tags';
 import type { ResourceApiDoc } from '@lib/openapi/types';
 
 /** Public ice DTO — no Prisma-isms and no `workspaceId` (implied by the path). */
@@ -55,7 +56,7 @@ export const icesCollectionApiDoc = {
     GET: {
       roles: ['USER'],
       permission: 'ICE_READ',
-      tags: ['Ice'],
+      tags: [ApiTags.iceCore],
       summary: 'List ice',
       description: 'List all ice of a workspace, optionally filtered by name.',
       params: WorkspaceIdParam,
@@ -65,7 +66,7 @@ export const icesCollectionApiDoc = {
     POST: {
       roles: ['MANAGER'],
       permission: 'ICE_CREATE',
-      tags: ['Ice'],
+      tags: [ApiTags.iceCore],
       summary: 'Create ice',
       params: WorkspaceIdParam,
       body: IceCreateSchema,
@@ -81,7 +82,7 @@ export const icesItemApiDoc = {
     GET: {
       roles: ['USER'],
       permission: 'ICE_READ',
-      tags: ['Ice'],
+      tags: [ApiTags.iceCore],
       summary: 'Get ice',
       params: IceItemParams,
       response: IceDtoSchema,
@@ -90,7 +91,7 @@ export const icesItemApiDoc = {
     PUT: {
       roles: ['MANAGER'],
       permission: 'ICE_UPDATE',
-      tags: ['Ice'],
+      tags: [ApiTags.iceCore],
       summary: 'Update ice',
       params: IceItemParams,
       body: IceUpdateSchema,
@@ -99,7 +100,7 @@ export const icesItemApiDoc = {
     DELETE: {
       roles: ['ADMIN'],
       permission: 'ICE_DELETE',
-      tags: ['Ice'],
+      tags: [ApiTags.iceCore],
       summary: 'Delete ice',
       params: IceItemParams,
       response: IceDtoSchema,

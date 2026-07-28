@@ -5,6 +5,7 @@
  */
 import { z } from '@lib/openapi/zod';
 import { WorkspaceIdParam } from '@lib/schemas/common';
+import { ApiTags } from '@lib/openapi/tags';
 import type { ResourceApiDoc } from '@lib/openapi/types';
 
 export const LeaveResultSchema = z.object({ ok: z.boolean() }).openapi('LeaveResult');
@@ -17,7 +18,7 @@ export const leaveApiDoc = {
       roles: ['USER'],
       permission: null,
       sessionOnly: true,
-      tags: ['Workspace'],
+      tags: [ApiTags.workspaceMembership],
       summary: 'Leave workspace',
       description: 'Removes the calling user from the workspace. Session-only — API keys are not accepted.',
       params: WorkspaceIdParam,

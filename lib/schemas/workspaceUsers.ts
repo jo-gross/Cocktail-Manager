@@ -6,6 +6,7 @@
  */
 import { z } from '@lib/openapi/zod';
 import { WorkspaceIdParam, DeletionResult } from '@lib/schemas/common';
+import { ApiTags } from '@lib/openapi/tags';
 import type { ResourceApiDoc } from '@lib/openapi/types';
 
 /** Workspace role assigned to a membership. */
@@ -41,7 +42,7 @@ export const workspaceUsersCollectionApiDoc = {
     GET: {
       roles: ['USER'],
       permission: 'USERS_READ',
-      tags: ['Workspace Users'],
+      tags: [ApiTags.workspaceUsersCore],
       summary: 'List workspace users',
       description: 'List all users (memberships) of a workspace.',
       params: WorkspaceIdParam,
@@ -57,7 +58,7 @@ export const workspaceUsersItemApiDoc = {
     PUT: {
       roles: ['ADMIN'],
       permission: 'USERS_UPDATE',
-      tags: ['Workspace Users'],
+      tags: [ApiTags.workspaceUsersCore],
       summary: 'Update workspace user role',
       params: WorkspaceUserItemParams,
       body: WorkspaceUserUpdateSchema,
@@ -67,7 +68,7 @@ export const workspaceUsersItemApiDoc = {
     DELETE: {
       roles: ['ADMIN'],
       permission: 'USERS_DELETE',
-      tags: ['Workspace Users'],
+      tags: [ApiTags.workspaceUsersCore],
       summary: 'Remove workspace user',
       params: WorkspaceUserItemParams,
       response: DeletionResult,

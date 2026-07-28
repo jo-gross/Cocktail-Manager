@@ -6,6 +6,7 @@
  */
 import { z } from '@lib/openapi/zod';
 import { WorkspaceIdParam, DateTimeString, DeletionResult } from '@lib/schemas/common';
+import { ApiTags } from '@lib/openapi/tags';
 import type { ResourceApiDoc } from '@lib/openapi/types';
 
 const RoleEnum = z.enum(['OWNER', 'ADMIN', 'MANAGER', 'USER']).openapi('WorkspaceRole');
@@ -72,7 +73,7 @@ export const workspaceItemApiDoc = {
     GET: {
       roles: ['USER'],
       permission: 'WORKSPACE_READ',
-      tags: ['Workspace'],
+      tags: [ApiTags.workspaceCore],
       summary: 'Get workspace',
       description: 'Get workspace details including settings and members. Expired demo workspaces are deleted and return 410.',
       params: WorkspaceIdParam,
@@ -82,7 +83,7 @@ export const workspaceItemApiDoc = {
     PUT: {
       roles: ['MANAGER'],
       permission: 'WORKSPACE_UPDATE',
-      tags: ['Workspace'],
+      tags: [ApiTags.workspaceCore],
       summary: 'Update workspace',
       description: 'Update the workspace name.',
       params: WorkspaceIdParam,
@@ -92,7 +93,7 @@ export const workspaceItemApiDoc = {
     DELETE: {
       roles: ['ADMIN'],
       permission: null,
-      tags: ['Workspace'],
+      tags: [ApiTags.workspaceCore],
       summary: 'Delete workspace',
       description: 'Permanently delete the workspace and all its data.',
       params: WorkspaceIdParam,
@@ -108,7 +109,7 @@ export const workspaceSettingsApiDoc = {
     GET: {
       roles: ['USER'],
       permission: 'WORKSPACE_READ',
-      tags: ['Workspace'],
+      tags: [ApiTags.workspaceSettings],
       summary: 'Get workspace settings',
       description: 'Get all workspace settings as a key→value map.',
       params: WorkspaceIdParam,
@@ -117,7 +118,7 @@ export const workspaceSettingsApiDoc = {
     PUT: {
       roles: ['MANAGER'],
       permission: 'WORKSPACE_UPDATE',
-      tags: ['Workspace'],
+      tags: [ApiTags.workspaceSettings],
       summary: 'Update workspace setting',
       description: 'Upsert a single workspace setting and return the full settings map.',
       params: WorkspaceIdParam,

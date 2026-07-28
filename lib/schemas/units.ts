@@ -6,6 +6,7 @@
  */
 import { z } from '@lib/openapi/zod';
 import { WorkspaceIdParam } from '@lib/schemas/common';
+import { ApiTags } from '@lib/openapi/tags';
 import type { ResourceApiDoc } from '@lib/openapi/types';
 
 /** Public unit DTO — no Prisma-isms and no `workspaceId` (implied by the path). */
@@ -78,7 +79,7 @@ export const unitsCollectionApiDoc = {
     GET: {
       roles: ['USER'],
       permission: 'UNITS_READ',
-      tags: ['Units'],
+      tags: [ApiTags.unitsCore],
       summary: 'List units',
       description: 'List all units of a workspace, optionally filtered by name.',
       params: WorkspaceIdParam,
@@ -88,7 +89,7 @@ export const unitsCollectionApiDoc = {
     POST: {
       roles: ['ADMIN'],
       permission: null,
-      tags: ['Units'],
+      tags: [ApiTags.unitsCore],
       summary: 'Create unit',
       params: WorkspaceIdParam,
       body: UnitCreateSchema,
@@ -104,7 +105,7 @@ export const unitsItemApiDoc = {
     DELETE: {
       roles: ['ADMIN'],
       permission: null,
-      tags: ['Units'],
+      tags: [ApiTags.unitsCore],
       summary: 'Delete unit',
       params: UnitItemParams,
       response: UnitDtoSchema,
@@ -119,7 +120,7 @@ export const unitConversionsCollectionApiDoc = {
     GET: {
       roles: ['USER'],
       permission: null,
-      tags: ['Units'],
+      tags: [ApiTags.unitsConversions],
       summary: 'List unit conversions',
       description: 'List all unit conversions of a workspace.',
       params: WorkspaceIdParam,
@@ -128,7 +129,7 @@ export const unitConversionsCollectionApiDoc = {
     POST: {
       roles: ['ADMIN'],
       permission: null,
-      tags: ['Units'],
+      tags: [ApiTags.unitsConversions],
       summary: 'Create unit conversion',
       description: 'Create a unit conversion (plus its inverse) and regenerate all derived conversions.',
       params: WorkspaceIdParam,
@@ -145,7 +146,7 @@ export const unitConversionsItemApiDoc = {
     PUT: {
       roles: ['ADMIN'],
       permission: 'UNITS_UPDATE',
-      tags: ['Units'],
+      tags: [ApiTags.unitsConversions],
       summary: 'Update unit conversion',
       description: 'Update a conversion factor and regenerate all derived conversions.',
       params: UnitConversionItemParams,
@@ -155,7 +156,7 @@ export const unitConversionsItemApiDoc = {
     DELETE: {
       roles: ['ADMIN'],
       permission: null,
-      tags: ['Units'],
+      tags: [ApiTags.unitsConversions],
       summary: 'Delete unit conversion',
       description: 'Delete a conversion and regenerate all derived conversions.',
       params: UnitConversionItemParams,

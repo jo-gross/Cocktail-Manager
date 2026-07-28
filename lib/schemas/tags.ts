@@ -6,6 +6,7 @@
  */
 import { z } from '@lib/openapi/zod';
 import { WorkspaceIdParam } from '@lib/schemas/common';
+import { ApiTags } from '@lib/openapi/tags';
 import type { ResourceApiDoc } from '@lib/openapi/types';
 
 /** Public tags DTO — the deduplicated list of tag strings in the workspace. */
@@ -20,7 +21,7 @@ export const tagsCollectionApiDoc = {
     GET: {
       roles: ['USER'],
       permission: 'COCKTAILS_READ',
-      tags: ['Tags'],
+      tags: [ApiTags.tagsCore],
       summary: 'List tags',
       description: 'List all distinct tags used across cocktails and ingredients of a workspace.',
       params: WorkspaceIdParam,
