@@ -115,15 +115,6 @@ export async function seedIngredient(workspaceId: string, overrides: { name?: st
   });
 }
 
-export async function seedTag(workspaceId: string, overrides: { name?: string } = {}) {
-  return prisma.tag.create({
-    data: {
-      name: overrides.name ?? `Tag ${randomToken().slice(0, 6)}`,
-      workspaceId,
-    },
-  });
-}
-
 export async function seedIce(workspaceId: string, overrides: { name?: string } = {}) {
   return prisma.ice.create({
     data: {

@@ -201,7 +201,7 @@ export function buildOpenApiDocument(resources: ResourceApiDoc[], variant: ApiVa
     }
   }
 
-  const enriched = doc as Record<string, unknown>;
+  const enriched = doc as unknown as Record<string, unknown>;
   enriched.tags = OPENAPI_TAGS;
   enriched['x-tagGroups'] = OPENAPI_TAG_GROUPS;
 
