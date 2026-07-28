@@ -53,6 +53,49 @@ jobs:
       - name: 'Run tests'
         run: pnpm test
 
+  Integration:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: cocktail_recipe_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v7
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: 'Node.js setup'
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: 'pnpm'
+
+      - name: 'Install dependencies'
+        run: pnpm install --frozen-lockfile
+
+      - name: 'Run integration tests'
+        run: pnpm test:integration
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/cocktail_recipe_test
+          BETTER_AUTH_SECRET: test-better-auth-secret
+          BETTER_AUTH_URL: http://localhost:3000
+          API_KEY_JWT_SECRET: test-jwt-secret-for-api-tests
+          INSTANCE_MASTER_API_KEY: ck_master_test_key_1234567890
+
   OpenAPI:
     name: OpenAPI spec up to date
     runs-on: ubuntu-latest

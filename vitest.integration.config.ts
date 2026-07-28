@@ -5,13 +5,14 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
-    include: ['lib/**/*.test.{ts,tsx}', 'middleware/**/*.test.{ts,tsx}'],
-    exclude: ['**/node_modules/**', '**/*.integration.test.{ts,tsx}'],
-    coverage: {
-      provider: 'v8',
-      reporter: ['text', 'lcov', 'html'],
-      include: ['lib/**', 'models/**', 'middleware/**'],
-    },
+    include: ['lib/**/*.integration.test.{ts,tsx}'],
+    exclude: ['**/node_modules/**'],
+    globalSetup: ['./test/globalSetup.ts'],
+    setupFiles: ['./test/setupIntegration.ts'],
+    testTimeout: 30_000,
+    hookTimeout: 60_000,
+    fileParallelism: false,
+    sequence: { concurrent: false },
   },
   resolve: {
     alias: {
