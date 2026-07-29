@@ -75,7 +75,7 @@
   },
   "devDependencies": {
     "@next/bundle-analyzer": "^16.2.12",
-    "@playwright/test": "^1.60.0",
+    "@playwright/test": "^1.62.0",
     "@tailwindcss/postcss": "^4.3.2",
     "@types/bcrypt": "^6.0.0",
     "@types/deep-diff": "1.0.5",
