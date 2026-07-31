@@ -3,7 +3,7 @@ import { Role, User } from '@generated/prisma/client';
 import { withAuthentication } from '@middleware/api/authenticationMiddleware';
 import HTTPMethod from 'http-method-enum';
 import { withHttpMethods } from '@middleware/api/handleMethods';
-import { regenerateUnitConversions } from '../../../workspaces/[workspaceId]/units/conversions';
+import { regenerateUnitConversions } from '@lib/api/controllers/units';
 import { createWorkspaceWithDefaults } from '@lib/workspace/createWorkspaceWithDefaults';
 import prisma from '../../../../prisma/prisma';
 

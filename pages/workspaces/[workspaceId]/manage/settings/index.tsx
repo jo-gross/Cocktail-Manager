@@ -1,7 +1,7 @@
 import React, { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { alertService } from '@lib/alertService';
 import { useRouter } from 'next/router';
-import { BackupStructure } from '../../../../api/v1/workspaces/[workspaceId]/admin/backups/backupStructure';
+import { BackupStructure } from '../../../../api/workspaces/[workspaceId]/admin/backups/backupStructure';
 import { ManageEntityLayout } from '@components/layout/ManageEntityLayout';
 import { Role, WorkspaceCocktailRecipeStepAction } from '@generated/prisma/client';
 import type { UnitDto, UnitConversionDto } from '@lib/schemas/units';
