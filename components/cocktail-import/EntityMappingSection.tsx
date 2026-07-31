@@ -101,7 +101,7 @@ export function EntityMappingSection({
       if (!workspaceId || typeof workspaceId !== 'string') {
         return [];
       }
-      const response = await fetch(`/api/workspaces/${workspaceId}/${apiEndpoint}?search=${encodeURIComponent(search)}`);
+      const response = await fetch(`/api/v1/workspaces/${workspaceId}/${apiEndpoint}?search=${encodeURIComponent(search)}`);
       const data = await response.json();
       return data.data || [];
     },

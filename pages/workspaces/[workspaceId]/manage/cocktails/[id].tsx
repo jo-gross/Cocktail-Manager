@@ -41,7 +41,7 @@ function EditCocktailRecipe() {
           setExportingPdf(true);
           try {
             alertService.info('Export läuft und wird gleich zur Verfügung stehen. Dieser Vorgang kann einige Minuten dauern.');
-            const response = await fetch(`/api/workspaces/${workspaceId}/cocktails/export-pdf`, {
+            const response = await fetch(`/api/v1/workspaces/${workspaceId}/cocktails/export/pdf`, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
@@ -139,7 +139,7 @@ function EditCocktailRecipe() {
               onClick={async () => {
                 const archiveFunction = async () => {
                   const response = await fetch(
-                    `/api/workspaces/${workspaceId}/cocktails/${cocktailRecipe?.id}/${cocktailRecipe?.isArchived ? 'unarchive' : 'archive'}`,
+                    `/api/v1/workspaces/${workspaceId}/cocktails/${cocktailRecipe?.id}/${cocktailRecipe?.isArchived ? 'unarchive' : 'archive'}`,
                     {
                       method: 'PUT',
                     },

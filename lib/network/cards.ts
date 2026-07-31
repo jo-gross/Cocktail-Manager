@@ -18,7 +18,7 @@ export async function fetchCards(
 
   try {
     const { data, fromCache, error } = await fetchListWithCache<CocktailCardFull>({
-      url: `/api/workspaces/${wsId}/cards`,
+      url: `/api/v1/workspaces/${wsId}/cards`,
       storeName: 'cards',
       workspaceId: wsId,
       listKey: 'all',
@@ -63,7 +63,7 @@ export async function fetchCard(
 
   try {
     const { data, fromCache, error } = await fetchWithCache<CocktailCardFull>({
-      url: `/api/workspaces/${wsId}/cards/${cardId}`,
+      url: `/api/v1/workspaces/${wsId}/cards/${cardId}`,
       storeName: 'cards',
       workspaceId: wsId,
       resourceId: cardId,
@@ -115,27 +115,27 @@ export async function prefetchCardData(workspaceId: string, card: CocktailCardFu
   // Fetch and cache each cocktail
   for (const cocktailId of cocktailIds) {
     try {
-      const response = await fetch(`/api/workspaces/${workspaceId}/cocktails/${cocktailId}`);
+      const response = await fetch(`/api/v1/workspaces/${workspaceId}/cocktails/${cocktailId}`);
       if (response.ok) {
         const body = await response.json();
         await cacheService.set('cocktails', workspaceId, cocktailId, body.data);
 
         // Cache cocktail image if it has one
         if (body.data._count?.CocktailRecipeImage > 0) {
-          const imageUrl = `/api/workspaces/${workspaceId}/cocktails/${cocktailId}/image`;
+          const imageUrl = `/api/v1/workspaces/${workspaceId}/cocktails/${cocktailId}/image`;
           imageUrls.push(imageUrl);
         }
 
         // Cache glass image if it has one
         if (body.data.glass?._count?.GlassImage > 0) {
-          const glassImageUrl = `/api/workspaces/${workspaceId}/glasses/${body.data.glass.id}/image`;
+          const glassImageUrl = `/api/v1/workspaces/${workspaceId}/glasses/${body.data.glass.id}/image`;
           imageUrls.push(glassImageUrl);
         }
 
         // Cache garnish images
         body.data.garnishes?.forEach((g: { garnish?: { id: string; _count?: { GarnishImage: number } } }) => {
           if (g.garnish && g.garnish._count && g.garnish._count.GarnishImage > 0) {
-            const garnishImageUrl = `/api/workspaces/${workspaceId}/garnishes/${g.garnish.id}/image`;
+            const garnishImageUrl = `/api/v1/workspaces/${workspaceId}/garnishes/${g.garnish.id}/image`;
             imageUrls.push(garnishImageUrl);
           }
         });

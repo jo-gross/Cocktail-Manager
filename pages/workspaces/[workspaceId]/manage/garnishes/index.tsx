@@ -105,7 +105,7 @@ const ManageGarnishesOverviewPage: NextPageWithPullToRefresh = () => {
     if (!workspaceId || selectedIds.size === 0) return;
     setExportingJson(true);
     try {
-      const response = await fetch(`/api/workspaces/${workspaceId}/garnishes/export-json`, {
+      const response = await fetch(`/api/v1/workspaces/${workspaceId}/garnishes/export/json`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ids: Array.from(selectedIds) }),
@@ -142,7 +142,7 @@ const ManageGarnishesOverviewPage: NextPageWithPullToRefresh = () => {
       if (!workspaceId) return;
       setExportingSingleId(id);
       try {
-        const response = await fetch(`/api/workspaces/${workspaceId}/garnishes/export-json`, {
+        const response = await fetch(`/api/v1/workspaces/${workspaceId}/garnishes/export/json`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ ids: [id] }),

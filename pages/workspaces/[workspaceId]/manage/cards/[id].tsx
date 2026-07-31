@@ -23,7 +23,7 @@ function EditCocktailCard() {
   useEffect(() => {
     if (!id || !workspaceId) return;
     setLoadingCard(true);
-    fetch(`/api/workspaces/${workspaceId}/cards/${id}`)
+    fetch(`/api/v1/workspaces/${workspaceId}/cards/${id}`)
       .then(async (response) => {
         const body = await response.json();
         if (response.ok) {
@@ -42,7 +42,7 @@ function EditCocktailCard() {
       });
 
     setLoadingCocktails(true);
-    fetch(`/api/workspaces/${workspaceId}/cocktails`)
+    fetch(`/api/v1/workspaces/${workspaceId}/cocktails`)
       .then(async (response) => {
         const body = await response.json();
         if (response.ok) {

@@ -25,7 +25,7 @@ function EditGlassPage() {
     if (!id) return;
     if (!workspaceId) return;
     setLoading(true);
-    fetch(`/api/workspaces/${workspaceId}/glasses/${id}`)
+    fetch(`/api/v1/workspaces/${workspaceId}/glasses/${id}`)
       .then(async (response) => {
         const body = await response.json();
         if (response.ok) {

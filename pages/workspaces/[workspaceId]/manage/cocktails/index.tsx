@@ -169,7 +169,7 @@ const CocktailsOverviewPage: NextPageWithPullToRefresh = () => {
         confirmVariant="primary"
         onConfirm={async () => {
           for (const id of ids) {
-            const res = await fetch(`/api/workspaces/${workspaceId}/cocktails/${id}/archive`, { method: 'PUT' });
+            const res = await fetch(`/api/v1/workspaces/${workspaceId}/cocktails/${id}/archive`, { method: 'PUT' });
             if (!res.ok) throw new Error('Archivieren fehlgeschlagen');
           }
           setSelectedCocktailIds(new Set());
@@ -188,7 +188,7 @@ const CocktailsOverviewPage: NextPageWithPullToRefresh = () => {
           setExportingPdf(true);
           try {
             alertService.info('Export läuft und wird gleich zur Verfügung stehen. Dieser Vorgang kann je nach Anzahl der Rezepte einige Minuten dauern.');
-            const response = await fetch(`/api/workspaces/${workspaceId}/cocktails/export-pdf`, {
+            const response = await fetch(`/api/v1/workspaces/${workspaceId}/cocktails/export/pdf`, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
@@ -237,7 +237,7 @@ const CocktailsOverviewPage: NextPageWithPullToRefresh = () => {
     if (!workspaceId || selectedCocktailIds.size === 0) return;
     setExportingJson(true);
     try {
-      const response = await fetch(`/api/workspaces/${workspaceId}/cocktails/export-json`, {
+      const response = await fetch(`/api/v1/workspaces/${workspaceId}/cocktails/export/json`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -280,7 +280,7 @@ const CocktailsOverviewPage: NextPageWithPullToRefresh = () => {
       if (!workspaceId) return;
       setExportingSingleId({ id: cocktailId, type: 'json' });
       try {
-        const response = await fetch(`/api/workspaces/${workspaceId}/cocktails/export-json`, {
+        const response = await fetch(`/api/v1/workspaces/${workspaceId}/cocktails/export/json`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -329,7 +329,7 @@ const CocktailsOverviewPage: NextPageWithPullToRefresh = () => {
             setExportingSingleId({ id: cocktailId, type: 'pdf' });
             try {
               alertService.info('Export läuft und wird gleich zur Verfügung stehen.');
-              const response = await fetch(`/api/workspaces/${workspaceId}/cocktails/export-pdf`, {
+              const response = await fetch(`/api/v1/workspaces/${workspaceId}/cocktails/export/pdf`, {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json',

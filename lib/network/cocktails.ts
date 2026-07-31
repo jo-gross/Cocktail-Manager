@@ -57,7 +57,7 @@ export function fetchCocktailWithImage(
   setCocktailLoading(true);
 
   fetchWithCache<CocktailRecipeFullWithImage>({
-    url: `/api/workspaces/${wsId}/cocktails/${cocktailId}?include=image`,
+    url: `/api/v1/workspaces/${wsId}/cocktails/${cocktailId}?include=image`,
     storeName: 'cocktails',
     workspaceId: wsId,
     resourceId: `${cocktailId}-with-image`,

@@ -34,7 +34,7 @@ const CardsOverviewPage: NextPageWithPullToRefresh = () => {
   const fetchCards = useCallback(() => {
     if (!workspaceId) return;
     setLoading(true);
-    fetch(`/api/workspaces/${workspaceId}/cards?withArchived=true`)
+    fetch(`/api/v1/workspaces/${workspaceId}/cards?withArchived=true`)
       .then(async (response) => {
         const body = await response.json();
         if (response.ok) {
@@ -59,7 +59,7 @@ const CardsOverviewPage: NextPageWithPullToRefresh = () => {
 
   useEffect(() => {
     if (!workspaceId) return;
-    fetch(`/api/workspaces/${workspaceId}/settings`)
+    fetch(`/api/v1/workspaces/${workspaceId}/settings`)
       .then((res) => res.json())
       .then((data) => {
         if (data.data?.statisticDayStartTime) {

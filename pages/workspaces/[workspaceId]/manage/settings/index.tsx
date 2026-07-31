@@ -1,7 +1,7 @@
 import React, { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { alertService } from '@lib/alertService';
 import { useRouter } from 'next/router';
-import { BackupStructure } from '../../../../api/workspaces/[workspaceId]/admin/backups/backupStructure';
+import { BackupStructure } from '../../../../api/v1/workspaces/[workspaceId]/admin/backups/backupStructure';
 import { ManageEntityLayout } from '@components/layout/ManageEntityLayout';
 import { Role, WorkspaceCocktailRecipeStepAction } from '@generated/prisma/client';
 import type { UnitDto, UnitConversionDto } from '@lib/schemas/units';
@@ -116,7 +116,7 @@ function WorkspaceSettingPage() {
 
   const exportAll = useCallback(async () => {
     setExporting(true);
-    fetch(`/api/workspaces/${workspaceId}/admin/backups/export`)
+    fetch(`/api/v1/workspaces/${workspaceId}/admin/backups/export`)
       .then((response) => response.text())
       .then((content) => {
         const element = document.createElement('a');
@@ -142,7 +142,7 @@ function WorkspaceSettingPage() {
 
       const data: BackupStructure = JSON.parse(await uploadImportFile.text());
 
-      const response = await fetch(`/api/workspaces/${workspaceId}/admin/backups/import`, {
+      const response = await fetch(`/api/v1/workspaces/${workspaceId}/admin/backups/import`, {
         method: 'POST',
         body: JSON.stringify(data),
       });
@@ -252,7 +252,7 @@ function WorkspaceSettingPage() {
       if (workspaceId == undefined) return;
       if (deleting[unitId] ?? false) return;
       setDeleting({ ...deleting, [unitId]: true });
-      fetch(`/api/workspaces/${workspaceId}/units/${unitId}`, {
+      fetch(`/api/v1/workspaces/${workspaceId}/units/${unitId}`, {
         method: 'DELETE',
       })
         .then(async (response) => {
@@ -282,7 +282,7 @@ function WorkspaceSettingPage() {
       if (workspaceId == undefined) return;
       if (deleting[unitConversionId] ?? false) return;
       setDeleting({ ...deleting, [unitConversionId]: true });
-      fetch(`/api/workspaces/${workspaceId}/units/conversions/${unitConversionId}`, {
+      fetch(`/api/v1/workspaces/${workspaceId}/units/conversions/${unitConversionId}`, {
         method: 'DELETE',
       })
         .then(async (response) => {

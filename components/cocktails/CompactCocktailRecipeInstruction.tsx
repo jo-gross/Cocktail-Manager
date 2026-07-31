@@ -70,9 +70,9 @@ export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeIns
           <ImageWithSkeleton
             className="h-16 w-fit object-contain"
             skeletonClassName="h-16 w-12 rounded-lg"
-            src={`/api/workspaces/${workspaceId}/glasses/${props.cocktailRecipe.glass?.id}/image`}
+            src={`/api/v1/workspaces/${workspaceId}/glasses/${props.cocktailRecipe.glass?.id}/image`}
             alt={props.cocktailRecipe.glass?.name ?? 'Cocktail-Glas'}
-            onClick={() => modalContext.openModal(<ImageModal image={`/api/workspaces/${workspaceId}/glasses/${props.cocktailRecipe.glass?.id}/image`} />)}
+            onClick={() => modalContext.openModal(<ImageModal image={`/api/v1/workspaces/${workspaceId}/glasses/${props.cocktailRecipe.glass?.id}/image`} />)}
             width={200}
             height={200}
             unoptimized={true}

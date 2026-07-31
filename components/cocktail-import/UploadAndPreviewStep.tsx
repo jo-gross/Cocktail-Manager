@@ -28,7 +28,7 @@ export function UploadAndPreviewStep({ workspaceId, onComplete, onCancel }: Uplo
       const data = JSON.parse(text) as CocktailExportStructure;
 
       // Validate with API
-      const response = await fetch(`/api/workspaces/${workspaceId}/cocktails/import-json`, {
+      const response = await fetch(`/api/v1/workspaces/${workspaceId}/cocktails/import/json`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

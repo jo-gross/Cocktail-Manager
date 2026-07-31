@@ -205,7 +205,7 @@ const WorkspacesPage: NextPageWithPullToRefresh = () => {
       if (code.trim().length == 0) return;
       setJoiningWorkspace(true);
       fetch(
-        `/api/workspaces/join?` +
+        `/api/v1/workspaces/join?` +
           new URLSearchParams({
             code: code,
           }),

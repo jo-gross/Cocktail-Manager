@@ -67,7 +67,7 @@ export function AuthBoundary(props: AlertBoundaryProps) {
   const fetchWorkspace = useCallback(() => {
     if (router.query.workspaceId && router.query.workspaceId != workspace?.id) {
       setWorkspaceLoading(true);
-      fetch(`/api/workspaces/${router.query.workspaceId}`)
+      fetch(`/api/v1/workspaces/${router.query.workspaceId}`)
         .then(async (response) => {
           const body = await response.json();
           if (response.ok) {

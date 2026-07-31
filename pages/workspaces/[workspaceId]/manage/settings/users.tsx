@@ -50,7 +50,7 @@ export default function ManageUsersPage() {
   const fetchWorkspaceUsers = useCallback(() => {
     if (workspaceId == undefined) return;
     setWorkspaceUsersLoading(true);
-    fetch(`/api/workspaces/${workspaceId}/users`)
+    fetch(`/api/v1/workspaces/${workspaceId}/users`)
       .then((response) => {
         if (!response.ok) throw new Error('Error while loading');
         return response.json();

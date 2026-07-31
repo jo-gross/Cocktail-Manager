@@ -84,7 +84,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
 
   useEffect(() => {
     if (!workspaceId) return;
-    fetch(`/api/workspaces/${workspaceId}/settings`)
+    fetch(`/api/v1/workspaces/${workspaceId}/settings`)
       .then((res) => res.json())
       .then((data) => {
         if (data.data?.statisticDayStartTime) {
@@ -276,7 +276,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
   // ========================
 
   const refreshQueue = useCallback(() => {
-    fetch(`/api/workspaces/${workspaceId}/queue?timestamp=${new Date().toISOString()}`)
+    fetch(`/api/v1/workspaces/${workspaceId}/queue?timestamp=${new Date().toISOString()}`)
       .then(async (response) => {
         const body = await response.json();
         if (response.ok) {

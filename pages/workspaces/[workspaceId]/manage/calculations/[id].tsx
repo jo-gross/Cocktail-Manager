@@ -149,7 +149,7 @@ export default function CalculationPage() {
     if (!id) return;
     if (id == 'create') return;
     setLoading(true);
-    fetch(`/api/workspaces/${workspaceId}/calculations/${id}`)
+    fetch(`/api/v1/workspaces/${workspaceId}/calculations/${id}`)
       .then(async (response) => {
         const body = await response.json();
         if (response.ok) {
@@ -198,7 +198,7 @@ export default function CalculationPage() {
           },
         ]);
       } else {
-        fetch(`/api/workspaces/${workspaceId}/cocktails/${cocktailId}`)
+        fetch(`/api/v1/workspaces/${workspaceId}/cocktails/${cocktailId}`)
           .then(async (response) => {
             const body = await response.json();
             if (response.ok) {
@@ -292,7 +292,7 @@ export default function CalculationPage() {
           }),
           ingredientShoppingUnits: ingredientShoppingUnits,
         };
-        fetch(`/api/workspaces/${workspaceId}/calculations`, {
+        fetch(`/api/v1/workspaces/${workspaceId}/calculations`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(body),
@@ -336,7 +336,7 @@ export default function CalculationPage() {
           ingredientShoppingUnits: ingredientShoppingUnits,
         };
 
-        fetch(`/api/workspaces/${workspaceId}/calculations/${id}`, {
+        fetch(`/api/v1/workspaces/${workspaceId}/calculations/${id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(body),
