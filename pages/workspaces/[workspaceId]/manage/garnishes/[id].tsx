@@ -25,7 +25,7 @@ function EditGarnishPage() {
     if (!id) return;
     if (!workspaceId) return;
     setLoading(true);
-    fetch(`/api/workspaces/${workspaceId}/garnishes/${id}`)
+    fetch(`/api/v1/workspaces/${workspaceId}/garnishes/${id}`)
       .then(async (response) => {
         const body = await response.json();
         if (response.ok) {

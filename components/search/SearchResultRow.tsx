@@ -1,11 +1,11 @@
 import React from 'react';
-import { CocktailRecipeFull } from '../../models/CocktailRecipeFull';
+import type { CocktailSummaryDto } from '@lib/schemas/cocktails';
 import { Button } from '@components/ui';
 
 interface SearchResultRowProps {
-  cocktail: CocktailRecipeFull;
+  cocktail: CocktailSummaryDto;
   isArchived?: boolean;
-  onSelect: (cocktail: CocktailRecipeFull) => void;
+  onSelect: (cocktail: CocktailSummaryDto) => void;
   actionLabel?: string;
   actionDisabled?: boolean;
   showAction?: boolean;

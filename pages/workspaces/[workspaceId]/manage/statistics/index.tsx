@@ -213,7 +213,7 @@ const StatisticsAdvancedPage = () => {
   // Lade Workspace-Settings für Tagesstart
   useEffect(() => {
     if (!workspaceId) return;
-    fetch(`/api/workspaces/${workspaceId}/settings`)
+    fetch(`/api/v1/workspaces/${workspaceId}/settings`)
       .then((res) => res.json())
       .then((data) => {
         if (data.data?.statisticDayStartTime) {
@@ -307,7 +307,7 @@ const StatisticsAdvancedPage = () => {
       setLoading(true);
       const startDate = timeRange.startDate.toISOString();
       const endDate = timeRange.endDate.toISOString();
-      const response = await fetch(`/api/workspaces/${workspaceId}/statistics/advanced/overview?startDate=${startDate}&endDate=${endDate}`);
+      const response = await fetch(`/api/v1/workspaces/${workspaceId}/statistics/advanced/overview?startDate=${startDate}&endDate=${endDate}`);
       if (response.ok) {
         const body = await response.json();
         setOverviewData(body.data);
@@ -322,7 +322,7 @@ const StatisticsAdvancedPage = () => {
           return;
         }
         console.error('StatisticsAdvancedPage -> loadOverviewData', response);
-        alertService.error(body.message ?? 'Fehler beim Laden der Übersichtsdaten', response.status, response.statusText);
+        alertService.error(body.error?.message ?? 'Fehler beim Laden der Übersichtsdaten', response.status, response.statusText);
       }
     } catch (error) {
       console.error('StatisticsAdvancedPage -> loadOverviewData', error);
@@ -339,14 +339,14 @@ const StatisticsAdvancedPage = () => {
       setCocktailsLoading(true);
       const startDate = timeRange.startDate.toISOString();
       const endDate = timeRange.endDate.toISOString();
-      const response = await fetch(`/api/workspaces/${workspaceId}/statistics/advanced/cocktails?startDate=${startDate}&endDate=${endDate}`);
+      const response = await fetch(`/api/v1/workspaces/${workspaceId}/statistics/advanced/cocktails?startDate=${startDate}&endDate=${endDate}`);
       if (response.ok) {
         const body = await response.json();
         setCocktailsData(body.data);
       } else {
         const body = await response.json();
         console.error('StatisticsAdvancedPage -> loadCocktailsData', response);
-        alertService.error(body.message ?? 'Fehler beim Laden der Cocktail-Daten', response.status, response.statusText);
+        alertService.error(body.error?.message ?? 'Fehler beim Laden der Cocktail-Daten', response.status, response.statusText);
       }
     } catch (error) {
       console.error('StatisticsAdvancedPage -> loadCocktailsData', error);
@@ -363,7 +363,7 @@ const StatisticsAdvancedPage = () => {
       setCocktailsLoading(true);
       const startDate = timeRange.startDate.toISOString();
       const endDate = timeRange.endDate.toISOString();
-      const response = await fetch(`/api/workspaces/${workspaceId}/statistics/cocktails?startDate=${startDate}&endDate=${endDate}`);
+      const response = await fetch(`/api/v1/workspaces/${workspaceId}/statistics/cocktails?startDate=${startDate}&endDate=${endDate}`);
       if (response.ok) {
         const body = await response.json();
         // Ensure cocktail details are included
@@ -371,7 +371,7 @@ const StatisticsAdvancedPage = () => {
       } else {
         const body = await response.json();
         console.error('StatisticsAdvancedPage -> loadCocktailStatisticItems', response);
-        alertService.error(body.message ?? 'Fehler beim Laden der Statistik-Items', response.status, response.statusText);
+        alertService.error(body.error?.message ?? 'Fehler beim Laden der Statistik-Items', response.status, response.statusText);
       }
     } catch (error) {
       console.error('StatisticsAdvancedPage -> loadCocktailStatisticItems', error);
@@ -574,14 +574,14 @@ const StatisticsAdvancedPage = () => {
         setCocktailDetailLoading(true);
         const startDate = timeRange.startDate.toISOString();
         const endDate = timeRange.endDate.toISOString();
-        const response = await fetch(`/api/workspaces/${workspaceId}/statistics/advanced/cocktails/${cocktailId}?startDate=${startDate}&endDate=${endDate}`);
+        const response = await fetch(`/api/v1/workspaces/${workspaceId}/statistics/advanced/cocktails/${cocktailId}?startDate=${startDate}&endDate=${endDate}`);
         if (response.ok) {
           const body = await response.json();
           setCocktailDetailData(body.data);
         } else {
           const body = await response.json();
           console.error('StatisticsAdvancedPage -> loadCocktailDetail', response);
-          alertService.error(body.message ?? 'Fehler beim Laden der Cocktail-Details', response.status, response.statusText);
+          alertService.error(body.error?.message ?? 'Fehler beim Laden der Cocktail-Details', response.status, response.statusText);
         }
       } catch (error) {
         console.error('StatisticsAdvancedPage -> loadCocktailDetail', error);
@@ -600,14 +600,14 @@ const StatisticsAdvancedPage = () => {
       setComparisonsLoading(true);
       const startDate = timeRange.startDate.toISOString();
       const endDate = timeRange.endDate.toISOString();
-      const response = await fetch(`/api/workspaces/${workspaceId}/statistics/advanced/tags?startDate=${startDate}&endDate=${endDate}`);
+      const response = await fetch(`/api/v1/workspaces/${workspaceId}/statistics/advanced/tags?startDate=${startDate}&endDate=${endDate}`);
       if (response.ok) {
         const body = await response.json();
         setTagsData(body.data);
       } else {
         const body = await response.json();
         console.error('StatisticsAdvancedPage -> loadTagsData', response);
-        alertService.error(body.message ?? 'Fehler beim Laden der Tag-Daten', response.status, response.statusText);
+        alertService.error(body.error?.message ?? 'Fehler beim Laden der Tag-Daten', response.status, response.statusText);
       }
     } catch (error) {
       console.error('StatisticsAdvancedPage -> loadTagsData', error);
@@ -624,14 +624,14 @@ const StatisticsAdvancedPage = () => {
       setComparisonsLoading(true);
       const startDate = timeRange.startDate.toISOString();
       const endDate = timeRange.endDate.toISOString();
-      const response = await fetch(`/api/workspaces/${workspaceId}/statistics/advanced/ingredients?startDate=${startDate}&endDate=${endDate}`);
+      const response = await fetch(`/api/v1/workspaces/${workspaceId}/statistics/advanced/ingredients?startDate=${startDate}&endDate=${endDate}`);
       if (response.ok) {
         const body = await response.json();
         setIngredientsData(body.data);
       } else {
         const body = await response.json();
         console.error('StatisticsAdvancedPage -> loadIngredientsData', response);
-        alertService.error(body.message ?? 'Fehler beim Laden der Zutaten-Daten', response.status, response.statusText);
+        alertService.error(body.error?.message ?? 'Fehler beim Laden der Zutaten-Daten', response.status, response.statusText);
       }
     } catch (error) {
       console.error('StatisticsAdvancedPage -> loadIngredientsData', error);
@@ -782,14 +782,14 @@ const StatisticsAdvancedPage = () => {
           endDate,
         });
 
-        const response = await fetch(`/api/workspaces/${workspaceId}/statistics/advanced/compare?${params.toString()}`);
+        const response = await fetch(`/api/v1/workspaces/${workspaceId}/statistics/advanced/compare?${params.toString()}`);
         if (response.ok) {
           const body = await response.json();
           setSetDetailData(body.data);
         } else {
           const body = await response.json();
           console.error('StatisticsAdvancedPage -> loadComparisonDetail', response);
-          alertService.error(body.message ?? 'Fehler beim Laden der Vergleichsdaten', response.status, response.statusText);
+          alertService.error(body.error?.message ?? 'Fehler beim Laden der Vergleichsdaten', response.status, response.statusText);
         }
       } catch (error) {
         console.error('StatisticsAdvancedPage -> loadComparisonDetail', error);
@@ -815,7 +815,7 @@ const StatisticsAdvancedPage = () => {
         title="Set speichern"
         description={`Geben Sie einen Namen für das ${comparisonMode === 'tags' ? 'Tag' : 'Zutaten'}-Set ein:`}
         onInputSubmit={async (name) => {
-          const response = await fetch(`/api/workspaces/${workspaceId}/statistics/advanced/sets`, {
+          const response = await fetch(`/api/v1/workspaces/${workspaceId}/statistics/advanced/sets`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -836,7 +836,7 @@ const StatisticsAdvancedPage = () => {
             setSavedSetsRefreshKey((prev) => prev + 1);
           } else {
             const body = await response.json();
-            alertService.error(body.message ?? 'Fehler beim Speichern des Sets');
+            alertService.error(body.error?.message ?? 'Fehler beim Speichern des Sets');
           }
         }}
       />,
@@ -857,7 +857,7 @@ const StatisticsAdvancedPage = () => {
         title="Cocktail-Set speichern"
         description="Geben Sie einen Namen für das Cocktail-Set ein:"
         onInputSubmit={async (name) => {
-          const response = await fetch(`/api/workspaces/${workspaceId}/statistics/advanced/sets`, {
+          const response = await fetch(`/api/v1/workspaces/${workspaceId}/statistics/advanced/sets`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -878,7 +878,7 @@ const StatisticsAdvancedPage = () => {
             setAnalysisSetsRefreshKey((prev) => prev + 1);
           } else {
             const body = await response.json();
-            alertService.error(body.message ?? 'Fehler beim Speichern des Sets');
+            alertService.error(body.error?.message ?? 'Fehler beim Speichern des Sets');
           }
         }}
       />,
@@ -891,7 +891,7 @@ const StatisticsAdvancedPage = () => {
 
     const items = Array.from(selectedAnalysisCocktailIds);
     try {
-      const response = await fetch(`/api/workspaces/${workspaceId}/statistics/advanced/sets`, {
+      const response = await fetch(`/api/v1/workspaces/${workspaceId}/statistics/advanced/sets`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -905,7 +905,7 @@ const StatisticsAdvancedPage = () => {
         alertService.success('Set aktualisiert');
       } else {
         const body = await response.json();
-        alertService.error(body.message ?? 'Fehler beim Aktualisieren des Sets');
+        alertService.error(body.error?.message ?? 'Fehler beim Aktualisieren des Sets');
       }
     } catch (error) {
       console.error('handleUpdateAnalysisSet', error);
@@ -924,7 +924,7 @@ const StatisticsAdvancedPage = () => {
 
     const items = comparisonMode === 'tags' ? Array.from(selectedTags) : Array.from(selectedIngredients);
     try {
-      const response = await fetch(`/api/workspaces/${workspaceId}/statistics/advanced/sets`, {
+      const response = await fetch(`/api/v1/workspaces/${workspaceId}/statistics/advanced/sets`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -940,7 +940,7 @@ const StatisticsAdvancedPage = () => {
         alertService.success('Set aktualisiert');
       } else {
         const body = await response.json();
-        alertService.error(body.message ?? 'Fehler beim Aktualisieren des Sets');
+        alertService.error(body.error?.message ?? 'Fehler beim Aktualisieren des Sets');
       }
     } catch (error) {
       console.error('handleUpdateComparisonSet', error);
@@ -1090,7 +1090,7 @@ const StatisticsAdvancedPage = () => {
           try {
             const startDate = timeRange.startDate.toISOString();
             const endDate = timeRange.endDate.toISOString();
-            const url = `/api/workspaces/${workspaceId}/statistics/advanced/cocktails/${cocktailId}?startDate=${startDate}&endDate=${endDate}`;
+            const url = `/api/v1/workspaces/${workspaceId}/statistics/advanced/cocktails/${cocktailId}?startDate=${startDate}&endDate=${endDate}`;
             const response = await fetch(url);
             if (response.ok) {
               const body = await response.json();
@@ -1124,7 +1124,7 @@ const StatisticsAdvancedPage = () => {
         startDate: timeRange.startDate.toISOString(),
         endDate: timeRange.endDate.toISOString(),
       });
-      const response = await fetch(`/api/workspaces/${workspaceId}/statistics/advanced/cocktails/all?${params}`);
+      const response = await fetch(`/api/v1/workspaces/${workspaceId}/statistics/advanced/cocktails/all?${params}`);
       if (response.ok) {
         const body = await response.json();
         setAllCocktails(body.data);
@@ -1206,7 +1206,7 @@ const StatisticsAdvancedPage = () => {
             try {
               const startDate = timeRange.startDate.toISOString();
               const endDate = timeRange.endDate.toISOString();
-              const url = `/api/workspaces/${workspaceId}/statistics/advanced/cocktails/${cocktailId}?startDate=${startDate}&endDate=${endDate}`;
+              const url = `/api/v1/workspaces/${workspaceId}/statistics/advanced/cocktails/${cocktailId}?startDate=${startDate}&endDate=${endDate}`;
               const response = await fetch(url);
               if (response.ok) {
                 const body = await response.json();
@@ -1966,7 +1966,7 @@ const StatisticsAdvancedPage = () => {
 
                         // Load set and select items in the list
                         try {
-                          const setResponse = await fetch(`/api/workspaces/${workspaceId}/statistics/advanced/sets/${setIdValue}`);
+                          const setResponse = await fetch(`/api/v1/workspaces/${workspaceId}/statistics/advanced/sets/${setIdValue}`);
                           const data = await setResponse.json();
                           if (data.data && data.data.set) {
                             const items = data.data.set.items as string[];
@@ -2326,7 +2326,7 @@ const StatisticsAdvancedPage = () => {
                         }
                         // Load set and select cocktails in the list
                         try {
-                          const setResponse = await fetch(`/api/workspaces/${workspaceId}/statistics/advanced/sets/${setId}`);
+                          const setResponse = await fetch(`/api/v1/workspaces/${workspaceId}/statistics/advanced/sets/${setId}`);
                           const data = await setResponse.json();
                           if (data.data && data.data.set) {
                             const items = data.data.set.items as string[];

@@ -1,11 +1,12 @@
 import HTTPMethod from 'http-method-enum';
 import { withHttpMethods } from '@middleware/api/handleMethods';
 import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
+import { withDeprecation } from '@middleware/api/withDeprecation';
 import { Permission, Role } from '@generated/prisma/client';
 import prisma from '../../../../../../../prisma/prisma';
 import { NextApiRequest, NextApiResponse } from 'next';
 
-export default withHttpMethods({
+const legacyHandler = withHttpMethods({
   [HTTPMethod.DELETE]: withWorkspacePermission(
     [Role.MANAGER],
     Permission.MONITOR_UPDATE,
@@ -31,3 +32,7 @@ export default withHttpMethods({
     },
   ),
 });
+
+// DEPRECATED: unversioned endpoint kept for backward compatibility. Behavior is
+// unchanged; only advertises the successor v1 path. Use /api/v1/... instead.
+export default withDeprecation({ successor: '/api/v1/workspaces/{workspaceId}/admin/signage/slides/{slideId}' }, legacyHandler);

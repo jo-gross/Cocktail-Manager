@@ -1,6 +1,6 @@
 import { BsSearch } from 'react-icons/bs';
 import React, { forwardRef, useCallback, useContext, useEffect, useImperativeHandle, useRef, useState } from 'react';
-import { CocktailRecipeFull } from '../../models/CocktailRecipeFull';
+import type { CocktailSummaryDto } from '@lib/schemas/cocktails';
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import { useRouter } from 'next/router';
 import { alertService } from '@lib/alertService';
@@ -11,7 +11,7 @@ import { SearchResultRow } from '../search/SearchResultRow';
 import { Button, ButtonGroup, CardActions, Collapse, CollapseContent, CollapseTitle, Input, Loading, Skeleton } from '@components/ui';
 
 interface SearchModalProps {
-  onCocktailSelectedObject?: (cocktail: CocktailRecipeFull) => void;
+  onCocktailSelectedObject?: (cocktail: CocktailSummaryDto) => void;
   selectedCocktails?: string[];
   selectionLabel?: string;
   showRecipe?: boolean;
@@ -45,7 +45,7 @@ export const SearchModal = forwardRef<SearchModalRef, SearchModalProps>((props, 
   const showRecipe = props.showRecipe ?? true;
 
   const [search, setSearch] = useState('');
-  const [cocktails, setCocktails] = useState<CocktailRecipeFull[]>([]);
+  const [cocktails, setCocktails] = useState<CocktailSummaryDto[]>([]);
   const [isLoading, setLoading] = useState(false);
   const [openCards, setOpenCards] = useState<Set<string>>(new Set());
   const [archivedOpen, setArchivedOpen] = useState(false);
@@ -61,7 +61,7 @@ export const SearchModal = forwardRef<SearchModalRef, SearchModalProps>((props, 
 
       setLoading(true);
       fetch(
-        `/api/workspaces/${workspaceId}/cocktails?` +
+        `/api/v1/workspaces/${workspaceId}/cocktails?` +
           new URLSearchParams({
             search: search,
           }),
@@ -123,7 +123,7 @@ export const SearchModal = forwardRef<SearchModalRef, SearchModalProps>((props, 
     });
   };
 
-  const handleSelectCocktail = (cocktail: CocktailRecipeFull) => {
+  const handleSelectCocktail = (cocktail: CocktailSummaryDto) => {
     props.onCocktailSelectedObject?.(cocktail);
     if (!props.notAsModal) {
       setSearch('');
@@ -131,7 +131,7 @@ export const SearchModal = forwardRef<SearchModalRef, SearchModalProps>((props, 
     }
   };
 
-  const renderSelectionRow = (cocktail: CocktailRecipeFull, isArchived: boolean) => (
+  const renderSelectionRow = (cocktail: CocktailSummaryDto, isArchived: boolean) => (
     <SearchResultRow
       key={'search-modal-' + cocktail.id}
       cocktail={cocktail}
@@ -143,7 +143,7 @@ export const SearchModal = forwardRef<SearchModalRef, SearchModalProps>((props, 
     />
   );
 
-  const renderCocktailCard = (cocktail: CocktailRecipeFull, index: number, isArchived: boolean, openCard: boolean = false) => {
+  const renderCocktailCard = (cocktail: CocktailSummaryDto, index: number, isArchived: boolean, openCard: boolean = false) => {
     if (!showRecipe) {
       return renderSelectionRow(cocktail, isArchived);
     }
@@ -160,7 +160,7 @@ export const SearchModal = forwardRef<SearchModalRef, SearchModalProps>((props, 
         </CollapseTitle>
         <CollapseContent>
           <CocktailRecipeCardItem
-            cocktailRecipe={cocktail}
+            cocktailRecipe={cocktail.id}
             showImage={true}
             showTags={true}
             showDescription={true}

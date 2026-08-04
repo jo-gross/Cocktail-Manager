@@ -5,8 +5,9 @@ import { Garnish, Permission, Role, Workspace } from '@generated/prisma/client';
 import { withHttpMethods } from '@middleware/api/handleMethods';
 import HTTPMethod from 'http-method-enum';
 import { calculateGarnishSimilarity } from '@lib/findSimilarEntities';
+import { withDeprecation } from '@middleware/api/withDeprecation';
 
-export default withHttpMethods({
+const legacyHandler = withHttpMethods({
   [HTTPMethod.GET]: withWorkspacePermission(
     [Role.USER],
     Permission.GARNISHES_READ,
@@ -53,3 +54,5 @@ export default withHttpMethods({
     },
   ),
 });
+
+export default withDeprecation({ successor: '/api/v1/workspaces/{workspaceId}/garnishes/check' }, legacyHandler);

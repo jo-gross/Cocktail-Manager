@@ -5,10 +5,23 @@ import { ModalContext } from '@lib/context/ModalContextProvider';
 import { alertService } from '@lib/alertService';
 import { useRouter } from 'next/router';
 import { Button, FormControl, Input, Label, LabelText, LabelTextAlt, Loading, Toggle } from '@components/ui';
+import { z } from 'zod';
+import { zodFormikValidate } from '@lib/forms/zodFormikValidate';
 
 interface AddWorkspaceJoinCodeModalProps {
   onCreated?: () => void;
 }
+
+const joinCodeSchema = z.object({
+  code: z.string().min(6, 'Der Code muss länger als 5 Zeichen sein'),
+  expires: z
+    .string()
+    .optional()
+    .refine((expires) => !expires || new Date(expires) >= new Date(), { message: 'Das Ablaufdatum muss in der Zukunft liegen' }),
+  onlyUseOnce: z.boolean(),
+});
+
+const validateJoinCode = zodFormikValidate(joinCodeSchema);
 
 export default function AddWorkspaceJoinCodeModal(props: AddWorkspaceJoinCodeModalProps) {
   const _userContext = useContext(UserContext);
@@ -44,7 +57,7 @@ export default function AddWorkspaceJoinCodeModal(props: AddWorkspaceJoinCodeMod
               onlyUseOnce: values.onlyUseOnce,
             };
 
-            const response = await fetch(`/api/workspaces/${workspaceId}/join-codes`, {
+            const response = await fetch(`/api/v1/workspaces/${workspaceId}/join-codes`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(body),
@@ -62,16 +75,7 @@ export default function AddWorkspaceJoinCodeModal(props: AddWorkspaceJoinCodeMod
             alertService.error('Es ist ein Fehler aufgetreten');
           }
         }}
-        validate={(values) => {
-          const errors: { [key: string]: string } = {};
-          if (values.code.length <= 5) {
-            errors.code = `Der Code muss länger als 5 Zeichen sein ${values.code.length}`;
-          }
-          if (values.expires && new Date(values.expires) < new Date()) {
-            errors.expires = 'Das Ablaufdatum muss in der Zukunft liegen';
-          }
-          return errors;
-        }}
+        validate={(values) => validateJoinCode(values)}
       >
         {({ values, handleChange, handleSubmit, isSubmitting, errors, touched, handleBlur }) => (
           <form onSubmit={handleSubmit} className={'flex flex-col gap-2'}>

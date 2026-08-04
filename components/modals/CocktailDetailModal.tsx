@@ -1,4 +1,4 @@
-import { CocktailRecipeFull } from '../../models/CocktailRecipeFull';
+import type { CocktailDto } from '@lib/schemas/cocktails';
 import Link from 'next/link';
 import { FaArrowLeft, FaFileDownload, FaHistory, FaInfo, FaPencilAlt, FaPlus, FaSyncAlt, FaTimes } from 'react-icons/fa';
 import { ModalContext } from '@lib/context/ModalContextProvider';
@@ -42,7 +42,7 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
   const userContext = useContext(UserContext);
 
   const [loading, setLoading] = useState(true);
-  const [loadedCocktail, setLoadedCocktail] = useState<CocktailRecipeFull>();
+  const [loadedCocktail, setLoadedCocktail] = useState<CocktailDto>();
 
   const [ingredients, setIngredients] = useState<IngredientModel[] | undefined>(undefined);
 
@@ -67,7 +67,7 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
           setExportingPdf(true);
           try {
             alertService.info('Export läuft und wird gleich zur Verfügung stehen. Dieser Vorgang kann einige Minuten dauern.');
-            const response = await fetch(`/api/workspaces/${workspaceId}/cocktails/export-pdf`, {
+            const response = await fetch(`/api/v1/workspaces/${workspaceId}/cocktails/export/pdf`, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
@@ -240,15 +240,13 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                     <div>Eis: {userContext.getTranslation(loadedCocktail.ice?.name ?? '-', 'de')}</div>
                   </div>
                 </div>
-                {loadedCocktail.glass && loadedCocktail.glass._count.GlassImage > 0 && (
+                {loadedCocktail.glass && loadedCocktail.glass.hasImage && (
                   <div className={''}>
                     <div className={'h-16 w-16'}>
                       <AvatarImage
-                        src={`/api/workspaces/${loadedCocktail.workspaceId}/glasses/${loadedCocktail.glass.id}/image`}
+                        src={`/api/v1/workspaces/${workspaceId}/glasses/${loadedCocktail.glass.id}/image`}
                         onClick={() =>
-                          modalContext.openModal(
-                            <ImageModal image={`/api/workspaces/${loadedCocktail.workspaceId}/glasses/${loadedCocktail.glass?.id}/image`} />,
-                          )
+                          modalContext.openModal(<ImageModal image={`/api/v1/workspaces/${workspaceId}/glasses/${loadedCocktail.glass?.id}/image`} />)
                         }
                         alt={`Glas - ${loadedCocktail.glass?.name}`}
                       />
@@ -257,7 +255,7 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                 )}
               </div>
 
-              <div className={`grid ${loadedCocktail._count.CocktailRecipeImage > 0 ? 'grid-cols-5' : 'grid-cols-3'} gap-2`}>
+              <div className={`grid ${loadedCocktail.hasImage ? 'grid-cols-5' : 'grid-cols-3'} gap-2`}>
                 <div className={'col-span-3 flex flex-col gap-2'}>
                   <div className={'flex flex-row items-baseline justify-between gap-2'}>
                     <div className={'font-bold'}>Zubereitung</div>
@@ -277,7 +275,7 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                     .map((step) => (
                       <div key={`cocktail-details-step-${step.id}`} className={'flex flex-col gap-2 rounded border border-base-300 p-2'}>
                         <div className={`font-bold ${step.optional ? 'italic' : ''}`}>
-                          {userContext.getTranslation(step.action.name, 'de')} {step.optional && '(optional)'}
+                          {userContext.getTranslation(step.action?.name ?? '', 'de')} {step.optional && '(optional)'}
                         </div>
                         {step.ingredients
                           .sort((a, b) => a.ingredientNumber - b.ingredientNumber)
@@ -300,15 +298,13 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                       </div>
                     ))}
                 </div>
-                {loadedCocktail._count.CocktailRecipeImage > 0 && (
+                {loadedCocktail.hasImage && (
                   <div className={'col-span-2'}>
                     <Image
                       className={'h-full w-full flex-none cursor-pointer rounded-lg object-cover object-center shadow-md'}
-                      src={`/api/workspaces/${loadedCocktail.workspaceId}/cocktails/${loadedCocktail.id}/image`}
+                      src={loadedCocktail.imageUrl ?? ''}
                       alt={'Cocktail'}
-                      onClick={() =>
-                        modalContext.openModal(<ImageModal image={`/api/workspaces/${loadedCocktail.workspaceId}/cocktails/${loadedCocktail.id}/image`} />)
-                      }
+                      onClick={() => modalContext.openModal(<ImageModal image={loadedCocktail.imageUrl ?? ''} />)}
                       width={100}
                       height={300}
                       unoptimized={true}
@@ -525,13 +521,13 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                             {ingredient.ingredient?.shortName && <div className={'text-sm font-thin italic'}>{ingredient.ingredient?.shortName}</div>}
                           </div>
                           <div>
-                            {ingredient.ingredient?._count?.IngredientImage != 0 ? (
+                            {ingredient.ingredient?.hasImage ? (
                               <div className={'h-16 w-16'}>
                                 <AvatarImage
-                                  src={`/api/workspaces/${loadedCocktail.workspaceId}/ingredients/${ingredient.ingredient?.id}/image`}
+                                  src={`/api/v1/workspaces/${workspaceId}/ingredients/${ingredient.ingredient?.id}/image`}
                                   onClick={() =>
                                     modalContext.openModal(
-                                      <ImageModal image={`/api/workspaces/${loadedCocktail.workspaceId}/ingredients/${ingredient.ingredient?.id}/image`} />,
+                                      <ImageModal image={`/api/v1/workspaces/${workspaceId}/ingredients/${ingredient.ingredient?.id}/image`} />,
                                     )
                                   }
                                   alt={`Zutat Produktbild - ${ingredient.ingredient?.name}`}
@@ -582,14 +578,12 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                       <div key={`cocktail-details-garnish-${index}-${garnish?.id}`} className={'flex flex-col gap-2 rounded border border-base-300 p-2'}>
                         <div className={'flex flex-row justify-between gap-2'}>
                           <div className={`font-bold`}>{garnish.name}</div>
-                          {garnish._count.GarnishImage > 0 && (
+                          {garnish.hasImage && (
                             <div className={'h-12 w-12'}>
                               <AvatarImage
-                                src={`/api/workspaces/${garnish.workspaceId}/garnishes/${garnish.id}/image`}
+                                src={`/api/v1/workspaces/${workspaceId}/garnishes/${garnish.id}/image`}
                                 alt={'Cocktail Garnitur ' + garnish?.name}
-                                onClick={() =>
-                                  modalContext.openModal(<ImageModal image={`/api/workspaces/${garnish.workspaceId}/garnishes/${garnish.id}/image`} />)
-                                }
+                                onClick={() => modalContext.openModal(<ImageModal image={`/api/v1/workspaces/${workspaceId}/garnishes/${garnish.id}/image`} />)}
                               />
                             </div>
                           )}

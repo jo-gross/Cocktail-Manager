@@ -48,11 +48,11 @@ export function SavedSetSelector({
       setLoading(true);
       let url: string;
       if (showAllTypes) {
-        url = `/api/workspaces/${workspaceId}/statistics/advanced/sets?types=TAG_SET,INGREDIENT_SET`;
+        url = `/api/v1/workspaces/${workspaceId}/statistics/advanced/sets?types=TAG_SET,INGREDIENT_SET`;
       } else if (type) {
-        url = `/api/workspaces/${workspaceId}/statistics/advanced/sets?type=${type}`;
+        url = `/api/v1/workspaces/${workspaceId}/statistics/advanced/sets?type=${type}`;
       } else {
-        url = `/api/workspaces/${workspaceId}/statistics/advanced/sets`;
+        url = `/api/v1/workspaces/${workspaceId}/statistics/advanced/sets`;
       }
       const response = await fetch(url);
       if (response.ok) {
@@ -80,7 +80,7 @@ export function SavedSetSelector({
         spelling="DELETE"
         entityName={set.name}
         onApprove={async () => {
-          const response = await fetch(`/api/workspaces/${workspaceId}/statistics/advanced/sets?id=${set.id}`, {
+          const response = await fetch(`/api/v1/workspaces/${workspaceId}/statistics/advanced/sets?id=${set.id}`, {
             method: 'DELETE',
           });
           if (response.ok) {

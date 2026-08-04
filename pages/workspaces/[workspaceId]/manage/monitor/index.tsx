@@ -77,7 +77,7 @@ async function patchSlides(
     dateExclusive?: boolean;
   },
 ) {
-  const response = await fetch(`/api/workspaces/${workspaceId}/admin/signage/slides`, {
+  const response = await fetch(`/api/v1/workspaces/${workspaceId}/admin/signage/slides`, {
     method: 'PATCH',
     headers: {
       'Content-Type': 'application/json',
@@ -110,7 +110,7 @@ async function parseJsonResponseBody(response: Response): Promise<{ message?: st
 }
 
 async function putSignageSettings(workspaceId: string, payload: SignageSettingsUpdatePayload) {
-  const response = await fetch(`/api/workspaces/${workspaceId}/admin/signage`, {
+  const response = await fetch(`/api/v1/workspaces/${workspaceId}/admin/signage`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
@@ -209,7 +209,7 @@ function SignageFormatEditor({
   };
 
   const handleDelete = async (slideId: string) => {
-    const response = await fetch(`/api/workspaces/${workspaceId}/admin/signage/slides/${slideId}`, {
+    const response = await fetch(`/api/v1/workspaces/${workspaceId}/admin/signage/slides/${slideId}`, {
       method: 'DELETE',
     });
     if (!response.ok) {
@@ -515,7 +515,7 @@ const ManageMonitorPage: NextPageWithPullToRefresh = () => {
         return;
       }
 
-      const response = await fetch(`/api/workspaces/${workspaceId}/admin/signage/slides`, {
+      const response = await fetch(`/api/v1/workspaces/${workspaceId}/admin/signage/slides`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

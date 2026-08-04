@@ -106,7 +106,7 @@ const ManageGlassesOverviewPage: NextPageWithPullToRefresh = () => {
     if (!workspaceId || selectedIds.size === 0) return;
     setExportingJson(true);
     try {
-      const response = await fetch(`/api/workspaces/${workspaceId}/glasses/export-json`, {
+      const response = await fetch(`/api/v1/workspaces/${workspaceId}/glasses/export/json`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ids: Array.from(selectedIds) }),
@@ -143,7 +143,7 @@ const ManageGlassesOverviewPage: NextPageWithPullToRefresh = () => {
       if (!workspaceId) return;
       setExportingSingleId(id);
       try {
-        const response = await fetch(`/api/workspaces/${workspaceId}/glasses/export-json`, {
+        const response = await fetch(`/api/v1/workspaces/${workspaceId}/glasses/export/json`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ ids: [id] }),
@@ -288,11 +288,11 @@ const ManageGlassesOverviewPage: NextPageWithPullToRefresh = () => {
                         <Checkbox checkboxSize="sm" checked={selectedIds.has(glass.id)} onChange={() => handleToggleSelect(glass.id)} />
                       </TableCell>
                       <TableImageCell
-                        hasImage={(glass._count?.GlassImage ?? 0) !== 0}
-                        onImageClick={() => modalContext.openModal(<ImageModal image={`/api/workspaces/${glass.workspaceId}/glasses/${glass.id}/image`} />)}
+                        hasImage={glass.hasImage}
+                        onImageClick={() => modalContext.openModal(<ImageModal image={glass.imageUrl ?? ''} />)}
                         className="[&>div]:rounded-[30%]"
                       >
-                        <AvatarImage src={`/api/workspaces/${glass.workspaceId}/glasses/${glass.id}/image`} alt="Glass" altComponent={<DefaultGlassIcon />} />
+                        <AvatarImage src={glass.imageUrl ?? ''} alt="Glass" altComponent={<DefaultGlassIcon />} />
                       </TableImageCell>
                       <TableCell>
                         <div className="font-bold">{glass.name}</div>

@@ -10,7 +10,7 @@ export function fetchCocktailRatings(
 ) {
   if (!workspaceId) return;
   setCocktailRatingLoading(true);
-  fetch(`/api/workspaces/${workspaceId}/cocktails/${cocktailId}/ratings`, {
+  fetch(`/api/v1/workspaces/${workspaceId}/cocktails/${cocktailId}/ratings`, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
@@ -23,7 +23,7 @@ export function fetchCocktailRatings(
         setCocktailRatingError(false);
       } else {
         const body = await response.json();
-        alertService.error(body.message ?? 'Fehler beim Laden der Cocktail Bewertungen', response.status, response.statusText);
+        alertService.error(body.error?.message ?? 'Fehler beim Laden der Cocktail Bewertungen', response.status, response.statusText);
         setCocktailRatings([]);
         setCocktailRatingError(true);
       }

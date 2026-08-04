@@ -89,7 +89,7 @@ export function AuditLogHistoryModal({ entityType, entityId, entityName }: Audit
   const fetchLogs = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/workspaces/${workspaceId}/audit-logs?entityType=${entityType}&entityId=${entityId}&limit=100`);
+      const response = await fetch(`/api/v1/workspaces/${workspaceId}/audit-logs?entityType=${entityType}&entityId=${entityId}&limit=100`);
       if (response.ok) {
         const data = await response.json();
         setLogs(data.data);

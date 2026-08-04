@@ -7,9 +7,10 @@ import { withHttpMethods } from '@middleware/api/handleMethods';
 import HTTPMethod from 'http-method-enum';
 import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
 import { Permission, Prisma, Role } from '@generated/prisma/client';
+import { withDeprecation } from '@middleware/api/withDeprecation';
 import GarnishCreateInput = Prisma.GarnishCreateInput;
 
-export default withHttpMethods({
+const legacyHandler = withHttpMethods({
   [HTTPMethod.GET]: withWorkspacePermission([Role.USER], Permission.GARNISHES_READ, async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
     const search = typeof req.query.search === 'string' ? req.query.search : '';
     const where: Prisma.GarnishWhereInput = {
@@ -80,3 +81,5 @@ export default withHttpMethods({
     },
   ),
 });
+
+export default withDeprecation({ successor: '/api/v1/workspaces/{workspaceId}/garnishes' }, legacyHandler);

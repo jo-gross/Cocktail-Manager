@@ -3,8 +3,9 @@ import HTTPMethod from 'http-method-enum';
 import { withAuthentication, withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
 import prisma from '../../../../../prisma/prisma';
 import { Role } from '@generated/prisma/client';
+import { withDeprecation } from '@middleware/api/withDeprecation';
 
-export default withHttpMethods({
+const legacyHandler = withHttpMethods({
   [HTTPMethod.GET]: withWorkspacePermission([Role.MANAGER], async (req, res, user, workspace) => {
     const joinRequests = await prisma.workspaceJoinRequest.findMany({
       where: { workspaceId: workspace.id },
@@ -35,3 +36,6 @@ export default withHttpMethods({
     }
   }),
 });
+
+// DEPRECATED: unversioned endpoint kept for backward compatibility. Use /api/v1/... instead.
+export default withDeprecation({ successor: '/api/v1/workspaces/{workspaceId}/join-requests' }, legacyHandler);

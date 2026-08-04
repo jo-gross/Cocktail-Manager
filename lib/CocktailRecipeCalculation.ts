@@ -1,4 +1,3 @@
-import { CocktailRecipeFull } from '../models/CocktailRecipeFull';
 import { IngredientModel } from '../models/IngredientModel';
 
 /**
@@ -93,26 +92,49 @@ export function calculateAggregatedIngredientAmount(
   };
 }
 
-export function calcCocktailTotalPrice(cocktail: CocktailRecipeFull, ingredients: IngredientModel[]): number {
+/**
+ * Minimal cocktail shape needed to compute the material price. Deliberately structural so all three
+ * callers satisfy it: the v1 `CocktailDto` (detail modal), the Prisma `CocktailRecipeFull` (calc page)
+ * and the edit-form Formik values. Prisma exposes the FK ids (`ingredientId`/`unitId`) while the DTO
+ * exposes nested `{ id }` refs — both are resolved below.
+ */
+interface PriceCalcStepIngredient {
+  amount: number | null;
+  ingredientId?: string | null;
+  unitId?: string | null;
+  ingredient?: { id: string } | null;
+  unit?: { id: string } | null;
+}
+
+interface PriceCalcGarnish {
+  isAlternative?: boolean | null;
+  garnishId?: string;
+  garnish?: { id?: string; price?: number | null } | null;
+}
+
+export interface PriceCalcCocktail {
+  steps: { ingredients: PriceCalcStepIngredient[] }[];
+  garnishes: PriceCalcGarnish[];
+}
+
+export function calcCocktailTotalPrice(cocktail: PriceCalcCocktail, ingredients: IngredientModel[]): number {
+  const resolveIngredientId = (stepIngredient: PriceCalcStepIngredient) => stepIngredient.ingredientId ?? stepIngredient.ingredient?.id;
+  const resolveUnitId = (stepIngredient: PriceCalcStepIngredient) => stepIngredient.unitId ?? stepIngredient.unit?.id;
+
   return cocktail.steps.filter((step) => step.ingredients.some((ingredient) => ingredient.ingredient != undefined)).length > 0
     ? cocktail.steps
         .map((step) => step.ingredients.filter((ingredient) => ingredient.ingredient != undefined))
         .flat()
         .map((stepIngredient) => {
-          if (
-            ingredients
-              .find((ingredient) => ingredient.id == stepIngredient.ingredientId)
-              ?.IngredientVolume.find((volumeUnits) => volumeUnits.unitId == stepIngredient.unitId) == undefined
-          ) {
+          const ingredientModel = ingredients.find((ingredient) => ingredient.id == resolveIngredientId(stepIngredient));
+          const volume = ingredientModel?.volumes.find((volumeUnits) => volumeUnits.unit.id == resolveUnitId(stepIngredient))?.volume;
+          if (volume == undefined) {
             return 0;
           } else {
-            return (
-              ((stepIngredient.ingredient?.price ?? 0) /
-                (ingredients
-                  .find((ingredient) => ingredient.id == stepIngredient.ingredientId)
-                  ?.IngredientVolume.find((volumeUnits) => volumeUnits.unitId == stepIngredient.unitId)?.volume ?? 0)) *
-              (stepIngredient.amount ?? 0)
-            );
+            // Ingredient price is sourced from the `ingredients` list — the v1 DTO ingredient ref carries
+            // no price. For the Prisma/form callers this is identical to the former embedded price, since
+            // they pass the same fetchIngredients() list (verify manually after the migration).
+            return ((ingredientModel?.price ?? 0) / volume) * (stepIngredient.amount ?? 0);
           }
         })
         .reduce((summ, sum) => summ + sum, 0) +

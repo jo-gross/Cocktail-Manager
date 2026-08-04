@@ -34,7 +34,7 @@ export function CocktailReviewStep({ workspaceId, exportData, selectedCocktailId
     const fetchConflicts = async () => {
       setLoading(true);
       try {
-        const response = await fetch(`/api/workspaces/${workspaceId}/cocktails/import-json`, {
+        const response = await fetch(`/api/v1/workspaces/${workspaceId}/cocktails/import/json`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

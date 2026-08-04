@@ -5,7 +5,8 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
-    include: ['**/__tests__/**/*.test.{ts,tsx}', '**/*.test.{ts,tsx}'],
+    include: ['lib/**/*.test.{ts,tsx}', 'middleware/**/*.test.{ts,tsx}'],
+    exclude: ['**/node_modules/**', '**/*.integration.test.{ts,tsx}'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'lcov', 'html'],
@@ -18,6 +19,7 @@ export default defineConfig({
       '@components': path.resolve(__dirname, 'components'),
       '@middleware': path.resolve(__dirname, 'middleware'),
       '@generated': path.resolve(__dirname, 'generated'),
+      '@test': path.resolve(__dirname, 'test'),
     },
   },
 });

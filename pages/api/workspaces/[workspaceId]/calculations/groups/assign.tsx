@@ -3,9 +3,10 @@ import prisma from '../../../../../../prisma/prisma';
 import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
 import { Permission, Prisma, Role } from '@generated/prisma/client';
 import { withHttpMethods } from '@middleware/api/handleMethods';
+import { withDeprecation } from '@middleware/api/withDeprecation';
 import HTTPMethod from 'http-method-enum';
 
-export default withHttpMethods({
+const legacyHandler = withHttpMethods({
   [HTTPMethod.POST]: withWorkspacePermission(
     [Role.USER],
     Permission.CALCULATIONS_UPDATE,
@@ -37,3 +38,7 @@ export default withHttpMethods({
     },
   ),
 });
+
+// DEPRECATED: unversioned endpoint kept for backward compatibility. Behavior is
+// unchanged; only advertises the successor v1 path. Use /api/v1/... instead.
+export default withDeprecation({ successor: '/api/v1/workspaces/{workspaceId}/calculations/groups/assign' }, legacyHandler);

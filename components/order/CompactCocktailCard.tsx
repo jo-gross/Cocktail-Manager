@@ -1,10 +1,10 @@
 import React from 'react';
-import { CocktailRecipeFull } from '../../models/CocktailRecipeFull';
+import type { CocktailSummaryDto } from '@lib/schemas/cocktails';
 import '../../lib/NumberUtils';
 import { Button, Card, CardActions, CardBody, CardTitle } from '@components/ui';
 
 interface CompactCocktailCardProps {
-  cocktail: CocktailRecipeFull;
+  cocktail: CocktailSummaryDto;
   onAdd: () => void;
   onAddWithDeposit: () => void;
 }

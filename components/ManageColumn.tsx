@@ -132,19 +132,21 @@ export function ManageColumn(props: ManageColumnProps) {
     if ((props.entity === 'ingredients' || props.entity === 'glasses') && workspaceId) {
       setIsCheckingReferences(true);
       try {
-        const referencesResponse = await fetch(`/api/workspaces/${workspaceId}/${props.entity}/${props.id}/references`);
+        const referencesResponse = await fetch(`/api/v1/workspaces/${workspaceId}/${props.entity}/${props.id}/references`);
         const referencesData = await referencesResponse.json();
+        // v1 returns the referencing cocktails directly as `data: { id, name }[]`.
+        const references: _Reference[] = referencesResponse.ok && Array.isArray(referencesData.data) ? referencesData.data : [];
 
-        if (referencesResponse.ok && referencesData.data?.inUse && referencesData.data.cocktails) {
+        if (references.length > 0) {
           // Öffne Modal mit Referenzen
           modalContext.openModal(
             <DeleteConfirmationModal
               spelling={'DELETE'}
               entityName={props.name}
               entityType={props.entity === 'ingredients' ? 'ingredient' : 'glass'}
-              references={referencesData.data.cocktails}
+              references={references}
               onApprove={async () => {
-                const response = await fetch(`/api/workspaces/${workspaceId}/${props.entity}/${props.id}`, {
+                const response = await fetch(`/api/v1/workspaces/${workspaceId}/${props.entity}/${props.id}`, {
                   method: 'DELETE',
                 });
 
@@ -154,7 +156,7 @@ export function ManageColumn(props: ManageColumnProps) {
                   alertService.success('Erfolgreich gelöscht');
                 } else {
                   console.error(`ManageColumn[${props.entity}] -> delete`, response);
-                  alertService.error(body.message ?? 'Fehler beim Löschen', response.status, response.statusText);
+                  alertService.error(body.error?.message ?? 'Fehler beim Löschen', response.status, response.statusText);
                 }
               }}
             />,
@@ -167,7 +169,7 @@ export function ManageColumn(props: ManageColumnProps) {
               entityName={props.name}
               entityType={props.entity === 'ingredients' ? 'ingredient' : 'glass'}
               onApprove={async () => {
-                const response = await fetch(`/api/workspaces/${workspaceId}/${props.entity}/${props.id}`, {
+                const response = await fetch(`/api/v1/workspaces/${workspaceId}/${props.entity}/${props.id}`, {
                   method: 'DELETE',
                 });
 
@@ -177,7 +179,7 @@ export function ManageColumn(props: ManageColumnProps) {
                   alertService.success('Erfolgreich gelöscht');
                 } else {
                   console.error(`ManageColumn[${props.entity}] -> delete`, response);
-                  alertService.error(body.message ?? 'Fehler beim Löschen', response.status, response.statusText);
+                  alertService.error(body.error?.message ?? 'Fehler beim Löschen', response.status, response.statusText);
                 }
               }}
             />,
@@ -196,7 +198,7 @@ export function ManageColumn(props: ManageColumnProps) {
           spelling={'DELETE'}
           entityName={props.name}
           onApprove={async () => {
-            const response = await fetch(`/api/workspaces/${workspaceId}/${props.entity}/${props.id}`, {
+            const response = await fetch(`/api/v1/workspaces/${workspaceId}/${props.entity}/${props.id}`, {
               method: 'DELETE',
             });
 
@@ -206,7 +208,7 @@ export function ManageColumn(props: ManageColumnProps) {
               alertService.success('Erfolgreich gelöscht');
             } else {
               console.error(`ManageColumn[${props.entity}] -> delete`, response);
-              alertService.error(body.message ?? 'Fehler beim Löschen', response.status, response.statusText);
+              alertService.error(body.error?.message ?? 'Fehler beim Löschen', response.status, response.statusText);
             }
           }}
         />,
@@ -255,7 +257,7 @@ export function ManageColumn(props: ManageColumnProps) {
         onInputSubmit={async (value) => {
           try {
             setIsDuplicating(true);
-            const response = await fetch(`/api/workspaces/${workspaceId}/${props.entity}/${props.id}/clone`, {
+            const response = await fetch(`/api/v1/workspaces/${workspaceId}/${props.entity}/${props.id}/clone`, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
@@ -270,7 +272,7 @@ export function ManageColumn(props: ManageColumnProps) {
               await router.push(`/workspaces/${workspaceId}/manage/${props.entity}/${body.data.id}`);
             } else {
               console.error(`ManageColumn -> duplicate${props.entity}`, response);
-              alertService.error(body.message ?? labels.errorMessage, response.status, response.statusText);
+              alertService.error(body.error?.message ?? labels.errorMessage, response.status, response.statusText);
             }
           } catch (error) {
             console.error(`ManageColumn -> duplicate${props.entity}`, error);

@@ -50,7 +50,7 @@ export default function ManageUsersPage() {
   const fetchWorkspaceUsers = useCallback(() => {
     if (workspaceId == undefined) return;
     setWorkspaceUsersLoading(true);
-    fetch(`/api/workspaces/${workspaceId}/users`)
+    fetch(`/api/v1/workspaces/${workspaceId}/users`)
       .then((response) => {
         if (!response.ok) throw new Error('Error while loading');
         return response.json();
@@ -68,7 +68,7 @@ export default function ManageUsersPage() {
   const fetchWorkspaceJoinRequest = useCallback(() => {
     if (workspaceId == undefined) return;
     setJoinRequestsLoading(true);
-    fetch(`/api/workspaces/${workspaceId}/join-requests`)
+    fetch(`/api/v1/workspaces/${workspaceId}/join-requests`)
       .then((response) => {
         if (!response.ok) throw new Error('Error while loading');
         return response.json();
@@ -86,7 +86,7 @@ export default function ManageUsersPage() {
   const fetchWorkspaceJoinCodes = useCallback(() => {
     if (workspaceId == undefined) return;
     setWorkspaceJoinCodeLoading(true);
-    fetch(`/api/workspaces/${workspaceId}/join-codes`)
+    fetch(`/api/v1/workspaces/${workspaceId}/join-codes`)
       .then((response) => {
         if (!response.ok) throw new Error('Error while loading');
         return response.json();
@@ -175,10 +175,10 @@ export default function ManageUsersPage() {
                               }
                               value={workspaceUser.role}
                               onChange={(event) => {
-                                fetch(`/api/workspaces/${workspaceId}/users/${workspaceUser.userId}`, {
+                                fetch(`/api/v1/workspaces/${workspaceId}/users/${workspaceUser.userId}`, {
                                   method: 'PUT',
                                   headers: { 'Content-Type': 'application/json' },
-                                  body: JSON.stringify({ userId: workspaceUser.userId, role: event.target.value }),
+                                  body: JSON.stringify({ role: event.target.value }),
                                 })
                                   .then(async (response) => {
                                     if (response.ok) {
@@ -187,7 +187,7 @@ export default function ManageUsersPage() {
                                     } else {
                                       const body = await response.json();
                                       console.error('SettingsPage -> updateUserRole', response);
-                                      alertService.error(body.message ?? 'Fehler beim aktualisieren', response.status, response.statusText);
+                                      alertService.error(body.error?.message ?? 'Fehler beim aktualisieren', response.status, response.statusText);
                                     }
                                   })
                                   .catch((error) => {
@@ -226,7 +226,7 @@ export default function ManageUsersPage() {
                               }
                               onClick={() => {
                                 setLeaveLoading({ ...leaveLoading, [workspaceUser.userId]: true });
-                                fetch(`/api/workspaces/${workspaceId}/users/${workspaceUser.userId}`, {
+                                fetch(`/api/v1/workspaces/${workspaceId}/users/${workspaceUser.userId}`, {
                                   method: 'DELETE',
                                 })
                                   .then(async (response) => {
@@ -236,7 +236,7 @@ export default function ManageUsersPage() {
                                     } else {
                                       const body = await response.json();
                                       console.error('SettingsPage -> removeUser', response);
-                                      alertService.error(body.message ?? 'Fehler beim Entfernen', response.status, response.statusText);
+                                      alertService.error(body.error?.message ?? 'Fehler beim Entfernen', response.status, response.statusText);
                                     }
                                   })
                                   .catch((error) => {
@@ -266,7 +266,7 @@ export default function ManageUsersPage() {
                               onClick={() => {
                                 setLeaveLoading({ ...leaveLoading, [workspaceUser.user.id]: true });
 
-                                fetch(`/api/workspaces/${workspaceId}/leave`, {
+                                fetch(`/api/v1/workspaces/${workspaceId}/leave`, {
                                   method: 'POST',
                                 })
                                   .then(async (response) => {
@@ -346,7 +346,7 @@ export default function ManageUsersPage() {
                               disabled={workspaceJoinRequestAcceptLoading[joinRequest.user.id] || workspaceJoinRequestRejectLoading[joinRequest.user.id]}
                               onClick={() => {
                                 setWorkspaceJoinRequestAcceptLoading({ ...workspaceJoinRequestAcceptLoading, [joinRequest.user.id]: true });
-                                fetch(`/api/workspaces/${workspaceId}/join-requests/${joinRequest.user.id}/accept`, {
+                                fetch(`/api/v1/workspaces/${workspaceId}/join-requests/${joinRequest.user.id}/accept`, {
                                   method: 'POST',
                                 })
                                   .then(async (response) => {
@@ -380,7 +380,7 @@ export default function ManageUsersPage() {
                               disabled={workspaceJoinRequestRejectLoading[joinRequest.user.id] || workspaceJoinRequestAcceptLoading[joinRequest.user.id]}
                               onClick={() => {
                                 setWorkspaceJoinRequestRejectLoading({ ...workspaceJoinRequestRejectLoading, [joinRequest.user.id]: true });
-                                fetch(`/api/workspaces/${workspaceId}/join-requests/${joinRequest.user.id}/reject`, {
+                                fetch(`/api/v1/workspaces/${workspaceId}/join-requests/${joinRequest.user.id}/reject`, {
                                   method: 'POST',
                                 })
                                   .then(async (response) => {
@@ -536,7 +536,7 @@ export default function ManageUsersPage() {
                                   <DeleteConfirmationModal
                                     onApprove={async () => {
                                       setWorkspaceJoinCodeDeleting({ ...workspaceJoinCodeDeleting, [workspaceJoinCode.code]: true });
-                                      fetch(`/api/workspaces/${workspaceId}/join-codes/${workspaceJoinCode.code}`, {
+                                      fetch(`/api/v1/workspaces/${workspaceId}/join-codes/${workspaceJoinCode.code}`, {
                                         method: 'DELETE',
                                       })
                                         .then(async (response) => {

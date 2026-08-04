@@ -2,12 +2,14 @@ import React, { useContext, useEffect, useState } from 'react';
 import { DndContext, DragEndEvent, PointerSensor, closestCenter, useSensor, useSensors } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { FieldArray, Formik, FormikErrors } from 'formik';
+import { z } from 'zod';
 import { FaTrashAlt } from 'react-icons/fa';
 import _ from 'lodash';
 import { useRouter } from 'next/router';
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import { RoutingContext } from '@lib/context/RoutingContextProvider';
 import { alertService } from '@lib/alertService';
+import { zodFormikValidate } from '@lib/forms/zodFormikValidate';
 import { DeleteConfirmationModal } from '@components/modals/DeleteConfirmationModal';
 import { CocktailCardFull } from '../../models/CocktailCardFull';
 import { CocktailRecipeFull } from '../../models/CocktailRecipeFull';
@@ -34,10 +36,24 @@ interface CocktailCardGroupError {
   groupPrice?: string;
 }
 
-interface CocktailCardError {
-  name?: string;
-  groups?: FormikErrors<CocktailCardGroupError[]>;
-}
+/**
+ * Mirrors the former inline `validate` logic:
+ *  - the card `name` is required (non-empty after trim),
+ *  - every group `name` is required (non-empty after trim).
+ * The adapter maps issue paths (e.g. `groups[0].name`) onto Formik's nested error
+ * object, so the field-level messages line up with the JSX exactly as before.
+ */
+const cardFormSchema = z.object({
+  name: z.string().refine((v) => v.trim() != '', { message: 'Required' }),
+  date: z.string().optional(),
+  groups: z.array(
+    z.object({
+      name: z.string().refine((v) => v.trim() != '', { message: 'Required' }),
+    }),
+  ),
+});
+
+const validateCard = zodFormikValidate(cardFormSchema);
 
 interface CardEditorFormProps {
   card?: CocktailCardFull;
@@ -104,27 +120,7 @@ export function CardEditorForm({ card, cocktails, loadingCocktails, workspaceId,
         }
         onUnsavedChangesChange(!_.isEqual(values, reducedCard));
 
-        const errors: CocktailCardError = {};
-        if (!values.name || values.name.trim() == '') {
-          errors.name = 'Required';
-        }
-
-        const groupErrors: CocktailCardGroupError[] = [];
-        values.groups.forEach((group, groupIndex) => {
-          const groupError: CocktailCardGroupError = {};
-          if (!group.name || group.name.trim() == '') {
-            groupError.name = 'Required';
-          }
-          if (Object.keys(groupError).length > 0) {
-            groupErrors[groupIndex] = groupError;
-          }
-        });
-
-        if (groupErrors.filter((lineItemErrors) => Object.keys(lineItemErrors).length > 0).length > 0) {
-          errors.groups = groupErrors;
-        }
-
-        return errors;
+        return validateCard(values);
       }}
       onSubmit={async (values) => {
         try {
@@ -144,7 +140,7 @@ export function CardEditorForm({ card, cocktails, loadingCocktails, workspaceId,
           };
 
           if (card == undefined) {
-            const response = await fetch(`/api/workspaces/${workspaceId}/cards`, {
+            const response = await fetch(`/api/v1/workspaces/${workspaceId}/cards`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(input),
@@ -156,10 +152,10 @@ export function CardEditorForm({ card, cocktails, loadingCocktails, workspaceId,
             } else {
               const body = await response.json();
               console.error('CardId -> onSubmit[create]', response);
-              alertService.error(body.message ?? 'Fehler beim Erstellen der Karte', response.status, response.statusText);
+              alertService.error(body.error?.message ?? 'Fehler beim Erstellen der Karte', response.status, response.statusText);
             }
           } else {
-            const response = await fetch(`/api/workspaces/${workspaceId}/cards/${card.id}`, {
+            const response = await fetch(`/api/v1/workspaces/${workspaceId}/cards/${card.id}`, {
               method: 'PUT',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(input),
@@ -171,7 +167,7 @@ export function CardEditorForm({ card, cocktails, loadingCocktails, workspaceId,
             } else {
               const body = await response.json();
               console.error('CardId -> onSubmit[update]', response);
-              alertService.error(body.message ?? 'Fehler beim Speichern der Karte', response.status, response.statusText);
+              alertService.error(body.error?.message ?? 'Fehler beim Speichern der Karte', response.status, response.statusText);
             }
           }
         } catch (error) {
@@ -342,7 +338,7 @@ export function CardEditorArchiveActions({ card, workspaceId }: CardEditorArchiv
           variant="outline"
           size="sm"
           onClick={async () => {
-            const response = await fetch(`/api/workspaces/${workspaceId}/cards/${card.id}/${card.archived ? 'unarchive' : 'archive'}`, {
+            const response = await fetch(`/api/v1/workspaces/${workspaceId}/cards/${card.id}/${card.archived ? 'unarchive' : 'archive'}`, {
               method: 'PUT',
             });
 
@@ -354,7 +350,7 @@ export function CardEditorArchiveActions({ card, workspaceId }: CardEditorArchiv
             } else {
               console.error('CardId -> (un)archive', response);
               alertService.error(
-                body.message ?? `Fehler beim ${card.archived ? 'Entarchivieren' : 'Archivieren'} der Karte`,
+                body.error?.message ?? `Fehler beim ${card.archived ? 'Entarchivieren' : 'Archivieren'} der Karte`,
                 response.status,
                 response.statusText,
               );
@@ -373,7 +369,7 @@ export function CardEditorArchiveActions({ card, workspaceId }: CardEditorArchiv
                 spelling={'DELETE'}
                 entityName={`die Karte '${card.name}'`}
                 onApprove={async () => {
-                  const response = await fetch(`/api/workspaces/${workspaceId}/cards/${card.id}`, {
+                  const response = await fetch(`/api/v1/workspaces/${workspaceId}/cards/${card.id}`, {
                     method: 'DELETE',
                   });
 
@@ -383,7 +379,7 @@ export function CardEditorArchiveActions({ card, workspaceId }: CardEditorArchiv
                     await routingContext.conditionalBack(`/workspaces/${workspaceId}/manage/cards`);
                   } else {
                     console.error('CardId -> deleteCard', response);
-                    alertService.error(body.message ?? 'Fehler beim Löschen der Karte', response.status, response.statusText);
+                    alertService.error(body.error?.message ?? 'Fehler beim Löschen der Karte', response.status, response.statusText);
                   }
                 }}
               />,

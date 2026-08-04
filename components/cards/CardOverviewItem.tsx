@@ -103,8 +103,9 @@ export default function CardOverviewItem(props: CardOverviewItemProps) {
                     title={'Name'}
                     onInputSubmit={async (value) => {
                       try {
-                        const response = await fetch(`/api/workspaces/${props.workspaceId}/cards/${props.card.id}/clone`, {
+                        const response = await fetch(`/api/v1/workspaces/${props.workspaceId}/cards/${props.card.id}/clone`, {
                           method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
                           body: JSON.stringify({ name: value }),
                         });
 
@@ -114,7 +115,7 @@ export default function CardOverviewItem(props: CardOverviewItemProps) {
                           await routingContext.conditionalBack(`/workspaces/${props.workspaceId}/manage/cards/${body.data.id}`);
                         } else {
                           console.error('CardId -> cloneCard', response);
-                          alertService.error(body.message ?? 'Fehler beim Duplizieren der Karte', response.status, response.statusText);
+                          alertService.error(body.error?.message ?? 'Fehler beim Duplizieren der Karte', response.status, response.statusText);
                         }
                       } catch (error) {
                         console.error('CardId -> cloneCard', error);

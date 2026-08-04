@@ -10,6 +10,7 @@ import { CocktailRecipeGarnishFull } from '../../../../../models/CocktailRecipeG
 import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
 import HTTPMethod from 'http-method-enum';
 import { withHttpMethods } from '@middleware/api/handleMethods';
+import { withDeprecation } from '@middleware/api/withDeprecation';
 import { normalizeString } from '../../../../../lib/StringUtils';
 import CocktailRecipeCreateInput = Prisma.CocktailRecipeCreateInput;
 
@@ -21,7 +22,7 @@ export const config = {
   },
 };
 
-export default withHttpMethods({
+const legacyHandler = withHttpMethods({
   [HTTPMethod.GET]: withWorkspacePermission([Role.USER], Permission.COCKTAILS_READ, async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
     const cocktailRecipes: CocktailRecipeFull[] = await prisma.cocktailRecipe.findMany({
       where: {
@@ -167,3 +168,7 @@ export default withHttpMethods({
     },
   ),
 });
+
+// DEPRECATED: unversioned endpoint kept for backward compatibility. Behavior is
+// unchanged; only advertises the successor v1 path. Use /api/v1/... instead.
+export default withDeprecation({ successor: '/api/v1/workspaces/{workspaceId}/cocktails' }, legacyHandler);

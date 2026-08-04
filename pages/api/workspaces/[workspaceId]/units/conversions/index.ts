@@ -4,9 +4,10 @@ import { withWorkspacePermission } from '@middleware/api/authenticationMiddlewar
 import { Prisma, Role, Unit, UnitConversion } from '@generated/prisma/client';
 import prisma from '../../../../../../prisma/prisma';
 import { Graph, shortestPath } from 'graph-data-structure';
+import { withDeprecation } from '@middleware/api/withDeprecation';
 import UnitConversionCreateInput = Prisma.UnitConversionCreateInput;
 
-export default withHttpMethods({
+const legacyHandler = withHttpMethods({
   [HTTPMethod.GET]: withWorkspacePermission([Role.USER], async (req, res, user, workspace) => {
     const unitConversions = await prisma.unitConversion.findMany({ where: { workspaceId: workspace.id } });
     return res.json({ data: unitConversions });
@@ -38,6 +39,10 @@ export default withHttpMethods({
     return res.json({ data: await regenerateUnitConversions(workspace.id) });
   }),
 });
+
+// DEPRECATED: unversioned endpoint kept for backward compatibility. Behavior is
+// unchanged; only advertises the successor v1 path. Use /api/v1/... instead.
+export default withDeprecation({ successor: '/api/v1/workspaces/{workspaceId}/units/conversions' }, legacyHandler);
 
 export async function regenerateUnitConversions(workspaceId: string): Promise<UnitConversion[]> {
   // Recalculate all unit conversions

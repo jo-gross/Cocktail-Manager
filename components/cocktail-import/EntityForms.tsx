@@ -1,6 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { Formik, useFormikContext } from 'formik';
 import { Button, Card, CardBody, FormControl, Input, Label, LabelText, LabelTextAlt, Select } from '@components/ui';
+import { z } from 'zod';
+import { zodFormikValidate } from '@lib/forms/zodFormikValidate';
+
+// Mirrors the original if/else: empty -> "Ungültiger Identifier", otherwise must match [A-Z_].
+const identifierSchema = z.string().superRefine((value, ctx) => {
+  if (value.trim() == '') {
+    ctx.addIssue({ code: 'custom', message: 'Ungültiger Identifier' });
+  } else if (!/^[A-Z_]+$/.test(value)) {
+    ctx.addIssue({ code: 'custom', message: 'Nur A-Z und _ erlaubt' });
+  }
+});
+
+const lableDESchema = z.string().refine((value) => value.trim() != '', { message: 'Ungültiger Bezeichner' });
 
 interface EntityFormEntity {
   id: string;
@@ -19,6 +32,13 @@ interface UnitFormValues {
   identifier: string;
   lableDE: string;
 }
+
+const unitFormSchema = z.object({
+  identifier: identifierSchema,
+  lableDE: lableDESchema,
+});
+
+const validateUnit = zodFormikValidate(unitFormSchema);
 
 function UnitFormContent({ onDataChange }: { onDataChange: (data: Record<string, unknown>) => void }) {
   const { values, handleChange, errors, touched } = useFormikContext<UnitFormValues>();
@@ -68,23 +88,7 @@ export function UnitForm({ initialData, onDataChange, entity }: BaseEntityFormPr
         identifier: String(initialData?.name ?? entity.name ?? ''),
         lableDE: String(initialData?.lableDE ?? ''),
       }}
-      validate={(values) => {
-        const errors: { [key: string]: string } = {};
-
-        if (values.identifier.trim() != '') {
-          if (!/^[A-Z_]+$/.test(values.identifier)) {
-            errors.identifier = 'Nur A-Z und _ erlaubt';
-          }
-        } else {
-          errors.identifier = 'Ungültiger Identifier';
-        }
-
-        if (!values.lableDE || values.lableDE.trim() == '') {
-          errors.lableDE = 'Ungültiger Bezeichner';
-        }
-
-        return errors;
-      }}
+      validate={(values) => validateUnit(values)}
       onSubmit={() => {}}
       enableReinitialize
     >
@@ -99,6 +103,13 @@ interface IceFormValues {
 }
 
 export type { IceFormValues };
+
+const iceFormSchema = z.object({
+  identifier: identifierSchema,
+  lableDE: lableDESchema,
+});
+
+const validateIce = zodFormikValidate(iceFormSchema);
 
 function IceFormContent({ onDataChange }: { onDataChange: (data: Record<string, unknown>) => void }) {
   const { values, handleChange, errors, touched } = useFormikContext<IceFormValues>();
@@ -148,23 +159,7 @@ export function IceForm({ initialData, onDataChange, entity }: BaseEntityFormPro
         identifier: String(initialData?.name ?? entity.name ?? ''),
         lableDE: String(initialData?.lableDE ?? ''),
       }}
-      validate={(values) => {
-        const errors: { [key: string]: string } = {};
-
-        if (!values.identifier || values.identifier.trim() == '') {
-          errors.identifier = 'Ungültiger Identifier';
-        } else {
-          if (!/^[A-Z_]+$/.test(values.identifier)) {
-            errors.identifier = 'Nur A-Z und _ erlaubt';
-          }
-        }
-
-        if (!values.lableDE || values.lableDE.trim() == '') {
-          errors.lableDE = 'Ungültiger Bezeichner';
-        }
-
-        return errors;
-      }}
+      validate={(values) => validateIce(values)}
       onSubmit={() => {}}
       enableReinitialize
     >
@@ -183,6 +178,26 @@ interface StepActionFormValues {
   newActionGroup: string;
   lableDE: string;
 }
+
+// Validation depends on the `newGroupMode` UI state, so the schema is built per render.
+const buildStepActionFormSchema = (newGroupMode: boolean) =>
+  z.object({
+    action: identifierSchema,
+    lableDE: lableDESchema,
+    actionGroup: z.string().superRefine((value, ctx) => {
+      if (!newGroupMode && value.trim() == '') {
+        ctx.addIssue({ code: 'custom', message: 'Gruppe muss ausgewählt werden' });
+      }
+    }),
+    newActionGroup: z.string().superRefine((value, ctx) => {
+      if (!newGroupMode) return;
+      if (value.trim() == '') {
+        ctx.addIssue({ code: 'custom', message: 'Ungültiger Identifier' });
+      } else if (!/^[A-Z_]+$/.test(value)) {
+        ctx.addIssue({ code: 'custom', message: 'Nur A-Z und _ erlaubt' });
+      }
+    }),
+  });
 
 function StepActionFormContent({
   onDataChange,
@@ -305,37 +320,7 @@ export function StepActionForm({ initialData, onDataChange, entity, existingGrou
         newActionGroup: '',
         lableDE: String(initialData?.lableDE ?? ''),
       }}
-      validate={(values) => {
-        const errors: { [key: string]: string } = {};
-
-        if (newGroupMode) {
-          if (values.newActionGroup.trim() != '') {
-            if (!/^[A-Z_]+$/.test(values.newActionGroup)) {
-              errors.newActionGroup = 'Nur A-Z und _ erlaubt';
-            }
-          } else {
-            errors.newActionGroup = 'Ungültiger Identifier';
-          }
-        } else {
-          if (!values.actionGroup || values.actionGroup.trim() == '') {
-            errors.actionGroup = 'Gruppe muss ausgewählt werden';
-          }
-        }
-
-        if (!values.action || values.action.trim() == '') {
-          errors.action = 'Ungültiger Identifier';
-        } else {
-          if (!/^[A-Z_]+$/.test(values.action)) {
-            errors.action = 'Nur A-Z und _ erlaubt';
-          }
-        }
-
-        if (!values.lableDE || values.lableDE.trim() == '') {
-          errors.lableDE = 'Ungültiger Bezeichner';
-        }
-
-        return errors;
-      }}
+      validate={(values) => zodFormikValidate(buildStepActionFormSchema(newGroupMode))(values)}
       onSubmit={() => {}}
       enableReinitialize
     >

@@ -1,4 +1,4 @@
-import { Unit, UnitConversion } from '@generated/prisma/client';
+import type { UnitDto, UnitConversionDto } from '@lib/schemas/units';
 import { Formik } from 'formik';
 import React, { useContext } from 'react';
 import { UserContext } from '@lib/context/UserContextProvider';
@@ -7,13 +7,28 @@ import { useRouter } from 'next/router';
 import { FaArrowsLeftRight } from 'react-icons/fa6';
 import { alertService } from '@lib/alertService';
 import { Button, ButtonGroup, FormControl, Input, Label, LabelText, LabelTextAlt, Loading, Select } from '@components/ui';
+import { z } from 'zod';
+import { zodFormikValidate } from '@lib/forms/zodFormikValidate';
 
 interface UnitConversionModalProps {
-  unitConversion?: UnitConversion;
-  units: Unit[];
-  existingConversions?: UnitConversion[];
+  unitConversion?: UnitConversionDto;
+  units: UnitDto[];
+  existingConversions?: UnitConversionDto[];
   onSaved?: () => void;
 }
+
+const unitConversionFormSchema = z
+  .object({
+    fromUnitId: z.string().trim().min(1, 'Pflichtfeld'),
+    toUnitId: z.string().trim().min(1, 'Pflichtfeld'),
+    factor: z.coerce.number(),
+  })
+  .refine((values) => Number.isNaN(values.factor) || values.factor > 0, {
+    message: 'Faktor muss größer als 0 sein',
+    path: ['factor'],
+  });
+
+const validateUnitConversion = zodFormikValidate(unitConversionFormSchema);
 
 export default function UnitConversionModal(props: UnitConversionModalProps) {
   const userContext = useContext(UserContext);
@@ -38,9 +53,9 @@ export default function UnitConversionModal(props: UnitConversionModalProps) {
               const body = {
                 fromUnitId: values.fromUnitId,
                 toUnitId: values.toUnitId,
-                factor: values.factor,
+                factor: Number(values.factor),
               };
-              const response = await fetch(`/api/workspaces/${workspaceId}/units/conversions`, {
+              const response = await fetch(`/api/v1/workspaces/${workspaceId}/units/conversions`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(body),
@@ -56,9 +71,9 @@ export default function UnitConversionModal(props: UnitConversionModalProps) {
               }
             } else {
               const body = {
-                factor: values.factor,
+                factor: Number(values.factor),
               };
-              const response = await fetch(`/api/workspaces/${workspaceId}/units/conversions/${props.unitConversion.id}`, {
+              const response = await fetch(`/api/v1/workspaces/${workspaceId}/units/conversions/${props.unitConversion.id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(body),
@@ -78,21 +93,7 @@ export default function UnitConversionModal(props: UnitConversionModalProps) {
             alertService.error('Es ist ein Fehler aufgetreten');
           }
         }}
-        validate={(values) => {
-          const errors: { [key: string]: string } = {};
-
-          if (!values.fromUnitId || values.fromUnitId.trim() == '') {
-            errors.fromUnitId = 'Pflichtfeld';
-          }
-          if (!values.toUnitId || values.toUnitId.trim() == '') {
-            errors.toUnitId = 'Pflichtfeld';
-          }
-          if (!isNaN(values.factor) && values.factor <= 0) {
-            errors.factor = 'Faktor muss größer als 0 sein';
-          }
-
-          return errors;
-        }}
+        validate={(values) => validateUnitConversion(values)}
       >
         {({ values, handleChange, handleSubmit, isSubmitting, errors, touched, setFieldValue }) => (
           <form onSubmit={handleSubmit} className={'flex flex-col gap-2'}>

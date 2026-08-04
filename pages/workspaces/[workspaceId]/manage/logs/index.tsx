@@ -62,7 +62,7 @@ const LogsPage: NextPageWithPullToRefresh = () => {
 
   useEffect(() => {
     if (!workspaceId) return;
-    fetch(`/api/workspaces/${workspaceId}/settings`)
+    fetch(`/api/v1/workspaces/${workspaceId}/settings`)
       .then((res) => res.json())
       .then((data) => {
         if (data.data?.statisticDayStartTime) {
@@ -124,7 +124,7 @@ const LogsPage: NextPageWithPullToRefresh = () => {
         params.append('search', searchQuery.trim());
       }
 
-      const response = await fetch(`/api/workspaces/${workspaceId}/statistics/logs?${params.toString()}`);
+      const response = await fetch(`/api/v1/workspaces/${workspaceId}/statistics/logs?${params.toString()}`);
       if (response.ok) {
         const body = await response.json();
         setCocktailStatisticItems(body.data);
@@ -132,7 +132,7 @@ const LogsPage: NextPageWithPullToRefresh = () => {
       } else {
         const body = await response.json();
         console.error('LogsPage -> loadLogs', response);
-        alertService.error(body.message ?? 'Fehler beim Laden der Logs', response.status, response.statusText);
+        alertService.error(body.error?.message ?? 'Fehler beim Laden der Logs', response.status, response.statusText);
       }
     } catch (error) {
       console.error('LogsPage -> loadLogs', error);
@@ -229,7 +229,7 @@ const LogsPage: NextPageWithPullToRefresh = () => {
                             onClick={async () => {
                               setItemDeleting({ ...itemDeleting, [item.id]: true });
                               try {
-                                const response = await fetch(`/api/workspaces/${workspaceId}/statistics/logs/${item.id}`, {
+                                const response = await fetch(`/api/v1/workspaces/${workspaceId}/statistics/logs/${item.id}`, {
                                   method: 'DELETE',
                                 });
                                 if (response.ok) {
@@ -238,7 +238,7 @@ const LogsPage: NextPageWithPullToRefresh = () => {
                                 } else {
                                   const body = await response.json();
                                   console.error('LogsPage -> deleteLogItem', response);
-                                  alertService.error(body.message ?? 'Fehler beim Löschen des Log-Eintrags', response.status, response.statusText);
+                                  alertService.error(body.error?.message ?? 'Fehler beim Löschen des Log-Eintrags', response.status, response.statusText);
                                 }
                               } catch (error) {
                                 console.error('LogsPage -> deleteLogItem', error);

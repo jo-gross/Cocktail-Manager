@@ -4,8 +4,9 @@ import { withWorkspacePermission } from '@middleware/api/authenticationMiddlewar
 import prisma from '../../../../../../prisma/prisma';
 import { Role } from '@generated/prisma/client';
 import { sendJoinRequestRejectedToUser } from '@lib/email/joinRequestNotifications';
+import { withDeprecation } from '@middleware/api/withDeprecation';
 
-export default withHttpMethods({
+const legacyHandler = withHttpMethods({
   [HTTPMethod.POST]: withWorkspacePermission([Role.MANAGER], async (req, res, user, workspace) => {
     const userId = req.query.userId as string;
     try {
@@ -27,3 +28,6 @@ export default withHttpMethods({
     }
   }),
 });
+
+// DEPRECATED: unversioned endpoint kept for backward compatibility. Use /api/v1/... instead.
+export default withDeprecation({ successor: '/api/v1/workspaces/{workspaceId}/join-requests/{userId}/reject' }, legacyHandler);

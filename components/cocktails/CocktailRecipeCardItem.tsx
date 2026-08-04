@@ -1,4 +1,4 @@
-import { CocktailRecipeFull } from '../../models/CocktailRecipeFull';
+import type { CocktailDto } from '@lib/schemas/cocktails';
 import React, { forwardRef, useCallback, useContext, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { CompactCocktailRecipeInstruction } from './CompactCocktailRecipeInstruction';
 import { ShowCocktailInfoButton } from './ShowCocktailInfoButton';
@@ -20,7 +20,7 @@ export type CocktailRecipeOverviewItemRef = {
 };
 
 export type CocktailRecipeOverviewItemProps = {
-  cocktailRecipe: CocktailRecipeFull | string;
+  cocktailRecipe: CocktailDto | string;
   showImage?: boolean;
   specialPrice?: number;
   showPrice?: boolean;
@@ -39,7 +39,7 @@ const CocktailRecipeCardItem = forwardRef<CocktailRecipeOverviewItemRef, Cocktai
   const router = useRouter();
   const workspaceId = router.query.workspaceId as string;
 
-  const [loadedCocktailRecipe, setLoadedCocktailRecipe] = useState<CocktailRecipeFull | undefined>(
+  const [loadedCocktailRecipe, setLoadedCocktailRecipe] = useState<CocktailDto | undefined>(
     typeof props.cocktailRecipe === 'string' ? undefined : props.cocktailRecipe,
   );
   const [cocktailRecipeLoading, setCocktailRecipeLoading] = useState(false);

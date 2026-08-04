@@ -4,8 +4,9 @@ import { withWorkspacePermission } from '@middleware/api/authenticationMiddlewar
 import { Role, Permission } from '@generated/prisma/client';
 import { NextApiRequest, NextApiResponse } from 'next';
 import prisma from '../../../../../../prisma/prisma';
+import { withDeprecation } from '@middleware/api/withDeprecation';
 
-export default withHttpMethods({
+const legacyHandler = withHttpMethods({
   [HTTPMethod.PUT]: withWorkspacePermission([Role.MANAGER], Permission.COCKTAILS_UPDATE, async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
     const { cocktailId } = req.query;
 
@@ -24,3 +25,7 @@ export default withHttpMethods({
     return res.status(200).json({ data: result });
   }),
 });
+
+// DEPRECATED: unversioned endpoint kept for backward compatibility. Behavior is
+// unchanged; only advertises the successor v1 path. Use /api/v1/... instead.
+export default withDeprecation({ successor: '/api/v1/workspaces/{workspaceId}/cocktails/{cocktailId}/unarchive' }, legacyHandler);

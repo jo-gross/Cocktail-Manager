@@ -102,7 +102,7 @@ const CocktailCalculationOverviewPage: NextPageWithPullToRefresh = () => {
   const refreshCocktailCalculations = useCallback(() => {
     if (!workspaceId) return;
     setLoading(true);
-    Promise.all([fetch(`/api/workspaces/${workspaceId}/calculations`), fetch(`/api/workspaces/${workspaceId}/calculations/groups`)])
+    Promise.all([fetch(`/api/v1/workspaces/${workspaceId}/calculations`), fetch(`/api/v1/workspaces/${workspaceId}/calculations/groups`)])
       .then(async ([calculationsResponse, groupsResponse]) => {
         const calculationsBody = await calculationsResponse.json();
         const groupsBody = await groupsResponse.json();
@@ -196,7 +196,7 @@ const CocktailCalculationOverviewPage: NextPageWithPullToRefresh = () => {
   const assignGroup = useCallback(
     async (calculationIds: string[], groupId: string | null) => {
       if (!workspaceId || calculationIds.length === 0) return;
-      const response = await fetch(`/api/workspaces/${workspaceId}/calculations/groups/assign`, {
+      const response = await fetch(`/api/v1/workspaces/${workspaceId}/calculations/groups/assign`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ calculationIds, groupId }),
@@ -268,7 +268,7 @@ const CocktailCalculationOverviewPage: NextPageWithPullToRefresh = () => {
               alertService.error('Bitte einen Gruppennamen eingeben');
               return;
             }
-            const response = await fetch(`/api/workspaces/${workspaceId}/calculations/groups`, {
+            const response = await fetch(`/api/v1/workspaces/${workspaceId}/calculations/groups`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ name, isDefaultExpanded: expandedInput?.checked ?? false }),
@@ -292,7 +292,7 @@ const CocktailCalculationOverviewPage: NextPageWithPullToRefresh = () => {
   const handleToggleGroupDefaultExpanded = useCallback(
     async (group: CalculationGroup) => {
       if (!workspaceId) return;
-      const response = await fetch(`/api/workspaces/${workspaceId}/calculations/groups/${group.id}`, {
+      const response = await fetch(`/api/v1/workspaces/${workspaceId}/calculations/groups/${group.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: group.name, isDefaultExpanded: !group.isDefaultExpanded }),
@@ -317,7 +317,7 @@ const CocktailCalculationOverviewPage: NextPageWithPullToRefresh = () => {
           confirmLabel={'Löschen'}
           confirmVariant={'error'}
           onConfirm={async () => {
-            const response = await fetch(`/api/workspaces/${workspaceId}/calculations/groups/${group.id}`, { method: 'DELETE' });
+            const response = await fetch(`/api/v1/workspaces/${workspaceId}/calculations/groups/${group.id}`, { method: 'DELETE' });
             const body = await response.json();
             if (!response.ok) {
               alertService.error(body.message ?? 'Fehler beim Löschen der Gruppe', response.status, response.statusText);
@@ -336,7 +336,7 @@ const CocktailCalculationOverviewPage: NextPageWithPullToRefresh = () => {
     if (!workspaceId || selectedIds.size === 0) return;
     setExportingJson(true);
     try {
-      const response = await fetch(`/api/workspaces/${workspaceId}/calculations/export-json`, {
+      const response = await fetch(`/api/v1/workspaces/${workspaceId}/calculations/export/json`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ids: Array.from(selectedIds) }),
@@ -373,7 +373,7 @@ const CocktailCalculationOverviewPage: NextPageWithPullToRefresh = () => {
       if (!workspaceId) return;
       setExportingSingleId(id);
       try {
-        const response = await fetch(`/api/workspaces/${workspaceId}/calculations/export-json`, {
+        const response = await fetch(`/api/v1/workspaces/${workspaceId}/calculations/export/json`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ ids: [id] }),
@@ -419,7 +419,7 @@ const CocktailCalculationOverviewPage: NextPageWithPullToRefresh = () => {
         confirmVariant="error"
         onConfirm={async () => {
           for (const id of ids) {
-            const res = await fetch(`/api/workspaces/${workspaceId}/calculations/${id}`, { method: 'DELETE' });
+            const res = await fetch(`/api/v1/workspaces/${workspaceId}/calculations/${id}`, { method: 'DELETE' });
             if (!res.ok) throw new Error('Löschen fehlgeschlagen');
           }
           setSelectedIds(new Set());

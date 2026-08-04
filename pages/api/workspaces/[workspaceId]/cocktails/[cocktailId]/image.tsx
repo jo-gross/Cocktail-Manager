@@ -1,11 +1,12 @@
 import { withHttpMethods } from '@middleware/api/handleMethods';
+import { withDeprecation } from '@middleware/api/withDeprecation';
 import HTTPMethod from 'http-method-enum';
 import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
 import { Role, Permission } from '@generated/prisma/client';
 import { NextApiRequest, NextApiResponse } from 'next';
 import prisma from '../../../../../../prisma/prisma';
 
-export default withHttpMethods({
+const legacyHandler = withHttpMethods({
   [HTTPMethod.GET]: withWorkspacePermission([Role.USER], Permission.COCKTAILS_READ, async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
     const cocktailId = req.query.cocktailId as string | undefined;
     if (!cocktailId) return res.status(400).json({ message: 'No cocktail id' });
@@ -35,3 +36,7 @@ export default withHttpMethods({
     return res.send(imageResp);
   }),
 });
+
+// DEPRECATED: unversioned endpoint kept for backward compatibility. Behavior is
+// unchanged; only advertises the successor v1 path. Use /api/v1/... instead.
+export default withDeprecation({ successor: '/api/v1/workspaces/{workspaceId}/cocktails/{cocktailId}/image' }, legacyHandler);

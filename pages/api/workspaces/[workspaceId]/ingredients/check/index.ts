@@ -3,11 +3,12 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
 import { Ingredient, Permission, Role, Workspace } from '@generated/prisma/client';
 import { withHttpMethods } from '@middleware/api/handleMethods';
+import { withDeprecation } from '@middleware/api/withDeprecation';
 import HTTPMethod from 'http-method-enum';
 import { calculateIngredientSimilarity } from '@lib/findSimilarEntities';
 import levenshtein from 'js-levenshtein';
 
-export default withHttpMethods({
+const legacyHandler = withHttpMethods({
   [HTTPMethod.GET]: withWorkspacePermission(
     [Role.USER],
     Permission.INGREDIENTS_READ,
@@ -60,3 +61,7 @@ export default withHttpMethods({
     },
   ),
 });
+
+// DEPRECATED: unversioned endpoint kept for backward compatibility. Behavior is
+// unchanged; only advertises the successor v1 path. Use /api/v1/... instead.
+export default withDeprecation({ successor: '/api/v1/workspaces/{workspaceId}/ingredients/check' }, legacyHandler);

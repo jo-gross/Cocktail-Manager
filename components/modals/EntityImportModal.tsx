@@ -123,7 +123,7 @@ function DependencyMappingSection({
 
   const fetchOptions = useCallback(
     async (search: string) => {
-      const res = await fetch(`/api/workspaces/${workspaceId}/${fetchUrl}?search=${encodeURIComponent(search)}`);
+      const res = await fetch(`/api/v1/workspaces/${workspaceId}/${fetchUrl}?search=${encodeURIComponent(search)}`);
       const body = await res.json();
       return body.data || [];
     },
@@ -304,7 +304,7 @@ export default function EntityImportModal({ workspaceId, entityType, onImportCom
       const selectedItems = parsedEntities.filter((e) => e.selected && e.valid);
       const exportData = selectedItems.map((e) => e.data);
 
-      const response = await fetch(`/api/workspaces/${workspaceId}/${entityType}/import-json`, {
+      const response = await fetch(`/api/v1/workspaces/${workspaceId}/${entityType}/import/json`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ phase: 'prepare-mapping', exportData }),
@@ -402,7 +402,7 @@ export default function EntityImportModal({ workspaceId, entityType, onImportCom
         body.unitMappings = unitMappings;
       }
 
-      const response = await fetch(`/api/workspaces/${workspaceId}/${entityType}/import-json`, {
+      const response = await fetch(`/api/v1/workspaces/${workspaceId}/${entityType}/import/json`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),

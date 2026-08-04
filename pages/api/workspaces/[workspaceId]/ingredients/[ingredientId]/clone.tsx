@@ -3,9 +3,10 @@ import HTTPMethod from 'http-method-enum';
 import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
 import { Role, Permission, Prisma } from '@generated/prisma/client';
 import { NextApiRequest, NextApiResponse } from 'next';
+import { withDeprecation } from '@middleware/api/withDeprecation';
 import prisma from '../../../../../../prisma/prisma';
 
-export default withHttpMethods({
+const legacyHandler = withHttpMethods({
   [HTTPMethod.POST]: withWorkspacePermission(
     [Role.MANAGER],
     Permission.INGREDIENTS_CREATE,
@@ -81,3 +82,7 @@ export default withHttpMethods({
     },
   ),
 });
+
+// DEPRECATED: unversioned endpoint kept for backward compatibility. Behavior is
+// unchanged; only advertises the successor v1 path. Use /api/v1/... instead.
+export default withDeprecation({ successor: '/api/v1/workspaces/{workspaceId}/ingredients/{ingredientId}/clone' }, legacyHandler);

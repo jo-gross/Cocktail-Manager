@@ -5,6 +5,18 @@ import { ModalContext } from '@lib/context/ModalContextProvider';
 import { alertService } from '@lib/alertService';
 import { useRouter } from 'next/router';
 import { Button, FormControl, Input, Label, LabelText, LabelTextAlt, Loading } from '@components/ui';
+import { z } from 'zod';
+import { zodFormikValidate } from '@lib/forms/zodFormikValidate';
+
+const iceSchema = z.object({
+  identifier: z
+    .string()
+    .min(1, 'Ungültiger Identifier')
+    .regex(/^[A-Z_]+$/, 'Nur A-Z und _ erlaubt'),
+  lableDE: z.string().trim().min(1, 'Ungültiger Bezeichner'),
+});
+
+const validateIce = zodFormikValidate(iceSchema);
 
 export default function CreateIceModal() {
   const _userContext = useContext(UserContext);
@@ -31,7 +43,7 @@ export default function CreateIceModal() {
               },
             };
 
-            const response = await fetch(`/api/workspaces/${workspaceId}/ice`, {
+            const response = await fetch(`/api/v1/workspaces/${workspaceId}/ice`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(body),
@@ -50,23 +62,7 @@ export default function CreateIceModal() {
             alertService.error('Es ist ein Fehler aufgetreten');
           }
         }}
-        validate={(values) => {
-          const errors: { [key: string]: string } = {};
-
-          if (!values.identifier || values.identifier.trim() == '') {
-            errors.identifier = 'Ungültiger Identifier';
-          } else {
-            if (!/^[A-Z_]+$/.test(values.identifier)) {
-              errors.identifier = 'Nur A-Z und _ erlaubt';
-            }
-          }
-
-          if (!values.lableDE || values.lableDE.trim() == '') {
-            errors.lableDE = 'Ungültiger Bezeichner';
-          }
-
-          return errors;
-        }}
+        validate={(values) => validateIce(values)}
       >
         {({ values, handleChange, handleSubmit, isSubmitting, errors, touched, setFieldValue: _setFieldValue }) => (
           <form onSubmit={handleSubmit} className={'flex flex-col gap-2'}>

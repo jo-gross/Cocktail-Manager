@@ -25,7 +25,7 @@ function EditCocktailRecipe() {
     if (!id) return;
     if (!workspaceId) return;
     setLoading(true);
-    fetch(`/api/workspaces/${workspaceId}/ingredients/${id}`)
+    fetch(`/api/v1/workspaces/${workspaceId}/ingredients/${id}`)
       .then(async (response) => {
         const body = await response.json();
         if (response.ok) {

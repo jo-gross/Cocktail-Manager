@@ -23,6 +23,8 @@ const PAGES: ScreenshotConfig[] = [
   { name: 'calculations-overview', path: '/manage/calculations', delay: 1000 },
   { name: 'statistics', path: '/manage/statistics', delay: 2000 },
   { name: 'settings', path: '/manage/settings', delay: 500 },
+  { name: 'api-keys', path: '/manage/settings/api-keys', delay: 800 },
+  { name: 'monitor', path: '/manage/monitor', delay: 1500 },
   { name: 'order-view', path: '/', waitForSelector: '[class*="card"]', delay: 1000 },
 ];
 

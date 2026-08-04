@@ -1,9 +1,12 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/router';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { FaAngleDown, FaAngleLeft, FaAngleRight, FaAngleUp, FaTrashAlt } from 'react-icons/fa';
 import { CompactCocktailRecipeInstruction } from '@components/cocktails/CompactCocktailRecipeInstruction';
 import { CocktailRecipeFull } from '../../models/CocktailRecipeFull';
+import type { CocktailDto } from '@lib/schemas/cocktails';
+import { fetchCocktail } from '@lib/network/cocktails';
 import { Button, Card, CardBody, Skeleton } from '@components/ui';
 import '../../lib/NumberUtils';
 import { DragHandle } from './CardEditorToolbar';
@@ -44,6 +47,17 @@ export function CardGroupItem({
     id: itemDragId(groupIndex, itemIndex),
     disabled: isArchived,
   });
+
+  // Cards stay on the old data flow; the detailed preview lazy-loads the v1 CocktailDto by id.
+  const router = useRouter();
+  const workspaceId = router.query.workspaceId as string;
+  const [loadedCocktail, setLoadedCocktail] = useState<CocktailDto | undefined>(undefined);
+  const [cocktailLoading, setCocktailLoading] = useState(false);
+  const cocktailId = cocktail?.id;
+  useEffect(() => {
+    if (viewMode === 'names' || !cocktailId) return;
+    fetchCocktail(workspaceId, cocktailId, setLoadedCocktail, setCocktailLoading);
+  }, [workspaceId, cocktailId, viewMode]);
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -116,9 +130,9 @@ export function CardGroupItem({
           </div>
         ) : null}
 
-        {cocktail != undefined ? (
-          <CompactCocktailRecipeInstruction showPrice={true} showImage={false} cocktailRecipe={cocktail} />
-        ) : loadingCocktails ? (
+        {loadedCocktail != undefined ? (
+          <CompactCocktailRecipeInstruction showPrice={true} showImage={false} cocktailRecipe={loadedCocktail} />
+        ) : cocktailLoading || loadingCocktails || cocktail != undefined ? (
           <div className="flex flex-col gap-2">
             <Skeleton className="h-5 w-3/4" />
             <Skeleton className="h-4 w-full" />

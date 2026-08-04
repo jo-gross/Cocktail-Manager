@@ -2,11 +2,12 @@ import prisma from '../../../../../../../prisma/prisma';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
 import { withHttpMethods } from '@middleware/api/handleMethods';
+import { withDeprecation } from '@middleware/api/withDeprecation';
 import { Role, Permission, WorkspaceSettingKey } from '@generated/prisma/client';
 import HTTPMethod from 'http-method-enum';
 import { getStartOfDay, getEndOfDay } from '../../../../../../../lib/dateHelpers';
 
-export default withHttpMethods({
+const legacyHandler = withHttpMethods({
   [HTTPMethod.GET]: withWorkspacePermission([Role.USER], Permission.STATISTICS_READ, async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
     const { startDate, endDate } = req.query;
 
@@ -96,3 +97,7 @@ export default withHttpMethods({
     });
   }),
 });
+
+// DEPRECATED: unversioned endpoint kept for backward compatibility. Behavior is
+// unchanged; only advertises the successor v1 path. Use /api/v1/... instead.
+export default withDeprecation({ successor: '/api/v1/workspaces/{workspaceId}/statistics/advanced/tags' }, legacyHandler);

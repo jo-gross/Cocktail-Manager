@@ -49,7 +49,7 @@ export default function CocktailOrderTimesModal({ workspaceId, cocktailId, cockt
         params.append('search', search.trim());
       }
 
-      const response = await fetch(`/api/workspaces/${workspaceId}/statistics/advanced/cocktails/${cocktailId}/orders?${params.toString()}`);
+      const response = await fetch(`/api/v1/workspaces/${workspaceId}/statistics/advanced/cocktails/${cocktailId}/orders?${params.toString()}`);
       if (response.ok) {
         const body = await response.json();
         setOrders(body.data);
@@ -65,7 +65,7 @@ export default function CocktailOrderTimesModal({ workspaceId, cocktailId, cockt
           return;
         }
         console.error('CocktailOrderTimesModal -> fetchOrders', response);
-        alertService.error(body.message ?? 'Fehler beim Laden der Bestellungen', response.status, response.statusText);
+        alertService.error(body.error?.message ?? 'Fehler beim Laden der Bestellungen', response.status, response.statusText);
       }
     } catch (error) {
       console.error('CocktailOrderTimesModal -> fetchOrders', error);

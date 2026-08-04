@@ -105,7 +105,7 @@ const ManageGarnishesOverviewPage: NextPageWithPullToRefresh = () => {
     if (!workspaceId || selectedIds.size === 0) return;
     setExportingJson(true);
     try {
-      const response = await fetch(`/api/workspaces/${workspaceId}/garnishes/export-json`, {
+      const response = await fetch(`/api/v1/workspaces/${workspaceId}/garnishes/export/json`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ids: Array.from(selectedIds) }),
@@ -142,7 +142,7 @@ const ManageGarnishesOverviewPage: NextPageWithPullToRefresh = () => {
       if (!workspaceId) return;
       setExportingSingleId(id);
       try {
-        const response = await fetch(`/api/workspaces/${workspaceId}/garnishes/export-json`, {
+        const response = await fetch(`/api/v1/workspaces/${workspaceId}/garnishes/export/json`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ ids: [id] }),
@@ -286,13 +286,8 @@ const ManageGarnishesOverviewPage: NextPageWithPullToRefresh = () => {
                       <TableCell className="w-0">
                         <Checkbox checkboxSize="sm" checked={selectedIds.has(garnish.id)} onChange={() => handleToggleSelect(garnish.id)} />
                       </TableCell>
-                      <TableImageCell
-                        hasImage={garnish._count.GarnishImage !== 0}
-                        onImageClick={() =>
-                          modalContext.openModal(<ImageModal image={`/api/workspaces/${garnish.workspaceId}/garnishes/${garnish.id}/image`} />)
-                        }
-                      >
-                        <AvatarImage src={`/api/workspaces/${garnish.workspaceId}/garnishes/${garnish.id}/image`} alt="Garnitur" />
+                      <TableImageCell hasImage={garnish.hasImage} onImageClick={() => modalContext.openModal(<ImageModal image={garnish.imageUrl ?? ''} />)}>
+                        <AvatarImage src={garnish.imageUrl ?? ''} alt="Garnitur" />
                       </TableImageCell>
                       <TableCell>
                         <div className="font-bold">{garnish.name}</div>

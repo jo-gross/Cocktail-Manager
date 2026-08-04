@@ -16,6 +16,8 @@ import { Glass } from '@generated/prisma/client';
 import { RoutingContext } from '@lib/context/RoutingContextProvider';
 import { resizeImage } from '@lib/ImageCompressor';
 import { Button, ButtonGroup, Divider, FormControl, Input, Label, LabelText, LabelTextAlt, Loading } from '@components/ui';
+import { z } from 'zod';
+import { zodFormikValidate } from '@lib/forms/zodFormikValidate';
 
 export interface GlassFormValues {
   name: string;
@@ -24,6 +26,21 @@ export interface GlassFormValues {
   originalImage: File | undefined;
   volume: number;
 }
+
+const glassFormSchema = z
+  .object({
+    name: z.string().min(1, 'Required'),
+    deposit: z.number(),
+    volume: z.number(),
+    image: z.string().optional(),
+    originalImage: z.any().optional(),
+  })
+  .refine((values) => !(values.originalImage != undefined && values.image == undefined), {
+    message: 'Bild ausgewählt aber nicht zugeschnitten',
+    path: ['image'],
+  });
+
+const validateGlass = zodFormikValidate(glassFormSchema);
 
 interface GlassFormProps {
   glass?: GlassWithImage;
@@ -64,7 +81,7 @@ export function GlassForm(props: GlassFormProps) {
             volume: values.volume == 0 ? undefined : values.volume,
           };
           if (props.glass == undefined) {
-            const response = await fetch(`/api/workspaces/${workspaceId}/glasses`, {
+            const response = await fetch(`/api/v1/workspaces/${workspaceId}/glasses`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(body),
@@ -82,7 +99,7 @@ export function GlassForm(props: GlassFormProps) {
               alertService.error(body.message ?? 'Fehler beim Erstellen des Glases', response.status, response.statusText);
             }
           } else {
-            const response = await fetch(`/api/workspaces/${workspaceId}/glasses/${props.glass.id}`, {
+            const response = await fetch(`/api/v1/workspaces/${workspaceId}/glasses/${props.glass.id}`, {
               method: 'PUT',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(body),
@@ -116,14 +133,7 @@ export function GlassForm(props: GlassFormProps) {
           props.setUnsavedChanges?.(true);
         }
 
-        const errors: Partial<Record<keyof GlassFormValues, string>> = {};
-        if (!values.name) {
-          errors.name = 'Required';
-        }
-        if (values.originalImage != undefined && values.image == undefined) {
-          errors.image = 'Bild ausgewählt aber nicht zugeschnitten';
-        }
-        return errors;
+        return validateGlass(values);
       }}
     >
       {({ values, setFieldValue, errors, handleChange, handleBlur, handleSubmit, isSubmitting, isValid }) => (
@@ -148,7 +158,7 @@ export function GlassForm(props: GlassFormProps) {
               className={errors.name ? fieldErrorClass : undefined}
               onChange={(event) => {
                 if (event.target.value.length > 2) {
-                  fetch(`/api/workspaces/${workspaceId}/glasses/check?name=${event.target.value}`)
+                  fetch(`/api/v1/workspaces/${workspaceId}/glasses/check?name=${event.target.value}`)
                     .then((response) => response.json())
                     .then((data) => {
                       if (data.data != null) {
