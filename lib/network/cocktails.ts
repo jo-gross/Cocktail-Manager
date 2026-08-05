@@ -1,5 +1,6 @@
 import { alertService } from '../alertService';
 import type { CocktailDto, CocktailSummaryDto } from '@lib/schemas/cocktails';
+import { apiV1Fetch } from './apiV1';
 import { fetchListWithCache, fetchWithCache } from './fetchWithCache';
 
 export function fetchCocktail(
@@ -114,11 +115,7 @@ export async function fetchCocktails(
 export async function prefetchAllCocktails(workspaceId: string, onProgress?: (loaded: number, total: number) => void): Promise<void> {
   try {
     // First, fetch the list of all cocktails (slim summaries — enough for offline search)
-    const response = await fetch(`/api/v1/workspaces/${workspaceId}/cocktails?search=`);
-    if (!response.ok) return;
-
-    const body = await response.json();
-    const cocktails = body.data as CocktailSummaryDto[];
+    const cocktails = await apiV1Fetch<CocktailSummaryDto[]>(`/api/v1/workspaces/${workspaceId}/cocktails?search=`);
 
     if (!cocktails || cocktails.length === 0) return;
 

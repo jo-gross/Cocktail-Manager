@@ -6,7 +6,7 @@ import Image, { ImageProps } from 'next/image';
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import ImageModal from '../modals/ImageModal';
 import StarsComponent from '../StarsComponent';
-import { CocktailRating } from '@generated/prisma/client';
+import type { RatingDto } from '@lib/schemas/ratings';
 import { Skeleton } from '@components/ui';
 import '../../lib/NumberUtils';
 
@@ -17,7 +17,7 @@ interface CompactCocktailRecipeInstructionProps {
   showImage?: boolean;
   image?: string;
 
-  showRating?: { ratings: CocktailRating[]; loading: boolean; error: boolean };
+  showRating?: { ratings: RatingDto[]; loading: boolean; error: boolean };
 }
 
 interface ImageWithSkeletonProps extends Omit<ImageProps, 'onLoad' | 'onError'> {

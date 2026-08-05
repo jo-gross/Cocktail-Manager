@@ -9,6 +9,8 @@ import { alertService } from '@lib/alertService';
 import { useRouter } from 'next/router';
 import type { WorkspaceDto } from '@lib/schemas/workspace';
 import type { TranslationsDto } from '@lib/schemas/translations';
+import { getTranslations, getWorkspace } from '@lib/network/workspaces';
+import { alertApiV1Error } from '@lib/network/apiV1';
 
 interface AlertBoundaryProps {
   children: React.ReactNode;
@@ -39,7 +41,7 @@ export function AuthBoundary(props: AlertBoundaryProps) {
           setUser(body.data);
         } else {
           console.error('AuthBoundary -> fetchUser', response);
-          alertService.error(body.message ?? 'Fehler beim Laden des Nutzers', response.status, response.statusText);
+          alertService.error(body.error?.message ?? body.message ?? 'Fehler beim Laden des Nutzers', response.status, response.statusText);
           await authClient.signOut();
         }
       })
@@ -77,40 +79,21 @@ export function AuthBoundary(props: AlertBoundaryProps) {
       setWorkspaceLoading(true);
 
       Promise.all([
-        fetch(`/api/v1/workspaces/${wsId}`).then(async (response) => {
-          const body = await response.json();
-          return { response, body };
-        }),
-        fetch(`/api/v1/workspaces/${wsId}/translations`).then(async (response) => {
-          const body = await response.json();
-          return { response, body };
+        getWorkspace(wsId),
+        getTranslations(wsId).catch((error) => {
+          console.error('AuthBoundary -> fetchTranslations', error);
+          return {} as TranslationsDto;
         }),
       ])
-        .then(([workspaceResult, translationsResult]) => {
-          if (workspaceResult.response.ok) {
-            setWorkspace(workspaceResult.body.data);
-          } else {
-            router.replace('/').then(() => {
-              console.error('AuthBoundary -> fetchWorkspace', workspaceResult.response);
-              alertService.error(
-                workspaceResult.body.error?.message ?? workspaceResult.body.message ?? 'Fehler beim Laden der Workspace',
-                workspaceResult.response.status,
-                workspaceResult.response.statusText,
-              );
-            });
-            return;
-          }
-
-          if (translationsResult.response.ok) {
-            setTranslations(translationsResult.body.data ?? {});
-          } else {
-            console.error('AuthBoundary -> fetchTranslations', translationsResult.response);
-            setTranslations({});
-          }
+        .then(([workspaceData, translationsData]) => {
+          setWorkspace(workspaceData);
+          setTranslations(translationsData ?? {});
         })
         .catch((error) => {
           console.error('AuthBoundary -> fetchWorkspace', error);
-          alertService.error('Fehler beim Laden der Workspace');
+          router.replace('/').then(() => {
+            alertApiV1Error(error, 'Fehler beim Laden der Workspace');
+          });
         })
         .finally(() => {
           setWorkspaceLoading(false);
@@ -190,7 +173,11 @@ export function AuthBoundary(props: AlertBoundaryProps) {
                 } else {
                   const body = await response.json();
                   console.error('AuthBoundary -> updateUserSetting', response);
-                  alertService.error(body.message ?? 'Fehler beim Aktualisieren der Nutzer-Einstellungen', response.status, response.statusText);
+                  alertService.error(
+                    body.error?.message ?? body.message ?? 'Fehler beim Aktualisieren der Nutzer-Einstellungen',
+                    response.status,
+                    response.statusText,
+                  );
                 }
               })
               .catch((error) => {

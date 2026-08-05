@@ -2,7 +2,7 @@ import { FaAngleDown, FaAngleUp, FaEuroSign, FaPlus, FaSearch, FaTrashAlt } from
 import { Field, FieldArray, Formik, FormikProps } from 'formik';
 import React, { createRef, useCallback, useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import { CocktailRecipe, Garnish, Glass, Ingredient, WorkspaceCocktailRecipeStepAction } from '@generated/prisma/client';
+import type { ActionDto } from '@lib/schemas/actions';
 import { UploadDropZone } from '../UploadDropZone';
 import { convertBase64ToFile, convertToBase64, fetchImageAsBase64 } from '@lib/Base64Converter';
 import { CocktailRecipeStepFull } from '../../models/CocktailRecipeStepFull';
@@ -19,7 +19,10 @@ import { GarnishForm, GarnishFormValues } from '../garnishes/GarnishForm';
 import { IngredientForm, FormValue as IngredientFormValues } from '../ingredients/IngredientForm';
 import { GlassForm } from '../glasses/GlassForm';
 import { CocktailRecipeFull } from '../../models/CocktailRecipeFull';
-import type { CocktailDto } from '@lib/schemas/cocktails';
+import type { CocktailDto, CocktailSummaryDto } from '@lib/schemas/cocktails';
+import type { GlassDto } from '@lib/schemas/glasses';
+import type { GarnishDto } from '@lib/schemas/garnishes';
+import type { IngredientDto } from '@lib/schemas/ingredients';
 import { UserContext } from '@lib/context/UserContextProvider';
 import { GlassModel } from '../../models/GlassModel';
 import { GarnishModel } from '../../models/GarnishModel';
@@ -37,6 +40,7 @@ import { fetchIce } from '@lib/network/ices';
 import { updateTags, validateTag } from '../../models/tags/TagUtils';
 import { TagInput } from '../TagInput';
 import CropComponent from '../CropComponent';
+import { alertApiV1Error, apiV1Fetch, apiV1Mutate } from '@lib/network/apiV1';
 import { FaCropSimple } from 'react-icons/fa6';
 import DeepDiff from 'deep-diff';
 import { RoutingContext } from '@lib/context/RoutingContextProvider';
@@ -243,13 +247,13 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
   const [garnishes, setGarnishes] = useState<GarnishModel[]>([]);
   const [garnishesLoading, setGarnishesLoading] = useState(false);
 
-  const [actions, setActions] = useState<WorkspaceCocktailRecipeStepAction[]>([]);
+  const [actions, setActions] = useState<ActionDto[]>([]);
   const [actionsLoading, setActionsLoading] = useState(false);
 
   const [units, setUnits] = useState<UnitDto[]>([]);
   const [_unitsLoading, setUnitsLoading] = useState(false);
 
-  const [similarCocktailRecipe, setSimilarCocktailRecipe] = useState<CocktailRecipe | undefined>(undefined);
+  const [similarCocktailRecipe, setSimilarCocktailRecipe] = useState<Pick<CocktailSummaryDto, 'id' | 'name'> | undefined>(undefined);
 
   const [hydratedImage, setHydratedImage] = useState<string | undefined>(undefined);
   const [imageHydrationDone, setImageHydrationDone] = useState(!props.cocktailRecipe?.hasImage);
@@ -552,38 +556,18 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
           if (values.image != undefined && values.image !== '') {
             body.image = values.image;
           }
+          if (!workspaceId) return;
           if (props.cocktailRecipe == undefined) {
-            const response = await fetch(`/api/v1/workspaces/${workspaceId}/cocktails`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(body),
-            });
-            if (response.status.toString().startsWith('2')) {
-              alertService.success('Erfolgreich erstellt');
-              await routingContext.conditionalBack(`/workspaces/${workspaceId}/manage/cocktails`);
-            } else {
-              const body = await response.json();
-              console.error('CocktailRecipeForm -> onSubmit[create]', response);
-              alertService.error(body.message ?? 'Fehler beim Erstellen des Cocktails', response.status, response.statusText);
-            }
+            await apiV1Mutate<CocktailDto>(`/api/v1/workspaces/${workspaceId}/cocktails`, 'POST', body);
+            alertService.success('Erfolgreich erstellt');
+            await routingContext.conditionalBack(`/workspaces/${workspaceId}/manage/cocktails`);
           } else {
-            const response = await fetch(`/api/v1/workspaces/${workspaceId}/cocktails/${props.cocktailRecipe.id}`, {
-              method: 'PUT',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(body),
-            });
-            if (response.status.toString().startsWith('2')) {
-              alertService.success('Erfolgreich aktualisiert');
-              await routingContext.conditionalBack(`/workspaces/${workspaceId}/manage/cocktails#${props.cocktailRecipe.id}`);
-            } else {
-              const body = await response.json();
-              console.error('CocktailRecipeForm -> onSubmit[update]', response);
-              alertService.error(body.message ?? 'Fehler beim Speichern des Cocktails', response.status, response.statusText);
-            }
+            await apiV1Mutate<CocktailDto>(`/api/v1/workspaces/${workspaceId}/cocktails/${props.cocktailRecipe.id}`, 'PUT', body);
+            alertService.success('Erfolgreich aktualisiert');
+            await routingContext.conditionalBack(`/workspaces/${workspaceId}/manage/cocktails#${props.cocktailRecipe.id}`);
           }
         } catch (error) {
-          console.error('CocktailRecipeForm -> onSubmit', error);
-          alertService.error('Es ist ein Fehler aufgetreten');
+          alertApiV1Error(error, props.cocktailRecipe == undefined ? 'Fehler beim Erstellen des Cocktails' : 'Fehler beim Speichern des Cocktails');
         }
       }}
     >
@@ -609,21 +593,18 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                       id={'name'}
                       className={errors.name ? fieldErrorClass : undefined}
                       onChange={(event) => {
-                        if (event.target.value.length > 2) {
-                          fetch(`/api/v1/workspaces/${workspaceId}/cocktails/check?name=${event.target.value}`)
-                            .then((response) => response.json())
-                            .then((data) => {
-                              console.log(data);
-                              if (data.data != null) {
-                                if (data.data.id != props.cocktailRecipe?.id) {
-                                  setSimilarCocktailRecipe(data.data);
-                                } else {
-                                  setSimilarCocktailRecipe(undefined);
-                                }
+                        if (event.target.value.length > 2 && workspaceId) {
+                          apiV1Fetch<CocktailSummaryDto | null>(
+                            `/api/v1/workspaces/${workspaceId}/cocktails/check?name=${encodeURIComponent(event.target.value)}`,
+                          )
+                            .then((match) => {
+                              if (match != null && match.id != props.cocktailRecipe?.id) {
+                                setSimilarCocktailRecipe(match);
                               } else {
                                 setSimilarCocktailRecipe(undefined);
                               }
-                            });
+                            })
+                            .catch(() => setSimilarCocktailRecipe(undefined));
                         } else {
                           setSimilarCocktailRecipe(undefined);
                         }
@@ -814,7 +795,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                         joinItem
                         onClick={() =>
                           modalContext.openModal(
-                            <FormModal<Glass>
+                            <FormModal<GlassDto>
                               form={
                                 <GlassForm
                                   onSaved={async (id) => {
@@ -1347,7 +1328,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                               joinItem
                                               onClick={() => {
                                                 modalContext.openModal(
-                                                  <FormModal<Ingredient>
+                                                  <FormModal<IngredientDto>
                                                     form={
                                                       <IngredientForm
                                                         formRef={createRef<FormikProps<IngredientFormValues>>()}
@@ -1609,7 +1590,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                   joinItem
                                   onClick={() => {
                                     modalContext.openModal(
-                                      <FormModal<Garnish>
+                                      <FormModal<GarnishDto>
                                         form={
                                           <GarnishForm
                                             formRef={createRef<FormikProps<GarnishFormValues>>()}

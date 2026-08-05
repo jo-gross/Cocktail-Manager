@@ -7,6 +7,8 @@ import { useRouter } from 'next/router';
 import { Button, FormControl, Input, Label, LabelText, LabelTextAlt, Loading, Toggle } from '@components/ui';
 import { z } from 'zod';
 import { zodFormikValidate } from '@lib/forms/zodFormikValidate';
+import { createJoinCode } from '@lib/network/workspaceUsers';
+import { alertApiV1Error } from '@lib/network/apiV1';
 
 interface AddWorkspaceJoinCodeModalProps {
   onCreated?: () => void;
@@ -51,28 +53,18 @@ export default function AddWorkspaceJoinCodeModal(props: AddWorkspaceJoinCodeMod
         }}
         onSubmit={async (values) => {
           try {
-            const body = {
+            if (!workspaceId) return;
+            await createJoinCode(workspaceId, {
               code: values.code,
               expires: values.expires,
               onlyUseOnce: values.onlyUseOnce,
-            };
-
-            const response = await fetch(`/api/v1/workspaces/${workspaceId}/join-codes`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(body),
             });
-            if (response.status.toString().startsWith('2')) {
-              modalContext.closeAllModals();
-              props.onCreated?.();
-              alertService.success('Beitrittcode erstellt');
-            } else {
-              formRef.current?.setFieldValue('code', Math.random().toString(36).slice(2, 8).toLowerCase());
-              alertService.error('Da hat etwas nicht funktioniert, probiere es mit diesem neu generierten Code erneut!', response.status, response.statusText);
-            }
+            modalContext.closeAllModals();
+            props.onCreated?.();
+            alertService.success('Beitrittcode erstellt');
           } catch (error) {
-            console.error('CocktailRatingModal -> onSubmit', error);
-            alertService.error('Es ist ein Fehler aufgetreten');
+            formRef.current?.setFieldValue('code', Math.random().toString(36).slice(2, 8).toLowerCase());
+            alertApiV1Error(error, 'Da hat etwas nicht funktioniert, probiere es mit diesem neu generierten Code erneut!');
           }
         }}
         validate={(values) => validateJoinCode(values)}

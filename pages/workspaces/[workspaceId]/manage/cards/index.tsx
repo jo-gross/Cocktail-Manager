@@ -4,7 +4,6 @@ import Link from 'next/link';
 import type { CardSummaryDto } from '@lib/schemas/cards';
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/router';
-import { alertService } from '@lib/alertService';
 import { UserContext } from '@lib/context/UserContextProvider';
 import { Role } from '@generated/prisma/client';
 import CardOverviewItem from '../../../../../components/cards/CardOverviewItem';
@@ -12,6 +11,8 @@ import ListSearchField from '../../../../../components/ListSearchField';
 import { NextPageWithPullToRefresh } from '../../../../../types/next';
 import { Button, Divider, Skeleton } from '@components/ui';
 import { formatDateLocal, getLogicalDate } from '@lib/dateHelpers';
+import { apiV1FetchSafe } from '@lib/network/apiV1';
+import { fetchWorkspaceSettingsSafe } from '@lib/network/workspaces';
 
 function cardFilter(filterString: string) {
   const normalizedFilter = filterString.trim().toLowerCase();
@@ -31,22 +32,12 @@ const CardsOverviewPage: NextPageWithPullToRefresh = () => {
 
   const today = useMemo(() => formatDateLocal(getLogicalDate(new Date(), dayStartTime)), [dayStartTime]);
 
-  const fetchCards = useCallback(() => {
+  const loadCards = useCallback(() => {
     if (!workspaceId) return;
     setLoading(true);
-    fetch(`/api/v1/workspaces/${workspaceId}/cards?withArchived=true`)
-      .then(async (response) => {
-        const body = await response.json();
-        if (response.ok) {
-          setCards(body.data);
-        } else {
-          console.error('Cards -> fetchCards', response);
-          alertService.error(body.message ?? 'Fehler beim Laden der Karten', response.status, response.statusText);
-        }
-      })
-      .catch((error) => {
-        console.error('Cards -> fetchCards', error);
-        alertService.error('Fehler beim Laden der Karten');
+    apiV1FetchSafe<CardSummaryDto[]>(`/api/v1/workspaces/${workspaceId}/cards?withArchived=true`, undefined, 'Fehler beim Laden der Karten')
+      .then((data) => {
+        if (data) setCards(data);
       })
       .finally(() => {
         setLoading(false);
@@ -54,23 +45,19 @@ const CardsOverviewPage: NextPageWithPullToRefresh = () => {
   }, [workspaceId]);
 
   useEffect(() => {
-    fetchCards();
-  }, [fetchCards]);
+    loadCards();
+  }, [loadCards]);
 
   useEffect(() => {
-    if (!workspaceId) return;
-    fetch(`/api/v1/workspaces/${workspaceId}/settings`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.data?.statisticDayStartTime) {
-          setDayStartTime(data.data.statisticDayStartTime);
-        }
-      })
-      .catch(console.error);
+    fetchWorkspaceSettingsSafe(workspaceId, (settings) => {
+      if (settings.statisticDayStartTime) {
+        setDayStartTime(settings.statisticDayStartTime);
+      }
+    });
   }, [workspaceId]);
 
   CardsOverviewPage.pullToRefresh = () => {
-    fetchCards();
+    loadCards();
   };
 
   const activeCards = cards

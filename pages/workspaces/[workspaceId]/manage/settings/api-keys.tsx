@@ -3,7 +3,6 @@ import { useRouter } from 'next/router';
 import { ManageEntityLayout } from '@components/layout/ManageEntityLayout';
 import { UserContext } from '@lib/context/UserContextProvider';
 import { ModalContext } from '@lib/context/ModalContextProvider';
-import { Permission } from '@generated/prisma/client';
 import { withPagePermission } from '@middleware/ui/withPagePermission';
 import CreateApiKeyModal from '../../../../../components/modals/CreateApiKeyModal';
 import { DeleteConfirmationModal } from '@components/modals/DeleteConfirmationModal';
@@ -12,21 +11,9 @@ import { FaPlus, FaTrash } from 'react-icons/fa';
 import { Loading } from '@components/Loading';
 import { formatDate as formatDateUtil } from '@lib/DateUtils';
 import { Badge, Button, Card, CardBody, Loading as UiLoading, Table, TableBody, TableCell, TableHead, TableHeaderCell, TableRow } from '@components/ui';
-
-interface ApiKey {
-  id: string;
-  name: string;
-  keyPrefix: string;
-  expiresAt: string | null;
-  lastUsedAt: string | null;
-  createdAt: string;
-  createdBy: {
-    id: string;
-    name: string | null;
-    email: string | null;
-  };
-  permissions: Permission[];
-}
+import type { ApiKeyDto } from '@lib/schemas/apiKeys';
+import { fetchApiKeysSafe, deleteApiKey } from '@lib/network/apiKeys';
+import { alertApiV1Error } from '@lib/network/apiV1';
 
 function ApiKeysPage() {
   const router = useRouter();
@@ -34,63 +21,40 @@ function ApiKeysPage() {
   const _userContext = useContext(UserContext);
   const modalContext = useContext(ModalContext);
 
-  const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
+  const [apiKeys, setApiKeys] = useState<ApiKeyDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState<string | null>(null);
 
-  const fetchApiKeys = async () => {
-    if (!workspaceId) return;
-
-    setLoading(true);
-    try {
-      const response = await fetch(`/api/v1/workspaces/${workspaceId}/api-keys`);
-      if (response.ok) {
-        const data = await response.json();
-        setApiKeys(data.data || []);
-      } else {
-        alertService.error('Fehler beim Laden der API Keys');
-      }
-    } catch (error) {
-      console.error('fetchApiKeys', error);
-      alertService.error('Fehler beim Laden der API Keys');
-    } finally {
-      setLoading(false);
-    }
+  const loadApiKeys = () => {
+    fetchApiKeysSafe(workspaceId, setApiKeys, setLoading);
   };
 
   useEffect(() => {
-    fetchApiKeys();
+    loadApiKeys();
   }, [workspaceId]);
 
   const handleCreate = () => {
     modalContext.openModal(<CreateApiKeyModal />, false);
     // Reload after modal closes (handled by modal)
     setTimeout(() => {
-      fetchApiKeys();
+      loadApiKeys();
     }, 500);
   };
 
-  const handleDelete = (apiKey: ApiKey) => {
+  const handleDelete = (apiKey: ApiKeyDto) => {
     modalContext.openModal(
       <DeleteConfirmationModal
         entityName={apiKey.name}
         spelling="DELETE"
         onApprove={async () => {
+          if (!workspaceId) return;
           setDeleting(apiKey.id);
           try {
-            const response = await fetch(`/api/v1/workspaces/${workspaceId}/api-keys/${apiKey.id}`, {
-              method: 'DELETE',
-            });
-            if (response.ok) {
-              alertService.success('API Key erfolgreich gelöscht');
-              fetchApiKeys();
-            } else {
-              const error = await response.json();
-              alertService.error(error.message || 'Fehler beim Löschen des API Keys');
-            }
+            await deleteApiKey(workspaceId, apiKey.id);
+            alertService.success('API Key erfolgreich gelöscht');
+            loadApiKeys();
           } catch (error) {
-            console.error('handleDelete', error);
-            alertService.error('Fehler beim Löschen des API Keys');
+            alertApiV1Error(error, 'Fehler beim Löschen des API Keys');
           } finally {
             setDeleting(null);
           }
@@ -165,7 +129,7 @@ function ApiKeysPage() {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {apiKeys.map((apiKey, _index) => {
+                    {apiKeys.map((apiKey) => {
                       const expired = isExpired(apiKey.expiresAt);
                       return (
                         <TableRow key={apiKey.id}>

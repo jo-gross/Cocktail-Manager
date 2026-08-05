@@ -17,6 +17,9 @@ import { MdOutlineCancel } from 'react-icons/md';
 import { DeleteConfirmationModal } from '@components/modals/DeleteConfirmationModal';
 import ThemeChanger from '@components/ThemeChanger';
 import { NextPageWithPullToRefresh } from '../types/next';
+import { createWorkspace, fetchWorkspacesSafe, type WorkspaceListItem } from '@lib/network/workspaces';
+import { withdrawOwnJoinRequest } from '@lib/network/workspaceUsers';
+import { alertApiV1Error } from '@lib/network/apiV1';
 import {
   Button,
   ButtonGroup,
@@ -45,7 +48,7 @@ const WorkspacesPage: NextPageWithPullToRefresh = () => {
   const router = useRouter();
   const { code } = router.query;
 
-  const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
+  const [workspaces, setWorkspaces] = useState<WorkspaceListItem[]>([]);
   const [workspacesLoading, setWorkspacesLoading] = useState(false);
   const [workspacesFetched, setWorkspacesFetched] = useState(false);
 
@@ -68,25 +71,14 @@ const WorkspacesPage: NextPageWithPullToRefresh = () => {
 
   const fetchWorkspaces = useCallback(() => {
     if (!userContext.user) return;
-    setWorkspacesLoading(true);
-    fetch('/api/v1/workspaces', { method: 'GET' })
-      .then(async (response) => {
-        const body = await response.json();
-        if (response.ok) {
-          setWorkspaces(body.data);
-        } else {
-          console.error('WorkspacesOverview -> fetchWorkspaces', response);
-          alertService.error(body.message ?? 'Fehler beim Laden der Workspaces', response.status, response.statusText);
-        }
-      })
-      .catch((error) => {
-        console.error('WorkspacesOverview -> fetchWorkspaces', error);
-        alertService.error('Fehler beim Laden der Workspaces');
-      })
-      .finally(() => {
-        setWorkspacesLoading(false);
-        setWorkspacesFetched(true);
-      });
+    fetchWorkspacesSafe(
+      setWorkspaces,
+      (loading) => {
+        setWorkspacesLoading(loading);
+        if (!loading) setWorkspacesFetched(true);
+      },
+      'Fehler beim Laden der Workspaces',
+    );
   }, [userContext.user]);
 
   const fetchOpenWorkspaceJoinRequest = useCallback(() => {
@@ -99,7 +91,7 @@ const WorkspacesPage: NextPageWithPullToRefresh = () => {
           setOpenWorkspaceJoinRequest(body.data);
         } else {
           console.error('WorkspacesOverview -> fetchOpenWorkspaceJoinRequest', response);
-          alertService.error(body.message ?? 'Fehler beim Laden der offenen Beitrittsanfragen', response.status, response.statusText);
+          alertService.error(body.error?.message ?? body.message ?? 'Fehler beim Laden der offenen Beitrittsanfragen', response.status, response.statusText);
         }
       })
       .catch((error) => {
@@ -144,19 +136,12 @@ const WorkspacesPage: NextPageWithPullToRefresh = () => {
   const createNewWorkspace = useCallback(() => {
     if (!userContext.user) return;
     setCreatingWorkspace(true);
-    fetch('/api/v1/workspaces', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ name: newWorkspaceName }),
-    })
-      .then((results) => results.json())
+    createWorkspace({ name: newWorkspaceName })
       .then(() => setNewWorkspaceName(''))
       .then(() => fetchWorkspaces())
       .catch((error) => {
         console.error('WorkspacesOverview -> createNewWorkspace', error);
-        alertService.error('Fehler beim Erstellen der Workspace');
+        alertApiV1Error(error, 'Fehler beim Erstellen der Workspace');
       })
       .finally(() => setCreatingWorkspace(false));
   }, [userContext.user, newWorkspaceName, fetchWorkspaces]);
@@ -174,7 +159,7 @@ const WorkspacesPage: NextPageWithPullToRefresh = () => {
       const body = await response.json();
 
       if (!response.ok) {
-        alertService.error(body.message ?? 'Fehler beim Erstellen der Demo-Workspace', response.status, response.statusText);
+        alertService.error(body.error?.message ?? body.message ?? 'Fehler beim Erstellen der Demo-Workspace', response.status, response.statusText);
         return;
       }
 
@@ -522,20 +507,14 @@ const WorkspacesPage: NextPageWithPullToRefresh = () => {
                                   <DeleteConfirmationModal
                                     onApprove={async () => {
                                       setJoinRequestCanceling({ ...joinRequestCanceling, [workspaceJoinRequest.workspaceId]: true });
-                                      fetch(`/api/v1/workspaces/${workspaceJoinRequest.workspaceId}/join-requests`, {
-                                        method: 'DELETE',
-                                      })
-                                        .then((response) => {
-                                          if (response.ok) {
-                                            alertService.success('Beitrittsanfrage abgebrochen');
-                                          } else {
-                                            alertService.error('Fehler beim Abbrechen der Beitrittsanfrage');
-                                          }
+                                      withdrawOwnJoinRequest(workspaceJoinRequest.workspaceId)
+                                        .then(() => {
+                                          alertService.success('Beitrittsanfrage abgebrochen');
+                                          fetchOpenWorkspaceJoinRequest();
                                         })
-                                        .then(() => fetchOpenWorkspaceJoinRequest())
                                         .catch((error) => {
                                           console.error('WorkspacesOverview -> openWorkspaceJoinRequest -> cancel', error);
-                                          alertService.error('Fehler beim Abbrechen der Beitrittsanfrage');
+                                          alertApiV1Error(error, 'Fehler beim Abbrechen der Beitrittsanfrage');
                                         })
                                         .finally(() => {
                                           setJoinRequestCanceling({ ...joinRequestCanceling, [workspaceJoinRequest.workspaceId]: false });

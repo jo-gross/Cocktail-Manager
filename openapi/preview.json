@@ -848,6 +848,15 @@
           },
           "user": {
             "$ref": "#/components/schemas/AuditLogUser"
+          },
+          "changes": {
+            "description": "Structured diff of the change, or null."
+          },
+          "snapshot": {
+            "description": "Entity snapshot after the change, or null."
+          },
+          "exportData": {
+            "description": "Exportable entity payload for restore/download, or null."
           }
         },
         "required": [

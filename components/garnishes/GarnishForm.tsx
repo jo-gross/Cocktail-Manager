@@ -17,6 +17,8 @@ import { resizeImage } from '@lib/ImageCompressor';
 import { Button, ButtonGroup, Divider, FormControl, Input, Label, LabelText, LabelTextAlt, Loading, Textarea } from '@components/ui';
 import { z } from 'zod';
 import { zodFormikValidate } from '@lib/forms/zodFormikValidate';
+import { alertApiV1Error } from '@lib/network/apiV1';
+import { checkGarnishName, createGarnish, updateGarnish } from '@lib/network/garnishes';
 
 export interface GarnishFormValues {
   name: string;
@@ -106,58 +108,36 @@ export function GarnishForm(props: GarnishFormProps) {
         originalImage: hydratedImage ? convertBase64ToFile(hydratedImage) : undefined,
       }}
       onSubmit={async (values) => {
+        if (!workspaceId) return;
         try {
-          const body: Record<string, unknown> = {
+          const body = {
             id: props.garnish == undefined ? undefined : props.garnish.id,
             name: values.name,
             price: values.price === '' || values.price === undefined ? null : Number(values.price),
             description: values.description?.trim() == '' ? null : values.description?.trim(),
             notes: values.notes?.trim() == '' ? null : values.notes?.trim(),
+            // Omitting `image` on update removes it; re-send hydrated/kept base64.
+            ...(values.image != undefined && values.image !== '' ? { image: values.image } : {}),
           };
-          // Omitting `image` on update removes it; re-send hydrated/kept base64.
-          if (values.image != undefined && values.image !== '') {
-            body.image = values.image;
-          }
           if (props.garnish == undefined) {
-            const response = await fetch(`/api/v1/workspaces/${workspaceId}/garnishes`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(body),
-            });
-            if (response.status.toString().startsWith('2')) {
-              if (props.onSaved != undefined) {
-                props.onSaved((await response.json()).data.id);
-              } else {
-                alertService.success('Garnitur erfolgreich erstellt');
-                await routingContext.conditionalBack(`/workspaces/${workspaceId}/manage/garnishes`);
-              }
+            const created = await createGarnish(workspaceId, body);
+            if (props.onSaved != undefined) {
+              props.onSaved(created.id);
             } else {
-              const body = await response.json();
-              console.error('GarnishForm -> onSubmit[create]', response);
-              alertService.error(body.message ?? 'Fehler beim Erstellen der Garnitur', response.status, response.statusText);
+              alertService.success('Garnitur erfolgreich erstellt');
+              await routingContext.conditionalBack(`/workspaces/${workspaceId}/manage/garnishes`);
             }
           } else {
-            const response = await fetch(`/api/v1/workspaces/${workspaceId}/garnishes/${props.garnish.id}`, {
-              method: 'PUT',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(body),
-            });
-            if (response.status.toString().startsWith('2')) {
-              if (props.onSaved != undefined) {
-                props.onSaved(props.garnish.id);
-              } else {
-                alertService.success('Garnitur erfolgreich gespeichert');
-                await routingContext.conditionalBack(`/workspaces/${workspaceId}/manage/garnishes`);
-              }
+            await updateGarnish(workspaceId, props.garnish.id, body);
+            if (props.onSaved != undefined) {
+              props.onSaved(props.garnish.id);
             } else {
-              const body = await response.json();
-              console.error('GarnishForm -> onSubmit[update]', response);
-              alertService.error(body.message ?? 'Fehler beim Speichern der Garnitur', response.status, response.statusText);
+              alertService.success('Garnitur erfolgreich gespeichert');
+              await routingContext.conditionalBack(`/workspaces/${workspaceId}/manage/garnishes`);
             }
           }
         } catch (error) {
-          console.error('GarnishForm -> onSubmit', error);
-          alertService.error('Es ist ein Fehler aufgetreten');
+          alertApiV1Error(error, props.garnish == undefined ? 'Fehler beim Erstellen der Garnitur' : 'Fehler beim Speichern der Garnitur');
         }
       }}
       validate={(values) => {
@@ -198,21 +178,16 @@ export function GarnishForm(props: GarnishFormProps) {
                 placeholder={'Name'}
                 className={errors.name ? fieldErrorClass : undefined}
                 onChange={(event) => {
-                  if (event.target.value.length > 2) {
-                    fetch(`/api/v1/workspaces/${workspaceId}/garnishes/check?name=${event.target.value}`)
-                      .then((response) => response.json())
-                      .then((data) => {
-                        console.log(data);
-                        if (data.data != null) {
-                          if (data.data.id != props.garnish?.id) {
-                            setSimilarGarnish(data.data);
-                          } else {
-                            setSimilarGarnish(undefined);
-                          }
+                  if (event.target.value.length > 2 && workspaceId) {
+                    checkGarnishName(workspaceId, event.target.value)
+                      .then((match) => {
+                        if (match != null && match.id != props.garnish?.id) {
+                          setSimilarGarnish(match);
                         } else {
                           setSimilarGarnish(undefined);
                         }
-                      });
+                      })
+                      .catch(() => setSimilarGarnish(undefined));
                   } else {
                     setSimilarGarnish(undefined);
                   }

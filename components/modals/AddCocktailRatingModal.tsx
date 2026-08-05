@@ -8,6 +8,8 @@ import { toInteger } from 'lodash';
 import { Button, FormControl, Input, Label, LabelText, LabelTextAlt, Loading, StarRatingInput, Textarea } from '@components/ui';
 import { z } from 'zod';
 import { zodFormikValidate } from '@lib/forms/zodFormikValidate';
+import { createCocktailRating } from '@lib/network/cocktailRatings';
+import { alertApiV1Error } from '@lib/network/apiV1';
 
 interface CocktailRatingModalProps {
   cocktailId: string;
@@ -42,29 +44,17 @@ export default function AddCocktailRatingModal(props: CocktailRatingModalProps) 
         }}
         onSubmit={async (values) => {
           try {
-            const body = {
+            if (!workspaceId) return;
+            await createCocktailRating(workspaceId, props.cocktailId, {
               name: values.name,
               rating: toInteger(values.rating),
               comment: values.comment,
-            };
-
-            const response = await fetch(`/api/v1/workspaces/${workspaceId}/cocktails/${props.cocktailId}/ratings`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(body),
             });
-            if (response.status.toString().startsWith('2')) {
-              modalContext.closeModal();
-              props.onCreated?.();
-              alertService.success('Bewertung hinzugefügt');
-            } else {
-              const body = await response.json();
-              console.error('CocktailRatingModal -> onSubmit[create]', response);
-              alertService.error(body.message ?? 'Fehler beim Erstellen der Zubereitungsmethode', response.status, response.statusText);
-            }
+            modalContext.closeModal();
+            props.onCreated?.();
+            alertService.success('Bewertung hinzugefügt');
           } catch (error) {
-            console.error('CocktailRatingModal -> onSubmit', error);
-            alertService.error('Es ist ein Fehler aufgetreten');
+            alertApiV1Error(error, 'Fehler beim Erstellen der Bewertung');
           }
         }}
         validate={(values) => validateCocktailRating(values)}

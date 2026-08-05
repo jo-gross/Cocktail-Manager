@@ -20,6 +20,7 @@ import CocktailExportOptionsModal, { CocktailExportOptions } from '../../../../.
 import CocktailImportWizardModal from '../../../../../components/modals/CocktailImportWizardModal';
 import { ConfirmActionModal } from '../../../../../components/modals/ConfirmActionModal';
 import { FaArchive } from 'react-icons/fa';
+import { alertApiV1Error, apiV1FetchSafe, apiV1Mutate } from '@lib/network/apiV1';
 import {
   Badge,
   Button,
@@ -91,19 +92,13 @@ const CocktailsOverviewPage: NextPageWithPullToRefresh = () => {
   const refreshCocktails = useCallback(() => {
     if (!workspaceId) return;
     setLoading(true);
-    fetch(`/api/v1/workspaces/${workspaceId}/cocktails?include=garnishes,ingredients`)
-      .then(async (response) => {
-        const body = await response.json();
-        if (response.ok) {
-          setCocktailRecipes(body.data);
-        } else {
-          console.error('Cocktails -> fetchCocktails', response);
-          alertService.error(body.message ?? 'Fehler beim Laden der Cocktails', response.status, response.statusText);
-        }
-      })
-      .catch((error) => {
-        console.error('Cocktails -> fetchCocktails', error);
-        alertService.error('Fehler beim Laden der Cocktails');
+    apiV1FetchSafe<CocktailSummaryDto[]>(
+      `/api/v1/workspaces/${workspaceId}/cocktails?include=garnishes,ingredients`,
+      undefined,
+      'Fehler beim Laden der Cocktails',
+    )
+      .then((data) => {
+        if (data) setCocktailRecipes(data);
       })
       .finally(() => {
         setLoading(false);
@@ -168,13 +163,16 @@ const CocktailsOverviewPage: NextPageWithPullToRefresh = () => {
         confirmLabel="Archivieren"
         confirmVariant="primary"
         onConfirm={async () => {
-          for (const id of ids) {
-            const res = await fetch(`/api/v1/workspaces/${workspaceId}/cocktails/${id}/archive`, { method: 'PUT' });
-            if (!res.ok) throw new Error('Archivieren fehlgeschlagen');
+          try {
+            for (const id of ids) {
+              await apiV1Mutate(`/api/v1/workspaces/${workspaceId}/cocktails/${id}/archive`, 'PUT');
+            }
+            setSelectedCocktailIds(new Set());
+            refreshCocktails();
+            alertService.success(`${count} Cocktail${count === 1 ? '' : 's'} archiviert`);
+          } catch (error) {
+            alertApiV1Error(error, 'Archivieren fehlgeschlagen');
           }
-          setSelectedCocktailIds(new Set());
-          refreshCocktails();
-          alertService.success(`${count} Cocktail${count === 1 ? '' : 's'} archiviert`);
         }}
       />,
     );

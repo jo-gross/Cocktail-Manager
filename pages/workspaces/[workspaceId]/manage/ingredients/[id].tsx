@@ -4,12 +4,12 @@ import { useRouter } from 'next/router';
 import { useEffect, useRef, useState } from 'react';
 import { Loading } from '@components/Loading';
 import { IngredientForm, FormValue } from '@components/ingredients/IngredientForm';
-import { alertService } from '@lib/alertService';
 import { withPagePermission } from '@middleware/ui/withPagePermission';
 import { FormikProps } from 'formik';
 import { SingleFormLayout } from '@components/layout/SingleFormLayout';
 import type { IngredientDto } from '@lib/schemas/ingredients';
 import { PageCenter } from '@components/layout/PageCenter';
+import { apiV1FetchSafe } from '@lib/network/apiV1';
 
 function EditCocktailRecipe() {
   const router = useRouter();
@@ -25,19 +25,9 @@ function EditCocktailRecipe() {
     if (!id) return;
     if (!workspaceId) return;
     setLoading(true);
-    fetch(`/api/v1/workspaces/${workspaceId}/ingredients/${id}`)
-      .then(async (response) => {
-        const body = await response.json();
-        if (response.ok) {
-          setIngredient(body.data);
-        } else {
-          console.error('IngredientId -> fetchIngredient', response);
-          alertService.error(body.message ?? 'Fehler beim Laden der Zutat', response.status, response.statusText);
-        }
-      })
-      .catch((error) => {
-        console.error('IngredientId -> fetchIngredient', error);
-        alertService.error('Fehler beim Laden der Zutat');
+    apiV1FetchSafe<IngredientDto>(`/api/v1/workspaces/${workspaceId}/ingredients/${id}`, undefined, 'Fehler beim Laden der Zutat')
+      .then((data) => {
+        if (data) setIngredient(data);
       })
       .finally(() => {
         setLoading(false);

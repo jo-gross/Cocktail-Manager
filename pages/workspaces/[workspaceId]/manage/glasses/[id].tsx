@@ -4,12 +4,12 @@ import { useRouter } from 'next/router';
 import { useEffect, useRef, useState } from 'react';
 import { Role } from '@generated/prisma/client';
 import { Loading } from '@components/Loading';
-import { alertService } from '@lib/alertService';
 import { withPagePermission } from '@middleware/ui/withPagePermission';
 import { FormikProps } from 'formik';
 import { SingleFormLayout } from '@components/layout/SingleFormLayout';
 import type { GlassDto } from '@lib/schemas/glasses';
 import { PageCenter } from '@components/layout/PageCenter';
+import { apiV1FetchSafe } from '@lib/network/apiV1';
 
 function EditGlassPage() {
   const router = useRouter();
@@ -25,19 +25,9 @@ function EditGlassPage() {
     if (!id) return;
     if (!workspaceId) return;
     setLoading(true);
-    fetch(`/api/v1/workspaces/${workspaceId}/glasses/${id}`)
-      .then(async (response) => {
-        const body = await response.json();
-        if (response.ok) {
-          setGlass(body.data);
-        } else {
-          console.error('GlassId -> fetchGlass', response);
-          alertService.error(body.message ?? 'Fehler beim Laden des Glases', response.status, response.statusText);
-        }
-      })
-      .catch((error) => {
-        console.error('GlassId -> fetchGlass', error);
-        alertService.error('Fehler beim Laden des Glases');
+    apiV1FetchSafe<GlassDto>(`/api/v1/workspaces/${workspaceId}/glasses/${id}`, undefined, 'Fehler beim Laden des Glases')
+      .then((data) => {
+        if (data) setGlass(data);
       })
       .finally(() => {
         setLoading(false);

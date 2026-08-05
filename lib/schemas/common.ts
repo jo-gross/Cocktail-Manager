@@ -36,6 +36,8 @@ export const DeletionResult = z
   })
   .openapi('DeletionResult');
 
+export type DeletionResult = z.infer<typeof DeletionResult>;
+
 /** Wrap a payload schema in the standard { data } envelope. */
 export const dataEnvelope = <T extends z.ZodTypeAny>(schema: T) => z.object({ data: schema });
 

@@ -3,6 +3,8 @@ import { FaEdit, FaTrash } from 'react-icons/fa';
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import { DeleteConfirmationModal } from '@components/modals/DeleteConfirmationModal';
 import { Button, Card, CardBody, CardTitle, Loading } from '@components/ui';
+import { alertApiV1Error, apiV1FetchSafe, apiV1Mutate } from '@lib/network/apiV1';
+import type { DeletionResult } from '@lib/schemas/common';
 
 type SavedSetType = 'TAG_SET' | 'INGREDIENT_SET' | 'COCKTAIL_SET';
 
@@ -46,20 +48,19 @@ export function SavedSetSelector({
 
     try {
       setLoading(true);
-      let url: string;
+      let path: string;
       if (showAllTypes) {
-        url = `/api/v1/workspaces/${workspaceId}/statistics/advanced/sets?types=TAG_SET,INGREDIENT_SET`;
+        path = `/api/v1/workspaces/${workspaceId}/statistics/advanced/sets?types=TAG_SET,INGREDIENT_SET`;
       } else if (type) {
-        url = `/api/v1/workspaces/${workspaceId}/statistics/advanced/sets?type=${type}`;
+        path = `/api/v1/workspaces/${workspaceId}/statistics/advanced/sets?type=${type}`;
       } else {
-        url = `/api/v1/workspaces/${workspaceId}/statistics/advanced/sets`;
+        path = `/api/v1/workspaces/${workspaceId}/statistics/advanced/sets`;
       }
-      const response = await fetch(url);
-      if (response.ok) {
-        const body = await response.json();
-        let filteredSets = body.data || [];
+      const data = await apiV1FetchSafe<SavedSet[]>(path);
+      if (data) {
+        let filteredSets = data;
         if (excludeTypes.length > 0) {
-          filteredSets = filteredSets.filter((set: SavedSet) => !excludeTypes.includes(set.type));
+          filteredSets = filteredSets.filter((set) => !excludeTypes.includes(set.type));
         }
         setSets(filteredSets);
       }
@@ -80,15 +81,15 @@ export function SavedSetSelector({
         spelling="DELETE"
         entityName={set.name}
         onApprove={async () => {
-          const response = await fetch(`/api/v1/workspaces/${workspaceId}/statistics/advanced/sets?id=${set.id}`, {
-            method: 'DELETE',
-          });
-          if (response.ok) {
+          try {
+            await apiV1Mutate<DeletionResult>(`/api/v1/workspaces/${workspaceId}/statistics/advanced/sets?id=${set.id}`, 'DELETE');
             await loadSets();
             if (selectedSetId === set.id) {
               onSelect(undefined);
             }
             onDelete?.(set.id);
+          } catch (error) {
+            alertApiV1Error(error, 'Fehler beim Löschen des Sets');
           }
         }}
       />,

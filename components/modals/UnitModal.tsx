@@ -8,6 +8,9 @@ import { useRouter } from 'next/router';
 import { Button, FormControl, Input, Label, LabelText, LabelTextAlt, Loading } from '@components/ui';
 import { z } from 'zod';
 import { zodFormikValidate } from '@lib/forms/zodFormikValidate';
+import { createUnit } from '@lib/network/units';
+import { upsertTranslation } from '@lib/network/workspaces';
+import { alertApiV1Error } from '@lib/network/apiV1';
 
 interface UnitModalProps {
   unit?: UnitDto;
@@ -43,54 +46,32 @@ export default function UnitModal(props: UnitModalProps) {
         }}
         onSubmit={async (values) => {
           try {
+            if (!workspaceId) return;
             if (props.unit == undefined) {
-              const body = {
+              await createUnit(workspaceId, {
                 name: values.name,
                 translations: {
                   de: values.lableDE,
                 },
-              };
-              const response = await fetch(`/api/v1/workspaces/${workspaceId}/units`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(body),
               });
-              if (response.status.toString().startsWith('2')) {
-                router.reload();
-                modalContext.closeModal();
-                props.onSaved?.();
-                alertService.success('Einheit erfolgreich erstellt');
-              } else {
-                const body = await response.json();
-                console.error('UnitModal -> onSubmit[create]', response);
-                alertService.error(body.message ?? 'Fehler beim Erstellen der Einheit', response.status, response.statusText);
-              }
+              router.reload();
+              modalContext.closeModal();
+              props.onSaved?.();
+              alertService.success('Einheit erfolgreich erstellt');
             } else {
-              const body = {
+              await upsertTranslation(workspaceId, {
                 key: values.name,
                 translations: {
                   de: values.lableDE,
                 },
-              };
-              const response = await fetch(`/api/v1/workspaces/${workspaceId}/translations`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(body),
               });
-              if (response.status.toString().startsWith('2')) {
-                router.reload();
-                modalContext.closeModal();
-                props.onSaved?.();
-                alertService.success('Einheit erfolgreich gespeichert');
-              } else {
-                const body = await response.json();
-                console.error('UnitModal -> onSubmit[update]', response);
-                alertService.error(body.message ?? 'Fehler beim Speichern der Einheit', response.status, response.statusText);
-              }
+              router.reload();
+              modalContext.closeModal();
+              props.onSaved?.();
+              alertService.success('Einheit erfolgreich gespeichert');
             }
           } catch (error) {
-            console.error('UnitModal -> onSubmit', error);
-            alertService.error('Es ist ein Fehler aufgetreten');
+            alertApiV1Error(error, props.unit == undefined ? 'Fehler beim Erstellen der Einheit' : 'Fehler beim Speichern der Einheit');
           }
         }}
         validate={(values) => validateUnit(values)}

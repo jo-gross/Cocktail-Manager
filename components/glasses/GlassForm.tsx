@@ -12,12 +12,13 @@ import type { GlassDto } from '@lib/schemas/glasses';
 import Image from 'next/image';
 import CropComponent from '../CropComponent';
 import { FaCropSimple } from 'react-icons/fa6';
-import { Glass } from '@generated/prisma/client';
 import { RoutingContext } from '@lib/context/RoutingContextProvider';
 import { resizeImage } from '@lib/ImageCompressor';
 import { Button, ButtonGroup, Divider, FormControl, Input, Label, LabelText, LabelTextAlt, Loading } from '@components/ui';
 import { z } from 'zod';
 import { zodFormikValidate } from '@lib/forms/zodFormikValidate';
+import { alertApiV1Error } from '@lib/network/apiV1';
+import { checkGlassName, createGlass, updateGlass } from '@lib/network/glasses';
 
 export interface GlassFormValues {
   name: string;
@@ -59,7 +60,7 @@ export function GlassForm(props: GlassFormProps) {
 
   const formRef = props.formRef;
 
-  const [similarGlass, setSimilarGlass] = useState<Glass | undefined>(undefined);
+  const [similarGlass, setSimilarGlass] = useState<Pick<GlassDto, 'id' | 'name'> | undefined>(undefined);
 
   const [hydratedImage, setHydratedImage] = useState<string | undefined>(undefined);
   const [imageHydrationDone, setImageHydrationDone] = useState(!props.glass?.hasImage);
@@ -104,57 +105,35 @@ export function GlassForm(props: GlassFormProps) {
         volume: props.glass?.volume ?? 0,
       }}
       onSubmit={async (values) => {
+        if (!workspaceId) return;
         try {
-          const body: Record<string, unknown> = {
+          const body = {
             id: props.glass?.id,
             name: values.name,
             deposit: values.deposit ?? 0,
             volume: values.volume == 0 ? undefined : values.volume,
+            // Omitting `image` on update removes it; re-send hydrated/kept base64.
+            ...(values.image != undefined && values.image !== '' ? { image: values.image } : {}),
           };
-          // Omitting `image` on update removes it; re-send hydrated/kept base64.
-          if (values.image != undefined && values.image !== '') {
-            body.image = values.image;
-          }
           if (props.glass == undefined) {
-            const response = await fetch(`/api/v1/workspaces/${workspaceId}/glasses`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(body),
-            });
-            if (response.status.toString().startsWith('2')) {
-              if (props.onSaved) {
-                props.onSaved((await response.json()).data.id);
-              } else {
-                alertService.success('Glas erfolgreich erstellt');
-                await routingContext.conditionalBack(`/workspaces/${workspaceId}/manage/glasses`);
-              }
+            const created = await createGlass(workspaceId, body);
+            if (props.onSaved) {
+              props.onSaved(created.id);
             } else {
-              const body = await response.json();
-              console.error('GlassForm -> onSubmit[create]', response);
-              alertService.error(body.message ?? 'Fehler beim Erstellen des Glases', response.status, response.statusText);
+              alertService.success('Glas erfolgreich erstellt');
+              await routingContext.conditionalBack(`/workspaces/${workspaceId}/manage/glasses`);
             }
           } else {
-            const response = await fetch(`/api/v1/workspaces/${workspaceId}/glasses/${props.glass.id}`, {
-              method: 'PUT',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(body),
-            });
-            if (response.status.toString().startsWith('2')) {
-              if (props.onSaved) {
-                props.onSaved(props.glass.id);
-              } else {
-                alertService.success('Glas erfolgreich gespeichert');
-                await routingContext.conditionalBack(`/workspaces/${workspaceId}/manage/glasses`);
-              }
+            await updateGlass(workspaceId, props.glass.id, body);
+            if (props.onSaved) {
+              props.onSaved(props.glass.id);
             } else {
-              const body = await response.json();
-              console.error('GlassForm -> onSubmit[update]', response);
-              alertService.error(body.message ?? 'Fehler beim Speichern des Glases', response.status, response.statusText);
+              alertService.success('Glas erfolgreich gespeichert');
+              await routingContext.conditionalBack(`/workspaces/${workspaceId}/manage/glasses`);
             }
           }
         } catch (error) {
-          console.error('GarnishForm -> onSubmit', error);
-          alertService.error('Es ist ein Fehler aufgetreten');
+          alertApiV1Error(error, props.glass == undefined ? 'Fehler beim Erstellen des Glases' : 'Fehler beim Speichern des Glases');
         }
       }}
       validate={(values) => {
@@ -196,20 +175,16 @@ export function GlassForm(props: GlassFormProps) {
               placeholder={'Name'}
               className={errors.name ? fieldErrorClass : undefined}
               onChange={(event) => {
-                if (event.target.value.length > 2) {
-                  fetch(`/api/v1/workspaces/${workspaceId}/glasses/check?name=${event.target.value}`)
-                    .then((response) => response.json())
-                    .then((data) => {
-                      if (data.data != null) {
-                        if (data.data.id != props.glass?.id) {
-                          setSimilarGlass(data.data);
-                        } else {
-                          setSimilarGlass(undefined);
-                        }
+                if (event.target.value.length > 2 && workspaceId) {
+                  checkGlassName(workspaceId, event.target.value)
+                    .then((match) => {
+                      if (match != null && match.id != props.glass?.id) {
+                        setSimilarGlass(match);
                       } else {
                         setSimilarGlass(undefined);
                       }
-                    });
+                    })
+                    .catch(() => setSimilarGlass(undefined));
                 } else {
                   setSimilarGlass(undefined);
                 }

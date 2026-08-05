@@ -24,6 +24,8 @@ import { OrderView } from '../../../components/order/OrderView';
 import { useOffline } from '@lib/context/OfflineContextProvider';
 import { fetchCard, fetchCards, prefetchCardData } from '@lib/network/cards';
 import { prefetchAllCocktails } from '@lib/network/cocktails';
+import { fetchWorkspaceSettingsSafe } from '@lib/network/workspaces';
+import { fetchQueueSafe } from '@lib/network/queue';
 import { formatDateLocal, getLogicalDate } from '@lib/dateHelpers';
 import type { CardDto, CardSummaryDto } from '@lib/schemas/cards';
 import type { QueueItemDto } from '@lib/schemas/queue';
@@ -83,15 +85,11 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
   const [dayStartTime, setDayStartTime] = useState<string | undefined>(undefined);
 
   useEffect(() => {
-    if (!workspaceId) return;
-    fetch(`/api/v1/workspaces/${workspaceId}/settings`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.data?.statisticDayStartTime) {
-          setDayStartTime(data.data.statisticDayStartTime);
-        }
-      })
-      .catch(console.error);
+    fetchWorkspaceSettingsSafe(workspaceId, (settings) => {
+      if (settings.statisticDayStartTime) {
+        setDayStartTime(settings.statisticDayStartTime);
+      }
+    });
   }, [workspaceId]);
 
   // Logical "today" as YYYY-MM-DD, accounting for the workspace day start time
@@ -276,20 +274,15 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
   // ========================
 
   const refreshQueue = useCallback(() => {
-    fetch(`/api/v1/workspaces/${workspaceId}/queue?timestamp=${new Date().toISOString()}`)
-      .then(async (response) => {
-        const body = await response.json();
-        if (response.ok) {
-          setCocktailQueue(body.data as QueueItemDto[]);
-          console.debug('queue', body.data);
-        } else {
-          console.error('CocktailCardPage -> fetchQueue', response);
-        }
-      })
-      .catch((error) => {
-        console.error('CocktailCardPage -> fetchQueue', error);
-      })
-      .finally(() => {});
+    fetchQueueSafe(
+      workspaceId,
+      (items) => {
+        setCocktailQueue(items);
+        console.debug('queue', items);
+      },
+      undefined,
+      new Date().toISOString(),
+    );
   }, [workspaceId]);
 
   interface GroupedItem {

@@ -3,12 +3,12 @@ import { PageCenter } from '@components/layout/PageCenter';
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { Loading } from '@components/Loading';
-import { alertService } from '@lib/alertService';
 import { withPagePermission } from '@middleware/ui/withPagePermission';
 import { Role } from '@generated/prisma/client';
 import type { CardDto } from '@lib/schemas/cards';
 import type { CocktailSummaryDto } from '@lib/schemas/cocktails';
 import { CardEditorArchiveActions, CardEditorForm } from '@components/card-editor/CardEditorForm';
+import { apiV1FetchSafe } from '@lib/network/apiV1';
 
 function EditCocktailCard() {
   const router = useRouter();
@@ -23,38 +23,18 @@ function EditCocktailCard() {
   useEffect(() => {
     if (!id || !workspaceId) return;
     setLoadingCard(true);
-    fetch(`/api/v1/workspaces/${workspaceId}/cards/${id}`)
-      .then(async (response) => {
-        const body = await response.json();
-        if (response.ok) {
-          setCard(body.data);
-        } else {
-          console.error('CardId -> fetchCard', response);
-          alertService.error(body.message ?? 'Fehler beim Laden der Karte', response.status, response.statusText);
-        }
-      })
-      .catch((error) => {
-        console.error('CardId -> fetchCard', error);
-        alertService.error('Fehler beim Laden der Karte');
+    apiV1FetchSafe<CardDto>(`/api/v1/workspaces/${workspaceId}/cards/${id}`, undefined, 'Fehler beim Laden der Karte')
+      .then((data) => {
+        if (data) setCard(data);
       })
       .finally(() => {
         setLoadingCard(false);
       });
 
     setLoadingCocktails(true);
-    fetch(`/api/v1/workspaces/${workspaceId}/cocktails`)
-      .then(async (response) => {
-        const body = await response.json();
-        if (response.ok) {
-          setCocktails(body.data);
-        } else {
-          console.error('CardId -> fetchCocktails', response);
-          alertService.error(body.message ?? 'Fehler beim Laden der Cocktails', response.status, response.statusText);
-        }
-      })
-      .catch((error) => {
-        console.error('CardId -> fetchCocktails', error);
-        alertService.error('Fehler beim Laden der Cocktails');
+    apiV1FetchSafe<CocktailSummaryDto[]>(`/api/v1/workspaces/${workspaceId}/cocktails`, undefined, 'Fehler beim Laden der Cocktails')
+      .then((data) => {
+        if (data) setCocktails(data);
       })
       .finally(() => {
         setLoadingCocktails(false);

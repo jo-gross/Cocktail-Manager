@@ -24,6 +24,9 @@ import { SignageSlideBulkActions } from '@components/signage/SignageSlideBulkAct
 import { SignageSlideFilter } from '@components/signage/SignageSlideFilter';
 import { SignageMonitorPreview } from '@components/signage/SignageMonitorPreview';
 import { filterSlidesForAdmin } from '@lib/signage/filterSlidesForAdmin';
+import { alertApiV1Error, ApiV1RequestError } from '@lib/network/apiV1';
+import type { SignageSlideDto } from '@lib/schemas/signage';
+import { createSignageSlides, deleteSignageSlide, patchSignageSlides, updateSignageSettings } from '@lib/network/signage';
 
 interface SignageFormatState {
   slides: SignageSlideView[];
@@ -31,6 +34,20 @@ interface SignageFormatState {
   backgroundMode: SignageBackgroundMode;
   slideDurationSeconds: number;
   mirrorSourceFormat?: MonitorFormat | null;
+}
+
+/** Maps v1 slide DTOs (`imageUrl`) onto the admin view model (`content` as Image src). */
+function toSignageSlideView(slide: SignageSlideDto): SignageSlideView {
+  return {
+    id: slide.id,
+    content: slide.imageUrl,
+    order: slide.order,
+    enabled: slide.enabled,
+    weekdays: slide.weekdays,
+    validFrom: slide.validFrom,
+    validTo: slide.validTo,
+    dateExclusive: slide.dateExclusive,
+  };
 }
 
 const defaultFormatState = (): SignageFormatState => ({
@@ -77,50 +94,15 @@ async function patchSlides(
     dateExclusive?: boolean;
   },
 ) {
-  const response = await fetch(`/api/v1/workspaces/${workspaceId}/admin/signage/slides`, {
-    method: 'PATCH',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(payload),
-  });
-
-  const body = await response.json();
-  if (!response.ok) {
-    throw new SignagePatchError(body.message ?? 'Fehler beim Aktualisieren der Slides', body.conflicts);
-  }
-
-  return body.slides as SignageSlideView[];
-}
-
-async function parseJsonResponseBody(response: Response): Promise<{ message?: string }> {
-  const text = await response.text();
-  if (!text) {
-    return {};
-  }
-
   try {
-    return JSON.parse(text) as { message?: string };
-  } catch {
-    if (!response.ok) {
-      throw new Error(`Serverfehler (${response.status})`);
+    const slides = await patchSignageSlides(workspaceId, payload);
+    return slides.map(toSignageSlideView);
+  } catch (error) {
+    if (error instanceof ApiV1RequestError) {
+      const conflicts = (error.issues as { conflicts?: ExclusiveConflict[] } | undefined)?.conflicts;
+      throw new SignagePatchError(error.message || 'Fehler beim Aktualisieren der Slides', conflicts);
     }
-    return {};
-  }
-}
-
-async function putSignageSettings(workspaceId: string, payload: SignageSettingsUpdatePayload) {
-  const response = await fetch(`/api/v1/workspaces/${workspaceId}/admin/signage`, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(payload),
-  });
-
-  const body = await parseJsonResponseBody(response);
-  if (!response.ok) {
-    throw new Error(body.message ?? 'Fehler beim Speichern');
+    throw error;
   }
 }
 
@@ -209,19 +191,16 @@ function SignageFormatEditor({
   };
 
   const handleDelete = async (slideId: string) => {
-    const response = await fetch(`/api/v1/workspaces/${workspaceId}/admin/signage/slides/${slideId}`, {
-      method: 'DELETE',
-    });
-    if (!response.ok) {
-      const body = await response.json();
-      alertService.error(body.message ?? 'Fehler beim Löschen');
-      return;
+    try {
+      await deleteSignageSlide(workspaceId, slideId);
+      onStateChange({
+        ...state,
+        slides: state.slides.filter((slide) => slide.id !== slideId),
+      });
+      onClearSelection();
+    } catch (error) {
+      alertApiV1Error(error, 'Fehler beim Löschen');
     }
-    onStateChange({
-      ...state,
-      slides: state.slides.filter((slide) => slide.id !== slideId),
-    });
-    onClearSelection();
   };
 
   const handleBulkApply = async (payload: { weekdays: number[]; validFrom: string | null; validTo: string | null; dateExclusive: boolean }) => {
@@ -446,11 +425,10 @@ const ManageMonitorPage: NextPageWithPullToRefresh = () => {
     };
 
     try {
-      await putSignageSettings(workspaceId as string, payload);
+      await updateSignageSettings(workspaceId, payload);
       alertService.success('Reihenfolge und Anzeigedauer gespeichert');
     } catch (error) {
-      console.error('SettingsPage -> handleUpdateSignage', error);
-      alertService.error(error instanceof Error ? error.message : 'Es ist ein Fehler aufgetreten');
+      alertApiV1Error(error, 'Es ist ein Fehler aufgetreten');
     } finally {
       setUpdatingSignage(false);
     }
@@ -515,31 +493,18 @@ const ManageMonitorPage: NextPageWithPullToRefresh = () => {
         return;
       }
 
-      const response = await fetch(`/api/v1/workspaces/${workspaceId}/admin/signage/slides`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          format,
-          slides: processedSlides,
-        }),
+      const uploaded = await createSignageSlides(workspaceId, {
+        format,
+        slides: processedSlides,
       });
-
-      const body = await response.json();
-      if (!response.ok) {
-        alertService.error(body.message ?? 'Fehler beim Hochladen');
-        return;
-      }
-
+      const uploadedSlides = uploaded.map(toSignageSlideView);
       setState((current) => ({
         ...current,
-        slides: [...current.slides, ...body.slides],
+        slides: [...current.slides, ...uploadedSlides],
       }));
       alertService.success('Upload erfolgreich');
     } catch (error) {
-      console.error('uploadSlides', error);
-      alertService.error('Fehler beim Hochladen');
+      alertApiV1Error(error, 'Fehler beim Hochladen');
     } finally {
       setUploading(false);
     }
@@ -571,12 +536,11 @@ const ManageMonitorPage: NextPageWithPullToRefresh = () => {
     };
 
     try {
-      await putSignageSettings(workspaceId as string, payload);
+      await updateSignageSettings(workspaceId, payload);
       setState(nextState);
       alertService.success(mirrorSourceFormat ? `Spiegelung von ${formatLabel(mirrorSourceFormat)} aktiviert` : 'Spiegelung deaktiviert');
     } catch (error) {
-      console.error('handleMirrorChange', error);
-      alertService.error(error instanceof Error ? error.message : 'Fehler beim Speichern der Spiegelung');
+      alertApiV1Error(error, 'Fehler beim Speichern der Spiegelung');
     }
   };
 

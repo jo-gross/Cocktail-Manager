@@ -12,6 +12,7 @@ import InputModal from './modals/InputModal';
 import { createPortal } from 'react-dom';
 import { AuditLogHistoryModal } from './modals/AuditLogHistoryModal';
 import { Button, Divider, Loading, Menu } from '@components/ui';
+import { alertApiV1Error, apiV1Fetch, apiV1Mutate } from '@lib/network/apiV1';
 
 interface ManageColumnProps {
   id: string;
@@ -127,15 +128,24 @@ export function ManageColumn(props: ManageColumnProps) {
     };
   }, [isDropdownOpen, calculateDropdownPosition]);
 
+  const deleteEntity = async () => {
+    if (!workspaceId) return;
+    try {
+      await apiV1Mutate(`/api/v1/workspaces/${workspaceId}/${props.entity}/${props.id}`, 'DELETE');
+      props.onRefresh();
+      alertService.success('Erfolgreich gelöscht');
+    } catch (error) {
+      alertApiV1Error(error, 'Fehler beim Löschen');
+    }
+  };
+
   const handleDeleteClick = async () => {
     // Prüfe Referenzen nur für ingredients und glasses
     if ((props.entity === 'ingredients' || props.entity === 'glasses') && workspaceId) {
       setIsCheckingReferences(true);
       try {
-        const referencesResponse = await fetch(`/api/v1/workspaces/${workspaceId}/${props.entity}/${props.id}/references`);
-        const referencesData = await referencesResponse.json();
         // v1 returns the referencing cocktails directly as `data: { id, name }[]`.
-        const references: _Reference[] = referencesResponse.ok && Array.isArray(referencesData.data) ? referencesData.data : [];
+        const references = await apiV1Fetch<_Reference[]>(`/api/v1/workspaces/${workspaceId}/${props.entity}/${props.id}/references`);
 
         if (references.length > 0) {
           // Öffne Modal mit Referenzen
@@ -145,20 +155,7 @@ export function ManageColumn(props: ManageColumnProps) {
               entityName={props.name}
               entityType={props.entity === 'ingredients' ? 'ingredient' : 'glass'}
               references={references}
-              onApprove={async () => {
-                const response = await fetch(`/api/v1/workspaces/${workspaceId}/${props.entity}/${props.id}`, {
-                  method: 'DELETE',
-                });
-
-                const body = await response.json();
-                if (response.ok) {
-                  props.onRefresh();
-                  alertService.success('Erfolgreich gelöscht');
-                } else {
-                  console.error(`ManageColumn[${props.entity}] -> delete`, response);
-                  alertService.error(body.error?.message ?? 'Fehler beim Löschen', response.status, response.statusText);
-                }
-              }}
+              onApprove={deleteEntity}
             />,
           );
         } else {
@@ -168,51 +165,18 @@ export function ManageColumn(props: ManageColumnProps) {
               spelling={'DELETE'}
               entityName={props.name}
               entityType={props.entity === 'ingredients' ? 'ingredient' : 'glass'}
-              onApprove={async () => {
-                const response = await fetch(`/api/v1/workspaces/${workspaceId}/${props.entity}/${props.id}`, {
-                  method: 'DELETE',
-                });
-
-                const body = await response.json();
-                if (response.ok) {
-                  props.onRefresh();
-                  alertService.success('Erfolgreich gelöscht');
-                } else {
-                  console.error(`ManageColumn[${props.entity}] -> delete`, response);
-                  alertService.error(body.error?.message ?? 'Fehler beim Löschen', response.status, response.statusText);
-                }
-              }}
+              onApprove={deleteEntity}
             />,
           );
         }
       } catch (error) {
-        console.error(`ManageColumn[${props.entity}] -> check references`, error);
-        alertService.error('Fehler beim Prüfen der Referenzen');
+        alertApiV1Error(error, 'Fehler beim Prüfen der Referenzen');
       } finally {
         setIsCheckingReferences(false);
       }
     } else {
       // Für andere Entitäten: Normale Löschbestätigung ohne Referenzprüfung
-      modalContext.openModal(
-        <DeleteConfirmationModal
-          spelling={'DELETE'}
-          entityName={props.name}
-          onApprove={async () => {
-            const response = await fetch(`/api/v1/workspaces/${workspaceId}/${props.entity}/${props.id}`, {
-              method: 'DELETE',
-            });
-
-            const body = await response.json();
-            if (response.ok) {
-              props.onRefresh();
-              alertService.success('Erfolgreich gelöscht');
-            } else {
-              console.error(`ManageColumn[${props.entity}] -> delete`, response);
-              alertService.error(body.error?.message ?? 'Fehler beim Löschen', response.status, response.statusText);
-            }
-          }}
-        />,
-      );
+      modalContext.openModal(<DeleteConfirmationModal spelling={'DELETE'} entityName={props.name} onApprove={deleteEntity} />);
     }
   };
 
@@ -257,26 +221,12 @@ export function ManageColumn(props: ManageColumnProps) {
         onInputSubmit={async (value) => {
           try {
             setIsDuplicating(true);
-            const response = await fetch(`/api/v1/workspaces/${workspaceId}/${props.entity}/${props.id}/clone`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({ name: value }),
-            });
-
-            const body = await response.json();
-            if (response.ok) {
-              alertService.success(labels.successMessage);
-              props.onRefresh();
-              await router.push(`/workspaces/${workspaceId}/manage/${props.entity}/${body.data.id}`);
-            } else {
-              console.error(`ManageColumn -> duplicate${props.entity}`, response);
-              alertService.error(body.error?.message ?? labels.errorMessage, response.status, response.statusText);
-            }
+            const cloned = await apiV1Mutate<{ id: string }>(`/api/v1/workspaces/${workspaceId}/${props.entity}/${props.id}/clone`, 'POST', { name: value });
+            alertService.success(labels.successMessage);
+            props.onRefresh();
+            await router.push(`/workspaces/${workspaceId}/manage/${props.entity}/${cloned.id}`);
           } catch (error) {
-            console.error(`ManageColumn -> duplicate${props.entity}`, error);
-            alertService.error(labels.errorMessage);
+            alertApiV1Error(error, labels.errorMessage);
             throw error;
           } finally {
             setIsDuplicating(false);
