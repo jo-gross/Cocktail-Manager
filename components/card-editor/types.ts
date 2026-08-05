@@ -3,6 +3,7 @@ export type CardEditorViewMode = 'names' | 'compact' | 'preview';
 export type CardEditorGroupItem = {
   cocktailId: string;
   itemNumber: number;
+  specialPrice?: number | null;
 };
 
 export type CardEditorGroup = {

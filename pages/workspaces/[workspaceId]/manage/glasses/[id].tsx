@@ -8,7 +8,7 @@ import { alertService } from '@lib/alertService';
 import { withPagePermission } from '@middleware/ui/withPagePermission';
 import { FormikProps } from 'formik';
 import { SingleFormLayout } from '@components/layout/SingleFormLayout';
-import { GlassWithImage } from '../../../../../models/GlassWithImage';
+import type { GlassDto } from '@lib/schemas/glasses';
 import { PageCenter } from '@components/layout/PageCenter';
 
 function EditGlassPage() {
@@ -16,7 +16,7 @@ function EditGlassPage() {
   const { id, workspaceId } = router.query;
 
   const [loading, setLoading] = useState(true);
-  const [glass, setGlass] = useState<GlassWithImage | undefined>(undefined);
+  const [glass, setGlass] = useState<GlassDto | undefined>(undefined);
 
   const [unsavedChanges, setUnsavedChanges] = useState(false);
   const formRef = useRef<FormikProps<GlassFormValues>>(null);

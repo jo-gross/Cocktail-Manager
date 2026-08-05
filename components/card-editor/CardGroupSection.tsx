@@ -7,7 +7,7 @@ import { FaAngleDown, FaAngleUp, FaEuroSign, FaTrashAlt } from 'react-icons/fa';
 import CocktailRecipeCardItem from '@components/cocktails/CocktailRecipeCardItem';
 import { SearchModal } from '@components/modals/SearchModal';
 import { DeleteConfirmationModal } from '@components/modals/DeleteConfirmationModal';
-import { CocktailRecipeFull } from '../../models/CocktailRecipeFull';
+import type { CocktailSummaryDto } from '@lib/schemas/cocktails';
 import {
   Button,
   ButtonGroup,
@@ -38,7 +38,7 @@ interface CardGroupSectionProps {
   viewMode: CardEditorViewMode;
   columns?: number;
   stackHeader?: boolean;
-  cocktails: CocktailRecipeFull[];
+  cocktails: CocktailSummaryDto[];
   loadingCocktails: boolean;
   isArchived?: boolean;
   errors?: FormikErrors<CocktailCardGroupError>;

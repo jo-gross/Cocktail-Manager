@@ -3,13 +3,13 @@ import { useRouter } from 'next/router';
 import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { updateTags, validateTag } from '../../models/tags/TagUtils';
 import { UploadDropZone } from '../UploadDropZone';
-import { convertBase64ToFile, convertToBase64 } from '@lib/Base64Converter';
+import { convertBase64ToFile, convertToBase64, fetchImageAsBase64 } from '@lib/Base64Converter';
 import { FaSyncAlt, FaTrashAlt } from 'react-icons/fa';
 import { alertService } from '@lib/alertService';
 import { DeleteConfirmationModal } from '../modals/DeleteConfirmationModal';
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import _ from 'lodash';
-import { IngredientWithImage } from '../../models/IngredientWithImage';
+import type { IngredientDto } from '@lib/schemas/ingredients';
 import { Ingredient } from '@generated/prisma/client';
 import type { UnitDto, UnitConversionDto } from '@lib/schemas/units';
 import { UserContext } from '@lib/context/UserContextProvider';
@@ -75,7 +75,7 @@ const ingredientFormSchema = z
 const validateIngredient = zodFormikValidate(ingredientFormSchema);
 
 interface IngredientFormProps {
-  ingredient?: IngredientWithImage;
+  ingredient?: IngredientDto;
   setUnsavedChanges?: (unsavedChanges: boolean) => void;
   formRef?: React.RefObject<FormikProps<FormValue> | null>;
   onSaved?: (id: string) => void;
@@ -121,10 +121,39 @@ export function IngredientForm(props: IngredientFormProps) {
 
   const [similarLinkIngredient, setSimilarLinkIngredient] = useState<Ingredient | undefined>(undefined);
 
+  const [hydratedImage, setHydratedImage] = useState<string | undefined>(undefined);
+  const [imageHydrationDone, setImageHydrationDone] = useState(!props.ingredient?.hasImage);
+
   useEffect(() => {
     fetchUnits(workspaceId, setAllUnits, setUnitsLoading);
     fetchUnitConversions(workspaceId, setLoadingDefaultConversions, setDefaultConversions);
   }, [workspaceId]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const hydrateImage = async () => {
+      if (props.ingredient?.hasImage && props.ingredient.imageUrl) {
+        setImageHydrationDone(false);
+        const base64 = await fetchImageAsBase64(props.ingredient.imageUrl);
+        if (!cancelled) {
+          setHydratedImage(base64);
+          setImageHydrationDone(true);
+        }
+      } else {
+        setHydratedImage(undefined);
+        setImageHydrationDone(true);
+      }
+    };
+    void hydrateImage();
+    return () => {
+      cancelled = true;
+    };
+  }, [props.ingredient?.id, props.ingredient?.hasImage, props.ingredient?.imageUrl]);
+
+  const mappedUnits: FormUnitValue[] = (props.ingredient?.volumes ?? []).map((volume) => ({
+    unitId: volume.unit.id,
+    volume: volume.volume,
+  }));
 
   const initialValues: FormValue = {
     name: props.ingredient?.name ?? '',
@@ -132,11 +161,11 @@ export function IngredientForm(props: IngredientFormProps) {
     notes: props.ingredient?.notes ?? '',
     description: props.ingredient?.description ?? '',
     price: props.ingredient?.price ?? null,
-    units: props.ingredient?.IngredientVolume ?? [],
+    units: mappedUnits,
     link: props.ingredient?.link ?? '',
     tags: props.ingredient?.tags ?? [],
-    image: props.ingredient?.IngredientImage?.[0]?.image ?? undefined,
-    originalImage: (props.ingredient?.IngredientImage.length ?? 0) > 0 ? convertBase64ToFile(props.ingredient!.IngredientImage?.[0]?.image) : undefined,
+    image: hydratedImage,
+    originalImage: hydratedImage ? convertBase64ToFile(hydratedImage) : undefined,
   };
 
   const checkSimilarName = useCallback(
@@ -173,24 +202,36 @@ export function IngredientForm(props: IngredientFormProps) {
     [props.ingredient?.id, workspaceId],
   );
 
+  if (props.ingredient && !imageHydrationDone) {
+    return (
+      <div className="flex justify-center py-8">
+        <Loading />
+      </div>
+    );
+  }
+
   return (
     <Formik
       innerRef={formRef}
       initialValues={initialValues}
       onSubmit={async (values) => {
         try {
-          const body = {
+          const body: Record<string, unknown> = {
             id: props.ingredient == undefined ? undefined : props.ingredient.id,
             name: values.name.trim(),
             shortName: values.shortName?.trim() == '' ? null : values.shortName?.trim(),
             notes: values.notes?.trim() == '' ? null : values.notes?.trim(),
             description: values.description?.trim() == '' ? null : values.description?.trim(),
             price: values.price === null || values.price === undefined || Number.isNaN(values.price) ? null : Number(values.price),
+            // Always send volumes on update so an empty hydration cannot wipe IngredientVolume rows.
             units: (values.units || []).map((unit) => ({ unitId: unit.unitId, volume: Number(unit.volume) })),
             link: values.link?.trim() == '' ? null : values.link?.trim(),
             tags: values.tags,
-            image: values.image?.trim() == '' ? null : values.image?.trim(),
           };
+          // Omitting `image` on update removes it; re-send hydrated/kept base64.
+          if (values.image != undefined && values.image.trim() !== '') {
+            body.image = values.image.trim();
+          }
           if (props.ingredient == undefined) {
             const response = await fetch(`/api/v1/workspaces/${workspaceId}/ingredients`, {
               method: 'POST',
@@ -235,23 +276,19 @@ export function IngredientForm(props: IngredientFormProps) {
       }}
       validate={(values) => {
         if (props.ingredient) {
-          const reducedOriginal = _.omit(props.ingredient, ['IngredientImage', 'id', 'workspaceId']);
-          if (reducedOriginal.link == null) {
-            reducedOriginal.link = '';
-          }
-          if (reducedOriginal.description == null) {
-            reducedOriginal.description = '';
-          }
-          if (reducedOriginal.notes == null) {
-            reducedOriginal.notes = '';
-          }
-          if (reducedOriginal.shortName == null) {
-            reducedOriginal.shortName = '';
-          }
-          const reducedValues = _.omit(values, ['image', 'originalImage']);
+          const reducedOriginal = {
+            name: props.ingredient.name,
+            shortName: props.ingredient.shortName ?? '',
+            notes: props.ingredient.notes ?? '',
+            description: props.ingredient.description ?? '',
+            price: props.ingredient.price,
+            units: mappedUnits,
+            link: props.ingredient.link ?? '',
+            tags: props.ingredient.tags,
+          };
+          const reducedValues = _.omit(values, ['image', 'originalImage', 'fetchingExternalData', 'volume', 'selectedUnit']);
 
-          const areImageEqual =
-            (props.ingredient.IngredientImage.length > 0 ? props.ingredient.IngredientImage[0].image.toString() : undefined) == values.image;
+          const areImageEqual = hydratedImage == values.image;
           props.setUnsavedChanges?.(!_.isEqual(reducedOriginal, reducedValues) || !areImageEqual);
         } else {
           props.setUnsavedChanges?.(true);

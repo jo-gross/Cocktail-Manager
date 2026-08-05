@@ -6,17 +6,17 @@ import { Loading } from '@components/Loading';
 import { alertService } from '@lib/alertService';
 import { withPagePermission } from '@middleware/ui/withPagePermission';
 import { Role } from '@generated/prisma/client';
-import { CocktailCardFull } from '../../../../../models/CocktailCardFull';
-import { CocktailRecipeFull } from '../../../../../models/CocktailRecipeFull';
+import type { CardDto } from '@lib/schemas/cards';
+import type { CocktailSummaryDto } from '@lib/schemas/cocktails';
 import { CardEditorArchiveActions, CardEditorForm } from '@components/card-editor/CardEditorForm';
 
 function EditCocktailCard() {
   const router = useRouter();
   const { id, workspaceId } = router.query;
 
-  const [card, setCard] = useState<CocktailCardFull | undefined>(undefined);
+  const [card, setCard] = useState<CardDto | undefined>(undefined);
   const [loadingCard, setLoadingCard] = useState<boolean>(false);
-  const [cocktails, setCocktails] = useState<CocktailRecipeFull[]>([]);
+  const [cocktails, setCocktails] = useState<CocktailSummaryDto[]>([]);
   const [loadingCocktails, setLoadingCocktails] = useState<boolean>(false);
   const [unsavedChanges, setUnsavedChanges] = useState(false);
 

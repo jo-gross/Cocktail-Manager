@@ -4,8 +4,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { FaAngleDown, FaAngleLeft, FaAngleRight, FaAngleUp, FaTrashAlt } from 'react-icons/fa';
 import { CompactCocktailRecipeInstruction } from '@components/cocktails/CompactCocktailRecipeInstruction';
-import { CocktailRecipeFull } from '../../models/CocktailRecipeFull';
-import type { CocktailDto } from '@lib/schemas/cocktails';
+import type { CocktailDto, CocktailSummaryDto } from '@lib/schemas/cocktails';
 import { fetchCocktail } from '@lib/network/cocktails';
 import { Button, Card, CardBody, Skeleton } from '@components/ui';
 import '../../lib/NumberUtils';
@@ -17,7 +16,7 @@ import { itemDragId } from './useCardEditorDnD';
 interface CardGroupItemProps {
   groupIndex: number;
   itemIndex: number;
-  cocktail?: CocktailRecipeFull;
+  cocktail?: CocktailSummaryDto;
   loadingCocktails: boolean;
   viewMode: CardEditorViewMode;
   isArchived?: boolean;
@@ -48,7 +47,7 @@ export function CardGroupItem({
     disabled: isArchived,
   });
 
-  // Cards stay on the old data flow; the detailed preview lazy-loads the v1 CocktailDto by id.
+  // Detail preview lazy-loads the full CocktailDto by id; the list only needs summaries.
   const router = useRouter();
   const workspaceId = router.query.workspaceId as string;
   const [loadedCocktail, setLoadedCocktail] = useState<CocktailDto | undefined>(undefined);

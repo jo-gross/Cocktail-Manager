@@ -8,14 +8,14 @@ import { alertService } from '@lib/alertService';
 import { withPagePermission } from '@middleware/ui/withPagePermission';
 import { FormikProps } from 'formik';
 import { SingleFormLayout } from '@components/layout/SingleFormLayout';
-import { GarnishWithImage } from '../../../../../models/GarnishWithImage';
+import type { GarnishDto } from '@lib/schemas/garnishes';
 import { PageCenter } from '@components/layout/PageCenter';
 
 function EditGarnishPage() {
   const router = useRouter();
   const { id, workspaceId } = router.query;
 
-  const [garnish, setGarnish] = useState<GarnishWithImage | undefined>(undefined);
+  const [garnish, setGarnish] = useState<GarnishDto | undefined>(undefined);
   const [loading, setLoading] = useState(true);
 
   const [unsavedChanges, setUnsavedChanges] = useState(false);

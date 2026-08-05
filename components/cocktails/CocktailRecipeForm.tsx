@@ -4,7 +4,7 @@ import React, { createRef, useCallback, useContext, useEffect, useState } from '
 import { useRouter } from 'next/router';
 import { CocktailRecipe, Garnish, Glass, Ingredient, WorkspaceCocktailRecipeStepAction } from '@generated/prisma/client';
 import { UploadDropZone } from '../UploadDropZone';
-import { convertBase64ToFile, convertToBase64 } from '@lib/Base64Converter';
+import { convertBase64ToFile, convertToBase64, fetchImageAsBase64 } from '@lib/Base64Converter';
 import { CocktailRecipeStepFull } from '../../models/CocktailRecipeStepFull';
 import CocktailRecipeCardItem from './CocktailRecipeCardItem';
 import { alertService } from '@lib/alertService';
@@ -19,7 +19,6 @@ import { GarnishForm, GarnishFormValues } from '../garnishes/GarnishForm';
 import { IngredientForm, FormValue as IngredientFormValues } from '../ingredients/IngredientForm';
 import { GlassForm } from '../glasses/GlassForm';
 import { CocktailRecipeFull } from '../../models/CocktailRecipeFull';
-import { CocktailRecipeFullWithImage } from '../../models/CocktailRecipeFullWithImage';
 import type { CocktailDto } from '@lib/schemas/cocktails';
 import { UserContext } from '@lib/context/UserContextProvider';
 import { GlassModel } from '../../models/GlassModel';
@@ -88,9 +87,50 @@ export interface CocktailRecipeFormValues {
 }
 
 interface CocktailRecipeFormProps {
-  cocktailRecipe?: CocktailRecipeFullWithImage;
+  cocktailRecipe?: CocktailDto;
   setUnsavedChanges?: (unsavedChanges: boolean) => void;
   formRef: React.RefObject<FormikProps<CocktailRecipeFormValues> | null>;
+}
+
+/** Map v1 CocktailDto nested refs into the flat FK shape the form fields expect. */
+function mapCocktailDtoToFormSteps(cocktail: CocktailDto): CocktailRecipeStepFull[] {
+  return cocktail.steps.map(
+    (step) =>
+      ({
+        id: step.id,
+        cocktailRecipeId: cocktail.id,
+        stepNumber: step.stepNumber,
+        optional: step.optional,
+        actionId: step.action?.id ?? '',
+        action: step.action ?? { id: '', name: '' },
+        ingredients: step.ingredients.map((line) => ({
+          id: line.id,
+          amount: line.amount,
+          optional: line.optional,
+          ingredientNumber: line.ingredientNumber,
+          unitId: line.unit?.id ?? null,
+          ingredientId: line.ingredient?.id ?? null,
+          unit: line.unit ?? null,
+          ingredient: line.ingredient ?? null,
+          cocktailRecipeStepId: step.id,
+        })),
+      }) as CocktailRecipeStepFull,
+  );
+}
+
+function mapCocktailDtoToFormGarnishes(cocktail: CocktailDto): CocktailRecipeGarnishFull[] {
+  return cocktail.garnishes.map(
+    (g) =>
+      ({
+        cocktailRecipeId: cocktail.id,
+        garnishId: g.garnishId ?? g.garnish?.id ?? '',
+        garnishNumber: g.garnishNumber,
+        description: g.description,
+        optional: g.optional,
+        isAlternative: g.isAlternative,
+        garnish: g.garnish,
+      }) as unknown as CocktailRecipeGarnishFull,
+  );
 }
 
 interface IngredientError {
@@ -211,6 +251,30 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
 
   const [similarCocktailRecipe, setSimilarCocktailRecipe] = useState<CocktailRecipe | undefined>(undefined);
 
+  const [hydratedImage, setHydratedImage] = useState<string | undefined>(undefined);
+  const [imageHydrationDone, setImageHydrationDone] = useState(!props.cocktailRecipe?.hasImage);
+
+  useEffect(() => {
+    let cancelled = false;
+    const hydrateImage = async () => {
+      if (props.cocktailRecipe?.hasImage && props.cocktailRecipe.imageUrl) {
+        setImageHydrationDone(false);
+        const base64 = await fetchImageAsBase64(props.cocktailRecipe.imageUrl);
+        if (!cancelled) {
+          setHydratedImage(base64);
+          setImageHydrationDone(true);
+        }
+      } else {
+        setHydratedImage(undefined);
+        setImageHydrationDone(true);
+      }
+    };
+    void hydrateImage();
+    return () => {
+      cancelled = true;
+    };
+  }, [props.cocktailRecipe?.id, props.cocktailRecipe?.hasImage, props.cocktailRecipe?.imageUrl]);
+
   const openIngredientSelectModal = useCallback(
     (setFieldValue: FormikProps<CocktailRecipeFormValues>['setFieldValue'], indexStep: number, indexIngredient: number) => {
       modalContext.openModal(
@@ -275,11 +339,13 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
     [garnishes, modalContext],
   );
 
+  const cocktailGlassId = props.cocktailRecipe?.glass?.id;
+
   useEffect(() => {
-    if (props.cocktailRecipe?.glassId && glasses.length > 0) {
-      formRef.current?.setFieldValue('glass', glasses.find((g) => g.id == props.cocktailRecipe?.glassId) ?? undefined);
+    if (cocktailGlassId && glasses.length > 0) {
+      formRef.current?.setFieldValue('glass', glasses.find((g) => g.id == cocktailGlassId) ?? undefined);
     }
-  }, [formRef, glasses, props.cocktailRecipe?.glassId]);
+  }, [formRef, glasses, cocktailGlassId]);
 
   useEffect(() => {
     // Otherwise not saved changes will be overwritten
@@ -287,13 +353,10 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
       if (props.cocktailRecipe != undefined && props.cocktailRecipe.garnishes?.length > 0 && garnishes.length > 0) {
         formRef.current?.setFieldValue(
           'garnishes',
-          props.cocktailRecipe?.garnishes.map((garnish) => {
-            return {
-              ...garnish,
-              garnishId: garnish.garnishId ?? '',
-              garnish: garnishes.find((g) => g.id == garnish.garnishId) ?? undefined,
-            };
-          }),
+          mapCocktailDtoToFormGarnishes(props.cocktailRecipe).map((garnish) => ({
+            ...garnish,
+            garnish: garnishes.find((g) => g.id == garnish.garnishId) ?? garnish.garnish,
+          })),
         );
       }
     } else {
@@ -312,20 +375,16 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
   useEffect(() => {
     // Otherwise not saved changes will be overwritten
     if (formRef.current?.values.steps == undefined) {
-      if (props.cocktailRecipe?.steps.some((step) => step.ingredients.map((ingredient) => ingredient).length > 0) && ingredients.length > 0) {
+      if (props.cocktailRecipe?.steps.some((step) => step.ingredients.length > 0) && ingredients.length > 0 && props.cocktailRecipe) {
         formRef.current?.setFieldValue(
           'steps',
-          props.cocktailRecipe?.steps.map((step) => {
-            return {
-              ...step,
-              ingredients: step.ingredients.map((ingredient) => {
-                return {
-                  ...ingredient,
-                  ingredient: ingredients.find((i) => i.id == ingredient.ingredientId) ?? undefined,
-                };
-              }),
-            };
-          }),
+          mapCocktailDtoToFormSteps(props.cocktailRecipe).map((step) => ({
+            ...step,
+            ingredients: step.ingredients.map((ingredient) => ({
+              ...ingredient,
+              ingredient: ingredients.find((i) => i.id == ingredient.ingredientId) ?? ingredient.ingredient,
+            })),
+          })),
         );
       }
     } else {
@@ -355,7 +414,10 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
     fetchUnits(workspaceId, setUnits, setUnitsLoading);
   }, [workspaceId]);
 
-  const initSteps: CocktailRecipeStepFull[] = props.cocktailRecipe?.steps ?? [];
+  const initSteps: CocktailRecipeStepFull[] = props.cocktailRecipe ? mapCocktailDtoToFormSteps(props.cocktailRecipe) : [];
+  const initGarnishes: CocktailRecipeGarnishFull[] = props.cocktailRecipe ? mapCocktailDtoToFormGarnishes(props.cocktailRecipe) : [];
+  const iceId = props.cocktailRecipe?.ice?.id ?? null;
+  const glassId = props.cocktailRecipe?.glass?.id ?? undefined;
 
   const initValue = {
     id: props.cocktailRecipe?.id ?? '',
@@ -365,14 +427,13 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
     history: props.cocktailRecipe?.history ?? '',
     price: props.cocktailRecipe?.price ?? null,
     tags: props.cocktailRecipe?.tags ?? [],
-    iceId: props.cocktailRecipe?.iceId ?? null,
-    image: props.cocktailRecipe?.CocktailRecipeImage[0]?.image ?? undefined,
-    originalImage:
-      (props.cocktailRecipe?.CocktailRecipeImage?.length ?? 0) > 0 ? convertBase64ToFile(props.cocktailRecipe!.CocktailRecipeImage[0].image!) : undefined,
-    glassId: props.cocktailRecipe?.glassId ?? undefined,
-    ice: iceOptions.find((i) => i.id == props.cocktailRecipe?.iceId) ?? null,
-    glass: glasses.find((g) => g.id == props.cocktailRecipe?.glassId) ?? null,
-    garnishes: props.cocktailRecipe?.garnishes ?? [],
+    iceId,
+    image: hydratedImage,
+    originalImage: hydratedImage ? convertBase64ToFile(hydratedImage) : undefined,
+    glassId,
+    ice: iceOptions.find((i) => i.id == iceId) ?? null,
+    glass: glasses.find((g) => g.id == glassId) ?? null,
+    garnishes: initGarnishes,
     steps: initSteps,
     workspaceId: workspaceId!,
     isArchived: props.cocktailRecipe?.isArchived ?? false,
@@ -386,28 +447,39 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
       .filterUnique();
   }, []);
 
+  if (props.cocktailRecipe && !imageHydrationDone) {
+    return (
+      <div className="flex justify-center py-8">
+        <Loading />
+      </div>
+    );
+  }
+
   return (
     <Formik
       innerRef={formRef}
       initialValues={initValue}
       validate={(values) => {
         if (props.cocktailRecipe) {
-          const reducedCocktailRecipe = _.omit(props.cocktailRecipe, ['CocktailRecipeImage', 'ice', 'isArchived', '_count', 'ratings']);
-          const reducedValues = _.omit(values, ['image', 'ice', 'isArchived', 'originalImage']);
+          const mappedOriginal = {
+            id: props.cocktailRecipe.id,
+            name: props.cocktailRecipe.name,
+            description: props.cocktailRecipe.description ?? '',
+            notes: props.cocktailRecipe.notes ?? '',
+            history: props.cocktailRecipe.history ?? '',
+            price: props.cocktailRecipe.price,
+            tags: props.cocktailRecipe.tags,
+            iceId: props.cocktailRecipe.ice?.id ?? null,
+            glassId: props.cocktailRecipe.glass?.id,
+            garnishes: mapCocktailDtoToFormGarnishes(props.cocktailRecipe),
+            steps: mapCocktailDtoToFormSteps(props.cocktailRecipe),
+            workspaceId: workspaceId!,
+          };
+          const reducedValues = _.omit(values, ['image', 'ice', 'glass', 'isArchived', 'originalImage']);
 
-          if (reducedCocktailRecipe.description == null) {
-            reducedCocktailRecipe.description = '';
-          }
-          if (reducedCocktailRecipe.notes == null) {
-            reducedCocktailRecipe.notes = '';
-          }
-          if (reducedCocktailRecipe.price == null) {
-            reducedCocktailRecipe.price = null;
-          }
-
-          if (reducedCocktailRecipe.steps != undefined) {
-            reducedCocktailRecipe.steps = orderBy(reducedCocktailRecipe.steps, ['stepNumber'], ['asc']);
-            reducedCocktailRecipe.steps.forEach((step) => {
+          if (mappedOriginal.steps != undefined) {
+            mappedOriginal.steps = orderBy(mappedOriginal.steps, ['stepNumber'], ['asc']);
+            mappedOriginal.steps.forEach((step) => {
               step.ingredients = orderBy(step.ingredients, ['ingredientNumber'], ['asc']);
             });
           }
@@ -421,15 +493,12 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
               });
             });
           }
-          // console.debug('CocktailRecipe', reducedCocktailRecipe);
-          // console.debug('Values', values);
-          console.debug('Difference', DeepDiff.diff(reducedCocktailRecipe, reducedValues));
-          // console.debug('Differs', !_.isEqual(reducedCocktailRecipe, values));
+          console.debug('Difference', DeepDiff.diff(mappedOriginal, reducedValues));
 
-          const areImageEqual =
-            (props.cocktailRecipe.CocktailRecipeImage.length > 0 ? props.cocktailRecipe.CocktailRecipeImage[0].image.toString() : undefined) == values.image;
+          // Update schemas delete the image when `image` is omitted; keep existing by re-sending hydrated base64.
+          const areImageEqual = hydratedImage == values.image;
 
-          props.setUnsavedChanges?.(!_.isEqual(reducedCocktailRecipe, reducedValues) || !areImageEqual);
+          props.setUnsavedChanges?.(!_.isEqual(mappedOriginal, reducedValues) || !areImageEqual);
         } else {
           props.setUnsavedChanges?.(true);
         }
@@ -438,7 +507,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
       }}
       onSubmit={async (values) => {
         try {
-          const body = {
+          const body: Record<string, unknown> = {
             id: props.cocktailRecipe?.id,
             name: values.name,
             description: values.description.trim() === '' ? null : values.description.trim(),
@@ -447,7 +516,6 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
             price: values.price ?? null,
             iceId: values.iceId,
             glassId: values.glassId,
-            image: values.image == '' ? null : values.image,
             tags: values.tags,
             // Shaped to the v1 CocktailStepInputSchema. Optional `id` is sent through so the
             // differential PUT can match existing rows (empty/missing id = new).
@@ -480,6 +548,10 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
               };
             }),
           };
+          // Update always deleteMany's the image row; re-send base64 to keep, omit to clear.
+          if (values.image != undefined && values.image !== '') {
+            body.image = values.image;
+          }
           if (props.cocktailRecipe == undefined) {
             const response = await fetch(`/api/v1/workspaces/${workspaceId}/cocktails`, {
               method: 'POST',

@@ -45,13 +45,15 @@ export const CardGroupDtoSchema = z
   })
   .openapi('CardGroup');
 
-/** Slim card DTO for list views — no nested groups. */
+/** Slim card DTO for list views — no nested groups, but includes counts for overview UI. */
 export const CardSummaryDtoSchema = z
   .object({
     id: z.string(),
     name: z.string(),
     date: DateTimeString.nullable().openapi({ description: 'Optional date the card is scheduled for.' }),
     archived: z.boolean(),
+    groupCount: z.number().int().openapi({ description: 'Number of groups on this card.' }),
+    itemCount: z.number().int().openapi({ description: 'Total number of cocktail items across all groups.' }),
   })
   .openapi('CardSummary');
 

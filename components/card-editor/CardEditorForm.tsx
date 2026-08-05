@@ -11,8 +11,8 @@ import { RoutingContext } from '@lib/context/RoutingContextProvider';
 import { alertService } from '@lib/alertService';
 import { zodFormikValidate } from '@lib/forms/zodFormikValidate';
 import { DeleteConfirmationModal } from '@components/modals/DeleteConfirmationModal';
-import { CocktailCardFull } from '../../models/CocktailCardFull';
-import { CocktailRecipeFull } from '../../models/CocktailRecipeFull';
+import type { CardDto } from '@lib/schemas/cards';
+import type { CocktailSummaryDto } from '@lib/schemas/cocktails';
 import { Button, Divider, FormControl, Input, Label, LabelText, LabelTextAlt } from '@components/ui';
 import { CardEditorToolbar } from './CardEditorToolbar';
 import { CardGroupSection } from './CardGroupSection';
@@ -55,9 +55,30 @@ const cardFormSchema = z.object({
 
 const validateCard = zodFormikValidate(cardFormSchema);
 
+function mapCardToFormValues(card?: CardDto): CardEditorFormValues {
+  return {
+    name: card?.name ?? '',
+    date: card?.date != undefined ? new Date(card.date).toISOString().split('T')[0] : '',
+    groups:
+      card?.groups
+        .slice()
+        .sort((a, b) => a.groupNumber - b.groupNumber)
+        .map((group) => ({
+          name: group.name,
+          groupNumber: group.groupNumber,
+          groupPrice: group.groupPrice,
+          items: group.items.map((item) => ({
+            cocktailId: item.cocktail.id,
+            itemNumber: item.itemNumber,
+            specialPrice: item.specialPrice,
+          })),
+        })) ?? [],
+  };
+}
+
 interface CardEditorFormProps {
-  card?: CocktailCardFull;
-  cocktails: CocktailRecipeFull[];
+  card?: CardDto;
+  cocktails: CocktailSummaryDto[];
   loadingCocktails: boolean;
   workspaceId: string;
   onUnsavedChangesChange: (unsaved: boolean) => void;
@@ -107,18 +128,10 @@ export function CardEditorForm({ card, cocktails, loadingCocktails, workspaceId,
 
   return (
     <Formik<CardEditorFormValues>
-      initialValues={{
-        groups: card?.groups.sort((a, b) => a.groupNumber - b.groupNumber) ?? [],
-        name: card?.name ?? '',
-        date: card?.date != undefined ? new Date(card.date).toISOString().split('T')[0] : '',
-      }}
+      initialValues={mapCardToFormValues(card)}
       enableReinitialize
       validate={(values) => {
-        const reducedCard = _.omit(card, ['workspaceId', 'id', 'groups[*].items[*].cocktail']) as Record<string, unknown>;
-        if (reducedCard.date == null) {
-          reducedCard.date = '';
-        }
-        onUnsavedChangesChange(!_.isEqual(values, reducedCard));
+        onUnsavedChangesChange(!_.isEqual(values, mapCardToFormValues(card)));
 
         return validateCard(values);
       }}
@@ -320,7 +333,7 @@ export function CardEditorForm({ card, cocktails, loadingCocktails, workspaceId,
 }
 
 interface CardEditorArchiveActionsProps {
-  card: CocktailCardFull;
+  card: CardDto;
   workspaceId: string;
 }
 

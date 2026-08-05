@@ -69,6 +69,12 @@ export async function getWorkspaceSettings(workspace: Workspace): Promise<Worksp
 }
 
 export async function updateWorkspaceSetting(workspace: Workspace, input: WorkspaceSettingUpdateInput): Promise<WorkspaceSettingsDto> {
+  // Translations are a content resource — use GET/PUT /translations instead of
+  // blindly overwriting the catalog via the scalar settings map.
+  if (input.setting === 'translations') {
+    throw new ApiError(400, 'INVALID_SETTING', 'Use GET/PUT /translations to manage the translation catalog');
+  }
+
   await prisma.workspaceSetting.upsert({
     where: { workspaceId_setting: { workspaceId: workspace.id, setting: input.setting } },
     create: { workspaceId: workspace.id, setting: input.setting, value: input.value ?? null },

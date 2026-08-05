@@ -1457,13 +1457,23 @@
           },
           "archived": {
             "type": "boolean"
+          },
+          "groupCount": {
+            "type": "integer",
+            "description": "Number of groups on this card."
+          },
+          "itemCount": {
+            "type": "integer",
+            "description": "Total number of cocktail items across all groups."
           }
         },
         "required": [
           "id",
           "name",
           "date",
-          "archived"
+          "archived",
+          "groupCount",
+          "itemCount"
         ]
       },
       "Card": {
@@ -4218,6 +4228,16 @@
           "type": "string"
         }
       },
+      "Translations": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "description": "Display-name catalog keyed by language code, then by translation key."
+      },
       "Unit": {
         "type": "object",
         "properties": {
@@ -5709,7 +5729,7 @@
     "/api/v1/workspaces/{workspaceId}/admin/translation": {
       "put": {
         "summary": "Upsert a translation",
-        "description": "**Required API-key permission:** `WORKSPACE_UPDATE` — Update workspace settings\n\nMerges display-name translations for a key into the workspace translation settings.",
+        "description": "**Required API-key permission:** `WORKSPACE_UPDATE` — Update workspace settings\n\nMerges display-name translations for a key into the workspace translation settings. Prefer PUT /translations.",
         "tags": [
           "Workspace / Settings"
         ],
@@ -14665,7 +14685,7 @@
       },
       "put": {
         "summary": "Update workspace setting",
-        "description": "**Required API-key permission:** `WORKSPACE_UPDATE` — Update workspace settings\n\nUpsert a single workspace setting and return the full settings map.",
+        "description": "**Required API-key permission:** `WORKSPACE_UPDATE` — Update workspace settings\n\nUpsert a single scalar workspace setting and return the full settings map. The `translations` key is rejected — use GET/PUT /translations instead.",
         "tags": [
           "Workspace / Settings"
         ],
@@ -14721,7 +14741,7 @@
             }
           },
           "400": {
-            "description": "Validation error",
+            "description": "Setting key `translations` must be managed via /translations.",
             "content": {
               "application/json": {
                 "schema": {
@@ -16821,6 +16841,179 @@
           }
         },
         "x-required-permission": "COCKTAILS_READ"
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/translations": {
+      "get": {
+        "summary": "Get translations",
+        "description": "**Required API-key permission:** `WORKSPACE_READ` — Read workspace settings and audit logs\n\nReturn the workspace display-name translation catalog as a parsed object.",
+        "tags": [
+          "Workspace / Settings"
+        ],
+        "security": [
+          {
+            "WorkspaceApiKeyAuth": [
+              "WORKSPACE_READ"
+            ]
+          },
+          {
+            "InstanceApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "Workspace ID",
+              "example": "ckw0a1b2c3d4e5f6g7h8"
+            },
+            "required": true,
+            "description": "Workspace ID",
+            "name": "workspaceId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Get translations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Translations"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-required-permission": "WORKSPACE_READ"
+      },
+      "put": {
+        "summary": "Upsert a translation",
+        "description": "**Required API-key permission:** `WORKSPACE_UPDATE` — Update workspace settings\n\nMerges display-name translations for a key into the workspace translation catalog.",
+        "tags": [
+          "Workspace / Settings"
+        ],
+        "security": [
+          {
+            "WorkspaceApiKeyAuth": [
+              "WORKSPACE_UPDATE"
+            ]
+          },
+          {
+            "InstanceApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "Workspace ID",
+              "example": "ckw0a1b2c3d4e5f6g7h8"
+            },
+            "required": true,
+            "description": "Workspace ID",
+            "name": "workspaceId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TranslationUpdateInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Upsert a translation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/TranslationUpdateResult"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-required-permission": "WORKSPACE_UPDATE"
       }
     },
     "/api/v1/workspaces/{workspaceId}/units": {

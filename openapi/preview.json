@@ -1340,13 +1340,23 @@
           },
           "archived": {
             "type": "boolean"
+          },
+          "groupCount": {
+            "type": "integer",
+            "description": "Number of groups on this card."
+          },
+          "itemCount": {
+            "type": "integer",
+            "description": "Total number of cocktail items across all groups."
           }
         },
         "required": [
           "id",
           "name",
           "date",
-          "archived"
+          "archived",
+          "groupCount",
+          "itemCount"
         ]
       },
       "Card": {
@@ -5292,7 +5302,7 @@
     "/api/workspaces/{workspaceId}/admin/translation": {
       "put": {
         "summary": "Upsert a translation",
-        "description": "**Required API-key permission:** `WORKSPACE_UPDATE` — Update workspace settings\n\nMerges display-name translations for a key into the workspace translation settings.",
+        "description": "**Required API-key permission:** `WORKSPACE_UPDATE` — Update workspace settings\n\nMerges display-name translations for a key into the workspace translation settings. Prefer PUT /translations.",
         "tags": [
           "Workspace / Settings"
         ],
@@ -13221,7 +13231,7 @@
       },
       "put": {
         "summary": "Update workspace setting",
-        "description": "**Required API-key permission:** `WORKSPACE_UPDATE` — Update workspace settings\n\nUpsert a single workspace setting and return the full settings map.",
+        "description": "**Required API-key permission:** `WORKSPACE_UPDATE` — Update workspace settings\n\nUpsert a single scalar workspace setting and return the full settings map. The `translations` key is rejected — use GET/PUT /translations instead.",
         "tags": [
           "Workspace / Settings"
         ],
@@ -13277,7 +13287,7 @@
             }
           },
           "400": {
-            "description": "Validation error",
+            "description": "Setting key `translations` must be managed via /translations.",
             "content": {
               "application/json": {
                 "schema": {

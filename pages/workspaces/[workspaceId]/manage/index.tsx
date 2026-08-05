@@ -48,9 +48,9 @@ export default function ManagePage() {
               )}
               <div className={'hidden md:flex md:flex-col md:items-start'}>
                 <span>{userContext.user?.name || 'Demo Nutzer'}</span>
-                {userContext.workspace?.users && (
+                {userContext.workspace?.members && (
                   <span className="text-xs font-normal opacity-70">
-                    {userContext.workspace.users.find((u) => u.userId === userContext.user?.id)?.role || 'MANAGER'}
+                    {userContext.workspace.members.find((m) => m.userId === userContext.user?.id)?.role || 'MANAGER'}
                   </span>
                 )}
               </div>
@@ -59,9 +59,9 @@ export default function ManagePage() {
               <Menu size="sm" className="gap-2">
                 <div className={'pt-1 text-center md:hidden'}>
                   <div className="text-lg font-bold">{userContext.user?.name || 'Demo Nutzer'}</div>
-                  {userContext.workspace?.users && (
+                  {userContext.workspace?.members && (
                     <div className="mt-1 text-xs font-normal opacity-70">
-                      {userContext.workspace.users.find((u) => u.userId === userContext.user?.id)?.role || 'MANAGER'}
+                      {userContext.workspace.members.find((m) => m.userId === userContext.user?.id)?.role || 'MANAGER'}
                     </div>
                   )}
                 </div>

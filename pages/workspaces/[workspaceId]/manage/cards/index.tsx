@@ -1,7 +1,7 @@
 import { ManageEntityLayout } from '@components/layout/ManageEntityLayout';
 import { FaPlus } from 'react-icons/fa';
 import Link from 'next/link';
-import { CocktailCardFull } from '../../../../../models/CocktailCardFull';
+import type { CardSummaryDto } from '@lib/schemas/cards';
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/router';
 import { alertService } from '@lib/alertService';
@@ -15,7 +15,7 @@ import { formatDateLocal, getLogicalDate } from '@lib/dateHelpers';
 
 function cardFilter(filterString: string) {
   const normalizedFilter = filterString.trim().toLowerCase();
-  return (card: CocktailCardFull) => normalizedFilter === '' || card.name.toLowerCase().includes(normalizedFilter);
+  return (card: CardSummaryDto) => normalizedFilter === '' || card.name.toLowerCase().includes(normalizedFilter);
 }
 
 const CardsOverviewPage: NextPageWithPullToRefresh = () => {
@@ -24,7 +24,7 @@ const CardsOverviewPage: NextPageWithPullToRefresh = () => {
 
   const userContext = useContext(UserContext);
 
-  const [cards, setCards] = useState<CocktailCardFull[]>([]);
+  const [cards, setCards] = useState<CardSummaryDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterString, setFilterString] = useState('');
   const [dayStartTime, setDayStartTime] = useState<string | undefined>(undefined);

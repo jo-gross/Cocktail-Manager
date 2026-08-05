@@ -8,7 +8,7 @@ import { alertService } from '@lib/alertService';
 import { withPagePermission } from '@middleware/ui/withPagePermission';
 import { FormikProps } from 'formik';
 import { SingleFormLayout } from '@components/layout/SingleFormLayout';
-import { IngredientWithImage } from '../../../../../models/IngredientWithImage';
+import type { IngredientDto } from '@lib/schemas/ingredients';
 import { PageCenter } from '@components/layout/PageCenter';
 
 function EditCocktailRecipe() {
@@ -16,7 +16,7 @@ function EditCocktailRecipe() {
   const { id, workspaceId } = router.query;
 
   const [loading, setLoading] = useState(true);
-  const [ingredient, setIngredient] = useState<IngredientWithImage | undefined>(undefined);
+  const [ingredient, setIngredient] = useState<IngredientDto | undefined>(undefined);
 
   const [unsavedChanges, setUnsavedChanges] = useState(false);
   const formRef = useRef<FormikProps<FormValue>>(null);

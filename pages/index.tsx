@@ -69,7 +69,7 @@ const WorkspacesPage: NextPageWithPullToRefresh = () => {
   const fetchWorkspaces = useCallback(() => {
     if (!userContext.user) return;
     setWorkspacesLoading(true);
-    fetch('/api/workspaces', { method: 'GET' })
+    fetch('/api/v1/workspaces', { method: 'GET' })
       .then(async (response) => {
         const body = await response.json();
         if (response.ok) {
@@ -144,7 +144,7 @@ const WorkspacesPage: NextPageWithPullToRefresh = () => {
   const createNewWorkspace = useCallback(() => {
     if (!userContext.user) return;
     setCreatingWorkspace(true);
-    fetch('/api/workspaces', {
+    fetch('/api/v1/workspaces', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

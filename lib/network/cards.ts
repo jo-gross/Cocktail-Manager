@@ -1,13 +1,14 @@
 import { alertService } from '../alertService';
-import { CocktailCardFull } from '../../models/CocktailCardFull';
 import { fetchListWithCache, fetchWithCache, prefetchImage } from './fetchWithCache';
+import type { CardDto, CardSummaryDto } from '@lib/schemas/cards';
+import type { CocktailDto } from '@lib/schemas/cocktails';
 
 /**
  * Fetch all cards for a workspace
  */
 export async function fetchCards(
   workspaceId: string | string[] | undefined,
-  setCards: (cards: CocktailCardFull[]) => void,
+  setCards: (cards: CardSummaryDto[]) => void,
   setLoading: (loading: boolean) => void,
   onCacheFallback?: () => void,
 ): Promise<void> {
@@ -17,7 +18,7 @@ export async function fetchCards(
   setLoading(true);
 
   try {
-    const { data, fromCache, error } = await fetchListWithCache<CocktailCardFull>({
+    const { data, fromCache, error } = await fetchListWithCache<CardSummaryDto>({
       url: `/api/v1/workspaces/${wsId}/cards`,
       storeName: 'cards',
       workspaceId: wsId,
@@ -52,7 +53,7 @@ export async function fetchCards(
 export async function fetchCard(
   workspaceId: string | string[] | undefined,
   cardId: string,
-  setCard: (card: CocktailCardFull) => void,
+  setCard: (card: CardDto) => void,
   setLoading: (loading: boolean) => void,
   onCacheFallback?: () => void,
 ): Promise<void> {
@@ -62,7 +63,7 @@ export async function fetchCard(
   setLoading(true);
 
   try {
-    const { data, fromCache, error } = await fetchWithCache<CocktailCardFull>({
+    const { data, fromCache, error } = await fetchWithCache<CardDto>({
       url: `/api/v1/workspaces/${wsId}/cards/${cardId}`,
       storeName: 'cards',
       workspaceId: wsId,
@@ -94,17 +95,16 @@ export async function fetchCard(
 /**
  * Prefetch all data for a card (cocktails, images, etc.) for offline use
  */
-export async function prefetchCardData(workspaceId: string, card: CocktailCardFull, onProgress?: (current: number, total: number) => void): Promise<void> {
+export async function prefetchCardData(workspaceId: string, card: CardDto, onProgress?: (current: number, total: number) => void): Promise<void> {
   const { cacheService } = await import('../offline/CacheService');
 
-  // Collect all cocktail IDs from the card
   const cocktailIds: string[] = [];
   const imageUrls: string[] = [];
 
   card.groups?.forEach((group) => {
     group.items?.forEach((item) => {
-      if (item.cocktailId) {
-        cocktailIds.push(item.cocktailId);
+      if (item.cocktail?.id) {
+        cocktailIds.push(item.cocktail.id);
       }
     });
   });
@@ -112,31 +112,25 @@ export async function prefetchCardData(workspaceId: string, card: CocktailCardFu
   const total = cocktailIds.length;
   let current = 0;
 
-  // Fetch and cache each cocktail
   for (const cocktailId of cocktailIds) {
     try {
       const response = await fetch(`/api/v1/workspaces/${workspaceId}/cocktails/${cocktailId}`);
       if (response.ok) {
         const body = await response.json();
-        await cacheService.set('cocktails', workspaceId, cocktailId, body.data);
+        const cocktail = body.data as CocktailDto;
+        await cacheService.set('cocktails', workspaceId, `${cocktailId}-full`, cocktail);
 
-        // Cache cocktail image if it has one
-        if (body.data._count?.CocktailRecipeImage > 0) {
-          const imageUrl = `/api/v1/workspaces/${workspaceId}/cocktails/${cocktailId}/image`;
-          imageUrls.push(imageUrl);
+        if (cocktail.hasImage && cocktail.imageUrl) {
+          imageUrls.push(cocktail.imageUrl);
         }
 
-        // Cache glass image if it has one
-        if (body.data.glass?._count?.GlassImage > 0) {
-          const glassImageUrl = `/api/v1/workspaces/${workspaceId}/glasses/${body.data.glass.id}/image`;
-          imageUrls.push(glassImageUrl);
+        if (cocktail.glass?.hasImage) {
+          imageUrls.push(`/api/v1/workspaces/${workspaceId}/glasses/${cocktail.glass.id}/image`);
         }
 
-        // Cache garnish images
-        body.data.garnishes?.forEach((g: { garnish?: { id: string; _count?: { GarnishImage: number } } }) => {
-          if (g.garnish && g.garnish._count && g.garnish._count.GarnishImage > 0) {
-            const garnishImageUrl = `/api/v1/workspaces/${workspaceId}/garnishes/${g.garnish.id}/image`;
-            imageUrls.push(garnishImageUrl);
+        cocktail.garnishes?.forEach((g) => {
+          if (g.garnish?.hasImage) {
+            imageUrls.push(`/api/v1/workspaces/${workspaceId}/garnishes/${g.garnish.id}/image`);
           }
         });
       }
@@ -148,6 +142,5 @@ export async function prefetchCardData(workspaceId: string, card: CocktailCardFu
     onProgress?.(current, total);
   }
 
-  // Cache images in parallel
   await Promise.allSettled(imageUrls.map((url) => prefetchImage(workspaceId, url)));
 }

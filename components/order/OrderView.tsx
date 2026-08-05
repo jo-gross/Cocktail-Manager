@@ -1,7 +1,7 @@
 import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import type { CocktailSummaryDto } from '@lib/schemas/cocktails';
-import { CocktailCardFull } from '../../models/CocktailCardFull';
+import type { CardDto, CardGroupDto, CardSummaryDto } from '@lib/schemas/cards';
 import { GlassModel } from '../../models/GlassModel';
 import { fetchGlasses } from '../../lib/network/glasses';
 import { addCocktailToQueue } from '../../lib/network/cocktailTracking';
@@ -46,7 +46,7 @@ interface OrderItem {
 }
 
 interface OrderViewProps {
-  cocktailCards: CocktailCardFull[];
+  cocktailCards: CardSummaryDto[];
   workspaceId: string;
 }
 
@@ -54,6 +54,8 @@ export const OrderView = React.memo(function OrderView({ cocktailCards, workspac
   const _router = useRouter();
   const _modalContext = useContext(ModalContext);
   const [selectedCardId, setSelectedCardId] = useState<string>('');
+  const [selectedCard, setSelectedCard] = useState<CardDto | undefined>(undefined);
+  const [selectedCardLoading, setSelectedCardLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [cocktails, setCocktails] = useState<CocktailSummaryDto[]>([]);
   const [filteredCocktails, setFilteredCocktails] = useState<CocktailSummaryDto[]>([]);
@@ -90,6 +92,32 @@ export const OrderView = React.memo(function OrderView({ cocktailCards, workspac
       .finally(() => setCocktailsLoading(false));
   }, [workspaceId]);
 
+  // Fetch full card when a specific card is selected
+  useEffect(() => {
+    if (!workspaceId || !selectedCardId || selectedCardId === 'all') {
+      setSelectedCard(undefined);
+      return;
+    }
+
+    setSelectedCardLoading(true);
+    fetch(`/api/v1/workspaces/${workspaceId}/cards/${selectedCardId}`)
+      .then(async (response) => {
+        const body = await response.json();
+        if (response.ok) {
+          setSelectedCard(body.data);
+        } else {
+          console.error('OrderView -> fetchCard', response);
+          alertService.error(body.error ?? 'Fehler beim Laden der Karte', response.status, response.statusText);
+          setSelectedCard(undefined);
+        }
+      })
+      .catch((error) => {
+        console.error('OrderView -> fetchCard', error);
+        alertService.error('Fehler beim Laden der Karte');
+        setSelectedCard(undefined);
+      })
+      .finally(() => setSelectedCardLoading(false));
+  }, [workspaceId, selectedCardId]);
   // Filter cocktails based on search term (used for "Alle Cocktails"-Ansicht)
   useEffect(() => {
     const searchLower = searchTerm.toLowerCase().trim();
@@ -276,14 +304,12 @@ export const OrderView = React.memo(function OrderView({ cocktailCards, workspac
     {} as Record<string, GlassModel[]>,
   );
 
-  const selectedCard = selectedCardId && selectedCardId !== 'all' ? cocktailCards.find((card) => card.id === selectedCardId) : undefined;
-
   // Cocktails, die explizit in der ausgewählten Karte vorkommen
   const cocktailsOnSelectedCardIds = selectedCard
     ? new Set<string>(
         selectedCard.groups
           .flatMap((group) => group.items ?? [])
-          .map((item) => item.cocktailId)
+          .map((item) => item.cocktail.id)
           .filter((id: string | undefined): id is string => !!id),
       )
     : new Set<string>();
@@ -306,14 +332,12 @@ export const OrderView = React.memo(function OrderView({ cocktailCards, workspac
     );
   };
 
-  type CocktailCardGroup = CocktailCardFull['groups'][number];
-  const getCocktailsForGroup = (group: CocktailCardGroup): CocktailSummaryDto[] => {
+  const getCocktailsForGroup = (group: CardGroupDto): CocktailSummaryDto[] => {
     return group.items
       .sort((a, b) => (a.itemNumber ?? 0) - (b.itemNumber ?? 0))
-      .map((item) => cocktails.find((c) => c.id === item.cocktailId))
+      .map((item) => cocktails.find((c) => c.id === item.cocktail.id))
       .filter((cocktail: CocktailSummaryDto | undefined): cocktail is CocktailSummaryDto => !!cocktail && matchesSearchTerm(cocktail));
   };
-
   const CocktailTile = React.memo(function CocktailTile({ cocktail }: { cocktail: CocktailSummaryDto }) {
     const price = cocktail.price ?? 0;
     const deposit = cocktail.glass?.deposit ?? 0;
@@ -409,7 +433,7 @@ export const OrderView = React.memo(function OrderView({ cocktailCards, workspac
 
             {/* Inhalt: Gruppen & Cocktails horizontal */}
             <div className="min-h-0 flex-1 overflow-x-auto overflow-y-hidden">
-              {cocktailsLoading ? (
+              {cocktailsLoading || selectedCardLoading ? (
                 <div className="flex h-full items-center justify-center">
                   <Loading />
                 </div>

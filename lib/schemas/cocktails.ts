@@ -161,6 +161,9 @@ export const CocktailDtoSchema = CocktailBaseSchema.extend({
 }).openapi('Cocktail');
 
 export type CocktailGlassRef = z.infer<typeof CocktailGlassRefSchema>;
+export type CocktailUnitRef = z.infer<typeof CocktailUnitRefSchema>;
+export type CocktailIngredientRef = z.infer<typeof CocktailIngredientRefSchema>;
+export type CocktailGarnishRef = z.infer<typeof CocktailGarnishRefSchema>;
 export type CocktailStepIngredientDto = z.infer<typeof CocktailStepIngredientDtoSchema>;
 export type CocktailStepDto = z.infer<typeof CocktailStepDtoSchema>;
 export type CocktailGarnishDto = z.infer<typeof CocktailGarnishDtoSchema>;
