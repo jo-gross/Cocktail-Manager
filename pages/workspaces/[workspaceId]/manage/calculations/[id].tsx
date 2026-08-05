@@ -1,13 +1,13 @@
 import { ManageEntityLayout } from '@components/layout/ManageEntityLayout';
 import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import { CocktailRecipeFull } from '../../../../../models/CocktailRecipeFull';
+import type { CocktailDto, CocktailGarnishRef, CocktailIngredientRef, CocktailUnitRef } from '@lib/schemas/cocktails';
+import type { CalculationDto } from '@lib/schemas/calculations';
 import { FaInfoCircle, FaPencilAlt, FaPrint, FaSave, FaTrashAlt } from 'react-icons/fa';
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import { SearchModal } from '@components/modals/SearchModal';
 import { alertService } from '@lib/alertService';
 import { calcCocktailTotalPrice } from '@lib/CocktailRecipeCalculation';
-import { Garnish, Ingredient, Unit } from '@generated/prisma/client';
 import type { UnitDto } from '@lib/schemas/units';
 import InputModal from '../../../../../components/modals/InputModal';
 import { PageCenter } from '@components/layout/PageCenter';
@@ -44,34 +44,29 @@ import {
   Tooltip,
 } from '@components/ui';
 
+/** Local calculation item with a fully hydrated CocktailDto (fetched separately from the slim CalculationDto refs). */
 interface CocktailCalculationItem {
-  cocktail: CocktailRecipeFull;
+  cocktail: CocktailDto;
   plannedAmount: number;
   customPrice: number | undefined;
 }
 
 interface IngredientCalculationItem {
-  ingredient: Ingredient;
+  ingredient: CocktailIngredientRef;
   amount: number;
-  unit: Unit;
+  unit: CocktailUnitRef;
 }
 
 interface GarnishCalculationItem {
-  garnish: Garnish;
+  garnish: CocktailGarnishRef;
   amount: number;
 }
 
+/** Flat write shape for shopping units (matches CalculationShoppingUnitInputSchema). */
 interface IngredientShoppingUnit {
   ingredientId: string;
   unitId: string;
   checked: boolean;
-}
-
-interface CalculationData {
-  name: string;
-  showSalesStuff: boolean;
-  cocktailCalculationItems: CocktailCalculationItem[];
-  ingredientShoppingUnits: IngredientShoppingUnit[];
 }
 
 export default function CalculationPage() {
@@ -144,32 +139,55 @@ export default function CalculationPage() {
     showSalesStuff,
   ]);
 
-  // Fetch Calculation
+  // Fetch Calculation (slim item refs) then hydrate each cocktail via CocktailDto
   useEffect(() => {
     if (!id) return;
     if (id == 'create') return;
+    if (!workspaceId) return;
     setLoading(true);
     fetch(`/api/v1/workspaces/${workspaceId}/calculations/${id}`)
       .then(async (response) => {
         const body = await response.json();
-        if (response.ok) {
-          const data: CalculationData = body.data;
-          setCalculationName(data.name);
-          setCocktailCalculationItems(data.cocktailCalculationItems);
-          setShowSalesStuff(data.showSalesStuff ?? false);
-          setIngredientShoppingUnits(data.ingredientShoppingUnits ?? []);
-          setOriginalName(data.name);
-          setOriginalItems(JSON.stringify(data.cocktailCalculationItems));
-          setOriginalShowSalesStuff(data.showSalesStuff ?? false);
-          setOriginalIngredientShoppingUnits(JSON.stringify(data.ingredientShoppingUnits ?? []));
-        } else {
+        if (!response.ok) {
           console.error('CocktailCalculation -> useEffect[init, id != create]', response);
           alertService.error(body.message ?? 'Fehler beim Laden der Kalkulation', response.status, response.statusText);
+          return;
         }
+
+        const data: CalculationDto = body.data;
+        setCalculationName(data.name);
+        setShowSalesStuff(data.showSalesStuff ?? false);
+        setOriginalName(data.name);
+        setOriginalShowSalesStuff(data.showSalesStuff ?? false);
+
+        const shoppingUnits: IngredientShoppingUnit[] = (data.ingredientShoppingUnits ?? []).map((unit) => ({
+          ingredientId: unit.ingredient.id,
+          unitId: unit.unit.id,
+          checked: unit.checked,
+        }));
+        setIngredientShoppingUnits(shoppingUnits);
+        setOriginalIngredientShoppingUnits(JSON.stringify(shoppingUnits));
+
+        const hydratedItems = await Promise.all(
+          data.items.map(async (item) => {
+            const cocktailResponse = await fetch(`/api/v1/workspaces/${workspaceId}/cocktails/${item.cocktail.id}`);
+            const cocktailBody = await cocktailResponse.json();
+            if (!cocktailResponse.ok) {
+              throw new Error(cocktailBody.message ?? `Fehler beim Laden des Cocktails ${item.cocktail.name}`);
+            }
+            return {
+              cocktail: cocktailBody.data as CocktailDto,
+              plannedAmount: item.plannedAmount,
+              customPrice: item.customPrice ?? undefined,
+            } satisfies CocktailCalculationItem;
+          }),
+        );
+        setCocktailCalculationItems(hydratedItems);
+        setOriginalItems(JSON.stringify(hydratedItems));
       })
       .catch((error) => {
         console.error('CocktailCalculation -> useEffect[init, id != create]', error);
-        alertService.error('Es ist ein Fehler aufgetreten');
+        alertService.error(error instanceof Error ? error.message : 'Es ist ein Fehler aufgetreten');
       })
       .finally(() => {
         setLoading(false);
@@ -220,25 +238,25 @@ export default function CalculationPage() {
     [cocktailCalculationItems, workspaceId],
   );
 
-  //Ingredient Calculation
+  // Ingredient Calculation — CocktailDto step lines expose nested ingredient/unit refs (no flat FKs)
   useEffect(() => {
     let calculationItems: IngredientCalculationItem[] = [];
 
     cocktailCalculationItems.forEach((item) => {
       item.cocktail.steps.forEach((step) => {
         step.ingredients.forEach((stepIngredient) => {
-          if (stepIngredient.ingredient != null) {
-            const existingItem = calculationItems.find(
-              (calculationItem) => calculationItem.ingredient.id == stepIngredient.ingredientId && calculationItem.unit.id == stepIngredient.unitId,
-            );
+          if (stepIngredient.ingredient != null && stepIngredient.unit != null) {
+            const ingredientId = stepIngredient.ingredient.id;
+            const unitId = stepIngredient.unit.id;
+            const existingItem = calculationItems.find((calculationItem) => calculationItem.ingredient.id == ingredientId && calculationItem.unit.id == unitId);
             if (existingItem) {
               existingItem.amount += (stepIngredient.amount ?? 0) * item.plannedAmount;
-              calculationItems = [...calculationItems.filter((item) => item.ingredient.id != existingItem?.ingredient.id), existingItem];
+              calculationItems = [...calculationItems.filter((calcItem) => calcItem.ingredient.id != existingItem.ingredient.id), existingItem];
             } else {
               calculationItems.push({
                 ingredient: stepIngredient.ingredient,
                 amount: (stepIngredient.amount ?? 0) * item.plannedAmount,
-                unit: stepIngredient.unit!,
+                unit: stepIngredient.unit,
               });
             }
           }
@@ -248,18 +266,18 @@ export default function CalculationPage() {
     setIngredientCalculationItems(calculationItems);
   }, [cocktailCalculationItems]);
 
-  //Garnish Calculation
+  // Garnish Calculation
   useEffect(() => {
     let calculationItems: GarnishCalculationItem[] = [];
 
     cocktailCalculationItems.forEach((item) => {
       item.cocktail.garnishes
-        .filter((g) => !(g as unknown as { isAlternative?: boolean }).isAlternative)
+        .filter((g) => !g.isAlternative)
         .forEach((garnish) => {
           const existingItem = calculationItems.find((calculationItem) => calculationItem.garnish.id == garnish.garnishId);
           if (existingItem) {
             existingItem.amount += item.plannedAmount;
-            calculationItems = [...calculationItems.filter((item) => item.garnish.id != existingItem?.garnish.id), existingItem];
+            calculationItems = [...calculationItems.filter((calcItem) => calcItem.garnish.id != existingItem.garnish.id), existingItem];
           } else {
             calculationItems.push({
               garnish: garnish.garnish,
@@ -453,25 +471,24 @@ export default function CalculationPage() {
 
   const calculateRecommendedAmount = useCallback(
     (calculationItem: CocktailCalculationItem) => {
-      const summedIngredientPerCocktails: { ingredient: Ingredient; amountInPercent: number }[] = [];
+      const summedIngredientPerCocktails: { ingredient: CocktailIngredientRef; amountInPercent: number }[] = [];
       calculationItem.cocktail.steps
         .flatMap((step) => step.ingredients)
-        .filter((stepIngredient) => stepIngredient.ingredient != null)
+        .filter((stepIngredient) => stepIngredient.ingredient != null && stepIngredient.unit != null)
         .forEach((stepIngredient) => {
-          const existingItem = summedIngredientPerCocktails.find((item) => item.ingredient.id == stepIngredient.ingredientId);
+          const ingredientId = stepIngredient.ingredient!.id;
+          const unitId = stepIngredient.unit!.id;
+          const existingItem = summedIngredientPerCocktails.find((item) => item.ingredient.id == ingredientId);
           if (existingItem) {
             existingItem.amountInPercent +=
               (stepIngredient.amount ?? 0) /
-              (ingredients.find((ingredient) => ingredient.id == stepIngredient.ingredientId)?.volumes.find((volume) => volume.unit.id == stepIngredient.unitId)
-                ?.volume ?? 1);
+              (ingredients.find((ingredient) => ingredient.id == ingredientId)?.volumes.find((volume) => volume.unit.id == unitId)?.volume ?? 1);
           } else {
             summedIngredientPerCocktails.push({
               ingredient: stepIngredient.ingredient!,
               amountInPercent:
                 (stepIngredient.amount ?? 0) /
-                (ingredients
-                  .find((ingredient) => ingredient.id == stepIngredient.ingredientId)
-                  ?.volumes.find((volume) => volume.unit.id == stepIngredient.unitId)?.volume ?? 1),
+                (ingredients.find((ingredient) => ingredient.id == ingredientId)?.volumes.find((volume) => volume.unit.id == unitId)?.volume ?? 1),
             });
           }
         });

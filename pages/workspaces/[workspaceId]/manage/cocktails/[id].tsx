@@ -7,7 +7,7 @@ import { alertService } from '@lib/alertService';
 import { withPagePermission } from '@middleware/ui/withPagePermission';
 import { Role } from '@generated/prisma/client';
 import { FormikProps } from 'formik';
-import { CocktailRecipeFullWithImage } from '../../../../../models/CocktailRecipeFullWithImage';
+import type { CocktailDto } from '@lib/schemas/cocktails';
 import { PageCenter } from '@components/layout/PageCenter';
 import { UserContext } from '@lib/context/UserContextProvider';
 import { ModalContext } from '@lib/context/ModalContextProvider';
@@ -25,7 +25,7 @@ function EditCocktailRecipe() {
   const userContext = useContext(UserContext);
   const modalContext = useContext(ModalContext);
 
-  const [cocktailRecipe, setCocktailRecipe] = useState<CocktailRecipeFullWithImage | undefined>(undefined);
+  const [cocktailRecipe, setCocktailRecipe] = useState<CocktailDto | undefined>(undefined);
   const [loading, setLoading] = useState(true);
   const [exportingPdf, setExportingPdf] = useState(false);
   const [chromiumAvailable, setChromiumAvailable] = useState(false);

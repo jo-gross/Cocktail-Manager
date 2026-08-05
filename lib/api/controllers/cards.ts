@@ -36,8 +36,26 @@ export async function listCards(workspace: Workspace, opts: { withArchived?: boo
   if (!opts.withArchived) {
     where.archived = false;
   }
-  const cards = await prisma.cocktailCard.findMany({ where });
-  return cards.map(toCardSummaryDto);
+  const cards = await prisma.cocktailCard.findMany({
+    where,
+    include: {
+      groups: {
+        include: {
+          _count: { select: { items: true } },
+        },
+      },
+    },
+  });
+  return cards.map((card) =>
+    toCardSummaryDto({
+      id: card.id,
+      name: card.name,
+      date: card.date,
+      archived: card.archived,
+      groupCount: card.groups.length,
+      itemCount: card.groups.reduce((sum, group) => sum + group._count.items, 0),
+    }),
+  );
 }
 
 export async function getCard(workspace: Workspace, cardId: string): Promise<CardDto | null> {
@@ -150,9 +168,23 @@ export async function archiveCard(workspace: Workspace, cardId: string, archived
   const updated = await prisma.cocktailCard.update({
     where: { id: cardId },
     data: { archived },
+    include: {
+      groups: {
+        include: {
+          _count: { select: { items: true } },
+        },
+      },
+    },
   });
 
-  return toCardSummaryDto(updated);
+  return toCardSummaryDto({
+    id: updated.id,
+    name: updated.name,
+    date: updated.date,
+    archived: updated.archived,
+    groupCount: updated.groups.length,
+    itemCount: updated.groups.reduce((sum, group) => sum + group._count.items, 0),
+  });
 }
 
 export async function cloneCard(workspace: Workspace, cardId: string, name: string): Promise<CardDto> {

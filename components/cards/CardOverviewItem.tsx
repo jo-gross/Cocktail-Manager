@@ -1,9 +1,9 @@
 import { Role } from '@generated/prisma/client';
 import Link from 'next/link';
 import { FaRegClone, FaRegEdit } from 'react-icons/fa';
-import React, { useContext, useMemo } from 'react';
+import React, { useContext } from 'react';
 import { UserContext } from '@lib/context/UserContextProvider';
-import { CocktailCardFull } from '../../models/CocktailCardFull';
+import type { CardSummaryDto } from '@lib/schemas/cards';
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import InputModal from '../modals/InputModal';
 import { alertService } from '@lib/alertService';
@@ -12,7 +12,7 @@ import { Badge, Button, Card, CardActions, CardBody, CardTitle } from '@componen
 import CardSnapshot from './CardSnapshot';
 
 interface CardOverviewItemProps {
-  card: CocktailCardFull;
+  card: CardSummaryDto;
   workspaceId: string;
   today: string;
 }
@@ -72,8 +72,8 @@ export default function CardOverviewItem(props: CardOverviewItemProps) {
   const modalContext = useContext(ModalContext);
   const routingContext = useContext(RoutingContext);
 
-  const groupCount = props.card.groups?.length ?? 0;
-  const cocktailCount = useMemo(() => props.card.groups?.reduce((acc, group) => acc + group.items.length, 0) ?? 0, [props.card.groups]);
+  const groupCount = props.card.groupCount;
+  const cocktailCount = props.card.itemCount;
 
   return (
     <Card key={'card-' + props.card.id} variant="elevated">
@@ -87,7 +87,7 @@ export default function CardOverviewItem(props: CardOverviewItemProps) {
         </CardTitle>
       </div>
       <CardBody className="gap-3">
-        <CardSnapshot groups={props.card.groups ?? []} />
+        <CardSnapshot groupCount={groupCount} itemCount={cocktailCount} />
         <div className="text-sm text-base-content/70">
           {groupCount} {groupCount === 1 ? 'Gruppe' : 'Gruppen'} · {cocktailCount} {cocktailCount === 1 ? 'Cocktail' : 'Cocktails'}
         </div>

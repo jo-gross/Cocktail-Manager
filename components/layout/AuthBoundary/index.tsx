@@ -1,13 +1,14 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { authClient } from '@lib/auth-client';
-import { Role, User, UserSetting, WorkspaceSetting, WorkspaceSettingKey } from '@generated/prisma/client';
+import { Role, User, UserSetting } from '@generated/prisma/client';
 import { PageCenter } from '../PageCenter';
 import { Loading } from '../../Loading';
 import { Button } from '@components/ui';
 import { UserContext } from '@lib/context/UserContextProvider';
 import { alertService } from '@lib/alertService';
 import { useRouter } from 'next/router';
-import { WorkspaceFull } from '../../../models/WorkspaceFull';
+import type { WorkspaceDto } from '@lib/schemas/workspace';
+import type { TranslationsDto } from '@lib/schemas/translations';
 
 interface AlertBoundaryProps {
   children: React.ReactNode;
@@ -19,7 +20,8 @@ export function AuthBoundary(props: AlertBoundaryProps) {
   const [user, setUser] = useState<(User & { settings: UserSetting[] }) | undefined>();
   const [userLoading, setUserLoading] = useState<boolean>(false);
 
-  const [workspace, setWorkspace] = useState<WorkspaceFull | undefined>();
+  const [workspace, setWorkspace] = useState<WorkspaceDto | undefined>();
+  const [translations, setTranslations] = useState<TranslationsDto>({});
   const [workspaceLoading, setWorkspaceLoading] = useState<boolean>(false);
 
   const router = useRouter();
@@ -61,22 +63,49 @@ export function AuthBoundary(props: AlertBoundaryProps) {
     if (!sessionUser?.id && !sessionLoading && user) {
       setUser(undefined);
       setWorkspace(undefined);
+      setTranslations({});
     }
   }, [fetchUser, session?.user, user, userLoading, sessionLoading]);
 
-  const fetchWorkspace = useCallback(() => {
-    if (router.query.workspaceId && router.query.workspaceId != workspace?.id) {
+  const fetchWorkspace = useCallback(
+    (force = false) => {
+      const workspaceId = router.query.workspaceId;
+      if (!workspaceId) return;
+      if (!force && workspaceId == workspace?.id) return;
+
+      const wsId = Array.isArray(workspaceId) ? workspaceId[0] : workspaceId;
       setWorkspaceLoading(true);
-      fetch(`/api/v1/workspaces/${router.query.workspaceId}`)
-        .then(async (response) => {
+
+      Promise.all([
+        fetch(`/api/v1/workspaces/${wsId}`).then(async (response) => {
           const body = await response.json();
-          if (response.ok) {
-            setWorkspace(body.data);
+          return { response, body };
+        }),
+        fetch(`/api/v1/workspaces/${wsId}/translations`).then(async (response) => {
+          const body = await response.json();
+          return { response, body };
+        }),
+      ])
+        .then(([workspaceResult, translationsResult]) => {
+          if (workspaceResult.response.ok) {
+            setWorkspace(workspaceResult.body.data);
           } else {
             router.replace('/').then(() => {
-              console.error('AuthBoundary -> fetchWorkspace', response);
-              alertService.error(body.message ?? 'Fehler beim Laden der Workspace', response.status, response.statusText);
+              console.error('AuthBoundary -> fetchWorkspace', workspaceResult.response);
+              alertService.error(
+                workspaceResult.body.error?.message ?? workspaceResult.body.message ?? 'Fehler beim Laden der Workspace',
+                workspaceResult.response.status,
+                workspaceResult.response.statusText,
+              );
             });
+            return;
+          }
+
+          if (translationsResult.response.ok) {
+            setTranslations(translationsResult.body.data ?? {});
+          } else {
+            console.error('AuthBoundary -> fetchTranslations', translationsResult.response);
+            setTranslations({});
           }
         })
         .catch((error) => {
@@ -86,22 +115,23 @@ export function AuthBoundary(props: AlertBoundaryProps) {
         .finally(() => {
           setWorkspaceLoading(false);
         });
-    }
-  }, [router, workspace?.id]);
+    },
+    [router, workspace?.id],
+  );
 
   useEffect(() => {
     fetchWorkspace();
   }, [fetchWorkspace]);
 
+  const refreshWorkspace = useCallback(() => {
+    fetchWorkspace(true);
+  }, [fetchWorkspace]);
+
   const getTranslationOrNull = useCallback(
     (key: string, language: 'de') => {
-      return (
-        JSON.parse((workspace?.WorkspaceSetting as WorkspaceSetting[]).find((setting) => setting.setting == WorkspaceSettingKey.translations)?.value ?? '{}')[
-          language
-        ][key] ?? null
-      );
+      return translations?.[language]?.[key] ?? undefined;
     },
-    [workspace],
+    [translations],
   );
 
   const getTranslation = useCallback(
@@ -117,12 +147,13 @@ export function AuthBoundary(props: AlertBoundaryProps) {
         value={{
           user: user,
           workspace: workspace,
-          refreshWorkspace: fetchWorkspace,
+          translations: translations,
+          refreshWorkspace: refreshWorkspace,
           refreshUser: fetchUser,
           workspaceRefreshing: workspaceLoading,
 
           isUserPermitted: (role: Role) => {
-            const userRole = workspace?.users.find((u) => u.userId == user?.id)?.role;
+            const userRole = workspace?.members.find((m) => m.userId == user?.id)?.role;
             if (!userRole) return false;
 
             switch (userRole) {

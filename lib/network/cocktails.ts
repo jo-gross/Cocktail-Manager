@@ -1,5 +1,4 @@
 import { alertService } from '../alertService';
-import { CocktailRecipeFullWithImage } from '../../models/CocktailRecipeFullWithImage';
 import type { CocktailDto, CocktailSummaryDto } from '@lib/schemas/cocktails';
 import { fetchListWithCache, fetchWithCache } from './fetchWithCache';
 
@@ -44,43 +43,18 @@ export function fetchCocktail(
     });
 }
 
+/**
+ * Loads the cocktail detail DTO for edit forms. Image bytes live at `imageUrl`
+ * and are hydrated by the form via `fetchImageAsBase64` — v1 no longer embeds base64.
+ */
 export function fetchCocktailWithImage(
   workspaceId: string | string[] | undefined,
   cocktailId: string,
-  setCocktail: (cocktail: CocktailRecipeFullWithImage) => void,
+  setCocktail: (cocktail: CocktailDto) => void,
   setCocktailLoading: (loading: boolean) => void,
   onCacheFallback?: () => void,
 ) {
-  if (!workspaceId) return;
-  const wsId = Array.isArray(workspaceId) ? workspaceId[0] : workspaceId;
-
-  setCocktailLoading(true);
-
-  fetchWithCache<CocktailRecipeFullWithImage>({
-    url: `/api/v1/workspaces/${wsId}/cocktails/${cocktailId}?include=image`,
-    storeName: 'cocktails',
-    workspaceId: wsId,
-    resourceId: `${cocktailId}-with-image`,
-    onCacheFallback: () => {
-      onCacheFallback?.();
-    },
-    onNetworkError: (error) => {
-      console.error('fetchCocktailWithImage network error:', error);
-    },
-  })
-    .then(({ data, fromCache, error }) => {
-      if (data) {
-        setCocktail(data);
-        if (fromCache) {
-          console.debug('Cocktail with image loaded from cache:', cocktailId);
-        }
-      } else if (error) {
-        alertService.error('Fehler beim Laden des Cocktails');
-      }
-    })
-    .finally(() => {
-      setCocktailLoading(false);
-    });
+  fetchCocktail(workspaceId, cocktailId, setCocktail, setCocktailLoading, onCacheFallback);
 }
 
 /**

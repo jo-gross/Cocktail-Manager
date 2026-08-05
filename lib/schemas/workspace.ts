@@ -120,10 +120,12 @@ export const workspaceSettingsApiDoc = {
       permission: 'WORKSPACE_UPDATE',
       tags: [ApiTags.workspaceSettings],
       summary: 'Update workspace setting',
-      description: 'Upsert a single workspace setting and return the full settings map.',
+      description:
+        'Upsert a single scalar workspace setting and return the full settings map. The `translations` key is rejected — use GET/PUT /translations instead.',
       params: WorkspaceIdParam,
       body: WorkspaceSettingUpdateSchema,
       response: WorkspaceSettingsDtoSchema,
+      errorResponses: { 400: 'Setting key `translations` must be managed via /translations.' },
     },
   },
 } satisfies ResourceApiDoc;

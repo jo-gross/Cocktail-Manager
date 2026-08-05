@@ -112,7 +112,7 @@ import {
   statisticsAdvancedTagsApiDoc,
 } from '@lib/schemas/statisticsAdvanced';
 import { tagsCollectionApiDoc } from '@lib/schemas/tags';
-import { translationsApiDoc } from '@lib/schemas/translations';
+import { translationsApiDoc, translationsCollectionApiDoc } from '@lib/schemas/translations';
 import { unitConversionsCollectionApiDoc, unitConversionsItemApiDoc, unitsCollectionApiDoc, unitsItemApiDoc } from '@lib/schemas/units';
 import { workspaceItemApiDoc, workspaceSettingsApiDoc } from '@lib/schemas/workspace';
 import { workspaceUsersCollectionApiDoc, workspaceUsersItemApiDoc } from '@lib/schemas/workspaceUsers';
@@ -210,6 +210,7 @@ export const handlerBindings: HandlerBinding[] = [
   { apiDoc: statisticsAdvancedSetsApiDoc, handler: statisticsAdvanced.setsHandler },
   { apiDoc: statisticsAdvancedSetItemApiDoc, handler: statisticsAdvanced.setItemHandler },
   { apiDoc: tagsCollectionApiDoc, handler: tags.collectionHandler },
+  { apiDoc: translationsCollectionApiDoc, handler: translations.translationsCollectionHandler },
   { apiDoc: translationsApiDoc, handler: translations.translationHandler },
   { apiDoc: unitsCollectionApiDoc, handler: units.collectionHandler },
   { apiDoc: unitsItemApiDoc, handler: units.itemHandler },

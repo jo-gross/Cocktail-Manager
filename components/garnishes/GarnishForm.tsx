@@ -1,13 +1,13 @@
 import { Formik, FormikProps } from 'formik';
 import { useRouter } from 'next/router';
-import React, { useContext, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { UploadDropZone } from '../UploadDropZone';
-import { convertBase64ToFile, convertToBase64 } from '@lib/Base64Converter';
+import { convertBase64ToFile, convertToBase64, fetchImageAsBase64 } from '@lib/Base64Converter';
 import { FaTrashAlt } from 'react-icons/fa';
 import { alertService } from '@lib/alertService';
 import { DeleteConfirmationModal } from '../modals/DeleteConfirmationModal';
 import { ModalContext } from '@lib/context/ModalContextProvider';
-import { GarnishWithImage } from '../../models/GarnishWithImage';
+import type { GarnishDto } from '@lib/schemas/garnishes';
 import Image from 'next/image';
 import CropComponent from '../CropComponent';
 import { FaCropSimple } from 'react-icons/fa6';
@@ -44,7 +44,7 @@ const garnishFormSchema = z
 const validateGarnish = zodFormikValidate(garnishFormSchema);
 
 interface GarnishFormProps {
-  garnish?: GarnishWithImage;
+  garnish?: GarnishDto;
   setUnsavedChanges?: (unsavedChanges: boolean) => void;
   formRef?: React.RefObject<FormikProps<GarnishFormValues> | null>;
   onSaved?: (id: string) => void;
@@ -60,7 +60,39 @@ export function GarnishForm(props: GarnishFormProps) {
 
   const formRef = props.formRef || React.createRef<FormikProps<GarnishFormValues>>();
 
-  const [similarGarnish, setSimilarGarnish] = useState<GarnishWithImage | undefined>();
+  const [similarGarnish, setSimilarGarnish] = useState<Pick<GarnishDto, 'id' | 'name'> | undefined>();
+
+  const [hydratedImage, setHydratedImage] = useState<string | undefined>(undefined);
+  const [imageHydrationDone, setImageHydrationDone] = useState(!props.garnish?.hasImage);
+
+  useEffect(() => {
+    let cancelled = false;
+    const hydrateImage = async () => {
+      if (props.garnish?.hasImage && props.garnish.imageUrl) {
+        setImageHydrationDone(false);
+        const base64 = await fetchImageAsBase64(props.garnish.imageUrl);
+        if (!cancelled) {
+          setHydratedImage(base64);
+          setImageHydrationDone(true);
+        }
+      } else {
+        setHydratedImage(undefined);
+        setImageHydrationDone(true);
+      }
+    };
+    void hydrateImage();
+    return () => {
+      cancelled = true;
+    };
+  }, [props.garnish?.id, props.garnish?.hasImage, props.garnish?.imageUrl]);
+
+  if (props.garnish && !imageHydrationDone) {
+    return (
+      <div className="flex justify-center py-8">
+        <Loading />
+      </div>
+    );
+  }
 
   return (
     <Formik<GarnishFormValues>
@@ -70,19 +102,22 @@ export function GarnishForm(props: GarnishFormProps) {
         price: props.garnish?.price ?? undefined,
         description: props.garnish?.description ?? '',
         notes: props.garnish?.notes ?? '',
-        image: props.garnish?.GarnishImage?.[0]?.image ?? undefined,
-        originalImage: (props.garnish?.GarnishImage.length ?? 0) ? convertBase64ToFile(props.garnish!.GarnishImage[0].image) : undefined,
+        image: hydratedImage,
+        originalImage: hydratedImage ? convertBase64ToFile(hydratedImage) : undefined,
       }}
       onSubmit={async (values) => {
         try {
-          const body = {
+          const body: Record<string, unknown> = {
             id: props.garnish == undefined ? undefined : props.garnish.id,
             name: values.name,
             price: values.price === '' || values.price === undefined ? null : Number(values.price),
             description: values.description?.trim() == '' ? null : values.description?.trim(),
             notes: values.notes?.trim() == '' ? null : values.notes?.trim(),
-            image: values.image == '' ? null : values.image,
           };
+          // Omitting `image` on update removes it; re-send hydrated/kept base64.
+          if (values.image != undefined && values.image !== '') {
+            body.image = values.image;
+          }
           if (props.garnish == undefined) {
             const response = await fetch(`/api/v1/workspaces/${workspaceId}/garnishes`, {
               method: 'POST',
@@ -127,9 +162,14 @@ export function GarnishForm(props: GarnishFormProps) {
       }}
       validate={(values) => {
         if (props.garnish) {
-          const reducedOriginal = _.omit(props.garnish, ['id', 'workspaceId', 'GarnishImage']);
+          const reducedOriginal = {
+            name: props.garnish.name,
+            price: props.garnish.price ?? undefined,
+            description: props.garnish.description ?? '',
+            notes: props.garnish.notes ?? '',
+          };
           const reducedValues = _.omit(values, ['image', 'originalImage']);
-          const areImageEqual = (props.garnish.GarnishImage.length > 0 ? props.garnish.GarnishImage[0].image.toString() : undefined) == values.image;
+          const areImageEqual = hydratedImage == values.image;
           props.setUnsavedChanges?.(!_.isEqual(reducedOriginal, reducedValues) || !areImageEqual);
         } else {
           props.setUnsavedChanges?.(true);

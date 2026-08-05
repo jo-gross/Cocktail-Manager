@@ -23,7 +23,7 @@ import { UserContext } from '@lib/context/UserContextProvider';
 import InputModal from '@components/modals/InputModal';
 import { AnalysisCocktailSelector } from '@components/statistics/AnalysisCocktailSelector';
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { CocktailStatisticItemFull } from '../../../../../models/CocktailStatisticItemFull';
+import type { CocktailStatisticItemDto } from '@lib/schemas/statistics';
 import { formatDateShort, formatDateNoYear } from '@lib/DateUtils';
 import '@lib/StringUtils';
 import { AmountWithUnit, calculateAggregatedIngredientAmount, IngredientVolumeInfo } from '@lib/CocktailRecipeCalculation';
@@ -269,7 +269,8 @@ const StatisticsAdvancedPage = () => {
   const [cocktailDetailSetLoading, _setCocktailDetailSetLoading] = useState(false);
 
   // Tab 2: Grouped statistics
-  const [cocktailStatisticItems, setCocktailStatisticItems] = useState<CocktailStatisticItemFull[]>([]);
+  const [cocktailStatisticItems, setCocktailStatisticItems] = useState<CocktailStatisticItemDto[]>([]);
+  const [cocktailPriceById, setCocktailPriceById] = useState<Map<string, number>>(new Map());
   const [groupBy, setGroupBy] = useState<'hour' | 'day'>('hour');
   const [showAllDays, setShowAllDays] = useState(false);
 
@@ -363,15 +364,29 @@ const StatisticsAdvancedPage = () => {
       setCocktailsLoading(true);
       const startDate = timeRange.startDate.toISOString();
       const endDate = timeRange.endDate.toISOString();
-      const response = await fetch(`/api/v1/workspaces/${workspaceId}/statistics/cocktails?startDate=${startDate}&endDate=${endDate}`);
-      if (response.ok) {
-        const body = await response.json();
-        // Ensure cocktail details are included
+      const [statsResponse, cocktailsResponse] = await Promise.all([
+        fetch(`/api/v1/workspaces/${workspaceId}/statistics/cocktails?startDate=${startDate}&endDate=${endDate}`),
+        fetch(`/api/v1/workspaces/${workspaceId}/cocktails`),
+      ]);
+
+      if (statsResponse.ok) {
+        const body = await statsResponse.json();
         setCocktailStatisticItems(body.data);
       } else {
-        const body = await response.json();
-        console.error('StatisticsAdvancedPage -> loadCocktailStatisticItems', response);
-        alertService.error(body.error?.message ?? 'Fehler beim Laden der Statistik-Items', response.status, response.statusText);
+        const body = await statsResponse.json();
+        console.error('StatisticsAdvancedPage -> loadCocktailStatisticItems', statsResponse);
+        alertService.error(body.error?.message ?? 'Fehler beim Laden der Statistik-Items', statsResponse.status, statsResponse.statusText);
+      }
+
+      if (cocktailsResponse.ok) {
+        const body = await cocktailsResponse.json();
+        const prices = new Map<string, number>();
+        for (const cocktail of body.data ?? []) {
+          if (typeof cocktail.price === 'number') {
+            prices.set(cocktail.id, cocktail.price);
+          }
+        }
+        setCocktailPriceById(prices);
       }
     } catch (error) {
       console.error('StatisticsAdvancedPage -> loadCocktailStatisticItems', error);
@@ -447,11 +462,11 @@ const StatisticsAdvancedPage = () => {
     }[];
   }
 
-  const processDataGroupByHourly = useCallback((data: CocktailStatisticItemFull[], hiddenIds: Set<string>): ProcessedData => {
+  const processDataGroupByHourly = useCallback((data: CocktailStatisticItemDto[], hiddenIds: Set<string>): ProcessedData => {
     const hourlyCocktails: Record<string, Record<string, number>> = {};
 
     data
-      .filter((item) => !hiddenIds.has(item.cocktailId))
+      .filter((item) => !hiddenIds.has(item.cocktail.id))
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
       .forEach((entry) => {
         const date = new Date(entry.date);
@@ -488,7 +503,7 @@ const StatisticsAdvancedPage = () => {
 
   const processDataGroupByDaily = useCallback(
     (
-      data: CocktailStatisticItemFull[],
+      data: CocktailStatisticItemDto[],
       showEmptyDays: boolean,
       hiddenIds: Set<string>,
       startDate: Date,
@@ -498,7 +513,7 @@ const StatisticsAdvancedPage = () => {
       const dailyCocktails: Record<string, Record<string, number>> = {};
 
       data
-        .filter((item) => !hiddenIds.has(item.cocktailId))
+        .filter((item) => !hiddenIds.has(item.cocktail.id))
         .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
         .forEach((entry) => {
           const date = new Date(entry.date);
@@ -1575,19 +1590,16 @@ const StatisticsAdvancedPage = () => {
                   <div className="flex flex-col gap-4">
                     {/* Calculate KPIs for Info Cards */}
                     {(() => {
-                      const visibleItems = cocktailStatisticItems.filter((item) => !hiddenCocktailIds.has(item.cocktailId));
+                      const visibleItems = cocktailStatisticItems.filter((item) => !hiddenCocktailIds.has(item.cocktail.id));
                       const totalCount = visibleItems.length;
 
-                      // Calculate revenue (sum of cocktail prices)
-                      const revenue = visibleItems.reduce((sum, item) => {
-                        const price = item.cocktail?.price ?? 0;
-                        return sum + (price || 0);
-                      }, 0);
+                      // Menu price is not on CocktailStatisticItemDto — look up from cocktail summaries when loaded.
+                      const revenue = visibleItems.reduce((sum, item) => sum + (cocktailPriceById.get(item.cocktail.id) ?? 0), 0);
 
                       // Find top cocktail
                       const cocktailCounts: Record<string, { count: number; name: string }> = {};
                       visibleItems.forEach((item) => {
-                        const id = item.cocktailId;
+                        const id = item.cocktail.id;
                         const name = item.cocktail.name;
                         if (!cocktailCounts[id]) {
                           cocktailCounts[id] = { count: 0, name };

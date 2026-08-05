@@ -20,20 +20,35 @@ type CardWithGroups = Pick<CocktailCard, 'id' | 'name' | 'date' | 'archived'> & 
   groups: GroupWithItems[];
 };
 
-/** Slim summary for list views — no nested groups. */
-export function toCardSummaryDto(card: Pick<CocktailCard, 'id' | 'name' | 'date' | 'archived'>): CardSummaryDto {
+type CardWithCounts = Pick<CocktailCard, 'id' | 'name' | 'date' | 'archived'> & {
+  groupCount: number;
+  itemCount: number;
+};
+
+/** Slim summary for list views — no nested groups, includes overview counts. */
+export function toCardSummaryDto(card: CardWithCounts): CardSummaryDto {
   return {
     id: card.id,
     name: card.name,
     date: card.date ? card.date.toISOString() : null,
     archived: card.archived,
+    groupCount: card.groupCount,
+    itemCount: card.itemCount,
+  };
+}
+
+function countsFromGroups(groups: GroupWithItems[]): { groupCount: number; itemCount: number } {
+  return {
+    groupCount: groups.length,
+    itemCount: groups.reduce((sum, group) => sum + group.items.length, 0),
   };
 }
 
 /** Full card with nested groups and items. */
 export function toCardDto(card: CardWithGroups): CardDto {
+  const counts = countsFromGroups(card.groups);
   return {
-    ...toCardSummaryDto(card),
+    ...toCardSummaryDto({ ...card, ...counts }),
     groups: card.groups.map((group) => ({
       id: group.id,
       name: group.name,

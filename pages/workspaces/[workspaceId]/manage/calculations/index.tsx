@@ -4,7 +4,7 @@ import { ManageColumn } from '@components/ManageColumn';
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/router';
 import { alertService } from '@lib/alertService';
-import { CocktailCalculationOverview } from '../../../../../models/CocktailCalculationOverview';
+import type { CalculationGroupDto, CalculationSummaryDto } from '@lib/schemas/calculations';
 import { Role } from '@generated/prisma/client';
 import { FaChevronDown, FaChevronRight, FaFileDownload, FaFileUpload, FaLayerGroup, FaPlus, FaTrashAlt } from 'react-icons/fa';
 import ListSearchField from '../../../../../components/ListSearchField';
@@ -41,13 +41,6 @@ import {
 } from '@components/ui';
 import type { SortDirection } from '@components/ui';
 
-interface CalculationGroup {
-  id: string;
-  name: string;
-  isDefaultExpanded: boolean;
-  _count?: { calculations: number };
-}
-
 const CocktailCalculationOverviewPage: NextPageWithPullToRefresh = () => {
   const router = useRouter();
   const { workspaceId } = router.query;
@@ -55,8 +48,8 @@ const CocktailCalculationOverviewPage: NextPageWithPullToRefresh = () => {
   const modalContext = useContext(ModalContext);
   const userContext = useContext(UserContext);
 
-  const [cocktailCalculations, setCocktailCalculations] = useState<CocktailCalculationOverview[]>([]);
-  const [calculationGroups, setCalculationGroups] = useState<CalculationGroup[]>([]);
+  const [cocktailCalculations, setCocktailCalculations] = useState<CalculationSummaryDto[]>([]);
+  const [calculationGroups, setCalculationGroups] = useState<CalculationGroupDto[]>([]);
   const [collapsedGroupIds, setCollapsedGroupIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
 
@@ -76,12 +69,12 @@ const CocktailCalculationOverviewPage: NextPageWithPullToRefresh = () => {
     [sortKey, sortDirection],
   );
 
-  const getCalculationSortValue = useCallback((calc: CocktailCalculationOverview, key: string) => {
+  const getCalculationSortValue = useCallback((calc: CalculationSummaryDto, key: string) => {
     switch (key) {
       case 'name':
         return calc.name;
       case 'cocktails':
-        return calc.cocktailCalculationItems.length;
+        return calc.items.length;
       case 'updatedAt':
         return new Date(calc.updatedAt);
       default:
@@ -119,9 +112,9 @@ const CocktailCalculationOverviewPage: NextPageWithPullToRefresh = () => {
         }
 
         setCocktailCalculations(calculationsBody.data ?? []);
-        const groups = groupsBody.data ?? [];
+        const groups: CalculationGroupDto[] = groupsBody.data ?? [];
         setCalculationGroups(groups);
-        setCollapsedGroupIds(new Set(groups.filter((g: CalculationGroup) => !g.isDefaultExpanded).map((g: CalculationGroup) => g.id)));
+        setCollapsedGroupIds(new Set(groups.filter((g) => !g.isDefaultExpanded).map((g) => g.id)));
       })
       .catch((error) => {
         console.error('Calculation -> refreshCocktailCalculations', error);
@@ -151,11 +144,11 @@ const CocktailCalculationOverviewPage: NextPageWithPullToRefresh = () => {
     const grouped = calculationGroups
       .map((group) => ({
         group,
-        items: sortedCalculations.filter((calc) => calc.groupId === group.id),
+        items: sortedCalculations.filter((calc) => calc.group?.id === group.id),
       }))
       .filter((entry) => entry.items.length > 0);
 
-    const ungrouped = sortedCalculations.filter((calc) => !calc.groupId);
+    const ungrouped = sortedCalculations.filter((calc) => !calc.group?.id);
     return { grouped, ungrouped };
   }, [calculationGroups, sortedCalculations]);
 
@@ -236,7 +229,7 @@ const CocktailCalculationOverviewPage: NextPageWithPullToRefresh = () => {
             </option>
             {calculationGroups.map((group) => (
               <option key={group.id} value={group.id}>
-                {group.name}
+                {group.name} ({group.calculationCount})
               </option>
             ))}
           </Select>
@@ -290,7 +283,7 @@ const CocktailCalculationOverviewPage: NextPageWithPullToRefresh = () => {
   }, [workspaceId, modalContext, refreshCocktailCalculations]);
 
   const handleToggleGroupDefaultExpanded = useCallback(
-    async (group: CalculationGroup) => {
+    async (group: CalculationGroupDto) => {
       if (!workspaceId) return;
       const response = await fetch(`/api/v1/workspaces/${workspaceId}/calculations/groups/${group.id}`, {
         method: 'PUT',
@@ -308,7 +301,7 @@ const CocktailCalculationOverviewPage: NextPageWithPullToRefresh = () => {
   );
 
   const handleDeleteGroup = useCallback(
-    (group: CalculationGroup) => {
+    (group: CalculationGroupDto) => {
       if (!workspaceId) return;
       modalContext.openModal(
         <ConfirmActionModal
@@ -506,7 +499,9 @@ const CocktailCalculationOverviewPage: NextPageWithPullToRefresh = () => {
                   calculationGroups.map((group) => (
                     <li key={group.id}>
                       <div className={'flex items-center justify-between gap-2'}>
-                        <span className={'truncate'}>{group.name}</span>
+                        <span className={'truncate'}>
+                          {group.name} ({group.calculationCount})
+                        </span>
                         <div className={'flex items-center gap-1'}>
                           <Button type={'button'} variant="ghost" size="xs" onClick={() => handleToggleGroupDefaultExpanded(group)}>
                             {group.isDefaultExpanded ? 'Standard: Auf' : 'Standard: Zu'}
@@ -621,16 +616,13 @@ const CocktailCalculationOverviewPage: NextPageWithPullToRefresh = () => {
                               </TableCell>
                               <TableCell>{cocktailCalculation.name}</TableCell>
                               <TableCell>
-                                {cocktailCalculation.cocktailCalculationItems
+                                {cocktailCalculation.items
                                   .map((calculationItem) => calculationItem.cocktail.name)
                                   .sort((a, b) => a.localeCompare(b))
                                   .join(', ')}
                               </TableCell>
                               <TableCell>
-                                <div className="flex flex-col leading-tight">
-                                  <span>von {cocktailCalculation.updatedByUser.name}</span>
-                                  <span className="text-xs opacity-70">{formatUpdatedAt(cocktailCalculation.updatedAt)}</span>
-                                </div>
+                                <span className="text-xs opacity-70">{formatUpdatedAt(cocktailCalculation.updatedAt)}</span>
                               </TableCell>
                               <ManageColumn
                                 entity={'calculations'}
@@ -676,16 +668,13 @@ const CocktailCalculationOverviewPage: NextPageWithPullToRefresh = () => {
                             </TableCell>
                             <TableCell>{cocktailCalculation.name}</TableCell>
                             <TableCell>
-                              {cocktailCalculation.cocktailCalculationItems
+                              {cocktailCalculation.items
                                 .map((calculationItem) => calculationItem.cocktail.name)
                                 .sort((a, b) => a.localeCompare(b))
                                 .join(', ')}
                             </TableCell>
                             <TableCell>
-                              <div className="flex flex-col leading-tight">
-                                <span>von {cocktailCalculation.updatedByUser.name}</span>
-                                <span className="text-xs opacity-70">{formatUpdatedAt(cocktailCalculation.updatedAt)}</span>
-                              </div>
+                              <span className="text-xs opacity-70">{formatUpdatedAt(cocktailCalculation.updatedAt)}</span>
                             </TableCell>
                             <ManageColumn
                               entity={'calculations'}

@@ -1,15 +1,17 @@
 import React from 'react';
 import { Card, CardBody } from '@components/ui';
-import { CocktailCardFull } from '../../models/CocktailCardFull';
+import type { CardGroupDto } from '@lib/schemas/cards';
 
 const MAX_VISIBLE_GROUPS = 4;
 const MAX_VISIBLE_ITEMS = 8;
 
 interface CardSnapshotProps {
-  groups: CocktailCardFull['groups'];
+  groups?: CardGroupDto[];
+  groupCount?: number;
+  itemCount?: number;
 }
 
-function sortGroups(groups: CocktailCardFull['groups']) {
+function sortGroups(groups: CardGroupDto[]) {
   return [...groups].sort((a, b) => a.groupNumber - b.groupNumber);
 }
 
@@ -31,28 +33,48 @@ function ItemPlaceholders({ count }: { count: number }) {
   );
 }
 
-export default function CardSnapshot({ groups }: CardSnapshotProps) {
-  if (!groups || groups.length === 0) {
-    return <div className="rounded-xl bg-base-300/30 px-3 py-4 text-center text-sm text-base-content/60">Keine Gruppen</div>;
+export default function CardSnapshot({ groups, groupCount, itemCount }: CardSnapshotProps) {
+  if (groups && groups.length > 0) {
+    const sortedGroups = sortGroups(groups);
+    const visibleGroups = sortedGroups.slice(0, MAX_VISIBLE_GROUPS);
+    const hiddenGroupCount = sortedGroups.length - visibleGroups.length;
+
+    return (
+      <Card variant="inset" className="rounded-xl">
+        <CardBody compact className="gap-2.5 p-3">
+          {visibleGroups.map((group) => (
+            <div key={group.id} className="space-y-1">
+              <div className="flex items-baseline justify-between gap-2">
+                <span className="truncate text-xs font-semibold text-base-content">{group.name || 'Gruppe'}</span>
+                {group.groupPrice != null ? <span className="shrink-0 text-[0.65rem] text-base-content/60">{group.groupPrice}€</span> : null}
+              </div>
+              <ItemPlaceholders count={group.items.length} />
+            </div>
+          ))}
+          {hiddenGroupCount > 0 ? <div className="text-center text-xs text-base-content/60">+{hiddenGroupCount} Gruppen</div> : null}
+        </CardBody>
+      </Card>
+    );
   }
 
-  const sortedGroups = sortGroups(groups);
-  const visibleGroups = sortedGroups.slice(0, MAX_VISIBLE_GROUPS);
-  const hiddenGroupCount = sortedGroups.length - visibleGroups.length;
+  const resolvedGroupCount = groupCount ?? 0;
+  const resolvedItemCount = itemCount ?? 0;
+
+  if (resolvedGroupCount === 0 && resolvedItemCount === 0) {
+    return <div className="rounded-xl bg-base-300/30 px-3 py-4 text-center text-sm text-base-content/60">Keine Gruppen</div>;
+  }
 
   return (
     <Card variant="inset" className="rounded-xl">
       <CardBody compact className="gap-2.5 p-3">
-        {visibleGroups.map((group) => (
-          <div key={group.id} className="space-y-1">
-            <div className="flex items-baseline justify-between gap-2">
-              <span className="truncate text-xs font-semibold text-base-content">{group.name || 'Gruppe'}</span>
-              {group.groupPrice != null ? <span className="shrink-0 text-[0.65rem] text-base-content/60">{group.groupPrice}€</span> : null}
-            </div>
-            <ItemPlaceholders count={group.items.length} />
+        <div className="space-y-1">
+          <div className="flex items-baseline justify-between gap-2">
+            <span className="truncate text-xs font-semibold text-base-content">
+              {resolvedGroupCount} {resolvedGroupCount === 1 ? 'Gruppe' : 'Gruppen'}
+            </span>
           </div>
-        ))}
-        {hiddenGroupCount > 0 ? <div className="text-center text-xs text-base-content/60">+{hiddenGroupCount} Gruppen</div> : null}
+          <ItemPlaceholders count={resolvedItemCount} />
+        </div>
       </CardBody>
     </Card>
   );

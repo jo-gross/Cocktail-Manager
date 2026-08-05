@@ -1,14 +1,14 @@
 import { Formik, FormikProps } from 'formik';
 import { UploadDropZone } from '../UploadDropZone';
-import { convertBase64ToFile, convertToBase64 } from '@lib/Base64Converter';
+import { convertBase64ToFile, convertToBase64, fetchImageAsBase64 } from '@lib/Base64Converter';
 import { useRouter } from 'next/router';
 import { FaTrashAlt } from 'react-icons/fa';
-import React, { useContext, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { alertService } from '@lib/alertService';
 import { DeleteConfirmationModal } from '../modals/DeleteConfirmationModal';
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import _ from 'lodash';
-import { GlassWithImage } from '../../models/GlassWithImage';
+import type { GlassDto } from '@lib/schemas/glasses';
 import Image from 'next/image';
 import CropComponent from '../CropComponent';
 import { FaCropSimple } from 'react-icons/fa6';
@@ -43,7 +43,7 @@ const glassFormSchema = z
 const validateGlass = zodFormikValidate(glassFormSchema);
 
 interface GlassFormProps {
-  glass?: GlassWithImage;
+  glass?: GlassDto;
   setUnsavedChanges?: (unsavedChanges: boolean) => void;
   formRef?: React.RefObject<FormikProps<GlassFormValues> | null>;
   onSaved?: (id: string) => void;
@@ -61,25 +61,60 @@ export function GlassForm(props: GlassFormProps) {
 
   const [similarGlass, setSimilarGlass] = useState<Glass | undefined>(undefined);
 
+  const [hydratedImage, setHydratedImage] = useState<string | undefined>(undefined);
+  const [imageHydrationDone, setImageHydrationDone] = useState(!props.glass?.hasImage);
+
+  useEffect(() => {
+    let cancelled = false;
+    const hydrateImage = async () => {
+      if (props.glass?.hasImage && props.glass.imageUrl) {
+        setImageHydrationDone(false);
+        const base64 = await fetchImageAsBase64(props.glass.imageUrl);
+        if (!cancelled) {
+          setHydratedImage(base64);
+          setImageHydrationDone(true);
+        }
+      } else {
+        setHydratedImage(undefined);
+        setImageHydrationDone(true);
+      }
+    };
+    void hydrateImage();
+    return () => {
+      cancelled = true;
+    };
+  }, [props.glass?.id, props.glass?.hasImage, props.glass?.imageUrl]);
+
+  if (props.glass && !imageHydrationDone) {
+    return (
+      <div className="flex justify-center py-8">
+        <Loading />
+      </div>
+    );
+  }
+
   return (
     <Formik<GlassFormValues>
       innerRef={formRef}
       initialValues={{
         name: props.glass?.name ?? '',
         deposit: props.glass?.deposit ?? 0,
-        image: props.glass?.GlassImage?.[0]?.image ?? undefined,
-        originalImage: (props.glass?.GlassImage.length ?? 0) ? convertBase64ToFile(props.glass!.GlassImage[0].image) : undefined,
+        image: hydratedImage,
+        originalImage: hydratedImage ? convertBase64ToFile(hydratedImage) : undefined,
         volume: props.glass?.volume ?? 0,
       }}
       onSubmit={async (values) => {
         try {
-          const body = {
+          const body: Record<string, unknown> = {
             id: props.glass?.id,
             name: values.name,
             deposit: values.deposit ?? 0,
-            image: values.image,
             volume: values.volume == 0 ? undefined : values.volume,
           };
+          // Omitting `image` on update removes it; re-send hydrated/kept base64.
+          if (values.image != undefined && values.image !== '') {
+            body.image = values.image;
+          }
           if (props.glass == undefined) {
             const response = await fetch(`/api/v1/workspaces/${workspaceId}/glasses`, {
               method: 'POST',
@@ -124,9 +159,13 @@ export function GlassForm(props: GlassFormProps) {
       }}
       validate={(values) => {
         if (props.glass) {
-          const reducedOriginal = _.omit(props.glass, ['id', 'workspaceId', 'GlassImage']);
+          const reducedOriginal = {
+            name: props.glass.name,
+            deposit: props.glass.deposit,
+            volume: props.glass.volume ?? 0,
+          };
           const reducedValues = _.omit(values, ['image', 'originalImage']);
-          const areImageEqual = (props.glass.GlassImage.length > 0 ? props.glass.GlassImage[0].image.toString() : undefined) == values.image;
+          const areImageEqual = hydratedImage == values.image;
 
           props.setUnsavedChanges?.(!_.isEqual(reducedOriginal, reducedValues) || !areImageEqual);
         } else {

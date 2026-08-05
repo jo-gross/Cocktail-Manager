@@ -2,14 +2,12 @@ import React, { useCallback, useContext, useEffect, useRef, useState } from 'rea
 import { FaAngleDown, FaAngleUp, FaArrowDown, FaCheck, FaEye, FaPlus, FaSearch, FaTimes } from 'react-icons/fa';
 import Link from 'next/link';
 import { BsFillGearFill } from 'react-icons/bs';
-import { CocktailCardFull } from '../../../models/CocktailCardFull';
 import CocktailRecipeCardItem, { CocktailRecipeOverviewItemRef } from '../../../components/cocktails/CocktailRecipeCardItem';
 import { CocktailRecipeCardSkeleton } from '../../../components/cocktails/CocktailRecipeCardSkeleton';
-import { CocktailCard, Setting } from '@generated/prisma/client';
+import { Setting } from '@generated/prisma/client';
 import { useRouter } from 'next/router';
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import { SearchModal, SearchModalRef } from '@components/modals/SearchModal';
-import { Loading } from '@components/Loading';
 import ThemeChanger from '../../../components/ThemeChanger';
 import Head from 'next/head';
 import { UserContext } from '@lib/context/UserContextProvider';
@@ -27,6 +25,8 @@ import { useOffline } from '@lib/context/OfflineContextProvider';
 import { fetchCard, fetchCards, prefetchCardData } from '@lib/network/cards';
 import { prefetchAllCocktails } from '@lib/network/cocktails';
 import { formatDateLocal, getLogicalDate } from '@lib/dateHelpers';
+import type { CardDto, CardSummaryDto } from '@lib/schemas/cards';
+import type { QueueItemDto } from '@lib/schemas/queue';
 import {
   Button,
   ButtonGroup,
@@ -73,7 +73,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
   const [showSettingsAtBottom, setShowSettingsAtBottom] = useState(false);
   const [collapsedGroupIds, setCollapsedGroupIds] = useState<Set<string>>(new Set());
 
-  const [cocktailCards, setCocktailCards] = useState<CocktailCardFull[]>([]);
+  const [cocktailCards, setCocktailCards] = useState<CardSummaryDto[]>([]);
   const [loadingCards, setLoadingCards] = useState(true);
   const [loadingGroups, setLoadingGroups] = useState(false);
 
@@ -132,7 +132,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
   }, [userContext.user, workspaceId]);
 
   const [selectedCardId, setSelectedCardId] = useState<string | undefined>((router.query.card as string) || undefined);
-  const [selectedCard, setSelectedCard] = useState<CocktailCardFull | undefined>(cocktailCards.length > 0 ? cocktailCards[0] : undefined);
+  const [selectedCard, setSelectedCard] = useState<CardDto | undefined>(undefined);
 
   const fetchSelectedCard = useCallback(() => {
     if (selectedCardId != undefined && selectedCardId != 'search' && selectedCardId != 'order' && workspaceId) {
@@ -164,7 +164,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
   }, [cocktailCards, workspaceId, isOnline]);
 
   const sortCards = useCallback(
-    (a: CocktailCard, b: CocktailCard) => {
+    (a: CardSummaryDto, b: CardSummaryDto) => {
       const today = logicalToday;
 
       if (a.date != undefined && cardDateKey(a.date) == today && b.date != undefined && cardDateKey(b.date) != today) {
@@ -280,7 +280,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
       .then(async (response) => {
         const body = await response.json();
         if (response.ok) {
-          setCocktailQueue(body.data);
+          setCocktailQueue(body.data as QueueItemDto[]);
           console.debug('queue', body.data);
         } else {
           console.error('CocktailCardPage -> fetchQueue', response);
@@ -292,27 +292,18 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
       .finally(() => {});
   }, [workspaceId]);
 
-  interface CocktailQueueItem {
-    queueItemId: string;
-    cocktailId: string;
-    timestamp: Date;
-    cocktailName: string;
-    inProgress: boolean;
-    notes?: string;
-  }
-
   interface GroupedItem {
     queueItemId: string;
     cocktailId: string;
     notes: string | undefined;
     cocktailName: string;
     count: number;
-    oldestTimestamp: Date;
+    oldestTimestamp: string;
     inProgress?: boolean;
     total: number | undefined;
   }
 
-  const [cocktailQueue, setCocktailQueue] = useState<CocktailQueueItem[]>([]);
+  const [cocktailQueue, setCocktailQueue] = useState<QueueItemDto[]>([]);
   const [submittingQueue, setSubmittingQueue] = useState<{ cocktailId: string; mode: 'ACCEPT' | 'REJECT' | 'IN_PROGRESS' | 'NOT_ANYMORE_IN_PROGRESS' }[]>([]);
 
   useEffect(() => {
@@ -669,34 +660,34 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                 {(queueGrouping == 'ALPHABETIC' || true
                   ? _(cocktailQueue)
                       .filter((item) => item.inProgress)
-                      .groupBy((item) => `${item.cocktailId}||${item.notes}`) // Gruppierung basierend auf cocktailId und notes
+                      .groupBy((item) => `${item.cocktail.id}||${item.notes}`)
                       .map((items, key) => {
-                        const [cocktailId, notes] = key.split('||'); // Extrahiere cocktailId und notes aus dem Key
+                        const [cocktailId, notes] = key.split('||');
                         return {
-                          queueItemId: items[0].queueItemId,
+                          queueItemId: items[0].id,
                           cocktailId: cocktailId,
                           notes: notes === 'null' || notes === '' ? undefined : notes,
-                          cocktailName: items[0].cocktailName,
+                          cocktailName: items[0].cocktail.name,
                           count: items.length,
-                          oldestTimestamp: _.minBy(items, 'timestamp')!.timestamp, // Finde den ältesten Timestamp
+                          oldestTimestamp: _.minBy(items, 'createdAt')!.createdAt,
                           inProgress: true,
                           total: undefined,
                         };
                       })
-                      .sortBy(['cocktailName', (item) => -(item.notes ?? '')]) // Sortiere nach cocktailName (asc) und notes (desc)
+                      .sortBy(['cocktailName', (item) => -(item.notes ?? '')])
                   : _(cocktailQueue)
                       .filter((item) => item.inProgress)
-                      .sortBy('timestamp') // Sortiere nach timestamp (desc)
+                      .sortBy('createdAt')
                       .map((item, _key) => {
                         return {
-                          queueItemId: item.queueItemId,
-                          cocktailId: item.cocktailId,
-                          notes: item.notes,
-                          cocktailName: item.cocktailName,
+                          queueItemId: item.id,
+                          cocktailId: item.cocktail.id,
+                          notes: item.notes ?? undefined,
+                          cocktailName: item.cocktail.name,
                           count: 1,
-                          oldestTimestamp: item.timestamp,
+                          oldestTimestamp: item.createdAt,
                           inProgress: true,
-                          total: cocktailQueue.filter((i) => i.cocktailId == item.cocktailId && i.notes == item.notes).length,
+                          total: cocktailQueue.filter((i) => i.cocktail.id == item.cocktail.id && i.notes == item.notes).length,
                         };
                       })
                 )
@@ -715,16 +706,16 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                 {(queueGrouping == 'ALPHABETIC'
                   ? _(cocktailQueue)
                       .filter((item) => !item.inProgress)
-                      .groupBy((item) => `${item.cocktailId}||${item.notes || ''}`) // Gruppierung basierend auf cocktailId und notes
+                      .groupBy((item) => `${item.cocktail.id}||${item.notes || ''}`)
                       .map<GroupedItem>((items, key) => {
-                        const [cocktailId, notes] = key.split('||'); // Extrahiere cocktailId und notes aus dem Key
+                        const [cocktailId, notes] = key.split('||');
                         return {
-                          queueItemId: items[0].queueItemId,
+                          queueItemId: items[0].id,
                           cocktailId: cocktailId,
                           notes: notes === 'null' || notes === '' ? undefined : notes,
-                          cocktailName: items[0].cocktailName,
+                          cocktailName: items[0].cocktail.name,
                           count: items.length,
-                          oldestTimestamp: _.minBy(items, 'timestamp')!.timestamp, // Finde den ältesten Timestamp
+                          oldestTimestamp: _.minBy(items, 'createdAt')!.createdAt,
                           inProgress: false,
                           total: undefined,
                         };
@@ -733,19 +724,19 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                       .value()
                   : _(cocktailQueue)
                       .filter((item) => !item.inProgress)
-                      .sortBy('timestamp') // Sortiere nach timestamp (desc)
+                      .sortBy('createdAt')
                       .reduce<GroupedItem[]>((acc, item) => {
-                        if (acc.length > 0 && acc[acc.length - 1].cocktailId === item.cocktailId && acc[acc.length - 1].notes === item.notes) {
-                          acc[acc.length - 1].count += 1; // Erhöhe die Anzahl für zusammenhängende gleiche Einträge
+                        if (acc.length > 0 && acc[acc.length - 1].cocktailId === item.cocktail.id && acc[acc.length - 1].notes === (item.notes ?? undefined)) {
+                          acc[acc.length - 1].count += 1;
                         } else {
                           acc.push({
-                            queueItemId: item.queueItemId,
-                            cocktailId: item.cocktailId,
-                            notes: item.notes,
-                            cocktailName: item.cocktailName,
+                            queueItemId: item.id,
+                            cocktailId: item.cocktail.id,
+                            notes: item.notes ?? undefined,
+                            cocktailName: item.cocktail.name,
                             count: 1,
-                            oldestTimestamp: item.timestamp,
-                            total: cocktailQueue.filter((i) => i.cocktailId == item.cocktailId && i.notes == item.notes).length,
+                            oldestTimestamp: item.createdAt,
+                            total: cocktailQueue.filter((i) => i.cocktail.id == item.cocktail.id && i.notes == item.notes).length,
                           });
                         }
                         return acc;
@@ -855,19 +846,20 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                               group.items
                                 ?.sort((a, b) => a.itemNumber - b.itemNumber)
                                 .map((groupItem, index) => {
-                                  if (groupItem.cocktailId != undefined) {
+                                  const cocktailId = groupItem.cocktail?.id;
+                                  if (cocktailId != undefined) {
                                     return (
                                       <CocktailRecipeCardItem
-                                        key={`card-${selectedCard.id}-group-${group.id}-cocktail-${groupItem.cocktailId}-${index}`}
+                                        key={`card-${selectedCard.id}-group-${group.id}-cocktail-${cocktailId}-${index}`}
                                         ref={(el) => {
-                                          cocktailItemRefs.current[groupItem.cocktailId!] = el;
+                                          cocktailItemRefs.current[cocktailId] = el;
                                         }}
                                         showImage={showImage}
                                         showTags={showTags}
                                         showDetailsOnClick={true}
                                         showPrice={groupItem.specialPrice == undefined && group.groupPrice == undefined}
                                         specialPrice={groupItem.specialPrice ?? group.groupPrice ?? undefined}
-                                        cocktailRecipe={groupItem.cocktailId}
+                                        cocktailRecipe={cocktailId}
                                         showStatisticActions={showStatisticActions}
                                         showDescription={showDescription}
                                         showNotes={showNotes}
@@ -877,8 +869,11 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                                     );
                                   } else {
                                     return (
-                                      <div key={`card-${selectedCard.id}-group-${group.id}-cocktail-${groupItem.cocktailId}-${index}`}>
-                                        <Loading />
+                                      <div
+                                        key={`card-${selectedCard.id}-group-${group.id}-cocktail-missing-${index}`}
+                                        className="text-center text-sm opacity-70"
+                                      >
+                                        Cocktail nicht verfügbar
                                       </div>
                                     );
                                   }
@@ -983,7 +978,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                       {loadingCards && <UiLoading size="xs" />}
                     </Divider>
                     {loadingCards && cocktailCards.length == 0 ? (
-                      <Loading />
+                      <UiLoading />
                     ) : cocktailCards.length == 0 ? (
                       <div className={'flex items-center justify-between'}>
                         <div>Keine Karten vorhanden</div>
