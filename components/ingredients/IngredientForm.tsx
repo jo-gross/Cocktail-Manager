@@ -9,7 +9,7 @@ import { alertService } from '@lib/alertService';
 import { DeleteConfirmationModal } from '../modals/DeleteConfirmationModal';
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import _ from 'lodash';
-import type { IngredientDto } from '@lib/schemas/ingredients';
+import type { IngredientCreateInput, IngredientDto, IngredientUpdateInput } from '@lib/schemas/ingredients';
 import type { UnitDto, UnitConversionDto } from '@lib/schemas/units';
 import { UserContext } from '@lib/context/UserContextProvider';
 import { fetchUnitConversions, fetchUnits } from '@lib/network/units';
@@ -220,8 +220,7 @@ export function IngredientForm(props: IngredientFormProps) {
       onSubmit={async (values) => {
         if (!workspaceId) return;
         try {
-          const body: Record<string, unknown> = {
-            id: props.ingredient == undefined ? undefined : props.ingredient.id,
+          const body: IngredientCreateInput & IngredientUpdateInput = {
             name: values.name.trim(),
             shortName: values.shortName?.trim() == '' ? null : values.shortName?.trim(),
             notes: values.notes?.trim() == '' ? null : values.notes?.trim(),
@@ -232,6 +231,9 @@ export function IngredientForm(props: IngredientFormProps) {
             link: values.link?.trim() == '' ? null : values.link?.trim(),
             tags: values.tags,
           };
+          if (props.ingredient?.id) {
+            body.id = props.ingredient.id;
+          }
           // Omitting `image` on update removes it; re-send hydrated/kept base64.
           if (values.image != undefined && values.image.trim() !== '') {
             body.image = values.image.trim();

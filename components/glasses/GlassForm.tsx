@@ -19,6 +19,7 @@ import { z } from 'zod';
 import { zodFormikValidate } from '@lib/forms/zodFormikValidate';
 import { alertApiV1Error } from '@lib/network/apiV1';
 import { checkGlassName, createGlass, updateGlass } from '@lib/network/glasses';
+import type { GlassCreateInput, GlassUpdateInput } from '@lib/schemas/glasses';
 
 export interface GlassFormValues {
   name: string;
@@ -107,12 +108,14 @@ export function GlassForm(props: GlassFormProps) {
       onSubmit={async (values) => {
         if (!workspaceId) return;
         try {
-          const body: Record<string, unknown> = {
-            id: props.glass?.id,
+          const body: GlassCreateInput & GlassUpdateInput = {
             name: values.name,
             deposit: values.deposit ?? 0,
             volume: values.volume == 0 ? undefined : values.volume,
           };
+          if (props.glass?.id) {
+            body.id = props.glass.id;
+          }
           // Omitting `image` on update removes it; re-send hydrated/kept base64.
           if (values.image != undefined && values.image !== '') {
             body.image = values.image;

@@ -7,7 +7,7 @@ import { FaTrashAlt } from 'react-icons/fa';
 import { alertService } from '@lib/alertService';
 import { DeleteConfirmationModal } from '../modals/DeleteConfirmationModal';
 import { ModalContext } from '@lib/context/ModalContextProvider';
-import type { GarnishDto } from '@lib/schemas/garnishes';
+import type { GarnishCreateInput, GarnishDto, GarnishUpdateInput } from '@lib/schemas/garnishes';
 import Image from 'next/image';
 import CropComponent from '../CropComponent';
 import { FaCropSimple } from 'react-icons/fa6';
@@ -110,13 +110,15 @@ export function GarnishForm(props: GarnishFormProps) {
       onSubmit={async (values) => {
         if (!workspaceId) return;
         try {
-          const body: Record<string, unknown> = {
-            id: props.garnish == undefined ? undefined : props.garnish.id,
+          const body: GarnishCreateInput & GarnishUpdateInput = {
             name: values.name,
             price: values.price === '' || values.price === undefined ? null : Number(values.price),
             description: values.description?.trim() == '' ? null : values.description?.trim(),
             notes: values.notes?.trim() == '' ? null : values.notes?.trim(),
           };
+          if (props.garnish?.id) {
+            body.id = props.garnish.id;
+          }
           // Omitting `image` on update removes it; re-send hydrated/kept base64.
           if (values.image != undefined && values.image !== '') {
             body.image = values.image;
