@@ -220,7 +220,7 @@ export function IngredientForm(props: IngredientFormProps) {
       onSubmit={async (values) => {
         if (!workspaceId) return;
         try {
-          const body = {
+          const body: Record<string, unknown> = {
             id: props.ingredient == undefined ? undefined : props.ingredient.id,
             name: values.name.trim(),
             shortName: values.shortName?.trim() == '' ? null : values.shortName?.trim(),
@@ -231,9 +231,11 @@ export function IngredientForm(props: IngredientFormProps) {
             units: (values.units || []).map((unit) => ({ unitId: unit.unitId, volume: Number(unit.volume) })),
             link: values.link?.trim() == '' ? null : values.link?.trim(),
             tags: values.tags,
-            // Omitting `image` on update removes it; re-send hydrated/kept base64.
-            ...(values.image != undefined && values.image.trim() !== '' ? { image: values.image.trim() } : {}),
           };
+          // Omitting `image` on update removes it; re-send hydrated/kept base64.
+          if (values.image != undefined && values.image.trim() !== '') {
+            body.image = values.image.trim();
+          }
           if (props.ingredient == undefined) {
             const created = await createIngredient(workspaceId, body);
             if (props.onSaved != undefined) {

@@ -107,14 +107,16 @@ export function GlassForm(props: GlassFormProps) {
       onSubmit={async (values) => {
         if (!workspaceId) return;
         try {
-          const body = {
+          const body: Record<string, unknown> = {
             id: props.glass?.id,
             name: values.name,
             deposit: values.deposit ?? 0,
             volume: values.volume == 0 ? undefined : values.volume,
-            // Omitting `image` on update removes it; re-send hydrated/kept base64.
-            ...(values.image != undefined && values.image !== '' ? { image: values.image } : {}),
           };
+          // Omitting `image` on update removes it; re-send hydrated/kept base64.
+          if (values.image != undefined && values.image !== '') {
+            body.image = values.image;
+          }
           if (props.glass == undefined) {
             const created = await createGlass(workspaceId, body);
             if (props.onSaved) {

@@ -110,15 +110,17 @@ export function GarnishForm(props: GarnishFormProps) {
       onSubmit={async (values) => {
         if (!workspaceId) return;
         try {
-          const body = {
+          const body: Record<string, unknown> = {
             id: props.garnish == undefined ? undefined : props.garnish.id,
             name: values.name,
             price: values.price === '' || values.price === undefined ? null : Number(values.price),
             description: values.description?.trim() == '' ? null : values.description?.trim(),
             notes: values.notes?.trim() == '' ? null : values.notes?.trim(),
-            // Omitting `image` on update removes it; re-send hydrated/kept base64.
-            ...(values.image != undefined && values.image !== '' ? { image: values.image } : {}),
           };
+          // Omitting `image` on update removes it; re-send hydrated/kept base64.
+          if (values.image != undefined && values.image !== '') {
+            body.image = values.image;
+          }
           if (props.garnish == undefined) {
             const created = await createGarnish(workspaceId, body);
             if (props.onSaved != undefined) {
