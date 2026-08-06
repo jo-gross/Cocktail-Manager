@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { alertService } from '@lib/alertService';
 import { formatTime } from '@lib/DateUtils';
 import { Button, ButtonGroup, Input, Loading, Table, TableBody, TableCell, TableHead, TableHeaderCell, TableRow, Tooltip } from '@components/ui';
+import { alertApiV1Error, apiV1FetchPaginated } from '@lib/network/apiV1';
 
 interface OrderTime {
   id: string;
@@ -49,27 +49,13 @@ export default function CocktailOrderTimesModal({ workspaceId, cocktailId, cockt
         params.append('search', search.trim());
       }
 
-      const response = await fetch(`/api/v1/workspaces/${workspaceId}/statistics/advanced/cocktails/${cocktailId}/orders?${params.toString()}`);
-      if (response.ok) {
-        const body = await response.json();
-        setOrders(body.data);
-        setTotalPages(body.pagination.totalPages);
-      } else {
-        let body;
-        try {
-          body = await response.json();
-        } catch {
-          const text = await response.text();
-          console.error('CocktailOrderTimesModal -> fetchOrders - Non-JSON response', text);
-          alertService.error('Fehler beim Laden der Bestellungen', response.status, response.statusText);
-          return;
-        }
-        console.error('CocktailOrderTimesModal -> fetchOrders', response);
-        alertService.error(body.error?.message ?? 'Fehler beim Laden der Bestellungen', response.status, response.statusText);
-      }
+      const result = await apiV1FetchPaginated<OrderTime[]>(
+        `/api/v1/workspaces/${workspaceId}/statistics/advanced/cocktails/${cocktailId}/orders?${params.toString()}`,
+      );
+      setOrders(result.data);
+      setTotalPages(result.pagination.totalPages);
     } catch (error) {
-      console.error('CocktailOrderTimesModal -> fetchOrders', error);
-      alertService.error('Es ist ein Fehler aufgetreten');
+      alertApiV1Error(error, 'Fehler beim Laden der Bestellungen');
     } finally {
       setLoading(false);
     }

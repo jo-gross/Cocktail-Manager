@@ -5,6 +5,15 @@ import React, { useCallback, useContext, useEffect, useMemo, useState } from 're
 import { useRouter } from 'next/router';
 import { alertService } from '@lib/alertService';
 import type { CalculationGroupDto, CalculationSummaryDto } from '@lib/schemas/calculations';
+import {
+  assignCalculationsToGroup,
+  createCalculationGroup,
+  deleteCalculation,
+  deleteCalculationGroup,
+  fetchCalculationsAndGroupsSafe,
+  updateCalculationGroup,
+} from '@lib/network/calculations';
+import { alertApiV1Error } from '@lib/network/apiV1';
 import { Role } from '@generated/prisma/client';
 import { FaChevronDown, FaChevronRight, FaFileDownload, FaFileUpload, FaLayerGroup, FaPlus, FaTrashAlt } from 'react-icons/fa';
 import ListSearchField from '../../../../../components/ListSearchField';
@@ -93,36 +102,15 @@ const CocktailCalculationOverviewPage: NextPageWithPullToRefresh = () => {
   }, []);
 
   const refreshCocktailCalculations = useCallback(() => {
-    if (!workspaceId) return;
-    setLoading(true);
-    Promise.all([fetch(`/api/v1/workspaces/${workspaceId}/calculations`), fetch(`/api/v1/workspaces/${workspaceId}/calculations/groups`)])
-      .then(async ([calculationsResponse, groupsResponse]) => {
-        const calculationsBody = await calculationsResponse.json();
-        const groupsBody = await groupsResponse.json();
-
-        if (!calculationsResponse.ok) {
-          console.error('Calculation -> refreshCocktailCalculations', calculationsResponse);
-          alertService.error(calculationsBody.message ?? 'Fehler beim Laden der Kalkulationen', calculationsResponse.status, calculationsResponse.statusText);
-          return;
-        }
-        if (!groupsResponse.ok) {
-          console.error('Calculation -> refreshGroups', groupsResponse);
-          alertService.error(groupsBody.message ?? 'Fehler beim Laden der Gruppen', groupsResponse.status, groupsResponse.statusText);
-          return;
-        }
-
-        setCocktailCalculations(calculationsBody.data ?? []);
-        const groups: CalculationGroupDto[] = groupsBody.data ?? [];
+    fetchCalculationsAndGroupsSafe(
+      workspaceId,
+      setCocktailCalculations,
+      (groups) => {
         setCalculationGroups(groups);
         setCollapsedGroupIds(new Set(groups.filter((g) => !g.isDefaultExpanded).map((g) => g.id)));
-      })
-      .catch((error) => {
-        console.error('Calculation -> refreshCocktailCalculations', error);
-        alertService.error('Fehler beim Laden der Kalkulationen');
-      })
-      .finally(() => {
-        setLoading(false);
-      });
+      },
+      setLoading,
+    );
   }, [workspaceId]);
 
   useEffect(() => {
@@ -189,19 +177,14 @@ const CocktailCalculationOverviewPage: NextPageWithPullToRefresh = () => {
   const assignGroup = useCallback(
     async (calculationIds: string[], groupId: string | null) => {
       if (!workspaceId || calculationIds.length === 0) return;
-      const response = await fetch(`/api/v1/workspaces/${workspaceId}/calculations/groups/assign`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ calculationIds, groupId }),
-      });
-      const body = await response.json();
-      if (!response.ok) {
-        alertService.error(body.message ?? 'Fehler beim Zuordnen der Gruppe', response.status, response.statusText);
-        return;
+      try {
+        await assignCalculationsToGroup(workspaceId, { calculationIds, groupId });
+        alertService.success(groupId ? 'Gruppe zugeordnet' : 'Gruppenzuordnung entfernt');
+        setSelectedIds(new Set());
+        refreshCocktailCalculations();
+      } catch (error) {
+        alertApiV1Error(error, 'Fehler beim Zuordnen der Gruppe');
       }
-      alertService.success(groupId ? 'Gruppe zugeordnet' : 'Gruppenzuordnung entfernt');
-      setSelectedIds(new Set());
-      refreshCocktailCalculations();
     },
     [workspaceId, refreshCocktailCalculations],
   );
@@ -261,19 +244,14 @@ const CocktailCalculationOverviewPage: NextPageWithPullToRefresh = () => {
               alertService.error('Bitte einen Gruppennamen eingeben');
               return;
             }
-            const response = await fetch(`/api/v1/workspaces/${workspaceId}/calculations/groups`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ name, isDefaultExpanded: expandedInput?.checked ?? false }),
-            });
-            const body = await response.json();
-            if (!response.ok) {
-              alertService.error(body.message ?? 'Fehler beim Erstellen der Gruppe', response.status, response.statusText);
-              return;
+            try {
+              await createCalculationGroup(workspaceId, { name, isDefaultExpanded: expandedInput?.checked ?? false });
+              modalContext.closeAllModals();
+              alertService.success('Gruppe erstellt');
+              refreshCocktailCalculations();
+            } catch (error) {
+              alertApiV1Error(error, 'Fehler beim Erstellen der Gruppe');
             }
-            modalContext.closeAllModals();
-            alertService.success('Gruppe erstellt');
-            refreshCocktailCalculations();
           }}
         >
           Erstellen
@@ -285,17 +263,12 @@ const CocktailCalculationOverviewPage: NextPageWithPullToRefresh = () => {
   const handleToggleGroupDefaultExpanded = useCallback(
     async (group: CalculationGroupDto) => {
       if (!workspaceId) return;
-      const response = await fetch(`/api/v1/workspaces/${workspaceId}/calculations/groups/${group.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: group.name, isDefaultExpanded: !group.isDefaultExpanded }),
-      });
-      const body = await response.json();
-      if (!response.ok) {
-        alertService.error(body.message ?? 'Fehler beim Aktualisieren der Gruppe', response.status, response.statusText);
-        return;
+      try {
+        await updateCalculationGroup(workspaceId, group.id, { name: group.name, isDefaultExpanded: !group.isDefaultExpanded });
+        refreshCocktailCalculations();
+      } catch (error) {
+        alertApiV1Error(error, 'Fehler beim Aktualisieren der Gruppe');
       }
-      refreshCocktailCalculations();
     },
     [workspaceId, refreshCocktailCalculations],
   );
@@ -310,14 +283,13 @@ const CocktailCalculationOverviewPage: NextPageWithPullToRefresh = () => {
           confirmLabel={'Löschen'}
           confirmVariant={'error'}
           onConfirm={async () => {
-            const response = await fetch(`/api/v1/workspaces/${workspaceId}/calculations/groups/${group.id}`, { method: 'DELETE' });
-            const body = await response.json();
-            if (!response.ok) {
-              alertService.error(body.message ?? 'Fehler beim Löschen der Gruppe', response.status, response.statusText);
-              return;
+            try {
+              await deleteCalculationGroup(workspaceId, group.id);
+              alertService.success('Gruppe gelöscht');
+              refreshCocktailCalculations();
+            } catch (error) {
+              alertApiV1Error(error, 'Fehler beim Löschen der Gruppe');
             }
-            alertService.success('Gruppe gelöscht');
-            refreshCocktailCalculations();
           }}
         />,
       );
@@ -411,13 +383,16 @@ const CocktailCalculationOverviewPage: NextPageWithPullToRefresh = () => {
         confirmLabel="Löschen"
         confirmVariant="error"
         onConfirm={async () => {
-          for (const id of ids) {
-            const res = await fetch(`/api/v1/workspaces/${workspaceId}/calculations/${id}`, { method: 'DELETE' });
-            if (!res.ok) throw new Error('Löschen fehlgeschlagen');
+          try {
+            for (const id of ids) {
+              await deleteCalculation(workspaceId, id);
+            }
+            setSelectedIds(new Set());
+            refreshCocktailCalculations();
+            alertService.success(`${count} Kalkulation${count === 1 ? '' : 'en'} gelöscht`);
+          } catch (error) {
+            alertApiV1Error(error, 'Löschen fehlgeschlagen');
           }
-          setSelectedIds(new Set());
-          refreshCocktailCalculations();
-          alertService.success(`${count} Kalkulation${count === 1 ? '' : 'en'} gelöscht`);
         }}
       />,
     );

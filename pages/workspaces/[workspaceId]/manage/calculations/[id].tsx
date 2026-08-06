@@ -20,6 +20,8 @@ import _ from 'lodash';
 import { fetchUnits } from '@lib/network/units';
 import { formatDate } from '@lib/DateUtils';
 import { RoutingContext } from '@lib/context/RoutingContextProvider';
+import { createCalculation, getCalculation, updateCalculation } from '@lib/network/calculations';
+import { alertApiV1Error, apiV1Fetch } from '@lib/network/apiV1';
 import '../../../../../lib/NumberUtils';
 import {
   Button,
@@ -145,16 +147,8 @@ export default function CalculationPage() {
     if (id == 'create') return;
     if (!workspaceId) return;
     setLoading(true);
-    fetch(`/api/v1/workspaces/${workspaceId}/calculations/${id}`)
-      .then(async (response) => {
-        const body = await response.json();
-        if (!response.ok) {
-          console.error('CocktailCalculation -> useEffect[init, id != create]', response);
-          alertService.error(body.message ?? 'Fehler beim Laden der Kalkulation', response.status, response.statusText);
-          return;
-        }
-
-        const data: CalculationDto = body.data;
+    getCalculation(workspaceId, id as string)
+      .then(async (data: CalculationDto) => {
         setCalculationName(data.name);
         setShowSalesStuff(data.showSalesStuff ?? false);
         setOriginalName(data.name);
@@ -170,13 +164,9 @@ export default function CalculationPage() {
 
         const hydratedItems = await Promise.all(
           data.items.map(async (item) => {
-            const cocktailResponse = await fetch(`/api/v1/workspaces/${workspaceId}/cocktails/${item.cocktail.id}`);
-            const cocktailBody = await cocktailResponse.json();
-            if (!cocktailResponse.ok) {
-              throw new Error(cocktailBody.message ?? `Fehler beim Laden des Cocktails ${item.cocktail.name}`);
-            }
+            const cocktail = await apiV1Fetch<CocktailDto>(`/api/v1/workspaces/${workspaceId}/cocktails/${item.cocktail.id}`);
             return {
-              cocktail: cocktailBody.data as CocktailDto,
+              cocktail,
               plannedAmount: item.plannedAmount,
               customPrice: item.customPrice ?? undefined,
             } satisfies CocktailCalculationItem;
@@ -187,7 +177,7 @@ export default function CalculationPage() {
       })
       .catch((error) => {
         console.error('CocktailCalculation -> useEffect[init, id != create]', error);
-        alertService.error(error instanceof Error ? error.message : 'Es ist ein Fehler aufgetreten');
+        alertApiV1Error(error, 'Fehler beim Laden der Kalkulation');
       })
       .finally(() => {
         setLoading(false);
@@ -216,19 +206,13 @@ export default function CalculationPage() {
           },
         ]);
       } else {
-        fetch(`/api/v1/workspaces/${workspaceId}/cocktails/${cocktailId}`)
-          .then(async (response) => {
-            const body = await response.json();
-            if (response.ok) {
-              setCocktailCalculationItems([...cocktailCalculationItems, { cocktail: body.data, plannedAmount: 1, customPrice: undefined }]);
-            } else {
-              console.error('CalculationId -> addCocktailToSelection (not already exists) -> fetchCocktail', response);
-              alertService.error(body.message ?? 'Fehler beim Laden des Cocktails', response.status, response.statusText);
-            }
+        apiV1Fetch<CocktailDto>(`/api/v1/workspaces/${workspaceId}/cocktails/${cocktailId}`)
+          .then((cocktail) => {
+            setCocktailCalculationItems([...cocktailCalculationItems, { cocktail, plannedAmount: 1, customPrice: undefined }]);
           })
           .catch((error) => {
             console.error('CalculationId -> addCocktailToSelection (not already exists) -> fetchCocktail', error);
-            alertService.error('Fehler beim Laden des Cocktails');
+            alertApiV1Error(error, 'Fehler beim Laden des Cocktails');
           })
           .finally(() => {
             triggerRecalculate(true);
@@ -297,107 +281,53 @@ export default function CalculationPage() {
       const currentScrollTop = window.scrollY;
 
       setSaving(true);
-      if (id == 'create') {
-        const body = {
-          name: calculationName,
-          showSalesStuff: showSalesStuff,
-          calculationItems: cocktailCalculationItems.map((item) => {
-            return {
-              plannedAmount: item.plannedAmount,
-              customPrice: item.customPrice,
-              cocktailId: item.cocktail.id,
-            };
-          }),
-          ingredientShoppingUnits: ingredientShoppingUnits,
-        };
-        fetch(`/api/v1/workspaces/${workspaceId}/calculations`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body),
-        })
-          .then(async (response) => {
-            const body = await response.json();
-            if (response.ok) {
+      const body = {
+        name: calculationName,
+        showSalesStuff: showSalesStuff,
+        calculationItems: cocktailCalculationItems.map((item) => {
+          return {
+            plannedAmount: item.plannedAmount,
+            customPrice: item.customPrice,
+            cocktailId: item.cocktail.id,
+          };
+        }),
+        ingredientShoppingUnits: ingredientShoppingUnits,
+      };
+
+      const savePromise =
+        id == 'create'
+          ? createCalculation(workspaceId!, body).then(async (created) => {
               setOriginalItems(JSON.stringify(cocktailCalculationItems));
               setOriginalShowSalesStuff(showSalesStuff);
               setOriginalName(calculationName);
               setOriginalIngredientShoppingUnits(JSON.stringify(ingredientShoppingUnits));
               if (redirect) {
-                await router.replace(`/workspaces/${workspaceId}/manage/calculations/${body.data.id}`);
+                await router.replace(`/workspaces/${workspaceId}/manage/calculations/${created.id}`);
               }
               alertService.success('Kalkulation erfolgreich erstellt');
-            } else {
-              console.error('CalculationId -> saveCalculation[create]', response);
-              alertService.error(body.message ?? 'Fehler beim Erstellen der Kalkulation', response.status, response.statusText);
-            }
-          })
-          .catch((error) => {
-            console.error('CalculationId -> saveCalculation[create]', error);
-            alertService.error('Es ist ein Fehler aufgetreten');
-          })
-          .finally(() => {
-            setSaving(false);
-            window.scrollTo(0, currentScrollTop);
-          });
-      } else {
-        // Update
-        const body = {
-          name: calculationName,
-          showSalesStuff: showSalesStuff,
-          calculationItems: cocktailCalculationItems.map((item) => {
-            return {
-              plannedAmount: item.plannedAmount,
-              customPrice: item.customPrice,
-              cocktailId: item.cocktail.id,
-            };
-          }),
-          ingredientShoppingUnits: ingredientShoppingUnits,
-        };
-
-        fetch(`/api/v1/workspaces/${workspaceId}/calculations/${id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body),
-        })
-          .then(async (response) => {
-            const body = await response.json();
-            if (response.ok) {
+            })
+          : updateCalculation(workspaceId!, id as string, body).then(async (updated) => {
               setOriginalItems(JSON.stringify(cocktailCalculationItems));
               setOriginalShowSalesStuff(showSalesStuff);
               setOriginalName(calculationName);
               setOriginalIngredientShoppingUnits(JSON.stringify(ingredientShoppingUnits));
               if (redirect) {
-                await router.replace(`/workspaces/${workspaceId}/manage/calculations/${body.data.id}`);
+                await router.replace(`/workspaces/${workspaceId}/manage/calculations/${updated.id}`);
               }
               alertService.success('Kalkulation erfolgreich gespeichert');
-            } else {
-              console.error('CalculationId -> saveCalculation[update]', response);
-              alertService.error(body.message ?? 'Fehler beim Aktualisieren der Kalkulation', response.status, response.statusText);
-            }
-          })
-          .catch((error) => {
-            console.error('CalculationId -> saveCalculation[update]', error);
-            alertService.error('Es ist ein Fehler aufgetreten');
-          })
-          .finally(() => {
-            setSaving(false);
-            window.scrollTo(0, currentScrollTop);
-          });
-      }
+            });
+
+      savePromise
+        .catch((error) => {
+          console.error('CalculationId -> saveCalculation', error);
+          alertApiV1Error(error, id == 'create' ? 'Fehler beim Erstellen der Kalkulation' : 'Fehler beim Aktualisieren der Kalkulation');
+        })
+        .finally(() => {
+          setSaving(false);
+          window.scrollTo(0, currentScrollTop);
+        });
     },
-    [
-      ingredientShoppingUnits,
-      id,
-      calculationName,
-      showSalesStuff,
-      cocktailCalculationItems,
-      workspaceId,
-      router,
-      originalItems,
-      originalIngredientShoppingUnits,
-      originalName,
-      originalShowSalesStuff,
-    ],
+    [ingredientShoppingUnits, id, calculationName, showSalesStuff, cocktailCalculationItems, workspaceId, router],
   );
 
   useEffect(() => {

@@ -4,6 +4,8 @@ import { EntityCombobox } from './EntityCombobox';
 import { useRouter } from 'next/router';
 import { UnitForm, IceForm, StepActionForm } from './EntityForms';
 import { Badge, Card, CardBody, FormControl, Input, Label, LabelText, Radio } from '@components/ui';
+import { apiV1FetchSafe } from '@lib/network/apiV1';
+import type { ActionDto } from '@lib/schemas/actions';
 
 interface EntityMapping {
   exportId: string;
@@ -45,10 +47,10 @@ export function EntityMappingSection({
   // Load action groups for stepActions
   useEffect(() => {
     if (entityType === 'stepActions' && workspaceId) {
-      fetch(`/api/v1/workspaces/${workspaceId}/actions`)
-        .then((res) => res.json())
-        .then((data) => {
-          const groups = Array.from(new Set(data.data.map((action: { actionGroup?: string }) => action.actionGroup).filter(Boolean))) as string[];
+      apiV1FetchSafe<ActionDto[]>(`/api/v1/workspaces/${workspaceId}/actions`)
+        .then((actions) => {
+          if (!actions) return;
+          const groups = Array.from(new Set(actions.map((action) => action.actionGroup).filter(Boolean)));
           setActionGroups(groups);
         })
         .catch((err) => console.error('Error loading action groups:', err));
@@ -101,9 +103,10 @@ export function EntityMappingSection({
       if (!workspaceId || typeof workspaceId !== 'string') {
         return [];
       }
-      const response = await fetch(`/api/v1/workspaces/${workspaceId}/${apiEndpoint}?search=${encodeURIComponent(search)}`);
-      const data = await response.json();
-      return data.data || [];
+      const data = await apiV1FetchSafe<Array<{ id: string; name: string; actionGroup?: string }>>(
+        `/api/v1/workspaces/${workspaceId}/${apiEndpoint}?search=${encodeURIComponent(search)}`,
+      );
+      return data || [];
     },
     [workspaceId, apiEndpoint],
   );

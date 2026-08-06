@@ -7,6 +7,8 @@ import { useRouter } from 'next/router';
 import { Button, FormControl, Input, Label, LabelText, LabelTextAlt, Loading } from '@components/ui';
 import { z } from 'zod';
 import { zodFormikValidate } from '@lib/forms/zodFormikValidate';
+import { upsertTranslation } from '@lib/network/workspaces';
+import { alertApiV1Error } from '@lib/network/apiV1';
 
 interface TranslationModalProps {
   slang: string;
@@ -36,29 +38,18 @@ export default function EditTranslationModal(props: TranslationModalProps) {
         }}
         onSubmit={async (values) => {
           try {
-            const body = {
+            if (!workspaceId) return;
+            await upsertTranslation(workspaceId, {
               key: props.identifier,
               translations: {
                 de: values.lableDE,
               },
-            };
-            const response = await fetch(`/api/v1/workspaces/${workspaceId}/translations`, {
-              method: 'PUT',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(body),
             });
-            if (response.status.toString().startsWith('2')) {
-              userContext.refreshWorkspace();
-              modalContext.closeModal();
-              alertService.success(`${props.slang} erfolgreich gespeichert`);
-            } else {
-              const body = await response.json();
-              console.error('EditTranslationModal -> onSubmit[update]', response);
-              alertService.error(body.message ?? `Fehler beim Speichern der ${props.slang}`, response.status, response.statusText);
-            }
+            userContext.refreshWorkspace();
+            modalContext.closeModal();
+            alertService.success(`${props.slang} erfolgreich gespeichert`);
           } catch (error) {
-            console.error('EditTranslationModal -> onSubmit', error);
-            alertService.error('Es ist ein Fehler aufgetreten');
+            alertApiV1Error(error, `Fehler beim Speichern der ${props.slang}`);
           }
         }}
         validate={(values) => validateTranslation(values)}

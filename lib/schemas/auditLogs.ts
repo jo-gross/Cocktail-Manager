@@ -27,6 +27,9 @@ export const AuditLogDtoSchema = z
     action: z.string().openapi({ description: 'Action performed, e.g. `CREATE`, `UPDATE`, `DELETE`.' }),
     createdAt: DateTimeString,
     user: AuditLogUserDtoSchema.nullable().openapi({ description: 'The acting user, or null if the user was removed.' }),
+    changes: z.unknown().nullable().openapi({ description: 'Structured diff of the change, or null.' }),
+    snapshot: z.unknown().nullable().openapi({ description: 'Entity snapshot after the change, or null.' }),
+    exportData: z.unknown().nullable().openapi({ description: 'Exportable entity payload for restore/download, or null.' }),
   })
   .openapi('AuditLog');
 

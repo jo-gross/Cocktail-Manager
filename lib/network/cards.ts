@@ -1,4 +1,5 @@
 import { alertService } from '../alertService';
+import { apiV1Fetch } from './apiV1';
 import { fetchListWithCache, fetchWithCache, prefetchImage } from './fetchWithCache';
 import type { CardDto, CardSummaryDto } from '@lib/schemas/cards';
 import type { CocktailDto } from '@lib/schemas/cocktails';
@@ -114,26 +115,22 @@ export async function prefetchCardData(workspaceId: string, card: CardDto, onPro
 
   for (const cocktailId of cocktailIds) {
     try {
-      const response = await fetch(`/api/v1/workspaces/${workspaceId}/cocktails/${cocktailId}`);
-      if (response.ok) {
-        const body = await response.json();
-        const cocktail = body.data as CocktailDto;
-        await cacheService.set('cocktails', workspaceId, `${cocktailId}-full`, cocktail);
+      const cocktail = await apiV1Fetch<CocktailDto>(`/api/v1/workspaces/${workspaceId}/cocktails/${cocktailId}`);
+      await cacheService.set('cocktails', workspaceId, `${cocktailId}-full`, cocktail);
 
-        if (cocktail.hasImage && cocktail.imageUrl) {
-          imageUrls.push(cocktail.imageUrl);
-        }
-
-        if (cocktail.glass?.hasImage) {
-          imageUrls.push(`/api/v1/workspaces/${workspaceId}/glasses/${cocktail.glass.id}/image`);
-        }
-
-        cocktail.garnishes?.forEach((g) => {
-          if (g.garnish?.hasImage) {
-            imageUrls.push(`/api/v1/workspaces/${workspaceId}/garnishes/${g.garnish.id}/image`);
-          }
-        });
+      if (cocktail.hasImage && cocktail.imageUrl) {
+        imageUrls.push(cocktail.imageUrl);
       }
+
+      if (cocktail.glass?.hasImage) {
+        imageUrls.push(`/api/v1/workspaces/${workspaceId}/glasses/${cocktail.glass.id}/image`);
+      }
+
+      cocktail.garnishes?.forEach((g) => {
+        if (g.garnish?.hasImage) {
+          imageUrls.push(`/api/v1/workspaces/${workspaceId}/garnishes/${g.garnish.id}/image`);
+        }
+      });
     } catch (error) {
       console.error(`Failed to prefetch cocktail ${cocktailId}:`, error);
     }

@@ -1,7 +1,7 @@
 import { ManageEntityLayout } from '@components/layout/ManageEntityLayout';
 import { useRouter } from 'next/router';
 import React, { useCallback, useContext, useEffect, useState } from 'react';
-import { CocktailStatisticItemFull } from '../../../../../models/CocktailStatisticItemFull';
+import type { CocktailStatisticItemDto } from '@lib/schemas/statistics';
 import { alertService } from '@lib/alertService';
 import { FaSyncAlt, FaTrashAlt } from 'react-icons/fa';
 import { UserContext } from '@lib/context/UserContextProvider';
@@ -10,6 +10,10 @@ import { NextPageWithPullToRefresh } from '../../../../../types/next';
 import { TimeRange, TimeRangePicker } from '@components/statistics/TimeRangePicker';
 import { formatDateTime } from '@lib/DateUtils';
 import { getStartOfDay, getEndOfDay } from '@lib/dateHelpers';
+import { fetchWorkspaceSettingsSafe } from '@lib/network/workspaces';
+import { deleteStatisticLog, fetchStatisticLogsSafe } from '@lib/network/statistics';
+import { alertApiV1Error } from '@lib/network/apiV1';
+import type { PaginationMeta } from '@lib/http/responses';
 import {
   Button,
   Card,
@@ -30,13 +34,6 @@ import {
   useSortableData,
 } from '@components/ui';
 import type { SortDirection } from '@components/ui';
-
-interface PaginationInfo {
-  page: number;
-  limit: number;
-  total: number;
-  totalPages: number;
-}
 
 const LogsPage: NextPageWithPullToRefresh = () => {
   const router = useRouter();
@@ -61,15 +58,11 @@ const LogsPage: NextPageWithPullToRefresh = () => {
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
 
   useEffect(() => {
-    if (!workspaceId) return;
-    fetch(`/api/v1/workspaces/${workspaceId}/settings`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.data?.statisticDayStartTime) {
-          setDayStartTime(data.data.statisticDayStartTime);
-        }
-      })
-      .catch(console.error);
+    fetchWorkspaceSettingsSafe(workspaceId, (settings) => {
+      if (settings.statisticDayStartTime) {
+        setDayStartTime(settings.statisticDayStartTime);
+      }
+    });
   }, [workspaceId]);
 
   useEffect(() => {
@@ -79,8 +72,8 @@ const LogsPage: NextPageWithPullToRefresh = () => {
     }
   }, [dayStartTime, getInitialTimeRange]);
 
-  const [cocktailStatisticItems, setCocktailStatisticItems] = useState<CocktailStatisticItemFull[]>([]);
-  const [pagination, setPagination] = useState<PaginationInfo | null>(null);
+  const [cocktailStatisticItems, setCocktailStatisticItems] = useState<CocktailStatisticItemDto[]>([]);
+  const [pagination, setPagination] = useState<PaginationMeta | null>(null);
   const [loading, setLoading] = useState(false);
   const [itemDeleting, setItemDeleting] = useState<Record<string, boolean>>({});
   const [searchQuery, setSearchQuery] = useState('');
@@ -94,7 +87,7 @@ const LogsPage: NextPageWithPullToRefresh = () => {
     [sortKey, sortDirection],
   );
 
-  const getLogSortValue = useCallback((item: CocktailStatisticItemFull, key: string) => {
+  const getLogSortValue = useCallback((item: CocktailStatisticItemDto, key: string) => {
     switch (key) {
       case 'date':
         return new Date(item.date);
@@ -111,43 +104,26 @@ const LogsPage: NextPageWithPullToRefresh = () => {
 
   const sortedLogItems = useSortableData(cocktailStatisticItems, { key: sortKey, direction: sortDirection }, getLogSortValue);
 
-  const loadLogs = useCallback(async () => {
+  const loadLogs = useCallback(() => {
     if (!workspaceId) return;
-    try {
-      setLoading(true);
-      const params = new URLSearchParams();
-      params.append('page', currentPage.toString());
-      params.append('limit', '50');
-      params.append('startDate', timeRange.startDate.toISOString());
-      params.append('endDate', timeRange.endDate.toISOString());
-      if (searchQuery.trim()) {
-        params.append('search', searchQuery.trim());
-      }
-
-      const response = await fetch(`/api/v1/workspaces/${workspaceId}/statistics/logs?${params.toString()}`);
-      if (response.ok) {
-        const body = await response.json();
-        setCocktailStatisticItems(body.data);
-        setPagination(body.pagination);
-      } else {
-        const body = await response.json();
-        console.error('LogsPage -> loadLogs', response);
-        alertService.error(body.error?.message ?? 'Fehler beim Laden der Logs', response.status, response.statusText);
-      }
-    } catch (error) {
-      console.error('LogsPage -> loadLogs', error);
-      alertService.error('Es ist ein Fehler aufgetreten');
-    } finally {
-      setLoading(false);
+    const params = new URLSearchParams();
+    params.append('page', currentPage.toString());
+    params.append('limit', '50');
+    params.append('startDate', timeRange.startDate.toISOString());
+    params.append('endDate', timeRange.endDate.toISOString());
+    if (searchQuery.trim()) {
+      params.append('search', searchQuery.trim());
     }
+
+    fetchStatisticLogsSafe(workspaceId, params, setCocktailStatisticItems, setPagination, setLoading);
   }, [workspaceId, currentPage, timeRange.startDate.getTime(), timeRange.endDate.getTime(), searchQuery]);
 
   useEffect(() => {
     loadLogs();
   }, [loadLogs]);
 
-  LogsPage.pullToRefresh = async () => {
-    await loadLogs();
+  LogsPage.pullToRefresh = () => {
+    loadLogs();
   };
 
   const handleTimeRangeChange = useCallback((newRange: TimeRange) => {
@@ -227,22 +203,15 @@ const LogsPage: NextPageWithPullToRefresh = () => {
                             size="sm"
                             shape={itemDeleting[item.id] ? 'default' : 'square'}
                             onClick={async () => {
+                              if (!workspaceId) return;
                               setItemDeleting({ ...itemDeleting, [item.id]: true });
                               try {
-                                const response = await fetch(`/api/v1/workspaces/${workspaceId}/statistics/logs/${item.id}`, {
-                                  method: 'DELETE',
-                                });
-                                if (response.ok) {
-                                  alertService.success('Log-Eintrag gelöscht');
-                                  await loadLogs();
-                                } else {
-                                  const body = await response.json();
-                                  console.error('LogsPage -> deleteLogItem', response);
-                                  alertService.error(body.error?.message ?? 'Fehler beim Löschen des Log-Eintrags', response.status, response.statusText);
-                                }
+                                await deleteStatisticLog(workspaceId, item.id);
+                                alertService.success('Log-Eintrag gelöscht');
+                                loadLogs();
                               } catch (error) {
                                 console.error('LogsPage -> deleteLogItem', error);
-                                alertService.error('Es ist ein Fehler aufgetreten');
+                                alertApiV1Error(error, 'Fehler beim Löschen des Log-Eintrags');
                               } finally {
                                 setItemDeleting({ ...itemDeleting, [item.id]: false });
                               }

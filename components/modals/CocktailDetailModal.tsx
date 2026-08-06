@@ -5,7 +5,8 @@ import { ModalContext } from '@lib/context/ModalContextProvider';
 import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { UserContext } from '@lib/context/UserContextProvider';
-import { CocktailRating, Role } from '@generated/prisma/client';
+import { Role } from '@generated/prisma/client';
+import type { RatingDto } from '@lib/schemas/ratings';
 import Image from 'next/image';
 import AvatarImage from '../AvatarImage';
 import { Alert, Badge, Button, ButtonGroup, CardBody, CardTitle, Divider, FormControl, Input, Label, Loading, Tooltip } from '@components/ui';
@@ -46,7 +47,7 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
 
   const [ingredients, setIngredients] = useState<IngredientModel[] | undefined>(undefined);
 
-  const [cocktailRatings, setCocktailRatings] = useState<CocktailRating[]>([]);
+  const [cocktailRatings, setCocktailRatings] = useState<RatingDto[]>([]);
   const [ratingsLoading, setRatingsLoading] = useState(true);
   const [ratingError, setRatingsError] = useState(false);
   const [chromiumAvailable, setChromiumAvailable] = useState(false);

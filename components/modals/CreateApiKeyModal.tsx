@@ -6,6 +6,8 @@ import ApiKeyPermissionSelector from '../api-keys/ApiKeyPermissionSelector';
 import { Permission } from '@generated/prisma/client';
 import { FaCopy } from 'react-icons/fa';
 import { Button, ButtonGroup, FormControl, Input, Label, LabelText, Loading } from '@components/ui';
+import { createApiKey } from '@lib/network/apiKeys';
+import { alertApiV1Error } from '@lib/network/apiV1';
 
 interface CreateApiKeyModalProps {
   initialName?: string;
@@ -31,33 +33,20 @@ export default function CreateApiKeyModal(props: CreateApiKeyModalProps) {
       alertService.error('Name ist erforderlich');
       return;
     }
+    if (!workspaceId) return;
 
     setIsSubmitting(true);
     try {
-      const body = {
+      const result = await createApiKey(workspaceId, {
         name: name.trim(),
         expiresAt: expiresAt ? new Date(expiresAt).toISOString() : null,
         permissions: permissions,
-      };
-
-      const response = await fetch(`/api/v1/workspaces/${workspaceId}/api-keys`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
       });
-
-      if (response.ok) {
-        const data = await response.json();
-        if (data.data.key) {
-          setCreatedKey(data.data.key);
-        }
-      } else {
-        const error = await response.json();
-        alertService.error(error.message || 'Fehler beim Erstellen des API Keys');
+      if (result.key) {
+        setCreatedKey(result.key);
       }
     } catch (error) {
-      console.error('CreateApiKeyModal -> handleSubmit', error);
-      alertService.error('Fehler beim Erstellen des API Keys');
+      alertApiV1Error(error, 'Fehler beim Erstellen des API Keys');
     } finally {
       setIsSubmitting(false);
     }

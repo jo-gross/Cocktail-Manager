@@ -6,7 +6,7 @@ import { useRouter } from 'next/router';
 import { FaExclamationTriangle } from 'react-icons/fa';
 import { CocktailRecipeCardSkeleton } from './CocktailRecipeCardSkeleton';
 import { fetchCocktail } from '@lib/network/cocktails';
-import { CocktailRating } from '@generated/prisma/client';
+import type { RatingDto } from '@lib/schemas/ratings';
 import { fetchCocktailRatings } from '@lib/network/cocktailRatings';
 import StatisticActions from '../StatisticActions';
 import ExpandableText, { ExpandableTextHandle } from '../ExpandableText';
@@ -44,7 +44,7 @@ const CocktailRecipeCardItem = forwardRef<CocktailRecipeOverviewItemRef, Cocktai
   );
   const [cocktailRecipeLoading, setCocktailRecipeLoading] = useState(false);
 
-  const [cocktailRatings, setCocktailRatings] = useState<CocktailRating[]>([]);
+  const [cocktailRatings, setCocktailRatings] = useState<RatingDto[]>([]);
   const [cocktailRatingsLoading, setCocktailRatingsLoading] = useState(false);
   const [cocktailRatingsError, setCocktailRatingsError] = useState<boolean>(false);
 

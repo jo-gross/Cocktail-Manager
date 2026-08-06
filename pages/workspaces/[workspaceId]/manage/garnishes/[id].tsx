@@ -4,12 +4,12 @@ import { useRouter } from 'next/router';
 import { useEffect, useRef, useState } from 'react';
 import { Role } from '@generated/prisma/client';
 import { Loading } from '@components/Loading';
-import { alertService } from '@lib/alertService';
 import { withPagePermission } from '@middleware/ui/withPagePermission';
 import { FormikProps } from 'formik';
 import { SingleFormLayout } from '@components/layout/SingleFormLayout';
 import type { GarnishDto } from '@lib/schemas/garnishes';
 import { PageCenter } from '@components/layout/PageCenter';
+import { apiV1FetchSafe } from '@lib/network/apiV1';
 
 function EditGarnishPage() {
   const router = useRouter();
@@ -25,19 +25,9 @@ function EditGarnishPage() {
     if (!id) return;
     if (!workspaceId) return;
     setLoading(true);
-    fetch(`/api/v1/workspaces/${workspaceId}/garnishes/${id}`)
-      .then(async (response) => {
-        const body = await response.json();
-        if (response.ok) {
-          setGarnish(body.data);
-        } else {
-          console.error('GarnishId -> fetchGarnish', response);
-          alertService.error(body.message ?? 'Fehler beim Laden der Garnitur', response.status, response.statusText);
-        }
-      })
-      .catch((error) => {
-        console.error('GarnishId -> fetchGarnish', error);
-        alertService.error('Fehler beim Laden der Garnitur');
+    apiV1FetchSafe<GarnishDto>(`/api/v1/workspaces/${workspaceId}/garnishes/${id}`, undefined, 'Fehler beim Laden der Garnitur')
+      .then((data) => {
+        if (data) setGarnish(data);
       })
       .finally(() => {
         setLoading(false);

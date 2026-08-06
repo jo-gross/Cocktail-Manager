@@ -1,28 +1,31 @@
-import { alertService } from '../alertService';
-import { WorkspaceCocktailRecipeStepAction } from '@generated/prisma/client';
+import { apiV1FetchSafe, apiV1Mutate } from './apiV1';
+import type { ActionDto, ActionCreateInput, ActionUpdateInput } from '@lib/schemas/actions';
+import type { DeletionResult } from '@lib/schemas/common';
 
 export function fetchActions(
   workspaceId: string | string[] | undefined,
-  setActions: (actions: WorkspaceCocktailRecipeStepAction[]) => void,
+  setActions: (actions: ActionDto[]) => void,
   setActionsLoading: (loading: boolean) => void,
 ) {
   if (!workspaceId) return;
   setActionsLoading(true);
-  fetch(`/api/v1/workspaces/${workspaceId}/actions`)
-    .then(async (response) => {
-      const body = await response.json();
-      if (response.ok) {
-        setActions(body.data);
-      } else {
-        console.error('CocktailRecipeForm -> fetchActions', response);
-        alertService.error(body.message ?? 'Fehler beim Laden der Zubereitungsmöglichkeiten', response.status, response.statusText);
-      }
-    })
-    .catch((error) => {
-      console.error('CocktailRecipeForm -> fetchActions', error);
-      alertService.error('Fehler beim laden der Zubereitungsmöglichkeiten');
+  apiV1FetchSafe<ActionDto[]>(`/api/v1/workspaces/${workspaceId}/actions`, undefined, 'Fehler beim Laden der Zubereitungsmöglichkeiten')
+    .then((actions) => {
+      if (actions) setActions(actions);
     })
     .finally(() => {
       setActionsLoading(false);
     });
+}
+
+export function createAction(workspaceId: string | string[], body: ActionCreateInput): Promise<ActionDto> {
+  return apiV1Mutate<ActionDto>(`/api/v1/workspaces/${workspaceId}/actions`, 'POST', body);
+}
+
+export function updateAction(workspaceId: string | string[], actionId: string, body: ActionUpdateInput): Promise<ActionDto> {
+  return apiV1Mutate<ActionDto>(`/api/v1/workspaces/${workspaceId}/actions/${actionId}`, 'PUT', body);
+}
+
+export function deleteAction(workspaceId: string | string[], actionId: string): Promise<DeletionResult> {
+  return apiV1Mutate<DeletionResult>(`/api/v1/workspaces/${workspaceId}/actions/${actionId}`, 'DELETE');
 }

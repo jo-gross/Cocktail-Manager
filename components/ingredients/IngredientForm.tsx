@@ -9,11 +9,12 @@ import { alertService } from '@lib/alertService';
 import { DeleteConfirmationModal } from '../modals/DeleteConfirmationModal';
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import _ from 'lodash';
-import type { IngredientDto } from '@lib/schemas/ingredients';
-import { Ingredient } from '@generated/prisma/client';
+import type { IngredientCreateInput, IngredientDto, IngredientUpdateInput } from '@lib/schemas/ingredients';
 import type { UnitDto, UnitConversionDto } from '@lib/schemas/units';
 import { UserContext } from '@lib/context/UserContextProvider';
 import { fetchUnitConversions, fetchUnits } from '@lib/network/units';
+import { alertApiV1Error } from '@lib/network/apiV1';
+import { checkIngredientLink, checkIngredientName, createIngredient, updateIngredient } from '@lib/network/ingredients';
 import Image from 'next/image';
 import { TagInput } from '../TagInput';
 import CropComponent from '../CropComponent';
@@ -117,9 +118,9 @@ export function IngredientForm(props: IngredientFormProps) {
   const [_loadingDefaultConversions, setLoadingDefaultConversions] = useState(false);
   const [defaultConversions, setDefaultConversions] = useState<UnitConversionDto[]>([]);
 
-  const [similarIngredient, setSimilarIngredient] = useState<Ingredient | undefined>(undefined);
+  const [similarIngredient, setSimilarIngredient] = useState<Pick<IngredientDto, 'id' | 'name'> | undefined>(undefined);
 
-  const [similarLinkIngredient, setSimilarLinkIngredient] = useState<Ingredient | undefined>(undefined);
+  const [similarLinkIngredient, setSimilarLinkIngredient] = useState<Pick<IngredientDto, 'id' | 'name'> | undefined>(undefined);
 
   const [hydratedImage, setHydratedImage] = useState<string | undefined>(undefined);
   const [imageHydrationDone, setImageHydrationDone] = useState(!props.ingredient?.hasImage);
@@ -168,38 +169,40 @@ export function IngredientForm(props: IngredientFormProps) {
     originalImage: hydratedImage ? convertBase64ToFile(hydratedImage) : undefined,
   };
 
+  const ingredientId = props.ingredient?.id;
+
   const checkSimilarName = useCallback(
     async (name: string) => {
-      const response = await fetch(`/api/v1/workspaces/${workspaceId}/ingredients/check?name=${name}`);
-      const data = await response.json();
-      if (data.data != null) {
-        if (data.data.id != props.ingredient?.id) {
-          setSimilarIngredient(data.data);
+      if (!workspaceId) return;
+      try {
+        const match = await checkIngredientName(workspaceId, name);
+        if (match != null && match.id != ingredientId) {
+          setSimilarIngredient(match);
         } else {
           setSimilarIngredient(undefined);
         }
-      } else {
+      } catch {
         setSimilarIngredient(undefined);
       }
     },
-    [props.ingredient?.id, workspaceId],
+    [ingredientId, workspaceId],
   );
 
   const checkSimilarLink = useCallback(
     async (url: string) => {
-      const response = await fetch(`/api/v1/workspaces/${workspaceId}/ingredients/check?link=${encodeURI(url)}`);
-      const data = await response.json();
-      if (data.data != null) {
-        if (data.data.id != props.ingredient?.id) {
-          setSimilarLinkIngredient(data.data);
+      if (!workspaceId) return;
+      try {
+        const match = await checkIngredientLink(workspaceId, url);
+        if (match != null && match.id != ingredientId) {
+          setSimilarLinkIngredient(match);
         } else {
           setSimilarLinkIngredient(undefined);
         }
-      } else {
+      } catch {
         setSimilarLinkIngredient(undefined);
       }
     },
-    [props.ingredient?.id, workspaceId],
+    [ingredientId, workspaceId],
   );
 
   if (props.ingredient && !imageHydrationDone) {
@@ -215,9 +218,9 @@ export function IngredientForm(props: IngredientFormProps) {
       innerRef={formRef}
       initialValues={initialValues}
       onSubmit={async (values) => {
+        if (!workspaceId) return;
         try {
-          const body: Record<string, unknown> = {
-            id: props.ingredient == undefined ? undefined : props.ingredient.id,
+          const body: IngredientCreateInput & IngredientUpdateInput = {
             name: values.name.trim(),
             shortName: values.shortName?.trim() == '' ? null : values.shortName?.trim(),
             notes: values.notes?.trim() == '' ? null : values.notes?.trim(),
@@ -228,50 +231,32 @@ export function IngredientForm(props: IngredientFormProps) {
             link: values.link?.trim() == '' ? null : values.link?.trim(),
             tags: values.tags,
           };
+          if (props.ingredient?.id) {
+            body.id = props.ingredient.id;
+          }
           // Omitting `image` on update removes it; re-send hydrated/kept base64.
           if (values.image != undefined && values.image.trim() !== '') {
             body.image = values.image.trim();
           }
           if (props.ingredient == undefined) {
-            const response = await fetch(`/api/v1/workspaces/${workspaceId}/ingredients`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(body),
-            });
-            if (response.status.toString().startsWith('2')) {
-              if (props.onSaved != undefined) {
-                props.onSaved((await response.json()).data.id);
-              } else {
-                alertService.success('Zutat erfolgreich erstellt');
-                await routingContext.conditionalBack(`/workspaces/${workspaceId}/manage/ingredients`);
-              }
+            const created = await createIngredient(workspaceId, body);
+            if (props.onSaved != undefined) {
+              props.onSaved(created.id);
             } else {
-              const body = await response.json();
-              console.error('IngredientForm -> onSubmit[create]', response);
-              alertService.error(body.message ?? 'Fehler beim Erstellen der Zutat', response.status, response.statusText);
+              alertService.success('Zutat erfolgreich erstellt');
+              await routingContext.conditionalBack(`/workspaces/${workspaceId}/manage/ingredients`);
             }
           } else {
-            const response = await fetch(`/api/v1/workspaces/${workspaceId}/ingredients/${props.ingredient.id}`, {
-              method: 'PUT',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(body),
-            });
-            if (response.status.toString().startsWith('2')) {
-              if (props.onSaved != undefined) {
-                props.onSaved(props.ingredient.id);
-              } else {
-                alertService.success('Zutat erfolgreich gespeichert');
-                await routingContext.conditionalBack(`/workspaces/${workspaceId}/manage/ingredients`);
-              }
+            await updateIngredient(workspaceId, props.ingredient.id, body);
+            if (props.onSaved != undefined) {
+              props.onSaved(props.ingredient.id);
             } else {
-              const body = await response.json();
-              console.error('IngredientForm -> onSubmit[update]', response);
-              alertService.error(body.message ?? 'Fehler beim Speichern der Zutat', response.status, response.statusText);
+              alertService.success('Zutat erfolgreich gespeichert');
+              await routingContext.conditionalBack(`/workspaces/${workspaceId}/manage/ingredients`);
             }
           }
         } catch (error) {
-          console.error('IngredientForm -> onSubmit', error);
-          alertService.error('Es ist ein Fehler aufgetreten');
+          alertApiV1Error(error, props.ingredient == undefined ? 'Fehler beim Erstellen der Zutat' : 'Fehler beim Speichern der Zutat');
         }
       }}
       validate={(values) => {

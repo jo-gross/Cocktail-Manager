@@ -3,13 +3,14 @@ import Link from 'next/link';
 import { FaRegClone, FaRegEdit } from 'react-icons/fa';
 import React, { useContext } from 'react';
 import { UserContext } from '@lib/context/UserContextProvider';
-import type { CardSummaryDto } from '@lib/schemas/cards';
+import type { CardDto, CardSummaryDto } from '@lib/schemas/cards';
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import InputModal from '../modals/InputModal';
 import { alertService } from '@lib/alertService';
 import { RoutingContext } from '@lib/context/RoutingContextProvider';
 import { Badge, Button, Card, CardActions, CardBody, CardTitle } from '@components/ui';
 import CardSnapshot from './CardSnapshot';
+import { alertApiV1Error, apiV1Mutate } from '@lib/network/apiV1';
 
 interface CardOverviewItemProps {
   card: CardSummaryDto;
@@ -103,23 +104,13 @@ export default function CardOverviewItem(props: CardOverviewItemProps) {
                     title={'Name'}
                     onInputSubmit={async (value) => {
                       try {
-                        const response = await fetch(`/api/v1/workspaces/${props.workspaceId}/cards/${props.card.id}/clone`, {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ name: value }),
+                        const cloned = await apiV1Mutate<CardDto>(`/api/v1/workspaces/${props.workspaceId}/cards/${props.card.id}/clone`, 'POST', {
+                          name: value,
                         });
-
-                        const body = await response.json();
-                        if (response.ok) {
-                          alertService.success('Karte erfolgreich dupliziert');
-                          await routingContext.conditionalBack(`/workspaces/${props.workspaceId}/manage/cards/${body.data.id}`);
-                        } else {
-                          console.error('CardId -> cloneCard', response);
-                          alertService.error(body.error?.message ?? 'Fehler beim Duplizieren der Karte', response.status, response.statusText);
-                        }
+                        alertService.success('Karte erfolgreich dupliziert');
+                        await routingContext.conditionalBack(`/workspaces/${props.workspaceId}/manage/cards/${cloned.id}`);
                       } catch (error) {
-                        console.error('CardId -> cloneCard', error);
-                        alertService.error('Fehler beim Duplizieren der Karte');
+                        alertApiV1Error(error, 'Fehler beim Duplizieren der Karte');
                         throw error;
                       }
                     }}

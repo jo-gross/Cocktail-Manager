@@ -7,6 +7,8 @@ import { useRouter } from 'next/router';
 import { Button, FormControl, Input, Label, LabelText, LabelTextAlt, Loading } from '@components/ui';
 import { z } from 'zod';
 import { zodFormikValidate } from '@lib/forms/zodFormikValidate';
+import { createIce } from '@lib/network/ices';
+import { alertApiV1Error } from '@lib/network/apiV1';
 
 const iceSchema = z.object({
   identifier: z
@@ -36,30 +38,18 @@ export default function CreateIceModal() {
         }}
         onSubmit={async (values) => {
           try {
-            const body = {
+            if (!workspaceId) return;
+            await createIce(workspaceId, {
               name: values.identifier,
               translations: {
                 de: values.lableDE,
               },
-            };
-
-            const response = await fetch(`/api/v1/workspaces/${workspaceId}/ice`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(body),
             });
-            if (response.status.toString().startsWith('2')) {
-              router.reload();
-              modalContext.closeModal();
-              alertService.success('Zubereitungsmethode erfolgreich erstellt');
-            } else {
-              const body = await response.json();
-              console.error('CocktailStepActionModal -> onSubmit[create]', response);
-              alertService.error(body.message ?? 'Fehler beim Erstellen der Zubereitungsmethode', response.status, response.statusText);
-            }
+            router.reload();
+            modalContext.closeModal();
+            alertService.success('Zubereitungsmethode erfolgreich erstellt');
           } catch (error) {
-            console.error('CocktailStepActionModal -> onSubmit', error);
-            alertService.error('Es ist ein Fehler aufgetreten');
+            alertApiV1Error(error, 'Fehler beim Erstellen der Zubereitungsmethode');
           }
         }}
         validate={(values) => validateIce(values)}

@@ -9,6 +9,8 @@ import { alertService } from '@lib/alertService';
 import { Button, ButtonGroup, FormControl, Input, Label, LabelText, LabelTextAlt, Loading, Select } from '@components/ui';
 import { z } from 'zod';
 import { zodFormikValidate } from '@lib/forms/zodFormikValidate';
+import { createUnitConversion, updateUnitConversion } from '@lib/network/units';
+import { alertApiV1Error } from '@lib/network/apiV1';
 
 interface UnitConversionModalProps {
   unitConversion?: UnitConversionDto;
@@ -49,48 +51,26 @@ export default function UnitConversionModal(props: UnitConversionModalProps) {
         }}
         onSubmit={async (values) => {
           try {
+            if (!workspaceId) return;
             if (props.unitConversion == undefined) {
-              const body = {
+              await createUnitConversion(workspaceId, {
                 fromUnitId: values.fromUnitId,
                 toUnitId: values.toUnitId,
                 factor: Number(values.factor),
-              };
-              const response = await fetch(`/api/v1/workspaces/${workspaceId}/units/conversions`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(body),
               });
-              if (response.status.toString().startsWith('2')) {
-                props.onSaved?.();
-                modalContext.closeModal();
-                alertService.success('Umrechnung erfolgreich erstellt');
-              } else {
-                const body = await response.json();
-                console.error('UnitConversionModal -> onSubmit[create]', response);
-                alertService.error(body.message ?? 'Fehler beim Erstellen der Umrechnung', response.status, response.statusText);
-              }
+              props.onSaved?.();
+              modalContext.closeModal();
+              alertService.success('Umrechnung erfolgreich erstellt');
             } else {
-              const body = {
+              await updateUnitConversion(workspaceId, props.unitConversion.id, {
                 factor: Number(values.factor),
-              };
-              const response = await fetch(`/api/v1/workspaces/${workspaceId}/units/conversions/${props.unitConversion.id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(body),
               });
-              if (response.status.toString().startsWith('2')) {
-                props.onSaved?.();
-                modalContext.closeModal();
-                alertService.success('Umrechnung erfolgreich gespeichert');
-              } else {
-                const body = await response.json();
-                console.error('UnitConversionModal -> onSubmit[update]', response);
-                alertService.error(body.message ?? 'Fehler beim Speichern der Umrechnung', response.status, response.statusText);
-              }
+              props.onSaved?.();
+              modalContext.closeModal();
+              alertService.success('Umrechnung erfolgreich gespeichert');
             }
           } catch (error) {
-            console.error('UnitConversionModal -> onSubmit', error);
-            alertService.error('Es ist ein Fehler aufgetreten');
+            alertApiV1Error(error, props.unitConversion == undefined ? 'Fehler beim Erstellen der Umrechnung' : 'Fehler beim Speichern der Umrechnung');
           }
         }}
         validate={(values) => validateUnitConversion(values)}

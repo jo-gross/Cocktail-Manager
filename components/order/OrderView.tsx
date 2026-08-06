@@ -5,6 +5,7 @@ import type { CardDto, CardGroupDto, CardSummaryDto } from '@lib/schemas/cards';
 import { GlassModel } from '../../models/GlassModel';
 import { fetchGlasses } from '../../lib/network/glasses';
 import { addCocktailToQueue } from '../../lib/network/cocktailTracking';
+import { apiV1FetchSafe } from '../../lib/network/apiV1';
 import { alertService } from '../../lib/alertService';
 import { Loading } from '../Loading';
 import { BsSearch } from 'react-icons/bs';
@@ -75,19 +76,9 @@ export const OrderView = React.memo(function OrderView({ cocktailCards, workspac
   useEffect(() => {
     if (!workspaceId) return;
     setCocktailsLoading(true);
-    fetch(`/api/v1/workspaces/${workspaceId}/cocktails?search=`)
-      .then(async (response) => {
-        const body = await response.json();
-        if (response.ok) {
-          setCocktails(body.data);
-        } else {
-          console.error('OrderView -> fetchCocktails', response);
-          alertService.error(body.error ?? 'Fehler beim Laden der Cocktails', response.status, response.statusText);
-        }
-      })
-      .catch((error) => {
-        console.error('OrderView -> fetchCocktails', error);
-        alertService.error('Fehler beim Laden der Cocktails');
+    apiV1FetchSafe<CocktailSummaryDto[]>(`/api/v1/workspaces/${workspaceId}/cocktails?search=`, undefined, 'Fehler beim Laden der Cocktails')
+      .then((data) => {
+        if (data) setCocktails(data);
       })
       .finally(() => setCocktailsLoading(false));
   }, [workspaceId]);
@@ -100,21 +91,9 @@ export const OrderView = React.memo(function OrderView({ cocktailCards, workspac
     }
 
     setSelectedCardLoading(true);
-    fetch(`/api/v1/workspaces/${workspaceId}/cards/${selectedCardId}`)
-      .then(async (response) => {
-        const body = await response.json();
-        if (response.ok) {
-          setSelectedCard(body.data);
-        } else {
-          console.error('OrderView -> fetchCard', response);
-          alertService.error(body.error ?? 'Fehler beim Laden der Karte', response.status, response.statusText);
-          setSelectedCard(undefined);
-        }
-      })
-      .catch((error) => {
-        console.error('OrderView -> fetchCard', error);
-        alertService.error('Fehler beim Laden der Karte');
-        setSelectedCard(undefined);
+    apiV1FetchSafe<CardDto>(`/api/v1/workspaces/${workspaceId}/cards/${selectedCardId}`, undefined, 'Fehler beim Laden der Karte')
+      .then((data) => {
+        setSelectedCard(data);
       })
       .finally(() => setSelectedCardLoading(false));
   }, [workspaceId, selectedCardId]);

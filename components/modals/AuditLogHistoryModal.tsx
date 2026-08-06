@@ -7,6 +7,9 @@ import { buildExportData } from '@lib/auditExport';
 import { formatDateTime, formatDateTimeCompact } from '@lib/DateUtils';
 import { Badge, Button, Loading } from '@components/ui';
 
+import type { AuditLogDto } from '@lib/schemas/auditLogs';
+import { fetchAuditLogsSafe } from '@lib/network/auditLogs';
+
 interface AuditLogHistoryModalProps {
   entityType: string;
   entityId: string;
@@ -28,19 +31,12 @@ interface AuditChange {
 type AuditSnapshot = Record<string, unknown>;
 type AuditExportData = Record<string, unknown>;
 
-interface AuditLog {
-  id: string;
-  action: 'CREATE' | 'UPDATE' | 'DELETE';
-  changes: AuditChange[] | Record<string, unknown>;
-  createdAt: string;
-  user: {
-    id: string;
-    name: string | null;
-    image: string | null;
-  } | null;
-  snapshot?: AuditSnapshot;
-  exportData?: AuditExportData;
-}
+type AuditLog = AuditLogDto & {
+  action: 'CREATE' | 'UPDATE' | 'DELETE' | string;
+  changes: AuditChange[] | Record<string, unknown> | null;
+  snapshot?: AuditSnapshot | null;
+  exportData?: AuditExportData | null;
+};
 
 const LONG_TEXT_FIELDS = ['description', 'preparation', 'history', 'notes'];
 
@@ -82,24 +78,9 @@ export function AuditLogHistoryModal({ entityType, entityId, entityName }: Audit
 
   useEffect(() => {
     if (workspaceId && entityId) {
-      fetchLogs();
+      fetchAuditLogsSafe(workspaceId, { entityType, entityId, limit: 100 }, (logs) => setLogs(logs as AuditLog[]), setLoading);
     }
-  }, [workspaceId, entityId]);
-
-  const fetchLogs = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch(`/api/v1/workspaces/${workspaceId}/audit-logs?entityType=${entityType}&entityId=${entityId}&limit=100`);
-      if (response.ok) {
-        const data = await response.json();
-        setLogs(data.data);
-      }
-    } catch (error) {
-      console.error('Failed to fetch audit logs', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [workspaceId, entityId, entityType]);
 
   const t = (text: string) => userContext.getTranslation(text, 'de');
 

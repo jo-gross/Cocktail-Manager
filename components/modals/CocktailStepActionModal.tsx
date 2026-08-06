@@ -1,4 +1,4 @@
-import { WorkspaceCocktailRecipeStepAction } from '@generated/prisma/client';
+import type { ActionDto } from '@lib/schemas/actions';
 import { Field, Formik } from 'formik';
 import React, { useContext } from 'react';
 import { UserContext } from '@lib/context/UserContextProvider';
@@ -8,9 +8,11 @@ import { useRouter } from 'next/router';
 import { Button, FormControl, Input, Label, LabelText, LabelTextAlt, Loading, Radio } from '@components/ui';
 import { z } from 'zod';
 import { zodFormikValidate } from '@lib/forms/zodFormikValidate';
+import { createAction, updateAction } from '@lib/network/actions';
+import { alertApiV1Error } from '@lib/network/apiV1';
 
 interface CocktailStepActionModalProps {
-  cocktailStepAction?: WorkspaceCocktailRecipeStepAction;
+  cocktailStepAction?: ActionDto;
   cocktailStepActionGroups?: string[];
 }
 
@@ -65,47 +67,35 @@ export default function CocktailStepActionModal(props: CocktailStepActionModalPr
         }}
         onSubmit={async (values) => {
           try {
+            if (!workspaceId) return;
+            const actionGroup = values.actionGroup?.trim();
+            if (!actionGroup) {
+              alertService.error('Aktionsgruppe ist erforderlich');
+              return;
+            }
             const body = {
               name: values.action,
-              actionGroup: values.actionGroup?.trim() == '' ? null : values.actionGroup?.trim(),
+              actionGroup,
               translations: {
                 de: values.lableDE,
               },
             };
             if (props.cocktailStepAction == undefined) {
-              const response = await fetch(`/api/v1/workspaces/${workspaceId}/actions`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(body),
-              });
-              if (response.status.toString().startsWith('2')) {
-                router.reload();
-                modalContext.closeModal();
-                alertService.success('Zubereitungsmethode erfolgreich erstellt');
-              } else {
-                const body = await response.json();
-                console.error('CocktailStepActionModal -> onSubmit[create]', response);
-                alertService.error(body.message ?? 'Fehler beim Erstellen der Zubereitungsmethode', response.status, response.statusText);
-              }
+              await createAction(workspaceId, body);
+              router.reload();
+              modalContext.closeModal();
+              alertService.success('Zubereitungsmethode erfolgreich erstellt');
             } else {
-              const response = await fetch(`/api/v1/workspaces/${workspaceId}/actions/${props.cocktailStepAction.id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(body),
-              });
-              if (response.status.toString().startsWith('2')) {
-                router.reload();
-                modalContext.closeModal();
-                alertService.success('Zubereitungsmethode erfolgreich gespeichert');
-              } else {
-                const body = await response.json();
-                console.error('CocktailStepActionModal -> onSubmit[update]', response);
-                alertService.error(body.message ?? 'Fehler beim Speichern der Zubereitungsmethode', response.status, response.statusText);
-              }
+              await updateAction(workspaceId, props.cocktailStepAction.id, body);
+              router.reload();
+              modalContext.closeModal();
+              alertService.success('Zubereitungsmethode erfolgreich gespeichert');
             }
           } catch (error) {
-            console.error('CocktailStepActionModal -> onSubmit', error);
-            alertService.error('Es ist ein Fehler aufgetreten');
+            alertApiV1Error(
+              error,
+              props.cocktailStepAction == undefined ? 'Fehler beim Erstellen der Zubereitungsmethode' : 'Fehler beim Speichern der Zubereitungsmethode',
+            );
           }
         }}
         validate={(values) => validateCocktailStepAction(values)}

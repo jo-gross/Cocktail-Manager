@@ -74,7 +74,7 @@ export const SearchModal = forwardRef<SearchModalRef, SearchModalProps>((props, 
             setCocktails(body.data);
           } else {
             console.error('SearchModal -> search', response);
-            alertService.error(body.message ?? 'Fehler beim Suchen der Cocktails', response.status, response.statusText);
+            alertService.error(body.error?.message ?? body.message ?? 'Fehler beim Suchen der Cocktails', response.status, response.statusText);
           }
         })
         .catch((error) => {

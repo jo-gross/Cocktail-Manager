@@ -153,7 +153,7 @@ function EditCocktailRecipe() {
                   } else {
                     console.error('CocktailId -> (un)archive', response);
                     alertService.error(
-                      body.message ?? `Fehler beim ${cocktailRecipe?.isArchived ? 'Entarchivieren' : 'Archivieren'} der Karte`,
+                      body.error?.message ?? body.message ?? `Fehler beim ${cocktailRecipe?.isArchived ? 'Entarchivieren' : 'Archivieren'} der Karte`,
                       response.status,
                       response.statusText,
                     );

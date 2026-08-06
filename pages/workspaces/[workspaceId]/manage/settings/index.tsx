@@ -3,7 +3,8 @@ import { alertService } from '@lib/alertService';
 import { useRouter } from 'next/router';
 import { BackupStructure } from '../../../../api/workspaces/[workspaceId]/admin/backups/backupStructure';
 import { ManageEntityLayout } from '@components/layout/ManageEntityLayout';
-import { Role, WorkspaceCocktailRecipeStepAction } from '@generated/prisma/client';
+import { Role } from '@generated/prisma/client';
+import type { ActionDto } from '@lib/schemas/actions';
 import type { UnitDto, UnitConversionDto } from '@lib/schemas/units';
 import type { IceDto } from '@lib/schemas/ices';
 import { UserContext } from '@lib/context/UserContextProvider';
@@ -17,12 +18,12 @@ import CocktailStepActionModal from '../../../../../components/modals/CocktailSt
 import EditTranslationModal from '../../../../../components/modals/EditTranslationModal';
 import UnitModal from '../../../../../components/modals/UnitModal';
 import UnitConversionModal from '../../../../../components/modals/UnitConversionModal';
-import { fetchUnitConversions, fetchUnits } from '@lib/network/units';
-import { fetchActions } from '@lib/network/actions';
-import { apiV1FetchSafe, apiV1Mutate } from '@lib/network/apiV1';
+import { fetchUnitConversions, fetchUnits, deleteUnit as deleteUnitRequest, deleteUnitConversion as deleteUnitConversionRequest } from '@lib/network/units';
+import { fetchActions, deleteAction } from '@lib/network/actions';
+import { alertApiV1Error, apiV1FetchSafe, apiV1Mutate } from '@lib/network/apiV1';
 import type { WorkspaceSettingsDto } from '@lib/schemas/workspace';
-
-import { fetchIce } from '@lib/network/ices';
+import { deleteWorkspace, updateWorkspace } from '@lib/network/workspaces';
+import { fetchIce, deleteIce as deleteIceRequest } from '@lib/network/ices';
 import CreateIceModal from '../../../../../components/modals/CreateIceModal';
 import { withPagePermission } from '@middleware/ui/withPagePermission';
 import {
@@ -65,7 +66,7 @@ function WorkspaceSettingPage() {
   const [workspaceDeleting, setWorkspaceDeleting] = useState<boolean>(false);
   const [workspaceRenaming, setWorkspaceRenaming] = useState<boolean>(false);
 
-  const [workspaceActions, setWorkspaceActions] = useState<WorkspaceCocktailRecipeStepAction[]>([]);
+  const [workspaceActions, setWorkspaceActions] = useState<ActionDto[]>([]);
   const [workspaceActionLoading, setWorkspaceActionLoading] = useState<boolean>(false);
 
   const [units, setUnits] = useState<UnitDto[]>([]);
@@ -158,7 +159,7 @@ function WorkspaceSettingPage() {
       } else {
         const body = await response.json();
         console.error('Admin -> ImportBackup', response);
-        alertService.error(body.message ?? 'Fehler beim Importieren', response.status, response.statusText);
+        alertService.error(body.error?.message ?? body.message ?? 'Fehler beim Importieren', response.status, response.statusText);
       }
     } catch (error) {
       console.error('SettingsPage -> importBackup', error);
@@ -169,53 +170,32 @@ function WorkspaceSettingPage() {
   }, [importing, uploadImportFile, workspaceId]);
 
   const handleDeleteWorkspace = useCallback(async () => {
+    if (!workspaceId) return;
     if (!confirm('Workspace inkl. aller Zutaten und Rezepte wirklich löschen?')) return;
     setWorkspaceDeleting(true);
-    fetch(`/api/v1/workspaces/${workspaceId}`, {
-      method: 'DELETE',
-    })
-      .then(async (response) => {
-        const body = await response.json();
-        if (response.ok) {
-          router.replace('/').then(() => alertService.success('Erfolgreich gelöscht'));
-        } else {
-          console.error('SettingsPage -> DeleteWorkspace', response);
-          alertService.error(body.error?.message ?? 'Fehler beim Löschen der Workspace', response.status, response.statusText);
-        }
-      })
-      .catch((error) => {
-        console.error('SettingsPage -> handleDeleteWorkspace', error);
-        alertService.error('Es ist ein Fehler aufgetreten');
-      })
-      .finally(() => {
-        setWorkspaceDeleting(false);
-      });
+    try {
+      await deleteWorkspace(workspaceId);
+      await router.replace('/');
+      alertService.success('Erfolgreich gelöscht');
+    } catch (error) {
+      alertApiV1Error(error, 'Fehler beim Löschen der Workspace');
+    } finally {
+      setWorkspaceDeleting(false);
+    }
   }, [router, workspaceId]);
 
   const handleRenameWorkspace = useCallback(async () => {
+    if (!workspaceId) return;
     setWorkspaceRenaming(true);
-    fetch(`/api/v1/workspaces/${workspaceId}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: newWorkspaceName }),
-    })
-      .then(async (response) => {
-        const body = await response.json();
-        if (response.ok) {
-          router.reload();
-          alertService.success(`Umbenennen erfolgreich`);
-        } else {
-          console.error('Admin -> RenameWorkspace', response);
-          alertService.error(body.error?.message ?? 'Fehler beim Umbenennen der Workspace', response.status, response.statusText);
-        }
-      })
-      .catch((error) => {
-        console.error('SettingsPage -> handleRenameWorkspace', error);
-        alertService.error('Es ist ein Fehler aufgetreten');
-      })
-      .finally(() => {
-        setWorkspaceRenaming(false);
-      });
+    try {
+      await updateWorkspace(workspaceId, { name: newWorkspaceName });
+      router.reload();
+      alertService.success(`Umbenennen erfolgreich`);
+    } catch (error) {
+      alertApiV1Error(error, 'Fehler beim Umbenennen der Workspace');
+    } finally {
+      setWorkspaceRenaming(false);
+    }
   }, [newWorkspaceName, router, workspaceId]);
 
   const deleteCocktailRecipeAction = useCallback(
@@ -223,26 +203,15 @@ function WorkspaceSettingPage() {
       if (workspaceId == undefined) return;
       if (deleting[actionId] ?? false) return;
       setDeleting({ ...deleting, [actionId]: true });
-      fetch(`/api/v1/workspaces/${workspaceId}/actions/${actionId}`, {
-        method: 'DELETE',
-      })
-        .then(async (response) => {
-          if (response.ok) {
-            fetchActions(workspaceId, setWorkspaceActions, setWorkspaceActionLoading);
-            alertService.success('Erfolgreich gelöscht');
-          } else {
-            const body = await response.json();
-            console.error('SettingsPage -> deleteCocktailRecipeAction', response);
-            alertService.error(body.message ?? 'Fehler beim Löschen', response.status, response.statusText);
-          }
-        })
-        .catch((error) => {
-          console.error('SettingsPage -> deleteCocktailRecipeAction', error);
-          alertService.error('Fehler beim Löschen');
-        })
-        .finally(() => {
-          setDeleting({ ...deleting, [actionId]: false });
-        });
+      try {
+        await deleteAction(workspaceId, actionId);
+        fetchActions(workspaceId, setWorkspaceActions, setWorkspaceActionLoading);
+        alertService.success('Erfolgreich gelöscht');
+      } catch (error) {
+        alertApiV1Error(error, 'Fehler beim Löschen');
+      } finally {
+        setDeleting({ ...deleting, [actionId]: false });
+      }
     },
     [deleting, workspaceId],
   );
@@ -252,27 +221,16 @@ function WorkspaceSettingPage() {
       if (workspaceId == undefined) return;
       if (deleting[unitId] ?? false) return;
       setDeleting({ ...deleting, [unitId]: true });
-      fetch(`/api/v1/workspaces/${workspaceId}/units/${unitId}`, {
-        method: 'DELETE',
-      })
-        .then(async (response) => {
-          if (response.ok) {
-            fetchUnits(workspaceId, setUnits, setUnitsLoading);
-            fetchUnitConversions(workspaceId, setUnitConversionsLoading, setUnitConversions);
-            alertService.success('Erfolgreich gelöscht');
-          } else {
-            const body = await response.json();
-            console.error('SettingsPage -> deleteUnit', response);
-            alertService.error(body.message ?? 'Fehler beim Löschen', response.status, response.statusText);
-          }
-        })
-        .catch((error) => {
-          console.error('SettingsPage -> deleteUnit', error);
-          alertService.error('Fehler beim Löschen');
-        })
-        .finally(() => {
-          setDeleting({ ...deleting, [unitId]: false });
-        });
+      try {
+        await deleteUnitRequest(workspaceId, unitId);
+        fetchUnits(workspaceId, setUnits, setUnitsLoading);
+        fetchUnitConversions(workspaceId, setUnitConversionsLoading, setUnitConversions);
+        alertService.success('Erfolgreich gelöscht');
+      } catch (error) {
+        alertApiV1Error(error, 'Fehler beim Löschen');
+      } finally {
+        setDeleting({ ...deleting, [unitId]: false });
+      }
     },
     [deleting, workspaceId],
   );
@@ -282,26 +240,15 @@ function WorkspaceSettingPage() {
       if (workspaceId == undefined) return;
       if (deleting[unitConversionId] ?? false) return;
       setDeleting({ ...deleting, [unitConversionId]: true });
-      fetch(`/api/v1/workspaces/${workspaceId}/units/conversions/${unitConversionId}`, {
-        method: 'DELETE',
-      })
-        .then(async (response) => {
-          if (response.ok) {
-            fetchUnitConversions(workspaceId, setUnitConversionsLoading, setUnitConversions);
-            alertService.success('Erfolgreich gelöscht');
-          } else {
-            const body = await response.json();
-            console.error('SettingsPage -> deleteUnitConversion', response);
-            alertService.error(body.message ?? 'Fehler beim Löschen', response.status, response.statusText);
-          }
-        })
-        .catch((error) => {
-          console.error('SettingsPage -> deleteUnitConversion', error);
-          alertService.error('Fehler beim Löschen');
-        })
-        .finally(() => {
-          setDeleting({ ...deleting, [unitConversionId]: false });
-        });
+      try {
+        await deleteUnitConversionRequest(workspaceId, unitConversionId);
+        fetchUnitConversions(workspaceId, setUnitConversionsLoading, setUnitConversions);
+        alertService.success('Erfolgreich gelöscht');
+      } catch (error) {
+        alertApiV1Error(error, 'Fehler beim Löschen');
+      } finally {
+        setDeleting({ ...deleting, [unitConversionId]: false });
+      }
     },
     [deleting, workspaceId],
   );
@@ -311,26 +258,15 @@ function WorkspaceSettingPage() {
       if (workspaceId == undefined) return;
       if (deleting[iceId] ?? false) return;
       setDeleting({ ...deleting, [iceId]: true });
-      fetch(`/api/v1/workspaces/${workspaceId}/ice/${iceId}`, {
-        method: 'DELETE',
-      })
-        .then(async (response) => {
-          if (response.ok) {
-            fetchIce(workspaceId, setIceOptions, setIceOptionsLoading);
-            alertService.success('Erfolgreich gelöscht');
-          } else {
-            const body = await response.json();
-            console.error('SettingsPage -> deleteIce', response);
-            alertService.error(body.error?.message ?? 'Fehler beim Löschen', response.status, response.statusText);
-          }
-        })
-        .catch((error) => {
-          console.error('SettingsPage -> deleteIce', error);
-          alertService.error('Fehler beim Löschen');
-        })
-        .finally(() => {
-          setDeleting({ ...deleting, [iceId]: false });
-        });
+      try {
+        await deleteIceRequest(workspaceId, iceId);
+        fetchIce(workspaceId, setIceOptions, setIceOptionsLoading);
+        alertService.success('Erfolgreich gelöscht');
+      } catch (error) {
+        alertApiV1Error(error, 'Fehler beim Löschen');
+      } finally {
+        setDeleting({ ...deleting, [iceId]: false });
+      }
     },
     [deleting, workspaceId],
   );

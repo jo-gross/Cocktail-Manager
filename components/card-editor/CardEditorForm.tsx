@@ -13,6 +13,7 @@ import { zodFormikValidate } from '@lib/forms/zodFormikValidate';
 import { DeleteConfirmationModal } from '@components/modals/DeleteConfirmationModal';
 import type { CardDto } from '@lib/schemas/cards';
 import type { CocktailSummaryDto } from '@lib/schemas/cocktails';
+import { alertApiV1Error, apiV1Mutate } from '@lib/network/apiV1';
 import { Button, Divider, FormControl, Input, Label, LabelText, LabelTextAlt } from '@components/ui';
 import { CardEditorToolbar } from './CardEditorToolbar';
 import { CardGroupSection } from './CardGroupSection';
@@ -153,39 +154,16 @@ export function CardEditorForm({ card, cocktails, loadingCocktails, workspaceId,
           };
 
           if (card == undefined) {
-            const response = await fetch(`/api/v1/workspaces/${workspaceId}/cards`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(input),
-            });
-
-            if (response.ok) {
-              alertService.success('Karte erfolgreich erstellt');
-              await routingContext.conditionalBack(`/workspaces/${workspaceId}/manage/cards`);
-            } else {
-              const body = await response.json();
-              console.error('CardId -> onSubmit[create]', response);
-              alertService.error(body.error?.message ?? 'Fehler beim Erstellen der Karte', response.status, response.statusText);
-            }
+            await apiV1Mutate<CardDto>(`/api/v1/workspaces/${workspaceId}/cards`, 'POST', input);
+            alertService.success('Karte erfolgreich erstellt');
+            await routingContext.conditionalBack(`/workspaces/${workspaceId}/manage/cards`);
           } else {
-            const response = await fetch(`/api/v1/workspaces/${workspaceId}/cards/${card.id}`, {
-              method: 'PUT',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(input),
-            });
-
-            if (response.ok) {
-              alertService.success('Karte erfolgreich gespeichert');
-              await routingContext.conditionalBack(`/workspaces/${workspaceId}/manage/cards`);
-            } else {
-              const body = await response.json();
-              console.error('CardId -> onSubmit[update]', response);
-              alertService.error(body.error?.message ?? 'Fehler beim Speichern der Karte', response.status, response.statusText);
-            }
+            await apiV1Mutate<CardDto>(`/api/v1/workspaces/${workspaceId}/cards/${card.id}`, 'PUT', input);
+            alertService.success('Karte erfolgreich gespeichert');
+            await routingContext.conditionalBack(`/workspaces/${workspaceId}/manage/cards`);
           }
         } catch (error) {
-          console.error('CardId -> onSubmit', error);
-          alertService.error('Es ist ein Fehler aufgetreten');
+          alertApiV1Error(error, card == undefined ? 'Fehler beim Erstellen der Karte' : 'Fehler beim Speichern der Karte');
         }
       }}
     >
@@ -351,22 +329,12 @@ export function CardEditorArchiveActions({ card, workspaceId }: CardEditorArchiv
           variant="outline"
           size="sm"
           onClick={async () => {
-            const response = await fetch(`/api/v1/workspaces/${workspaceId}/cards/${card.id}/${card.archived ? 'unarchive' : 'archive'}`, {
-              method: 'PUT',
-            });
-
-            const body = await response.json();
-            if (response.ok) {
-              router
-                .replace(`/workspaces/${workspaceId}/manage/cards`)
-                .then(() => alertService.success(`Karte ${card.archived ? 'entarchiviert' : 'archiviert'}`));
-            } else {
-              console.error('CardId -> (un)archive', response);
-              alertService.error(
-                body.error?.message ?? `Fehler beim ${card.archived ? 'Entarchivieren' : 'Archivieren'} der Karte`,
-                response.status,
-                response.statusText,
-              );
+            try {
+              await apiV1Mutate<CardDto>(`/api/v1/workspaces/${workspaceId}/cards/${card.id}/${card.archived ? 'unarchive' : 'archive'}`, 'PUT');
+              await router.replace(`/workspaces/${workspaceId}/manage/cards`);
+              alertService.success(`Karte ${card.archived ? 'entarchiviert' : 'archiviert'}`);
+            } catch (error) {
+              alertApiV1Error(error, `Fehler beim ${card.archived ? 'Entarchivieren' : 'Archivieren'} der Karte`);
             }
           }}
         >
@@ -382,17 +350,12 @@ export function CardEditorArchiveActions({ card, workspaceId }: CardEditorArchiv
                 spelling={'DELETE'}
                 entityName={`die Karte '${card.name}'`}
                 onApprove={async () => {
-                  const response = await fetch(`/api/v1/workspaces/${workspaceId}/cards/${card.id}`, {
-                    method: 'DELETE',
-                  });
-
-                  const body = await response.json();
-                  if (response.ok) {
+                  try {
+                    await apiV1Mutate(`/api/v1/workspaces/${workspaceId}/cards/${card.id}`, 'DELETE');
                     alertService.success('Karte gelöscht');
                     await routingContext.conditionalBack(`/workspaces/${workspaceId}/manage/cards`);
-                  } else {
-                    console.error('CardId -> deleteCard', response);
-                    alertService.error(body.error?.message ?? 'Fehler beim Löschen der Karte', response.status, response.statusText);
+                  } catch (error) {
+                    alertApiV1Error(error, 'Fehler beim Löschen der Karte');
                   }
                 }}
               />,
