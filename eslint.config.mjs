@@ -51,17 +51,7 @@ const literalStringOptions = {
     'aria-labelledby',
     'aria-describedby',
   ],
-  ignore: [
-    '^[A-Z0-9_\\-./:#•]+$',
-    '^\\s*$',
-    '^€',
-    '^%[sd]$',
-    '^\\d+$',
-    '^[#.].*',
-    '^v\\d',
-    '^[\\d.,\\s/%+\u2212\\-–—]+$',
-    '^[=×xX]+$',
-  ],
+  ignore: ['^[A-Z0-9_\\-./:#•]+$', '^\\s*$', '^€', '^%[sd]$', '^\\d+$', '^[#.].*', '^v\\d', '^[\\d.,\\s/%+\u2212\\-–—]+$', '^[=×xX]+$'],
 };
 
 const eslintConfig = defineConfig([

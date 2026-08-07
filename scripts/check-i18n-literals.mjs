@@ -4,16 +4,12 @@ import { dirname, join } from 'node:path';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 
-const result = spawnSync(
-  'pnpm',
-  ['exec', 'eslint', 'components/**/*.{ts,tsx}', 'pages/**/*.{ts,tsx}', '-f', 'json'],
-  {
-    cwd: root,
-    encoding: 'utf8',
-    maxBuffer: 64 * 1024 * 1024,
-    shell: false,
-  },
-);
+const result = spawnSync('pnpm', ['exec', 'eslint', 'components/**/*.{ts,tsx}', 'pages/**/*.{ts,tsx}', '-f', 'json'], {
+  cwd: root,
+  encoding: 'utf8',
+  maxBuffer: 64 * 1024 * 1024,
+  shell: false,
+});
 
 if (result.error) {
   console.error(result.error);
