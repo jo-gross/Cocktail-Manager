@@ -1,0 +1,21 @@
+{
+  "slidesSelected": "{{count}} slide(s) selected",
+  "startDate": "Start date",
+  "endDate": "End date",
+  "exclusivePeriod": "Show only in this period (replaces other cards)",
+  "exclusivePeriodHelp": "Exclusive cards replace the normal rotation while they are active.",
+  "apply": "Apply",
+  "activate": "Activate",
+  "deactivate": "Deactivate",
+  "clearSelection": "Clear selection",
+  "filter": "Filter",
+  "all": "All",
+  "currentlyActive": "Currently active",
+  "weekday": "Weekday",
+  "timeRange": "Time range",
+  "from": "From",
+  "to": "To",
+  "close": "Close",
+  "selectAll": "Select all",
+  "noActiveSlide": "No active slide"
+}

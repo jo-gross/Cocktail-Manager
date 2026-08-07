@@ -1,0 +1,41 @@
+{
+  "importByLink": "Import via link",
+  "name": "Ingredient name",
+  "shortName": "Custom label",
+  "price": "Price",
+  "tags": "Tags",
+  "volumes": "Quantities",
+  "availableUnits": "Available units",
+  "addVolume": "Add another quantity",
+  "volumeSuggestions": "Quantity suggestions",
+  "noMoreSuggestions": "No further suggestions",
+  "noUnitsAvailable": "No units available",
+  "noUnitsAdded": "No units added",
+  "description": "General ingredient description",
+  "descriptionPlaceholder": "Origin, history, etc.",
+  "notes": "Notes",
+  "notesPlaceholder": "Storage, preparation, etc.",
+  "imagePreview": "Image preview",
+  "warning": {
+    "noVolumes": "No volumes/quantities added"
+  },
+  "similarExists": "A similar ingredient named {{name}} already exists.",
+  "similarUrlExists": "An ingredient with a similar URL already exists under {{name}}.",
+  "success": {
+    "created": "Ingredient created successfully",
+    "saved": "Ingredient saved successfully"
+  },
+  "info": {
+    "dataLoaded": "Data loaded, please review!"
+  },
+  "warn": {
+    "noUrlData": "No data could be loaded from the URL."
+  },
+  "error": {
+    "create": "Failed to create ingredient",
+    "save": "Failed to save ingredient",
+    "imageScale": "Image could not be scaled.",
+    "imageAutoCrop": "Image could not be auto-cropped.",
+    "fileSelect": "File could not be selected."
+  }
+}
