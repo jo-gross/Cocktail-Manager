@@ -1,3 +1,4 @@
+import { i18n } from '@lib/i18n/client';
 import { apiV1FetchSafe, apiV1Mutate } from './apiV1';
 import type { ActionDto, ActionCreateInput, ActionUpdateInput } from '@lib/schemas/actions';
 import type { DeletionResult } from '@lib/schemas/common';
@@ -6,10 +7,11 @@ export function fetchActions(
   workspaceId: string | string[] | undefined,
   setActions: (actions: ActionDto[]) => void,
   setActionsLoading: (loading: boolean) => void,
+  errorMessage = i18n.t('errors:loadActions'),
 ) {
   if (!workspaceId) return;
   setActionsLoading(true);
-  apiV1FetchSafe<ActionDto[]>(`/api/v1/workspaces/${workspaceId}/actions`, undefined, 'Fehler beim Laden der Zubereitungsmöglichkeiten')
+  apiV1FetchSafe<ActionDto[]>(`/api/v1/workspaces/${workspaceId}/actions`, undefined, errorMessage)
     .then((actions) => {
       if (actions) setActions(actions);
     })

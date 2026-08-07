@@ -1,6 +1,7 @@
 import { GlassForm, GlassFormValues } from '@components/glasses/GlassForm';
 import { ManageEntityLayout } from '@components/layout/ManageEntityLayout';
 import { useRouter } from 'next/router';
+import { useTranslation } from 'react-i18next';
 import { useEffect, useRef, useState } from 'react';
 import { Role } from '@generated/prisma/client';
 import { Loading } from '@components/Loading';
@@ -13,6 +14,7 @@ import { apiV1FetchSafe } from '@lib/network/apiV1';
 
 function EditGlassPage() {
   const router = useRouter();
+  const { t } = useTranslation(['nav', 'entity', 'errors']);
   const { id, workspaceId } = router.query;
 
   const [loading, setLoading] = useState(true);
@@ -25,7 +27,7 @@ function EditGlassPage() {
     if (!id) return;
     if (!workspaceId) return;
     setLoading(true);
-    apiV1FetchSafe<GlassDto>(`/api/v1/workspaces/${workspaceId}/glasses/${id}`, undefined, 'Fehler beim Laden des Glases')
+    apiV1FetchSafe<GlassDto>(`/api/v1/workspaces/${workspaceId}/glasses/${id}`, undefined, t('errors:loadGlass'))
       .then((data) => {
         if (data) setGlass(data);
       })
@@ -39,8 +41,8 @@ function EditGlassPage() {
       <Loading />
     </PageCenter>
   ) : (
-    <ManageEntityLayout backLink={`/workspaces/${workspaceId}/manage/glasses`} title={'Gläser'} unsavedChanges={unsavedChanges} formRef={formRef}>
-      <SingleFormLayout title={'Glas erfassen'}>
+    <ManageEntityLayout backLink={`/workspaces/${workspaceId}/manage/glasses`} title={t('nav:glasses')} unsavedChanges={unsavedChanges} formRef={formRef}>
+      <SingleFormLayout title={t('entity:formTitle.glass')}>
         <GlassForm glass={glass} setUnsavedChanges={setUnsavedChanges} formRef={formRef} />
       </SingleFormLayout>
     </ManageEntityLayout>

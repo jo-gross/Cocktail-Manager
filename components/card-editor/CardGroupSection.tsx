@@ -8,6 +8,7 @@ import CocktailRecipeCardItem from '@components/cocktails/CocktailRecipeCardItem
 import { SearchModal } from '@components/modals/SearchModal';
 import { DeleteConfirmationModal } from '@components/modals/DeleteConfirmationModal';
 import type { CocktailSummaryDto } from '@lib/schemas/cocktails';
+import { useTranslation } from 'react-i18next';
 import {
   Button,
   ButtonGroup,
@@ -73,6 +74,7 @@ export function CardGroupSection({
   onReorderItems,
   openModal,
 }: CardGroupSectionProps) {
+  const { t } = useTranslation(['manage', 'common', 'entity']);
   const [collapsed, setCollapsed] = useState(false);
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: groupDragId(groupIndex),
@@ -97,7 +99,7 @@ export function CardGroupSection({
   const nameField = (
     <FormControl className={stackHeader ? undefined : 'sm:flex-2'}>
       <Label className="flex-row items-center justify-between">
-        <LabelText>Gruppe</LabelText>
+        <LabelText>{t('group')}</LabelText>
         <LabelTextAlt className="text-error">
           <span>{errors?.name && touched?.name ? errors.name : ''}</span>
           <span>*</span>
@@ -118,7 +120,7 @@ export function CardGroupSection({
   const priceField = (
     <FormControl className={stackHeader ? undefined : 'sm:flex-1'}>
       <Label className="flex-row items-center justify-between">
-        <LabelText>Gruppen Preis</LabelText>
+        <LabelText>{t('groupPrice')}</LabelText>
         <LabelTextAlt className="text-error">
           <span>{errors?.groupPrice && touched?.groupPrice ? errors.groupPrice : ''}</span>
         </LabelTextAlt>
@@ -160,20 +162,20 @@ export function CardGroupSection({
   const renderPreview = () => (
     <Collapse open={!collapsed} arrow className="rounded-xl">
       <CollapseTitle className="text-center text-2xl font-bold" onClick={() => setCollapsed(!collapsed)}>
-        {group.name || 'Gruppe'}
-        {group.groupPrice != undefined ? ` - Special Preis: ${group.groupPrice}€` : ''}
+        {group.name || t('group')}
+        {group.groupPrice != undefined ? ` - ${t('common:customPriceLabel', { price: group.groupPrice })}` : ''}
       </CollapseTitle>
       <CollapseContent>
         <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}>
           {sortedItems.length === 0 ? (
-            <div className="col-span-full text-center text-base-content/70">Keine Cocktails in dieser Gruppe</div>
+            <div className="col-span-full text-center text-base-content/70">{t('noCocktailsInGroup')}</div>
           ) : (
             sortedItems.map((item, itemIndex) => {
               const cocktail = cocktails.find((entry) => entry.id === item.cocktailId);
               if (!cocktail) {
                 return (
                   <Card key={`preview-item-${itemIndex}`} variant="elevated">
-                    <CardBody>{loadingCocktails ? 'Lade…' : 'Unbekannt'}</CardBody>
+                    <CardBody>{loadingCocktails ? t('common:loadingShort') : t('common:unknown')}</CardBody>
                   </Card>
                 );
               }
@@ -270,7 +272,11 @@ export function CardGroupSection({
                           openModal(
                             <DeleteConfirmationModal
                               spelling={'REMOVE'}
-                              entityName={`den Cocktail '${cocktail?.name ?? '-'}' von der Gruppe${group.name ? ` '${group.name}'` : ''}`}
+                              entityName={
+                                group.name
+                                  ? t('entity:theCocktailFromGroupNamed', { cocktail: cocktail?.name ?? '-', group: group.name })
+                                  : t('entity:theCocktailFromGroup', { cocktail: cocktail?.name ?? '-' })
+                              }
                               onApprove={async () => removeItem(itemIndex)}
                             />,
                           )
@@ -294,12 +300,12 @@ export function CardGroupSection({
                           onCocktailSelectedObject={(cocktail) => {
                             pushItem({ cocktailId: cocktail.id, itemNumber: sortedItems.length });
                           }}
-                          selectionLabel={'Hinzufügen'}
+                          selectionLabel={t('common:add')}
                         />,
                       )
                     }
                   >
-                    Cocktail hinzufügen
+                    {t('addCocktail')}
                   </Button>
                 </div>
               ) : null}

@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import { alertService } from '@lib/alertService';
 import { useContext, useState, useRef, useEffect, useCallback } from 'react';
 import { ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 import { UserContext } from '@lib/context/UserContextProvider';
 import Link from 'next/link';
 import { Role } from '@generated/prisma/client';
@@ -40,6 +41,7 @@ interface _Reference {
 }
 
 export function ManageColumn(props: ManageColumnProps) {
+  const { t } = useTranslation(['common', 'entity', 'errors']);
   const router = useRouter();
   const workspaceId = router.query.workspaceId as string | undefined;
   const userContext = useContext(UserContext);
@@ -133,14 +135,14 @@ export function ManageColumn(props: ManageColumnProps) {
     try {
       await apiV1Mutate(`/api/v1/workspaces/${workspaceId}/${props.entity}/${props.id}`, 'DELETE');
       props.onRefresh();
-      alertService.success('Erfolgreich gelöscht');
+      alertService.success(t('common:success.deleted'));
     } catch (error) {
-      alertApiV1Error(error, 'Fehler beim Löschen');
+      alertApiV1Error(error, t('errors:delete'));
     }
   };
 
   const handleDeleteClick = async () => {
-    // Prüfe Referenzen nur für ingredients und glasses
+    // Only check references for ingredients and glasses
     if ((props.entity === 'ingredients' || props.entity === 'glasses') && workspaceId) {
       setIsCheckingReferences(true);
       try {
@@ -148,7 +150,6 @@ export function ManageColumn(props: ManageColumnProps) {
         const references = await apiV1Fetch<_Reference[]>(`/api/v1/workspaces/${workspaceId}/${props.entity}/${props.id}/references`);
 
         if (references.length > 0) {
-          // Öffne Modal mit Referenzen
           modalContext.openModal(
             <DeleteConfirmationModal
               spelling={'DELETE'}
@@ -159,7 +160,6 @@ export function ManageColumn(props: ManageColumnProps) {
             />,
           );
         } else {
-          // Keine Referenzen gefunden, normale Löschbestätigung
           modalContext.openModal(
             <DeleteConfirmationModal
               spelling={'DELETE'}
@@ -170,12 +170,12 @@ export function ManageColumn(props: ManageColumnProps) {
           );
         }
       } catch (error) {
-        alertApiV1Error(error, 'Fehler beim Prüfen der Referenzen');
+        alertApiV1Error(error, t('errors:checkReferences'));
       } finally {
         setIsCheckingReferences(false);
       }
     } else {
-      // Für andere Entitäten: Normale Löschbestätigung ohne Referenzprüfung
+      // Other entities: delete confirmation without reference check
       modalContext.openModal(<DeleteConfirmationModal spelling={'DELETE'} entityName={props.name} onApprove={deleteEntity} />);
     }
   };
@@ -183,57 +183,37 @@ export function ManageColumn(props: ManageColumnProps) {
   const handleDuplicateClick = () => {
     if (!workspaceId) return;
 
-    const entityLabels: Record<typeof props.entity, { title: string; successMessage: string; errorMessage: string }> = {
-      cocktails: {
-        title: 'Cocktail duplizieren',
-        successMessage: 'Cocktail erfolgreich dupliziert',
-        errorMessage: 'Fehler beim Duplizieren des Cocktails',
-      },
-      ingredients: {
-        title: 'Zutat duplizieren',
-        successMessage: 'Zutat erfolgreich dupliziert',
-        errorMessage: 'Fehler beim Duplizieren der Zutat',
-      },
-      glasses: {
-        title: 'Glas duplizieren',
-        successMessage: 'Glas erfolgreich dupliziert',
-        errorMessage: 'Fehler beim Duplizieren des Glases',
-      },
-      garnishes: {
-        title: 'Garnitur duplizieren',
-        successMessage: 'Garnitur erfolgreich dupliziert',
-        errorMessage: 'Fehler beim Duplizieren der Garnitur',
-      },
-      calculations: {
-        title: '',
-        successMessage: '',
-        errorMessage: '',
-      },
-    };
+    const duplicateKeyByEntity = {
+      cocktails: 'cocktail',
+      ingredients: 'ingredient',
+      glasses: 'glass',
+      garnishes: 'garnish',
+    } as const;
 
-    const labels = entityLabels[props.entity];
-    if (!labels.title) return; // calculations wird nicht unterstützt
+    if (props.entity === 'calculations') return;
+
+    const duplicateKey = duplicateKeyByEntity[props.entity];
 
     modalContext.openModal(
       <InputModal
-        title={labels.title}
-        description={'Geben Sie einen Namen für die Kopie ein:'}
+        title={t(`entity:duplicate.${duplicateKey}`)}
+        description={t('common:copyNamePrompt')}
         onInputSubmit={async (value) => {
           try {
             setIsDuplicating(true);
             const cloned = await apiV1Mutate<{ id: string }>(`/api/v1/workspaces/${workspaceId}/${props.entity}/${props.id}/clone`, 'POST', { name: value });
-            alertService.success(labels.successMessage);
+            alertService.success(t(`entity:duplicate.success.${duplicateKey}`));
             props.onRefresh();
             await router.push(`/workspaces/${workspaceId}/manage/${props.entity}/${cloned.id}`);
           } catch (error) {
-            alertApiV1Error(error, labels.errorMessage);
+            alertApiV1Error(error, t(`entity:duplicate.error.${duplicateKey}`));
             throw error;
           } finally {
             setIsDuplicating(false);
           }
         }}
         allowEmpty={false}
-        defaultValue={props.name + ' - Kopie'}
+        defaultValue={`${props.name} ${t('common:copyNameSuffix')}`}
       />,
     );
   };
@@ -273,7 +253,7 @@ export function ManageColumn(props: ManageColumnProps) {
                   onClick={() => setIsDropdownOpen(false)}
                 >
                   <FaRegEdit />
-                  Bearbeiten
+                  {t('common:edit')}
                 </Link>
               </li>
               {props.customActions?.map((action, index) => (
@@ -305,7 +285,7 @@ export function ManageColumn(props: ManageColumnProps) {
                     disabled={props.exportingJson}
                   >
                     {props.exportingJson ? <Loading size="sm" /> : <FaFileDownload />}
-                    Als JSON exportieren
+                    {t('common:exportAsJson')}
                   </button>
                 </li>
               )}
@@ -321,7 +301,7 @@ export function ManageColumn(props: ManageColumnProps) {
                     disabled={props.exportingPdf}
                   >
                     {props.exportingPdf ? <Loading size="sm" /> : <FaFileDownload />}
-                    Als PDF exportieren
+                    {t('common:exportAsPdf')}
                   </button>
                 </li>
               )}
@@ -337,7 +317,7 @@ export function ManageColumn(props: ManageColumnProps) {
                     disabled={isDuplicating}
                   >
                     {isDuplicating ? <Loading size="sm" /> : <FaRegClone />}
-                    Duplizieren
+                    {t('common:duplicate')}
                   </button>
                 </li>
               )}
@@ -368,7 +348,7 @@ export function ManageColumn(props: ManageColumnProps) {
                   }}
                 >
                   <FaHistory />
-                  Verlauf anzeigen
+                  {t('common:showHistory')}
                 </button>
               </li>
               {canDelete && <Divider size="sm" className="my-1" />}
@@ -384,7 +364,7 @@ export function ManageColumn(props: ManageColumnProps) {
                     disabled={isCheckingReferences}
                   >
                     {isCheckingReferences ? <Loading size="sm" /> : <FaTrashAlt />}
-                    Löschen
+                    {t('common:delete')}
                   </button>
                 </li>
               )}

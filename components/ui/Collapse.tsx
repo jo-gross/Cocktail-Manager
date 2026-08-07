@@ -1,4 +1,5 @@
 import React, { createContext, useContext } from 'react';
+import { useTranslation } from 'react-i18next';
 import { cn } from './cn';
 import { collapseContentPadding } from './layoutStyles';
 
@@ -34,12 +35,13 @@ export type CollapseTitleProps = React.HTMLAttributes<HTMLDivElement>;
 
 export function CollapseTitle({ className, children, ...props }: CollapseTitleProps) {
   const { open, arrow } = useContext(CollapseContext);
+  const { t } = useTranslation('common');
   return (
     <div className={cn('flex cursor-pointer items-center gap-2 px-3 py-3 transition-colors hover:bg-base-300/30 md:px-4', className)} {...props}>
       <div className="flex min-w-0 flex-1 items-center justify-between gap-2">{children}</div>
       {arrow && (
         <span className={cn('shrink-0 transition-transform duration-200 motion-reduce:transition-none', open && 'rotate-180')} aria-hidden>
-          ▾
+          {t('collapseChevron')}
         </span>
       )}
     </div>

@@ -23,7 +23,7 @@ if (result.error) {
 let reports;
 try {
   reports = JSON.parse(result.stdout || '[]');
-} catch (error) {
+} catch {
   console.error('Failed to parse ESLint JSON output.');
   if (result.stderr) console.error(result.stderr);
   if (result.stdout) console.error(result.stdout.slice(0, 2000));

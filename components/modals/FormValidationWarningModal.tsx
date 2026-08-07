@@ -1,4 +1,5 @@
 import { useContext } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import { Button } from '@components/ui';
 
@@ -10,12 +11,13 @@ interface FormValidationWarningProps {
 
 export function FormValidationWarningModal(props: FormValidationWarningProps) {
   const modalContext = useContext(ModalContext);
+  const { t } = useTranslation(['entity', 'common']);
 
   return (
     <div className="flex flex-col space-y-4">
-      <div className="text-2xl font-bold">Warnung</div>
+      <div className="text-2xl font-bold">{t('entity:validationWarningTitle')}</div>
       <div className="max-w-xl text-justify">
-        <div className="mb-2">Folgende Punkte sind noch nicht ausgefüllt:</div>
+        <div className="mb-2">{t('entity:validationWarningIntro')}</div>
         <ul className="list-inside list-disc space-y-1">
           {props.warnings.map((warning, index) => (
             <li key={index} className="text-warning">
@@ -23,7 +25,7 @@ export function FormValidationWarningModal(props: FormValidationWarningProps) {
             </li>
           ))}
         </ul>
-        <div className="mt-4">Möchtest du trotzdem speichern?</div>
+        <div className="mt-4">{t('entity:validationWarningContinue')}</div>
       </div>
       <div className="flex flex-row space-x-4">
         <div className={'flex-1'}></div>
@@ -34,7 +36,7 @@ export function FormValidationWarningModal(props: FormValidationWarningProps) {
             modalContext.closeModal();
           }}
         >
-          Abbrechen
+          {t('common:cancel')}
         </Button>
         <Button
           variant="primary"
@@ -43,7 +45,7 @@ export function FormValidationWarningModal(props: FormValidationWarningProps) {
             modalContext.closeModal();
           }}
         >
-          Trotzdem speichern
+          {t('common:saveAnyway')}
         </Button>
       </div>
     </div>

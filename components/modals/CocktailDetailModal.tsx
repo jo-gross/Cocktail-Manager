@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { FaArrowLeft, FaFileDownload, FaHistory, FaInfo, FaPencilAlt, FaPlus, FaSyncAlt, FaTimes } from 'react-icons/fa';
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import React, { useCallback, useContext, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useRouter } from 'next/router';
 import { UserContext } from '@lib/context/UserContextProvider';
 import { Role } from '@generated/prisma/client';
@@ -41,6 +42,7 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
   const workspaceId = router.query.workspaceId as string | undefined;
   const modalContext = useContext(ModalContext);
   const userContext = useContext(UserContext);
+  const { t, i18n } = useTranslation(['cocktail', 'common', 'errors']);
 
   const [loading, setLoading] = useState(true);
   const [loadedCocktail, setLoadedCocktail] = useState<CocktailDto>();
@@ -67,7 +69,7 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
         onExport={async (options: CocktailExportOptions) => {
           setExportingPdf(true);
           try {
-            alertService.info('Export läuft und wird gleich zur Verfügung stehen. Dieser Vorgang kann einige Minuten dauern.');
+            alertService.info(t('cocktail:exportRunningMinutes'));
             const response = await fetch(`/api/v1/workspaces/${workspaceId}/cocktails/export/pdf`, {
               method: 'POST',
               headers: {
@@ -82,12 +84,13 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                 newPagePerCocktail: options.newPagePerCocktail,
                 showHeader: options.showHeader,
                 showFooter: options.showFooter,
+                locale: i18n.language,
               }),
             });
 
             if (!response.ok) {
-              const error = await response.json().catch(() => ({ message: 'Fehler beim Exportieren' }));
-              alertService.error(error.message ?? 'Fehler beim Exportieren des PDFs', response.status, response.statusText);
+              const error = await response.json().catch(() => ({ message: t('errors:export') }));
+              alertService.error(error.message ?? t('cocktail:error.exportPdf'), response.status, response.statusText);
               return;
             }
 
@@ -100,17 +103,17 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
             a.click();
             window.URL.revokeObjectURL(url);
             document.body.removeChild(a);
-            alertService.success('PDF erfolgreich exportiert');
+            alertService.success(t('cocktail:pdfExported'));
           } catch (error) {
             console.error('PDF export error:', error);
-            alertService.error('Fehler beim Exportieren des PDFs');
+            alertService.error(t('cocktail:error.exportPdf'));
           } finally {
             setExportingPdf(false);
           }
         }}
       />,
     );
-  }, [workspaceId, loadedCocktail, modalContext]);
+  }, [workspaceId, loadedCocktail, modalContext, t]);
 
   useEffect(() => {
     fetchIngredients(workspaceId, setIngredients, () => {});
@@ -167,7 +170,7 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
               )}
             </CardTitle>
             {chromiumAvailable ? (
-              <Tooltip tip="Als PDF exportieren">
+              <Tooltip tip={t('cocktail:exportAsPdfTip')}>
                 <Button variant="outline" size="sm" shape="square" onClick={handleExportPdf} disabled={exportingPdf}>
                   {exportingPdf ? <Loading size="sm" /> : <FaFileDownload />}
                 </Button>
@@ -188,7 +191,7 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
               variant="outline"
               size="sm"
               shape="square"
-              title="Verlauf anzeigen"
+              title={t('common:showHistory')}
               onClick={() =>
                 modalContext.openModal(<AuditLogHistoryModal entityType={'CocktailRecipe'} entityId={loadedCocktail.id} entityName={loadedCocktail.name} />)
               }
@@ -212,12 +215,14 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
             <Alert variant="warning" className="grid grid-cols-2">
               {localQueueAmount && (
                 <div>
-                  Anzahl: <strong>{localQueueAmount}x</strong>
+                  {t('cocktail:queueAmount')}
+                  <strong>{t('cocktail:queueAmountTimes', { amount: localQueueAmount })}</strong>
                 </div>
               )}
               {props.queueNotes && (
                 <div>
-                  Warteschlangennotiz: <strong>{props.queueNotes}</strong>
+                  {t('cocktail:queueNote')}
+                  <strong>{props.queueNotes}</strong>
                 </div>
               )}
             </Alert>
@@ -237,8 +242,8 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                     </div>
                   )}
                   <div className={'flex flex-1 items-end justify-between gap-2'}>
-                    <div>Glas: {loadedCocktail.glass?.name}</div>
-                    <div>Eis: {userContext.getTranslation(loadedCocktail.ice?.name ?? '-', 'de')}</div>
+                    <div>{t('cocktail:glassLabel', { name: loadedCocktail.glass?.name })}</div>
+                    <div>{t('cocktail:iceLabel', { name: userContext.getTranslation(loadedCocktail.ice?.name ?? '-') })}</div>
                   </div>
                 </div>
                 {loadedCocktail.glass && loadedCocktail.glass.hasImage && (
@@ -249,7 +254,7 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                         onClick={() =>
                           modalContext.openModal(<ImageModal image={`/api/v1/workspaces/${workspaceId}/glasses/${loadedCocktail.glass?.id}/image`} />)
                         }
-                        alt={`Glas - ${loadedCocktail.glass?.name}`}
+                        alt={t('cocktail:glassImageAlt', { name: loadedCocktail.glass?.name })}
                       />
                     </div>
                   </div>
@@ -259,10 +264,10 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
               <div className={`grid ${loadedCocktail.hasImage ? 'grid-cols-5' : 'grid-cols-3'} gap-2`}>
                 <div className={'col-span-3 flex flex-col gap-2'}>
                   <div className={'flex flex-row items-baseline justify-between gap-2'}>
-                    <div className={'font-bold'}>Zubereitung</div>
+                    <div className={'font-bold'}>{t('cocktail:preparation')}</div>
                     {amountAdjustment != 100 && (
                       <Badge variant="secondary" outline size="sm">
-                        {'Menge '}
+                        {t('cocktail:amountBadge')}
                         {amountAdjustment.toLocaleString(undefined, {
                           minimumFractionDigits: 0,
                           maximumFractionDigits: 0,
@@ -276,7 +281,7 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                     .map((step) => (
                       <div key={`cocktail-details-step-${step.id}`} className={'flex flex-col gap-2 rounded border border-base-300 p-2'}>
                         <div className={`font-bold ${step.optional ? 'italic' : ''}`}>
-                          {userContext.getTranslation(step.action?.name ?? '', 'de')} {step.optional && '(optional)'}
+                          {userContext.getTranslation(step.action?.name ?? '')} {step.optional && t('cocktail:optional')}
                         </div>
                         {step.ingredients
                           .sort((a, b) => a.ingredientNumber - b.ingredientNumber)
@@ -291,9 +296,9 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                                   maximumFractionDigits: 2,
                                 })}
                               </div>
-                              <div className={'font-bold'}>{userContext.getTranslation(stepIngredient.unit?.name ?? '', 'de')}</div>
+                              <div className={'font-bold'}>{userContext.getTranslation(stepIngredient.unit?.name ?? '')}</div>
                               <div>{stepIngredient.ingredient?.shortName ?? stepIngredient.ingredient?.name}</div>
-                              {stepIngredient.optional && <div>(optional)</div>}
+                              {stepIngredient.optional && <div>{t('cocktail:optional')}</div>}
                             </div>
                           ))}
                       </div>
@@ -304,7 +309,7 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                     <Image
                       className={'h-full w-full flex-none cursor-pointer rounded-lg object-cover object-center shadow-md'}
                       src={loadedCocktail.imageUrl ?? ''}
-                      alt={'Cocktail'}
+                      alt={t('cocktail:cocktailImageAlt')}
                       onClick={() => modalContext.openModal(<ImageModal image={loadedCocktail.imageUrl ?? ''} />)}
                       width={100}
                       height={300}
@@ -315,7 +320,7 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
               </div>
               {loadedCocktail.garnishes.length > 0 && (
                 <>
-                  <div className={'font-bold'}>Garnitur</div>
+                  <div className={'font-bold'}>{t('cocktail:garnish')}</div>
                   {loadedCocktail.garnishes
                     .sort((a, b) => a.garnishNumber - b.garnishNumber)
                     .map((garnish) => (
@@ -325,13 +330,13 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                       >
                         <div className={'flex flex-row justify-between gap-2'}>
                           <div className={`font-bold ${garnish.optional ? 'italic' : ''}`}>
-                            {garnish.isAlternative && <span className={'font-normal italic'}>oder </span>}
-                            {garnish.garnish.name} {garnish.optional ? '(Optional)' : ''}
+                            {garnish.isAlternative && <span className={'font-normal italic'}>{t('cocktail:orPrefix')}</span>}
+                            {garnish.garnish.name} {garnish.optional ? t('cocktail:optionalCapitalized') : ''}
                           </div>
                         </div>
                         {garnish.description && (
                           <>
-                            <div className={'underline'}>Cocktailspezifische-Notizen</div>
+                            <div className={'underline'}>{t('cocktail:cocktailSpecificNotes')}</div>
                             <div className={'long-text-format'}>{garnish.description}</div>
                           </>
                         )}
@@ -348,7 +353,7 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                   initData={{
                     comment:
                       amountAdjustment != 100 && loadedCocktail
-                        ? `Angepasste Menge (${amountAdjustment}%):\n${loadedCocktail.steps
+                        ? `${t('cocktail:adjustedAmountHeader', { percent: amountAdjustment })}\n${loadedCocktail.steps
                             .sort((a, b) => a.stepNumber - b.stepNumber)
                             .map((step) => {
                               return `${step.ingredients
@@ -357,11 +362,11 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                                   return `- ${((stepIngredient.amount ?? 0) * (amountAdjustment / 100))?.toLocaleString(undefined, {
                                     minimumFractionDigits: 0,
                                     maximumFractionDigits: 2,
-                                  })} ${userContext.getTranslation(stepIngredient.unit?.name ?? '', 'de')} ${stepIngredient.ingredient?.shortName ?? stepIngredient.ingredient?.name}${stepIngredient.optional ? '(optional)' : ''}`;
+                                  })} ${userContext.getTranslation(stepIngredient.unit?.name ?? '')} ${stepIngredient.ingredient?.shortName ?? stepIngredient.ingredient?.name}${stepIngredient.optional ? `(${t('common:optionalLower')})` : ''}`;
                                 })
                                 .join('\n')}`;
                             })
-                            .join('\n')}\nBasispreis ± angepasste Menge = Verkaufspreis (${amountAdjustment}%):\n${
+                            .join('\n')}\n${t('cocktail:adjustedAmountPriceLine', { percent: amountAdjustment })}\n${
                             loadedCocktail.price?.formatPriceEfficent() + ' €'
                           } ${((loadedCocktail.price ?? 0) * (amountAdjustment / 100) - (loadedCocktail.price ?? 0))
                             .formatPriceEfficent({ signDisplay: 'exceptZero' })
@@ -391,12 +396,12 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
               </div>
               <Divider size="sm" />
               <details className="rounded-box border border-base-300">
-                <summary className="cursor-pointer px-4 py-3 font-bold">Menge anpassen</summary>
+                <summary className="cursor-pointer px-4 py-3 font-bold">{t('cocktail:adjustAmount')}</summary>
                 <div className="px-4 pb-4">
                   <div className={'flex flex-col gap-2 pr-3 pb-2 pl-4'}>
                     <div className={'flex items-end gap-2'}>
                       <FormControl className="w-full">
-                        <Label>Menge</Label>
+                        <Label>{t('common:quantity')}</Label>
                         <ButtonGroup className="w-full">
                           <Input
                             joinItem
@@ -414,7 +419,7 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                         <FaArrowRotateLeft />
                       </Button>
                     </div>
-                    {amountAdjustment != 100 && <div className={'font-thin'}>Die geänderte Menge fließt nicht in die Statistik mit ein</div>}
+                    {amountAdjustment != 100 && <div className={'font-thin'}>{t('cocktail:amountNotInStats')}</div>}
                   </div>
                 </div>
               </details>
@@ -422,11 +427,11 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
             {/*Right side*/}
             <div className={'flex flex-col gap-2'}>
               <div className={'w-full gap-2'}>
-                <span className={'font-bold'}>Bewertung</span>
+                <span className={'font-bold'}>{t('cocktail:rating')}</span>
                 <div className={'flex flex-row items-center gap-2'}>
                   {ratingError ? (
                     <>
-                      <div>Fehler beim Laden der Bewertungen</div>
+                      <div>{t('cocktail:ratingsLoadError')}</div>
                       <Button type={'button'} variant="outline" size="sm" shape="square" disabled={ratingsLoading} onClick={refreshRatings}>
                         {ratingsLoading && <Loading size="sm" />}
                         <FaSyncAlt />
@@ -442,7 +447,7 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                           maximumFractionDigits: 1,
                         })
                       ) : (
-                        'Keine Bewertungen'
+                        t('cocktail:noRatingsShort')
                       )}
                       <StarsComponent
                         rating={cocktailRatings.length > 0 ? cocktailRatings.reduce((acc, rating) => acc + rating.rating, 0) / cocktailRatings.length : 0}
@@ -479,7 +484,7 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                           )
                         }
                       >
-                        <FaPlus /> Bewertung hinzufügen
+                        <FaPlus /> {t('cocktail:addRating')}
                       </Button>
                     </>
                   )}
@@ -488,25 +493,25 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
 
               {loadedCocktail.notes && (
                 <>
-                  <div className={'font-bold'}>Zubereitungsnotizen</div>
+                  <div className={'font-bold'}>{t('cocktail:prepNotes')}</div>
                   <div className={'long-text-format rounded border border-base-300 p-2'}>{loadedCocktail.notes}</div>
                 </>
               )}
               {loadedCocktail.description && (
                 <>
-                  <div className={'font-bold'}>Allgemeine Beschreibung</div>
+                  <div className={'font-bold'}>{t('cocktail:description')}</div>
                   <div className={'long-text-format rounded border border-base-300 p-2 text-justify'}>{loadedCocktail.description}</div>
                 </>
               )}
               {loadedCocktail.history && (
                 <>
-                  <div className={'font-bold'}>Geschichte und Entstehung</div>
+                  <div className={'font-bold'}>{t('cocktail:history')}</div>
                   <div className={'long-text-format rounded border border-base-300 p-2 text-justify'}>{loadedCocktail.history}</div>
                 </>
               )}
               {loadedCocktail.steps.map((step) => step.ingredients).flat().length > 0 && (
                 <>
-                  <div className={'font-bold'}>Zutatenbeschreibungen</div>
+                  <div className={'font-bold'}>{t('cocktail:ingredientDescriptions')}</div>
                   {loadedCocktail.steps
                     .map((step) => step.ingredients)
                     .flat()
@@ -531,7 +536,7 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                                       <ImageModal image={`/api/v1/workspaces/${workspaceId}/ingredients/${ingredient.ingredient?.id}/image`} />,
                                     )
                                   }
-                                  alt={`Zutat Produktbild - ${ingredient.ingredient?.name}`}
+                                  alt={t('cocktail:ingredientProductImageAlt', { name: ingredient.ingredient?.name })}
                                 />
                               </div>
                             ) : (
@@ -541,13 +546,13 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                         </div>
                         {ingredient.ingredient?.description && (
                           <div className={'text-justify'}>
-                            <div className={'underline'}>Zutat Beschreibung</div>
+                            <div className={'underline'}>{t('cocktail:ingredientDescription')}</div>
                             <div className={'long-text-format'}>{ingredient.ingredient?.description}</div>
                           </div>
                         )}
                         {ingredient.ingredient?.notes && (
                           <div className={'text-justify'}>
-                            <div className={'underline'}>Notizen</div>
+                            <div className={'underline'}>{t('common:notes')}</div>
                             <div className={'long-text-format'}>{ingredient.ingredient?.notes}</div>
                           </div>
                         )}
@@ -571,7 +576,7 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
               )}
               {loadedCocktail.garnishes.length > 0 && (
                 <>
-                  <div className={'font-bold'}>Garniturbeschreibungen</div>
+                  <div className={'font-bold'}>{t('cocktail:garnishDescriptions')}</div>
                   {loadedCocktail.garnishes
                     .map((garnish) => garnish.garnish)
                     .sort((a, b) => (a.name ?? '').localeCompare(b.name ?? ''))
@@ -583,7 +588,7 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                             <div className={'h-12 w-12'}>
                               <AvatarImage
                                 src={`/api/v1/workspaces/${workspaceId}/garnishes/${garnish.id}/image`}
-                                alt={'Cocktail Garnitur ' + garnish?.name}
+                                alt={t('cocktail:garnishImageAlt', { name: garnish?.name })}
                                 onClick={() => modalContext.openModal(<ImageModal image={`/api/v1/workspaces/${workspaceId}/garnishes/${garnish.id}/image`} />)}
                               />
                             </div>
@@ -591,13 +596,13 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                         </div>
                         {garnish.description && (
                           <>
-                            <div className={'underline'}>Allgemeine Beschreibung</div>
+                            <div className={'underline'}>{t('cocktail:description')}</div>
                             <div className={'long-text-format'}>{garnish.description}</div>
                           </>
                         )}
                         {garnish.notes && (
                           <>
-                            <div className={'underline'}>Notizen</div>
+                            <div className={'underline'}>{t('common:notes')}</div>
                             <div className={'long-text-format'}>{garnish.notes}</div>
                           </>
                         )}
@@ -609,7 +614,7 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
               <div className={'flex-grow'}></div>
               {userContext.isUserPermitted(Role.MANAGER) && ingredients && (
                 <>
-                  <div className={'font-bold'}>Materialkosten</div>
+                  <div className={'font-bold'}>{t('cocktail:materialCosts')}</div>
                   <div>
                     {calcCocktailTotalPrice(loadedCocktail, ingredients).formatPrice() + ' €'}
                     {amountAdjustment != 100

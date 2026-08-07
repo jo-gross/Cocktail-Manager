@@ -1,6 +1,7 @@
 import { GarnishForm, GarnishFormValues } from '@components/garnishes/GarnishForm';
 import { ManageEntityLayout } from '@components/layout/ManageEntityLayout';
 import { useRouter } from 'next/router';
+import { useTranslation } from 'react-i18next';
 import { useEffect, useRef, useState } from 'react';
 import { Role } from '@generated/prisma/client';
 import { Loading } from '@components/Loading';
@@ -13,6 +14,7 @@ import { apiV1FetchSafe } from '@lib/network/apiV1';
 
 function EditGarnishPage() {
   const router = useRouter();
+  const { t } = useTranslation(['nav', 'entity', 'errors']);
   const { id, workspaceId } = router.query;
 
   const [garnish, setGarnish] = useState<GarnishDto | undefined>(undefined);
@@ -25,7 +27,7 @@ function EditGarnishPage() {
     if (!id) return;
     if (!workspaceId) return;
     setLoading(true);
-    apiV1FetchSafe<GarnishDto>(`/api/v1/workspaces/${workspaceId}/garnishes/${id}`, undefined, 'Fehler beim Laden der Garnitur')
+    apiV1FetchSafe<GarnishDto>(`/api/v1/workspaces/${workspaceId}/garnishes/${id}`, undefined, t('errors:loadGarnish'))
       .then((data) => {
         if (data) setGarnish(data);
       })
@@ -39,8 +41,8 @@ function EditGarnishPage() {
       <Loading />
     </PageCenter>
   ) : (
-    <ManageEntityLayout backLink={`/workspaces/${workspaceId}/manage/garnishes`} title={'Garnitur'} unsavedChanges={unsavedChanges} formRef={formRef}>
-      <SingleFormLayout title={'Garnitur erfassen'}>
+    <ManageEntityLayout backLink={`/workspaces/${workspaceId}/manage/garnishes`} title={t('nav:garnishes')} unsavedChanges={unsavedChanges} formRef={formRef}>
+      <SingleFormLayout title={t('entity:formTitle.garnish')}>
         <GarnishForm garnish={garnish} setUnsavedChanges={setUnsavedChanges} formRef={formRef} />
       </SingleFormLayout>
     </ManageEntityLayout>

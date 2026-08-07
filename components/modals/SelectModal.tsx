@@ -2,6 +2,7 @@ import { BsSearch } from 'react-icons/bs';
 import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import { alertService } from '@lib/alertService';
+import { useTranslation } from 'react-i18next';
 import { Button, ButtonGroup, Input, Loading } from '@components/ui';
 
 interface SelectModalProps<T> {
@@ -17,6 +18,7 @@ interface SelectModalProps<T> {
 
 export function SelectModal<T>(props: SelectModalProps<T>) {
   const modalContext = useContext(ModalContext);
+  const { t } = useTranslation(['common', 'errors']);
 
   const [search, setSearch] = useState('');
   const [elements, setElements] = useState<T[]>([]);
@@ -43,7 +45,7 @@ export function SelectModal<T>(props: SelectModalProps<T>) {
       setElements(elements);
     } catch (error) {
       console.error('SelectModal -> fetchElements', error);
-      alertService.error('Fehler beim Laden der Daten');
+      alertService.error(t('errors:load'));
     } finally {
       setLoading(false);
     }
@@ -78,9 +80,9 @@ export function SelectModal<T>(props: SelectModalProps<T>) {
           <Loading />
         ) : elements.length == 0 ? (
           search != '' ? (
-            <div>Keine Einträge gefunden</div>
+            <div>{t('common:noEntriesFound')}</div>
           ) : (
-            <div>Bitte gib deine Suche ein</div>
+            <div>{t('common:pleaseEnterSearch')}</div>
           )
         ) : (
           elements.sort(props.compareFunction).map((element, index) => {
@@ -104,7 +106,7 @@ export function SelectModal<T>(props: SelectModalProps<T>) {
                       modalContext.closeModal();
                     }}
                   >
-                    {props.selectionLabel ?? 'Auswählen'}
+                    {props.selectionLabel ?? t('common:select')}
                   </Button>
                 </div>
               </div>

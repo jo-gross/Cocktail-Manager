@@ -1,4 +1,5 @@
 import { apiV1FetchSafe, apiV1Mutate } from './apiV1';
+import { i18n } from '@lib/i18n/client';
 import type { WorkspaceUserDto } from '@lib/schemas/workspaceUsers';
 import type { JoinRequestDto } from '@lib/schemas/joinRequests';
 import type { JoinCodeDto, JoinCodeCreateInput } from '@lib/schemas/joinCodes';
@@ -11,7 +12,7 @@ export function fetchWorkspaceUsers(
 ) {
   if (workspaceId == undefined) return;
   setLoading(true);
-  apiV1FetchSafe<WorkspaceUserDto[]>(`/api/v1/workspaces/${workspaceId}/users`, undefined, 'Fehler beim Laden der Benutzer')
+  apiV1FetchSafe<WorkspaceUserDto[]>(`/api/v1/workspaces/${workspaceId}/users`, undefined, i18n.t('errors:loadUsers'))
     .then((users) => {
       if (users) setUsers(users);
     })
@@ -25,7 +26,7 @@ export function fetchWorkspaceJoinRequests(
 ) {
   if (workspaceId == undefined) return;
   setLoading(true);
-  apiV1FetchSafe<JoinRequestDto[]>(`/api/v1/workspaces/${workspaceId}/join-requests`, undefined, 'Fehler beim Laden der Beitrittsanfragen')
+  apiV1FetchSafe<JoinRequestDto[]>(`/api/v1/workspaces/${workspaceId}/join-requests`, undefined, i18n.t('errors:loadJoinRequests'))
     .then((requests) => {
       if (requests) setJoinRequests(requests);
     })
@@ -43,7 +44,7 @@ export function fetchWorkspaceJoinCodes(
 ) {
   if (workspaceId == undefined) return;
   setLoading(true);
-  apiV1FetchSafe<JoinCodeDto[]>(`/api/v1/workspaces/${workspaceId}/join-codes`, undefined, 'Fehler beim Laden der Beitrittcodes')
+  apiV1FetchSafe<JoinCodeDto[]>(`/api/v1/workspaces/${workspaceId}/join-codes`, undefined, i18n.t('errors:loadJoinCodes'))
     .then((codes) => {
       if (codes) setJoinCodes(codes);
     })

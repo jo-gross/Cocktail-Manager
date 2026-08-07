@@ -127,7 +127,7 @@ const legacyHandler = withHttpMethods({
 
       if (!validation.valid) {
         return res.status(409).json({
-          message: 'Exklusive Zeiträume überschneiden sich mit bestehenden exklusiven Karten',
+          message: 'Exclusive time ranges overlap with existing exclusive cards',
           conflicts: validation.conflicts,
         });
       }

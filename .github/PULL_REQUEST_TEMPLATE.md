@@ -10,6 +10,7 @@ merging your code._
 
 - [ ] I've created all necessary migrations?
 - [ ] The format is correct (`pnpm format:check`, if invalid `pnpm format:fix`)
+- [ ] Translation keys match (`pnpm i18n:check`)
 - [ ] No build errors (`pnpm build`)
 - [ ] I've tested the implemented function by my own
 - [ ] Ensure the pr title fits the [conventional commit](https://www.conventionalcommits.org/en/v1.0.0/) standard

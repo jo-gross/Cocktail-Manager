@@ -1,15 +1,19 @@
+import { useTranslation } from 'react-i18next';
+
 interface LoadingProps {
   name?: string;
 }
 
 export function Loading(props: LoadingProps) {
+  const { t } = useTranslation('common');
+
   return (
     <div className="flex items-center justify-center gap-2">
       <div
         className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"
         role="status"
       >
-        <span className="!absolute !-m-px !h-px !w-px !overflow-hidden !border-0 !p-0 !whitespace-nowrap ![clip:rect(0,0,0,0)]">Loading...</span>
+        <span className="!absolute !-m-px !h-px !w-px !overflow-hidden !border-0 !p-0 !whitespace-nowrap ![clip:rect(0,0,0,0)]">{t('loading')}</span>
       </div>
       <>{props.name && <div>{props.name}</div>}</>
     </div>

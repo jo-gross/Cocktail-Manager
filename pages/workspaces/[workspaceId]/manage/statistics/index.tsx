@@ -1,6 +1,7 @@
 import { ManageEntityLayout } from '@components/layout/ManageEntityLayout';
 import { useRouter } from 'next/router';
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { TimeRange, TimeRangePicker } from '@components/statistics/TimeRangePicker';
 import { getEndOfDay, getLogicalDate, getOrderedHourLabels, getStartOfWeek, reorderHourDistribution } from '@lib/dateHelpers';
 import { DAY_NAMES_SHORT_MONDAY_FIRST, DAY_ORDER_MONDAY_FIRST, reorderDaysMondayFirst } from '@lib/dayConstants';
@@ -28,6 +29,7 @@ import type { CocktailSummaryDto } from '@lib/schemas/cocktails';
 import { formatDateShort, formatDateNoYear } from '@lib/DateUtils';
 import '@lib/StringUtils';
 import { AmountWithUnit, calculateAggregatedIngredientAmount, IngredientVolumeInfo } from '@lib/CocktailRecipeCalculation';
+import { toIntlLocale } from '@lib/i18n/format';
 import { alertApiV1Error, apiV1FetchSafe } from '@lib/network/apiV1';
 import { fetchAdvancedStatistics, listCocktailStatistics, mutateAdvancedStatisticsSet } from '@lib/network/statistics';
 import { fetchWorkspaceSettingsSafe } from '@lib/network/workspaces';
@@ -192,6 +194,8 @@ const StatisticsAdvancedPage = () => {
   const { workspaceId } = router.query;
   const modalContext = useContext(ModalContext);
   const userContext = useContext(UserContext);
+  const { t, i18n } = useTranslation(['manage', 'common', 'nav', 'cocktail', 'statistics', 'errors']);
+  const intlLocale = toIntlLocale(i18n.language);
 
   // Initialize timeRange with defaults
   // Note: dayStartTime will be loaded asynchronously, so initial calculation may not include it
@@ -214,7 +218,7 @@ const StatisticsAdvancedPage = () => {
   const [overviewPeriodTab, setOverviewPeriodTab] = useState<'today' | 'week' | 'month' | 'period' | 'allTime'>('today');
   const [dayStartTime, setDayStartTime] = useState<string | undefined>(undefined);
 
-  // Lade Workspace-Settings für Tagesstart
+  // Load workspace settings for day start time
   useEffect(() => {
     fetchWorkspaceSettingsSafe(workspaceId, (settings) => {
       if (settings.statisticDayStartTime) {
@@ -311,11 +315,11 @@ const StatisticsAdvancedPage = () => {
       const data = await fetchAdvancedStatistics<OverviewData>(workspaceId, `overview?startDate=${startDate}&endDate=${endDate}`);
       setOverviewData(data);
     } catch (error) {
-      alertApiV1Error(error, 'Fehler beim Laden der Übersichtsdaten');
+      alertApiV1Error(error, t('errors:loadOverview'));
     } finally {
       setLoading(false);
     }
-  }, [workspaceId, timeRange.startDate.getTime(), timeRange.endDate.getTime()]);
+  }, [workspaceId, timeRange.startDate.getTime(), timeRange.endDate.getTime(), t]);
 
   const loadCocktailsData = useCallback(async () => {
     if (!workspaceId) return;
@@ -327,11 +331,11 @@ const StatisticsAdvancedPage = () => {
       const data = await fetchAdvancedStatistics<typeof cocktailsData>(workspaceId, `cocktails?startDate=${startDate}&endDate=${endDate}`);
       setCocktailsData(data);
     } catch (error) {
-      alertApiV1Error(error, 'Fehler beim Laden der Cocktail-Daten');
+      alertApiV1Error(error, t('errors:loadCocktailData'));
     } finally {
       setCocktailsLoading(false);
     }
-  }, [workspaceId, timeRange.startDate.getTime(), timeRange.endDate.getTime()]);
+  }, [workspaceId, timeRange.startDate.getTime(), timeRange.endDate.getTime(), t]);
 
   const loadCocktailStatisticItems = useCallback(async () => {
     if (!workspaceId) return;
@@ -357,11 +361,11 @@ const StatisticsAdvancedPage = () => {
         setCocktailPriceById(prices);
       }
     } catch (error) {
-      alertApiV1Error(error, 'Fehler beim Laden der Statistik-Items');
+      alertApiV1Error(error, t('errors:loadStatisticItems'));
     } finally {
       setCocktailsLoading(false);
     }
-  }, [workspaceId, timeRange.startDate.getTime(), timeRange.endDate.getTime()]);
+  }, [workspaceId, timeRange.startDate.getTime(), timeRange.endDate.getTime(), t]);
 
   // Helper function to calculate aggregated amount with unit conversion
   // Uses the shared helper from CocktailRecipeCalculation
@@ -559,12 +563,12 @@ const StatisticsAdvancedPage = () => {
         const data = await fetchAdvancedStatistics<CocktailDetailData>(workspaceId, `cocktails/${cocktailId}?startDate=${startDate}&endDate=${endDate}`);
         setCocktailDetailData(data);
       } catch (error) {
-        alertApiV1Error(error, 'Fehler beim Laden der Cocktail-Details');
+        alertApiV1Error(error, t('errors:loadCocktailDetails'));
       } finally {
         setCocktailDetailLoading(false);
       }
     },
-    [workspaceId, timeRange.startDate.getTime(), timeRange.endDate.getTime()],
+    [workspaceId, timeRange.startDate.getTime(), timeRange.endDate.getTime(), t],
   );
 
   const loadTagsData = useCallback(async () => {
@@ -577,11 +581,11 @@ const StatisticsAdvancedPage = () => {
       const data = await fetchAdvancedStatistics<typeof tagsData>(workspaceId, `tags?startDate=${startDate}&endDate=${endDate}`);
       setTagsData(data);
     } catch (error) {
-      alertApiV1Error(error, 'Fehler beim Laden der Tag-Daten');
+      alertApiV1Error(error, t('errors:loadTagData'));
     } finally {
       setComparisonsLoading(false);
     }
-  }, [workspaceId, timeRange]);
+  }, [workspaceId, timeRange, t]);
 
   const loadIngredientsData = useCallback(async () => {
     if (!workspaceId) return;
@@ -593,11 +597,11 @@ const StatisticsAdvancedPage = () => {
       const data = await fetchAdvancedStatistics<typeof ingredientsData>(workspaceId, `ingredients?startDate=${startDate}&endDate=${endDate}`);
       setIngredientsData(data);
     } catch (error) {
-      alertApiV1Error(error, 'Fehler beim Laden der Zutaten-Daten');
+      alertApiV1Error(error, t('errors:loadIngredientData'));
     } finally {
       setComparisonsLoading(false);
     }
-  }, [workspaceId, timeRange]);
+  }, [workspaceId, timeRange, t]);
 
   // Calculate aggregated ingredients from comparison cocktails (count * ingredient amount)
   // Only includes cocktails that are part of the selected set/comparison
@@ -743,12 +747,12 @@ const StatisticsAdvancedPage = () => {
         const data = await fetchAdvancedStatistics<SetDetailData>(workspaceId, `compare?${params.toString()}`);
         setSetDetailData(data);
       } catch (error) {
-        alertApiV1Error(error, 'Fehler beim Laden der Vergleichsdaten');
+        alertApiV1Error(error, t('errors:loadComparisonData'));
       } finally {
         setSetDetailLoading(false);
       }
     },
-    [workspaceId, timeRange, comparisonLogic],
+    [workspaceId, timeRange, comparisonLogic, t],
   );
 
   const handleSaveSet = () => {
@@ -756,14 +760,14 @@ const StatisticsAdvancedPage = () => {
 
     const items = comparisonMode === 'tags' ? Array.from(selectedTags) : Array.from(selectedIngredients);
     if (items.length === 0) {
-      alertService.error('Bitte wählen Sie mindestens ein Element aus');
+      alertService.error(t('errors:selectAtLeastOne'));
       return;
     }
 
     modalContext.openModal(
       <InputModal
-        title="Set speichern"
-        description={`Geben Sie einen Namen für das ${comparisonMode === 'tags' ? 'Tag' : 'Zutaten'}-Set ein:`}
+        title={t('manage:statistics.saveSet')}
+        description={comparisonMode === 'tags' ? t('manage:statistics.setNamePromptTag') : t('manage:statistics.setNamePromptIngredient')}
         onInputSubmit={async (name) => {
           try {
             await mutateAdvancedStatisticsSet(workspaceId, 'POST', {
@@ -772,13 +776,13 @@ const StatisticsAdvancedPage = () => {
               logic: comparisonLogic,
               items,
             });
-            alertService.success('Set gespeichert');
+            alertService.success(t('manage:statistics.setSaved'));
             setSelectedTags(new Set());
             setSelectedIngredients(new Set());
             // Refresh saved sets
             setSavedSetsRefreshKey((prev) => prev + 1);
           } catch (error) {
-            alertApiV1Error(error, 'Fehler beim Speichern des Sets');
+            alertApiV1Error(error, t('errors:saveSet'));
           }
         }}
       />,
@@ -790,14 +794,14 @@ const StatisticsAdvancedPage = () => {
 
     const items = Array.from(selectedAnalysisCocktailIds);
     if (items.length === 0) {
-      alertService.error('Bitte wählen Sie mindestens einen Cocktail aus');
+      alertService.error(t('errors:selectAtLeastOneCocktail'));
       return;
     }
 
     modalContext.openModal(
       <InputModal
-        title="Cocktail-Set speichern"
-        description="Geben Sie einen Namen für das Cocktail-Set ein:"
+        title={t('manage:statistics.saveCocktailSet')}
+        description={t('manage:statistics.cocktailSetNamePrompt')}
         onInputSubmit={async (name) => {
           try {
             await mutateAdvancedStatisticsSet(workspaceId, 'POST', {
@@ -806,13 +810,13 @@ const StatisticsAdvancedPage = () => {
               logic: 'AND',
               items,
             });
-            alertService.success('Cocktail-Set gespeichert');
+            alertService.success(t('manage:statistics.cocktailSetSaved'));
             // Clear selection and refresh
             setSelectedAnalysisSetId(undefined);
             setOriginalAnalysisSetItems(new Set());
             setAnalysisSetsRefreshKey((prev) => prev + 1);
           } catch (error) {
-            alertApiV1Error(error, 'Fehler beim Speichern des Sets');
+            alertApiV1Error(error, t('errors:saveSet'));
           }
         }}
       />,
@@ -831,9 +835,9 @@ const StatisticsAdvancedPage = () => {
       });
       setOriginalAnalysisSetItems(new Set(selectedAnalysisCocktailIds));
       setAnalysisSetsRefreshKey((prev) => prev + 1);
-      alertService.success('Set aktualisiert');
+      alertService.success(t('manage:statistics.setUpdated'));
     } catch (error) {
-      alertApiV1Error(error, 'Fehler beim Aktualisieren des Sets');
+      alertApiV1Error(error, t('errors:updateSet'));
     }
   };
 
@@ -856,9 +860,9 @@ const StatisticsAdvancedPage = () => {
       setOriginalComparisonSetItems(new Set(items));
       setOriginalComparisonSetLogic(comparisonLogic);
       setSavedSetsRefreshKey((prev) => prev + 1);
-      alertService.success('Set aktualisiert');
+      alertService.success(t('manage:statistics.setUpdated'));
     } catch (error) {
-      alertApiV1Error(error, 'Fehler beim Aktualisieren des Sets');
+      alertApiV1Error(error, t('errors:updateSet'));
     }
   };
 
@@ -974,7 +978,7 @@ const StatisticsAdvancedPage = () => {
     loadComparisonDetail,
   ]);
 
-  // Change detection for Tab 4 (Cocktail-Analyse): Check if selection differs from original set
+  // Change detection for Tab 4 (cocktail analysis): Check if selection differs from original set
   const hasAnalysisSetChanges = useMemo(() => {
     if (!selectedAnalysisSetId) return false;
     const original = Array.from(originalAnalysisSetItems).sort().join(',');
@@ -982,7 +986,7 @@ const StatisticsAdvancedPage = () => {
     return original !== current;
   }, [selectedAnalysisSetId, originalAnalysisSetItems, selectedAnalysisCocktailIds]);
 
-  // Change detection for Tab 3 (Vergleiche): Check if selection or logic differs from original set
+  // Change detection for Tab 3 (comparisons): Check if selection or logic differs from original set
   const hasComparisonSetChanges = useMemo(() => {
     if (!selectedSetId) return false;
     const currentItems = comparisonMode === 'tags' ? selectedTags : selectedIngredients;
@@ -1061,29 +1065,32 @@ const StatisticsAdvancedPage = () => {
   }, []);
 
   // Format time range with time for subtitle
-  const formatTimeRangeWithTime = useCallback((range: TimeRange): string => {
-    const formatDateTime = (date: Date) => {
-      return date.toLocaleString('de-DE', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-      });
-    };
+  const formatTimeRangeWithTime = useCallback(
+    (range: TimeRange): string => {
+      const formatDateTime = (date: Date) => {
+        return date.toLocaleString(intlLocale, {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        });
+      };
 
-    const start = formatDateTime(range.startDate);
-    const end = formatDateTime(range.endDate);
+      const start = formatDateTime(range.startDate);
+      const end = formatDateTime(range.endDate);
 
-    // If same day, show only one date with time range
-    if (range.startDate.toDateString() === range.endDate.toDateString()) {
-      const startTime = range.startDate.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-      const endTime = range.endDate.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-      return `${start} (${startTime} - ${endTime})`;
-    }
+      // If same day, show only one date with time range
+      if (range.startDate.toDateString() === range.endDate.toDateString()) {
+        const startTime = range.startDate.toLocaleTimeString(intlLocale, { hour: '2-digit', minute: '2-digit' });
+        const endTime = range.endDate.toLocaleTimeString(intlLocale, { hour: '2-digit', minute: '2-digit' });
+        return `${start} (${startTime} - ${endTime})`;
+      }
 
-    return `${start} - ${end}`;
-  }, []);
+      return `${start} - ${end}`;
+    },
+    [intlLocale],
+  );
 
   const handleRefresh = () => {
     if (activeTab === 'overview') {
@@ -1133,10 +1140,10 @@ const StatisticsAdvancedPage = () => {
   };
 
   const tabs: Array<{ id: Tab; label: string }> = [
-    { id: 'overview', label: 'Übersicht' },
-    { id: 'cocktails', label: 'Zeitraum & Cocktails' },
-    { id: 'comparisons', label: 'Vergleiche' },
-    { id: 'analysis', label: 'Cocktail-Analyse' },
+    { id: 'overview', label: t('manage:statistics.overview') },
+    { id: 'cocktails', label: t('manage:statistics.periodAndCocktails') },
+    { id: 'comparisons', label: t('manage:statistics.comparisons') },
+    { id: 'analysis', label: t('manage:statistics.cocktailAnalysis') },
   ];
 
   // Convert Chart.js data format to Tremor format
@@ -1204,12 +1211,12 @@ const StatisticsAdvancedPage = () => {
   return (
     <ManageEntityLayout
       backLink={`/workspaces/${workspaceId}/manage`}
-      title="Erweiterte Statistik"
+      title={t('nav:advancedStatistics')}
       subtitle={formatTimeRangeWithTime(timeRange)}
       actions={
         <div className="flex items-center gap-2">
           <TimeRangePicker value={timeRange} onChange={handleTimeRangeChange} compact dayStartTime={dayStartTime} />
-          <UiTooltip tip="Aktualisieren">
+          <UiTooltip tip={t('common:update')}>
             <Button type="button" shape="square" variant="primary" size="sm" className="md:h-10 md:w-10" onClick={handleRefresh}>
               <FaSyncAlt />
             </Button>
@@ -1235,19 +1242,19 @@ const StatisticsAdvancedPage = () => {
             {/* Period Tabs */}
             <Tabs variant="bordered" fullWidth>
               <Tab active={overviewPeriodTab === 'today'} variant="bordered" onClick={() => setOverviewPeriodTab('today')}>
-                Heute
+                {t('manage:statistics.today')}
               </Tab>
               <Tab active={overviewPeriodTab === 'week'} variant="bordered" onClick={() => setOverviewPeriodTab('week')}>
-                Woche
+                {t('manage:statistics.week')}
               </Tab>
               <Tab active={overviewPeriodTab === 'month'} variant="bordered" onClick={() => setOverviewPeriodTab('month')}>
-                Monat
+                {t('manage:statistics.month')}
               </Tab>
               <Tab active={overviewPeriodTab === 'period'} variant="bordered" onClick={() => setOverviewPeriodTab('period')}>
-                Zeitraum
+                {t('manage:statistics.period')}
               </Tab>
               <Tab active={overviewPeriodTab === 'allTime'} variant="bordered" onClick={() => setOverviewPeriodTab('allTime')}>
-                Allzeit
+                {t('manage:statistics.allTime')}
               </Tab>
             </Tabs>
 
@@ -1257,7 +1264,7 @@ const StatisticsAdvancedPage = () => {
                 {overviewPeriodTab === 'today' && (
                   <>
                     <StatCard
-                      title="Anzahl"
+                      title={t('statistics:count')}
                       value={overviewData.kpis.today.total}
                       delta={overviewData.kpis.today.delta}
                       previousValue={overviewData.kpis.today.previousTotal}
@@ -1265,15 +1272,15 @@ const StatisticsAdvancedPage = () => {
                       loading={loading}
                     />
                     <StatCard
-                      title="Top Cocktail"
+                      title={t('statistics:topCocktail')}
                       value={overviewData.kpis.today.topCocktail?.name || '-'}
-                      desc={overviewData.kpis.today.topCocktail ? `${overviewData.kpis.today.topCocktail.count} Bestellungen` : undefined}
+                      desc={overviewData.kpis.today.topCocktail ? t('statistics:orderCount', { count: overviewData.kpis.today.topCocktail.count }) : undefined}
                       loading={loading}
                     />
                     <StatCard
-                      title="Umsatz"
+                      title={t('statistics:revenue')}
                       value={overviewData.kpis.today.revenue}
-                      formatValue={(val) => (typeof val === 'number' ? val.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' }) : String(val))}
+                      formatValue={(val) => (typeof val === 'number' ? val.toLocaleString(intlLocale, { style: 'currency', currency: 'EUR' }) : String(val))}
                       loading={loading}
                     />
                   </>
@@ -1281,7 +1288,7 @@ const StatisticsAdvancedPage = () => {
                 {overviewPeriodTab === 'week' && (
                   <>
                     <StatCard
-                      title="Anzahl"
+                      title={t('statistics:count')}
                       value={overviewData.kpis.week.total}
                       delta={overviewData.kpis.week.delta}
                       previousValue={overviewData.kpis.week.previousTotal}
@@ -1289,15 +1296,15 @@ const StatisticsAdvancedPage = () => {
                       loading={loading}
                     />
                     <StatCard
-                      title="Top Cocktail"
+                      title={t('statistics:topCocktail')}
                       value={overviewData.kpis.week.topCocktail?.name || '-'}
-                      desc={overviewData.kpis.week.topCocktail ? `${overviewData.kpis.week.topCocktail.count} Bestellungen` : undefined}
+                      desc={overviewData.kpis.week.topCocktail ? t('statistics:orderCount', { count: overviewData.kpis.week.topCocktail.count }) : undefined}
                       loading={loading}
                     />
                     <StatCard
-                      title="Umsatz"
+                      title={t('statistics:revenue')}
                       value={overviewData.kpis.week.revenue}
-                      formatValue={(val) => (typeof val === 'number' ? val.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' }) : String(val))}
+                      formatValue={(val) => (typeof val === 'number' ? val.toLocaleString(intlLocale, { style: 'currency', currency: 'EUR' }) : String(val))}
                       loading={loading}
                     />
                   </>
@@ -1305,7 +1312,7 @@ const StatisticsAdvancedPage = () => {
                 {overviewPeriodTab === 'month' && (
                   <>
                     <StatCard
-                      title="Anzahl"
+                      title={t('statistics:count')}
                       value={overviewData.kpis.month.total}
                       delta={overviewData.kpis.month.delta}
                       previousValue={overviewData.kpis.month.previousTotal}
@@ -1313,32 +1320,34 @@ const StatisticsAdvancedPage = () => {
                       loading={loading}
                     />
                     <StatCard
-                      title="Top Cocktail"
+                      title={t('statistics:topCocktail')}
                       value={overviewData.kpis.month.topCocktail?.name || '-'}
-                      desc={overviewData.kpis.month.topCocktail ? `${overviewData.kpis.month.topCocktail.count} Bestellungen` : undefined}
+                      desc={overviewData.kpis.month.topCocktail ? t('statistics:orderCount', { count: overviewData.kpis.month.topCocktail.count }) : undefined}
                       loading={loading}
                     />
                     <StatCard
-                      title="Umsatz"
+                      title={t('statistics:revenue')}
                       value={overviewData.kpis.month.revenue}
-                      formatValue={(val) => (typeof val === 'number' ? val.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' }) : String(val))}
+                      formatValue={(val) => (typeof val === 'number' ? val.toLocaleString(intlLocale, { style: 'currency', currency: 'EUR' }) : String(val))}
                       loading={loading}
                     />
                   </>
                 )}
                 {overviewPeriodTab === 'period' && (
                   <>
-                    <StatCard title="Anzahl" value={overviewData.kpis.period.total} loading={loading} />
+                    <StatCard title={t('statistics:count')} value={overviewData.kpis.period.total} loading={loading} />
                     <StatCard
-                      title="Top Cocktail"
+                      title={t('statistics:topCocktail')}
                       value={overviewData.kpis.period.topCocktail?.name || '-'}
-                      desc={overviewData.kpis.period.topCocktail ? `${overviewData.kpis.period.topCocktail.count} Bestellungen` : undefined}
+                      desc={
+                        overviewData.kpis.period.topCocktail ? t('statistics:orderCount', { count: overviewData.kpis.period.topCocktail.count }) : undefined
+                      }
                       loading={loading}
                     />
                     <StatCard
-                      title="Umsatz"
+                      title={t('statistics:revenue')}
                       value={overviewData.kpis.period.revenue}
-                      formatValue={(val) => (typeof val === 'number' ? val.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' }) : String(val))}
+                      formatValue={(val) => (typeof val === 'number' ? val.toLocaleString(intlLocale, { style: 'currency', currency: 'EUR' }) : String(val))}
                       loading={loading}
                     />
                   </>
@@ -1346,21 +1355,23 @@ const StatisticsAdvancedPage = () => {
                 {overviewPeriodTab === 'allTime' && (
                   <>
                     <StatCard
-                      title="Anzahl"
+                      title={t('statistics:count')}
                       value={overviewData.kpis.allTime.total}
-                      formatValue={(val) => (typeof val === 'number' ? val.toLocaleString('de-DE') : String(val))}
+                      formatValue={(val) => (typeof val === 'number' ? val.toLocaleString(intlLocale) : String(val))}
                       loading={loading}
                     />
                     <StatCard
-                      title="Top Cocktail"
+                      title={t('statistics:topCocktail')}
                       value={overviewData.kpis.allTime.topCocktail?.name || '-'}
-                      desc={overviewData.kpis.allTime.topCocktail ? `${overviewData.kpis.allTime.topCocktail.count} Bestellungen` : undefined}
+                      desc={
+                        overviewData.kpis.allTime.topCocktail ? t('statistics:orderCount', { count: overviewData.kpis.allTime.topCocktail.count }) : undefined
+                      }
                       loading={loading}
                     />
                     <StatCard
-                      title="Umsatz"
+                      title={t('statistics:revenue')}
                       value={overviewData.kpis.allTime.revenue}
-                      formatValue={(val) => (typeof val === 'number' ? val.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' }) : String(val))}
+                      formatValue={(val) => (typeof val === 'number' ? val.toLocaleString(intlLocale, { style: 'currency', currency: 'EUR' }) : String(val))}
                       loading={loading}
                     />
                   </>
@@ -1368,9 +1379,9 @@ const StatisticsAdvancedPage = () => {
               </div>
             ) : (
               <div className="grid w-full grid-cols-1 gap-4 lg:grid-cols-3">
-                <StatCard title="Anzahl" value={0} loading={true} />
-                <StatCard title="Top Cocktail" value="-" loading={true} />
-                <StatCard title="Umsatz" value={0} loading={true} />
+                <StatCard title={t('statistics:count')} value={0} loading={true} />
+                <StatCard title={t('statistics:topCocktail')} value="-" loading={true} />
+                <StatCard title={t('statistics:revenue')} value={0} loading={true} />
               </div>
             )}
 
@@ -1392,20 +1403,20 @@ const StatisticsAdvancedPage = () => {
                       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                         <Card variant="elevated">
                           <CardBody>
-                            <CardTitle className="text-lg">Cocktails im Zeitverlauf</CardTitle>
+                            <CardTitle className="text-lg">{t('manage:statistics.cocktailsOverTime')}</CardTitle>
                             {loading ? (
                               <Skeleton className="h-[260px] w-full" />
                             ) : chartData.timeSeries.length > 0 ? (
-                              <TimeSeriesChart data={chartData.timeSeries} label="Bestellungen" height={260} />
+                              <TimeSeriesChart data={chartData.timeSeries} label={t('statistics:orders')} height={260} />
                             ) : (
-                              <div className="py-8 text-center text-base-content/70">Keine Cocktails vorhanden</div>
+                              <div className="py-8 text-center text-base-content/70">{t('manage:statistics.noCocktails')}</div>
                             )}
                           </CardBody>
                         </Card>
 
                         <Card variant="elevated">
                           <CardBody>
-                            <CardTitle className="text-lg">Cocktails nach Uhrzeit</CardTitle>
+                            <CardTitle className="text-lg">{t('manage:statistics.cocktailsByHour')}</CardTitle>
                             {loading ? (
                               <Skeleton className="h-[260px] w-full" />
                             ) : chartData.hourDistribution.some((d) => d.count > 0) ? (
@@ -1415,11 +1426,11 @@ const StatisticsAdvancedPage = () => {
                                   value: d.count,
                                 }))}
                                 height={260}
-                                xLabel="Uhrzeit"
-                                yLabel="Anzahl"
+                                xLabel={t('statistics:hourAxis')}
+                                yLabel={t('statistics:count')}
                               />
                             ) : (
-                              <div className="py-8 text-center text-base-content/70">Keine Cocktails vorhanden</div>
+                              <div className="py-8 text-center text-base-content/70">{t('manage:statistics.noCocktails')}</div>
                             )}
                           </CardBody>
                         </Card>
@@ -1427,7 +1438,7 @@ const StatisticsAdvancedPage = () => {
 
                       <Card variant="elevated">
                         <CardBody>
-                          <CardTitle className="text-lg">Top-Cocktails</CardTitle>
+                          <CardTitle className="text-lg">{t('manage:statistics.topCocktails')}</CardTitle>
                           {loading ? (
                             <Skeleton className="h-[200px] w-full" />
                           ) : chartData.topCocktails.length > 0 ? (
@@ -1438,11 +1449,11 @@ const StatisticsAdvancedPage = () => {
                               }))}
                               horizontal
                               height={Math.max(200, chartData.topCocktails.length * 40)}
-                              yLabel="Cocktail"
-                              xLabel="Anzahl"
+                              yLabel={t('statistics:cocktail')}
+                              xLabel={t('statistics:count')}
                             />
                           ) : (
-                            <div className="py-8 text-center text-base-content/70">Keine Cocktails vorhanden</div>
+                            <div className="py-8 text-center text-base-content/70">{t('manage:statistics.noCocktails')}</div>
                           )}
                         </CardBody>
                       </Card>
@@ -1518,19 +1529,25 @@ const StatisticsAdvancedPage = () => {
                       return (
                         <div className="grid w-full grid-cols-1 gap-4 lg:grid-cols-3">
                           <StatCard
-                            title="Totale Anzahl"
+                            title={t('statistics:totalCount')}
                             value={totalCount}
-                            formatValue={(val) => (typeof val === 'number' ? val.toLocaleString('de-DE') : String(val))}
+                            formatValue={(val) => (typeof val === 'number' ? val.toLocaleString(intlLocale) : String(val))}
                             loading={cocktailsLoading}
                           />
                           <StatCard
-                            title="Umsatz"
+                            title={t('statistics:revenue')}
                             value={revenue}
-                            formatValue={(val) => (typeof val === 'number' ? val.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' }) : String(val))}
+                            formatValue={(val) =>
+                              typeof val === 'number' ? val.toLocaleString(intlLocale, { style: 'currency', currency: 'EUR' }) : String(val)
+                            }
                             loading={cocktailsLoading}
                           />
-                          <StatCard title="Top Cocktail" value={topCocktail ? topCocktail.name : '-'} loading={cocktailsLoading} />
-                          <StatCard title="Haupt Uhrzeit" value={peakHourCount > 0 ? `${peakHour} Uhr` : '-'} loading={cocktailsLoading} />
+                          <StatCard title={t('statistics:topCocktail')} value={topCocktail ? topCocktail.name : '-'} loading={cocktailsLoading} />
+                          <StatCard
+                            title={t('statistics:peakHour')}
+                            value={peakHourCount > 0 ? t('statistics:peakHourValue', { hour: peakHour }) : '-'}
+                            loading={cocktailsLoading}
+                          />
                         </div>
                       );
                     })()}
@@ -1538,11 +1555,11 @@ const StatisticsAdvancedPage = () => {
                     <Card variant="elevated">
                       <CardBody>
                         <CardTitle className="flex items-center justify-between">
-                          <div>Gruppierte Ansicht </div>
+                          <div>{t('manage:statistics.groupedView')}</div>
                           <div className="flex items-center gap-2">
                             <FormControl className={groupBy != 'day' ? 'hidden' : ''}>
                               <Label className="cursor-pointer flex-row items-center gap-2">
-                                <LabelText className="text-sm">Alle Tage anzeigen</LabelText>
+                                <LabelText className="text-sm">{t('manage:statistics.showAllDays')}</LabelText>
                                 <Toggle
                                   toggleSize="sm"
                                   disabled={groupBy != 'day'}
@@ -1554,16 +1571,16 @@ const StatisticsAdvancedPage = () => {
                             </FormControl>
                             <FormControl>
                               <Select selectSize="sm" value={groupBy} onChange={(event) => setGroupBy(event.target.value as 'day' | 'hour')}>
-                                <option value="hour">Stunden</option>
+                                <option value="hour">{t('manage:statistics.hours')}</option>
                                 <option value="day" disabled={timeRange.endDate.getTime() - timeRange.startDate.getTime() < 24 * 3600 * 1000}>
-                                  Tagen
+                                  {t('manage:statistics.days')}
                                 </option>
                               </Select>
                             </FormControl>
                           </div>
                         </CardTitle>
 
-                        {/* Chart: X = Zeitraum, Y = Anzahl. X-Achsen-Labels fest bei 60° geneigt */}
+                        {/* Chart: X = period, Y = count. X-axis labels fixed at 60° tilt */}
                         {groupedChartData && groupedChartData.length > 0 && groupedChartCategories.length > 0 ? (
                           <div className="h-[50vh] w-full lg:h-[70vh]">
                             <ResponsiveContainer width="100%" height="100%">
@@ -1629,7 +1646,7 @@ const StatisticsAdvancedPage = () => {
                                         </div>
                                         <div className="mt-2 border-t border-base-300 pt-2">
                                           <div className="flex items-center justify-between">
-                                            <span className="text-sm font-semibold text-base-content">Gesamt</span>
+                                            <span className="text-sm font-semibold text-base-content">{t('manage:total')}</span>
                                             <span className="text-sm font-semibold text-base-content">{total}</span>
                                           </div>
                                         </div>
@@ -1645,7 +1662,7 @@ const StatisticsAdvancedPage = () => {
                             </ResponsiveContainer>
                           </div>
                         ) : (
-                          <div className="py-8 text-center text-base-content/70">Keine Cocktails vorhanden</div>
+                          <div className="py-8 text-center text-base-content/70">{t('manage:statistics.noCocktails')}</div>
                         )}
                       </CardBody>
                     </Card>
@@ -1690,39 +1707,39 @@ const StatisticsAdvancedPage = () => {
                   ) : cocktailDetailData ? (
                     <Card variant="elevated">
                       <CardBody>
-                        <CardTitle className="mb-4 text-lg">{cocktailDetailData?.cocktail?.name ?? ''} – Detailansicht</CardTitle>
+                        <CardTitle className="mb-4 text-lg">{t('manage:statistics.detailView', { name: cocktailDetailData?.cocktail?.name ?? '' })}</CardTitle>
 
                         <div className="grid w-full grid-cols-1 gap-4 lg:grid-cols-3">
                           <StatCard
-                            title="Bestellungen"
+                            title={t('statistics:orders')}
                             value={cocktailDetailData?.total ?? 0}
                             delta={cocktailDetailData?.delta}
                             previousValue={cocktailDetailData?.previousTotal}
                             loading={cocktailDetailLoading}
                           />
                           <StatCard
-                            title="Ø pro aktiver Stunde"
+                            title={t('statistics:avgPerActiveHour')}
                             value={(cocktailDetailData?.avgPerActiveHour ?? 0).toFixed(1)}
-                            desc="/ Std"
+                            desc={t('statistics:perHour')}
                             loading={cocktailDetailLoading}
                           />
-                          <StatCard title="Rang" value={`#${cocktailDetailData?.rank ?? 0}`} loading={cocktailDetailLoading} />
+                          <StatCard title={t('statistics:rank')} value={`#${cocktailDetailData?.rank ?? 0}`} loading={cocktailDetailLoading} />
                         </div>
 
                         <div className="mb-4">
-                          <h4 className="text-md mb-2 font-semibold">Verteilung über Zeit</h4>
+                          <h4 className="text-md mb-2 font-semibold">{t('manage:statistics.distributionOverTime')}</h4>
                           {cocktailDetailLoading ? (
                             <Skeleton className="h-[200px] w-full" />
                           ) : (cocktailDetailData?.timeSeries?.length ?? 0) > 0 ? (
-                            <TimeSeriesChart data={cocktailDetailData?.timeSeries ?? []} label="Bestellungen" height={200} />
+                            <TimeSeriesChart data={cocktailDetailData?.timeSeries ?? []} label={t('statistics:orders')} height={200} />
                           ) : (
-                            <div className="py-8 text-center text-base-content/70">Keine Cocktails vorhanden</div>
+                            <div className="py-8 text-center text-base-content/70">{t('manage:statistics.noCocktails')}</div>
                           )}
                         </div>
 
                         <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2">
                           <div>
-                            <h4 className="text-md mb-2 font-semibold">Verteilung nach Stunde</h4>
+                            <h4 className="text-md mb-2 font-semibold">{t('manage:statistics.distributionByHour')}</h4>
                             {cocktailDetailLoading ? (
                               <Skeleton className="h-[200px] w-full" />
                             ) : cocktailDetailData?.hourDistribution?.some((d: { hour: number; count: number }) => d.count > 0) ? (
@@ -1732,15 +1749,15 @@ const StatisticsAdvancedPage = () => {
                                   value: d.count || 0,
                                 }))}
                                 height={200}
-                                xLabel="Uhrzeit"
-                                yLabel="Anzahl"
+                                xLabel={t('statistics:hourAxis')}
+                                yLabel={t('statistics:count')}
                               />
                             ) : (
-                              <div className="py-8 text-center text-base-content/70">Keine Cocktails vorhanden</div>
+                              <div className="py-8 text-center text-base-content/70">{t('manage:statistics.noCocktails')}</div>
                             )}
                           </div>
                           <div>
-                            <h4 className="text-md mb-2 font-semibold">Verteilung nach Wochentag</h4>
+                            <h4 className="text-md mb-2 font-semibold">{t('manage:statistics.distributionByWeekday')}</h4>
                             {cocktailDetailLoading ? (
                               <Skeleton className="h-[200px] w-full" />
                             ) : cocktailDetailData?.dayDistribution?.some((d: { day: number; count: number }) => d.count > 0) ? (
@@ -1753,18 +1770,18 @@ const StatisticsAdvancedPage = () => {
                                   };
                                 })}
                                 height={200}
-                                xLabel="Wochentag"
-                                yLabel="Anzahl"
+                                xLabel={t('statistics:weekdayAxis')}
+                                yLabel={t('statistics:count')}
                               />
                             ) : (
-                              <div className="py-8 text-center text-base-content/70">Keine Cocktails vorhanden</div>
+                              <div className="py-8 text-center text-base-content/70">{t('manage:statistics.noCocktails')}</div>
                             )}
                           </div>
                         </div>
 
                         {(cocktailDetailData?.cocktail?.tags?.length ?? 0) > 0 && (
                           <div className="mb-4">
-                            <h4 className="text-md mb-2 font-semibold">Tags</h4>
+                            <h4 className="text-md mb-2 font-semibold">{t('common:tags')}</h4>
                             <div className="flex flex-wrap gap-2">
                               {(cocktailDetailData?.cocktail?.tags ?? []).map((tag: string) => (
                                 <Badge key={tag} variant="primary">
@@ -1777,7 +1794,7 @@ const StatisticsAdvancedPage = () => {
 
                         {(cocktailDetailData?.ingredients?.length ?? 0) > 0 && (
                           <div className="mb-4">
-                            <h4 className="text-md mb-2 font-semibold">Zutaten</h4>
+                            <h4 className="text-md mb-2 font-semibold">{t('cocktail:ingredients')}</h4>
                             <div className="flex flex-wrap gap-2">
                               {(cocktailDetailData?.ingredients ?? []).map((ingredient: string) => (
                                 <Badge key={ingredient} variant="secondary">
@@ -1788,7 +1805,7 @@ const StatisticsAdvancedPage = () => {
                           </div>
                         )}
 
-                        <Divider>Gespeicherte Sets</Divider>
+                        <Divider>{t('manage:statistics.savedSets')}</Divider>
                         <SavedSetSelector
                           workspaceId={workspaceId as string}
                           type="COCKTAIL_SET"
@@ -1804,16 +1821,20 @@ const StatisticsAdvancedPage = () => {
                           <div className="mt-4">
                             <h4 className="text-md mb-2 font-semibold">{cocktailDetailSetData?.set?.name ?? ''}</h4>
                             <div className="grid w-full grid-cols-1 gap-4 lg:grid-cols-3">
-                              <StatCard title="Bestellungen" value={cocktailDetailSetData?.kpis?.total ?? 0} loading={cocktailDetailSetLoading} />
-                              <StatCard title="Cocktails" value={cocktailDetailSetData?.kpis?.cocktailCount ?? 0} loading={cocktailDetailSetLoading} />
+                              <StatCard title={t('statistics:orders')} value={cocktailDetailSetData?.kpis?.total ?? 0} loading={cocktailDetailSetLoading} />
                               <StatCard
-                                title="Anteil"
+                                title={t('statistics:cocktails')}
+                                value={cocktailDetailSetData?.kpis?.cocktailCount ?? 0}
+                                loading={cocktailDetailSetLoading}
+                              />
+                              <StatCard
+                                title={t('statistics:share')}
                                 value={`${(cocktailDetailSetData?.kpis?.percentage ?? 0).toFixed(1)}%`}
                                 loading={cocktailDetailSetLoading}
                               />
                             </div>
                             <div className="mb-4">
-                              <h5 className="mb-2 text-sm font-semibold">Cocktails im Set</h5>
+                              <h5 className="mb-2 text-sm font-semibold">{t('manage:statistics.cocktailsInSet')}</h5>
                               {(cocktailDetailSetData?.cocktails?.length ?? 0) > 0 ? (
                                 <DistributionChart
                                   data={(cocktailDetailSetData?.cocktails ?? []).map((c: { name: string; count: number }) => ({
@@ -1822,11 +1843,11 @@ const StatisticsAdvancedPage = () => {
                                   }))}
                                   horizontal
                                   height={Math.max(200, (cocktailDetailSetData?.cocktails ?? []).length * 40)}
-                                  yLabel="Cocktail"
-                                  xLabel="Anzahl"
+                                  yLabel={t('statistics:cocktail')}
+                                  xLabel={t('statistics:count')}
                                 />
                               ) : (
-                                <div className="py-8 text-center text-base-content/70">Keine Cocktails vorhanden</div>
+                                <div className="py-8 text-center text-base-content/70">{t('manage:statistics.noCocktails')}</div>
                               )}
                             </div>
                           </div>
@@ -1836,7 +1857,7 @@ const StatisticsAdvancedPage = () => {
                   ) : (
                     <Card variant="elevated">
                       <CardBody>
-                        <div className="text-center text-base-content/70">Bitte wählen Sie einen Cocktail aus</div>
+                        <div className="text-center text-base-content/70">{t('manage:statistics.selectCocktail')}</div>
                       </CardBody>
                     </Card>
                   )
@@ -1910,11 +1931,11 @@ const StatisticsAdvancedPage = () => {
                     }}
                   />
 
-                  <Divider>Ergebnisse im Zeitraum</Divider>
+                  <Divider>{t('manage:statistics.resultsInPeriod')}</Divider>
 
                   {/* Mode Selector */}
                   <div className="flex w-full flex-col gap-2">
-                    {/* Tags / Zutaten - full width, equal size */}
+                    {/* Tags / Ingredients - full width, equal size */}
                     <ButtonGroup className="w-full">
                       <Button
                         type="button"
@@ -1925,7 +1946,7 @@ const StatisticsAdvancedPage = () => {
                         onClick={() => setComparisonMode('tags')}
                         disabled={!!selectedSetId}
                       >
-                        Tags
+                        {t('common:tags')}
                       </Button>
                       <Button
                         type="button"
@@ -1936,7 +1957,7 @@ const StatisticsAdvancedPage = () => {
                         onClick={() => setComparisonMode('ingredients')}
                         disabled={!!selectedSetId}
                       >
-                        Zutaten
+                        {t('cocktail:ingredients')}
                       </Button>
                     </ButtonGroup>
 
@@ -1968,17 +1989,17 @@ const StatisticsAdvancedPage = () => {
                           {selectedSetId && hasComparisonSetChanges && (
                             <>
                               <Button type="button" variant="warning" size="sm" onClick={handleResetComparisonSet}>
-                                Zurücksetzen
+                                {t('common:reset')}
                               </Button>
                               <Button type="button" variant="primary" size="sm" className="flex-1" onClick={handleUpdateComparisonSet}>
-                                Aktualisieren
+                                {t('common:update')}
                               </Button>
                             </>
                           )}
                         </div>
                         {/* Save as new set button */}
                         <Button type="button" variant="secondary" size="sm" wide onClick={handleSaveSet}>
-                          {selectedSetId ? 'Als neues Set speichern' : 'Set speichern'}
+                          {selectedSetId ? t('manage:statistics.saveAsNewSet') : t('manage:statistics.saveSet')}
                         </Button>
                       </div>
                     )}
@@ -2051,34 +2072,43 @@ const StatisticsAdvancedPage = () => {
                     {/* Stats Card */}
                     <div className="grid w-full grid-cols-1 gap-4 lg:grid-cols-3">
                       <StatCard
-                        title="Cocktails"
+                        title={t('statistics:cocktails')}
                         value={setDetailData.cocktails ? setDetailData.cocktails.filter((c: { count: number }) => c.count > 0).length : 0}
-                        desc={setDetailData.kpis.cocktailCount ? `von ${setDetailData.kpis.cocktailCount} mit dieser Kombination` : undefined}
+                        desc={setDetailData.kpis.cocktailCount ? t('manage:statistics.ofCombination', { count: setDetailData.kpis.cocktailCount }) : undefined}
                         loading={setDetailLoading}
                       />
                       <StatCard
-                        title="Bestellungen"
+                        title={t('statistics:orders')}
                         value={setDetailData.kpis.total}
-                        desc={setDetailData.kpis.totalStats ? `von ${setDetailData.kpis.totalStats.toLocaleString('de-DE')} im Zeitraum` : undefined}
-                        loading={setDetailLoading}
-                      />
-                      <StatCard
-                        title="Anteil"
-                        value={setDetailData.kpis.cocktailPercentageAll !== undefined ? `${setDetailData.kpis.cocktailPercentageAll.toFixed(1)}%` : '-'}
                         desc={
-                          setDetailData.kpis.cocktailCount && setDetailData.kpis.totalCocktailsInWorkspace
-                            ? `${setDetailData.kpis.cocktailCount} von ${setDetailData.kpis.totalCocktailsInWorkspace} allen Cocktails`
+                          setDetailData.kpis.totalStats
+                            ? t('manage:statistics.ofPeriodTotal', { count: setDetailData.kpis.totalStats.toLocaleString(intlLocale) })
                             : undefined
                         }
                         loading={setDetailLoading}
                       />
                       <StatCard
-                        title="Umsatz"
+                        title={t('statistics:share')}
+                        value={setDetailData.kpis.cocktailPercentageAll !== undefined ? `${setDetailData.kpis.cocktailPercentageAll.toFixed(1)}%` : '-'}
+                        desc={
+                          setDetailData.kpis.cocktailCount && setDetailData.kpis.totalCocktailsInWorkspace
+                            ? t('manage:statistics.ofAllCocktails', {
+                                count: setDetailData.kpis.cocktailCount,
+                                total: setDetailData.kpis.totalCocktailsInWorkspace,
+                              })
+                            : undefined
+                        }
+                        loading={setDetailLoading}
+                      />
+                      <StatCard
+                        title={t('statistics:revenue')}
                         value={setDetailData.kpis.revenue !== undefined ? setDetailData.kpis.revenue : 0}
-                        formatValue={(val) => (typeof val === 'number' ? val.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' }) : String(val))}
+                        formatValue={(val) => (typeof val === 'number' ? val.toLocaleString(intlLocale, { style: 'currency', currency: 'EUR' }) : String(val))}
                         desc={
                           setDetailData.kpis.totalRevenue !== undefined && setDetailData.kpis.totalRevenue > 0
-                            ? `${(((setDetailData.kpis.revenue || 0) / setDetailData.kpis.totalRevenue) * 100).toFixed(1)}% vom Gesamtumsatz`
+                            ? t('manage:statistics.ofTotalRevenue', {
+                                percent: (((setDetailData.kpis.revenue || 0) / setDetailData.kpis.totalRevenue) * 100).toFixed(1),
+                              })
                             : undefined
                         }
                         loading={setDetailLoading}
@@ -2088,7 +2118,7 @@ const StatisticsAdvancedPage = () => {
                     {/* Cocktails Card */}
                     <Card variant="elevated">
                       <CardBody>
-                        <CardTitle className="text-lg">Cocktails</CardTitle>
+                        <CardTitle className="text-lg">{t('nav:cocktails')}</CardTitle>
                         {setDetailData.cocktails && setDetailData.cocktails.length > 0 ? (
                           <DistributionChart
                             data={setDetailData.cocktails
@@ -2099,11 +2129,11 @@ const StatisticsAdvancedPage = () => {
                               }))}
                             horizontal
                             height={Math.max(200, setDetailData.cocktails.length * 40)}
-                            yLabel="Cocktail"
-                            xLabel="Anzahl"
+                            yLabel={t('statistics:cocktail')}
+                            xLabel={t('statistics:count')}
                           />
                         ) : (
-                          <div className="py-8 text-center text-base-content/70">Keine Cocktails vorhanden</div>
+                          <div className="py-8 text-center text-base-content/70">{t('manage:statistics.noCocktails')}</div>
                         )}
                       </CardBody>
                     </Card>
@@ -2112,20 +2142,20 @@ const StatisticsAdvancedPage = () => {
                     {setDetailData.set.type === 'TAG_SET' && (
                       <Card variant="elevated">
                         <CardBody>
-                          <CardTitle className="text-lg">Zutaten (aggregiert)</CardTitle>
+                          <CardTitle className="text-lg">{t('manage:statistics.ingredientsAggregated')}</CardTitle>
                           {cocktailsLoading ? (
                             <Loading />
                           ) : aggregatedIngredientsData.length === 0 ? (
-                            <div className="py-4 text-center text-base-content/70">Keine Zutaten im Zeitraum</div>
+                            <div className="py-4 text-center text-base-content/70">{t('manage:statistics.noIngredientsInPeriod')}</div>
                           ) : (
                             <div className="overflow-x-auto">
                               <Table compact className="w-full">
                                 <TableHead>
                                   <TableRow>
-                                    <TableHeaderCell>Zutat</TableHeaderCell>
-                                    <TableHeaderCell>Ausgabe-Einheit</TableHeaderCell>
-                                    <TableHeaderCell className="text-right">Menge</TableHeaderCell>
-                                    <TableHeaderCell className="text-right">Kosten</TableHeaderCell>
+                                    <TableHeaderCell>{t('common:ingredientLabel')}</TableHeaderCell>
+                                    <TableHeaderCell>{t('manage:statistics.outputUnit')}</TableHeaderCell>
+                                    <TableHeaderCell className="text-right">{t('manage:amount')}</TableHeaderCell>
+                                    <TableHeaderCell className="text-right">{t('manage:statistics.cost')}</TableHeaderCell>
                                   </TableRow>
                                 </TableHead>
                                 <TableBody>
@@ -2151,7 +2181,7 @@ const StatisticsAdvancedPage = () => {
                                             >
                                               {ingredient.availableUnits.map((unit) => (
                                                 <option key={unit.unitId} value={unit.unitId}>
-                                                  {userContext.getTranslation(unit.unitName, 'de')}
+                                                  {userContext.getTranslation(unit.unitName)}
                                                 </option>
                                               ))}
                                             </Select>
@@ -2160,14 +2190,14 @@ const StatisticsAdvancedPage = () => {
                                           )}
                                         </TableCell>
                                         <TableCell className="text-right">
-                                          {calculated.amount.toLocaleString('de-DE', {
+                                          {calculated.amount.toLocaleString(intlLocale, {
                                             minimumFractionDigits: 0,
                                             maximumFractionDigits: 2,
                                           })}{' '}
-                                          {userContext.getTranslation(calculated.unitName, 'de')}
+                                          {userContext.getTranslation(calculated.unitName)}
                                         </TableCell>
                                         <TableCell className="text-right">
-                                          {cost.toLocaleString('de-DE', {
+                                          {cost.toLocaleString(intlLocale, {
                                             minimumFractionDigits: 2,
                                             maximumFractionDigits: 2,
                                           })}{' '}
@@ -2180,12 +2210,12 @@ const StatisticsAdvancedPage = () => {
                                 <tfoot>
                                   <TableRow className="font-bold">
                                     <TableCell colSpan={3} className="text-right">
-                                      Gesamt:
+                                      {t('manage:totalColon')}
                                     </TableCell>
                                     <TableCell className="text-right">
                                       {aggregatedIngredientsData
                                         .reduce((sum, ing) => sum + calculateIngredientCost(ing), 0)
-                                        .toLocaleString('de-DE', {
+                                        .toLocaleString(intlLocale, {
                                           minimumFractionDigits: 2,
                                           maximumFractionDigits: 2,
                                         })}{' '}
@@ -2203,7 +2233,7 @@ const StatisticsAdvancedPage = () => {
                 ) : (
                   <Card variant="elevated">
                     <CardBody>
-                      <div className="text-center text-base-content/70">Bitte wählen Sie ein Set aus</div>
+                      <div className="text-center text-base-content/70">{t('manage:statistics.selectSet')}</div>
                     </CardBody>
                   </Card>
                 )
@@ -2252,7 +2282,7 @@ const StatisticsAdvancedPage = () => {
                     }}
                   />
 
-                  <Divider>Cocktails auswählen</Divider>
+                  <Divider>{t('manage:statistics.selectCocktails')}</Divider>
 
                   {/* Set Action Buttons - shown when items are selected */}
                   {selectedAnalysisCocktailIds.size > 0 && (
@@ -2262,17 +2292,17 @@ const StatisticsAdvancedPage = () => {
                         {selectedAnalysisSetId && hasAnalysisSetChanges && (
                           <>
                             <Button type="button" variant="warning" size="sm" onClick={handleResetAnalysisSet}>
-                              Zurücksetzen
+                              {t('common:reset')}
                             </Button>
                             <Button type="button" variant="primary" size="sm" className="flex-1" onClick={handleUpdateAnalysisSet}>
-                              Aktualisieren
+                              {t('common:update')}
                             </Button>
                           </>
                         )}
                       </div>
                       {/* Save as new set button */}
                       <Button type="button" variant="secondary" size="sm" wide onClick={handleSaveAnalysisSet}>
-                        {selectedAnalysisSetId ? 'Als neues Set speichern' : 'Set speichern'}
+                        {selectedAnalysisSetId ? t('manage:statistics.saveAsNewSet') : t('manage:statistics.saveSet')}
                       </Button>
                     </div>
                   )}
@@ -2316,7 +2346,7 @@ const StatisticsAdvancedPage = () => {
                         {/* Overview Card */}
                         <Card variant="elevated">
                           <CardBody>
-                            <CardTitle className="text-lg">Übersicht</CardTitle>
+                            <CardTitle className="text-lg">{t('manage:statistics.overview')}</CardTitle>
                             {(() => {
                               // Calculate previous period for comparison
                               const periodLength = timeRange.endDate.getTime() - timeRange.startDate.getTime();
@@ -2327,11 +2357,11 @@ const StatisticsAdvancedPage = () => {
 
                               // Calculate number of days
                               const daysDiff = Math.ceil(periodLength / (1000 * 60 * 60 * 24));
-                              const daysText = daysDiff === 1 ? '1 Tag' : `${daysDiff} Tage`;
+                              const daysText = t('manage:statistics.day', { count: daysDiff });
 
                               // Format previous period for description
                               const formatDateTime = (date: Date) => {
-                                return date.toLocaleString('de-DE', {
+                                return date.toLocaleString(intlLocale, {
                                   day: '2-digit',
                                   month: '2-digit',
                                   year: 'numeric',
@@ -2340,7 +2370,10 @@ const StatisticsAdvancedPage = () => {
                                 });
                               };
 
-                              const comparisonPeriodText = `Vergleichszeitraum: ${formatDateTime(previousStart)} - ${formatDateTime(previousEnd)} (${daysText})`;
+                              const comparisonPeriodText = `${t('statistics:comparisonRange', {
+                                start: formatDateTime(previousStart),
+                                end: formatDateTime(previousEnd),
+                              })} (${daysText})`;
 
                               const totalRevenue = Array.from(selectedAnalysisCocktailIds).reduce((sum, id) => {
                                 const detail = analysisCocktailDetails.get(id);
@@ -2380,7 +2413,7 @@ const StatisticsAdvancedPage = () => {
                         {/* Time Series Card */}
                         <Card variant="elevated">
                           <CardBody>
-                            <CardTitle className="text-lg">Zeitverlauf</CardTitle>
+                            <CardTitle className="text-lg">{t('manage:statistics.timeline')}</CardTitle>
                             {(() => {
                               const datasets = Array.from(selectedAnalysisCocktailIds)
                                 .map((id) => {
@@ -2398,7 +2431,7 @@ const StatisticsAdvancedPage = () => {
                               if (datasets.length > 0) {
                                 return <TimeSeriesChart datasets={datasets} height={300} />;
                               }
-                              return <div className="py-8 text-center text-base-content/70">Keine Daten vorhanden</div>;
+                              return <div className="py-8 text-center text-base-content/70">{t('manage:statistics.noData')}</div>;
                             })()}
                           </CardBody>
                         </Card>
@@ -2407,7 +2440,7 @@ const StatisticsAdvancedPage = () => {
                         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                           <Card variant="elevated">
                             <CardBody>
-                              <CardTitle className="text-lg">Verteilung nach Stunde</CardTitle>
+                              <CardTitle className="text-lg">{t('manage:statistics.distributionByHour')}</CardTitle>
                               {(() => {
                                 const orderedHourLabels = getOrderedHourLabels(dayStartTime);
                                 const datasets = Array.from(selectedAnalysisCocktailIds)
@@ -2432,16 +2465,22 @@ const StatisticsAdvancedPage = () => {
 
                                 if (datasets.length > 0) {
                                   return (
-                                    <StackedDistributionChart labels={orderedHourLabels} datasets={datasets} height={300} xLabel="Uhrzeit" yLabel="Anzahl" />
+                                    <StackedDistributionChart
+                                      labels={orderedHourLabels}
+                                      datasets={datasets}
+                                      height={300}
+                                      xLabel={t('statistics:hourAxis')}
+                                      yLabel={t('statistics:count')}
+                                    />
                                   );
                                 }
-                                return <div className="py-8 text-center text-base-content/70">Keine Daten vorhanden</div>;
+                                return <div className="py-8 text-center text-base-content/70">{t('manage:statistics.noData')}</div>;
                               })()}
                             </CardBody>
                           </Card>
                           <Card variant="elevated">
                             <CardBody>
-                              <CardTitle className="text-lg">Verteilung nach Wochentag</CardTitle>
+                              <CardTitle className="text-lg">{t('manage:statistics.distributionByWeekday')}</CardTitle>
                               {(() => {
                                 const labels = Array.from(DAY_NAMES_SHORT_MONDAY_FIRST);
 
@@ -2467,9 +2506,17 @@ const StatisticsAdvancedPage = () => {
                                   .filter((ds): ds is { label: string; data: number[]; color: string } => ds !== null);
 
                                 if (datasets.length > 0) {
-                                  return <StackedDistributionChart labels={labels} datasets={datasets} height={300} xLabel="Wochentag" yLabel="Anzahl" />;
+                                  return (
+                                    <StackedDistributionChart
+                                      labels={labels}
+                                      datasets={datasets}
+                                      height={300}
+                                      xLabel={t('statistics:weekdayAxis')}
+                                      yLabel={t('statistics:count')}
+                                    />
+                                  );
                                 }
-                                return <div className="py-8 text-center text-base-content/70">Keine Daten vorhanden</div>;
+                                return <div className="py-8 text-center text-base-content/70">{t('manage:statistics.noData')}</div>;
                               })()}
                             </CardBody>
                           </Card>
@@ -2478,7 +2525,7 @@ const StatisticsAdvancedPage = () => {
                     ) : (
                       <Card variant="elevated">
                         <CardBody>
-                          <div className="text-center text-base-content/70">Lade Daten...</div>
+                          <div className="text-center text-base-content/70">{t('manage:statistics.loadingData')}</div>
                         </CardBody>
                       </Card>
                     )}
@@ -2486,7 +2533,7 @@ const StatisticsAdvancedPage = () => {
                 ) : (
                   <Card variant="elevated">
                     <CardBody>
-                      <div className="text-center text-base-content/70">Bitte wählen Sie Cocktails aus oder laden Sie ein Set</div>
+                      <div className="text-center text-base-content/70">{t('manage:statistics.selectCocktailsOrSet')}</div>
                     </CardBody>
                   </Card>
                 )

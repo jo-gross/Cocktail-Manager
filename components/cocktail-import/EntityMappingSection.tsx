@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { FaCheckCircle, FaChevronDown, FaChevronUp } from 'react-icons/fa';
 import { EntityCombobox } from './EntityCombobox';
 import { useRouter } from 'next/router';
@@ -39,10 +40,30 @@ export function EntityMappingSection({
   autoMatchedCount,
   onMappingsChange,
 }: EntityMappingSectionProps) {
+  const { t } = useTranslation(['import', 'common']);
   const [collapsed, setCollapsed] = useState(autoMatchedCount === entities.length);
   const [actionGroups, setActionGroups] = useState<string[]>([]);
   const router = useRouter();
   const { workspaceId } = router.query;
+
+  const selectPlaceholder = useMemo(() => {
+    switch (entityType) {
+      case 'units':
+        return t('import:selectUnit');
+      case 'ice':
+        return t('import:selectIce');
+      case 'stepActions':
+        return t('import:selectAction');
+      case 'glasses':
+        return t('import:selectGlass');
+      case 'garnishes':
+        return t('import:selectGarnish');
+      case 'ingredients':
+        return t('import:selectIngredient');
+      default:
+        return t('common:selectEllipsis');
+    }
+  }, [entityType, t]);
 
   // Load action groups for stepActions
   useEffect(() => {
@@ -161,15 +182,15 @@ export function EntityMappingSection({
         return (
           <Card variant="elevated" className="ml-6 rounded-lg">
             <CardBody compact>
-              <div className="mb-2 text-sm font-semibold">Neues Glas erstellen</div>
+              <div className="mb-2 text-sm font-semibold">{t('import:createNewGlass')}</div>
               <FormControl>
                 <Label className="flex-row">
-                  <LabelText className="text-xs">Name</LabelText>
+                  <LabelText className="text-xs">{t('common:name')}</LabelText>
                 </Label>
                 <Input
                   type="text"
                   inputSize="sm"
-                  placeholder="Name"
+                  placeholder={t('common:name')}
                   value={String(currentData.name ?? entity.name ?? '')}
                   onChange={(e) => handleFieldChange('name', e.target.value)}
                 />
@@ -177,25 +198,25 @@ export function EntityMappingSection({
               <div className="mt-2 grid grid-cols-2 gap-2">
                 <FormControl>
                   <Label className="flex-row">
-                    <LabelText className="text-xs">Volumen (ml)</LabelText>
+                    <LabelText className="text-xs">{t('import:volumeMl')}</LabelText>
                   </Label>
                   <Input
                     type="number"
                     inputSize="sm"
-                    placeholder="Volumen"
+                    placeholder={t('import:volumePlaceholder')}
                     value={String(currentData.volume ?? entity.volume ?? '')}
                     onChange={(e) => handleFieldChange('volume', e.target.value ? parseFloat(e.target.value) : null)}
                   />
                 </FormControl>
                 <FormControl>
                   <Label className="flex-row">
-                    <LabelText className="text-xs">Pfand (€)</LabelText>
+                    <LabelText className="text-xs">{t('import:depositEuro')}</LabelText>
                   </Label>
                   <Input
                     type="number"
                     step="0.01"
                     inputSize="sm"
-                    placeholder="Pfand"
+                    placeholder={t('import:depositPlaceholder')}
                     value={String(currentData.deposit ?? entity.deposit ?? '')}
                     onChange={(e) => handleFieldChange('deposit', e.target.value ? parseFloat(e.target.value) : null)}
                   />
@@ -209,40 +230,40 @@ export function EntityMappingSection({
         return (
           <Card variant="elevated" className="ml-6 rounded-lg">
             <CardBody compact>
-              <div className="mb-2 text-sm font-semibold">Neue Garnitur erstellen</div>
+              <div className="mb-2 text-sm font-semibold">{t('import:createNewGarnish')}</div>
               <FormControl>
                 <Label className="flex-row">
-                  <LabelText className="text-xs">Name</LabelText>
+                  <LabelText className="text-xs">{t('common:name')}</LabelText>
                 </Label>
                 <Input
                   type="text"
                   inputSize="sm"
-                  placeholder="Name"
+                  placeholder={t('common:name')}
                   value={String(currentData.name ?? entity.name ?? '')}
                   onChange={(e) => handleFieldChange('name', e.target.value)}
                 />
               </FormControl>
               <FormControl className="mt-2">
                 <Label className="flex-row">
-                  <LabelText className="text-xs">Beschreibung</LabelText>
+                  <LabelText className="text-xs">{t('common:description')}</LabelText>
                 </Label>
                 <Input
                   type="text"
                   inputSize="sm"
-                  placeholder="Beschreibung (optional)"
+                  placeholder={t('import:descriptionOptional')}
                   value={String(currentData.description ?? entity.description ?? '')}
                   onChange={(e) => handleFieldChange('description', e.target.value || null)}
                 />
               </FormControl>
               <FormControl className="mt-2">
                 <Label className="flex-row">
-                  <LabelText className="text-xs">Preis (€)</LabelText>
+                  <LabelText className="text-xs">{t('import:priceEuro')}</LabelText>
                 </Label>
                 <Input
                   type="number"
                   step="0.01"
                   inputSize="sm"
-                  placeholder="Preis (optional)"
+                  placeholder={t('import:priceOptional')}
                   value={String(currentData.price ?? entity.price ?? '')}
                   onChange={(e) => handleFieldChange('price', e.target.value ? parseFloat(e.target.value) : null)}
                 />
@@ -255,28 +276,28 @@ export function EntityMappingSection({
         return (
           <Card variant="elevated" className="ml-6 rounded-lg">
             <CardBody compact>
-              <div className="mb-2 text-sm font-semibold">Neue Zutat erstellen</div>
+              <div className="mb-2 text-sm font-semibold">{t('import:createNewIngredient')}</div>
               <div className="grid grid-cols-2 gap-2">
                 <FormControl>
                   <Label className="flex-row">
-                    <LabelText className="text-xs">Name</LabelText>
+                    <LabelText className="text-xs">{t('common:name')}</LabelText>
                   </Label>
                   <Input
                     type="text"
                     inputSize="sm"
-                    placeholder="Name"
+                    placeholder={t('common:name')}
                     value={String(currentData.name ?? entity.name ?? '')}
                     onChange={(e) => handleFieldChange('name', e.target.value)}
                   />
                 </FormControl>
                 <FormControl>
                   <Label className="flex-row">
-                    <LabelText className="text-xs">Kurzname</LabelText>
+                    <LabelText className="text-xs">{t('common:shortName')}</LabelText>
                   </Label>
                   <Input
                     type="text"
                     inputSize="sm"
-                    placeholder="Kurzname (optional)"
+                    placeholder={t('import:shortNameOptional')}
                     value={String(currentData.shortName ?? entity.shortName ?? '')}
                     onChange={(e) => handleFieldChange('shortName', e.target.value || null)}
                   />
@@ -284,25 +305,25 @@ export function EntityMappingSection({
               </div>
               <FormControl className="mt-2">
                 <Label className="flex-row">
-                  <LabelText className="text-xs">Beschreibung</LabelText>
+                  <LabelText className="text-xs">{t('common:description')}</LabelText>
                 </Label>
                 <Input
                   type="text"
                   inputSize="sm"
-                  placeholder="Beschreibung (optional)"
+                  placeholder={t('import:descriptionOptional')}
                   value={String(currentData.description ?? entity.description ?? '')}
                   onChange={(e) => handleFieldChange('description', e.target.value || null)}
                 />
               </FormControl>
               <FormControl className="mt-2">
                 <Label className="flex-row">
-                  <LabelText className="text-xs">Preis (€)</LabelText>
+                  <LabelText className="text-xs">{t('import:priceEuro')}</LabelText>
                 </Label>
                 <Input
                   type="number"
                   step="0.01"
                   inputSize="sm"
-                  placeholder="Preis (optional)"
+                  placeholder={t('import:priceOptional')}
                   value={String(currentData.price ?? entity.price ?? '')}
                   onChange={(e) => handleFieldChange('price', e.target.value ? parseFloat(e.target.value) : null)}
                 />
@@ -328,7 +349,7 @@ export function EntityMappingSection({
           {autoMatchedCount > 0 && (
             <Badge variant="success" size="sm" className="gap-1">
               <FaCheckCircle className={'text-xs'} />
-              {autoMatchedCount} auto-matched
+              {t('import:autoMatchedCount', { count: autoMatchedCount })}
             </Badge>
           )}
         </div>
@@ -351,7 +372,7 @@ export function EntityMappingSection({
                       <div className={'font-semibold'}>{getEntityDisplayName(entity)}</div>
                       {isAutoMatched && (
                         <Badge variant="success" size="sm">
-                          Auto-matched
+                          {t('import:autoMatched')}
                         </Badge>
                       )}
                     </div>
@@ -369,7 +390,7 @@ export function EntityMappingSection({
                             handleDecisionChange(entity.id, 'create-new', undefined, initialData);
                           }}
                         />
-                        <span className={'text-sm'}>Neu erstellen</span>
+                        <span className={'text-sm'}>{t('import:createNew')}</span>
                       </label>
 
                       {mapping?.decision === 'create-new' && renderNewEntityForm(entity.id, entity, mapping)}
@@ -386,7 +407,7 @@ export function EntityMappingSection({
                             }
                           }}
                         />
-                        <span className={'text-sm'}>Bestehende verwenden</span>
+                        <span className={'text-sm'}>{t('import:useExisting')}</span>
                       </label>
 
                       {mapping?.decision === 'use-existing' && (
@@ -397,13 +418,13 @@ export function EntityMappingSection({
                             fetchOptions={fetchOptions}
                             getOptionLabel={getOptionLabel}
                             getOptionValue={getOptionValue}
-                            placeholder={`${title.slice(0, -1)} auswählen`}
+                            placeholder={selectPlaceholder}
                           />
                         </div>
                       )}
 
                       {matches.length === 0 && mapping?.decision === 'use-existing' && !mapping.existingId && (
-                        <div className={'ml-6 text-xs text-base-content/50'}>Keine bestehenden Übereinstimmungen gefunden</div>
+                        <div className={'ml-6 text-xs text-base-content/50'}>{t('import:noExistingMatches')}</div>
                       )}
                     </div>
                   </CardBody>

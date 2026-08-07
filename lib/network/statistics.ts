@@ -1,3 +1,4 @@
+import { i18n } from '@lib/i18n/client';
 import { apiV1Fetch, apiV1FetchPaginatedSafe, apiV1Mutate } from './apiV1';
 import type { CocktailStatisticItemDto } from '@lib/schemas/statistics';
 import type { PaginationMeta } from '@lib/http/responses';
@@ -9,10 +10,11 @@ export function fetchStatisticLogsSafe(
   setItems: (items: CocktailStatisticItemDto[]) => void,
   setPagination: (pagination: PaginationMeta) => void,
   setLoading: (loading: boolean) => void,
+  errorMessage = i18n.t('errors:loadLogs'),
 ) {
   if (workspaceId == undefined) return;
   setLoading(true);
-  apiV1FetchPaginatedSafe<CocktailStatisticItemDto[]>(`/api/v1/workspaces/${workspaceId}/statistics/logs?${query}`, undefined, 'Fehler beim Laden der Logs')
+  apiV1FetchPaginatedSafe<CocktailStatisticItemDto[]>(`/api/v1/workspaces/${workspaceId}/statistics/logs?${query}`, undefined, errorMessage)
     .then((result) => {
       if (!result) return;
       setItems(result.data);

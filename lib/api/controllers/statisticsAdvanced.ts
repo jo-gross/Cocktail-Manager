@@ -951,7 +951,7 @@ export async function compareSet(
     return {
       data: {
         set: {
-          name: type === 'TAG_SET' ? `Tags: ${itemArray.join(', ')}` : `Zutaten: ${itemArray.join(', ')}`,
+          name: type === 'TAG_SET' ? `Tags: ${itemArray.join(', ')}` : `Ingredients: ${itemArray.join(', ')}`,
           type,
           logic: comparisonLogic,
         },
@@ -1047,7 +1047,7 @@ export async function compareSet(
   return {
     data: {
       set: {
-        name: type === 'TAG_SET' ? `Tags: ${itemArray.join(', ')}` : `Zutaten: ${itemArray.join(', ')}`,
+        name: type === 'TAG_SET' ? `Tags: ${itemArray.join(', ')}` : `Ingredients: ${itemArray.join(', ')}`,
         type,
         logic: comparisonLogic,
       },

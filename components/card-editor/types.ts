@@ -19,21 +19,21 @@ export type CardEditorFormValues = {
   groups: CardEditorGroup[];
 };
 
-export const CARD_EDITOR_VIEW_MODES: { id: CardEditorViewMode; label: string }[] = [
-  { id: 'names', label: 'Editor (Übersicht)' },
-  { id: 'compact', label: 'Editor (Detail)' },
-  { id: 'preview', label: 'Vorschau' },
-];
+export const CARD_EDITOR_VIEW_MODES = [
+  { id: 'names', labelKey: 'editorOverview' },
+  { id: 'compact', labelKey: 'editorDetail' },
+  { id: 'preview', labelKey: 'common:preview' },
+] as const satisfies ReadonlyArray<{ id: CardEditorViewMode; labelKey: string }>;
 
 export type CardEditorDevice = 'mobile' | 'tablet' | 'desktop';
 
 /** Preview orientation for phone/tablet frames (desktop has none). */
 export type CardEditorOrientation = 'portrait' | 'landscape';
 
-export const CARD_EDITOR_ORIENTATIONS: { id: CardEditorOrientation; label: string }[] = [
-  { id: 'portrait', label: 'Hochformat' },
-  { id: 'landscape', label: 'Querformat' },
-];
+export const CARD_EDITOR_ORIENTATIONS = [
+  { id: 'portrait', labelKey: 'portrait' },
+  { id: 'landscape', labelKey: 'landscape' },
+] as const satisfies ReadonlyArray<{ id: CardEditorOrientation; labelKey: string }>;
 
 /** Supported tablet sizes for the device preview. */
 export type CardEditorTabletSize = 'mini' | 'pro11' | 'pro129';
@@ -60,10 +60,10 @@ const DESKTOP_WIDTH = 1536;
 /** Layout density, mirroring the workspace page "lessItems" setting. */
 export type CardEditorDensity = 'reduced' | 'wide';
 
-export const CARD_EDITOR_DENSITIES: { id: CardEditorDensity; label: string }[] = [
-  { id: 'reduced', label: 'Reduziert' },
-  { id: 'wide', label: 'Breit' },
-];
+export const CARD_EDITOR_DENSITIES = [
+  { id: 'reduced', labelKey: 'densityReduced' },
+  { id: 'wide', labelKey: 'densityWide' },
+] as const satisfies ReadonlyArray<{ id: CardEditorDensity; labelKey: string }>;
 
 /** Portrait dimensions for the given device/tablet size. */
 function getPortraitDimensions(device: CardEditorDevice, tabletSize: CardEditorTabletSize): { width: number; height: number } {

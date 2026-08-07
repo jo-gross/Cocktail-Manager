@@ -1,4 +1,5 @@
 import { useContext, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import { alertService } from '@lib/alertService';
 import { Button, Loading } from '@components/ui';
@@ -14,6 +15,7 @@ interface ConfirmActionModalProps {
 
 export function ConfirmActionModal({ title, message, confirmLabel, confirmVariant = 'primary', onConfirm, onCancel }: ConfirmActionModalProps) {
   const modalContext = useContext(ModalContext);
+  const { t } = useTranslation(['common']);
   const [loading, setLoading] = useState(false);
 
   return (
@@ -30,7 +32,7 @@ export function ConfirmActionModal({ title, message, confirmLabel, confirmVarian
             modalContext.closeModal();
           }}
         >
-          Abbrechen
+          {t('common:cancel')}
         </Button>
         <Button
           type="button"
@@ -43,7 +45,7 @@ export function ConfirmActionModal({ title, message, confirmLabel, confirmVarian
               modalContext.closeModal();
             } catch (error) {
               console.error('ConfirmActionModal onConfirm', error);
-              alertService.error('Aktion fehlgeschlagen');
+              alertService.error(t('common:actionFailed'));
             } finally {
               setLoading(false);
             }

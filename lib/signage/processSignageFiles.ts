@@ -2,6 +2,7 @@ import { compressFile } from '@lib/ImageCompressor';
 import { convertToBase64 } from '@lib/Base64Converter';
 import { pdfToImageFiles } from '@lib/pdf/pdfToImages';
 import { alertService } from '@lib/alertService';
+import { i18n } from '@lib/i18n/client';
 
 export async function processSignageFiles(files: File[]): Promise<string[]> {
   const slides: string[] = [];
@@ -18,7 +19,7 @@ export async function processSignageFiles(files: File[]): Promise<string[]> {
       }
 
       if (!file.type.startsWith('image/')) {
-        alertService.error(`Dateityp nicht unterstützt: ${file.name}`);
+        alertService.error(i18n.t('manage:monitor.unsupportedFileType', { name: file.name }));
         continue;
       }
 
@@ -26,7 +27,7 @@ export async function processSignageFiles(files: File[]): Promise<string[]> {
       slides.push(await convertToBase64(compressed));
     } catch (error) {
       console.error('processSignageFiles', error);
-      alertService.error(`Fehler beim Verarbeiten von ${file.name}`);
+      alertService.error(i18n.t('manage:monitor.errorProcessFile', { name: file.name }));
     }
   }
 

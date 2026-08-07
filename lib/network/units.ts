@@ -1,11 +1,12 @@
 import { apiV1FetchSafe, apiV1Mutate } from './apiV1';
+import { i18n } from '@lib/i18n/client';
 import type { UnitDto, UnitConversionDto, UnitCreateInput, UnitConversionCreateInput, UnitConversionUpdateInput } from '@lib/schemas/units';
 import type { DeletionResult } from '@lib/schemas/common';
 
 export function fetchUnits(workspaceId: string | string[] | undefined, setUnits: (units: UnitDto[]) => void, setUnitsLoading: (loading: boolean) => void) {
   if (workspaceId == undefined) return;
   setUnitsLoading(true);
-  apiV1FetchSafe<UnitDto[]>(`/api/v1/workspaces/${workspaceId}/units`, undefined, 'Fehler beim Laden der Einheiten')
+  apiV1FetchSafe<UnitDto[]>(`/api/v1/workspaces/${workspaceId}/units`, undefined, i18n.t('errors:loadUnits'))
     .then((units) => {
       if (units) setUnits(units);
     })
@@ -19,7 +20,7 @@ export const fetchUnitConversions = (
 ) => {
   if (workspaceId == undefined) return;
   setUnitConversionsLoading(true);
-  apiV1FetchSafe<UnitConversionDto[]>(`/api/v1/workspaces/${workspaceId}/units/conversions`, undefined, 'Fehler beim Laden der Einheiten')
+  apiV1FetchSafe<UnitConversionDto[]>(`/api/v1/workspaces/${workspaceId}/units/conversions`, undefined, i18n.t('errors:loadUnitConversions'))
     .then((conversions) => {
       if (conversions) setUnitConversions(conversions);
     })

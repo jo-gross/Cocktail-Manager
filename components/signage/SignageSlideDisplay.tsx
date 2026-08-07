@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
+import { useTranslation } from 'react-i18next';
 import { cn } from '@components/ui';
 import { SignageBackgroundMode } from '@lib/signage/types';
 
@@ -12,14 +13,10 @@ interface SignageSlideDisplayProps {
   alt?: string;
 }
 
-export function SignageSlideDisplay({
-  slides,
-  slideDurationSeconds,
-  backgroundMode = 'COLOR',
-  className,
-  emptyMessage = 'No active slide',
-  alt = 'Monitor slide',
-}: SignageSlideDisplayProps) {
+export function SignageSlideDisplay({ slides, slideDurationSeconds, backgroundMode = 'COLOR', className, emptyMessage, alt }: SignageSlideDisplayProps) {
+  const { t } = useTranslation(['monitor', 'common']);
+  const resolvedEmptyMessage = emptyMessage ?? t('monitor:noActiveSlide');
+  const resolvedAlt = alt ?? t('common:monitorSlideAlt');
   const [currentIndex, setCurrentIndex] = useState(0);
   const slidesKey = useMemo(() => slides.map((slide) => slide.id).join(','), [slides]);
 
@@ -40,7 +37,7 @@ export function SignageSlideDisplay({
   }, [slideDurationSeconds, slides.length]);
 
   if (slides.length === 0) {
-    return <div className={cn('flex h-full items-center justify-center text-sm text-base-content/70', className)}>{emptyMessage}</div>;
+    return <div className={cn('flex h-full items-center justify-center text-sm text-base-content/70', className)}>{resolvedEmptyMessage}</div>;
   }
 
   return (
@@ -72,7 +69,7 @@ export function SignageSlideDisplay({
             aria-hidden={index !== currentIndex}
           >
             <div className="relative h-full w-full">
-              <Image src={slide.content} alt={index === currentIndex ? alt : ''} fill className="object-contain" />
+              <Image src={slide.content} alt={index === currentIndex ? resolvedAlt : ''} fill className="object-contain" />
             </div>
           </div>
         ))}

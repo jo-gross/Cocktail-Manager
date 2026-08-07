@@ -1,4 +1,5 @@
 import { apiV1FetchSafe } from './apiV1';
+import { i18n } from '@lib/i18n/client';
 import type { AuditLogDto } from '@lib/schemas/auditLogs';
 
 export function fetchAuditLogsSafe(
@@ -14,7 +15,7 @@ export function fetchAuditLogsSafe(
     entityId: query.entityId,
     limit: String(query.limit ?? 100),
   });
-  apiV1FetchSafe<AuditLogDto[]>(`/api/v1/workspaces/${workspaceId}/audit-logs?${params}`, undefined, 'Fehler beim Laden der Historie')
+  apiV1FetchSafe<AuditLogDto[]>(`/api/v1/workspaces/${workspaceId}/audit-logs?${params}`, undefined, i18n.t('errors:loadHistory'))
     .then((logs) => {
       if (logs) setLogs(logs);
     })

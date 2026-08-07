@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { ManageEntityLayout } from '@components/layout/ManageEntityLayout';
 import { ManageColumn } from '@components/ManageColumn';
 import React, { useCallback, useContext, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useRouter } from 'next/router';
 import { alertService } from '@lib/alertService';
 import { UserContext } from '@lib/context/UserContextProvider';
@@ -47,6 +48,7 @@ import {
 import type { SortDirection } from '@components/ui';
 
 const CocktailsOverviewPage: NextPageWithPullToRefresh = () => {
+  const { t, i18n } = useTranslation(['manage', 'common', 'cocktail', 'nav', 'errors']);
   const router = useRouter();
   const { workspaceId } = router.query;
 
@@ -92,18 +94,14 @@ const CocktailsOverviewPage: NextPageWithPullToRefresh = () => {
   const refreshCocktails = useCallback(() => {
     if (!workspaceId) return;
     setLoading(true);
-    apiV1FetchSafe<CocktailSummaryDto[]>(
-      `/api/v1/workspaces/${workspaceId}/cocktails?include=garnishes,ingredients`,
-      undefined,
-      'Fehler beim Laden der Cocktails',
-    )
+    apiV1FetchSafe<CocktailSummaryDto[]>(`/api/v1/workspaces/${workspaceId}/cocktails?include=garnishes,ingredients`, undefined, t('cocktail:error.load'))
       .then((data) => {
         if (data) setCocktailRecipes(data);
       })
       .finally(() => {
         setLoading(false);
       });
-  }, [workspaceId]);
+  }, [workspaceId, t]);
 
   useEffect(() => {
     refreshCocktails();
@@ -158,9 +156,9 @@ const CocktailsOverviewPage: NextPageWithPullToRefresh = () => {
     const ids = Array.from(selectedCocktailIds);
     modalContext.openModal(
       <ConfirmActionModal
-        title="Archivieren"
-        message={`Möchtest du die ${count} ausgewählten Cocktail${count === 1 ? '' : 's'} wirklich archivieren?`}
-        confirmLabel="Archivieren"
+        title={t('common:archive')}
+        message={t('cocktail:archiveConfirm', { count })}
+        confirmLabel={t('common:archive')}
         confirmVariant="primary"
         onConfirm={async () => {
           try {
@@ -169,14 +167,14 @@ const CocktailsOverviewPage: NextPageWithPullToRefresh = () => {
             }
             setSelectedCocktailIds(new Set());
             refreshCocktails();
-            alertService.success(`${count} Cocktail${count === 1 ? '' : 's'} archiviert`);
+            alertService.success(t('cocktail:archivedCount', { count }));
           } catch (error) {
-            alertApiV1Error(error, 'Archivieren fehlgeschlagen');
+            alertApiV1Error(error, t('cocktail:archiveFailed'));
           }
         }}
       />,
     );
-  }, [workspaceId, selectedCocktailIds, modalContext, refreshCocktails]);
+  }, [workspaceId, selectedCocktailIds, modalContext, refreshCocktails, t]);
 
   const handleExportPdf = useCallback(() => {
     if (!workspaceId || selectedCocktailIds.size === 0) return;
@@ -185,7 +183,7 @@ const CocktailsOverviewPage: NextPageWithPullToRefresh = () => {
         onExport={async (options: CocktailExportOptions) => {
           setExportingPdf(true);
           try {
-            alertService.info('Export läuft und wird gleich zur Verfügung stehen. Dieser Vorgang kann je nach Anzahl der Rezepte einige Minuten dauern.');
+            alertService.info(t('cocktail:exportRunningLong'));
             const response = await fetch(`/api/v1/workspaces/${workspaceId}/cocktails/export/pdf`, {
               method: 'POST',
               headers: {
@@ -200,12 +198,13 @@ const CocktailsOverviewPage: NextPageWithPullToRefresh = () => {
                 newPagePerCocktail: options.newPagePerCocktail,
                 showHeader: options.showHeader,
                 showFooter: options.showFooter,
+                locale: i18n.language,
               }),
             });
 
             if (!response.ok) {
-              const error = await response.json().catch(() => ({ message: 'Fehler beim Exportieren' }));
-              alertService.error(error.message ?? 'Fehler beim Exportieren des PDFs', response.status, response.statusText);
+              const error = await response.json().catch(() => ({ message: t('errors:export') }));
+              alertService.error(error.message ?? t('cocktail:error.exportPdf'), response.status, response.statusText);
               return;
             }
 
@@ -218,18 +217,18 @@ const CocktailsOverviewPage: NextPageWithPullToRefresh = () => {
             a.click();
             window.URL.revokeObjectURL(url);
             document.body.removeChild(a);
-            alertService.success('PDF erfolgreich exportiert');
+            alertService.success(t('cocktail:pdfExported'));
             setSelectedCocktailIds(new Set());
           } catch (error) {
             console.error('PDF export error:', error);
-            alertService.error('Fehler beim Exportieren des PDFs');
+            alertService.error(t('cocktail:error.exportPdf'));
           } finally {
             setExportingPdf(false);
           }
         }}
       />,
     );
-  }, [workspaceId, selectedCocktailIds, modalContext]);
+  }, [workspaceId, selectedCocktailIds, modalContext, t]);
 
   const handleExportJson = useCallback(async () => {
     if (!workspaceId || selectedCocktailIds.size === 0) return;
@@ -246,8 +245,8 @@ const CocktailsOverviewPage: NextPageWithPullToRefresh = () => {
       });
 
       if (!response.ok) {
-        const error = await response.json().catch(() => ({ message: 'Fehler beim Exportieren' }));
-        alertService.error(error.message ?? 'Fehler beim Exportieren des JSON', response.status, response.statusText);
+        const error = await response.json().catch(() => ({ message: t('errors:export') }));
+        alertService.error(error.message ?? t('cocktail:error.exportJson'), response.status, response.statusText);
         return;
       }
 
@@ -263,15 +262,15 @@ const CocktailsOverviewPage: NextPageWithPullToRefresh = () => {
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
-      alertService.success('JSON erfolgreich exportiert');
+      alertService.success(t('cocktail:jsonExported'));
       setSelectedCocktailIds(new Set());
     } catch (error) {
       console.error('JSON export error:', error);
-      alertService.error('Fehler beim Exportieren des JSON');
+      alertService.error(t('cocktail:error.exportJson'));
     } finally {
       setExportingJson(false);
     }
-  }, [workspaceId, selectedCocktailIds]);
+  }, [workspaceId, selectedCocktailIds, t]);
 
   const handleExportSingleJson = useCallback(
     async (cocktailId: string) => {
@@ -289,8 +288,8 @@ const CocktailsOverviewPage: NextPageWithPullToRefresh = () => {
         });
 
         if (!response.ok) {
-          const error = await response.json().catch(() => ({ message: 'Fehler beim Exportieren' }));
-          alertService.error(error.message ?? 'Fehler beim Exportieren des JSON', response.status, response.statusText);
+          const error = await response.json().catch(() => ({ message: t('errors:export') }));
+          alertService.error(error.message ?? t('cocktail:error.exportJson'), response.status, response.statusText);
           return;
         }
 
@@ -307,15 +306,15 @@ const CocktailsOverviewPage: NextPageWithPullToRefresh = () => {
         a.click();
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
-        alertService.success('JSON erfolgreich exportiert');
+        alertService.success(t('cocktail:jsonExported'));
       } catch (error) {
         console.error('JSON export error:', error);
-        alertService.error('Fehler beim Exportieren des JSON');
+        alertService.error(t('cocktail:error.exportJson'));
       } finally {
         setExportingSingleId(null);
       }
     },
-    [workspaceId, cocktailRecipes],
+    [workspaceId, cocktailRecipes, t],
   );
 
   const handleExportSinglePdf = useCallback(
@@ -326,7 +325,7 @@ const CocktailsOverviewPage: NextPageWithPullToRefresh = () => {
           onExport={async (options: CocktailExportOptions) => {
             setExportingSingleId({ id: cocktailId, type: 'pdf' });
             try {
-              alertService.info('Export läuft und wird gleich zur Verfügung stehen.');
+              alertService.info(t('cocktail:exportRunning'));
               const response = await fetch(`/api/v1/workspaces/${workspaceId}/cocktails/export/pdf`, {
                 method: 'POST',
                 headers: {
@@ -341,12 +340,13 @@ const CocktailsOverviewPage: NextPageWithPullToRefresh = () => {
                   newPagePerCocktail: options.newPagePerCocktail,
                   showHeader: options.showHeader,
                   showFooter: options.showFooter,
+                  locale: i18n.language,
                 }),
               });
 
               if (!response.ok) {
-                const error = await response.json().catch(() => ({ message: 'Fehler beim Exportieren' }));
-                alertService.error(error.message ?? 'Fehler beim Exportieren des PDFs', response.status, response.statusText);
+                const error = await response.json().catch(() => ({ message: t('errors:export') }));
+                alertService.error(error.message ?? t('cocktail:error.exportPdf'), response.status, response.statusText);
                 return;
               }
 
@@ -360,10 +360,10 @@ const CocktailsOverviewPage: NextPageWithPullToRefresh = () => {
               a.click();
               window.URL.revokeObjectURL(url);
               document.body.removeChild(a);
-              alertService.success('PDF erfolgreich exportiert');
+              alertService.success(t('cocktail:pdfExported'));
             } catch (error) {
               console.error('PDF export error:', error);
-              alertService.error('Fehler beim Exportieren des PDFs');
+              alertService.error(t('cocktail:error.exportPdf'));
             } finally {
               setExportingSingleId(null);
             }
@@ -371,7 +371,7 @@ const CocktailsOverviewPage: NextPageWithPullToRefresh = () => {
         />,
       );
     },
-    [workspaceId, modalContext, cocktailRecipes],
+    [workspaceId, modalContext, cocktailRecipes, t],
   );
 
   const renderTableRows = (recipes: CocktailSummaryDto[], isArchived: boolean) => {
@@ -383,13 +383,13 @@ const CocktailsOverviewPage: NextPageWithPullToRefresh = () => {
           </TableCell>
         )}
         <TableImageCell hasImage={cocktailRecipe.hasImage} onImageClick={() => modalContext.openModal(<ImageModal image={cocktailRecipe.imageUrl ?? ''} />)}>
-          <AvatarImage src={cocktailRecipe.imageUrl ?? ''} alt={'Cocktail'} />
+          <AvatarImage src={cocktailRecipe.imageUrl ?? ''} alt={t('common:cocktailImageAlt')} />
         </TableImageCell>
         <TableCell className={isArchived ? 'italic' : ''}>
-          {cocktailRecipe.name} {isArchived && '(Archiviert)'}
+          {cocktailRecipe.name} {isArchived && t('common:archivedParen')}
         </TableCell>
         <TableCell>
-          <span className={'whitespace-nowrap'}>{cocktailRecipe.price?.formatPrice() ?? '-'} €</span>
+          <span className={'whitespace-nowrap'}>{t('common:euroValue', { value: cocktailRecipe.price?.formatPrice() ?? '-' })}</span>
         </TableCell>
         <TableCell className={'flex items-center gap-1'}>
           {cocktailRecipe.tags.map((tag) => (
@@ -417,14 +417,14 @@ const CocktailsOverviewPage: NextPageWithPullToRefresh = () => {
   return (
     <ManageEntityLayout
       backLink={`/workspaces/${workspaceId}/manage`}
-      title={'Cocktails'}
+      title={t('nav:cocktails')}
       actions={
         <div className={'flex items-center gap-2'}>
           {selectedCocktailIds.size > 0 && (
             <Dropdown align="end">
               <Button type="button" variant="outline" size="sm" className="md:h-10 md:min-h-10 md:px-4" tabIndex={0}>
                 <FaFileDownload />
-                {selectedCocktailIds.size} ausgewählt
+                {t('manage:selectedCount', { count: selectedCocktailIds.size })}
                 <FaChevronDown />
               </Button>
               <DropdownContent tabIndex={0} className="z-[1] mt-2 block w-64">
@@ -435,14 +435,14 @@ const CocktailsOverviewPage: NextPageWithPullToRefresh = () => {
                   <li>
                     <button type="button" onClick={handleExportJson} disabled={exportingJson}>
                       {exportingJson ? <UiLoading size="sm" /> : <FaFileDownload />}
-                      Als JSON exportieren ({selectedCocktailIds.size})
+                      {t('manage:exportAsJsonCount', { count: selectedCocktailIds.size })}
                     </button>
                   </li>
                   {chromiumAvailable && (
                     <li>
                       <button type="button" onClick={handleExportPdf} disabled={exportingPdf}>
                         {exportingPdf ? <UiLoading size="sm" /> : <FaFileDownload />}
-                        Als PDF exportieren ({selectedCocktailIds.size})
+                        {t('manage:exportAsPdfCount', { count: selectedCocktailIds.size })}
                       </button>
                     </li>
                   )}
@@ -450,7 +450,7 @@ const CocktailsOverviewPage: NextPageWithPullToRefresh = () => {
                     <li>
                       <button type="button" onClick={handleBulkArchive}>
                         <FaArchive />
-                        Archivieren ({selectedCocktailIds.size})
+                        {t('manage:archiveCount', { count: selectedCocktailIds.size })}
                       </button>
                     </li>
                   )}
@@ -461,7 +461,7 @@ const CocktailsOverviewPage: NextPageWithPullToRefresh = () => {
           <Dropdown align="end">
             <Button type="button" variant="outline" size="sm" className="md:h-10 md:min-h-10 md:px-4" tabIndex={0}>
               <FaFileUpload />
-              Import/Export
+              {t('manage:importExport')}
               <FaChevronDown />
             </Button>
             <DropdownContent tabIndex={0} className="z-[1] mt-2 block w-52">
@@ -485,7 +485,7 @@ const CocktailsOverviewPage: NextPageWithPullToRefresh = () => {
                     }}
                   >
                     <FaFileUpload />
-                    Aus JSON importieren
+                    {t('manage:importFromJson')}
                   </button>
                 </li>
               </Menu>
@@ -521,22 +521,22 @@ const CocktailsOverviewPage: NextPageWithPullToRefresh = () => {
                             : true)
                         }
                         onChange={handleToggleSelectAll}
-                        aria-label="Alle auswählen"
+                        aria-label={t('common:selectAll')}
                       />
                     </TableHeaderCell>
                   )}
                   <TableHeaderCell className="w-0"></TableHeaderCell>
                   <SortableHeaderCell sortKey="name" activeSortKey={sortKey} direction={sortDirection} onSort={handleSort}>
-                    Name
+                    {t('common:name')}
                   </SortableHeaderCell>
                   <SortableHeaderCell sortKey="price" activeSortKey={sortKey} direction={sortDirection} onSort={handleSort}>
-                    Preis
+                    {t('common:price')}
                   </SortableHeaderCell>
-                  <TableHeaderCell>Tags</TableHeaderCell>
+                  <TableHeaderCell>{t('common:tags')}</TableHeaderCell>
                   <SortableHeaderCell sortKey="glass" activeSortKey={sortKey} direction={sortDirection} onSort={handleSort}>
-                    Glas
+                    {t('cocktail:glass')}
                   </SortableHeaderCell>
-                  <TableHeaderCell>Garnitur(en)</TableHeaderCell>
+                  <TableHeaderCell>{t('common:garnishesParen')}</TableHeaderCell>
                   <TableHeaderCell></TableHeaderCell>
                 </TableRow>
               </TableHead>
@@ -548,7 +548,7 @@ const CocktailsOverviewPage: NextPageWithPullToRefresh = () => {
                     {groupedCocktails['false']?.filter(cocktailFilter(filterString)).length == 0 ? (
                       <TableRow>
                         <TableCell colSpan={chromiumAvailable ? 8 : 7} className={'text-center'}>
-                          Keine Cocktails gefunden
+                          {t('manage:noCocktailsFound')}
                         </TableCell>
                       </TableRow>
                     ) : (
@@ -558,7 +558,7 @@ const CocktailsOverviewPage: NextPageWithPullToRefresh = () => {
                       <>
                         <TableRow className={'cursor-pointer'} onClick={() => setCollapsedArchived(!collapsedArchived)}>
                           <TableCell colSpan={chromiumAvailable ? 7 : 6} className={'bg-base-100 font-bold'}>
-                            Archiviert
+                            {t('manage:archived')}
                           </TableCell>
                           <TableCell className={'flex items-center justify-end bg-base-100'}>
                             <div className={'p-2'}>{!collapsedArchived ? <FaArrowUp /> : <FaArrowDown />}</div>

@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { FaTimes } from 'react-icons/fa';
 import { Button, Card, CardBody, CardTitle, Checkbox, Input, Loading, Select } from '@components/ui';
 
@@ -19,6 +20,7 @@ interface AnalysisCocktailSelectorProps {
 }
 
 export function AnalysisCocktailSelector({ items, selectedIds, onToggleSelect, onClear, loading }: AnalysisCocktailSelectorProps) {
+  const { t } = useTranslation(['statistics', 'common']);
   const [filter, setFilter] = useState('');
   const [sortBy, setSortBy] = useState<SortOption>('count-desc');
 
@@ -44,7 +46,7 @@ export function AnalysisCocktailSelector({ items, selectedIds, onToggleSelect, o
       <CardBody>
         <CardTitle className="flex items-center justify-between">
           <span className="flex items-center gap-2">
-            Cocktails
+            {t('statistics:cocktails')}
             {loading && <Loading size="xs" />}
           </span>
           {selectedIds.size > 0 && onClear && (
@@ -56,7 +58,7 @@ export function AnalysisCocktailSelector({ items, selectedIds, onToggleSelect, o
                 e.stopPropagation();
                 onClear();
               }}
-              title="Auswahl leeren"
+              title={t('common:clearSelection')}
             >
               <FaTimes />
             </Button>
@@ -64,10 +66,17 @@ export function AnalysisCocktailSelector({ items, selectedIds, onToggleSelect, o
         </CardTitle>
 
         <div className="flex flex-wrap gap-2">
-          <Input type="text" placeholder="Filter..." inputSize="sm" className="w-full flex-1" value={filter} onChange={(e) => setFilter(e.target.value)} />
+          <Input
+            type="text"
+            placeholder={t('common:filterPlaceholder')}
+            inputSize="sm"
+            className="w-full flex-1"
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+          />
           <Select selectSize="sm" className="w-fit" value={sortBy} onChange={(e) => setSortBy(e.target.value as SortOption)}>
-            <option value="count-desc">↓ Bestellungen</option>
-            <option value="count-asc">↑ Bestellungen</option>
+            <option value="count-desc">{t('statistics:ordersDesc')}</option>
+            <option value="count-asc">{t('statistics:ordersAsc')}</option>
             <option value="alpha-asc">A-Z</option>
             <option value="alpha-desc">Z-A</option>
           </Select>
@@ -85,14 +94,14 @@ export function AnalysisCocktailSelector({ items, selectedIds, onToggleSelect, o
               <div className="flex items-center justify-between">
                 <div>
                   <div className="font-semibold">{item.name}</div>
-                  <div className="text-sm text-base-content/70">{item.count} Bestellungen</div>
+                  <div className="text-sm text-base-content/70">{t('statistics:orderCount', { count: item.count })}</div>
                 </div>
                 <Checkbox checked={selectedIds.has(item.id)} onChange={() => onToggleSelect(item.id)} onClick={(e) => e.stopPropagation()} />
               </div>
             </div>
           ))}
         </div>
-        {sortedAndFilteredItems.length === 0 && <div className="py-4 text-center text-base-content/70">Keine Cocktails gefunden</div>}
+        {sortedAndFilteredItems.length === 0 && <div className="py-4 text-center text-base-content/70">{t('statistics:noCocktailsFound')}</div>}
       </CardBody>
     </Card>
   );

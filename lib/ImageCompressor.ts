@@ -13,7 +13,7 @@ export function resizeImage(file: File, maxWidth: number, maxHeight: number, cal
 
   reader.onload = (event: ProgressEvent<FileReader>) => {
     if (!event.target?.result) {
-      console.error('Fehler beim Lesen der Datei.');
+      console.error('Failed to read file.');
       return;
     }
 
@@ -21,45 +21,42 @@ export function resizeImage(file: File, maxWidth: number, maxHeight: number, cal
     img.onload = () => {
       let { width, height } = img;
 
-      // Berechne den Skalierungsfaktor
       if (width > maxWidth || height > maxHeight) {
         const scale = Math.min(maxWidth / width, maxHeight / height);
         width = Math.round(width * scale);
         height = Math.round(height * scale);
       }
 
-      // Canvas erstellen und das Bild skalieren
       const canvas = document.createElement('canvas');
       canvas.width = width;
       canvas.height = height;
       const ctx = canvas.getContext('2d');
 
       if (!ctx) {
-        console.error('Canvas-Kontext konnte nicht erstellt werden.');
+        console.error('Failed to create canvas context.');
         return;
       }
 
       ctx.drawImage(img, 0, 0, width, height);
 
-      // Canvas in Blob konvertieren
       canvas.toBlob(
         (blob) => {
           callback(blob);
         },
         file.type,
-        0.9, // Qualität (90%)
+        0.9,
       );
     };
 
     img.onerror = () => {
-      console.error('Fehler beim Laden des Bildes.');
+      console.error('Failed to load image.');
     };
 
     img.src = event.target.result as string;
   };
 
   reader.onerror = () => {
-    console.error('Fehler beim Lesen der Datei mit FileReader.');
+    console.error('Failed to read file with FileReader.');
   };
 
   reader.readAsDataURL(file);

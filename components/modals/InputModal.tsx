@@ -1,5 +1,6 @@
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import React, { useContext, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button, ButtonGroup, Input, Loading } from '@components/ui';
 
 interface InputModalProps {
@@ -12,6 +13,7 @@ interface InputModalProps {
 
 export default function InputModal(props: InputModalProps) {
   const modalContext = useContext(ModalContext);
+  const { t } = useTranslation(['common']);
 
   const [inputValue, setInputValue] = useState(props.defaultValue || '');
 
@@ -42,7 +44,7 @@ export default function InputModal(props: InputModalProps) {
           }}
         >
           {isSubmitting ? <Loading size="sm" /> : null}
-          Speichern
+          {t('common:save')}
         </Button>
       </ButtonGroup>
     </div>

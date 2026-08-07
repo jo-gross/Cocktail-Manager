@@ -71,6 +71,7 @@ enum Setting {
   showTags
   lessItems
   theme
+  language
   showStatisticActions
   lastSeenVersion
   showNotes

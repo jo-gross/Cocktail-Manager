@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { CocktailExportStructure } from '../../types/CocktailExportStructure';
 import { MappingDecisions } from '../modals/CocktailImportWizardModal';
 import { alertService } from '@lib/alertService';
@@ -34,6 +35,7 @@ interface ImportResult {
 }
 
 export function ConfirmationStep({ workspaceId, exportData, mappingDecisions, selectedCocktailIds, onComplete, onBack }: ConfirmationStepProps) {
+  const { t } = useTranslation(['import', 'common', 'errors']);
   const [importing, setImporting] = useState(false);
   const [importComplete, setImportComplete] = useState(false);
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
@@ -78,22 +80,22 @@ export function ConfirmationStep({ workspaceId, exportData, mappingDecisions, se
 
       if (!response.ok) {
         const errorData = await response.json();
-        setError(errorData.message || 'Fehler beim Importieren');
+        setError(errorData.message || t('errors:import'));
         if (errorData.errors && Array.isArray(errorData.errors)) {
           setErrors(errorData.errors);
         }
-        alertService.error(errorData.message || 'Fehler beim Importieren der Cocktails');
+        alertService.error(errorData.message || t('import:importFailed'));
         return;
       }
 
       const result = await response.json();
       setImportResult(result);
       setImportComplete(true);
-      alertService.success('Cocktails erfolgreich importiert');
+      alertService.success(t('import:importSuccessToast'));
     } catch (err) {
       console.error('Import error:', err);
-      setError('Fehler beim Importieren der Cocktails');
-      alertService.error('Fehler beim Importieren der Cocktails');
+      setError(t('import:importFailed'));
+      alertService.error(t('import:importFailed'));
     } finally {
       setImporting(false);
     }
@@ -102,7 +104,7 @@ export function ConfirmationStep({ workspaceId, exportData, mappingDecisions, se
   if (importComplete && importResult) {
     return (
       <div className={'flex flex-col gap-4'}>
-        <div className={'text-lg font-semibold'}>Import erfolgreich!</div>
+        <div className={'text-lg font-semibold'}>{t('import:importSuccess')}</div>
 
         <div className={'flex items-center justify-center'}>
           <FaCheckCircle className={'text-6xl text-success'} />
@@ -110,49 +112,49 @@ export function ConfirmationStep({ workspaceId, exportData, mappingDecisions, se
 
         <Card variant="elevated">
           <CardBody>
-            <div className={'text-sm font-semibold'}>Zusammenfassung</div>
+            <div className={'text-sm font-semibold'}>{t('import:summary')}</div>
             <div className={'mt-2 grid grid-cols-2 gap-2 text-sm'}>
-              <div className={'text-base-content/70'}>Cocktails importiert:</div>
+              <div className={'text-base-content/70'}>{t('import:cocktailsImported')}</div>
               <div className={'font-semibold'}>{importResult.imported.cocktails}</div>
 
               {importResult.created.glasses > 0 && (
                 <>
-                  <div className={'text-base-content/70'}>Neue Gläser:</div>
+                  <div className={'text-base-content/70'}>{t('import:newGlasses')}</div>
                   <div className={'font-semibold'}>{importResult.created.glasses}</div>
                 </>
               )}
 
               {importResult.created.garnishes > 0 && (
                 <>
-                  <div className={'text-base-content/70'}>Neue Garnituren:</div>
+                  <div className={'text-base-content/70'}>{t('import:newGarnishes')}</div>
                   <div className={'font-semibold'}>{importResult.created.garnishes}</div>
                 </>
               )}
 
               {importResult.created.ingredients > 0 && (
                 <>
-                  <div className={'text-base-content/70'}>Neue Zutaten:</div>
+                  <div className={'text-base-content/70'}>{t('import:newIngredients')}</div>
                   <div className={'font-semibold'}>{importResult.created.ingredients}</div>
                 </>
               )}
 
               {importResult.created.units > 0 && (
                 <>
-                  <div className={'text-base-content/70'}>Neue Einheiten:</div>
+                  <div className={'text-base-content/70'}>{t('import:newUnits')}</div>
                   <div className={'font-semibold'}>{importResult.created.units}</div>
                 </>
               )}
 
               {importResult.created.ice > 0 && (
                 <>
-                  <div className={'text-base-content/70'}>Neue Eis-Typen:</div>
+                  <div className={'text-base-content/70'}>{t('import:newIceTypes')}</div>
                   <div className={'font-semibold'}>{importResult.created.ice}</div>
                 </>
               )}
 
               {importResult.created.stepActions > 0 && (
                 <>
-                  <div className={'text-base-content/70'}>Neue Aktionen:</div>
+                  <div className={'text-base-content/70'}>{t('import:newActions')}</div>
                   <div className={'font-semibold'}>{importResult.created.stepActions}</div>
                 </>
               )}
@@ -162,7 +164,7 @@ export function ConfirmationStep({ workspaceId, exportData, mappingDecisions, se
 
         <div className={'flex justify-end gap-2'}>
           <Button variant="primary" onClick={onComplete}>
-            Fertig
+            {t('common:done')}
           </Button>
         </div>
       </div>
@@ -171,54 +173,54 @@ export function ConfirmationStep({ workspaceId, exportData, mappingDecisions, se
 
   return (
     <div className={'flex flex-col gap-4'}>
-      <div className={'text-lg font-semibold'}>Schritt 4: Import bestätigen</div>
-      <div className={'text-sm text-base-content/70'}>Überprüfen Sie die Import-Zusammenfassung und bestätigen Sie den Import.</div>
+      <div className={'text-lg font-semibold'}>{t('import:step4Title')}</div>
+      <div className={'text-sm text-base-content/70'}>{t('import:step4Description')}</div>
 
       <Card variant="elevated">
         <CardBody>
-          <div className={'mb-3 text-sm font-semibold'}>Import-Zusammenfassung</div>
+          <div className={'mb-3 text-sm font-semibold'}>{t('import:importSummary')}</div>
           <div className={'grid grid-cols-2 gap-2 text-sm'}>
-            <div className={'text-base-content/70'}>Cocktails zu importieren:</div>
+            <div className={'text-base-content/70'}>{t('import:cocktailsToImport')}</div>
             <div className={'font-semibold'}>{cocktailsToImport}</div>
 
             {newGlasses.length > 0 && (
               <>
-                <div className={'text-base-content/70'}>Neue Gläser:</div>
+                <div className={'text-base-content/70'}>{t('import:newGlasses')}</div>
                 <div className={'font-semibold'}>{newGlasses.length}</div>
               </>
             )}
 
             {newGarnishes.length > 0 && (
               <>
-                <div className={'text-base-content/70'}>Neue Garnituren:</div>
+                <div className={'text-base-content/70'}>{t('import:newGarnishes')}</div>
                 <div className={'font-semibold'}>{newGarnishes.length}</div>
               </>
             )}
 
             {newIngredients.length > 0 && (
               <>
-                <div className={'text-base-content/70'}>Neue Zutaten:</div>
+                <div className={'text-base-content/70'}>{t('import:newIngredients')}</div>
                 <div className={'font-semibold'}>{newIngredients.length}</div>
               </>
             )}
 
             {newUnits.length > 0 && (
               <>
-                <div className={'text-base-content/70'}>Neue Einheiten:</div>
+                <div className={'text-base-content/70'}>{t('import:newUnits')}</div>
                 <div className={'font-semibold'}>{newUnits.length}</div>
               </>
             )}
 
             {newIce.length > 0 && (
               <>
-                <div className={'text-base-content/70'}>Neue Eis-Typen:</div>
+                <div className={'text-base-content/70'}>{t('import:newIceTypes')}</div>
                 <div className={'font-semibold'}>{newIce.length}</div>
               </>
             )}
 
             {newStepActions.length > 0 && (
               <>
-                <div className={'text-base-content/70'}>Neue Aktionen:</div>
+                <div className={'text-base-content/70'}>{t('import:newActions')}</div>
                 <div className={'font-semibold'}>{newStepActions.length}</div>
               </>
             )}
@@ -232,14 +234,14 @@ export function ConfirmationStep({ workspaceId, exportData, mappingDecisions, se
           className={'flex cursor-pointer items-center justify-between border-b border-base-300/60 bg-base-100 px-3 py-3 md:px-4'}
           onClick={() => setShowDetailsCollapsed(!showDetailsCollapsed)}
         >
-          <span className={'text-sm font-semibold'}>Details anzeigen</span>
+          <span className={'text-sm font-semibold'}>{t('import:showDetails')}</span>
           {showDetailsCollapsed ? <FaChevronDown /> : <FaChevronUp />}
         </div>
         {!showDetailsCollapsed && (
           <div className={'max-h-[300px] overflow-y-auto p-3'}>
             {newUnits.length > 0 && (
               <div className="mb-3">
-                <div className="mb-1 text-sm font-semibold">Neue Einheiten ({newUnits.length}):</div>
+                <div className="mb-1 text-sm font-semibold">{t('import:newUnitsCount', { count: newUnits.length })}</div>
                 <ul className="ml-2 list-inside list-disc text-xs">
                   {newUnits.map((m) => (
                     <li key={m.exportId}>{getEntityName(m.exportId, 'units')}</li>
@@ -250,7 +252,7 @@ export function ConfirmationStep({ workspaceId, exportData, mappingDecisions, se
 
             {newIce.length > 0 && (
               <div className="mb-3">
-                <div className="mb-1 text-sm font-semibold">Neue Eis-Typen ({newIce.length}):</div>
+                <div className="mb-1 text-sm font-semibold">{t('import:newIceTypesCount', { count: newIce.length })}</div>
                 <ul className="ml-2 list-inside list-disc text-xs">
                   {newIce.map((m) => (
                     <li key={m.exportId}>{getEntityName(m.exportId, 'ice')}</li>
@@ -261,7 +263,7 @@ export function ConfirmationStep({ workspaceId, exportData, mappingDecisions, se
 
             {newStepActions.length > 0 && (
               <div className="mb-3">
-                <div className="mb-1 text-sm font-semibold">Neue Aktionen ({newStepActions.length}):</div>
+                <div className="mb-1 text-sm font-semibold">{t('import:newActionsCount', { count: newStepActions.length })}</div>
                 <ul className="ml-2 list-inside list-disc text-xs">
                   {newStepActions.map((m) => (
                     <li key={m.exportId}>{getEntityName(m.exportId, 'stepActions')}</li>
@@ -272,7 +274,7 @@ export function ConfirmationStep({ workspaceId, exportData, mappingDecisions, se
 
             {newGlasses.length > 0 && (
               <div className="mb-3">
-                <div className="mb-1 text-sm font-semibold">Neue Gläser ({newGlasses.length}):</div>
+                <div className="mb-1 text-sm font-semibold">{t('import:newGlassesCount', { count: newGlasses.length })}</div>
                 <ul className="ml-2 list-inside list-disc text-xs">
                   {newGlasses.map((m) => (
                     <li key={m.exportId}>{getEntityName(m.exportId, 'glasses')}</li>
@@ -283,7 +285,7 @@ export function ConfirmationStep({ workspaceId, exportData, mappingDecisions, se
 
             {newGarnishes.length > 0 && (
               <div className="mb-3">
-                <div className="mb-1 text-sm font-semibold">Neue Garnituren ({newGarnishes.length}):</div>
+                <div className="mb-1 text-sm font-semibold">{t('import:newGarnishesCount', { count: newGarnishes.length })}</div>
                 <ul className="ml-2 list-inside list-disc text-xs">
                   {newGarnishes.map((m) => (
                     <li key={m.exportId}>{getEntityName(m.exportId, 'garnishes')}</li>
@@ -294,7 +296,7 @@ export function ConfirmationStep({ workspaceId, exportData, mappingDecisions, se
 
             {newIngredients.length > 0 && (
               <div className="mb-3">
-                <div className="mb-1 text-sm font-semibold">Neue Zutaten ({newIngredients.length}):</div>
+                <div className="mb-1 text-sm font-semibold">{t('import:newIngredientsCount', { count: newIngredients.length })}</div>
                 <ul className="ml-2 list-inside list-disc text-xs">
                   {newIngredients.map((m) => (
                     <li key={m.exportId}>{getEntityName(m.exportId, 'ingredients')}</li>
@@ -305,7 +307,7 @@ export function ConfirmationStep({ workspaceId, exportData, mappingDecisions, se
 
             {cocktailsToImport > 0 && (
               <div className="mb-3">
-                <div className="mb-1 text-sm font-semibold">Cocktails ({cocktailsToImport}):</div>
+                <div className="mb-1 text-sm font-semibold">{t('import:cocktailsCount', { count: cocktailsToImport })}</div>
                 <ul className="ml-2 list-inside list-disc text-xs">
                   {mappingDecisions.cocktails
                     .filter((m) => m.decision !== 'skip')
@@ -316,7 +318,7 @@ export function ConfirmationStep({ workspaceId, exportData, mappingDecisions, se
                       if (m.decision === 'rename' && m.newName) {
                         label = `${cocktail.name} → ${m.newName}`;
                       } else if (m.decision === 'overwrite') {
-                        label = `${cocktail.name} (überschreibt bestehenden)`;
+                        label = `${cocktail.name} ${t('import:overwritesExisting')}`;
                       }
                       return <li key={m.exportId}>{label}</li>;
                     })}
@@ -339,7 +341,7 @@ export function ConfirmationStep({ workspaceId, exportData, mappingDecisions, se
           <div className="flex w-full flex-col">
             <div className="mb-2 flex items-center gap-2">
               <FaExclamationCircle />
-              <span className="font-semibold">Import-Fehler aufgetreten:</span>
+              <span className="font-semibold">{t('import:importErrors')}</span>
             </div>
             <ul className="ml-4 list-inside list-disc text-sm">
               {errors.map((err, index) => (
@@ -355,16 +357,16 @@ export function ConfirmationStep({ workspaceId, exportData, mappingDecisions, se
       {importing ? (
         <div className={'flex flex-col items-center justify-center gap-4 py-8'}>
           <Loading size="lg" />
-          <span>Import läuft... Bitte warten Sie.</span>
-          <div className={'text-xs text-base-content/50'}>Dies kann je nach Anzahl der Cocktails einige Sekunden dauern.</div>
+          <span>{t('import:importRunning')}</span>
+          <div className={'text-xs text-base-content/50'}>{t('import:importRunningHint')}</div>
         </div>
       ) : (
         <div className={'flex justify-end gap-2'}>
           <Button variant="outline" onClick={onBack} disabled={importing}>
-            Zurück
+            {t('common:back')}
           </Button>
           <Button variant="primary" onClick={handleImport} disabled={importing}>
-            Import starten
+            {t('import:startImport')}
           </Button>
         </div>
       )}

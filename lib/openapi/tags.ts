@@ -60,6 +60,8 @@ export const ApiTags = {
   statisticsLogging: 'Statistics / Logging',
   statisticsAdvanced: 'Statistics / Advanced',
   ratingsCore: 'Ratings / Core',
+
+  userSettings: 'User / Settings',
 } as const;
 
 export type ApiTagName = (typeof ApiTags)[keyof typeof ApiTags];
@@ -128,6 +130,7 @@ export const OPENAPI_TAGS: OpenApiTagObject[] = [
   { name: ApiTags.statisticsLogging, ...subTag('Logging', 'Cocktail statistics and logs.', 1) },
   { name: ApiTags.statisticsAdvanced, ...subTag('Advanced', 'Advanced analytics, sets and comparisons.', 2) },
   { name: ApiTags.ratingsCore, ...subTag('Core', 'Cocktail ratings.', 1) },
+  { name: ApiTags.userSettings, ...subTag('Settings', 'Authenticated user preferences (theme, language, display flags).', 1) },
 ];
 
 /** One x-tagGroup per resource. Every tag must appear in exactly one group. */
@@ -190,4 +193,5 @@ export const OPENAPI_TAG_GROUPS: Array<{ name: string; tags: ApiTagName[] }> = [
   { name: 'Queue', tags: [ApiTags.queueCore] },
   { name: 'Statistics', tags: [ApiTags.statisticsLogging, ApiTags.statisticsAdvanced] },
   { name: 'Ratings', tags: [ApiTags.ratingsCore] },
+  { name: 'User', tags: [ApiTags.userSettings] },
 ];

@@ -1,4 +1,5 @@
 import React, { useContext, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button, Modal, ModalBackdrop, ModalBox } from '@components/ui';
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import { FaArrowLeft, FaTimes } from 'react-icons/fa';
@@ -10,6 +11,7 @@ interface GlobalModalProps {
 
 export function GlobalModal(props: GlobalModalProps) {
   const modalContext = useContext(ModalContext);
+  const { t } = useTranslation(['common']);
 
   useEffect(() => {
     const handleEsc = (event: KeyboardEvent) => {
@@ -65,11 +67,11 @@ export function GlobalModal(props: GlobalModalProps) {
         <ModalBackdrop>
           <button
             type="button"
-            aria-label="Close modal"
+            aria-label={t('common:close')}
             className="fixed inset-0 h-full w-full cursor-default border-0 bg-transparent p-0"
             onClick={() => modalContext.closeModal()}
           >
-            <span className="sr-only">close</span>
+            <span className="sr-only">{t('common:close')}</span>
           </button>
         </ModalBackdrop>
       </Modal>

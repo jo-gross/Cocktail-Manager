@@ -1,5 +1,6 @@
 import { ManageEntityLayout } from '@components/layout/ManageEntityLayout';
 import { useRouter } from 'next/router';
+import { useTranslation } from 'react-i18next';
 import { $Enums, Role } from '@generated/prisma/client';
 import { alertService } from '@lib/alertService';
 import { FaShareAlt } from 'react-icons/fa';
@@ -62,8 +63,8 @@ const defaultFilterState = (): SignageSlideFilterState => ({
   mode: 'all',
 });
 
-function formatLabel(format: MonitorFormat): string {
-  return format === MonitorFormat.LANDSCAPE ? 'Horizontal' : 'Vertikal';
+function formatLabel(format: MonitorFormat, translate: (key: 'manage:monitor.landscape' | 'manage:monitor.portrait') => string): string {
+  return format === MonitorFormat.LANDSCAPE ? translate('manage:monitor.landscape') : translate('manage:monitor.portrait');
 }
 
 function otherFormat(format: MonitorFormat): MonitorFormat {
@@ -100,7 +101,7 @@ async function patchSlides(
   } catch (error) {
     if (error instanceof ApiV1RequestError) {
       const conflicts = (error.issues as { conflicts?: ExclusiveConflict[] } | undefined)?.conflicts;
-      throw new SignagePatchError(error.message || 'Fehler beim Aktualisieren der Slides', conflicts);
+      throw new SignagePatchError(error.message || 'Failed to update slides', conflicts);
     }
     throw error;
   }
@@ -149,6 +150,7 @@ function SignageFormatEditor({
   onClearSelection: () => void;
   onMirrorChange: (mirrorSourceFormat: MonitorFormat | null) => Promise<void>;
 }) {
+  const { t } = useTranslation(['manage', 'common']);
   const isMirroring = Boolean(state.mirrorSourceFormat);
   const filteredSlides = useMemo(() => filterSlidesForAdmin(state.slides, filter), [state.slides, filter]);
   const previewSlides = isMirroring ? sourceSlides : state.slides;
@@ -174,11 +176,13 @@ function SignageFormatEditor({
     if (error instanceof SignagePatchError) {
       const conflictLabels = error.conflicts?.map((conflict) => conflict.label).join(', ');
       alertService.error(
-        conflictLabels ? `Exklusive Zeiträume überschneiden sich: ${conflictLabels}` : (error.message ?? 'Exklusive Zeiträume überschneiden sich'),
+        conflictLabels
+          ? t('manage:monitor.errorExclusiveOverlapWith', { labels: conflictLabels })
+          : (error.message ?? t('manage:monitor.errorExclusiveOverlap')),
       );
       return;
     }
-    alertService.error('Fehler beim Aktualisieren der Slides');
+    alertService.error(t('manage:monitor.errorUpdateSlides'));
   };
 
   const handleToggleEnabled = async (slideId: string, enabled: boolean) => {
@@ -199,7 +203,7 @@ function SignageFormatEditor({
       });
       onClearSelection();
     } catch (error) {
-      alertApiV1Error(error, 'Fehler beim Löschen');
+      alertApiV1Error(error, t('manage:monitor.errorDelete'));
     }
   };
 
@@ -213,7 +217,7 @@ function SignageFormatEditor({
         dateExclusive: payload.dateExclusive,
       });
       updateSlidesInState(updated);
-      alertService.success('Zeitplan aktualisiert');
+      alertService.success(t('manage:monitor.scheduleUpdated'));
     } catch (error) {
       handlePatchError(error);
     }
@@ -232,7 +236,7 @@ function SignageFormatEditor({
         dateExclusive: payload.dateExclusive,
       });
       updateSlidesInState(updated);
-      alertService.success('Zeitplan aktualisiert');
+      alertService.success(t('manage:monitor.scheduleUpdated'));
     } catch (error) {
       handlePatchError(error);
       throw error;
@@ -246,13 +250,13 @@ function SignageFormatEditor({
         enabled,
       });
       updateSlidesInState(updated);
-      alertService.success(enabled ? 'Slides aktiviert' : 'Slides deaktiviert');
+      alertService.success(enabled ? t('manage:monitor.slidesEnabled') : t('manage:monitor.slidesDisabled'));
     } catch (error) {
       handlePatchError(error);
     }
   };
 
-  const sourceLabel = formatLabel(otherFormat(format));
+  const sourceLabel = formatLabel(otherFormat(format), (key) => t(key));
 
   return (
     <div className="flex flex-col gap-3">
@@ -260,28 +264,28 @@ function SignageFormatEditor({
 
       <label className="flex items-start gap-2 text-sm">
         <Checkbox checked={isMirroring} onChange={() => onMirrorChange(isMirroring ? null : otherFormat(format))} />
-        <span>Gleiche Inhalte wie {sourceLabel} anzeigen (Bild wird automatisch angepasst)</span>
+        <span>{t('manage:monitor.mirrorSameContent', { format: sourceLabel })}</span>
       </label>
 
       {isMirroring ? (
         <div className="rounded-lg border border-base-300/60 bg-base-200/40 p-3 text-sm text-base-content/70">
-          Inhalte werden von {sourceLabel} übernommen. Eigene Slides bleiben gespeichert, sind aber deaktiviert.
+          {t('manage:monitor.mirrorContentFrom', { format: sourceLabel })}
         </div>
       ) : (
         <>
           <UploadDropZone
             multiple
             accept="image/*,application/pdf"
-            label="Dateien wählen"
-            hint="(z.B. PNG, JPG, GIF oder PDF)"
-            maxUploadSize={'1MB pro Bild'}
+            label={t('manage:monitor.chooseFiles')}
+            hint={t('manage:monitor.fileHintFormats')}
+            maxUploadSize={t('manage:monitor.maxPerImage')}
             onSelectedFilesChanged={() => undefined}
             onFilesSelected={onFilesSelected}
           />
           {uploading ? (
             <div className="flex items-center gap-2 text-sm text-base-content/70">
               <UiLoading size="sm" />
-              Dateien werden hochgeladen...
+              {t('manage:monitor.uploadingFiles')}
             </div>
           ) : null}
 
@@ -318,7 +322,7 @@ function SignageFormatEditor({
 
       <FormControl>
         <Label>
-          <LabelText>Anzeigedauer pro Slide (Sekunden)</LabelText>
+          <LabelText>{t('manage:monitor.slideDurationSeconds')}</LabelText>
         </Label>
         <Input
           type="number"
@@ -336,7 +340,7 @@ function SignageFormatEditor({
       </FormControl>
       <FormControl>
         <Label>
-          <LabelText>Hintergrund</LabelText>
+          <LabelText>{t('manage:monitor.background')}</LabelText>
         </Label>
         <div className="flex flex-col gap-2">
           <Label className="flex-row items-center gap-2">
@@ -347,7 +351,7 @@ function SignageFormatEditor({
               disabled={!isMirroring && state.slides.length === 0}
               onChange={() => onStateChange({ ...state, backgroundMode: 'COLOR' })}
             />
-            <LabelText>Farbe</LabelText>
+            <LabelText>{t('manage:monitor.color')}</LabelText>
           </Label>
           <Label className="flex-row items-center gap-2">
             <Radio
@@ -357,14 +361,14 @@ function SignageFormatEditor({
               disabled={!isMirroring && state.slides.length === 0}
               onChange={() => onStateChange({ ...state, backgroundMode: 'BLURRED' })}
             />
-            <LabelText>Unscharfer Hintergrund</LabelText>
+            <LabelText>{t('manage:monitor.blurredBackground')}</LabelText>
           </Label>
         </div>
       </FormControl>
       {state.backgroundMode === 'COLOR' ? (
         <FormControl>
           <Label>
-            <LabelText>Hintergrundfarbe</LabelText>
+            <LabelText>{t('common:backgroundColor')}</LabelText>
           </Label>
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
             <div className="relative h-11 w-full min-w-32 overflow-hidden rounded-lg border border-base-300 sm:w-32">
@@ -384,14 +388,14 @@ function SignageFormatEditor({
               disabled={(!isMirroring && state.slides.length === 0) || state.backgroundColor == null}
               onClick={() => onStateChange({ ...state, backgroundColor: null })}
             >
-              Farbe entfernen
+              {t('manage:monitor.removeColor')}
             </Button>
           </div>
         </FormControl>
       ) : null}
 
       <div className="flex flex-col gap-2">
-        <div className="text-sm font-medium">Live-Vorschau</div>
+        <div className="text-sm font-medium">{t('manage:monitor.livePreview')}</div>
         <SignageMonitorPreview format={formatView} />
       </div>
     </div>
@@ -399,6 +403,7 @@ function SignageFormatEditor({
 }
 
 const ManageMonitorPage: NextPageWithPullToRefresh = () => {
+  const { t } = useTranslation(['manage', 'common', 'errors']);
   const router = useRouter();
   const { workspaceId } = router.query;
   const userContext = useContext(UserContext);
@@ -426,13 +431,13 @@ const ManageMonitorPage: NextPageWithPullToRefresh = () => {
 
     try {
       await updateSignageSettings(workspaceId, payload);
-      alertService.success('Reihenfolge und Anzeigedauer gespeichert');
+      alertService.success(t('manage:monitor.orderAndDurationSaved'));
     } catch (error) {
-      alertApiV1Error(error, 'Es ist ein Fehler aufgetreten');
+      alertApiV1Error(error, t('errors:generic'));
     } finally {
       setUpdatingSignage(false);
     }
-  }, [landscape, portrait, workspaceId]);
+  }, [landscape, portrait, workspaceId, t]);
 
   const fetchSignage = useCallback(() => {
     if (workspaceId == undefined) return;
@@ -464,12 +469,12 @@ const ManageMonitorPage: NextPageWithPullToRefresh = () => {
       })
       .catch((error) => {
         console.error('SettingsPage -> fetchSignage', error);
-        alertService.error('Fehler beim Laden der Monitor-Einstellungen');
+        alertService.error(t('manage:monitor.errorLoadSettings'));
       })
       .finally(() => {
         setSignageLoading(false);
       });
-  }, [workspaceId]);
+  }, [workspaceId, t]);
 
   useEffect(() => {
     fetchSignage();
@@ -502,9 +507,9 @@ const ManageMonitorPage: NextPageWithPullToRefresh = () => {
         ...current,
         slides: [...current.slides, ...uploadedSlides],
       }));
-      alertService.success('Upload erfolgreich');
+      alertService.success(t('manage:monitor.uploadSuccess'));
     } catch (error) {
-      alertApiV1Error(error, 'Fehler beim Hochladen');
+      alertApiV1Error(error, t('manage:monitor.errorUpload'));
     } finally {
       setUploading(false);
     }
@@ -538,9 +543,13 @@ const ManageMonitorPage: NextPageWithPullToRefresh = () => {
     try {
       await updateSignageSettings(workspaceId, payload);
       setState(nextState);
-      alertService.success(mirrorSourceFormat ? `Spiegelung von ${formatLabel(mirrorSourceFormat)} aktiviert` : 'Spiegelung deaktiviert');
+      alertService.success(
+        mirrorSourceFormat
+          ? t('manage:monitor.mirroringEnabled', { format: formatLabel(mirrorSourceFormat, (key) => t(key)) })
+          : t('manage:monitor.mirroringDisabled'),
+      );
     } catch (error) {
-      alertApiV1Error(error, 'Fehler beim Speichern der Spiegelung');
+      alertApiV1Error(error, t('manage:monitor.errorSaveMirror'));
     }
   };
 
@@ -569,12 +578,12 @@ const ManageMonitorPage: NextPageWithPullToRefresh = () => {
   };
 
   return (
-    <ManageEntityLayout title={'Monitor'} backLink={`/workspaces/${workspaceId}/manage`}>
+    <ManageEntityLayout title={t('manage:monitor.title')} backLink={`/workspaces/${workspaceId}/manage`}>
       {userContext.isUserPermitted(Role.MANAGER) ? (
         <Card>
           <CardBody>
             <CardTitle className="w-full justify-between">
-              <div>Statische Karte</div>
+              <div>{t('manage:monitor.staticCard')}</div>
               <Button
                 type="button"
                 variant="outline"
@@ -583,23 +592,23 @@ const ManageMonitorPage: NextPageWithPullToRefresh = () => {
                   setCopyToClipboardLoading(true);
                   await navigator.clipboard.writeText(`${window.location.origin}/signage?id=${workspaceId}`);
                   setCopyToClipboardLoading(false);
-                  alertService.info('In Zwischenablage kopiert');
+                  alertService.info(t('common:success.copied'));
                 }}
                 disabled={copyToClipboardLoading}
               >
                 {copyToClipboardLoading ? <UiLoading size="sm" /> : null}
-                <FaShareAlt /> Link kopieren
+                <FaShareAlt /> {t('common:copyLink')}
               </Button>
             </CardTitle>
             {signageLoading ? (
               <div className="flex w-full flex-col items-center justify-center gap-2">
                 <UiLoading />
-                <div>Lade Einstellungen...</div>
+                <div>{t('manage:monitor.loadingSettings')}</div>
               </div>
             ) : (
               <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                 <SignageFormatEditor
-                  title="Horizontal"
+                  title={t('manage:monitor.landscape')}
                   workspaceId={workspaceId as string}
                   format={MonitorFormat.LANDSCAPE}
                   state={landscape}
@@ -616,7 +625,7 @@ const ManageMonitorPage: NextPageWithPullToRefresh = () => {
                   onMirrorChange={(mirrorSourceFormat) => handleMirrorChange(MonitorFormat.LANDSCAPE, landscape, setLandscape, mirrorSourceFormat)}
                 />
                 <SignageFormatEditor
-                  title="Vertikal"
+                  title={t('manage:monitor.portrait')}
                   workspaceId={workspaceId as string}
                   format={MonitorFormat.PORTRAIT}
                   state={portrait}
@@ -636,7 +645,7 @@ const ManageMonitorPage: NextPageWithPullToRefresh = () => {
             )}
             <Button type="button" variant="primary" disabled={updatingSignage || signageLoading} onClick={handleUpdateSignage}>
               {updatingSignage ? <UiLoading size="sm" /> : null}
-              Reihenfolge und Anzeigedauer speichern
+              {t('manage:monitor.saveOrderAndDuration')}
             </Button>
           </CardBody>
         </Card>

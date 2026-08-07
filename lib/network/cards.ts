@@ -3,6 +3,7 @@ import { apiV1Fetch } from './apiV1';
 import { fetchListWithCache, fetchWithCache, prefetchImage } from './fetchWithCache';
 import type { CardDto, CardSummaryDto } from '@lib/schemas/cards';
 import type { CocktailDto } from '@lib/schemas/cocktails';
+import { i18n } from '@lib/i18n/client';
 
 /**
  * Fetch all cards for a workspace
@@ -38,11 +39,11 @@ export async function fetchCards(
         console.debug('Cards loaded from cache');
       }
     } else if (error) {
-      alertService.error('Fehler beim Laden der Karten');
+      alertService.error(i18n.t('errors:loadCards'));
     }
   } catch (error) {
     console.error('fetchCards error:', error);
-    alertService.error('Fehler beim Laden der Karten');
+    alertService.error(i18n.t('errors:loadCards'));
   } finally {
     setLoading(false);
   }
@@ -83,11 +84,11 @@ export async function fetchCard(
         console.debug('Card loaded from cache:', cardId);
       }
     } else if (error) {
-      alertService.error('Fehler beim Laden der Karte');
+      alertService.error(i18n.t('errors:loadCard'));
     }
   } catch (error) {
     console.error('fetchCard error:', error);
-    alertService.error('Fehler beim Laden der Karte');
+    alertService.error(i18n.t('errors:loadCard'));
   } finally {
     setLoading(false);
   }

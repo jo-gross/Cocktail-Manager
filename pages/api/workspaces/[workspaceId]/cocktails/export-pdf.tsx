@@ -20,9 +20,11 @@ import React from 'react';
 import { renderToString } from 'react-dom/server';
 import puppeteer, { Browser } from 'puppeteer-core';
 import { promises as dnsPromises } from 'dns';
-import { CocktailPdfPage } from '../../../../../components/pdf/CocktailPdfPage';
+import { buildCocktailPdfLabels, CocktailPdfPage } from '../../../../../components/pdf/CocktailPdfPage';
 import { PDFDocument } from 'pdf-lib';
 import { pdfExportTailwindConfigScript, pdfExportThemeStyles } from '../../../../../lib/pdf/pdfExportStyles';
+import { getServerT } from '../../../../../lib/i18n/server';
+import { DEFAULT_LOCALE } from '../../../../../lib/i18n/locales';
 import { withDeprecation } from '@middleware/api/withDeprecation';
 
 const WorkspaceSettingKey = $Enums.WorkspaceSettingKey;
@@ -214,8 +216,8 @@ async function generatePdf(html: string, numberOfCocktails: number, showHeader: 
   }
 }
 
-function getTranslation(translations: Record<string, Record<string, string>>, key: string, language: 'de' = 'de'): string {
-  return translations[language]?.[key] ?? key;
+function getTranslation(translations: Record<string, Record<string, string>>, key: string, language: string = 'de'): string {
+  return translations[language]?.[key] ?? translations['de']?.[key] ?? key;
 }
 
 function generateHtmlForCocktails(
@@ -231,6 +233,8 @@ function generateHtmlForCocktails(
     showFooter: boolean;
   },
 ): string {
+  const { t } = getServerT(DEFAULT_LOCALE);
+  const labels = buildCocktailPdfLabels(t);
   const pages = cocktails.map((cocktail, index) => {
     console.log('Rendering cocktail', cocktail.name);
     // Extract base64 image from CocktailRecipeImage if available
@@ -240,6 +244,8 @@ function generateHtmlForCocktails(
         cocktail,
         imageBase64,
         getTranslation: (key: string) => getTranslation(translations, key),
+        labels,
+        locale: DEFAULT_LOCALE,
         exportImage: options.exportImage,
         exportDescription: options.exportDescription,
         exportNotes: options.exportNotes,

@@ -195,6 +195,67 @@
           "error"
         ]
       },
+      "UserSetting": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string"
+          },
+          "setting": {
+            "$ref": "#/components/schemas/UserSettingKey"
+          },
+          "value": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "userId",
+          "setting",
+          "value"
+        ]
+      },
+      "UserSettingKey": {
+        "type": "string",
+        "enum": [
+          "showImage",
+          "showTags",
+          "lessItems",
+          "theme",
+          "language",
+          "showStatisticActions",
+          "lastSeenVersion",
+          "showNotes",
+          "showHistory",
+          "showDescription",
+          "showTime",
+          "showRating",
+          "queueGrouping",
+          "showFastQueueCheck",
+          "showSettingsAtBottom"
+        ]
+      },
+      "UserSettingUpdateInput": {
+        "type": "object",
+        "properties": {
+          "setting": {
+            "$ref": "#/components/schemas/UserSettingKey"
+          },
+          "value": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Setting value as string, or null to clear."
+          }
+        },
+        "required": [
+          "setting",
+          "value"
+        ]
+      },
       "Workspace": {
         "type": "object",
         "properties": {
@@ -4443,6 +4504,79 @@
                   "properties": {
                     "data": {
                       "$ref": "#/components/schemas/Me"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/users/settings": {
+      "put": {
+        "summary": "Upsert a user setting",
+        "description": "**Authentication:** requires a logged-in workspace-member session. API keys (workspace or the instance master key) are NOT accepted for this operation.\n\nCreates or updates a setting for the authenticated session user. Session-only — API keys are not accepted.",
+        "tags": [
+          "User / Settings"
+        ],
+        "security": [
+          {
+            "SessionCookieAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserSettingUpdateInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Upsert a user setting",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/UserSetting"
                     }
                   },
                   "required": [
@@ -18198,6 +18332,12 @@
       "description": "Cocktail ratings.",
       "x-displayName": "Core",
       "x-position": 1
+    },
+    {
+      "name": "User / Settings",
+      "description": "Authenticated user preferences (theme, language, display flags).",
+      "x-displayName": "Settings",
+      "x-position": 1
     }
   ],
   "x-tagGroups": [
@@ -18320,6 +18460,12 @@
       "name": "Ratings",
       "tags": [
         "Ratings / Core"
+      ]
+    },
+    {
+      "name": "User",
+      "tags": [
+        "User / Settings"
       ]
     }
   ]

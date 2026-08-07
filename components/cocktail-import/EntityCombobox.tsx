@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { FaCheck, FaChevronDown, FaSearch } from 'react-icons/fa';
 import { Button, Input, Loading, Menu, MenuItem } from '@components/ui';
 
@@ -18,15 +19,9 @@ interface EntityComboboxProps {
   disabled?: boolean;
 }
 
-export function EntityCombobox({
-  value,
-  onChange,
-  fetchOptions,
-  getOptionLabel,
-  getOptionValue,
-  placeholder = 'Auswählen...',
-  disabled = false,
-}: EntityComboboxProps) {
+export function EntityCombobox({ value, onChange, fetchOptions, getOptionLabel, getOptionValue, placeholder, disabled = false }: EntityComboboxProps) {
+  const { t } = useTranslation(['import', 'common']);
+  const resolvedPlaceholder = placeholder ?? t('common:selectEllipsis');
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [options, setOptions] = useState<ComboboxOption[]>([]);
@@ -185,7 +180,7 @@ export function EntityCombobox({
     <div ref={containerRef} className="relative w-full">
       {/* Trigger Button */}
       <Button type="button" size="sm" variant="outline" className="w-full justify-between" disabled={disabled} onClick={() => !disabled && setIsOpen(!isOpen)}>
-        <span className="truncate">{selectedOption ? getOptionLabelRef.current(selectedOption) : placeholder}</span>
+        <span className="truncate">{selectedOption ? getOptionLabelRef.current(selectedOption) : resolvedPlaceholder}</span>
         <FaChevronDown className={`ml-2 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </Button>
 
@@ -200,7 +195,7 @@ export function EntityCombobox({
                 ref={inputRef}
                 type="text"
                 bordered={false}
-                placeholder="Suchen..."
+                placeholder={t('common:search')}
                 className="h-8 min-h-8 flex-1 border-0 px-0 focus:ring-0"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
@@ -216,7 +211,7 @@ export function EntityCombobox({
                 <Loading size="sm" />
               </div>
             ) : options.length === 0 ? (
-              <div className="py-4 text-center text-sm text-base-content/50">Keine Ergebnisse gefunden</div>
+              <div className="py-4 text-center text-sm text-base-content/50">{t('import:noResults')}</div>
             ) : (
               <Menu size="sm" className="gap-1 p-0">
                 {options.map((option, index) => {

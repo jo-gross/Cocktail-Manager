@@ -1,5 +1,6 @@
 import { FaSearch } from 'react-icons/fa';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Input } from '@components/ui';
 
 interface ListSearchFieldProps {
@@ -7,6 +8,7 @@ interface ListSearchFieldProps {
 }
 
 export default function ListSearchField(props: ListSearchFieldProps) {
+  const { t } = useTranslation('common');
   const [filterString, setFilterString] = React.useState('');
 
   return (
@@ -14,7 +16,7 @@ export default function ListSearchField(props: ListSearchFieldProps) {
       <FaSearch className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-base-content/40" aria-hidden />
       <Input
         className="w-full pl-9"
-        placeholder="Suche..."
+        placeholder={t('search')}
         value={filterString}
         onChange={(e) => {
           setFilterString(e.target.value);

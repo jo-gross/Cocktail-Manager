@@ -1,6 +1,7 @@
 import { ManageEntityLayout } from '@components/layout/ManageEntityLayout';
 import { useRouter } from 'next/router';
 import React, { useCallback, useContext, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { CocktailStatisticItemDto } from '@lib/schemas/statistics';
 import { alertService } from '@lib/alertService';
 import { FaSyncAlt, FaTrashAlt } from 'react-icons/fa';
@@ -37,6 +38,7 @@ import type { SortDirection } from '@components/ui';
 
 const LogsPage: NextPageWithPullToRefresh = () => {
   const router = useRouter();
+  const { t } = useTranslation(['manage', 'common', 'nav', 'entity', 'errors']);
   const { workspaceId } = router.query;
   const userContext = useContext(UserContext);
 
@@ -142,12 +144,12 @@ const LogsPage: NextPageWithPullToRefresh = () => {
 
   return (
     <ManageEntityLayout
-      title={'Logs'}
+      title={t('nav:logs')}
       backLink={`/workspaces/${workspaceId}/manage`}
       actions={
         <div className="flex items-center gap-2">
           <TimeRangePicker value={timeRange} onChange={handleTimeRangeChange} compact dayStartTime={dayStartTime} />
-          <Tooltip tip="Aktualisieren">
+          <Tooltip tip={t('common:update')}>
             <Button type="button" variant="primary" shape="square" size="sm" className="md:h-10 md:min-h-10 md:w-10" onClick={loadLogs}>
               {loading ? <UiLoading size="sm" /> : <FaSyncAlt />}
             </Button>
@@ -159,22 +161,22 @@ const LogsPage: NextPageWithPullToRefresh = () => {
       <div className="flex min-h-0 flex-1 flex-col gap-4">
         <Card className="flex min-h-0 flex-1 flex-col">
           <CardBody className="min-h-0 flex-1">
-            <CardTitle className="flex w-full justify-between">Bestell-Logs</CardTitle>
+            <CardTitle className="flex w-full justify-between">{t('manage:orderLogs')}</CardTitle>
             <DataTable fillHeight toolbar={<ListSearchField onFilterChange={handleSearchChange} />}>
               <Table zebra compact className="w-full">
                 <TableHead>
                   <TableRow>
                     <SortableHeaderCell sortKey="date" activeSortKey={sortKey} direction={sortDirection} onSort={handleSort}>
-                      Zeitpunkt
+                      {t('manage:timestamp')}
                     </SortableHeaderCell>
                     <SortableHeaderCell sortKey="cocktail" activeSortKey={sortKey} direction={sortDirection} onSort={handleSort}>
-                      Cocktail
+                      {t('common:cocktail_one')}
                     </SortableHeaderCell>
                     <SortableHeaderCell sortKey="card" activeSortKey={sortKey} direction={sortDirection} onSort={handleSort}>
-                      Cocktail Karte
+                      {t('manage:cocktailCard')}
                     </SortableHeaderCell>
                     <SortableHeaderCell sortKey="user" activeSortKey={sortKey} direction={sortDirection} onSort={handleSort}>
-                      Hinzugefügt von
+                      {t('manage:addedBy')}
                     </SortableHeaderCell>
                     <TableHeaderCell></TableHeaderCell>
                   </TableRow>
@@ -185,14 +187,14 @@ const LogsPage: NextPageWithPullToRefresh = () => {
                   ) : sortedLogItems.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={5} className={'text-center'}>
-                        Keine Einträge gefunden
+                        {t('manage:noEntriesFound')}
                       </TableCell>
                     </TableRow>
                   ) : (
                     sortedLogItems.map((item) => (
                       <TableRow key={'statistic-item-' + item.id}>
                         <TableCell>{formatDateTime(new Date(item.date))}</TableCell>
-                        <TableCell>{item.cocktail?.name || 'Gelöschter Cocktail'}</TableCell>
+                        <TableCell>{item.cocktail?.name || t('entity:deletedCocktail')}</TableCell>
                         <TableCell>{item.cocktailCard?.name || '-'}</TableCell>
                         <TableCell>{item.user?.name || '-'}</TableCell>
                         <TableCell className={'flex items-center justify-end space-x-2'}>
@@ -207,11 +209,11 @@ const LogsPage: NextPageWithPullToRefresh = () => {
                               setItemDeleting({ ...itemDeleting, [item.id]: true });
                               try {
                                 await deleteStatisticLog(workspaceId, item.id);
-                                alertService.success('Log-Eintrag gelöscht');
+                                alertService.success(t('entity:logDeleted'));
                                 loadLogs();
                               } catch (error) {
                                 console.error('LogsPage -> deleteLogItem', error);
-                                alertApiV1Error(error, 'Fehler beim Löschen des Log-Eintrags');
+                                alertApiV1Error(error, t('errors:deleteLog'));
                               } finally {
                                 setItemDeleting({ ...itemDeleting, [item.id]: false });
                               }
@@ -231,13 +233,17 @@ const LogsPage: NextPageWithPullToRefresh = () => {
             {pagination && (
               <div className={'mt-4 flex items-center justify-center gap-2'}>
                 <Button type="button" size="sm" disabled={currentPage === 1 || loading} onClick={() => handlePageChange(currentPage - 1)}>
-                  Vorherige
+                  {t('manage:previous')}
                 </Button>
                 <span className={'text-sm'}>
-                  Seite {pagination.page} von {pagination.totalPages} ({pagination.total} Einträge)
+                  {t('manage:pageOfEntries', {
+                    page: pagination.page,
+                    totalPages: pagination.totalPages,
+                    total: pagination.total,
+                  })}
                 </span>
                 <Button type="button" size="sm" disabled={currentPage >= pagination.totalPages || loading} onClick={() => handlePageChange(currentPage + 1)}>
-                  Nächste
+                  {t('common:next')}
                 </Button>
               </div>
             )}

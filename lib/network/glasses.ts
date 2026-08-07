@@ -1,3 +1,4 @@
+import { i18n } from '@lib/i18n/client';
 import { apiV1Fetch, apiV1FetchSafe, apiV1Mutate } from './apiV1';
 import type { GlassCreateInput, GlassDto, GlassUpdateInput } from '@lib/schemas/glasses';
 import type { DeletionResult } from '@lib/schemas/common';
@@ -6,10 +7,11 @@ export function fetchGlasses(
   workspaceId: string | string[] | undefined,
   setGlasses: (glasses: GlassDto[]) => void,
   setGlassesLoading: (loading: boolean) => void,
+  errorMessage = i18n.t('errors:loadGlasses'),
 ) {
   if (!workspaceId) return;
   setGlassesLoading(true);
-  apiV1FetchSafe<GlassDto[]>(`/api/v1/workspaces/${workspaceId}/glasses`, undefined, 'Fehler beim Laden der Gläser')
+  apiV1FetchSafe<GlassDto[]>(`/api/v1/workspaces/${workspaceId}/glasses`, undefined, errorMessage)
     .then((glasses) => {
       if (glasses) setGlasses(glasses);
     })

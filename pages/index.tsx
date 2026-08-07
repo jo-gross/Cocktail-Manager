@@ -1,5 +1,6 @@
 import { authClient } from '@lib/auth-client';
 import { useCallback, useContext, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Setting, Workspace, WorkspaceJoinRequest } from '@generated/prisma/client';
 import { Loading } from '@components/Loading';
 import Image from 'next/image';
@@ -16,6 +17,7 @@ import { useRouter } from 'next/router';
 import { MdOutlineCancel } from 'react-icons/md';
 import { DeleteConfirmationModal } from '@components/modals/DeleteConfirmationModal';
 import ThemeChanger from '@components/ThemeChanger';
+import LanguageChanger from '@components/LanguageChanger';
 import { NextPageWithPullToRefresh } from '../types/next';
 import { createWorkspace, fetchWorkspacesSafe, type WorkspaceListItem } from '@lib/network/workspaces';
 import { withdrawOwnJoinRequest } from '@lib/network/workspaceUsers';
@@ -60,6 +62,7 @@ const WorkspacesPage: NextPageWithPullToRefresh = () => {
   const [joinWorkspaceId, setJoinWorkspaceId] = useState('');
 
   const userContext = useContext(UserContext);
+  const { t } = useTranslation(['auth', 'common', 'nav']);
 
   const [joiningWorkspace, setJoiningWorkspace] = useState(false);
   const [creatingWorkspace, setCreatingWorkspace] = useState(false);
@@ -77,9 +80,9 @@ const WorkspacesPage: NextPageWithPullToRefresh = () => {
         setWorkspacesLoading(loading);
         if (!loading) setWorkspacesFetched(true);
       },
-      'Fehler beim Laden der Workspaces',
+      t('auth:error.loadWorkspaces'),
     );
-  }, [userContext.user]);
+  }, [userContext.user, t]);
 
   const fetchOpenWorkspaceJoinRequest = useCallback(() => {
     if (!userContext.user) return;
@@ -91,15 +94,15 @@ const WorkspacesPage: NextPageWithPullToRefresh = () => {
           setOpenWorkspaceJoinRequest(body.data);
         } else {
           console.error('WorkspacesOverview -> fetchOpenWorkspaceJoinRequest', response);
-          alertService.error(body.error?.message ?? body.message ?? 'Fehler beim Laden der offenen Beitrittsanfragen', response.status, response.statusText);
+          alertService.error(body.error?.message ?? body.message ?? t('auth:error.loadJoinRequests'), response.status, response.statusText);
         }
       })
       .catch((error) => {
         console.error('WorkspacesOverview -> fetchOpenWorkspaceJoinRequest', error);
-        alertService.error('Fehler beim Laden der offenen Beitrittsanfragen');
+        alertService.error(t('auth:error.loadJoinRequests'));
       })
       .finally(() => setOpenWorkspaceJoinRequestLoading(false));
-  }, [userContext.user]);
+  }, [userContext.user, t]);
 
   const fetchWorkspaceCreationConfig = useCallback(() => {
     fetch('/api/config/workspace-creation', { method: 'GET' })
@@ -141,10 +144,10 @@ const WorkspacesPage: NextPageWithPullToRefresh = () => {
       .then(() => fetchWorkspaces())
       .catch((error) => {
         console.error('WorkspacesOverview -> createNewWorkspace', error);
-        alertApiV1Error(error, 'Fehler beim Erstellen der Workspace');
+        alertApiV1Error(error, t('auth:error.createWorkspace'));
       })
       .finally(() => setCreatingWorkspace(false));
-  }, [userContext.user, newWorkspaceName, fetchWorkspaces]);
+  }, [userContext.user, newWorkspaceName, fetchWorkspaces, t]);
 
   const createDemoWorkspace = useCallback(async () => {
     setCreatingDemoWorkspace(true);
@@ -159,7 +162,7 @@ const WorkspacesPage: NextPageWithPullToRefresh = () => {
       const body = await response.json();
 
       if (!response.ok) {
-        alertService.error(body.error?.message ?? body.message ?? 'Fehler beim Erstellen der Demo-Workspace', response.status, response.statusText);
+        alertService.error(body.error?.message ?? body.message ?? t('auth:error.createDemoWorkspace'), response.status, response.statusText);
         return;
       }
 
@@ -174,15 +177,15 @@ const WorkspacesPage: NextPageWithPullToRefresh = () => {
         // Redirect to workspace
         router.push(`/workspaces/${body.data.workspaceId}`);
       } else {
-        alertService.error('Fehler beim Anmelden als Demo-User');
+        alertService.error(t('auth:error.demoLogin'));
       }
     } catch (error) {
       console.error('WorkspacesOverview -> createDemoWorkspace', error);
-      alertService.error('Fehler beim Erstellen der Demo-Workspace');
+      alertService.error(t('auth:error.createDemoWorkspace'));
     } finally {
       setCreatingDemoWorkspace(false);
     }
-  }, [router]);
+  }, [router, t]);
 
   const joinWorkspace = useCallback(
     (code: string) => {
@@ -207,21 +210,21 @@ const WorkspacesPage: NextPageWithPullToRefresh = () => {
               if (response.body) {
                 const body = await response.json();
                 if (body?.data?.key == 'JOIN_ALREADY_REQUESTED') {
-                  alertService.info('Du hast bereits eine Beitrittsanfrage für diesen Workspace gestellt');
+                  alertService.info(t('auth:alert.alreadyRequested'));
                 } else if (body?.data?.key == 'ALREADY_IN_WORKSPACE') {
-                  alertService.info('Du bist bereits in dieser Workspace');
+                  alertService.info(t('auth:alert.alreadyMember'));
                 } else {
-                  alertService.error('Mit diesem Code konntest du keiner Workspace beitreten, bitte überprüfe den Code und versuche es erneut');
+                  alertService.error(t('auth:alert.invalidCode'));
                 }
               } else {
-                alertService.error('Mit diesem Code konntest du keiner Workspace beitreten, bitte überprüfe den Code und versuche es erneut');
+                alertService.error(t('auth:alert.invalidCode'));
               }
             } catch (error) {
               console.error('WorkspacesOverview -> joinWorkspace', error);
-              alertService.error('Fehler beim Beitreten der Workspace');
+              alertService.error(t('auth:error.joinWorkspace'));
             }
           } else {
-            alertService.success('Beitrittsanfrage gesendet, warte auf Annahme');
+            alertService.success(t('auth:joinRequestSent'));
           }
         })
         .then(async () => {
@@ -234,11 +237,11 @@ const WorkspacesPage: NextPageWithPullToRefresh = () => {
         })
         .catch((error) => {
           console.error('WorkspacesOverview -> joinWorkspace', error);
-          alertService.error('Fehler beim Beitreten');
+          alertService.error(t('auth:error.join'));
         })
         .finally(() => setJoiningWorkspace(false));
     },
-    [fetchOpenWorkspaceJoinRequest, fetchWorkspaces, router, userContext.user],
+    [fetchOpenWorkspaceJoinRequest, fetchWorkspaces, router, userContext.user, t],
   );
 
   useEffect(() => {
@@ -259,7 +262,7 @@ const WorkspacesPage: NextPageWithPullToRefresh = () => {
 
         modalContext.openModal(
           <div className={'flex flex-col gap-4'}>
-            <div className={'w-full text-center text-2xl font-bold'}>Neue Version ({packageInfo.version})</div>
+            <div className={'w-full text-center text-2xl font-bold'}>{t('auth:newVersion', { version: packageInfo.version })}</div>
             {currentEntry && (
               <div className={'flex flex-col gap-2'}>
                 <ul className={'list-disc space-y-1 pl-5'}>
@@ -271,15 +274,13 @@ const WorkspacesPage: NextPageWithPullToRefresh = () => {
             )}
             {recentEntries.length > 1 && (
               <details className={'mt-2'}>
-                <summary className={'cursor-pointer text-sm text-base-content/60'}>Vorherige Versionen</summary>
+                <summary className={'cursor-pointer text-sm text-base-content/60'}>{t('auth:previousVersions')}</summary>
                 <div className={'mt-2 flex flex-col gap-3'}>
                   {recentEntries
                     .filter((e) => e.version !== packageInfo.version)
                     .map((entry) => (
                       <div key={entry.version} className={'flex flex-col gap-1'}>
-                        <div className={'text-sm font-semibold'}>
-                          v{entry.version} ({entry.date})
-                        </div>
+                        <div className={'text-sm font-semibold'}>{t('common:versionDate', { version: entry.version, date: entry.date })}</div>
                         <ul className={'list-disc space-y-0.5 pl-5 text-sm'}>
                           {entry.highlights.map((h, i) => (
                             <li key={i}>{h}</li>
@@ -292,7 +293,7 @@ const WorkspacesPage: NextPageWithPullToRefresh = () => {
             )}
             <div className={'w-full text-center text-sm italic'}>
               <Link href={'https://github.com/jo-gross/Cocktail-Manager/releases'} className={'link'} target={'_blank'}>
-                Alle Änderungen ansehen
+                {t('auth:viewAllChanges')}
               </Link>
             </div>
           </div>,
@@ -340,24 +341,23 @@ const WorkspacesPage: NextPageWithPullToRefresh = () => {
     if (code) {
       modalContext.openModal(
         <div className={'flex flex-col gap-2'}>
-          <div className={'text-2xl font-bold'}>Mit Code beitreten</div>
+          <div className={'text-2xl font-bold'}>{t('auth:joinWithCode')}</div>
           <form
             onSubmit={(e) => {
               e.preventDefault();
               joinWorkspace(code as string);
-              alertService.info('aSD');
               modalContext.closeAllModals();
             }}
           >
             <FormControl>
               <Label>
-                <LabelText>Beitrittscode</LabelText>
+                <LabelText>{t('auth:joinCode')}</LabelText>
               </Label>
               <ButtonGroup className="w-full">
                 <Input
                   joinItem
                   className="w-full"
-                  placeholder={'Beitrittscode'}
+                  placeholder={t('auth:joinCode')}
                   value={code as string}
                   onChange={(event) => setJoinWorkspaceId(event.target.value)}
                 />
@@ -383,11 +383,15 @@ const WorkspacesPage: NextPageWithPullToRefresh = () => {
   const versionLine = (
     <div className="text-center text-sm text-base-content/70">
       <Link href={'https://github.com/jo-gross/Cocktail-Manager/'} target={'_blank'} className={'link'}>
-        v{packageInfo.version}
+        {t('common:versionLine', {
+          version: packageInfo.version,
+          env: process.env.DEPLOYMENT == 'development' ? t('common:devEnvSuffix') : '',
+        })}
       </Link>
-      {` ${process.env.DEPLOYMENT == 'development' ? '(DEV)' : ''} - by `}
+      {' - '}
+      {t('common:byAuthor')}{' '}
       <Link className={'link'} target={'_blank'} href={'https://github.com/jo-gross'}>
-        Johannes Groß
+        {t('common:authorName')}
       </Link>
     </div>
   );
@@ -395,29 +399,30 @@ const WorkspacesPage: NextPageWithPullToRefresh = () => {
   return (
     <>
       <Head>
-        <title>The Cocktail-Manager</title>
+        <title>{t('common:appName')}</title>
       </Head>
       <div className="relative">
-        <div className="absolute top-4 right-4 z-10">
-          <ThemeChanger />
+        <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
+          <LanguageChanger size="sm" />
+          <ThemeChanger size="sm" />
         </div>
         {!userContext.user ? (
           <div className="flex min-h-dvh flex-col items-center justify-center p-4">
             <Card variant="elevated" className="w-full max-w-md">
               <CardBody className="flex flex-col items-center gap-4">
                 <Image src={'/images/The Cocktail Manager Logo.png'} alt="The Cocktail Manager" className={logoClassName} height={180} width={211} />
-                <h1 className="text-center text-3xl font-bold">The Cocktail-Manager</h1>
+                <h1 className="text-center text-3xl font-bold">{t('common:appName')}</h1>
                 {versionLine}
-                <Divider className="w-full">Anmelden</Divider>
+                <Divider className="w-full">{t('auth:login')}</Divider>
                 {process.env.NEXT_PUBLIC_DEMO_MODE === 'true' ? (
                   <Button variant="primary" className="w-full" onClick={createDemoWorkspace} disabled={creatingDemoWorkspace}>
                     {creatingDemoWorkspace ? (
                       <>
                         <UiLoading size="sm" />
-                        Demo wird erstellt...
+                        {t('auth:demoCreating')}
                       </>
                     ) : (
-                      'Demo starten'
+                      t('auth:demoStart')
                     )}
                   </Button>
                 ) : authProviders.length > 0 ? (
@@ -430,7 +435,7 @@ const WorkspacesPage: NextPageWithPullToRefresh = () => {
                     ))}
                   </div>
                 ) : (
-                  <span className="text-sm text-base-content/60">Keine Anmeldung konfiguriert</span>
+                  <span className="text-sm text-base-content/60">{t('auth:noAuthConfigured')}</span>
                 )}
               </CardBody>
             </Card>
@@ -440,24 +445,24 @@ const WorkspacesPage: NextPageWithPullToRefresh = () => {
             <div className={'col-span-3 items-center'}>
               <div className={'flex flex-col items-center justify-center space-y-2 pt-4'}>
                 <Image src={'/images/The Cocktail Manager Logo.png'} alt="The Cocktail Manager" className={logoClassName} height={211} width={247} />
-                <h1 className={'text-center text-4xl font-bold'}>The Cocktail-Manager</h1>
+                <h1 className={'text-center text-4xl font-bold'}>{t('common:appName')}</h1>
                 {versionLine}
                 <div className={'flex items-center space-x-2'}>
-                  <span>Hi {userContext.user.name}</span>
+                  <span>{t('auth:hi', { name: userContext.user.name })}</span>
                   <Button variant="outline" size="sm" onClick={() => authClient.signOut()}>
-                    Sign out
+                    {t('auth:logout')}
                   </Button>
                 </div>
               </div>
             </div>
             <div className={'col-span-3 grid grid-cols-1 gap-2 p-4 md:gap-4 md:p-12 lg:grid-cols-4'}>
-              <Divider className="col-span-full">Meine Workspaces</Divider>
+              <Divider className="col-span-full">{t('nav:myWorkspaces')}</Divider>
               {userContext.user && (workspacesLoading || !workspacesFetched) ? (
                 <div className={'col-span-full'}>
                   <Loading />
                 </div>
               ) : workspaces.length == 0 ? (
-                <div className={'col-span-full text-center'}>Keine Workspaces</div>
+                <div className={'col-span-full text-center'}>{t('auth:noWorkspaces')}</div>
               ) : (
                 workspaces.map((workspace) => (
                   <Card key={`workspace-${workspace.id}`} className="h-40">
@@ -467,7 +472,7 @@ const WorkspacesPage: NextPageWithPullToRefresh = () => {
                       <CardActions className="justify-center">
                         <Link href={'/workspaces/' + workspace.id} replace={true}>
                           <Button variant="outline" className="border-primary text-primary hover:bg-primary/10">
-                            Öffnen
+                            {t('auth:open')}
                           </Button>
                         </Link>
                       </CardActions>
@@ -478,7 +483,7 @@ const WorkspacesPage: NextPageWithPullToRefresh = () => {
 
               {(openWorkspaceJoinRequest.length > 0 || openWorkspaceJoinRequestLoading) && (
                 <>
-                  <Divider className="col-span-full">Beitrittsanfragen</Divider>
+                  <Divider className="col-span-full">{t('auth:joinRequests')}</Divider>
                   {openWorkspaceJoinRequestLoading ? (
                     <div className={'col-span-full'}>
                       <Loading />
@@ -488,14 +493,16 @@ const WorkspacesPage: NextPageWithPullToRefresh = () => {
                       <Card key={`join-request-${workspaceJoinRequest.workspace.id}`}>
                         <CardBody>
                           <div className={'text-center text-3xl font-bold'}>
-                            <span className={'italic'}>Angefragt: </span>
+                            <span className={'italic'}>{t('auth:requestedAt')} </span>
                             {workspaceJoinRequest.workspace.name}
                           </div>
-                          <div className={'text-center font-thin'}>Datum der Anfrage: {formatDateTime(new Date(workspaceJoinRequest.date))}</div>
+                          <div className={'text-center font-thin'}>
+                            {t('auth:joinRequestDate')} {formatDateTime(new Date(workspaceJoinRequest.date))}
+                          </div>
                           <div className={'h-full'}></div>
                           <CardActions className="justify-center">
                             <Button type="button" variant="outline" className="border-primary text-primary hover:bg-primary/10" disabled>
-                              Warte auf Annahme
+                              {t('auth:waitingAcceptance')}
                             </Button>
                             <Button
                               type="button"
@@ -509,12 +516,12 @@ const WorkspacesPage: NextPageWithPullToRefresh = () => {
                                       setJoinRequestCanceling({ ...joinRequestCanceling, [workspaceJoinRequest.workspaceId]: true });
                                       withdrawOwnJoinRequest(workspaceJoinRequest.workspaceId)
                                         .then(() => {
-                                          alertService.success('Beitrittsanfrage abgebrochen');
+                                          alertService.success(t('auth:joinRequestCancelled'));
                                           fetchOpenWorkspaceJoinRequest();
                                         })
                                         .catch((error) => {
                                           console.error('WorkspacesOverview -> openWorkspaceJoinRequest -> cancel', error);
-                                          alertApiV1Error(error, 'Fehler beim Abbrechen der Beitrittsanfrage');
+                                          alertApiV1Error(error, t('auth:error.cancelJoinRequest'));
                                         })
                                         .finally(() => {
                                           setJoinRequestCanceling({ ...joinRequestCanceling, [workspaceJoinRequest.workspaceId]: false });
@@ -538,11 +545,11 @@ const WorkspacesPage: NextPageWithPullToRefresh = () => {
               )}
               {workspaceCreationConfig && (!workspaceCreationConfig.disabled || workspaceCreationConfig.message) ? (
                 <>
-                  <Divider className="col-span-full">Workspace hinzufügen</Divider>
+                  <Divider className="col-span-full">{t('auth:addWorkspace')}</Divider>
                   {workspaceCreationConfig.disabled && workspaceCreationConfig.message ? (
                     <Card>
                       <CardBody className="flex h-full flex-col items-center justify-center space-y-2">
-                        <CardTitle>Workspace erstellen</CardTitle>
+                        <CardTitle>{t('auth:createWorkspace')}</CardTitle>
                         <div
                           className={'text-center'}
                           dangerouslySetInnerHTML={{
@@ -554,7 +561,7 @@ const WorkspacesPage: NextPageWithPullToRefresh = () => {
                   ) : (
                     <Card>
                       <CardBody className="flex h-full flex-col items-center justify-center space-y-2">
-                        <CardTitle>Workspace erstellen</CardTitle>
+                        <CardTitle>{t('auth:createWorkspace')}</CardTitle>
                         <form
                           onSubmit={(e) => {
                             e.preventDefault();
@@ -563,13 +570,13 @@ const WorkspacesPage: NextPageWithPullToRefresh = () => {
                         >
                           <FormControl>
                             <Label>
-                              <LabelText>Name der Workspace</LabelText>
+                              <LabelText>{t('auth:workspaceName')}</LabelText>
                             </Label>
                             <ButtonGroup className="w-full">
                               <Input
                                 joinItem
                                 className="w-full"
-                                placeholder={'Name der Workspace'}
+                                placeholder={t('auth:workspaceNamePlaceholder')}
                                 value={newWorkspaceName}
                                 onChange={(event) => setNewWorkspaceName(event.target.value)}
                               />
@@ -592,7 +599,7 @@ const WorkspacesPage: NextPageWithPullToRefresh = () => {
               ) : null}
               <Card>
                 <CardBody className="flex flex-col items-center justify-center gap-2">
-                  <CardTitle>Workspace beitreten</CardTitle>
+                  <CardTitle>{t('auth:joinWorkspace')}</CardTitle>
                   <form
                     onSubmit={(e) => {
                       e.preventDefault();
@@ -601,13 +608,13 @@ const WorkspacesPage: NextPageWithPullToRefresh = () => {
                   >
                     <FormControl>
                       <Label>
-                        <LabelText>Beitrittscode</LabelText>
+                        <LabelText>{t('auth:joinCode')}</LabelText>
                       </Label>
                       <ButtonGroup className="w-full">
                         <Input
                           joinItem
                           className="w-full"
-                          placeholder={'Beitrittscode'}
+                          placeholder={t('auth:joinCode')}
                           value={joinWorkspaceId}
                           onChange={(event) => setJoinWorkspaceId(event.target.value)}
                         />

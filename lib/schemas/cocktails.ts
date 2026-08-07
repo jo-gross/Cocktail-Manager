@@ -276,6 +276,7 @@ export const CocktailExportPdfSchema = z
     newPagePerCocktail: z.boolean().optional().openapi({ description: 'Start a new page per cocktail (default true).' }),
     showHeader: z.boolean().optional().openapi({ description: 'Render a page header (default false).' }),
     showFooter: z.boolean().optional().openapi({ description: 'Render a page footer with page numbers (default false).' }),
+    locale: z.enum(['de', 'en']).optional().openapi({ description: 'UI locale for PDF chrome labels (default de).' }),
   })
   .openapi('CocktailExportPdfInput');
 export type CocktailExportPdfInput = z.infer<typeof CocktailExportPdfSchema>;

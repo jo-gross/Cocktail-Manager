@@ -1,4 +1,5 @@
 import { useContext, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { DndContext, DragEndEvent, PointerSensor, closestCenter, useSensor, useSensors } from '@dnd-kit/core';
 import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -38,6 +39,7 @@ function SlideSchedulePanel({
   onApply: (payload: SignageSlideSchedulePayload) => Promise<void>;
   onClose: () => void;
 }) {
+  const { t } = useTranslation(['monitor', 'common']);
   const [weekdays, setWeekdays] = useState<number[]>(slide.weekdays);
   const [validFrom, setValidFrom] = useState(slide.validFrom ?? '');
   const [validTo, setValidTo] = useState(slide.validTo ?? '');
@@ -76,13 +78,13 @@ function SlideSchedulePanel({
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         <FormControl>
           <Label>
-            <LabelText>Startdatum</LabelText>
+            <LabelText>{t('monitor:startDate')}</LabelText>
           </Label>
           <Input type="date" value={validFrom} onChange={(event) => setValidFrom(event.target.value)} />
         </FormControl>
         <FormControl>
           <Label>
-            <LabelText>Enddatum</LabelText>
+            <LabelText>{t('monitor:endDate')}</LabelText>
           </Label>
           <Input type="date" value={validTo} onChange={(event) => setValidTo(event.target.value)} />
         </FormControl>
@@ -91,17 +93,17 @@ function SlideSchedulePanel({
       <label className="flex items-start gap-2 text-sm">
         <Checkbox checked={dateExclusive} onChange={() => setDateExclusive((current) => !current)} />
         <span>
-          Nur in diesem Zeitraum anzeigen (ersetzt andere Karten)
-          <span className="mt-0.5 block text-xs text-base-content/60">Exklusive Karten ersetzen die normale Rotation, solange sie aktiv sind.</span>
+          {t('monitor:exclusivePeriod')}
+          <span className="mt-0.5 block text-xs text-base-content/60">{t('monitor:exclusivePeriodHelp')}</span>
         </span>
       </label>
 
       <div className="flex flex-wrap gap-2">
         <Button type="button" variant="primary" size="sm" disabled={submitting} onClick={handleApply}>
-          Anwenden
+          {t('monitor:apply')}
         </Button>
         <Button type="button" variant="ghost" size="sm" onClick={onClose}>
-          Schließen
+          {t('monitor:close')}
         </Button>
       </div>
     </div>
@@ -131,6 +133,7 @@ function SortableSlideItem({
   onScheduleApply: (payload: SignageSlideSchedulePayload) => Promise<void>;
   onCloseSchedule: () => void;
 }) {
+  const { t } = useTranslation(['manage', 'monitor']);
   const modalContext = useContext(ModalContext);
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
   const style = {
@@ -154,13 +157,20 @@ function SortableSlideItem({
           type="button"
           className={`relative h-24 w-32 shrink-0 overflow-hidden rounded-md ${slide.enabled ? '' : 'opacity-50 grayscale'} cursor-zoom-in`}
           onClick={() => modalContext.openModal(<ImageModal image={slide.content} />)}
-          title="Vorschau vergrößern"
+          title={t('manage:monitor.enlargeSlidePreview')}
         >
-          <Image src={slide.content} alt="Monitor slide preview" fill className="object-contain" />
+          <Image src={slide.content} alt={t('manage:monitor.slidePreviewAlt')} fill className="object-contain" />
         </button>
         <div className="min-w-0 flex-1 text-xs text-base-content/70">{formatSlideScheduleLabel(slide)}</div>
         <div className="flex gap-1">
-          <Button type="button" variant={expanded ? 'primary' : 'outline'} shape="square" size="sm" onClick={onToggleSchedule} title="Zeitplan bearbeiten">
+          <Button
+            type="button"
+            variant={expanded ? 'primary' : 'outline'}
+            shape="square"
+            size="sm"
+            onClick={onToggleSchedule}
+            title={t('manage:monitor.editSchedule')}
+          >
             <FaCalendarAlt />
           </Button>
           <Button
@@ -169,7 +179,7 @@ function SortableSlideItem({
             shape="square"
             size="sm"
             onClick={() => onToggleEnabled()}
-            title={slide.enabled ? 'Deaktivieren' : 'Aktivieren'}
+            title={slide.enabled ? t('monitor:deactivate') : t('monitor:activate')}
           >
             {slide.enabled ? <FaEye /> : <FaEyeSlash />}
           </Button>
@@ -200,6 +210,7 @@ export function SignageSlideList({
   onDelete,
   onScheduleApply,
 }: SignageSlideListProps) {
+  const { t } = useTranslation('monitor');
   const [expandedSlideId, setExpandedSlideId] = useState<string | null>(null);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
   const ids = slides.map((slide) => slide.id);
@@ -232,7 +243,7 @@ export function SignageSlideList({
     <div className="flex flex-col gap-2">
       <label className="flex items-center gap-2 text-sm">
         <Checkbox checked={allSelected} onChange={onToggleSelectAll} />
-        Alle auswählen
+        {t('selectAll')}
       </label>
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext items={ids} strategy={verticalListSortingStrategy}>

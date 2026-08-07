@@ -1,4 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { AlertsContainer } from './AlertsContainer';
 import { FaExclamationTriangle } from 'react-icons/fa';
 import { UserContext } from '@lib/context/UserContextProvider';
@@ -9,6 +10,7 @@ interface AlertBoundaryProps {
 
 export function AlertBoundary(props: AlertBoundaryProps) {
   const userContext = useContext(UserContext);
+  const { t } = useTranslation('auth');
   const [remainingTime, setRemainingTime] = useState<string>('');
 
   useEffect(() => {
@@ -19,7 +21,7 @@ export function AlertBoundary(props: AlertBoundaryProps) {
         const diff = expiresAt.getTime() - now.getTime();
 
         if (diff <= 0) {
-          setRemainingTime('abgelaufen');
+          setRemainingTime(t('demoExpired'));
           return;
         }
 
@@ -38,7 +40,7 @@ export function AlertBoundary(props: AlertBoundaryProps) {
 
       return () => clearInterval(interval);
     }
-  }, [userContext.workspace]);
+  }, [userContext.workspace, t]);
 
   const isDemoWorkspace = userContext.workspace?.isDemo === true;
   const showDevStagingBanner = process.env.NODE_ENV == 'development' || process.env.DEPLOYMENT == 'staging';
@@ -53,7 +55,9 @@ export function AlertBoundary(props: AlertBoundaryProps) {
               className={`fixed top-0 z-50 flex h-10 w-full flex-row items-center justify-center gap-2 overflow-hidden ${process.env.DEPLOYMENT == 'staging' ? 'bg-info' : 'bg-warning'} p-2 text-white`}
             >
               <FaExclamationTriangle />
-              Achtung sie befinden sich in der {process.env.DEPLOYMENT == 'staging' ? 'Staging' : 'Entwicklungs'}-Umgebung
+              {t('envBanner', {
+                env: process.env.DEPLOYMENT == 'staging' ? t('envStaging') : t('envDevelopment'),
+              })}
             </div>
           </>
         )}
@@ -62,13 +66,12 @@ export function AlertBoundary(props: AlertBoundaryProps) {
             className={`fixed ${showDevStagingBanner ? 'top-10' : 'top-0'} z-50 flex h-10 w-full flex-row items-center justify-center gap-2 overflow-hidden bg-info p-2 text-white`}
           >
             <FaExclamationTriangle />
-            Demo-Version - Verbleibende Zeit: {remainingTime || 'wird berechnet...'}
+            {t('demoBanner', { time: remainingTime || t('demoCalculating') })}
           </div>
         )}
         {(showDevStagingBanner || isDemoWorkspace) && <div className={bannerHeight}></div>}
       </>
       <div className={'fixed bottom-2 left-1/2 z-50 w-full max-w-fit -translate-x-1/2 overflow-hidden print:hidden'}>
-        {/*<div className="fixed bottom-2 left-2 right-2 z-50 flex flex-col items-center justify-center overflow-hidden print:hidden">*/}
         <AlertsContainer />
       </div>
       {props.children}

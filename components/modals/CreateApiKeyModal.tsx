@@ -1,4 +1,5 @@
 import React, { useState, useContext } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import { useRouter } from 'next/router';
 import { alertService } from '@lib/alertService';
@@ -18,6 +19,7 @@ interface CreateApiKeyModalProps {
 
 export default function CreateApiKeyModal(props: CreateApiKeyModalProps) {
   const modalContext = useContext(ModalContext);
+  const { t } = useTranslation(['settings', 'common', 'errors']);
   const router = useRouter();
   const { workspaceId } = router.query;
 
@@ -30,7 +32,7 @@ export default function CreateApiKeyModal(props: CreateApiKeyModalProps) {
 
   const handleSubmit = async () => {
     if (!name.trim()) {
-      alertService.error('Name ist erforderlich');
+      alertService.error(t('common:name'));
       return;
     }
     if (!workspaceId) return;
@@ -46,7 +48,7 @@ export default function CreateApiKeyModal(props: CreateApiKeyModalProps) {
         setCreatedKey(result.key);
       }
     } catch (error) {
-      alertApiV1Error(error, 'Fehler beim Erstellen des API Keys');
+      alertApiV1Error(error, t('errors:create'));
     } finally {
       setIsSubmitting(false);
     }
@@ -55,10 +57,10 @@ export default function CreateApiKeyModal(props: CreateApiKeyModalProps) {
   const copyToClipboard = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text);
-      alertService.success('API Key in Zwischenablage kopiert');
+      alertService.success(t('common:success.copied'));
     } catch (error) {
       console.error('Failed to copy:', error);
-      alertService.error('Fehler beim Kopieren');
+      alertService.error(t('errors:copy'));
     }
   };
 
@@ -70,24 +72,25 @@ export default function CreateApiKeyModal(props: CreateApiKeyModalProps) {
   if (createdKey) {
     return (
       <div className="flex flex-col gap-4 md:min-w-[32rem]">
-        <div className="text-2xl font-bold">API Key erstellt</div>
+        <div className="text-2xl font-bold">{t('settings:apiKeyCreated')}</div>
         <div className="text-warning">
-          <strong>Wichtig:</strong> Dieser API Key wird nur einmal angezeigt. Speichern Sie ihn sicher.
+          <strong>{t('settings:apiKeyImportantPrefix')}</strong>
+          {t('settings:apiKeyImportantSuffix')}
         </div>
         <FormControl>
           <Label>
-            <LabelText className="font-semibold">API Key:</LabelText>
+            <LabelText className="font-semibold">{t('settings:apiKeyLabel')}</LabelText>
           </Label>
           <ButtonGroup className="w-full">
             <Input type="text" readOnly value={createdKey} joinItem className="flex-1 font-mono" />
-            <Button joinItem variant="primary" onClick={() => copyToClipboard(createdKey)} title="In Zwischenablage kopieren">
+            <Button joinItem variant="primary" onClick={() => copyToClipboard(createdKey)} title={t('common:copy')}>
               <FaCopy />
             </Button>
           </ButtonGroup>
         </FormControl>
         <div className="flex justify-end gap-2">
           <Button variant="primary" onClick={handleContinue}>
-            Fertig
+            {t('common:done')}
           </Button>
         </div>
       </div>
@@ -96,17 +99,17 @@ export default function CreateApiKeyModal(props: CreateApiKeyModalProps) {
 
   return (
     <div className="flex flex-col gap-4 md:min-w-[32rem]">
-      <div className="text-2xl font-bold">{viewOnly ? 'API Key Details' : 'API Key erstellen'}</div>
+      <div className="text-2xl font-bold">{viewOnly ? t('settings:apiKeyDetails') : t('settings:apiKeysCreate')}</div>
 
       <FormControl>
         <Label>
-          <LabelText className="font-semibold">Name:</LabelText>
+          <LabelText className="font-semibold">{t('settings:nameColon')}</LabelText>
         </Label>
         <Input
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="z.B. Production API Key"
+          placeholder={t('settings:apiKeyNamePlaceholder')}
           disabled={isSubmitting || viewOnly}
           readOnly={viewOnly}
         />
@@ -114,7 +117,7 @@ export default function CreateApiKeyModal(props: CreateApiKeyModalProps) {
 
       <FormControl>
         <Label>
-          <LabelText className="font-semibold">Ablaufdatum (optional):</LabelText>
+          <LabelText className="font-semibold">{t('settings:apiKeyExpiresOptional')}</LabelText>
         </Label>
         <Input type="date" value={expiresAt} onChange={(e) => setExpiresAt(e.target.value)} disabled={isSubmitting || viewOnly} readOnly={viewOnly} />
       </FormControl>
@@ -124,16 +127,16 @@ export default function CreateApiKeyModal(props: CreateApiKeyModalProps) {
       <div className="flex justify-end gap-2">
         {viewOnly ? (
           <Button variant="primary" onClick={() => modalContext.closeModal()}>
-            Schließen
+            {t('common:close')}
           </Button>
         ) : (
           <>
             <Button variant="ghost" onClick={() => modalContext.closeModal()} disabled={isSubmitting}>
-              Abbrechen
+              {t('common:cancel')}
             </Button>
             <Button variant="primary" onClick={handleSubmit} disabled={isSubmitting || !name.trim()}>
               {isSubmitting ? <Loading size="sm" /> : null}
-              Erstellen ({permissions.length})
+              {t('common:createWithCount', { count: permissions.length })}
             </Button>
           </>
         )}

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { CocktailExportStructure } from '../../types/CocktailExportStructure';
 import { alertService } from '@lib/alertService';
 import { EntityMappingSection } from './EntityMappingSection';
@@ -51,6 +52,7 @@ interface EntityMappingStepProps {
 }
 
 export function EntityMappingStep({ workspaceId, exportData, selectedCocktailIds: _selectedCocktailIds, onComplete, onBack }: EntityMappingStepProps) {
+  const { t } = useTranslation(['import', 'common']);
   const [loading, setLoading] = useState(true);
   const [glassMappings, setGlassMappings] = useState<EntityMapping[]>([]);
   const [garnishMappings, setGarnishMappings] = useState<EntityMapping[]>([]);
@@ -78,7 +80,7 @@ export function EntityMappingStep({ workspaceId, exportData, selectedCocktailIds
 
         if (!response.ok) {
           const error = await response.json();
-          alertService.error(error.message || 'Fehler beim Laden der Mapping-Daten');
+          alertService.error(error.message || t('import:mappingLoadError'));
           return;
         }
 
@@ -94,14 +96,14 @@ export function EntityMappingStep({ workspaceId, exportData, selectedCocktailIds
         setStepActionMappings(result.autoMappings.stepActions);
       } catch (error) {
         console.error('Mapping preparation error:', error);
-        alertService.error('Fehler beim Laden der Mapping-Daten');
+        alertService.error(t('import:mappingLoadError'));
       } finally {
         setLoading(false);
       }
     };
 
     fetchMappingData();
-  }, [workspaceId, exportData]);
+  }, [workspaceId, exportData, t]);
 
   const handleNext = () => {
     const decisions: MappingDecisions = {
@@ -120,7 +122,7 @@ export function EntityMappingStep({ workspaceId, exportData, selectedCocktailIds
     return (
       <div className={'flex flex-col items-center justify-center gap-4 py-8'}>
         <Loading size="lg" />
-        <span>Mapping-Daten werden geladen...</span>
+        <span>{t('import:mappingLoading')}</span>
       </div>
     );
   }
@@ -136,18 +138,18 @@ export function EntityMappingStep({ workspaceId, exportData, selectedCocktailIds
 
   return (
     <div className={'flex flex-col gap-4'}>
-      <div className={'text-lg font-semibold'}>Schritt 2: Entitäten zuordnen</div>
+      <div className={'text-lg font-semibold'}>{t('import:step2Title')}</div>
       <div className={'text-sm text-base-content/70'}>
-        Wählen Sie für jede Entität, ob eine bestehende verwendet oder eine neue erstellt werden soll.
+        {t('import:step2Description')}
         <br />
-        Auto-Matching wurde basierend auf exakten Namen durchgeführt.
+        {t('import:step2AutoMatch')}
       </div>
 
       <div className={'max-h-[400px] overflow-y-auto'}>
         <div className={'flex flex-col gap-4'}>
           {exportData.units.length > 0 && (
             <EntityMappingSection
-              title={'Einheiten'}
+              title={t('import:unitsTitle')}
               entityType={'units'}
               entities={exportData.units}
               mappings={unitMappings}
@@ -159,7 +161,7 @@ export function EntityMappingStep({ workspaceId, exportData, selectedCocktailIds
 
           {exportData.ice.length > 0 && (
             <EntityMappingSection
-              title={'Eis-Typen'}
+              title={t('import:iceTitle')}
               entityType={'ice'}
               entities={exportData.ice}
               mappings={iceMappings}
@@ -171,7 +173,7 @@ export function EntityMappingStep({ workspaceId, exportData, selectedCocktailIds
 
           {exportData.stepActions.length > 0 && (
             <EntityMappingSection
-              title={'Aktionen'}
+              title={t('import:actionsTitle')}
               entityType={'stepActions'}
               entities={exportData.stepActions}
               mappings={stepActionMappings}
@@ -183,7 +185,7 @@ export function EntityMappingStep({ workspaceId, exportData, selectedCocktailIds
 
           {exportData.glasses.length > 0 && (
             <EntityMappingSection
-              title={'Gläser'}
+              title={t('import:glassesTitle')}
               entityType={'glasses'}
               entities={exportData.glasses}
               mappings={glassMappings}
@@ -195,7 +197,7 @@ export function EntityMappingStep({ workspaceId, exportData, selectedCocktailIds
 
           {exportData.garnishes.length > 0 && (
             <EntityMappingSection
-              title={'Garnituren'}
+              title={t('import:garnishesTitle')}
               entityType={'garnishes'}
               entities={exportData.garnishes}
               mappings={garnishMappings}
@@ -207,7 +209,7 @@ export function EntityMappingStep({ workspaceId, exportData, selectedCocktailIds
 
           {exportData.ingredients.length > 0 && (
             <EntityMappingSection
-              title={'Zutaten'}
+              title={t('import:ingredientsTitle')}
               entityType={'ingredients'}
               entities={exportData.ingredients}
               mappings={ingredientMappings}
@@ -221,10 +223,10 @@ export function EntityMappingStep({ workspaceId, exportData, selectedCocktailIds
 
       <div className={'flex justify-end gap-2'}>
         <Button variant="outline" onClick={onBack}>
-          Zurück
+          {t('common:back')}
         </Button>
         <Button variant="primary" onClick={handleNext}>
-          Weiter
+          {t('common:next')}
         </Button>
       </div>
     </div>

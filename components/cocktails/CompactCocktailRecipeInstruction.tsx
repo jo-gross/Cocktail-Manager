@@ -1,5 +1,6 @@
 import type { CocktailDto } from '@lib/schemas/cocktails';
 import React, { useContext, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useRouter } from 'next/router';
 import { UserContext } from '@lib/context/UserContextProvider';
 import Image, { ImageProps } from 'next/image';
@@ -46,6 +47,7 @@ function ImageWithSkeleton({ skeletonClassName, className, onClick, ...imageProp
 }
 
 export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeInstructionProps) {
+  const { t } = useTranslation(['cocktail', 'common']);
   const userContext = useContext(UserContext);
   const modalContext = useContext(ModalContext);
   const router = useRouter();
@@ -71,7 +73,7 @@ export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeIns
             className="h-16 w-fit object-contain"
             skeletonClassName="h-16 w-12 rounded-lg"
             src={`/api/v1/workspaces/${workspaceId}/glasses/${props.cocktailRecipe.glass?.id}/image`}
-            alt={props.cocktailRecipe.glass?.name ?? 'Cocktail-Glas'}
+            alt={props.cocktailRecipe.glass?.name ?? t('cocktail:cocktailGlassAlt')}
             onClick={() => modalContext.openModal(<ImageModal image={`/api/v1/workspaces/${workspaceId}/glasses/${props.cocktailRecipe.glass?.id}/image`} />)}
             width={200}
             height={200}
@@ -83,7 +85,7 @@ export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeIns
         <div className={'col-span-3 flex flex-row items-center gap-2'}>
           {props.showRating.error ? (
             <>
-              <div>Fehler beim Laden der Bewertungen</div>
+              <div>{t('cocktail:error.loadRatings')}</div>
             </>
           ) : (
             <>
@@ -121,8 +123,8 @@ export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeIns
         </div>
       )}
       <div className={'col-span-3 flex flex-row justify-between space-x-2 font-thin'}>
-        <div>Glas: {props.cocktailRecipe.glass?.name ?? '<Glas>'}</div>
-        <div>Eis: {userContext.getTranslation(props.cocktailRecipe.ice?.name ?? '<Eis>', 'de')}</div>
+        <div>{t('cocktail:glassLabel', { name: props.cocktailRecipe.glass?.name ?? '-' })}</div>
+        <div>{t('cocktail:iceLabel', { name: userContext.getTranslation(props.cocktailRecipe.ice?.name ?? '-') })}</div>
       </div>
       <div className={'col-span-4 border-b border-base-100'}></div>
       <div className={`col-span-4 grid grid-cols-5 gap-1`}>
@@ -132,8 +134,8 @@ export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeIns
             ?.map((step, _index) => (
               <div key={`step-${step.id}`} className={'pb-2 break-words'}>
                 <span className={`font-bold ${step.optional && 'italic'}`}>
-                  {userContext.getTranslation(step.action?.name ?? '', 'de')}
-                  {step.optional ? ' (optional)' : ''}
+                  {userContext.getTranslation(step.action?.name ?? '')}
+                  {step.optional ? ` ${t('cocktail:optional')}` : ''}
                 </span>
                 {step.ingredients
                   ?.sort((a, b) => a.ingredientNumber - b.ingredientNumber)
@@ -149,11 +151,11 @@ export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeIns
                             maximumFractionDigits: 2,
                           }) ?? ''}
                         </div>
-                        <div>{userContext.getTranslation(stepIngredient?.unit?.name ?? '', 'de')}</div>
+                        <div>{userContext.getTranslation(stepIngredient?.unit?.name ?? '')}</div>
                       </div>
                       <div>
                         {stepIngredient.ingredient?.shortName ?? stepIngredient.ingredient?.name ?? ''}
-                        {stepIngredient.optional ? ' (optional)' : ''}
+                        {stepIngredient.optional ? ` ${t('cocktail:optional')}` : ''}
                       </div>
                     </div>
                   ))}
@@ -162,7 +164,7 @@ export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeIns
 
           {props.cocktailRecipe.garnishes.length == 0 ? <></> : <div className={`mb-1 border-b border-base-100`}></div>}
           <div>
-            {props.cocktailRecipe.garnishes.length == 0 ? <></> : <div className={'font-bold'}>Garnitur</div>}
+            {props.cocktailRecipe.garnishes.length == 0 ? <></> : <div className={'font-bold'}>{t('cocktail:garnish')}</div>}
             <div>
               {props.cocktailRecipe.garnishes
                 ?.sort((a, b) => a.garnishNumber - b.garnishNumber)
@@ -171,11 +173,11 @@ export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeIns
                     key={`cocktail-${props.cocktailRecipe.id}-garnish-${garnish.garnishNumber}-garnishId-${garnish.garnishId}`}
                     className={`pl-2 ${garnish.optional ? 'italic' : ''}`}
                   >
-                    {garnish.isAlternative && <span className="font-bold">oder </span>}
+                    {garnish.isAlternative && <span className="font-bold">{t('cocktail:orPrefix')}</span>}
                     {garnish?.garnish?.name}
-                    {garnish.optional ? ' (optional)' : ''}
+                    {garnish.optional ? ` ${t('cocktail:optional')}` : ''}
                   </div>
-                )) ?? 'Keine'}
+                )) ?? t('cocktail:noGarnishes')}
             </div>
           </div>
         </div>

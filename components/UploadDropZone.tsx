@@ -1,4 +1,5 @@
-import { useRef, useState } from 'react';
+import { useId, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { isMobile } from 'react-device-detect';
 import { FaCamera, FaFileAlt, FaLink } from 'react-icons/fa';
 import ImportPhotoByUrl from './ImportPhotoByUrl';
@@ -16,13 +17,14 @@ interface UploadDropZoneProps {
 }
 
 export function UploadDropZone(props: UploadDropZoneProps) {
-  const identifier = Math.floor(Math.random() * 1000000);
+  const { t } = useTranslation(['common', 'errors']);
+  const identifier = useId();
   const [showUrlInput, setShowUrlInput] = useState(false);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const accept = props.accept ?? 'image/*';
-  const label = props.label ?? 'Bild wählen';
-  const hint = props.hint ?? '(z.B. SVG, PNG, JPG oder GIF)';
+  const label = props.label ?? t('imageChoose');
+  const hint = props.hint ?? t('imageHintFormats');
 
   const handleFiles = (fileList: FileList | null | undefined) => {
     if (!fileList || fileList.length === 0) {
@@ -42,7 +44,7 @@ export function UploadDropZone(props: UploadDropZoneProps) {
       const response = await fetch(`/api/scraper/image?url=${encodeURIComponent(imageUrl)}`);
 
       if (!response.ok) {
-        alertService.error('Fehler beim Laden des Bildes');
+        alertService.error(t('errors:loadImage'));
         console.log('Fehler beim Laden des Bildes:', response);
       } else {
         const blob = await response.blob();
@@ -53,7 +55,7 @@ export function UploadDropZone(props: UploadDropZoneProps) {
       }
     } catch (error) {
       console.error('Fehler beim Laden des Bildes:', error);
-      alertService.error('Fehler beim Laden des Bildes');
+      alertService.error(t('errors:loadImage'));
     }
   };
 
@@ -65,7 +67,7 @@ export function UploadDropZone(props: UploadDropZoneProps) {
             {!showUrlInput ? (
               <div className="grid w-full grid-cols-3 gap-2">
                 <Button variant="outline" type="button" onClick={() => cameraInputRef.current?.click()}>
-                  <FaCamera /> Kamera
+                  <FaCamera /> {t('camera')}
                 </Button>
                 <input
                   ref={cameraInputRef}
@@ -79,7 +81,7 @@ export function UploadDropZone(props: UploadDropZoneProps) {
                   }}
                 />
                 <Button variant="outline" type="button" onClick={() => fileInputRef.current?.click()}>
-                  <FaFileAlt /> Datei
+                  <FaFileAlt /> {t('file')}
                 </Button>
                 <input
                   ref={fileInputRef}
@@ -100,7 +102,7 @@ export function UploadDropZone(props: UploadDropZoneProps) {
               <div className="w-full">
                 <ImportPhotoByUrl onImport={handleUrlImport} />
                 <Button variant="outline" size="sm" type="button" className="mt-2 w-full p-1" onClick={() => setShowUrlInput(false)}>
-                  Zurück
+                  {t('back')}
                 </Button>
               </div>
             )}
@@ -129,12 +131,12 @@ export function UploadDropZone(props: UploadDropZoneProps) {
                   ></path>
                 </svg>
                 <p className="mb-2 text-sm text-base-content">
-                  <span className="font-semibold">Klicken, zum auswählen</span> oder ziehen
+                  <span className="font-semibold">{t('clickToSelect')}</span> {t('orDrag')}
                 </p>
                 <p className="text-xs text-base-content">{hint}</p>
                 {props.maxUploadSize && (
                   <p className="text-xs text-base-content">
-                    Maximale Datei-Größe: <strong>{props.maxUploadSize}</strong>
+                    {t('maxFileSize')} <strong>{props.maxUploadSize}</strong>
                   </p>
                 )}
               </div>
@@ -154,7 +156,7 @@ export function UploadDropZone(props: UploadDropZoneProps) {
               <>
                 <Divider className="my-4 flex items-center gap-4 before:content-none after:content-none">
                   <span className="h-px flex-1 bg-base-content/15" />
-                  <span className="text-sm text-base-content/70">Bild über URL laden</span>
+                  <span className="text-sm text-base-content/70">{t('loadImageFromUrl')}</span>
                   <span className="h-px flex-1 bg-base-content/15" />
                 </Divider>
                 <ImportPhotoByUrl onImport={handleUrlImport} />

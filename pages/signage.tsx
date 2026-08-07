@@ -1,5 +1,6 @@
 import { useRouter } from 'next/router';
 import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
+import { useTranslation } from 'react-i18next';
 import { alertService } from '@lib/alertService';
 import { $Enums } from '@generated/prisma/client';
 import { PageCenter } from '@components/layout/PageCenter';
@@ -27,6 +28,7 @@ function subscribeToOrientation(onStoreChange: () => void) {
 
 export default function SignagePage() {
   const router = useRouter();
+  const { t } = useTranslation(['errors', 'manage', 'common']);
   const { id } = router.query;
 
   const format = useSyncExternalStore(subscribeToOrientation, getMonitorFormat, () => MonitorFormat.LANDSCAPE);
@@ -47,7 +49,7 @@ export default function SignagePage() {
         .catch((error) => {
           console.error('Signage', error);
           if (!options?.silent) {
-            alertService.error('Fehler beim Laden der Karte.');
+            alertService.error(t('errors:loadCard'));
           }
         })
         .finally(() => {
@@ -56,7 +58,7 @@ export default function SignagePage() {
           }
         });
     },
-    [id, format],
+    [id, format, t],
   );
 
   useEffect(() => {
@@ -93,8 +95,8 @@ export default function SignagePage() {
           slides={slides}
           slideDurationSeconds={content?.slideDurationSeconds ?? 10}
           backgroundMode={backgroundMode}
-          emptyMessage="Keine Karte gefunden"
-          alt="Monitor slide"
+          emptyMessage={t('manage:noCardsFound')}
+          alt={t('common:monitorSlideAlt')}
         />
       )}
     </div>

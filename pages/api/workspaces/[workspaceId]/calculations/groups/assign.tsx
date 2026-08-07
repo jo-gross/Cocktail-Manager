@@ -14,14 +14,14 @@ const legacyHandler = withHttpMethods({
       const { calculationIds, groupId } = req.body as { calculationIds?: string[]; groupId?: string | null };
 
       if (!calculationIds || calculationIds.length === 0) {
-        return res.status(400).json({ message: 'Keine Kalkulationen ausgewählt' });
+        return res.status(400).json({ message: 'No calculations selected' });
       }
 
       if (groupId) {
         const group = await prisma.cocktailCalculationGroup.findFirst({
           where: { id: groupId, workspaceId: workspace.id },
         });
-        if (!group) return res.status(404).json({ message: 'Gruppe nicht gefunden' });
+        if (!group) return res.status(404).json({ message: 'Group not found' });
       }
 
       // Use raw SQL to avoid Prisma @updatedAt side effects on pure group assignment.

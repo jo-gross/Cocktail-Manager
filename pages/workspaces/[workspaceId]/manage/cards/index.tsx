@@ -4,6 +4,7 @@ import Link from 'next/link';
 import type { CardSummaryDto } from '@lib/schemas/cards';
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/router';
+import { useTranslation } from 'react-i18next';
 import { UserContext } from '@lib/context/UserContextProvider';
 import { Role } from '@generated/prisma/client';
 import CardOverviewItem from '../../../../../components/cards/CardOverviewItem';
@@ -21,6 +22,7 @@ function cardFilter(filterString: string) {
 
 const CardsOverviewPage: NextPageWithPullToRefresh = () => {
   const router = useRouter();
+  const { t } = useTranslation(['manage', 'nav', 'errors']);
   const { workspaceId } = router.query;
 
   const userContext = useContext(UserContext);
@@ -35,7 +37,7 @@ const CardsOverviewPage: NextPageWithPullToRefresh = () => {
   const loadCards = useCallback(() => {
     if (!workspaceId) return;
     setLoading(true);
-    apiV1FetchSafe<CardSummaryDto[]>(`/api/v1/workspaces/${workspaceId}/cards?withArchived=true`, undefined, 'Fehler beim Laden der Karten')
+    apiV1FetchSafe<CardSummaryDto[]>(`/api/v1/workspaces/${workspaceId}/cards?withArchived=true`, undefined, t('errors:loadCards'))
       .then((data) => {
         if (data) setCards(data);
       })
@@ -72,7 +74,7 @@ const CardsOverviewPage: NextPageWithPullToRefresh = () => {
   return (
     <ManageEntityLayout
       backLink={`/workspaces/${workspaceId}/manage`}
-      title={'Karten'}
+      title={t('nav:cards')}
       actions={
         userContext.isUserPermitted(Role.MANAGER) ? (
           <Link href={`/workspaces/${workspaceId}/manage/cards/create`}>
@@ -90,23 +92,23 @@ const CardsOverviewPage: NextPageWithPullToRefresh = () => {
           ))}
         </div>
       ) : cards.length == 0 ? (
-        <div className={'text-center'}>Keine Einträge gefunden</div>
+        <div className={'text-center'}>{t('manage:noEntriesFound')}</div>
       ) : (
         <div className="flex flex-col gap-4">
           <ListSearchField onFilterChange={setFilterString} />
           {activeCards.length == 0 && archivedCards.length == 0 ? (
-            <div className="text-center">Keine Karten gefunden</div>
+            <div className="text-center">{t('manage:noCardsFound')}</div>
           ) : (
             <div className={'grid grid-cols-1 gap-2 md:grid-cols-2 md:gap-4'}>
               {activeCards.length == 0 ? (
-                <div className="col-span-full text-center text-base-content/70">Keine aktiven Karten gefunden</div>
+                <div className="col-span-full text-center text-base-content/70">{t('manage:noActiveCardsFound')}</div>
               ) : (
                 activeCards.map((card) => <CardOverviewItem key={'card-' + card.id} card={card} workspaceId={workspaceId as string} today={today} />)
               )}
 
               {archivedCards.length > 0 ? (
                 <>
-                  <Divider className="col-span-full">Archiviert</Divider>
+                  <Divider className="col-span-full">{t('manage:archived')}</Divider>
                   {archivedCards.map((card) => (
                     <CardOverviewItem key={'card-' + card.id} card={card} workspaceId={workspaceId as string} today={today} />
                   ))}

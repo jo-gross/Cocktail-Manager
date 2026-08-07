@@ -1,4 +1,5 @@
 import { apiV1Fetch, apiV1FetchSafe, apiV1Mutate } from './apiV1';
+import { i18n } from '@lib/i18n/client';
 import type { GarnishCreateInput, GarnishDto, GarnishUpdateInput } from '@lib/schemas/garnishes';
 import type { DeletionResult } from '@lib/schemas/common';
 
@@ -9,7 +10,7 @@ export function fetchGarnishes(
 ) {
   if (!workspaceId) return;
   setGarnishesLoading(true);
-  apiV1FetchSafe<GarnishDto[]>(`/api/v1/workspaces/${workspaceId}/garnishes`, undefined, 'Fehler beim Laden der Garnituren')
+  apiV1FetchSafe<GarnishDto[]>(`/api/v1/workspaces/${workspaceId}/garnishes`, undefined, i18n.t('errors:loadGarnishes'))
     .then((garnishes) => {
       if (garnishes) setGarnishes(garnishes);
     })

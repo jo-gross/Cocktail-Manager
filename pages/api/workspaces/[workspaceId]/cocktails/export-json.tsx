@@ -22,7 +22,7 @@ const legacyHandler = withHttpMethods({
     const { cocktailIds } = req.body as { cocktailIds: string[] };
 
     if (!cocktailIds || cocktailIds.length === 0) {
-      return res.status(400).json({ message: 'Keine Cocktails ausgewählt' });
+      return res.status(400).json({ message: 'No cocktails selected' });
     }
 
     try {
@@ -35,7 +35,7 @@ const legacyHandler = withHttpMethods({
       });
 
       if (cocktailRecipes.length === 0) {
-        return res.status(404).json({ message: 'Keine Cocktails gefunden' });
+        return res.status(404).json({ message: 'No cocktails found' });
       }
 
       // Fetch cocktail recipe images
@@ -147,7 +147,7 @@ const legacyHandler = withHttpMethods({
       return res.json(exportData);
     } catch (error) {
       console.error('Export error:', error);
-      return res.status(500).json({ message: 'Fehler beim Exportieren der Cocktails' });
+      return res.status(500).json({ message: 'Failed to export cocktails' });
     }
   }),
 });

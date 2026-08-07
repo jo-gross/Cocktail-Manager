@@ -14,7 +14,7 @@ export default withHttpMethods({
 
       const response = await fetch(imageUrl);
       if (!response.ok) {
-        return res.status(400).json({ error: 'Fehler beim Abrufen des Bildes' });
+        return res.status(400).json({ error: 'Failed to fetch image' });
       }
 
       const contentType = response.headers.get('content-type') || 'application/octet-stream';

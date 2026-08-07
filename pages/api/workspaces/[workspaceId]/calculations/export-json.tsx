@@ -13,7 +13,7 @@ const legacyHandler = withHttpMethods({
     const { ids } = req.body as { ids: string[] };
 
     if (!ids || ids.length === 0) {
-      return res.status(400).json({ message: 'Keine Kalkulationen ausgewählt' });
+      return res.status(400).json({ message: 'No calculations selected' });
     }
 
     try {
@@ -34,7 +34,7 @@ const legacyHandler = withHttpMethods({
       });
 
       if (calculations.length === 0) {
-        return res.status(404).json({ message: 'Keine Kalkulationen gefunden' });
+        return res.status(404).json({ message: 'No calculations found' });
       }
 
       const exportData: CocktailCalculationExportStructure[] = calculations.map((calc) => ({
@@ -69,7 +69,7 @@ const legacyHandler = withHttpMethods({
       return res.json(exportData.length === 1 ? exportData[0] : exportData);
     } catch (error) {
       console.error('Calculation export error:', error);
-      return res.status(500).json({ message: 'Fehler beim Exportieren' });
+      return res.status(500).json({ message: 'Failed to export' });
     }
   }),
 });

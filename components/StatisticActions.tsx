@@ -2,6 +2,7 @@ import { addCocktailToQueue, addCocktailToStatistic } from '@lib/network/cocktai
 import { MdPlaylistAdd } from 'react-icons/md';
 import { FaCheck } from 'react-icons/fa';
 import React, { useContext, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import AddCocktailToQueueModal from './modals/AddCocktailToQueueModal';
 import SelectSpecifyCocktailForStatisticModal from './modals/SelectSpecifyCocktailForStatisticModal';
@@ -34,6 +35,7 @@ export default function StatisticActions({
   onAddToQueue: _onAddToQueue,
   cocktailName,
 }: StatisticActionsProps) {
+  const { t } = useTranslation(['cocktail', 'common', 'entity']);
   const [submittingQueue, setSubmittingQueue] = useState(false);
   const [submittingStatistic, setSubmittingStatistic] = useState(false);
 
@@ -41,7 +43,7 @@ export default function StatisticActions({
   const { isOnline, isOfflineMode } = useOffline();
 
   const isOffline = !isOnline || isOfflineMode;
-  const offlineTip = isOffline ? 'Nicht verfügbar im Offline-Modus' : undefined;
+  const offlineTip = isOffline ? t('common:offlineUnavailable') : undefined;
 
   return (
     <div className="@container">
@@ -61,7 +63,7 @@ export default function StatisticActions({
             disabled={submittingQueue || disabled?.list || isOffline}
           >
             <MdPlaylistAdd />
-            Liste
+            {t('cocktail:list')}
             {submittingQueue ? <Loading size="sm" /> : null}
           </Button>
         </Tooltip>
@@ -85,7 +87,7 @@ export default function StatisticActions({
             disabled={submittingQueue || disabled?.listWithNote || isOffline}
           >
             <MdPlaylistAdd />
-            mit Notiz
+            {t('entity:withNote')}
             {submittingQueue ? <Loading size="sm" /> : null}
           </Button>
         </Tooltip>
@@ -122,7 +124,7 @@ export default function StatisticActions({
             disabled={submittingStatistic || disabled?.markAsDone || isOffline}
           >
             <FaCheck />
-            Gemacht
+            {t('cocktail:markedDone')}
             {submittingStatistic ? <Loading size="sm" /> : null}
           </Button>
         </Tooltip>

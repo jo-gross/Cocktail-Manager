@@ -9,6 +9,8 @@
  */
 import { alertService } from '../alertService';
 import type { PaginationMeta } from '@lib/http/responses';
+import { resolveApiErrorMessage } from '@lib/i18n/apiErrors';
+import { i18n } from '@lib/i18n/client';
 
 export interface ApiV1ErrorBody {
   code: string;
@@ -22,12 +24,13 @@ export interface ApiV1ErrorBody {
  */
 export function getApiV1ErrorMessage(body: unknown, fallback: string): string {
   if (body && typeof body === 'object') {
-    const record = body as { error?: { message?: unknown }; message?: unknown };
+    const record = body as { error?: { message?: unknown; code?: unknown }; message?: unknown };
+    const code = typeof record.error?.code === 'string' ? record.error.code : undefined;
     if (typeof record.error?.message === 'string' && record.error.message.length > 0) {
-      return record.error.message;
+      return resolveApiErrorMessage(code, record.error.message, fallback);
     }
     if (typeof record.message === 'string' && record.message.length > 0) {
-      return record.message;
+      return resolveApiErrorMessage(code, record.message, fallback);
     }
   }
   return fallback;
@@ -58,7 +61,7 @@ export class ApiV1RequestError extends Error {
 /** Reports an {@link ApiV1RequestError} (or generic failure) via alertService. */
 export function alertApiV1Error(error: unknown, fallbackMessage: string) {
   if (error instanceof ApiV1RequestError) {
-    alertService.error(error.message || fallbackMessage, error.status, error.code);
+    alertService.error(resolveApiErrorMessage(error.code, error.message, fallbackMessage), error.status, error.code);
     return;
   }
   console.error(fallbackMessage, error);
@@ -120,10 +123,14 @@ export async function apiV1FetchSafe<T>(path: string, init?: RequestInit, errorM
     return await apiV1Fetch<T>(path, init);
   } catch (error) {
     if (error instanceof ApiV1RequestError) {
-      alertService.error(errorMessage ?? error.message, error.status, error.code);
+      alertService.error(
+        resolveApiErrorMessage(error.code, error.message, errorMessage ?? (i18n.t('errors:network' as never) as string)),
+        error.status,
+        error.code,
+      );
     } else {
       console.error('apiV1FetchSafe', path, error);
-      alertService.error(errorMessage ?? 'Netzwerkfehler');
+      alertService.error(errorMessage ?? (i18n.t('errors:network' as never) as string));
     }
     return undefined;
   }
@@ -141,10 +148,14 @@ export async function apiV1FetchPaginatedSafe<T>(
     return await apiV1FetchPaginated<T>(path, init);
   } catch (error) {
     if (error instanceof ApiV1RequestError) {
-      alertService.error(errorMessage ?? error.message, error.status, error.code);
+      alertService.error(
+        resolveApiErrorMessage(error.code, error.message, errorMessage ?? (i18n.t('errors:network' as never) as string)),
+        error.status,
+        error.code,
+      );
     } else {
       console.error('apiV1FetchPaginatedSafe', path, error);
-      alertService.error(errorMessage ?? 'Netzwerkfehler');
+      alertService.error(errorMessage ?? (i18n.t('errors:network' as never) as string));
     }
     return undefined;
   }

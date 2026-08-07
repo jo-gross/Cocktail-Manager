@@ -1,6 +1,7 @@
 import { addCocktailToQueue } from '@lib/network/cocktailTracking';
 import { MdPlaylistAdd } from 'react-icons/md';
 import React, { useContext, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import { FaMinus, FaPlus } from 'react-icons/fa';
 import { Button, ButtonGroup, Loading, Textarea } from '@components/ui';
@@ -21,6 +22,7 @@ export default function AddCocktailToQueueModal({
   initComment,
 }: AddCocktailToQueueModalProps) {
   const [submittingQueue, setSubmittingQueue] = useState(false);
+  const { t } = useTranslation(['cocktail', 'common']);
 
   const [notes, setNotes] = useState(initComment ?? '');
   const [amount, setAmount] = useState(1);
@@ -28,13 +30,11 @@ export default function AddCocktailToQueueModal({
   const modalContext = useContext(ModalContext);
   return (
     <div className={'space-y-2 pt-4'}>
-      <div className={'text-2xl font-bold'}>
-        <strong>{cocktailName}</strong> hinzufügen
-      </div>
+      <div className={'text-2xl font-bold'}>{t('cocktail:addToQueueTitle', { name: cocktailName })}</div>
       <div className={'flex'}>
         <ButtonGroup>
           <div className="join-item flex flex-1 items-center gap-2 rounded-none border border-base-content/20 bg-base-100 px-3">
-            <strong>Anzahl</strong>
+            <strong>{t('common:amount')}</strong>
             <input
               type="number"
               className={'grow bg-transparent outline-none'}
@@ -68,7 +68,7 @@ export default function AddCocktailToQueueModal({
           </Button>
         </ButtonGroup>
       </div>
-      <Textarea className="w-full" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={'Notiz'} />
+      <Textarea className="w-full" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={t('cocktail:queueNotePlaceholder')} />
       <Button
         variant="outline"
         className="w-full flex-1"
@@ -88,7 +88,7 @@ export default function AddCocktailToQueueModal({
         disabled={submittingQueue}
       >
         <MdPlaylistAdd />
-        Hinzufügen
+        {t('common:add')}
         {submittingQueue ? <Loading size="sm" /> : null}
       </Button>
     </div>

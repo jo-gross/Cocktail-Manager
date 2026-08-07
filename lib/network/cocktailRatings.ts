@@ -1,4 +1,5 @@
 import { apiV1FetchSafe, apiV1Mutate } from './apiV1';
+import { i18n } from '@lib/i18n/client';
 import type { RatingDto, RatingCreateInput } from '@lib/schemas/ratings';
 
 export function fetchCocktailRatings(
@@ -16,7 +17,7 @@ export function fetchCocktailRatings(
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
     },
-    'Fehler beim Laden der Cocktail Bewertungen',
+    i18n.t('errors:loadRatings'),
   )
     .then((ratings) => {
       if (ratings) {

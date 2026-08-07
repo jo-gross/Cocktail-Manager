@@ -59,8 +59,41 @@ cocktail, with the detailed recipe making and the compact view for the bartender
   single click
 - **Unit sensitive** - You can define available units for your ingredients and the application will use them for the
   calculations
+- **Internationalization (DE/EN)** - UI language via user setting (fallback: browser locale). Workspace entity labels
+  (preparation actions, units, ice) support German and English display names.
 
-## 🖼️ Screenshots
+## 🌐 Internationalization
+
+The UI uses [i18next](https://www.i18next.com/) + `react-i18next`.
+
+| Topic | Convention |
+| --- | --- |
+| Locales | `de` (default/fallback), `en` |
+| Files | `locales/{de\|en}/{namespace}.json` |
+| Namespaces | `common`, `nav`, `auth`, `cocktail`, `ingredient`, `settings`, `errors`, `entity` |
+| Keys | Dot notation, e.g. `common.save` |
+| Plurals | i18next v4: `key_one` / `key_other` |
+| Preference | `UserSetting.language` → browser → `de` |
+
+```tsx
+const { t } = useTranslation('common');
+return <button>{t('save')}</button>;
+
+// Plurals
+t('entity:hasReferences', { count: n, type: entityType });
+```
+
+Workspace entity display names (actions/units/ice) stay in the DB translation catalog and are resolved with
+`userContext.getTranslation(key)` using the active UI locale.
+
+```sh
+pnpm i18n:check      # ensure EN keys match DE
+pnpm i18n:extract    # optional extract via i18next-parser
+```
+
+ESLint rule `i18next/no-literal-string` flags untranslated JSX text (`warn` globally; `error` on migrated shell/auth/entity paths). Remaining feature screens still emit warnings until fully migrated — treat new UI as requiring `t()` keys.
+
+---
 
 <details>
   <summary>Bartenders view / Pre-configured overview card</summary>

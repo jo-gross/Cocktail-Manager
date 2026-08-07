@@ -1,4 +1,5 @@
 import React, { useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { FaAngleDown, FaAngleUp, FaArrowDown, FaCheck, FaEye, FaPlus, FaSearch, FaTimes } from 'react-icons/fa';
 import Link from 'next/link';
 import { BsFillGearFill } from 'react-icons/bs';
@@ -52,6 +53,7 @@ import {
 const OverviewPage: NextPageWithPullToRefresh = () => {
   const modalContext = useContext(ModalContext);
   const userContext = useContext(UserContext);
+  const { t, i18n } = useTranslation(['nav', 'common', 'settings', 'manage', 'entity']);
   const { isOnline, isOfflineMode } = useOffline();
   const router = useRouter();
   const { workspaceId } = router.query;
@@ -400,7 +402,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
       ) : (
         ''
       )}
-      {currentTime ? formatDateTimeShort(currentTime) : ''} Uhr
+      {currentTime ? t('manage:overview.clock', { time: formatDateTimeShort(currentTime) }) : ''}
     </div>
   );
 
@@ -468,19 +470,19 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
         >
           <div className={'mt-1 flex flex-row flex-wrap items-center justify-between gap-1'}>
             <div className={'font-bold'}>
-              <strong>{cocktailQueueItem.count}x</strong> {cocktailQueueItem.cocktailName}{' '}
+              <strong>{t('manage:overview.countTimes', { count: cocktailQueueItem.count })}</strong> {cocktailQueueItem.cocktailName}{' '}
             </div>
-            <span className={'flex flex-wrap gap-1'}>{cocktailQueueItem.notes && <span className={'italic'}>mit Notiz</span>}</span>
+            <span className={'flex flex-wrap gap-1'}>{cocktailQueueItem.notes && <span className={'italic'}>{t('entity:withNote')}</span>}</span>
           </div>
           <div className={'flex flex-row flex-wrap items-center justify-between gap-1'}>
             {cocktailQueueItem.total != undefined && cocktailQueueItem.total > 1 ? (
-              <span className={'font-thin'}> (Insg. {cocktailQueueItem.total} gleiche)</span>
+              <span className={'font-thin'}>{t('manage:overview.sameTotal', { count: cocktailQueueItem.total })}</span>
             ) : (
               <></>
             )}
-            <span>(seit {formatTime(new Date(cocktailQueueItem?.oldestTimestamp))} Uhr)</span>
+            <span>{t('manage:overview.since', { time: formatTime(new Date(cocktailQueueItem?.oldestTimestamp)) })}</span>
           </div>
-          {cocktailQueueItem.notes && <span className={'long-text-format italic lg:pb-1'}>Notiz: {cocktailQueueItem.notes}</span>}
+          {cocktailQueueItem.notes && <span className={'long-text-format italic lg:pb-1'}>{t('manage:overview.note', { note: cocktailQueueItem.notes })}</span>}
         </div>
         <div className={'flex w-full flex-row gap-2 pb-1'}>
           <Button
@@ -644,8 +646,8 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
             >
               {showTime ? <div className={'pb-2'}>{timeComponent}</div> : <></>}
               <div className="flex w-full flex-row flex-wrap items-center justify-center border-b border-base-content pb-1 text-center">
-                <span className="truncate">Wird gemacht</span>
-                <span className="ml-1">(A-Z)</span>
+                <span className="truncate">{t('nav:inProgress')}</span>
+                <span className="ml-1">{t('manage:overview.az')}</span>
               </div>
 
               {/*<div className={'divider'}></div>*/}
@@ -687,13 +689,13 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                   .value()
                   .mapWithFallback(
                     (cocktailQueueItem, index) => renderCocktailQueueItem(cocktailQueueItem, index),
-                    <div className={'w-full text-center font-thin italic'}>Keine Einträge</div>,
+                    <div className={'w-full text-center font-thin italic'}>{t('common:emptyEntries')}</div>,
                   )}
               </div>
               <div className={'h-2'}></div>
               <div className="flex w-full flex-row flex-wrap items-center justify-center border-b border-base-content pb-1 text-center">
-                <span className="truncate">Warteschlange</span>
-                <span className="ml-1">({queueGrouping == 'ALPHABETIC' ? 'A-Z' : 'Uhr'})</span>
+                <span className="truncate">{t('nav:queue')}</span>
+                <span className="ml-1">{queueGrouping == 'ALPHABETIC' ? t('manage:overview.az') : t('manage:overview.time')}</span>
               </div>
               <div className={'flex flex-col divide-y overflow-y-auto'}>
                 {(queueGrouping == 'ALPHABETIC'
@@ -734,7 +736,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                         }
                         return acc;
                       }, [])
-                ).mapWithFallback((cocktailQueueItem, index) => renderCocktailQueueItem(cocktailQueueItem, index), <div>Warteschlange ist leer</div>)}
+                ).mapWithFallback((cocktailQueueItem, index) => renderCocktailQueueItem(cocktailQueueItem, index), <div>{t('entity:queueEmpty')}</div>)}
               </div>
             </aside>
           ) : (
@@ -757,7 +759,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                     <SearchModal
                       ref={searchPageSearchRef}
                       onCocktailSelectedObject={(cocktail) => setSelectedCocktail(cocktail.id)}
-                      selectionLabel={'Ansehen'}
+                      selectionLabel={t('common:view')}
                       showRecipe={false}
                       customWidthClassName={'w-full'}
                       notAsModal={true}
@@ -766,7 +768,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                 </Card>
                 <div className={'h-min w-full flex-1'}>
                   {showTime && !showStatisticActions ? (
-                    <div className={'w-full pb-2 text-center'}>{currentTime ? formatDateTimeShort(currentTime) : ''} Uhr</div>
+                    <div className={'w-full pb-2 text-center'}>{currentTime ? t('manage:overview.clock', { time: formatDateTimeShort(currentTime) }) : ''}</div>
                   ) : (
                     <></>
                   )}
@@ -800,7 +802,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                   </div>
                 ) : (selectedCard?.groups ?? []).length == 0 ? (
                   <PageCenter>
-                    <div className={'text-center'}>Keine Gruppen in der Karte vorhanden</div>
+                    <div className={'text-center'}>{t('entity:noGroupsOnCard')}</div>
                   </PageCenter>
                 ) : (
                   selectedCard?.groups
@@ -827,14 +829,14 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                           }
                         >
                           {group.name}
-                          {group.groupPrice != undefined ? ` - Special Preis: ${group.groupPrice}€` : ''}
+                          {group.groupPrice != undefined ? t('common:groupPriceSuffix', { price: group.groupPrice }) : ''}
                         </CollapseTitle>
                         <CollapseContent>
                           <div
                             className={`grid ${lessItems ? '2xl:grid-cols-5' : '2xl:grid-cols-6'} ${lessItems ? 'xl:grid-cols-3' : 'xl:grid-cols-4'} ${lessItems ? 'md:grid-cols-2' : 'md:grid-cols-3'} ${lessItems ? 'xs:grid-cols-1' : 'xs:grid-cols-2'} grid-cols-1 gap-3 p-0`}
                           >
                             {group.items.length == 0 ? (
-                              <div className={'col-span-full text-center'}>Keine Einträge vorhanden</div>
+                              <div className={'col-span-full text-center'}>{t('common:emptyEntriesPresent')}</div>
                             ) : (
                               group.items
                                 ?.sort((a, b) => a.itemNumber - b.itemNumber)
@@ -866,7 +868,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                                         key={`card-${selectedCard.id}-group-${group.id}-cocktail-missing-${index}`}
                                         className="text-center text-sm opacity-70"
                                       >
-                                        Cocktail nicht verfügbar
+                                        {t('manage:overview.cocktailUnavailable')}
                                       </div>
                                     );
                                   }
@@ -923,7 +925,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                 >
                   <div className={'flex flex-col gap-2'}>
                     <Label className="flex-row items-center justify-between">
-                      <LabelText className="font-bold">Cocktailsuche</LabelText>
+                      <LabelText className="font-bold">{t('nav:cocktailSearch')}</LabelText>
                       <Radio
                         name="card-radio"
                         value={'search'}
@@ -945,7 +947,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                       />
                     </Label>
                     <Label className="flex-row items-center justify-between">
-                      <LabelText className="font-bold">Bestellen</LabelText>
+                      <LabelText className="font-bold">{t('nav:order')}</LabelText>
                       <Radio
                         name="card-radio"
                         value={'order'}
@@ -967,14 +969,14 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                       />
                     </Label>
                     <Divider>
-                      Karte(n)
+                      {t('manage:overview.cards')}
                       {loadingCards && <UiLoading size="xs" />}
                     </Divider>
                     {loadingCards && cocktailCards.length == 0 ? (
                       <UiLoading />
                     ) : cocktailCards.length == 0 ? (
                       <div className={'flex items-center justify-between'}>
-                        <div>Keine Karten vorhanden</div>
+                        <div>{t('entity:noCards')}</div>
                         <Link href={`/workspaces/${workspaceId}/manage/cards/create`}>
                           <Button type="button" variant="outline" shape="square" size="sm" className="border-primary text-primary hover:bg-primary/10">
                             <FaPlus />
@@ -988,7 +990,14 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                             <LabelText className="font-bold">
                               {card.name}
                               {card.date != undefined ? (
-                                <span> - ({cardDateKey(card.date) == logicalToday ? 'Heute' : new Date(card.date).toLocaleDateString('de')})</span>
+                                <span>
+                                  {t('manage:overview.cardDate', {
+                                    date:
+                                      cardDateKey(card.date) == logicalToday
+                                        ? t('common:today')
+                                        : new Date(card.date).toLocaleDateString(i18n.language?.startsWith('en') ? 'en-US' : 'de-DE'),
+                                  })}
+                                </span>
                               ) : (
                                 ''
                               )}
@@ -1017,17 +1026,17 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                       ))
                     )}
 
-                    <Divider>Darstellung</Divider>
+                    <Divider>{t('common:display')}</Divider>
                     <div className={`flex flex-col gap-2`}>
                       <div className={'flex cursor-pointer flex-row items-center justify-between'} onClick={() => setShowRecipeOptions(!showRecipeOptions)}>
-                        <div className={'font-bold'}>Rezeptbereich</div>
+                        <div className={'font-bold'}>{t('nav:recipeArea')}</div>
                         <div>{showRecipeOptions ? <FaAngleUp /> : <FaAngleDown />}</div>
                       </div>
                       <div className={`flex flex-col gap-2 ${showRecipeOptions ? '' : 'hidden'}`}>
-                        {isOffline && <span className="text-xs text-warning">Nicht verfügbar im Offline-Modus</span>}
+                        {isOffline && <span className="text-xs text-warning">{t('common:offlineUnavailable')}</span>}
                         <FormControl>
                           <Label className={`flex-row items-center justify-between ${isOffline ? 'opacity-50' : ''}`}>
-                            Bilder anzeigen
+                            {t('settings:showImages')}
                             <Toggle
                               checked={showImage}
                               readOnly={true}
@@ -1042,7 +1051,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                         </FormControl>
                         <FormControl>
                           <Label className={`flex-row items-center justify-between ${isOffline ? 'opacity-50' : ''}`}>
-                            Tags anzeigen
+                            {t('settings:showTags')}
                             <Toggle
                               checked={showTags}
                               readOnly={true}
@@ -1057,7 +1066,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                         </FormControl>
                         <FormControl>
                           <Label className={`flex-row items-center justify-between ${isOffline ? 'opacity-50' : ''}`}>
-                            Beschreibung anzeigen
+                            {t('settings:showDescription')}
                             <Toggle
                               checked={showDescription}
                               readOnly={true}
@@ -1072,7 +1081,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                         </FormControl>
                         <FormControl>
                           <Label className={`flex-row items-center justify-between ${isOffline ? 'opacity-50' : ''}`}>
-                            Notizen anzeigen
+                            {t('settings:showNotes')}
                             <Toggle
                               checked={showNotes}
                               readOnly={true}
@@ -1087,7 +1096,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                         </FormControl>
                         <FormControl>
                           <Label className={`flex-row items-center justify-between ${isOffline ? 'opacity-50' : ''}`}>
-                            Geschichte und Entstehung anzeigen
+                            {t('settings:showHistory')}
                             <Toggle
                               checked={showHistory}
                               readOnly={true}
@@ -1102,7 +1111,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                         </FormControl>
                         <FormControl>
                           <Label className={`flex-row items-center justify-between ${isOffline ? 'opacity-50' : ''}`}>
-                            Bewertung anzeigen
+                            {t('settings:showRating')}
                             <Toggle
                               checked={showRating}
                               readOnly={true}
@@ -1117,7 +1126,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                         </FormControl>
                         <FormControl>
                           <Label className={`flex-row items-center justify-between ${isOffline ? 'opacity-50' : ''}`}>
-                            Tracking aktivieren
+                            {t('settings:enableTracking')}
                             <Toggle
                               checked={showStatisticActions}
                               readOnly={true}
@@ -1137,16 +1146,16 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
 
                     <div className={`flex flex-col gap-2`}>
                       <div className={'flex cursor-pointer flex-row items-center justify-between'} onClick={() => setShowQueueOptions(!showQueueOptions)}>
-                        <div className={'font-bold'}>Warteschlange</div>
+                        <div className={'font-bold'}>{t('nav:queue')}</div>
                         <div>{showQueueOptions ? <FaAngleUp /> : <FaAngleDown />}</div>
                       </div>
                       <div className={`flex flex-col gap-2 ${showQueueOptions ? '' : 'hidden'}`}>
-                        {isOffline && <span className="text-xs text-warning">Nicht verfügbar im Offline-Modus</span>}
+                        {isOffline && <span className="text-xs text-warning">{t('common:offlineUnavailable')}</span>}
                         <FormControl>
-                          <div className={`${isOffline ? 'opacity-50' : ''}`}>Gruppierung</div>
+                          <div className={`${isOffline ? 'opacity-50' : ''}`}>{t('nav:grouping')}</div>
                           <FormControl key={'grouping-alphabetic'}>
                             <Label className={`flex-row items-center justify-between ${isOffline ? 'opacity-50' : ''}`}>
-                              <LabelText>Cocktailname (A-Z)</LabelText>
+                              <LabelText>{t('nav:groupByCocktailName')}</LabelText>
                               <Radio
                                 name="queue-radio"
                                 value={'ALPHABETIC'}
@@ -1162,7 +1171,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                               />
                             </Label>
                             <Label className={`flex-row items-center justify-between ${isOffline ? 'opacity-50' : ''}`}>
-                              <LabelText>Keine (Chronologisch)</LabelText>
+                              <LabelText>{t('nav:groupNoneChronological')}</LabelText>
                               <Radio
                                 name="queue-radio"
                                 value={'NONE'}
@@ -1181,7 +1190,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                         </FormControl>
                         <FormControl>
                           <Label className={`flex-row items-center justify-between ${isOffline ? 'opacity-50' : ''}`}>
-                            Schnelles abhaken anzeigen
+                            {t('settings:showFastQueueCheck')}
                             <Toggle
                               checked={showFastQueueCheck}
                               readOnly={true}
@@ -1200,14 +1209,14 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                     <Divider />
                     <div className={`flex flex-col gap-2`}>
                       <div className={'flex cursor-pointer flex-row items-center justify-between'} onClick={() => setShowLayoutOptions(!showLayoutOptions)}>
-                        <div className={'font-bold'}>Layout</div>
+                        <div className={'font-bold'}>{t('common:layout')}</div>
                         <div>{showLayoutOptions ? <FaAngleUp /> : <FaAngleDown />}</div>
                       </div>
                       <div className={`flex flex-col gap-2 ${showLayoutOptions ? '' : 'hidden'}`}>
-                        {isOffline && <span className="text-xs text-warning">Nicht verfügbar im Offline-Modus</span>}
+                        {isOffline && <span className="text-xs text-warning">{t('common:offlineUnavailable')}</span>}
                         <FormControl>
                           <Label className={`flex-row items-center justify-between ${isOffline ? 'opacity-50' : ''}`}>
-                            Uhrzeit anzeigen
+                            {t('settings:showTime')}
                             <Toggle
                               checked={showTime}
                               readOnly={true}
@@ -1223,7 +1232,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                         {router.query.card !== 'search' && (
                           <FormControl>
                             <Label className={`flex-row items-center justify-between ${isOffline ? 'opacity-50' : ''}`}>
-                              Weniger Spalten
+                              {t('settings:lessColumns')}
                               <Toggle
                                 checked={lessItems}
                                 readOnly={true}
@@ -1239,7 +1248,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                         )}
                         <FormControl>
                           <Label className={`flex-row items-center justify-between ${isOffline ? 'opacity-50' : ''}`}>
-                            Einstellungen am Ende
+                            {t('nav:settingsAtEnd')}
                             <Toggle
                               checked={showSettingsAtBottom}
                               readOnly={true}
@@ -1255,10 +1264,10 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                       </div>
                     </div>
                     <Divider />
-                    <Tooltip tip={isOffline ? 'Nicht verfügbar im Offline-Modus' : undefined} className="self-center">
+                    <Tooltip tip={isOffline ? t('common:offlineUnavailable') : undefined} className="self-center">
                       <ThemeChanger disabled={isOffline} />
                     </Tooltip>
-                    {isOffline && <span className="text-xs text-warning">Nicht verfügbar im Offline-Modus</span>}
+                    {isOffline && <span className="text-xs text-warning">{t('common:offlineUnavailable')}</span>}
                   </div>
                 </div>
                 {isDropdownScrollable && (
@@ -1271,7 +1280,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
 
             <>
               {selectedCardId != 'search' && selectedCardId != 'order' && selectedCardId != undefined ? (
-                <Tooltip tip="Suche (Shift + F)" className={showSettingsAtBottom ? 'mr-1' : ''}>
+                <Tooltip tip={t('nav:searchShortcut')} className={showSettingsAtBottom ? 'mr-1' : ''}>
                   <Button
                     type="button"
                     shape="square"
@@ -1287,7 +1296,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
               )}
             </>
             {isOffline ? (
-              <Tooltip tip="Nicht verfügbar im Offline-Modus">
+              <Tooltip tip={t('common:offlineUnavailable')}>
                 <Button type="button" shape="square" variant="primary" className="rounded-xl md:h-12 md:min-h-12 md:w-12 md:px-0" disabled>
                   <BsFillGearFill />
                 </Button>

@@ -1,6 +1,7 @@
 import { FaArrowLeft } from 'react-icons/fa';
 import Head from 'next/head';
 import React, { useContext } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@components/ui';
 import { NotSavedLeaveConfirmation } from '../modals/NotSavedLeaveConfirmation';
 import { ModalContext } from '@lib/context/ModalContextProvider';
@@ -28,11 +29,12 @@ interface ManageEntityLayoutProps {
 export function ManageEntityLayout(props: ManageEntityLayoutProps) {
   const modalContext = useContext(ModalContext);
   const routingContext = useContext(RoutingContext);
+  const { t } = useTranslation('common');
 
   return (
     <>
       <Head>
-        <>{typeof props.title === 'string' ? <title>{`The Cocktail-Manager • ${props.title}`}</title> : <title>The Cocktail-Manager</title>}</>
+        <>{typeof props.title === 'string' ? <title>{`${t('appName')} • ${props.title}`}</title> : <title>{t('appName')}</title>}</>
       </Head>
       <div className={props.fullHeight ? 'flex h-dvh flex-col' : undefined}>
         <div
@@ -71,7 +73,7 @@ export function ManageEntityLayout(props: ManageEntityLayoutProps) {
             {props.subtitle && <div className="mt-1 text-sm text-base-content/70 print:hidden">{props.subtitle}</div>}
           </div>
           <div className={'flex flex-col-reverse items-center gap-2 justify-self-end md:flex-row print:hidden'}>
-            {props.unsavedChanges && <div className={'text-center italic print:hidden'}>Nicht gespeicherte Änderungen</div>}
+            {props.unsavedChanges && <div className={'text-center italic print:hidden'}>{t('unsavedChanges')}</div>}
             {props.actions}
           </div>
         </div>

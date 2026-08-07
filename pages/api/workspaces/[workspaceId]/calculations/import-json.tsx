@@ -155,7 +155,7 @@ const legacyHandler = withHttpMethods({
 
       if (phase === 'execute') {
         if (!decisions || decisions.length === 0) {
-          return res.status(400).json({ message: 'Keine Entscheidungen angegeben' });
+          return res.status(400).json({ message: 'No decisions provided' });
         }
 
         // Build cocktail name -> ID mapping
@@ -377,7 +377,7 @@ const legacyHandler = withHttpMethods({
               await createLog(tx, workspaceId, user.id, 'CocktailCalculation', calcId, action as 'CREATE' | 'UPDATE', null, fullResult);
               results.push({ name: finalName, status: decision.decision === 'overwrite' ? 'overwritten' : 'created' });
             } catch (err: unknown) {
-              results.push({ name: finalName, status: 'error', message: err instanceof Error ? err.message : 'Unbekannter Fehler' });
+              results.push({ name: finalName, status: 'error', message: err instanceof Error ? err.message : 'Unknown error' });
             }
           }
         });
@@ -385,7 +385,7 @@ const legacyHandler = withHttpMethods({
         return res.json({ success: true, results });
       }
 
-      return res.status(400).json({ message: 'Ungültige Phase' });
+      return res.status(400).json({ message: 'Invalid phase' });
     } catch (error: unknown) {
       console.error('Calculation import error:', error);
       return res.status(500).json({ message: error instanceof Error ? error.message : 'Import failed' });

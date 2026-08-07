@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useRouter } from 'next/router';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -42,6 +43,7 @@ export function CardGroupItem({
   onMoveRight,
   onRemove,
 }: CardGroupItemProps) {
+  const { t } = useTranslation('common');
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: itemDragId(groupIndex, itemIndex),
     disabled: isArchived,
@@ -66,8 +68,8 @@ export function CardGroupItem({
 
   const MoveBackIcon = singleColumn ? FaAngleUp : FaAngleLeft;
   const MoveForwardIcon = singleColumn ? FaAngleDown : FaAngleRight;
-  const moveBackLabel = singleColumn ? 'Nach oben' : 'Nach links';
-  const moveForwardLabel = singleColumn ? 'Nach unten' : 'Nach rechts';
+  const moveBackLabel = singleColumn ? t('moveUp') : t('moveLeft');
+  const moveForwardLabel = singleColumn ? t('moveDown') : t('moveRight');
 
   if (viewMode === 'names') {
     return (
@@ -77,13 +79,13 @@ export function CardGroupItem({
         className="col-span-1 flex min-h-12 shrink-0 items-center gap-2 self-start rounded-lg border border-base-300/60 bg-base-100 px-3 py-2"
       >
         {!isArchived ? <DragHandle attributes={attributes} listeners={listeners} /> : null}
-        <div className="min-w-0 flex-1 truncate font-medium">{cocktail?.name ?? (loadingCocktails ? '…' : 'Unbekannt')}</div>
+        <div className="min-w-0 flex-1 truncate font-medium">{cocktail?.name ?? (loadingCocktails ? '…' : t('unknown'))}</div>
         {!isArchived ? (
           <ItemActionMenu
             actions={[
               { label: moveBackLabel, icon: <MoveBackIcon />, onClick: onMoveLeft, disabled: !canMoveLeft },
               { label: moveForwardLabel, icon: <MoveForwardIcon />, onClick: onMoveRight, disabled: !canMoveRight },
-              { label: 'Löschen', icon: <FaTrashAlt />, onClick: onRemove, isDanger: true },
+              { label: t('delete'), icon: <FaTrashAlt />, onClick: onRemove, isDanger: true },
             ]}
           />
         ) : null}
@@ -122,7 +124,7 @@ export function CardGroupItem({
               >
                 <MoveForwardIcon />
               </Button>
-              <Button type="button" variant="outline-error" shape="square" size="sm" onClick={onRemove} aria-label="Löschen" title="Löschen">
+              <Button type="button" variant="outline-error" shape="square" size="sm" onClick={onRemove} aria-label={t('delete')} title={t('delete')}>
                 <FaTrashAlt />
               </Button>
             </div>
@@ -138,7 +140,7 @@ export function CardGroupItem({
             <Skeleton className="h-4 w-5/6" />
           </div>
         ) : (
-          <div>Unbekannt</div>
+          <div>{t('unknown')}</div>
         )}
       </CardBody>
     </Card>

@@ -13,7 +13,7 @@ const legacyHandler = withHttpMethods({
     const { ids } = req.body as { ids: string[] };
 
     if (!ids || ids.length === 0) {
-      return res.status(400).json({ message: 'Keine Garnituren ausgewählt' });
+      return res.status(400).json({ message: 'No garnishes selected' });
     }
 
     try {
@@ -22,7 +22,7 @@ const legacyHandler = withHttpMethods({
       });
 
       if (garnishes.length === 0) {
-        return res.status(404).json({ message: 'Keine Garnituren gefunden' });
+        return res.status(404).json({ message: 'No garnishes found' });
       }
 
       const exportData: GarnishExportStructure[] = garnishes.map((garnish) => ({
@@ -41,7 +41,7 @@ const legacyHandler = withHttpMethods({
       return res.json(exportData.length === 1 ? exportData[0] : exportData);
     } catch (error) {
       console.error('Garnish export error:', error);
-      return res.status(500).json({ message: 'Fehler beim Exportieren' });
+      return res.status(500).json({ message: 'Failed to export' });
     }
   }),
 });

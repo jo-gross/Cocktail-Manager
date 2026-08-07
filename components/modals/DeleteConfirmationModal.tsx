@@ -1,4 +1,5 @@
 import { useContext, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import { alertService } from '@lib/alertService';
 import { Button, Loading } from '@components/ui';
@@ -19,23 +20,27 @@ interface DeleteConfirmationModalProps {
 
 export function DeleteConfirmationModal(props: DeleteConfirmationModalProps) {
   const modalContext = useContext(ModalContext);
+  const { t } = useTranslation(['entity', 'errors']);
 
   const [isDeleting, setIsDeleting] = useState(false);
 
   const hasReferences = props.references && props.references.length > 0;
-  const entityTypeText = props.entityType === 'ingredient' ? 'Zutat' : props.entityType === 'glass' ? 'Glas' : 'Eintrag';
+  const entityTypeText =
+    props.entityType === 'ingredient' ? t('entity:type.ingredient') : props.entityType === 'glass' ? t('entity:type.glass') : t('entity:type.entry');
+
+  const title = props.spelling == 'DELETE' ? t('entity:delete') : props.spelling == 'REMOVE' ? t('entity:remove') : t('entity:abort');
+  const actionVerb = props.spelling == 'DELETE' ? t('entity:action.delete') : props.spelling == 'REMOVE' ? t('entity:action.remove') : t('entity:action.abort');
+  const confirmLabel = props.spelling == 'DELETE' ? t('entity:delete') : props.spelling == 'REMOVE' ? t('entity:remove') : t('entity:confirmAbort');
 
   return (
     <div className="flex flex-col space-y-4">
-      <div className="text-2xl font-bold">{props.spelling == 'DELETE' ? 'Löschen' : props.spelling == 'REMOVE' ? 'Entfernen' : 'Abbrechen'}</div>
+      <div className="text-2xl font-bold">{title}</div>
       <div className="max-w-xl text-justify">
         {hasReferences ? (
           <div className="flex flex-col space-y-4">
-            <div className="font-bold text-error">
-              Diese {entityTypeText} kann nicht gelöscht werden, da sie noch in {props.references!.length} Cocktail(s) verwendet wird!
-            </div>
+            <div className="font-bold text-error">{t('entity:hasReferences', { type: entityTypeText, count: props.references!.length })}</div>
             <div className="flex flex-col space-y-2">
-              <div className="font-bold">Verwendet in folgenden Cocktails:</div>
+              <div className="font-bold">{t('entity:usedInCocktails')}</div>
               <div className="max-h-64 overflow-y-auto rounded border border-base-300 p-2">
                 <ul className="list-inside list-disc space-y-1">
                   {props.references!.map((cocktail) => (
@@ -47,8 +52,10 @@ export function DeleteConfirmationModal(props: DeleteConfirmationModalProps) {
           </div>
         ) : (
           <div>
-            Möchtest du <span className={'font-bold italic'}>{props.entityName ?? 'diesen Eintrag'}</span> wirklich{' '}
-            {props.spelling == 'DELETE' ? 'löschen' : props.spelling == 'REMOVE' ? 'entfernen' : 'abbrechen'}?
+            {t('entity:confirmQuestion', {
+              name: props.entityName || t('entity:thisEntry'),
+              action: actionVerb,
+            })}
           </div>
         )}
       </div>
@@ -62,7 +69,7 @@ export function DeleteConfirmationModal(props: DeleteConfirmationModalProps) {
             modalContext.closeModal();
           }}
         >
-          {hasReferences ? 'Schließen' : 'Abbrechen'}
+          {hasReferences ? t('entity:close') : t('entity:abort')}
         </Button>
         {!hasReferences && (
           <Button
@@ -75,14 +82,14 @@ export function DeleteConfirmationModal(props: DeleteConfirmationModalProps) {
                 modalContext.closeModal();
               } catch (error) {
                 console.error('DeleteConfirmationModal -> onApprove', error);
-                alertService.error('Fehler beim Löschen');
+                alertService.error(t('errors:delete'));
               } finally {
                 setIsDeleting(false);
               }
             }}
           >
             {isDeleting ? <Loading size="sm" /> : null}
-            {props.spelling == 'DELETE' ? 'Löschen' : props.spelling == 'REMOVE' ? 'Entfernen' : 'Abbruch bestätigen'}
+            {confirmLabel}
           </Button>
         )}
       </div>

@@ -1,5 +1,6 @@
 import { Formik } from 'formik';
 import React, { useContext } from 'react';
+import { useTranslation } from 'react-i18next';
 import { UserContext } from '@lib/context/UserContextProvider';
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import { alertService } from '@lib/alertService';
@@ -17,25 +18,26 @@ interface CocktailRatingModalProps {
   onCreated?: () => void;
 }
 
-const cocktailRatingSchema = z.object({
-  name: z.string().optional(),
-  rating: z.coerce.number().min(1, 'Die Bewertung muss zwischen 1 und 5 liegen').max(5, 'Die Bewertung muss zwischen 1 und 5 liegen'),
-  comment: z.string().optional(),
-});
-
-const validateCocktailRating = zodFormikValidate(cocktailRatingSchema);
-
 export default function AddCocktailRatingModal(props: CocktailRatingModalProps) {
   const _userContext = useContext(UserContext);
   const modalContext = useContext(ModalContext);
+  const { t } = useTranslation(['cocktail', 'common']);
 
   const router = useRouter();
 
   const { workspaceId } = router.query;
 
+  const cocktailRatingSchema = z.object({
+    name: z.string().optional(),
+    rating: z.coerce.number().min(1, t('cocktail:ratingRangeError')).max(5, t('cocktail:ratingRangeError')),
+    comment: z.string().optional(),
+  });
+
+  const validateCocktailRating = zodFormikValidate(cocktailRatingSchema);
+
   return (
     <div className={'flex flex-col gap-2'}>
-      <div className={'text-2xl font-bold'}>{props.cocktailName} - Bewertung hinzufügen</div>
+      <div className={'text-2xl font-bold'}>{t('cocktail:ratingAddTitle', { name: props.cocktailName })}</div>
       <Formik
         initialValues={{
           name: undefined,
@@ -52,9 +54,9 @@ export default function AddCocktailRatingModal(props: CocktailRatingModalProps) 
             });
             modalContext.closeModal();
             props.onCreated?.();
-            alertService.success('Bewertung hinzugefügt');
+            alertService.success(t('cocktail:ratingAdded'));
           } catch (error) {
-            alertApiV1Error(error, 'Fehler beim Erstellen der Bewertung');
+            alertApiV1Error(error, t('cocktail:error.createRating'));
           }
         }}
         validate={(values) => validateCocktailRating(values)}
@@ -65,17 +67,17 @@ export default function AddCocktailRatingModal(props: CocktailRatingModalProps) 
               <FormControl>
                 <Label htmlFor={'name'} className="flex-row items-center justify-between">
                   <LabelText>
-                    Name <span className={'italic'}>(optional)</span>
+                    {t('common:name')} <span className={'italic'}>{t('cocktail:optional')}</span>
                   </LabelText>
                   <LabelTextAlt className="text-error">
                     <span>{errors.name && touched.name ? errors.name : ''}</span>
                   </LabelTextAlt>
                 </Label>
-                <Input id={'name'} name={'name'} value={values.name} onChange={handleChange} placeholder={'z.B. Manuel Neuer'} />
+                <Input id={'name'} name={'name'} value={values.name} onChange={handleChange} placeholder={t('cocktail:ratingNamePlaceholder')} />
               </FormControl>
               <FormControl>
                 <Label className="flex-row items-center justify-between">
-                  <LabelText>Bewertung</LabelText>
+                  <LabelText>{t('cocktail:rating')}</LabelText>
                   <LabelTextAlt className="text-error">
                     <span>{errors.rating && touched.rating ? errors.rating : ''}</span>
                   </LabelTextAlt>
@@ -85,13 +87,20 @@ export default function AddCocktailRatingModal(props: CocktailRatingModalProps) 
               <FormControl>
                 <Label className="flex-row items-center justify-between">
                   <LabelText>
-                    Kommentar <span className={'italic'}>(optional)</span>
+                    {t('cocktail:ratingComment')} <span className={'italic'}>{t('cocktail:optional')}</span>
                   </LabelText>
                   <LabelTextAlt className="text-error">
                     <span>{errors.comment && touched.comment ? errors.comment : ''}</span>
                   </LabelTextAlt>
                 </Label>
-                <Textarea id={'comment'} name={'comment'} value={values.comment} onChange={handleChange} rows={4} placeholder={'Unfassbar geiler Cocktail!'} />
+                <Textarea
+                  id={'comment'}
+                  name={'comment'}
+                  value={values.comment}
+                  onChange={handleChange}
+                  rows={4}
+                  placeholder={t('cocktail:ratingCommentPlaceholder')}
+                />
               </FormControl>
             </div>
             <div className={'flex justify-end gap-2'}>
@@ -103,11 +112,11 @@ export default function AddCocktailRatingModal(props: CocktailRatingModalProps) 
                   modalContext.closeModal();
                 }}
               >
-                Abbrechen
+                {t('common:cancel')}
               </Button>
               <Button variant="primary" type={'submit'}>
                 {isSubmitting ? <Loading size="sm" /> : null}
-                Hinzufügen
+                {t('common:add')}
               </Button>
             </div>
           </form>

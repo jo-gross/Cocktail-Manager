@@ -18,7 +18,10 @@ import { randomUUID } from 'crypto';
 import { $Enums, Prisma } from '@generated/prisma/client';
 import type { User, Workspace } from '@generated/prisma/client';
 import { createCocktailRecipeAuditLog } from '@lib/auditLog';
-import { CocktailPdfPage } from '@components/pdf/CocktailPdfPage';
+import { buildCocktailPdfLabels, CocktailPdfPage } from '@components/pdf/CocktailPdfPage';
+import { getServerT } from '@lib/i18n/server';
+import { normalizeLocale, type AppLocale } from '@lib/i18n/locales';
+import { toIntlLocale } from '@lib/i18n/format';
 import { pdfExportTailwindConfigScript, pdfExportThemeStyles } from '@lib/pdf/pdfExportStyles';
 import { CocktailExportStructure } from '../../../types/CocktailExportStructure';
 import packageJson from '../../../package.json';
@@ -36,7 +39,7 @@ export async function exportCocktailsJson(workspace: Workspace, cocktailIds: str
   const workspaceId = workspace.id;
 
   if (!cocktailIds || cocktailIds.length === 0) {
-    return { status: 400, body: { message: 'Keine Cocktails ausgewählt' } };
+    return { status: 400, body: { message: 'No cocktails selected' } };
   }
 
   try {
@@ -45,7 +48,7 @@ export async function exportCocktailsJson(workspace: Workspace, cocktailIds: str
     });
 
     if (cocktailRecipes.length === 0) {
-      return { status: 404, body: { message: 'Keine Cocktails gefunden' } };
+      return { status: 404, body: { message: 'No cocktails found' } };
     }
 
     const cocktailRecipeImages = await prisma.cocktailRecipeImage.findMany({
@@ -113,7 +116,7 @@ export async function exportCocktailsJson(workspace: Workspace, cocktailIds: str
     return { status: 200, body: exportData };
   } catch (error) {
     console.error('Export error:', error);
-    return { status: 500, body: { message: 'Fehler beim Exportieren der Cocktails' } };
+    return { status: 500, body: { message: 'Failed to export cocktails' } };
   }
 }
 
@@ -142,12 +145,14 @@ export interface CocktailPdfOptions {
   newPagePerCocktail?: boolean;
   showHeader?: boolean;
   showFooter?: boolean;
+  /** UI locale for PDF chrome labels (defaults to `de`). */
+  locale?: AppLocale | string;
 }
 
 /** Discriminated result: either a rendered PDF or a JSON error mirroring the legacy status codes. */
 export type CocktailPdfResult = { kind: 'pdf'; buffer: Buffer } | { kind: 'error'; status: number; body: unknown };
 
-async function generatePdf(html: string, numberOfCocktails: number, showHeader = false, showFooter = false): Promise<Buffer> {
+async function generatePdf(html: string, numberOfCocktails: number, showHeader = false, showFooter = false, locale: AppLocale = 'de'): Promise<Buffer> {
   const chromiumHost = process.env.CHROMIUM_HOST;
   console.debug('chromiumHost', chromiumHost);
 
@@ -211,7 +216,9 @@ async function generatePdf(html: string, numberOfCocktails: number, showHeader =
     let pdfBuffer: Buffer;
     try {
       const currentDate = new Date();
-      const formattedDate = currentDate.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+      const { t } = getServerT(locale);
+      const formattedDate = currentDate.toLocaleDateString(toIntlLocale(locale), { day: '2-digit', month: '2-digit', year: 'numeric' });
+      const pageLabel = t('cocktail:pdfPageLabel');
 
       const headerTemplate = showHeader
         ? `<div style="font-size: 8pt; color: rgba(0, 0, 0, 0.6); width: 100%; display: flex; justify-content: space-between; align-items: center; padding: 0 5mm;">
@@ -223,7 +230,7 @@ async function generatePdf(html: string, numberOfCocktails: number, showHeader =
 
       const footerTemplate = showFooter
         ? `<div style="font-size: 8pt; color: rgba(0, 0, 0, 0.6); width: 100%; text-align: center; padding: 0 5mm;">
-            Seite <span class="pageNumber"></span>
+            ${pageLabel} <span class="pageNumber"></span>
           </div>`
         : '<div></div>';
 
@@ -277,8 +284,8 @@ async function generatePdf(html: string, numberOfCocktails: number, showHeader =
   }
 }
 
-function getTranslation(translations: Record<string, Record<string, string>>, key: string, language: 'de' = 'de'): string {
-  return translations[language]?.[key] ?? key;
+function getTranslation(translations: Record<string, Record<string, string>>, key: string, language: string = 'de'): string {
+  return translations[language]?.[key] ?? translations['de']?.[key] ?? key;
 }
 
 function generateHtmlForCocktails(
@@ -292,8 +299,11 @@ function generateHtmlForCocktails(
     newPagePerCocktail: boolean;
     showHeader: boolean;
     showFooter: boolean;
+    locale: AppLocale;
   },
 ): string {
+  const { t } = getServerT(options.locale);
+  const labels = buildCocktailPdfLabels(t);
   const pages = cocktails.map((cocktail, index) => {
     console.log('Rendering cocktail', cocktail.name);
     const imageBase64 = options.exportImage ? cocktail.CocktailRecipeImage?.[0]?.image || null : null;
@@ -301,7 +311,9 @@ function generateHtmlForCocktails(
       React.createElement(CocktailPdfPage, {
         cocktail,
         imageBase64,
-        getTranslation: (key: string) => getTranslation(translations, key),
+        getTranslation: (key: string) => getTranslation(translations, key, options.locale),
+        labels,
+        locale: options.locale,
         exportImage: options.exportImage,
         exportDescription: options.exportDescription,
         exportNotes: options.exportNotes,
@@ -325,7 +337,7 @@ function generateHtmlForCocktails(
       : '';
 
   return `<!DOCTYPE html>
-<html lang="de">
+<html lang="${options.locale}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -390,7 +402,9 @@ export async function exportCocktailsPdf(workspace: Workspace, options: Cocktail
       newPagePerCocktail = true,
       showHeader = false,
       showFooter = false,
+      locale: localeOption,
     } = options;
+    const locale = normalizeLocale(localeOption);
 
     if (!cocktailIds || !Array.isArray(cocktailIds) || cocktailIds.length === 0) {
       return { kind: 'error', status: 400, body: { message: 'cocktailIds array is required and must not be empty' } };
@@ -449,8 +463,9 @@ export async function exportCocktailsPdf(workspace: Workspace, options: Cocktail
         newPagePerCocktail,
         showHeader,
         showFooter,
+        locale,
       });
-      const batchPdfBuffer = await generatePdf(html, batch.length, showHeader, showFooter);
+      const batchPdfBuffer = await generatePdf(html, batch.length, showHeader, showFooter, locale);
       pdfBuffers.push(batchPdfBuffer);
       console.log(`Batch ${i + 1}/${batches.length} completed successfully`);
     }
@@ -486,6 +501,9 @@ interface ImportEntityData {
   name: string;
   workspaceId?: string;
   actionGroup?: string;
+  labelDe?: string;
+  labelEn?: string;
+  /** @deprecated Prefer labelDe */
   lableDE?: string;
   deposit?: number | null;
   volume?: number | null;
@@ -532,7 +550,7 @@ export async function importCocktailsJson(
   try {
     if (phase === 'validate') {
       if (!exportData || !exportData.exportVersion || !exportData.cocktailRecipes) {
-        return { status: 400, body: { valid: false, errors: ['Ungültige JSON-Struktur'] } };
+        return { status: 400, body: { valid: false, errors: ['Invalid JSON structure'] } };
       }
 
       return {
@@ -674,12 +692,25 @@ export async function importCocktailsJson(
           const existingTranslationsSetting = await transaction.workspaceSetting.findFirst({ where: { workspaceId, setting: 'translations' } });
           const translationsToUpdate: { [lang: string]: { [key: string]: string } } = JSON.parse(existingTranslationsSetting?.value ?? '{}');
 
-          const addTranslation = (key: string, lableDE: string) => {
-            if (!translationsToUpdate.de) {
-              translationsToUpdate.de = {};
+          const addTranslation = (key: string, labelDe?: string, labelEn?: string) => {
+            if (labelDe) {
+              if (!translationsToUpdate.de) {
+                translationsToUpdate.de = {};
+              }
+              translationsToUpdate.de[key] = labelDe;
             }
-            translationsToUpdate.de[key] = lableDE;
+            if (labelEn) {
+              if (!translationsToUpdate.en) {
+                translationsToUpdate.en = {};
+              }
+              translationsToUpdate.en[key] = labelEn;
+            }
           };
+
+          const readEntityLabels = (data?: ImportEntityData) => ({
+            labelDe: data?.labelDe ?? data?.lableDE,
+            labelEn: data?.labelEn,
+          });
 
           // Process units first
           for (const decision of mappingDecisions.units) {
@@ -697,14 +728,17 @@ export async function importCocktailsJson(
                   } else {
                     const newId = randomUUID();
                     await transaction.unit.create({ data: { id: newId, name: unitName, workspaceId } });
-                    if (decision.newEntityData?.lableDE) {
-                      addTranslation(unitName, decision.newEntityData.lableDE);
+                    {
+                      const labels = readEntityLabels(decision.newEntityData);
+                      if (labels.labelDe || labels.labelEn) {
+                        addTranslation(unitName, labels.labelDe, labels.labelEn);
+                      }
                     }
                     unitMapping.set(decision.exportId, newId);
                     created.units++;
                   }
                 } catch (err: unknown) {
-                  errors.push({ step: 'units', entityType: 'Einheit', entityName: unitName, error: err instanceof Error ? err.message : 'Unbekannter Fehler' });
+                  errors.push({ step: 'units', entityType: 'Einheit', entityName: unitName, error: err instanceof Error ? err.message : 'Unknown error' });
                 }
               }
             }
@@ -726,14 +760,17 @@ export async function importCocktailsJson(
                   } else {
                     const newId = randomUUID();
                     await transaction.ice.create({ data: { id: newId, name: iceName, workspaceId } });
-                    if (decision.newEntityData?.lableDE) {
-                      addTranslation(iceName, decision.newEntityData.lableDE);
+                    {
+                      const labels = readEntityLabels(decision.newEntityData);
+                      if (labels.labelDe || labels.labelEn) {
+                        addTranslation(iceName, labels.labelDe, labels.labelEn);
+                      }
                     }
                     iceMapping.set(decision.exportId, newId);
                     created.ice++;
                   }
                 } catch (err: unknown) {
-                  errors.push({ step: 'ice', entityType: 'Eis-Typ', entityName: iceName, error: err instanceof Error ? err.message : 'Unbekannter Fehler' });
+                  errors.push({ step: 'ice', entityType: 'Eis-Typ', entityName: iceName, error: err instanceof Error ? err.message : 'Unknown error' });
                 }
               }
             }
@@ -763,8 +800,11 @@ export async function importCocktailsJson(
                   } else {
                     const newId = randomUUID();
                     await transaction.workspaceCocktailRecipeStepAction.create({ data: { id: newId, name: actionName, actionGroup, workspaceId } });
-                    if (decision.newEntityData?.lableDE) {
-                      addTranslation(actionName, decision.newEntityData.lableDE);
+                    {
+                      const labels = readEntityLabels(decision.newEntityData);
+                      if (labels.labelDe || labels.labelEn) {
+                        addTranslation(actionName, labels.labelDe, labels.labelEn);
+                      }
                     }
                     stepActionMapping.set(decision.exportId, newId);
                     created.stepActions++;
@@ -774,7 +814,7 @@ export async function importCocktailsJson(
                     step: 'stepActions',
                     entityType: 'Aktion',
                     entityName: `${actionName} (${actionGroup})`,
-                    error: err instanceof Error ? err.message : 'Unbekannter Fehler',
+                    error: err instanceof Error ? err.message : 'Unknown error',
                   });
                 }
               }
@@ -819,7 +859,7 @@ export async function importCocktailsJson(
                     }
                   }
                 } catch (err: unknown) {
-                  errors.push({ step: 'glasses', entityType: 'Glas', entityName: glassName, error: err instanceof Error ? err.message : 'Unbekannter Fehler' });
+                  errors.push({ step: 'glasses', entityType: 'Glas', entityName: glassName, error: err instanceof Error ? err.message : 'Unknown error' });
                 }
               }
             }
@@ -867,7 +907,7 @@ export async function importCocktailsJson(
                     step: 'garnishes',
                     entityType: 'Garnitur',
                     entityName: garnishName,
-                    error: err instanceof Error ? err.message : 'Unbekannter Fehler',
+                    error: err instanceof Error ? err.message : 'Unknown error',
                   });
                 }
               }
@@ -932,7 +972,7 @@ export async function importCocktailsJson(
                             step: 'ingredientVolumes',
                             entityType: 'Zutaten-Volumen',
                             entityName: ingredientName,
-                            error: volErr instanceof Error ? volErr.message : 'Fehler beim Erstellen des Volumens',
+                            error: volErr instanceof Error ? volErr.message : 'Failed to create volume',
                           });
                         }
                       }
@@ -943,7 +983,7 @@ export async function importCocktailsJson(
                     step: 'ingredients',
                     entityType: 'Zutat',
                     entityName: ingredientName,
-                    error: err instanceof Error ? err.message : 'Unbekannter Fehler',
+                    error: err instanceof Error ? err.message : 'Unknown error',
                   });
                 }
               }
@@ -1074,7 +1114,7 @@ export async function importCocktailsJson(
                 step: 'cocktails',
                 entityType: 'Cocktail',
                 entityName: exportCocktail.name,
-                error: err instanceof Error ? err.message : 'Unbekannter Fehler',
+                error: err instanceof Error ? err.message : 'Unknown error',
               });
             }
           }
@@ -1094,7 +1134,7 @@ export async function importCocktailsJson(
         return {
           status: 500,
           body: {
-            message: 'Fehler beim Importieren der Cocktails',
+            message: 'Failed to import cocktails',
             errors:
               errors.length > 0
                 ? errors
@@ -1111,9 +1151,9 @@ export async function importCocktailsJson(
       }
     }
 
-    return { status: 400, body: { message: 'Ungültige Phase' } };
+    return { status: 400, body: { message: 'Invalid phase' } };
   } catch (error: unknown) {
     console.error('Import error:', error);
-    return { status: 500, body: { message: error instanceof Error ? error.message : 'Fehler beim Importieren der Cocktails' } };
+    return { status: 500, body: { message: error instanceof Error ? error.message : 'Failed to import cocktails' } };
   }
 }

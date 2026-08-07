@@ -2,8 +2,10 @@ import Link from 'next/link';
 import { ManageEntityLayout } from '@components/layout/ManageEntityLayout';
 import { ManageColumn } from '@components/ManageColumn';
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useRouter } from 'next/router';
 import { alertService } from '@lib/alertService';
+import { toIntlLocale } from '@lib/i18n/format';
 import type { CalculationGroupDto, CalculationSummaryDto } from '@lib/schemas/calculations';
 import {
   assignCalculationsToGroup,
@@ -51,6 +53,7 @@ import {
 import type { SortDirection } from '@components/ui';
 
 const CocktailCalculationOverviewPage: NextPageWithPullToRefresh = () => {
+  const { t, i18n } = useTranslation(['manage', 'common', 'nav', 'settings', 'entity', 'errors']);
   const router = useRouter();
   const { workspaceId } = router.query;
 
@@ -91,15 +94,18 @@ const CocktailCalculationOverviewPage: NextPageWithPullToRefresh = () => {
     }
   }, []);
 
-  const formatUpdatedAt = useCallback((dateString: string | Date) => {
-    return new Date(dateString).toLocaleString('de-DE', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  }, []);
+  const formatUpdatedAt = useCallback(
+    (dateString: string | Date) => {
+      return new Date(dateString).toLocaleString(toIntlLocale(i18n.language), {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    },
+    [i18n.language],
+  );
 
   const refreshCocktailCalculations = useCallback(() => {
     fetchCalculationsAndGroupsSafe(
@@ -179,25 +185,25 @@ const CocktailCalculationOverviewPage: NextPageWithPullToRefresh = () => {
       if (!workspaceId || calculationIds.length === 0) return;
       try {
         await assignCalculationsToGroup(workspaceId, { calculationIds, groupId });
-        alertService.success(groupId ? 'Gruppe zugeordnet' : 'Gruppenzuordnung entfernt');
+        alertService.success(groupId ? t('manage:calculations.groupAssigned') : t('manage:calculations.groupAssignmentRemoved'));
         setSelectedIds(new Set());
         refreshCocktailCalculations();
       } catch (error) {
-        alertApiV1Error(error, 'Fehler beim Zuordnen der Gruppe');
+        alertApiV1Error(error, t('errors:assignGroup'));
       }
     },
-    [workspaceId, refreshCocktailCalculations],
+    [workspaceId, refreshCocktailCalculations, t],
   );
 
   const openAssignGroupModal = useCallback(
     (calculationIds: string[]) => {
       if (calculationGroups.length === 0) {
-        alertService.error('Bitte zuerst eine Gruppe anlegen');
+        alertService.error(t('manage:calculations.createGroupFirst'));
         return;
       }
       modalContext.openModal(
         <div className={'grid grid-cols-1 gap-3 p-2'}>
-          <div className={'text-xl font-bold'}>Gruppe zuordnen</div>
+          <div className={'text-xl font-bold'}>{t('manage:calculations.assignGroup')}</div>
           <Select
             className="w-full"
             defaultValue={''}
@@ -208,7 +214,7 @@ const CocktailCalculationOverviewPage: NextPageWithPullToRefresh = () => {
             }}
           >
             <option value={''} disabled>
-              Gruppe auswählen
+              {t('manage:calculations.selectGroup')}
             </option>
             {calculationGroups.map((group) => (
               <option key={group.id} value={group.id}>
@@ -216,22 +222,22 @@ const CocktailCalculationOverviewPage: NextPageWithPullToRefresh = () => {
               </option>
             ))}
           </Select>
-          <div className={'text-xs opacity-70'}>Tipp: In der Kalkulation selbst kannst du die Gruppe auch per Suchfeld auswählen.</div>
+          <div className={'text-xs opacity-70'}>{t('manage:calculations.assignGroupTip')}</div>
         </div>,
       );
     },
-    [calculationGroups, modalContext, assignGroup],
+    [calculationGroups, modalContext, assignGroup, t],
   );
 
   const openCreateGroupModal = useCallback(() => {
     if (!workspaceId) return;
     modalContext.openModal(
       <div className={'grid grid-cols-1 gap-3 p-2'}>
-        <div className={'text-xl font-bold'}>Neue Gruppe</div>
-        <Input id={'new-calculation-group-name'} className="w-full" placeholder={'Gruppenname'} autoFocus />
+        <div className={'text-xl font-bold'}>{t('manage:calculations.newGroup')}</div>
+        <Input id={'new-calculation-group-name'} className="w-full" placeholder={t('manage:calculations.groupNamePlaceholder')} autoFocus />
         <Label className="cursor-pointer flex-row items-center justify-start gap-2">
           <Checkbox id={'new-calculation-group-expanded'} checkboxSize="sm" />
-          <LabelText>Standardmäßig aufgeklappt</LabelText>
+          <LabelText>{t('manage:calculations.defaultExpanded')}</LabelText>
         </Label>
         <Button
           type={'button'}
@@ -241,24 +247,24 @@ const CocktailCalculationOverviewPage: NextPageWithPullToRefresh = () => {
             const expandedInput = document.getElementById('new-calculation-group-expanded') as HTMLInputElement | null;
             const name = nameInput?.value?.trim() ?? '';
             if (!name) {
-              alertService.error('Bitte einen Gruppennamen eingeben');
+              alertService.error(t('manage:calculations.enterGroupName'));
               return;
             }
             try {
               await createCalculationGroup(workspaceId, { name, isDefaultExpanded: expandedInput?.checked ?? false });
               modalContext.closeAllModals();
-              alertService.success('Gruppe erstellt');
+              alertService.success(t('manage:calculations.groupCreated'));
               refreshCocktailCalculations();
             } catch (error) {
-              alertApiV1Error(error, 'Fehler beim Erstellen der Gruppe');
+              alertApiV1Error(error, t('errors:createGroup'));
             }
           }}
         >
-          Erstellen
+          {t('common:create')}
         </Button>
       </div>,
     );
-  }, [workspaceId, modalContext, refreshCocktailCalculations]);
+  }, [workspaceId, modalContext, refreshCocktailCalculations, t]);
 
   const handleToggleGroupDefaultExpanded = useCallback(
     async (group: CalculationGroupDto) => {
@@ -267,10 +273,10 @@ const CocktailCalculationOverviewPage: NextPageWithPullToRefresh = () => {
         await updateCalculationGroup(workspaceId, group.id, { name: group.name, isDefaultExpanded: !group.isDefaultExpanded });
         refreshCocktailCalculations();
       } catch (error) {
-        alertApiV1Error(error, 'Fehler beim Aktualisieren der Gruppe');
+        alertApiV1Error(error, t('errors:updateGroup'));
       }
     },
-    [workspaceId, refreshCocktailCalculations],
+    [workspaceId, refreshCocktailCalculations, t],
   );
 
   const handleDeleteGroup = useCallback(
@@ -278,23 +284,23 @@ const CocktailCalculationOverviewPage: NextPageWithPullToRefresh = () => {
       if (!workspaceId) return;
       modalContext.openModal(
         <ConfirmActionModal
-          title={'Gruppe löschen'}
-          message={`Soll die Gruppe "${group.name}" gelöscht werden?`}
-          confirmLabel={'Löschen'}
+          title={t('manage:calculations.deleteGroupTitle')}
+          message={t('manage:calculations.deleteGroupConfirm', { name: group.name })}
+          confirmLabel={t('common:delete')}
           confirmVariant={'error'}
           onConfirm={async () => {
             try {
               await deleteCalculationGroup(workspaceId, group.id);
-              alertService.success('Gruppe gelöscht');
+              alertService.success(t('entity:groupDeleted'));
               refreshCocktailCalculations();
             } catch (error) {
-              alertApiV1Error(error, 'Fehler beim Löschen der Gruppe');
+              alertApiV1Error(error, t('errors:deleteGroup'));
             }
           }}
         />,
       );
     },
-    [workspaceId, modalContext, refreshCocktailCalculations],
+    [workspaceId, modalContext, refreshCocktailCalculations, t],
   );
 
   const handleExportJson = useCallback(async () => {
@@ -308,8 +314,8 @@ const CocktailCalculationOverviewPage: NextPageWithPullToRefresh = () => {
       });
 
       if (!response.ok) {
-        const error = await response.json().catch(() => ({ message: 'Fehler beim Exportieren' }));
-        alertService.error(error.message ?? 'Fehler beim Exportieren');
+        const error = await response.json().catch(() => ({ message: t('errors:export') }));
+        alertService.error(error.message ?? t('errors:export'));
         return;
       }
 
@@ -323,15 +329,15 @@ const CocktailCalculationOverviewPage: NextPageWithPullToRefresh = () => {
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
-      alertService.success('JSON erfolgreich exportiert');
+      alertService.success(t('entity:jsonExported'));
       setSelectedIds(new Set());
     } catch (error) {
       console.error('JSON export error:', error);
-      alertService.error('Fehler beim Exportieren');
+      alertService.error(t('errors:export'));
     } finally {
       setExportingJson(false);
     }
-  }, [workspaceId, selectedIds]);
+  }, [workspaceId, selectedIds, t]);
 
   const handleExportSingleJson = useCallback(
     async (id: string) => {
@@ -345,8 +351,8 @@ const CocktailCalculationOverviewPage: NextPageWithPullToRefresh = () => {
         });
 
         if (!response.ok) {
-          const error = await response.json().catch(() => ({ message: 'Fehler beim Exportieren' }));
-          alertService.error(error.message ?? 'Fehler beim Exportieren');
+          const error = await response.json().catch(() => ({ message: t('errors:export') }));
+          alertService.error(error.message ?? t('errors:export'));
           return;
         }
 
@@ -361,15 +367,15 @@ const CocktailCalculationOverviewPage: NextPageWithPullToRefresh = () => {
         a.click();
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
-        alertService.success('JSON erfolgreich exportiert');
+        alertService.success(t('entity:jsonExported'));
       } catch (error) {
         console.error('JSON export error:', error);
-        alertService.error('Fehler beim Exportieren');
+        alertService.error(t('errors:export'));
       } finally {
         setExportingSingleId(null);
       }
     },
-    [workspaceId, cocktailCalculations],
+    [workspaceId, cocktailCalculations, t],
   );
 
   const handleBulkDelete = useCallback(() => {
@@ -378,9 +384,9 @@ const CocktailCalculationOverviewPage: NextPageWithPullToRefresh = () => {
     const ids = Array.from(selectedIds);
     modalContext.openModal(
       <ConfirmActionModal
-        title="Löschen"
-        message={`Möchtest du die ${count} ausgewählte${count === 1 ? '' : 'n'} Kalkulation${count === 1 ? '' : 'en'} wirklich löschen?`}
-        confirmLabel="Löschen"
+        title={t('common:delete')}
+        message={t('manage:calculations.deleteCalculationsConfirm', { count })}
+        confirmLabel={t('common:delete')}
         confirmVariant="error"
         onConfirm={async () => {
           try {
@@ -389,26 +395,26 @@ const CocktailCalculationOverviewPage: NextPageWithPullToRefresh = () => {
             }
             setSelectedIds(new Set());
             refreshCocktailCalculations();
-            alertService.success(`${count} Kalkulation${count === 1 ? '' : 'en'} gelöscht`);
+            alertService.success(t('manage:calculations.calculationsDeleted', { count }));
           } catch (error) {
-            alertApiV1Error(error, 'Löschen fehlgeschlagen');
+            alertApiV1Error(error, t('errors:deleteFailed'));
           }
         }}
       />,
     );
-  }, [workspaceId, selectedIds, modalContext, refreshCocktailCalculations]);
+  }, [workspaceId, selectedIds, modalContext, refreshCocktailCalculations, t]);
 
   return (
     <ManageEntityLayout
       backLink={`/workspaces/${workspaceId}/manage`}
-      title={'Kalkulationen'}
+      title={t('entity:plural.calculations')}
       actions={
         <div className={'flex items-center gap-2'}>
           {selectedIds.size > 0 && (
             <Dropdown align="end">
               <Button type="button" variant="outline" size="sm" className="md:h-10 md:min-h-10 md:px-4" tabIndex={0}>
                 <FaFileDownload />
-                {selectedIds.size} ausgewählt
+                {t('manage:selectedCount', { count: selectedIds.size })}
                 <FaChevronDown />
               </Button>
               <DropdownContent tabIndex={0} className="z-[1] mt-2 block w-72">
@@ -419,26 +425,26 @@ const CocktailCalculationOverviewPage: NextPageWithPullToRefresh = () => {
                   <li>
                     <button type="button" onClick={handleExportJson} disabled={exportingJson}>
                       {exportingJson ? <UiLoading size="sm" /> : <FaFileDownload />}
-                      Als JSON exportieren ({selectedIds.size})
+                      {t('manage:exportAsJsonCount', { count: selectedIds.size })}
                     </button>
                   </li>
                   <li>
                     <button type="button" onClick={() => openAssignGroupModal(Array.from(selectedIds))}>
                       <FaLayerGroup />
-                      Gruppe zuordnen ({selectedIds.size})
+                      {t('manage:calculations.assignGroupCount', { count: selectedIds.size })}
                     </button>
                   </li>
                   <li>
                     <button type="button" onClick={() => assignGroup(Array.from(selectedIds), null)}>
                       <FaLayerGroup />
-                      Gruppenzuordnung entfernen ({selectedIds.size})
+                      {t('manage:calculations.removeGroupAssignmentCount', { count: selectedIds.size })}
                     </button>
                   </li>
                   {userContext.isUserPermitted(Role.ADMIN) && (
                     <li>
                       <button type="button" className="text-error" onClick={handleBulkDelete}>
                         <FaTrashAlt />
-                        Löschen ({selectedIds.size})
+                        {t('manage:deleteCount', { count: selectedIds.size })}
                       </button>
                     </li>
                   )}
@@ -449,7 +455,7 @@ const CocktailCalculationOverviewPage: NextPageWithPullToRefresh = () => {
           <Dropdown align="end">
             <Button type="button" variant="outline" size="sm" className="md:h-10 md:min-h-10 md:px-4" tabIndex={0}>
               <FaLayerGroup />
-              Gruppen
+              {t('manage:calculations.groups')}
               <FaChevronDown />
             </Button>
             <DropdownContent tabIndex={0} className="z-[1] mt-2 block w-80">
@@ -460,15 +466,15 @@ const CocktailCalculationOverviewPage: NextPageWithPullToRefresh = () => {
                 <li>
                   <button type={'button'} onClick={openCreateGroupModal}>
                     <FaPlus />
-                    Neue Gruppe anlegen
+                    {t('manage:calculations.createNewGroup')}
                   </button>
                 </li>
                 <li className="pointer-events-none px-3 py-1 text-xs font-semibold uppercase opacity-60">
-                  <span>Vorhandene Gruppen</span>
+                  <span>{t('manage:calculations.existingGroups')}</span>
                 </li>
                 {calculationGroups.length === 0 ? (
                   <li>
-                    <span className={'opacity-70'}>Noch keine Gruppen vorhanden</span>
+                    <span className={'opacity-70'}>{t('manage:calculations.noGroupsYet')}</span>
                   </li>
                 ) : (
                   calculationGroups.map((group) => (
@@ -479,9 +485,9 @@ const CocktailCalculationOverviewPage: NextPageWithPullToRefresh = () => {
                         </span>
                         <div className={'flex items-center gap-1'}>
                           <Button type={'button'} variant="ghost" size="xs" onClick={() => handleToggleGroupDefaultExpanded(group)}>
-                            {group.isDefaultExpanded ? 'Standard: Auf' : 'Standard: Zu'}
+                            {group.isDefaultExpanded ? t('manage:calculations.standardOn') : t('manage:calculations.standardOff')}
                           </Button>
-                          <Tooltip tip={`Gruppe "${group.name}" löschen`}>
+                          <Tooltip tip={t('manage:calculations.deleteGroupTooltip', { name: group.name })}>
                             <Button type={'button'} variant="ghost" size="xs" className="text-error" onClick={() => handleDeleteGroup(group)}>
                               <FaTrashAlt />
                             </Button>
@@ -497,7 +503,7 @@ const CocktailCalculationOverviewPage: NextPageWithPullToRefresh = () => {
           <Dropdown align="end">
             <Button type="button" variant="outline" size="sm" className="md:h-10 md:min-h-10 md:px-4" tabIndex={0}>
               <FaFileUpload />
-              Import
+              {t('common:import')}
               <FaChevronDown />
             </Button>
             <DropdownContent tabIndex={0} className="z-[1] mt-2 block w-52">
@@ -516,7 +522,7 @@ const CocktailCalculationOverviewPage: NextPageWithPullToRefresh = () => {
                     }}
                   >
                     <FaFileUpload />
-                    Aus JSON importieren
+                    {t('manage:importFromJson')}
                   </button>
                 </li>
               </Menu>
@@ -542,17 +548,17 @@ const CocktailCalculationOverviewPage: NextPageWithPullToRefresh = () => {
                       checkboxSize="sm"
                       checked={sortedCalculations.length > 0 && sortedCalculations.every((c) => selectedIds.has(c.id))}
                       onChange={handleToggleSelectAll}
-                      aria-label="Alle auswählen"
+                      aria-label={t('common:selectAll')}
                     />
                   </TableHeaderCell>
                   <SortableHeaderCell sortKey="name" activeSortKey={sortKey} direction={sortDirection} onSort={handleSort}>
-                    Name
+                    {t('common:name')}
                   </SortableHeaderCell>
                   <SortableHeaderCell sortKey="cocktails" activeSortKey={sortKey} direction={sortDirection} onSort={handleSort}>
-                    Cocktails
+                    {t('nav:cocktails')}
                   </SortableHeaderCell>
                   <SortableHeaderCell sortKey="updatedAt" activeSortKey={sortKey} direction={sortDirection} onSort={handleSort}>
-                    Zuletzt bearbeitet
+                    {t('manage:lastEdited')}
                   </SortableHeaderCell>
                   <TableHeaderCell></TableHeaderCell>
                 </TableRow>
@@ -563,7 +569,7 @@ const CocktailCalculationOverviewPage: NextPageWithPullToRefresh = () => {
                 ) : sortedCalculations.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={5} className={'text-center'}>
-                      Keine Einträge gefunden
+                      {t('manage:noEntriesFound')}
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -610,12 +616,12 @@ const CocktailCalculationOverviewPage: NextPageWithPullToRefresh = () => {
                                 exportingJson={exportingSingleId === cocktailCalculation.id}
                                 customActions={[
                                   {
-                                    label: 'Gruppe zuordnen',
+                                    label: t('manage:calculations.assignGroup'),
                                     icon: <FaLayerGroup />,
                                     onClick: (id) => openAssignGroupModal([id]),
                                   },
                                   {
-                                    label: 'Gruppenzuordnung entfernen',
+                                    label: t('manage:calculations.removeGroupAssignment'),
                                     icon: <FaLayerGroup />,
                                     onClick: (id) => assignGroup([id], null),
                                   },
@@ -629,7 +635,9 @@ const CocktailCalculationOverviewPage: NextPageWithPullToRefresh = () => {
                       <>
                         <TableRow className={'bg-base-200'}>
                           <TableCell colSpan={5}>
-                            <div className={'px-2 py-1 font-semibold'}>Ohne Gruppe ({groupedCalculations.ungrouped.length})</div>
+                            <div className={'px-2 py-1 font-semibold'}>
+                              {t('manage:calculations.ungrouped', { count: groupedCalculations.ungrouped.length })}
+                            </div>
                           </TableCell>
                         </TableRow>
                         {groupedCalculations.ungrouped.map((cocktailCalculation) => (
@@ -662,7 +670,7 @@ const CocktailCalculationOverviewPage: NextPageWithPullToRefresh = () => {
                               exportingJson={exportingSingleId === cocktailCalculation.id}
                               customActions={[
                                 {
-                                  label: 'Gruppe zuordnen',
+                                  label: t('manage:calculations.assignGroup'),
                                   icon: <FaLayerGroup />,
                                   onClick: (id) => openAssignGroupModal([id]),
                                 },

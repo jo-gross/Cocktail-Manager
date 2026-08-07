@@ -1,4 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useRouter } from 'next/router';
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import { UserContext } from '@lib/context/UserContextProvider';
@@ -40,39 +41,46 @@ type AuditLog = AuditLogDto & {
 
 const LONG_TEXT_FIELDS = ['description', 'preparation', 'history', 'notes'];
 
-/** Maps snapshot keys to German UI header labels */
-const GROUP_HEADERS: Record<string, string> = {
-  name: 'Name',
-  description: 'Beschreibung',
-  preparation: 'Zubereitung',
-  history: 'Geschichte',
-  price: 'Preis',
-  glass: 'Glas',
-  ice: 'Eis',
-  image: 'Bild',
-  tags: 'Tags',
-  steps: 'Schritte',
-  garnishes: 'Garnituren',
-  notes: 'Notizen',
-  volume: 'Volumen',
-  deposit: 'Pfand',
-  shortName: 'Kurzname',
-  link: 'Link',
-  units: 'Einheiten',
-  showSalesInfo: 'Betriebswirtschaftliche Ansicht',
-  cocktails: 'Cocktails',
-  shoppingUnits: 'Einkaufsliste Einheiten',
-  unit: 'Einheit',
-  checked: 'Ausgewählt',
-  plannedAmount: 'Geplante Menge',
-  customPrice: 'Sonderpreis',
-};
+/** Maps snapshot keys to i18n header keys under entity:auditHeader.* */
+const GROUP_HEADER_KEYS = {
+  name: 'name',
+  description: 'description',
+  preparation: 'preparation',
+  history: 'history',
+  price: 'price',
+  glass: 'glass',
+  ice: 'ice',
+  image: 'image',
+  tags: 'tags',
+  steps: 'steps',
+  garnishes: 'garnishes',
+  notes: 'notes',
+  volume: 'volume',
+  deposit: 'deposit',
+  shortName: 'shortName',
+  link: 'link',
+  units: 'units',
+  showSalesInfo: 'showSalesInfo',
+  cocktails: 'cocktails',
+  shoppingUnits: 'shoppingUnits',
+  unit: 'unit',
+  checked: 'checked',
+  plannedAmount: 'plannedAmount',
+  customPrice: 'customPrice',
+} as const;
+
+type AuditHeaderKey = (typeof GROUP_HEADER_KEYS)[keyof typeof GROUP_HEADER_KEYS];
+
+function isAuditHeaderKey(value: string): value is AuditHeaderKey {
+  return Object.prototype.hasOwnProperty.call(GROUP_HEADER_KEYS, value);
+}
 
 export function AuditLogHistoryModal({ entityType, entityId, entityName }: AuditLogHistoryModalProps) {
   const router = useRouter();
   const workspaceId = router.query.workspaceId as string | undefined;
   const modalContext = useContext(ModalContext);
   const userContext = useContext(UserContext);
+  const { t: ti18n } = useTranslation(['common', 'entity', 'cocktail']);
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -82,7 +90,7 @@ export function AuditLogHistoryModal({ entityType, entityId, entityName }: Audit
     }
   }, [workspaceId, entityId, entityType]);
 
-  const t = (text: string) => userContext.getTranslation(text, 'de');
+  const t = (text: string) => userContext.getTranslation(text);
 
   /**
    * Collects all changed paths from the changes array into a Map of
@@ -128,7 +136,7 @@ export function AuditLogHistoryModal({ entityType, entityId, entityName }: Audit
 
     return (
       <div className="overflow-hidden rounded border bg-base-100">
-        <div className="border-b bg-base-200 px-3 py-1 font-bold text-base-content">Tags</div>
+        <div className="border-b bg-base-200 px-3 py-1 font-bold text-base-content">{ti18n('entity:auditHeader.tags')}</div>
         <div className="flex flex-row flex-wrap gap-1.5 p-2">
           {allTags.map((tag) => {
             if (removedTags.has(tag)) {
@@ -187,16 +195,16 @@ export function AuditLogHistoryModal({ entityType, entityId, entityName }: Audit
 
     return (
       <div className="overflow-hidden rounded border bg-base-100">
-        <div className="border-b bg-base-200 px-3 py-1 font-bold text-base-content">Schritte</div>
+        <div className="border-b bg-base-200 px-3 py-1 font-bold text-base-content">{ti18n('entity:auditHeader.steps')}</div>
         <div className="flex flex-col p-2">
-          {hasPositionChange && <div className="mb-2 px-1 text-xs text-info italic">Reihenfolge der Schritte wurde geändert</div>}
+          {hasPositionChange && <div className="mb-2 px-1 text-xs text-info italic">{ti18n('entity:auditStepOrderChanged')}</div>}
 
           {/* Removed steps */}
           {Array.from(removedSteps.entries()).map(([stepKey, stepData]) => (
             <div key={`removed-${stepKey}`} className="mb-2 border-b border-base-200 pb-2 opacity-60 last:mb-0 last:border-b-0 last:pb-0">
               <div className="font-bold text-error line-through">
                 − {t(String(stepData?.action || stepKey))}
-                {stepData?.optional === true ? <>{' (optional)'}</> : null}
+                {stepData?.optional === true ? <>{ti18n('cocktail:optional')}</> : null}
               </div>
               {stepData?.ingredients
                 ? Object.entries(stepData.ingredients as Record<string, Record<string, unknown>>).map(([ingName, ing]: [string, Record<string, unknown>]) => (
@@ -205,7 +213,7 @@ export function AuditLogHistoryModal({ entityType, entityId, entityName }: Audit
                       <span>{ing?.unit ? t(String(ing.unit)) : ''}</span>
                       <span>
                         {ingName}
-                        {ing?.optional === true ? <>{' (optional)'}</> : null}
+                        {ing?.optional === true ? <>{ti18n('cocktail:optional')}</> : null}
                       </span>
                     </div>
                   ))
@@ -246,26 +254,26 @@ export function AuditLogHistoryModal({ entityType, entityId, entityName }: Audit
                       if (optChange.kind === 'N' || (optChange.kind === 'E' && stepData?.optional === true)) {
                         return (
                           <Badge variant="success" size="xs" outline>
-                            + optional
+                            {ti18n('common:plusOptional')}
                           </Badge>
                         );
                       }
                       if (optChange.kind === 'D' || (optChange.kind === 'E' && stepData?.optional !== true)) {
                         return (
                           <Badge variant="error" size="xs" outline className="line-through">
-                            optional
+                            {ti18n('common:optionalLower')}
                           </Badge>
                         );
                       }
                     }
-                    return stepData?.optional === true ? <span className="text-xs font-normal text-base-content/50">(optional)</span> : null;
+                    return stepData?.optional === true ? <span className="text-xs font-normal text-base-content/50">{ti18n('cocktail:optional')}</span> : null;
                   })()}
                 </div>
                 {/* Ingredient order change indicator */}
                 {changes.some(
                   (c: AuditChange) =>
                     c.kind === 'E' && c.path?.[0] === 'steps' && c.path?.[1] === stepKey && c.path?.[2] === 'ingredients' && c.path?.[4] === 'position',
-                ) && <div className="pl-2 text-xs text-info italic">Reihenfolge der Zutaten wurde geändert</div>}
+                ) && <div className="pl-2 text-xs text-info italic">{ti18n('entity:auditIngredientOrderChanged')}</div>}
                 {/* Ingredients */}
                 {sortedIngredients.map(([ingName, ing]: [string, Record<string, unknown>]) => {
                   const ingBase = `steps.${stepKey}.ingredients.${ingName}`;
@@ -314,15 +322,15 @@ export function AuditLogHistoryModal({ entityType, entityId, entityName }: Audit
                       {optionalChange ? (
                         optionalChange.kind === 'N' || (optionalChange.kind === 'E' && ing?.optional === true) ? (
                           <Badge variant="success" size="xs" outline>
-                            + optional
+                            {ti18n('common:plusOptional')}
                           </Badge>
                         ) : optionalChange.kind === 'D' || (optionalChange.kind === 'E' && ing?.optional !== true) ? (
                           <Badge variant="error" size="xs" outline className="line-through">
-                            optional
+                            {ti18n('common:optionalLower')}
                           </Badge>
                         ) : null
                       ) : (
-                        ing?.optional === true && <span className="text-xs text-base-content/50">(optional)</span>
+                        ing?.optional === true && <span className="text-xs text-base-content/50">{ti18n('cocktail:optional')}</span>
                       )}
                     </div>
                   );
@@ -342,7 +350,7 @@ export function AuditLogHistoryModal({ entityType, entityId, entityName }: Audit
                         <span>{Number(removedIng?.amount)?.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 }) ?? ''}</span>
                         <span>{removedIng?.unit ? t(String(removedIng.unit)) : ''}</span>
                         <span>{String(removedIngName)}</span>
-                        {removedIng?.optional === true && <span>(optional)</span>}
+                        {removedIng?.optional === true && <span>{ti18n('cocktail:optional')}</span>}
                       </div>
                     );
                   })}
@@ -383,16 +391,16 @@ export function AuditLogHistoryModal({ entityType, entityId, entityName }: Audit
 
     return (
       <div className="overflow-hidden rounded border bg-base-100">
-        <div className="border-b bg-base-200 px-3 py-1 font-bold text-base-content">Garnituren</div>
+        <div className="border-b bg-base-200 px-3 py-1 font-bold text-base-content">{ti18n('entity:auditHeader.garnishes')}</div>
         <div className="flex flex-col gap-1.5 p-2">
-          {hasPositionChange && <div className="px-1 text-xs text-info italic">Reihenfolge der Garnituren wurde geändert</div>}
+          {hasPositionChange && <div className="px-1 text-xs text-info italic">{ti18n('entity:auditGarnishOrderChanged')}</div>}
           {/* Removed */}
           {Array.from(removedGarnishes.entries()).map(([name, data]: [string, Record<string, unknown>]) => (
             <div key={`removed-${name}`} className="flex flex-wrap items-center gap-1.5 pl-2 text-sm text-error/70 line-through">
               <span>−</span>
-              {data?.alternative === true ? <span className="font-bold">oder</span> : null}
+              {data?.alternative === true ? <span className="font-bold">{ti18n('common:or')}</span> : null}
               <span>{name}</span>
-              {data?.optional === true && <span>(optional)</span>}
+              {data?.optional === true && <span>{ti18n('cocktail:optional')}</span>}
               {data?.note != null && data?.note !== '' && <span className="text-base-content/50">– {String(data.note)}</span>}
             </div>
           ))}
@@ -412,32 +420,32 @@ export function AuditLogHistoryModal({ entityType, entityId, entityName }: Audit
                   {alternativeChange ? (
                     alternativeChange.kind === 'N' || (alternativeChange.kind === 'E' && data?.alternative === true) ? (
                       <Badge variant="success" size="xs" outline>
-                        + oder
+                        {ti18n('common:plusOr')}
                       </Badge>
                     ) : alternativeChange.kind === 'D' || (alternativeChange.kind === 'E' && data?.alternative !== true) ? (
                       <Badge variant="error" size="xs" outline className="line-through">
-                        oder
+                        {ti18n('common:or')}
                       </Badge>
                     ) : (
-                      Boolean(data?.alternative) && <span className="font-bold">oder</span>
+                      Boolean(data?.alternative) && <span className="font-bold">{ti18n('common:or')}</span>
                     )
                   ) : (
-                    Boolean(data?.alternative) && <span className="font-bold">oder</span>
+                    Boolean(data?.alternative) && <span className="font-bold">{ti18n('common:or')}</span>
                   )}
                   <span>{name}</span>
                   {/* Optional status */}
                   {optionalChange ? (
                     optionalChange.kind === 'N' || (optionalChange.kind === 'E' && data?.optional === true) ? (
                       <Badge variant="success" size="xs" outline>
-                        + optional
+                        {ti18n('common:plusOptional')}
                       </Badge>
                     ) : optionalChange.kind === 'D' || (optionalChange.kind === 'E' && data?.optional !== true) ? (
                       <Badge variant="error" size="xs" outline className="line-through">
-                        optional
+                        {ti18n('common:optionalLower')}
                       </Badge>
                     ) : null
                   ) : data?.optional === true ? (
-                    <span className="text-xs text-base-content/50">(optional)</span>
+                    <span className="text-xs text-base-content/50">{ti18n('cocktail:optional')}</span>
                   ) : null}
                 </div>
                 {/* Note change */}
@@ -445,23 +453,29 @@ export function AuditLogHistoryModal({ entityType, entityId, entityName }: Audit
                   <div className="mt-0.5 pl-4">
                     {noteChange.kind === 'E' && (
                       <div className="flex flex-col gap-0.5">
-                        {!isUndefinedish(noteChange.lhs) && <span className="text-xs text-error line-through">Notiz: {String(noteChange.lhs)}</span>}
-                        {!isUndefinedish(noteChange.rhs) && <span className="text-xs text-success">Notiz: {String(noteChange.rhs)}</span>}
+                        {!isUndefinedish(noteChange.lhs) && (
+                          <span className="text-xs text-error line-through">{ti18n('common:notePrefix', { note: String(noteChange.lhs) })}</span>
+                        )}
+                        {!isUndefinedish(noteChange.rhs) && (
+                          <span className="text-xs text-success">{ti18n('common:notePrefix', { note: String(noteChange.rhs) })}</span>
+                        )}
                       </div>
                     )}
                     {noteChange.kind === 'N' && !isUndefinedish(noteChange.rhs) && (
-                      <span className="text-xs text-success">+ Notiz: {String(noteChange.rhs)}</span>
+                      <span className="text-xs text-success">{ti18n('common:plusNotePrefix', { note: String(noteChange.rhs) })}</span>
                     )}
                     {noteChange.kind === 'D' && !isUndefinedish(noteChange.lhs) && (
-                      <span className="text-xs text-error line-through">Notiz: {String(noteChange.lhs)}</span>
+                      <span className="text-xs text-error line-through">{ti18n('common:notePrefix', { note: String(noteChange.lhs) })}</span>
                     )}
                   </div>
                 ) : (
                   data?.note != null &&
                   data?.note !== '' &&
-                  !isNew && <div className="mt-0.5 pl-4 text-xs text-base-content/50">Notiz: {String(data.note)}</div>
+                  !isNew && <div className="mt-0.5 pl-4 text-xs text-base-content/50">{ti18n('common:notePrefix', { note: String(data.note) })}</div>
                 )}
-                {isNew && data?.note != null && data?.note !== '' && <div className="mt-0.5 pl-4 text-xs">Notiz: {String(data.note)}</div>}
+                {isNew && data?.note != null && data?.note !== '' && (
+                  <div className="mt-0.5 pl-4 text-xs">{ti18n('common:notePrefix', { note: String(data.note) })}</div>
+                )}
               </div>
             );
           })}
@@ -498,7 +512,7 @@ export function AuditLogHistoryModal({ entityType, entityId, entityName }: Audit
 
     return (
       <div className="overflow-hidden rounded border bg-base-100">
-        <div className="border-b bg-base-200 px-3 py-1 font-bold text-base-content">Einheiten</div>
+        <div className="border-b bg-base-200 px-3 py-1 font-bold text-base-content">{ti18n('entity:auditHeader.units')}</div>
         <div className="flex flex-col gap-1 p-2">
           {allUnitNames.map((unitName) => {
             if (removedUnits.has(unitName)) {
@@ -558,7 +572,7 @@ export function AuditLogHistoryModal({ entityType, entityId, entityName }: Audit
 
     return (
       <div className="overflow-hidden rounded border bg-base-100">
-        <div className="border-b bg-base-200 px-3 py-1 font-bold text-base-content">Cocktails</div>
+        <div className="border-b bg-base-200 px-3 py-1 font-bold text-base-content">{ti18n('entity:auditHeader.cocktails')}</div>
         <div className="flex flex-col gap-1 p-2">
           {/* Removed cocktails */}
           {Array.from(removedCocktails.entries()).map(([name, data]: [string, Record<string, unknown>]) => (
@@ -566,7 +580,7 @@ export function AuditLogHistoryModal({ entityType, entityId, entityName }: Audit
               <span>−</span>
               <span>{name}</span>
               {data?.plannedAmount != null && <span className="text-base-content/50">× {String(data.plannedAmount)}</span>}
-              {data?.customPrice != null && <span className="text-base-content/50">({String(data.customPrice)} €)</span>}
+              {data?.customPrice != null && <span className="text-base-content/50">{ti18n('common:euroParen', { value: String(data.customPrice) })}</span>}
             </div>
           ))}
           {/* Current cocktails */}
@@ -595,19 +609,24 @@ export function AuditLogHistoryModal({ entityType, entityId, entityName }: Audit
                 {priceChange ? (
                   priceChange.kind === 'E' ? (
                     <span className="flex items-center gap-1">
-                      {!isUndefinedish(priceChange.lhs) && <span className="text-error line-through">({String(priceChange.lhs)} €)</span>}
+                      {!isUndefinedish(priceChange.lhs) && (
+                        <span className="text-error line-through">{ti18n('common:euroParen', { value: String(priceChange.lhs) })}</span>
+                      )}
                       <span className="text-base-content/50">→</span>
-                      {!isUndefinedish(priceChange.rhs) && <span className="font-medium text-success">({String(priceChange.rhs)} €)</span>}
+                      {!isUndefinedish(priceChange.rhs) && (
+                        <span className="font-medium text-success">{ti18n('common:euroParen', { value: String(priceChange.rhs) })}</span>
+                      )}
                     </span>
                   ) : priceChange.kind === 'N' && !isUndefinedish(priceChange.rhs) ? (
-                    <span className="font-medium text-success">+ Sonderpreis: {String(priceChange.rhs)} €</span>
+                    <span className="font-medium text-success">{ti18n('common:plusCustomPriceLabel', { price: String(priceChange.rhs) })}</span>
                   ) : priceChange.kind === 'D' && !isUndefinedish(priceChange.lhs) ? (
-                    <span className="text-error line-through">Sonderpreis: {String(priceChange.lhs)} €</span>
+                    <span className="text-error line-through">{ti18n('common:customPriceLabel', { price: String(priceChange.lhs) })}</span>
                   ) : null
                 ) : (
-                  data?.customPrice != null && !isAdded && <span className="text-base-content/50">({String(data.customPrice)} €)</span>
+                  data?.customPrice != null &&
+                  !isAdded && <span className="text-base-content/50">{ti18n('common:euroParen', { value: String(data.customPrice) })}</span>
                 )}
-                {isAdded && data?.customPrice != null && <span>({String(data.customPrice)} €)</span>}
+                {isAdded && data?.customPrice != null && <span>{ti18n('common:euroParen', { value: String(data.customPrice) })}</span>}
               </div>
             );
           })}
@@ -641,7 +660,7 @@ export function AuditLogHistoryModal({ entityType, entityId, entityName }: Audit
 
     return (
       <div className="overflow-hidden rounded border bg-base-100">
-        <div className="border-b bg-base-200 px-3 py-1 font-bold text-base-content">Einkaufsliste Einheiten</div>
+        <div className="border-b bg-base-200 px-3 py-1 font-bold text-base-content">{ti18n('entity:auditHeader.shoppingUnits')}</div>
         <div className="flex flex-col gap-1 p-2">
           {/* Removed units */}
           {Array.from(removedUnits.entries()).map(([ingredientName, data]: [string, Record<string, unknown>]) => (
@@ -676,14 +695,14 @@ export function AuditLogHistoryModal({ entityType, entityId, entityName }: Audit
                 {/* Checked state */}
                 {checkedChange &&
                   (checkedChange.kind === 'N' ? (
-                    <span className="font-medium text-success">✓</span>
+                    <span className="font-medium text-success">{String.fromCharCode(0x2713)}</span>
                   ) : checkedChange.kind === 'D' ? (
-                    <span className="text-error line-through">✓</span>
+                    <span className="text-error line-through">{String.fromCharCode(0x2713)}</span>
                   ) : checkedChange.kind === 'E' ? (
                     checkedChange.rhs === true ? (
-                      <span className="font-medium text-success">+ ausgewählt</span>
+                      <span className="font-medium text-success">{ti18n('common:plusSelected')}</span>
                     ) : (
-                      <span className="text-error">− abgewählt</span>
+                      <span className="text-error">{ti18n('common:minusDeselected')}</span>
                     )
                   ) : null)}
               </div>
@@ -698,20 +717,20 @@ export function AuditLogHistoryModal({ entityType, entityId, entityName }: Audit
 
   /** Translates snapshot values to German display values */
   const displayValue = (val: string, useTranslation = false): string => {
-    if (val === 'true') return 'Ja';
+    if (val === 'true') return ti18n('common:yes');
     if (useTranslation) return t(val);
     return val;
   };
 
   /** Translates snapshot sub-path keys to German labels */
   const displaySubPath = (pathSegments: string[]): string => {
-    return pathSegments.map((seg) => GROUP_HEADERS[seg] || seg).join(' › ');
+    return pathSegments.map((seg) => (isAuditHeaderKey(seg) ? ti18n(`entity:auditHeader.${GROUP_HEADER_KEYS[seg]}`) : seg)).join(' › ');
   };
 
   const renderGeneralChanges = (group: string, changes: AuditChange[]) => {
     const isLongText = LONG_TEXT_FIELDS.includes(group);
     const isIce = group === 'ice';
-    const headerLabel = GROUP_HEADERS[group] || group;
+    const headerLabel = isAuditHeaderKey(group) ? ti18n(`entity:auditHeader.${GROUP_HEADER_KEYS[group]}`) : group;
 
     const renderedChanges = changes
       .map((change: AuditChange, index: number) => {
@@ -729,7 +748,7 @@ export function AuditLogHistoryModal({ entityType, entityId, entityName }: Audit
           if (isPosition) {
             return (
               <div key={index} className="flex items-center gap-2">
-                {subPath && <span className="text-base-content/50">Reihenfolge:</span>}
+                {subPath && <span className="text-base-content/50">{ti18n('entity:auditOrder')}</span>}
                 <span className="text-error line-through">{String(lhsRaw)}</span>
                 <span className="text-base-content/50">→</span>
                 <span className="font-medium text-success">{String(rhsRaw)}</span>
@@ -832,13 +851,13 @@ export function AuditLogHistoryModal({ entityType, entityId, entityName }: Audit
     let displayLabel = '';
     let color = '';
     if (change.kind === 'N') {
-      displayLabel = '+ Hinzugefügt';
+      displayLabel = ti18n('entity:auditImageAdded');
       color = 'text-success';
     } else if (change.kind === 'D') {
-      displayLabel = '− Entfernt';
+      displayLabel = ti18n('entity:auditImageRemoved');
       color = 'text-error';
     } else if (change.kind === 'E') {
-      displayLabel = '+ Geändert';
+      displayLabel = ti18n('entity:auditImageChanged');
       color = 'text-info';
     }
 
@@ -846,7 +865,7 @@ export function AuditLogHistoryModal({ entityType, entityId, entityName }: Audit
 
     return (
       <div className="overflow-hidden rounded border bg-base-100">
-        <div className="border-b bg-base-200 px-3 py-1 font-bold text-base-content">Bild</div>
+        <div className="border-b bg-base-200 px-3 py-1 font-bold text-base-content">{ti18n('entity:auditHeader.image')}</div>
         <div className="p-2">
           <span className={`font-medium ${color}`}>{displayLabel}</span>
         </div>
@@ -860,11 +879,11 @@ export function AuditLogHistoryModal({ entityType, entityId, entityName }: Audit
     if (log.action === 'CREATE') {
       const changesRecord = log.changes as Record<string, unknown> | undefined;
       const name = String(changesRecord?.name ?? log.snapshot?.name ?? entityName);
-      return <div className="text-sm text-success">+ &quot;{name}&quot; hinzugefügt</div>;
+      return <div className="text-sm text-success">{ti18n('entity:auditEntityAdded', { name })}</div>;
     }
 
     if (log.action === 'DELETE') {
-      return <div className="text-sm text-error">− &quot;{entityName}&quot; gelöscht</div>;
+      return <div className="text-sm text-error">{ti18n('entity:auditEntityDeleted', { name: entityName })}</div>;
     }
 
     if (log.action === 'UPDATE' && Array.isArray(log.changes)) {
@@ -897,7 +916,7 @@ export function AuditLogHistoryModal({ entityType, entityId, entityName }: Audit
   return (
     <div className={'flex h-full max-h-[80vh] flex-col gap-4'}>
       <div>
-        <div className={'text-2xl font-bold'}>Bearbeitungshistorie</div>
+        <div className={'text-2xl font-bold'}>{ti18n('entity:auditHistoryTitle')}</div>
         <div className="text-sm text-base-content/60">{entityName}</div>
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto">
@@ -906,7 +925,7 @@ export function AuditLogHistoryModal({ entityType, entityId, entityName }: Audit
             <Loading size="lg" />
           </div>
         ) : logs.length === 0 ? (
-          <div className="p-4 text-center text-base-content/60">Kein Verlauf gefunden.</div>
+          <div className="p-4 text-center text-base-content/60">{ti18n('entity:auditNoHistory')}</div>
         ) : (
           <div className="flex flex-col gap-4">
             {logs
@@ -921,13 +940,13 @@ export function AuditLogHistoryModal({ entityType, entityId, entityName }: Audit
                         <div className="flex h-6 w-6 items-center justify-center rounded-full text-xs">{log.user?.name?.[0] || '?'}</div>
                       )}
                       <div className="flex flex-col">
-                        <span className="text-sm font-semibold">{log.user?.name || 'Unbekannt'}</span>
+                        <span className="text-sm font-semibold">{log.user?.name || ti18n('common:unknown')}</span>
                         <span className="text-xs text-base-content/60">{formatDateTime(new Date(log.createdAt))}</span>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
                       <Badge size="sm" outline variant={log.action === 'CREATE' ? 'success' : log.action === 'DELETE' ? 'error' : 'info'}>
-                        {log.action === 'CREATE' ? 'Erstellt' : log.action === 'UPDATE' ? 'Aktualisiert' : 'Gelöscht'}
+                        {log.action === 'CREATE' ? ti18n('common:created') : log.action === 'UPDATE' ? ti18n('common:updated') : ti18n('common:deleted')}
                       </Badge>
                       {(log.exportData || log.snapshot) && (
                         <Button
@@ -945,7 +964,7 @@ export function AuditLogHistoryModal({ entityType, entityId, entityName }: Audit
                             a.download = `${entityName}_${formatDateTimeCompact(new Date(log.createdAt))}.json`;
                             a.click();
                           }}
-                          title="Export"
+                          title={ti18n('common:export')}
                         >
                           <FaFileDownload />
                         </Button>
@@ -961,7 +980,7 @@ export function AuditLogHistoryModal({ entityType, entityId, entityName }: Audit
 
       <div className="flex shrink-0 justify-end border-base-200">
         <Button variant="outline" onClick={() => modalContext.closeModal()}>
-          Schließen
+          {ti18n('common:close')}
         </Button>
       </div>
     </div>

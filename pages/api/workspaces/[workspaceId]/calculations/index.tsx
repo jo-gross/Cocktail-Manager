@@ -42,7 +42,7 @@ const legacyHandler = withHttpMethods({
             select: { id: true },
           });
           if (!group) {
-            throw new Error('Ungültige Gruppe');
+            throw new Error('Invalid group');
           }
           targetGroupId = group.id;
         }
