@@ -2810,6 +2810,14 @@
           "showFooter": {
             "type": "boolean",
             "description": "Render a page footer with page numbers (default false)."
+          },
+          "locale": {
+            "type": "string",
+            "enum": [
+              "de",
+              "en"
+            ],
+            "description": "UI locale for PDF chrome labels (default de)."
           }
         },
         "required": [
