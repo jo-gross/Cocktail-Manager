@@ -4,6 +4,12 @@ export type AppLocale = (typeof SUPPORTED_LOCALES)[number];
 
 export const DEFAULT_LOCALE: AppLocale = 'de';
 
+/** Unicode regional flags shown next to locale names in the UI. */
+export const LOCALE_FLAGS: Record<AppLocale, string> = {
+  de: '🇩🇪',
+  en: '🇬🇧',
+};
+
 export function isAppLocale(value: string | null | undefined): value is AppLocale {
   return value === 'de' || value === 'en';
 }

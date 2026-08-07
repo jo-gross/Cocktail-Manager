@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Button, ButtonGroup, type ButtonSize } from '@components/ui';
 import { UserContext } from '@lib/context/UserContextProvider';
 import { changeAppLanguage } from '@lib/i18n/client';
-import type { AppLocale } from '@lib/i18n/locales';
+import { LOCALE_FLAGS, type AppLocale } from '@lib/i18n/locales';
 import { Setting } from '@generated/prisma/client';
 
 interface LanguageChangerProps {
@@ -27,10 +27,10 @@ export default function LanguageChanger({ disabled = false, size }: LanguageChan
   return (
     <ButtonGroup className={`self-center ${disabled ? 'opacity-50' : ''}`} aria-label={t('language.label')}>
       <Button joinItem size={size} variant={current === 'de' ? 'primary' : 'outline'} disabled={disabled} onClick={() => void setLanguage('de')}>
-        DE
+        <span aria-hidden="true">{LOCALE_FLAGS.de}</span> {t('labelDe')}
       </Button>
       <Button joinItem size={size} variant={current === 'en' ? 'primary' : 'outline'} disabled={disabled} onClick={() => void setLanguage('en')}>
-        EN
+        <span aria-hidden="true">{LOCALE_FLAGS.en}</span> {t('labelEn')}
       </Button>
     </ButtonGroup>
   );
