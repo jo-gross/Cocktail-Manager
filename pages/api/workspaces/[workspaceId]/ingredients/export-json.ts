@@ -13,7 +13,7 @@ const legacyHandler = withHttpMethods({
     const { ids } = req.body as { ids: string[] };
 
     if (!ids || ids.length === 0) {
-      return res.status(400).json({ message: 'Keine Zutaten ausgewählt' });
+      return res.status(400).json({ message: 'No ingredients selected' });
     }
 
     try {
@@ -27,7 +27,7 @@ const legacyHandler = withHttpMethods({
       });
 
       if (ingredients.length === 0) {
-        return res.status(404).json({ message: 'Keine Zutaten gefunden' });
+        return res.status(404).json({ message: 'No ingredients found' });
       }
 
       const exportData: IngredientExportStructure[] = ingredients.map((ingredient) => {
@@ -71,7 +71,7 @@ const legacyHandler = withHttpMethods({
       return res.json(exportData.length === 1 ? exportData[0] : exportData);
     } catch (error) {
       console.error('Ingredient export error:', error);
-      return res.status(500).json({ message: 'Fehler beim Exportieren' });
+      return res.status(500).json({ message: 'Failed to export' });
     }
   }),
 });

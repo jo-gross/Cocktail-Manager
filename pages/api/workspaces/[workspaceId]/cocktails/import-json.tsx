@@ -22,6 +22,9 @@ interface ImportEntityData {
   name: string;
   workspaceId?: string;
   actionGroup?: string;
+  labelDe?: string;
+  labelEn?: string;
+  /** @deprecated Prefer labelDe */
   lableDE?: string;
   deposit?: number | null;
   volume?: number | null;
@@ -72,7 +75,7 @@ const legacyHandler = withHttpMethods({
         if (!exportData || !exportData.exportVersion || !exportData.cocktailRecipes) {
           return res.status(400).json({
             valid: false,
-            errors: ['Ungültige JSON-Struktur'],
+            errors: ['Invalid JSON structure'],
           });
         }
 
@@ -325,13 +328,25 @@ const legacyHandler = withHttpMethods({
             });
             const translationsToUpdate: { [lang: string]: { [key: string]: string } } = JSON.parse(existingTranslationsSetting?.value ?? '{}');
 
-            // Helper to add translation
-            const addTranslation = (key: string, lableDE: string) => {
-              if (!translationsToUpdate.de) {
-                translationsToUpdate.de = {};
+            const addTranslation = (key: string, labelDe?: string, labelEn?: string) => {
+              if (labelDe) {
+                if (!translationsToUpdate.de) {
+                  translationsToUpdate.de = {};
+                }
+                translationsToUpdate.de[key] = labelDe;
               }
-              translationsToUpdate.de[key] = lableDE;
+              if (labelEn) {
+                if (!translationsToUpdate.en) {
+                  translationsToUpdate.en = {};
+                }
+                translationsToUpdate.en[key] = labelEn;
+              }
             };
+
+            const readEntityLabels = (data?: ImportEntityData) => ({
+              labelDe: data?.labelDe ?? data?.lableDE,
+              labelEn: data?.labelEn,
+            });
 
             // Process units first
             for (const decision of mappingDecisions.units) {
@@ -364,8 +379,11 @@ const legacyHandler = withHttpMethods({
                           workspaceId,
                         },
                       });
-                      if (decision.newEntityData?.lableDE) {
-                        addTranslation(unitName, decision.newEntityData.lableDE);
+                      {
+                        const labels = readEntityLabels(decision.newEntityData);
+                        if (labels.labelDe || labels.labelEn) {
+                          addTranslation(unitName, labels.labelDe, labels.labelEn);
+                        }
                       }
                       unitMapping.set(decision.exportId, newId);
                       created.units++;
@@ -375,7 +393,7 @@ const legacyHandler = withHttpMethods({
                       step: 'units',
                       entityType: 'Einheit',
                       entityName: unitName,
-                      error: err instanceof Error ? err.message : 'Unbekannter Fehler',
+                      error: err instanceof Error ? err.message : 'Unknown error',
                     });
                   }
                 }
@@ -412,8 +430,11 @@ const legacyHandler = withHttpMethods({
                           workspaceId,
                         },
                       });
-                      if (decision.newEntityData?.lableDE) {
-                        addTranslation(iceName, decision.newEntityData.lableDE);
+                      {
+                        const labels = readEntityLabels(decision.newEntityData);
+                        if (labels.labelDe || labels.labelEn) {
+                          addTranslation(iceName, labels.labelDe, labels.labelEn);
+                        }
                       }
                       iceMapping.set(decision.exportId, newId);
                       created.ice++;
@@ -423,7 +444,7 @@ const legacyHandler = withHttpMethods({
                       step: 'ice',
                       entityType: 'Eis-Typ',
                       entityName: iceName,
-                      error: err instanceof Error ? err.message : 'Unbekannter Fehler',
+                      error: err instanceof Error ? err.message : 'Unknown error',
                     });
                   }
                 }
@@ -466,8 +487,11 @@ const legacyHandler = withHttpMethods({
                           workspaceId,
                         },
                       });
-                      if (decision.newEntityData?.lableDE) {
-                        addTranslation(actionName, decision.newEntityData.lableDE);
+                      {
+                        const labels = readEntityLabels(decision.newEntityData);
+                        if (labels.labelDe || labels.labelEn) {
+                          addTranslation(actionName, labels.labelDe, labels.labelEn);
+                        }
                       }
                       stepActionMapping.set(decision.exportId, newId);
                       created.stepActions++;
@@ -477,7 +501,7 @@ const legacyHandler = withHttpMethods({
                       step: 'stepActions',
                       entityType: 'Aktion',
                       entityName: `${actionName} (${actionGroup})`,
-                      error: err instanceof Error ? err.message : 'Unbekannter Fehler',
+                      error: err instanceof Error ? err.message : 'Unknown error',
                     });
                   }
                 }
@@ -538,7 +562,7 @@ const legacyHandler = withHttpMethods({
                       step: 'glasses',
                       entityType: 'Glas',
                       entityName: glassName,
-                      error: err instanceof Error ? err.message : 'Unbekannter Fehler',
+                      error: err instanceof Error ? err.message : 'Unknown error',
                     });
                   }
                 }
@@ -599,7 +623,7 @@ const legacyHandler = withHttpMethods({
                       step: 'garnishes',
                       entityType: 'Garnitur',
                       entityName: garnishName,
-                      error: err instanceof Error ? err.message : 'Unbekannter Fehler',
+                      error: err instanceof Error ? err.message : 'Unknown error',
                     });
                   }
                 }
@@ -688,7 +712,7 @@ const legacyHandler = withHttpMethods({
                               step: 'ingredientVolumes',
                               entityType: 'Zutaten-Volumen',
                               entityName: ingredientName,
-                              error: volErr instanceof Error ? volErr.message : 'Fehler beim Erstellen des Volumens',
+                              error: volErr instanceof Error ? volErr.message : 'Failed to create volume',
                             });
                           }
                         }
@@ -699,7 +723,7 @@ const legacyHandler = withHttpMethods({
                       step: 'ingredients',
                       entityType: 'Zutat',
                       entityName: ingredientName,
-                      error: err instanceof Error ? err.message : 'Unbekannter Fehler',
+                      error: err instanceof Error ? err.message : 'Unknown error',
                     });
                   }
                 }
@@ -862,7 +886,7 @@ const legacyHandler = withHttpMethods({
                   step: 'cocktails',
                   entityType: 'Cocktail',
                   entityName: exportCocktail.name,
-                  error: err instanceof Error ? err.message : 'Unbekannter Fehler',
+                  error: err instanceof Error ? err.message : 'Unknown error',
                 });
               }
             }
@@ -897,7 +921,7 @@ const legacyHandler = withHttpMethods({
         } catch (transactionError: unknown) {
           console.error('Transaction error:', transactionError);
           return res.status(500).json({
-            message: 'Fehler beim Importieren der Cocktails',
+            message: 'Failed to import cocktails',
             errors:
               errors.length > 0
                 ? errors
@@ -913,10 +937,10 @@ const legacyHandler = withHttpMethods({
         }
       }
 
-      return res.status(400).json({ message: 'Ungültige Phase' });
+      return res.status(400).json({ message: 'Invalid phase' });
     } catch (error: unknown) {
       console.error('Import error:', error);
-      return res.status(500).json({ message: error instanceof Error ? error.message : 'Fehler beim Importieren der Cocktails' });
+      return res.status(500).json({ message: error instanceof Error ? error.message : 'Failed to import cocktails' });
     }
   }),
 });

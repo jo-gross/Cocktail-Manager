@@ -4,6 +4,7 @@ import { convertBase64ToFile, convertToBase64, fetchImageAsBase64 } from '@lib/B
 import { useRouter } from 'next/router';
 import { FaTrashAlt } from 'react-icons/fa';
 import React, { useContext, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { alertService } from '@lib/alertService';
 import { DeleteConfirmationModal } from '../modals/DeleteConfirmationModal';
 import { ModalContext } from '@lib/context/ModalContextProvider';
@@ -29,20 +30,20 @@ export interface GlassFormValues {
   volume: number;
 }
 
-const glassFormSchema = z
-  .object({
-    name: z.string().min(1, 'Required'),
-    deposit: z.number(),
-    volume: z.number(),
-    image: z.string().optional(),
-    originalImage: z.any().optional(),
-  })
-  .refine((values) => !(values.originalImage != undefined && values.image == undefined), {
-    message: 'Bild ausgewählt aber nicht zugeschnitten',
-    path: ['image'],
-  });
-
-const validateGlass = zodFormikValidate(glassFormSchema);
+function createGlassFormSchema(requiredMessage: string, imageNotCroppedMessage: string) {
+  return z
+    .object({
+      name: z.string().min(1, requiredMessage),
+      deposit: z.number(),
+      volume: z.number(),
+      image: z.string().optional(),
+      originalImage: z.any().optional(),
+    })
+    .refine((values) => !(values.originalImage != undefined && values.image == undefined), {
+      message: imageNotCroppedMessage,
+      path: ['image'],
+    });
+}
 
 interface GlassFormProps {
   glass?: GlassDto;
@@ -54,6 +55,7 @@ interface GlassFormProps {
 const fieldErrorClass = 'border-error focus:border-error focus:ring-error/25';
 
 export function GlassForm(props: GlassFormProps) {
+  const { t } = useTranslation(['manage', 'common', 'entity', 'errors']);
   const router = useRouter();
   const { workspaceId } = router.query;
   const modalContext = useContext(ModalContext);
@@ -125,7 +127,7 @@ export function GlassForm(props: GlassFormProps) {
             if (props.onSaved) {
               props.onSaved(created.id);
             } else {
-              alertService.success('Glas erfolgreich erstellt');
+              alertService.success(t('manage:glassForm.success.created'));
               await routingContext.conditionalBack(`/workspaces/${workspaceId}/manage/glasses`);
             }
           } else {
@@ -133,12 +135,12 @@ export function GlassForm(props: GlassFormProps) {
             if (props.onSaved) {
               props.onSaved(props.glass.id);
             } else {
-              alertService.success('Glas erfolgreich gespeichert');
+              alertService.success(t('manage:glassForm.success.saved'));
               await routingContext.conditionalBack(`/workspaces/${workspaceId}/manage/glasses`);
             }
           }
         } catch (error) {
-          alertApiV1Error(error, props.glass == undefined ? 'Fehler beim Erstellen des Glases' : 'Fehler beim Speichern des Glases');
+          alertApiV1Error(error, props.glass == undefined ? t('manage:glassForm.error.create') : t('manage:glassForm.error.save'));
         }
       }}
       validate={(values) => {
@@ -156,14 +158,14 @@ export function GlassForm(props: GlassFormProps) {
           props.setUnsavedChanges?.(true);
         }
 
-        return validateGlass(values);
+        return zodFormikValidate(createGlassFormSchema(t('errors:requiredField'), t('common:imageNotCropped')))(values);
       }}
     >
       {({ values, setFieldValue, errors, handleChange, handleBlur, handleSubmit, isSubmitting, isValid }) => (
         <form onSubmit={handleSubmit} className={'grid w-full grid-cols-1 gap-2 md:max-w-4xl md:grid-cols-2'}>
           <FormControl className={'col-span-full'}>
             <Label htmlFor={'name'} className="flex-row items-center justify-between">
-              <LabelText>Name</LabelText>
+              <LabelText>{t('common:name')}</LabelText>
               <LabelTextAlt className={'space-x-2 text-error'}>
                 <span>
                   <>{errors.name && errors.name}</>
@@ -177,7 +179,7 @@ export function GlassForm(props: GlassFormProps) {
               value={values.name}
               autoComplete={'off'}
               type={'text'}
-              placeholder={'Name'}
+              placeholder={t('common:name')}
               className={errors.name ? fieldErrorClass : undefined}
               onChange={(event) => {
                 if (event.target.value.length > 2 && workspaceId) {
@@ -199,16 +201,14 @@ export function GlassForm(props: GlassFormProps) {
             />
             {similarGlass && (
               <Label className="flex-row">
-                <LabelTextAlt className="text-warning">
-                  Ein ähnliches Glas mit dem Namen <strong>{similarGlass.name}</strong> existiert bereits.
-                </LabelTextAlt>
+                <LabelTextAlt className="text-warning">{t('manage:glassForm.similarExists', { name: similarGlass.name })}</LabelTextAlt>
               </Label>
             )}
           </FormControl>
 
           <FormControl>
             <Label htmlFor={'deposit'} className="flex-row items-center justify-between">
-              <LabelText>Pfand</LabelText>
+              <LabelText>{t('common:deposit')}</LabelText>
               <LabelTextAlt className={'space-x-2 text-error'}>
                 <span>
                   <>{errors.deposit && errors.deposit}</>
@@ -219,7 +219,7 @@ export function GlassForm(props: GlassFormProps) {
               <Input
                 id={'deposit'}
                 type={'number'}
-                placeholder={'Deposit'}
+                placeholder={t('common:deposit')}
                 className={errors.deposit ? fieldErrorClass : undefined}
                 joinItem
                 value={values.deposit}
@@ -234,7 +234,7 @@ export function GlassForm(props: GlassFormProps) {
           </FormControl>
           <FormControl>
             <Label htmlFor={'volume'} className="flex-row items-center justify-between">
-              <LabelText>Volumen</LabelText>
+              <LabelText>{t('common:volume')}</LabelText>
             </Label>
             <ButtonGroup className="w-full">
               <Input
@@ -248,19 +248,19 @@ export function GlassForm(props: GlassFormProps) {
                 name={'volume'}
               />
               <Button type="button" variant="secondary" joinItem>
-                cl
+                {t('common:cl')}
               </Button>
             </ButtonGroup>
           </FormControl>
           <div className="col-span-full flex items-center gap-3 py-2">
             <Divider className="my-0 flex-1" />
-            <span className="shrink-0 text-sm font-medium text-base-content/70">Darstellung</span>
+            <span className="shrink-0 text-sm font-medium text-base-content/70">{t('common:display')}</span>
             <Divider className="my-0 flex-1" />
           </div>
           <FormControl className={'col-span-full'}>
             {values.image != undefined ? (
               <Label className="flex-row">
-                <LabelText>Vorschau Bild</LabelText>
+                <LabelText>{t('common:imagePreview')}</LabelText>
               </Label>
             ) : (
               <></>
@@ -272,7 +272,7 @@ export function GlassForm(props: GlassFormProps) {
                     await setFieldValue('originalImage', file);
                     await setFieldValue('image', undefined);
                   } else {
-                    alertService.error('Datei konnte nicht ausgewählt werden.');
+                    alertService.error(t('common:fileSelectError'));
                   }
                 }}
               />
@@ -287,7 +287,7 @@ export function GlassForm(props: GlassFormProps) {
                       if (compressedImageFile) {
                         await setFieldValue('image', await convertToBase64(new File([compressedImageFile], 'image.png', { type: 'image/png' })));
                       } else {
-                        alertService.error('Bild konnte nicht skaliert werden.');
+                        alertService.error(t('common:imageScaleError'));
                       }
                     });
                   }}
@@ -321,7 +321,7 @@ export function GlassForm(props: GlassFormProps) {
                       modalContext.openModal(
                         <DeleteConfirmationModal
                           spelling={'REMOVE'}
-                          entityName={'das Bild'}
+                          entityName={t('entity:theImage')}
                           onApprove={async () => {
                             await setFieldValue('image', undefined);
                             await setFieldValue('originalImage', undefined);
@@ -334,12 +334,9 @@ export function GlassForm(props: GlassFormProps) {
                   </Button>
                 </div>
                 <div className={'bg-transparent-pattern relative h-32 w-32 rounded-lg'}>
-                  <Image className={'w-fit rounded-lg'} src={values.image ?? ''} layout={'fill'} objectFit={'contain'} alt={'Glass Image'} />
+                  <Image className={'w-fit rounded-lg'} src={values.image ?? ''} layout={'fill'} objectFit={'contain'} alt={t('common:glassImageAlt')} />
                 </div>
-                <div className={'pt-2 font-thin italic'}>
-                  Info: Durch Speichern des Glases wird das Bild dauerhaft zugeschnitten. Das Original wird nicht gespeichert. Falls du später einen anderen
-                  Bereich des Bildes auswählen möchtest, musst du das Bild erneut hochladen.
-                </div>
+                <div className={'pt-2 font-thin italic'}>{t('manage:glassForm.imageCropInfo')}</div>
               </div>
             )}
           </FormControl>
@@ -348,14 +345,10 @@ export function GlassForm(props: GlassFormProps) {
             <FormControl>
               <Button disabled={isSubmitting || !isValid} type={'submit'} variant="primary">
                 {isSubmitting ? <Loading size="sm" /> : null}
-                Speichern
+                {t('common:save')}
               </Button>
             </FormControl>
-            {!isValid && (
-              <div className={'font-thin text-error italic'}>
-                Nicht alle Felder sind korrekt ausgefüllt. Kontrolliere daher alle Felder. (Name gesetzt, Bild zugeschnitten, ... ?)
-              </div>
-            )}
+            {!isValid && <div className={'font-thin text-error italic'}>{t('common:formIncomplete')}</div>}
           </div>
         </form>
       )}

@@ -1,6 +1,7 @@
 import type { UnitDto, UnitConversionDto } from '@lib/schemas/units';
 import { Formik } from 'formik';
-import React, { useContext } from 'react';
+import React, { useContext, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { UserContext } from '@lib/context/UserContextProvider';
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import { useRouter } from 'next/router';
@@ -19,30 +20,32 @@ interface UnitConversionModalProps {
   onSaved?: () => void;
 }
 
-const unitConversionFormSchema = z
-  .object({
-    fromUnitId: z.string().trim().min(1, 'Pflichtfeld'),
-    toUnitId: z.string().trim().min(1, 'Pflichtfeld'),
-    factor: z.coerce.number(),
-  })
-  .refine((values) => Number.isNaN(values.factor) || values.factor > 0, {
-    message: 'Faktor muss größer als 0 sein',
-    path: ['factor'],
-  });
-
-const validateUnitConversion = zodFormikValidate(unitConversionFormSchema);
-
 export default function UnitConversionModal(props: UnitConversionModalProps) {
   const userContext = useContext(UserContext);
   const modalContext = useContext(ModalContext);
+  const { t } = useTranslation(['settings', 'common', 'errors']);
 
   const router = useRouter();
 
   const { workspaceId } = router.query;
 
+  const validateUnitConversion = useMemo(() => {
+    const schema = z
+      .object({
+        fromUnitId: z.string().trim().min(1, t('errors:requiredField')),
+        toUnitId: z.string().trim().min(1, t('errors:requiredField')),
+        factor: z.coerce.number(),
+      })
+      .refine((values) => Number.isNaN(values.factor) || values.factor > 0, {
+        message: t('settings:validation.factorGtZero'),
+        path: ['factor'],
+      });
+    return zodFormikValidate(schema);
+  }, [t]);
+
   return (
     <div className={'flex flex-col gap-2'}>
-      <div className={'text-2xl font-bold'}>Einheit Umrechnen</div>
+      <div className={'text-2xl font-bold'}>{t('settings:unitConversionTitle')}</div>
       <Formik
         initialValues={{
           fromUnitId: props.unitConversion?.fromUnitId || '',
@@ -60,17 +63,17 @@ export default function UnitConversionModal(props: UnitConversionModalProps) {
               });
               props.onSaved?.();
               modalContext.closeModal();
-              alertService.success('Umrechnung erfolgreich erstellt');
+              alertService.success(t('settings:conversionCreated'));
             } else {
               await updateUnitConversion(workspaceId, props.unitConversion.id, {
                 factor: Number(values.factor),
               });
               props.onSaved?.();
               modalContext.closeModal();
-              alertService.success('Umrechnung erfolgreich gespeichert');
+              alertService.success(t('settings:conversionSaved'));
             }
           } catch (error) {
-            alertApiV1Error(error, props.unitConversion == undefined ? 'Fehler beim Erstellen der Umrechnung' : 'Fehler beim Speichern der Umrechnung');
+            alertApiV1Error(error, props.unitConversion == undefined ? t('errors:createConversion') : t('errors:saveConversion'));
           }
         }}
         validate={(values) => validateUnitConversion(values)}
@@ -80,7 +83,7 @@ export default function UnitConversionModal(props: UnitConversionModalProps) {
             <div className={'flex flex-row items-center justify-center gap-4'}>
               <FormControl className="w-full">
                 <Label className="flex-row items-center justify-between">
-                  <LabelText>Von Einheit...</LabelText>
+                  <LabelText>{t('settings:fromUnit')}</LabelText>
                   <LabelTextAlt className="text-error">
                     <span>{errors.fromUnitId && touched.fromUnitId ? errors.fromUnitId : ''}</span>
                     <span>*</span>
@@ -102,12 +105,12 @@ export default function UnitConversionModal(props: UnitConversionModalProps) {
                     value={values.fromUnitId}
                   >
                     <option value={''} disabled>
-                      Auswählen...
+                      {t('common:selectEllipsis')}
                     </option>
                     {props.units.map((unit) => {
                       return (
                         <option key={unit.id} value={unit.id}>
-                          {userContext.getTranslation(unit.name, 'de')}
+                          {userContext.getTranslation(unit.name)}
                         </option>
                       );
                     })}
@@ -121,7 +124,7 @@ export default function UnitConversionModal(props: UnitConversionModalProps) {
 
               <FormControl className="w-full">
                 <Label className="flex-row items-center justify-between">
-                  <LabelText>... zu Einheit</LabelText>
+                  <LabelText>{t('settings:toUnit')}</LabelText>
                   <LabelTextAlt className="text-error">
                     <span>{errors.toUnitId && touched.toUnitId ? errors.toUnitId : errors.factor && touched.factor ? errors.factor : ''}</span>
                     <span>*</span>
@@ -138,7 +141,7 @@ export default function UnitConversionModal(props: UnitConversionModalProps) {
                     value={values.toUnitId}
                   >
                     <option value={''} disabled>
-                      Auswählen...
+                      {t('common:selectEllipsis')}
                     </option>
                     {props.units.map((unit) => {
                       return (
@@ -154,7 +157,7 @@ export default function UnitConversionModal(props: UnitConversionModalProps) {
                             ) != undefined
                           }
                         >
-                          {userContext.getTranslation(unit.name, 'de')}
+                          {userContext.getTranslation(unit.name)}
                         </option>
                       );
                     })}
@@ -171,11 +174,11 @@ export default function UnitConversionModal(props: UnitConversionModalProps) {
                   modalContext.closeModal();
                 }}
               >
-                Abbrechen
+                {t('common:cancel')}
               </Button>
               <Button variant="primary" type={'submit'}>
                 {isSubmitting ? <Loading size="sm" /> : null}
-                Speichern
+                {t('common:save')}
               </Button>
             </div>
           </form>

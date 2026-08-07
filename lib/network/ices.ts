@@ -1,11 +1,12 @@
 import { apiV1FetchSafe, apiV1Mutate } from './apiV1';
+import { i18n } from '@lib/i18n/client';
 import type { IceDto, IceCreateInput } from '@lib/schemas/ices';
 import type { DeletionResult } from '@lib/schemas/common';
 
 export function fetchIce(workspaceId: string | string[] | undefined, setIce: (ice: IceDto[]) => void, setIceLoading: (loading: boolean) => void) {
   if (!workspaceId) return;
   setIceLoading(true);
-  apiV1FetchSafe<IceDto[]>(`/api/v1/workspaces/${workspaceId}/ice`, undefined, 'Fehler beim Laden der Eis-Optionen')
+  apiV1FetchSafe<IceDto[]>(`/api/v1/workspaces/${workspaceId}/ice`, undefined, i18n.t('errors:loadIce'))
     .then((ice) => {
       if (ice) setIce(ice);
     })

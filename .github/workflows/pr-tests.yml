@@ -31,6 +31,12 @@ jobs:
       - name: 'Run ESLint'
         run: pnpm lint
 
+      - name: 'Check i18n key parity (en ⊆ de)'
+        run: pnpm i18n:check
+
+      - name: 'Check untranslated JSX strings'
+        run: pnpm i18n:lint
+
   Test:
     runs-on: ubuntu-latest
 

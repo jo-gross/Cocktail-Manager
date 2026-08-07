@@ -1,4 +1,5 @@
 import React, { useCallback, useContext, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useRouter } from 'next/router';
 import type { CocktailSummaryDto } from '@lib/schemas/cocktails';
 import type { CardDto, CardGroupDto, CardSummaryDto } from '@lib/schemas/cards';
@@ -52,6 +53,7 @@ interface OrderViewProps {
 }
 
 export const OrderView = React.memo(function OrderView({ cocktailCards, workspaceId }: OrderViewProps) {
+  const { t } = useTranslation(['order', 'common', 'entity', 'errors', 'cocktail']);
   const _router = useRouter();
   const _modalContext = useContext(ModalContext);
   const [selectedCardId, setSelectedCardId] = useState<string>('');
@@ -69,19 +71,19 @@ export const OrderView = React.memo(function OrderView({ cocktailCards, workspac
 
   // Fetch glasses
   useEffect(() => {
-    fetchGlasses(workspaceId, setGlasses, setGlassesLoading);
-  }, [workspaceId]);
+    fetchGlasses(workspaceId, setGlasses, setGlassesLoading, t('errors:loadGlasses'));
+  }, [workspaceId, t]);
 
   // Fetch cocktails
   useEffect(() => {
     if (!workspaceId) return;
     setCocktailsLoading(true);
-    apiV1FetchSafe<CocktailSummaryDto[]>(`/api/v1/workspaces/${workspaceId}/cocktails?search=`, undefined, 'Fehler beim Laden der Cocktails')
+    apiV1FetchSafe<CocktailSummaryDto[]>(`/api/v1/workspaces/${workspaceId}/cocktails?search=`, undefined, t('cocktail:error.load'))
       .then((data) => {
         if (data) setCocktails(data);
       })
       .finally(() => setCocktailsLoading(false));
-  }, [workspaceId]);
+  }, [workspaceId, t]);
 
   // Fetch full card when a specific card is selected
   useEffect(() => {
@@ -91,12 +93,12 @@ export const OrderView = React.memo(function OrderView({ cocktailCards, workspac
     }
 
     setSelectedCardLoading(true);
-    apiV1FetchSafe<CardDto>(`/api/v1/workspaces/${workspaceId}/cards/${selectedCardId}`, undefined, 'Fehler beim Laden der Karte')
+    apiV1FetchSafe<CardDto>(`/api/v1/workspaces/${workspaceId}/cards/${selectedCardId}`, undefined, t('errors:loadCard'))
       .then((data) => {
         setSelectedCard(data);
       })
       .finally(() => setSelectedCardLoading(false));
-  }, [workspaceId, selectedCardId]);
+  }, [workspaceId, selectedCardId, t]);
   // Filter cocktails based on search term (used for "Alle Cocktails"-Ansicht)
   useEffect(() => {
     const searchLower = searchTerm.toLowerCase().trim();
@@ -145,14 +147,14 @@ export const OrderView = React.memo(function OrderView({ cocktailCards, workspac
       if (isReturnedDeposit) {
         // Ein gleiches Glas wurde zurückgegeben - erstelle ein separates Glas-Item
         if (!cocktail.glass) {
-          alertService.warn('Cocktail hat kein Glas');
+          alertService.warn(t('order:cocktailNoGlass'));
           return;
         }
 
         // Finde das entsprechende Glas in der Gläser-Liste
         const glass = glasses.find((g) => g.id === cocktail.glass?.id);
         if (!glass) {
-          alertService.warn('Glas nicht gefunden');
+          alertService.warn(t('order:glassNotFound'));
           return;
         }
 
@@ -181,7 +183,7 @@ export const OrderView = React.memo(function OrderView({ cocktailCards, workspac
         }
       }
     },
-    [orderItems, glasses, addReturnedGlass],
+    [orderItems, glasses, addReturnedGlass, t],
   );
 
   const updateItemAmount = useCallback(
@@ -227,7 +229,7 @@ export const OrderView = React.memo(function OrderView({ cocktailCards, workspac
     const cocktailItems = orderItems.filter((item) => item.type === 'cocktail');
 
     if (cocktailItems.length === 0) {
-      alertService.warn('Keine Cocktails in der Bestellung');
+      alertService.warn(t('order:noCocktailsInOrder'));
       return;
     }
 
@@ -247,16 +249,16 @@ export const OrderView = React.memo(function OrderView({ cocktailCards, workspac
         });
       }
 
-      alertService.success('Alle Cocktails zur Warteschlange hinzugefügt');
+      alertService.success(t('entity:addedToQueue'));
       clearOrder();
       setGlobalNotes('');
     } catch (error) {
       console.error('OrderView -> addToQueue', error);
-      alertService.error('Fehler beim Hinzufügen zur Warteschlange');
+      alertService.error(t('errors:addToQueue'));
     } finally {
       setSubmitting(false);
     }
-  }, [orderItems, workspaceId, clearOrder, globalNotes]);
+  }, [orderItems, workspaceId, clearOrder, globalNotes, t]);
 
   // Calculate totals
   const totalCocktailPrice = orderItems.filter((item) => item.type === 'cocktail').reduce((sum, item) => sum + item.price * item.amount, 0);
@@ -343,7 +345,8 @@ export const OrderView = React.memo(function OrderView({ cocktailCards, workspac
         </div>
         <div className="line-clamp-2 text-xs font-medium">{cocktail.name}</div>
         <div className="text-xs text-base-content/80">
-          {price.formatPrice()} € {deposit > 0 && <span className="text-[0.65rem] text-base-content/60">(+ {deposit.formatPrice()} € Pfand)</span>}
+          {t('common:euroValue', { value: price.formatPrice() })}{' '}
+          {deposit > 0 && <span className="text-[0.65rem] text-base-content/60">{t('order:depositWithAmount', { amount: deposit.formatPrice() })}</span>}
         </div>
       </button>
     );
@@ -358,19 +361,15 @@ export const OrderView = React.memo(function OrderView({ cocktailCards, workspac
             {/* Header: Titel, Suche, Kartenauswahl */}
             <div className="flex flex-col items-start gap-2 md:flex-row md:justify-between">
               <div className={'h-full items-center'}>
-                <CardTitle className="text-xl">Übersicht</CardTitle>
-                <p className="text-sm text-base-content/70">Füge Cocktails einfach zur Bestellung hinzu.</p>
+                <CardTitle className="text-xl">{t('order:overview')}</CardTitle>
+                <p className="text-sm text-base-content/70">{t('order:overviewHint')}</p>
               </div>
               <div className="flex w-full flex-row items-end gap-2 md:w-2/3">
                 <div className="flex-1">
                   <Label className="flex-row items-baseline justify-between py-1">
-                    <LabelText className="text-xs xl:text-base">Cocktail suchen</LabelText>
+                    <LabelText className="text-xs xl:text-base">{t('order:searchCocktail')}</LabelText>
                     <span className="text-xs text-base-content/60">
-                      {cocktailsLoading
-                        ? 'Lade Cocktails...'
-                        : filteredCocktails.length > 0
-                          ? `${filteredCocktails.length} Cocktail${filteredCocktails.length === 1 ? '' : 's'} gefunden`
-                          : 'Keine Cocktails gefunden'}
+                      {cocktailsLoading ? t('common:loading') : filteredCocktails.length > 0 ? `${filteredCocktails.length}` : t('order:noCocktailsFound')}
                     </span>
                   </Label>
                   <ButtonGroup className="w-full">
@@ -378,7 +377,7 @@ export const OrderView = React.memo(function OrderView({ cocktailCards, workspac
                       joinItem
                       inputSize="sm"
                       className="w-full xl:h-10 xl:min-h-10"
-                      placeholder="Name, Beschreibung oder Tags..."
+                      placeholder={t('order:searchPlaceholder')}
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                     />
@@ -396,10 +395,10 @@ export const OrderView = React.memo(function OrderView({ cocktailCards, workspac
                 </div>
                 <div className="flex-1">
                   <Label className="py-1">
-                    <LabelText className="text-xs xl:text-base">Karte auswählen</LabelText>
+                    <LabelText className="text-xs xl:text-base">{t('order:selectCard')}</LabelText>
                   </Label>
                   <Select selectSize="sm" className="w-full xl:h-10 xl:min-h-10" value={selectedCardId} onChange={(e) => setSelectedCardId(e.target.value)}>
-                    <option value="all">Alle Cocktails</option>
+                    <option value="all">{t('order:allCocktails')}</option>
                     {cocktailCards.map((card) => (
                       <option key={card.id} value={card.id}>
                         {card.name}
@@ -419,12 +418,12 @@ export const OrderView = React.memo(function OrderView({ cocktailCards, workspac
               ) : selectedCardId === 'all' || !selectedCard ? (
                 <>
                   {filteredCocktails.length === 0 ? (
-                    <div className="flex h-full items-center justify-center text-base-content/70">Keine Cocktails gefunden</div>
+                    <div className="flex h-full items-center justify-center text-base-content/70">{t('order:noCocktailsFound')}</div>
                   ) : (
                     <div className="flex h-full items-stretch gap-2">
                       {/* Pseudo-Gruppe "Alle" */}
                       <div className="2 flex h-full w-full flex-col">
-                        <h3 className="shrink-0 text-lg font-semibold">Alle Cocktails</h3>
+                        <h3 className="shrink-0 text-lg font-semibold">{t('order:allCocktails')}</h3>
                         <div className="min-h-0 flex-1 overflow-y-auto">
                           <div className="flex flex-row flex-wrap justify-between gap-2">
                             {filteredCocktails
@@ -464,7 +463,7 @@ export const OrderView = React.memo(function OrderView({ cocktailCards, workspac
 
                   {additionalCocktailsForSearch.length > 0 && (
                     <div className="flex h-full w-full flex-col gap-2">
-                      <h3 className="shrink-0 text-lg font-semibold">Weitere Cocktails</h3>
+                      <h3 className="shrink-0 text-lg font-semibold">{t('order:moreCocktails')}</h3>
                       <div className="min-h-0 flex-1 overflow-y-auto">
                         <div className="flex flex-row flex-wrap gap-2">
                           {additionalCocktailsForSearch
@@ -489,12 +488,12 @@ export const OrderView = React.memo(function OrderView({ cocktailCards, workspac
         <div className="w-full md:w-1/2">
           <Card className="h-full">
             <CardBody className="flex h-full flex-col">
-              <CardTitle className="text-xl">Gläser</CardTitle>
+              <CardTitle className="text-xl">{t('order:glasses')}</CardTitle>
               <div className="min-h-0 flex-1 space-y-4 overflow-y-auto">
                 {glassesLoading ? (
                   <Loading />
                 ) : glasses.length === 0 ? (
-                  <div className="py-8 text-center text-base-content/70">Keine Gläser vorhanden</div>
+                  <div className="py-8 text-center text-base-content/70">{t('order:noGlasses')}</div>
                 ) : (
                   Object.entries(groupedGlasses)
                     .sort(([a], [b]) => parseFloat(b) - parseFloat(a))
@@ -502,7 +501,7 @@ export const OrderView = React.memo(function OrderView({ cocktailCards, workspac
                       <div key={deposit} className="">
                         <div className="p-4">
                           <div className="mb-2">
-                            <CardTitle className="text-lg">Pfand: {parseFloat(deposit).formatPrice()} €</CardTitle>
+                            <CardTitle className="text-lg">{t('order:deposit', { amount: parseFloat(deposit).formatPrice() })}</CardTitle>
                           </div>
                           <div className="flex flex-wrap justify-between gap-2">
                             {glassesInGroup.map((glass) => (
@@ -536,7 +535,7 @@ export const OrderView = React.memo(function OrderView({ cocktailCards, workspac
           <Card className="h-full">
             <CardBody className="flex h-full flex-col">
               <div className="flex items-start justify-between gap-2">
-                <CardTitle className="text-2xl">Bestellung</CardTitle>
+                <CardTitle className="text-2xl">{t('order:order')}</CardTitle>
                 <Button
                   type="button"
                   variant="outline"
@@ -549,24 +548,22 @@ export const OrderView = React.memo(function OrderView({ cocktailCards, workspac
                   disabled={orderItems.length === 0}
                 >
                   <FaTrash />
-                  Bestellung leeren
+                  {t('order:clearOrder')}
                 </Button>
               </div>
               {orderItems.length === 0 ? (
-                <div className="flex flex-1 items-center justify-center py-8 text-center text-base-content/70">
-                  Keine Cocktails oder Gläser in der Bestellung
-                </div>
+                <div className="flex flex-1 items-center justify-center py-8 text-center text-base-content/70">{t('order:emptyOrder')}</div>
               ) : (
                 <>
                   <div className="min-h-0 flex-1 overflow-x-auto overflow-y-auto">
                     <Table zebra compact className="xl:text-base">
                       <TableHead>
                         <TableRow>
-                          <TableHeaderCell>Item</TableHeaderCell>
-                          <TableHeaderCell>Anzahl</TableHeaderCell>
-                          <TableHeaderCell>Preis</TableHeaderCell>
-                          <TableHeaderCell>Pfand</TableHeaderCell>
-                          <TableHeaderCell className="text-right">Gesamt</TableHeaderCell>
+                          <TableHeaderCell>{t('order:item')}</TableHeaderCell>
+                          <TableHeaderCell>{t('order:quantity')}</TableHeaderCell>
+                          <TableHeaderCell>{t('order:price')}</TableHeaderCell>
+                          <TableHeaderCell>{t('order:depositColumn')}</TableHeaderCell>
+                          <TableHeaderCell className="text-right">{t('order:total')}</TableHeaderCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
@@ -632,7 +629,7 @@ export const OrderView = React.memo(function OrderView({ cocktailCards, workspac
                                                 }
                                               }}
                                             >
-                                              <FaReply /> Glas
+                                              <FaReply /> {t('order:glass')}
                                             </Button>
                                           )}
                                         </div>
@@ -680,7 +677,7 @@ export const OrderView = React.memo(function OrderView({ cocktailCards, workspac
                                   <div className="flex flex-col gap-1">
                                     {newDeposit > 0 && <span className="text-nowrap">+{newDeposit.formatPrice()} €</span>}
                                     {returnedDeposit > 0 && <span className="text-nowrap text-success">-{returnedDeposit.formatPrice()} €</span>}
-                                    {newDeposit === 0 && returnedDeposit === 0 && <span className="text-nowrap">0.00 €</span>}
+                                    {newDeposit === 0 && returnedDeposit === 0 && <span className="text-nowrap">{t('order:zeroEuro')}</span>}
                                   </div>
                                 </TableCell>
                                 <TableCell className="text-right font-bold text-nowrap">{itemTotal.formatPrice()} €</TableCell>
@@ -694,24 +691,24 @@ export const OrderView = React.memo(function OrderView({ cocktailCards, workspac
                     <div className="hidden xl:block"></div>
                     <div className="flex flex-col gap-1 text-xs xl:text-base">
                       <div className="flex justify-between">
-                        <span className={'font-semibold'}>Gesamtpreis Cocktails (ohne Pfand)</span>
-                        <span>{totalCocktailPrice.formatPrice()} €</span>
+                        <span className={'font-semibold'}>{t('order:totalCocktailPrice')}</span>
+                        <span>{t('common:euroValue', { value: totalCocktailPrice.formatPrice() })}</span>
                       </div>
                       {totalNewDeposit > 0 && (
                         <div className="flex justify-between">
-                          <span className={'font-semibold'}>Pfand (neu)</span>
+                          <span className={'font-semibold'}>{t('order:depositNew')}</span>
                           <span>+{totalNewDeposit.formatPrice()} €</span>
                         </div>
                       )}
                       {totalReturnedDeposit > 0 && (
                         <div className="flex justify-between">
-                          <span className={'font-semibold'}>Pfand zurück</span>
+                          <span className={'font-semibold'}>{t('order:depositReturned')}</span>
                           <span className="text-success">-{totalReturnedDeposit.formatPrice()} €</span>
                         </div>
                       )}
                       <div className="flex justify-between font-bold">
-                        <span>Gesamtpreis</span>
-                        <span className="text-right text-primary">{totalPrice.formatPrice()} €</span>
+                        <span>{t('order:totalPrice')}</span>
+                        <span className="text-right text-primary">{t('common:euroValue', { value: totalPrice.formatPrice() })}</span>
                       </div>
                     </div>
                   </div>
@@ -719,13 +716,13 @@ export const OrderView = React.memo(function OrderView({ cocktailCards, workspac
                     <CardActions className="flex gap-2">
                       <FormControl className="flex-1">
                         <Label className="text-xs xl:text-base">
-                          <LabelText>Notiz für alle Cocktails</LabelText>
+                          <LabelText>{t('order:noteForAll')}</LabelText>
                         </Label>
                         <Input
                           type="text"
                           inputSize="sm"
                           className="w-full xl:h-10 xl:min-h-10"
-                          placeholder="z.B. Für Tim und Freunde ..."
+                          placeholder={t('order:notesPlaceholder')}
                           value={globalNotes}
                           onChange={(e) => setGlobalNotes(e.target.value)}
                         />
@@ -738,7 +735,7 @@ export const OrderView = React.memo(function OrderView({ cocktailCards, workspac
                         onClick={addToQueue}
                         disabled={submitting || orderItems.filter((item) => item.type === 'cocktail').length === 0}
                       >
-                        {submitting ? <UiLoading size="sm" /> : 'Zur Warteschlange hinzufügen'}
+                        {submitting ? <UiLoading size="sm" /> : t('order:addToQueue')}
                       </Button>
                     </CardActions>
                   </div>

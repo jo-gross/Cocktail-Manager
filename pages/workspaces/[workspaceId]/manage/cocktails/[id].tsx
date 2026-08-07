@@ -2,6 +2,7 @@ import { CocktailRecipeForm, CocktailRecipeFormValues } from '@components/cockta
 import { ManageEntityLayout } from '@components/layout/ManageEntityLayout';
 import React, { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
+import { useTranslation } from 'react-i18next';
 import { Loading } from '@components/Loading';
 import { alertService } from '@lib/alertService';
 import { withPagePermission } from '@middleware/ui/withPagePermission';
@@ -20,6 +21,7 @@ import { Button, Divider, Loading as UiLoading } from '@components/ui';
 
 function EditCocktailRecipe() {
   const router = useRouter();
+  const { t, i18n } = useTranslation(['manage', 'common', 'cocktail', 'errors']);
   const { id, workspaceId } = router.query;
 
   const userContext = useContext(UserContext);
@@ -40,7 +42,7 @@ function EditCocktailRecipe() {
         onExport={async (options: CocktailExportOptions) => {
           setExportingPdf(true);
           try {
-            alertService.info('Export läuft und wird gleich zur Verfügung stehen. Dieser Vorgang kann einige Minuten dauern.');
+            alertService.info(t('cocktail:exportRunningMinutes'));
             const response = await fetch(`/api/v1/workspaces/${workspaceId}/cocktails/export/pdf`, {
               method: 'POST',
               headers: {
@@ -55,12 +57,13 @@ function EditCocktailRecipe() {
                 newPagePerCocktail: options.newPagePerCocktail,
                 showHeader: options.showHeader,
                 showFooter: options.showFooter,
+                locale: i18n.language,
               }),
             });
 
             if (!response.ok) {
-              const error = await response.json().catch(() => ({ message: 'Fehler beim Exportieren' }));
-              alertService.error(error.message ?? 'Fehler beim Exportieren des PDFs', response.status, response.statusText);
+              const error = await response.json().catch(() => ({ message: t('errors:export') }));
+              alertService.error(error.message ?? t('cocktail:error.exportPdf'), response.status, response.statusText);
               return;
             }
 
@@ -73,17 +76,17 @@ function EditCocktailRecipe() {
             a.click();
             window.URL.revokeObjectURL(url);
             document.body.removeChild(a);
-            alertService.success('PDF erfolgreich exportiert');
+            alertService.success(t('cocktail:pdfExported'));
           } catch (error) {
             console.error('PDF export error:', error);
-            alertService.error('Fehler beim Exportieren des PDFs');
+            alertService.error(t('cocktail:error.exportPdf'));
           } finally {
             setExportingPdf(false);
           }
         }}
       />,
     );
-  }, [workspaceId, cocktailRecipe, modalContext]);
+  }, [workspaceId, cocktailRecipe, modalContext, t]);
 
   useEffect(() => {
     fetchCocktailWithImage(workspaceId as string, id as string, setCocktailRecipe, setLoading);
@@ -106,7 +109,7 @@ function EditCocktailRecipe() {
   ) : (
     <ManageEntityLayout
       backLink={`/workspaces/${workspaceId}/manage/cocktails`}
-      title={cocktailRecipe?.isArchived ? <span className={'italic'}>Cocktail (archiviert)</span> : 'Cocktail'}
+      title={cocktailRecipe?.isArchived ? <span className={'italic'}>{t('manage:cocktailArchived')}</span> : t('common:cocktail_one')}
       unsavedChanges={unsavedChanges}
       formRef={formRef}
     >
@@ -118,7 +121,7 @@ function EditCocktailRecipe() {
             {chromiumAvailable && (
               <Button type="button" variant="outline" size="sm" onClick={handleExportPdf} disabled={exportingPdf}>
                 {exportingPdf ? <UiLoading size="sm" /> : <FaFileDownload />}
-                PDF exportieren
+                {t('manage:exportPdf')}
               </Button>
             )}
             <Button
@@ -130,7 +133,7 @@ function EditCocktailRecipe() {
               }
             >
               <FaHistory />
-              Verlauf
+              {t('manage:history')}
             </Button>
             <Button
               type="button"
@@ -149,11 +152,11 @@ function EditCocktailRecipe() {
                   if (response.ok) {
                     router
                       .replace(`/workspaces/${workspaceId}/manage/cocktails`)
-                      .then(() => alertService.success(`Cocktail ${cocktailRecipe?.isArchived ? 'entarchiviert' : 'archiviert'}`));
+                      .then(() => alertService.success(cocktailRecipe?.isArchived ? t('cocktail:unarchivedSuccess') : t('cocktail:archivedSuccess')));
                   } else {
                     console.error('CocktailId -> (un)archive', response);
                     alertService.error(
-                      body.error?.message ?? body.message ?? `Fehler beim ${cocktailRecipe?.isArchived ? 'Entarchivieren' : 'Archivieren'} der Karte`,
+                      body.error?.message ?? body.message ?? (cocktailRecipe?.isArchived ? t('cocktail:unarchiveError') : t('cocktail:archiveError')),
                       response.status,
                       response.statusText,
                     );
@@ -167,7 +170,7 @@ function EditCocktailRecipe() {
                 }
               }}
             >
-              {cocktailRecipe?.isArchived ? 'Cocktail entarchivieren' : 'Cocktail archivieren'}
+              {cocktailRecipe?.isArchived ? t('cocktail:unarchiveCocktail') : t('cocktail:archiveCocktail')}
             </Button>
           </div>
         </>

@@ -1,19 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Formik, useFormikContext } from 'formik';
+import { useTranslation } from 'react-i18next';
 import { Button, Card, CardBody, FormControl, Input, Label, LabelText, LabelTextAlt, Select } from '@components/ui';
 import { z } from 'zod';
 import { zodFormikValidate } from '@lib/forms/zodFormikValidate';
-
-// Mirrors the original if/else: empty -> "Ungültiger Identifier", otherwise must match [A-Z_].
-const identifierSchema = z.string().superRefine((value, ctx) => {
-  if (value.trim() == '') {
-    ctx.addIssue({ code: 'custom', message: 'Ungültiger Identifier' });
-  } else if (!/^[A-Z_]+$/.test(value)) {
-    ctx.addIssue({ code: 'custom', message: 'Nur A-Z und _ erlaubt' });
-  }
-});
-
-const lableDESchema = z.string().refine((value) => value.trim() != '', { message: 'Ungültiger Bezeichner' });
 
 interface EntityFormEntity {
   id: string;
@@ -28,52 +18,65 @@ interface BaseEntityFormProps {
   entity: EntityFormEntity;
 }
 
-interface UnitFormValues {
-  identifier: string;
-  lableDE: string;
+function readLabelDe(data?: Record<string, unknown>): string {
+  return String(data?.labelDe ?? data?.lableDE ?? '');
 }
 
-const unitFormSchema = z.object({
-  identifier: identifierSchema,
-  lableDE: lableDESchema,
-});
+function readLabelEn(data?: Record<string, unknown>): string {
+  return String(data?.labelEn ?? '');
+}
 
-const validateUnit = zodFormikValidate(unitFormSchema);
+interface UnitFormValues {
+  identifier: string;
+  labelDe: string;
+  labelEn: string;
+}
 
 function UnitFormContent({ onDataChange }: { onDataChange: (data: Record<string, unknown>) => void }) {
+  const { t } = useTranslation(['settings', 'common']);
   const { values, handleChange, errors, touched } = useFormikContext<UnitFormValues>();
 
   useEffect(() => {
     onDataChange({
       name: values.identifier,
-      lableDE: values.lableDE,
+      labelDe: values.labelDe,
+      labelEn: values.labelEn,
     });
-  }, [values.identifier, values.lableDE, onDataChange]);
+  }, [values.identifier, values.labelDe, values.labelEn, onDataChange]);
 
   return (
     <Card variant="elevated" className="ml-6 rounded-lg">
       <CardBody compact>
-        <div className="mb-2 text-sm font-semibold">Neue Einheit erstellen</div>
+        <div className="mb-2 text-sm font-semibold">{t('settings:unitModal.create')}</div>
+        <FormControl className="mb-2">
+          <Label htmlFor="identifier" className="flex-row items-center justify-between">
+            <LabelText className="text-xs">{t('common:identifierAz')}</LabelText>
+            <LabelTextAlt className="text-xs text-error">
+              <span>{errors.identifier && touched.identifier ? String(errors.identifier) : ''}</span>
+              <span>{t('common:required')}</span>
+            </LabelTextAlt>
+          </Label>
+          <Input id="identifier" name="identifier" inputSize="sm" value={values.identifier} onChange={handleChange} />
+        </FormControl>
         <div className="grid grid-cols-2 gap-2">
           <FormControl>
-            <Label htmlFor="identifier" className="flex-row items-center justify-between">
-              <LabelText className="text-xs">Identifier (A-Z,_)</LabelText>
+            <Label htmlFor="labelDe" className="flex-row items-center justify-between">
+              <LabelText className="text-xs">{t('settings:labelDe')}</LabelText>
               <LabelTextAlt className="text-xs text-error">
-                <span>{errors.identifier && touched.identifier ? String(errors.identifier) : ''}</span>
-                <span>*</span>
+                <span>{errors.labelDe && touched.labelDe ? String(errors.labelDe) : ''}</span>
+                <span>{t('common:required')}</span>
               </LabelTextAlt>
             </Label>
-            <Input id="identifier" name="identifier" inputSize="sm" value={values.identifier} onChange={handleChange} />
+            <Input id="labelDe" name="labelDe" inputSize="sm" value={values.labelDe} onChange={handleChange} />
           </FormControl>
           <FormControl>
-            <Label htmlFor="lableDE" className="flex-row items-center justify-between">
-              <LabelText className="text-xs">Deutsch</LabelText>
+            <Label htmlFor="labelEn" className="flex-row items-center justify-between">
+              <LabelText className="text-xs">{t('settings:labelEn')}</LabelText>
               <LabelTextAlt className="text-xs text-error">
-                <span>{errors.lableDE && touched.lableDE ? String(errors.lableDE) : ''}</span>
-                <span>*</span>
+                <span>{errors.labelEn && touched.labelEn ? String(errors.labelEn) : ''}</span>
               </LabelTextAlt>
             </Label>
-            <Input id="lableDE" name="lableDE" inputSize="sm" value={values.lableDE} onChange={handleChange} />
+            <Input id="labelEn" name="labelEn" inputSize="sm" value={values.labelEn} onChange={handleChange} />
           </FormControl>
         </div>
       </CardBody>
@@ -82,13 +85,28 @@ function UnitFormContent({ onDataChange }: { onDataChange: (data: Record<string,
 }
 
 export function UnitForm({ initialData, onDataChange, entity }: BaseEntityFormProps) {
+  const { t } = useTranslation('settings');
+
+  const unitFormSchema = z.object({
+    identifier: z.string().superRefine((value, ctx) => {
+      if (value.trim() == '') {
+        ctx.addIssue({ code: 'custom', message: t('validation.invalidIdentifier') });
+      } else if (!/^[A-Z_]+$/.test(value)) {
+        ctx.addIssue({ code: 'custom', message: t('validation.azOnly') });
+      }
+    }),
+    labelDe: z.string().refine((value) => value.trim() != '', { message: t('validation.invalidLabel') }),
+    labelEn: z.string(),
+  });
+
   return (
     <Formik<UnitFormValues>
       initialValues={{
         identifier: String(initialData?.name ?? entity.name ?? ''),
-        lableDE: String(initialData?.lableDE ?? ''),
+        labelDe: readLabelDe(initialData),
+        labelEn: readLabelEn(initialData),
       }}
-      validate={(values) => validateUnit(values)}
+      validate={(values) => zodFormikValidate(unitFormSchema)(values)}
       onSubmit={() => {}}
       enableReinitialize
     >
@@ -99,52 +117,57 @@ export function UnitForm({ initialData, onDataChange, entity }: BaseEntityFormPr
 
 interface IceFormValues {
   identifier: string;
-  lableDE: string;
+  labelDe: string;
+  labelEn: string;
 }
 
 export type { IceFormValues };
 
-const iceFormSchema = z.object({
-  identifier: identifierSchema,
-  lableDE: lableDESchema,
-});
-
-const validateIce = zodFormikValidate(iceFormSchema);
-
 function IceFormContent({ onDataChange }: { onDataChange: (data: Record<string, unknown>) => void }) {
+  const { t } = useTranslation(['settings', 'common']);
   const { values, handleChange, errors, touched } = useFormikContext<IceFormValues>();
 
   useEffect(() => {
     onDataChange({
       name: values.identifier,
-      lableDE: values.lableDE,
+      labelDe: values.labelDe,
+      labelEn: values.labelEn,
     });
-  }, [values.identifier, values.lableDE, onDataChange]);
+  }, [values.identifier, values.labelDe, values.labelEn, onDataChange]);
 
   return (
     <Card variant="elevated" className="ml-6 rounded-lg">
       <CardBody compact>
-        <div className="mb-2 text-sm font-semibold">Neues Eis erstellen</div>
+        <div className="mb-2 text-sm font-semibold">{t('settings:createIce')}</div>
+        <FormControl className="mb-2">
+          <Label htmlFor="identifier" className="flex-row items-center justify-between">
+            <LabelText className="text-xs">{t('common:identifierAz')}</LabelText>
+            <LabelTextAlt className="text-xs text-error">
+              <span>{errors.identifier && touched.identifier ? String(errors.identifier) : ''}</span>
+              <span>{t('common:required')}</span>
+            </LabelTextAlt>
+          </Label>
+          <Input id="identifier" name="identifier" inputSize="sm" value={values.identifier} onChange={handleChange} />
+        </FormControl>
         <div className="grid grid-cols-2 gap-2">
           <FormControl>
-            <Label htmlFor="identifier" className="flex-row items-center justify-between">
-              <LabelText className="text-xs">Identifier (A-Z,_)</LabelText>
+            <Label htmlFor="labelDe" className="flex-row items-center justify-between">
+              <LabelText className="text-xs">{t('settings:labelDe')}</LabelText>
               <LabelTextAlt className="text-xs text-error">
-                <span>{errors.identifier && touched.identifier ? String(errors.identifier) : ''}</span>
-                <span>*</span>
+                <span>{errors.labelDe && touched.labelDe ? String(errors.labelDe) : ''}</span>
+                <span>{t('common:required')}</span>
               </LabelTextAlt>
             </Label>
-            <Input id="identifier" name="identifier" inputSize="sm" value={values.identifier} onChange={handleChange} />
+            <Input id="labelDe" name="labelDe" inputSize="sm" value={values.labelDe} onChange={handleChange} />
           </FormControl>
           <FormControl>
-            <Label htmlFor="lableDE" className="flex-row items-center justify-between">
-              <LabelText className="text-xs">Deutsch</LabelText>
+            <Label htmlFor="labelEn" className="flex-row items-center justify-between">
+              <LabelText className="text-xs">{t('settings:labelEn')}</LabelText>
               <LabelTextAlt className="text-xs text-error">
-                <span>{errors.lableDE && touched.lableDE ? String(errors.lableDE) : ''}</span>
-                <span>*</span>
+                <span>{errors.labelEn && touched.labelEn ? String(errors.labelEn) : ''}</span>
               </LabelTextAlt>
             </Label>
-            <Input id="lableDE" name="lableDE" inputSize="sm" value={values.lableDE} onChange={handleChange} />
+            <Input id="labelEn" name="labelEn" inputSize="sm" value={values.labelEn} onChange={handleChange} />
           </FormControl>
         </div>
       </CardBody>
@@ -153,13 +176,28 @@ function IceFormContent({ onDataChange }: { onDataChange: (data: Record<string, 
 }
 
 export function IceForm({ initialData, onDataChange, entity }: BaseEntityFormProps) {
+  const { t } = useTranslation('settings');
+
+  const iceFormSchema = z.object({
+    identifier: z.string().superRefine((value, ctx) => {
+      if (value.trim() == '') {
+        ctx.addIssue({ code: 'custom', message: t('validation.invalidIdentifier') });
+      } else if (!/^[A-Z_]+$/.test(value)) {
+        ctx.addIssue({ code: 'custom', message: t('validation.azOnly') });
+      }
+    }),
+    labelDe: z.string().refine((value) => value.trim() != '', { message: t('validation.invalidLabel') }),
+    labelEn: z.string(),
+  });
+
   return (
     <Formik<IceFormValues>
       initialValues={{
         identifier: String(initialData?.name ?? entity.name ?? ''),
-        lableDE: String(initialData?.lableDE ?? ''),
+        labelDe: readLabelDe(initialData),
+        labelEn: readLabelEn(initialData),
       }}
-      validate={(values) => validateIce(values)}
+      validate={(values) => zodFormikValidate(iceFormSchema)(values)}
       onSubmit={() => {}}
       enableReinitialize
     >
@@ -176,28 +214,9 @@ interface StepActionFormValues {
   action: string;
   actionGroup: string;
   newActionGroup: string;
-  lableDE: string;
+  labelDe: string;
+  labelEn: string;
 }
-
-// Validation depends on the `newGroupMode` UI state, so the schema is built per render.
-const buildStepActionFormSchema = (newGroupMode: boolean) =>
-  z.object({
-    action: identifierSchema,
-    lableDE: lableDESchema,
-    actionGroup: z.string().superRefine((value, ctx) => {
-      if (!newGroupMode && value.trim() == '') {
-        ctx.addIssue({ code: 'custom', message: 'Gruppe muss ausgewählt werden' });
-      }
-    }),
-    newActionGroup: z.string().superRefine((value, ctx) => {
-      if (!newGroupMode) return;
-      if (value.trim() == '') {
-        ctx.addIssue({ code: 'custom', message: 'Ungültiger Identifier' });
-      } else if (!/^[A-Z_]+$/.test(value)) {
-        ctx.addIssue({ code: 'custom', message: 'Nur A-Z und _ erlaubt' });
-      }
-    }),
-  });
 
 function StepActionFormContent({
   onDataChange,
@@ -210,6 +229,7 @@ function StepActionFormContent({
   newGroupMode: boolean;
   setNewGroupMode: (value: boolean) => void;
 }) {
+  const { t } = useTranslation(['settings', 'common']);
   const { values, handleChange, errors, touched, setFieldValue } = useFormikContext<StepActionFormValues>();
 
   useEffect(() => {
@@ -217,28 +237,29 @@ function StepActionFormContent({
     onDataChange({
       name: values.action,
       actionGroup: finalActionGroup,
-      lableDE: values.lableDE,
+      labelDe: values.labelDe,
+      labelEn: values.labelEn,
     });
-  }, [values.action, values.actionGroup, values.newActionGroup, values.lableDE, newGroupMode, onDataChange]);
+  }, [values.action, values.actionGroup, values.newActionGroup, values.labelDe, values.labelEn, newGroupMode, onDataChange]);
 
   return (
     <Card variant="elevated" className="ml-6 rounded-lg">
       <CardBody compact>
-        <div className="mb-2 text-sm font-semibold">Neue Aktion erstellen</div>
+        <div className="mb-2 text-sm font-semibold">{t('settings:actionModal.create')}</div>
 
         <FormControl className="mb-2">
           <Label className="flex-row items-center justify-between">
-            <LabelText className="text-xs">Gruppe</LabelText>
+            <LabelText className="text-xs">{t('settings:groups')}</LabelText>
             <LabelTextAlt className="text-xs text-error">
               <span>{errors.actionGroup && touched.actionGroup ? String(errors.actionGroup) : ''}</span>
               <span>{errors.newActionGroup && touched.newActionGroup ? String(errors.newActionGroup) : ''}</span>
-              <span>*</span>
+              <span>{t('common:required')}</span>
             </LabelTextAlt>
           </Label>
           {!newGroupMode ? (
             <div className="flex gap-2">
               <Select name="actionGroup" selectSize="sm" value={values.actionGroup} onChange={handleChange} className="flex-1">
-                <option value="">Gruppe auswählen...</option>
+                <option value="">{t('settings:groups')}...</option>
                 {existingGroups.map((group) => (
                   <option key={group} value={group}>
                     {group}
@@ -254,7 +275,7 @@ function StepActionFormContent({
                   setFieldValue('actionGroup', '');
                 }}
               >
-                Neue Gruppe
+                {t('settings:newGroupIdentifier')}
               </Button>
             </div>
           ) : (
@@ -264,7 +285,7 @@ function StepActionFormContent({
                 inputSize="sm"
                 value={values.newActionGroup}
                 onChange={handleChange}
-                placeholder="Gruppe-Identifier (A-Z,_)"
+                placeholder={t('settings:newGroupIdentifier')}
                 className="flex-1"
               />
               <Button
@@ -276,32 +297,41 @@ function StepActionFormContent({
                   setFieldValue('newActionGroup', '');
                 }}
               >
-                Abbrechen
+                {t('common:cancel')}
               </Button>
             </div>
           )}
         </FormControl>
 
+        <FormControl className="mb-2">
+          <Label htmlFor="action" className="flex-row items-center justify-between">
+            <LabelText className="text-xs">{t('common:identifierAz')}</LabelText>
+            <LabelTextAlt className="text-xs text-error">
+              <span>{errors.action && touched.action ? String(errors.action) : ''}</span>
+              <span>{t('common:required')}</span>
+            </LabelTextAlt>
+          </Label>
+          <Input id="action" name="action" inputSize="sm" value={values.action} onChange={handleChange} />
+        </FormControl>
         <div className="grid grid-cols-2 gap-2">
           <FormControl>
-            <Label htmlFor="action" className="flex-row items-center justify-between">
-              <LabelText className="text-xs">Identifier (A-Z,_)</LabelText>
+            <Label htmlFor="labelDe" className="flex-row items-center justify-between">
+              <LabelText className="text-xs">{t('settings:labelDe')}</LabelText>
               <LabelTextAlt className="text-xs text-error">
-                <span>{errors.action && touched.action ? String(errors.action) : ''}</span>
-                <span>*</span>
+                <span>{errors.labelDe && touched.labelDe ? String(errors.labelDe) : ''}</span>
+                <span>{t('common:required')}</span>
               </LabelTextAlt>
             </Label>
-            <Input id="action" name="action" inputSize="sm" value={values.action} onChange={handleChange} />
+            <Input id="labelDe" name="labelDe" inputSize="sm" value={values.labelDe} onChange={handleChange} />
           </FormControl>
           <FormControl>
-            <Label htmlFor="lableDE" className="flex-row items-center justify-between">
-              <LabelText className="text-xs">Deutsch</LabelText>
+            <Label htmlFor="labelEn" className="flex-row items-center justify-between">
+              <LabelText className="text-xs">{t('settings:labelEn')}</LabelText>
               <LabelTextAlt className="text-xs text-error">
-                <span>{errors.lableDE && touched.lableDE ? String(errors.lableDE) : ''}</span>
-                <span>*</span>
+                <span>{errors.labelEn && touched.labelEn ? String(errors.labelEn) : ''}</span>
               </LabelTextAlt>
             </Label>
-            <Input id="lableDE" name="lableDE" inputSize="sm" value={values.lableDE} onChange={handleChange} />
+            <Input id="labelEn" name="labelEn" inputSize="sm" value={values.labelEn} onChange={handleChange} />
           </FormControl>
         </div>
       </CardBody>
@@ -310,7 +340,33 @@ function StepActionFormContent({
 }
 
 export function StepActionForm({ initialData, onDataChange, entity, existingGroups = [] }: StepActionFormProps) {
+  const { t } = useTranslation('settings');
   const [newGroupMode, setNewGroupMode] = useState(false);
+
+  const stepActionFormSchema = z.object({
+    action: z.string().superRefine((value, ctx) => {
+      if (value.trim() == '') {
+        ctx.addIssue({ code: 'custom', message: t('validation.invalidIdentifier') });
+      } else if (!/^[A-Z_]+$/.test(value)) {
+        ctx.addIssue({ code: 'custom', message: t('validation.azOnly') });
+      }
+    }),
+    labelDe: z.string().refine((value) => value.trim() != '', { message: t('validation.invalidLabel') }),
+    labelEn: z.string(),
+    actionGroup: z.string().superRefine((value, ctx) => {
+      if (!newGroupMode && value.trim() == '') {
+        ctx.addIssue({ code: 'custom', message: t('validation.actionGroupRequired') });
+      }
+    }),
+    newActionGroup: z.string().superRefine((value, ctx) => {
+      if (!newGroupMode) return;
+      if (value.trim() == '') {
+        ctx.addIssue({ code: 'custom', message: t('validation.invalidIdentifier') });
+      } else if (!/^[A-Z_]+$/.test(value)) {
+        ctx.addIssue({ code: 'custom', message: t('validation.azOnly') });
+      }
+    }),
+  });
 
   return (
     <Formik<StepActionFormValues>
@@ -318,9 +374,10 @@ export function StepActionForm({ initialData, onDataChange, entity, existingGrou
         actionGroup: String(initialData?.actionGroup ?? entity.actionGroup ?? ''),
         action: String(initialData?.name ?? entity.name ?? ''),
         newActionGroup: '',
-        lableDE: String(initialData?.lableDE ?? ''),
+        labelDe: readLabelDe(initialData),
+        labelEn: readLabelEn(initialData),
       }}
-      validate={(values) => zodFormikValidate(buildStepActionFormSchema(newGroupMode))(values)}
+      validate={(values) => zodFormikValidate(stepActionFormSchema)(values)}
       onSubmit={() => {}}
       enableReinitialize
     >

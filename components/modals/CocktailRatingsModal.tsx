@@ -1,4 +1,5 @@
 import React, { useCallback, useContext, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { UserContext } from '@lib/context/UserContextProvider';
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import { useRouter } from 'next/router';
@@ -22,6 +23,7 @@ interface CocktailRatingModalProps {
 export default function CocktailRatingsModal(props: CocktailRatingModalProps) {
   const userContext = useContext(UserContext);
   const modalContext = useContext(ModalContext);
+  const { t } = useTranslation(['cocktail', 'common', 'errors']);
 
   const [cocktailRatings, setCocktailRatings] = React.useState<RatingDto[]>([]);
 
@@ -37,10 +39,10 @@ export default function CocktailRatingsModal(props: CocktailRatingModalProps) {
     const ratings = await apiV1FetchSafe<RatingDto[]>(
       `/api/v1/workspaces/${workspaceId}/cocktails/${props.cocktailId}/ratings`,
       undefined,
-      'Fehler beim Laden der Bewertungen',
+      t('cocktail:error.loadRatings'),
     );
     if (ratings) setCocktailRatings(ratings);
-  }, [props.cocktailId, workspaceId]);
+  }, [props.cocktailId, workspaceId, t]);
 
   const handleDelete = useCallback(
     async (ratingId: string) => {
@@ -48,13 +50,13 @@ export default function CocktailRatingsModal(props: CocktailRatingModalProps) {
         await apiV1Mutate(`/api/v1/workspaces/${workspaceId}/cocktails/${props.cocktailId}/ratings/${ratingId}`, 'DELETE');
         await fetchCocktailRating();
         props.onUpdate?.();
-        alertService.success('Erfolgreich gelöscht');
+        alertService.success(t('common:success.deleted'));
       } catch (error) {
         console.error(`CocktailRatingModal[${ratingId}] -> delete`, error);
-        alertService.error(error instanceof ApiV1RequestError ? error.message : 'Fehler beim Löschen');
+        alertService.error(error instanceof ApiV1RequestError ? error.message : t('errors:delete'));
       }
     },
-    [fetchCocktailRating, props, workspaceId],
+    [fetchCocktailRating, props, workspaceId, t],
   );
 
   useEffect(() => {
@@ -81,15 +83,15 @@ export default function CocktailRatingsModal(props: CocktailRatingModalProps) {
             modalContext.openModal(<AddCocktailRatingModal cocktailId={props.cocktailId} cocktailName={props.cocktailName} onCreated={fetchCocktailRating} />)
           }
         >
-          <FaPlus /> Bewertung hinzufügen
+          <FaPlus /> {t('cocktail:addRating')}
         </Button>
       </div>
 
-      <Input inputSize="sm" placeholder={'Nach Person suchen...'} value={search} onChange={(event) => setSearch(event.target.value)} />
+      <Input inputSize="sm" placeholder={t('cocktail:searchPersonPlaceholder')} value={search} onChange={(event) => setSearch(event.target.value)} />
       <div className={'flex flex-col divide-y'}>
         {cocktailRatings.filter(
           (rating) => (rating.name ?? '').toLowerCase().includes(search.toLowerCase()) || (rating.comment ?? '').toLowerCase().includes(search.toLowerCase()),
-        )?.length === 0 && <div className={'text-center text-gray-500 italic'}>Keine Bewertungen vorhanden</div>}
+        )?.length === 0 && <div className={'text-center text-gray-500 italic'}>{t('cocktail:noRatings')}</div>}
         {cocktailRatings
           .filter(
             (rating) => (rating.name ?? '').toLowerCase().includes(search.toLowerCase()) || (rating.comment ?? '').toLowerCase().includes(search.toLowerCase()),
@@ -113,7 +115,11 @@ export default function CocktailRatingsModal(props: CocktailRatingModalProps) {
                           modalContext.openModal(
                             <DeleteConfirmationModal
                               spelling={'DELETE'}
-                              entityName={`die ${rating.rating} Sterne Bewertung ${rating.name ? `von ${rating.name} ` : ''}vom ${formatDateTime(new Date(rating.createdAt))}`}
+                              entityName={t('cocktail:ratingDeleteEntity', {
+                                rating: rating.rating,
+                                byName: rating.name ? t('cocktail:ratingByName', { name: rating.name }) : '',
+                                date: formatDateTime(new Date(rating.createdAt)),
+                              })}
                               onApprove={async () => handleDelete(rating.id)}
                             />,
                           )
@@ -141,7 +147,11 @@ export default function CocktailRatingsModal(props: CocktailRatingModalProps) {
                           modalContext.openModal(
                             <DeleteConfirmationModal
                               spelling={'DELETE'}
-                              entityName={`die ${rating.rating} Sterne Bewertung ${rating.name ? `von ${rating.name} ` : ''}vom ${formatDateTime(new Date(rating.createdAt))}`}
+                              entityName={t('cocktail:ratingDeleteEntity', {
+                                rating: rating.rating,
+                                byName: rating.name ? t('cocktail:ratingByName', { name: rating.name }) : '',
+                                date: formatDateTime(new Date(rating.createdAt)),
+                              })}
                               onApprove={async () => handleDelete(rating.id)}
                             />,
                           )

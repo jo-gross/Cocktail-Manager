@@ -1,4 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { FaEdit, FaTrash } from 'react-icons/fa';
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import { DeleteConfirmationModal } from '@components/modals/DeleteConfirmationModal';
@@ -39,6 +40,7 @@ export function SavedSetSelector({
   showAllTypes = false,
   excludeTypes = [],
 }: SavedSetSelectorProps) {
+  const { t } = useTranslation(['statistics', 'errors']);
   const modalContext = useContext(ModalContext);
   const [sets, setSets] = useState<SavedSet[]>([]);
   const [loading, setLoading] = useState(false);
@@ -89,7 +91,7 @@ export function SavedSetSelector({
             }
             onDelete?.(set.id);
           } catch (error) {
-            alertApiV1Error(error, 'Fehler beim Löschen des Sets');
+            alertApiV1Error(error, t('errors:deleteSet'));
           }
         }}
       />,
@@ -99,11 +101,11 @@ export function SavedSetSelector({
   const getTypeLabel = (setType: SavedSetType) => {
     switch (setType) {
       case 'TAG_SET':
-        return 'Tags';
+        return t('tags');
       case 'INGREDIENT_SET':
-        return 'Zutaten';
+        return t('ingredients');
       case 'COCKTAIL_SET':
-        return 'Cocktails';
+        return t('cocktails');
       default:
         return setType;
     }
@@ -114,13 +116,13 @@ export function SavedSetSelector({
       <CardBody>
         <CardTitle className="flex items-center justify-between">
           <span className="flex items-center gap-2 text-sm font-semibold tracking-wide text-base-content/70 uppercase">
-            Gespeicherte Sets
+            {t('savedSets')}
             {loading && <Loading size="xs" />}
           </span>
         </CardTitle>
         <div className="space-y-2">
           {sets.length === 0 ? (
-            <div className="text-sm text-base-content/70">Keine Sets gespeichert</div>
+            <div className="text-sm text-base-content/70">{t('noSetsSaved')}</div>
           ) : (
             sets.map((set) => (
               <div
@@ -135,7 +137,7 @@ export function SavedSetSelector({
                     <div>
                       <div className="font-semibold">{set.name}</div>
                       <div className="text-xs text-base-content/70">
-                        {set.items.length} {getTypeLabel(set.type)}
+                        {t('setItemCount', { count: set.items.length, type: getTypeLabel(set.type) })}
                         {set.logic && ` · ${set.logic}`}
                       </div>
                     </div>

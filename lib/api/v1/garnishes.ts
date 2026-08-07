@@ -51,7 +51,7 @@ const exportSpec = garnishesExportJsonApiDoc.operations.POST!;
 export const exportJsonHandler = withHttpMethods({
   [HTTPMethod.POST]: withWorkspacePermission(exportSpec.roles, exportSpec.permission, async (req: NextApiRequest, res: NextApiResponse, _user, workspace) => {
     const { ids } = (req.body ?? {}) as { ids?: string[] };
-    if (!ids || ids.length === 0) return res.status(400).json({ message: 'Keine Garnituren ausgewählt' });
+    if (!ids || ids.length === 0) return res.status(400).json({ message: 'No garnishes selected' });
 
     try {
       const exportData = await garnishes.exportGarnishesJson(workspace, ids);
@@ -59,7 +59,7 @@ export const exportJsonHandler = withHttpMethods({
     } catch (error) {
       if (error instanceof ApiError) return res.status(error.status).json({ message: error.message });
       console.error('Garnish export error:', error);
-      return res.status(500).json({ message: 'Fehler beim Exportieren' });
+      return res.status(500).json({ message: 'Failed to export' });
     }
   }),
 });

@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Line } from 'react-chartjs-2';
 import { CategoryScale, Chart as ChartJS, Legend, LinearScale, LineElement, PointElement, TimeScale, Title, Tooltip, TooltipModel } from 'chart.js';
+import { toIntlLocale } from '@lib/i18n/format';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, TimeScale);
 
@@ -51,7 +53,7 @@ interface TimeSeriesChartProps {
 
 export function TimeSeriesChart({
   data,
-  label = 'Anzahl',
+  label,
   comparisonData,
   comparisonLabel,
   datasets,
@@ -60,6 +62,8 @@ export function TimeSeriesChart({
   showLegend = false,
   loading = false,
 }: TimeSeriesChartProps) {
+  const { t, i18n } = useTranslation('statistics');
+  const resolvedLabel = label ?? t('count');
   const containerRef = useRef<HTMLDivElement>(null);
   const [themeColor, setThemeColor] = useState(color || '#6366f1');
 
@@ -129,12 +133,12 @@ export function TimeSeriesChart({
   const formatDateWithWeekday = (dateString: string): string => {
     try {
       const date = new Date(dateString);
-      const weekdays = ['So.', 'Mo.', 'Di.', 'Mi.', 'Do.', 'Fr.', 'Sa.'];
-      const weekday = weekdays[date.getDay()];
-      const day = date.getDate().toString().padStart(2, '0');
-      const month = (date.getMonth() + 1).toString().padStart(2, '0');
-      const year = date.getFullYear().toString().slice(-2);
-      return `${weekday} ${day}.${month}.${year}`;
+      return date.toLocaleDateString(toIntlLocale(i18n.language), {
+        weekday: 'short',
+        day: '2-digit',
+        month: '2-digit',
+        year: '2-digit',
+      });
     } catch {
       return dateString;
     }
@@ -189,7 +193,7 @@ export function TimeSeriesChart({
     formattedLabels = chartLabels.map(formatDateWithWeekday);
     chartDatasets = [
       {
-        label,
+        label: resolvedLabel,
         data: data ? data.map((d) => d.count) : [],
         borderColor: themeColor,
         backgroundColor: withAlpha(themeColor, 0.1),
@@ -199,7 +203,7 @@ export function TimeSeriesChart({
       ...(comparisonData
         ? [
             {
-              label: comparisonLabel || 'Vergleich',
+              label: comparisonLabel || t('comparison'),
               data: comparisonData.map((d) => d.count),
               borderColor: 'rgb(156, 163, 175)',
               backgroundColor: 'rgba(156, 163, 175, 0.1)',
@@ -334,7 +338,7 @@ export function TimeSeriesChart({
               </div>
               {tooltipData.items.length > 1 && (
                 <div className="mt-2 flex items-center justify-between border-t border-base-300 pt-2">
-                  <span className="text-sm font-medium text-base-content">Gesamt</span>
+                  <span className="text-sm font-medium text-base-content">{t('total')}</span>
                   <span className="text-sm font-bold text-base-content">{tooltipData.total}</span>
                 </div>
               )}

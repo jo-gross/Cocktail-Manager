@@ -9,7 +9,7 @@ import HTTPMethod from 'http-method-enum';
 const legacyHandler = withHttpMethods({
   [HTTPMethod.PUT]: withWorkspacePermission([Role.USER], Permission.CALCULATIONS_UPDATE, async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
     const groupId = req.query.groupId as string | undefined;
-    if (!groupId) return res.status(400).json({ message: 'Keine Gruppen-ID' });
+    if (!groupId) return res.status(400).json({ message: 'No group ID' });
 
     const { name, isDefaultExpanded } = req.body as { name?: string; isDefaultExpanded?: boolean };
 
@@ -21,7 +21,7 @@ const legacyHandler = withHttpMethods({
       where: { id: groupId, workspaceId: workspace.id },
     });
     if (!existing) {
-      return res.status(404).json({ message: 'Gruppe nicht gefunden' });
+      return res.status(404).json({ message: 'Group not found' });
     }
 
     try {
@@ -35,10 +35,10 @@ const legacyHandler = withHttpMethods({
       return res.json({ data: updated });
     } catch (error: unknown) {
       if (error != null && typeof error === 'object' && 'code' in error && error.code === 'P2002') {
-        return res.status(409).json({ message: 'Eine Gruppe mit diesem Namen existiert bereits' });
+        return res.status(409).json({ message: 'A group with this name already exists' });
       }
       console.error('CalculationGroup -> update', error);
-      return res.status(500).json({ message: 'Fehler beim Aktualisieren der Gruppe' });
+      return res.status(500).json({ message: 'Failed to update group' });
     }
   }),
   [HTTPMethod.DELETE]: withWorkspacePermission(
@@ -46,13 +46,13 @@ const legacyHandler = withHttpMethods({
     Permission.CALCULATIONS_UPDATE,
     async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
       const groupId = req.query.groupId as string | undefined;
-      if (!groupId) return res.status(400).json({ message: 'Keine Gruppen-ID' });
+      if (!groupId) return res.status(400).json({ message: 'No group ID' });
 
       const existing = await prisma.cocktailCalculationGroup.findFirst({
         where: { id: groupId, workspaceId: workspace.id },
       });
       if (!existing) {
-        return res.status(404).json({ message: 'Gruppe nicht gefunden' });
+        return res.status(404).json({ message: 'Group not found' });
       }
 
       await prisma.cocktailCalculationGroup.delete({ where: { id: groupId } });

@@ -1,4 +1,5 @@
 import { apiV1Fetch, apiV1FetchSafe, apiV1Mutate } from './apiV1';
+import { i18n } from '@lib/i18n/client';
 import type {
   CalculationDto,
   CalculationSummaryDto,
@@ -28,8 +29,8 @@ export function fetchCalculationsAndGroupsSafe(
   if (workspaceId == undefined) return;
   setLoading(true);
   Promise.all([
-    apiV1FetchSafe<CalculationSummaryDto[]>(`/api/v1/workspaces/${workspaceId}/calculations`, undefined, 'Fehler beim Laden der Kalkulationen'),
-    apiV1FetchSafe<CalculationGroupDto[]>(`/api/v1/workspaces/${workspaceId}/calculations/groups`, undefined, 'Fehler beim Laden der Gruppen'),
+    apiV1FetchSafe<CalculationSummaryDto[]>(`/api/v1/workspaces/${workspaceId}/calculations`, undefined, i18n.t('errors:loadCalculations')),
+    apiV1FetchSafe<CalculationGroupDto[]>(`/api/v1/workspaces/${workspaceId}/calculations/groups`, undefined, i18n.t('errors:loadGroups')),
   ])
     .then(([calculations, groups]) => {
       if (calculations) setCalculations(calculations);

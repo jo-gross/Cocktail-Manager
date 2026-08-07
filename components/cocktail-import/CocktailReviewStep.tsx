@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { CocktailExportStructure } from '../../types/CocktailExportStructure';
 import { alertService } from '@lib/alertService';
 import { FaExclamationTriangle } from 'react-icons/fa';
@@ -26,6 +27,7 @@ interface CocktailReviewStepProps {
 }
 
 export function CocktailReviewStep({ workspaceId, exportData, selectedCocktailIds, onComplete, onBack }: CocktailReviewStepProps) {
+  const { t } = useTranslation(['import', 'common']);
   const [loading, setLoading] = useState(true);
   const [cocktailMappings, setCocktailMappings] = useState<CocktailMapping[]>([]);
   const [conflicts, setConflicts] = useState<CocktailConflict[]>([]);
@@ -47,7 +49,7 @@ export function CocktailReviewStep({ workspaceId, exportData, selectedCocktailId
 
         if (!response.ok) {
           const error = await response.json();
-          alertService.error(error.message || 'Fehler beim Laden der Konflikt-Daten');
+          alertService.error(error.message || t('import:conflictLoadError'));
           return;
         }
 
@@ -66,14 +68,14 @@ export function CocktailReviewStep({ workspaceId, exportData, selectedCocktailId
         setCocktailMappings(initialMappings);
       } catch (error) {
         console.error('Conflict detection error:', error);
-        alertService.error('Fehler beim Laden der Konflikt-Daten');
+        alertService.error(t('import:conflictLoadError'));
       } finally {
         setLoading(false);
       }
     };
 
     fetchConflicts();
-  }, [workspaceId, exportData, selectedCocktailIds]);
+  }, [workspaceId, exportData, selectedCocktailIds, t]);
 
   const handleDecisionChange = (exportId: string, decision: CocktailMapping['decision'], newName?: string, overwriteId?: string) => {
     setCocktailMappings((prev) =>
@@ -108,14 +110,14 @@ export function CocktailReviewStep({ workspaceId, exportData, selectedCocktailId
     // Validate rename decisions have new names
     const invalidRenames = cocktailMappings.filter((m) => m.decision === 'rename' && !m.newName?.trim());
     if (invalidRenames.length > 0) {
-      alertService.error('Bitte geben Sie für alle umzubenennenden Cocktails einen neuen Namen an');
+      alertService.error(t('import:renameRequired'));
       return;
     }
 
     // Validate overwrite decisions have selected cocktail
     const invalidOverwrites = cocktailMappings.filter((m) => m.decision === 'overwrite' && !m.overwriteId);
     if (invalidOverwrites.length > 0) {
-      alertService.error('Bitte wählen Sie für alle zu überschreibenden Cocktails einen bestehenden Cocktail aus');
+      alertService.error(t('import:overwriteRequired'));
       return;
     }
 
@@ -126,7 +128,7 @@ export function CocktailReviewStep({ workspaceId, exportData, selectedCocktailId
     return (
       <div className={'flex flex-col items-center justify-center gap-4 py-8'}>
         <Loading size="lg" />
-        <span>Konflikte werden analysiert...</span>
+        <span>{t('import:analyzingConflicts')}</span>
       </div>
     );
   }
@@ -139,15 +141,13 @@ export function CocktailReviewStep({ workspaceId, exportData, selectedCocktailId
 
   return (
     <div className={'flex flex-col gap-4'}>
-      <div className={'text-lg font-semibold'}>Schritt 3: Cocktails überprüfen</div>
-      <div className={'text-sm text-base-content/70'}>Überprüfen Sie die zu importierenden Cocktails und lösen Sie eventuelle Namenskonflikte.</div>
+      <div className={'text-lg font-semibold'}>{t('import:step3Title')}</div>
+      <div className={'text-sm text-base-content/70'}>{t('import:step3Description')}</div>
 
       {conflictCount > 0 && (
         <Alert variant="warning">
           <FaExclamationTriangle />
-          <span>
-            {conflictCount} Cocktail{conflictCount > 1 ? 's haben' : ' hat'} Namenskonflikte und {conflictCount > 1 ? 'müssen' : 'muss'} überprüft werden
-          </span>
+          <span>{t('import:conflictsNeedReview', { count: conflictCount })}</span>
         </Alert>
       )}
 
@@ -164,28 +164,28 @@ export function CocktailReviewStep({ workspaceId, exportData, selectedCocktailId
                   <div className={'font-semibold'}>{cocktail.name}</div>
                   {hasConflict && (
                     <Badge variant="warning" size="sm">
-                      Konflikt
+                      {t('import:conflictBadge')}
                     </Badge>
                   )}
                 </div>
 
                 {hasConflict && (
                   <div className={'mt-2 text-sm text-base-content/70'}>
-                    Ein Cocktail mit diesem Namen existiert bereits: {conflict.conflicts.map((c) => c.name).join(', ')}
+                    {t('import:nameExistsAlready', { names: conflict.conflicts.map((c) => c.name).join(', ') })}
                   </div>
                 )}
 
                 <div className={'mt-3 flex flex-col gap-2'}>
                   <label className={'flex cursor-pointer items-center gap-2'}>
                     <Radio radioSize="sm" checked={mapping?.decision === 'import'} onChange={() => handleDecisionChange(cocktail.id, 'import')} />
-                    <span className={'text-sm'}>{hasConflict ? 'Trotzdem importieren' : 'Importieren'}</span>
+                    <span className={'text-sm'}>{hasConflict ? t('import:importAnyway') : t('import:importAction')}</span>
                   </label>
 
                   {hasConflict && (
                     <>
                       <label className={'flex cursor-pointer items-center gap-2'}>
                         <Radio radioSize="sm" checked={mapping?.decision === 'rename'} onChange={() => handleDecisionChange(cocktail.id, 'rename')} />
-                        <span className={'text-sm'}>Umbenennen und importieren</span>
+                        <span className={'text-sm'}>{t('import:renameAndImport')}</span>
                       </label>
 
                       {mapping?.decision === 'rename' && (
@@ -194,7 +194,7 @@ export function CocktailReviewStep({ workspaceId, exportData, selectedCocktailId
                             type={'text'}
                             inputSize="sm"
                             className="w-full max-w-xs"
-                            placeholder={'Neuer Name'}
+                            placeholder={t('import:newNamePlaceholder')}
                             value={mapping.newName || ''}
                             onChange={(e) => handleDecisionChange(cocktail.id, 'rename', e.target.value)}
                           />
@@ -207,7 +207,7 @@ export function CocktailReviewStep({ workspaceId, exportData, selectedCocktailId
                           checked={mapping?.decision === 'overwrite'}
                           onChange={() => handleDecisionChange(cocktail.id, 'overwrite', undefined, conflict.conflicts[0]?.id)}
                         />
-                        <span className={'text-sm text-error'}>Bestehenden Cocktail überschreiben (Warnung!)</span>
+                        <span className={'text-sm text-error'}>{t('import:overwriteExisting')}</span>
                       </label>
 
                       {mapping?.decision === 'overwrite' && (
@@ -224,9 +224,7 @@ export function CocktailReviewStep({ workspaceId, exportData, selectedCocktailId
                               </option>
                             ))}
                           </Select>
-                          <div className={'mt-1 text-xs text-error'}>
-                            Achtung: Der ausgewählte Cocktail wird vollständig durch den importierten Cocktail ersetzt!
-                          </div>
+                          <div className={'mt-1 text-xs text-error'}>{t('import:overwriteWarning')}</div>
                         </div>
                       )}
                     </>
@@ -234,7 +232,7 @@ export function CocktailReviewStep({ workspaceId, exportData, selectedCocktailId
 
                   <label className={'flex cursor-pointer items-center gap-2'}>
                     <Radio radioSize="sm" checked={mapping?.decision === 'skip'} onChange={() => handleDecisionChange(cocktail.id, 'skip')} />
-                    <span className={'text-sm'}>Überspringen</span>
+                    <span className={'text-sm'}>{t('import:skip')}</span>
                   </label>
                 </div>
               </div>
@@ -244,15 +242,18 @@ export function CocktailReviewStep({ workspaceId, exportData, selectedCocktailId
       </div>
 
       <div className={'text-sm text-base-content/70'}>
-        {cocktailMappings.filter((m) => m.decision !== 'skip').length} von {selectedCocktails.length} Cocktails werden importiert
+        {t('import:willImport', {
+          count: cocktailMappings.filter((m) => m.decision !== 'skip').length,
+          total: selectedCocktails.length,
+        })}
       </div>
 
       <div className={'flex justify-end gap-2'}>
         <Button variant="outline" onClick={onBack}>
-          Zurück
+          {t('common:back')}
         </Button>
         <Button variant="primary" onClick={handleNext}>
-          Weiter
+          {t('common:next')}
         </Button>
       </div>
     </div>

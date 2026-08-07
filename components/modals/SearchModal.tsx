@@ -1,5 +1,6 @@
 import { BsSearch } from 'react-icons/bs';
 import React, { forwardRef, useCallback, useContext, useEffect, useImperativeHandle, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { CocktailSummaryDto } from '@lib/schemas/cocktails';
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import { useRouter } from 'next/router';
@@ -41,6 +42,7 @@ export const SearchModal = forwardRef<SearchModalRef, SearchModalProps>((props, 
   const router = useRouter();
   const workspaceId = router.query.workspaceId as string | undefined;
   const modalContext = useContext(ModalContext);
+  const { t } = useTranslation(['cocktail', 'common', 'errors']);
 
   const showRecipe = props.showRecipe ?? true;
 
@@ -74,20 +76,20 @@ export const SearchModal = forwardRef<SearchModalRef, SearchModalProps>((props, 
             setCocktails(body.data);
           } else {
             console.error('SearchModal -> search', response);
-            alertService.error(body.error?.message ?? body.message ?? 'Fehler beim Suchen der Cocktails', response.status, response.statusText);
+            alertService.error(body.error?.message ?? body.message ?? t('cocktail:error.search'), response.status, response.statusText);
           }
         })
         .catch((error) => {
           if (error.name != 'AbortError') {
             console.error('SearchModal -> search', error);
-            alertService.error('Es ist ein Fehler aufgetreten');
+            alertService.error(t('errors:generic'));
           }
         })
         .finally(() => {
           setLoading(false);
         });
     },
-    [workspaceId],
+    [workspaceId, t],
   );
 
   useEffect(() => {
@@ -137,7 +139,7 @@ export const SearchModal = forwardRef<SearchModalRef, SearchModalProps>((props, 
       cocktail={cocktail}
       isArchived={isArchived}
       onSelect={handleSelectCocktail}
-      actionLabel={props.selectionLabel ?? 'Hinzufügen'}
+      actionLabel={props.selectionLabel ?? t('common:add')}
       actionDisabled={props.selectedCocktails?.includes(cocktail.id) ?? false}
       showAction={props.onCocktailSelectedObject != undefined}
     />
@@ -155,7 +157,7 @@ export const SearchModal = forwardRef<SearchModalRef, SearchModalProps>((props, 
         <CollapseTitle tabIndex={index} className="text-base font-medium md:text-lg" onClick={() => toggleCard(cocktail.id)}>
           <span className="min-w-0 truncate">
             {cocktail.name}
-            {isArchived && ' (Archiviert)'}
+            {isArchived && t('common:archivedParen')}
           </span>
         </CollapseTitle>
         <CollapseContent>
@@ -181,7 +183,7 @@ export const SearchModal = forwardRef<SearchModalRef, SearchModalProps>((props, 
                 size="sm"
                 onClick={() => handleSelectCocktail(cocktail)}
               >
-                {props.selectionLabel ?? 'Hinzufügen'}
+                {props.selectionLabel ?? t('common:add')}
               </Button>
             </CardActions>
           ) : null}
@@ -206,14 +208,14 @@ export const SearchModal = forwardRef<SearchModalRef, SearchModalProps>((props, 
   return (
     <div className={`grid w-full grid-cols-1 gap-3 ${props.customWidthClassName ? props.customWidthClassName : 'md:max-w-2xl'}`}>
       <div className={'sticky w-full'}>
-        <div className={'w-max text-2xl font-bold'}>Cocktail suchen</div>
+        <div className={'w-max text-2xl font-bold'}>{t('cocktail:searchTitle')}</div>
         <ButtonGroup className="w-full pb-2">
           <Input
             joinItem
             className="w-full"
             value={search}
             autoFocus={true}
-            placeholder="Tippe zum Suchen…"
+            placeholder={t('cocktail:searchPlaceholder')}
             onChange={async (e) => {
               setSearch(e.target.value);
               if (e.target.value.trim().length != 0) {
@@ -244,9 +246,9 @@ export const SearchModal = forwardRef<SearchModalRef, SearchModalProps>((props, 
           <SearchSkeletonRows />
         ) : cocktails.length == 0 ? (
           search != '' ? (
-            <div className="px-1 text-base-content/70">Keine Einträge gefunden</div>
+            <div className="px-1 text-base-content/70">{t('common:noEntriesFound')}</div>
           ) : (
-            <div className="px-1 text-base-content/70">Tippe zum Suchen…</div>
+            <div className="px-1 text-base-content/70">{t('cocktail:searchPlaceholder')}</div>
           )
         ) : (
           <>
@@ -257,7 +259,7 @@ export const SearchModal = forwardRef<SearchModalRef, SearchModalProps>((props, 
             {groupedCocktails['true']?.length > 0 && (
               <Collapse open={archivedOpen} arrow>
                 <CollapseTitle className="text-xl font-medium" onClick={() => setArchivedOpen(!archivedOpen)}>
-                  Archiviert
+                  {t('common:archived')}
                 </CollapseTitle>
                 <CollapseContent>
                   <div className={'flex flex-col gap-2'}>

@@ -1,4 +1,5 @@
 import React, { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface ExpandableTextProps {
   text: string;
@@ -9,7 +10,8 @@ export interface ExpandableTextHandle {
 }
 
 const ExpandableText = forwardRef<ExpandableTextHandle, ExpandableTextProps>(({ text }, ref) => {
-  const textRef = useRef<HTMLDivElement | null>(null); // Typisiert als HTMLDivElement
+  const { t } = useTranslation('common');
+  const textRef = useRef<HTMLDivElement | null>(null);
   const [isClamped, setIsClamped] = useState(false);
 
   const checkClamp = () => {
@@ -34,8 +36,8 @@ const ExpandableText = forwardRef<ExpandableTextHandle, ExpandableTextProps>(({ 
         </div>
         {isClamped && (
           <>
-            <div className="w-full p-1 text-center underline group-open:hidden">mehr anzeigen</div>
-            <div className="hidden p-1 text-center underline group-open:inline">weniger anzeigen</div>
+            <div className="w-full p-1 text-center underline group-open:hidden">{t('showMore')}</div>
+            <div className="hidden p-1 text-center underline group-open:inline">{t('showLess')}</div>
           </>
         )}
       </summary>

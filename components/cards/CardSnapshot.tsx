@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Card, CardBody } from '@components/ui';
 import type { CardGroupDto } from '@lib/schemas/cards';
 
@@ -16,8 +17,10 @@ function sortGroups(groups: CardGroupDto[]) {
 }
 
 function ItemPlaceholders({ count }: { count: number }) {
+  const { t } = useTranslation('manage');
+
   if (count === 0) {
-    return <span className="text-xs text-base-content/50">Keine Cocktails</span>;
+    return <span className="text-xs text-base-content/50">{t('noCocktails')}</span>;
   }
 
   const visibleCount = Math.min(count, MAX_VISIBLE_ITEMS);
@@ -34,6 +37,8 @@ function ItemPlaceholders({ count }: { count: number }) {
 }
 
 export default function CardSnapshot({ groups, groupCount, itemCount }: CardSnapshotProps) {
+  const { t } = useTranslation(['manage', 'common']);
+
   if (groups && groups.length > 0) {
     const sortedGroups = sortGroups(groups);
     const visibleGroups = sortedGroups.slice(0, MAX_VISIBLE_GROUPS);
@@ -45,13 +50,13 @@ export default function CardSnapshot({ groups, groupCount, itemCount }: CardSnap
           {visibleGroups.map((group) => (
             <div key={group.id} className="space-y-1">
               <div className="flex items-baseline justify-between gap-2">
-                <span className="truncate text-xs font-semibold text-base-content">{group.name || 'Gruppe'}</span>
+                <span className="truncate text-xs font-semibold text-base-content">{group.name || t('group')}</span>
                 {group.groupPrice != null ? <span className="shrink-0 text-[0.65rem] text-base-content/60">{group.groupPrice}€</span> : null}
               </div>
               <ItemPlaceholders count={group.items.length} />
             </div>
           ))}
-          {hiddenGroupCount > 0 ? <div className="text-center text-xs text-base-content/60">+{hiddenGroupCount} Gruppen</div> : null}
+          {hiddenGroupCount > 0 ? <div className="text-center text-xs text-base-content/60">{t('moreGroups', { count: hiddenGroupCount })}</div> : null}
         </CardBody>
       </Card>
     );
@@ -61,7 +66,7 @@ export default function CardSnapshot({ groups, groupCount, itemCount }: CardSnap
   const resolvedItemCount = itemCount ?? 0;
 
   if (resolvedGroupCount === 0 && resolvedItemCount === 0) {
-    return <div className="rounded-xl bg-base-300/30 px-3 py-4 text-center text-sm text-base-content/60">Keine Gruppen</div>;
+    return <div className="rounded-xl bg-base-300/30 px-3 py-4 text-center text-sm text-base-content/60">{t('noGroups')}</div>;
   }
 
   return (
@@ -70,7 +75,7 @@ export default function CardSnapshot({ groups, groupCount, itemCount }: CardSnap
         <div className="space-y-1">
           <div className="flex items-baseline justify-between gap-2">
             <span className="truncate text-xs font-semibold text-base-content">
-              {resolvedGroupCount} {resolvedGroupCount === 1 ? 'Gruppe' : 'Gruppen'}
+              {resolvedGroupCount} {t('common:group', { count: resolvedGroupCount })}
             </span>
           </div>
           <ItemPlaceholders count={resolvedItemCount} />

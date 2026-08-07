@@ -1,4 +1,5 @@
 import { apiV1Fetch, apiV1FetchSafe, apiV1Mutate } from './apiV1';
+import { i18n } from '@lib/i18n/client';
 import type { ApiKeyDto, ApiKeyCreateInput, ApiKeyCreateResult } from '@lib/schemas/apiKeys';
 import type { DeletionResult } from '@lib/schemas/common';
 
@@ -9,7 +10,7 @@ export function listApiKeys(workspaceId: string | string[]): Promise<ApiKeyDto[]
 export function fetchApiKeysSafe(workspaceId: string | string[] | undefined, setApiKeys: (keys: ApiKeyDto[]) => void, setLoading: (loading: boolean) => void) {
   if (workspaceId == undefined) return;
   setLoading(true);
-  apiV1FetchSafe<ApiKeyDto[]>(`/api/v1/workspaces/${workspaceId}/api-keys`, undefined, 'Fehler beim Laden der API Keys')
+  apiV1FetchSafe<ApiKeyDto[]>(`/api/v1/workspaces/${workspaceId}/api-keys`, undefined, i18n.t('errors:loadApiKeys'))
     .then((keys) => {
       if (keys) setApiKeys(keys);
     })

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { DAY_ORDER_MONDAY_FIRST, getDayName } from '@lib/dayConstants';
 import { Button, Checkbox, FormControl, Input, Label, LabelText } from '@components/ui';
 
@@ -11,6 +12,7 @@ interface SignageSlideBulkActionsProps {
 }
 
 export function SignageSlideBulkActions({ selectedCount, onApply, onDisable, onEnable, onClearSelection }: SignageSlideBulkActionsProps) {
+  const { t } = useTranslation(['monitor', 'common']);
   const [weekdays, setWeekdays] = useState<number[]>([]);
   const [validFrom, setValidFrom] = useState('');
   const [validTo, setValidTo] = useState('');
@@ -41,7 +43,7 @@ export function SignageSlideBulkActions({ selectedCount, onApply, onDisable, onE
 
   return (
     <div className="flex flex-col gap-3 rounded-lg border border-primary/30 bg-primary/5 p-3">
-      <div className="text-sm font-medium">{selectedCount} Slide(s) ausgewählt</div>
+      <div className="text-sm font-medium">{t('monitor:slidesSelected', { count: selectedCount })}</div>
 
       <div className="flex flex-wrap gap-1">
         {DAY_ORDER_MONDAY_FIRST.map((day) => (
@@ -54,13 +56,13 @@ export function SignageSlideBulkActions({ selectedCount, onApply, onDisable, onE
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         <FormControl>
           <Label>
-            <LabelText>Startdatum</LabelText>
+            <LabelText>{t('monitor:startDate')}</LabelText>
           </Label>
           <Input type="date" value={validFrom} onChange={(event) => setValidFrom(event.target.value)} />
         </FormControl>
         <FormControl>
           <Label>
-            <LabelText>Enddatum</LabelText>
+            <LabelText>{t('monitor:endDate')}</LabelText>
           </Label>
           <Input type="date" value={validTo} onChange={(event) => setValidTo(event.target.value)} />
         </FormControl>
@@ -69,23 +71,23 @@ export function SignageSlideBulkActions({ selectedCount, onApply, onDisable, onE
       <label className="flex items-start gap-2 text-sm">
         <Checkbox checked={dateExclusive} onChange={() => setDateExclusive((current) => !current)} />
         <span>
-          Nur in diesem Zeitraum anzeigen (ersetzt andere Karten)
-          <span className="mt-0.5 block text-xs text-base-content/60">Exklusive Karten ersetzen die normale Rotation, solange sie aktiv sind.</span>
+          {t('monitor:exclusivePeriod')}
+          <span className="mt-0.5 block text-xs text-base-content/60">{t('monitor:exclusivePeriodHelp')}</span>
         </span>
       </label>
 
       <div className="flex flex-wrap gap-2">
         <Button type="button" variant="primary" size="sm" disabled={submitting} onClick={handleApply}>
-          Anwenden
+          {t('monitor:apply')}
         </Button>
         <Button type="button" variant="outline" size="sm" disabled={submitting} onClick={onEnable}>
-          Aktivieren
+          {t('monitor:activate')}
         </Button>
         <Button type="button" variant="outline" size="sm" disabled={submitting} onClick={onDisable}>
-          Deaktivieren
+          {t('monitor:deactivate')}
         </Button>
         <Button type="button" variant="ghost" size="sm" onClick={onClearSelection}>
-          Auswahl aufheben
+          {t('monitor:clearSelection')}
         </Button>
       </div>
     </div>

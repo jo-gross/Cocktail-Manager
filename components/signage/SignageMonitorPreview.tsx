@@ -1,4 +1,5 @@
 import { useContext, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { cn } from '@components/ui';
 import { SignageFormatView } from '@lib/signage/types';
 import { filterSlidesForDisplay } from '@lib/signage/isSlideActiveNow';
@@ -14,6 +15,7 @@ interface SignageMonitorPreviewProps {
 }
 
 function SignageMonitorPreviewContent({ format, allFormats, variant }: SignageMonitorPreviewProps) {
+  const { t } = useTranslation('manage');
   const displaySlides = useMemo(() => {
     if (allFormats && allFormats.length > 0) {
       return resolveSignageSlides(allFormats, format.format);
@@ -44,14 +46,15 @@ function SignageMonitorPreviewContent({ format, allFormats, variant }: SignageMo
         slides={slides}
         slideDurationSeconds={format.slideDurationSeconds}
         backgroundMode={backgroundMode}
-        emptyMessage="Keine aktive Karte für jetzt"
-        alt="Monitor preview slide"
+        emptyMessage={t('monitor.noActiveCardNow')}
+        alt={t('monitor.livePreview')}
       />
     </div>
   );
 }
 
 export function SignageMonitorPreview({ format, allFormats, variant = 'inline' }: SignageMonitorPreviewProps) {
+  const { t } = useTranslation('manage');
   const modalContext = useContext(ModalContext);
 
   if (variant === 'modal') {
@@ -63,7 +66,7 @@ export function SignageMonitorPreview({ format, allFormats, variant = 'inline' }
       type="button"
       className="block w-full cursor-zoom-in text-left"
       onClick={() => modalContext.openModal(<SignageMonitorPreviewContent format={format} allFormats={allFormats} variant="modal" />)}
-      title="Monitor-Vorschau vergrößern"
+      title={t('monitor.enlargePreview')}
     >
       <SignageMonitorPreviewContent format={format} allFormats={allFormats} variant="inline" />
     </button>

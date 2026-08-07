@@ -150,7 +150,7 @@ export async function deleteIngredient(workspace: Workspace, user: User, ingredi
 
   const cocktails = Array.from(uniqueCocktails.values());
   if (cocktails.length > 0) {
-    throw new ApiError(409, 'INGREDIENT_IN_USE', `Die Zutat wird noch in ${cocktails.length} Cocktail(s) verwendet und kann nicht gelöscht werden.`, {
+    throw new ApiError(409, 'INGREDIENT_IN_USE', `The ingredient is still used in ${cocktails.length} cocktail(s) and cannot be deleted.`, {
       cocktails,
     });
   }
@@ -280,7 +280,7 @@ export async function exportIngredientsJson(workspace: Workspace, ids: string[])
     include: { IngredientVolume: { include: { unit: true } } },
   });
 
-  if (ingredients.length === 0) throw new ApiError(404, 'NOT_FOUND', 'Keine Zutaten gefunden');
+  if (ingredients.length === 0) throw new ApiError(404, 'INGREDIENTS_NOT_FOUND', 'No ingredients found');
 
   const exportData: IngredientExportStructure[] = ingredients.map((ingredient) => {
     const unitsMap = new Map<string, { id: string; name: string; workspaceId: string }>();
@@ -380,7 +380,7 @@ export async function importIngredientsJson(
   if (body.phase === 'execute') {
     const decisions = body.decisions;
     if (!decisions || decisions.length === 0) {
-      throw new ApiError(400, 'VALIDATION_ERROR', 'Keine Entscheidungen angegeben');
+      throw new ApiError(400, 'NO_DECISIONS', 'No decisions provided');
     }
 
     const results: Array<{ name: string; status: string; message?: string }> = [];
@@ -453,7 +453,7 @@ export async function importIngredientsJson(
             results.push({ name: finalName, status: 'created' });
           }
         } catch (err: unknown) {
-          results.push({ name: finalName, status: 'error', message: err instanceof Error ? err.message : 'Unbekannter Fehler' });
+          results.push({ name: finalName, status: 'error', message: err instanceof Error ? err.message : 'Unknown error' });
         }
       }
     });
@@ -461,7 +461,7 @@ export async function importIngredientsJson(
     return { success: true, results };
   }
 
-  throw new ApiError(400, 'VALIDATION_ERROR', 'Ungültige Phase');
+  throw new ApiError(400, 'INVALID_PHASE', 'Invalid phase');
 }
 
 export async function getIngredientImage(workspace: Workspace, ingredientId: string): Promise<{ contentType: string; bytes: Buffer } | null> {

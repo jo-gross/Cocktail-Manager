@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { FaEllipsisV } from 'react-icons/fa';
+import { useTranslation } from 'react-i18next';
 import { Button, Menu } from '@components/ui';
 
 export interface ItemAction {
@@ -21,7 +22,9 @@ interface ItemActionMenuProps {
  * A portal is required because the surrounding group Card uses `overflow-hidden`, which
  * would clip an absolutely positioned dropdown.
  */
-export function ItemActionMenu({ actions, ariaLabel = 'Aktionen' }: ItemActionMenuProps) {
+export function ItemActionMenu({ actions, ariaLabel }: ItemActionMenuProps) {
+  const { t } = useTranslation('common');
+  const resolvedAriaLabel = ariaLabel ?? t('actions');
   const [isOpen, setIsOpen] = useState(false);
   const [position, setPosition] = useState({ top: 0, left: 0 });
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -122,7 +125,7 @@ export function ItemActionMenu({ actions, ariaLabel = 'Aktionen' }: ItemActionMe
 
   return (
     <>
-      <Button ref={buttonRef} type="button" variant="ghost" shape="square" size="sm" onClick={handleToggle} aria-label={ariaLabel}>
+      <Button ref={buttonRef} type="button" variant="ghost" shape="square" size="sm" onClick={handleToggle} aria-label={resolvedAriaLabel}>
         <FaEllipsisV />
       </Button>
       {menu}

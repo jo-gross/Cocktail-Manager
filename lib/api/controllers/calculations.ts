@@ -69,7 +69,7 @@ export async function createCalculation(workspace: Workspace, user: User, input:
         select: { id: true },
       });
       if (!group) {
-        throw new ApiError(400, 'INVALID_GROUP', 'Ungültige Gruppe');
+        throw new ApiError(400, 'INVALID_GROUP', 'Invalid group');
       }
       targetGroupId = group.id;
     }
@@ -119,7 +119,7 @@ export async function updateCalculation(
         select: { id: true },
       });
       if (!group) {
-        throw new ApiError(400, 'INVALID_GROUP', 'Ungültige Gruppe');
+        throw new ApiError(400, 'INVALID_GROUP', 'Invalid group');
       }
       targetGroupId = group.id;
     }
@@ -192,7 +192,7 @@ export async function createCalculationGroup(workspace: Workspace, input: Calcul
     return toCalculationGroupDto(group);
   } catch (error: unknown) {
     if (typeof error === 'object' && error !== null && 'code' in error && error.code === 'P2002') {
-      throw new ApiError(409, 'GROUP_NAME_TAKEN', 'Eine Gruppe mit diesem Namen existiert bereits');
+      throw new ApiError(409, 'GROUP_NAME_TAKEN', 'A group with this name already exists');
     }
     throw error;
   }
@@ -201,7 +201,7 @@ export async function createCalculationGroup(workspace: Workspace, input: Calcul
 export async function updateCalculationGroup(workspace: Workspace, groupId: string, input: CalculationGroupUpdateInput): Promise<CalculationGroupDto> {
   const existing = await prisma.cocktailCalculationGroup.findFirst({ where: { id: groupId, workspaceId: workspace.id } });
   if (!existing) {
-    throw new ApiError(404, 'NOT_FOUND', 'Gruppe nicht gefunden');
+    throw new ApiError(404, 'GROUP_NOT_FOUND', 'Group not found');
   }
 
   try {
@@ -216,7 +216,7 @@ export async function updateCalculationGroup(workspace: Workspace, groupId: stri
     return toCalculationGroupDto(updated);
   } catch (error: unknown) {
     if (typeof error === 'object' && error !== null && 'code' in error && error.code === 'P2002') {
-      throw new ApiError(409, 'GROUP_NAME_TAKEN', 'Eine Gruppe mit diesem Namen existiert bereits');
+      throw new ApiError(409, 'GROUP_NAME_TAKEN', 'A group with this name already exists');
     }
     throw error;
   }
@@ -225,7 +225,7 @@ export async function updateCalculationGroup(workspace: Workspace, groupId: stri
 export async function deleteCalculationGroup(workspace: Workspace, groupId: string): Promise<{ count: number }> {
   const existing = await prisma.cocktailCalculationGroup.findFirst({ where: { id: groupId, workspaceId: workspace.id } });
   if (!existing) {
-    throw new ApiError(404, 'NOT_FOUND', 'Gruppe nicht gefunden');
+    throw new ApiError(404, 'GROUP_NOT_FOUND', 'Group not found');
   }
 
   await prisma.cocktailCalculationGroup.delete({ where: { id: groupId } });
@@ -236,7 +236,7 @@ export async function assignCalculationsToGroup(workspace: Workspace, input: Cal
   if (input.groupId) {
     const group = await prisma.cocktailCalculationGroup.findFirst({ where: { id: input.groupId, workspaceId: workspace.id } });
     if (!group) {
-      throw new ApiError(404, 'NOT_FOUND', 'Gruppe nicht gefunden');
+      throw new ApiError(404, 'GROUP_NOT_FOUND', 'Group not found');
     }
   }
 
@@ -286,7 +286,7 @@ export async function exportCalculationsJson(workspace: Workspace, input: Calcul
   const { ids } = input;
 
   if (!ids || ids.length === 0) {
-    throw new ApiError(400, 'NO_CALCULATIONS_SELECTED', 'Keine Kalkulationen ausgewählt');
+    throw new ApiError(400, 'NO_CALCULATIONS_SELECTED', 'No calculations selected');
   }
 
   const calculations = await prisma.cocktailCalculation.findMany({
@@ -299,7 +299,7 @@ export async function exportCalculationsJson(workspace: Workspace, input: Calcul
   });
 
   if (calculations.length === 0) {
-    throw new ApiError(404, 'NOT_FOUND', 'Keine Kalkulationen gefunden');
+    throw new ApiError(404, 'CALCULATIONS_NOT_FOUND', 'No calculations found');
   }
 
   const exportData: CocktailCalculationExportStructure[] = calculations.map((calc) => ({
@@ -454,7 +454,7 @@ export async function importCalculationsJson(workspace: Workspace, user: User, i
 
   if (phase === 'execute') {
     if (!decisions || decisions.length === 0) {
-      throw new ApiError(400, 'NO_DECISIONS', 'Keine Entscheidungen angegeben');
+      throw new ApiError(400, 'NO_DECISIONS', 'No decisions provided');
     }
 
     const cocktailNameToId = new Map<string, string>();
@@ -667,7 +667,7 @@ export async function importCalculationsJson(workspace: Workspace, user: User, i
           await createLog(tx, workspaceId, user.id, 'CocktailCalculation', calcId, action as 'CREATE' | 'UPDATE', null, fullResult);
           results.push({ name: finalName, status: decision.decision === 'overwrite' ? 'overwritten' : 'created' });
         } catch (err: unknown) {
-          results.push({ name: finalName, status: 'error', message: err instanceof Error ? err.message : 'Unbekannter Fehler' });
+          results.push({ name: finalName, status: 'error', message: err instanceof Error ? err.message : 'Unknown error' });
         }
       }
     });
@@ -675,5 +675,5 @@ export async function importCalculationsJson(workspace: Workspace, user: User, i
     return { success: true, results };
   }
 
-  throw new ApiError(400, 'INVALID_PHASE', 'Ungültige Phase');
+  throw new ApiError(400, 'INVALID_PHASE', 'Invalid phase');
 }

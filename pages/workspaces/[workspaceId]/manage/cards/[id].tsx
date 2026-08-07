@@ -2,6 +2,7 @@ import { ManageEntityLayout } from '@components/layout/ManageEntityLayout';
 import { PageCenter } from '@components/layout/PageCenter';
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
+import { useTranslation } from 'react-i18next';
 import { Loading } from '@components/Loading';
 import { withPagePermission } from '@middleware/ui/withPagePermission';
 import { Role } from '@generated/prisma/client';
@@ -12,6 +13,7 @@ import { apiV1FetchSafe } from '@lib/network/apiV1';
 
 function EditCocktailCard() {
   const router = useRouter();
+  const { t } = useTranslation(['manage', 'common', 'cocktail', 'errors']);
   const { id, workspaceId } = router.query;
 
   const [card, setCard] = useState<CardDto | undefined>(undefined);
@@ -23,7 +25,7 @@ function EditCocktailCard() {
   useEffect(() => {
     if (!id || !workspaceId) return;
     setLoadingCard(true);
-    apiV1FetchSafe<CardDto>(`/api/v1/workspaces/${workspaceId}/cards/${id}`, undefined, 'Fehler beim Laden der Karte')
+    apiV1FetchSafe<CardDto>(`/api/v1/workspaces/${workspaceId}/cards/${id}`, undefined, t('errors:loadCard'))
       .then((data) => {
         if (data) setCard(data);
       })
@@ -32,7 +34,7 @@ function EditCocktailCard() {
       });
 
     setLoadingCocktails(true);
-    apiV1FetchSafe<CocktailSummaryDto[]>(`/api/v1/workspaces/${workspaceId}/cocktails`, undefined, 'Fehler beim Laden der Cocktails')
+    apiV1FetchSafe<CocktailSummaryDto[]>(`/api/v1/workspaces/${workspaceId}/cocktails`, undefined, t('cocktail:error.load'))
       .then((data) => {
         if (data) setCocktails(data);
       })
@@ -48,7 +50,7 @@ function EditCocktailCard() {
   ) : (
     <ManageEntityLayout
       backLink={`/workspaces/${workspaceId}/manage/cards`}
-      title={card?.archived ? <span className={'italic'}>Karte (archiviert)</span> : 'Karte'}
+      title={card?.archived ? <span className={'italic'}>{t('manage:cardArchived')}</span> : t('manage:card')}
       unsavedChanges={unsavedChanges}
     >
       <CardEditorForm

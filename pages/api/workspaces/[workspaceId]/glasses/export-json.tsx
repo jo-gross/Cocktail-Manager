@@ -13,7 +13,7 @@ const legacyHandler = withHttpMethods({
     const { ids } = req.body as { ids: string[] };
 
     if (!ids || ids.length === 0) {
-      return res.status(400).json({ message: 'Keine Gläser ausgewählt' });
+      return res.status(400).json({ message: 'No glasses selected' });
     }
 
     try {
@@ -22,7 +22,7 @@ const legacyHandler = withHttpMethods({
       });
 
       if (glasses.length === 0) {
-        return res.status(404).json({ message: 'Keine Gläser gefunden' });
+        return res.status(404).json({ message: 'No glasses found' });
       }
 
       const exportData: GlassExportStructure[] = glasses.map((glass) => ({
@@ -41,7 +41,7 @@ const legacyHandler = withHttpMethods({
       return res.json(exportData.length === 1 ? exportData[0] : exportData);
     } catch (error) {
       console.error('Glass export error:', error);
-      return res.status(500).json({ message: 'Fehler beim Exportieren' });
+      return res.status(500).json({ message: 'Failed to export' });
     }
   }),
 });

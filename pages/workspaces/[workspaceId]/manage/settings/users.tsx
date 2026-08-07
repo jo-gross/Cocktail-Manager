@@ -1,6 +1,7 @@
 import { ManageEntityLayout } from '@components/layout/ManageEntityLayout';
 import { useRouter } from 'next/router';
 import React, { useCallback, useContext, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { UserContext } from '@lib/context/UserContextProvider';
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import { Role } from '@generated/prisma/client';
@@ -33,6 +34,7 @@ import { fetchWorkspaceUsers, fetchWorkspaceJoinRequests, fetchWorkspaceJoinCode
 import { ApiV1RequestError, apiV1Mutate } from '@lib/network/apiV1';
 
 export default function ManageUsersPage() {
+  const { t } = useTranslation(['settings', 'common', 'manage', 'errors', 'entity']);
   const router = useRouter();
   const userContext = useContext(UserContext);
   const modalContext = useContext(ModalContext);
@@ -91,29 +93,26 @@ export default function ManageUsersPage() {
   };
 
   return (
-    <ManageEntityLayout backLink={`/workspaces/${workspaceId}/manage`} title={`Workspace-Einstellungen - ${userContext.workspace?.name}`}>
+    <ManageEntityLayout backLink={`/workspaces/${workspaceId}/manage`} title={t('settings:title', { name: userContext.workspace?.name ?? '' })}>
       <div className={'grid grid-cols-1 gap-2 md:grid-cols-2'}>
         {isExternallyManaged && (
           <Alert variant="warning" className="md:col-span-2">
             <FaExclamationTriangle />
             <div>
-              <h3 className="font-bold">Extern verwaltete Workspace</h3>
-              <div className="text-xs">
-                Diese Workspace wird von einem externen Dienst (OpenID) verwaltet. Nutzer und Rollen werden ausschließlich bei der Anmeldung aktualisiert und
-                können hier nicht bearbeitet werden.
-              </div>
+              <h3 className="font-bold">{t('settings:externallyManaged')}</h3>
+              <div className="text-xs">{t('manage:externallyManagedHelp')}</div>
             </div>
           </Alert>
         )}
         <Card className="overflow-y-auto md:col-span-2">
           <CardBody>
-            <CardTitle>Workspace Nutzer verwalten</CardTitle>
+            <CardTitle>{t('settings:usersTitle')}</CardTitle>
             <Table zebra className="w-full rounded-xl border border-base-200">
               <TableHead>
                 <TableRow>
-                  <TableHeaderCell>Name</TableHeaderCell>
-                  <TableHeaderCell>Email</TableHeaderCell>
-                  <TableHeaderCell>Rolle</TableHeaderCell>
+                  <TableHeaderCell>{t('common:name')}</TableHeaderCell>
+                  <TableHeaderCell>{t('manage:email')}</TableHeaderCell>
+                  <TableHeaderCell>{t('settings:role')}</TableHeaderCell>
                   <TableHeaderCell></TableHeaderCell>
                 </TableRow>
               </TableHead>
@@ -121,7 +120,7 @@ export default function ManageUsersPage() {
                 {workspaceUsersLoading ? (
                   <TableRow>
                     <TableCell colSpan={4} className="w-full text-center">
-                      Lade...
+                      {t('common:loadingShort')}
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -152,9 +151,9 @@ export default function ManageUsersPage() {
                                     .then(() => {
                                       loadWorkspaceUsers();
                                       userContext.refreshWorkspace();
-                                      alertService.success('Erfolgreich aktualisiert');
+                                      alertService.success(t('common:success.updated'));
                                     })
-                                    .catch((error) => handleMutationError(error, 'Fehler beim aktualisieren'));
+                                    .catch((error) => handleMutationError(error, t('errors:updateRole')));
                                 }}
                               >
                                 {Object.values(Role)
@@ -182,16 +181,16 @@ export default function ManageUsersPage() {
                                     .then(() => {
                                       loadWorkspaceUsers();
                                       userContext.refreshWorkspace();
-                                      alertService.success('Erfolgreich entfernt');
+                                      alertService.success(t('common:success.removed'));
                                     })
-                                    .catch((error) => handleMutationError(error, 'Fehler beim Entfernen'))
+                                    .catch((error) => handleMutationError(error, t('errors:remove')))
                                     .finally(() => {
                                       setLeaveLoading({ ...leaveLoading, [workspaceUser.userId]: false });
                                     });
                                 }}
                               >
                                 {leaveLoading[workspaceUser.userId] ? <UiLoading size="sm" /> : null}
-                                Entfernen
+                                {t('common:remove')}
                               </Button>
                             ) : (
                               <Button
@@ -203,16 +202,16 @@ export default function ManageUsersPage() {
                                   setLeaveLoading({ ...leaveLoading, [workspaceUser.userId]: true });
                                   apiV1Mutate(`/api/v1/workspaces/${workspaceId}/leave`, 'POST')
                                     .then(() => {
-                                      router.replace('/').then(() => alertService.success('Erfolgreich verlassen'));
+                                      router.replace('/').then(() => alertService.success(t('common:success.left')));
                                     })
-                                    .catch((error) => handleMutationError(error, 'Fehler beim Verlassen der Workspace'))
+                                    .catch((error) => handleMutationError(error, t('errors:leaveWorkspace')))
                                     .finally(() => {
                                       setLeaveLoading({ ...leaveLoading, [workspaceUser.userId]: false });
                                     });
                                 }}
                               >
                                 {leaveLoading[workspaceUser.userId] ? <UiLoading size="sm" /> : null}
-                                Verlassen
+                                {t('settings:leave')}
                               </Button>
                             )}
                           </TableCell>
@@ -227,13 +226,13 @@ export default function ManageUsersPage() {
         {userContext.isUserPermitted(Role.MANAGER) && workspaceJoinRequests.length > 0 && (
           <Card className="overflow-y-auto md:col-span-2">
             <CardBody>
-              <CardTitle>Beitrittsanfragen</CardTitle>
+              <CardTitle>{t('manage:joinRequests')}</CardTitle>
               <Table zebra className="w-full rounded-xl border border-base-200">
                 <TableHead>
                   <TableRow>
-                    <TableHeaderCell>Name</TableHeaderCell>
-                    <TableHeaderCell>Email</TableHeaderCell>
-                    <TableHeaderCell>Datum</TableHeaderCell>
+                    <TableHeaderCell>{t('common:name')}</TableHeaderCell>
+                    <TableHeaderCell>{t('manage:email')}</TableHeaderCell>
+                    <TableHeaderCell>{t('manage:date')}</TableHeaderCell>
                     <TableHeaderCell className="flex justify-end">
                       <Button
                         type="button"
@@ -252,7 +251,7 @@ export default function ManageUsersPage() {
                   {joinRequestsLoading ? (
                     <TableRow>
                       <TableCell colSpan={4} className="text-center">
-                        Lade...
+                        {t('common:loadingShort')}
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -282,15 +281,15 @@ export default function ManageUsersPage() {
                                       loadWorkspaceUsers();
                                       loadWorkspaceJoinRequests();
                                       userContext.refreshWorkspace();
-                                      alertService.success('Erfolgreich angenommen');
+                                      alertService.success(t('common:success.accepted'));
                                     })
-                                    .catch((error) => handleMutationError(error, 'Fehler beim Annehmen'))
+                                    .catch((error) => handleMutationError(error, t('errors:accept')))
                                     .finally(() => {
                                       setWorkspaceJoinRequestAcceptLoading({ ...workspaceJoinRequestAcceptLoading, [joinRequest.userId]: false });
                                     });
                                 }}
                               >
-                                <FaCheck /> Annehmen
+                                <FaCheck /> {t('manage:accept')}
                               </Button>
                               <Button
                                 type="button"
@@ -309,15 +308,15 @@ export default function ManageUsersPage() {
                                     .then(() => {
                                       loadWorkspaceUsers();
                                       loadWorkspaceJoinRequests();
-                                      alertService.success('Erfolgreich abgelehnt');
+                                      alertService.success(t('common:success.rejected'));
                                     })
-                                    .catch((error) => handleMutationError(error, 'Fehler beim Ablehnen'))
+                                    .catch((error) => handleMutationError(error, t('errors:reject')))
                                     .finally(() => {
                                       setWorkspaceJoinRequestRejectLoading({ ...workspaceJoinRequestRejectLoading, [joinRequest.userId]: false });
                                     });
                                 }}
                               >
-                                <FaTimes /> Ablehnen
+                                <FaTimes /> {t('manage:reject')}
                               </Button>
                             </ButtonGroup>
                           </TableCell>
@@ -332,15 +331,15 @@ export default function ManageUsersPage() {
         {userContext.isUserPermitted(Role.MANAGER) && (
           <Card className="overflow-y-auto md:col-span-2">
             <CardBody>
-              <CardTitle>Einladungscode</CardTitle>
+              <CardTitle>{t('settings:invitationCodes')}</CardTitle>
               <Table zebra className="w-full rounded-xl border border-base-200">
                 <TableHead>
                   <TableRow>
-                    <TableHeaderCell>Code</TableHeaderCell>
-                    <TableHeaderCell>Erstelldatum</TableHeaderCell>
-                    <TableHeaderCell>Ablaufdatum</TableHeaderCell>
-                    <TableHeaderCell>Einmal-Code</TableHeaderCell>
-                    <TableHeaderCell>Verwendet</TableHeaderCell>
+                    <TableHeaderCell>{t('manage:code')}</TableHeaderCell>
+                    <TableHeaderCell>{t('settings:createdAt')}</TableHeaderCell>
+                    <TableHeaderCell>{t('manage:expiresAt')}</TableHeaderCell>
+                    <TableHeaderCell>{t('manage:singleUseCode')}</TableHeaderCell>
+                    <TableHeaderCell>{t('settings:used')}</TableHeaderCell>
                     <TableHeaderCell className="flex justify-end">
                       <Button
                         type="button"
@@ -350,7 +349,7 @@ export default function ManageUsersPage() {
                         disabled={isExternallyManaged}
                         onClick={() => modalContext.openModal(<AddWorkspaceJoinCodeModal onCreated={() => loadWorkspaceJoinCodes()} />)}
                       >
-                        <FaPlus /> Erstellen
+                        <FaPlus /> {t('common:create')}
                       </Button>
                     </TableHeaderCell>
                   </TableRow>
@@ -359,13 +358,13 @@ export default function ManageUsersPage() {
                   {workspaceJoinCodeLoading ? (
                     <TableRow>
                       <TableCell colSpan={6} className="text-center">
-                        Lade...
+                        {t('common:loadingShort')}
                       </TableCell>
                     </TableRow>
                   ) : workspaceJoinCodes.length == 0 ? (
                     <TableRow>
                       <TableCell colSpan={6} className="text-center">
-                        Keine Einladungscode vorhanden
+                        {t('manage:noInvitationCodes')}
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -381,7 +380,7 @@ export default function ManageUsersPage() {
                               className="text-primary"
                               onClick={() => {
                                 navigator.clipboard.writeText(workspaceJoinCode.code).then(() => {
-                                  alertService.info('Erfolgreich kopiert');
+                                  alertService.info(t('common:success.copied'));
                                 });
                               }}
                             >
@@ -433,12 +432,12 @@ export default function ManageUsersPage() {
                               className="border-primary text-primary hover:bg-primary/10"
                               onClick={() => {
                                 navigator.clipboard.writeText(window.location.origin + '/?code=' + workspaceJoinCode.code).then(() => {
-                                  alertService.info('Erfolgreich kopiert');
+                                  alertService.info(t('common:success.copied'));
                                 });
                               }}
                             >
                               <FaShareAlt />
-                              <div>Link kopieren</div>
+                              <div>{t('common:copyLink')}</div>
                             </Button>
                             <Button
                               type="button"
@@ -454,15 +453,15 @@ export default function ManageUsersPage() {
                                       apiV1Mutate(`/api/v1/workspaces/${workspaceId}/join-codes/${workspaceJoinCode.code}`, 'DELETE')
                                         .then(() => {
                                           loadWorkspaceJoinCodes();
-                                          alertService.success('Erfolgreich entfernt');
+                                          alertService.success(t('common:success.removed'));
                                         })
-                                        .catch((error) => handleMutationError(error, 'Fehler beim Löschen des Beitrittcodes'))
+                                        .catch((error) => handleMutationError(error, t('errors:deleteJoinCode')))
                                         .finally(() => {
                                           setWorkspaceJoinCodeDeleting({ ...workspaceJoinCodeDeleting, [workspaceJoinCode.code]: false });
                                         });
                                     }}
                                     spelling={'DELETE'}
-                                    entityName={`den Beitrittscode '${workspaceJoinCode.code}'`}
+                                    entityName={t('entity:theJoinCode', { name: workspaceJoinCode.code })}
                                   />,
                                 );
                               }}

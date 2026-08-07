@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { CocktailExportStructure } from '../../types/CocktailExportStructure';
 import { alertService } from '@lib/alertService';
+import { toIntlLocale } from '@lib/i18n/format';
 import { FaUpload } from 'react-icons/fa';
 import { Alert, Button, Card, CardBody, Checkbox, Loading, Table, TableBody, TableCell, TableHead, TableHeaderCell, TableRow } from '@components/ui';
 
@@ -11,6 +13,7 @@ interface UploadAndPreviewStepProps {
 }
 
 export function UploadAndPreviewStep({ workspaceId, onComplete, onCancel }: UploadAndPreviewStepProps) {
+  const { t, i18n } = useTranslation(['import', 'common', 'cocktail', 'errors']);
   const [loading, setLoading] = useState(false);
   const [exportData, setExportData] = useState<CocktailExportStructure | null>(null);
   const [selectedCocktailIds, setSelectedCocktailIds] = useState<Set<string>>(new Set());
@@ -41,26 +44,26 @@ export function UploadAndPreviewStep({ workspaceId, onComplete, onCancel }: Uplo
 
       if (!response.ok) {
         const error = await response.json();
-        setValidationError(error.message || 'Fehler bei der Validierung');
-        alertService.error('Ungültige JSON-Datei');
+        setValidationError(error.message || t('errors:generic'));
+        alertService.error(t('errors:invalidJson'));
         return;
       }
 
       const validationResult = await response.json();
       if (!validationResult.valid) {
-        setValidationError(validationResult.errors?.join(', ') || 'Ungültige Struktur');
-        alertService.error('Ungültige JSON-Datei');
+        setValidationError(validationResult.errors?.join(', ') || t('errors:invalidStructure'));
+        alertService.error(t('errors:invalidJson'));
         return;
       }
 
       setExportData(data);
       // Select all cocktails by default
       setSelectedCocktailIds(new Set(data.cocktailRecipes.map((c) => c.id)));
-      alertService.success('Datei erfolgreich geladen');
+      alertService.success(t('import:fileLoaded'));
     } catch (error) {
       console.error('File upload error:', error);
-      setValidationError('Fehler beim Lesen der Datei');
-      alertService.error('Fehler beim Lesen der Datei');
+      setValidationError(t('import:fileReadError'));
+      alertService.error(t('import:fileReadError'));
     } finally {
       setLoading(false);
     }
@@ -88,7 +91,7 @@ export function UploadAndPreviewStep({ workspaceId, onComplete, onCancel }: Uplo
   const handleNext = () => {
     if (!exportData) return;
     if (selectedCocktailIds.size === 0) {
-      alertService.error('Bitte wählen Sie mindestens einen Cocktail aus');
+      alertService.error(t('errors:selectAtLeastOneCocktail'));
       return;
     }
     onComplete(exportData, selectedCocktailIds);
@@ -96,19 +99,19 @@ export function UploadAndPreviewStep({ workspaceId, onComplete, onCancel }: Uplo
 
   return (
     <div className={'flex flex-col gap-4'}>
-      <div className={'text-lg font-semibold'}>Schritt 1: Datei hochladen</div>
+      <div className={'text-lg font-semibold'}>{t('import:step1Title')}</div>
 
       {!exportData ? (
         <div className={'flex flex-col gap-4'}>
-          <div className={'text-sm text-base-content/70'}>Laden Sie eine JSON-Datei hoch, die zuvor exportiert wurde.</div>
+          <div className={'text-sm text-base-content/70'}>{t('import:step1Description')}</div>
 
           <label
             className={`flex cursor-pointer flex-col items-center gap-4 rounded-lg border-2 border-dashed border-base-300 p-8 transition-colors hover:border-primary ${loading ? 'opacity-50' : ''}`}
           >
             <FaUpload className={'text-4xl text-base-content/50'} />
             <div className={'text-center'}>
-              <div className={'font-semibold'}>JSON-Datei hochladen</div>
-              <div className={'text-sm text-base-content/70'}>Klicken Sie hier oder ziehen Sie eine Datei herein</div>
+              <div className={'font-semibold'}>{t('import:uploadJson')}</div>
+              <div className={'text-sm text-base-content/70'}>{t('import:uploadHint')}</div>
             </div>
             <input type={'file'} accept={'.json,application/json'} className={'hidden'} onChange={handleFileUpload} disabled={loading} />
           </label>
@@ -122,7 +125,7 @@ export function UploadAndPreviewStep({ workspaceId, onComplete, onCancel }: Uplo
           {loading && (
             <div className={'flex items-center justify-center gap-2'}>
               <Loading />
-              <span>Datei wird geladen...</span>
+              <span>{t('import:fileLoading')}</span>
             </div>
           )}
         </div>
@@ -130,18 +133,22 @@ export function UploadAndPreviewStep({ workspaceId, onComplete, onCancel }: Uplo
         <div className={'flex flex-col gap-4'}>
           <Card variant="elevated">
             <CardBody>
-              <div className={'text-sm font-semibold'}>Import-Details</div>
+              <div className={'text-sm font-semibold'}>{t('import:importDetails')}</div>
               <div className={'mt-2 text-sm text-base-content/70'}>
-                <div>Quelle: {exportData.exportedFrom.workspaceName}</div>
-                <div>Export-Datum: {new Date(exportData.exportDate).toLocaleString('de-DE')}</div>
-                <div>Version: {exportData.exportVersion}</div>
-                <div>Anzahl Cocktails: {exportData.cocktailRecipes.length}</div>
+                <div>{t('import:source', { name: exportData.exportedFrom.workspaceName })}</div>
+                <div>
+                  {t('import:exportDate', {
+                    date: new Date(exportData.exportDate).toLocaleString(toIntlLocale(i18n.language)),
+                  })}
+                </div>
+                <div>{t('import:version', { version: exportData.exportVersion })}</div>
+                <div>{t('import:cocktailCount', { count: exportData.cocktailRecipes.length })}</div>
               </div>
             </CardBody>
           </Card>
 
-          <div className={'text-sm font-semibold'}>Cocktails auswählen</div>
-          <div className={'text-sm text-base-content/70'}>Wählen Sie die Cocktails aus, die Sie importieren möchten.</div>
+          <div className={'text-sm font-semibold'}>{t('import:selectCocktails')}</div>
+          <div className={'text-sm text-base-content/70'}>{t('import:selectCocktailsHint')}</div>
 
           <div className={'max-h-[300px] overflow-y-auto rounded-lg border border-base-300'}>
             <Table compact>
@@ -154,9 +161,9 @@ export function UploadAndPreviewStep({ workspaceId, onComplete, onCancel }: Uplo
                       onChange={handleToggleSelectAll}
                     />
                   </TableHeaderCell>
-                  <TableHeaderCell>Name</TableHeaderCell>
-                  <TableHeaderCell>Glas</TableHeaderCell>
-                  <TableHeaderCell>Preis</TableHeaderCell>
+                  <TableHeaderCell>{t('common:name')}</TableHeaderCell>
+                  <TableHeaderCell>{t('cocktail:glass')}</TableHeaderCell>
+                  <TableHeaderCell>{t('common:price')}</TableHeaderCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -169,7 +176,7 @@ export function UploadAndPreviewStep({ workspaceId, onComplete, onCancel }: Uplo
                       </TableCell>
                       <TableCell>{cocktail.name}</TableCell>
                       <TableCell>{glass?.name || '-'}</TableCell>
-                      <TableCell>{cocktail.price ? `${cocktail.price} €` : '-'}</TableCell>
+                      <TableCell>{cocktail.price ? t('common:euroValue', { value: cocktail.price }) : '-'}</TableCell>
                     </TableRow>
                   );
                 })}
@@ -178,17 +185,20 @@ export function UploadAndPreviewStep({ workspaceId, onComplete, onCancel }: Uplo
           </div>
 
           <div className={'text-sm text-base-content/70'}>
-            {selectedCocktailIds.size} von {exportData.cocktailRecipes.length} Cocktails ausgewählt
+            {t('import:selectedOfTotal', {
+              selected: selectedCocktailIds.size,
+              total: exportData.cocktailRecipes.length,
+            })}
           </div>
         </div>
       )}
 
       <div className={'flex justify-end gap-2'}>
         <Button variant="outline" className="border-error text-error hover:bg-error/10" onClick={onCancel}>
-          Abbrechen
+          {t('common:cancel')}
         </Button>
         <Button variant="primary" onClick={handleNext} disabled={!exportData || selectedCocktailIds.size === 0}>
-          Weiter
+          {t('common:next')}
         </Button>
       </div>
     </div>

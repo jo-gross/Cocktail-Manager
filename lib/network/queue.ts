@@ -1,4 +1,5 @@
 import { apiV1Fetch, apiV1FetchSafe, apiV1Mutate } from './apiV1';
+import { i18n } from '@lib/i18n/client';
 import type { QueueItemDto, QueueAddInput, QueueRemoveInput, QueueUpdateInput } from '@lib/schemas/queue';
 
 export function listQueue(workspaceId: string | string[], timestamp?: string): Promise<QueueItemDto[]> {
@@ -15,7 +16,7 @@ export function fetchQueueSafe(
   if (workspaceId == undefined) return;
   setLoading?.(true);
   const params = timestamp ? `?timestamp=${encodeURIComponent(timestamp)}` : '';
-  apiV1FetchSafe<QueueItemDto[]>(`/api/v1/workspaces/${workspaceId}/queue${params}`, undefined, 'Fehler beim Laden der Warteschlange')
+  apiV1FetchSafe<QueueItemDto[]>(`/api/v1/workspaces/${workspaceId}/queue${params}`, undefined, i18n.t('errors:loadQueue'))
     .then((items) => {
       if (items) setQueue(items);
     })

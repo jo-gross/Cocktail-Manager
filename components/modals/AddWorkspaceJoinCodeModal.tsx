@@ -1,5 +1,6 @@
 import { Field, Formik, FormikProps } from 'formik';
-import React, { useContext } from 'react';
+import React, { useContext, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { UserContext } from '@lib/context/UserContextProvider';
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import { alertService } from '@lib/alertService';
@@ -14,20 +15,14 @@ interface AddWorkspaceJoinCodeModalProps {
   onCreated?: () => void;
 }
 
-const joinCodeSchema = z.object({
-  code: z.string().min(6, 'Der Code muss länger als 5 Zeichen sein'),
-  expires: z
-    .string()
-    .optional()
-    .refine((expires) => !expires || new Date(expires) >= new Date(), { message: 'Das Ablaufdatum muss in der Zukunft liegen' }),
-  onlyUseOnce: z.boolean(),
-});
-
-const validateJoinCode = zodFormikValidate(joinCodeSchema);
+function generateJoinCode() {
+  return Math.random().toString(36).slice(2, 8).toLowerCase();
+}
 
 export default function AddWorkspaceJoinCodeModal(props: AddWorkspaceJoinCodeModalProps) {
   const _userContext = useContext(UserContext);
   const modalContext = useContext(ModalContext);
+  const { t } = useTranslation(['settings', 'common', 'entity', 'errors']);
 
   const router = useRouter();
 
@@ -41,13 +36,26 @@ export default function AddWorkspaceJoinCodeModal(props: AddWorkspaceJoinCodeMod
     }>
   >(null);
 
+  const initialCode = useMemo(() => generateJoinCode(), []);
+
+  const joinCodeSchema = z.object({
+    code: z.string().min(6, t('settings:validation.codeMinLength')),
+    expires: z
+      .string()
+      .optional()
+      .refine((expires) => !expires || new Date(expires) >= new Date(), { message: t('settings:validation.expiresInFuture') }),
+    onlyUseOnce: z.boolean(),
+  });
+
+  const validateJoinCode = zodFormikValidate(joinCodeSchema);
+
   return (
     <div className={'flex flex-col gap-2'}>
-      <div className={'text-2xl font-bold'}>Einladungscode hinzufügen</div>
+      <div className={'text-2xl font-bold'}>{t('settings:addJoinCode')}</div>
       <Formik
         innerRef={formRef}
         initialValues={{
-          code: Math.random().toString(36).slice(2, 8).toLowerCase(),
+          code: initialCode,
           expires: undefined,
           onlyUseOnce: false,
         }}
@@ -61,10 +69,10 @@ export default function AddWorkspaceJoinCodeModal(props: AddWorkspaceJoinCodeMod
             });
             modalContext.closeAllModals();
             props.onCreated?.();
-            alertService.success('Beitrittcode erstellt');
+            alertService.success(t('settings:joinCodeCreated'));
           } catch (error) {
-            formRef.current?.setFieldValue('code', Math.random().toString(36).slice(2, 8).toLowerCase());
-            alertApiV1Error(error, 'Da hat etwas nicht funktioniert, probiere es mit diesem neu generierten Code erneut!');
+            formRef.current?.setFieldValue('code', generateJoinCode());
+            alertApiV1Error(error, t('errors:create'));
           }
         }}
         validate={(values) => validateJoinCode(values)}
@@ -75,7 +83,7 @@ export default function AddWorkspaceJoinCodeModal(props: AddWorkspaceJoinCodeMod
               <FormControl>
                 <Label htmlFor={'code'} className="flex-row items-center justify-between">
                   <LabelText>
-                    Beitrittcode <span className={'italic'}>(unveränderbar)</span>
+                    {t('settings:joinCodeImmutable')} <span className={'italic'}>{t('settings:immutableHint')}</span>
                   </LabelText>
                   <LabelTextAlt className="text-error">
                     <span>{errors.code && touched.code ? errors.code : ''}</span>
@@ -85,7 +93,7 @@ export default function AddWorkspaceJoinCodeModal(props: AddWorkspaceJoinCodeMod
               </FormControl>
               <FormControl>
                 <Label className="flex-row items-center justify-between">
-                  <LabelText>Ablaufdatum</LabelText>
+                  <LabelText>{t('settings:expiryDate')}</LabelText>
                   <LabelTextAlt className="text-error">
                     <span>{errors.expires && touched.expires ? errors.expires : ''}</span>
                   </LabelTextAlt>
@@ -94,7 +102,7 @@ export default function AddWorkspaceJoinCodeModal(props: AddWorkspaceJoinCodeMod
               </FormControl>
               <FormControl>
                 <Label className="flex-row items-center justify-between">
-                  <LabelText>Einmal-Code</LabelText>
+                  <LabelText>{t('settings:oneTimeCode')}</LabelText>
                   <LabelTextAlt className="text-error">
                     <span>{errors.onlyUseOnce && touched.onlyUseOnce ? errors.onlyUseOnce : ''}</span>
                   </LabelTextAlt>
@@ -111,11 +119,11 @@ export default function AddWorkspaceJoinCodeModal(props: AddWorkspaceJoinCodeMod
                   modalContext.closeAllModals();
                 }}
               >
-                Abbrechen
+                {t('common:cancel')}
               </Button>
               <Button variant="primary" type={'submit'}>
                 {isSubmitting ? <Loading size="sm" /> : null}
-                Hinzufügen
+                {t('common:add')}
               </Button>
             </div>
           </form>

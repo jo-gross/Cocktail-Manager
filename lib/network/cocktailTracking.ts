@@ -1,4 +1,5 @@
 import { alertService } from '../alertService';
+import { i18n } from '@lib/i18n/client';
 import { ApiV1RequestError, apiV1Mutate, alertApiV1Error } from './apiV1';
 import { addToQueue, removeFromQueue, updateQueueItem } from './queue';
 
@@ -33,12 +34,12 @@ export async function addCocktailToStatistic({
       ignoreQueue,
     });
     onSuccess?.();
-    alertService.success('Cocktail als gemacht markiert');
+    alertService.success(i18n.t('cocktail:tracking.markedAsMade'));
   } catch (error) {
     if (error instanceof ApiV1RequestError && error.code === 'STATISTIC_QUEUE_AMBIGUOUS') {
       onNotDecidableError?.(error.issues as { _min: { id: string; createdAt: Date }; cocktailId: string; notes: string }[]);
     } else {
-      alertApiV1Error(error, 'Fehler beim Hinzufügen des Cocktails zur Statistik');
+      alertApiV1Error(error, i18n.t('errors:addToStatistic'));
     }
   } finally {
     setSubmitting(false);
@@ -66,10 +67,10 @@ export async function addCocktailToQueue({
     if (onSuccess) {
       onSuccess();
     } else {
-      alertService.info('Cocktail zur Warteschlange hinzugefügt');
+      alertService.info(i18n.t('cocktail:tracking.addedToQueue'));
     }
   } catch (error) {
-    alertApiV1Error(error, 'Fehler beim Hinzufügen des Cocktails zur Warteschlange');
+    alertApiV1Error(error, i18n.t('errors:addToQueue'));
   } finally {
     setSubmitting(false);
   }
@@ -93,7 +94,7 @@ export async function removeCocktailFromQueue({
     await removeFromQueue(workspaceId, { cocktailId, notes });
     reload?.();
   } catch (error) {
-    alertApiV1Error(error, 'Fehler beim Entfernen des Cocktails von der Warteschlange');
+    alertApiV1Error(error, i18n.t('errors:removeFromQueue'));
   } finally {
     setSubmitting(false);
   }
@@ -117,7 +118,7 @@ export async function changeQueueProcess({
     await updateQueueItem(workspaceId, cocktailQueueItemId, { inProgress });
     onSuccess?.();
   } catch (error) {
-    alertApiV1Error(error, 'Fehler beim aktualisieren des Eintrags');
+    alertApiV1Error(error, i18n.t('errors:updateQueueItem'));
   } finally {
     setSubmitting(false);
   }

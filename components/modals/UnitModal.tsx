@@ -1,6 +1,7 @@
 import type { UnitDto } from '@lib/schemas/units';
 import { Formik } from 'formik';
 import React, { useContext } from 'react';
+import { useTranslation } from 'react-i18next';
 import { UserContext } from '@lib/context/UserContextProvider';
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import { alertService } from '@lib/alertService';
@@ -17,18 +18,8 @@ interface UnitModalProps {
   onSaved?: () => void;
 }
 
-const unitFormSchema = z.object({
-  name: z
-    .string()
-    .trim()
-    .min(1, 'Ungültiger Identifier')
-    .regex(/^[A-Z_]+$/, 'Nur A-Z und _ erlaubt'),
-  lableDE: z.string().trim().min(1, 'Ungültiger Bezeichner'),
-});
-
-const validateUnit = zodFormikValidate(unitFormSchema);
-
 export default function UnitModal(props: UnitModalProps) {
+  const { t } = useTranslation(['settings', 'common', 'entity', 'errors']);
   const userContext = useContext(UserContext);
   const modalContext = useContext(ModalContext);
 
@@ -36,75 +27,96 @@ export default function UnitModal(props: UnitModalProps) {
 
   const { workspaceId } = router.query;
 
+  const unitFormSchema = z.object({
+    name: z
+      .string()
+      .trim()
+      .min(1, t('settings:validation.invalidIdentifier'))
+      .regex(/^[A-Z_]+$/, t('settings:validation.azOnly')),
+    labelDe: z.string().trim().min(1, t('settings:validation.invalidLabel')),
+    labelEn: z.string(),
+  });
+
+  const validateUnit = zodFormikValidate(unitFormSchema);
+
   return (
     <div className={'flex flex-col gap-2'}>
-      <div className={'text-2xl font-bold'}>Einheit {props.unit == undefined ? 'Erfassen' : 'Anpassen'}</div>
+      <div className={'text-2xl font-bold'}>{props.unit == undefined ? t('settings:unitModal.create') : t('settings:unitModal.edit')}</div>
       <Formik
         initialValues={{
           name: props.unit?.name || '',
-          lableDE: props.unit != undefined ? userContext.getTranslation(props.unit.name, 'de') : '',
+          labelDe: props.unit != undefined ? (userContext.translations?.de?.[props.unit.name] ?? '') : '',
+          labelEn: props.unit != undefined ? (userContext.translations?.en?.[props.unit.name] ?? '') : '',
         }}
         onSubmit={async (values) => {
           try {
             if (!workspaceId) return;
+            const translations = {
+              de: values.labelDe.trim(),
+              en: values.labelEn.trim(),
+            };
             if (props.unit == undefined) {
               await createUnit(workspaceId, {
                 name: values.name,
-                translations: {
-                  de: values.lableDE,
-                },
+                translations,
               });
-              router.reload();
-              modalContext.closeModal();
-              props.onSaved?.();
-              alertService.success('Einheit erfolgreich erstellt');
+              alertService.success(t('entity:unitCreated'));
             } else {
               await upsertTranslation(workspaceId, {
                 key: values.name,
-                translations: {
-                  de: values.lableDE,
-                },
+                translations,
               });
-              router.reload();
-              modalContext.closeModal();
-              props.onSaved?.();
-              alertService.success('Einheit erfolgreich gespeichert');
+              alertService.success(t('entity:unitSaved'));
             }
+            userContext.patchTranslations(values.name, translations);
+            props.onSaved?.();
+            modalContext.closeModal();
+            void userContext.refreshWorkspace();
           } catch (error) {
-            alertApiV1Error(error, props.unit == undefined ? 'Fehler beim Erstellen der Einheit' : 'Fehler beim Speichern der Einheit');
+            alertApiV1Error(error, props.unit == undefined ? t('errors:create') : t('errors:save'));
           }
         }}
         validate={(values) => validateUnit(values)}
       >
-        {({ values, handleChange, handleSubmit, isSubmitting, errors, touched, setFieldValue: _setFieldValue }) => (
+        {({ values, handleChange, handleSubmit, isSubmitting, errors, touched }) => (
           <form onSubmit={handleSubmit} className={'flex flex-col gap-2'}>
+            <FormControl>
+              <Label className="flex-row items-center justify-between">
+                <LabelText>{t('common:identifierAz')}</LabelText>
+                <LabelTextAlt className="text-error">
+                  <span>{errors.name && touched.name ? errors.name : ''}</span>
+                  <span>{t('common:required')}</span>
+                </LabelTextAlt>
+              </Label>
+              <Input
+                id={'name'}
+                readOnly={props.unit != undefined}
+                name={'name'}
+                value={values.name}
+                onChange={handleChange}
+                disabled={props.unit != undefined}
+              />
+            </FormControl>
             <div className={'grid grid-cols-2 gap-2'}>
               <FormControl>
                 <Label className="flex-row items-center justify-between">
-                  <LabelText>Identifier (A-Z,_)</LabelText>
+                  <LabelText>{t('settings:labelDe')}</LabelText>
                   <LabelTextAlt className="text-error">
-                    <span>{errors.name && touched.name ? errors.name : ''}</span>
-                    <span>*</span>
+                    <span>{errors.labelDe && touched.labelDe ? errors.labelDe : ''}</span>
+                    <span>{t('common:required')}</span>
                   </LabelTextAlt>
                 </Label>
-                <Input
-                  id={'name'}
-                  readOnly={props.unit != undefined}
-                  name={'name'}
-                  value={values.name}
-                  onChange={handleChange}
-                  disabled={props.unit != undefined}
-                />
+                <Input id={'labelDe'} name={'labelDe'} value={values.labelDe} onChange={handleChange} />
               </FormControl>
               <FormControl>
                 <Label className="flex-row items-center justify-between">
-                  <LabelText>Deutsch</LabelText>
+                  <LabelText>{t('settings:labelEn')}</LabelText>
                   <LabelTextAlt className="text-error">
-                    <span>{errors.lableDE && touched.lableDE ? errors.lableDE : ''}</span>
-                    <span>*</span>
+                    <span>{errors.labelEn && touched.labelEn ? errors.labelEn : ''}</span>
                   </LabelTextAlt>
                 </Label>
-                <Input id={'lableDE'} name={'lableDE'} value={values.lableDE} onChange={handleChange} />
+                <Input id={'labelEn'} name={'labelEn'} value={values.labelEn} onChange={handleChange} />
+                {!values.labelEn.trim() ? <span className="text-xs text-base-content/60">{t('settings:missingEnHint')}</span> : null}
               </FormControl>
             </div>
             <div className={'flex justify-end gap-2'}>
@@ -116,11 +128,11 @@ export default function UnitModal(props: UnitModalProps) {
                   modalContext.closeModal();
                 }}
               >
-                Abbrechen
+                {t('common:cancel')}
               </Button>
               <Button variant="primary" type={'submit'}>
                 {isSubmitting ? <Loading size="sm" /> : null}
-                {props.unit == undefined ? 'Erstellen' : 'Speichern'}
+                {props.unit == undefined ? t('common:create') : t('common:save')}
               </Button>
             </div>
           </form>

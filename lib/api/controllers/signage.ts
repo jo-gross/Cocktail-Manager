@@ -128,7 +128,7 @@ export async function patchSlides(workspace: Workspace, input: SignageSlidePatch
     );
 
     if (!validation.valid) {
-      throw new ApiError(409, 'EXCLUSIVE_OVERLAP', 'Exklusive Zeiträume überschneiden sich mit bestehenden exklusiven Karten', {
+      throw new ApiError(409, 'EXCLUSIVE_OVERLAP', 'Exclusive time ranges overlap with existing exclusive cards', {
         conflicts: validation.conflicts,
       });
     }

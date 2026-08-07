@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { FaTimes } from 'react-icons/fa';
 import { Button, Card, CardBody, CardTitle, Checkbox, Input, Loading, Select } from '@components/ui';
 
@@ -20,6 +21,7 @@ interface TagListProps {
 }
 
 export function TagList({ items, selectedIds = new Set(), onToggleSelect, onClear, loading }: TagListProps) {
+  const { t } = useTranslation(['statistics', 'common']);
   const [filter, setFilter] = useState('');
   const [sortBy, setSortBy] = useState<SortOption>('count-desc');
 
@@ -45,7 +47,7 @@ export function TagList({ items, selectedIds = new Set(), onToggleSelect, onClea
       <CardBody>
         <CardTitle className="flex items-center justify-between">
           <span className="flex items-center gap-2">
-            Tags
+            {t('statistics:tags')}
             {loading && <Loading size="xs" />}
           </span>
           {selectedIds.size > 0 && onClear && (
@@ -57,7 +59,7 @@ export function TagList({ items, selectedIds = new Set(), onToggleSelect, onClea
                 e.stopPropagation();
                 onClear();
               }}
-              title="Auswahl leeren"
+              title={t('common:clearSelection')}
             >
               <FaTimes />
             </Button>
@@ -65,10 +67,17 @@ export function TagList({ items, selectedIds = new Set(), onToggleSelect, onClea
         </CardTitle>
 
         <div className="flex flex-wrap gap-2">
-          <Input type="text" placeholder="Filter..." inputSize="sm" className="w-full flex-1" value={filter} onChange={(e) => setFilter(e.target.value)} />
+          <Input
+            type="text"
+            placeholder={t('common:filterPlaceholder')}
+            inputSize="sm"
+            className="w-full flex-1"
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+          />
           <Select selectSize="sm" className="w-fit" value={sortBy} onChange={(e) => setSortBy(e.target.value as SortOption)}>
-            <option value="count-desc">↓ Bestellungen</option>
-            <option value="count-asc">↑ Bestellungen</option>
+            <option value="count-desc">{t('statistics:ordersDesc')}</option>
+            <option value="count-asc">{t('statistics:ordersAsc')}</option>
             <option value="alpha-asc">A-Z</option>
             <option value="alpha-desc">Z-A</option>
           </Select>
@@ -87,7 +96,7 @@ export function TagList({ items, selectedIds = new Set(), onToggleSelect, onClea
                 <div>
                   <div className="font-semibold">{item.tag}</div>
                   <div className="text-sm text-base-content/70">
-                    {item.count} Bestellungen · {item.cocktailCount} Cocktails
+                    {t('statistics:orderCountWithCocktails', { count: item.count, cocktailCount: item.cocktailCount })}
                   </div>
                 </div>
                 {onToggleSelect && (
@@ -97,7 +106,7 @@ export function TagList({ items, selectedIds = new Set(), onToggleSelect, onClea
             </div>
           ))}
         </div>
-        {sortedAndFilteredItems.length === 0 && <div className="py-4 text-center text-base-content/70">Keine Tags gefunden</div>}
+        {sortedAndFilteredItems.length === 0 && <div className="py-4 text-center text-base-content/70">{t('statistics:noTagsFound')}</div>}
       </CardBody>
     </Card>
   );

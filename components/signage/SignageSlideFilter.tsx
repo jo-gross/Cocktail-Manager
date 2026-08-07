@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { DAY_ORDER_MONDAY_FIRST, getDayName } from '@lib/dayConstants';
 import { SignageSlideFilterState } from '@lib/signage/types';
 import { Button, FormControl, Input, Label, LabelText, Select } from '@components/ui';
@@ -8,11 +9,13 @@ interface SignageSlideFilterProps {
 }
 
 export function SignageSlideFilter({ value, onChange }: SignageSlideFilterProps) {
+  const { t } = useTranslation('monitor');
+
   return (
     <div className="flex flex-col gap-2 rounded-lg border border-base-300/60 bg-base-100 p-3">
       <FormControl>
         <Label>
-          <LabelText>Filter</LabelText>
+          <LabelText>{t('filter')}</LabelText>
         </Label>
         <Select
           value={value.mode}
@@ -23,10 +26,10 @@ export function SignageSlideFilter({ value, onChange }: SignageSlideFilterProps)
             })
           }
         >
-          <option value="all">Alle</option>
-          <option value="activeNow">Aktuell aktiv</option>
-          <option value="weekday">Wochentag</option>
-          <option value="dateRange">Zeitraum</option>
+          <option value="all">{t('all')}</option>
+          <option value="activeNow">{t('currentlyActive')}</option>
+          <option value="weekday">{t('weekday')}</option>
+          <option value="dateRange">{t('timeRange')}</option>
         </Select>
       </FormControl>
 
@@ -50,13 +53,13 @@ export function SignageSlideFilter({ value, onChange }: SignageSlideFilterProps)
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           <FormControl>
             <Label>
-              <LabelText>Von</LabelText>
+              <LabelText>{t('from')}</LabelText>
             </Label>
             <Input type="date" value={value.dateFrom ?? ''} onChange={(event) => onChange({ ...value, dateFrom: event.target.value })} />
           </FormControl>
           <FormControl>
             <Label>
-              <LabelText>Bis</LabelText>
+              <LabelText>{t('to')}</LabelText>
             </Label>
             <Input type="date" value={value.dateTo ?? ''} onChange={(event) => onChange({ ...value, dateTo: event.target.value })} />
           </FormControl>

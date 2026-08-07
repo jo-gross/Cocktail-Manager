@@ -1,3 +1,4 @@
+import { i18n } from '@lib/i18n/client';
 import { apiV1Fetch, apiV1FetchSafe, apiV1Mutate } from './apiV1';
 import type { IngredientCreateInput, IngredientDto, IngredientUpdateInput } from '@lib/schemas/ingredients';
 import type { DeletionResult } from '@lib/schemas/common';
@@ -6,10 +7,11 @@ export function fetchIngredients(
   workspaceId: string | string[] | undefined,
   setIngredients: (ingredients: IngredientDto[]) => void,
   setIngredientsLoading: (loading: boolean) => void,
+  errorMessage = i18n.t('errors:loadIngredients'),
 ) {
   if (!workspaceId) return;
   setIngredientsLoading(true);
-  apiV1FetchSafe<IngredientDto[]>(`/api/v1/workspaces/${workspaceId}/ingredients`, undefined, 'Fehler beim Laden der Zutaten')
+  apiV1FetchSafe<IngredientDto[]>(`/api/v1/workspaces/${workspaceId}/ingredients`, undefined, errorMessage)
     .then((ingredients) => {
       if (ingredients) setIngredients(ingredients);
     })

@@ -1,6 +1,7 @@
 import { FieldArray, Formik, FormikProps } from 'formik';
 import { useRouter } from 'next/router';
 import React, { useCallback, useContext, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { updateTags, validateTag } from '../../models/tags/TagUtils';
 import { UploadDropZone } from '../UploadDropZone';
 import { convertBase64ToFile, convertToBase64, fetchImageAsBase64 } from '@lib/Base64Converter';
@@ -48,32 +49,32 @@ import { zodFormikValidate } from '@lib/forms/zodFormikValidate';
 
 const fieldErrorClass = 'border-error focus:border-error focus:ring-error/25';
 
-const ingredientFormSchema = z
-  .object({
-    name: z.string().min(1, 'Required'),
-    shortName: z.string().optional(),
-    notes: z.string().optional(),
-    description: z.string().optional(),
-    price: z.coerce.number().nullish(),
-    units: z
-      .array(
-        z.object({
-          unitId: z.string(),
-          volume: z.coerce.number(),
-        }),
-      )
-      .optional(),
-    link: z.string().optional(),
-    tags: z.array(z.string()).optional(),
-    image: z.string().optional(),
-    originalImage: z.any().optional(),
-  })
-  .refine((values) => !(values.originalImage != undefined && values.image == undefined), {
-    message: 'Bild ausgewählt aber nicht zugeschnitten',
-    path: ['image'],
-  });
-
-const validateIngredient = zodFormikValidate(ingredientFormSchema);
+function createIngredientFormSchema(requiredMessage: string, imageNotCroppedMessage: string) {
+  return z
+    .object({
+      name: z.string().min(1, requiredMessage),
+      shortName: z.string().optional(),
+      notes: z.string().optional(),
+      description: z.string().optional(),
+      price: z.coerce.number().nullish(),
+      units: z
+        .array(
+          z.object({
+            unitId: z.string(),
+            volume: z.coerce.number(),
+          }),
+        )
+        .optional(),
+      link: z.string().optional(),
+      tags: z.array(z.string()).optional(),
+      image: z.string().optional(),
+      originalImage: z.any().optional(),
+    })
+    .refine((values) => !(values.originalImage != undefined && values.image == undefined), {
+      message: imageNotCroppedMessage,
+      path: ['image'],
+    });
+}
 
 interface IngredientFormProps {
   ingredient?: IngredientDto;
@@ -107,6 +108,7 @@ export function IngredientForm(props: IngredientFormProps) {
   const router = useRouter();
   const workspaceId = router.query.workspaceId as string | undefined;
   const modalContext = useContext(ModalContext);
+  const { t } = useTranslation(['ingredient', 'common', 'entity', 'errors']);
   const userContext = useContext(UserContext);
   const routingContext = useContext(RoutingContext);
 
@@ -243,7 +245,7 @@ export function IngredientForm(props: IngredientFormProps) {
             if (props.onSaved != undefined) {
               props.onSaved(created.id);
             } else {
-              alertService.success('Zutat erfolgreich erstellt');
+              alertService.success(t('ingredient:success.created'));
               await routingContext.conditionalBack(`/workspaces/${workspaceId}/manage/ingredients`);
             }
           } else {
@@ -251,12 +253,12 @@ export function IngredientForm(props: IngredientFormProps) {
             if (props.onSaved != undefined) {
               props.onSaved(props.ingredient.id);
             } else {
-              alertService.success('Zutat erfolgreich gespeichert');
+              alertService.success(t('ingredient:success.saved'));
               await routingContext.conditionalBack(`/workspaces/${workspaceId}/manage/ingredients`);
             }
           }
         } catch (error) {
-          alertApiV1Error(error, props.ingredient == undefined ? 'Fehler beim Erstellen der Zutat' : 'Fehler beim Speichern der Zutat');
+          alertApiV1Error(error, props.ingredient == undefined ? t('ingredient:error.create') : t('ingredient:error.save'));
         }
       }}
       validate={(values) => {
@@ -278,14 +280,14 @@ export function IngredientForm(props: IngredientFormProps) {
         } else {
           props.setUnsavedChanges?.(true);
         }
-        return validateIngredient(values);
+        return zodFormikValidate(createIngredientFormSchema(t('errors:requiredField'), t('common:imageNotCropped')))(values);
       }}
     >
       {({ values, setFieldValue, errors, setFieldError, handleChange, handleBlur, handleSubmit, isSubmitting, isValid, submitForm }) => {
         const checkValidationWarnings = (): string[] => {
           const warnings: string[] = [];
           if (!values.units || values.units.length === 0) {
-            warnings.push('Keine Volumes/Mengen hinzugefügt');
+            warnings.push(t('ingredient:warning.noVolumes'));
           }
           return warnings;
         };
@@ -314,7 +316,7 @@ export function IngredientForm(props: IngredientFormProps) {
           <form onSubmit={handleFormSubmit} className={'grid grid-cols-1 gap-2 md:grid-cols-2'}>
             <FormControl className={'col-span-full'}>
               <Label htmlFor={'link'} className="flex-row items-center justify-between">
-                <LabelText>Über Link importieren</LabelText>
+                <LabelText>{t('ingredient:importByLink')}</LabelText>
                 <LabelTextAlt className={'space-x-2 text-error'}>
                   <span>
                     <>{errors.link && errors.link}</>
@@ -370,12 +372,12 @@ export function IngredientForm(props: IngredientFormProps) {
                                     await setFieldValue('image', await convertToBase64(new File([compressedImageFile], 'image.png', { type: 'image/png' })));
                                     await setFieldValue('originalImage', imageFile);
                                   } else {
-                                    alertService.error('Bild konnte nicht skaliert werden.');
+                                    alertService.error(t('ingredient:error.imageScale'));
                                   }
                                 });
                               } catch (error) {
-                                console.error('Fehler beim automatischen Zuschneiden des Bildes:', error);
-                                alertService.error('Bild konnte nicht automatisch zugeschnitten werden.');
+                                console.error('Failed to auto-crop image:', error);
+                                alertService.error(t('ingredient:error.imageAutoCrop'));
                               }
                             }
                             const selectedUnitId = allUnits.find((unit) => unit.name == 'CL')?.id ?? '';
@@ -390,10 +392,10 @@ export function IngredientForm(props: IngredientFormProps) {
                               await setFieldValue('selectedUnit', selectedUnitId);
                             }
 
-                            alertService.info('Daten geladen, bitte überprüfen!');
+                            alertService.info(t('ingredient:info.dataLoaded'));
                           });
                         } else {
-                          alertService.warn('Es konnten keine Daten über die URL geladen werden.');
+                          alertService.warn(t('ingredient:warn.noUrlData'));
                         }
                       })
                       .finally(async () => {
@@ -407,9 +409,7 @@ export function IngredientForm(props: IngredientFormProps) {
               </ButtonGroup>
               {similarLinkIngredient && (
                 <Label className="flex-row">
-                  <LabelTextAlt className="text-warning">
-                    Eine Zutat mit ähnlicher Url existiert bereits unter dem Namen <strong>{similarLinkIngredient.name}</strong>.
-                  </LabelTextAlt>
+                  <LabelTextAlt className="text-warning">{t('ingredient:similarUrlExists', { name: similarLinkIngredient.name })}</LabelTextAlt>
                 </Label>
               )}
             </FormControl>
@@ -419,7 +419,7 @@ export function IngredientForm(props: IngredientFormProps) {
             <div className={'grid grid-cols-1 gap-2 xl:grid-cols-2'}>
               <FormControl className={'col-span-full'}>
                 <Label htmlFor={'name'} className="flex-row items-center justify-between">
-                  <LabelText>Name der Zutat</LabelText>
+                  <LabelText>{t('ingredient:name')}</LabelText>
                   <LabelTextAlt className={'space-x-2 text-error'}>
                     <span>
                       <>{errors.name && errors.name}</>
@@ -446,16 +446,14 @@ export function IngredientForm(props: IngredientFormProps) {
                 />
                 {similarIngredient && (
                   <Label className="flex-row">
-                    <LabelTextAlt className="text-warning">
-                      Eine ähnliche Zutat mit dem Namen <strong>{similarIngredient.name}</strong> existiert bereits.
-                    </LabelTextAlt>
+                    <LabelTextAlt className="text-warning">{t('ingredient:similarExists', { name: similarIngredient.name })}</LabelTextAlt>
                   </Label>
                 )}
               </FormControl>
               <div className={'flex flex-col gap-2'}>
                 <FormControl>
                   <Label htmlFor={'shortName'} className="flex-row items-center justify-between">
-                    <LabelText>Eigene Bezeichnung</LabelText>
+                    <LabelText>{t('ingredient:shortName')}</LabelText>
                     <LabelTextAlt className={'space-x-2 text-error'}>
                       <span>
                         <>{errors.shortName && errors.shortName}</>
@@ -474,7 +472,7 @@ export function IngredientForm(props: IngredientFormProps) {
                 </FormControl>
                 <FormControl>
                   <Label htmlFor={'price'} className="flex-row items-center justify-between">
-                    <LabelText>Preis</LabelText>
+                    <LabelText>{t('ingredient:price')}</LabelText>
                     <LabelTextAlt className={'space-x-2 text-error'}>
                       <span>
                         <>{errors.price && errors.price}</>
@@ -500,7 +498,7 @@ export function IngredientForm(props: IngredientFormProps) {
               </div>
               <div>
                 <Label className="flex-row items-center justify-between">
-                  <LabelText>Tags</LabelText>
+                  <LabelText>{t('ingredient:tags')}</LabelText>
                   <LabelTextAlt className="text-error">
                     <>{errors.tags && errors.tags}</>
                   </LabelTextAlt>
@@ -510,10 +508,10 @@ export function IngredientForm(props: IngredientFormProps) {
                   onChange={(tags) =>
                     setFieldValue(
                       'tags',
-                      updateTags(tags, (text) => setFieldError('tags', text ?? 'Tag fehlerhaft')),
+                      updateTags(tags, (text) => setFieldError('tags', text ?? t('common:tagInvalid'))),
                     )
                   }
-                  validate={(tag) => validateTag(tag, (text) => setFieldError('tags', text ?? 'Tag fehlerhaft'))}
+                  validate={(tag) => validateTag(tag, (text) => setFieldError('tags', text ?? t('common:tagInvalid')))}
                 />
               </div>
 
@@ -521,19 +519,19 @@ export function IngredientForm(props: IngredientFormProps) {
                 {({ push: pushUnit, remove: removeUnit }) => (
                   <>
                     <div>
-                      <LabelText>Mengen</LabelText>
+                      <LabelText>{t('ingredient:volumes')}</LabelText>
                       <div className={'overflow-x-auto'}>
                         <Table zebra className="bg-base-300">
                           <TableHead>
                             <TableRow>
-                              <TableHeaderCell colSpan={4}>Verfügbare Einheiten</TableHeaderCell>
+                              <TableHeaderCell colSpan={4}>{t('ingredient:availableUnits')}</TableHeaderCell>
                             </TableRow>
                           </TableHead>
                           <TableBody>
                             {values.units.length == 0 ? (
                               <TableRow>
                                 <TableCell colSpan={4} className={'text-center'}>
-                                  Keine Einheiten hinzugefügt
+                                  {t('ingredient:noUnitsAdded')}
                                 </TableCell>
                               </TableRow>
                             ) : (
@@ -546,14 +544,15 @@ export function IngredientForm(props: IngredientFormProps) {
                                     })}
                                   </TableCell>
                                   <TableCell>
-                                    {userContext.getTranslation(allUnits.find((availableUnit) => availableUnit.id == unit.unitId)?.name ?? 'N/A', 'de')}
+                                    {userContext.getTranslation(allUnits.find((availableUnit) => availableUnit.id == unit.unitId)?.name ?? 'N/A')}
                                   </TableCell>
                                   <TableCell>
                                     {values.price != undefined && typeof values.price === 'number'
                                       ? (values.price / unit.volume).toFixed(2).replace(/\D00(?=\D*$)/, '')
                                       : '-'}{' '}
-                                    €/
-                                    {userContext.getTranslation(allUnits.find((availableUnit) => availableUnit.id == unit.unitId)?.name ?? 'N/A', 'de')}
+                                    {t('common:euroPerUnit', {
+                                      unit: userContext.getTranslation(allUnits.find((availableUnit) => availableUnit.id == unit.unitId)?.name ?? 'N/A'),
+                                    })}
                                   </TableCell>
                                   <TableCell className={'flex flex-row items-center justify-center'}>
                                     <Button
@@ -578,7 +577,7 @@ export function IngredientForm(props: IngredientFormProps) {
                     <div>
                       <FormControl>
                         <Label htmlFor={'anotherVolume'} className="flex-row items-center justify-between">
-                          <LabelText>Weitere Menge hinzufügen</LabelText>
+                          <LabelText>{t('ingredient:addVolume')}</LabelText>
                           <LabelTextAlt className={'space-x-2 text-error'}>
                             <span>
                               <>{errors.volume && errors.volume}</>
@@ -609,24 +608,24 @@ export function IngredientForm(props: IngredientFormProps) {
                           >
                             {loadingUnits ? (
                               <option value={''} disabled={true}>
-                                Lade...
+                                {t('common:loadingShort')}
                               </option>
                             ) : allUnits.length == 0 ? (
-                              <option value={''}>Keine Einheiten verfügbar</option>
+                              <option value={''}>{t('ingredient:noUnitsAvailable')}</option>
                             ) : (
                               <>
                                 <option value={''} disabled>
-                                  Auswählen...
+                                  {t('common:selectEllipsis')}
                                 </option>
                                 {allUnits
-                                  .sort((a, b) => userContext.getTranslation(a.name, 'de').localeCompare(userContext.getTranslation(b.name, 'de')))
+                                  .sort((a, b) => userContext.getTranslation(a.name).localeCompare(userContext.getTranslation(b.name)))
                                   .map((unit) => (
                                     <option
                                       key={`unit-option-${unit.id}`}
                                       value={unit.id}
                                       disabled={(values.units as FormUnitValue[]).find((u) => u.unitId == unit.id) != undefined}
                                     >
-                                      {userContext.getTranslation(unit.name, 'de')}
+                                      {userContext.getTranslation(unit.name)}
                                     </option>
                                   ))}
                               </>
@@ -646,12 +645,12 @@ export function IngredientForm(props: IngredientFormProps) {
                               await setFieldValue('selectedUnit', '');
                             }}
                           >
-                            Hinzufügen
+                            {t('common:add')}
                           </Button>
                         </ButtonGroup>
                       </FormControl>
                       <div>
-                        <LabelText>Mengen vorschläge</LabelText>
+                        <LabelText>{t('ingredient:volumeSuggestions')}</LabelText>
                         <ul className={'list-inside list-disc'}>
                           {_.uniqBy(
                             defaultConversions
@@ -672,7 +671,7 @@ export function IngredientForm(props: IngredientFormProps) {
                               <li key={`unit-conversion-suggestion-${suggestionIndex}`} className={'space-x-2 italic'}>
                                 <span className={'p-2'}>{suggestion.volume.toFixed(2).replace(/\D00(?=\D*$)/, '')}</span>
                                 <span className={'p-2'}>
-                                  {userContext.getTranslation(allUnits.find((unit) => unit.id == suggestion.unitId)?.name ?? 'N/A', 'de')}
+                                  {userContext.getTranslation(allUnits.find((unit) => unit.id == suggestion.unitId)?.name ?? 'N/A')}
                                 </span>
                                 <Button
                                   type="button"
@@ -682,11 +681,11 @@ export function IngredientForm(props: IngredientFormProps) {
                                     pushUnit(suggestion);
                                   }}
                                 >
-                                  Hinzufügen
+                                  {t('common:add')}
                                 </Button>
                               </li>
                             ),
-                            <div className={'italic'}>Keine weiteren Vorschläge</div>,
+                            <div className={'italic'}>{t('ingredient:noMoreSuggestions')}</div>,
                           )}
                         </ul>
                       </div>
@@ -698,7 +697,7 @@ export function IngredientForm(props: IngredientFormProps) {
               <div className={'col-span-full'}>
                 <div className="flex items-center gap-3 py-2">
                   <Divider className="my-0 flex-1" />
-                  <span className="shrink-0 text-sm font-medium text-base-content/70">Vorschau Bild</span>
+                  <span className="shrink-0 text-sm font-medium text-base-content/70">{t('common:imagePreview')}</span>
                   <Divider className="my-0 flex-1" />
                 </div>
                 {values.image == undefined && values.originalImage == undefined ? (
@@ -708,7 +707,7 @@ export function IngredientForm(props: IngredientFormProps) {
                         await setFieldValue('image', undefined);
                         await setFieldValue('originalImage', file);
                       } else {
-                        alertService.error('Datei konnte nicht ausgewählt werden.');
+                        alertService.error(t('ingredient:error.fileSelect'));
                       }
                     }}
                   />
@@ -723,7 +722,7 @@ export function IngredientForm(props: IngredientFormProps) {
                           if (compressedImageFile) {
                             await setFieldValue('image', await convertToBase64(new File([compressedImageFile], 'image.png', { type: 'image/png' })));
                           } else {
-                            alertService.error('Bild konnte nicht skaliert werden.');
+                            alertService.error(t('ingredient:error.imageScale'));
                           }
                         });
                       }}
@@ -758,7 +757,7 @@ export function IngredientForm(props: IngredientFormProps) {
                             modalContext.openModal(
                               <DeleteConfirmationModal
                                 spelling={'REMOVE'}
-                                entityName={'das Bild'}
+                                entityName={t('entity:theImage')}
                                 onApprove={async () => {
                                   await setFieldValue('originalImage', undefined);
                                   await setFieldValue('image', undefined);
@@ -771,12 +770,15 @@ export function IngredientForm(props: IngredientFormProps) {
                         </Button>
                       </div>
                       <div className={'bg-transparent-pattern relative h-32 w-32 rounded-lg'}>
-                        <Image className={'w-fit rounded-lg'} src={values.image ?? ''} layout={'fill'} objectFit={'contain'} alt={'Ingredient Image'} />
+                        <Image
+                          className={'w-fit rounded-lg'}
+                          src={values.image ?? ''}
+                          layout={'fill'}
+                          objectFit={'contain'}
+                          alt={t('common:ingredientImageAlt')}
+                        />
                       </div>
-                      <div className={'pt-2 font-thin italic'}>
-                        Info: Durch Speichern der Zutat wird das Bild dauerhaft zugeschnitten. Das Original wird nicht gespeichert. Falls du später einen
-                        anderen Bereich des Bildes auswählen möchtest, musst du das Bild erneut hochladen.
-                      </div>
+                      <div className={'pt-2 font-thin italic'}>{t('common:imageCropInfoLong')}</div>
                     </div>
                   </div>
                 )}
@@ -785,7 +787,7 @@ export function IngredientForm(props: IngredientFormProps) {
             <div className={'flex h-full flex-col gap-2'}>
               <FormControl className={'col-span-full'}>
                 <Label htmlFor={'description'} className="flex-row items-center justify-between">
-                  <LabelText>Allgemeine Zutatenbeschreibung</LabelText>
+                  <LabelText>{t('ingredient:description')}</LabelText>
                   <LabelTextAlt className={'space-x-2 text-error'}>
                     <span>
                       <>{errors.description && errors.description}</>
@@ -799,14 +801,14 @@ export function IngredientForm(props: IngredientFormProps) {
                   onChange={handleChange}
                   onBlur={handleBlur}
                   name={'description'}
-                  placeholder={'Herkunft, Geschichte, etc.'}
+                  placeholder={t('ingredient:descriptionPlaceholder')}
                   rows={5}
                 />
               </FormControl>
 
               <FormControl className={'col-span-full'}>
                 <Label htmlFor={'notes'} className="flex-row items-center justify-between">
-                  <LabelText>Notizen</LabelText>
+                  <LabelText>{t('ingredient:notes')}</LabelText>
                   <LabelTextAlt className={'space-x-2 text-error'}>
                     <span>
                       <>{errors.notes && errors.notes}</>
@@ -820,7 +822,7 @@ export function IngredientForm(props: IngredientFormProps) {
                   onChange={handleChange}
                   onBlur={handleBlur}
                   name={'notes'}
-                  placeholder={'Lagerort, Zubereitung, etc.'}
+                  placeholder={t('ingredient:notesPlaceholder')}
                   rows={5}
                 />
               </FormControl>
@@ -829,14 +831,10 @@ export function IngredientForm(props: IngredientFormProps) {
                 <FormControl>
                   <Button type={'submit'} variant="primary" disabled={isSubmitting || !isValid}>
                     {isSubmitting ? <Loading size="sm" /> : null}
-                    Speichern
+                    {t('common:save')}
                   </Button>
                 </FormControl>
-                {!isValid && (
-                  <div className={'font-thin text-error italic'}>
-                    Nicht alle Felder sind korrekt ausgefüllt. Kontrolliere daher alle Felder. (Name gesetzt, Bild zugeschnitten, ... ?)
-                  </div>
-                )}
+                {!isValid && <div className={'font-thin text-error italic'}>{t('common:formIncomplete')}</div>}
               </div>
             </div>
           </form>

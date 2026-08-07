@@ -1,7 +1,9 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Badge } from './Badge';
 import { cn } from './cn';
 import { Skeleton } from './Skeleton';
+import { toIntlLocale } from '@lib/i18n/format';
 
 export interface StatCardProps {
   title: string;
@@ -17,10 +19,11 @@ export interface StatCardProps {
 
 /** Metric card with optional delta vs. a previous period and a loading state. */
 export function StatCard({ title, value, desc, delta, previousValue, previousPeriodLabel, formatValue, className = '', loading = false }: StatCardProps) {
+  const { t, i18n } = useTranslation('common');
   const formatNumber = (val: number | string): string => {
     if (typeof val === 'string') return val;
     if (formatValue) return formatValue(val);
-    return val.toLocaleString('de-DE');
+    return val.toLocaleString(toIntlLocale(i18n.language));
   };
 
   const displayValue = formatNumber(value);
@@ -35,7 +38,7 @@ export function StatCard({ title, value, desc, delta, previousValue, previousPer
         {previousValue !== undefined && (
           <>
             {' '}
-            vs. {formatNumber(previousValue)}
+            {t('vs')} {formatNumber(previousValue)}
             {previousPeriodLabel && ` (${previousPeriodLabel})`}
           </>
         )}

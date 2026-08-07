@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { FaWifi } from 'react-icons/fa';
 import { useOffline } from '@lib/context/OfflineContextProvider';
 
@@ -13,6 +14,7 @@ interface OfflineBannerProps {
  */
 export function OfflineBanner({ className = '' }: OfflineBannerProps) {
   const { isOnline, isOfflineMode } = useOffline();
+  const { t } = useTranslation('common');
 
   // Don't render if online and not in offline mode
   if (isOnline && !isOfflineMode) {
@@ -26,7 +28,7 @@ export function OfflineBanner({ className = '' }: OfflineBannerProps) {
       aria-live="polite"
     >
       <FaWifi className="h-4 w-4 animate-pulse" />
-      <span className="text-sm font-medium">Du bist offline – Einige Funktionen sind eingeschränkt. Daten werden aus dem Cache geladen.</span>
+      <span className="text-sm font-medium">{t('offlineBanner')}</span>
     </div>
   );
 }

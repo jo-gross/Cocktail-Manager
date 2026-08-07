@@ -1,4 +1,5 @@
 import React, { useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { alertService } from '@lib/alertService';
 import { useRouter } from 'next/router';
 import { BackupStructure } from '../../../../api/workspaces/[workspaceId]/admin/backups/backupStructure';
@@ -25,6 +26,7 @@ import type { WorkspaceSettingsDto } from '@lib/schemas/workspace';
 import { deleteWorkspace, updateWorkspace } from '@lib/network/workspaces';
 import { fetchIce, deleteIce as deleteIceRequest } from '@lib/network/ices';
 import CreateIceModal from '../../../../../components/modals/CreateIceModal';
+import { EntityTranslationCells, EntityTranslationHeaderCells, ENTITY_TRANSLATION_COLUMN_COUNT } from '@components/settings/EntityTranslationLabels';
 import { withPagePermission } from '@middleware/ui/withPagePermission';
 import {
   Button,
@@ -49,6 +51,7 @@ import {
 } from '@components/ui';
 
 function WorkspaceSettingPage() {
+  const { t } = useTranslation(['settings', 'common', 'errors', 'entity']);
   const router = useRouter();
   const userContext = useContext(UserContext);
   const modalContext = useContext(ModalContext);
@@ -106,14 +109,14 @@ function WorkspaceSettingPage() {
         setting: 'statisticDayStartTime',
         value: statisticDayStartTime,
       });
-      alertService.success('Einstellung gespeichert');
+      alertService.success(t('settings:settingSaved'));
     } catch (error) {
       console.error('saveStatisticDayStartTime', error);
-      alertService.error('Fehler beim Speichern');
+      alertService.error(t('errors:save'));
     } finally {
       setStatisticSettingsSaving(false);
     }
-  }, [workspaceId, statisticDayStartTime]);
+  }, [workspaceId, statisticDayStartTime, t]);
 
   const exportAll = useCallback(async () => {
     setExporting(true);
@@ -129,10 +132,10 @@ function WorkspaceSettingPage() {
       })
       .catch((error) => {
         console.error('Settings-Page -> exportAll', error);
-        alertService.error('Fehler beim Exportieren');
+        alertService.error(t('errors:export'));
       })
       .finally(() => setExporting(false));
-  }, [userContext.workspace?.name, workspaceId]);
+  }, [userContext.workspace?.name, workspaceId, t]);
 
   const importBackup = useCallback(async () => {
     try {
@@ -150,7 +153,7 @@ function WorkspaceSettingPage() {
       console.log('SettingsPage -> importBackup -> response', response);
       if (response.ok) {
         fetchActions(workspaceId, setWorkspaceActions, setWorkspaceActionLoading);
-        alertService.success(`Import erfolgreich`);
+        alertService.success(t('entity:importSuccess'));
         router.reload();
         setUploadImportFile(undefined);
         if (uploadImportFileRef.current) {
@@ -159,30 +162,30 @@ function WorkspaceSettingPage() {
       } else {
         const body = await response.json();
         console.error('Admin -> ImportBackup', response);
-        alertService.error(body.error?.message ?? body.message ?? 'Fehler beim Importieren', response.status, response.statusText);
+        alertService.error(body.error?.message ?? body.message ?? t('errors:import'), response.status, response.statusText);
       }
     } catch (error) {
       console.error('SettingsPage -> importBackup', error);
-      alertService.error(`Fehler beim Importieren`);
+      alertService.error(t('errors:import'));
     } finally {
       setImporting(false);
     }
-  }, [importing, uploadImportFile, workspaceId]);
+  }, [importing, uploadImportFile, workspaceId, t, router]);
 
   const handleDeleteWorkspace = useCallback(async () => {
     if (!workspaceId) return;
-    if (!confirm('Workspace inkl. aller Zutaten und Rezepte wirklich löschen?')) return;
+    if (!confirm(t('settings:deleteWorkspaceConfirm'))) return;
     setWorkspaceDeleting(true);
     try {
       await deleteWorkspace(workspaceId);
       await router.replace('/');
-      alertService.success('Erfolgreich gelöscht');
+      alertService.success(t('common:success.deleted'));
     } catch (error) {
-      alertApiV1Error(error, 'Fehler beim Löschen der Workspace');
+      alertApiV1Error(error, t('errors:deleteWorkspace'));
     } finally {
       setWorkspaceDeleting(false);
     }
-  }, [router, workspaceId]);
+  }, [router, workspaceId, t]);
 
   const handleRenameWorkspace = useCallback(async () => {
     if (!workspaceId) return;
@@ -190,13 +193,13 @@ function WorkspaceSettingPage() {
     try {
       await updateWorkspace(workspaceId, { name: newWorkspaceName });
       router.reload();
-      alertService.success(`Umbenennen erfolgreich`);
+      alertService.success(t('entity:renameSuccess'));
     } catch (error) {
-      alertApiV1Error(error, 'Fehler beim Umbenennen der Workspace');
+      alertApiV1Error(error, t('errors:renameWorkspace'));
     } finally {
       setWorkspaceRenaming(false);
     }
-  }, [newWorkspaceName, router, workspaceId]);
+  }, [newWorkspaceName, router, workspaceId, t]);
 
   const deleteCocktailRecipeAction = useCallback(
     async (actionId: string) => {
@@ -206,14 +209,14 @@ function WorkspaceSettingPage() {
       try {
         await deleteAction(workspaceId, actionId);
         fetchActions(workspaceId, setWorkspaceActions, setWorkspaceActionLoading);
-        alertService.success('Erfolgreich gelöscht');
+        alertService.success(t('common:success.deleted'));
       } catch (error) {
-        alertApiV1Error(error, 'Fehler beim Löschen');
+        alertApiV1Error(error, t('errors:delete'));
       } finally {
         setDeleting({ ...deleting, [actionId]: false });
       }
     },
-    [deleting, workspaceId],
+    [deleting, workspaceId, t],
   );
 
   const deleteUnit = useCallback(
@@ -225,14 +228,14 @@ function WorkspaceSettingPage() {
         await deleteUnitRequest(workspaceId, unitId);
         fetchUnits(workspaceId, setUnits, setUnitsLoading);
         fetchUnitConversions(workspaceId, setUnitConversionsLoading, setUnitConversions);
-        alertService.success('Erfolgreich gelöscht');
+        alertService.success(t('common:success.deleted'));
       } catch (error) {
-        alertApiV1Error(error, 'Fehler beim Löschen');
+        alertApiV1Error(error, t('errors:delete'));
       } finally {
         setDeleting({ ...deleting, [unitId]: false });
       }
     },
-    [deleting, workspaceId],
+    [deleting, workspaceId, t],
   );
 
   const deleteUnitConversion = useCallback(
@@ -243,14 +246,14 @@ function WorkspaceSettingPage() {
       try {
         await deleteUnitConversionRequest(workspaceId, unitConversionId);
         fetchUnitConversions(workspaceId, setUnitConversionsLoading, setUnitConversions);
-        alertService.success('Erfolgreich gelöscht');
+        alertService.success(t('common:success.deleted'));
       } catch (error) {
-        alertApiV1Error(error, 'Fehler beim Löschen');
+        alertApiV1Error(error, t('errors:delete'));
       } finally {
         setDeleting({ ...deleting, [unitConversionId]: false });
       }
     },
-    [deleting, workspaceId],
+    [deleting, workspaceId, t],
   );
 
   const deleteIce = useCallback(
@@ -261,14 +264,14 @@ function WorkspaceSettingPage() {
       try {
         await deleteIceRequest(workspaceId, iceId);
         fetchIce(workspaceId, setIceOptions, setIceOptionsLoading);
-        alertService.success('Erfolgreich gelöscht');
+        alertService.success(t('common:success.deleted'));
       } catch (error) {
-        alertApiV1Error(error, 'Fehler beim Löschen');
+        alertApiV1Error(error, t('errors:delete'));
       } finally {
         setDeleting({ ...deleting, [iceId]: false });
       }
     },
-    [deleting, workspaceId],
+    [deleting, workspaceId, t],
   );
 
   useEffect(() => {
@@ -279,31 +282,28 @@ function WorkspaceSettingPage() {
   }, [workspaceId]);
 
   return (
-    <ManageEntityLayout backLink={`/workspaces/${workspaceId}/manage`} title={`Workspace-Einstellungen - ${userContext.workspace?.name}`}>
+    <ManageEntityLayout backLink={`/workspaces/${workspaceId}/manage`} title={t('settings:title', { name: userContext.workspace?.name })}>
       <div className={'grid grid-flow-row-dense grid-cols-1 gap-2 md:grid-cols-2 md:gap-4'}>
         {/*Cocktail Recipe Actions*/}
         {userContext.isUserPermitted(Role.ADMIN) ? (
           <Card className="h-min">
             <CardBody>
-              <CardTitle>Zubereitung</CardTitle>
-              <div>
-                Bei der Zubereitung von Cocktails können unterschiedliche Aktionen durchgeführt werden. Hier lassen sich diese Anpassen und erstellen. Beachte,
-                dass das Löschen erst dann funktioniert, wenn eine Aktion nicht mehr verwendet wird.
-              </div>
+              <CardTitle>{t('settings:preparation')}</CardTitle>
+              <div>{t('settings:preparationHelp')}</div>
               {workspaceActionLoading ? (
                 <div>
                   <Loading />
                 </div>
               ) : (
                 <>
-                  <div className={'text-lg font-bold'}>Methoden</div>
+                  <div className={'text-lg font-bold'}>{t('settings:methods')}</div>
                   <div className={'overflow-x-auto'}>
                     <Table zebra className="grid-col-full w-full table-auto">
                       <TableHead>
                         <TableRow>
-                          <TableHeaderCell>Key</TableHeaderCell>
-                          <TableHeaderCell>Deutsch</TableHeaderCell>
-                          <TableHeaderCell>Gruppenbezeichner</TableHeaderCell>
+                          <TableHeaderCell>{t('settings:key')}</TableHeaderCell>
+                          <EntityTranslationHeaderCells />
+                          <TableHeaderCell>{t('settings:groupIdentifier')}</TableHeaderCell>
                           <TableHeaderCell className="flex flex-row justify-end">
                             <Button
                               type="button"
@@ -314,11 +314,12 @@ function WorkspaceSettingPage() {
                                   <CocktailStepActionModal
                                     cocktailStepAction={undefined}
                                     cocktailStepActionGroups={Object.keys(_.groupBy(workspaceActions, 'actionGroup'))}
+                                    onSaved={() => fetchActions(workspaceId, setWorkspaceActions, setWorkspaceActionLoading)}
                                   />,
                                 );
                               }}
                             >
-                              Hinzufügen
+                              {t('common:add')}
                             </Button>
                           </TableHeaderCell>
                         </TableRow>
@@ -326,14 +327,14 @@ function WorkspaceSettingPage() {
                       <TableBody>
                         {workspaceActions.length == 0 ? (
                           <TableRow>
-                            <TableCell colSpan={4}>Keine Einträge vorhanden</TableCell>
+                            <TableCell colSpan={3 + ENTITY_TRANSLATION_COLUMN_COUNT}>{t('common:emptyEntriesPresent')}</TableCell>
                           </TableRow>
                         ) : (
                           workspaceActions.map((action) => (
                             <TableRow key={`action-${action.id}`}>
                               <TableCell>{action.name}</TableCell>
-                              <TableCell>{userContext.getTranslation(action.name, 'de')}</TableCell>
-                              <TableCell>{userContext.getTranslation(action.actionGroup, 'de')}</TableCell>
+                              <EntityTranslationCells translationKey={action.name} />
+                              <TableCell>{userContext.getTranslation(action.actionGroup)}</TableCell>
                               <TableCell className="flex flex-row justify-end gap-2">
                                 <Button
                                   type="button"
@@ -345,11 +346,12 @@ function WorkspaceSettingPage() {
                                       <CocktailStepActionModal
                                         cocktailStepAction={action}
                                         cocktailStepActionGroups={Object.keys(_.groupBy(workspaceActions, 'actionGroup'))}
+                                        onSaved={() => fetchActions(workspaceId, setWorkspaceActions, setWorkspaceActionLoading)}
                                       />,
                                     );
                                   }}
                                 >
-                                  Edit
+                                  {t('common:edit')}
                                 </Button>
                                 <Button
                                   type="button"
@@ -361,7 +363,7 @@ function WorkspaceSettingPage() {
                                     modalContext.openModal(
                                       <DeleteConfirmationModal
                                         spelling={'DELETE'}
-                                        entityName={userContext.getTranslation(action.name, 'de')}
+                                        entityName={userContext.getTranslation(action.name)}
                                         onApprove={() => deleteCocktailRecipeAction(action.id)}
                                       />,
                                     )
@@ -377,28 +379,28 @@ function WorkspaceSettingPage() {
                       </TableBody>
                     </Table>
                   </div>
-                  <div className={'text-lg font-bold'}>Gruppen</div>
-                  <div>Diese können bei den Methoden erstellt werden, hier kannst du die passende Anzeige einstellen</div>
+                  <div className={'text-lg font-bold'}>{t('settings:groups')}</div>
+                  <div>{t('settings:groupsHelp')}</div>
 
                   <div className={'overflow-x-auto'}>
                     <Table zebra className="grid-col-full w-full table-auto">
                       <TableHead>
                         <TableRow>
-                          <TableHeaderCell>Key</TableHeaderCell>
-                          <TableHeaderCell>Deutsch</TableHeaderCell>
+                          <TableHeaderCell>{t('settings:key')}</TableHeaderCell>
+                          <EntityTranslationHeaderCells />
                           <TableHeaderCell></TableHeaderCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
                         {Object.entries(_.groupBy(workspaceActions, 'actionGroup')).length == 0 ? (
                           <TableRow>
-                            <TableCell colSpan={3}>Keine Einträge vorhanden</TableCell>
+                            <TableCell colSpan={2 + ENTITY_TRANSLATION_COLUMN_COUNT}>{t('common:emptyEntriesPresent')}</TableCell>
                           </TableRow>
                         ) : (
                           Object.entries(_.groupBy(workspaceActions, 'actionGroup')).map(([group, _groupActions]) => (
                             <TableRow key={`action-group-${group}`}>
                               <TableCell>{group}</TableCell>
-                              <TableCell>{userContext.getTranslation(group, 'de')}</TableCell>
+                              <EntityTranslationCells translationKey={group} />
                               <TableCell className="flex flex-row justify-end gap-2">
                                 <Button
                                   type="button"
@@ -406,10 +408,10 @@ function WorkspaceSettingPage() {
                                   size="sm"
                                   className="border-primary text-primary hover:bg-primary/10"
                                   onClick={() => {
-                                    modalContext.openModal(<EditTranslationModal identifier={group} slang={'Zubereitungsgruppe'} />);
+                                    modalContext.openModal(<EditTranslationModal identifier={group} slang={t('settings:slang.actionGroup')} />);
                                   }}
                                 >
-                                  Edit
+                                  {t('common:edit')}
                                 </Button>
                               </TableCell>
                             </TableRow>
@@ -429,21 +431,21 @@ function WorkspaceSettingPage() {
         {userContext.isUserPermitted(Role.ADMIN) ? (
           <Card className={`${!collapsedGeneratedUnits ? 'row-span-2' : 'row-span-6'} h-fit`}>
             <CardBody>
-              <CardTitle>Einheiten</CardTitle>
-              <div>Hier lassen sich alle Einheiten, die bei der Zubereitung eines Cocktails ausgewählt werden können angepasst werden.</div>
+              <CardTitle>{t('settings:units')}</CardTitle>
+              <div>{t('settings:unitsHelp')}</div>
               {unitsLoading ? (
                 <div>
                   <Loading />
                 </div>
               ) : (
                 <>
-                  <div className={'text-lg font-bold'}>Einheiten</div>
+                  <div className={'text-lg font-bold'}>{t('settings:units')}</div>
                   <div className={'overflow-x-auto'}>
                     <Table zebra className="grid-col-full w-full table-auto">
                       <TableHead>
                         <TableRow>
-                          <TableHeaderCell>Key</TableHeaderCell>
-                          <TableHeaderCell>Deutsch</TableHeaderCell>
+                          <TableHeaderCell>{t('settings:key')}</TableHeaderCell>
+                          <EntityTranslationHeaderCells />
                           <TableHeaderCell className="flex flex-row justify-end">
                             <Button
                               type="button"
@@ -453,7 +455,7 @@ function WorkspaceSettingPage() {
                                 modalContext.openModal(<UnitModal unit={undefined} onSaved={() => fetchUnits(workspaceId, setUnits, setUnitsLoading)} />);
                               }}
                             >
-                              Hinzufügen
+                              {t('common:add')}
                             </Button>
                           </TableHeaderCell>
                         </TableRow>
@@ -461,15 +463,15 @@ function WorkspaceSettingPage() {
                       <TableBody>
                         {units.length == 0 ? (
                           <TableRow>
-                            <TableCell colSpan={3} className="text-center">
-                              Keine Einträge vorhanden
+                            <TableCell colSpan={2 + ENTITY_TRANSLATION_COLUMN_COUNT} className="text-center">
+                              {t('common:emptyEntriesPresent')}
                             </TableCell>
                           </TableRow>
                         ) : (
                           units.map((unit) => (
                             <TableRow key={`unit-${unit.id}`}>
                               <TableCell>{unit.name}</TableCell>
-                              <TableCell>{userContext.getTranslation(unit.name, 'de')}</TableCell>
+                              <EntityTranslationCells translationKey={unit.name} />
                               <TableCell className="flex flex-row justify-end gap-2">
                                 <Button
                                   type="button"
@@ -477,10 +479,10 @@ function WorkspaceSettingPage() {
                                   size="sm"
                                   className="border-primary text-primary hover:bg-primary/10"
                                   onClick={() => {
-                                    modalContext.openModal(<UnitModal unit={unit} />);
+                                    modalContext.openModal(<UnitModal unit={unit} onSaved={() => fetchUnits(workspaceId, setUnits, setUnitsLoading)} />);
                                   }}
                                 >
-                                  Edit
+                                  {t('common:edit')}
                                 </Button>
                                 <Button
                                   type="button"
@@ -492,7 +494,7 @@ function WorkspaceSettingPage() {
                                     modalContext.openModal(
                                       <DeleteConfirmationModal
                                         spelling={'DELETE'}
-                                        entityName={userContext.getTranslation(unit.name, 'de')}
+                                        entityName={userContext.getTranslation(unit.name)}
                                         onApprove={() => deleteUnit(unit.id)}
                                       />,
                                     )
@@ -508,15 +510,15 @@ function WorkspaceSettingPage() {
                       </TableBody>
                     </Table>
                   </div>
-                  <div className={'text-lg font-bold'}>Umrechnungen</div>
-                  <div>Hier können die standardmäßigen Umrechnungen der Einheiten angepasst werden.</div>
+                  <div className={'text-lg font-bold'}>{t('settings:conversions')}</div>
+                  <div>{t('settings:conversionsHelp')}</div>
                   <div className={'overflow-x-auto'}>
                     <Table zebra className="grid-col-full w-full">
                       <TableHead>
                         <TableRow>
-                          <TableHeaderCell>1 Einheit A</TableHeaderCell>
-                          <TableHeaderCell className="text-right">= X</TableHeaderCell>
-                          <TableHeaderCell>Einheit B</TableHeaderCell>
+                          <TableHeaderCell>{t('settings:unitA')}</TableHeaderCell>
+                          <TableHeaderCell className="text-right">{t('settings:unitFactor')}</TableHeaderCell>
+                          <TableHeaderCell>{t('settings:unitB')}</TableHeaderCell>
                           <TableHeaderCell></TableHeaderCell>
                           <TableHeaderCell className="flex justify-end">
                             <Button
@@ -533,7 +535,7 @@ function WorkspaceSettingPage() {
                                 );
                               }}
                             >
-                              Hinzufügen
+                              {t('common:add')}
                             </Button>
                           </TableHeaderCell>
                         </TableRow>
@@ -548,7 +550,7 @@ function WorkspaceSettingPage() {
                         ) : unitConversions.length == 0 ? (
                           <TableRow>
                             <TableCell colSpan={5} className="text-center">
-                              Keine Einträge vorhanden
+                              {t('common:emptyEntriesPresent')}
                             </TableCell>
                           </TableRow>
                         ) : (
@@ -557,21 +559,23 @@ function WorkspaceSettingPage() {
                               .filter((conversion) => !conversion.autoGenerated)
                               .map((conversion) => (
                                 <TableRow key={`unit-conversion-${conversion.id}`}>
-                                  <TableCell>{userContext.getTranslation(units.find((unit) => unit.id == conversion.fromUnitId)?.name ?? '', 'de')}</TableCell>
+                                  <TableCell>{userContext.getTranslation(units.find((unit) => unit.id == conversion.fromUnitId)?.name ?? '')}</TableCell>
                                   <TableCell className="text-right">
                                     {conversion.factor.toLocaleString(undefined, {
                                       minimumFractionDigits: 2,
                                       maximumFractionDigits: 2,
                                     })}
                                   </TableCell>
-                                  <TableCell>{userContext.getTranslation(units.find((unit) => unit.id == conversion.toUnitId)?.name ?? '', 'de')}</TableCell>
+                                  <TableCell>{userContext.getTranslation(units.find((unit) => unit.id == conversion.toUnitId)?.name ?? '')}</TableCell>
                                   <TableCell>
-                                    1 {userContext.getTranslation(units.find((unit) => unit.id == conversion.toUnitId)?.name ?? '', 'de')} ={' '}
-                                    {(1 / conversion.factor).toLocaleString(undefined, {
-                                      minimumFractionDigits: 2,
-                                      maximumFractionDigits: 2,
-                                    })}{' '}
-                                    {userContext.getTranslation(units.find((unit) => unit.id == conversion.fromUnitId)?.name ?? '', 'de')}
+                                    {t('settings:conversionEquals', {
+                                      to: userContext.getTranslation(units.find((unit) => unit.id == conversion.toUnitId)?.name ?? ''),
+                                      factor: (1 / conversion.factor).toLocaleString(undefined, {
+                                        minimumFractionDigits: 2,
+                                        maximumFractionDigits: 2,
+                                      }),
+                                      from: userContext.getTranslation(units.find((unit) => unit.id == conversion.fromUnitId)?.name ?? ''),
+                                    })}
                                   </TableCell>
                                   <TableCell className="flex flex-row justify-end gap-2">
                                     <Button
@@ -590,7 +594,7 @@ function WorkspaceSettingPage() {
                                         );
                                       }}
                                     >
-                                      Edit
+                                      {t('common:edit')}
                                     </Button>
                                     <Button
                                       type="button"
@@ -602,11 +606,10 @@ function WorkspaceSettingPage() {
                                         modalContext.openModal(
                                           <DeleteConfirmationModal
                                             spelling={'DELETE'}
-                                            entityName={
-                                              userContext.getTranslation(units.find((unit) => unit.id == conversion.fromUnitId)?.name ?? 'N/A', 'de') +
-                                              ' zu ' +
-                                              userContext.getTranslation(units.find((unit) => unit.id == conversion.toUnitId)?.name ?? 'N/A', 'de')
-                                            }
+                                            entityName={t('settings:conversionTo', {
+                                              from: userContext.getTranslation(units.find((unit) => unit.id == conversion.fromUnitId)?.name ?? 'N/A'),
+                                              to: userContext.getTranslation(units.find((unit) => unit.id == conversion.toUnitId)?.name ?? 'N/A'),
+                                            })}
                                             onApprove={() => deleteUnitConversion(conversion.id)}
                                           />,
                                         )
@@ -620,7 +623,8 @@ function WorkspaceSettingPage() {
                               ))}
                             <TableRow onClick={() => setCollapsedGeneratedUnits(!collapsedGeneratedUnits)}>
                               <TableCell colSpan={4} className="cursor-pointer italic">
-                                Automatisch generierte Umrechnungen <span className="underline">{!collapsedGeneratedUnits ? 'anzeigen' : 'verbergen'}</span>
+                                {t('settings:autoGeneratedConversions')}{' '}
+                                <span className="underline">{!collapsedGeneratedUnits ? t('common:show') : t('common:hide')}</span>
                               </TableCell>
                               <TableCell className="flex items-center justify-end">
                                 <div className="p-2">{collapsedGeneratedUnits ? <FaArrowUp /> : <FaArrowDown />}</div>
@@ -633,25 +637,23 @@ function WorkspaceSettingPage() {
                                 .sort((a, b) => a.fromUnitId.localeCompare(b.fromUnitId) || a.toUnitId.localeCompare(b.toUnitId))
                                 .map((conversion) => (
                                   <TableRow key={`unit-conversion-${conversion.id}`}>
-                                    <TableCell>
-                                      {userContext.getTranslation(units.find((unit) => unit.id == conversion.fromUnitId)?.name ?? 'N/A', 'de')}
-                                    </TableCell>
+                                    <TableCell>{userContext.getTranslation(units.find((unit) => unit.id == conversion.fromUnitId)?.name ?? 'N/A')}</TableCell>
                                     <TableCell className="text-right">
                                       {conversion.factor.toLocaleString(undefined, {
                                         minimumFractionDigits: 2,
                                         maximumFractionDigits: 2,
                                       })}
                                     </TableCell>
+                                    <TableCell>{userContext.getTranslation(units.find((unit) => unit.id == conversion.toUnitId)?.name ?? 'N/A')}</TableCell>
                                     <TableCell>
-                                      {userContext.getTranslation(units.find((unit) => unit.id == conversion.toUnitId)?.name ?? 'N/A', 'de')}
-                                    </TableCell>
-                                    <TableCell>
-                                      1 {userContext.getTranslation(units.find((unit) => unit.id == conversion.toUnitId)?.name ?? 'N/A', 'de')} ={' '}
-                                      {(1 / conversion.factor).toLocaleString(undefined, {
-                                        minimumFractionDigits: 2,
-                                        maximumFractionDigits: 2,
-                                      })}{' '}
-                                      {userContext.getTranslation(units.find((unit) => unit.id == conversion.fromUnitId)?.name ?? 'N/A', 'de')}
+                                      {t('settings:conversionEquals', {
+                                        to: userContext.getTranslation(units.find((unit) => unit.id == conversion.toUnitId)?.name ?? 'N/A'),
+                                        factor: (1 / conversion.factor).toLocaleString(undefined, {
+                                          minimumFractionDigits: 2,
+                                          maximumFractionDigits: 2,
+                                        }),
+                                        from: userContext.getTranslation(units.find((unit) => unit.id == conversion.fromUnitId)?.name ?? 'N/A'),
+                                      })}
                                     </TableCell>
                                     <TableCell></TableCell>
                                   </TableRow>
@@ -676,8 +678,8 @@ function WorkspaceSettingPage() {
         {userContext.isUserPermitted(Role.ADMIN) ? (
           <Card className="h-min">
             <CardBody>
-              <CardTitle>Eis</CardTitle>
-              <div>Hier lassen sich die unterschiedlichen Eiswürfeltypen anpassen. Beachte, dass das Löschen alle Verweise auf das Eis löscht.</div>
+              <CardTitle>{t('settings:ice')}</CardTitle>
+              <div>{t('settings:iceHelp')}</div>
               {iceOptionsLoading ? (
                 <div>
                   <Loading />
@@ -688,18 +690,18 @@ function WorkspaceSettingPage() {
                     <Table zebra className="grid-col-full w-full table-auto">
                       <TableHead>
                         <TableRow>
-                          <TableHeaderCell>Key</TableHeaderCell>
-                          <TableHeaderCell>Deutsch</TableHeaderCell>
+                          <TableHeaderCell>{t('settings:key')}</TableHeaderCell>
+                          <EntityTranslationHeaderCells />
                           <TableHeaderCell className="flex flex-row justify-end">
                             <Button
                               type="button"
                               variant="primary"
                               size="sm"
                               onClick={() => {
-                                modalContext.openModal(<CreateIceModal />);
+                                modalContext.openModal(<CreateIceModal onSaved={() => fetchIce(workspaceId, setIceOptions, setIceOptionsLoading)} />);
                               }}
                             >
-                              Hinzufügen
+                              {t('common:add')}
                             </Button>
                           </TableHeaderCell>
                         </TableRow>
@@ -707,13 +709,13 @@ function WorkspaceSettingPage() {
                       <TableBody>
                         {iceOptions.length == 0 ? (
                           <TableRow>
-                            <TableCell colSpan={3}>Keine Einträge vorhanden</TableCell>
+                            <TableCell colSpan={2 + ENTITY_TRANSLATION_COLUMN_COUNT}>{t('common:emptyEntriesPresent')}</TableCell>
                           </TableRow>
                         ) : (
                           iceOptions.map((iceOption, indexIceOption) => (
                             <TableRow key={`ice-option-${indexIceOption}`}>
                               <TableCell>{iceOption.name}</TableCell>
-                              <TableCell>{userContext.getTranslation(iceOption.name, 'de')}</TableCell>
+                              <EntityTranslationCells translationKey={iceOption.name} />
                               <TableCell className="flex flex-row justify-end gap-2">
                                 <Button
                                   type="button"
@@ -721,10 +723,10 @@ function WorkspaceSettingPage() {
                                   size="sm"
                                   className="border-primary text-primary hover:bg-primary/10"
                                   onClick={() => {
-                                    modalContext.openModal(<EditTranslationModal identifier={iceOption.name} slang={'Eis'} />);
+                                    modalContext.openModal(<EditTranslationModal identifier={iceOption.name} slang={t('settings:slang.ice')} />);
                                   }}
                                 >
-                                  Edit
+                                  {t('common:edit')}
                                 </Button>
                                 <Button
                                   type="button"
@@ -736,7 +738,7 @@ function WorkspaceSettingPage() {
                                     modalContext.openModal(
                                       <DeleteConfirmationModal
                                         spelling={'DELETE'}
-                                        entityName={userContext.getTranslation(iceOption.name, 'de')}
+                                        entityName={userContext.getTranslation(iceOption.name)}
                                         onApprove={() => deleteIce(iceOption.id)}
                                       />,
                                     )
@@ -766,24 +768,21 @@ function WorkspaceSettingPage() {
             <div className={'col-span-full'}></div>
             <Card>
               <CardBody>
-                <CardTitle>Statistik-Einstellungen</CardTitle>
+                <CardTitle>{t('settings:statistics')}</CardTitle>
                 <FormControl>
                   <Label>
-                    <LabelText className="font-semibold">Tagesstart-Uhrzeit</LabelText>
+                    <LabelText className="font-semibold">{t('settings:dayStartTime')}</LabelText>
                   </Label>
-                  <p className="mb-2 text-sm text-base-content/70">
-                    Definiert, wann ein &quot;Tag&quot; für Statistik-Zwecke beginnt. Nützlich für Bars, deren Arbeitstag nicht um Mitternacht beginnt (z.B.
-                    18:00 Uhr).
-                  </p>
+                  <p className="mb-2 text-sm text-base-content/70">{t('settings:dayStartHelp')}</p>
                   <ButtonGroup className="w-full">
                     <Input type="time" joinItem className="w-full" value={statisticDayStartTime} onChange={(e) => setStatisticDayStartTime(e.target.value)} />
                     <Button type="button" variant="primary" joinItem onClick={saveStatisticDayStartTime} disabled={statisticSettingsSaving}>
                       {statisticSettingsSaving ? <UiLoading size="sm" /> : null}
-                      Speichern
+                      {t('common:save')}
                     </Button>
                   </ButtonGroup>
                   <Label>
-                    <LabelTextAlt>Aktuell: Ein Tag beginnt um {statisticDayStartTime} Uhr</LabelTextAlt>
+                    <LabelTextAlt>{t('settings:dayStartCurrent', { time: statisticDayStartTime })}</LabelTextAlt>
                   </Label>
                 </FormControl>
               </CardBody>
@@ -796,17 +795,17 @@ function WorkspaceSettingPage() {
             <div className={'col-span-full'}></div>
             <Card>
               <CardBody>
-                <CardTitle>Daten Transfer</CardTitle>
+                <CardTitle>{t('settings:dataTransfer')}</CardTitle>
                 <FormControl>
                   <FileInput disabled={importing} ref={uploadImportFileRef} onChange={(event) => setUploadImportFile(event.target.files?.[0])} />
                 </FormControl>
                 <Button type="button" variant="primary" disabled={uploadImportFile == undefined || importing} onClick={importBackup}>
                   {importing ? <UiLoading size="sm" /> : null}
-                  Import
+                  {t('settings:import')}
                 </Button>
                 <Button type="button" variant="primary" onClick={exportAll} disabled={exporting}>
                   {exporting ? <UiLoading size="sm" /> : null}
-                  Export All
+                  {t('settings:exportAll')}
                 </Button>
               </CardBody>
             </Card>
@@ -818,12 +817,12 @@ function WorkspaceSettingPage() {
         {/*Workspace Dangerous Actions*/}
         {userContext.isUserPermitted(Role.ADMIN) ? (
           <div className={'col-span-full'}>
-            <Divider>Gefahrenbereich</Divider>
+            <Divider>{t('settings:dangerZone')}</Divider>
             <Card>
               <CardBody>
-                <CardTitle>Gefahrenbereich</CardTitle>
+                <CardTitle>{t('settings:dangerZone')}</CardTitle>
                 <Label className="cursor-pointer">
-                  <LabelText>Workspace umbenennen</LabelText>
+                  <LabelText>{t('settings:renameWorkspace')}</LabelText>
                 </Label>
                 <ButtonGroup className="w-full">
                   <Input type="text" joinItem className="w-full" value={newWorkspaceName} onChange={(event) => setNewWorkspaceName(event.target.value)} />
@@ -836,7 +835,7 @@ function WorkspaceSettingPage() {
                     onClick={handleRenameWorkspace}
                   >
                     {workspaceRenaming ? <UiLoading size="sm" /> : null}
-                    Umbenennen
+                    {t('settings:rename')}
                   </Button>
                 </ButtonGroup>
                 <Divider />
@@ -846,12 +845,12 @@ function WorkspaceSettingPage() {
                   className="border-error text-error hover:bg-error/10"
                   onClick={() =>
                     modalContext.openModal(
-                      <DeleteConfirmationModal onApprove={handleDeleteWorkspace} entityName={'diesen Arbeitsbereich'} spelling={'DELETE'} />,
+                      <DeleteConfirmationModal onApprove={handleDeleteWorkspace} entityName={t('settings:thisWorkspace')} spelling={'DELETE'} />,
                     )
                   }
                 >
                   {workspaceDeleting ? <UiLoading size="sm" /> : null}
-                  Workspace löschen
+                  {t('settings:deleteWorkspace')}
                 </Button>
               </CardBody>
             </Card>

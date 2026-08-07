@@ -1,4 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useRouter } from 'next/router';
 import { ManageEntityLayout } from '@components/layout/ManageEntityLayout';
 import { UserContext } from '@lib/context/UserContextProvider';
@@ -16,6 +17,7 @@ import { fetchApiKeysSafe, deleteApiKey } from '@lib/network/apiKeys';
 import { alertApiV1Error } from '@lib/network/apiV1';
 
 function ApiKeysPage() {
+  const { t } = useTranslation(['settings', 'common', 'manage', 'nav', 'entity', 'errors']);
   const router = useRouter();
   const { workspaceId } = router.query;
   const _userContext = useContext(UserContext);
@@ -51,10 +53,10 @@ function ApiKeysPage() {
           setDeleting(apiKey.id);
           try {
             await deleteApiKey(workspaceId, apiKey.id);
-            alertService.success('API Key erfolgreich gelöscht');
+            alertService.success(t('entity:apiKeyDeleted'));
             loadApiKeys();
           } catch (error) {
-            alertApiV1Error(error, 'Fehler beim Löschen des API Keys');
+            alertApiV1Error(error, t('errors:deleteApiKey'));
           } finally {
             setDeleting(null);
           }
@@ -65,7 +67,7 @@ function ApiKeysPage() {
   };
 
   const formatDate = (dateString: string | null) => {
-    if (!dateString) return 'Nie';
+    if (!dateString) return t('common:never');
     try {
       return formatDateUtil(new Date(dateString));
     } catch {
@@ -80,7 +82,7 @@ function ApiKeysPage() {
 
   if (loading) {
     return (
-      <ManageEntityLayout backLink={`/workspaces/${workspaceId}/manage`} title="API Keys">
+      <ManageEntityLayout backLink={`/workspaces/${workspaceId}/manage`} title={t('nav:apiKeys')}>
         <Loading />
       </ManageEntityLayout>
     );
@@ -89,29 +91,26 @@ function ApiKeysPage() {
   return (
     <ManageEntityLayout
       backLink={`/workspaces/${workspaceId}/manage`}
-      title="API Keys"
+      title={t('nav:apiKeys')}
       actions={[
         <Button key="create" type="button" variant="primary" onClick={handleCreate}>
           <FaPlus />
-          API Key erstellen
+          {t('settings:apiKeysCreate')}
         </Button>,
       ]}
     >
       <div className="flex flex-col gap-4">
         <Card>
           <CardBody>
-            <div className="text-lg font-bold">API Keys verwalten</div>
-            <div className="text-sm text-base-content/70">
-              Erstellen Sie API Keys, um externen Diensten kontrollierten Zugriff auf Ihr Workspace zu gewähren. Jeder Key kann spezifische Berechtigungen
-              haben.
-            </div>
+            <div className="text-lg font-bold">{t('settings:apiKeysManage')}</div>
+            <div className="text-sm text-base-content/70">{t('settings:apiKeysHelpLong')}</div>
 
             {apiKeys.length === 0 ? (
               <div className="mt-4 text-center">
-                <div className="text-lg">Keine API Keys vorhanden</div>
+                <div className="text-lg">{t('settings:apiKeysEmpty')}</div>
                 <Button type="button" variant="outline" className="mt-4 border-primary text-primary hover:bg-primary/10" onClick={handleCreate}>
                   <FaPlus />
-                  Ersten API Key erstellen
+                  {t('settings:apiKeysCreateFirst')}
                 </Button>
               </div>
             ) : (
@@ -119,13 +118,13 @@ function ApiKeysPage() {
                 <Table zebra className="w-full">
                   <TableHead>
                     <TableRow>
-                      <TableHeaderCell>Name</TableHeaderCell>
-                      <TableHeaderCell>Erstellt am</TableHeaderCell>
-                      <TableHeaderCell>Ablaufdatum</TableHeaderCell>
-                      <TableHeaderCell>Zuletzt verwendet</TableHeaderCell>
-                      <TableHeaderCell>Erstellt von</TableHeaderCell>
-                      <TableHeaderCell>Berechtigungen</TableHeaderCell>
-                      <TableHeaderCell>Aktionen</TableHeaderCell>
+                      <TableHeaderCell>{t('common:name')}</TableHeaderCell>
+                      <TableHeaderCell>{t('settings:createdOn')}</TableHeaderCell>
+                      <TableHeaderCell>{t('manage:expiresAt')}</TableHeaderCell>
+                      <TableHeaderCell>{t('settings:lastUsed')}</TableHeaderCell>
+                      <TableHeaderCell>{t('settings:createdBy')}</TableHeaderCell>
+                      <TableHeaderCell>{t('settings:permissions')}</TableHeaderCell>
+                      <TableHeaderCell>{t('common:actions')}</TableHeaderCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -142,11 +141,13 @@ function ApiKeysPage() {
                             {apiKey.expiresAt ? (
                               <span className={expired ? 'text-error' : ''}>{formatDate(apiKey.expiresAt)}</span>
                             ) : (
-                              <span className="text-base-content/60">Nie</span>
+                              <span className="text-base-content/60">{t('common:never')}</span>
                             )}
                           </TableCell>
                           <TableCell className={expired ? 'opacity-50' : ''}>{formatDate(apiKey.lastUsedAt)}</TableCell>
-                          <TableCell className={expired ? 'opacity-50' : ''}>{apiKey.createdBy.name || apiKey.createdBy.email || 'Unbekannt'}</TableCell>
+                          <TableCell className={expired ? 'opacity-50' : ''}>
+                            {apiKey.createdBy.name || apiKey.createdBy.email || t('common:unknown')}
+                          </TableCell>
                           <TableCell className={expired ? 'opacity-50' : ''}>
                             {apiKey.permissions.length > 0 ? (
                               <Badge
@@ -165,11 +166,11 @@ function ApiKeysPage() {
                                   );
                                 }}
                               >
-                                {apiKey.permissions.length} Berechtigung{apiKey.permissions.length !== 1 ? 'en' : ''}
+                                {t('manage:permission', { count: apiKey.permissions.length })}
                               </Badge>
                             ) : (
                               <Badge variant="primary" size="sm">
-                                {apiKey.permissions.length} Berechtigung{apiKey.permissions.length !== 1 ? 'en' : ''}
+                                {t('manage:permission', { count: apiKey.permissions.length })}
                               </Badge>
                             )}
                           </TableCell>

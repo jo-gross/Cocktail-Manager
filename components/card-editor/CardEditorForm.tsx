@@ -15,6 +15,7 @@ import type { CardDto } from '@lib/schemas/cards';
 import type { CocktailSummaryDto } from '@lib/schemas/cocktails';
 import { alertApiV1Error, apiV1Mutate } from '@lib/network/apiV1';
 import { Button, Divider, FormControl, Input, Label, LabelText, LabelTextAlt } from '@components/ui';
+import { useTranslation } from 'react-i18next';
 import { CardEditorToolbar } from './CardEditorToolbar';
 import { CardGroupSection } from './CardGroupSection';
 import {
@@ -44,17 +45,17 @@ interface CocktailCardGroupError {
  * The adapter maps issue paths (e.g. `groups[0].name`) onto Formik's nested error
  * object, so the field-level messages line up with the JSX exactly as before.
  */
-const cardFormSchema = z.object({
-  name: z.string().refine((v) => v.trim() != '', { message: 'Required' }),
-  date: z.string().optional(),
-  groups: z.array(
-    z.object({
-      name: z.string().refine((v) => v.trim() != '', { message: 'Required' }),
-    }),
-  ),
-});
-
-const validateCard = zodFormikValidate(cardFormSchema);
+function createCardFormSchema(requiredMessage: string) {
+  return z.object({
+    name: z.string().refine((v) => v.trim() != '', { message: requiredMessage }),
+    date: z.string().optional(),
+    groups: z.array(
+      z.object({
+        name: z.string().refine((v) => v.trim() != '', { message: requiredMessage }),
+      }),
+    ),
+  });
+}
 
 function mapCardToFormValues(card?: CardDto): CardEditorFormValues {
   return {
@@ -86,6 +87,7 @@ interface CardEditorFormProps {
 }
 
 export function CardEditorForm({ card, cocktails, loadingCocktails, workspaceId, onUnsavedChangesChange }: CardEditorFormProps) {
+  const { t } = useTranslation(['manage', 'common', 'entity', 'errors']);
   const modalContext = useContext(ModalContext);
   const routingContext = useContext(RoutingContext);
   const [viewMode, setViewMode] = useState<CardEditorViewMode>('names');
@@ -134,7 +136,7 @@ export function CardEditorForm({ card, cocktails, loadingCocktails, workspaceId,
       validate={(values) => {
         onUnsavedChangesChange(!_.isEqual(values, mapCardToFormValues(card)));
 
-        return validateCard(values);
+        return zodFormikValidate(createCardFormSchema(t('errors:requiredField')))(values);
       }}
       onSubmit={async (values) => {
         try {
@@ -155,15 +157,15 @@ export function CardEditorForm({ card, cocktails, loadingCocktails, workspaceId,
 
           if (card == undefined) {
             await apiV1Mutate<CardDto>(`/api/v1/workspaces/${workspaceId}/cards`, 'POST', input);
-            alertService.success('Karte erfolgreich erstellt');
+            alertService.success(t('entity:cardCreated'));
             await routingContext.conditionalBack(`/workspaces/${workspaceId}/manage/cards`);
           } else {
             await apiV1Mutate<CardDto>(`/api/v1/workspaces/${workspaceId}/cards/${card.id}`, 'PUT', input);
-            alertService.success('Karte erfolgreich gespeichert');
+            alertService.success(t('entity:cardSaved'));
             await routingContext.conditionalBack(`/workspaces/${workspaceId}/manage/cards`);
           }
         } catch (error) {
-          alertApiV1Error(error, card == undefined ? 'Fehler beim Erstellen der Karte' : 'Fehler beim Speichern der Karte');
+          alertApiV1Error(error, card == undefined ? t('errors:createCard') : t('errors:saveCard'));
         }
       }}
     >
@@ -222,7 +224,7 @@ export function CardEditorForm({ card, cocktails, loadingCocktails, workspaceId,
                   <div className="flex flex-col gap-2 md:flex-row">
                     <FormControl>
                       <Label className="flex-row items-center justify-between">
-                        <LabelText>Karte</LabelText>
+                        <LabelText>{t('manage:card')}</LabelText>
                         <LabelTextAlt className="text-error">
                           <span>{errors.name && touched.name ? errors.name : ''}</span>
                           <span>*</span>
@@ -240,7 +242,7 @@ export function CardEditorForm({ card, cocktails, loadingCocktails, workspaceId,
                     </FormControl>
                     <FormControl>
                       <Label className="flex-row items-center justify-between">
-                        <LabelText>Datum</LabelText>
+                        <LabelText>{t('common:date')}</LabelText>
                       </Label>
                       <Input type="date" disabled={card?.archived} name="date" onChange={handleChange} onBlur={handleBlur} value={values.date} />
                     </FormControl>
@@ -287,7 +289,7 @@ export function CardEditorForm({ card, cocktails, loadingCocktails, workspaceId,
                                 modalContext.openModal(
                                   <DeleteConfirmationModal
                                     spelling={'REMOVE'}
-                                    entityName={`die Gruppe${group.name ? ` '${group.name}'` : ''}`}
+                                    entityName={group.name ? t('entity:theGroupNamed', { name: group.name }) : t('entity:theGroup')}
                                     onApprove={async () => removeGroup(groupIndex)}
                                   />,
                                 )
@@ -316,6 +318,7 @@ interface CardEditorArchiveActionsProps {
 }
 
 export function CardEditorArchiveActions({ card, workspaceId }: CardEditorArchiveActionsProps) {
+  const { t } = useTranslation(['manage', 'common', 'entity', 'errors']);
   const modalContext = useContext(ModalContext);
   const routingContext = useContext(RoutingContext);
   const router = useRouter();
@@ -332,13 +335,13 @@ export function CardEditorArchiveActions({ card, workspaceId }: CardEditorArchiv
             try {
               await apiV1Mutate<CardDto>(`/api/v1/workspaces/${workspaceId}/cards/${card.id}/${card.archived ? 'unarchive' : 'archive'}`, 'PUT');
               await router.replace(`/workspaces/${workspaceId}/manage/cards`);
-              alertService.success(`Karte ${card.archived ? 'entarchiviert' : 'archiviert'}`);
+              alertService.success(card.archived ? t('entity:cardUnarchiveSuccess') : t('entity:cardArchiveSuccess'));
             } catch (error) {
-              alertApiV1Error(error, `Fehler beim ${card.archived ? 'Entarchivieren' : 'Archivieren'} der Karte`);
+              alertApiV1Error(error, card.archived ? t('errors:unarchiveCard') : t('errors:archiveCard'));
             }
           }}
         >
-          {card.archived ? 'Karte entarchivieren' : 'Karte archivieren'}
+          {card.archived ? t('unarchiveCard') : t('archiveCard')}
         </Button>
         <Button
           type="button"
@@ -348,14 +351,14 @@ export function CardEditorArchiveActions({ card, workspaceId }: CardEditorArchiv
             modalContext.openModal(
               <DeleteConfirmationModal
                 spelling={'DELETE'}
-                entityName={`die Karte '${card.name}'`}
+                entityName={t('entity:theCard', { name: card.name })}
                 onApprove={async () => {
                   try {
                     await apiV1Mutate(`/api/v1/workspaces/${workspaceId}/cards/${card.id}`, 'DELETE');
-                    alertService.success('Karte gelöscht');
+                    alertService.success(t('entity:cardDeleted'));
                     await routingContext.conditionalBack(`/workspaces/${workspaceId}/manage/cards`);
                   } catch (error) {
-                    alertApiV1Error(error, 'Fehler beim Löschen der Karte');
+                    alertApiV1Error(error, t('errors:deleteCard'));
                   }
                 }}
               />,
@@ -363,7 +366,7 @@ export function CardEditorArchiveActions({ card, workspaceId }: CardEditorArchiv
           }
         >
           <FaTrashAlt />
-          Karte löschen
+          {t('deleteCard')}
         </Button>
       </div>
     </>

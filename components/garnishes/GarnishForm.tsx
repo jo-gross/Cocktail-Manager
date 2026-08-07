@@ -1,6 +1,7 @@
 import { Formik, FormikProps } from 'formik';
 import { useRouter } from 'next/router';
 import React, { useContext, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { UploadDropZone } from '../UploadDropZone';
 import { convertBase64ToFile, convertToBase64, fetchImageAsBase64 } from '@lib/Base64Converter';
 import { FaTrashAlt } from 'react-icons/fa';
@@ -29,21 +30,21 @@ export interface GarnishFormValues {
   originalImage: File | undefined;
 }
 
-const garnishFormSchema = z
-  .object({
-    name: z.string().min(1, 'Required'),
-    price: z.union([z.coerce.number(), z.literal(''), z.undefined()]).optional(),
-    description: z.string().optional(),
-    notes: z.string().optional(),
-    image: z.string().optional(),
-    originalImage: z.instanceof(File).optional(),
-  })
-  .refine((values) => !(values.originalImage != undefined && values.image == undefined), {
-    message: 'Bild ausgewählt aber nicht zugeschnitten',
-    path: ['image'],
-  });
-
-const validateGarnish = zodFormikValidate(garnishFormSchema);
+function createGarnishFormSchema(requiredMessage: string, imageNotCroppedMessage: string) {
+  return z
+    .object({
+      name: z.string().min(1, requiredMessage),
+      price: z.union([z.coerce.number(), z.literal(''), z.undefined()]).optional(),
+      description: z.string().optional(),
+      notes: z.string().optional(),
+      image: z.string().optional(),
+      originalImage: z.instanceof(File).optional(),
+    })
+    .refine((values) => !(values.originalImage != undefined && values.image == undefined), {
+      message: imageNotCroppedMessage,
+      path: ['image'],
+    });
+}
 
 interface GarnishFormProps {
   garnish?: GarnishDto;
@@ -55,6 +56,7 @@ interface GarnishFormProps {
 const fieldErrorClass = 'border-error focus:border-error focus:ring-error/25';
 
 export function GarnishForm(props: GarnishFormProps) {
+  const { t } = useTranslation(['manage', 'common', 'entity', 'errors']);
   const router = useRouter();
   const { workspaceId } = router.query;
   const modalContext = useContext(ModalContext);
@@ -128,7 +130,7 @@ export function GarnishForm(props: GarnishFormProps) {
             if (props.onSaved != undefined) {
               props.onSaved(created.id);
             } else {
-              alertService.success('Garnitur erfolgreich erstellt');
+              alertService.success(t('manage:garnishForm.success.created'));
               await routingContext.conditionalBack(`/workspaces/${workspaceId}/manage/garnishes`);
             }
           } else {
@@ -136,12 +138,12 @@ export function GarnishForm(props: GarnishFormProps) {
             if (props.onSaved != undefined) {
               props.onSaved(props.garnish.id);
             } else {
-              alertService.success('Garnitur erfolgreich gespeichert');
+              alertService.success(t('manage:garnishForm.success.saved'));
               await routingContext.conditionalBack(`/workspaces/${workspaceId}/manage/garnishes`);
             }
           }
         } catch (error) {
-          alertApiV1Error(error, props.garnish == undefined ? 'Fehler beim Erstellen der Garnitur' : 'Fehler beim Speichern der Garnitur');
+          alertApiV1Error(error, props.garnish == undefined ? t('manage:garnishForm.error.create') : t('manage:garnishForm.error.save'));
         }
       }}
       validate={(values) => {
@@ -159,7 +161,7 @@ export function GarnishForm(props: GarnishFormProps) {
           props.setUnsavedChanges?.(true);
         }
 
-        return validateGarnish(values);
+        return zodFormikValidate(createGarnishFormSchema(t('errors:requiredField'), t('common:imageNotCropped')))(values);
       }}
     >
       {({ values, errors, handleChange, handleBlur, handleSubmit, isSubmitting, isValid, setFieldValue }) => (
@@ -167,7 +169,7 @@ export function GarnishForm(props: GarnishFormProps) {
           <div className={'col-span-full flex flex-row flex-wrap gap-2'}>
             <FormControl className={'flex-1'}>
               <Label htmlFor={'name'} className="flex-row items-center justify-between">
-                <LabelText>Name</LabelText>
+                <LabelText>{t('common:name')}</LabelText>
                 <LabelTextAlt className={'space-x-2 text-error'}>
                   <span>
                     <>{errors.name && errors.name}</>
@@ -179,7 +181,7 @@ export function GarnishForm(props: GarnishFormProps) {
                 id={'name'}
                 type={'text'}
                 autoComplete={'off'}
-                placeholder={'Name'}
+                placeholder={t('common:name')}
                 className={errors.name ? fieldErrorClass : undefined}
                 onChange={(event) => {
                   if (event.target.value.length > 2 && workspaceId) {
@@ -203,16 +205,14 @@ export function GarnishForm(props: GarnishFormProps) {
               />
               {similarGarnish && (
                 <Label className="flex-row">
-                  <LabelTextAlt className="text-warning">
-                    Eine ähnliche Garnitur mit dem Namen <strong>{similarGarnish.name}</strong> existiert bereits.
-                  </LabelTextAlt>
+                  <LabelTextAlt className="text-warning">{t('manage:garnishForm.similarExists', { name: similarGarnish.name })}</LabelTextAlt>
                 </Label>
               )}
             </FormControl>
 
             <FormControl>
               <Label htmlFor={'price'} className="flex-row items-center justify-between">
-                <LabelText>Preis</LabelText>
+                <LabelText>{t('common:price')}</LabelText>
                 <LabelTextAlt className={'space-x-2 text-error'}>
                   <>{errors.price && errors.price}</>
                 </LabelTextAlt>
@@ -221,7 +221,7 @@ export function GarnishForm(props: GarnishFormProps) {
                 <Input
                   id={'price'}
                   type={'number'}
-                  placeholder={'Preis'}
+                  placeholder={t('common:price')}
                   className={errors.price ? fieldErrorClass : undefined}
                   joinItem
                   value={values.price}
@@ -238,7 +238,7 @@ export function GarnishForm(props: GarnishFormProps) {
           <div className={''}>
             <div className="flex items-center gap-3 py-2">
               <Divider className="my-0 flex-1" />
-              <span className="shrink-0 text-sm font-medium text-base-content/70">Vorschau Bild</span>
+              <span className="shrink-0 text-sm font-medium text-base-content/70">{t('common:imagePreview')}</span>
               <Divider className="my-0 flex-1" />
             </div>
             {values.image == undefined && values.originalImage == undefined ? (
@@ -248,7 +248,7 @@ export function GarnishForm(props: GarnishFormProps) {
                     await setFieldValue('originalImage', file);
                     await setFieldValue('image', undefined);
                   } else {
-                    alertService.error('Datei konnte nicht ausgewählt werden.');
+                    alertService.error(t('common:fileSelectError'));
                   }
                 }}
               />
@@ -263,7 +263,7 @@ export function GarnishForm(props: GarnishFormProps) {
                       if (compressedImageFile) {
                         await setFieldValue('image', await convertToBase64(new File([compressedImageFile], 'image.png', { type: 'image/png' })));
                       } else {
-                        alertService.error('Bild konnte nicht skaliert werden.');
+                        alertService.error(t('common:imageScaleError'));
                       }
                     });
                   }}
@@ -297,7 +297,7 @@ export function GarnishForm(props: GarnishFormProps) {
                       modalContext.openModal(
                         <DeleteConfirmationModal
                           spelling={'REMOVE'}
-                          entityName={'das Bild'}
+                          entityName={t('entity:theImage')}
                           onApprove={async () => {
                             await setFieldValue('originalImage', undefined);
                             await setFieldValue('image', undefined);
@@ -310,12 +310,9 @@ export function GarnishForm(props: GarnishFormProps) {
                   </Button>
                 </div>
                 <div className={'bg-transparent-pattern relative h-32 w-32 rounded-lg'}>
-                  <Image className={'w-fit rounded-lg'} src={values.image ?? ''} layout={'fill'} objectFit={'contain'} alt={'Garnish image'} />
+                  <Image className={'w-fit rounded-lg'} src={values.image ?? ''} layout={'fill'} objectFit={'contain'} alt={t('common:garnishImageAlt')} />
                 </div>
-                <div className={'pt-2 font-thin italic'}>
-                  Info: Durch Speichern der Garnitur wird das Bild dauerhaft zugeschnitten. Das Original wird nicht gespeichert. Falls du später einen anderen
-                  Bereich des Bildes auswählen möchtest, musst du das Bild erneut hochladen.
-                </div>
+                <div className={'pt-2 font-thin italic'}>{t('manage:garnishForm.imageCropInfo')}</div>
               </div>
             )}
           </div>
@@ -323,7 +320,7 @@ export function GarnishForm(props: GarnishFormProps) {
           <div className={'flex flex-col gap-2'}>
             <FormControl>
               <Label htmlFor={'notes'} className="flex-row items-center justify-between">
-                <LabelText>Notizen</LabelText>
+                <LabelText>{t('common:notes')}</LabelText>
                 <LabelTextAlt className={'space-x-2 text-error'}>
                   <span>
                     <>{errors.notes && errors.notes}</>
@@ -337,14 +334,14 @@ export function GarnishForm(props: GarnishFormProps) {
                 onChange={handleChange}
                 onBlur={handleBlur}
                 name={'notes'}
-                placeholder={'Lagerort, Lieferant, etc.'}
+                placeholder={t('manage:garnishForm.notesPlaceholder')}
                 rows={5}
               />
             </FormControl>
 
             <FormControl>
               <Label htmlFor={'description'} className="flex-row items-center justify-between">
-                <LabelText>Allgemeine Beschreibung</LabelText>
+                <LabelText>{t('manage:garnishForm.description')}</LabelText>
                 <LabelTextAlt className={'space-x-2 text-error'}>
                   <span>
                     <>{errors.description && errors.description}</>
@@ -358,7 +355,7 @@ export function GarnishForm(props: GarnishFormProps) {
                 onChange={handleChange}
                 onBlur={handleBlur}
                 name={'description'}
-                placeholder={'Das Öl der Zeste hilft, den Geschmack des Cocktails zu intensivieren, ...'}
+                placeholder={t('manage:garnishForm.descriptionPlaceholder')}
                 rows={5}
               />
             </FormControl>
@@ -366,14 +363,10 @@ export function GarnishForm(props: GarnishFormProps) {
               <FormControl>
                 <Button disabled={isSubmitting || !isValid} type={'submit'} variant="primary" wide>
                   {isSubmitting ? <Loading size="sm" /> : null}
-                  Speichern
+                  {t('common:save')}
                 </Button>
               </FormControl>
-              {!isValid && (
-                <div className={'font-thin text-error italic'}>
-                  Nicht alle Felder sind korrekt ausgefüllt. Kontrolliere daher alle Felder. (Name gesetzt, Bild zugeschnitten, ... ?)
-                </div>
-              )}
+              {!isValid && <div className={'font-thin text-error italic'}>{t('common:formIncomplete')}</div>}
             </div>
           </div>
         </form>

@@ -1,5 +1,6 @@
 import type { CocktailDto } from '@lib/schemas/cocktails';
 import React, { forwardRef, useCallback, useContext, useEffect, useImperativeHandle, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { CompactCocktailRecipeInstruction } from './CompactCocktailRecipeInstruction';
 import { ShowCocktailInfoButton } from './ShowCocktailInfoButton';
 import { useRouter } from 'next/router';
@@ -36,6 +37,7 @@ export type CocktailRecipeOverviewItemProps = {
 };
 
 const CocktailRecipeCardItem = forwardRef<CocktailRecipeOverviewItemRef, CocktailRecipeOverviewItemProps>((props, ref) => {
+  const { t } = useTranslation(['cocktail']);
   const router = useRouter();
   const workspaceId = router.query.workspaceId as string;
 
@@ -125,7 +127,7 @@ const CocktailRecipeCardItem = forwardRef<CocktailRecipeOverviewItemRef, Cocktai
                 {props.showNotes && cocktailRecipe.notes && (
                   <>
                     <div className={'border-b border-base-100'}></div>
-                    <div className={'font-bold'}>Zubereitungsnotizen</div>
+                    <div className={'font-bold'}>{t('cocktail:prepNotes')}</div>
                     <div className={'pl-2'}>
                       <ExpandableText
                         text={cocktailRecipe.notes}
@@ -141,7 +143,7 @@ const CocktailRecipeCardItem = forwardRef<CocktailRecipeOverviewItemRef, Cocktai
                 {props.showDescription && cocktailRecipe.description && (
                   <>
                     <div className={'border-b border-base-100'}></div>
-                    <div className={'font-bold'}>Allgemeine Beschreibung</div>
+                    <div className={'font-bold'}>{t('cocktail:description')}</div>
                     <div className={'pl-2'}>
                       <ExpandableText
                         text={cocktailRecipe.description}
@@ -157,7 +159,7 @@ const CocktailRecipeCardItem = forwardRef<CocktailRecipeOverviewItemRef, Cocktai
                 {props.showHistory && cocktailRecipe.history && (
                   <>
                     <div className={'border-b border-base-100'}></div>
-                    <div className={'font-bold'}>Geschichte und Entstehung</div>
+                    <div className={'font-bold'}>{t('cocktail:history')}</div>
                     <div className={'pl-2'}>
                       <ExpandableText
                         text={cocktailRecipe.history}
@@ -205,7 +207,7 @@ const CocktailRecipeCardItem = forwardRef<CocktailRecipeOverviewItemRef, Cocktai
         ) : (
           <div className={'flex h-full min-h-40 w-full flex-col items-center justify-center gap-2'}>
             <FaExclamationTriangle />
-            <div>Fehler beim Laden des Cocktails</div>
+            <div>{t('cocktail:error.loadOne')}</div>
           </div>
         )}
       </Card>

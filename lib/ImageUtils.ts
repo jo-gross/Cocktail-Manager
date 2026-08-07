@@ -1,11 +1,13 @@
+import { i18n } from '@lib/i18n/client';
+
 /**
- * Automatisch ein Bild in ein gewünschtes Aspect-Ratio einbetten.
- * Das gesamte Bild bleibt sichtbar, transparente Ränder werden hinzugefügt, um das Aspect-Ratio zu erreichen.
+ * Automatically embed an image into a target aspect ratio.
+ * The full image stays visible; transparent padding is added to reach the aspect ratio.
  *
- * @param file - Das Bild-File, das eingebettet werden soll
- * @param aspect - Das gewünschte Aspect-Ratio (z.B. 1 für quadratisch, 9/16 für Portrait)
- * @param backgroundColor - Optional: Hintergrundfarbe ('transparent' oder Hex-Farbe wie '#ffffff')
- * @returns Promise mit dem eingebetteten Bild als File
+ * @param file - Image file to embed
+ * @param aspect - Target aspect ratio (e.g. 1 for square, 9/16 for portrait)
+ * @param backgroundColor - Optional background ('transparent' or hex like '#ffffff')
+ * @returns Promise with the embedded image as a File
  */
 export async function autoCropImage(file: File, aspect: number = 1, backgroundColor: string = 'transparent'): Promise<File> {
   return new Promise((resolve, reject) => {
@@ -19,7 +21,7 @@ export async function autoCropImage(file: File, aspect: number = 1, backgroundCo
       const imgHeight = img.naturalHeight;
 
       if (imgWidth === 0 || imgHeight === 0) {
-        reject(new Error('Bild hat keine gültigen Dimensionen'));
+        reject(new Error(i18n.t('errors:invalidImageDimensions')));
         return;
       }
 
@@ -75,7 +77,7 @@ export async function autoCropImage(file: File, aspect: number = 1, backgroundCo
       const ctx = canvas.getContext('2d', { alpha: true });
 
       if (!ctx) {
-        reject(new Error('Canvas-Kontext konnte nicht erstellt werden'));
+        reject(new Error(i18n.t('errors:canvasContextFailed')));
         return;
       }
 
@@ -93,7 +95,7 @@ export async function autoCropImage(file: File, aspect: number = 1, backgroundCo
       canvas.toBlob(
         (blob) => {
           if (!blob) {
-            reject(new Error('Canvas konnte nicht zu Blob konvertiert werden'));
+            reject(new Error(i18n.t('errors:canvasBlobFailed')));
             return;
           }
           resolve(new File([blob], 'image.png', { type: 'image/png' }));
@@ -105,7 +107,7 @@ export async function autoCropImage(file: File, aspect: number = 1, backgroundCo
 
     img.onerror = () => {
       URL.revokeObjectURL(objectUrl);
-      reject(new Error('Fehler beim Laden des Bildes'));
+      reject(new Error(i18n.t('errors:loadImage')));
     };
 
     img.src = objectUrl;

@@ -1,8 +1,10 @@
 import React, { useContext, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import '@lib/StringUtils';
 import { FaInfoCircle } from 'react-icons/fa';
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import CocktailOrderTimesModal from '@components/modals/CocktailOrderTimesModal';
+import { toIntlLocale } from '@lib/i18n/format';
 import { Button, Table, TableBody, TableCell, TableHead, TableHeaderCell, TableRow } from '@components/ui';
 
 interface AnalysisCocktailDetail {
@@ -39,6 +41,8 @@ export function AnalysisCocktailTable({
   startDate,
   endDate,
 }: AnalysisCocktailTableProps) {
+  const { t, i18n } = useTranslation('statistics');
+  const intlLocale = toIntlLocale(i18n.language);
   const [sortBy, setSortBy] = useState<'name' | 'total' | 'rank' | 'revenue' | 'revenuePercentage' | 'delta'>('total');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const modalContext = useContext(ModalContext);
@@ -93,37 +97,37 @@ export function AnalysisCocktailTable({
       <Table compact>
         <TableHead>
           <TableRow>
-            <TableHeaderCell>Farbe</TableHeaderCell>
+            <TableHeaderCell>{t('color')}</TableHeaderCell>
             <TableHeaderCell>
               <Button type="button" variant="ghost" size="xs" onClick={() => handleSort('name')}>
-                Cocktail {getSortIcon('name')}
+                {t('cocktail')} {getSortIcon('name')}
               </Button>
             </TableHeaderCell>
             <TableHeaderCell>
               <div className="flex items-center gap-1">
                 <Button type="button" variant="ghost" size="xs" onClick={() => handleSort('total')}>
-                  Bestellungen {getSortIcon('total')}
+                  {t('orders')} {getSortIcon('total')}
                 </Button>
               </div>
             </TableHeaderCell>
             <TableHeaderCell>
               <Button type="button" variant="ghost" size="xs" onClick={() => handleSort('rank')}>
-                Rang {getSortIcon('rank')}
+                {t('rank')} {getSortIcon('rank')}
               </Button>
             </TableHeaderCell>
             <TableHeaderCell>
               <Button type="button" variant="ghost" size="xs" onClick={() => handleSort('revenue')}>
-                Umsatz {getSortIcon('revenue')}
+                {t('revenue')} {getSortIcon('revenue')}
               </Button>
             </TableHeaderCell>
             <TableHeaderCell>
               <Button type="button" variant="ghost" size="xs" onClick={() => handleSort('revenuePercentage')}>
-                Anteil {getSortIcon('revenuePercentage')}
+                {t('share')} {getSortIcon('revenuePercentage')}
               </Button>
             </TableHeaderCell>
             <TableHeaderCell>
               <Button type="button" variant="ghost" size="xs" onClick={() => handleSort('delta')}>
-                Delta {getSortIcon('delta')}
+                {t('delta')} {getSortIcon('delta')}
               </Button>
             </TableHeaderCell>
           </TableRow>
@@ -157,7 +161,7 @@ export function AnalysisCocktailTable({
                       {previousTotal !== undefined && previousTotal !== null && (
                         <span className="ml-1 text-xs text-base-content/70">
                           ({totalDifference > 0 ? '+' : ''}
-                          {totalDifference.toLocaleString('de-DE')})
+                          {totalDifference.toLocaleString(intlLocale)})
                         </span>
                       )}
                     </span>
@@ -179,7 +183,7 @@ export function AnalysisCocktailTable({
                             true,
                           );
                         }}
-                        title="Bestellzeitpunkte anzeigen"
+                        title={t('showOrderTimes')}
                       >
                         <FaInfoCircle />
                       </Button>
@@ -188,11 +192,11 @@ export function AnalysisCocktailTable({
                 </TableCell>
                 <TableCell>{detail.rank ? `#${detail.rank}` : '-'}</TableCell>
                 <TableCell>
-                  {revenue > 0 ? revenue.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' }) : '-'}
+                  {revenue > 0 ? revenue.toLocaleString(intlLocale, { style: 'currency', currency: 'EUR' }) : '-'}
                   {previousRevenue !== undefined && previousRevenue !== null && previousRevenue !== 0 && (
                     <span className="ml-1 text-xs text-base-content/70">
                       ({revenueDifference > 0 ? '+' : ''}
-                      {revenueDifference.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })})
+                      {revenueDifference.toLocaleString(intlLocale, { style: 'currency', currency: 'EUR' })})
                     </span>
                   )}
                 </TableCell>
@@ -200,8 +204,10 @@ export function AnalysisCocktailTable({
                   {revenuePercentage > 0 ? revenuePercentage.toFixed(1) + '%' : '-'}
                   {previousTotalRevenue > 0 && previousRevenue !== undefined && previousRevenue !== null && (
                     <span className="ml-1 text-xs text-base-content/70">
-                      ({revenuePercentageDifference > 0 ? '+' : ''}
-                      {revenuePercentageDifference.toFixed(1)} PP)
+                      {t('ppDiff', {
+                        sign: revenuePercentageDifference > 0 ? '+' : '',
+                        value: revenuePercentageDifference.toFixed(1),
+                      })}
                     </span>
                   )}
                 </TableCell>

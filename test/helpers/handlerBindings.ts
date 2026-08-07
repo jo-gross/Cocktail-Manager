@@ -27,6 +27,7 @@ import * as statisticsAdvanced from '@lib/api/v1/statisticsAdvanced';
 import * as tags from '@lib/api/v1/tags';
 import * as translations from '@lib/api/v1/translations';
 import * as units from '@lib/api/v1/units';
+import * as userSettings from '@lib/api/v1/userSettings';
 import * as workspace from '@lib/api/v1/workspace';
 import * as workspaceUsers from '@lib/api/v1/workspaceUsers';
 
@@ -114,6 +115,7 @@ import {
 import { tagsCollectionApiDoc } from '@lib/schemas/tags';
 import { translationsApiDoc, translationsCollectionApiDoc } from '@lib/schemas/translations';
 import { unitConversionsCollectionApiDoc, unitConversionsItemApiDoc, unitsCollectionApiDoc, unitsItemApiDoc } from '@lib/schemas/units';
+import { userSettingsApiDoc } from '@lib/schemas/userSettings';
 import { workspaceItemApiDoc, workspaceSettingsApiDoc } from '@lib/schemas/workspace';
 import { workspaceUsersCollectionApiDoc, workspaceUsersItemApiDoc } from '@lib/schemas/workspaceUsers';
 
@@ -184,6 +186,7 @@ export const handlerBindings: HandlerBinding[] = [
   { apiDoc: joinRequestsRejectApiDoc, handler: joinRequests.rejectHandler },
   { apiDoc: leaveApiDoc, handler: leave.leaveHandler },
   { apiDoc: meApiDoc, handler: me.meHandler },
+  { apiDoc: userSettingsApiDoc, handler: userSettings.userSettingsHandler },
   { apiDoc: queueCollectionApiDoc, handler: queue.collectionHandler },
   { apiDoc: queueAddApiDoc, handler: queue.addHandler },
   { apiDoc: queueRemoveApiDoc, handler: queue.removeHandler },

@@ -1,5 +1,6 @@
 import { Formik } from 'formik';
 import React, { useContext } from 'react';
+import { useTranslation } from 'react-i18next';
 import { UserContext } from '@lib/context/UserContextProvider';
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import { alertService } from '@lib/alertService';
@@ -15,13 +16,8 @@ interface TranslationModalProps {
   identifier: string;
 }
 
-const translationSchema = z.object({
-  lableDE: z.string().trim().min(1, 'Ungültiger Bezeichner'),
-});
-
-const validateTranslation = zodFormikValidate(translationSchema);
-
 export default function EditTranslationModal(props: TranslationModalProps) {
+  const { t } = useTranslation(['settings', 'common']);
   const userContext = useContext(UserContext);
   const modalContext = useContext(ModalContext);
 
@@ -29,12 +25,20 @@ export default function EditTranslationModal(props: TranslationModalProps) {
 
   const { workspaceId } = router.query;
 
+  const translationSchema = z.object({
+    labelDe: z.string().trim().min(1, t('settings:validation.invalidLabel')),
+    labelEn: z.string(),
+  });
+
+  const validateTranslation = zodFormikValidate(translationSchema);
+
   return (
     <div className={'flex flex-col gap-2'}>
-      <div className={'text-2xl font-bold'}>{props.slang} Anpassen</div>
+      <div className={'text-2xl font-bold'}>{t('settings:slang.adjust', { name: props.slang })}</div>
       <Formik
         initialValues={{
-          lableDE: userContext.getTranslationOrNull(props.identifier, 'de') ?? '',
+          labelDe: userContext.translations?.de?.[props.identifier] ?? '',
+          labelEn: userContext.translations?.en?.[props.identifier] ?? '',
         }}
         onSubmit={async (values) => {
           try {
@@ -42,37 +46,52 @@ export default function EditTranslationModal(props: TranslationModalProps) {
             await upsertTranslation(workspaceId, {
               key: props.identifier,
               translations: {
-                de: values.lableDE,
+                de: values.labelDe.trim(),
+                en: values.labelEn.trim(),
               },
             });
-            userContext.refreshWorkspace();
+            userContext.patchTranslations(props.identifier, {
+              de: values.labelDe.trim(),
+              en: values.labelEn.trim(),
+            });
             modalContext.closeModal();
-            alertService.success(`${props.slang} erfolgreich gespeichert`);
+            alertService.success(t('settings:savedTranslation', { name: props.slang }));
+            void userContext.refreshWorkspace();
           } catch (error) {
-            alertApiV1Error(error, `Fehler beim Speichern der ${props.slang}`);
+            alertApiV1Error(error, t('settings:errorSaveTranslation', { name: props.slang }));
           }
         }}
         validate={(values) => validateTranslation(values)}
       >
-        {({ values, handleChange, handleSubmit, isSubmitting, errors, touched, setFieldValue: _setFieldValue }) => (
+        {({ values, handleChange, handleSubmit, isSubmitting, errors, touched }) => (
           <form onSubmit={handleSubmit} className={'flex flex-col gap-2'}>
+            <FormControl>
+              <Label className="flex-row items-center justify-between">
+                <LabelText>{t('common:identifier')}</LabelText>
+                <LabelTextAlt className="text-error"></LabelTextAlt>
+              </Label>
+              <Input id={'identifier'} readOnly={true} name={'identifier'} value={props.identifier} onChange={handleChange} disabled />
+            </FormControl>
             <div className={'grid grid-cols-2 gap-2'}>
               <FormControl>
                 <Label className="flex-row items-center justify-between">
-                  <LabelText>Identifier</LabelText>
-                  <LabelTextAlt className="text-error"></LabelTextAlt>
+                  <LabelText>{t('settings:labelDe')}</LabelText>
+                  <LabelTextAlt className="text-error">
+                    <span>{errors.labelDe && touched.labelDe ? errors.labelDe : ''}</span>
+                    <span>{t('common:required')}</span>
+                  </LabelTextAlt>
                 </Label>
-                <Input id={'identifier'} readOnly={true} name={'identifier'} value={props.identifier} onChange={handleChange} disabled />
+                <Input id={'labelDe'} name={'labelDe'} value={values.labelDe} onChange={handleChange} />
               </FormControl>
               <FormControl>
                 <Label className="flex-row items-center justify-between">
-                  <LabelText>Deutsch</LabelText>
+                  <LabelText>{t('settings:labelEn')}</LabelText>
                   <LabelTextAlt className="text-error">
-                    <span>{errors.lableDE && touched.lableDE ? errors.lableDE : ''}</span>
-                    <span>*</span>
+                    <span>{errors.labelEn && touched.labelEn ? errors.labelEn : ''}</span>
                   </LabelTextAlt>
                 </Label>
-                <Input id={'lableDE'} name={'lableDE'} value={values.lableDE} onChange={handleChange} />
+                <Input id={'labelEn'} name={'labelEn'} value={values.labelEn} onChange={handleChange} />
+                {!values.labelEn.trim() ? <span className="text-xs text-base-content/60">{t('settings:missingEnHint')}</span> : null}
               </FormControl>
             </div>
             <div className={'flex justify-end gap-2'}>
@@ -84,11 +103,11 @@ export default function EditTranslationModal(props: TranslationModalProps) {
                   modalContext.closeModal();
                 }}
               >
-                Abbrechen
+                {t('common:cancel')}
               </Button>
               <Button variant="primary" type={'submit'}>
                 {isSubmitting ? <Loading size="sm" /> : null}
-                Speichern
+                {t('common:save')}
               </Button>
             </div>
           </form>

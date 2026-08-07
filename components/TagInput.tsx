@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import CreatableSelect from 'react-select/creatable';
 import { MultiValue } from 'react-select';
 import classNames from 'classnames';
+import { useTranslation } from 'react-i18next';
 import '../lib/ArrayUtils';
 import { useRouter } from 'next/router';
 import { Badge, Button } from '@components/ui';
@@ -22,6 +23,7 @@ const inputControlClasses =
   'w-full min-h-10 h-10 rounded-field border border-base-content/20 bg-base-100 px-3 text-sm text-base-content outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/25';
 
 export function TagInput(props: TagInputProps) {
+  const { t } = useTranslation('common');
   const formatTags = (tags: string[]) => tags.map((tag) => ({ value: tag, label: tag }));
 
   const handleChange = (options: MultiValue<TagOption>) => {
@@ -62,9 +64,9 @@ export function TagInput(props: TagInputProps) {
         onChange={handleChange}
         onCreateOption={handleCreate}
         classNamePrefix="react-select"
-        placeholder="Tag hinzufügen..."
+        placeholder={t('tagAdd')}
         isClearable={false}
-        formatCreateLabel={(inputValue) => `Erstelle "${inputValue}"`}
+        formatCreateLabel={(inputValue) => t('tagCreate', { value: inputValue })}
         hideSelectedOptions={false}
         backspaceRemovesValue={false}
         controlShouldRenderValue={menuIsOpen}

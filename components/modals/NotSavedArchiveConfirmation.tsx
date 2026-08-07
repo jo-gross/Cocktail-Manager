@@ -1,4 +1,5 @@
 import { useContext, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import { alertService } from '@lib/alertService';
 import { Button, Loading } from '@components/ui';
@@ -12,15 +13,14 @@ interface NotSavedConfirmationProps {
 
 export function NotSavedArchiveConfirmation(props: NotSavedConfirmationProps) {
   const modalContext = useContext(ModalContext);
+  const { t } = useTranslation(['entity', 'common', 'errors']);
 
   const [isSaving, setIsSaving] = useState(false);
 
   return (
     <div className="flex flex-col space-y-4">
-      <div className="text-2xl font-bold">Änderungen nicht gespeichert</div>
-      <div className="max-w-xl text-justify">
-        Du scheinst Änderungen gemacht zu haben, die noch nicht gespeichert wurden. Möchtest du ohne Speichern fortfahren?
-      </div>
+      <div className="text-2xl font-bold">{t('entity:unsavedTitle')}</div>
+      <div className="max-w-xl text-justify">{t('entity:unsavedMessage')}</div>
       <div className="flex flex-row space-x-4">
         <div className={'flex-1'}></div>
         <Button
@@ -30,7 +30,7 @@ export function NotSavedArchiveConfirmation(props: NotSavedConfirmationProps) {
             modalContext.closeModal();
           }}
         >
-          Abbrechen
+          {t('common:cancel')}
         </Button>
         <Button
           disabled={isSaving || props.isArchiving}
@@ -42,14 +42,14 @@ export function NotSavedArchiveConfirmation(props: NotSavedConfirmationProps) {
               modalContext.closeModal();
             } catch (error) {
               console.error('NotSavedConfirmation -> onSave', error);
-              alertService.error('Fehler beim Speichern');
+              alertService.error(t('errors:save'));
             } finally {
               setIsSaving(false);
             }
           }}
         >
           {isSaving || props.isArchiving ? <Loading size="sm" /> : null}
-          {props.archive ? 'Archivieren' : 'Entarchivieren'}
+          {props.archive ? t('common:archive') : t('common:unarchive')}
         </Button>
       </div>
     </div>

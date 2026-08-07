@@ -1,4 +1,5 @@
 import React, { useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Bar } from 'react-chartjs-2';
 import { BarElement, CategoryScale, Chart as ChartJS, Legend, LinearScale, Title, Tooltip, TooltipModel } from 'chart.js';
 
@@ -41,6 +42,7 @@ export function StackedDistributionChart({
   showLegend = false,
   loading = false,
 }: StackedDistributionChartProps) {
+  const { t } = useTranslation('statistics');
   const containerRef = useRef<HTMLDivElement>(null);
   const [tooltipData, setTooltipData] = useState<{
     show: boolean;
@@ -175,7 +177,7 @@ export function StackedDistributionChart({
               </div>
               {tooltipData.items.length > 1 && (
                 <div className="mt-2 flex items-center justify-between border-t border-base-300 pt-2">
-                  <span className="text-sm font-medium text-base-content">Gesamt</span>
+                  <span className="text-sm font-medium text-base-content">{t('total')}</span>
                   <span className="text-sm font-bold text-base-content">{tooltipData.total}</span>
                 </div>
               )}

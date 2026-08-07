@@ -1,3 +1,4 @@
+import { i18n } from '@lib/i18n/client';
 import { apiV1Fetch, apiV1FetchSafe, apiV1Mutate } from './apiV1';
 import type { WorkspaceDto, WorkspaceSettingsDto, WorkspaceSettingUpdateInput, WorkspaceUpdateInput } from '@lib/schemas/workspace';
 import type { TranslationsDto, TranslationUpdateInput } from '@lib/schemas/translations';
@@ -17,7 +18,7 @@ export function listWorkspaces(): Promise<WorkspaceListItem[]> {
 export function fetchWorkspacesSafe(
   setWorkspaces: (workspaces: WorkspaceListItem[]) => void,
   setLoading?: (loading: boolean) => void,
-  errorMessage = 'Fehler beim Laden der Workspaces',
+  errorMessage = i18n.t('auth:error.loadWorkspaces'),
 ) {
   setLoading?.(true);
   apiV1FetchSafe<WorkspaceListItem[]>('/api/v1/workspaces', undefined, errorMessage)
@@ -50,7 +51,7 @@ export function getWorkspaceSettings(workspaceId: string | string[]): Promise<Wo
 export function fetchWorkspaceSettingsSafe(
   workspaceId: string | string[] | undefined,
   setSettings: (settings: WorkspaceSettingsDto) => void,
-  errorMessage = 'Fehler beim Laden der Einstellungen',
+  errorMessage = i18n.t('errors:loadSettings'),
 ) {
   if (workspaceId == undefined) return;
   apiV1FetchSafe<WorkspaceSettingsDto>(`/api/v1/workspaces/${workspaceId}/settings`, undefined, errorMessage).then((settings) => {
@@ -63,7 +64,7 @@ export function updateWorkspaceSetting(workspaceId: string | string[], body: Wor
 }
 
 export function getTranslations(workspaceId: string | string[]): Promise<TranslationsDto> {
-  return apiV1Fetch<TranslationsDto>(`/api/v1/workspaces/${workspaceId}/translations`);
+  return apiV1Fetch<TranslationsDto>(`/api/v1/workspaces/${workspaceId}/translations`, { cache: 'no-store' });
 }
 
 export function upsertTranslation(workspaceId: string | string[], body: TranslationUpdateInput): Promise<TranslationsDto> {

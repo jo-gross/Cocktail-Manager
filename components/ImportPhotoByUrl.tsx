@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button, Input, Loading } from '@components/ui';
 
 interface ImportPhotoByUrlProps {
@@ -6,6 +7,7 @@ interface ImportPhotoByUrlProps {
 }
 
 export default function ImportPhotoByUrl({ onImport }: ImportPhotoByUrlProps) {
+  const { t } = useTranslation('common');
   const [imageUrl, setImageUrl] = useState<string>('');
   const [isDisabled, setIsDisabled] = useState<boolean>(true);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -35,7 +37,7 @@ export default function ImportPhotoByUrl({ onImport }: ImportPhotoByUrlProps) {
     <>
       <Input
         type="text"
-        placeholder="Bild-URL eingeben..."
+        placeholder={t('imageUrlPlaceholder')}
         className="mb-2 w-full"
         value={imageUrl}
         onChange={(e) => setImageUrl(e.target.value)}
@@ -48,7 +50,7 @@ export default function ImportPhotoByUrl({ onImport }: ImportPhotoByUrlProps) {
       />
       <Button variant="secondary" className="w-full" type="button" disabled={isDisabled || isLoading} onClick={handleImport}>
         {isLoading ? <Loading size="sm" /> : null}
-        Bild herunterladen
+        {t('downloadImage')}
       </Button>
     </>
   );

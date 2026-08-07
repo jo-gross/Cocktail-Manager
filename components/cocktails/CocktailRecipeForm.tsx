@@ -1,6 +1,7 @@
 import { FaAngleDown, FaAngleUp, FaEuroSign, FaPlus, FaSearch, FaTrashAlt } from 'react-icons/fa';
 import { Field, FieldArray, Formik, FormikProps } from 'formik';
 import React, { createRef, useCallback, useContext, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useRouter } from 'next/router';
 import type { ActionDto } from '@lib/schemas/actions';
 import { UploadDropZone } from '../UploadDropZone';
@@ -165,66 +166,65 @@ interface GarnishError {
  * The adapter maps issue paths (e.g. `steps[0].ingredients[1].unit`) onto Formik's
  * nested error object, so the field-level messages line up with the JSX exactly as before.
  */
-const cocktailFormSchema = z
-  .object({
-    name: z.string().refine((v) => v.trim() != '', { message: 'Required' }),
-    glassId: z
-      .string()
-      .nullish()
-      .refine((v) => v != null && v != '', { message: 'Required' }),
-    iceId: z
-      .string()
-      .nullish()
-      .refine((v) => v != null && v != '', { message: 'Required' }),
-    image: z.string().optional(),
-    originalImage: z.any().optional(),
-    steps: z.array(
-      z.object({
-        actionId: z
-          .string()
-          .nullish()
-          .refine((v) => v != null && v != '', { message: 'Required' }),
-        ingredients: z.array(
-          z
-            .object({
-              // The number input feeds `handleChange` raw strings, so accept string | number | null.
-              amount: z.union([z.number(), z.string(), z.null()]).optional(),
-              unitId: z.string().nullish(),
-              ingredientId: z.string().nullish(),
-            })
-            // Object-level so we control the exact error sub-paths the JSX reads
-            // (`amount` / `unit` / `ingredientId`), mirroring the old inline logic.
-            .superRefine((ingredient, ctx) => {
-              // Old rule: `if (ingredient.amount && isNaN(ingredient.amount))` — only a
-              // truthy amount that is NaN when coerced errors; null / '' / 0 / valid numbers pass.
-              if (ingredient.amount != null && ingredient.amount !== '' && Number(ingredient.amount) != 0 && isNaN(Number(ingredient.amount))) {
-                ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Required', path: ['amount'] });
-              }
-              if (ingredient.unitId == null || ingredient.unitId == '') {
-                ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Required', path: ['unit'] });
-              }
-              if (ingredient.ingredientId == null || ingredient.ingredientId == '') {
-                ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Required', path: ['ingredientId'] });
-              }
-            }),
-        ),
-      }),
-    ),
-    garnishes: z.array(
-      z.object({
-        garnishId: z
-          .string()
-          .nullish()
-          .refine((v) => v != null && v != '', { message: 'Required' }),
-      }),
-    ),
-  })
-  .refine((values) => !(values.originalImage != undefined && values.image == undefined), {
-    message: 'Bild ausgewählt aber nicht zugeschnitten',
-    path: ['image'],
-  });
-
-const validateCocktail = zodFormikValidate(cocktailFormSchema);
+const cocktailFormSchema = (requiredMessage: string, imageNotCroppedMessage: string) =>
+  z
+    .object({
+      name: z.string().refine((v) => v.trim() != '', { message: requiredMessage }),
+      glassId: z
+        .string()
+        .nullish()
+        .refine((v) => v != null && v != '', { message: requiredMessage }),
+      iceId: z
+        .string()
+        .nullish()
+        .refine((v) => v != null && v != '', { message: requiredMessage }),
+      image: z.string().optional(),
+      originalImage: z.any().optional(),
+      steps: z.array(
+        z.object({
+          actionId: z
+            .string()
+            .nullish()
+            .refine((v) => v != null && v != '', { message: requiredMessage }),
+          ingredients: z.array(
+            z
+              .object({
+                // The number input feeds `handleChange` raw strings, so accept string | number | null.
+                amount: z.union([z.number(), z.string(), z.null()]).optional(),
+                unitId: z.string().nullish(),
+                ingredientId: z.string().nullish(),
+              })
+              // Object-level so we control the exact error sub-paths the JSX reads
+              // (`amount` / `unit` / `ingredientId`), mirroring the old inline logic.
+              .superRefine((ingredient, ctx) => {
+                // Old rule: `if (ingredient.amount && isNaN(ingredient.amount))` — only a
+                // truthy amount that is NaN when coerced errors; null / '' / 0 / valid numbers pass.
+                if (ingredient.amount != null && ingredient.amount !== '' && Number(ingredient.amount) != 0 && isNaN(Number(ingredient.amount))) {
+                  ctx.addIssue({ code: z.ZodIssueCode.custom, message: requiredMessage, path: ['amount'] });
+                }
+                if (ingredient.unitId == null || ingredient.unitId == '') {
+                  ctx.addIssue({ code: z.ZodIssueCode.custom, message: requiredMessage, path: ['unit'] });
+                }
+                if (ingredient.ingredientId == null || ingredient.ingredientId == '') {
+                  ctx.addIssue({ code: z.ZodIssueCode.custom, message: requiredMessage, path: ['ingredientId'] });
+                }
+              }),
+          ),
+        }),
+      ),
+      garnishes: z.array(
+        z.object({
+          garnishId: z
+            .string()
+            .nullish()
+            .refine((v) => v != null && v != '', { message: requiredMessage }),
+        }),
+      ),
+    })
+    .refine((values) => !(values.originalImage != undefined && values.image == undefined), {
+      message: imageNotCroppedMessage,
+      path: ['image'],
+    });
 
 export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
   const formRef = props.formRef;
@@ -234,6 +234,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
   const modalContext = useContext(ModalContext);
   const userContext = useContext(UserContext);
   const routingContext = useContext(RoutingContext);
+  const { t } = useTranslation(['cocktail', 'common', 'entity', 'errors']);
 
   const [iceOptions, setIceOptions] = useState<IceDto[]>([]);
   const [_iceOptionsLoading, setIceOptionsLoading] = useState(false);
@@ -283,7 +284,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
     (setFieldValue: FormikProps<CocktailRecipeFormValues>['setFieldValue'], indexStep: number, indexIngredient: number) => {
       modalContext.openModal(
         <SelectModal<IngredientModel>
-          title={'Zutat auswählen'}
+          title={t('cocktail:selectIngredient')}
           compareFunction={(a, b) => a.name.localeCompare(b.name)}
           fetchElements={async (search) => {
             if (search == undefined || search == '') {
@@ -314,14 +315,14 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
         />,
       );
     },
-    [ingredients, modalContext],
+    [ingredients, modalContext, t, units],
   );
 
   const openGarnishSelectModal = useCallback(
     (setFieldValue: FormikProps<CocktailRecipeFormValues>['setFieldValue'], indexGarnish: number) => {
       modalContext.openModal(
         <SelectModal<GarnishModel>
-          title={'Garnitur auswählen'}
+          title={t('cocktail:selectGarnish')}
           compareFunction={(a, b) => a.name.localeCompare(b.name)}
           fetchElements={async (search) => {
             if (search == undefined || search == '') {
@@ -340,7 +341,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
         />,
       );
     },
-    [garnishes, modalContext],
+    [garnishes, modalContext, t],
   );
 
   const cocktailGlassId = props.cocktailRecipe?.glass?.id;
@@ -410,13 +411,13 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
   }, [formRef, ingredients, props.cocktailRecipe?.steps]);
 
   useEffect(() => {
-    fetchActions(workspaceId, setActions, setActionsLoading);
+    fetchActions(workspaceId, setActions, setActionsLoading, t('errors:loadActions'));
     fetchIce(workspaceId, setIceOptions, setIceOptionsLoading);
     fetchIngredients(workspaceId, setIngredients, setIngredientsLoading);
     fetchGarnishes(workspaceId, setGarnishes, setGarnishesLoading);
-    fetchGlasses(workspaceId, setGlasses, setGlassesLoading);
+    fetchGlasses(workspaceId, setGlasses, setGlassesLoading, t('errors:loadGlasses'));
     fetchUnits(workspaceId, setUnits, setUnitsLoading);
-  }, [workspaceId]);
+  }, [workspaceId, t]);
 
   const initSteps: CocktailRecipeStepFull[] = props.cocktailRecipe ? mapCocktailDtoToFormSteps(props.cocktailRecipe) : [];
   const initGarnishes: CocktailRecipeGarnishFull[] = props.cocktailRecipe ? mapCocktailDtoToFormGarnishes(props.cocktailRecipe) : [];
@@ -507,7 +508,9 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
           props.setUnsavedChanges?.(true);
         }
 
-        return validateCocktail(values);
+        const errors = zodFormikValidate(cocktailFormSchema(t('errors:requiredField'), t('common:imageNotCropped')))(values) as
+          Record<string, unknown> | undefined;
+        return errors;
       }}
       onSubmit={async (values) => {
         try {
@@ -559,15 +562,15 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
           if (!workspaceId) return;
           if (props.cocktailRecipe == undefined) {
             await apiV1Mutate<CocktailDto>(`/api/v1/workspaces/${workspaceId}/cocktails`, 'POST', body);
-            alertService.success('Erfolgreich erstellt');
+            alertService.success(t('cocktail:success.created'));
             await routingContext.conditionalBack(`/workspaces/${workspaceId}/manage/cocktails`);
           } else {
             await apiV1Mutate<CocktailDto>(`/api/v1/workspaces/${workspaceId}/cocktails/${props.cocktailRecipe.id}`, 'PUT', body);
-            alertService.success('Erfolgreich aktualisiert');
+            alertService.success(t('cocktail:success.updated'));
             await routingContext.conditionalBack(`/workspaces/${workspaceId}/manage/cocktails#${props.cocktailRecipe.id}`);
           }
         } catch (error) {
-          alertApiV1Error(error, props.cocktailRecipe == undefined ? 'Fehler beim Erstellen des Cocktails' : 'Fehler beim Speichern des Cocktails');
+          alertApiV1Error(error, props.cocktailRecipe == undefined ? t('cocktail:error.create') : t('cocktail:error.save'));
         }
       }}
     >
@@ -576,12 +579,12 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
           <div className={cn('grid grid-cols-1 md:grid-cols-3', stackGap)}>
             <Card variant="surface" className="grid-cols-1 md:col-span-2">
               <CardBody>
-                <div className={'text-center text-2xl font-bold'}>Cocktail erfassen</div>
+                <div className={'text-center text-2xl font-bold'}>{t('cocktail:formTitle')}</div>
                 <Divider />
                 <div className={'grid grid-cols-2 gap-4'}>
                   <div className={'col-span-2'}>
                     <Label htmlFor={'name'} className="flex-row items-center justify-between">
-                      <LabelText>Name</LabelText>
+                      <LabelText>{t('cocktail:name')}</LabelText>
                       <LabelTextAlt className="text-error">
                         <>{errors.name && errors.name}</> *
                       </LabelTextAlt>
@@ -615,15 +618,13 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                     />
                     {similarCocktailRecipe && (
                       <Label className="flex-row">
-                        <LabelTextAlt className="text-warning">
-                          Eine ähnlicher Cocktail mit dem Namen <strong>{similarCocktailRecipe.name}</strong> existiert bereits.
-                        </LabelTextAlt>
+                        <LabelTextAlt className="text-warning">{t('cocktail:similarExists', { name: similarCocktailRecipe.name })}</LabelTextAlt>
                       </Label>
                     )}
                   </div>
                   <div className={'col-span-2'}>
                     <Label htmlFor={'notes'} className="flex-row items-center justify-between">
-                      <LabelText>Zubereitungsnotizen</LabelText>
+                      <LabelText>{t('cocktail:prepNotes')}</LabelText>
                       <LabelTextAlt className="text-error">
                         <>{errors.notes && errors.notes}</>
                       </LabelTextAlt>
@@ -632,7 +633,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                       id={'notes'}
                       name="notes"
                       className={errors.notes ? fieldErrorClass : undefined}
-                      placeholder={'Zubereitungshinweise, Tipps, etc.'}
+                      placeholder={t('cocktail:prepNotesPlaceholder')}
                       onChange={handleChange}
                       onBlur={handleBlur}
                       value={values.notes}
@@ -641,7 +642,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                   </div>
                   <div className={'col-span-2'}>
                     <Label htmlFor={'description'} className="flex-row items-center justify-between">
-                      <LabelText>Allgemeine Beschreibung</LabelText>
+                      <LabelText>{t('cocktail:description')}</LabelText>
                       <LabelTextAlt className="text-error">
                         <>{errors.description && errors.description}</>
                       </LabelTextAlt>
@@ -650,7 +651,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                       id={'description'}
                       name="description"
                       className={errors.description ? fieldErrorClass : undefined}
-                      placeholder={'Was zeichnet diesen Cocktail aus? Wie schmeckt er? Was macht ihn besonders? Was sollte man wissen?'}
+                      placeholder={t('cocktail:descriptionPlaceholder')}
                       onChange={handleChange}
                       onBlur={handleBlur}
                       value={values.description}
@@ -659,7 +660,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                   </div>
                   <div className={'col-span-2'}>
                     <Label htmlFor={'history'} className="flex-row items-center justify-between">
-                      <LabelText>Geschichte und Entstehung</LabelText>
+                      <LabelText>{t('cocktail:history')}</LabelText>
                       <LabelTextAlt className="text-error">
                         <>{errors.history && errors.history}</>
                       </LabelTextAlt>
@@ -668,7 +669,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                       id={'history'}
                       name="history"
                       className={errors.history ? fieldErrorClass : undefined}
-                      placeholder={'Geschichte, Herkunft, etc.'}
+                      placeholder={t('cocktail:historyPlaceholder')}
                       onChange={handleChange}
                       onBlur={handleBlur}
                       value={values.history}
@@ -677,7 +678,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                   </div>
                   <div className={'col-span-2 md:col-span-1'}>
                     <Label htmlFor={'price'} className="flex-row items-center justify-between">
-                      <LabelText>Preis</LabelText>
+                      <LabelText>{t('cocktail:price')}</LabelText>
                       <LabelTextAlt className="text-error">
                         <>{errors.price && errors.price}</>
                       </LabelTextAlt>
@@ -700,7 +701,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                   </div>
                   <div className={'col-span-2 md:col-span-1'}>
                     <Label className="flex-row items-center justify-between">
-                      <LabelText>Tags</LabelText>
+                      <LabelText>{t('cocktail:tags')}</LabelText>
                       <LabelTextAlt className="text-error">
                         <>{errors.tags && errors.tags}</>
                       </LabelTextAlt>
@@ -711,16 +712,16 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                         onChange={(tags: string[]) =>
                           setFieldValue(
                             'tags',
-                            updateTags(tags, (text) => setFieldError('tags', text ?? 'Tag fehlerhaft!')),
+                            updateTags(tags, (text) => setFieldError('tags', text ?? t('common:tagInvalid'))),
                           )
                         }
-                        validate={(tag) => validateTag(tag, (text) => setFieldError('tags', text ?? 'Tag fehlerhaft!!!'))}
+                        validate={(tag) => validateTag(tag, (text) => setFieldError('tags', text ?? t('common:tagInvalid')))}
                       />
                       {inheritTagsFromIngredients(values.steps, values.tags).length > 0 && (
                         <>
-                          <Tooltip tip="Basierend auf den Tags der Zutaten">
+                          <Tooltip tip={t('cocktail:tagsFromIngredientsTip')}>
                             <Label className="flex-row">
-                              <LabelText>Tags aus Zutaten</LabelText>
+                              <LabelText>{t('cocktail:tagsFromIngredients')}</LabelText>
                             </Label>
                           </Tooltip>
                           <div className={'flex flex-row flex-wrap gap-2'}>
@@ -750,7 +751,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                   </div>
                   <div>
                     <Label htmlFor={'glassId'} className="flex-row items-center justify-between">
-                      <LabelText>Glas</LabelText>
+                      <LabelText>{t('cocktail:glass')}</LabelText>
                       <LabelTextAlt className="text-error">
                         <>{errors.glassId && errors.glassId}</> *
                       </LabelTextAlt>
@@ -773,11 +774,11 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                       >
                         {glassesLoading ? (
                           <option disabled={true} defaultChecked={true}>
-                            Laden...
+                            {t('common:loading')}
                           </option>
                         ) : (
                           <>
-                            <option value={undefined}>Auswählen</option>
+                            <option value={undefined}>{t('common:select')}</option>
                             {glasses
                               .sort((a, b) => a.name.localeCompare(b.name))
                               .map((glass) => (
@@ -801,11 +802,11 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                   onSaved={async (id) => {
                                     modalContext.closeAllModals();
                                     await setFieldValue('glassId', id);
-                                    fetchGlasses(workspaceId, setGlasses, setGlassesLoading);
+                                    fetchGlasses(workspaceId, setGlasses, setGlassesLoading, t('errors:loadGlasses'));
                                   }}
                                 />
                               }
-                              title={'Glas erfassen'}
+                              title={t('cocktail:selectGlass')}
                             />,
                           )
                         }
@@ -816,7 +817,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                   </div>
                   <div>
                     <Label htmlFor={'iceId'} className="flex-row items-center justify-between">
-                      <LabelText>Eis</LabelText>
+                      <LabelText>{t('cocktail:ice')}</LabelText>
                       <LabelTextAlt className="text-error">
                         <>{errors.iceId && errors.iceId}</> *
                       </LabelTextAlt>
@@ -835,25 +836,25 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                       onBlur={handleBlur}
                       value={values.iceId ?? ''}
                     >
-                      <option value={''}>Auswählen</option>
+                      <option value={''}>{t('common:select')}</option>
                       {Object.values(iceOptions)
-                        .sort((a, b) => userContext.getTranslation(a.name, 'de').localeCompare(userContext.getTranslation(b.name, 'de')))
+                        .sort((a, b) => userContext.getTranslation(a.name).localeCompare(userContext.getTranslation(b.name)))
                         .map((iceType) => (
                           <option key={`form-recipe-ice-types-${iceType.id}`} value={iceType.id}>
-                            {userContext.getTranslation(iceType.name, 'de')}
+                            {userContext.getTranslation(iceType.name)}
                           </option>
                         ))}
                     </Select>
                   </div>
                   <div className="col-span-2 flex items-center gap-3 py-2">
                     <Divider className="my-0 flex-1" />
-                    <span className="shrink-0 text-sm font-medium text-base-content/70">Darstellung</span>
+                    <span className="shrink-0 text-sm font-medium text-base-content/70">{t('common:display')}</span>
                     <Divider className="my-0 flex-1" />
                   </div>
                   <div className={'col-span-2'}>
                     {values.image != undefined ? (
                       <Label className="flex-row items-center justify-between">
-                        <LabelText>Vorschau Bild</LabelText>
+                        <LabelText>{t('common:imagePreview')}</LabelText>
                       </Label>
                     ) : (
                       <></>
@@ -865,7 +866,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                             await setFieldValue('originalImage', file);
                             await setFieldValue('image', undefined);
                           } else {
-                            alertService.error('Datei konnte nicht ausgewählt werden.');
+                            alertService.error(t('common:fileSelectError'));
                           }
                         }}
                       />
@@ -880,7 +881,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                               if (compressedImageFile) {
                                 await setFieldValue('image', await convertToBase64(new File([compressedImageFile], 'image.png', { type: 'image/png' })));
                               } else {
-                                alertService.error('Bild konnte nicht skaliert werden.');
+                                alertService.error(t('common:imageScaleError'));
                               }
                             });
                           }}
@@ -914,7 +915,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                               modalContext.openModal(
                                 <DeleteConfirmationModal
                                   spelling={'REMOVE'}
-                                  entityName={'das Bild'}
+                                  entityName={t('entity:theImage')}
                                   onApprove={async () => {
                                     await setFieldValue('image', undefined);
                                     await setFieldValue('originalImage', undefined);
@@ -927,12 +928,15 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                           </Button>
                         </div>
                         <div className={'bg-transparent-pattern relative h-32 w-[4.5rem] rounded-lg'}>
-                          <Image className={'w-fit rounded-lg'} src={values.image ?? ''} layout={'fill'} objectFit={'contain'} alt={'Cocktail image'} />
+                          <Image
+                            className={'w-fit rounded-lg'}
+                            src={values.image ?? ''}
+                            layout={'fill'}
+                            objectFit={'contain'}
+                            alt={t('common:cocktailImageAlt')}
+                          />
                         </div>
-                        <div className={'pt-2 font-thin italic'}>
-                          Info: Durch Speichern des Cocktails wird das Bild dauerhaft zugeschnitten. Das Original wird nicht gespeichert. Falls du später einen
-                          anderen Bereich des Bildes auswählen möchtest, musst du das Bild erneut hochladen.
-                        </div>
+                        <div className={'pt-2 font-thin italic'}>{t('common:imageCropInfoLong')}</div>
                       </div>
                     )}
                   </div>
@@ -942,7 +946,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
             <div className={cn('flex flex-col', stackGap)}>
               <Card variant="surface">
                 <CardBody>
-                  <div className={'text-center text-2xl font-bold'}>Vorschau</div>
+                  <div className={'text-center text-2xl font-bold'}>{t('common:preview')}</div>
                   <Divider />
 
                   <CocktailRecipeCardItem
@@ -979,23 +983,19 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
               <div className={'hidden md:flex md:flex-col'}>
                 <Button type="submit" variant="primary" wide disabled={isSubmitting || !isValid}>
                   {isSubmitting ? <Loading size="sm" /> : <></>}
-                  {props.cocktailRecipe == undefined ? 'Erstellen' : 'Aktualisieren'}
+                  {props.cocktailRecipe == undefined ? t('common:create') : t('common:update')}
                 </Button>
-                {!isValid && (
-                  <div className={'font-thin text-error italic'}>
-                    Nicht alle Felder sind korrekt ausgefüllt. Kontrolliere daher alle Felder. (Name gesetzt, Bild zugeschnitten, ... ?)
-                  </div>
-                )}
+                {!isValid && <div className={'font-thin text-error italic'}>{t('common:formIncomplete')}</div>}
               </div>
 
               <Card variant="surface">
                 <CardBody>
-                  <div className={'text-center text-2xl font-bold'}>Finanzen</div>
+                  <div className={'text-center text-2xl font-bold'}>{t('cocktail:finances')}</div>
                   <Divider />
                   <div className={'grid grid-cols-2 gap-1'}>
                     <>
                       <Divider size="sm" className="col-span-2">
-                        Zutaten
+                        {t('cocktail:ingredients')}
                       </Divider>
                       {(values.steps as CocktailRecipeStepFull[]).filter((step) => step.ingredients.some((ingredient) => ingredient.ingredient != undefined))
                         .length > 0 ? (
@@ -1014,18 +1014,20 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                     ?.volumes.find((volumeUnits) => volumeUnits.unit.id == stepIngredient.unitId) != undefined ? (
                                     <>
                                       <div>
-                                        {stepIngredient.amount?.toLocaleString(undefined, {
-                                          minimumFractionDigits: 0,
-                                          maximumFractionDigits: 2,
-                                        }) ?? 0}{' '}
-                                        {userContext.getTranslation(stepIngredient?.unit?.name ?? '', 'de')} x{' '}
-                                        {(
-                                          (stepIngredient.ingredient?.price ?? 0) /
-                                          (ingredients
-                                            .find((ingredient) => ingredient.id == stepIngredient.ingredientId)
-                                            ?.volumes.find((volumeUnits) => volumeUnits.unit.id == stepIngredient.unitId)?.volume ?? 1)
-                                        ).formatPrice()}{' '}
-                                        €/{userContext.getTranslation(stepIngredient?.unit?.name ?? '', 'de')}
+                                        {t('common:unitTimesPrice', {
+                                          amount:
+                                            stepIngredient.amount?.toLocaleString(undefined, {
+                                              minimumFractionDigits: 0,
+                                              maximumFractionDigits: 2,
+                                            }) ?? 0,
+                                          unit: userContext.getTranslation(stepIngredient?.unit?.name ?? ''),
+                                          price: (
+                                            (stepIngredient.ingredient?.price ?? 0) /
+                                            (ingredients
+                                              .find((ingredient) => ingredient.id == stepIngredient.ingredientId)
+                                              ?.volumes.find((volumeUnits) => volumeUnits.unit.id == stepIngredient.unitId)?.volume ?? 1)
+                                          ).formatPrice(),
+                                        })}
                                       </div>
                                       <div className={'text-end'}>
                                         {indexIngredient > 0 ? '+ ' : ''}
@@ -1050,16 +1052,16 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                             ))}
                         </>
                       ) : (
-                        <div className={'col-span-2 text-center font-thin italic'}>Keine Zutaten</div>
+                        <div className={'col-span-2 text-center font-thin italic'}>{t('cocktail:noIngredients')}</div>
                       )}
 
                       <Divider size="sm" className="col-span-2">
-                        Garnituren
+                        {t('cocktail:garnish')}
                       </Divider>
                       {(values.garnishes as CocktailRecipeGarnishFull[]).length > 0 ? (
                         <></>
                       ) : (
-                        <div className={'col-span-2 text-center font-thin italic'}>Keine Garnituren</div>
+                        <div className={'col-span-2 text-center font-thin italic'}>{t('cocktail:noGarnishes')}</div>
                       )}
                       {(values.garnishes as CocktailRecipeGarnishFull[]).map((garnish) => {
                         const isAlternative = (garnish as CocktailRecipeGarnishFull & { isAlternative?: boolean }).isAlternative;
@@ -1067,7 +1069,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                           <React.Fragment key={`price-calculation-step-garnish-${garnish.garnishId}`}>
                             <div className={`${isAlternative ? 'line-through opacity-50' : ''}`}>{garnish?.garnish?.name}</div>
                             <div className={`grid grid-cols-2 ${isAlternative ? 'line-through opacity-50' : ''}`}>
-                              <div>1 x {(garnish?.garnish?.price ?? 0).formatPrice()}</div>
+                              <div>{t('common:timesPrice', { price: (garnish?.garnish?.price ?? 0).formatPrice() })}</div>
                               <div className={'text-end'}>
                                 {(values.steps as CocktailRecipeStepFull[]).some((step) => step.ingredients.length > 0) ? '+ ' : ''}
                                 {(garnish?.garnish?.price ?? 0).formatPrice()}€
@@ -1078,12 +1080,10 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                       })}
                       {(values.garnishes as CocktailRecipeGarnishFull[]).some(
                         (g) => (g as CocktailRecipeGarnishFull & { isAlternative?: boolean }).isAlternative,
-                      ) && (
-                        <div className={'col-span-2 mt-1 text-xs font-thin italic'}>* Alternative Garnituren werden nicht in die Berechnung einbezogen.</div>
-                      )}
+                      ) && <div className={'col-span-2 mt-1 text-xs font-thin italic'}>{t('cocktail:altGarnishNote')}</div>}
                     </>
                     <Divider size="sm" className="col-span-2"></Divider>
-                    <div>Summe</div>
+                    <div>{t('common:sum')}</div>
                     <div className={'grid grid-cols-3'}>
                       <div></div>
                       <div></div>
@@ -1098,7 +1098,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
 
             <Card variant="surface" className="col-span-full">
               <CardBody>
-                <div className={'text-center text-2xl font-bold'}>Zubereitung</div>
+                <div className={'text-center text-2xl font-bold'}>{t('cocktail:preparation')}</div>
 
                 <FieldArray name={'steps'}>
                   {({ push: pushStep, remove: removeStep }) => (
@@ -1107,10 +1107,10 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                         <Card key={`form-recipe-step-${indexStep}`} variant="inset" className={'flex w-full flex-col justify-between p-4'}>
                           <div className={'grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4'}>
                             <div className={'col-span-2 flex flex-row items-center justify-between gap-2 md:col-span-1 md:justify-start'}>
-                              <div className={'font-bold whitespace-nowrap'}>Schritt {indexStep + 1}</div>
+                              <div className={'font-bold whitespace-nowrap'}>{t('cocktail:step', { n: indexStep + 1 })}</div>
                               <FormControl>
                                 <Label className="w-fit flex-row items-center justify-start gap-1">
-                                  <LabelText>Optional</LabelText>
+                                  <LabelText>{t('common:optional')}</LabelText>
                                   <Field
                                     type={'checkbox'}
                                     name={`steps.${indexStep}.optional`}
@@ -1137,15 +1137,15 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                 onBlur={handleBlur}
                               >
                                 {actionsLoading ? (
-                                  <option disabled={true}>Lade...</option>
+                                  <option disabled={true}>{t('common:loadingShort')}</option>
                                 ) : (
                                   Object.entries(_.groupBy(actions, 'actionGroup')).map(([group, groupActions]) => (
-                                    <optgroup key={`form-recipe-step-${indexStep}-action-group-${group}`} label={userContext.getTranslation(group, 'de')}>
+                                    <optgroup key={`form-recipe-step-${indexStep}-action-group-${group}`} label={userContext.getTranslation(group)}>
                                       {groupActions
                                         .sort((a, b) => a.name.localeCompare(b.name))
                                         .map((action, indexAction) => (
                                           <option key={`form-recipe-step-${indexStep}-action-${indexAction}`} value={action.id}>
-                                            {userContext.getTranslation(action.name, 'de')}
+                                            {userContext.getTranslation(action.name)}
                                           </option>
                                         ))}
                                       )
@@ -1200,7 +1200,9 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                   modalContext.openModal(
                                     <DeleteConfirmationModal
                                       spelling={'REMOVE'}
-                                      entityName={`Schritt ${indexStep + 1} - ${userContext.getTranslation(values.steps[indexStep].action.name, 'de')}`}
+                                      entityName={
+                                        t('cocktail:step', { n: indexStep + 1 }) + ' - ' + userContext.getTranslation(values.steps[indexStep].action.name)
+                                      }
                                       onApprove={async () => {
                                         removeStep(indexStep);
                                       }}
@@ -1212,7 +1214,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                               </Button>
                             </div>
                           </div>
-                          <Divider className="col-span-full font-thin">Zutaten</Divider>
+                          <Divider className="col-span-full font-thin">{t('cocktail:ingredients')}</Divider>
                           <FieldArray name={`steps.${indexStep}.ingredients`}>
                             {({ push: pushIngredient, remove: removeIngredient }) => (
                               <>
@@ -1278,7 +1280,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                         <div className={'grid w-full grid-cols-2 gap-1 md:grid-cols-4'}>
                                           <FormControl className="col-span-2 md:col-span-1">
                                             <Label className="w-fit flex-row items-center justify-start gap-1 md:flex-col">
-                                              <LabelText>Optional</LabelText>
+                                              <LabelText>{t('common:optional')}</LabelText>
                                               <LabelTextAlt className="text-error">
                                                 {(errors.steps as StepError[])?.[indexStep]?.ingredients?.[indexIngredient]?.optional &&
                                                   (errors.steps as StepError[])?.[indexStep]?.ingredients?.[indexIngredient]?.optional}
@@ -1304,7 +1306,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                               value={
                                                 ingredientsLoading
                                                   ? 'Lade...'
-                                                  : (values.steps[indexStep].ingredients?.[indexIngredient].ingredient?.name ?? 'Wähle eine Zutat aus...')
+                                                  : (values.steps[indexStep].ingredients?.[indexIngredient].ingredient?.name ?? t('cocktail:chooseIngredient'))
                                               }
                                               readOnly={true}
                                               onClick={() => {
@@ -1339,7 +1341,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                                         }}
                                                       />
                                                     }
-                                                    title={'Zutat erfassen'}
+                                                    title={t('cocktail:createIngredient')}
                                                   />,
                                                 );
                                               }}
@@ -1375,7 +1377,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                               value={values.steps[indexStep].ingredients[indexIngredient].unitId ?? ''}
                                             >
                                               <option value={''} disabled>
-                                                Auswählen
+                                                {t('common:select')}
                                               </option>
 
                                               {values.steps[indexStep].ingredients[indexIngredient].unitId &&
@@ -1384,17 +1386,14 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                                 ?.volumes.find((unit) => unit.unit.id == values.steps[indexStep].ingredients[indexIngredient].unitId) ==
                                                 undefined ? (
                                                 <option
-                                                  className="tooltip"
-                                                  data-tip="hello"
                                                   value={values.steps[indexStep].ingredients[indexIngredient]?.unitId}
                                                   disabled={true}
+                                                  title={t('cocktail:unitUnavailable')}
                                                 >
-                                                  !!!
                                                   {userContext.getTranslation(
                                                     units.find((unit) => unit.id == values.steps[indexStep].ingredients[indexIngredient]?.unitId)?.name ?? '',
-                                                    'de',
-                                                  )}
-                                                  !!!
+                                                  )}{' '}
+                                                  ({t('cocktail:unitUnavailableShort')})
                                                 </option>
                                               ) : (
                                                 <></>
@@ -1402,14 +1401,14 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                               {ingredients
                                                 .find((ingredient) => ingredient.id == values.steps[indexStep].ingredients[indexIngredient]?.ingredientId)
                                                 ?.volumes?.sort((a, b) =>
-                                                  userContext.getTranslation(a.unit.name, 'de').localeCompare(userContext.getTranslation(b.unit.name, 'de')),
+                                                  userContext.getTranslation(a.unit.name).localeCompare(userContext.getTranslation(b.unit.name)),
                                                 )
                                                 ?.map((value) => (
                                                   <option
                                                     key={`steps.${indexStep}.ingredients.${indexIngredient}.units-${value.unit.id}`}
                                                     value={value.unit.id}
                                                   >
-                                                    {userContext.getTranslation(value.unit.name, 'de')}
+                                                    {userContext.getTranslation(value.unit.name)}
                                                   </option>
                                                 ))}
                                             </Select>
@@ -1422,7 +1421,9 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                                 modalContext.openModal(
                                                   <DeleteConfirmationModal
                                                     spelling={'REMOVE'}
-                                                    entityName={`die Zutat '${values.steps[indexStep].ingredients[indexIngredient].ingredient?.name ?? ''}'`}
+                                                    entityName={t('entity:theIngredient', {
+                                                      name: values.steps[indexStep].ingredients[indexIngredient].ingredient?.name ?? '',
+                                                    })}
                                                     onApprove={async () => removeIngredient(indexIngredient)}
                                                   />,
                                                 )
@@ -1453,7 +1454,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                     }
                                   >
                                     <FaPlus />
-                                    <span>Zutat hinzufügen</span>
+                                    <span>{t('cocktail:addIngredient')}</span>
                                   </Button>
                                 </div>
                               </>
@@ -1480,13 +1481,13 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                             pushStep(step);
                           }}
                         >
-                          <FaPlus /> <span>Schritt hinzufügen</span>
+                          <FaPlus /> <span>{t('cocktail:addStep')}</span>
                         </Button>
                       </div>
                     </div>
                   )}
                 </FieldArray>
-                <Divider className="col-span-2">Garnitur</Divider>
+                <Divider className="col-span-2">{t('cocktail:garnish')}</Divider>
                 <FieldArray name={'garnishes'}>
                   {({ push: pushGarnish, remove: removeGarnish }) => (
                     <div className={'col-span-2 space-y-4'}>
@@ -1557,7 +1558,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                           <div className={'grid w-full flex-2 grid-cols-1 gap-3 md:grid-cols-2'}>
                             <div className={''}>
                               <Label className="flex-row items-center justify-between">
-                                <LabelText>Garnitur</LabelText>
+                                <LabelText>{t('cocktail:garnish')}</LabelText>
                                 <LabelTextAlt className="text-error">
                                   {(errors.garnishes as GarnishError[])?.[indexGarnish]?.garnishId &&
                                     (errors.garnishes as GarnishError[])?.[indexGarnish]?.garnishId}
@@ -1567,7 +1568,9 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                 <Input
                                   joinItem
                                   className={`w-full cursor-pointer ${(errors.garnishes as GarnishError[])?.[indexGarnish]?.garnishId ? fieldErrorClass : undefined}`}
-                                  value={garnishesLoading ? 'Lade...' : (values.garnishes[indexGarnish].garnish?.name ?? 'Wähle eine Garnitur aus...')}
+                                  value={
+                                    garnishesLoading ? t('common:loadingShort') : (values.garnishes[indexGarnish].garnish?.name ?? t('cocktail:chooseGarnish'))
+                                  }
                                   readOnly={true}
                                   onClick={() => {
                                     openGarnishSelectModal(setFieldValue, indexGarnish);
@@ -1601,7 +1604,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                             }}
                                           />
                                         }
-                                        title={'Garnitur erfassen'}
+                                        title={t('cocktail:createGarnish')}
                                       />,
                                     );
                                   }}
@@ -1612,7 +1615,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                             </div>
                             <div className={'row-span-2'}>
                               <Label className="flex-row items-center justify-between">
-                                <LabelText>Zusätzliche Beschreibung</LabelText>
+                                <LabelText>{t('cocktail:garnishDescription')}</LabelText>
                                 <LabelTextAlt className="text-error">{/*{errors.garnishDescription  && errors.garnishDescription}*/}</LabelTextAlt>
                               </Label>
                               <Textarea
@@ -1625,7 +1628,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                             </div>
                             <FormControl>
                               <Label className="w-fit flex-col items-start justify-start gap-1">
-                                <LabelText>Optional</LabelText>
+                                <LabelText>{t('common:optional')}</LabelText>
                                 <LabelTextAlt className="text-error">
                                   {(errors.garnishes as GarnishError[])?.[indexGarnish]?.optional &&
                                     (errors.garnishes as GarnishError[])?.[indexGarnish]?.optional}
@@ -1643,7 +1646,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                             {indexGarnish > 0 && (
                               <FormControl>
                                 <Label className="w-fit flex-col items-start justify-start gap-1">
-                                  <LabelText>Alternativ</LabelText>
+                                  <LabelText>{t('cocktail:alternative')}</LabelText>
                                   <LabelTextAlt className="text-error">
                                     {(errors.garnishes as GarnishError[])?.[indexGarnish]?.isAlternative &&
                                       (errors.garnishes as GarnishError[])?.[indexGarnish]?.isAlternative}
@@ -1670,7 +1673,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                 modalContext.openModal(
                                   <DeleteConfirmationModal
                                     spelling={'REMOVE'}
-                                    entityName={`die Garnitur '${values.garnishes[indexGarnish].garnish.name}'`}
+                                    entityName={t('entity:theGarnish', { name: values.garnishes[indexGarnish].garnish.name })}
                                     onApprove={async () => removeGarnish(indexGarnish)}
                                   />,
                                 )
@@ -1700,7 +1703,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                             pushGarnish(cocktailRecipeGarnish);
                           }}
                         >
-                          <FaPlus /> <span>Garnitur hinzufügen</span>
+                          <FaPlus /> <span>{t('cocktail:addGarnish')}</span>
                         </Button>
                       </div>
                     </div>
@@ -1712,13 +1715,9 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
             <div className={'md:hidden'}>
               <Button type="submit" variant="primary" wide disabled={isSubmitting}>
                 {isSubmitting ? <Loading size="sm" /> : <></>}
-                {props.cocktailRecipe == undefined ? 'Erstellen' : 'Aktualisieren'}
+                {props.cocktailRecipe == undefined ? t('common:create') : t('common:update')}
               </Button>
-              {!isValid && (
-                <div className={'font-thin text-error italic'}>
-                  Nicht alle Felder sind korrekt ausgefüllt. Kontrolliere daher alle Felder. (Name gesetzt, Bild zugeschnitten, ... ?)
-                </div>
-              )}
+              {!isValid && <div className={'font-thin text-error italic'}>{t('common:formIncomplete')}</div>}
             </div>
           </div>
         </form>

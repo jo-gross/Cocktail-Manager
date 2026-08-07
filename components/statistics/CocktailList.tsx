@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import '@lib/StringUtils';
 import { Button, Card, CardBody, Input, Loading, Table, TableBody, TableCell, TableHead, TableHeaderCell, TableRow } from '@components/ui';
@@ -22,6 +23,7 @@ interface CocktailListProps {
 }
 
 export function CocktailList({ items, selectedId, onSelect, hiddenIds = new Set(), onToggleHidden, loading }: CocktailListProps) {
+  const { t } = useTranslation(['statistics', 'common']);
   const [sortBy, setSortBy] = useState<'name' | 'count' | 'percentage' | 'rank'>('count');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [filter, setFilter] = useState('');
@@ -61,7 +63,7 @@ export function CocktailList({ items, selectedId, onSelect, hiddenIds = new Set(
     return (
       <Card>
         <CardBody>
-          <div className="text-center text-base-content/70">Lade...</div>
+          <div className="text-center text-base-content/70">{t('statistics:loading')}</div>
         </CardBody>
       </Card>
     );
@@ -72,12 +74,12 @@ export function CocktailList({ items, selectedId, onSelect, hiddenIds = new Set(
       <CardBody>
         <div className="flex items-center justify-between">
           <span className="flex items-center gap-2">
-            Cocktails
+            {t('statistics:cocktails')}
             {loading && <Loading size="xs" />}
           </span>
         </div>
 
-        <Input type="text" placeholder="Filter..." inputSize="sm" value={filter} onChange={(e) => setFilter(e.target.value)} />
+        <Input type="text" placeholder={t('common:filterPlaceholder')} inputSize="sm" value={filter} onChange={(e) => setFilter(e.target.value)} />
 
         <div className="overflow-x-auto">
           <Table compact>
@@ -85,26 +87,26 @@ export function CocktailList({ items, selectedId, onSelect, hiddenIds = new Set(
               <TableRow>
                 <TableHeaderCell>
                   <Button type="button" variant="ghost" size="xs" onClick={() => handleSort('rank')}>
-                    Rang {sortBy === 'rank' && (sortDirection === 'asc' ? '↑' : '↓')}
+                    {t('statistics:rank')} {sortBy === 'rank' && (sortDirection === 'asc' ? '↑' : '↓')}
                   </Button>
                 </TableHeaderCell>
-                <TableHeaderCell>Farbe</TableHeaderCell>
+                <TableHeaderCell>{t('statistics:color')}</TableHeaderCell>
                 <TableHeaderCell>
                   <Button type="button" variant="ghost" size="xs" onClick={() => handleSort('name')}>
-                    Name {sortBy === 'name' && (sortDirection === 'asc' ? '↑' : '↓')}
+                    {t('statistics:name')} {sortBy === 'name' && (sortDirection === 'asc' ? '↑' : '↓')}
                   </Button>
                 </TableHeaderCell>
                 <TableHeaderCell>
                   <Button type="button" variant="ghost" size="xs" onClick={() => handleSort('count')}>
-                    Anzahl {sortBy === 'count' && (sortDirection === 'asc' ? '↑' : '↓')}
+                    {t('statistics:count')} {sortBy === 'count' && (sortDirection === 'asc' ? '↑' : '↓')}
                   </Button>
                 </TableHeaderCell>
                 <TableHeaderCell>
                   <Button type="button" variant="ghost" size="xs" onClick={() => handleSort('percentage')}>
-                    Anteil {sortBy === 'percentage' && (sortDirection === 'asc' ? '↑' : '↓')}
+                    {t('statistics:share')} {sortBy === 'percentage' && (sortDirection === 'asc' ? '↑' : '↓')}
                   </Button>
                 </TableHeaderCell>
-                <TableHeaderCell>Aktionen</TableHeaderCell>
+                <TableHeaderCell>{t('statistics:actions')}</TableHeaderCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -134,7 +136,7 @@ export function CocktailList({ items, selectedId, onSelect, hiddenIds = new Set(
                             e.stopPropagation();
                             onToggleHidden(item.cocktailId);
                           }}
-                          title={isHidden ? 'Einblenden' : 'Ausblenden'}
+                          title={isHidden ? t('common:show') : t('common:hide')}
                         >
                           {isHidden ? <FaEyeSlash /> : <FaEye />}
                         </Button>
@@ -147,7 +149,7 @@ export function CocktailList({ items, selectedId, onSelect, hiddenIds = new Set(
           </Table>
         </div>
 
-        {sortedItems.length === 0 && <div className="py-4 text-center text-base-content/70">Keine Cocktails gefunden</div>}
+        {sortedItems.length === 0 && <div className="py-4 text-center text-base-content/70">{t('statistics:noCocktailsFound')}</div>}
       </CardBody>
     </Card>
   );

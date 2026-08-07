@@ -1,5 +1,6 @@
 import ReactCrop, { Crop } from 'react-image-crop';
 import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import 'react-image-crop/dist/ReactCrop.css';
 import { FaTrashAlt } from 'react-icons/fa';
 import { Button, FormControl, Input, Label, Loading, Radio } from '@components/ui';
@@ -13,10 +14,11 @@ interface CropComponentProps {
 }
 
 export default function CropComponent(props: CropComponentProps) {
+  const { t } = useTranslation('common');
   const [crop, setCrop] = useState<Crop | null>(null);
 
-  const [backgroundColor, setBackgroundColor] = useState<string>('transparent'); // Hintergrundfarbe speichern
-  const [customColor, setCustomColor] = useState<string>('#ffffff'); // Benutzerdefinierte Farbe speichern
+  const [backgroundColor, setBackgroundColor] = useState<string>('transparent');
+  const [customColor, setCustomColor] = useState<string>('#ffffff');
 
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -74,25 +76,25 @@ export default function CropComponent(props: CropComponentProps) {
     const cropWidth = crop.width * scaleX;
     const cropHeight = crop.height * scaleY;
 
-    // Berechne den Offset des Bildes im Container
+    // Calculate image offset within the container
     const containerRect = containerRef.current!.getBoundingClientRect();
     const imgRect = imgRef.getBoundingClientRect();
     const offsetX = (containerRect.width - imgRect.width) / 2;
     const offsetY = (containerRect.height - imgRect.height) / 2;
 
-    // Erstelle ein Canvas mit den Dimensionen des Crop-Bereichs
+    // Create a canvas with the crop area dimensions
     const canvas = document.createElement('canvas');
     // const canvas = new OffscreenCanvas(crop.width, crop.height);
     canvas.width = crop.width * scaleX;
     canvas.height = crop.height * scaleY;
     const ctx = canvas.getContext('2d');
 
-    // Setze den Hintergrund auf Weiß
+    // Fill background when a custom color is selected
     if (backgroundColor === 'custom') {
       ctx!.fillStyle = customColor;
       ctx!.fillRect(0, 0, canvas.width, canvas.height);
     }
-    // Zeichne das Bild auf das Canvas, nur der gecroppte Bereich wird sichtbar sein
+    // Draw the cropped image region onto the canvas
     ctx?.drawImage(imgRef, (crop.x - offsetX) * scaleX, (crop.y - offsetY) * scaleY, cropWidth, cropHeight, 0, 0, canvas.width, canvas.height);
 
     return await new Promise((resolve, reject) => {
@@ -128,7 +130,7 @@ export default function CropComponent(props: CropComponentProps) {
               <img
                 ref={(imgRef) => setImageRef(imgRef)}
                 src={URL.createObjectURL(props.imageToCrop)}
-                alt="Crop"
+                alt={t('cropAlt')}
                 className={'absolute top-0 right-0 bottom-0 left-0 m-auto max-h-96 max-w-96 object-contain'}
                 onLoad={() => {
                   setImageLoaded(true);
@@ -138,16 +140,16 @@ export default function CropComponent(props: CropComponentProps) {
           </ReactCrop>
         </div>
         <div>
-          <div className={'font-bold'}>Hintergrundfarbe</div>
+          <div className={'font-bold'}>{t('backgroundColor')}</div>
           <FormControl>
             <Label className="flex-row items-center justify-between">
-              Transparent
+              {t('transparent')}
               <Radio name="bg-color" value="transparent" checked={backgroundColor === 'transparent'} onChange={() => setBackgroundColor('transparent')} />
             </Label>
           </FormControl>
           <FormControl>
             <Label className="flex-row items-center justify-between">
-              Eigene Farbe
+              {t('customColor')}
               <Radio name="bg-color" value="custom" checked={backgroundColor === 'custom'} onChange={() => setBackgroundColor('custom')} />
             </Label>
             <Input
@@ -169,7 +171,7 @@ export default function CropComponent(props: CropComponentProps) {
           onClick={async () => await generateCroppedImage()}
         >
           {isCropping ? <Loading size="sm" /> : null}
-          Zuschneiden und Bild übernehmen
+          {t('cropAndApply')}
         </Button>
         {props.onCropCancel && (
           <Button type="button" variant="outline" shape="square" className="border-error text-error hover:bg-error/10" onClick={props.onCropCancel}>

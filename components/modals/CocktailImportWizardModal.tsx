@@ -1,4 +1,5 @@
 import React, { useContext, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import { Divider } from '@components/ui';
 import { CocktailExportStructure } from '../../types/CocktailExportStructure';
@@ -38,6 +39,7 @@ interface CocktailImportWizardModalProps {
 
 export default function CocktailImportWizardModal({ workspaceId, onImportComplete }: CocktailImportWizardModalProps) {
   const modalContext = useContext(ModalContext);
+  const { t } = useTranslation(['cocktail']);
   const [currentStep, setCurrentStep] = useState(1);
   const [exportData, setExportData] = useState<CocktailExportStructure | null>(null);
   const [selectedCocktailIds, setSelectedCocktailIds] = useState<Set<string>>(new Set());
@@ -83,7 +85,7 @@ export default function CocktailImportWizardModal({ workspaceId, onImportComplet
 
   return (
     <div className={'flex flex-col gap-4'}>
-      <div className={'text-2xl font-bold'}>Cocktails importieren</div>
+      <div className={'text-2xl font-bold'}>{t('cocktail:importTitle')}</div>
 
       {/* Progress indicator */}
       <div className={'flex items-center justify-between'}>
@@ -110,10 +112,10 @@ export default function CocktailImportWizardModal({ workspaceId, onImportComplet
 
       {/* Step labels */}
       <div className={'flex justify-between text-xs'}>
-        <div className={'flex-1 text-center'}>Upload</div>
-        <div className={'flex-1 text-center'}>Mapping</div>
-        <div className={'flex-1 text-center'}>Review</div>
-        <div className={'flex-1 text-center'}>Import</div>
+        <div className={'flex-1 text-center'}>{t('cocktail:importStepUpload')}</div>
+        <div className={'flex-1 text-center'}>{t('cocktail:importStepMapping')}</div>
+        <div className={'flex-1 text-center'}>{t('cocktail:importStepReview')}</div>
+        <div className={'flex-1 text-center'}>{t('cocktail:importStepImport')}</div>
       </div>
 
       <Divider className="my-0" />

@@ -2,6 +2,7 @@ import prisma from '../../prisma/prisma';
 import { Role } from '@generated/prisma/client';
 import { sendEmail } from './send';
 import { getEmailConfig } from './config';
+import { getEmailCopy, getUserEmailLocale } from './copy';
 
 /**
  * Sends emails to all authorized users (OWNER, ADMIN, MANAGER) of the workspace
@@ -11,7 +12,7 @@ export async function sendJoinRequestNotificationToManagers(workspaceId: string,
   const config = getEmailConfig();
   if (!config.enabled || !config.templateConfig) return;
 
-  const { appBaseUrl } = config.templateConfig;
+  const { appBaseUrl, supportEmail, impressumUrl } = config.templateConfig;
 
   const [workspace, applicant] = await Promise.all([
     prisma.workspace.findUnique({
@@ -32,23 +33,31 @@ export async function sendJoinRequestNotificationToManagers(workspaceId: string,
       role: { in: [Role.OWNER, Role.ADMIN, Role.MANAGER] },
       user: { email: { not: null } },
     },
-    include: { user: { select: { email: true, name: true } } },
+    include: { user: { select: { id: true, email: true, name: true } } },
   });
 
   const manageUsersUrl = `${appBaseUrl}/workspaces/${workspaceId}/manage/settings/users`;
-  const applicantName = applicant?.name ?? 'Ein Nutzer';
 
   await Promise.all(
     managers
       .filter((m) => m.user.email)
-      .map((m) =>
-        sendEmail(m.user.email!, `Cocktail-Manager - ${workspace.name}: Neue Beitrittsanfrage`, 'join-request-notification', {
-          recipientName: m.user.name ?? undefined,
-          workspaceName: workspace.name,
-          applicantName,
+      .map(async (m) => {
+        const locale = await getUserEmailLocale(m.user.id);
+        const emailCopy = getEmailCopy(locale);
+        const applicantName = applicant?.name ?? emailCopy.aUser;
+
+        await sendEmail(m.user.email!, emailCopy.joinRequestSubject(workspace.name), 'join-request-notification', {
+          lang: emailCopy.lang,
+          title: emailCopy.joinRequestTitle,
+          greeting: emailCopy.greeting(m.user.name ?? undefined),
+          bodyHtml: emailCopy.joinRequestBody(applicantName, workspace.name),
+          ctaHint: emailCopy.joinRequestCtaHint,
+          ctaLabel: emailCopy.joinRequestCta,
           manageUsersUrl,
-        }),
-      ),
+          footerTagline: emailCopy.footerTagline,
+          footerLegal: emailCopy.footerLegal(supportEmail, impressumUrl),
+        });
+      }),
   );
 }
 
@@ -59,6 +68,8 @@ export async function sendJoinRequestAcceptedToUser(workspaceId: string, userId:
   const config = getEmailConfig();
   if (!config.enabled || !config.templateConfig) return;
 
+  const { supportEmail, impressumUrl } = config.templateConfig;
+
   const [workspace, recipient] = await Promise.all([
     prisma.workspace.findUnique({
       where: { id: workspaceId },
@@ -72,12 +83,20 @@ export async function sendJoinRequestAcceptedToUser(workspaceId: string, userId:
 
   if (!workspace || !recipient?.email) return;
 
+  const locale = await getUserEmailLocale(userId);
+  const emailCopy = getEmailCopy(locale);
   const workspaceUrl = `${config.templateConfig.appBaseUrl}/workspaces/${workspaceId}`;
 
-  await sendEmail(recipient.email, 'Cocktail-Manager - Beitrittsanfrage angenommen', 'join-request-accepted', {
-    recipientName: recipient.name ?? undefined,
-    workspaceName: workspace.name,
+  await sendEmail(recipient.email, emailCopy.joinAcceptedSubject, 'join-request-accepted', {
+    lang: emailCopy.lang,
+    title: emailCopy.joinAcceptedTitle,
+    greeting: emailCopy.greeting(recipient.name ?? undefined),
+    bodyHtml: emailCopy.joinAcceptedBody(workspace.name),
+    ctaHint: emailCopy.joinAcceptedCtaHint,
+    ctaLabel: emailCopy.joinAcceptedCta,
     workspaceUrl,
+    footerTagline: emailCopy.footerTagline,
+    footerLegal: emailCopy.footerLegal(supportEmail, impressumUrl),
   });
 }
 
@@ -88,6 +107,8 @@ export async function sendJoinRequestRejectedToUser(workspaceId: string, userId:
   const config = getEmailConfig();
   if (!config.enabled || !config.templateConfig) return;
 
+  const { supportEmail, impressumUrl } = config.templateConfig;
+
   const [workspace, recipient] = await Promise.all([
     prisma.workspace.findUnique({
       where: { id: workspaceId },
@@ -101,8 +122,15 @@ export async function sendJoinRequestRejectedToUser(workspaceId: string, userId:
 
   if (!workspace || !recipient?.email) return;
 
-  await sendEmail(recipient.email, 'Cocktail-Manager - Beitrittsanfrage abgelehnt', 'join-request-rejected', {
-    recipientName: recipient.name ?? undefined,
-    workspaceName: workspace.name,
+  const locale = await getUserEmailLocale(userId);
+  const emailCopy = getEmailCopy(locale);
+
+  await sendEmail(recipient.email, emailCopy.joinRejectedSubject, 'join-request-rejected', {
+    lang: emailCopy.lang,
+    title: emailCopy.joinRejectedTitle,
+    greeting: emailCopy.greeting(recipient.name ?? undefined),
+    bodyHtml: emailCopy.joinRejectedBody(workspace.name),
+    footerTagline: emailCopy.footerTagline,
+    footerLegal: emailCopy.footerLegal(supportEmail, impressumUrl),
   });
 }

@@ -2,6 +2,7 @@ import { alertService } from '../alertService';
 import type { CocktailDto, CocktailSummaryDto } from '@lib/schemas/cocktails';
 import { apiV1Fetch } from './apiV1';
 import { fetchListWithCache, fetchWithCache } from './fetchWithCache';
+import { i18n } from '@lib/i18n/client';
 
 export function fetchCocktail(
   workspaceId: string | string[] | undefined,
@@ -36,7 +37,7 @@ export function fetchCocktail(
           console.debug('Cocktail loaded from cache:', cocktailId);
         }
       } else if (error) {
-        alertService.error('Fehler beim Laden des Cocktails');
+        alertService.error(i18n.t('errors:loadCocktail'));
       }
     })
     .finally(() => {
@@ -97,12 +98,12 @@ export async function fetchCocktails(
         console.debug('Cocktails loaded from cache for search:', search);
       }
     } else if (error && error.name !== 'AbortError') {
-      alertService.error('Fehler beim Suchen der Cocktails');
+      alertService.error(i18n.t('cocktail:error.search'));
     }
   } catch (error) {
     if ((error as Error).name !== 'AbortError') {
       console.error('fetchCocktails error:', error);
-      alertService.error('Es ist ein Fehler aufgetreten');
+      alertService.error(i18n.t('errors:generic'));
     }
   } finally {
     setLoading(false);

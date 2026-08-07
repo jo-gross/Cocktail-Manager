@@ -116,7 +116,7 @@ describe('glasses controller', () => {
           phase: 'invalid' as never,
           exportData: {} as never,
         }),
-      ).rejects.toMatchObject({ code: 'VALIDATION_ERROR' });
+      ).rejects.toMatchObject({ code: 'INVALID_PHASE' });
     });
   });
 });

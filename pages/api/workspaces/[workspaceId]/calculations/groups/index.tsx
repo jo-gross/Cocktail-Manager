@@ -40,10 +40,10 @@ const legacyHandler = withHttpMethods({
         return res.json({ data: group });
       } catch (error: unknown) {
         if (error != null && typeof error === 'object' && 'code' in error && error.code === 'P2002') {
-          return res.status(409).json({ message: 'Eine Gruppe mit diesem Namen existiert bereits' });
+          return res.status(409).json({ message: 'A group with this name already exists' });
         }
         console.error('CalculationGroup -> create', error);
-        return res.status(500).json({ message: 'Fehler beim Erstellen der Gruppe' });
+        return res.status(500).json({ message: 'Failed to create group' });
       }
     },
   ),

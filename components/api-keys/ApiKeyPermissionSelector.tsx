@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import React, { useEffect, useState } from 'react';
 import { Permission } from '@generated/prisma/client';
 import { FaInfoCircle } from 'react-icons/fa';
@@ -125,58 +126,10 @@ const permissionLabels: Record<Permission, string> = {
   [Permission.MONITOR_UPDATE]: 'MONITOR_UPDATE',
 };
 
-// Permission descriptions
-const permissionDescriptions: Record<Permission, string> = {
-  [Permission.COCKTAILS_READ]: 'Cocktails lesen und anzeigen',
-  [Permission.COCKTAILS_CREATE]: 'Neue Cocktails erstellen',
-  [Permission.COCKTAILS_UPDATE]: 'Bestehende Cocktails bearbeiten',
-  [Permission.COCKTAILS_DELETE]: 'Cocktails löschen',
-  [Permission.INGREDIENTS_READ]: 'Zutaten lesen und anzeigen',
-  [Permission.INGREDIENTS_CREATE]: 'Neue Zutaten erstellen',
-  [Permission.INGREDIENTS_UPDATE]: 'Bestehende Zutaten bearbeiten',
-  [Permission.INGREDIENTS_DELETE]: 'Zutaten löschen',
-  [Permission.GARNISHES_READ]: 'Garnituren lesen und anzeigen',
-  [Permission.GARNISHES_CREATE]: 'Neue Garnituren erstellen',
-  [Permission.GARNISHES_UPDATE]: 'Bestehende Garnituren bearbeiten',
-  [Permission.GARNISHES_DELETE]: 'Garnituren löschen',
-  [Permission.GLASSES_READ]: 'Gläser lesen und anzeigen',
-  [Permission.GLASSES_CREATE]: 'Neue Gläser erstellen',
-  [Permission.GLASSES_UPDATE]: 'Bestehende Gläser bearbeiten',
-  [Permission.GLASSES_DELETE]: 'Gläser löschen',
-  [Permission.UNITS_READ]: 'Einheiten lesen und anzeigen',
-  [Permission.UNITS_UPDATE]: 'Bestehende Einheiten bearbeiten',
-  [Permission.QUEUE_READ]: 'Warteschlange lesen und anzeigen',
-  [Permission.QUEUE_CREATE]: 'Items zur Warteschlange hinzufügen',
-  [Permission.QUEUE_UPDATE]: 'Items in der Warteschlange bearbeiten',
-  [Permission.QUEUE_DELETE]: 'Items aus der Warteschlange entfernen',
-  [Permission.STATISTICS_READ]: 'Statistiken lesen und anzeigen',
-  [Permission.STATISTICS_CREATE]: 'Statistik-Einträge erstellen',
-  [Permission.STATISTICS_DELETE]: 'Statistik-Einträge löschen',
-  [Permission.CARDS_READ]: 'Bartender-Karten lesen und anzeigen',
-  [Permission.CARDS_CREATE]: 'Neue Bartender-Karten erstellen',
-  [Permission.CARDS_UPDATE]: 'Bestehende Bartender-Karten bearbeiten',
-  [Permission.CARDS_DELETE]: 'Bartender-Karten löschen',
-  [Permission.CALCULATIONS_READ]: 'Kalkulationen lesen und anzeigen',
-  [Permission.CALCULATIONS_CREATE]: 'Neue Kalkulationen erstellen',
-  [Permission.CALCULATIONS_UPDATE]: 'Bestehende Kalkulationen bearbeiten',
-  [Permission.CALCULATIONS_DELETE]: 'Kalkulationen löschen',
-  [Permission.WORKSPACE_READ]: 'Workspace-Informationen lesen',
-  [Permission.WORKSPACE_UPDATE]: 'Workspace-Einstellungen bearbeiten',
-  [Permission.USERS_READ]: 'Workspace-Nutzer lesen und anzeigen',
-  [Permission.USERS_UPDATE]: 'Workspace-Nutzer bearbeiten',
-  [Permission.USERS_DELETE]: 'Nutzer aus dem Workspace entfernen',
-  [Permission.ICE_READ]: 'Eis-Optionen lesen und anzeigen',
-  [Permission.ICE_CREATE]: 'Neue Eis-Optionen erstellen',
-  [Permission.ICE_UPDATE]: 'Bestehende Eis-Optionen bearbeiten',
-  [Permission.ICE_DELETE]: 'Eis-Optionen löschen',
-  [Permission.RATINGS_READ]: 'Bewertungen lesen und anzeigen',
-  [Permission.RATINGS_CREATE]: 'Neue Bewertungen erstellen',
-  [Permission.RATINGS_DELETE]: 'Bewertungen löschen',
-  [Permission.MONITOR_READ]: 'Monitor-/Signage-Einstellungen lesen',
-  [Permission.MONITOR_UPDATE]: 'Monitor-/Signage-Einstellungen setzen, ändern und entfernen',
-};
-
 export default function ApiKeyPermissionSelector(props: ApiKeyPermissionSelectorProps) {
+  const { t } = useTranslation(['settings', 'common']);
+
+  const permissionDescription = (permission: Permission) => t(`settings:permissionDesc.${permission}`);
   // Track selected permissions as a set for easy lookup
   const [selectedPermissionSet, setSelectedPermissionSet] = useState<Set<string>>(new Set());
 
@@ -296,7 +249,7 @@ export default function ApiKeyPermissionSelector(props: ApiKeyPermissionSelector
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="text-lg font-bold">Berechtigungen</div>
+      <div className="text-lg font-bold">{t('settings:permissions')}</div>
       <div className="max-h-96 overflow-y-auto">
         {/* ALL category */}
         <div className="flex flex-col gap-1">
@@ -316,10 +269,10 @@ export default function ApiKeyPermissionSelector(props: ApiKeyPermissionSelector
                 ALL
               </label>
               <Tooltip tip={allPermissions.map((p) => permissionLabels[p]).join(', ')}>
-                <span className="cursor-help text-xs text-base-content/60">({allPermissions.length} Berechtigungen)</span>
+                <span className="cursor-help text-xs text-base-content/60">{t('settings:permissionsCount', { count: allPermissions.length })}</span>
               </Tooltip>
             </div>
-            <Tooltip tip="Alle Berechtigungen auswählen - gewährt vollständigen Zugriff auf alle Endpunkte" className="pr-4">
+            <Tooltip tip={t('settings:permissionSelectAllTip')} className="pr-4">
               <FaInfoCircle className="cursor-help" size={14} />
             </Tooltip>
           </div>
@@ -346,10 +299,10 @@ export default function ApiKeyPermissionSelector(props: ApiKeyPermissionSelector
                   {category.label}
                 </label>
                 <Tooltip tip={category.permissions.map((p) => permissionLabels[p]).join(', ')}>
-                  <span className="cursor-help text-xs text-base-content/60">({category.permissions.length} Berechtigungen)</span>
+                  <span className="cursor-help text-xs text-base-content/60">{t('settings:permissionsCount', { count: category.permissions.length })}</span>
                 </Tooltip>
               </div>
-              <Tooltip tip={`Alle ${category.label}-Berechtigungen auswählen`} className="pr-4">
+              <Tooltip tip={t('settings:permissionSelectCategoryTip', { category: category.label })} className="pr-4">
                 <FaInfoCircle className="cursor-help" size={14} />
               </Tooltip>
             </div>
@@ -363,7 +316,7 @@ export default function ApiKeyPermissionSelector(props: ApiKeyPermissionSelector
                         {permissionLabels[perm]}
                       </label>
                     </div>
-                    <Tooltip tip={permissionDescriptions[perm]} className="pr-4">
+                    <Tooltip tip={permissionDescription(perm)} className="pr-4">
                       <FaInfoCircle className="cursor-help" size={12} />
                     </Tooltip>
                   </div>

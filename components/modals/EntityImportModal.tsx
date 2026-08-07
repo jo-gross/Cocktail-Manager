@@ -1,4 +1,5 @@
 import React, { useCallback, useContext, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import { alertService } from '@lib/alertService';
 import { FaUpload, FaCheckCircle, FaTimesCircle, FaExclamationTriangle, FaChevronDown, FaChevronUp } from 'react-icons/fa';
@@ -81,12 +82,12 @@ interface CalculationGroupOption {
 
 // ────────────── Constants ──────────────
 
-const ENTITY_LABELS: Record<string, { singular: string; plural: string; nameKey: string }> = {
-  glasses: { singular: 'Glas', plural: 'Gläser', nameKey: 'glass' },
-  garnishes: { singular: 'Garnitur', plural: 'Garnituren', nameKey: 'garnish' },
-  ingredients: { singular: 'Zutat', plural: 'Zutaten', nameKey: 'ingredient' },
-  calculations: { singular: 'Kalkulation', plural: 'Kalkulationen', nameKey: 'calculation' },
-};
+const ENTITY_LABEL_KEYS = {
+  glasses: { singularKey: 'glass', pluralKey: 'glasses', nameKey: 'glass' },
+  garnishes: { singularKey: 'garnish', pluralKey: 'garnishes', nameKey: 'garnish' },
+  ingredients: { singularKey: 'ingredient', pluralKey: 'ingredients', nameKey: 'ingredient' },
+  calculations: { singularKey: 'calculation', pluralKey: 'calculations', nameKey: 'calculation' },
+} as const;
 
 // ────────────── Dependency Mapping Section (matches EntityMappingSection design) ──────────────
 
@@ -119,6 +120,7 @@ function DependencyMappingSection({
   isAutoMatched,
   resetToAutoMatch,
 }: DependencyMappingSectionProps) {
+  const { t } = useTranslation(['common', 'entity']);
   const [collapsed, setCollapsed] = useState(defaultCollapsed);
 
   const fetchOptions = useCallback(
@@ -139,7 +141,7 @@ function DependencyMappingSection({
           {autoMatchedCount > 0 && (
             <Badge variant="success" size="sm" className="gap-1">
               <FaCheckCircle className="text-xs" />
-              {autoMatchedCount} auto-matched
+              {t('common:autoMatchedCount', { count: autoMatchedCount })}
             </Badge>
           )}
         </div>
@@ -160,18 +162,18 @@ function DependencyMappingSection({
                     <div className="font-semibold">{match.exportName}</div>
                     {isAuto && (
                       <Badge variant="success" size="sm">
-                        Auto-matched
+                        {t('common:autoMatched')}
                       </Badge>
                     )}
                     {!isAuto && isMapped && (
                       <button
                         type="button"
                         className="cursor-pointer"
-                        title="Klicken um automatische Zuordnung wiederherzustellen"
+                        title={t('common:restoreAutoMatch')}
                         onClick={() => resetToAutoMatch(type, match.exportName)}
                       >
                         <Badge variant="success" size="sm" outline>
-                          Auto
+                          {t('common:auto')}
                         </Badge>
                       </button>
                     )}
@@ -190,7 +192,7 @@ function DependencyMappingSection({
                           }
                         }}
                       />
-                      <span className="text-sm">Bestehende verwenden</span>
+                      <span className="text-sm">{t('common:useExisting')}</span>
                     </Label>
 
                     {mapping?.decision === 'use-existing' && (
@@ -208,7 +210,7 @@ function DependencyMappingSection({
 
                     <Label className="cursor-pointer flex-row items-center gap-2">
                       <Radio radioSize="sm" checked={mapping?.decision === 'skip'} onChange={() => onUpdate(match.exportName, null)} />
-                      <span className="text-sm">Überspringen</span>
+                      <span className="text-sm">{t('common:skip')}</span>
                     </Label>
                   </div>
                 </div>
@@ -225,8 +227,14 @@ function DependencyMappingSection({
 
 export default function EntityImportModal({ workspaceId, entityType, onImportComplete }: EntityImportModalProps) {
   const modalContext = useContext(ModalContext);
+  const { t } = useTranslation(['common', 'entity', 'cocktail', 'errors', 'nav', 'settings']);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const labels = ENTITY_LABELS[entityType];
+  const labelKeys = ENTITY_LABEL_KEYS[entityType];
+  const labels = {
+    singular: t(`entity:singular.${labelKeys.singularKey}`),
+    plural: t(`entity:plural.${labelKeys.pluralKey}`),
+    nameKey: labelKeys.nameKey,
+  };
   const isCalculation = entityType === 'calculations';
 
   const totalSteps = isCalculation ? 4 : 3;
@@ -269,19 +277,19 @@ export default function EntityImportModal({ workspaceId, entityType, onImportCom
           const parsed: ParsedEntity[] = dataArray.map((item: Record<string, unknown>) => {
             const entityData = item[labels.nameKey] as Record<string, unknown> | undefined;
             if (!entityData?.name) {
-              return { name: 'Unbekannt', data: item, valid: false, selected: false };
+              return { name: t('common:unknown'), data: item, valid: false, selected: false };
             }
             return { name: String(entityData.name), data: item, valid: true, selected: true };
           });
 
           setParsedEntities(parsed);
         } catch {
-          alertService.error('Ungültige JSON-Datei');
+          alertService.error(t('errors:invalidJson'));
         }
       };
       reader.readAsText(file);
     },
-    [labels.nameKey],
+    [labels.nameKey, t],
   );
 
   const handleToggleSelect = useCallback((index: number) => {
@@ -311,7 +319,7 @@ export default function EntityImportModal({ workspaceId, entityType, onImportCom
       });
 
       if (!response.ok) {
-        alertService.error('Fehler beim Prüfen der Konflikte');
+        alertService.error(t('errors:checkConflicts'));
         return;
       }
 
@@ -371,11 +379,11 @@ export default function EntityImportModal({ workspaceId, entityType, onImportCom
       setCurrentStep(2);
     } catch (error) {
       console.error('Prepare mapping error:', error);
-      alertService.error('Fehler beim Vorbereiten des Imports');
+      alertService.error(t('errors:prepareImport'));
     } finally {
       setLoading(false);
     }
-  }, [parsedEntities, workspaceId, entityType, isCalculation]);
+  }, [parsedEntities, workspaceId, entityType, isCalculation, t]);
 
   // ────── Step 3: Execute import ──────
 
@@ -416,14 +424,14 @@ export default function EntityImportModal({ workspaceId, entityType, onImportCom
       if (successCount > 0) {
         onImportComplete();
       }
-      alertService.success(`${labels.plural} erfolgreich importiert`);
+      alertService.success(t('entity:importedSuccessfully', { plural: labels.plural }));
     } catch (error) {
       console.error('Execute error:', error);
-      alertService.error('Fehler beim Importieren');
+      alertService.error(t('errors:import'));
     } finally {
       setImporting(false);
     }
-  }, [mappingEntities, workspaceId, entityType, isCalculation, cocktailMappings, ingredientMappings, unitMappings, onImportComplete]);
+  }, [mappingEntities, workspaceId, entityType, isCalculation, cocktailMappings, ingredientMappings, unitMappings, onImportComplete, labels.plural, t]);
 
   // ────── Helpers ──────
 
@@ -490,13 +498,15 @@ export default function EntityImportModal({ workspaceId, entityType, onImportCom
     });
   const singleEntity = mappingEntities.length === 1;
 
-  const stepLabels = isCalculation ? ['Upload', 'Konflikte', 'Zuordnung', 'Import'] : ['Upload', 'Konflikte', 'Import'];
+  const stepLabels = isCalculation
+    ? [t('cocktail:importStepUpload'), t('entity:importStepConflicts'), t('entity:importStepAssignment'), t('cocktail:importStepImport')]
+    : [t('cocktail:importStepUpload'), t('entity:importStepConflicts'), t('cocktail:importStepImport')];
 
   // ────── Render ──────
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="text-2xl font-bold">{labels.plural} importieren</div>
+      <div className="text-2xl font-bold">{t('entity:importPluralTitle', { plural: labels.plural })}</div>
 
       {/* Progress indicator (same as CocktailImportWizardModal) */}
       <div className="flex items-center justify-between">
@@ -526,41 +536,39 @@ export default function EntityImportModal({ workspaceId, entityType, onImportCom
         {/* Step 1: Upload */}
         {currentStep === 1 && (
           <div className="flex flex-col gap-4">
-            <div className="text-lg font-semibold">Schritt 1: Datei hochladen</div>
+            <div className="text-lg font-semibold">{t('entity:importStep1Upload')}</div>
 
             {parsedEntities.length === 0 ? (
               <>
-                <div className="text-sm text-base-content/70">Laden Sie eine JSON-Datei hoch, die zuvor exportiert wurde.</div>
+                <div className="text-sm text-base-content/70">{t('entity:importUploadHint')}</div>
                 <label
                   className={`flex cursor-pointer flex-col items-center gap-4 rounded-lg border-2 border-dashed border-base-300 p-8 transition-colors hover:border-primary ${loading ? 'opacity-50' : ''}`}
                 >
                   <FaUpload className="text-4xl text-base-content/50" />
                   <div className="text-center">
-                    <div className="font-semibold">JSON-Datei hochladen</div>
-                    <div className="text-sm text-base-content/70">Klicken Sie hier oder ziehen Sie eine Datei herein</div>
+                    <div className="font-semibold">{t('entity:importUploadJson')}</div>
+                    <div className="text-sm text-base-content/70">{t('entity:importDropHint')}</div>
                   </div>
                   <input ref={fileInputRef} type="file" accept=".json,application/json" className="hidden" onChange={handleFileUpload} />
                 </label>
                 {loading && (
                   <div className="flex items-center justify-center gap-2">
                     <Loading />
-                    <span>Datei wird geladen...</span>
+                    <span>{t('entity:importFileLoading')}</span>
                   </div>
                 )}
               </>
             ) : (
               <>
                 <div className="rounded-lg bg-base-200 p-4">
-                  <div className="text-sm font-semibold">Import-Details</div>
+                  <div className="text-sm font-semibold">{t('entity:importDetails')}</div>
                   <div className="mt-2 text-sm text-base-content/70">
-                    <div>
-                      Anzahl {labels.plural}: {parsedEntities.length}
-                    </div>
+                    <div>{t('entity:importEntityCount', { plural: labels.plural, count: parsedEntities.length })}</div>
                   </div>
                 </div>
 
-                <div className="text-sm font-semibold">{labels.plural} auswählen</div>
-                <div className="text-sm text-base-content/70">Wählen Sie die {labels.plural} aus, die Sie importieren möchten.</div>
+                <div className="text-sm font-semibold">{t('entity:importSelectEntities', { plural: labels.plural })}</div>
+                <div className="text-sm text-base-content/70">{t('entity:importSelectHint', { plural: labels.plural })}</div>
 
                 <div className="max-h-[300px] overflow-y-auto rounded-lg border border-base-300">
                   <Table compact>
@@ -573,8 +581,8 @@ export default function EntityImportModal({ workspaceId, entityType, onImportCom
                             onChange={handleToggleSelectAll}
                           />
                         </TableHeaderCell>
-                        <TableHeaderCell>Name</TableHeaderCell>
-                        <TableHeaderCell>Status</TableHeaderCell>
+                        <TableHeaderCell>{t('common:name')}</TableHeaderCell>
+                        <TableHeaderCell>{t('common:status')}</TableHeaderCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
@@ -587,11 +595,11 @@ export default function EntityImportModal({ workspaceId, entityType, onImportCom
                           <TableCell>
                             {entity.valid ? (
                               <Badge variant="ghost" size="sm">
-                                Bereit
+                                {t('common:ready')}
                               </Badge>
                             ) : (
                               <Badge variant="error" size="sm">
-                                Ungültig
+                                {t('common:invalid')}
                               </Badge>
                             )}
                           </TableCell>
@@ -602,18 +610,18 @@ export default function EntityImportModal({ workspaceId, entityType, onImportCom
                 </div>
 
                 <div className="text-sm text-base-content/70">
-                  {selectedCount} von {parsedEntities.filter((e) => e.valid).length} {labels.plural} ausgewählt
+                  {t('entity:importSelectedCount', { selected: selectedCount, total: parsedEntities.filter((e) => e.valid).length, plural: labels.plural })}
                 </div>
               </>
             )}
 
             <div className="flex justify-end gap-2">
               <Button variant="outline" className="border-error text-error hover:bg-error/10" onClick={() => modalContext.closeModal()}>
-                Abbrechen
+                {t('common:cancel')}
               </Button>
               <Button variant="primary" onClick={handlePrepareMapping} disabled={parsedEntities.length === 0 || selectedCount === 0 || loading}>
                 {loading ? <Loading size="sm" /> : null}
-                Weiter
+                {t('common:next')}
               </Button>
             </div>
           </div>
@@ -622,10 +630,8 @@ export default function EntityImportModal({ workspaceId, entityType, onImportCom
         {/* Step 2: Conflict resolution */}
         {currentStep === 2 && (
           <div className="flex flex-col gap-4">
-            <div className="text-lg font-semibold">Schritt 2: Konflikte lösen</div>
-            <div className="text-sm text-base-content/70">
-              Bestehende Einträge mit gleichem Namen wurden erkannt. Wählen Sie pro Eintrag, ob überschreiben, neu erstellen, umbenennen oder überspringen.
-            </div>
+            <div className="text-lg font-semibold">{t('entity:importStep2Conflicts')}</div>
+            <div className="text-sm text-base-content/70">{t('entity:importConflictsHint')}</div>
 
             <div className="max-h-[300px] overflow-y-auto">
               <div className="flex flex-col gap-3">
@@ -636,12 +642,12 @@ export default function EntityImportModal({ workspaceId, entityType, onImportCom
                       {entity.conflicts.length > 0 && (
                         <Badge variant="warning" size="sm">
                           <FaExclamationTriangle className="mr-1" />
-                          Konflikt
+                          {t('common:conflict')}
                         </Badge>
                       )}
                       {entity.conflicts.length === 0 && (
                         <Badge variant="success" size="sm">
-                          Neu
+                          {t('common:new')}
                         </Badge>
                       )}
                     </div>
@@ -655,7 +661,7 @@ export default function EntityImportModal({ workspaceId, entityType, onImportCom
                             checked={entity.decision === 'overwrite'}
                             onChange={() => updateMappingDecision(idx, { decision: 'overwrite', existingId: entity.conflicts[0].id })}
                           />
-                          <span className="text-sm">Überschreiben</span>
+                          <span className="text-sm">{t('common:overwrite')}</span>
                           {entity.conflicts.length > 1 && entity.decision === 'overwrite' && (
                             <Select
                               selectSize="sm"
@@ -678,16 +684,16 @@ export default function EntityImportModal({ workspaceId, entityType, onImportCom
                             checked={entity.decision === 'import'}
                             onChange={() => updateMappingDecision(idx, { decision: 'import' })}
                           />
-                          <span className="text-sm">Trotzdem erstellen</span>
+                          <span className="text-sm">{t('common:createNew')}</span>
                         </Label>
                         <Label className="cursor-pointer flex-row items-center gap-2">
                           <Radio
                             radioSize="sm"
                             name={`decision-${idx}`}
                             checked={entity.decision === 'rename'}
-                            onChange={() => updateMappingDecision(idx, { decision: 'rename', newName: entity.name + ' (Import)' })}
+                            onChange={() => updateMappingDecision(idx, { decision: 'rename', newName: entity.name + t('entity:importNameSuffix') })}
                           />
-                          <span className="text-sm">Umbenennen</span>
+                          <span className="text-sm">{t('common:rename')}</span>
                           {entity.decision === 'rename' && (
                             <Input
                               inputSize="sm"
@@ -706,7 +712,7 @@ export default function EntityImportModal({ workspaceId, entityType, onImportCom
                               checked={entity.decision === 'skip'}
                               onChange={() => updateMappingDecision(idx, { decision: 'skip' })}
                             />
-                            <span className="text-sm">Überspringen</span>
+                            <span className="text-sm">{t('common:skip')}</span>
                           </Label>
                         )}
                       </div>
@@ -714,7 +720,7 @@ export default function EntityImportModal({ workspaceId, entityType, onImportCom
 
                     {isCalculation && (
                       <div className="mt-3 rounded-md border border-base-300 bg-base-200/40 p-2">
-                        <div className="mb-2 text-sm font-semibold">Ordner-Zuordnung</div>
+                        <div className="mb-2 text-sm font-semibold">{t('entity:importFolderAssignment')}</div>
                         <div className="flex flex-col gap-1">
                           <Label className="cursor-pointer flex-row items-center gap-2">
                             <Radio
@@ -725,8 +731,8 @@ export default function EntityImportModal({ workspaceId, entityType, onImportCom
                               onChange={() => updateMappingDecision(idx, { groupDecision: 'keep-exported' })}
                             />
                             <span className="text-sm">
-                              Export-Ordner verwenden
-                              {entity.exportedGroupName ? ` (${entity.exportedGroupName})` : ' (kein Ordner im Export)'}
+                              {t('entity:importUseExportFolder')}
+                              {entity.exportedGroupName ? ` (${entity.exportedGroupName})` : t('entity:importNoFolderInExport')}
                             </span>
                           </Label>
                           <Label className="cursor-pointer flex-row items-center gap-2">
@@ -741,7 +747,7 @@ export default function EntityImportModal({ workspaceId, entityType, onImportCom
                                 })
                               }
                             />
-                            <span className="text-sm">Bestehenden Ordner auswählen</span>
+                            <span className="text-sm">{t('entity:importSelectExistingFolder')}</span>
                           </Label>
                           {entity.groupDecision === 'use-existing' && (
                             <Select
@@ -751,7 +757,7 @@ export default function EntityImportModal({ workspaceId, entityType, onImportCom
                               onChange={(event) => updateMappingDecision(idx, { existingGroupId: event.target.value })}
                             >
                               <option value={''} disabled>
-                                Ordner auswählen
+                                {t('entity:importSelectFolder')}
                               </option>
                               {calculationGroups.map((group) => (
                                 <option key={group.id} value={group.id}>
@@ -768,11 +774,11 @@ export default function EntityImportModal({ workspaceId, entityType, onImportCom
                               onChange={() =>
                                 updateMappingDecision(idx, {
                                   groupDecision: 'create-new',
-                                  newGroupName: entity.newGroupName || entity.exportedGroupName || `${entity.name} Gruppe`,
+                                  newGroupName: entity.newGroupName || entity.exportedGroupName || t('entity:groupNameDefault', { name: entity.name }),
                                 })
                               }
                             />
-                            <span className="text-sm">Neuen Ordner erstellen</span>
+                            <span className="text-sm">{t('entity:importCreateNewFolder')}</span>
                           </Label>
                           {entity.groupDecision === 'create-new' && (
                             <div className="mt-1 ml-6 flex max-w-md flex-col gap-2">
@@ -780,7 +786,7 @@ export default function EntityImportModal({ workspaceId, entityType, onImportCom
                                 inputSize="sm"
                                 type="text"
                                 className="w-full"
-                                placeholder="Ordnername"
+                                placeholder={t('entity:folderNamePlaceholder')}
                                 value={entity.newGroupName || ''}
                                 onChange={(event) => updateMappingDecision(idx, { newGroupName: event.target.value })}
                               />
@@ -790,7 +796,7 @@ export default function EntityImportModal({ workspaceId, entityType, onImportCom
                                   checked={Boolean(entity.newGroupDefaultExpanded)}
                                   onChange={(event) => updateMappingDecision(idx, { newGroupDefaultExpanded: event.target.checked })}
                                 />
-                                <span className="text-xs">Standardmäßig aufgeklappt</span>
+                                <span className="text-xs">{t('entity:importDefaultExpanded')}</span>
                               </Label>
                             </div>
                           )}
@@ -801,7 +807,7 @@ export default function EntityImportModal({ workspaceId, entityType, onImportCom
                               checked={entity.groupDecision === 'no-group'}
                               onChange={() => updateMappingDecision(idx, { groupDecision: 'no-group' })}
                             />
-                            <span className="text-sm">Ohne Ordner importieren</span>
+                            <span className="text-sm">{t('entity:importWithoutFolder')}</span>
                           </Label>
                         </div>
                       </div>
@@ -813,10 +819,10 @@ export default function EntityImportModal({ workspaceId, entityType, onImportCom
 
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setCurrentStep(1)}>
-                Zurück
+                {t('common:back')}
               </Button>
               <Button variant="primary" onClick={() => setCurrentStep(hasDependencyMappings ? 3 : totalSteps)} disabled={hasInvalidGroupAssignments}>
-                Weiter
+                {t('common:next')}
               </Button>
             </div>
           </div>
@@ -825,40 +831,38 @@ export default function EntityImportModal({ workspaceId, entityType, onImportCom
         {/* Step 3: Dependency mapping (calculations only) */}
         {currentStep === 3 && isCalculation && (
           <div className="flex flex-col gap-4">
-            <div className="text-lg font-semibold">Schritt 3: Entitäten zuordnen</div>
-            <div className="text-sm text-base-content/70">
-              Wählen Sie für jede Entität, ob eine bestehende verwendet werden soll. Auto-Matching wurde basierend auf exakten Namen durchgeführt.
-            </div>
+            <div className="text-lg font-semibold">{t('entity:importStep3Mapping')}</div>
+            <div className="text-sm text-base-content/70">{t('entity:importMappingHint')}</div>
 
             <div className="max-h-[400px] overflow-y-auto">
               <div className="flex flex-col gap-4">
                 {[
                   {
                     type: 'cocktail' as const,
-                    title: 'Cocktails',
+                    title: t('nav:cocktails'),
                     matches: cocktailMatches,
                     mappings: cocktailMappings,
                     onUpdate: updateCocktailMapping,
                     fetchUrl: 'cocktails',
-                    placeholder: 'Cocktail auswählen...',
+                    placeholder: t('entity:selectCocktailPlaceholder'),
                   },
                   {
                     type: 'ingredient' as const,
-                    title: 'Zutaten',
+                    title: t('entity:plural.ingredients'),
                     matches: ingredientMatches,
                     mappings: ingredientMappings,
                     onUpdate: updateIngredientMapping,
                     fetchUrl: 'ingredients',
-                    placeholder: 'Zutat auswählen...',
+                    placeholder: t('entity:selectIngredientPlaceholder'),
                   },
                   {
                     type: 'unit' as const,
-                    title: 'Einheiten',
+                    title: t('settings:units'),
                     matches: unitMatches,
                     mappings: unitMappings,
                     onUpdate: updateUnitMapping,
                     fetchUrl: 'units',
-                    placeholder: 'Einheit auswählen...',
+                    placeholder: t('entity:selectUnitPlaceholder'),
                   },
                 ]
                   .filter((section) => section.matches.length > 0)
@@ -889,10 +893,10 @@ export default function EntityImportModal({ workspaceId, entityType, onImportCom
 
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setCurrentStep(2)}>
-                Zurück
+                {t('common:back')}
               </Button>
               <Button variant="primary" onClick={() => setCurrentStep(totalSteps)}>
-                Weiter
+                {t('common:next')}
               </Button>
             </div>
           </div>
@@ -901,27 +905,27 @@ export default function EntityImportModal({ workspaceId, entityType, onImportCom
         {/* Step 4 (or 3): Confirmation & execution / Success */}
         {currentStep === totalSteps && importComplete && (
           <div className="flex flex-col gap-4">
-            <div className="text-lg font-semibold">Import erfolgreich!</div>
+            <div className="text-lg font-semibold">{t('entity:importSuccessTitle')}</div>
 
             <div className="flex items-center justify-center">
               <FaCheckCircle className="text-6xl text-success" />
             </div>
 
             <div className="rounded-lg bg-base-200 p-4">
-              <div className="text-sm font-semibold">Zusammenfassung</div>
+              <div className="text-sm font-semibold">{t('common:summary')}</div>
               <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
-                <div className="text-base-content/70">Erstellt:</div>
+                <div className="text-base-content/70">{t('common:createdCount')}</div>
                 <div className="font-semibold">{results.filter((r) => r.status === 'created').length}</div>
-                <div className="text-base-content/70">Überschrieben:</div>
+                <div className="text-base-content/70">{t('common:overwrittenCount')}</div>
                 <div className="font-semibold">{results.filter((r) => r.status === 'overwritten').length}</div>
-                <div className="text-base-content/70">Übersprungen:</div>
+                <div className="text-base-content/70">{t('common:skippedCount')}</div>
                 <div className="font-semibold">{results.filter((r) => r.status === 'skipped').length}</div>
               </div>
             </div>
 
             <div className="flex justify-end gap-2">
               <Button variant="primary" onClick={() => modalContext.closeModal()}>
-                Fertig
+                {t('common:done')}
               </Button>
             </div>
           </div>
@@ -929,13 +933,13 @@ export default function EntityImportModal({ workspaceId, entityType, onImportCom
 
         {currentStep === totalSteps && !importComplete && (
           <div className="flex flex-col gap-4">
-            <div className="text-lg font-semibold">Schritt {totalSteps}: Import bestätigen</div>
-            <div className="text-sm text-base-content/70">Überprüfen Sie die Import-Zusammenfassung und bestätigen Sie den Import.</div>
+            <div className="text-lg font-semibold">{t('entity:importStepConfirm', { step: totalSteps })}</div>
+            <div className="text-sm text-base-content/70">{t('entity:importConfirmHint')}</div>
 
             <div className="rounded-lg bg-base-200 p-4">
-              <div className="mb-3 text-sm font-semibold">Import-Zusammenfassung</div>
+              <div className="mb-3 text-sm font-semibold">{t('entity:importSummaryTitle')}</div>
               <div className="grid grid-cols-2 gap-2 text-sm">
-                <div className="text-base-content/70">{labels.plural} zu importieren:</div>
+                <div className="text-base-content/70">{t('entity:importToImport', { plural: labels.plural })}</div>
                 <div className="font-semibold">{mappingEntities.filter((e) => e.decision !== 'skip').length}</div>
               </div>
             </div>
@@ -943,7 +947,7 @@ export default function EntityImportModal({ workspaceId, entityType, onImportCom
             {/* Details anzeigen (same as Cocktail ConfirmationStep) */}
             <div className="rounded-lg border border-base-300">
               <div className="flex cursor-pointer items-center justify-between bg-base-200 p-3" onClick={() => setShowDetailsCollapsed(!showDetailsCollapsed)}>
-                <span className="text-sm font-semibold">Details anzeigen</span>
+                <span className="text-sm font-semibold">{t('common:details')}</span>
                 {showDetailsCollapsed ? <FaChevronDown /> : <FaChevronUp />}
               </div>
               {!showDetailsCollapsed && (
@@ -953,22 +957,22 @@ export default function EntityImportModal({ workspaceId, entityType, onImportCom
                       <div key={idx} className="flex items-center gap-2 text-sm">
                         {entity.decision === 'import' && (
                           <Badge variant="success" size="xs">
-                            Erstellen
+                            {t('entity:importCreateBadge')}
                           </Badge>
                         )}
                         {entity.decision === 'overwrite' && (
                           <Badge variant="warning" size="xs">
-                            Überschreiben
+                            {t('common:overwrite')}
                           </Badge>
                         )}
                         {entity.decision === 'rename' && (
                           <Badge variant="info" size="xs">
-                            Umbenennen
+                            {t('common:rename')}
                           </Badge>
                         )}
                         {entity.decision === 'skip' && (
                           <Badge variant="ghost" size="xs">
-                            Überspringen
+                            {t('common:skip')}
                           </Badge>
                         )}
                         <span className={entity.decision === 'skip' ? 'text-base-content/50 line-through' : ''}>
@@ -979,12 +983,14 @@ export default function EntityImportModal({ workspaceId, entityType, onImportCom
                           <span className="text-xs text-base-content/60">
                             {' · '}
                             {entity.groupDecision === 'no-group'
-                              ? 'ohne Ordner'
+                              ? t('entity:importSummaryWithoutFolder')
                               : entity.groupDecision === 'use-existing'
-                                ? `Ordner: ${calculationGroups.find((g) => g.id === entity.existingGroupId)?.name ?? 'bestehend'}`
+                                ? t('entity:importSummaryFolder', {
+                                    name: calculationGroups.find((g) => g.id === entity.existingGroupId)?.name ?? t('entity:importSummaryExisting'),
+                                  })
                                 : entity.groupDecision === 'create-new'
-                                  ? `Neuer Ordner: ${entity.newGroupName || '–'}`
-                                  : `Export-Ordner: ${entity.exportedGroupName || '–'}`}
+                                  ? t('entity:importSummaryNewFolder', { name: entity.newGroupName || '–' })
+                                  : t('entity:importSummaryExportFolder', { name: entity.exportedGroupName || '–' })}
                           </span>
                         )}
                       </div>
@@ -992,11 +998,11 @@ export default function EntityImportModal({ workspaceId, entityType, onImportCom
                   </div>
                   {isCalculation && hasDependencyMappings && (
                     <div className="mt-4">
-                      <div className="mb-2 text-sm font-semibold">Zuordnungen</div>
+                      <div className="mb-2 text-sm font-semibold">{t('common:mappings')}</div>
                       {[
-                        { label: 'Cocktails', mappings: cocktailMappings, matches: cocktailMatches },
-                        { label: 'Zutaten', mappings: ingredientMappings, matches: ingredientMatches },
-                        { label: 'Einheiten', mappings: unitMappings, matches: unitMatches },
+                        { label: t('nav:cocktails'), mappings: cocktailMappings, matches: cocktailMatches },
+                        { label: t('entity:plural.ingredients'), mappings: ingredientMappings, matches: ingredientMatches },
+                        { label: t('settings:units'), mappings: unitMappings, matches: unitMatches },
                       ]
                         .filter((s) => s.mappings.length > 0)
                         .map((section) => (
@@ -1013,7 +1019,7 @@ export default function EntityImportModal({ workspaceId, entityType, onImportCom
                                   <div key={m.exportName} className="flex items-center gap-2 text-sm">
                                     {m.decision === 'use-existing' ? (
                                       <Badge variant="success" size="xs">
-                                        ✓
+                                        {String.fromCharCode(0x2713)}
                                       </Badge>
                                     ) : (
                                       <Badge variant="warning" size="xs">
@@ -1039,29 +1045,29 @@ export default function EntityImportModal({ workspaceId, entityType, onImportCom
             {isCalculation && hasUnmappedDeps && (
               <div className="flex items-start gap-2 rounded-lg border border-warning p-2 text-sm text-warning">
                 <FaExclamationTriangle className="mt-0.5 shrink-0" />
-                <span>Einige Cocktails, Zutaten oder Einheiten konnten nicht zugeordnet werden und werden beim Import übersprungen.</span>
+                <span>{t('entity:importUnmappedWarning')}</span>
               </div>
             )}
             {isCalculation && hasInvalidGroupAssignments && (
               <div className="flex items-start gap-2 rounded-lg border border-error p-2 text-sm text-error">
                 <FaTimesCircle className="mt-0.5 shrink-0" />
-                <span>Bitte vervollständigen Sie die Ordnerzuordnung (bestehenden Ordner wählen oder neuen Namen angeben).</span>
+                <span>{t('entity:importFolderWarning')}</span>
               </div>
             )}
 
             {importing ? (
               <div className="flex flex-col items-center justify-center gap-4 py-8">
                 <Loading size="lg" />
-                <span>Import läuft... Bitte warten Sie.</span>
-                <div className="text-xs text-base-content/50">Dies kann je nach Anzahl einige Sekunden dauern.</div>
+                <span>{t('entity:importRunning')}</span>
+                <div className="text-xs text-base-content/50">{t('entity:importRunningHint')}</div>
               </div>
             ) : (
               <div className="flex justify-end gap-2">
                 <Button variant="outline" onClick={() => setCurrentStep(isCalculation ? 3 : 2)}>
-                  Zurück
+                  {t('common:back')}
                 </Button>
                 <Button variant="primary" onClick={handleExecute} disabled={mappingEntities.every((e) => e.decision === 'skip') || hasInvalidGroupAssignments}>
-                  Import starten
+                  {t('entity:importStart')}
                 </Button>
               </div>
             )}

@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import type { CocktailSummaryDto } from '@lib/schemas/cocktails';
 import { Button } from '@components/ui';
 
@@ -11,14 +12,10 @@ interface SearchResultRowProps {
   showAction?: boolean;
 }
 
-export function SearchResultRow({
-  cocktail,
-  isArchived = false,
-  onSelect,
-  actionLabel = 'Ansehen',
-  actionDisabled = false,
-  showAction = true,
-}: SearchResultRowProps) {
+export function SearchResultRow({ cocktail, isArchived = false, onSelect, actionLabel, actionDisabled = false, showAction = true }: SearchResultRowProps) {
+  const { t } = useTranslation('common');
+  const resolvedActionLabel = actionLabel ?? t('view');
+
   return (
     <div
       role="button"
@@ -34,7 +31,7 @@ export function SearchResultRow({
     >
       <span className="min-w-0 truncate text-base font-medium md:text-lg">
         {cocktail.name}
-        {isArchived ? ' (Archiviert)' : ''}
+        {isArchived ? ` ${t('archivedParen')}` : ''}
       </span>
       {showAction ? (
         <Button
@@ -47,7 +44,7 @@ export function SearchResultRow({
             onSelect(cocktail);
           }}
         >
-          {actionLabel}
+          {resolvedActionLabel}
         </Button>
       ) : null}
     </div>

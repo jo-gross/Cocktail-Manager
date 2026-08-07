@@ -2,6 +2,7 @@ import { Role } from '@generated/prisma/client';
 import Link from 'next/link';
 import { ManageEntityLayout } from '@components/layout/ManageEntityLayout';
 import React, { useCallback, useContext, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useRouter } from 'next/router';
 import { FaCheck, FaChevronDown, FaFileDownload, FaFileUpload, FaInfoCircle, FaPlus, FaTimes } from 'react-icons/fa';
 import { ManageColumn } from '@components/ManageColumn';
@@ -43,6 +44,7 @@ import {
 import type { SortDirection } from '@components/ui';
 
 const IngredientsOverviewPage: NextPageWithPullToRefresh = () => {
+  const { t } = useTranslation(['manage', 'common', 'nav', 'entity', 'errors']);
   const router = useRouter();
   const { workspaceId } = router.query;
 
@@ -133,8 +135,8 @@ const IngredientsOverviewPage: NextPageWithPullToRefresh = () => {
       });
 
       if (!response.ok) {
-        const error = await response.json().catch(() => ({ message: 'Fehler beim Exportieren' }));
-        alertService.error(error.message ?? 'Fehler beim Exportieren');
+        const error = await response.json().catch(() => ({ message: t('errors:export') }));
+        alertService.error(error.message ?? t('errors:export'));
         return;
       }
 
@@ -148,11 +150,11 @@ const IngredientsOverviewPage: NextPageWithPullToRefresh = () => {
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
-      alertService.success('JSON erfolgreich exportiert');
+      alertService.success(t('entity:jsonExported'));
       setSelectedIds(new Set());
     } catch (error) {
       console.error('JSON export error:', error);
-      alertService.error('Fehler beim Exportieren');
+      alertService.error(t('errors:export'));
     } finally {
       setExportingJson(false);
     }
@@ -170,8 +172,8 @@ const IngredientsOverviewPage: NextPageWithPullToRefresh = () => {
         });
 
         if (!response.ok) {
-          const error = await response.json().catch(() => ({ message: 'Fehler beim Exportieren' }));
-          alertService.error(error.message ?? 'Fehler beim Exportieren');
+          const error = await response.json().catch(() => ({ message: t('errors:export') }));
+          alertService.error(error.message ?? t('errors:export'));
           return;
         }
 
@@ -186,10 +188,10 @@ const IngredientsOverviewPage: NextPageWithPullToRefresh = () => {
         a.click();
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
-        alertService.success('JSON erfolgreich exportiert');
+        alertService.success(t('entity:jsonExported'));
       } catch (error) {
         console.error('JSON export error:', error);
-        alertService.error('Fehler beim Exportieren');
+        alertService.error(t('errors:export'));
       } finally {
         setExportingSingleId(null);
       }
@@ -199,7 +201,7 @@ const IngredientsOverviewPage: NextPageWithPullToRefresh = () => {
 
   return (
     <ManageEntityLayout
-      title={'Zutaten'}
+      title={t('nav:ingredients')}
       backLink={`/workspaces/${workspaceId}/manage`}
       actions={
         <div className={'flex items-center gap-2'}>
@@ -207,7 +209,7 @@ const IngredientsOverviewPage: NextPageWithPullToRefresh = () => {
             <Dropdown align="end">
               <Button type="button" variant="outline" size="sm" className="md:h-10 md:min-h-10 md:px-4" tabIndex={0}>
                 <FaFileDownload />
-                {selectedIds.size} ausgewählt
+                {t('manage:selectedCount', { count: selectedIds.size })}
                 <FaChevronDown />
               </Button>
               <DropdownContent tabIndex={0} className="z-[1] mt-2 block w-64">
@@ -218,7 +220,7 @@ const IngredientsOverviewPage: NextPageWithPullToRefresh = () => {
                   <li>
                     <button type="button" onClick={handleExportJson} disabled={exportingJson}>
                       {exportingJson ? <UiLoading size="sm" /> : <FaFileDownload />}
-                      Als JSON exportieren ({selectedIds.size})
+                      {t('manage:exportAsJsonCount', { count: selectedIds.size })}
                     </button>
                   </li>
                 </Menu>
@@ -228,7 +230,7 @@ const IngredientsOverviewPage: NextPageWithPullToRefresh = () => {
           <Dropdown align="end">
             <Button type="button" variant="outline" size="sm" className="md:h-10 md:min-h-10 md:px-4" tabIndex={0}>
               <FaFileUpload />
-              Import/Export
+              {t('manage:importExport')}
               <FaChevronDown />
             </Button>
             <DropdownContent tabIndex={0} className="z-[1] mt-2 block w-52">
@@ -251,7 +253,7 @@ const IngredientsOverviewPage: NextPageWithPullToRefresh = () => {
                     }}
                   >
                     <FaFileUpload />
-                    Aus JSON importieren
+                    {t('manage:importFromJson')}
                   </button>
                 </li>
               </Menu>
@@ -279,27 +281,27 @@ const IngredientsOverviewPage: NextPageWithPullToRefresh = () => {
                       checkboxSize="sm"
                       checked={sortedIngredients.length > 0 && sortedIngredients.every((i) => selectedIds.has(i.id))}
                       onChange={handleToggleSelectAll}
-                      aria-label="Alle auswählen"
+                      aria-label={t('common:selectAll')}
                     />
                   </TableHeaderCell>
                   <TableHeaderCell className="w-0"></TableHeaderCell>
                   <SortableHeaderCell sortKey="name" activeSortKey={sortKey} direction={sortDirection} onSort={handleSort}>
-                    Zutat
+                    {t('common:ingredientLabel')}
                   </SortableHeaderCell>
                   <SortableHeaderCell sortKey="shortName" activeSortKey={sortKey} direction={sortDirection} onSort={handleSort}>
-                    Eigene Bezeichnung
+                    {t('common:shortName')}
                   </SortableHeaderCell>
-                  <TableHeaderCell>Notizen</TableHeaderCell>
+                  <TableHeaderCell>{t('common:notes')}</TableHeaderCell>
                   <SortableHeaderCell sortKey="price" activeSortKey={sortKey} direction={sortDirection} onSort={handleSort}>
-                    Preis
+                    {t('common:price')}
                   </SortableHeaderCell>
-                  <TableHeaderCell>Verfügbare Menge(n)</TableHeaderCell>
-                  <TableHeaderCell>Preis/Menge</TableHeaderCell>
-                  <TableHeaderCell>Tags</TableHeaderCell>
+                  <TableHeaderCell>{t('manage:availableVolumes')}</TableHeaderCell>
+                  <TableHeaderCell>{t('manage:pricePerVolume')}</TableHeaderCell>
+                  <TableHeaderCell>{t('common:tags')}</TableHeaderCell>
                   <SortableHeaderCell sortKey="link" activeSortKey={sortKey} direction={sortDirection} onSort={handleSort}>
-                    Link
+                    {t('manage:link')}
                   </SortableHeaderCell>
-                  <TableHeaderCell>Seite</TableHeaderCell>
+                  <TableHeaderCell>{t('manage:page')}</TableHeaderCell>
                   <TableHeaderCell></TableHeaderCell>
                 </TableRow>
               </TableHead>
@@ -309,7 +311,7 @@ const IngredientsOverviewPage: NextPageWithPullToRefresh = () => {
                 ) : sortedIngredients.length == 0 ? (
                   <TableRow>
                     <TableCell colSpan={12} className="text-center">
-                      Keine Einträge gefunden
+                      {t('manage:noEntriesFound')}
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -322,7 +324,7 @@ const IngredientsOverviewPage: NextPageWithPullToRefresh = () => {
                         hasImage={ingredient.hasImage}
                         onImageClick={() => modalContext.openModal(<ImageModal image={ingredient.imageUrl ?? ''} />)}
                       >
-                        <AvatarImage src={ingredient.imageUrl ?? ''} alt={'Zutat'} />
+                        <AvatarImage src={ingredient.imageUrl ?? ''} alt={t('entity:singular.ingredient')} />
                       </TableImageCell>
                       <TableCell className={''}>{ingredient.name}</TableCell>
                       <TableCell>{ingredient.shortName}</TableCell>
@@ -336,30 +338,31 @@ const IngredientsOverviewPage: NextPageWithPullToRefresh = () => {
                             modalContext.openModal(
                               <div className={'flex flex-col gap-2'}>
                                 <div className={'mr-8 text-2xl font-bold'}>{ingredient.name}</div>
-                                <div className={'text-lg font-bold'}>Allgemeine Zutatenbeschreibung</div>
+                                <div className={'text-lg font-bold'}>{t('common:descriptionGeneral')}</div>
                                 <div className={'long-text-format'}>{ingredient.description ?? '-'}</div>
-                                <div className={'text-lg font-bold'}>Notizen</div>
+                                <div className={'text-lg font-bold'}>{t('common:notes')}</div>
                                 <div className={'long-text-format'}>{ingredient.notes ?? '-'}</div>
                               </div>,
                             );
                           }}
                         >
                           <FaInfoCircle />
-                          <span>Anzeigen</span>
+                          <span>{t('manage:show')}</span>
                         </Button>
                       </TableCell>
-                      <TableCell className={'whitespace-nowrap'}>{ingredient.price?.formatPrice() ?? '-'} €</TableCell>
+                      <TableCell className={'whitespace-nowrap'}>{t('common:euroValue', { value: ingredient.price?.formatPrice() ?? '-' })}</TableCell>
                       <TableCell className={''}>
                         {ingredient.volumes.map((volume) => (
                           <div key={`ingredient-${ingredient.id}-volume-unit-${volume.id}`} className={'whitespace-nowrap'}>
-                            {volume.volume.toFixed(2).replace(/\D00(?=\D*$)/, '')} {userContext.getTranslation(volume.unit.name, 'de')}
+                            {volume.volume.toFixed(2).replace(/\D00(?=\D*$)/, '')} {userContext.getTranslation(volume.unit.name)}
                           </div>
                         ))}
                       </TableCell>
                       <TableCell>
                         {ingredient.volumes.map((volume) => (
                           <div key={`ingredient-${ingredient.id}-volume-unit-price-${volume.id}`} className={'whitespace-nowrap'}>
-                            {((ingredient.price ?? 0) / volume.volume).formatPrice()} €/{userContext.getTranslation(volume.unit.name, 'de')}
+                            {((ingredient.price ?? 0) / volume.volume).formatPrice()}
+                            {t('common:euroPerUnit', { unit: userContext.getTranslation(volume.unit.name) })}
                           </div>
                         ))}
                       </TableCell>

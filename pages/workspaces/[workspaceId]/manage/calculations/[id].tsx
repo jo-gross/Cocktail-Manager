@@ -1,5 +1,6 @@
 import { ManageEntityLayout } from '@components/layout/ManageEntityLayout';
 import React, { useCallback, useContext, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useRouter } from 'next/router';
 import type { CocktailDto, CocktailGarnishRef, CocktailIngredientRef, CocktailUnitRef } from '@lib/schemas/cocktails';
 import type { CalculationDto } from '@lib/schemas/calculations';
@@ -72,6 +73,7 @@ interface IngredientShoppingUnit {
 }
 
 export default function CalculationPage() {
+  const { t } = useTranslation(['manage', 'common', 'cocktail', 'nav', 'errors', 'entity']);
   const modalContext = useContext(ModalContext);
   const userContext = useContext(UserContext);
   const routingContext = useContext(RoutingContext);
@@ -177,7 +179,7 @@ export default function CalculationPage() {
       })
       .catch((error) => {
         console.error('CocktailCalculation -> useEffect[init, id != create]', error);
-        alertApiV1Error(error, 'Fehler beim Laden der Kalkulation');
+        alertApiV1Error(error, t('errors:loadCalculation'));
       })
       .finally(() => {
         setLoading(false);
@@ -212,7 +214,7 @@ export default function CalculationPage() {
           })
           .catch((error) => {
             console.error('CalculationId -> addCocktailToSelection (not already exists) -> fetchCocktail', error);
-            alertApiV1Error(error, 'Fehler beim Laden des Cocktails');
+            alertApiV1Error(error, t('cocktail:error.loadOne'));
           })
           .finally(() => {
             triggerRecalculate(true);
@@ -304,7 +306,7 @@ export default function CalculationPage() {
               if (redirect) {
                 await router.replace(`/workspaces/${workspaceId}/manage/calculations/${created.id}`);
               }
-              alertService.success('Kalkulation erfolgreich erstellt');
+              alertService.success(t('common:success.created'));
             })
           : updateCalculation(workspaceId!, id as string, body).then(async (updated) => {
               setOriginalItems(JSON.stringify(cocktailCalculationItems));
@@ -314,20 +316,20 @@ export default function CalculationPage() {
               if (redirect) {
                 await router.replace(`/workspaces/${workspaceId}/manage/calculations/${updated.id}`);
               }
-              alertService.success('Kalkulation erfolgreich gespeichert');
+              alertService.success(t('manage:calculations.calculationSaved'));
             });
 
       savePromise
         .catch((error) => {
           console.error('CalculationId -> saveCalculation', error);
-          alertApiV1Error(error, id == 'create' ? 'Fehler beim Erstellen der Kalkulation' : 'Fehler beim Aktualisieren der Kalkulation');
+          alertApiV1Error(error, id == 'create' ? t('errors:createCalculation') : t('errors:updateCalculation'));
         })
         .finally(() => {
           setSaving(false);
           window.scrollTo(0, currentScrollTop);
         });
     },
-    [ingredientShoppingUnits, id, calculationName, showSalesStuff, cocktailCalculationItems, workspaceId, router],
+    [ingredientShoppingUnits, id, calculationName, showSalesStuff, cocktailCalculationItems, workspaceId, router, t],
   );
 
   useEffect(() => {
@@ -355,9 +357,9 @@ export default function CalculationPage() {
 
   const openNameModal = useCallback(() => {
     modalContext.openModal(
-      <InputModal title={'Kalkulation speichern'} onInputSubmit={async (value) => setCalculationName(value)} defaultValue={calculationName} />,
+      <InputModal title={t('manage:calculations.saveTitle')} onInputSubmit={async (value) => setCalculationName(value)} defaultValue={calculationName} />,
     );
-  }, [calculationName, modalContext]);
+  }, [calculationName, modalContext, t]);
 
   // All must have the same ingredient
   const calculateTotalIngredientAmount = useCallback(
@@ -443,7 +445,7 @@ export default function CalculationPage() {
   const handleCSVExport = useCallback(() => {
     const csvContent =
       'data:text/csv;charset=utf-8,' +
-      'Markiert,Name,Geplante Menge,Einheit\n' +
+      `${t('entity:auditHeader.checked')},${t('common:name')},${t('manage:calculations.plannedAmount')},${t('entity:auditHeader.unit')}\n` +
       _.chain(ingredientCalculationItems)
         .groupBy('ingredient.id')
         .sortBy((group) => group[0].ingredient.name)
@@ -457,7 +459,6 @@ export default function CalculationPage() {
             })},${userContext.getTranslation(
               units.find((unit) => unit.id == ingredientShoppingUnits.find((ingredient) => ingredient.ingredientId == items[0].ingredient.id)?.unitId)?.name ??
                 'N/A',
-              'de',
             )}`,
         )
         .value()
@@ -469,7 +470,7 @@ export default function CalculationPage() {
     link.setAttribute('download', 'cocktail-calculation.csv');
     document.body.appendChild(link);
     link.click();
-  }, [calculateTotalIngredientAmount, ingredientCalculationItems, ingredientShoppingUnits, units, userContext]);
+  }, [calculateTotalIngredientAmount, ingredientCalculationItems, ingredientShoppingUnits, t, units, userContext]);
 
   return (
     <ManageEntityLayout
@@ -485,7 +486,7 @@ export default function CalculationPage() {
       }}
       title={
         calculationName.trim() == '' ? (
-          'Kalkulation'
+          t('manage:calculations.title')
         ) : (
           <div className={'flex flex-col items-center justify-center md:flex-row md:gap-2 print:flex-row'}>
             <div className={'flex'}>
@@ -503,7 +504,7 @@ export default function CalculationPage() {
             </div>
 
             <span>{'-'}</span>
-            <span>Kalkulation</span>
+            <span>{t('manage:calculations.title')}</span>
             <div className={'hidden print:flex'}>({formatDate(new Date())})</div>
           </div>
         )
@@ -529,7 +530,7 @@ export default function CalculationPage() {
           }}
         >
           {saving ? <UiLoading size="sm" /> : null}
-          Speichern
+          {t('common:save')}
         </Button>,
       ]}
     >
@@ -542,7 +543,7 @@ export default function CalculationPage() {
           <div className={'col-span-1 row-span-3 w-full'}>
             <Card>
               <CardBody>
-                <div className={'text-center text-2xl font-bold print:text-xl'}>Getränke Übersicht</div>
+                <div className={'text-center text-2xl font-bold print:text-xl'}>{t('manage:calculations.drinksOverview')}</div>
                 <div className={'print:hidden'}>
                   <Divider size="sm" />
                 </div>
@@ -550,13 +551,13 @@ export default function CalculationPage() {
                   <Table compact className="w-full">
                     <TableHead>
                       <TableRow>
-                        <TableHeaderCell className="w-20">Geplante Menge</TableHeaderCell>
-                        <TableHeaderCell className="w-full">Name</TableHeaderCell>
-                        <TableHeaderCell className="print:hidden">Mengenvorschläge</TableHeaderCell>
+                        <TableHeaderCell className="w-20">{t('manage:calculations.plannedAmount')}</TableHeaderCell>
+                        <TableHeaderCell className="w-full">{t('common:name')}</TableHeaderCell>
+                        <TableHeaderCell className="print:hidden">{t('manage:calculations.amountSuggestions')}</TableHeaderCell>
                         {showSalesStuff ? (
                           <>
-                            <TableHeaderCell className="min-w-20">Preis</TableHeaderCell>
-                            <TableHeaderCell>Sonderpreis</TableHeaderCell>
+                            <TableHeaderCell className="min-w-20">{t('common:price')}</TableHeaderCell>
+                            <TableHeaderCell>{t('common:customPrice')}</TableHeaderCell>
                           </>
                         ) : null}
                         <TableHeaderCell className="flex justify-end print:hidden">
@@ -574,7 +575,7 @@ export default function CalculationPage() {
                               )
                             }
                           >
-                            Hinzufügen
+                            {t('common:add')}
                           </Button>
                         </TableHeaderCell>
                       </TableRow>
@@ -582,7 +583,7 @@ export default function CalculationPage() {
                     <TableBody>
                       {cocktailCalculationItems.length == 0 ? (
                         <TableRow className="text-center">
-                          <TableCell colSpan={showSalesStuff ? 6 : 4}>Keine Einträge vorhanden</TableCell>
+                          <TableCell colSpan={showSalesStuff ? 6 : 4}>{t('common:emptyEntriesPresent')}</TableCell>
                         </TableRow>
                       ) : (
                         cocktailCalculationItems.map((cocktail) => (
@@ -622,12 +623,9 @@ export default function CalculationPage() {
                                 onClick={() => {
                                   modalContext.openModal(
                                     <div className="flex flex-col gap-2">
-                                      <div className="text-lg font-semibold">Mengenvorschläge</div>
-                                      <div>
-                                        Wie viel Einheiten noch benötigt werden, um die Zutat vollständig zu benutzen (links, in grün) und (rechts, in rot) wie
-                                        viel weniger Einheiten, um die angebrochene Auszugleichen.
-                                      </div>
-                                      <Divider className="font-bold">Zutaten</Divider>
+                                      <div className="text-lg font-semibold">{t('manage:calculations.amountSuggestions')}</div>
+                                      <div>{t('manage:calculations.amountSuggestionsHelp')}</div>
+                                      <Divider className="font-bold">{t('cocktail:ingredients')}</Divider>
                                       <div className="grid grid-cols-3 items-center gap-2">
                                         {calculateRecommendedAmount(cocktail)
                                           .sort((a, b) => a.ingredient.name.localeCompare(b.ingredient.name))
@@ -650,7 +648,7 @@ export default function CalculationPage() {
                                                   modalContext.closeAllModals();
                                                 }}
                                               >
-                                                + {Math.floor(item.more)} Anpassen
+                                                {t('manage:calculations.adjustPositive', { count: Math.floor(item.more) })}
                                               </Button>
                                               <Button
                                                 type="button"
@@ -674,7 +672,7 @@ export default function CalculationPage() {
                                                   modalContext.closeAllModals();
                                                 }}
                                               >
-                                                {Math.floor(item.less)} Anpassen
+                                                {t('manage:calculations.adjustNegative', { count: Math.floor(item.less) })}
                                               </Button>
                                             </React.Fragment>
                                           ))}
@@ -684,7 +682,7 @@ export default function CalculationPage() {
                                 }}
                               >
                                 <FaInfoCircle />
-                                <span>Anzeigen</span>
+                                <span>{t('manage:show')}</span>
                               </Button>
                             </TableCell>
                             {showSalesStuff ? (
@@ -734,7 +732,7 @@ export default function CalculationPage() {
                                     modalContext.openModal(
                                       <DeleteConfirmationModal
                                         spelling="REMOVE"
-                                        entityName={`den Cocktail '${cocktail.cocktail.name}'`}
+                                        entityName={t('entity:theCocktail', { name: cocktail.cocktail.name })}
                                         onApprove={async () => {
                                           setCocktailCalculationItems(cocktailCalculationItems.filter((item) => item.cocktail.id != cocktail.cocktail.id));
                                           triggerRecalculate(true);
@@ -759,12 +757,12 @@ export default function CalculationPage() {
           <div className={'col-span-1 w-full'}>
             <Card>
               <CardBody>
-                <div className={'text-center text-2xl font-bold print:text-xl'}>Finanzen</div>
+                <div className={'text-center text-2xl font-bold print:text-xl'}>{t('cocktail:finances')}</div>
                 <div className={'print:hidden'}>
                   <Divider size="sm" />
                   <FormControl>
                     <Label className="flex-row items-center justify-between">
-                      <LabelText>Betriebswirtschaftliche Ansicht</LabelText>
+                      <LabelText>{t('manage:calculations.businessView')}</LabelText>
                       <Toggle checked={showSalesStuff} onChange={(event) => setShowSalesStuff(event.target.checked)} />
                     </Label>
                   </FormControl>
@@ -773,14 +771,14 @@ export default function CalculationPage() {
                   <Table compact className="w-full">
                     <TableHead>
                       <TableRow>
-                        <TableHeaderCell>Zutat</TableHeaderCell>
-                        <TableHeaderCell>Menge</TableHeaderCell>
-                        <TableHeaderCell>Produktions-Preis</TableHeaderCell>
-                        <TableHeaderCell>Produktion-Summe</TableHeaderCell>
+                        <TableHeaderCell>{t('common:ingredientLabel')}</TableHeaderCell>
+                        <TableHeaderCell>{t('manage:amount')}</TableHeaderCell>
+                        <TableHeaderCell>{t('manage:calculations.productionPrice')}</TableHeaderCell>
+                        <TableHeaderCell>{t('manage:calculations.productionSum')}</TableHeaderCell>
                         {showSalesStuff ? (
                           <>
-                            <TableHeaderCell>Erwarteter Umsatz</TableHeaderCell>
-                            <TableHeaderCell>Erwarteter Gewinn</TableHeaderCell>
+                            <TableHeaderCell>{t('manage:calculations.expectedRevenue')}</TableHeaderCell>
+                            <TableHeaderCell>{t('manage:calculations.expectedProfit')}</TableHeaderCell>
                           </>
                         ) : null}
                       </TableRow>
@@ -798,7 +796,9 @@ export default function CalculationPage() {
                           .map((cocktail) => (
                             <TableRow key={'cocktail-' + cocktail.cocktail.id}>
                               <TableCell>{cocktail.cocktail.name}</TableCell>
-                              <TableCell>{cocktail.plannedAmount} x</TableCell>
+                              <TableCell>
+                                {cocktail.plannedAmount} {t('manage:times')}
+                              </TableCell>
                               <TableCell>{calcCocktailTotalPrice(cocktail.cocktail, ingredients).formatPrice()} €</TableCell>
                               <TableCell>{(cocktail.plannedAmount * calcCocktailTotalPrice(cocktail.cocktail, ingredients)).formatPrice()} €</TableCell>
                               {showSalesStuff ? (
@@ -818,7 +818,7 @@ export default function CalculationPage() {
                       )}
                       <TableRow />
                       <TableRow className="bg-base-200">
-                        <TableCell className="font-bold">Gesamt</TableCell>
+                        <TableCell className="font-bold">{t('manage:total')}</TableCell>
                         <TableCell>
                           {cocktailCalculationItems
                             .map((cocktail) => cocktail.plannedAmount)
@@ -827,7 +827,7 @@ export default function CalculationPage() {
                               minimumFractionDigits: 0,
                               maximumFractionDigits: 0,
                             })}{' '}
-                          x
+                          {t('manage:times')}
                         </TableCell>
                         <TableCell />
                         <TableCell>
@@ -869,15 +869,15 @@ export default function CalculationPage() {
           <div className={'col-span-1 w-full'}>
             <Card>
               <CardBody>
-                <div className={'text-center text-2xl font-bold print:text-xl'}>Einkaufsliste</div>
+                <div className={'text-center text-2xl font-bold print:text-xl'}>{t('manage:calculations.shoppingList')}</div>
                 <div className={'print:hidden'}>
                   <Divider size="sm" />
                 </div>
                 <div className={'flex items-center justify-between'}>
-                  <div className={'text-lg font-bold'}>Zutaten</div>
+                  <div className={'text-lg font-bold'}>{t('cocktail:ingredients')}</div>
                   <Button type="button" variant="outline" size="sm" onClick={handleCSVExport}>
                     <FaSave />
-                    Als CSV exportieren
+                    {t('manage:calculations.exportCsv')}
                   </Button>
                 </div>
                 <div className={'overflow-x-auto'}>
@@ -885,21 +885,21 @@ export default function CalculationPage() {
                     <TableHead>
                       <TableRow>
                         <TableHeaderCell className="w-0">
-                          <Tooltip tip="Diese Kästchen sollen z.B. beim Einkaufen helfen">
+                          <Tooltip tip={t('manage:calculations.shoppingListCheckboxTip')}>
                             <FaInfoCircle />
                           </Tooltip>
                         </TableHeaderCell>
-                        <TableHeaderCell>Zutat</TableHeaderCell>
-                        <TableHeaderCell>Gesamt Menge</TableHeaderCell>
-                        <TableHeaderCell className="print:hidden">Ausgabe Einheit</TableHeaderCell>
-                        <TableHeaderCell>Anzahl</TableHeaderCell>
+                        <TableHeaderCell>{t('common:ingredientLabel')}</TableHeaderCell>
+                        <TableHeaderCell>{t('manage:calculations.totalAmount')}</TableHeaderCell>
+                        <TableHeaderCell className="print:hidden">{t('manage:calculations.outputUnit')}</TableHeaderCell>
+                        <TableHeaderCell>{t('manage:quantity')}</TableHeaderCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
                       {ingredientCalculationItems.length == 0 ? (
                         <TableRow>
                           <TableCell colSpan={5} className="text-center">
-                            Keine Zutaten benötigt
+                            {t('manage:calculations.noIngredientsNeeded')}
                           </TableCell>
                         </TableRow>
                       ) : (
@@ -945,7 +945,7 @@ export default function CalculationPage() {
                                       minimumFractionDigits: 0,
                                       maximumFractionDigits: 2,
                                     })}{' '}
-                                    {userContext.getTranslation(item.unit.name ?? 'N/A', 'de')}
+                                    {userContext.getTranslation(item.unit.name ?? 'N/A')}
                                   </div>
                                 ))}
                               </TableCell>
@@ -970,13 +970,13 @@ export default function CalculationPage() {
                                   }}
                                 >
                                   <option value="" disabled>
-                                    Auswählen
+                                    {t('common:select')}
                                   </option>
                                   {ingredients
                                     .find((ingredient) => ingredient.id == items[0].ingredient.id)
                                     ?.volumes.map((unit) => (
                                       <option key={`ingredientCalculation-${items[0].ingredient.id}-output-unit-${unit.unit.id}`} value={unit.unit.id}>
-                                        {userContext.getTranslation(unit.unit.name ?? 'N/A', 'de')}
+                                        {userContext.getTranslation(unit.unit.name ?? 'N/A')}
                                       </option>
                                     ))}
                                 </Select>
@@ -1001,20 +1001,20 @@ export default function CalculationPage() {
                     </TableBody>
                   </Table>
                 </div>
-                <div className={'text-lg font-bold'}>Garnituren</div>
+                <div className={'text-lg font-bold'}>{t('nav:garnishes')}</div>
                 <div className={'overflow-x-auto'}>
                   <Table compact className="w-full">
                     <TableHead>
                       <TableRow>
-                        <TableHeaderCell>Garnitur</TableHeaderCell>
-                        <TableHeaderCell>Menge</TableHeaderCell>
+                        <TableHeaderCell>{t('cocktail:garnish')}</TableHeaderCell>
+                        <TableHeaderCell>{t('manage:amount')}</TableHeaderCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
                       {garnishCalculationItems.length == 0 ? (
                         <TableRow>
                           <TableCell colSpan={2} className="text-center">
-                            Keine Garnituren benötigt
+                            {t('manage:calculations.noGarnishesNeeded')}
                           </TableCell>
                         </TableRow>
                       ) : (

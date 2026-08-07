@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { getEndOfDay, getStartOfDay, getStartOfMonth, getStartOfWeek, getStartOfYear } from '@lib/dateHelpers';
+import { toIntlLocale } from '@lib/i18n/format';
 import { Button, Divider, Dropdown, DropdownContent, Input, Select } from '@components/ui';
 
 export type TimeRangePreset = 'today' | 'yesterday' | 'thisWeek' | 'lastWeek' | 'thisMonth' | 'lastMonth' | 'thisYear' | 'allTime' | 'custom';
@@ -76,9 +78,9 @@ function parseDateStringLocal(dateStr: string): Date {
   return new Date(y, m - 1, d, 12, 0, 0, 0);
 }
 
-function formatDateRange(startDate: Date, endDate: Date): string {
+function formatDateRange(startDate: Date, endDate: Date, locale: string): string {
   const formatDate = (date: Date) => {
-    return date.toLocaleDateString('de-DE', {
+    return date.toLocaleDateString(locale, {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
@@ -96,9 +98,9 @@ function formatDateRange(startDate: Date, endDate: Date): string {
   return `${start} - ${end}`;
 }
 
-function formatDateTimeRange(startDate: Date, endDate: Date): string {
+function formatDateTimeRange(startDate: Date, endDate: Date, locale: string): string {
   const formatDateTime = (date: Date) => {
-    return date.toLocaleDateString('de-DE', {
+    return date.toLocaleDateString(locale, {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
@@ -120,6 +122,8 @@ export function TimeRangePicker({
   compact = false,
   dayStartTime,
 }: TimeRangePickerProps) {
+  const { t, i18n } = useTranslation('statistics');
+  const intlLocale = toIntlLocale(i18n.language);
   const [preset, setPreset] = useState<TimeRangePreset>(value.preset || 'thisWeek');
   const [isCustom, setIsCustom] = useState(value.preset === 'custom');
   const [customStart, setCustomStart] = useState(value.startDate.toISOString().split('T')[0]);
@@ -166,20 +170,20 @@ export function TimeRangePicker({
   };
 
   const presets: Array<{ value: TimeRangePreset; label: string }> = [
-    { value: 'today', label: 'Heute' },
-    { value: 'yesterday', label: 'Gestern' },
-    { value: 'thisWeek', label: 'Diese Woche' },
-    { value: 'lastWeek', label: 'Letzte Woche' },
-    { value: 'thisMonth', label: 'Dieser Monat' },
-    { value: 'lastMonth', label: 'Letzter Monat' },
-    { value: 'thisYear', label: 'Dieses Jahr (YTD)' },
+    { value: 'today', label: t('preset.today') },
+    { value: 'yesterday', label: t('preset.yesterday') },
+    { value: 'thisWeek', label: t('preset.thisWeek') },
+    { value: 'lastWeek', label: t('preset.lastWeek') },
+    { value: 'thisMonth', label: t('preset.thisMonth') },
+    { value: 'lastMonth', label: t('preset.lastMonth') },
+    { value: 'thisYear', label: t('preset.thisYear') },
   ];
 
   if (allowAllTime) {
-    presets.push({ value: 'allTime', label: 'Gesamte Zeit' });
+    presets.push({ value: 'allTime', label: t('preset.allTime') });
   }
 
-  presets.push({ value: 'custom', label: 'Benutzerdefiniert…' });
+  presets.push({ value: 'custom', label: t('preset.custom') });
 
   if (compact) {
     return (
@@ -193,11 +197,11 @@ export function TimeRangePicker({
               d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
             />
           </svg>
-          <span className="hidden sm:inline">{formatDateRange(value.startDate, value.endDate)}</span>
+          <span className="hidden sm:inline">{formatDateRange(value.startDate, value.endDate, intlLocale)}</span>
         </Button>
         <DropdownContent tabIndex={0} className="z-[1000] block w-[calc(100vw-2rem)] md:w-80">
           <div className="flex flex-col gap-3">
-            <div className="text-sm font-semibold">Zeitraum auswählen</div>
+            <div className="text-sm font-semibold">{t('selectTimeRange')}</div>
             <Select selectSize="sm" className="w-full" value={preset} onChange={(e) => handlePresetChange(e.target.value as TimeRangePreset)}>
               {presets.map((p) => (
                 <option key={p.value} value={p.value}>
@@ -208,7 +212,7 @@ export function TimeRangePicker({
 
             {isCustom && (
               <div className="flex flex-col gap-2">
-                <label className="text-xs text-base-content/70">Von</label>
+                <label className="text-xs text-base-content/70">{t('from')}</label>
                 <Input
                   type="date"
                   inputSize="sm"
@@ -226,7 +230,7 @@ export function TimeRangePicker({
                     applyCustomRange({ start: newStart, end: newEnd });
                   }}
                 />
-                <label className="text-xs text-base-content/70">Bis</label>
+                <label className="text-xs text-base-content/70">{t('to')}</label>
                 <Input
                   type="date"
                   inputSize="sm"
@@ -250,8 +254,8 @@ export function TimeRangePicker({
             <Divider size="sm" />
 
             <div className="text-xs text-base-content/70">
-              <div className="mb-1 font-medium">Gewählter Zeitraum:</div>
-              <div>{formatDateTimeRange(value.startDate, value.endDate)}</div>
+              <div className="mb-1 font-medium">{t('selectedRange')}</div>
+              <div>{formatDateTimeRange(value.startDate, value.endDate, intlLocale)}</div>
             </div>
 
             {dayStartTime && dayStartTime !== '00:00' && (
@@ -259,7 +263,7 @@ export function TimeRangePicker({
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                Tagesstart: {dayStartTime} Uhr
+                {t('dayStart', { time: dayStartTime })}
               </div>
             )}
           </div>
@@ -297,7 +301,7 @@ export function TimeRangePicker({
                 applyCustomRange({ start: newStart, end: newEnd });
               }}
             />
-            <span className="text-sm">bis</span>
+            <span className="text-sm">{t('until')}</span>
             <Input
               type="date"
               inputSize="sm"
@@ -320,7 +324,10 @@ export function TimeRangePicker({
 
       {showComparison && comparisonValue && onComparisonChange && (
         <div className="text-xs text-base-content/70">
-          Vergleichszeitraum: {comparisonValue.startDate.toLocaleDateString('de-DE')} - {comparisonValue.endDate.toLocaleDateString('de-DE')}
+          {t('comparisonRange', {
+            start: comparisonValue.startDate.toLocaleDateString(intlLocale),
+            end: comparisonValue.endDate.toLocaleDateString(intlLocale),
+          })}
         </div>
       )}
     </div>

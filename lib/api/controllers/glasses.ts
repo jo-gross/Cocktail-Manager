@@ -91,7 +91,7 @@ export async function deleteGlass(workspace: Workspace, user: User, glassId: str
   });
 
   if (cocktails.length > 0) {
-    throw new ApiError(409, 'GLASS_IN_USE', `Das Glas wird noch in ${cocktails.length} Cocktail(s) verwendet und kann nicht gelöscht werden.`, { cocktails });
+    throw new ApiError(409, 'GLASS_IN_USE', `The glass is still used in ${cocktails.length} cocktail(s) and cannot be deleted.`, { cocktails });
   }
 
   await prisma.$transaction(async (tx) => {
@@ -163,7 +163,7 @@ export async function getGlassReferences(workspace: Workspace, glassId: string):
 export async function exportGlassesJson(workspace: Workspace, ids: string[]): Promise<GlassExportStructure | GlassExportStructure[]> {
   const glasses = await prisma.glass.findMany({ where: { id: { in: ids }, workspaceId: workspace.id } });
 
-  if (glasses.length === 0) throw new ApiError(404, 'NOT_FOUND', 'Keine Gläser gefunden');
+  if (glasses.length === 0) throw new ApiError(404, 'GLASSES_NOT_FOUND', 'No glasses found');
 
   const exportData: GlassExportStructure[] = glasses.map((glass) => ({
     exportVersion: packageJson.version,
@@ -222,7 +222,7 @@ export async function importGlassesJson(
   if (body.phase === 'execute') {
     const decisions = body.decisions;
     if (!decisions || decisions.length === 0) {
-      throw new ApiError(400, 'VALIDATION_ERROR', 'Keine Entscheidungen angegeben');
+      throw new ApiError(400, 'NO_DECISIONS', 'No decisions provided');
     }
 
     const results: Array<{ name: string; status: string; message?: string }> = [];
@@ -269,7 +269,7 @@ export async function importGlassesJson(
             results.push({ name: finalName, status: 'created' });
           }
         } catch (err: unknown) {
-          results.push({ name: finalName, status: 'error', message: err instanceof Error ? err.message : 'Unbekannter Fehler' });
+          results.push({ name: finalName, status: 'error', message: err instanceof Error ? err.message : 'Unknown error' });
         }
       }
     });
@@ -277,7 +277,7 @@ export async function importGlassesJson(
     return { success: true, results };
   }
 
-  throw new ApiError(400, 'VALIDATION_ERROR', 'Ungültige Phase');
+  throw new ApiError(400, 'INVALID_PHASE', 'Invalid phase');
 }
 
 export async function getGlassImage(workspace: Workspace, glassId: string): Promise<{ contentType: string; bytes: Buffer } | null> {

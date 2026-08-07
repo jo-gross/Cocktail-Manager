@@ -4,6 +4,7 @@ import { ManageEntityLayout } from '@components/layout/ManageEntityLayout';
 import { ManageColumn } from '@components/ManageColumn';
 import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
+import { useTranslation } from 'react-i18next';
 import { UserContext } from '@lib/context/UserContextProvider';
 import { FaChevronDown, FaFileDownload, FaFileUpload, FaPlus } from 'react-icons/fa';
 import ListSearchField from '../../../../../components/ListSearchField';
@@ -42,6 +43,7 @@ import type { SortDirection } from '@components/ui';
 
 const ManageGarnishesOverviewPage: NextPageWithPullToRefresh = () => {
   const router = useRouter();
+  const { t } = useTranslation(['manage', 'common', 'nav', 'entity', 'errors']);
   const { workspaceId } = router.query;
 
   const userContext = useContext(UserContext);
@@ -112,8 +114,8 @@ const ManageGarnishesOverviewPage: NextPageWithPullToRefresh = () => {
       });
 
       if (!response.ok) {
-        const error = await response.json().catch(() => ({ message: 'Fehler beim Exportieren' }));
-        alertService.error(error.message ?? 'Fehler beim Exportieren');
+        const error = await response.json().catch(() => ({ message: t('errors:export') }));
+        alertService.error(error.message ?? t('errors:export'));
         return;
       }
 
@@ -127,11 +129,11 @@ const ManageGarnishesOverviewPage: NextPageWithPullToRefresh = () => {
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
-      alertService.success('JSON erfolgreich exportiert');
+      alertService.success(t('entity:jsonExported'));
       setSelectedIds(new Set());
     } catch (error) {
       console.error('JSON export error:', error);
-      alertService.error('Fehler beim Exportieren');
+      alertService.error(t('errors:export'));
     } finally {
       setExportingJson(false);
     }
@@ -149,8 +151,8 @@ const ManageGarnishesOverviewPage: NextPageWithPullToRefresh = () => {
         });
 
         if (!response.ok) {
-          const error = await response.json().catch(() => ({ message: 'Fehler beim Exportieren' }));
-          alertService.error(error.message ?? 'Fehler beim Exportieren');
+          const error = await response.json().catch(() => ({ message: t('errors:export') }));
+          alertService.error(error.message ?? t('errors:export'));
           return;
         }
 
@@ -165,10 +167,10 @@ const ManageGarnishesOverviewPage: NextPageWithPullToRefresh = () => {
         a.click();
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
-        alertService.success('JSON erfolgreich exportiert');
+        alertService.success(t('entity:jsonExported'));
       } catch (error) {
         console.error('JSON export error:', error);
-        alertService.error('Fehler beim Exportieren');
+        alertService.error(t('errors:export'));
       } finally {
         setExportingSingleId(null);
       }
@@ -178,7 +180,7 @@ const ManageGarnishesOverviewPage: NextPageWithPullToRefresh = () => {
 
   return (
     <ManageEntityLayout
-      title={'Garnituren'}
+      title={t('nav:garnishes')}
       backLink={`/workspaces/${workspaceId}/manage`}
       actions={
         <div className={'flex items-center gap-2'}>
@@ -186,7 +188,7 @@ const ManageGarnishesOverviewPage: NextPageWithPullToRefresh = () => {
             <Dropdown align="end">
               <Button type="button" variant="outline" size="sm" className="md:h-10 md:min-h-10 md:px-4" tabIndex={0}>
                 <FaFileDownload />
-                {selectedIds.size} ausgewählt
+                {t('manage:selectedCount', { count: selectedIds.size })}
                 <FaChevronDown />
               </Button>
               <DropdownContent tabIndex={0} className="z-[1] mt-2 block w-64">
@@ -197,7 +199,7 @@ const ManageGarnishesOverviewPage: NextPageWithPullToRefresh = () => {
                   <li>
                     <button type="button" onClick={handleExportJson} disabled={exportingJson}>
                       {exportingJson ? <UiLoading size="sm" /> : <FaFileDownload />}
-                      Als JSON exportieren ({selectedIds.size})
+                      {t('manage:exportAsJsonCount', { count: selectedIds.size })}
                     </button>
                   </li>
                 </Menu>
@@ -207,7 +209,7 @@ const ManageGarnishesOverviewPage: NextPageWithPullToRefresh = () => {
           <Dropdown align="end">
             <Button type="button" variant="outline" size="sm" className="md:h-10 md:min-h-10 md:px-4" tabIndex={0}>
               <FaFileUpload />
-              Import/Export
+              {t('manage:importExport')}
               <FaChevronDown />
             </Button>
             <DropdownContent tabIndex={0} className="z-[1] mt-2 block w-52">
@@ -230,7 +232,7 @@ const ManageGarnishesOverviewPage: NextPageWithPullToRefresh = () => {
                     }}
                   >
                     <FaFileUpload />
-                    Aus JSON importieren
+                    {t('manage:importFromJson')}
                   </button>
                 </li>
               </Menu>
@@ -258,15 +260,15 @@ const ManageGarnishesOverviewPage: NextPageWithPullToRefresh = () => {
                       checkboxSize="sm"
                       checked={sortedGarnishes.length > 0 && sortedGarnishes.every((g) => selectedIds.has(g.id))}
                       onChange={handleToggleSelectAll}
-                      aria-label="Alle auswählen"
+                      aria-label={t('common:selectAll')}
                     />
                   </TableHeaderCell>
                   <TableHeaderCell className="w-0"></TableHeaderCell>
                   <SortableHeaderCell sortKey="name" activeSortKey={sortKey} direction={sortDirection} onSort={handleSort}>
-                    Name
+                    {t('common:name')}
                   </SortableHeaderCell>
                   <SortableHeaderCell sortKey="price" activeSortKey={sortKey} direction={sortDirection} onSort={handleSort}>
-                    Preis
+                    {t('common:price')}
                   </SortableHeaderCell>
                   <TableHeaderCell></TableHeaderCell>
                 </TableRow>
@@ -277,7 +279,7 @@ const ManageGarnishesOverviewPage: NextPageWithPullToRefresh = () => {
                 ) : sortedGarnishes.length == 0 ? (
                   <TableRow>
                     <TableCell colSpan={5} className={'text-center'}>
-                      Keine Einträge gefunden
+                      {t('manage:noEntriesFound')}
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -287,7 +289,7 @@ const ManageGarnishesOverviewPage: NextPageWithPullToRefresh = () => {
                         <Checkbox checkboxSize="sm" checked={selectedIds.has(garnish.id)} onChange={() => handleToggleSelect(garnish.id)} />
                       </TableCell>
                       <TableImageCell hasImage={garnish.hasImage} onImageClick={() => modalContext.openModal(<ImageModal image={garnish.imageUrl ?? ''} />)}>
-                        <AvatarImage src={garnish.imageUrl ?? ''} alt="Garnitur" />
+                        <AvatarImage src={garnish.imageUrl ?? ''} alt={t('entity:singular.garnish')} />
                       </TableImageCell>
                       <TableCell>
                         <div className="font-bold">{garnish.name}</div>
