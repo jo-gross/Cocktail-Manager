@@ -157,8 +157,8 @@ importers:
         version: 4.4.3
     devDependencies:
       '@next/bundle-analyzer':
-        specifier: ^16.3.1
-        version: 16.3.1
+        specifier: ^16.3.2
+        version: 16.3.2
       '@playwright/test':
         specifier: ^1.62.1
         version: 1.62.1
@@ -1343,8 +1343,8 @@ packages:
   '@napi-rs/wasm-runtime@0.2.12':
     resolution: {integrity: sha512-ZVWUcfwY4E/yPitQJl481FjFo3K22D6qF0DuFH6Y/nbnE11GY5uguDxZMGXPQ8WQ0128MXQD7TnfHyK4oWoIJQ==}
 
-  '@next/bundle-analyzer@16.3.1':
-    resolution: {integrity: sha512-/6XQeYPHM6jF1gTeJ82Mu6yXOHQIFVxzAn3DkPtHDp5v6SDXoCicBMTHloN+2h4WKFCQujSLCgLZHItJ3jN1uw==}
+  '@next/bundle-analyzer@16.3.2':
+    resolution: {integrity: sha512-1WSK3fjvlZzA3cpP6XsM9JW2/LDWWlldlYN5sL/h2kvAQCu2KeXLxNkqfI/0ac+ikOYFzWuuBpL9O0Cu3mrfww==}
 
   '@next/env@16.2.11':
     resolution: {integrity: sha512-0do5A3BJ2gxWr0ZCMcD6BhW+e595jyxdTl3rXTS6lOtD8ektMiW6CO+EPwt1Eca1DBnm90r/7GdiKWBKxH++DA==}
@@ -3839,8 +3839,8 @@ packages:
     resolution: {integrity: sha512-+Pgi+vMuUNkJyExiMBt5IlFoMyKnr5zhJ4Uspz58WOhBF5QoIZkFyNHIbBAtHwzVAgk5RtndVNsDRN61/mmDqg==}
     engines: {node: '>=12'}
 
-  is-plain-object@5.0.0:
-    resolution: {integrity: sha512-VRSzKkbMm5jMDoKLbltAkFQ5Qr7VDiTFGXxYFXXowVj387GeGNOCsOH6Msy00SGZ3Fp84b1Naa1psqgcCIEP5Q==}
+  is-plain-object@5.1.0:
+    resolution: {integrity: sha512-bUi/yjmtKYcRVUtWRGr0UA6xEFh2I6zWUwMrUXB3s7bmYCaZ8a+0ZsTRkrawh/mzlSD1Y0Ph8bp/U+TvBpWDNw==}
     engines: {node: '>=0.10.0'}
 
   is-property@1.0.2:
@@ -6682,7 +6682,7 @@ snapshots:
       '@tybys/wasm-util': 0.10.1
     optional: true
 
-  '@next/bundle-analyzer@16.3.1':
+  '@next/bundle-analyzer@16.3.2':
     dependencies:
       webpack-bundle-analyzer: 4.10.1
     transitivePeerDependencies:
@@ -9406,7 +9406,7 @@ snapshots:
 
   is-plain-obj@4.1.0: {}
 
-  is-plain-object@5.0.0: {}
+  is-plain-object@5.1.0: {}
 
   is-property@1.0.2: {}
 
@@ -11498,7 +11498,7 @@ snapshots:
       escape-string-regexp: 4.0.0
       gzip-size: 6.0.0
       html-escaper: 2.0.2
-      is-plain-object: 5.0.0
+      is-plain-object: 5.1.0
       opener: 1.5.2
       picocolors: 1.1.1
       sirv: 2.0.4
