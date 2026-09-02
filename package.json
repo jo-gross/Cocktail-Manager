@@ -64,7 +64,7 @@
     "node-html-parser": "9.0.1",
     "nodemailer": "9.0.5",
     "pdf-lib": "^1.17.1",
-    "pdfjs-dist": "^6.2.108",
+    "pdfjs-dist": "^6.3.289",
     "pg": "^8.23.0",
     "prop-types": "15.8.1",
     "puppeteer-core": "^25.8.0",
