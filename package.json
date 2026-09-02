@@ -99,7 +99,7 @@
     "@types/nodemailer": "8.0.1",
     "@types/pg": "^8.23.1",
     "@types/react": "19.2.18",
-    "@types/react-dom": "19.2.4",
+    "@types/react-dom": "19.2.5",
     "@vitest/coverage-v8": "^4.1.11",
     "dotenv": "^17.3.1",
     "eslint": "10.7.0",
