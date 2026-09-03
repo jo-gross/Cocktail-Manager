@@ -8904,14 +8904,6 @@ snapshots:
     optionalDependencies:
       picomatch: 4.0.7
 
-  fdir@6.5.0(picomatch@4.0.7):
-    optionalDependencies:
-      picomatch: 4.0.7
-
-  fdir@6.5.0(picomatch@4.0.7):
-    optionalDependencies:
-      picomatch: 4.0.7
-
   file-entry-cache@8.0.0:
     dependencies:
       flat-cache: 4.0.1
