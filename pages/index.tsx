@@ -332,8 +332,7 @@ const WorkspacesPage: NextPageWithPullToRefresh = () => {
     if (providerType === 'social') {
       authClient.signIn.social({ provider: providerId as 'google' });
     } else {
-      // For generic OAuth/OIDC providers
-      authClient.signIn.oauth2({ providerId });
+      authClient.signIn.social({ provider: providerId });
     }
   };
 
