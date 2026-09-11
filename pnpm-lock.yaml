@@ -90,8 +90,8 @@ importers:
         specifier: 16.2.11
         version: 16.2.11(@babel/core@7.29.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.62.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       node-html-parser:
-        specifier: 9.0.1
-        version: 9.0.1
+        specifier: 9.0.2
+        version: 9.0.2
       nodemailer:
         specifier: 10.0.3
         version: 10.0.3
@@ -4398,8 +4398,8 @@ packages:
     resolution: {integrity: sha512-Tz09sEL2EEuv5fFowm419c1+a/jSMiBjI9gHxVLrVdbUkkNUUfjsVYs9pVZu5oCon/kmRh9TfLEObFtkVxmY0w==}
     engines: {node: '>=8.0.0'}
 
-  nanoid@3.3.19:
-    resolution: {integrity: sha512-Y2tUNy4ouw6tq5oDSKeQYGOyhkUBhNOcGV/02KC+6kd9eDGqdZd++mjMiIDilrBYvjEnCYvVtsuHCuP+okSfug==}
+  nanoid@3.3.18:
+    resolution: {integrity: sha512-DTg4MJbGMWkfi6VZFdNt2/caMbQy4Ou+Op/hJQvGEWcnVfoA1QA+xzRKAzw9jD6+GVOOeYr/mIcuDSdug6F6+w==}
     engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
     hasBin: true
 
@@ -4451,8 +4451,8 @@ packages:
     resolution: {integrity: sha512-LA4ZjwlnUblHVgq0oBF3Jl/6h/Nvs5fzBLwdEF4nuxnFdsfajde4WfxtJr3CaiH+F6ewcIB/q4jQ4UzPyid+CQ==}
     hasBin: true
 
-  node-html-parser@9.0.1:
-    resolution: {integrity: sha512-QrdiYYm1NnLRXsMXThUgVcF/syWfWIgHFmy8hylWMGFbHFtnRuXLBxxGQvIm3xaIJMUDJ0ayOmT/FGJYT3pZIw==}
+  node-html-parser@9.0.2:
+    resolution: {integrity: sha512-XhM0CTeF4Hkw3el7VCyasGJCEvp500Xf0s1J3ZigYfTOkVqZRQRY3EiAw1CbJzNrxaKSDthXiT9c/4CBwIJyfw==}
 
   node-releases@2.0.51:
     resolution: {integrity: sha512-wRNIrw4DmVLKQlbgOMdkMx27Wrpzes2hh5Jtbi2bjPd+4wJstWIqP5A+lscnqbm0xxmT5Bpg8Lec5ItEBwx6BQ==}
@@ -10051,7 +10051,7 @@ snapshots:
     dependencies:
       lru.min: 1.1.4
 
-  nanoid@3.3.19: {}
+  nanoid@3.3.18: {}
 
   nanostores@1.5.0: {}
 
@@ -10099,7 +10099,7 @@ snapshots:
 
   node-gyp-build@4.8.4: {}
 
-  node-html-parser@9.0.1:
+  node-html-parser@9.0.2:
     dependencies:
       css-select: 5.2.2
       entities: 8.0.0
@@ -10335,13 +10335,13 @@ snapshots:
 
   postcss@8.4.31:
     dependencies:
-      nanoid: 3.3.19
+      nanoid: 3.3.18
       picocolors: 1.1.1
       source-map-js: 1.2.1
 
   postcss@8.5.28:
     dependencies:
-      nanoid: 3.3.19
+      nanoid: 3.3.18
       picocolors: 1.1.1
       source-map-js: 1.2.1
 
