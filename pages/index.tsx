@@ -328,13 +328,8 @@ const WorkspacesPage: NextPageWithPullToRefresh = () => {
     fetchAuthProviders();
   };
 
-  const handleSignIn = (providerId: string, providerType: 'social' | 'oidc') => {
-    if (providerType === 'social') {
-      authClient.signIn.social({ provider: providerId as 'google' });
-    } else {
-      // For generic OAuth/OIDC providers
-      authClient.signIn.oauth2({ providerId });
-    }
+  const handleSignIn = (providerId: string) => {
+    authClient.signIn.social({ provider: providerId as 'google' });
   };
 
   useEffect(() => {
@@ -428,7 +423,7 @@ const WorkspacesPage: NextPageWithPullToRefresh = () => {
                 ) : authProviders.length > 0 ? (
                   <div className="flex w-full flex-col gap-2">
                     {authProviders.map((provider) => (
-                      <Button key={provider.id} variant="outline" className="w-full gap-2" onClick={() => handleSignIn(provider.id, provider.type)}>
+                      <Button key={provider.id} variant="outline" className="w-full gap-2" onClick={() => handleSignIn(provider.id)}>
                         {provider.id === 'google' ? <FaGoogle /> : <FaKey />}
                         {provider.name}
                       </Button>
