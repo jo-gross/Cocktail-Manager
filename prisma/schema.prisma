@@ -10,6 +10,7 @@ datasource db {
 model Account {
   id                    String    @id @default(cuid())
   userId                String    @map("user_id")
+  issuer                String
   providerId            String    @map("provider")
   accountId             String    @map("provider_account_id")
   accessToken           String?   @map("access_token")
@@ -24,6 +25,7 @@ model Account {
   user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([providerId, accountId])
+  @@unique([issuer, accountId])
   @@index([userId])
   @@map("Account")
 }

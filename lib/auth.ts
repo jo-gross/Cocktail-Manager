@@ -5,6 +5,23 @@ import prisma from '../prisma/prisma';
 import { Role } from '@generated/prisma/client';
 import { getExternalWorkspaceMappings } from './config/externalWorkspace';
 
+function getOidcDiscoveryUrl(issuerOrDiscoveryUrl: string): string {
+  if (issuerOrDiscoveryUrl.includes('/.well-known/')) {
+    return issuerOrDiscoveryUrl;
+  }
+
+  return `${issuerOrDiscoveryUrl.replace(/\/$/, '')}/.well-known/openid-configuration`;
+}
+
+function getOidcAccountSubject(profile: Record<string, unknown>): string {
+  const idKey = process.env.CUSTOM_OIDC_ID_KEY || 'sub';
+  const subject = profile[idKey] ?? profile.sub ?? profile.id;
+  if (subject == null) {
+    throw new Error('OIDC profile is missing a stable account subject');
+  }
+  return String(subject);
+}
+
 // Build social providers configuration
 const socialProviders: Record<string, { clientId: string; clientSecret: string }> = {};
 
@@ -21,24 +38,37 @@ const plugins: ReturnType<typeof genericOAuth>[] = [];
 // Cache for OIDC discovery data
 let oidcDiscoveryCache: { userinfo_endpoint?: string } | null = null;
 
+// Cache for OIDC groups (used for external workspace management)
+const oidcGroupsCache = new Map<string, string[]>();
+export { oidcGroupsCache };
+
 // Custom OIDC Provider via genericOAuth plugin
 if (process.env.CUSTOM_OIDC_NAME && process.env.CUSTOM_OIDC_ISSUER_URL && process.env.CUSTOM_OIDC_CLIENT_ID) {
+  const oidcDiscoveryUrl = getOidcDiscoveryUrl(process.env.CUSTOM_OIDC_ISSUER_URL);
+  const nameKey = process.env.CUSTOM_OIDC_NAME_KEY || 'name';
+  const emailKey = process.env.CUSTOM_OIDC_EMAIL_KEY || 'email';
+
   plugins.push(
     genericOAuth({
       config: [
         {
           providerId: 'custom_oidc',
-          discoveryUrl: process.env.CUSTOM_OIDC_ISSUER_URL,
+          name: process.env.CUSTOM_OIDC_NAME,
+          discoveryUrl: oidcDiscoveryUrl,
           clientId: process.env.CUSTOM_OIDC_CLIENT_ID,
           clientSecret: process.env.CUSTOM_OIDC_CLIENT_SECRET || '',
           scopes: (process.env.CUSTOM_OIDC_SCOPES || 'openid email profile').split(' '),
           pkce: true,
+          accountSubject: ({ profile }) => getOidcAccountSubject(profile),
+          mapProfileToUser: (profile) => ({
+            name: profile[nameKey] != null ? String(profile[nameKey]) : undefined,
+            email: profile[emailKey] != null ? String(profile[emailKey]) : undefined,
+            emailVerified: true,
+          }),
           getUserInfo: async (tokens) => {
-            const discoveryUrl = process.env.CUSTOM_OIDC_ISSUER_URL!;
-
             // Fetch discovery document to get userinfo endpoint (with caching)
             if (!oidcDiscoveryCache) {
-              const discoveryResponse = await fetch(discoveryUrl);
+              const discoveryResponse = await fetch(oidcDiscoveryUrl);
               if (discoveryResponse.ok) {
                 oidcDiscoveryCache = await discoveryResponse.json();
               }
@@ -47,8 +77,7 @@ if (process.env.CUSTOM_OIDC_NAME && process.env.CUSTOM_OIDC_ISSUER_URL && proces
             // Use userinfo endpoint from discovery, or construct fallback
             let userinfoUrl = oidcDiscoveryCache?.userinfo_endpoint;
             if (!userinfoUrl) {
-              // Fallback: try to construct from issuer
-              const baseUrl = discoveryUrl.replace('/.well-known/openid-configuration', '');
+              const baseUrl = oidcDiscoveryUrl.replace('/.well-known/openid-configuration', '');
               userinfoUrl = `${baseUrl}/userinfo`;
             }
 
@@ -69,19 +98,16 @@ if (process.env.CUSTOM_OIDC_NAME && process.env.CUSTOM_OIDC_ISSUER_URL && proces
             const profile = await response.json();
             console.log('[BetterAuth] User profile received:', Object.keys(profile));
 
-            const idKey = process.env.CUSTOM_OIDC_ID_KEY || 'sub';
-            const nameKey = process.env.CUSTOM_OIDC_NAME_KEY || 'name';
-            const emailKey = process.env.CUSTOM_OIDC_EMAIL_KEY || 'email';
-
-            // Store groups in a global cache for later use in workspace management
+            const accountSubject = getOidcAccountSubject(profile);
             const groupKey = process.env.CUSTOM_OIDC_GROUPS_KEY;
             if (groupKey && profile[groupKey]) {
-              const userId = profile[idKey];
-              oidcGroupsCache.set(userId, profile[groupKey]);
+              oidcGroupsCache.set(accountSubject, profile[groupKey]);
             }
 
             return {
-              id: profile[idKey],
+              ...profile,
+              id: accountSubject,
+              sub: profile.sub ?? accountSubject,
               name: profile[nameKey],
               email: profile[emailKey],
               emailVerified: true,
@@ -92,10 +118,6 @@ if (process.env.CUSTOM_OIDC_NAME && process.env.CUSTOM_OIDC_ISSUER_URL && proces
     }),
   );
 }
-
-// Cache for OIDC groups (used for external workspace management)
-const oidcGroupsCache = new Map<string, string[]>();
-export { oidcGroupsCache };
 
 // Helper function to handle external workspace management
 async function handleExternalWorkspaceManagement(userId: string, groups: string[]) {
