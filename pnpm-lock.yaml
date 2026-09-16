@@ -123,8 +123,8 @@ importers:
         specifier: 19.3.0
         version: 19.3.0(react@19.3.0)
       react-i18next:
-        specifier: ^17.0.12
-        version: 17.0.12(i18next@26.4.0(typescript@6.0.3))(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(typescript@6.0.3)
+        specifier: ^17.0.13
+        version: 17.0.13(i18next@26.4.0(typescript@6.0.3))(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(typescript@6.0.3)
       react-icons:
         specifier: 5.7.0
         version: 5.7.0(react@19.3.0)
@@ -4861,8 +4861,8 @@ packages:
   react-fast-compare@2.0.4:
     resolution: {integrity: sha512-suNP+J1VU1MWFKcyt7RtjiSWUjvidmQSlqu+eHslq+342xCbGTYmC0mEhPCOHxlW0CywylOC1u2DFAT+bv4dBw==}
 
-  react-i18next@17.0.12:
-    resolution: {integrity: sha512-lFWPEGkxQ6RhusdUkysFBD58VHfSSzvHBzqMgN0SvfVpdQGfwtNkStTqdy08/sJd7s807qqutgx93fRpD0DJ3Q==}
+  react-i18next@17.0.13:
+    resolution: {integrity: sha512-Cc1PscmblIHA1kljTqDwrcVMI21ydgmUzw0UAeQBe7pAOgfuRLfzXze4EUBQoeDiICzFIXXhHFoZxuetNg5D0Q==}
     peerDependencies:
       i18next: '>= 26.2.0'
       react: '>= 16.8.0'
@@ -5602,6 +5602,11 @@ packages:
 
   use-sync-external-store@1.6.0:
     resolution: {integrity: sha512-Pp6GSwGP/NrPIrxVFAIkOQeyw8lFenOHijQWkUTrDvrF4ALqylP2C/KCkeS9dpUM3KvYRQhna5vt7IL95+ZQ9w==}
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+
+  use-sync-external-store@1.7.0:
+    resolution: {integrity: sha512-6L+EeigHMQhdaIPNIFUKwfWJSwWFQ8gJbJ2DLOs5sDIegTwR9fRxvnM3uciHKjIZhFz+KAv2emhWMRvDmMcY8A==}
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
 
@@ -10474,13 +10479,13 @@ snapshots:
 
   react-fast-compare@2.0.4: {}
 
-  react-i18next@17.0.12(i18next@26.4.0(typescript@6.0.3))(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(typescript@6.0.3):
+  react-i18next@17.0.13(i18next@26.4.0(typescript@6.0.3))(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(typescript@6.0.3):
     dependencies:
       '@babel/runtime': 7.29.7
       html-parse-stringify: 4.0.1
       i18next: 26.4.0(typescript@6.0.3)
       react: 19.3.0
-      use-sync-external-store: 1.6.0(react@19.3.0)
+      use-sync-external-store: 1.7.0(react@19.3.0)
     optionalDependencies:
       react-dom: 19.3.0(react@19.3.0)
       typescript: 6.0.3
@@ -10519,7 +10524,7 @@ snapshots:
     dependencies:
       '@types/use-sync-external-store': 0.0.6
       react: 19.3.0
-      use-sync-external-store: 1.6.0(react@19.3.0)
+      use-sync-external-store: 1.7.0(react@19.3.0)
     optionalDependencies:
       '@types/react': 19.3.0
       redux: 5.0.1
@@ -11361,6 +11366,10 @@ snapshots:
       react: 19.3.0
 
   use-sync-external-store@1.6.0(react@19.3.0):
+    dependencies:
+      react: 19.3.0
+
+  use-sync-external-store@1.7.0(react@19.3.0):
     dependencies:
       react: 19.3.0
 
