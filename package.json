@@ -85,7 +85,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@next/bundle-analyzer": "^16.3.3",
+    "@next/bundle-analyzer": "^16.3.5",
     "@playwright/test": "^1.62.1",
     "@readme/openapi-parser": "^8.0.1",
     "@tailwindcss/postcss": "^4.3.2",
