@@ -9,6 +9,7 @@ Dockerfile
 .dockerignore
 *.yaml
 !pnpm-lock.yaml
+!pnpm-workspace.yaml
 .env
 
 
