@@ -36,7 +36,6 @@ updates:
       typescript-eslint:
         patterns:
           - 'typescript'
-          - 'eslint'
           - 'eslint-*'
           - 'typescript-eslint'
           - '@typescript-eslint/*'
