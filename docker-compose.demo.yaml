@@ -81,7 +81,7 @@ services:
     entrypoint: /bin/sh
     command: >
       -c "
-      echo '0 * * * * cd /app && corepack enable pnpm && corepack prepare pnpm@9.15.4 --activate && node scripts/cleanup-demo-workspaces.js >> /var/log/cleanup.log 2>&1' | crontab - &&
+      echo '0 * * * * cd /app && corepack enable pnpm && corepack prepare pnpm@11.25.0 --activate && node scripts/cleanup-demo-workspaces.js >> /var/log/cleanup.log 2>&1' | crontab - &&
       crond -f -l 2
       "
     volumes:

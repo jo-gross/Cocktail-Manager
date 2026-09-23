@@ -120,7 +120,7 @@ ESLint rule `i18next/no-literal-string` flags untranslated JSX text (`warn` glob
 **System Requirements:**
 
 - Node.js 24
-- pnpm 9.x (enabled via `corepack enable`)
+- pnpm 11.25.0 (enabled via `corepack enable`)
 - Docker (optional, for containerized deployment or local database)
 - Google Cloud Project (for authentication) or another OIDC provider
 
