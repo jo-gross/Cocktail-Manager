@@ -112,7 +112,7 @@
     "lint-staged": "^17.5.1",
     "playwright": "^1.63.0",
     "postcss": "8.5.28",
-    "prettier": "3.9.6",
+    "prettier": "3.9.8",
     "prettier-plugin-prisma": "5.0.0",
     "prettier-plugin-tailwindcss": "0.8.1",
     "prisma": "7.10.0",
