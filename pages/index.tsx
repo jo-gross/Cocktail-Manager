@@ -410,7 +410,7 @@ const WorkspacesPage: NextPageWithPullToRefresh = () => {
           <div className="flex min-h-dvh flex-col items-center justify-center p-4">
             <Card variant="elevated" className="w-full max-w-md">
               <CardBody className="flex flex-col items-center gap-4">
-                <Image src={'/images/The Cocktail Manager Logo.png'} alt="The Cocktail Manager" className={logoClassName} height={180} width={211} />
+                <Image src={'/images/The Cocktail Manager Logo.png'} alt="The Cocktail Manager" className={logoClassName} height={180} width={211} loading="eager"/>
                 <h1 className="text-center text-3xl font-bold">{t('common:appName')}</h1>
                 {versionLine}
                 <Divider className="w-full">{t('auth:login')}</Divider>
@@ -444,7 +444,7 @@ const WorkspacesPage: NextPageWithPullToRefresh = () => {
           <div className={'grid grid-cols-1 md:grid-cols-3'}>
             <div className={'col-span-3 items-center'}>
               <div className={'flex flex-col items-center justify-center space-y-2 pt-4'}>
-                <Image src={'/images/The Cocktail Manager Logo.png'} alt="The Cocktail Manager" className={logoClassName} height={211} width={247} />
+                <Image src={'/images/The Cocktail Manager Logo.png'} alt="The Cocktail Manager" className={logoClassName} height={211} width={247} loading="eager"/>
                 <h1 className={'text-center text-4xl font-bold'}>{t('common:appName')}</h1>
                 {versionLine}
                 <div className={'flex items-center space-x-2'}>
