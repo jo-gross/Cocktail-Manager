@@ -62,7 +62,7 @@
     "motion": "^13.4.4",
     "next": "16.3.6",
     "node-html-parser": "9.0.4",
-    "nodemailer": "10.0.10",
+    "nodemailer": "10.0.14",
     "pdf-lib": "^1.17.1",
     "pdfjs-dist": "^6.3.289",
     "pg": "^8.23.1",
