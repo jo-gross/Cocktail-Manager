@@ -37,7 +37,7 @@ importers:
         version: 7.10.0(prisma@7.10.0(@types/node@26.6.5)(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(magicast@0.5.5)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(typescript@6.0.3))(typescript@6.0.3)
       '@serwist/next':
         specifier: ^9.5.13
-        version: 9.5.13(next@16.3.6(@babel/core@7.29.7(supports-color@8.1.1))(@opentelemetry/api@1.9.0)(@playwright/test@1.64.0)(@types/node@26.6.5)(babel-plugin-macros@3.1.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(react@19.3.1)(typescript@6.0.3)(webpack@5.104.1(esbuild@0.28.2)(lightningcss@1.32.0)(postcss@8.5.29))
+        version: 9.5.13(next@16.3.6(@babel/core@7.29.7(supports-color@8.1.1))(@opentelemetry/api@1.9.0)(@playwright/test@1.64.0)(@types/node@26.6.5)(babel-plugin-macros@3.1.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(react@19.3.1)(typescript@6.0.3)(webpack@5.104.1(esbuild@0.28.2)(lightningcss@1.32.0)(postcss@8.5.30))
       bcrypt:
         specifier: ^6.0.0
         version: 6.0.0
@@ -244,8 +244,8 @@ importers:
         specifier: ^1.64.1
         version: 1.64.1
       postcss:
-        specifier: 8.5.29
-        version: 8.5.29
+        specifier: 8.5.30
+        version: 8.5.30
       prettier:
         specifier: 3.9.10
         version: 3.9.10
@@ -4273,11 +4273,6 @@ packages:
     resolution: {integrity: sha512-Tz09sEL2EEuv5fFowm419c1+a/jSMiBjI9gHxVLrVdbUkkNUUfjsVYs9pVZu5oCon/kmRh9TfLEObFtkVxmY0w==}
     engines: {node: '>=8.0.0'}
 
-  nanoid@3.3.18:
-    resolution: {integrity: sha512-DTg4MJbGMWkfi6VZFdNt2/caMbQy4Ou+Op/hJQvGEWcnVfoA1QA+xzRKAzw9jD6+GVOOeYr/mIcuDSdug6F6+w==}
-    engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
-    hasBin: true
-
   nanoid@3.3.20:
     resolution: {integrity: sha512-uKdg2G3GNCKQn9byYOpxbGqrT2fGO5KRt5J/8b3pok8rT6qxGWF6hxMyJiEYtAf+FVyYuD9hRaDqX5uPFYJ4ZQ==}
     engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
@@ -4573,8 +4568,8 @@ packages:
     resolution: {integrity: sha512-RRuzqDtt5Y9h3quz5hWhK+TPnsmVs6WwSU6LkJMeY4HstUEDuYTG8UJSdawMRzmzAtV+KEoG8N3Qg2qLy5vM/A==}
     engines: {node: ^10 || ^12 || >=14}
 
-  postcss@8.5.29:
-    resolution: {integrity: sha512-49cGhUbXj8Qenv0iTMxA1cFBzxXoctpC9Ujd77t1WcbJIr6nF/eI7g/8MgxrYldFRuAXvja7xQRwavoW7kgrxQ==}
+  postcss@8.5.30:
+    resolution: {integrity: sha512-zkd+e9S1AQHhmaBKye9zlFHWjOwVgqXl1q3ECYy8561K7qxR2cREf/STLskulBFd78k6AOFeA+ff1TtEzk9bAA==}
     engines: {node: ^10 || ^12 || >=14}
 
   postgres-array@2.0.0:
@@ -6926,11 +6921,11 @@ snapshots:
     transitivePeerDependencies:
       - browserslist
 
-  '@serwist/next@9.5.13(next@16.3.6(@babel/core@7.29.7(supports-color@8.1.1))(@opentelemetry/api@1.9.0)(@playwright/test@1.64.0)(@types/node@26.6.5)(babel-plugin-macros@3.1.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(react@19.3.1)(typescript@6.0.3)(webpack@5.104.1(esbuild@0.28.2)(lightningcss@1.32.0)(postcss@8.5.29))':
+  '@serwist/next@9.5.13(next@16.3.6(@babel/core@7.29.7(supports-color@8.1.1))(@opentelemetry/api@1.9.0)(@playwright/test@1.64.0)(@types/node@26.6.5)(babel-plugin-macros@3.1.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(react@19.3.1)(typescript@6.0.3)(webpack@5.104.1(esbuild@0.28.2)(lightningcss@1.32.0)(postcss@8.5.30))':
     dependencies:
       '@serwist/build': 9.5.13(browserslist@4.29.3)(typescript@6.0.3)
       '@serwist/utils': 9.5.13(browserslist@4.29.3)
-      '@serwist/webpack-plugin': 9.5.13(browserslist@4.29.3)(typescript@6.0.3)(webpack@5.104.1(esbuild@0.28.2)(lightningcss@1.32.0)(postcss@8.5.29))
+      '@serwist/webpack-plugin': 9.5.13(browserslist@4.29.3)(typescript@6.0.3)(webpack@5.104.1(esbuild@0.28.2)(lightningcss@1.32.0)(postcss@8.5.30))
       '@serwist/window': 9.5.13(browserslist@4.29.3)(typescript@6.0.3)
       browserslist: 4.29.3
       glob: 13.0.6
@@ -6949,7 +6944,7 @@ snapshots:
     optionalDependencies:
       browserslist: 4.29.3
 
-  '@serwist/webpack-plugin@9.5.13(browserslist@4.29.3)(typescript@6.0.3)(webpack@5.104.1(esbuild@0.28.2)(lightningcss@1.32.0)(postcss@8.5.29))':
+  '@serwist/webpack-plugin@9.5.13(browserslist@4.29.3)(typescript@6.0.3)(webpack@5.104.1(esbuild@0.28.2)(lightningcss@1.32.0)(postcss@8.5.30))':
     dependencies:
       '@serwist/build': 9.5.13(browserslist@4.29.3)(typescript@6.0.3)
       '@serwist/utils': 9.5.13(browserslist@4.29.3)
@@ -6957,7 +6952,7 @@ snapshots:
       zod: 4.6.5
     optionalDependencies:
       typescript: 6.0.3
-      webpack: 5.104.1(esbuild@0.28.2)(lightningcss@1.32.0)(postcss@8.5.29)
+      webpack: 5.104.1(esbuild@0.28.2)(lightningcss@1.32.0)(postcss@8.5.30)
     transitivePeerDependencies:
       - browserslist
 
@@ -9870,8 +9865,6 @@ snapshots:
     dependencies:
       lru.min: 1.1.4
 
-  nanoid@3.3.18: {}
-
   nanoid@3.3.20: {}
 
   nanostores@1.5.0: {}
@@ -10161,17 +10154,17 @@ snapshots:
 
   postcss@8.5.23:
     dependencies:
-      nanoid: 3.3.18
+      nanoid: 3.3.20
       picocolors: 1.1.1
       source-map-js: 1.2.2
 
   postcss@8.5.28:
     dependencies:
-      nanoid: 3.3.18
+      nanoid: 3.3.20
       picocolors: 1.1.1
       source-map-js: 1.2.2
 
-  postcss@8.5.29:
+  postcss@8.5.30:
     dependencies:
       nanoid: 3.3.20
       picocolors: 1.1.1
@@ -10918,17 +10911,17 @@ snapshots:
       - bare-abort-controller
       - react-native-b4a
 
-  terser-webpack-plugin@5.6.1(esbuild@0.28.2)(lightningcss@1.32.0)(postcss@8.5.29)(webpack@5.104.1(esbuild@0.28.2)(lightningcss@1.32.0)(postcss@8.5.29)):
+  terser-webpack-plugin@5.6.1(esbuild@0.28.2)(lightningcss@1.32.0)(postcss@8.5.30)(webpack@5.104.1(esbuild@0.28.2)(lightningcss@1.32.0)(postcss@8.5.30)):
     dependencies:
       '@jridgewell/trace-mapping': 0.3.31
       jest-worker: 27.5.1
       schema-utils: 4.5.0
       terser: 5.46.0
-      webpack: 5.104.1(esbuild@0.28.2)(lightningcss@1.32.0)(postcss@8.5.29)
+      webpack: 5.104.1(esbuild@0.28.2)(lightningcss@1.32.0)(postcss@8.5.30)
     optionalDependencies:
       esbuild: 0.28.2
       lightningcss: 1.32.0
-      postcss: 8.5.29
+      postcss: 8.5.30
     optional: true
 
   terser@5.46.0:
@@ -11347,7 +11340,7 @@ snapshots:
   webpack-sources@3.5.1:
     optional: true
 
-  webpack@5.104.1(esbuild@0.28.2)(lightningcss@1.32.0)(postcss@8.5.29):
+  webpack@5.104.1(esbuild@0.28.2)(lightningcss@1.32.0)(postcss@8.5.30):
     dependencies:
       '@types/eslint-scope': 3.7.7
       '@types/estree': 1.0.9
@@ -11371,7 +11364,7 @@ snapshots:
       neo-async: 2.6.2
       schema-utils: 4.5.0
       tapable: 2.3.3
-      terser-webpack-plugin: 5.6.1(esbuild@0.28.2)(lightningcss@1.32.0)(postcss@8.5.29)(webpack@5.104.1(esbuild@0.28.2)(lightningcss@1.32.0)(postcss@8.5.29))
+      terser-webpack-plugin: 5.6.1(esbuild@0.28.2)(lightningcss@1.32.0)(postcss@8.5.30)(webpack@5.104.1(esbuild@0.28.2)(lightningcss@1.32.0)(postcss@8.5.30))
       watchpack: 2.5.2
       webpack-sources: 3.5.1
     transitivePeerDependencies:
