@@ -1,3 +1,70 @@
+## [1.21.1](https://github.com/jo-gross/Cocktail-Manager/releases/tag/v1.21.1) (2026-10-21)
+
+## What's Changed
+
+- build(deps): update next and eslint-config-next to version 16.3.8, an… (#1409) @jo-gross
+
+## Dependencies
+
+- build(deps): bump the prisma-packages group across 1 directory with 3 updates (#1393) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps-dev): bump @playwright/test from 1.64.0 to 1.64.1 (#1403) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps): bump i18next from 26.4.3 to 26.5.2 (#1407) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps-dev): bump dotenv from 18.0.7 to 18.0.8 (#1398) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps): bump puppeteer-core from 25.13.0 to 25.14.0 (#1408) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps): bump zod from 4.6.6 to 4.6.7 (#1401) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps-dev): bump postcss from 8.5.29 to 8.5.30 (#1397) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps): bump motion from 14.1.0 to 14.3.0 (#1400) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps): bump react-i18next from 17.0.16 to 17.1.0 (#1404) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps-dev): bump the testing group across 1 directory with 2 updates (#1395) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps-dev): bump playwright from 1.64.0 to 1.64.1 (#1406) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps): bump ejs from 7.0.1 to 7.0.2 (#1405) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps): bump nodemailer from 10.1.0 to 10.1.2 (#1402) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps-dev): bump @next/bundle-analyzer from 16.4.0 to 16.4.2 (#1396) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps-dev): bump eslint from 10.12.0 to 10.13.0 (#1399) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps): bump the nextjs-react group with 2 updates (#1394) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps): bump zod from 4.6.5 to 4.6.6 (#1392) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps-dev): bump prettier from 3.9.9 to 3.9.10 (#1391) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps-dev): bump @types/node from 26.6.4 to 26.6.5 (#1390) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps): bump i18next from 26.4.2 to 26.4.3 (#1389) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps): bump motion from 14.0.0 to 14.1.0 (#1388) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps-dev): bump @types/lodash from 4.17.25 to 4.17.26 (#1387) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps): bump nodemailer from 10.0.16 to 10.1.0 (#1386) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps): bump source-map-js from 1.2.1 to 1.2.2 (#1385) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps): bump ejs from 6.0.1 to 7.0.1 (#1379) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps): bump keyv from 5.6.0 to 6.1.0 (#1383) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps-dev): bump @playwright/test from 1.63.0 to 1.64.0 (#1378) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps-dev): bump postcss from 8.5.28 to 8.5.29 (#1380) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps): bump puppeteer-core from 25.12.0 to 25.13.0 (#1376) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps-dev): bump dotenv from 18.0.5 to 18.0.7 (#1384) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps-dev): bump @readme/openapi-parser from 9.0.0 to 9.1.0 (#1382) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps-dev): bump @next/bundle-analyzer from 16.3.8 to 16.4.0 (#1381) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps-dev): bump playwright from 1.63.0 to 1.64.0 (#1377) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps): bump nodemailer from 10.0.14 to 10.0.16 (#1374) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps): bump the serwist group with 2 updates (#1373) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps): bump react-i18next from 17.0.15 to 17.0.16 (#1375) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps): bump motion from 13.4.4 to 14.0.0 (#1364) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps-dev): bump @types/node from 26.6.3 to 26.6.4 (#1370) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps): bump pdfjs-dist from 6.3.289 to 6.4.299 (#1371) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps-dev): bump eslint from 10.11.0 to 10.12.0 (#1368) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps-dev): bump the testing group across 1 directory with 2 updates (#1363) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps): bump sharp from 0.35.4 to 0.35.5 (#1372) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps-dev): bump @next/bundle-analyzer from 16.3.6 to 16.3.8 (#1369) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps): bump nodemailer from 10.0.10 to 10.0.14 (#1367) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps): bump pg from 8.23.0 to 8.23.1 (#1366) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps-dev): bump dotenv from 18.0.4 to 18.0.5 (#1365) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps-dev): bump @types/node from 26.6.2 to 26.6.3 (#1357) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps): bump fast-uri from 3.1.7 to 3.1.8 (#1362) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps-dev): bump dotenv from 18.0.1 to 18.0.4 (#1358) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps): bump motion from 13.4.0 to 13.4.4 (#1361) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps): bump puppeteer-core from 25.11.0 to 25.12.0 (#1360) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps-dev): bump prettier from 3.9.8 to 3.9.9 (#1359) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps-dev): bump lint-staged from 17.5.1 to 17.6.0 (#1356) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps): bump react-i18next from 17.0.14 to 17.0.15 (#1355) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps-dev): bump the testing group with 2 updates (#1354) @[dependabot[bot]](https://github.com/apps/dependabot)
+
+**Full Changelog**: https://github.com/jo-gross/Cocktail-Manager/compare/v1.21.0...v1.21.1
+
+
 ## [1.21.0](https://github.com/jo-gross/Cocktail-Manager/releases/tag/v1.21.0) (2026-09-24)
 
 ## What's New in v1.21.0
