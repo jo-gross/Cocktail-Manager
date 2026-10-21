@@ -111,7 +111,7 @@
     "i18next-parser": "^9.4.0",
     "lint-staged": "^17.6.0",
     "playwright": "^1.64.1",
-    "postcss": "8.5.29",
+    "postcss": "8.5.30",
     "prettier": "3.9.10",
     "prettier-plugin-prisma": "5.0.0",
     "prettier-plugin-tailwindcss": "0.8.1",
