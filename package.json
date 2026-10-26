@@ -67,7 +67,7 @@
     "pdfjs-dist": "^6.4.299",
     "pg": "^8.23.1",
     "prop-types": "15.8.1",
-    "puppeteer-core": "^25.14.0",
+    "puppeteer-core": "^25.16.0",
     "react": "19.3.1",
     "react-chartjs-2": "5.3.1",
     "react-device-detect": "2.2.3",
