@@ -214,6 +214,8 @@ const StatisticsAdvancedPage = () => {
 
   const [activeTab, setActiveTab] = useState<Tab>('overview');
   const [timeRange, setTimeRange] = useState<TimeRange>(getInitialTimeRange());
+  const rangeStartMs = timeRange.startDate.getTime();
+  const rangeEndMs = timeRange.endDate.getTime();
   const [comparisonsDataLoaded, setComparisonsDataLoaded] = useState(false);
   const [overviewPeriodTab, setOverviewPeriodTab] = useState<'today' | 'week' | 'month' | 'period' | 'allTime'>('today');
   const [dayStartTime, setDayStartTime] = useState<string | undefined>(undefined);
@@ -319,7 +321,7 @@ const StatisticsAdvancedPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [workspaceId, timeRange.startDate.getTime(), timeRange.endDate.getTime(), t]);
+  }, [workspaceId, rangeStartMs, rangeEndMs, t]);
 
   const loadCocktailsData = useCallback(async () => {
     if (!workspaceId) return;
@@ -335,7 +337,7 @@ const StatisticsAdvancedPage = () => {
     } finally {
       setCocktailsLoading(false);
     }
-  }, [workspaceId, timeRange.startDate.getTime(), timeRange.endDate.getTime(), t]);
+  }, [workspaceId, rangeStartMs, rangeEndMs, t]);
 
   const loadCocktailStatisticItems = useCallback(async () => {
     if (!workspaceId) return;
@@ -365,7 +367,7 @@ const StatisticsAdvancedPage = () => {
     } finally {
       setCocktailsLoading(false);
     }
-  }, [workspaceId, timeRange.startDate.getTime(), timeRange.endDate.getTime(), t]);
+  }, [workspaceId, rangeStartMs, rangeEndMs, t]);
 
   // Helper function to calculate aggregated amount with unit conversion
   // Uses the shared helper from CocktailRecipeCalculation
@@ -568,7 +570,7 @@ const StatisticsAdvancedPage = () => {
         setCocktailDetailLoading(false);
       }
     },
-    [workspaceId, timeRange.startDate.getTime(), timeRange.endDate.getTime(), t],
+    [workspaceId, rangeStartMs, rangeEndMs, t],
   );
 
   const loadTagsData = useCallback(async () => {
@@ -707,19 +709,23 @@ const StatisticsAdvancedPage = () => {
       }))
       .sort((a, b) => a.ingredientName.localeCompare(b.ingredientName));
 
-    // Set default selected units for new ingredients (first available unit)
-    setSelectedOutputUnits((prev) => {
-      const newUnits = { ...prev };
-      result.forEach((ingredient) => {
-        if (!newUnits[ingredient.ingredientId] && ingredient.availableUnits.length > 0) {
-          newUnits[ingredient.ingredientId] = ingredient.availableUnits[0].unitId;
-        }
-      });
-      return newUnits;
-    });
-
     return result;
   }, [cocktailsData, setDetailData]);
+
+  // Default newly seen ingredients to their first available unit.
+  useEffect(() => {
+    setSelectedOutputUnits((prev) => {
+      const newUnits = { ...prev };
+      let changed = false;
+      aggregatedIngredientsData.forEach((ingredient) => {
+        if (!newUnits[ingredient.ingredientId] && ingredient.availableUnits.length > 0) {
+          newUnits[ingredient.ingredientId] = ingredient.availableUnits[0].unitId;
+          changed = true;
+        }
+      });
+      return changed ? newUnits : prev;
+    });
+  }, [aggregatedIngredientsData]);
 
   const loadComparisonDetail = useCallback(
     async (items: Set<string>, type: 'TAG_SET' | 'INGREDIENT_SET') => {
@@ -909,7 +915,7 @@ const StatisticsAdvancedPage = () => {
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [timeRange.startDate.getTime(), timeRange.endDate.getTime(), activeTab, comparisonMode, comparisonsDataLoaded]);
+  }, [rangeStartMs, rangeEndMs, activeTab, comparisonMode, comparisonsDataLoaded]);
 
   // Reload cocktails data when timeRange changes (only if already on cocktails tab)
   useEffect(() => {
@@ -918,7 +924,7 @@ const StatisticsAdvancedPage = () => {
       loadCocktailStatisticItems();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [timeRange.startDate.getTime(), timeRange.endDate.getTime(), activeTab]);
+  }, [rangeStartMs, rangeEndMs, activeTab]);
 
   // Reload overview data when timeRange changes (preset or custom dates)
   useEffect(() => {
@@ -926,14 +932,14 @@ const StatisticsAdvancedPage = () => {
       loadOverviewData();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [timeRange.startDate.getTime(), timeRange.endDate.getTime(), activeTab]);
+  }, [rangeStartMs, rangeEndMs, activeTab]);
 
   // Update groupBy when time range is less than 24 hours
   useEffect(() => {
-    if (activeTab === 'cocktails' && timeRange.endDate.getTime() - timeRange.startDate.getTime() < 24 * 3600 * 1000) {
+    if (activeTab === 'cocktails' && rangeEndMs - rangeStartMs < 24 * 3600 * 1000) {
       setGroupBy('hour');
     }
-  }, [activeTab, timeRange.startDate.getTime(), timeRange.endDate.getTime()]);
+  }, [activeTab, rangeStartMs, rangeEndMs]);
 
   // Auto-select first cocktail when data loads and none is selected
   useEffect(() => {
@@ -948,7 +954,7 @@ const StatisticsAdvancedPage = () => {
       loadCocktailDetail(selectedCocktailId);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab, selectedCocktailId, timeRange.startDate.getTime(), timeRange.endDate.getTime()]);
+  }, [activeTab, selectedCocktailId, rangeStartMs, rangeEndMs]);
 
   // Convert Sets to strings for stable dependency tracking
   const selectedTagsString = useMemo(() => Array.from(selectedTags).sort().join(','), [selectedTags]);
@@ -967,16 +973,7 @@ const StatisticsAdvancedPage = () => {
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    activeTab,
-    selectedTagsString,
-    selectedIngredientsString,
-    comparisonMode,
-    timeRange.startDate.getTime(),
-    timeRange.endDate.getTime(),
-    comparisonLogic,
-    loadComparisonDetail,
-  ]);
+  }, [activeTab, selectedTagsString, selectedIngredientsString, comparisonMode, rangeStartMs, rangeEndMs, comparisonLogic, loadComparisonDetail]);
 
   // Change detection for Tab 4 (cocktail analysis): Check if selection differs from original set
   const hasAnalysisSetChanges = useMemo(() => {
@@ -1024,7 +1021,7 @@ const StatisticsAdvancedPage = () => {
 
       loadDetails();
     }
-  }, [activeTab, selectedAnalysisCocktailIdsString, workspaceId, timeRange.startDate.getTime(), timeRange.endDate.getTime()]);
+  }, [activeTab, selectedAnalysisCocktailIdsString, workspaceId, rangeStartMs, rangeEndMs]);
 
   useEffect(() => {
     if (activeTab === 'cocktails' && selectedCocktailId) {
@@ -1048,7 +1045,7 @@ const StatisticsAdvancedPage = () => {
     } finally {
       setAllCocktailsLoading(false);
     }
-  }, [workspaceId, timeRange.startDate.getTime(), timeRange.endDate.getTime()]);
+  }, [workspaceId, rangeStartMs, rangeEndMs]);
 
   useEffect(() => {
     if (activeTab === 'analysis') {
@@ -1168,7 +1165,7 @@ const StatisticsAdvancedPage = () => {
     if (activeTab !== 'cocktails') return null;
 
     const chartData =
-      timeRange.endDate.getTime() - timeRange.startDate.getTime() >= 24 * 3600 * 1000 && groupBy == 'day'
+      rangeEndMs - rangeStartMs >= 24 * 3600 * 1000 && groupBy == 'day'
         ? processDataGroupByDaily(cocktailStatisticItems, showAllDays, hiddenCocktailIds, timeRange.startDate, timeRange.endDate, dayStartTime)
         : processDataGroupByHourly(cocktailStatisticItems, hiddenCocktailIds);
 
@@ -1176,6 +1173,8 @@ const StatisticsAdvancedPage = () => {
   }, [
     activeTab,
     groupBy,
+    rangeStartMs,
+    rangeEndMs,
     timeRange.startDate,
     timeRange.endDate,
     showAllDays,
@@ -1572,7 +1571,7 @@ const StatisticsAdvancedPage = () => {
                             <FormControl>
                               <Select selectSize="sm" value={groupBy} onChange={(event) => setGroupBy(event.target.value as 'day' | 'hour')}>
                                 <option value="hour">{t('manage:statistics.hours')}</option>
-                                <option value="day" disabled={timeRange.endDate.getTime() - timeRange.startDate.getTime() < 24 * 3600 * 1000}>
+                                <option value="day" disabled={rangeEndMs - rangeStartMs < 24 * 3600 * 1000}>
                                   {t('manage:statistics.days')}
                                 </option>
                               </Select>
@@ -2349,7 +2348,7 @@ const StatisticsAdvancedPage = () => {
                             <CardTitle className="text-lg">{t('manage:statistics.overview')}</CardTitle>
                             {(() => {
                               // Calculate previous period for comparison
-                              const periodLength = timeRange.endDate.getTime() - timeRange.startDate.getTime();
+                              const periodLength = rangeEndMs - rangeStartMs;
                               const previousEnd = new Date(timeRange.startDate);
                               previousEnd.setTime(previousEnd.getTime() - 1);
                               const previousStart = new Date(previousEnd);
