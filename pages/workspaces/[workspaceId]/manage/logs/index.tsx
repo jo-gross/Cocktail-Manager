@@ -54,6 +54,8 @@ const LogsPage: NextPageWithPullToRefresh = () => {
   }, []);
 
   const [timeRange, setTimeRange] = useState<TimeRange>(getInitialTimeRange());
+  const rangeStartMs = timeRange.startDate.getTime();
+  const rangeEndMs = timeRange.endDate.getTime();
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [dayStartTime, setDayStartTime] = useState<string | undefined>(undefined);
   const [sortKey, setSortKey] = useState('date');
@@ -118,7 +120,7 @@ const LogsPage: NextPageWithPullToRefresh = () => {
     }
 
     fetchStatisticLogsSafe(workspaceId, params, setCocktailStatisticItems, setPagination, setLoading);
-  }, [workspaceId, currentPage, timeRange.startDate.getTime(), timeRange.endDate.getTime(), searchQuery]);
+  }, [workspaceId, currentPage, rangeStartMs, rangeEndMs, searchQuery]);
 
   useEffect(() => {
     loadLogs();
