@@ -1,3 +1,27 @@
+## [1.21.2](https://github.com/jo-gross/Cocktail-Manager/releases/tag/v1.21.2) (2026-10-26)
+
+## What's Changed
+
+- build(deps): update Next.js and related dependencies to version 16.4.3 (#1423) @jo-gross
+
+## Dependencies
+
+- build(deps): bump nodemailer from 10.1.2 to 10.2.1 (#1418) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps): bump react-i18next from 17.1.0 to 17.1.3 (#1415) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps): bump undici from 6.28.1 to 6.29.1 (#1422) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps): bump fast-uri from 3.1.8 to 3.1.9 (#1421) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps): bump node-html-parser from 9.0.4 to 9.0.5 (#1419) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps): bump chart.js from 4.5.1 to 4.6.1 (#1416) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps-dev): bump postcss from 8.5.30 to 8.5.31 (#1417) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps-dev): bump @types/lodash from 4.17.26 to 4.17.27 (#1412) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps-dev): bump dotenv from 18.0.8 to 18.0.9 (#1413) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps): bump i18next from 26.5.2 to 26.5.6 (#1414) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps): bump puppeteer-core from 25.14.0 to 25.16.0 (#1411) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps): bump motion from 14.3.0 to 14.6.0 (#1410) @[dependabot[bot]](https://github.com/apps/dependabot)
+
+**Full Changelog**: https://github.com/jo-gross/Cocktail-Manager/compare/v1.21.1...v1.21.2
+
+
 ## [1.21.1](https://github.com/jo-gross/Cocktail-Manager/releases/tag/v1.21.1) (2026-10-21)
 
 ## What's Changed
