@@ -195,8 +195,8 @@ importers:
         specifier: ^9.0.10
         version: 9.0.10
       '@types/lodash':
-        specifier: 4.17.26
-        version: 4.17.26
+        specifier: 4.17.27
+        version: 4.17.27
       '@types/node':
         specifier: 26.6.5
         version: 26.6.5
@@ -1932,8 +1932,8 @@ packages:
   '@types/jsonwebtoken@9.0.10':
     resolution: {integrity: sha512-asx5hIG9Qmf/1oStypjanR7iKTv0gXQ1Ov/jfrX6kS/EO0OFni8orbmGCn0672NHR3kXHwpAwR+B368ZGN/2rA==}
 
-  '@types/lodash@4.17.26':
-    resolution: {integrity: sha512-48NWfiY6oNcKOh47Z4h+sIvwcQR91h6KPhaYKgeMIrkT2jV82Gy90SErj60vW8jQbeMSOSbhIv3bZ7JoqPPVhA==}
+  '@types/lodash@4.17.27':
+    resolution: {integrity: sha512-VenMRv/eKNrspX9v3H4dbmjsrnCOYdYBG3kxXKk3dG6X+urBGcj2Prww3xw1U5K4FV/mE4h5GbWd0szEKf+9ew==}
 
   '@types/mdast@4.0.4':
     resolution: {integrity: sha512-kGaNbPh1k7AFzgpud/gMdvIm5xuECykRR+JnWKQno9TAXVa6WIVCGTPvYGekIDL4uwCZQSYbUxNBSb1aUo79oA==}
@@ -7140,7 +7140,7 @@ snapshots:
       '@types/ms': 2.1.0
       '@types/node': 26.6.5
 
-  '@types/lodash@4.17.26': {}
+  '@types/lodash@4.17.27': {}
 
   '@types/mdast@4.0.4':
     dependencies:
@@ -7378,7 +7378,7 @@ snapshots:
 
   '@visx/responsive@4.0.1-alpha.0(react@19.3.1)':
     dependencies:
-      '@types/lodash': 4.17.26
+      '@types/lodash': 4.17.27
       '@types/react': 19.3.0
       lodash: 4.18.1
       react: 19.3.1
@@ -7389,7 +7389,7 @@ snapshots:
 
   '@visx/shape@4.0.1-alpha.0(react@19.3.1)':
     dependencies:
-      '@types/lodash': 4.17.26
+      '@types/lodash': 4.17.27
       '@types/react': 19.3.0
       '@visx/curve': 4.0.1-alpha.0
       '@visx/group': 4.0.1-alpha.0(react@19.3.1)
