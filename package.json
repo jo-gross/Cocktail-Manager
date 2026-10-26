@@ -44,7 +44,7 @@
     "bcrypt": "^6.0.0",
     "better-auth": "^1.6.29",
     "browser-image-compression": "^2.0.2",
-    "chart.js": "4.5.1",
+    "chart.js": "4.6.1",
     "chartjs-plugin-datalabels": "^2.2.0",
     "classnames": "^2.5.1",
     "deep-diff": "1.0.2",
