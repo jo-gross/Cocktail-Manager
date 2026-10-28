@@ -8,7 +8,7 @@ export const config = { api: { bodyParser: false } };
 // Custom handler to intercept OAuth callbacks for workspace management
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   // Check if this is an OAuth callback that might need workspace management
-  const isOAuthCallback = req.url?.includes('/oauth2/callback/custom_oidc');
+  const isOAuthCallback = req.url?.includes('/callback/custom_oidc');
 
   // Get the base handler
   const baseHandler = toNodeHandler(auth.handler);

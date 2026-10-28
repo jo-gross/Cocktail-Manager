@@ -1,6 +1,6 @@
 import { betterAuth } from 'better-auth';
 import { prismaAdapter } from 'better-auth/adapters/prisma';
-import { genericOAuth } from 'better-auth/plugins';
+import { genericOAuth, type GenericOAuthUserInfo } from 'better-auth/plugins';
 import prisma from '../prisma/prisma';
 import { Role } from '@generated/prisma/client';
 import { getExternalWorkspaceMappings } from './config/externalWorkspace';
@@ -21,7 +21,34 @@ const plugins: ReturnType<typeof genericOAuth>[] = [];
 // Cache for OIDC discovery data
 let oidcDiscoveryCache: { userinfo_endpoint?: string } | null = null;
 
-// Custom OIDC Provider via genericOAuth plugin
+function readOidcClaim(profile: Record<string, unknown>, key: string): string | undefined {
+  const value = profile[key];
+  if (typeof value === 'string' && value.length > 0) return value;
+  if (typeof value === 'number') return String(value);
+  return undefined;
+}
+
+function oidcAccountSubject(profile: Record<string, unknown>): string {
+  const idKey = process.env.CUSTOM_OIDC_ID_KEY || 'sub';
+  const subject = readOidcClaim(profile, idKey);
+  if (!subject) {
+    throw new Error(`OIDC profile is missing account subject claim "${idKey}"`);
+  }
+  return subject;
+}
+
+function oidcGroups(profile: Record<string, unknown>): string[] {
+  const groupKey = process.env.CUSTOM_OIDC_GROUPS_KEY;
+  if (!groupKey) return [];
+  const value = profile[groupKey];
+  if (Array.isArray(value)) return value.filter((entry): entry is string => typeof entry === 'string');
+  if (typeof value === 'string' && value.length > 0) return [value];
+  return [];
+}
+
+// Custom OIDC Provider via genericOAuth plugin.
+// Better Auth 1.7 treats getUserInfo as the raw provider profile. Account identity
+// comes from accountSubject; mutable user fields come from mapProfileToUser.
 if (process.env.CUSTOM_OIDC_NAME && process.env.CUSTOM_OIDC_ISSUER_URL && process.env.CUSTOM_OIDC_CLIENT_ID) {
   plugins.push(
     genericOAuth({
@@ -33,6 +60,16 @@ if (process.env.CUSTOM_OIDC_NAME && process.env.CUSTOM_OIDC_ISSUER_URL && proces
           clientSecret: process.env.CUSTOM_OIDC_CLIENT_SECRET || '',
           scopes: (process.env.CUSTOM_OIDC_SCOPES || 'openid email profile').split(' '),
           pkce: true,
+          accountSubject: ({ profile }) => oidcAccountSubject(profile),
+          mapProfileToUser: (profile) => {
+            const nameKey = process.env.CUSTOM_OIDC_NAME_KEY || 'name';
+            const emailKey = process.env.CUSTOM_OIDC_EMAIL_KEY || 'email';
+            return {
+              name: readOidcClaim(profile, nameKey),
+              email: readOidcClaim(profile, emailKey),
+              emailVerified: true,
+            };
+          },
           getUserInfo: async (tokens) => {
             const discoveryUrl = process.env.CUSTOM_OIDC_ISSUER_URL!;
 
@@ -66,26 +103,16 @@ if (process.env.CUSTOM_OIDC_NAME && process.env.CUSTOM_OIDC_ISSUER_URL && proces
               throw new Error(`Failed to fetch user info: ${response.status} ${errorText}`);
             }
 
-            const profile = await response.json();
+            const profile = (await response.json()) as Record<string, unknown>;
             console.log('[BetterAuth] User profile received:', Object.keys(profile));
 
-            const idKey = process.env.CUSTOM_OIDC_ID_KEY || 'sub';
-            const nameKey = process.env.CUSTOM_OIDC_NAME_KEY || 'name';
-            const emailKey = process.env.CUSTOM_OIDC_EMAIL_KEY || 'email';
-
-            // Store groups in a global cache for later use in workspace management
-            const groupKey = process.env.CUSTOM_OIDC_GROUPS_KEY;
-            if (groupKey && profile[groupKey]) {
-              const userId = profile[idKey];
-              oidcGroupsCache.set(userId, profile[groupKey]);
+            const subject = oidcAccountSubject(profile);
+            const groups = oidcGroups(profile);
+            if (groups.length > 0) {
+              oidcGroupsCache.set(subject, groups);
             }
 
-            return {
-              id: profile[idKey],
-              name: profile[nameKey],
-              email: profile[emailKey],
-              emailVerified: true,
-            };
+            return profile as GenericOAuthUserInfo;
           },
         },
       ],
