@@ -1,13 +1,8 @@
 import { createAuthClient } from 'better-auth/react';
-import { genericOAuthClient } from 'better-auth/client/plugins';
 
-// Create the auth client for React
+// Generic OAuth providers are registered as social providers in Better Auth 1.7.
 export const authClient = createAuthClient({
   baseURL: typeof window !== 'undefined' ? window.location.origin : process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
-  plugins: [
-    // Generic OAuth client plugin for custom OIDC provider
-    genericOAuthClient(),
-  ],
 });
 
 // Export commonly used methods
