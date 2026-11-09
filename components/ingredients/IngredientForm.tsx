@@ -654,10 +654,10 @@ export function IngredientForm(props: IngredientFormProps) {
                         <ul className={'list-inside list-disc'}>
                           {_.uniqBy(
                             defaultConversions
-                              .filter((conversion) => (formRef?.current?.values.units as FormUnitValue[]).map((u) => u.unitId).includes(conversion.fromUnitId))
-                              .filter((conversion) => !(formRef?.current?.values.units as FormUnitValue[]).map((u) => u.unitId).includes(conversion.toUnitId))
+                              .filter((conversion) => values.units.map((u) => u.unitId).includes(conversion.fromUnitId))
+                              .filter((conversion) => !values.units.map((u) => u.unitId).includes(conversion.toUnitId))
                               .map((suggestion) => {
-                                const fromUnit = (formRef?.current?.values.units as FormUnitValue[]).find((u) => u.unitId == suggestion.fromUnitId);
+                                const fromUnit = values.units.find((u) => u.unitId == suggestion.fromUnitId);
                                 return {
                                   unitId: suggestion.toUnitId,
                                   volume: suggestion.factor * (fromUnit?.volume ?? 0),
