@@ -88,7 +88,7 @@
     "@next/bundle-analyzer": "16.4.5",
     "@playwright/test": "^1.64.1",
     "@readme/openapi-parser": "^10.0.0",
-    "@tailwindcss/postcss": "^4.3.2",
+    "@tailwindcss/postcss": "^4.3.4",
     "@types/bcrypt": "^6.0.0",
     "@types/deep-diff": "1.0.5",
     "@types/ejs": "^3.1.5",
