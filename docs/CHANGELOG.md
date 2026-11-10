@@ -1,3 +1,42 @@
+## [1.21.3](https://github.com/jo-gross/Cocktail-Manager/releases/tag/v1.21.3) (2026-11-10)
+
+## What's Changed
+
+- fix: unit conversion logic fixed to prevent an error on garnish edit (#1437) @jo-gross
+
+## Dependencies
+
+- build(deps-dev): bump @playwright/test from 1.64.1 to 1.65.0 (#1443) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps): bump i18next-browser-languagedetector from 8.2.4 to 8.3.0 (#1449) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps): bump better-auth from 1.7.14 to 1.7.18 (#1445) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps): bump react-i18next from 17.1.9 to 17.1.13 (#1440) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps-dev): bump @tailwindcss/postcss from 4.3.3 to 4.3.4 (#1442) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps): bump node-html-parser from 9.0.6 to 9.0.7 (#1448) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps): bump motion from 14.9.0 to 14.10.1 (#1447) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps-dev): bump playwright from 1.64.1 to 1.65.0 (#1444) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps): bump pdfjs-dist from 6.4.299 to 6.5.438 (#1446) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps-dev): bump @next/bundle-analyzer from 16.4.3 to 16.4.5 (#1441) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps): bump i18next from 26.6.0 to 26.7.2 (#1439) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps-dev): bump the testing group with 2 updates (#1438) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps): bump i18next from 26.5.10 to 26.6.0 (#1436) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps-dev): bump postcss from 8.5.31 to 8.5.32 (#1434) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps): bump better-auth from 1.7.12 to 1.7.14 (#1429) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps): bump nodemailer from 10.2.1 to 10.3.1 (#1433) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps): bump i18next-browser-languagedetector from 8.2.2 to 8.2.4 (#1435) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps): bump react-i18next from 17.1.8 to 17.1.9 (#1432) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps-dev): bump eslint from 10.13.0 to 10.14.0 (#1431) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps): bump node-html-parser from 9.0.5 to 9.0.6 (#1430) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps-dev): bump @types/node from 26.6.5 to 26.6.6 (#1428) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps): bump motion from 14.6.0 to 14.9.0 (#1427) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps): bump better-auth from 1.6.29 to 1.7.12 (#1316) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps): bump i18next from 26.5.6 to 26.5.10 (#1425) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps): bump i18next-browser-languagedetector from 8.2.1 to 8.2.2 (#1426) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps): bump react-i18next from 17.1.3 to 17.1.8 (#1424) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps-dev): bump @readme/openapi-parser from 9.1.0 to 10.0.0 (#1420) @[dependabot[bot]](https://github.com/apps/dependabot)
+
+**Full Changelog**: https://github.com/jo-gross/Cocktail-Manager/compare/v1.21.2...v1.21.3
+
+
 ## [1.21.2](https://github.com/jo-gross/Cocktail-Manager/releases/tag/v1.21.2) (2026-10-26)
 
 ## What's Changed
