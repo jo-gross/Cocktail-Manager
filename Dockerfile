@@ -51,8 +51,12 @@ COPY --from=deps --chown=nextjs:nodejs /app/node_modules ./node_modules
 # @napi-rs/canvas (optional peer of jsdom/pdfjs-dist) ships a Skia binary that requires AVX and
 # crashes with SIGILL on CPUs without it (e.g. QEMU virtual CPUs). Nothing on the server needs it:
 # jsdom falls back to "no canvas", pdfjs only runs in the browser.
-RUN find /app/node_modules -depth -path '*@napi-rs*canvas*' -exec rm -rf {} + 2>/dev/null; \
-    ! find /app/node_modules -name 'skia.*.node' | grep -q .
+# Only the package itself: pnpm also encodes optional peers in dir names (e.g. jsdom@…_@napi-rs+canvas@…).
+RUN find /app/node_modules \( -path '/app/node_modules/.pnpm/@napi-rs+canvas*' \
+      -o -path '*/node_modules/@napi-rs/canvas' -o -path '*/node_modules/@napi-rs/canvas-*' \) \
+      -prune -exec rm -rf {} + && \
+    ! find /app/node_modules -name 'skia.*.node' | grep -q . && \
+    node -e "require('/app/node_modules/isomorphic-dompurify')"
 
 RUN apk add --no-cache wget
 

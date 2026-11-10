@@ -39,7 +39,8 @@ export function SettingsLayout({ page, actions, unsavedChanges, wide = false, ch
   const router = useRouter();
   const userContext = useContext(UserContext);
   const workspaceId = typeof router.query.workspaceId === 'string' ? router.query.workspaceId : '';
-  const groups = visibleSettingsNavGroups((role) => userContext.isUserPermitted(role));
+  // Without a workspace id (static prerender / first client render) the links would be `/workspaces//…`.
+  const groups = workspaceId ? visibleSettingsNavGroups((role) => userContext.isUserPermitted(role)) : [];
   const activeMobileLinkRef = useRef<HTMLAnchorElement>(null);
 
   useEffect(() => {
