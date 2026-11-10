@@ -1,11 +1,19 @@
 import { $Enums } from '@generated/prisma/client';
-import { SignageFormatView, SignageSlideView } from './types';
+import { GuestMenuSlideOptions, SignageFormatView, SignageSlideView } from './types';
 
 type MonitorFormat = $Enums.MonitorFormat;
+
+function toGuestMenuSlideOptions(value: unknown): GuestMenuSlideOptions | null {
+  return value && typeof value === 'object' && !Array.isArray(value) ? (value as GuestMenuSlideOptions) : null;
+}
 
 export function mapSignageSlide(slide: {
   id: string;
   content: string;
+  type?: 'IMAGE' | 'GUEST_MENU';
+  guestMenuId?: string | null;
+  guestMenu?: { slug: string } | null;
+  options?: unknown;
   order: number;
   enabled: boolean;
   weekdays: number[];
@@ -13,9 +21,14 @@ export function mapSignageSlide(slide: {
   validTo: Date | null;
   dateExclusive: boolean;
 }): SignageSlideView {
+  const isMenu = slide.type === 'GUEST_MENU';
   return {
     id: slide.id,
     content: slide.content,
+    type: slide.type ?? 'IMAGE',
+    ...(isMenu
+      ? { guestMenuId: slide.guestMenuId ?? null, guestMenuSlug: slide.guestMenu?.slug ?? null, options: toGuestMenuSlideOptions(slide.options) }
+      : {}),
     order: slide.order,
     enabled: slide.enabled,
     weekdays: slide.weekdays,

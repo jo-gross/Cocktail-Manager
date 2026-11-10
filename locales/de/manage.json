@@ -192,7 +192,9 @@
     "cards": "Karte(n)",
     "cardDate": " - ({{date}})",
     "cocktailUnavailable": "Cocktail nicht verfügbar",
-    "titleCard": "The Cocktail-Manager • {{card}}"
+    "titleCard": "The Cocktail-Manager • {{card}}",
+    "guestMenuExtras": "Nur auf Gästekarte",
+    "guestMenuExtrasHint": "Auf der aktiven Gästekarte „{{menu}}“, aber nicht auf dieser Karte"
   },
   "statistics": {
     "today": "Heute",
@@ -253,5 +255,7 @@
   "portrait": "Hochformat",
   "landscape": "Querformat",
   "densityReduced": "Reduziert",
-  "densityWide": "Breit"
+  "densityWide": "Breit",
+  "itemSpecialPrice": "Sonderpreis",
+  "removeItemSpecialPrice": "Sonderpreis entfernen"
 }

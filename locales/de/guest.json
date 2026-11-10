@@ -1,0 +1,103 @@
+{
+  "badge": {
+    "recommendation": "Empfehlung",
+    "new": "Neu",
+    "signature": "Signature",
+    "alcoholFree": "Alkoholfrei",
+    "unavailable": "Heute aus",
+    "onRequest": "Auf Anfrage"
+  },
+  "item": {
+    "ingredients": "Zutaten",
+    "amounts": "Rezept",
+    "flavors": "Geschmack",
+    "description": "Beschreibung",
+    "history": "Geschichte",
+    "glass": "Glas",
+    "garnish": "Garnitur",
+    "rating": "Bewertung",
+    "ratingValue": "{{value}} von 5 ({{count}})",
+    "alcohol": "Alkohol",
+    "allergens": "Allergene",
+    "additives": "Zusatzstoffe",
+    "more": "Mehr erfahren",
+    "details": "Details",
+    "noPrice": "Preis auf Anfrage",
+    "optional": "optional",
+    "incomplete": "Angaben unvollständig"
+  },
+  "alcohol": {
+    "approx": "ca. {{value}}",
+    "percent": "{{value}} % vol",
+    "grams": "{{value}} g Alkohol"
+  },
+  "footer": {
+    "allergens": "Allergene",
+    "additives": "Zusatzstoffe",
+    "legend": "Kennzeichnung"
+  },
+  "notice": {
+    "allergens": "Informationen zu Allergenen und Zusatzstoffen erhalten Sie bei unserem Personal.",
+    "deposit": "Auf Gläser wird Pfand erhoben.",
+    "unavailable": "Mit „Heute aus“ markierte Drinks sind heute leider nicht verfügbar.",
+    "onRequest": "Diese Drinks stehen nicht auf der Karte, wir mixen sie aber gerne auf Anfrage.",
+    "alcoholApprox": "Alkoholangaben sind berechnete Näherungswerte."
+  },
+  "shell": {
+    "search": "Suchen",
+    "searchPlaceholder": "Drink, Zutat oder Geschmack suchen …",
+    "clearSearch": "Suche leeren",
+    "filters": "Filter",
+    "customFilters": "Auswahl",
+    "filtersTitle": "Filter",
+    "resetFilters": "Zurücksetzen",
+    "showResults_one": "{{count}} Drink anzeigen",
+    "showResults_other": "{{count}} Drinks anzeigen",
+    "close": "Schließen",
+    "alcoholCategory": "Alkohol",
+    "without": "Ohne",
+    "withoutHint": "Nur Drinks mit vollständigen Angaben",
+    "price": "Preis",
+    "priceUpTo": "bis {{price}}",
+    "sections": "Kategorien",
+    "language": "Sprache",
+    "results_one": "{{count}} Treffer",
+    "results_other": "{{count}} Treffer",
+    "noResults": "Keine passenden Drinks gefunden.",
+    "noResultsHint": "Versuche einen anderen Suchbegriff oder entferne Filter.",
+    "onRequestResults": "Auf Anfrage",
+    "matchName": "Name",
+    "matchOriginalName": "Originalname",
+    "matchIngredient": "Zutat: {{value}}",
+    "matchTag": "{{value}}",
+    "allDrinks": "Alle",
+    "backToMenu": "Zur Karte"
+  },
+  "page": {
+    "notFoundTitle": "Karte nicht gefunden",
+    "notFoundText": "Diese Karte gibt es nicht (mehr).",
+    "noMenuTitle": "Keine Karte verfügbar",
+    "noMenuText": "Aktuell ist keine Karte verfügbar. Bitte frag unser Team.",
+    "toCurrentMenu": "Zur aktuellen Karte",
+    "menuDisabled": "Diese Karte ist derzeit nicht verfügbar.",
+    "menuStartsAt": "Diese Karte gilt ab {{date}}.",
+    "menuEndedAt": "Diese Karte galt bis {{date}}.",
+    "menuWeekdays": "Diese Karte gilt nur {{days}}.",
+    "menuTime": "Diese Karte gilt nur von {{from}} bis {{to}} Uhr.",
+    "menuTimeFrom": "Diese Karte gilt ab {{from}} Uhr.",
+    "menuTimeTo": "Diese Karte gilt bis {{to}} Uhr.",
+    "previewBanner": "Vorschau – nicht veröffentlichter Entwurf",
+    "inactivePreview": "Vorschau dieser Karte",
+    "lockText": "Diese Karte ist geschützt. Bitte gib den Zugangscode ein.",
+    "lockCodeLabel": "Zugangscode",
+    "lockSubmit": "Karte öffnen",
+    "lockInvalid": "Der Code ist nicht korrekt. Bitte versuch es erneut.",
+    "lockRateLimited": "Zu viele Versuche. Bitte warte {{seconds}} Sekunden und versuch es dann erneut.",
+    "lockFailed": "Das hat nicht geklappt. Bitte versuch es erneut."
+  },
+  "print": {
+    "qrHint": "Digitale Karte mit Allergenen & Details",
+    "tableTentTitle": "Unsere Karte",
+    "tableTentHint": "QR-Code scannen und Karte entdecken"
+  }
+}

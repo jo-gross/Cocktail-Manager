@@ -1,4 +1,4 @@
-import { ManageCard } from '@components/manage/ManageCard';
+import { ManageGroup, ManageLink } from '@components/manage/ManageCard';
 import { ManageEntityLayout } from '@components/layout/ManageEntityLayout';
 import { useRouter } from 'next/router';
 import { UserContext } from '@lib/context/UserContextProvider';
@@ -8,11 +8,13 @@ import { authClient } from '@lib/auth-client';
 import LoadingText from '../../../../components/LoadingText';
 import Link from 'next/link';
 import AvatarImage from '../../../../components/AvatarImage';
-import { FaCalculator, FaCocktail, FaGlassMartiniAlt, FaKey, FaUsers } from 'react-icons/fa';
-import { LuCitrus, LuHistory, LuMonitorPlay } from 'react-icons/lu';
+import { WorkspaceLogo } from '@components/workspaces/WorkspaceLogo';
+import { FaCalculator, FaCocktail, FaGlassMartiniAlt, FaUsers } from 'react-icons/fa';
+import { LuCitrus, LuHistory, LuMonitorPlay, LuShieldAlert } from 'react-icons/lu';
 import { PiBeerBottleBold, PiCards } from 'react-icons/pi';
 import { FaGear } from 'react-icons/fa6';
 import { IoMdStats } from 'react-icons/io';
+import { MdOutlineMenuBook, MdOutlineSell } from 'react-icons/md';
 import packageInfo from '../../../../package.json';
 import LanguageChanger from '@components/LanguageChanger';
 import { Button, Divider, Dropdown, DropdownContent, Menu } from '@components/ui';
@@ -30,7 +32,10 @@ export default function ManagePage() {
         backLink={`/workspaces/${workspaceId}`}
         title={
           userContext.workspace?.name ? (
-            <div className={'w-max'}>{userContext.workspace.name}</div>
+            <div className="flex items-center gap-3">
+              <WorkspaceLogo image={userContext.workspace.image} name={userContext.workspace.name} className="h-12 w-12 md:h-16 md:w-16" />
+              <span className="break-words">{userContext.workspace.name}</span>
+            </div>
           ) : (
             <div className={'flex flex-row items-center space-x-2'}>
               <LoadingText />
@@ -102,43 +107,110 @@ export default function ManagePage() {
           </Dropdown>,
         ]}
       >
-        <div className={'grid grid-cols-1 gap-2 md:grid-cols-2 md:gap-4'}>
-          <div className={'flex flex-col gap-2'}>
-            <Divider className="col-span-full">{t('nav:section.cocktails')}</Divider>
-
-            <ManageCard icon={<FaCocktail />} title={t('nav:cocktails')} link={`/workspaces/${workspaceId}/manage/cocktails`} />
-            <ManageCard icon={<PiBeerBottleBold />} title={t('nav:ingredients')} link={`/workspaces/${workspaceId}/manage/ingredients`} />
-            <ManageCard icon={<LuCitrus />} title={t('nav:garnishes')} link={`/workspaces/${workspaceId}/manage/garnishes`} />
-            <ManageCard icon={<FaGlassMartiniAlt />} title={t('nav:glasses')} link={`/workspaces/${workspaceId}/manage/glasses`} />
+        <div className="mx-auto grid w-full max-w-5xl grid-cols-1 gap-6 lg:grid-cols-2">
+          <div className="flex flex-col gap-6">
+            <ManageGroup title={t('nav:section.recipes')}>
+              <ManageLink
+                icon={<FaCocktail />}
+                title={t('nav:cocktails')}
+                description={t('nav:overview.description.cocktails')}
+                link={`/workspaces/${workspaceId}/manage/cocktails`}
+              />
+              <ManageLink
+                icon={<PiBeerBottleBold />}
+                title={t('nav:ingredients')}
+                description={t('nav:overview.description.ingredients')}
+                link={`/workspaces/${workspaceId}/manage/ingredients`}
+              />
+              <ManageLink
+                icon={<LuCitrus />}
+                title={t('nav:garnishes')}
+                description={t('nav:overview.description.garnishes')}
+                link={`/workspaces/${workspaceId}/manage/garnishes`}
+              />
+              <ManageLink
+                icon={<FaGlassMartiniAlt />}
+                title={t('nav:glasses')}
+                description={t('nav:overview.description.glasses')}
+                link={`/workspaces/${workspaceId}/manage/glasses`}
+              />
+            </ManageGroup>
+            <ManageGroup title={t('nav:section.guestInfo')}>
+              <ManageLink
+                icon={<LuShieldAlert />}
+                title={t('nav:overview.allergensAlcohol')}
+                description={t('nav:overview.description.guestInfo')}
+                link={`/workspaces/${workspaceId}/manage/guest-info`}
+              />
+              <ManageLink
+                icon={<MdOutlineSell />}
+                title={t('nav:overview.tagsFilters')}
+                description={t('nav:overview.description.tags')}
+                link={`/workspaces/${workspaceId}/manage/tags`}
+              />
+            </ManageGroup>
           </div>
-
-          {userContext.isUserPermitted('MANAGER') && (
-            <>
-              <div className={'flex flex-col gap-2'}>
-                <Divider className="col-span-full">{t('nav:section.display')}</Divider>
-                <ManageCard icon={<PiCards />} title={t('nav:cards')} link={`/workspaces/${workspaceId}/manage/cards`} />
-                <ManageCard icon={<LuMonitorPlay />} title={t('nav:monitor')} link={`/workspaces/${workspaceId}/manage/monitor`} />
-              </div>
-            </>
-          )}
-
-          <div className={'flex flex-col gap-2'}>
-            <Divider className="col-span-full">{t('nav:section.numbers')}</Divider>
-            <ManageCard icon={<IoMdStats />} title={t('nav:statistics')} link={`/workspaces/${workspaceId}/manage/statistics`} />
-            <ManageCard icon={<FaCalculator />} title={t('nav:calculations')} link={`/workspaces/${workspaceId}/manage/calculations`} />
-            <ManageCard icon={<LuHistory />} title={t('nav:logs')} link={`/workspaces/${workspaceId}/manage/logs`} />
-          </div>
-
-          <div className={'flex flex-col gap-2'}>
-            <Divider className="col-span-full">{t('nav:section.workspace')}</Divider>
-            <ManageCard icon={<FaUsers />} title={t('nav:users')} link={`/workspaces/${workspaceId}/manage/settings/users`} />
-            {userContext.isUserPermitted('ADMIN') && (
-              <>
-                <ManageCard icon={<FaGear />} title={t('nav:settings')} link={`/workspaces/${workspaceId}/manage/settings`} />
-                <ManageCard icon={<FaKey />} title={t('nav:apiKeys')} link={`/workspaces/${workspaceId}/manage/settings/api-keys`} />
-              </>
+          <div className="flex flex-col gap-6">
+            {userContext.isUserPermitted('MANAGER') && (
+              <ManageGroup title={t('nav:section.display')}>
+                <ManageLink
+                  icon={<PiCards />}
+                  title={t('nav:cards')}
+                  description={t('nav:overview.description.cards')}
+                  link={`/workspaces/${workspaceId}/manage/cards`}
+                />
+                <ManageLink
+                  icon={<MdOutlineMenuBook />}
+                  title={t('nav:guestMenus')}
+                  description={t('nav:overview.description.guestMenus')}
+                  link={`/workspaces/${workspaceId}/manage/guest-menus`}
+                />
+                <ManageLink
+                  icon={<LuMonitorPlay />}
+                  title={t('nav:monitor')}
+                  description={t('nav:overview.description.monitor')}
+                  link={`/workspaces/${workspaceId}/manage/monitor`}
+                />
+              </ManageGroup>
             )}
+            <ManageGroup title={t('nav:section.numbers')}>
+              <ManageLink
+                icon={<IoMdStats />}
+                title={t('nav:statistics')}
+                description={t('nav:overview.description.statistics')}
+                link={`/workspaces/${workspaceId}/manage/statistics`}
+              />
+              <ManageLink
+                icon={<FaCalculator />}
+                title={t('nav:calculations')}
+                description={t('nav:overview.description.calculations')}
+                link={`/workspaces/${workspaceId}/manage/calculations`}
+              />
+              <ManageLink
+                icon={<LuHistory />}
+                title={t('nav:logs')}
+                description={t('nav:overview.description.logs')}
+                link={`/workspaces/${workspaceId}/manage/logs`}
+              />
+            </ManageGroup>
           </div>
+          <ManageGroup title={t('nav:section.workspace')} className="lg:col-span-2">
+            {userContext.isUserPermitted('ADMIN') ? (
+              <ManageLink
+                icon={<FaGear />}
+                title={t('nav:settings')}
+                description={t('nav:overview.description.settings')}
+                link={`/workspaces/${workspaceId}/manage/settings`}
+              />
+            ) : (
+              <ManageLink
+                icon={<FaUsers />}
+                title={t('nav:overview.members')}
+                description={t('nav:overview.description.members')}
+                link={`/workspaces/${workspaceId}/manage/settings/users`}
+              />
+            )}
+          </ManageGroup>
         </div>
       </ManageEntityLayout>
     </>

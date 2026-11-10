@@ -16,6 +16,8 @@ import { UserContext } from '@lib/context/UserContextProvider';
 import { fetchUnitConversions, fetchUnits } from '@lib/network/units';
 import { alertApiV1Error } from '@lib/network/apiV1';
 import { checkIngredientLink, checkIngredientName, createIngredient, updateIngredient } from '@lib/network/ingredients';
+import { TranslatedFieldTabs } from '@components/translations/TranslatedFieldTabs';
+import { useEntityContentTranslations } from '@components/translations/useEntityContentTranslations';
 import Image from 'next/image';
 import { TagInput } from '../TagInput';
 import CropComponent from '../CropComponent';
@@ -46,10 +48,12 @@ import {
 } from '@components/ui';
 import { z } from 'zod';
 import { zodFormikValidate } from '@lib/forms/zodFormikValidate';
+import { IngredientGuestInfoFields, parseOptionalPercent, type IngredientGuestInfoFormValues } from '@components/guest-info/GuestInfoFormFields';
+import { ADDITIVES, ALLERGENS } from '@lib/guest-info/constants';
 
 const fieldErrorClass = 'border-error focus:border-error focus:ring-error/25';
 
-function createIngredientFormSchema(requiredMessage: string, imageNotCroppedMessage: string) {
+function createIngredientFormSchema(requiredMessage: string, imageNotCroppedMessage: string, abvRangeMessage: string) {
   return z
     .object({
       name: z.string().min(1, requiredMessage),
@@ -69,6 +73,12 @@ function createIngredientFormSchema(requiredMessage: string, imageNotCroppedMess
       tags: z.array(z.string()).optional(),
       image: z.string().optional(),
       originalImage: z.any().optional(),
+      abv: z.union([z.literal(''), z.coerce.number().min(0, abvRangeMessage).max(100, abvRangeMessage)]),
+      allergens: z.array(z.enum(ALLERGENS)),
+      additives: z.array(z.enum(ADDITIVES)),
+      guestInfoComplete: z.boolean(),
+      hideOnGuestMenu: z.boolean(),
+      guestName: z.string(),
     })
     .refine((values) => !(values.originalImage != undefined && values.image == undefined), {
       message: imageNotCroppedMessage,
@@ -88,7 +98,7 @@ interface FormUnitValue {
   volume: number;
 }
 
-export interface FormValue {
+export interface FormValue extends IngredientGuestInfoFormValues {
   name: string;
   shortName: string;
   notes: string;
@@ -108,7 +118,7 @@ export function IngredientForm(props: IngredientFormProps) {
   const router = useRouter();
   const workspaceId = router.query.workspaceId as string | undefined;
   const modalContext = useContext(ModalContext);
-  const { t } = useTranslation(['ingredient', 'common', 'entity', 'errors']);
+  const { t } = useTranslation(['ingredient', 'common', 'entity', 'errors', 'guestInfo']);
   const userContext = useContext(UserContext);
   const routingContext = useContext(RoutingContext);
 
@@ -126,6 +136,7 @@ export function IngredientForm(props: IngredientFormProps) {
 
   const [hydratedImage, setHydratedImage] = useState<string | undefined>(undefined);
   const [imageHydrationDone, setImageHydrationDone] = useState(!props.ingredient?.hasImage);
+  const contentTranslations = useEntityContentTranslations('ingredient', props.ingredient?.id);
 
   useEffect(() => {
     fetchUnits(workspaceId, setAllUnits, setUnitsLoading);
@@ -169,6 +180,12 @@ export function IngredientForm(props: IngredientFormProps) {
     tags: props.ingredient?.tags ?? [],
     image: hydratedImage,
     originalImage: hydratedImage ? convertBase64ToFile(hydratedImage) : undefined,
+    abv: props.ingredient?.abv ?? '',
+    allergens: props.ingredient?.allergens ?? [],
+    additives: props.ingredient?.additives ?? [],
+    guestInfoComplete: props.ingredient?.guestInfoComplete ?? false,
+    hideOnGuestMenu: props.ingredient?.hideOnGuestMenu ?? false,
+    guestName: props.ingredient?.guestName ?? '',
   };
 
   const ingredientId = props.ingredient?.id;
@@ -232,6 +249,12 @@ export function IngredientForm(props: IngredientFormProps) {
             units: (values.units || []).map((unit) => ({ unitId: unit.unitId, volume: Number(unit.volume) })),
             link: values.link?.trim() == '' ? null : values.link?.trim(),
             tags: values.tags,
+            abv: parseOptionalPercent(values.abv),
+            allergens: values.allergens,
+            additives: values.additives,
+            guestInfoComplete: values.guestInfoComplete,
+            hideOnGuestMenu: values.hideOnGuestMenu,
+            guestName: values.guestName.trim() == '' ? null : values.guestName.trim(),
           };
           if (props.ingredient?.id) {
             body.id = props.ingredient.id;
@@ -242,6 +265,7 @@ export function IngredientForm(props: IngredientFormProps) {
           }
           if (props.ingredient == undefined) {
             const created = await createIngredient(workspaceId, body);
+            await contentTranslations.save(created.id);
             if (props.onSaved != undefined) {
               props.onSaved(created.id);
             } else {
@@ -250,6 +274,7 @@ export function IngredientForm(props: IngredientFormProps) {
             }
           } else {
             await updateIngredient(workspaceId, props.ingredient.id, body);
+            await contentTranslations.save(props.ingredient.id);
             if (props.onSaved != undefined) {
               props.onSaved(props.ingredient.id);
             } else {
@@ -272,6 +297,12 @@ export function IngredientForm(props: IngredientFormProps) {
             units: mappedUnits,
             link: props.ingredient.link ?? '',
             tags: props.ingredient.tags,
+            abv: props.ingredient.abv ?? '',
+            allergens: props.ingredient.allergens,
+            additives: props.ingredient.additives,
+            guestInfoComplete: props.ingredient.guestInfoComplete,
+            hideOnGuestMenu: props.ingredient.hideOnGuestMenu,
+            guestName: props.ingredient.guestName ?? '',
           };
           const reducedValues = _.omit(values, ['image', 'originalImage', 'fetchingExternalData', 'volume', 'selectedUnit']);
 
@@ -280,7 +311,7 @@ export function IngredientForm(props: IngredientFormProps) {
         } else {
           props.setUnsavedChanges?.(true);
         }
-        return zodFormikValidate(createIngredientFormSchema(t('errors:requiredField'), t('common:imageNotCropped')))(values);
+        return zodFormikValidate(createIngredientFormSchema(t('errors:requiredField'), t('common:imageNotCropped'), t('guestInfo:form.abvRange')))(values);
       }}
     >
       {({ values, setFieldValue, errors, setFieldError, handleChange, handleBlur, handleSubmit, isSubmitting, isValid, submitForm }) => {
@@ -427,23 +458,25 @@ export function IngredientForm(props: IngredientFormProps) {
                     <span>*</span>
                   </LabelTextAlt>
                 </Label>
-                <Input
-                  id={'name'}
-                  type={'text'}
-                  autoComplete={'off'}
-                  className={errors.name ? fieldErrorClass : undefined}
-                  onChange={(event) => {
-                    if (event.target.value.length > 2) {
-                      checkSimilarName(event.target.value);
-                    } else {
-                      setSimilarIngredient(undefined);
-                    }
-                    handleChange(event);
-                  }}
-                  onBlur={handleBlur}
-                  value={values.name}
-                  name={'name'}
-                />
+                <TranslatedFieldTabs translations={contentTranslations} field="name" sourceValue={values.name}>
+                  <Input
+                    id={'name'}
+                    type={'text'}
+                    autoComplete={'off'}
+                    className={errors.name ? fieldErrorClass : undefined}
+                    onChange={(event) => {
+                      if (event.target.value.length > 2) {
+                        checkSimilarName(event.target.value);
+                      } else {
+                        setSimilarIngredient(undefined);
+                      }
+                      handleChange(event);
+                    }}
+                    onBlur={handleBlur}
+                    value={values.name}
+                    name={'name'}
+                  />
+                </TranslatedFieldTabs>
                 {similarIngredient && (
                   <Label className="flex-row">
                     <LabelTextAlt className="text-warning">{t('ingredient:similarExists', { name: similarIngredient.name })}</LabelTextAlt>
@@ -794,16 +827,18 @@ export function IngredientForm(props: IngredientFormProps) {
                     </span>
                   </LabelTextAlt>
                 </Label>
-                <Textarea
-                  id={'description'}
-                  className={errors.description ? fieldErrorClass : undefined}
-                  value={values.description}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  name={'description'}
-                  placeholder={t('ingredient:descriptionPlaceholder')}
-                  rows={5}
-                />
+                <TranslatedFieldTabs translations={contentTranslations} field="description" sourceValue={values.description} multiline>
+                  <Textarea
+                    id={'description'}
+                    className={errors.description ? fieldErrorClass : undefined}
+                    value={values.description}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    name={'description'}
+                    placeholder={t('ingredient:descriptionPlaceholder')}
+                    rows={5}
+                  />
+                </TranslatedFieldTabs>
               </FormControl>
 
               <FormControl className={'col-span-full'}>
@@ -826,6 +861,13 @@ export function IngredientForm(props: IngredientFormProps) {
                   rows={5}
                 />
               </FormControl>
+              <IngredientGuestInfoFields
+                wrapGuestName={(input) => (
+                  <TranslatedFieldTabs translations={contentTranslations} field="guestName" sourceValue={values.guestName}>
+                    {input}
+                  </TranslatedFieldTabs>
+                )}
+              />
               <div className={'flex-grow'}></div>
               <div className={'col-span-full'}>
                 <FormControl>

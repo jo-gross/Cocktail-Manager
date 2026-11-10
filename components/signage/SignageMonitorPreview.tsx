@@ -48,6 +48,9 @@ function SignageMonitorPreviewContent({ format, allFormats, variant }: SignageMo
         backgroundMode={backgroundMode}
         emptyMessage={t('monitor.noActiveCardNow')}
         alt={t('monitor.livePreview')}
+        workspaceId={format.workspaceId}
+        format={format.format}
+        isolateMenuSlides
       />
     </div>
   );

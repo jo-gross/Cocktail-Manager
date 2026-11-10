@@ -10,6 +10,8 @@ const legacyHandler = withHttpMethods({
   [HTTPMethod.PUT]: withWorkspacePermission([Role.ADMIN], Permission.UNITS_UPDATE, async (req, res, user, workspace) => {
     const unitConversionId = req.query.unitConversionId as string | undefined;
     if (!unitConversionId) return res.status(400).json({ message: 'No unitConversion id' });
+    const existing = await prisma.unitConversion.findFirst({ where: { id: unitConversionId, workspaceId: workspace.id } });
+    if (existing == null) return res.status(404).json({ message: 'Unit conversion not found' });
 
     const { factor } = req.body;
     const unitConversion = await prisma.unitConversion.update({
@@ -21,9 +23,11 @@ const legacyHandler = withHttpMethods({
     await regenerateUnitConversions(workspace.id);
     return res.json({ data: unitConversion });
   }),
-  [HTTPMethod.DELETE]: withWorkspacePermission([Role.ADMIN], async (req, res, user, workspace) => {
+  [HTTPMethod.DELETE]: withWorkspacePermission([Role.ADMIN], Permission.UNITS_UPDATE, async (req, res, user, workspace) => {
     const unitConversionId = req.query.unitConversionId as string | undefined;
     if (!unitConversionId) return res.status(400).json({ message: 'No unitConversion id' });
+    const existing = await prisma.unitConversion.findFirst({ where: { id: unitConversionId, workspaceId: workspace.id } });
+    if (existing == null) return res.status(404).json({ message: 'Unit conversion not found' });
 
     const unitConversion = await prisma.unitConversion.delete({ where: { id: unitConversionId } });
     await regenerateUnitConversions(workspace.id);

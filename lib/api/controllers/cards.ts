@@ -106,34 +106,55 @@ export async function createCard(workspace: Workspace, input: CardCreateInput): 
   return findFullCardOrThrow(created.id);
 }
 
+/**
+ * Updates a card while keeping group IDs stable (guest menus reference them):
+ * groups whose `id` already belongs to this card are updated in place, groups
+ * without a known id are created and groups missing from the input are deleted.
+ * Items are always recreated (they have no own id).
+ */
 export async function updateCard(workspace: Workspace, cardId: string, input: CardUpdateInput): Promise<CardDto> {
   await prisma.$transaction(async (tx) => {
+    const existingCard = await tx.cocktailCard.findFirst({
+      where: { id: cardId, workspaceId: workspace.id },
+      include: { groups: { select: { id: true } } },
+    });
+    if (!existingCard) throw new ApiError(404, 'NOT_FOUND', 'Card not found');
+
+    const existingGroupIds = new Set(existingCard.groups.map((group) => group.id));
+    const keptGroupIds = new Set((input.groups ?? []).map((group) => group.id).filter((id): id is string => id != undefined && existingGroupIds.has(id)));
+
     await tx.cocktailCardGroupItem.deleteMany({
-      where: { cocktailCardGroup: { cocktailCard: { id: cardId } } },
+      where: { cocktailCardGroup: { cocktailCardId: cardId } },
     });
     await tx.cocktailCardGroup.deleteMany({
-      where: { cocktailCard: { id: cardId } },
+      where: { cocktailCardId: cardId, id: { notIn: [...keptGroupIds] } },
     });
 
     await tx.cocktailCard.update({
       where: { id: cardId },
       data: {
         name: input.name,
-        date: input.date ?? undefined,
-        workspace: { connect: { id: workspace.id } },
+        // undefined keeps the current date, null clears it
+        date: input.date,
       },
     });
 
     for (const group of input.groups ?? []) {
-      const groupResult = await tx.cocktailCardGroup.create({
-        data: {
-          id: group.id,
-          name: group.name,
-          groupNumber: group.groupNumber,
-          groupPrice: group.groupPrice ?? undefined,
-          cocktailCard: { connect: { id: cardId } },
-        },
-      });
+      const groupData = {
+        name: group.name,
+        groupNumber: group.groupNumber,
+        groupPrice: group.groupPrice ?? null,
+      };
+      const groupResult =
+        group.id != undefined && keptGroupIds.has(group.id)
+          ? await tx.cocktailCardGroup.update({ where: { id: group.id }, data: groupData })
+          : await tx.cocktailCardGroup.create({
+              data: {
+                ...groupData,
+                id: group.id,
+                cocktailCard: { connect: { id: cardId } },
+              },
+            });
 
       for (const item of group.items ?? []) {
         await tx.cocktailCardGroupItem.create({

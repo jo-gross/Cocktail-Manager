@@ -16,10 +16,21 @@ export const ActionDtoSchema = z
     id: z.string(),
     name: z.string(),
     actionGroup: z.string().openapi({ description: 'Grouping bucket, e.g. "MIXING" or "POURING".' }),
+    dilutionPercent: z.number().nullable().openapi({
+      description: 'Water added by this action in % of the liquid volume (for ABV calculation); null = default (SHAKE 25, STIR 20, otherwise 10).',
+    }),
   })
   .openapi('Action');
 
 export type ActionDto = z.infer<typeof ActionDtoSchema>;
+
+/** Dilution in % (0–100); null resets to the default for the action. */
+const DilutionPercentSchema = z.coerce
+  .number()
+  .min(0)
+  .max(100)
+  .nullish()
+  .openapi({ description: 'Dilution in % of the liquid volume; null = default for the action. Omit to keep unchanged.' });
 
 /** Optional per-language display-name overrides, keyed by language code. */
 const TranslationsSchema = z
@@ -30,6 +41,7 @@ export const ActionCreateSchema = z
   .object({
     name: z.string().min(1),
     actionGroup: z.string().min(1),
+    dilutionPercent: DilutionPercentSchema,
     translations: TranslationsSchema.optional(),
   })
   .openapi('ActionCreateInput');
@@ -37,6 +49,7 @@ export const ActionCreateSchema = z
 export const ActionUpdateSchema = z
   .object({
     actionGroup: z.string().min(1),
+    dilutionPercent: DilutionPercentSchema,
     translations: TranslationsSchema.optional(),
   })
   .openapi('ActionUpdateInput');

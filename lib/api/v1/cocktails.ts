@@ -12,6 +12,7 @@ import { fail } from '@lib/http/responses';
 import { ApiError } from '@lib/http/ApiError';
 import {
   cocktailsArchiveApiDoc,
+  cocktailsAvailabilityApiDoc,
   cocktailsCheckApiDoc,
   cocktailsCloneApiDoc,
   cocktailsCollectionApiDoc,
@@ -67,6 +68,10 @@ export const archiveHandler = defineApiHandlers(cocktailsArchiveApiDoc.operation
 
 export const unarchiveHandler = defineApiHandlers(cocktailsUnarchiveApiDoc.operations, {
   PUT: ({ workspace, params }) => cocktails.archiveCocktail(workspace, params.cocktailId, false),
+});
+
+export const availabilityHandler = defineApiHandlers(cocktailsAvailabilityApiDoc.operations, {
+  PUT: ({ workspace, params, body }) => cocktails.setCocktailAvailability(workspace, params.cocktailId, body.unavailable),
 });
 
 // Export/import serve the raw legacy data-dump format (NOT the clean DTO envelope)

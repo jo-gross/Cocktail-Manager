@@ -1,14 +1,14 @@
 import { withHttpMethods } from '@middleware/api/handleMethods';
 import HTTPMethod from 'http-method-enum';
 import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
-import { Prisma, Role } from '@generated/prisma/client';
+import { Permission, Prisma, Role } from '@generated/prisma/client';
 import prisma from '../../../../../prisma/prisma';
 import { updateTranslation } from '../admin/translation';
 import { withDeprecation } from '@middleware/api/withDeprecation';
 import WorkspaceCocktailRecipeStepActionCreateInput = Prisma.WorkspaceCocktailRecipeStepActionCreateInput;
 
 const legacyHandler = withHttpMethods({
-  [HTTPMethod.GET]: withWorkspacePermission([Role.USER], async (req, res, user, workspace) => {
+  [HTTPMethod.GET]: withWorkspacePermission([Role.USER], Permission.COCKTAILS_READ, async (req, res, user, workspace) => {
     const search = typeof req.query.search === 'string' ? req.query.search : '';
     const where: Prisma.WorkspaceCocktailRecipeStepActionWhereInput = {
       workspaceId: workspace.id,
@@ -22,7 +22,7 @@ const legacyHandler = withHttpMethods({
     const actions = await prisma.workspaceCocktailRecipeStepAction.findMany({ where });
     return res.json({ data: actions });
   }),
-  [HTTPMethod.POST]: withWorkspacePermission([Role.ADMIN], async (req, res, user, workspace) => {
+  [HTTPMethod.POST]: withWorkspacePermission([Role.ADMIN], Permission.COCKTAILS_UPDATE, async (req, res, user, workspace) => {
     const { name, actionGroup, translations } = req.body;
     const input: WorkspaceCocktailRecipeStepActionCreateInput = {
       name: name,

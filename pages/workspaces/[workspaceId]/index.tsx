@@ -27,9 +27,12 @@ import { fetchCard, fetchCards, prefetchCardData } from '@lib/network/cards';
 import { prefetchAllCocktails } from '@lib/network/cocktails';
 import { fetchWorkspaceSettingsSafe } from '@lib/network/workspaces';
 import { fetchQueueSafe } from '@lib/network/queue';
-import { formatDateLocal, getLogicalDate } from '@lib/dateHelpers';
+import { compareCardsForBarDay, findActiveCard, getBarDayNow, getCardDateKey } from '@lib/cards/activeCard';
+import { DEFAULT_WORKSPACE_TIMEZONE, getWorkspaceTimezone } from '@lib/workspace/workspaceLocaleSettings';
 import type { CardDto, CardSummaryDto } from '@lib/schemas/cards';
 import type { QueueItemDto } from '@lib/schemas/queue';
+import type { GuestMenuExtrasDto } from '@lib/schemas/guestMenus';
+import { getActiveGuestMenuExtras } from '@lib/network/guestMenus';
 import {
   Button,
   ButtonGroup,
@@ -49,6 +52,9 @@ import {
   Toggle,
   Tooltip,
 } from '@components/ui';
+
+/** Collapse state key of the virtual "Nur auf Gästekarte" group. */
+const GUEST_MENU_EXTRAS_GROUP_ID = '__guest-menu-extras';
 
 const OverviewPage: NextPageWithPullToRefresh = () => {
   const modalContext = useContext(ModalContext);
@@ -75,6 +81,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
   const [queueGrouping, setQueueGrouping] = useState<'ALPHABETIC' | 'NONE'>('NONE');
   const [showFastQueueCheck, setShowFastQueueCheck] = useState(false);
   const [showSettingsAtBottom, setShowSettingsAtBottom] = useState(false);
+  const [showGuestMenuExtras, setShowGuestMenuExtras] = useState(false);
   const [collapsedGroupIds, setCollapsedGroupIds] = useState<Set<string>>(new Set());
 
   const [cocktailCards, setCocktailCards] = useState<CardSummaryDto[]>([]);
@@ -83,22 +90,21 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
 
   const [selectedCocktail, setSelectedCocktail] = useState<string | undefined>(undefined);
 
-  // Workspace day start time (e.g. "18:00") used for logical "today" comparisons
+  // Workspace day start time (e.g. "18:00") and timezone used for logical "today" comparisons
   const [dayStartTime, setDayStartTime] = useState<string | undefined>(undefined);
+  const [workspaceTimezone, setWorkspaceTimezone] = useState<string>(DEFAULT_WORKSPACE_TIMEZONE);
 
   useEffect(() => {
     fetchWorkspaceSettingsSafe(workspaceId, (settings) => {
       if (settings.statisticDayStartTime) {
         setDayStartTime(settings.statisticDayStartTime);
       }
+      setWorkspaceTimezone(getWorkspaceTimezone(settings));
     });
   }, [workspaceId]);
 
-  // Logical "today" as YYYY-MM-DD, accounting for the workspace day start time
-  const logicalToday = formatDateLocal(getLogicalDate(new Date(), dayStartTime));
-
-  // Card dates are stored as UTC midnight, so compare on the UTC date part
-  const cardDateKey = useCallback((date: Date | string) => new Date(date).toISOString().split('T')[0], []);
+  // Logical "today" (bar day) as YYYY-MM-DD, accounting for the workspace timezone and day start time
+  const logicalToday = getBarDayNow(new Date(), workspaceTimezone, dayStartTime).date;
 
   // Search modal shortcut (Shift + F)
   useEffect(() => {
@@ -144,6 +150,23 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
     fetchSelectedCard();
   }, [fetchSelectedCard]);
 
+  // "Nur auf Gästekarte": cocktails on the active guest menu that are missing on the shown card
+  const [guestMenuExtras, setGuestMenuExtras] = useState<{ cardId: string; extras: GuestMenuExtrasDto } | undefined>(undefined);
+  useEffect(() => {
+    if (!showGuestMenuExtras || !workspaceId || !selectedCard || isOffline) return;
+    let cancelled = false;
+    getActiveGuestMenuExtras(workspaceId as string, selectedCard.id)
+      .then((extras) => !cancelled && setGuestMenuExtras({ cardId: selectedCard.id, extras }))
+      .catch((error) => console.error('Could not load guest menu extras', error));
+    return () => {
+      cancelled = true;
+    };
+  }, [showGuestMenuExtras, workspaceId, selectedCard, isOffline]);
+  const visibleGuestMenuExtras =
+    showGuestMenuExtras && selectedCard && guestMenuExtras?.cardId === selectedCard.id && guestMenuExtras.extras.cocktailIds.length > 0
+      ? guestMenuExtras.extras
+      : undefined;
+
   // Prefetch complete card data and cocktails for offline use
   useEffect(() => {
     if (workspaceId && isOnline && cocktailCards.length > 0) {
@@ -163,34 +186,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
     }
   }, [cocktailCards, workspaceId, isOnline]);
 
-  const sortCards = useCallback(
-    (a: CardSummaryDto, b: CardSummaryDto) => {
-      const today = logicalToday;
-
-      if (a.date != undefined && cardDateKey(a.date) == today && b.date != undefined && cardDateKey(b.date) != today) {
-        return -1; // a (heutiges Datum) kommt vor b
-      }
-      if (a.date != undefined && cardDateKey(a.date) != today && b.date != undefined && cardDateKey(b.date) == today) {
-        return 1; // b (heutiges Datum) kommt vor a
-      }
-      if (a.date == undefined && b.date != undefined) {
-        return -1; // a (Datum Null) kommt vor b
-      }
-      if (a.date != undefined && b.date == undefined) {
-        return 1; // b (Datum Null) kommt vor a
-      }
-
-      if (cardDateKey(a.date ?? new Date()) > today && cardDateKey(b.date ?? new Date()) <= today) {
-        return -1; // a (zukünftiges Datum) kommt vor b
-      }
-      if (cardDateKey(a.date ?? new Date()) <= today && cardDateKey(b.date ?? new Date()) > today) {
-        return 1; // b (zukünftiges Datum) kommt vor a
-      }
-
-      return a.name.localeCompare(b.name);
-    },
-    [logicalToday, cardDateKey],
-  );
+  const sortCards = useCallback((a: CardSummaryDto, b: CardSummaryDto) => compareCardsForBarDay(a, b, logicalToday), [logicalToday]);
 
   useEffect(() => {
     // Initialize selectedCardId from router query if available
@@ -201,10 +197,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
 
   useEffect(() => {
     if (selectedCardId == undefined && cocktailCards.length > 0 && router.query.card != 'search' && router.query.card != 'order') {
-      const todayCardId = cocktailCards.filter((card) => card.date != undefined).find((card) => cardDateKey(card.date!) == logicalToday)?.id;
-
-      const fallbackCardId = [...cocktailCards].sort(sortCards)[0]?.id;
-      const nextCardId = todayCardId ?? fallbackCardId;
+      const nextCardId = findActiveCard(cocktailCards, new Date(), { timezone: workspaceTimezone, dayStartTime })?.id;
 
       if (nextCardId) {
         setSelectedCardId(nextCardId);
@@ -223,7 +216,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
           .then();
       }
     }
-  }, [cocktailCards, router, selectedCardId, sortCards, workspaceId, logicalToday, cardDateKey]);
+  }, [cocktailCards, router, selectedCardId, workspaceId, workspaceTimezone, dayStartTime]);
 
   const initialSettingsSyncDone = useRef(false);
 
@@ -256,6 +249,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
     setQueueGrouping(settings?.find((s) => s.setting == Setting.queueGrouping)?.value as 'ALPHABETIC' | 'NONE');
     setShowFastQueueCheck(settings?.find((s) => s.setting == Setting.showFastQueueCheck)?.value == 'true');
     setShowSettingsAtBottom(settings?.find((s) => s.setting == Setting.showSettingsAtBottom)?.value == 'true');
+    setShowGuestMenuExtras(settings?.find((s) => s.setting == Setting.showGuestMenuExtras)?.value == 'true');
     initialSettingsSyncDone.current = true;
   }, [userContext.user?.id]);
 
@@ -856,6 +850,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                                         specialPrice={groupItem.specialPrice ?? group.groupPrice ?? undefined}
                                         cocktailRecipe={cocktailId}
                                         showStatisticActions={showStatisticActions}
+                                        showAvailabilityToggle={showStatisticActions}
                                         showDescription={showDescription}
                                         showNotes={showNotes}
                                         showHistory={showHistory}
@@ -878,6 +873,56 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                         </CollapseContent>
                       </Collapse>
                     ))
+                )}
+                {!loadingGroups && selectedCard && visibleGuestMenuExtras ? (
+                  <Collapse arrow open={!collapsedGroupIds.has(GUEST_MENU_EXTRAS_GROUP_ID)} className="rounded-xl print:p-1">
+                    <CollapseTitle
+                      className="text-center text-2xl font-bold"
+                      onClick={() =>
+                        setCollapsedGroupIds((previous) => {
+                          const next = new Set(previous);
+                          if (next.has(GUEST_MENU_EXTRAS_GROUP_ID)) {
+                            next.delete(GUEST_MENU_EXTRAS_GROUP_ID);
+                          } else {
+                            next.add(GUEST_MENU_EXTRAS_GROUP_ID);
+                          }
+                          return next;
+                        })
+                      }
+                    >
+                      {t('manage:overview.guestMenuExtras')}
+                      <div className="text-sm font-normal opacity-70">
+                        {t('manage:overview.guestMenuExtrasHint', { menu: visibleGuestMenuExtras.menus.map((menu) => menu.name).join(', ') })}
+                      </div>
+                    </CollapseTitle>
+                    <CollapseContent>
+                      <div
+                        className={`grid ${lessItems ? '2xl:grid-cols-5' : '2xl:grid-cols-6'} ${lessItems ? 'xl:grid-cols-3' : 'xl:grid-cols-4'} ${lessItems ? 'md:grid-cols-2' : 'md:grid-cols-3'} ${lessItems ? 'xs:grid-cols-1' : 'xs:grid-cols-2'} grid-cols-1 gap-3 p-0`}
+                      >
+                        {visibleGuestMenuExtras.cocktailIds.map((cocktailId) => (
+                          <CocktailRecipeCardItem
+                            key={`card-${selectedCard.id}-guest-menu-extra-${cocktailId}`}
+                            ref={(el) => {
+                              cocktailItemRefs.current[cocktailId] = el;
+                            }}
+                            showImage={showImage}
+                            showTags={showTags}
+                            showDetailsOnClick={true}
+                            showPrice={true}
+                            cocktailRecipe={cocktailId}
+                            showStatisticActions={showStatisticActions}
+                            showAvailabilityToggle={showStatisticActions}
+                            showDescription={showDescription}
+                            showNotes={showNotes}
+                            showHistory={showHistory}
+                            showRating={showRating}
+                          />
+                        ))}
+                      </div>
+                    </CollapseContent>
+                  </Collapse>
+                ) : (
+                  <></>
                 )}
               </div>
             )}
@@ -993,7 +1038,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                                 <span>
                                   {t('manage:overview.cardDate', {
                                     date:
-                                      cardDateKey(card.date) == logicalToday
+                                      getCardDateKey(card.date) == logicalToday
                                         ? t('common:today')
                                         : new Date(card.date).toLocaleDateString(i18n.language?.startsWith('en') ? 'en-US' : 'de-DE'),
                                   })}
@@ -1134,6 +1179,21 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                               onClick={() => {
                                 if (!isOffline) {
                                   toggleBooleanSetting(Setting.showStatisticActions, showStatisticActions, setShowStatisticActions);
+                                }
+                              }}
+                            />
+                          </Label>
+                        </FormControl>
+                        <FormControl>
+                          <Label className={`flex-row items-center justify-between ${isOffline ? 'opacity-50' : ''}`}>
+                            {t('settings:showGuestMenuExtras')}
+                            <Toggle
+                              checked={showGuestMenuExtras}
+                              readOnly={true}
+                              disabled={isOffline}
+                              onClick={() => {
+                                if (!isOffline) {
+                                  toggleBooleanSetting(Setting.showGuestMenuExtras, showGuestMenuExtras, setShowGuestMenuExtras);
                                 }
                               }}
                             />

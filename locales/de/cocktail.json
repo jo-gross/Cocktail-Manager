@@ -63,7 +63,8 @@
     "search": "Fehler beim Suchen der Cocktails",
     "exportPdf": "Fehler beim Exportieren des PDFs",
     "exportJson": "Fehler beim Exportieren des JSON",
-    "createRating": "Fehler beim Erstellen der Bewertung"
+    "createRating": "Fehler beim Erstellen der Bewertung",
+    "updateAvailability": "Verfügbarkeit konnte nicht geändert werden"
   },
   "queueNotePlaceholder": "Notiz",
   "optional": "(optional)",
@@ -141,5 +142,11 @@
   "tracking": {
     "markedAsMade": "Cocktail als gemacht markiert",
     "addedToQueue": "Cocktail zur Warteschlange hinzugefügt"
-  }
+  },
+  "unavailableToday": "aus",
+  "unavailableTodayTip": "Heute nicht verfügbar – ab dem nächsten Bartag wieder verfügbar",
+  "markUnavailableToday": "Heute aus",
+  "markUnavailableTodayTip": "Cocktail bis zum Beginn des nächsten Bartags als nicht verfügbar markieren",
+  "markAvailable": "Wieder verfügbar",
+  "markAvailableTip": "Cocktail wieder als verfügbar markieren"
 }

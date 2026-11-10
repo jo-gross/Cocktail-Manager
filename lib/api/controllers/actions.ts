@@ -24,7 +24,7 @@ export async function createAction(workspace: Workspace, input: ActionCreateInpu
     await updateTranslation(workspace.id, input.name, input.translations);
   }
   const created = await prisma.workspaceCocktailRecipeStepAction.create({
-    data: { name: input.name, actionGroup: input.actionGroup, workspace: { connect: { id: workspace.id } } },
+    data: { name: input.name, actionGroup: input.actionGroup, dilutionPercent: input.dilutionPercent, workspace: { connect: { id: workspace.id } } },
   });
   return toActionDto(created);
 }
@@ -33,7 +33,10 @@ export async function updateAction(workspace: Workspace, actionId: string, input
   const existing = await prisma.workspaceCocktailRecipeStepAction.findFirst({ where: { id: actionId, workspaceId: workspace.id } });
   if (!existing) throw new ApiError(404, 'NOT_FOUND', 'Action not found');
 
-  const updated = await prisma.workspaceCocktailRecipeStepAction.update({ where: { id: actionId }, data: { actionGroup: input.actionGroup } });
+  const updated = await prisma.workspaceCocktailRecipeStepAction.update({
+    where: { id: actionId },
+    data: { actionGroup: input.actionGroup, dilutionPercent: input.dilutionPercent },
+  });
   if (input.translations) {
     await updateTranslation(workspace.id, existing.name, input.translations);
   }

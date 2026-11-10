@@ -4,6 +4,7 @@ import { withWorkspacePermission } from '@middleware/api/authenticationMiddlewar
 import { withDeprecation } from '@middleware/api/withDeprecation';
 import { Role, Permission, WorkspaceSettingKey } from '@generated/prisma/client';
 import prisma from '../../../../../prisma/prisma';
+import { validateWorkspaceSettingValue } from '@lib/workspace/workspaceLocaleSettings';
 
 const legacyHandler = withHttpMethods({
   [HTTPMethod.GET]: withWorkspacePermission([Role.USER], Permission.WORKSPACE_READ, async (req, res, user, workspace) => {
@@ -24,6 +25,11 @@ const legacyHandler = withHttpMethods({
 
     if (!Object.values(WorkspaceSettingKey).includes(setting)) {
       return res.status(400).json({ message: 'Invalid setting key' });
+    }
+
+    const valueError = validateWorkspaceSettingValue(setting, value);
+    if (valueError) {
+      return res.status(400).json({ message: valueError });
     }
 
     const result = await prisma.workspaceSetting.upsert({

@@ -1,5 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import prisma from '../../prisma/prisma';
+import { asWorkspace } from '../../prisma/asWorkspace';
 import { User, Workspace } from '@generated/prisma/client';
 import { constants as HttpStatus } from 'http2';
 import { auth } from '@lib/auth';
@@ -92,6 +93,6 @@ export function withDemoWorkspacePermission(fn: (req: NextApiRequest, res: NextA
       return res.status(HttpStatus.HTTP_STATUS_GONE).json({ message: 'Demo workspace has expired and has been deleted' });
     }
 
-    return fn(req, res, user, workspaceResult);
+    return fn(req, res, user, asWorkspace(workspaceResult));
   });
 }

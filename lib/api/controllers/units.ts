@@ -2,12 +2,14 @@
  * Version-agnostic business logic for units and unit conversions (v1). Same DB
  * operations as the legacy handlers, but returns clean public DTOs
  * (lib/api/dto/units.ts). Legacy routes remain wrapped-but-untouched and keep
- * their raw Prisma shapes.
+ * their raw Prisma shapes. Item lookups are scoped by `workspaceId` (ids are
+ * global, so a bare-id write could hit another workspace).
  */
 import { Graph, shortestPath } from 'graph-data-structure';
 import prisma from '../../../prisma/prisma';
 import { updateTranslation } from '../../../pages/api/workspaces/[workspaceId]/admin/translation';
 import { toUnitConversionDto, toUnitDto } from '@lib/api/dto/units';
+import { ApiError } from '@lib/http/ApiError';
 import type { Prisma, Unit, UnitConversion, Workspace } from '@generated/prisma/client';
 import type { UnitConversionCreateInput, UnitConversionDto, UnitConversionUpdateInput, UnitCreateInput, UnitDto } from '@lib/schemas/units';
 
@@ -33,7 +35,10 @@ export async function createUnit(workspace: Workspace, input: UnitCreateInput): 
   return toUnitDto(created);
 }
 
-export async function deleteUnit(unitId: string): Promise<UnitDto> {
+export async function deleteUnit(workspace: Workspace, unitId: string): Promise<UnitDto> {
+  const existing = await prisma.unit.findFirst({ where: { id: unitId, workspaceId: workspace.id } });
+  if (!existing) throw new ApiError(404, 'NOT_FOUND', 'Unit not found');
+
   const deleted = await prisma.unit.delete({ where: { id: unitId } });
   return toUnitDto(deleted);
 }
@@ -44,6 +49,9 @@ export async function listUnitConversions(workspace: Workspace): Promise<UnitCon
 }
 
 export async function createUnitConversion(workspace: Workspace, input: UnitConversionCreateInput): Promise<UnitConversionDto[]> {
+  const unitCount = await prisma.unit.count({ where: { id: { in: [input.fromUnitId, input.toUnitId] }, workspaceId: workspace.id } });
+  if (unitCount !== new Set([input.fromUnitId, input.toUnitId]).size) throw new ApiError(404, 'NOT_FOUND', 'Unit not found');
+
   await prisma.unitConversion.create({
     data: {
       fromUnit: { connect: { id: input.fromUnitId } },
@@ -66,7 +74,13 @@ export async function createUnitConversion(workspace: Workspace, input: UnitConv
   return conversions.map(toUnitConversionDto);
 }
 
+async function assertUnitConversionInWorkspace(workspace: Workspace, unitConversionId: string) {
+  const existing = await prisma.unitConversion.findFirst({ where: { id: unitConversionId, workspaceId: workspace.id } });
+  if (!existing) throw new ApiError(404, 'NOT_FOUND', 'Unit conversion not found');
+}
+
 export async function updateUnitConversion(workspace: Workspace, unitConversionId: string, input: UnitConversionUpdateInput): Promise<UnitConversionDto> {
+  await assertUnitConversionInWorkspace(workspace, unitConversionId);
   const updated = await prisma.unitConversion.update({
     where: { id: unitConversionId },
     data: { factor: input.factor },
@@ -76,6 +90,7 @@ export async function updateUnitConversion(workspace: Workspace, unitConversionI
 }
 
 export async function deleteUnitConversion(workspace: Workspace, unitConversionId: string): Promise<UnitConversionDto> {
+  await assertUnitConversionInWorkspace(workspace, unitConversionId);
   const deleted = await prisma.unitConversion.delete({ where: { id: unitConversionId } });
   await regenerateUnitConversions(workspace.id);
   return toUnitConversionDto(deleted);

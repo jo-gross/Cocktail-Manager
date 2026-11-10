@@ -26,8 +26,21 @@ import { SignageSlideFilter } from '@components/signage/SignageSlideFilter';
 import { SignageMonitorPreview } from '@components/signage/SignageMonitorPreview';
 import { filterSlidesForAdmin } from '@lib/signage/filterSlidesForAdmin';
 import { alertApiV1Error, ApiV1RequestError } from '@lib/network/apiV1';
-import type { SignageSlideDto } from '@lib/schemas/signage';
-import { createSignageSlides, deleteSignageSlide, patchSignageSlides, updateSignageSettings } from '@lib/network/signage';
+import type { SignageKeyDto, SignageSlideDto } from '@lib/schemas/signage';
+import { SignageKeySection } from '@components/signage/SignageKeySection';
+import {
+  createGuestMenuSignageSlide,
+  createSignageSlides,
+  deleteSignageSlide,
+  getSignageKey,
+  patchSignageSlides,
+  updateGuestMenuSignageSlide,
+  updateSignageSettings,
+} from '@lib/network/signage';
+import { getGuestMenus } from '@lib/network/guestMenus';
+import type { GuestMenuSummaryDto } from '@lib/schemas/guestMenus';
+import { GuestMenuSlideForm, type GuestMenuSlideFormValue } from '@components/signage/GuestMenuSlideForm';
+import { FaListAlt } from 'react-icons/fa';
 
 interface SignageFormatState {
   slides: SignageSlideView[];
@@ -41,7 +54,11 @@ interface SignageFormatState {
 function toSignageSlideView(slide: SignageSlideDto): SignageSlideView {
   return {
     id: slide.id,
-    content: slide.imageUrl,
+    content: slide.imageUrl ?? '',
+    type: slide.type,
+    guestMenuId: slide.guestMenuId,
+    guestMenuName: slide.guestMenuName,
+    options: slide.options,
     order: slide.order,
     enabled: slide.enabled,
     weekdays: slide.weekdays,
@@ -107,6 +124,17 @@ async function patchSlides(
   }
 }
 
+/** Adds menu name/slug (admin list + live preview) from the workspace's guest menus. */
+function withGuestMenuInfo(slides: SignageSlideView[], guestMenus: GuestMenuSummaryDto[]): SignageSlideView[] {
+  if (!slides.some((slide) => slide.type === 'GUEST_MENU')) return slides;
+  const byId = new Map(guestMenus.map((menu) => [menu.id, menu]));
+  return slides.map((slide) => {
+    if (slide.type !== 'GUEST_MENU' || !slide.guestMenuId) return slide;
+    const menu = byId.get(slide.guestMenuId);
+    return { ...slide, guestMenuName: menu?.name ?? slide.guestMenuName ?? null, guestMenuSlug: menu?.slug ?? slide.guestMenuSlug ?? null };
+  });
+}
+
 function buildFormatPayload(state: SignageFormatState): SignageSettingsUpdatePayload['landscape'] {
   return {
     slides: state.slides.map((slide, order) => ({ id: slide.id, order })),
@@ -133,6 +161,7 @@ function SignageFormatEditor({
   onFilterChange,
   onClearSelection,
   onMirrorChange,
+  guestMenus,
 }: {
   title: string;
   workspaceId: string;
@@ -149,11 +178,20 @@ function SignageFormatEditor({
   onFilterChange: (filter: SignageSlideFilterState) => void;
   onClearSelection: () => void;
   onMirrorChange: (mirrorSourceFormat: MonitorFormat | null) => Promise<void>;
+  guestMenus: GuestMenuSummaryDto[];
 }) {
-  const { t } = useTranslation(['manage', 'common']);
+  const { t } = useTranslation(['manage', 'common', 'monitor']);
+  const [addingGuestMenuSlide, setAddingGuestMenuSlide] = useState(false);
   const isMirroring = Boolean(state.mirrorSourceFormat);
-  const filteredSlides = useMemo(() => filterSlidesForAdmin(state.slides, filter), [state.slides, filter]);
-  const previewSlides = isMirroring ? sourceSlides : state.slides;
+  const filteredSlides = useMemo(() => withGuestMenuInfo(filterSlidesForAdmin(state.slides, filter), guestMenus), [state.slides, filter, guestMenus]);
+  const previewSlides = useMemo(
+    () => withGuestMenuInfo(isMirroring ? sourceSlides : state.slides, guestMenus),
+    [isMirroring, sourceSlides, state.slides, guestMenus],
+  );
+  const formMenus = useMemo(
+    () => guestMenus.map((menu) => ({ id: menu.id, name: menu.name, isPublished: menu.isPublished, locales: menu.locales })),
+    [guestMenus],
+  );
   const formatView: SignageFormatView = {
     workspaceId,
     format,
@@ -256,6 +294,28 @@ function SignageFormatEditor({
     }
   };
 
+  const handleAddGuestMenuSlide = async (value: GuestMenuSlideFormValue) => {
+    try {
+      const created = await createGuestMenuSignageSlide(workspaceId, { format, guestMenuId: value.guestMenuId, options: value.options });
+      onStateChange({ ...state, slides: [...state.slides, toSignageSlideView(created)] });
+      setAddingGuestMenuSlide(false);
+      alertService.success(t('monitor:guestMenuSlide.created'));
+    } catch (error) {
+      alertApiV1Error(error, t('monitor:guestMenuSlide.errorCreate'));
+    }
+  };
+
+  const handleUpdateGuestMenuSlide = async (slideId: string, value: GuestMenuSlideFormValue, close: () => void) => {
+    try {
+      const updated = await updateGuestMenuSignageSlide(workspaceId, slideId, { guestMenuId: value.guestMenuId, options: value.options });
+      updateSlidesInState([toSignageSlideView(updated)].map((slide) => ({ ...state.slides.find((entry) => entry.id === slideId)!, ...slide })));
+      close();
+      alertService.success(t('monitor:guestMenuSlide.updated'));
+    } catch (error) {
+      alertApiV1Error(error, t('monitor:guestMenuSlide.errorUpdate'));
+    }
+  };
+
   const sourceLabel = formatLabel(otherFormat(format), (key) => t(key));
 
   return (
@@ -282,6 +342,18 @@ function SignageFormatEditor({
             onSelectedFilesChanged={() => undefined}
             onFilesSelected={onFilesSelected}
           />
+          {addingGuestMenuSlide ? (
+            <GuestMenuSlideForm
+              menus={formMenus}
+              submitLabel={t('monitor:guestMenuSlide.add')}
+              onSubmit={handleAddGuestMenuSlide}
+              onCancel={() => setAddingGuestMenuSlide(false)}
+            />
+          ) : (
+            <Button type="button" variant="outline" size="sm" className="self-start" onClick={() => setAddingGuestMenuSlide(true)}>
+              <FaListAlt /> {t('monitor:guestMenuSlide.add')}
+            </Button>
+          )}
           {uploading ? (
             <div className="flex items-center gap-2 text-sm text-base-content/70">
               <UiLoading size="sm" />
@@ -316,6 +388,15 @@ function SignageFormatEditor({
             onToggleEnabled={handleToggleEnabled}
             onDelete={handleDelete}
             onScheduleApply={handleSlideScheduleApply}
+            renderGuestMenuEditor={(slide, close) => (
+              <GuestMenuSlideForm
+                menus={formMenus}
+                initialValue={{ guestMenuId: slide.guestMenuId ?? null, options: slide.options ?? {} }}
+                submitLabel={t('common:save')}
+                onSubmit={(value) => handleUpdateGuestMenuSlide(slide.id, value, close)}
+                onCancel={close}
+              />
+            )}
           />
         </>
       )}
@@ -419,6 +500,15 @@ const ManageMonitorPage: NextPageWithPullToRefresh = () => {
   const [portraitSelectedIds, setPortraitSelectedIds] = useState<Set<string>>(new Set());
   const [landscapeFilter, setLandscapeFilter] = useState<SignageSlideFilterState>(defaultFilterState);
   const [portraitFilter, setPortraitFilter] = useState<SignageSlideFilterState>(defaultFilterState);
+  const [guestMenus, setGuestMenus] = useState<GuestMenuSummaryDto[]>([]);
+  const [signageKey, setSignageKey] = useState<SignageKeyDto | null>(null);
+
+  useEffect(() => {
+    if (!workspaceId) return;
+    getGuestMenus(workspaceId)
+      .then(setGuestMenus)
+      .catch((error) => console.error('ManageMonitorPage -> getGuestMenus', error));
+  }, [workspaceId]);
 
   const handleUpdateSignage = useCallback(async () => {
     if (!workspaceId) return;
@@ -442,7 +532,17 @@ const ManageMonitorPage: NextPageWithPullToRefresh = () => {
   const fetchSignage = useCallback(() => {
     if (workspaceId == undefined) return;
     setSignageLoading(true);
-    fetch(`/api/signage/${workspaceId}?includeInactive=true`)
+    // The monitor key is also needed for the preview of protected guest menus.
+    getSignageKey(workspaceId)
+      .catch((error) => {
+        console.error('ManageMonitorPage -> getSignageKey', error);
+        return null;
+      })
+      .then((keyDto) => {
+        setSignageKey(keyDto);
+        const keyQuery = keyDto?.key ? `&key=${encodeURIComponent(keyDto.key)}` : '';
+        return fetch(`/api/signage/${workspaceId}?includeInactive=true${keyQuery}`);
+      })
       .then(async (response) => response.json())
       .then((data) => {
         const nextLandscape = defaultFormatState();
@@ -479,6 +579,15 @@ const ManageMonitorPage: NextPageWithPullToRefresh = () => {
   useEffect(() => {
     fetchSignage();
   }, [fetchSignage]);
+
+  const hasProtectedMenuSlides = useMemo(() => {
+    const protectedMenuIds = new Set(guestMenus.filter((menu) => menu.hasAccessCode).map((menu) => menu.id));
+    if (protectedMenuIds.size === 0) return false;
+    return [...landscape.slides, ...portrait.slides].some(
+      // "Active menu" slides (no guestMenuId) may show any protected menu.
+      (slide) => slide.type === 'GUEST_MENU' && (slide.guestMenuId ? protectedMenuIds.has(slide.guestMenuId) : true),
+    );
+  }, [guestMenus, landscape.slides, portrait.slides]);
 
   ManageMonitorPage.pullToRefresh = () => {
     fetchSignage();
@@ -590,7 +699,7 @@ const ManageMonitorPage: NextPageWithPullToRefresh = () => {
                 size="sm"
                 onClick={async () => {
                   setCopyToClipboardLoading(true);
-                  await navigator.clipboard.writeText(`${window.location.origin}/signage?id=${workspaceId}`);
+                  await navigator.clipboard.writeText(`${window.location.origin}${signageKey?.monitorPath ?? `/signage?id=${workspaceId}`}`);
                   setCopyToClipboardLoading(false);
                   alertService.info(t('common:success.copied'));
                 }}
@@ -600,6 +709,17 @@ const ManageMonitorPage: NextPageWithPullToRefresh = () => {
                 <FaShareAlt /> {t('common:copyLink')}
               </Button>
             </CardTitle>
+            {workspaceId ? (
+              <SignageKeySection
+                workspaceId={workspaceId as string}
+                signageKey={signageKey}
+                hasProtectedMenuSlides={hasProtectedMenuSlides}
+                onChange={(next) => {
+                  setSignageKey(next);
+                  fetchSignage();
+                }}
+              />
+            ) : null}
             {signageLoading ? (
               <div className="flex w-full flex-col items-center justify-center gap-2">
                 <UiLoading />
@@ -623,6 +743,7 @@ const ManageMonitorPage: NextPageWithPullToRefresh = () => {
                   onFilterChange={setLandscapeFilter}
                   onClearSelection={() => setLandscapeSelectedIds(new Set())}
                   onMirrorChange={(mirrorSourceFormat) => handleMirrorChange(MonitorFormat.LANDSCAPE, landscape, setLandscape, mirrorSourceFormat)}
+                  guestMenus={guestMenus}
                 />
                 <SignageFormatEditor
                   title={t('manage:monitor.portrait')}
@@ -640,6 +761,7 @@ const ManageMonitorPage: NextPageWithPullToRefresh = () => {
                   onFilterChange={setPortraitFilter}
                   onClearSelection={() => setPortraitSelectedIds(new Set())}
                   onMirrorChange={(mirrorSourceFormat) => handleMirrorChange(MonitorFormat.PORTRAIT, portrait, setPortrait, mirrorSourceFormat)}
+                  guestMenus={guestMenus}
                 />
               </div>
             )}

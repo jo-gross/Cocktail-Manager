@@ -1,19 +1,21 @@
 import { withHttpMethods } from '@middleware/api/handleMethods';
 import HTTPMethod from 'http-method-enum';
 import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
-import { Prisma, Role, Unit, UnitConversion } from '@generated/prisma/client';
+import { Permission, Prisma, Role, Unit, UnitConversion } from '@generated/prisma/client';
 import prisma from '../../../../../../prisma/prisma';
 import { Graph, shortestPath } from 'graph-data-structure';
 import { withDeprecation } from '@middleware/api/withDeprecation';
 import UnitConversionCreateInput = Prisma.UnitConversionCreateInput;
 
 const legacyHandler = withHttpMethods({
-  [HTTPMethod.GET]: withWorkspacePermission([Role.USER], async (req, res, user, workspace) => {
+  [HTTPMethod.GET]: withWorkspacePermission([Role.USER], Permission.UNITS_READ, async (req, res, user, workspace) => {
     const unitConversions = await prisma.unitConversion.findMany({ where: { workspaceId: workspace.id } });
     return res.json({ data: unitConversions });
   }),
-  [HTTPMethod.POST]: withWorkspacePermission([Role.ADMIN], async (req, res, user, workspace) => {
+  [HTTPMethod.POST]: withWorkspacePermission([Role.ADMIN], Permission.UNITS_UPDATE, async (req, res, user, workspace) => {
     const { fromUnitId, toUnitId, factor } = req.body;
+    const unitCount = await prisma.unit.count({ where: { id: { in: [fromUnitId, toUnitId] }, workspaceId: workspace.id } });
+    if (unitCount !== new Set([fromUnitId, toUnitId]).size) return res.status(404).json({ message: 'Unit not found' });
     const input: UnitConversionCreateInput = {
       fromUnit: { connect: { id: fromUnitId } },
       toUnit: { connect: { id: toUnitId } },

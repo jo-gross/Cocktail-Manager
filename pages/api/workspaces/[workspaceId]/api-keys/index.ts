@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
+import { withWorkspaceSession } from '@middleware/api/authenticationMiddleware';
 import { withHttpMethods } from '@middleware/api/handleMethods';
 import { Permission, Role } from '@generated/prisma/client';
 import HTTPMethod from 'http-method-enum';
@@ -9,7 +9,7 @@ import { createApiKeyJwt } from '@middleware/api/jwtApiKeyMiddleware';
 import { withDeprecation } from '@middleware/api/withDeprecation';
 
 const legacyHandler = withHttpMethods({
-  [HTTPMethod.GET]: withWorkspacePermission([Role.ADMIN, Role.OWNER], async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
+  [HTTPMethod.GET]: withWorkspaceSession([Role.ADMIN, Role.OWNER], async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
     const apiKeys = await prisma.workspaceApiKey.findMany({
       where: {
         workspaceId: workspace.id,
@@ -46,7 +46,7 @@ const legacyHandler = withHttpMethods({
     return res.json({ data: sanitizedKeys });
   }),
 
-  [HTTPMethod.POST]: withWorkspacePermission([Role.ADMIN, Role.OWNER], async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
+  [HTTPMethod.POST]: withWorkspaceSession([Role.ADMIN, Role.OWNER], async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
     const { name, expiresAt, permissions } = req.body;
 
     if (!name || typeof name !== 'string') {

@@ -25,6 +25,9 @@ import { PDFDocument } from 'pdf-lib';
 import { pdfExportTailwindConfigScript, pdfExportThemeStyles } from '../../../../../lib/pdf/pdfExportStyles';
 import { getServerT } from '../../../../../lib/i18n/server';
 import { DEFAULT_LOCALE } from '../../../../../lib/i18n/locales';
+import { resolveLabel } from '@lib/i18n/labelFallback';
+import { loadWorkspaceLocaleSettings } from '@lib/workspace/workspaceLocaleSettings.server';
+import type { ContentLocales } from '@lib/workspace/workspaceLocaleSettings';
 import { withDeprecation } from '@middleware/api/withDeprecation';
 
 const WorkspaceSettingKey = $Enums.WorkspaceSettingKey;
@@ -216,10 +219,6 @@ async function generatePdf(html: string, numberOfCocktails: number, showHeader: 
   }
 }
 
-function getTranslation(translations: Record<string, Record<string, string>>, key: string, language: string = 'de'): string {
-  return translations[language]?.[key] ?? translations['de']?.[key] ?? key;
-}
-
 function generateHtmlForCocktails(
   cocktails: CocktailRecipeWithDetails[],
   translations: Record<string, Record<string, string>>,
@@ -231,6 +230,7 @@ function generateHtmlForCocktails(
     newPagePerCocktail: boolean;
     showHeader: boolean;
     showFooter: boolean;
+    contentLocales: ContentLocales;
   },
 ): string {
   const { t } = getServerT(DEFAULT_LOCALE);
@@ -243,7 +243,7 @@ function generateHtmlForCocktails(
       React.createElement(CocktailPdfPage, {
         cocktail,
         imageBase64,
-        getTranslation: (key: string) => getTranslation(translations, key),
+        getTranslation: (key: string) => resolveLabel(translations, key, DEFAULT_LOCALE, options.contentLocales),
         labels,
         locale: DEFAULT_LOCALE,
         exportImage: options.exportImage,
@@ -397,6 +397,7 @@ const legacyHandler = withHttpMethods({
       });
 
       const translations: Record<string, Record<string, string>> = translationSetting?.value ? JSON.parse(translationSetting.value) : { de: {} };
+      const { contentLocales } = await loadWorkspaceLocaleSettings(workspace.id);
 
       // Always use max 10 cocktails per batch to prevent browser tab overflow
       const batchSize = 10;
@@ -423,6 +424,7 @@ const legacyHandler = withHttpMethods({
             newPagePerCocktail,
             showHeader,
             showFooter,
+            contentLocales,
           });
           const batchPdfBuffer = await generatePdf(html, batch.length, showHeader, showFooter);
           pdfBuffers.push(batchPdfBuffer);

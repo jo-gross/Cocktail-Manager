@@ -57,6 +57,13 @@ function createCardFormSchema(requiredMessage: string) {
   });
 }
 
+/** Formik number inputs yield '' when cleared – submit that as null instead of coercing it to 0. */
+function toPriceInput(value: number | string | null | undefined): number | null {
+  if (value === null || value === undefined || value === '') return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
 function mapCardToFormValues(card?: CardDto): CardEditorFormValues {
   return {
     name: card?.name ?? '',
@@ -66,6 +73,7 @@ function mapCardToFormValues(card?: CardDto): CardEditorFormValues {
         .slice()
         .sort((a, b) => a.groupNumber - b.groupNumber)
         .map((group) => ({
+          id: group.id,
           name: group.name,
           groupNumber: group.groupNumber,
           groupPrice: group.groupPrice,
@@ -145,13 +153,17 @@ export function CardEditorForm({ card, cocktails, loadingCocktails, workspaceId,
             name: values.name,
             date: values.date != '' ? new Date(values.date).toISOString() : null,
             groups: values.groups.map((group, index) => ({
+              id: group.id,
               name: group.name,
               groupNumber: index,
-              groupPrice: group.groupPrice,
-              items: group.items.map((item, itemIndex) => ({
-                itemNumber: itemIndex,
-                cocktailId: item.cocktailId,
-              })),
+              groupPrice: toPriceInput(group.groupPrice),
+              items: [...group.items]
+                .sort((a, b) => a.itemNumber - b.itemNumber)
+                .map((item, itemIndex) => ({
+                  itemNumber: itemIndex,
+                  cocktailId: item.cocktailId,
+                  specialPrice: toPriceInput(item.specialPrice),
+                })),
             })),
           };
 

@@ -9,6 +9,7 @@ import { calculateIngredientSimilarity } from '@lib/findSimilarEntities';
 import levenshtein from 'js-levenshtein';
 import { ApiError } from '@lib/http/ApiError';
 import { toIngredientDto } from '@lib/api/dto/ingredients';
+import { ingredientGuestInfoImportData } from '@lib/guest-info/sanitize';
 import packageJson from '../../../package.json';
 import type { IngredientExportStructure } from '@lib/auditExport';
 import type { Prisma, User, Workspace } from '@generated/prisma/client';
@@ -18,6 +19,18 @@ const ingredientInclude = {
   IngredientVolume: { include: { unit: true } },
   _count: { select: { IngredientImage: true } },
 } satisfies Prisma.IngredientInclude;
+
+/** Guest-info fields of a create/update input; omitted fields stay unchanged, a blank guest name is stored as null. */
+function guestInfoData(input: IngredientCreateInput | IngredientUpdateInput) {
+  return {
+    abv: input.abv,
+    allergens: input.allergens,
+    additives: input.additives,
+    guestInfoComplete: input.guestInfoComplete,
+    hideOnGuestMenu: input.hideOnGuestMenu,
+    guestName: input.guestName === undefined ? undefined : input.guestName?.trim() || null,
+  };
+}
 
 export async function listIngredients(workspace: Workspace, opts: { search?: string }): Promise<IngredientDto[]> {
   const where: Prisma.IngredientWhereInput = { workspaceId: workspace.id };
@@ -48,6 +61,7 @@ export async function createIngredient(workspace: Workspace, user: User, input: 
         price: input.price ?? undefined,
         link: input.link ?? undefined,
         tags: input.tags ?? undefined,
+        ...guestInfoData(input),
         workspace: { connect: { id: workspace.id } },
       },
     });
@@ -95,6 +109,7 @@ export async function updateIngredient(workspace: Workspace, user: User, ingredi
         price: input.price ?? undefined,
         link: input.link ?? undefined,
         tags: input.tags ?? undefined,
+        ...guestInfoData(input),
         workspace: { connect: { id: workspace.id } },
       },
     });
@@ -218,6 +233,12 @@ export async function cloneIngredient(workspace: Workspace, ingredientId: string
         price: existing.price,
         link: existing.link,
         tags: existing.tags,
+        abv: existing.abv,
+        allergens: existing.allergens,
+        additives: existing.additives,
+        guestInfoComplete: existing.guestInfoComplete,
+        hideOnGuestMenu: existing.hideOnGuestMenu,
+        guestName: existing.guestName,
         workspace: { connect: { id: workspace.id } },
       },
     });
@@ -309,6 +330,12 @@ export async function exportIngredientsJson(workspace: Workspace, ids: string[])
         price: ingredient.price,
         link: ingredient.link,
         tags: ingredient.tags,
+        abv: ingredient.abv,
+        allergens: ingredient.allergens,
+        additives: ingredient.additives,
+        guestInfoComplete: ingredient.guestInfoComplete,
+        hideOnGuestMenu: ingredient.hideOnGuestMenu,
+        guestName: ingredient.guestName,
         workspaceId: ingredient.workspaceId,
       },
       ingredientVolumes,
@@ -416,6 +443,7 @@ export async function importIngredientsJson(
                 price: itemData.ingredient.price ?? null,
                 link: itemData.ingredient.link ?? null,
                 tags: itemData.ingredient.tags ?? [],
+                ...ingredientGuestInfoImportData(itemData.ingredient),
               },
             });
 
@@ -438,6 +466,7 @@ export async function importIngredientsJson(
                 price: itemData.ingredient.price ?? null,
                 link: itemData.ingredient.link ?? null,
                 tags: itemData.ingredient.tags ?? [],
+                ...ingredientGuestInfoImportData(itemData.ingredient),
                 workspaceId,
               },
             });

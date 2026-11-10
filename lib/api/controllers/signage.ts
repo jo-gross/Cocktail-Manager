@@ -7,11 +7,15 @@ import prisma from '../../../prisma/prisma';
 import { ApiError } from '@lib/http/ApiError';
 import { ensureSignageContainer } from '@lib/signage/signageApiHelpers';
 import { validateExclusiveOverlap } from '@lib/signage/validateExclusiveOverlap';
+import { buildSignagePath, generateSignageKey } from '@lib/signage/signageKey';
 import { toSignageFormatDto, toSignageSlideDto } from '@lib/api/dto/signage';
-import type { Workspace } from '@generated/prisma/client';
+import { Prisma, type Workspace } from '@generated/prisma/client';
 import type {
   SignageFormatDto,
   SignageFormatSettingsInput,
+  SignageGuestMenuSlideCreateInput,
+  SignageGuestMenuSlideUpdateInput,
+  SignageKeyDto,
   SignageSettingsUpdateInput,
   SignageSlideCreateInput,
   SignageSlideDto,
@@ -19,6 +23,8 @@ import type {
 } from '@lib/schemas/signage';
 
 type MonitorFormat = 'LANDSCAPE' | 'PORTRAIT';
+
+const slideInclude = { guestMenu: { select: { name: true } } } as const;
 
 // Copied verbatim from the legacy admin/signage handler (behaviour preserved).
 async function updateSignageFormatSettings(workspaceId: string, format: MonitorFormat, data: SignageFormatSettingsInput | undefined) {
@@ -57,7 +63,7 @@ async function updateSignageFormatSettings(workspaceId: string, format: MonitorF
 export async function getSignage(workspace: Workspace): Promise<SignageFormatDto[]> {
   const [signages, slides] = await Promise.all([
     prisma.signage.findMany({ where: { workspaceId: workspace.id } }),
-    prisma.signageSlide.findMany({ where: { workspaceId: workspace.id }, orderBy: { order: 'asc' } }),
+    prisma.signageSlide.findMany({ where: { workspaceId: workspace.id }, orderBy: { order: 'asc' }, include: slideInclude }),
   ]);
   return signages.map((signage) =>
     toSignageFormatDto(
@@ -89,7 +95,7 @@ export async function createSlides(workspace: Workspace, input: SignageSlideCrea
     let nextOrder = (maxOrderSlide?.order ?? -1) + 1;
     const slides = [];
     for (const content of input.slides) {
-      slides.push(await tx.signageSlide.create({ data: { workspaceId: workspace.id, format, content, order: nextOrder } }));
+      slides.push(await tx.signageSlide.create({ data: { workspaceId: workspace.id, format, content, order: nextOrder }, include: slideInclude }));
       nextOrder += 1;
     }
     return slides;
@@ -148,8 +154,56 @@ export async function patchSlides(workspace: Workspace, input: SignageSlidePatch
   const slides = await prisma.signageSlide.findMany({
     where: { workspaceId: workspace.id, id: { in: input.slideIds } },
     orderBy: { order: 'asc' },
+    include: slideInclude,
   });
   return slides.map((slide) => toSignageSlideDto(slide, workspace.id));
+}
+
+async function assertGuestMenuInWorkspace(workspaceId: string, guestMenuId: string | null | undefined) {
+  if (!guestMenuId) return;
+  const menu = await prisma.guestMenu.findFirst({ where: { id: guestMenuId, workspaceId }, select: { id: true } });
+  if (!menu) throw new ApiError(404, 'GUEST_MENU_NOT_FOUND', 'Guest menu not found');
+}
+
+function toOptionsJson(options: SignageGuestMenuSlideCreateInput['options']) {
+  if (!options) return Prisma.DbNull;
+  // Drop unset values so the stored JSON only contains real overrides.
+  const entries = Object.entries(options).filter(([, value]) => value !== undefined && value !== null);
+  return entries.length > 0 ? (Object.fromEntries(entries) as Prisma.InputJsonObject) : Prisma.DbNull;
+}
+
+export async function createGuestMenuSlide(workspace: Workspace, input: SignageGuestMenuSlideCreateInput): Promise<SignageSlideDto> {
+  await assertGuestMenuInWorkspace(workspace.id, input.guestMenuId);
+  const slide = await prisma.$transaction(async (tx) => {
+    await ensureSignageContainer(tx, workspace.id, input.format);
+    const maxOrderSlide = await tx.signageSlide.findFirst({ where: { workspaceId: workspace.id, format: input.format }, orderBy: { order: 'desc' } });
+    return tx.signageSlide.create({
+      data: {
+        workspaceId: workspace.id,
+        format: input.format,
+        type: 'GUEST_MENU',
+        content: '',
+        guestMenuId: input.guestMenuId ?? null,
+        options: toOptionsJson(input.options),
+        order: (maxOrderSlide?.order ?? -1) + 1,
+      },
+      include: slideInclude,
+    });
+  });
+  return toSignageSlideDto(slide, workspace.id);
+}
+
+export async function updateGuestMenuSlide(workspace: Workspace, slideId: string, input: SignageGuestMenuSlideUpdateInput): Promise<SignageSlideDto> {
+  const existing = await prisma.signageSlide.findFirst({ where: { id: slideId, workspaceId: workspace.id }, select: { type: true } });
+  if (!existing) throw new ApiError(404, 'NOT_FOUND', 'Slide not found');
+  if (existing.type !== 'GUEST_MENU') throw new ApiError(400, 'NOT_A_GUEST_MENU_SLIDE', 'Slide is not a guest menu slide');
+  await assertGuestMenuInWorkspace(workspace.id, input.guestMenuId);
+
+  const data: Prisma.SignageSlideUncheckedUpdateInput = {};
+  if (input.guestMenuId !== undefined) data.guestMenuId = input.guestMenuId;
+  if (input.options !== undefined) data.options = toOptionsJson(input.options);
+  const slide = await prisma.signageSlide.update({ where: { id: slideId }, data, include: slideInclude });
+  return toSignageSlideDto(slide, workspace.id);
 }
 
 export async function deleteSlide(workspace: Workspace, slideId: string): Promise<{ count: number }> {
@@ -161,9 +215,9 @@ export async function deleteSlide(workspace: Workspace, slideId: string): Promis
 export async function getSlideImage(workspace: Workspace, slideId: string): Promise<{ contentType: string; bytes: Buffer } | null> {
   const slide = await prisma.signageSlide.findFirst({
     where: { id: slideId, workspaceId: workspace.id },
-    select: { content: true },
+    select: { content: true, type: true },
   });
-  if (!slide?.content) return null;
+  if (!slide?.content || slide.type !== 'IMAGE') return null;
 
   const raw = slide.content;
   if (raw.startsWith('data:')) {
@@ -171,4 +225,19 @@ export async function getSlideImage(workspace: Workspace, slideId: string): Prom
     return { contentType, bytes: Buffer.from(raw.split(',')[1], 'base64') };
   }
   return { contentType: 'image/png', bytes: Buffer.from(raw, 'base64') };
+}
+
+function toSignageKeyDto(workspaceId: string, key: string | null): SignageKeyDto {
+  return { key, monitorPath: buildSignagePath(workspaceId, key) };
+}
+
+export async function getSignageKey(workspace: Workspace): Promise<SignageKeyDto> {
+  const row = await prisma.workspace.findUnique({ where: { id: workspace.id }, select: { signageKey: true } });
+  return toSignageKeyDto(workspace.id, row?.signageKey ?? null);
+}
+
+export async function regenerateSignageKey(workspace: Workspace): Promise<SignageKeyDto> {
+  const key = generateSignageKey();
+  await prisma.workspace.update({ where: { id: workspace.id }, data: { signageKey: key } });
+  return toSignageKeyDto(workspace.id, key);
 }

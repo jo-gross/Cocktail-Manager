@@ -1,10 +1,10 @@
-import { useContext, useState } from 'react';
+import { useContext, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DndContext, DragEndEvent, PointerSensor, closestCenter, useSensor, useSensors } from '@dnd-kit/core';
 import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import Image from 'next/image';
-import { FaCalendarAlt, FaEye, FaEyeSlash, FaGripVertical, FaTrashAlt } from 'react-icons/fa';
+import { FaCalendarAlt, FaCog, FaEye, FaEyeSlash, FaGripVertical, FaListAlt, FaTrashAlt } from 'react-icons/fa';
 import { Button, Checkbox, FormControl, Input, Label, LabelText } from '@components/ui';
 import { DAY_ORDER_MONDAY_FIRST, getDayName } from '@lib/dayConstants';
 import { formatSlideScheduleLabel } from '@lib/signage/isSlideActiveNow';
@@ -28,6 +28,20 @@ interface SignageSlideListProps {
   onToggleEnabled: (slideId: string, enabled: boolean) => Promise<void>;
   onDelete: (slideId: string) => Promise<void>;
   onScheduleApply: (slideId: string, payload: SignageSlideSchedulePayload) => Promise<void>;
+  /** Editor for GUEST_MENU slides (menu + display options). */
+  renderGuestMenuEditor?: (slide: SignageSlideView, onClose: () => void) => ReactNode;
+}
+
+function GuestMenuSlideThumbnail({ slide }: { slide: SignageSlideView }) {
+  const { t } = useTranslation('monitor');
+  return (
+    <div className="flex h-full w-full flex-col items-center justify-center gap-1 bg-neutral p-2 text-center text-neutral-content">
+      <FaListAlt className="text-2xl" aria-hidden />
+      <span className="line-clamp-2 text-xs font-medium">
+        {slide.guestMenuId ? (slide.guestMenuName ?? t('guestMenuSlide.menu')) : t('guestMenuSlide.activeMenu')}
+      </span>
+    </div>
+  );
 }
 
 function SlideSchedulePanel({
@@ -121,11 +135,17 @@ function SortableSlideItem({
   onDelete,
   onScheduleApply,
   onCloseSchedule,
+  editing,
+  onToggleEdit,
+  renderGuestMenuEditor,
 }: {
   id: string;
   slide: SignageSlideView;
   selected: boolean;
   expanded: boolean;
+  editing: boolean;
+  onToggleEdit: () => void;
+  renderGuestMenuEditor?: (slide: SignageSlideView, onClose: () => void) => ReactNode;
   onToggleSelect: () => void;
   onToggleEnabled: () => Promise<void>;
   onToggleSchedule: () => void;
@@ -135,6 +155,7 @@ function SortableSlideItem({
 }) {
   const { t } = useTranslation(['manage', 'monitor']);
   const modalContext = useContext(ModalContext);
+  const isGuestMenu = slide.type === 'GUEST_MENU';
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -153,16 +174,48 @@ function SortableSlideItem({
         <button type="button" className="cursor-grab text-base-content/60" {...attributes} {...listeners}>
           <FaGripVertical />
         </button>
-        <button
-          type="button"
-          className={`relative h-24 w-32 shrink-0 overflow-hidden rounded-md ${slide.enabled ? '' : 'opacity-50 grayscale'} cursor-zoom-in`}
-          onClick={() => modalContext.openModal(<ImageModal image={slide.content} />)}
-          title={t('manage:monitor.enlargeSlidePreview')}
-        >
-          <Image src={slide.content} alt={t('manage:monitor.slidePreviewAlt')} fill className="object-contain" />
-        </button>
-        <div className="min-w-0 flex-1 text-xs text-base-content/70">{formatSlideScheduleLabel(slide)}</div>
+        {isGuestMenu ? (
+          <button
+            type="button"
+            className={`relative h-24 w-32 shrink-0 overflow-hidden rounded-md ${slide.enabled ? '' : 'opacity-50 grayscale'}`}
+            onClick={onToggleEdit}
+            title={t('monitor:guestMenuSlide.edit')}
+          >
+            <GuestMenuSlideThumbnail slide={slide} />
+          </button>
+        ) : (
+          <button
+            type="button"
+            className={`relative h-24 w-32 shrink-0 overflow-hidden rounded-md ${slide.enabled ? '' : 'opacity-50 grayscale'} cursor-zoom-in`}
+            onClick={() => modalContext.openModal(<ImageModal image={slide.content} />)}
+            title={t('manage:monitor.enlargeSlidePreview')}
+          >
+            <Image src={slide.content} alt={t('manage:monitor.slidePreviewAlt')} fill className="object-contain" />
+          </button>
+        )}
+        <div className="min-w-0 flex-1 text-xs text-base-content/70">
+          {isGuestMenu ? (
+            <div className="font-medium text-base-content">
+              {slide.guestMenuId
+                ? t('monitor:guestMenuSlide.label', { name: slide.guestMenuName ?? slide.guestMenuId })
+                : t('monitor:guestMenuSlide.activeMenu')}
+            </div>
+          ) : null}
+          {formatSlideScheduleLabel(slide)}
+        </div>
         <div className="flex gap-1">
+          {isGuestMenu && renderGuestMenuEditor ? (
+            <Button
+              type="button"
+              variant={editing ? 'primary' : 'outline'}
+              shape="square"
+              size="sm"
+              onClick={onToggleEdit}
+              title={t('monitor:guestMenuSlide.edit')}
+            >
+              <FaCog />
+            </Button>
+          ) : null}
           <Button
             type="button"
             variant={expanded ? 'primary' : 'outline'}
@@ -196,6 +249,7 @@ function SortableSlideItem({
           onClose={onCloseSchedule}
         />
       ) : null}
+      {editing && isGuestMenu && renderGuestMenuEditor ? <div className="mt-2">{renderGuestMenuEditor(slide, onToggleEdit)}</div> : null}
     </div>
   );
 }
@@ -209,9 +263,11 @@ export function SignageSlideList({
   onToggleEnabled,
   onDelete,
   onScheduleApply,
+  renderGuestMenuEditor,
 }: SignageSlideListProps) {
   const { t } = useTranslation('monitor');
   const [expandedSlideId, setExpandedSlideId] = useState<string | null>(null);
+  const [editingSlideId, setEditingSlideId] = useState<string | null>(null);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
   const ids = slides.map((slide) => slide.id);
   const allSelected = slides.length > 0 && slides.every((slide) => selectedIds.has(slide.id));
@@ -261,6 +317,9 @@ export function SignageSlideList({
                 onDelete={() => onDelete(slide.id)}
                 onScheduleApply={(payload) => onScheduleApply(slide.id, payload)}
                 onCloseSchedule={() => setExpandedSlideId(null)}
+                editing={editingSlideId === slide.id}
+                onToggleEdit={() => setEditingSlideId((current) => (current === slide.id ? null : slide.id))}
+                renderGuestMenuEditor={renderGuestMenuEditor}
               />
             ))}
           </div>

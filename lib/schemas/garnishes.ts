@@ -8,6 +8,7 @@ import { z } from '@lib/openapi/zod';
 import { WorkspaceIdParam, DeletionResult } from '@lib/schemas/common';
 import { ApiTags } from '@lib/openapi/tags';
 import type { ResourceApiDoc } from '@lib/openapi/types';
+import { GarnishGuestInfoDtoShape, GarnishGuestInfoInputShape } from '@lib/schemas/guestInfo';
 
 /** Public garnish DTO — no Prisma-isms: `hasImage`/`imageUrl` instead of `_count`/base64. */
 export const GarnishDtoSchema = z
@@ -19,6 +20,7 @@ export const GarnishDtoSchema = z
     price: z.number().nullable().openapi({ description: 'Price in currency units.' }),
     hasImage: z.boolean().openapi({ description: 'Whether the garnish has an image.' }),
     imageUrl: z.string().nullable().openapi({ description: 'URL to fetch the garnish image bytes, or null when hasImage is false.' }),
+    ...GarnishGuestInfoDtoShape,
   })
   .openapi('Garnish');
 
@@ -32,6 +34,7 @@ export const GarnishCreateSchema = z
     description: z.string().nullish(),
     notes: z.string().nullish(),
     image: z.string().nullish().openapi({ description: 'Base64-encoded image (data URI) to attach.' }),
+    ...GarnishGuestInfoInputShape,
   })
   .openapi('GarnishCreateInput');
 
@@ -42,6 +45,7 @@ export const GarnishUpdateSchema = z
     description: z.string().nullish(),
     notes: z.string().nullish(),
     image: z.string().nullish().openapi({ description: 'Base64 image; omitting it removes the current image.' }),
+    ...GarnishGuestInfoInputShape,
   })
   .openapi('GarnishUpdateInput');
 
@@ -166,7 +170,7 @@ export const garnishesExportJsonApiDoc = {
   operations: {
     POST: {
       roles: ['USER'],
-      permission: null,
+      permission: 'GARNISHES_READ',
       tags: [ApiTags.garnishesImportExport],
       summary: 'Export garnishes as JSON',
       description:

@@ -9,6 +9,7 @@ export type WorkspaceListItem = {
   id: string;
   name: string;
   description?: string | null;
+  image?: string | null;
 };
 
 export function listWorkspaces(): Promise<WorkspaceListItem[]> {

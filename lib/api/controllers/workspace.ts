@@ -10,7 +10,13 @@ import { isWorkspaceExternallyManaged } from '@lib/config/externalWorkspace';
 import { ApiError } from '@lib/http/ApiError';
 import { toWorkspaceDto, toWorkspaceSettingsDto } from '@lib/api/dto/workspace';
 import type { User, Workspace } from '@generated/prisma/client';
-import type { WorkspaceDto, WorkspaceSettingsDto, WorkspaceSettingUpdateInput, WorkspaceUpdateInput } from '@lib/schemas/workspace';
+import {
+  isReservedPublicSlug,
+  type WorkspaceDto,
+  type WorkspaceSettingsDto,
+  type WorkspaceSettingUpdateInput,
+  type WorkspaceUpdateInput,
+} from '@lib/schemas/workspace';
 
 const memberSelect = {
   role: true,
@@ -50,10 +56,30 @@ export async function getWorkspace(workspace: Workspace, user: User): Promise<Wo
 }
 
 export async function updateWorkspace(workspace: Workspace, input: WorkspaceUpdateInput): Promise<WorkspaceDto> {
-  await prisma.workspace.update({
-    where: { id: workspace.id },
-    data: { id: workspace.id, name: input.name },
-  });
+  if (input.publicSlug != undefined) {
+    if (isReservedPublicSlug(input.publicSlug)) {
+      throw new ApiError(400, 'PUBLIC_SLUG_RESERVED', 'Public slugs must not look like an id (cuid/uuid)');
+    }
+    // `/m/{bar}` resolves ids first – a slug equal to any workspace id would be unreachable / shadow it.
+    const taken = await prisma.workspace.findFirst({
+      where: { OR: [{ publicSlug: input.publicSlug, id: { not: workspace.id } }, { id: input.publicSlug }] },
+      select: { id: true },
+    });
+    if (taken) throw new ApiError(409, 'PUBLIC_SLUG_TAKEN', 'This public slug is already used by another workspace');
+  }
+
+  try {
+    await prisma.workspace.update({
+      where: { id: workspace.id },
+      // undefined keeps the current value; publicSlug null removes it
+      data: { name: input.name, publicSlug: input.publicSlug, image: input.image },
+    });
+  } catch (error) {
+    if (typeof error === 'object' && error !== null && 'code' in error && error.code === 'P2002') {
+      throw new ApiError(409, 'PUBLIC_SLUG_TAKEN', 'This public slug is already used by another workspace');
+    }
+    throw error;
+  }
 
   return loadWorkspaceDto(workspace.id);
 }

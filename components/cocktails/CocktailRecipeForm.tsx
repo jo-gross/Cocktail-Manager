@@ -42,6 +42,8 @@ import { updateTags, validateTag } from '../../models/tags/TagUtils';
 import { TagInput } from '../TagInput';
 import CropComponent from '../CropComponent';
 import { alertApiV1Error, apiV1Fetch, apiV1Mutate } from '@lib/network/apiV1';
+import { TranslatedFieldTabs } from '@components/translations/TranslatedFieldTabs';
+import { useEntityContentTranslations } from '@components/translations/useEntityContentTranslations';
 import { FaCropSimple } from 'react-icons/fa6';
 import DeepDiff from 'deep-diff';
 import { RoutingContext } from '@lib/context/RoutingContextProvider';
@@ -68,10 +70,12 @@ import {
   Toggle,
   Tooltip,
 } from '@components/ui';
+import { CocktailGuestInfoFields, parseOptionalPercent, type CocktailGuestInfoFormValues } from '@components/guest-info/GuestInfoFormFields';
+import { ADDITIVES, ALLERGENS } from '@lib/guest-info/constants';
 
 const fieldErrorClass = 'border-error focus:border-error focus:ring-error/25';
 
-export interface CocktailRecipeFormValues {
+export interface CocktailRecipeFormValues extends CocktailGuestInfoFormValues {
   id: string;
   name: string;
   description: string;
@@ -166,7 +170,7 @@ interface GarnishError {
  * The adapter maps issue paths (e.g. `steps[0].ingredients[1].unit`) onto Formik's
  * nested error object, so the field-level messages line up with the JSX exactly as before.
  */
-const cocktailFormSchema = (requiredMessage: string, imageNotCroppedMessage: string) =>
+const cocktailFormSchema = (requiredMessage: string, imageNotCroppedMessage: string, abvRangeMessage: string) =>
   z
     .object({
       name: z.string().refine((v) => v.trim() != '', { message: requiredMessage }),
@@ -180,6 +184,9 @@ const cocktailFormSchema = (requiredMessage: string, imageNotCroppedMessage: str
         .refine((v) => v != null && v != '', { message: requiredMessage }),
       image: z.string().optional(),
       originalImage: z.any().optional(),
+      abvOverride: z.union([z.literal(''), z.null(), z.coerce.number().min(0, abvRangeMessage).max(100, abvRangeMessage)]),
+      extraAllergens: z.array(z.enum(ALLERGENS)),
+      extraAdditives: z.array(z.enum(ADDITIVES)),
       steps: z.array(
         z.object({
           actionId: z
@@ -234,7 +241,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
   const modalContext = useContext(ModalContext);
   const userContext = useContext(UserContext);
   const routingContext = useContext(RoutingContext);
-  const { t } = useTranslation(['cocktail', 'common', 'entity', 'errors']);
+  const { t } = useTranslation(['cocktail', 'common', 'entity', 'errors', 'guestInfo']);
 
   const [iceOptions, setIceOptions] = useState<IceDto[]>([]);
   const [_iceOptionsLoading, setIceOptionsLoading] = useState(false);
@@ -258,6 +265,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
 
   const [hydratedImage, setHydratedImage] = useState<string | undefined>(undefined);
   const [imageHydrationDone, setImageHydrationDone] = useState(!props.cocktailRecipe?.hasImage);
+  const contentTranslations = useEntityContentTranslations('cocktail', props.cocktailRecipe?.id);
 
   useEffect(() => {
     let cancelled = false;
@@ -442,6 +450,9 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
     steps: initSteps,
     workspaceId: workspaceId!,
     isArchived: props.cocktailRecipe?.isArchived ?? false,
+    abvOverride: props.cocktailRecipe?.abvOverride ?? '',
+    extraAllergens: props.cocktailRecipe?.extraAllergens ?? [],
+    extraAdditives: props.cocktailRecipe?.extraAdditives ?? [],
   };
 
   const inheritTagsFromIngredients = useCallback((steps: CocktailRecipeStepFull[], tags: string[]) => {
@@ -479,6 +490,9 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
             garnishes: mapCocktailDtoToFormGarnishes(props.cocktailRecipe),
             steps: mapCocktailDtoToFormSteps(props.cocktailRecipe),
             workspaceId: workspaceId!,
+            abvOverride: props.cocktailRecipe.abvOverride ?? '',
+            extraAllergens: props.cocktailRecipe.extraAllergens,
+            extraAdditives: props.cocktailRecipe.extraAdditives,
           };
           const reducedValues = _.omit(values, ['image', 'ice', 'glass', 'isArchived', 'originalImage']);
 
@@ -508,7 +522,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
           props.setUnsavedChanges?.(true);
         }
 
-        const errors = zodFormikValidate(cocktailFormSchema(t('errors:requiredField'), t('common:imageNotCropped')))(values) as
+        const errors = zodFormikValidate(cocktailFormSchema(t('errors:requiredField'), t('common:imageNotCropped'), t('guestInfo:form.abvRange')))(values) as
           Record<string, unknown> | undefined;
         return errors;
       }}
@@ -524,6 +538,9 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
             iceId: values.iceId,
             glassId: values.glassId,
             tags: values.tags,
+            abvOverride: parseOptionalPercent(values.abvOverride),
+            extraAllergens: values.extraAllergens,
+            extraAdditives: values.extraAdditives,
             // Shaped to the v1 CocktailStepInputSchema. Optional `id` is sent through so the
             // differential PUT can match existing rows (empty/missing id = new).
             steps: (values.steps as CocktailRecipeStepFull[]).map((step, index) => {
@@ -561,11 +578,13 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
           }
           if (!workspaceId) return;
           if (props.cocktailRecipe == undefined) {
-            await apiV1Mutate<CocktailDto>(`/api/v1/workspaces/${workspaceId}/cocktails`, 'POST', body);
+            const created = await apiV1Mutate<CocktailDto>(`/api/v1/workspaces/${workspaceId}/cocktails`, 'POST', body);
+            await contentTranslations.save(created.id);
             alertService.success(t('cocktail:success.created'));
             await routingContext.conditionalBack(`/workspaces/${workspaceId}/manage/cocktails`);
           } else {
             await apiV1Mutate<CocktailDto>(`/api/v1/workspaces/${workspaceId}/cocktails/${props.cocktailRecipe.id}`, 'PUT', body);
+            await contentTranslations.save(props.cocktailRecipe.id);
             alertService.success(t('cocktail:success.updated'));
             await routingContext.conditionalBack(`/workspaces/${workspaceId}/manage/cocktails#${props.cocktailRecipe.id}`);
           }
@@ -589,33 +608,35 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                         <>{errors.name && errors.name}</> *
                       </LabelTextAlt>
                     </Label>
-                    <Input
-                      type="text"
-                      name="name"
-                      autoComplete={'off'}
-                      id={'name'}
-                      className={errors.name ? fieldErrorClass : undefined}
-                      onChange={(event) => {
-                        if (event.target.value.length > 2 && workspaceId) {
-                          apiV1Fetch<CocktailSummaryDto | null>(
-                            `/api/v1/workspaces/${workspaceId}/cocktails/check?name=${encodeURIComponent(event.target.value)}`,
-                          )
-                            .then((match) => {
-                              if (match != null && match.id != props.cocktailRecipe?.id) {
-                                setSimilarCocktailRecipe(match);
-                              } else {
-                                setSimilarCocktailRecipe(undefined);
-                              }
-                            })
-                            .catch(() => setSimilarCocktailRecipe(undefined));
-                        } else {
-                          setSimilarCocktailRecipe(undefined);
-                        }
-                        handleChange(event);
-                      }}
-                      onBlur={handleBlur}
-                      value={values.name}
-                    />
+                    <TranslatedFieldTabs translations={contentTranslations} field="name" sourceValue={values.name}>
+                      <Input
+                        type="text"
+                        name="name"
+                        autoComplete={'off'}
+                        id={'name'}
+                        className={errors.name ? fieldErrorClass : undefined}
+                        onChange={(event) => {
+                          if (event.target.value.length > 2 && workspaceId) {
+                            apiV1Fetch<CocktailSummaryDto | null>(
+                              `/api/v1/workspaces/${workspaceId}/cocktails/check?name=${encodeURIComponent(event.target.value)}`,
+                            )
+                              .then((match) => {
+                                if (match != null && match.id != props.cocktailRecipe?.id) {
+                                  setSimilarCocktailRecipe(match);
+                                } else {
+                                  setSimilarCocktailRecipe(undefined);
+                                }
+                              })
+                              .catch(() => setSimilarCocktailRecipe(undefined));
+                          } else {
+                            setSimilarCocktailRecipe(undefined);
+                          }
+                          handleChange(event);
+                        }}
+                        onBlur={handleBlur}
+                        value={values.name}
+                      />
+                    </TranslatedFieldTabs>
                     {similarCocktailRecipe && (
                       <Label className="flex-row">
                         <LabelTextAlt className="text-warning">{t('cocktail:similarExists', { name: similarCocktailRecipe.name })}</LabelTextAlt>
@@ -647,16 +668,18 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                         <>{errors.description && errors.description}</>
                       </LabelTextAlt>
                     </Label>
-                    <Textarea
-                      id={'description'}
-                      name="description"
-                      className={errors.description ? fieldErrorClass : undefined}
-                      placeholder={t('cocktail:descriptionPlaceholder')}
-                      onChange={handleChange}
-                      onBlur={handleBlur}
-                      value={values.description}
-                      rows={5}
-                    />
+                    <TranslatedFieldTabs translations={contentTranslations} field="description" sourceValue={values.description} multiline>
+                      <Textarea
+                        id={'description'}
+                        name="description"
+                        className={errors.description ? fieldErrorClass : undefined}
+                        placeholder={t('cocktail:descriptionPlaceholder')}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        value={values.description}
+                        rows={5}
+                      />
+                    </TranslatedFieldTabs>
                   </div>
                   <div className={'col-span-2'}>
                     <Label htmlFor={'history'} className="flex-row items-center justify-between">
@@ -665,16 +688,18 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                         <>{errors.history && errors.history}</>
                       </LabelTextAlt>
                     </Label>
-                    <Textarea
-                      id={'history'}
-                      name="history"
-                      className={errors.history ? fieldErrorClass : undefined}
-                      placeholder={t('cocktail:historyPlaceholder')}
-                      onChange={handleChange}
-                      onBlur={handleBlur}
-                      value={values.history}
-                      rows={5}
-                    />
+                    <TranslatedFieldTabs translations={contentTranslations} field="history" sourceValue={values.history} multiline>
+                      <Textarea
+                        id={'history'}
+                        name="history"
+                        className={errors.history ? fieldErrorClass : undefined}
+                        placeholder={t('cocktail:historyPlaceholder')}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        value={values.history}
+                        rows={5}
+                      />
+                    </TranslatedFieldTabs>
                   </div>
                   <div className={'col-span-2 md:col-span-1'}>
                     <Label htmlFor={'price'} className="flex-row items-center justify-between">
@@ -1709,6 +1734,8 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                     </div>
                   )}
                 </FieldArray>
+                <Divider className="col-span-2">{t('guestInfo:form.sectionTitle')}</Divider>
+                {workspaceId && <CocktailGuestInfoFields workspaceId={workspaceId} cocktailId={props.cocktailRecipe?.id} />}
               </CardBody>
             </Card>
 

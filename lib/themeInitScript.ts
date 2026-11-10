@@ -1,0 +1,2 @@
+/** Inline script in pages/_document.tsx that applies the stored app theme before hydration (CSP hashes are derived from it). */
+export const THEME_INIT_SCRIPT = `(function(){try{var t=localStorage.getItem('theme');if(t){t=JSON.parse(t);if(t==='dark')document.documentElement.setAttribute('data-theme','dark');else if(t==='light')document.documentElement.setAttribute('data-theme','light')}}catch(e){}})()`;

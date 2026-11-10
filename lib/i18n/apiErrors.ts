@@ -29,6 +29,12 @@ const CODE_TO_KEY: Record<string, string> = {
   CREATE_GROUP_FAILED: 'errors:createGroup',
   UPDATE_GROUP_FAILED: 'errors:updateGroup',
   NETWORK: 'errors:network',
+  SLUG_TAKEN: 'guestMenu:errors.slugTaken',
+  PUBLIC_SLUG_TAKEN: 'settings:publicSlugTaken',
+  PUBLIC_SLUG_RESERVED: 'settings:publicSlugReserved',
+  TEMPLATE_ERROR: 'guestMenu:errors.templateError',
+  TEMPLATE_IN_USE: 'guestMenu:errors.templateInUse',
+  INVALID_DOCUMENT: 'guestMenu:errors.invalidDocument',
 };
 
 /** Legacy German (and English) server messages → i18n keys when no code is available. */

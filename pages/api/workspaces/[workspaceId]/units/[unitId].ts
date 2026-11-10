@@ -1,14 +1,16 @@
 import { withHttpMethods } from '@middleware/api/handleMethods';
 import HTTPMethod from 'http-method-enum';
 import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
-import { Role } from '@generated/prisma/client';
+import { Permission, Role } from '@generated/prisma/client';
 import prisma from '../../../../../prisma/prisma';
 import { withDeprecation } from '@middleware/api/withDeprecation';
 
 const legacyHandler = withHttpMethods({
-  [HTTPMethod.DELETE]: withWorkspacePermission([Role.ADMIN], null, async (req, res, _user, _workspace) => {
+  [HTTPMethod.DELETE]: withWorkspacePermission([Role.ADMIN], Permission.UNITS_UPDATE, async (req, res, _user, workspace) => {
     const unitId = req.query.unitId as string | undefined;
     if (!unitId) return res.status(400).json({ message: 'No unit id' });
+    const existing = await prisma.unit.findFirst({ where: { id: unitId, workspaceId: workspace.id } });
+    if (existing == null) return res.status(404).json({ message: 'Unit not found' });
 
     const unit = await prisma.unit.delete({ where: { id: unitId } });
     return res.json({ data: unit });

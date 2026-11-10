@@ -22,7 +22,7 @@ const legacyHandler = withHttpMethods({
     const actions = await prisma.unit.findMany({ where });
     return res.json({ data: actions });
   }),
-  [HTTPMethod.POST]: withWorkspacePermission([Role.ADMIN], null, async (req, res, user, workspace) => {
+  [HTTPMethod.POST]: withWorkspacePermission([Role.ADMIN], Permission.UNITS_UPDATE, async (req, res, user, workspace) => {
     const { name, translations } = req.body;
     const input: UnitCreateInput = {
       name: name,

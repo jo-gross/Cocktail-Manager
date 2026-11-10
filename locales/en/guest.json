@@ -1,0 +1,103 @@
+{
+  "badge": {
+    "recommendation": "Recommended",
+    "new": "New",
+    "signature": "Signature",
+    "alcoholFree": "Alcohol-free",
+    "unavailable": "Sold out today",
+    "onRequest": "On request"
+  },
+  "item": {
+    "ingredients": "Ingredients",
+    "amounts": "Recipe",
+    "flavors": "Flavour",
+    "description": "Description",
+    "history": "History",
+    "glass": "Glass",
+    "garnish": "Garnish",
+    "rating": "Rating",
+    "ratingValue": "{{value}} of 5 ({{count}})",
+    "alcohol": "Alcohol",
+    "allergens": "Allergens",
+    "additives": "Additives",
+    "more": "Learn more",
+    "details": "Details",
+    "noPrice": "Price on request",
+    "optional": "optional",
+    "incomplete": "Information incomplete"
+  },
+  "alcohol": {
+    "approx": "approx. {{value}}",
+    "percent": "{{value}}% ABV",
+    "grams": "{{value}} g alcohol"
+  },
+  "footer": {
+    "allergens": "Allergens",
+    "additives": "Additives",
+    "legend": "Legend"
+  },
+  "notice": {
+    "allergens": "Please ask our staff for information about allergens and additives.",
+    "deposit": "A deposit is charged on glasses.",
+    "unavailable": "Drinks marked “sold out today” are unfortunately not available today.",
+    "onRequest": "These drinks are not on the menu, but we are happy to mix them on request.",
+    "alcoholApprox": "Alcohol values are calculated approximations."
+  },
+  "shell": {
+    "search": "Search",
+    "searchPlaceholder": "Search drinks, ingredients or flavours …",
+    "clearSearch": "Clear search",
+    "filters": "Filters",
+    "customFilters": "Highlights",
+    "filtersTitle": "Filters",
+    "resetFilters": "Reset",
+    "showResults_one": "Show {{count}} drink",
+    "showResults_other": "Show {{count}} drinks",
+    "close": "Close",
+    "alcoholCategory": "Alcohol",
+    "without": "Without",
+    "withoutHint": "Only drinks with complete information",
+    "price": "Price",
+    "priceUpTo": "up to {{price}}",
+    "sections": "Categories",
+    "language": "Language",
+    "results_one": "{{count}} result",
+    "results_other": "{{count}} results",
+    "noResults": "No matching drinks found.",
+    "noResultsHint": "Try another search term or remove filters.",
+    "onRequestResults": "On request",
+    "matchName": "Name",
+    "matchOriginalName": "Original name",
+    "matchIngredient": "Ingredient: {{value}}",
+    "matchTag": "{{value}}",
+    "allDrinks": "All",
+    "backToMenu": "Back to menu"
+  },
+  "page": {
+    "notFoundTitle": "Menu not found",
+    "notFoundText": "This menu does not exist (anymore).",
+    "noMenuTitle": "No menu available",
+    "noMenuText": "There is no menu available right now. Please ask our team.",
+    "toCurrentMenu": "Go to the current menu",
+    "menuDisabled": "This menu is currently not available.",
+    "menuStartsAt": "This menu is valid from {{date}}.",
+    "menuEndedAt": "This menu was valid until {{date}}.",
+    "menuWeekdays": "This menu is only valid on {{days}}.",
+    "menuTime": "This menu is only valid from {{from}} to {{to}}.",
+    "menuTimeFrom": "This menu is valid from {{from}}.",
+    "menuTimeTo": "This menu is valid until {{to}}.",
+    "previewBanner": "Preview – unpublished draft",
+    "inactivePreview": "Preview of this menu",
+    "lockText": "This menu is protected. Please enter the access code.",
+    "lockCodeLabel": "Access code",
+    "lockSubmit": "Open menu",
+    "lockInvalid": "The code is not correct. Please try again.",
+    "lockRateLimited": "Too many attempts. Please wait {{seconds}} seconds and try again.",
+    "lockFailed": "Something went wrong. Please try again."
+  },
+  "print": {
+    "qrHint": "Digital menu with allergens & details",
+    "tableTentTitle": "Our menu",
+    "tableTentHint": "Scan the QR code to explore our menu"
+  }
+}

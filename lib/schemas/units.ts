@@ -88,7 +88,7 @@ export const unitsCollectionApiDoc = {
     },
     POST: {
       roles: ['ADMIN'],
-      permission: null,
+      permission: 'UNITS_UPDATE',
       tags: [ApiTags.unitsCore],
       summary: 'Create unit',
       params: WorkspaceIdParam,
@@ -104,7 +104,7 @@ export const unitsItemApiDoc = {
   operations: {
     DELETE: {
       roles: ['ADMIN'],
-      permission: null,
+      permission: 'UNITS_UPDATE',
       tags: [ApiTags.unitsCore],
       summary: 'Delete unit',
       params: UnitItemParams,
@@ -119,7 +119,7 @@ export const unitConversionsCollectionApiDoc = {
   operations: {
     GET: {
       roles: ['USER'],
-      permission: null,
+      permission: 'UNITS_READ',
       tags: [ApiTags.unitsConversions],
       summary: 'List unit conversions',
       description: 'List all unit conversions of a workspace.',
@@ -128,7 +128,7 @@ export const unitConversionsCollectionApiDoc = {
     },
     POST: {
       roles: ['ADMIN'],
-      permission: null,
+      permission: 'UNITS_UPDATE',
       tags: [ApiTags.unitsConversions],
       summary: 'Create unit conversion',
       description: 'Create a unit conversion (plus its inverse) and regenerate all derived conversions.',
@@ -155,7 +155,7 @@ export const unitConversionsItemApiDoc = {
     },
     DELETE: {
       roles: ['ADMIN'],
-      permission: null,
+      permission: 'UNITS_UPDATE',
       tags: [ApiTags.unitsConversions],
       summary: 'Delete unit conversion',
       description: 'Delete a conversion and regenerate all derived conversions.',

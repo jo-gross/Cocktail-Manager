@@ -162,6 +162,10 @@ ESLint rule `i18next/no-literal-string` flags untranslated JSX text (`warn` glob
 > docker compose up -d --build
 > ```
 
+#### Behind a reverse proxy
+
+> Set `TRUST_PROXY=true` (or the number of proxy hops / `cloudflare`) and `BETTER_AUTH_URL` to the public URL, so rate limits see the real client IP and guest menu links use the right domain. See [docs/ENV.md](docs/ENV.md#reverse-proxy--public-url).
+
 ---
 
 ### ⚙️ Local development

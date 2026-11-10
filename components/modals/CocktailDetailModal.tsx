@@ -1,6 +1,6 @@
 import type { CocktailDto } from '@lib/schemas/cocktails';
 import Link from 'next/link';
-import { FaArrowLeft, FaFileDownload, FaHistory, FaInfo, FaPencilAlt, FaPlus, FaSyncAlt, FaTimes } from 'react-icons/fa';
+import { FaArrowLeft, FaBan, FaCheck, FaFileDownload, FaHistory, FaInfo, FaPencilAlt, FaPlus, FaSyncAlt, FaTimes } from 'react-icons/fa';
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -27,6 +27,8 @@ import { alertService } from '@lib/alertService';
 import '../../lib/NumberUtils';
 import CocktailExportOptionsModal, { CocktailExportOptions } from './CocktailExportOptionsModal';
 import { AuditLogHistoryModal } from './AuditLogHistoryModal';
+import { alertApiV1Error, apiV1Mutate } from '@lib/network/apiV1';
+import { isCocktailUnavailable } from '@lib/cocktails/availability';
 
 interface CocktailDetailModalProps {
   cocktailId: string;
@@ -56,6 +58,23 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
 
   const [localQueueAmount, setLocalQueueAmount] = useState(props.queueAmount);
   const [exportingPdf, setExportingPdf] = useState(false);
+  const [availabilitySaving, setAvailabilitySaving] = useState(false);
+
+  const unavailable = isCocktailUnavailable(loadedCocktail?.unavailableUntil);
+  const toggleAvailability = useCallback(async () => {
+    if (!workspaceId || !loadedCocktail) return;
+    setAvailabilitySaving(true);
+    try {
+      const updated = await apiV1Mutate<CocktailDto>(`/api/v1/workspaces/${workspaceId}/cocktails/${loadedCocktail.id}/availability`, 'PUT', {
+        unavailable: !isCocktailUnavailable(loadedCocktail.unavailableUntil),
+      });
+      setLoadedCocktail((previous) => (previous ? { ...previous, unavailableUntil: updated.unavailableUntil } : updated));
+    } catch (error) {
+      alertApiV1Error(error, t('cocktail:error.updateAvailability'));
+    } finally {
+      setAvailabilitySaving(false);
+    }
+  }, [workspaceId, loadedCocktail, t]);
 
   const refreshRatings = useCallback(() => {
     props.onRefreshRatings();
@@ -187,6 +206,20 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                 <FaFileDownload />
               </Button>
             )}
+            {userContext.isUserPermitted(Role.USER) && (
+              <Tooltip tip={unavailable ? t('cocktail:markAvailableTip') : t('cocktail:markUnavailableTodayTip')}>
+                <Button
+                  variant={unavailable ? 'outline' : 'outline-error'}
+                  size="sm"
+                  onClick={toggleAvailability}
+                  disabled={availabilitySaving}
+                  aria-label={unavailable ? t('cocktail:markAvailable') : t('cocktail:markUnavailableToday')}
+                >
+                  {availabilitySaving ? <Loading size="sm" /> : unavailable ? <FaCheck /> : <FaBan />}
+                  <span className="hidden sm:inline">{unavailable ? t('cocktail:markAvailable') : t('cocktail:markUnavailableToday')}</span>
+                </Button>
+              </Tooltip>
+            )}
             <Button
               variant="outline"
               size="sm"
@@ -211,6 +244,11 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
               <FaTimes />
             </Button>
           </div>
+          {unavailable && (
+            <Alert variant="warning" className="mt-2">
+              {t('cocktail:unavailableTodayTip')}
+            </Alert>
+          )}
           {(props.queueNotes || localQueueAmount) && (
             <Alert variant="warning" className="grid grid-cols-2">
               {localQueueAmount && (

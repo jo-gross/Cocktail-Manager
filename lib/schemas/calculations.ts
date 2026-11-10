@@ -208,7 +208,7 @@ export const calculationsExportJsonApiDoc = {
   operations: {
     POST: {
       roles: ['USER'],
-      permission: null,
+      permission: 'CALCULATIONS_READ',
       tags: [ApiTags.calculationsImportExport],
       summary: 'Export calculations as JSON',
       description:

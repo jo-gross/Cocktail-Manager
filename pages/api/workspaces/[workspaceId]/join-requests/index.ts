@@ -2,11 +2,11 @@ import { withHttpMethods } from '@middleware/api/handleMethods';
 import HTTPMethod from 'http-method-enum';
 import { withAuthentication, withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
 import prisma from '../../../../../prisma/prisma';
-import { Role } from '@generated/prisma/client';
+import { Permission, Role } from '@generated/prisma/client';
 import { withDeprecation } from '@middleware/api/withDeprecation';
 
 const legacyHandler = withHttpMethods({
-  [HTTPMethod.GET]: withWorkspacePermission([Role.MANAGER], async (req, res, user, workspace) => {
+  [HTTPMethod.GET]: withWorkspacePermission([Role.MANAGER], Permission.USERS_READ, async (req, res, user, workspace) => {
     const joinRequests = await prisma.workspaceJoinRequest.findMany({
       where: { workspaceId: workspace.id },
       include: {

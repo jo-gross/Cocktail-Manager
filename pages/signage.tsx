@@ -29,7 +29,9 @@ function subscribeToOrientation(onStoreChange: () => void) {
 export default function SignagePage() {
   const router = useRouter();
   const { t } = useTranslation(['errors', 'manage', 'common']);
-  const { id } = router.query;
+  const { id, key } = router.query;
+  // Monitor key: required for PIN-protected guest menu slides (skipped without it).
+  const signageKey = typeof key === 'string' ? key : '';
 
   const format = useSyncExternalStore(subscribeToOrientation, getMonitorFormat, () => MonitorFormat.LANDSCAPE);
   const [content, setContent] = useState<SignageFormatView>();
@@ -41,7 +43,8 @@ export default function SignagePage() {
       if (!options?.silent) {
         setImageLoading(true);
       }
-      fetch(`/api/signage/${id}?format=${format}`)
+      const keyQuery = signageKey ? `&key=${encodeURIComponent(signageKey)}` : '';
+      fetch(`/api/signage/${id}?format=${format}${keyQuery}`)
         .then((response) => response.json())
         .then((data) => {
           setContent(data.content);
@@ -58,7 +61,7 @@ export default function SignagePage() {
           }
         });
     },
-    [id, format, t],
+    [id, format, signageKey, t],
   );
 
   useEffect(() => {
@@ -97,6 +100,8 @@ export default function SignagePage() {
           backgroundMode={backgroundMode}
           emptyMessage={t('manage:noCardsFound')}
           alt={t('common:monitorSlideAlt')}
+          workspaceId={typeof id === 'string' ? id : undefined}
+          format={format}
         />
       )}
     </div>

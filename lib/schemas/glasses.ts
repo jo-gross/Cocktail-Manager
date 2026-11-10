@@ -189,7 +189,7 @@ export const glassesExportJsonApiDoc = {
   operations: {
     POST: {
       roles: ['USER'],
-      permission: null,
+      permission: 'GLASSES_READ',
       tags: [ApiTags.glassesImportExport],
       summary: 'Export glasses as JSON',
       description:

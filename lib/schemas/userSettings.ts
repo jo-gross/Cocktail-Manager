@@ -24,6 +24,7 @@ export const UserSettingKeyEnum = z
     'queueGrouping',
     'showFastQueueCheck',
     'showSettingsAtBottom',
+    'showGuestMenuExtras',
   ])
   .openapi('UserSettingKey');
 

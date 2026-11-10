@@ -97,7 +97,18 @@
           "RATINGS_CREATE",
           "RATINGS_DELETE",
           "MONITOR_READ",
-          "MONITOR_UPDATE"
+          "MONITOR_UPDATE",
+          "GUEST_MENUS_READ",
+          "GUEST_MENUS_CREATE",
+          "GUEST_MENUS_UPDATE",
+          "GUEST_MENUS_DELETE",
+          "GUEST_MENUS_PUBLISH",
+          "TRANSLATIONS_READ",
+          "TRANSLATIONS_UPDATE",
+          "TAGS_READ",
+          "TAGS_UPDATE",
+          "BACKUPS_EXPORT",
+          "BACKUPS_IMPORT"
         ],
         "description": "Granular API-key permission scopes. See Authentication → Permissions for the full matrix."
       },
@@ -140,7 +151,8 @@
           "showRating",
           "queueGrouping",
           "showFastQueueCheck",
-          "showSettingsAtBottom"
+          "showSettingsAtBottom",
+          "showGuestMenuExtras"
         ]
       },
       "ErrorResponse": {
@@ -224,6 +236,13 @@
             "type": "boolean",
             "description": "Whether membership/roles are managed via an external identity provider."
           },
+          "publicSlug": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Public slug for guest menus (`/m/{publicSlug}`), or null."
+          },
           "settings": {
             "$ref": "#/components/schemas/WorkspaceSettings"
           },
@@ -242,6 +261,7 @@
           "isDemo",
           "expiresAt",
           "isExternallyManaged",
+          "publicSlug",
           "settings",
           "members"
         ]
@@ -262,6 +282,24 @@
             ]
           },
           "statisticDayStartTime": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "timezone": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "currency": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "contentLocales": {
             "type": [
               "string",
               "null"
@@ -330,12 +368,29 @@
         "properties": {
           "name": {
             "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "description": "New workspace name; omitted keeps the current name."
+          },
+          "image": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 2000000,
+            "pattern": "^data:image\\/(?:png|jpeg|gif|webp|avif);base64,[A-Za-z0-9+/]+={0,2}$",
+            "description": "Workspace logo as a base64 image data URI; null removes it, omitted keeps it."
+          },
+          "publicSlug": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 3,
+            "maxLength": 64,
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+            "description": "Public slug for guest menus (`/m/{publicSlug}`), unique across workspaces; null removes it, omitted keeps it. Slugs shaped like ids (cuid `c` + 20 or more letters/digits, or a UUID) are rejected with 400 `PUBLIC_SLUG_RESERVED`, slugs used by another workspace or equal to a workspace id with 409 `PUBLIC_SLUG_TAKEN`."
           }
-        },
-        "required": [
-          "name"
-        ]
+        }
       },
       "DeletionResult": {
         "type": "object",
@@ -361,12 +416,20 @@
           "actionGroup": {
             "type": "string",
             "description": "Grouping bucket, e.g. \"MIXING\" or \"POURING\"."
+          },
+          "dilutionPercent": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Water added by this action in % of the liquid volume (for ABV calculation); null = default (SHAKE 25, STIR 20, otherwise 10)."
           }
         },
         "required": [
           "id",
           "name",
-          "actionGroup"
+          "actionGroup",
+          "dilutionPercent"
         ]
       },
       "ActionCreateInput": {
@@ -379,6 +442,15 @@
           "actionGroup": {
             "type": "string",
             "minLength": 1
+          },
+          "dilutionPercent": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 100,
+            "description": "Dilution in % of the liquid volume; null = default for the action. Omit to keep unchanged."
           },
           "translations": {
             "type": "object",
@@ -399,6 +471,15 @@
           "actionGroup": {
             "type": "string",
             "minLength": 1
+          },
+          "dilutionPercent": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 100,
+            "description": "Dilution in % of the liquid volume; null = default for the action. Omit to keep unchanged."
           },
           "translations": {
             "type": "object",
@@ -510,9 +591,32 @@
           "dateExclusive": {
             "type": "boolean"
           },
+          "type": {
+            "$ref": "#/components/schemas/SignageSlideType"
+          },
           "imageUrl": {
-            "type": "string",
-            "description": "URL to fetch the slide image bytes."
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "URL to fetch the slide image bytes (IMAGE slides), null for GUEST_MENU slides."
+          },
+          "guestMenuId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "GUEST_MENU slides: the shown menu, or null for the currently active menu."
+          },
+          "guestMenuName": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Name of `guestMenuId`, if set."
+          },
+          "options": {
+            "$ref": "#/components/schemas/GuestMenuSlideOptions"
           }
         },
         "required": [
@@ -523,8 +627,82 @@
           "validFrom",
           "validTo",
           "dateExclusive",
-          "imageUrl"
+          "type",
+          "imageUrl",
+          "guestMenuId",
+          "guestMenuName",
+          "options"
         ]
+      },
+      "SignageSlideType": {
+        "type": "string",
+        "enum": [
+          "IMAGE",
+          "GUEST_MENU"
+        ]
+      },
+      "GuestMenuSlideOptions": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "localeMode": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "primary",
+              "fixed",
+              "rotate",
+              null
+            ],
+            "description": "`rotate` alternates the menu languages per page cycle."
+          },
+          "locale": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 16,
+            "description": "Content locale for `localeMode: fixed`."
+          },
+          "showQrCode": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "columns": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "auto"
+                ]
+              },
+              {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 6
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "`auto` picks the column count (and font scale) that fits best."
+          },
+          "pageDurationSeconds": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 3,
+            "maximum": 600,
+            "description": "Seconds per page when the menu needs several pages."
+          }
+        }
       },
       "SignageSettingsUpdateInput": {
         "type": "object",
@@ -1738,6 +1916,15 @@
             "type": "boolean",
             "description": "Whether the cocktail is archived."
           },
+          "unavailableUntil": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "example": "2026-07-04T12:00:00.000Z",
+            "description": "Cocktail is marked as unavailable (\"heute aus\") until this instant (start of the next bar day), or null when available."
+          },
           "hasImage": {
             "type": "boolean",
             "description": "Whether the cocktail has an image."
@@ -1774,6 +1961,7 @@
           "tags",
           "price",
           "isArchived",
+          "unavailableUntil",
           "hasImage",
           "imageUrl",
           "glass"
@@ -1875,6 +2063,15 @@
             "type": "boolean",
             "description": "Whether the cocktail is archived."
           },
+          "unavailableUntil": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "example": "2026-07-04T12:00:00.000Z",
+            "description": "Cocktail is marked as unavailable (\"heute aus\") until this instant (start of the next bar day), or null when available."
+          },
           "hasImage": {
             "type": "boolean",
             "description": "Whether the cocktail has an image."
@@ -1900,6 +2097,25 @@
               "string",
               "null"
             ]
+          },
+          "abvOverride": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Manual ABV in % vol, null when calculated."
+          },
+          "extraAllergens": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Allergen"
+            }
+          },
+          "extraAdditives": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Additive"
+            }
           },
           "ice": {
             "$ref": "#/components/schemas/CocktailIceRef"
@@ -1935,17 +2151,59 @@
           "tags",
           "price",
           "isArchived",
+          "unavailableUntil",
           "hasImage",
           "imageUrl",
           "glass",
           "notes",
           "history",
+          "abvOverride",
+          "extraAllergens",
+          "extraAdditives",
           "ice",
           "garnishes",
           "steps",
           "averageRating",
           "ratingCount"
         ]
+      },
+      "Allergen": {
+        "type": "string",
+        "enum": [
+          "GLUTEN",
+          "CRUSTACEANS",
+          "EGGS",
+          "FISH",
+          "PEANUTS",
+          "SOY",
+          "MILK",
+          "NUTS",
+          "CELERY",
+          "MUSTARD",
+          "SESAME",
+          "SULPHITES",
+          "LUPIN",
+          "MOLLUSCS"
+        ],
+        "description": "Allergen per Regulation (EU) No 1169/2011, Annex II."
+      },
+      "Additive": {
+        "type": "string",
+        "enum": [
+          "COLORING",
+          "PRESERVATIVE",
+          "ANTIOXIDANT",
+          "FLAVOR_ENHANCER",
+          "SULPHURED",
+          "BLACKENED",
+          "WAXED",
+          "PHOSPHATE",
+          "SWEETENER",
+          "PHENYLALANINE",
+          "CAFFEINE",
+          "QUININE"
+        ],
+        "description": "Labelling-relevant additive."
       },
       "CocktailIceRef": {
         "type": [
@@ -2374,6 +2632,29 @@
               ]
             },
             "description": "Garnishes attached to the cocktail."
+          },
+          "abvOverride": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 100,
+            "description": "Manual ABV in % vol; overrides the calculated value. null = calculate."
+          },
+          "extraAllergens": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Allergen"
+            },
+            "description": "Allergens added on top of the ingredient-derived ones."
+          },
+          "extraAdditives": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Additive"
+            },
+            "description": "Additives added on top of the ingredient-derived ones."
           }
         },
         "required": [
@@ -2554,6 +2835,29 @@
               ]
             },
             "description": "Garnishes. Differentially applied via garnishId: present are updated/created, missing are deleted."
+          },
+          "abvOverride": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 100,
+            "description": "Manual ABV in % vol; overrides the calculated value. null = calculate."
+          },
+          "extraAllergens": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Allergen"
+            },
+            "description": "Allergens added on top of the ingredient-derived ones."
+          },
+          "extraAdditives": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Additive"
+            },
+            "description": "Additives added on top of the ingredient-derived ones."
           }
         },
         "required": [
@@ -2679,6 +2983,21 @@
               "null"
             ],
             "description": "URL to fetch the garnish image bytes, or null when hasImage is false."
+          },
+          "allergens": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Allergen"
+            }
+          },
+          "additives": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Additive"
+            }
+          },
+          "guestInfoComplete": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -2688,7 +3007,10 @@
           "notes",
           "price",
           "hasImage",
-          "imageUrl"
+          "imageUrl",
+          "allergens",
+          "additives",
+          "guestInfoComplete"
         ]
       },
       "GarnishCreateInput": {
@@ -2727,6 +3049,22 @@
               "null"
             ],
             "description": "Base64-encoded image (data URI) to attach."
+          },
+          "allergens": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Allergen"
+            }
+          },
+          "additives": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Additive"
+            }
+          },
+          "guestInfoComplete": {
+            "type": "boolean",
+            "description": "Allergen/additive information has been verified as complete."
           }
         },
         "required": [
@@ -2764,6 +3102,22 @@
               "null"
             ],
             "description": "Base64 image; omitting it removes the current image."
+          },
+          "allergens": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Allergen"
+            }
+          },
+          "additives": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Additive"
+            }
+          },
+          "guestInfoComplete": {
+            "type": "boolean",
+            "description": "Allergen/additive information has been verified as complete."
           }
         },
         "required": [
@@ -3047,6 +3401,37 @@
               "null"
             ],
             "description": "URL to fetch the ingredient image bytes, or null when hasImage is false."
+          },
+          "abv": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Alcohol by volume in % vol, null if unknown."
+          },
+          "allergens": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Allergen"
+            }
+          },
+          "additives": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Additive"
+            }
+          },
+          "guestInfoComplete": {
+            "type": "boolean"
+          },
+          "hideOnGuestMenu": {
+            "type": "boolean"
+          },
+          "guestName": {
+            "type": [
+              "string",
+              "null"
+            ]
           }
         },
         "required": [
@@ -3060,7 +3445,13 @@
           "tags",
           "volumes",
           "hasImage",
-          "imageUrl"
+          "imageUrl",
+          "abv",
+          "allergens",
+          "additives",
+          "guestInfoComplete",
+          "hideOnGuestMenu",
+          "guestName"
         ]
       },
       "IngredientVolume": {
@@ -3174,6 +3565,42 @@
               "null"
             ],
             "description": "Base64-encoded image (data URI) to attach."
+          },
+          "abv": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 100,
+            "description": "Alcohol by volume in % vol (0–100), null if unknown."
+          },
+          "allergens": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Allergen"
+            }
+          },
+          "additives": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Additive"
+            }
+          },
+          "guestInfoComplete": {
+            "type": "boolean",
+            "description": "Allergen/additive information has been verified as complete."
+          },
+          "hideOnGuestMenu": {
+            "type": "boolean",
+            "description": "Do not list this ingredient on guest menus."
+          },
+          "guestName": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Name shown to guests instead of the internal name."
           }
         },
         "required": [
@@ -3252,6 +3679,42 @@
               "null"
             ],
             "description": "Base64 image; omitting it removes the current image."
+          },
+          "abv": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 100,
+            "description": "Alcohol by volume in % vol (0–100), null if unknown."
+          },
+          "allergens": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Allergen"
+            }
+          },
+          "additives": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Additive"
+            }
+          },
+          "guestInfoComplete": {
+            "type": "boolean",
+            "description": "Allergen/additive information has been verified as complete."
+          },
+          "hideOnGuestMenu": {
+            "type": "boolean",
+            "description": "Do not list this ingredient on guest menus."
+          },
+          "guestName": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Name shown to guests instead of the internal name."
           }
         },
         "required": [
@@ -3537,7 +4000,7 @@
               "string",
               "null"
             ],
-            "description": "New value for the setting; null clears it."
+            "description": "New value for the setting; null clears it. `timezone` must be an IANA time zone (default Europe/Berlin), `currency` an ISO 4217 code (default EUR), `contentLocales` a JSON string `{\"primary\":\"de\",\"additional\":[\"en\"]}`."
           }
         },
         "required": [
@@ -3549,7 +4012,10 @@
         "enum": [
           "translations",
           "usePrices",
-          "statisticDayStartTime"
+          "statisticDayStartTime",
+          "timezone",
+          "currency",
+          "contentLocales"
         ]
       },
       "AdvancedStatisticsCocktailRanking": {
@@ -4392,7 +4858,7 @@
       },
       "put": {
         "summary": "Update workspace",
-        "description": "**Required API-key permission:** `WORKSPACE_UPDATE` — Update workspace settings\n\nUpdate the workspace name.",
+        "description": "**Required API-key permission:** `WORKSPACE_UPDATE` — Update workspace settings\n\nUpdate the workspace name, logo and/or the public guest-menu slug (409 when the slug is taken).",
         "tags": [
           "Workspace / Core"
         ],
@@ -4476,22 +4942,29 @@
                 }
               }
             }
+          },
+          "409": {
+            "description": "The public slug is already used by another workspace.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           }
         },
         "x-required-permission": "WORKSPACE_UPDATE"
       },
       "delete": {
         "summary": "Delete workspace",
-        "description": "**Authentication:** requires a valid session or API key (no specific permission).\n\nPermanently delete the workspace and all its data.",
+        "description": "**Authentication:** requires a logged-in workspace-member session. API keys (workspace or the instance master key) are NOT accepted for this operation.\n\nPermanently delete the workspace and all its data.",
         "tags": [
           "Workspace / Core"
         ],
         "security": [
           {
-            "WorkspaceApiKeyAuth": []
-          },
-          {
-            "InstanceApiKeyAuth": []
+            "SessionCookieAuth": []
           }
         ],
         "parameters": [
@@ -15629,13 +16102,15 @@
       },
       "post": {
         "summary": "Create unit",
-        "description": "**Authentication:** requires a valid session or API key (no specific permission).",
+        "description": "**Required API-key permission:** `UNITS_UPDATE` — Create, update, and delete units and unit conversions",
         "tags": [
           "Units / Core"
         ],
         "security": [
           {
-            "WorkspaceApiKeyAuth": []
+            "WorkspaceApiKeyAuth": [
+              "UNITS_UPDATE"
+            ]
           },
           {
             "InstanceApiKeyAuth": []
@@ -15712,19 +16187,22 @@
               }
             }
           }
-        }
+        },
+        "x-required-permission": "UNITS_UPDATE"
       }
     },
     "/api/workspaces/{workspaceId}/units/{unitId}": {
       "delete": {
         "summary": "Delete unit",
-        "description": "**Authentication:** requires a valid session or API key (no specific permission).",
+        "description": "**Required API-key permission:** `UNITS_UPDATE` — Create, update, and delete units and unit conversions",
         "tags": [
           "Units / Core"
         ],
         "security": [
           {
-            "WorkspaceApiKeyAuth": []
+            "WorkspaceApiKeyAuth": [
+              "UNITS_UPDATE"
+            ]
           },
           {
             "InstanceApiKeyAuth": []
@@ -15800,19 +16278,22 @@
               }
             }
           }
-        }
+        },
+        "x-required-permission": "UNITS_UPDATE"
       }
     },
     "/api/workspaces/{workspaceId}/units/conversions": {
       "get": {
         "summary": "List unit conversions",
-        "description": "**Authentication:** requires a valid session or API key (no specific permission).\n\nList all unit conversions of a workspace.",
+        "description": "**Required API-key permission:** `UNITS_READ` — Read units and unit conversions\n\nList all unit conversions of a workspace.",
         "tags": [
           "Units / Conversions"
         ],
         "security": [
           {
-            "WorkspaceApiKeyAuth": []
+            "WorkspaceApiKeyAuth": [
+              "UNITS_READ"
+            ]
           },
           {
             "InstanceApiKeyAuth": []
@@ -15883,17 +16364,20 @@
               }
             }
           }
-        }
+        },
+        "x-required-permission": "UNITS_READ"
       },
       "post": {
         "summary": "Create unit conversion",
-        "description": "**Authentication:** requires a valid session or API key (no specific permission).\n\nCreate a unit conversion (plus its inverse) and regenerate all derived conversions.",
+        "description": "**Required API-key permission:** `UNITS_UPDATE` — Create, update, and delete units and unit conversions\n\nCreate a unit conversion (plus its inverse) and regenerate all derived conversions.",
         "tags": [
           "Units / Conversions"
         ],
         "security": [
           {
-            "WorkspaceApiKeyAuth": []
+            "WorkspaceApiKeyAuth": [
+              "UNITS_UPDATE"
+            ]
           },
           {
             "InstanceApiKeyAuth": []
@@ -15973,7 +16457,8 @@
               }
             }
           }
-        }
+        },
+        "x-required-permission": "UNITS_UPDATE"
       }
     },
     "/api/workspaces/{workspaceId}/units/conversions/{unitConversionId}": {
@@ -16077,13 +16562,15 @@
       },
       "delete": {
         "summary": "Delete unit conversion",
-        "description": "**Authentication:** requires a valid session or API key (no specific permission).\n\nDelete a conversion and regenerate all derived conversions.",
+        "description": "**Required API-key permission:** `UNITS_UPDATE` — Create, update, and delete units and unit conversions\n\nDelete a conversion and regenerate all derived conversions.",
         "tags": [
           "Units / Conversions"
         ],
         "security": [
           {
-            "WorkspaceApiKeyAuth": []
+            "WorkspaceApiKeyAuth": [
+              "UNITS_UPDATE"
+            ]
           },
           {
             "InstanceApiKeyAuth": []
@@ -16159,7 +16646,8 @@
               }
             }
           }
-        }
+        },
+        "x-required-permission": "UNITS_UPDATE"
       }
     },
     "/api/workspaces/{workspaceId}/users": {
@@ -16587,6 +17075,12 @@
       "x-position": 4
     },
     {
+      "name": "Guest Info / Core",
+      "description": "Allergens, additives and alcohol content for guests.",
+      "x-displayName": "Core",
+      "x-position": 1
+    },
+    {
       "name": "Glasses / Core",
       "description": "List, create, read, update and delete glasses.",
       "x-displayName": "Core",
@@ -16629,6 +17123,18 @@
       "x-position": 1
     },
     {
+      "name": "Tags / Metadata",
+      "description": "Tag definitions (labels, colors, visibility) and tag categories.",
+      "x-displayName": "Metadata",
+      "x-position": 2
+    },
+    {
+      "name": "Translations / Content",
+      "description": "Translations of cocktail, ingredient, garnish and glass content.",
+      "x-displayName": "Content",
+      "x-position": 1
+    },
+    {
       "name": "Units / Core",
       "description": "List, create and delete measurement units.",
       "x-displayName": "Core",
@@ -16651,6 +17157,24 @@
       "description": "Clone, archive and unarchive cards.",
       "x-displayName": "Lifecycle",
       "x-position": 2
+    },
+    {
+      "name": "Guest Menus / Core",
+      "description": "Guest menus: list, create, meta data, schedule, priorities.",
+      "x-displayName": "Core",
+      "x-position": 1
+    },
+    {
+      "name": "Guest Menus / Content",
+      "description": "Draft document, publishing, preview and QR codes.",
+      "x-displayName": "Content",
+      "x-position": 2
+    },
+    {
+      "name": "Guest Menus / Templates",
+      "description": "Built-in and custom Liquid templates.",
+      "x-displayName": "Templates",
+      "x-position": 3
     },
     {
       "name": "Calculations / Core",
@@ -16766,6 +17290,12 @@
       ]
     },
     {
+      "name": "Guest Info",
+      "tags": [
+        "Guest Info / Core"
+      ]
+    },
+    {
       "name": "Glasses",
       "tags": [
         "Glasses / Core",
@@ -16784,7 +17314,14 @@
     {
       "name": "Tags",
       "tags": [
-        "Tags / Core"
+        "Tags / Core",
+        "Tags / Metadata"
+      ]
+    },
+    {
+      "name": "Translations",
+      "tags": [
+        "Translations / Content"
       ]
     },
     {
@@ -16799,6 +17336,14 @@
       "tags": [
         "Cards / Core",
         "Cards / Lifecycle"
+      ]
+    },
+    {
+      "name": "Guest Menus",
+      "tags": [
+        "Guest Menus / Core",
+        "Guest Menus / Content",
+        "Guest Menus / Templates"
       ]
     },
     {

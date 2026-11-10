@@ -11,6 +11,9 @@ import { z } from 'zod';
 import { zodFormikValidate } from '@lib/forms/zodFormikValidate';
 import { createAction, updateAction } from '@lib/network/actions';
 import { alertApiV1Error } from '@lib/network/apiV1';
+import { getDefaultDilutionPercent } from '@lib/guest-info/constants';
+import { useLabelLocales } from '@components/settings/EntityTranslationLabels';
+import { activeLabelValues, initialLabelValues, LabelTranslationInputs, labelValuesSchema } from '@components/settings/LabelTranslationInputs';
 
 interface CocktailStepActionModalProps {
   cocktailStepAction?: ActionDto;
@@ -19,20 +22,21 @@ interface CocktailStepActionModalProps {
 }
 
 export default function CocktailStepActionModal(props: CocktailStepActionModalProps) {
-  const { t } = useTranslation(['settings', 'common', 'entity', 'errors']);
+  const { t } = useTranslation(['settings', 'common', 'entity', 'errors', 'guestInfo']);
   const userContext = useContext(UserContext);
   const modalContext = useContext(ModalContext);
 
   const router = useRouter();
 
   const { workspaceId } = router.query;
+  const labelLocales = useLabelLocales();
 
   const cocktailStepActionSchema = z
     .object({
       actionGroup: z.string(),
       action: z.string(),
-      labelDe: z.string(),
-      labelEn: z.string(),
+      labels: labelValuesSchema(labelLocales, t('settings:validation.invalidLabel')),
+      dilutionPercent: z.union([z.literal(''), z.coerce.number().min(0, t('guestInfo:form.abvRange')).max(100, t('guestInfo:form.abvRange'))]),
     })
     .superRefine((values, ctx) => {
       // The action-group identifier is edited via the "newActionGroup" field, so
@@ -50,10 +54,6 @@ export default function CocktailStepActionModal(props: CocktailStepActionModalPr
       } else if (!/^[A-Z_]+$/.test(values.action)) {
         ctx.addIssue({ code: 'custom', message: t('settings:validation.azOnly'), path: ['action'] });
       }
-
-      if (!values.labelDe || values.labelDe.trim() == '') {
-        ctx.addIssue({ code: 'custom', message: t('settings:validation.invalidLabel'), path: ['labelDe'] });
-      }
     });
 
   const validateCocktailStepAction = zodFormikValidate(cocktailStepActionSchema);
@@ -67,12 +67,12 @@ export default function CocktailStepActionModal(props: CocktailStepActionModalPr
           action: props.cocktailStepAction?.name || '',
           description: '',
           newActionGroup: '',
-          labelDe: props.cocktailStepAction != undefined ? (userContext.translations?.de?.[props.cocktailStepAction.name] ?? '') : '',
-          labelEn: props.cocktailStepAction != undefined ? (userContext.translations?.en?.[props.cocktailStepAction.name] ?? '') : '',
+          labels: initialLabelValues(userContext.translations, props.cocktailStepAction?.name),
+          dilutionPercent: (props.cocktailStepAction?.dilutionPercent ?? '') as number | '',
         }}
         onSubmit={async (values) => {
           try {
-            if (!workspaceId) return;
+            if (!workspaceId || labelLocales.length === 0) return;
             const actionGroup = values.actionGroup?.trim();
             if (!actionGroup) {
               alertService.error(t('settings:validation.actionGroupRequired'));
@@ -81,10 +81,8 @@ export default function CocktailStepActionModal(props: CocktailStepActionModalPr
             const body = {
               name: values.action,
               actionGroup,
-              translations: {
-                de: values.labelDe.trim(),
-                en: values.labelEn.trim(),
-              },
+              dilutionPercent: values.dilutionPercent === '' ? null : Number(values.dilutionPercent),
+              translations: activeLabelValues(values.labels, labelLocales),
             };
             if (props.cocktailStepAction == undefined) {
               await createAction(workspaceId, body);
@@ -155,28 +153,28 @@ export default function CocktailStepActionModal(props: CocktailStepActionModalPr
                 disabled={props.cocktailStepAction != undefined}
               />
             </FormControl>
-            <div className={'grid grid-cols-2 gap-2'}>
-              <FormControl>
-                <Label className="flex-row items-center justify-between">
-                  <LabelText>{t('settings:labelDe')}</LabelText>
-                  <LabelTextAlt className="text-error">
-                    <span>{errors.labelDe && touched.labelDe ? errors.labelDe : ''}</span>
-                    <span>{t('common:required')}</span>
-                  </LabelTextAlt>
-                </Label>
-                <Input id={'labelDe'} name={'labelDe'} value={values.labelDe} onChange={handleChange} />
-              </FormControl>
-              <FormControl>
-                <Label className="flex-row items-center justify-between">
-                  <LabelText>{t('settings:labelEn')}</LabelText>
-                  <LabelTextAlt className="text-error">
-                    <span>{errors.labelEn && touched.labelEn ? errors.labelEn : ''}</span>
-                  </LabelTextAlt>
-                </Label>
-                <Input id={'labelEn'} name={'labelEn'} value={values.labelEn} onChange={handleChange} />
-                {!values.labelEn.trim() ? <span className="text-xs text-base-content/60">{t('settings:missingEnHint')}</span> : null}
-              </FormControl>
-            </div>
+            <LabelTranslationInputs locales={labelLocales} />
+            <FormControl>
+              <Label htmlFor={'dilutionPercent'} className="flex-row items-center justify-between">
+                <LabelText>{t('guestInfo:form.dilution')}</LabelText>
+                <LabelTextAlt className="text-error">
+                  <span>{errors.dilutionPercent ?? ''}</span>
+                </LabelTextAlt>
+              </Label>
+              <Input
+                id={'dilutionPercent'}
+                name={'dilutionPercent'}
+                type={'number'}
+                inputMode={'decimal'}
+                min={0}
+                max={100}
+                step={1}
+                placeholder={String(getDefaultDilutionPercent(values.action))}
+                value={values.dilutionPercent}
+                onChange={handleChange}
+              />
+              <span className="text-xs text-base-content/60">{t('guestInfo:form.dilutionHint', { value: getDefaultDilutionPercent(values.action) })}</span>
+            </FormControl>
             <div className={'flex justify-end gap-2'}>
               <Button
                 variant="outline"
@@ -188,7 +186,7 @@ export default function CocktailStepActionModal(props: CocktailStepActionModalPr
               >
                 {t('common:cancel')}
               </Button>
-              <Button variant="primary" type={'submit'}>
+              <Button variant="primary" type={'submit'} disabled={isSubmitting || labelLocales.length === 0}>
                 {isSubmitting ? <Loading size="sm" /> : null}
                 {props.cocktailStepAction == undefined ? t('common:create') : t('common:save')}
               </Button>
