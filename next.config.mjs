@@ -5,6 +5,8 @@ import withBundleAnalyzer from '@next/bundle-analyzer';
 const nextConfig = {
   reactStrictMode: true,
   output: 'standalone',
+  // Never ship the optional Skia canvas binary (needs AVX, see Dockerfile).
+  outputFileTracingExcludes: { '/*': ['./node_modules/**/@napi-rs/canvas*/**', './node_modules/**/@napi-rs+canvas*/**'] },
   images: {
     remotePatterns: [
       {
