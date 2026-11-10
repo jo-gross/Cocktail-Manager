@@ -82,12 +82,16 @@ enum Setting {
   queueGrouping
   showFastQueueCheck
   showSettingsAtBottom
+  showGuestMenuExtras
 }
 
 enum WorkspaceSettingKey {
   translations
   usePrices
   statisticDayStartTime
+  timezone
+  currency
+  contentLocales
 }
 
 model UserSetting {
@@ -171,6 +175,11 @@ enum SignageBackgroundMode {
   BLURRED
 }
 
+enum SignageSlideType {
+  IMAGE
+  GUEST_MENU
+}
+
 model WorkspaceUser {
   workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   workspaceId String // relation scalar field (used in the `@relation` attribute above)
@@ -191,6 +200,9 @@ model Workspace {
   isDemo                            Boolean                             @default(false)
   expiresAt                         DateTime?
   demoUserId                        String?
+  publicSlug                        String?                             @unique
+  /// Bearer secret of the monitor link (`/signage?id=…&key=…`); required for signage access tokens of protected guest menus. Never exported in backups.
+  signageKey                        String?
   users                             WorkspaceUser[]
   Glass                             Glass[]
   Garnish                           Garnish[]
@@ -213,6 +225,10 @@ model Workspace {
   WorkspaceApiKey                   WorkspaceApiKey[]
   StatisticSavedSet                 StatisticSavedSet[]
   AuditLog                          AuditLog[]
+  GuestMenu                         GuestMenu[]
+  GuestMenuTemplate                 GuestMenuTemplate[]
+  TagCategory                       TagCategory[]
+  TagDefinition                     TagDefinition[]
 }
 
 model Signage {
@@ -229,19 +245,25 @@ model Signage {
 }
 
 model SignageSlide {
-  id            String        @id @default(cuid())
+  id            String           @id @default(cuid())
   workspaceId   String
   format        MonitorFormat
-  content       String
+  type          SignageSlideType @default(IMAGE)
+  // Image data for IMAGE slides, empty string for GUEST_MENU slides
+  content       String           @default("")
+  guestMenuId   String?
+  guestMenu     GuestMenu?       @relation(fields: [guestMenuId], references: [id], onDelete: SetNull)
+  options       Json?
   order         Int
-  enabled       Boolean       @default(true)
+  enabled       Boolean          @default(true)
   weekdays      Int[]
-  validFrom     DateTime?     @db.Date
-  validTo       DateTime?     @db.Date
-  dateExclusive Boolean       @default(false)
-  signage       Signage       @relation(fields: [workspaceId, format], references: [workspaceId, format], onDelete: Cascade)
+  validFrom     DateTime?        @db.Date
+  validTo       DateTime?        @db.Date
+  dateExclusive Boolean          @default(false)
+  signage       Signage          @relation(fields: [workspaceId, format], references: [workspaceId, format], onDelete: Cascade)
 
   @@index([workspaceId, format, order])
+  @@index([guestMenuId])
 }
 
 model Glass {
@@ -252,9 +274,10 @@ model Glass {
   deposit        Float
   CocktailRecipe CocktailRecipe[]
 
-  workspace   Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  workspaceId String
-  GlassImage  GlassImage[]
+  workspace    Workspace          @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspaceId  String
+  GlassImage   GlassImage[]
+  translations GlassTranslation[]
 }
 
 model GlassImage {
@@ -269,11 +292,15 @@ model Garnish {
   description             String?
   notes                   String?
   price                   Float?
+  allergens               Allergen[]              @default([])
+  additives               Additive[]              @default([])
+  guestInfoComplete       Boolean                 @default(false)
   CocktailRecipeGarnishes CocktailRecipeGarnish[]
 
-  workspace    Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspace    Workspace            @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   workspaceId  String
   GarnishImage GarnishImage[]
+  translations GarnishTranslation[]
 }
 
 model GarnishImage {
@@ -300,13 +327,19 @@ model CocktailRecipe {
 
   isArchived Boolean @default(false)
 
-  workspace                Workspace                  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  abvOverride      Float?
+  extraAllergens   Allergen[] @default([])
+  extraAdditives   Additive[] @default([])
+  unavailableUntil DateTime?
+
+  workspace                Workspace                   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   workspaceId              String
   CocktailCalculationItems CocktailCalculationItems[]
   CocktailRecipeImage      CocktailRecipeImage[]
   CocktailStatisticItem    CocktailStatisticItem[]
   CocktailQueue            CocktailQueue[]
   ratings                  CocktailRating[]
+  translations             CocktailRecipeTranslation[]
 }
 
 model CocktailRecipeImage {
@@ -333,6 +366,7 @@ model WorkspaceCocktailRecipeStepAction {
   id                 String               @id @default(cuid())
   name               String
   actionGroup        String
+  dilutionPercent    Float?
   workspaceId        String
   workspace          Workspace            @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   CocktailRecipeStep CocktailRecipeStep[]
@@ -395,6 +429,12 @@ model Ingredient {
   price                    Float?
   link                     String?
   tags                     String[]
+  abv                      Float?
+  allergens                Allergen[]                 @default([])
+  additives                Additive[]                 @default([])
+  guestInfoComplete        Boolean                    @default(false)
+  hideOnGuestMenu          Boolean                    @default(false)
+  guestName                String?
   CocktailRecipeIngredient CocktailRecipeIngredient[]
 
   workspaceId                       String
@@ -402,6 +442,7 @@ model Ingredient {
   IngredientImage                   IngredientImage[]
   IngredientVolume                  IngredientVolume[]
   CalculationIngredientShoppingUnit CalculationIngredientShoppingUnit[]
+  translations                      IngredientTranslation[]
 }
 
 model IngredientImage {
@@ -420,6 +461,7 @@ model CocktailCard {
   workspace             Workspace               @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   workspaceId           String
   CocktailStatisticItem CocktailStatisticItem[]
+  GuestMenu             GuestMenu[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
@@ -450,8 +492,8 @@ model CocktailCalculation {
   id   String @id @default(cuid())
   name String
 
-  showSalesStuff Boolean @default(true)
-  updatedAt      DateTime @default(now()) @updatedAt
+  showSalesStuff Boolean                   @default(true)
+  updatedAt      DateTime                  @default(now()) @updatedAt
   groupId        String?
   group          CocktailCalculationGroup? @relation(fields: [groupId], references: [id], onDelete: SetNull)
 
@@ -464,11 +506,11 @@ model CocktailCalculation {
 }
 
 model CocktailCalculationGroup {
-  id                String               @id @default(cuid())
+  id                String                @id @default(cuid())
   name              String
-  isDefaultExpanded Boolean              @default(false)
+  isDefaultExpanded Boolean               @default(false)
   workspaceId       String
-  workspace         Workspace            @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspace         Workspace             @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   calculations      CocktailCalculation[]
 
   createdAt DateTime @default(now())
@@ -644,6 +686,17 @@ enum Permission {
   RATINGS_DELETE
   MONITOR_READ
   MONITOR_UPDATE
+  GUEST_MENUS_READ
+  GUEST_MENUS_CREATE
+  GUEST_MENUS_UPDATE
+  GUEST_MENUS_DELETE
+  GUEST_MENUS_PUBLISH
+  TRANSLATIONS_READ
+  TRANSLATIONS_UPDATE
+  TAGS_READ
+  TAGS_UPDATE
+  BACKUPS_EXPORT
+  BACKUPS_IMPORT
 }
 
 model WorkspaceApiKey {
@@ -682,7 +735,7 @@ model StatisticSavedSet {
   name        String
   type        SavedSetType
   logic       SavedSetLogic?
-  items       Json           // Array of IDs (tags, ingredients, or cocktail IDs)
+  items       Json // Array of IDs (tags, ingredients, or cocktail IDs)
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
 
@@ -691,7 +744,7 @@ model StatisticSavedSet {
 }
 
 model AuditLog {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   workspaceId String
   workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   userId      String?
@@ -707,4 +760,174 @@ model AuditLog {
   @@index([workspaceId])
   @@index([entityId])
   @@index([entityType])
+}
+
+// ---------------------------------------------------------------------------
+// Guest menus (see docs/GUEST-MENU-CONCEPT.md)
+// ---------------------------------------------------------------------------
+
+enum Allergen {
+  GLUTEN
+  CRUSTACEANS
+  EGGS
+  FISH
+  PEANUTS
+  SOY
+  MILK
+  NUTS
+  CELERY
+  MUSTARD
+  SESAME
+  SULPHITES
+  LUPIN
+  MOLLUSCS
+}
+
+enum Additive {
+  COLORING
+  PRESERVATIVE
+  ANTIOXIDANT
+  FLAVOR_ENHANCER
+  SULPHURED
+  BLACKENED
+  WAXED
+  PHOSPHATE
+  SWEETENER
+  PHENYLALANINE
+  CAFFEINE
+  QUININE
+}
+
+enum GuestMenuInactiveBehavior {
+  NOTICE_WITH_LINK
+  NOTICE_WITH_CONTENT
+  REDIRECT
+}
+
+enum GuestMenuSourceMode {
+  NONE
+  FIXED_CARD
+  ACTIVE_CARD
+}
+
+model GuestMenu {
+  id                String                    @id @default(cuid())
+  workspaceId       String
+  workspace         Workspace                 @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  name              String
+  slug              String
+  enabled           Boolean                   @default(true)
+  isDefault         Boolean                   @default(false)
+  // Lower number = higher priority
+  priority          Int                       @default(0)
+  validFrom         DateTime?                 @db.Date
+  validTo           DateTime?                 @db.Date
+  // 0 = Sunday .. 6 = Saturday, empty = every day
+  weekdays          Int[]                     @default([])
+  // "HH:mm" in workspace timezone
+  timeFrom          String?
+  timeTo            String?
+  inactiveBehavior  GuestMenuInactiveBehavior @default(NOTICE_WITH_LINK)
+  sourceMode        GuestMenuSourceMode       @default(NONE)
+  sourceCardId      String?
+  sourceCard        CocktailCard?             @relation(fields: [sourceCardId], references: [id], onDelete: SetNull)
+  // Content locales offered for this menu, empty = workspace contentLocales
+  locales           String[]                  @default([])
+  // GuestMenuDocument (lib/guest-menu/schema.ts)
+  draft             Json
+  published         Json?
+  publishedAt       DateTime?
+  previewToken      String                    @unique @default(cuid())
+  // Optional guest access code (bcrypt hash, never returned); null = public
+  accessCodeHash    String?
+  // Bumped whenever the code changes/is removed → invalidates issued access cookies/tokens
+  accessCodeVersion Int                       @default(0)
+  createdAt         DateTime                  @default(now())
+  updatedAt         DateTime                  @default(now()) @updatedAt
+  signageSlides     SignageSlide[]
+
+  @@unique([workspaceId, slug])
+  @@index([workspaceId])
+  @@index([sourceCardId])
+}
+
+model GuestMenuTemplate {
+  id          String    @id @default(cuid())
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  name        String
+  definition  Json
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @default(now()) @updatedAt
+
+  @@index([workspaceId])
+}
+
+model TagCategory {
+  id                String          @id @default(cuid())
+  workspaceId       String
+  workspace         Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  // LocalizedText
+  name              Json
+  order             Int             @default(0)
+  showAsGuestFilter Boolean         @default(true)
+  tags              TagDefinition[]
+
+  @@index([workspaceId])
+}
+
+model TagDefinition {
+  workspaceId String
+  workspace   Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  tag         String
+  // LocalizedText
+  label       Json?
+  categoryId  String?
+  category    TagCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  color       String?
+  isPublic    Boolean      @default(true)
+
+  @@id([workspaceId, tag])
+  @@index([categoryId])
+}
+
+model CocktailRecipeTranslation {
+  cocktailId  String
+  cocktail    CocktailRecipe @relation(fields: [cocktailId], references: [id], onDelete: Cascade)
+  locale      String
+  name        String?
+  description String?
+  history     String?
+
+  @@id([cocktailId, locale])
+}
+
+model IngredientTranslation {
+  ingredientId String
+  ingredient   Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+  locale       String
+  name         String?
+  guestName    String?
+  description  String?
+
+  @@id([ingredientId, locale])
+}
+
+model GarnishTranslation {
+  garnishId   String
+  garnish     Garnish @relation(fields: [garnishId], references: [id], onDelete: Cascade)
+  locale      String
+  name        String?
+  description String?
+
+  @@id([garnishId, locale])
+}
+
+model GlassTranslation {
+  glassId String
+  glass   Glass   @relation(fields: [glassId], references: [id], onDelete: Cascade)
+  locale  String
+  name    String?
+
+  @@id([glassId, locale])
 }

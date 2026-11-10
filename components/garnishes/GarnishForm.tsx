@@ -20,8 +20,12 @@ import { z } from 'zod';
 import { zodFormikValidate } from '@lib/forms/zodFormikValidate';
 import { alertApiV1Error } from '@lib/network/apiV1';
 import { checkGarnishName, createGarnish, updateGarnish } from '@lib/network/garnishes';
+import { TranslatedFieldTabs } from '@components/translations/TranslatedFieldTabs';
+import { useEntityContentTranslations } from '@components/translations/useEntityContentTranslations';
+import { GarnishGuestInfoFields, type GarnishGuestInfoFormValues } from '@components/guest-info/GuestInfoFormFields';
+import { ADDITIVES, ALLERGENS } from '@lib/guest-info/constants';
 
-export interface GarnishFormValues {
+export interface GarnishFormValues extends GarnishGuestInfoFormValues {
   name: string;
   price: number | undefined | string;
   description: string;
@@ -39,6 +43,9 @@ function createGarnishFormSchema(requiredMessage: string, imageNotCroppedMessage
       notes: z.string().optional(),
       image: z.string().optional(),
       originalImage: z.instanceof(File).optional(),
+      allergens: z.array(z.enum(ALLERGENS)),
+      additives: z.array(z.enum(ADDITIVES)),
+      guestInfoComplete: z.boolean(),
     })
     .refine((values) => !(values.originalImage != undefined && values.image == undefined), {
       message: imageNotCroppedMessage,
@@ -68,6 +75,7 @@ export function GarnishForm(props: GarnishFormProps) {
 
   const [hydratedImage, setHydratedImage] = useState<string | undefined>(undefined);
   const [imageHydrationDone, setImageHydrationDone] = useState(!props.garnish?.hasImage);
+  const contentTranslations = useEntityContentTranslations('garnish', props.garnish?.id);
 
   useEffect(() => {
     let cancelled = false;
@@ -108,6 +116,9 @@ export function GarnishForm(props: GarnishFormProps) {
         notes: props.garnish?.notes ?? '',
         image: hydratedImage,
         originalImage: hydratedImage ? convertBase64ToFile(hydratedImage) : undefined,
+        allergens: props.garnish?.allergens ?? [],
+        additives: props.garnish?.additives ?? [],
+        guestInfoComplete: props.garnish?.guestInfoComplete ?? false,
       }}
       onSubmit={async (values) => {
         if (!workspaceId) return;
@@ -117,6 +128,9 @@ export function GarnishForm(props: GarnishFormProps) {
             price: values.price === '' || values.price === undefined ? null : Number(values.price),
             description: values.description?.trim() == '' ? null : values.description?.trim(),
             notes: values.notes?.trim() == '' ? null : values.notes?.trim(),
+            allergens: values.allergens,
+            additives: values.additives,
+            guestInfoComplete: values.guestInfoComplete,
           };
           if (props.garnish?.id) {
             body.id = props.garnish.id;
@@ -127,6 +141,7 @@ export function GarnishForm(props: GarnishFormProps) {
           }
           if (props.garnish == undefined) {
             const created = await createGarnish(workspaceId, body);
+            await contentTranslations.save(created.id);
             if (props.onSaved != undefined) {
               props.onSaved(created.id);
             } else {
@@ -135,6 +150,7 @@ export function GarnishForm(props: GarnishFormProps) {
             }
           } else {
             await updateGarnish(workspaceId, props.garnish.id, body);
+            await contentTranslations.save(props.garnish.id);
             if (props.onSaved != undefined) {
               props.onSaved(props.garnish.id);
             } else {
@@ -153,6 +169,9 @@ export function GarnishForm(props: GarnishFormProps) {
             price: props.garnish.price ?? undefined,
             description: props.garnish.description ?? '',
             notes: props.garnish.notes ?? '',
+            allergens: props.garnish.allergens,
+            additives: props.garnish.additives,
+            guestInfoComplete: props.garnish.guestInfoComplete,
           };
           const reducedValues = _.omit(values, ['image', 'originalImage']);
           const areImageEqual = hydratedImage == values.image;
@@ -177,32 +196,34 @@ export function GarnishForm(props: GarnishFormProps) {
                   <span>*</span>
                 </LabelTextAlt>
               </Label>
-              <Input
-                id={'name'}
-                type={'text'}
-                autoComplete={'off'}
-                placeholder={t('common:name')}
-                className={errors.name ? fieldErrorClass : undefined}
-                onChange={(event) => {
-                  if (event.target.value.length > 2 && workspaceId) {
-                    checkGarnishName(workspaceId, event.target.value)
-                      .then((match) => {
-                        if (match != null && match.id != props.garnish?.id) {
-                          setSimilarGarnish(match);
-                        } else {
-                          setSimilarGarnish(undefined);
-                        }
-                      })
-                      .catch(() => setSimilarGarnish(undefined));
-                  } else {
-                    setSimilarGarnish(undefined);
-                  }
-                  handleChange(event);
-                }}
-                onBlur={handleBlur}
-                value={values.name}
-                name={'name'}
-              />
+              <TranslatedFieldTabs translations={contentTranslations} field="name" sourceValue={values.name}>
+                <Input
+                  id={'name'}
+                  type={'text'}
+                  autoComplete={'off'}
+                  placeholder={t('common:name')}
+                  className={errors.name ? fieldErrorClass : undefined}
+                  onChange={(event) => {
+                    if (event.target.value.length > 2 && workspaceId) {
+                      checkGarnishName(workspaceId, event.target.value)
+                        .then((match) => {
+                          if (match != null && match.id != props.garnish?.id) {
+                            setSimilarGarnish(match);
+                          } else {
+                            setSimilarGarnish(undefined);
+                          }
+                        })
+                        .catch(() => setSimilarGarnish(undefined));
+                    } else {
+                      setSimilarGarnish(undefined);
+                    }
+                    handleChange(event);
+                  }}
+                  onBlur={handleBlur}
+                  value={values.name}
+                  name={'name'}
+                />
+              </TranslatedFieldTabs>
               {similarGarnish && (
                 <Label className="flex-row">
                   <LabelTextAlt className="text-warning">{t('manage:garnishForm.similarExists', { name: similarGarnish.name })}</LabelTextAlt>
@@ -348,17 +369,20 @@ export function GarnishForm(props: GarnishFormProps) {
                   </span>
                 </LabelTextAlt>
               </Label>
-              <Textarea
-                id={'description'}
-                className={errors.description ? fieldErrorClass : undefined}
-                value={values.description}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                name={'description'}
-                placeholder={t('manage:garnishForm.descriptionPlaceholder')}
-                rows={5}
-              />
+              <TranslatedFieldTabs translations={contentTranslations} field="description" sourceValue={values.description} multiline>
+                <Textarea
+                  id={'description'}
+                  className={errors.description ? fieldErrorClass : undefined}
+                  value={values.description}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  name={'description'}
+                  placeholder={t('manage:garnishForm.descriptionPlaceholder')}
+                  rows={5}
+                />
+              </TranslatedFieldTabs>
             </FormControl>
+            <GarnishGuestInfoFields />
             <div className={'w-full items-center justify-end'}>
               <FormControl>
                 <Button disabled={isSubmitting || !isValid} type={'submit'} variant="primary" wide>

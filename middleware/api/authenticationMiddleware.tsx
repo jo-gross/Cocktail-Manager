@@ -1,10 +1,12 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import prisma from '../../prisma/prisma';
-import { Role, User, Workspace, WorkspaceUser, Permission } from '@generated/prisma/client';
+import { asWorkspace } from '../../prisma/asWorkspace';
+import { Role, User, Workspace, Permission } from '@generated/prisma/client';
 import { constants as HttpStatus } from 'http2';
 import { auth } from '@lib/auth';
 import { authenticateApiKey, checkMasterApiKey } from './jwtApiKeyMiddleware';
 import { hasPermission } from '@lib/permissions/apiKeyPermissions';
+import { setRequestApiKeyPermissions } from '@lib/http/requestAuth';
 
 /**
  * Helper function to get session from BetterAuth
@@ -145,7 +147,8 @@ export function withWorkspacePermission(
         createdAt: new Date(),
         updatedAt: new Date(),
       };
-      return handler(req, res, dummyUser, workspaceResult);
+      setRequestApiKeyPermissions(req, 'all');
+      return handler(req, res, dummyUser, asWorkspace(workspaceResult));
     }
 
     // Try API key authentication
@@ -180,6 +183,7 @@ export function withWorkspacePermission(
         createdAt: new Date(),
         updatedAt: new Date(),
       };
+      setRequestApiKeyPermissions(req, apiKeyAuth.permissions);
       return handler(req, res, dummyUser, apiKeyAuth.workspace);
     }
 
@@ -224,7 +228,7 @@ export function withWorkspaceSession(
     }
 
     return withAuthentication(async (sessionReq: NextApiRequest, sessionRes: NextApiResponse, user: User) => {
-      const workspaceResult: (Workspace & { users: WorkspaceUser[] }) | null = await prisma.workspace.findFirst({
+      const workspaceResult = await prisma.workspace.findFirst({
         where: {
           id: workspaceId,
           users: { some: { user: user, role: { in: allowedRoles } } },
@@ -235,7 +239,7 @@ export function withWorkspaceSession(
         return sessionRes.status(HttpStatus.HTTP_STATUS_FORBIDDEN).json({ message: 'User is not permitted' });
       }
 
-      return fn(sessionReq, sessionRes, user, workspaceResult);
+      return fn(sessionReq, sessionRes, user, asWorkspace(workspaceResult));
     })(req, res);
   };
 }

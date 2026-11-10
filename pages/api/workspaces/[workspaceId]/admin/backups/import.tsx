@@ -3,8 +3,16 @@ import { BackupStructure, SignageBackupRecord, SignageSlideBackupRecord } from '
 import prisma from '../../../../../../prisma/prisma';
 import { randomUUID } from 'crypto';
 import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
-import { MonitorFormat, Role } from '@generated/prisma/client';
+import { MonitorFormat, Permission, Prisma, Role } from '@generated/prisma/client';
 import { ensureSignageContainer } from '@lib/signage/signageApiHelpers';
+import {
+  importedGuestMenuSafeState,
+  normalizeBackupGuestMenuSlug,
+  prepareBackupGuestMenuDocument,
+  validateBackupGuestMenuTemplate,
+  validateBackupWorkspaceSetting,
+  type BackupImportReport,
+} from '@lib/backup/backupSecurity';
 
 const IMPORT_TRANSACTION_TIMEOUT_MS = 30 * 60 * 1000;
 
@@ -68,7 +76,10 @@ function normalizeSignageSlide(slide: SignageSlideBackupRecord, workspaceId: str
     id: randomUUID(),
     workspaceId,
     format: slide.format,
-    content: slide.content,
+    type: slide.type ?? 'IMAGE',
+    content: slide.content ?? '',
+    // guestMenuId is linked after the guest menus were imported (new ids).
+    options: slide.options == null ? Prisma.DbNull : (slide.options as Prisma.InputJsonValue),
     order: slide.order,
     enabled: slide.enabled ?? true,
     weekdays: slide.weekdays ?? [],
@@ -104,7 +115,12 @@ function convertIce(ice: string): string {
   }
 }
 
-export default withWorkspacePermission([Role.USER], async (req: NextApiRequest, res: NextApiResponse, user, _workspace) => {
+/**
+ * Imports a backup into the workspace (admins; API keys need BACKUPS_IMPORT). The payload is
+ * untrusted: settings, custom templates and guest menu documents are validated (invalid ones are
+ * skipped and listed in `report.skipped`), imported guest menus are disabled and unpublished.
+ */
+export default withWorkspacePermission([Role.ADMIN], Permission.BACKUPS_IMPORT, async (req: NextApiRequest, res: NextApiResponse, user, _workspace) => {
   const workspaceId = req.query.workspaceId as string | undefined;
   if (!workspaceId) return res.status(400).json({ message: 'No workspace id' });
 
@@ -112,6 +128,7 @@ export default withWorkspacePermission([Role.USER], async (req: NextApiRequest, 
     try {
       const importLogger = createImportLogger(workspaceId);
       importLogger.step('Import started');
+      const report: BackupImportReport = { skipped: [] };
 
       await prisma.$transaction(
         async (transaction) => {
@@ -130,19 +147,16 @@ export default withWorkspacePermission([Role.USER], async (req: NextApiRequest, 
           if (data.workspaceSettings?.length > 0) {
             importLogger.step('Importing workspace settings', { count: data.workspaceSettings.length });
             for (const workspaceSetting of data.workspaceSettings) {
+              const validated = validateBackupWorkspaceSetting(workspaceSetting);
+              if (!validated.ok) {
+                report.skipped.push({ type: 'workspaceSetting', name: String(workspaceSetting.setting), reason: validated.reason });
+                continue;
+              }
+              const { setting, value } = validated.value;
               await transaction.workspaceSetting.upsert({
-                where: {
-                  workspaceId_setting: {
-                    workspaceId,
-                    setting: workspaceSetting.setting,
-                  },
-                },
-                update: { value: workspaceSetting.value },
-                create: {
-                  workspaceId,
-                  setting: workspaceSetting.setting,
-                  value: workspaceSetting.value,
-                },
+                where: { workspaceId_setting: { workspaceId, setting } },
+                update: { value },
+                create: { workspaceId, setting, value },
               });
             }
           }
@@ -671,23 +685,194 @@ export default withWorkspacePermission([Role.USER], async (req: NextApiRequest, 
           }
 
           const signageSlideRecords = data.signageSlides ?? [];
+          /** New slide id → guest menu id from the backup (remapped after the guest menu import). */
+          const signageSlideMenuLinks: { slideId: string; backupMenuId: string }[] = [];
           if (signageSlideRecords.length > 0) {
             importLogger.step('Importing signage slides', { count: signageSlideRecords.length });
             for (const slide of signageSlideRecords) {
               await ensureSignageContainer(transaction, workspaceId, slide.format as MonitorFormat);
-              await transaction.signageSlide.create({
+              const created = await transaction.signageSlide.create({
                 data: normalizeSignageSlide(slide, workspaceId),
+              });
+              if (slide.type === 'GUEST_MENU' && slide.guestMenuId) {
+                signageSlideMenuLinks.push({ slideId: created.id, backupMenuId: slide.guestMenuId });
+              }
+            }
+          }
+
+          const tagCategoryMapping: { id: string; newId: string }[] = [];
+          if ((data.tagCategories?.length ?? 0) > 0) {
+            importLogger.step('Importing tag categories', { count: data.tagCategories!.length });
+            const existingCategories = await transaction.tagCategory.findMany({ where: { workspaceId } });
+            const nameKey = (name: unknown) =>
+              name && typeof name === 'object'
+                ? Object.values(name as Record<string, unknown>)
+                    .filter((value): value is string => typeof value === 'string' && value.trim() !== '')
+                    .map((value) => value.trim().toLocaleLowerCase())
+                : [];
+            for (const category of data.tagCategories!) {
+              const keys = nameKey(category.name);
+              const existing = existingCategories.find((candidate) => nameKey(candidate.name).some((key) => keys.includes(key)));
+              if (existing) {
+                tagCategoryMapping.push({ id: category.id, newId: existing.id });
+              } else {
+                const created = await transaction.tagCategory.create({
+                  data: {
+                    workspaceId,
+                    name: (category.name ?? {}) as Prisma.InputJsonValue,
+                    order: category.order ?? 0,
+                    showAsGuestFilter: category.showAsGuestFilter ?? true,
+                  },
+                });
+                existingCategories.push(created);
+                tagCategoryMapping.push({ id: category.id, newId: created.id });
+              }
+            }
+          }
+
+          if ((data.tagDefinitions?.length ?? 0) > 0) {
+            importLogger.step('Importing tag definitions', { count: data.tagDefinitions!.length });
+            for (const definition of data.tagDefinitions!) {
+              const values = {
+                label: definition.label == null ? Prisma.DbNull : (definition.label as Prisma.InputJsonValue),
+                categoryId: definition.categoryId ? (tagCategoryMapping.find((cm) => cm.id === definition.categoryId)?.newId ?? null) : null,
+                color: definition.color ?? null,
+                isPublic: definition.isPublic ?? true,
+              };
+              await transaction.tagDefinition.upsert({
+                where: { workspaceId_tag: { workspaceId, tag: definition.tag } },
+                create: { workspaceId, tag: definition.tag, ...values },
+                update: values,
               });
             }
           }
 
-          importLogger.step('Import transaction finished');
+          const mapTranslations = <T extends { locale: string }>(rows: T[] | undefined, getId: (row: T) => string, mapping: { id: string; newId: string }[]) =>
+            (rows ?? []).flatMap((row) => {
+              const newId = mapping.find((m) => m.id === getId(row))?.newId;
+              return newId ? [{ row, newId }] : [];
+            });
+          const cocktailTranslations = mapTranslations(data.cocktailRecipeTranslations, (row) => row.cocktailId, cocktailRecipeMapping);
+          const ingredientTranslations = mapTranslations(data.ingredientTranslations, (row) => row.ingredientId, ingredientMapping);
+          const garnishTranslations = mapTranslations(data.garnishTranslations, (row) => row.garnishId, garnishMapping);
+          const glassTranslations = mapTranslations(data.glassTranslations, (row) => row.glassId, glassMapping);
+          if (cocktailTranslations.length + ingredientTranslations.length + garnishTranslations.length + glassTranslations.length > 0) {
+            importLogger.step('Importing content translations', {
+              cocktails: cocktailTranslations.length,
+              ingredients: ingredientTranslations.length,
+              garnishes: garnishTranslations.length,
+              glasses: glassTranslations.length,
+            });
+            await transaction.cocktailRecipeTranslation.createMany({
+              data: cocktailTranslations.map(({ row, newId }) => ({
+                cocktailId: newId,
+                locale: row.locale,
+                name: row.name ?? null,
+                description: row.description ?? null,
+                history: row.history ?? null,
+              })),
+              skipDuplicates: true,
+            });
+            await transaction.ingredientTranslation.createMany({
+              data: ingredientTranslations.map(({ row, newId }) => ({
+                ingredientId: newId,
+                locale: row.locale,
+                name: row.name ?? null,
+                guestName: row.guestName ?? null,
+                description: row.description ?? null,
+              })),
+              skipDuplicates: true,
+            });
+            await transaction.garnishTranslation.createMany({
+              data: garnishTranslations.map(({ row, newId }) => ({
+                garnishId: newId,
+                locale: row.locale,
+                name: row.name ?? null,
+                description: row.description ?? null,
+              })),
+              skipDuplicates: true,
+            });
+            await transaction.glassTranslation.createMany({
+              data: glassTranslations.map(({ row, newId }) => ({ glassId: newId, locale: row.locale, name: row.name ?? null })),
+              skipDuplicates: true,
+            });
+          }
+
+          const guestMenuTemplateMapping = new Map<string, string>();
+          if ((data.guestMenuTemplates?.length ?? 0) > 0) {
+            importLogger.step('Importing guest menu templates', { count: data.guestMenuTemplates!.length });
+            for (const template of data.guestMenuTemplates!) {
+              const validated = validateBackupGuestMenuTemplate(template);
+              if (!validated.ok) {
+                // Menus referencing it fall back to the default template.
+                report.skipped.push({ type: 'guestMenuTemplate', name: String(template.name), reason: validated.reason });
+                continue;
+              }
+              const created = await transaction.guestMenuTemplate.create({
+                data: { workspaceId, name: validated.value.name, definition: validated.value.definition as Prisma.InputJsonValue },
+              });
+              guestMenuTemplateMapping.set(template.id, created.id);
+            }
+          }
+
+          const guestMenuMapping = new Map<string, string>();
+          if ((data.guestMenus?.length ?? 0) > 0) {
+            importLogger.step('Importing guest menus', { count: data.guestMenus!.length });
+            const idMaps = {
+              cocktails: new Map(cocktailRecipeMapping.map((m) => [m.id, m.newId])),
+              ingredients: new Map(ingredientMapping.map((m) => [m.id, m.newId])),
+              cardGroups: new Map(cocktailCardGroupMapping.map((m) => [m.id, m.newId])),
+              templates: guestMenuTemplateMapping,
+            };
+            const takenSlugs = new Set((await transaction.guestMenu.findMany({ where: { workspaceId }, select: { slug: true } })).map((menu) => menu.slug));
+            for (const menu of data.guestMenus!) {
+              const draft = prepareBackupGuestMenuDocument(menu.draft, idMaps);
+              if (!draft.ok) {
+                report.skipped.push({ type: 'guestMenu', name: String(menu.name), reason: draft.reason });
+                continue;
+              }
+              const baseSlug = normalizeBackupGuestMenuSlug(menu.slug);
+              let slug = baseSlug;
+              for (let i = 2; takenSlugs.has(slug); i++) slug = `${baseSlug}-${i}`;
+              takenSlugs.add(slug);
+              const sourceCardId = menu.sourceCardId ? (cocktailCardMapping.find((m) => m.id === menu.sourceCardId)?.newId ?? null) : null;
+              const createdMenu = await transaction.guestMenu.create({
+                data: {
+                  workspaceId,
+                  name: menu.name,
+                  slug,
+                  // Never live after an import: disabled, unpublished, not default, no access code, new preview token.
+                  ...importedGuestMenuSafeState(),
+                  priority: menu.priority ?? 0,
+                  validFrom: menu.validFrom ?? null,
+                  validTo: menu.validTo ?? null,
+                  weekdays: menu.weekdays ?? [],
+                  timeFrom: menu.timeFrom ?? null,
+                  timeTo: menu.timeTo ?? null,
+                  inactiveBehavior: menu.inactiveBehavior ?? 'NOTICE_WITH_LINK',
+                  sourceMode: menu.sourceMode === 'FIXED_CARD' && !sourceCardId ? 'NONE' : (menu.sourceMode ?? 'NONE'),
+                  sourceCardId,
+                  locales: menu.locales ?? [],
+                  draft: draft.value as Prisma.InputJsonValue,
+                },
+              });
+              guestMenuMapping.set(menu.id, createdMenu.id);
+            }
+          }
+
+          // Guest menu signage slides: point to the re-created menus (unknown menus → active menu).
+          for (const link of signageSlideMenuLinks) {
+            const guestMenuId = guestMenuMapping.get(link.backupMenuId);
+            if (guestMenuId) await transaction.signageSlide.update({ where: { id: link.slideId }, data: { guestMenuId } });
+          }
+
+          importLogger.step('Import transaction finished', { skipped: report.skipped.length });
         },
         { timeout: IMPORT_TRANSACTION_TIMEOUT_MS },
       );
 
       importLogger.step('Import request completed successfully');
-      return res.status(200).json({ msg: 'Success' });
+      return res.status(200).json({ msg: 'Success', report });
     } catch (error) {
       console.error(error);
       return res.status(500).json({ msg: 'Error' });

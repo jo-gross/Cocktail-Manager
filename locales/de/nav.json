@@ -20,7 +20,6 @@
   "login": "Anmelden",
   "queue": "Warteschlange",
   "cocktailSearch": "Cocktailsuche",
-  "searchShortcut": "Suche (Shift + F)",
   "order": "Bestellen",
   "settingsAtEnd": "Einstellungen am Ende",
   "recipeArea": "Rezeptbereich",
@@ -30,9 +29,33 @@
   "inProgress": "Wird gemacht",
   "advancedStatistics": "Erweiterte Statistik",
   "section": {
-    "cocktails": "Cocktails",
-    "display": "Darstellung",
-    "numbers": "Zahlen",
+    "recipes": "Rezepte & Bar",
+    "display": "Karten & Gäste",
+    "guestInfo": "Gästeinformationen",
+    "numbers": "Auswertung",
     "workspace": "Workspace"
-  }
+  },
+  "overview": {
+    "allergensAlcohol": "Allergene & Alkohol",
+    "tagsFilters": "Tags & Filter",
+    "members": "Mitglieder",
+    "description": {
+      "cocktails": "Rezepte anlegen, bearbeiten und bewerten",
+      "ingredients": "Zutaten, Preise und Einheiten pflegen",
+      "garnishes": "Garnituren und Dekorationen verwalten",
+      "glasses": "Gläser mit Volumen und Bild verwalten",
+      "cards": "Karten für die Bar zusammenstellen",
+      "guestMenus": "Digitale Karten für Gäste gestalten",
+      "monitor": "Inhalte für externe Bildschirme",
+      "guestInfo": "Allergene und Alkoholangaben festlegen",
+      "tags": "Tags für Filter und Suche organisieren",
+      "statistics": "Bestellungen und Trends auswerten",
+      "calculations": "Mengen und Kosten für Events planen",
+      "logs": "Alle Buchungen nachvollziehen",
+      "members": "Mitglieder und Rollen verwalten",
+      "settings": "Allgemein, Mitglieder, Sprachen, Rezept-Stammdaten und API-Keys"
+    }
+  },
+  "guestInfo": "Gästeinformationen",
+  "guestMenus": "Gästekarten"
 }

@@ -19,12 +19,22 @@ import {
   IngredientImage,
   IngredientVolume,
   MonitorFormat,
+  Prisma,
   SignageBackgroundMode,
+  SignageSlideType,
   Unit,
   UnitConversion,
   WorkspaceCocktailRecipeStepAction,
   WorkspaceSetting,
+  TagCategory,
+  TagDefinition,
+  CocktailRecipeTranslation,
+  IngredientTranslation,
+  GarnishTranslation,
+  GlassTranslation,
+  GuestMenuTemplate,
 } from '@generated/prisma/client';
+import type { GuestMenuBackupRecord } from '@lib/backup/backupSecurity';
 
 /** Signage container in backups; `content` is legacy pre-slide schema. */
 export interface SignageBackupRecord {
@@ -43,6 +53,11 @@ export interface SignageSlideBackupRecord {
   workspaceId?: string;
   format: MonitorFormat;
   content: string;
+  /** Missing in older exports = IMAGE. */
+  type?: SignageSlideType;
+  /** GUEST_MENU slides: id of the menu in the backup (remapped on import), null = active menu. */
+  guestMenuId?: string | null;
+  options?: Prisma.JsonValue | null;
   order: number;
   enabled?: boolean;
   weekdays?: number[];
@@ -77,4 +92,17 @@ export interface BackupStructure {
   ice: Ice[];
   signage?: SignageBackupRecord[];
   signageSlides?: SignageSlideBackupRecord[];
+  /** Tag metadata and content translations (optional for older exports). */
+  tagCategories?: TagCategory[];
+  tagDefinitions?: TagDefinition[];
+  cocktailRecipeTranslations?: CocktailRecipeTranslation[];
+  ingredientTranslations?: IngredientTranslation[];
+  garnishTranslations?: GarnishTranslation[];
+  glassTranslations?: GlassTranslation[];
+  /**
+   * Guest menus (documents reference cocktails/ingredients/card groups/templates by id) – optional for older exports.
+   * Without access code and preview token; imported menus are always created disabled and unpublished.
+   */
+  guestMenus?: GuestMenuBackupRecord[];
+  guestMenuTemplates?: GuestMenuTemplate[];
 }

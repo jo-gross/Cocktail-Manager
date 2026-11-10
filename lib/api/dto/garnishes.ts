@@ -6,7 +6,11 @@
 import type { Garnish } from '@generated/prisma/client';
 import type { GarnishDto } from '@lib/schemas/garnishes';
 
-export function toGarnishDto(garnish: Pick<Garnish, 'id' | 'name' | 'description' | 'notes' | 'price'>, hasImage: boolean, workspaceId: string): GarnishDto {
+export function toGarnishDto(
+  garnish: Pick<Garnish, 'id' | 'name' | 'description' | 'notes' | 'price' | 'allergens' | 'additives' | 'guestInfoComplete'>,
+  hasImage: boolean,
+  workspaceId: string,
+): GarnishDto {
   return {
     id: garnish.id,
     name: garnish.name,
@@ -15,5 +19,8 @@ export function toGarnishDto(garnish: Pick<Garnish, 'id' | 'name' | 'description
     price: garnish.price,
     hasImage,
     imageUrl: hasImage ? `/api/v1/workspaces/${workspaceId}/garnishes/${garnish.id}/image` : null,
+    allergens: garnish.allergens,
+    additives: garnish.additives,
+    guestInfoComplete: garnish.guestInfoComplete,
   };
 }

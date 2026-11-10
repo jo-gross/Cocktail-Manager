@@ -24,6 +24,14 @@ const serwist = new Serwist({
       matcher: /\/ratings$/,
       handler: new NetworkOnly(),
     },
+    // Gästekarten (/m/…, /api/public/…) → nie im SW-Cache: geschützte Karten dürfen
+    // nicht länger als das Zugangs-Cookie lesbar bleiben (HTTP-Cache-Header gelten weiter)
+    {
+      // inkl. Client-Navigation: /_next/data/{buildId}/m/….json
+      matcher: ({ url, sameOrigin }) =>
+        sameOrigin && (url.pathname.startsWith('/m/') || url.pathname.startsWith('/api/public/') || /^\/_next\/data\/[^/]+\/m\//.test(url.pathname)),
+      handler: new NetworkOnly(),
+    },
     // Allgemeine HTTP(S) GET-Requests → StaleWhileRevalidate
     {
       matcher: /^https?.*/,

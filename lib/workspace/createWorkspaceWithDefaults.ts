@@ -1,6 +1,7 @@
 import prisma from '../../prisma/prisma';
 import { $Enums, Prisma, Role } from '@generated/prisma/client';
 import { randomUUID } from 'crypto';
+import { DEFAULT_TAG_CATEGORIES } from '@lib/tags/defaultTagCategories';
 import WorkspaceSettingKey = $Enums.WorkspaceSettingKey;
 
 interface CreateWorkspaceOptions {
@@ -184,6 +185,11 @@ export async function createWorkspaceWithDefaults(options: CreateWorkspaceOption
             factor: 50,
           },
         ],
+      },
+    },
+    TagCategory: {
+      createMany: {
+        data: DEFAULT_TAG_CATEGORIES.map((category) => ({ name: category.name, order: category.order, showAsGuestFilter: category.showAsGuestFilter })),
       },
     },
     WorkspaceSetting: {

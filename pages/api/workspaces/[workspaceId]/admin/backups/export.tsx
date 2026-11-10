@@ -2,9 +2,10 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import prisma from '../../../../../../prisma/prisma';
 import { BackupStructure } from './backupStructure';
 import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
-import { Role } from '@generated/prisma/client';
+import { Permission, Role } from '@generated/prisma/client';
 import { withHttpMethods } from '@middleware/api/handleMethods';
 import HTTPMethod from 'http-method-enum';
+import { stripGuestMenuSecrets } from '@lib/backup/backupSecurity';
 
 export const config = {
   api: {
@@ -15,8 +16,13 @@ export const config = {
   },
 };
 
+/**
+ * Full workspace export (admins; API keys need BACKUPS_EXPORT). Contains no secrets:
+ * the workspace row (signage key), API keys and join codes are not exported and
+ * guest menus are stripped of access code and preview token.
+ */
 export default withHttpMethods({
-  [HTTPMethod.GET]: withWorkspacePermission([Role.USER], async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
+  [HTTPMethod.GET]: withWorkspacePermission([Role.ADMIN], Permission.BACKUPS_EXPORT, async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
     const workspaceId = workspace.id;
     const workspaceSettings = await prisma.workspaceSetting.findMany({ where: { workspaceId } });
     const translationsSetting = workspaceSettings.find((setting) => setting.setting === 'translations');
@@ -129,6 +135,14 @@ export default withHttpMethods({
         where: { workspaceId },
         orderBy: [{ format: 'asc' }, { order: 'asc' }],
       }),
+      tagCategories: await prisma.tagCategory.findMany({ where: { workspaceId }, orderBy: { order: 'asc' } }),
+      tagDefinitions: await prisma.tagDefinition.findMany({ where: { workspaceId } }),
+      cocktailRecipeTranslations: await prisma.cocktailRecipeTranslation.findMany({ where: { cocktail: { workspaceId } } }),
+      ingredientTranslations: await prisma.ingredientTranslation.findMany({ where: { ingredient: { workspaceId } } }),
+      garnishTranslations: await prisma.garnishTranslation.findMany({ where: { garnish: { workspaceId } } }),
+      glassTranslations: await prisma.glassTranslation.findMany({ where: { glass: { workspaceId } } }),
+      guestMenus: (await prisma.guestMenu.findMany({ where: { workspaceId }, orderBy: { priority: 'asc' } })).map(stripGuestMenuSecrets),
+      guestMenuTemplates: await prisma.guestMenuTemplate.findMany({ where: { workspaceId } }),
     };
 
     console.info(`[BackupExport][${workspaceId}] Export finished`, {
@@ -137,6 +151,8 @@ export default withHttpMethods({
       calculations: backup.calculation.length,
       signage: backup.signage?.length ?? 0,
       signageSlides: backup.signageSlides?.length ?? 0,
+      tagDefinitions: backup.tagDefinitions?.length ?? 0,
+      guestMenus: backup.guestMenus?.length ?? 0,
     });
     return res.json(backup);
   }),

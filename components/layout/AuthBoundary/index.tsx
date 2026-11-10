@@ -14,7 +14,10 @@ import { getTranslations, getWorkspace } from '@lib/network/workspaces';
 import { upsertUserSettingRequest } from '@lib/network/userSettings';
 import { alertApiV1Error } from '@lib/network/apiV1';
 import { getActiveLocale, i18n } from '@lib/i18n/client';
-import { DEFAULT_LOCALE, normalizeLocale, type AppLocale } from '@lib/i18n/locales';
+import { normalizeLocale, type AppLocale } from '@lib/i18n/locales';
+import { resolveLabelOrNull } from '@lib/i18n/labelFallback';
+import { getWorkspaceContentLocales, type ContentLocales } from '@lib/workspace/workspaceLocaleSettings';
+import { CONTENT_LOCALES_CHANGED_EVENT } from '@components/settings/useContentLocales';
 import type { UserSettingUpdateInput } from '@lib/schemas/userSettings';
 
 interface AlertBoundaryProps {
@@ -30,6 +33,8 @@ export function AuthBoundary(props: AlertBoundaryProps) {
 
   const [workspace, setWorkspace] = useState<WorkspaceDto | undefined>();
   const [translations, setTranslations] = useState<TranslationsDto>({});
+  // Workspace content languages drive the label fallback; `null` without workspace (legacy chain UI locale → de).
+  const [contentLocales, setContentLocales] = useState<ContentLocales | null>(null);
   const [uiLocale, setUiLocale] = useState<AppLocale>(() => getActiveLocale());
   const [workspaceLoading, setWorkspaceLoading] = useState<boolean>(false);
 
@@ -73,6 +78,7 @@ export function AuthBoundary(props: AlertBoundaryProps) {
       setUser(undefined);
       setWorkspace(undefined);
       setTranslations({});
+      setContentLocales(null);
     }
   }, [fetchUser, session?.user, user, userLoading, sessionLoading]);
 
@@ -99,6 +105,8 @@ export function AuthBoundary(props: AlertBoundaryProps) {
       try {
         const workspaceData = await getWorkspace(wsId);
         setWorkspace(workspaceData);
+        // The workspace DTO carries the settings map (same data as GET /workspaces/{id}/settings).
+        setContentLocales(getWorkspaceContentLocales(workspaceData.settings ?? {}));
       } catch (error) {
         console.error('AuthBoundary -> fetchWorkspace', error);
         await router.replace('/');
@@ -124,6 +132,12 @@ export function AuthBoundary(props: AlertBoundaryProps) {
     void fetchWorkspace();
   }, [fetchWorkspace]);
 
+  useEffect(() => {
+    const onContentLocalesChanged = (event: Event) => setContentLocales((event as CustomEvent<ContentLocales>).detail);
+    window.addEventListener(CONTENT_LOCALES_CHANGED_EVENT, onContentLocalesChanged);
+    return () => window.removeEventListener(CONTENT_LOCALES_CHANGED_EVENT, onContentLocalesChanged);
+  }, []);
+
   const refreshWorkspace = useCallback(async () => {
     await fetchWorkspace(true);
   }, [fetchWorkspace]);
@@ -140,10 +154,9 @@ export function AuthBoundary(props: AlertBoundaryProps) {
 
   const getTranslationOrNull = useCallback(
     (key: string, language?: AppLocale) => {
-      const locale = language ?? uiLocale;
-      return translations?.[locale]?.[key] ?? (locale !== DEFAULT_LOCALE ? translations?.[DEFAULT_LOCALE]?.[key] : undefined) ?? undefined;
+      return resolveLabelOrNull(translations, key, language ?? uiLocale, contentLocales);
     },
-    [translations, uiLocale],
+    [translations, uiLocale, contentLocales],
   );
 
   const getTranslation = useCallback(
@@ -160,6 +173,7 @@ export function AuthBoundary(props: AlertBoundaryProps) {
           user: user,
           workspace: workspace,
           translations: translations,
+          contentLocales,
           uiLocale,
           refreshWorkspace: refreshWorkspace,
           refreshUser: fetchUser,

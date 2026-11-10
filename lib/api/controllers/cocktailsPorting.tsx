@@ -11,17 +11,21 @@
 import prisma from '../../../prisma/prisma';
 import React from 'react';
 import { renderToString } from 'react-dom/server';
-import puppeteer, { Browser } from 'puppeteer-core';
-import { promises as dnsPromises } from 'dns';
+import type { Browser } from 'puppeteer-core';
+import { connectPdfBrowser } from '@lib/pdf/browser';
 import { PDFDocument } from 'pdf-lib';
 import { randomUUID } from 'crypto';
 import { $Enums, Prisma } from '@generated/prisma/client';
 import type { User, Workspace } from '@generated/prisma/client';
 import { createCocktailRecipeAuditLog } from '@lib/auditLog';
+import { cocktailGuestInfoImportData, garnishGuestInfoImportData, ingredientGuestInfoImportData, parsePercent } from '@lib/guest-info/sanitize';
 import { buildCocktailPdfLabels, CocktailPdfPage } from '@components/pdf/CocktailPdfPage';
 import { getServerT } from '@lib/i18n/server';
 import { normalizeLocale, type AppLocale } from '@lib/i18n/locales';
 import { toIntlLocale } from '@lib/i18n/format';
+import { resolveLabel } from '@lib/i18n/labelFallback';
+import { loadWorkspaceLocaleSettings } from '@lib/workspace/workspaceLocaleSettings.server';
+import type { ContentLocales } from '@lib/workspace/workspaceLocaleSettings';
 import { pdfExportTailwindConfigScript, pdfExportThemeStyles } from '@lib/pdf/pdfExportStyles';
 import { CocktailExportStructure } from '../../../types/CocktailExportStructure';
 import packageJson from '../../../package.json';
@@ -153,37 +157,12 @@ export interface CocktailPdfOptions {
 export type CocktailPdfResult = { kind: 'pdf'; buffer: Buffer } | { kind: 'error'; status: number; body: unknown };
 
 async function generatePdf(html: string, numberOfCocktails: number, showHeader = false, showFooter = false, locale: AppLocale = 'de'): Promise<Buffer> {
-  const chromiumHost = process.env.CHROMIUM_HOST;
-  console.debug('chromiumHost', chromiumHost);
-
   const timeoutMs = Math.max(10000 * numberOfCocktails, 30000);
   console.debug(`Setting timeout to ${timeoutMs}ms for ${numberOfCocktails} cocktails`);
 
   let browser: Browser | undefined;
   try {
-    if (chromiumHost && chromiumHost !== 'localhost' && chromiumHost !== '127.0.0.1') {
-      console.debug('Fetching WebSocket URL from Chromium...');
-      try {
-        const { address: chromeIP } = await dnsPromises.lookup(chromiumHost);
-        console.debug('Chromium IP:', chromeIP);
-        const browserURL = `http://${chromeIP}:9222`;
-        console.debug('Connecting to Chromium via browserURL:', browserURL);
-        browser = await puppeteer.connect({ browserURL });
-        console.debug('Successfully connected via DNS-resolved IP');
-      } catch (dnsError) {
-        console.error('DNS lookup failed, trying hostname directly:', dnsError);
-        const browserURL = `http://${chromiumHost}:9222`;
-        browser = await puppeteer.connect({ browserURL });
-        console.debug('Successfully connected via hostname');
-      }
-    } else if (chromiumHost === 'localhost' || chromiumHost === '127.0.0.1') {
-      console.debug('Connecting to localhost Chromium');
-      browser = await puppeteer.connect({ browserURL: 'http://localhost:9222' });
-      console.debug('Successfully connected to localhost');
-    } else {
-      console.debug('No Chromium host specified, launching local Chromium - assuming it is installed at the instance');
-      browser = await puppeteer.launch();
-    }
+    browser = await connectPdfBrowser();
 
     const page = await browser.newPage();
     page.setDefaultTimeout(timeoutMs);
@@ -284,10 +263,6 @@ async function generatePdf(html: string, numberOfCocktails: number, showHeader =
   }
 }
 
-function getTranslation(translations: Record<string, Record<string, string>>, key: string, language: string = 'de'): string {
-  return translations[language]?.[key] ?? translations['de']?.[key] ?? key;
-}
-
 function generateHtmlForCocktails(
   cocktails: CocktailRecipeWithDetails[],
   translations: Record<string, Record<string, string>>,
@@ -300,6 +275,7 @@ function generateHtmlForCocktails(
     showHeader: boolean;
     showFooter: boolean;
     locale: AppLocale;
+    contentLocales: ContentLocales;
   },
 ): string {
   const { t } = getServerT(options.locale);
@@ -311,7 +287,7 @@ function generateHtmlForCocktails(
       React.createElement(CocktailPdfPage, {
         cocktail,
         imageBase64,
-        getTranslation: (key: string) => getTranslation(translations, key, options.locale),
+        getTranslation: (key: string) => resolveLabel(translations, key, options.locale, options.contentLocales),
         labels,
         locale: options.locale,
         exportImage: options.exportImage,
@@ -442,6 +418,7 @@ export async function exportCocktailsPdf(workspace: Workspace, options: Cocktail
     });
 
     const translations: Record<string, Record<string, string>> = translationSetting?.value ? JSON.parse(translationSetting.value) : { de: {} };
+    const { contentLocales } = await loadWorkspaceLocaleSettings(workspace.id);
 
     const batchSize = 10;
     const batches: CocktailRecipeWithDetails[][] = [];
@@ -464,6 +441,7 @@ export async function exportCocktailsPdf(workspace: Workspace, options: Cocktail
         showHeader,
         showFooter,
         locale,
+        contentLocales,
       });
       const batchPdfBuffer = await generatePdf(html, batch.length, showHeader, showFooter, locale);
       pdfBuffers.push(batchPdfBuffer);
@@ -799,7 +777,12 @@ export async function importCocktailsJson(
                     stepActionMapping.set(decision.exportId, existing.id);
                   } else {
                     const newId = randomUUID();
-                    await transaction.workspaceCocktailRecipeStepAction.create({ data: { id: newId, name: actionName, actionGroup, workspaceId } });
+                    // The wizard only sends edited fields, so take the dilution from the exported action.
+                    const exportAction = exportData.stepActions.find((a) => a.id === decision.exportId);
+                    const dilutionPercent = parsePercent(exportAction?.dilutionPercent);
+                    await transaction.workspaceCocktailRecipeStepAction.create({
+                      data: { id: newId, name: actionName, actionGroup, workspaceId, dilutionPercent },
+                    });
                     {
                       const labels = readEntityLabels(decision.newEntityData);
                       if (labels.labelDe || labels.labelEn) {
@@ -888,6 +871,7 @@ export async function importCocktailsJson(
                         description: entityData.description ?? null,
                         notes: entityData.notes ?? null,
                         price: entityData.price ?? null,
+                        ...garnishGuestInfoImportData({ ...exportData.garnishes.find((g) => g.id === decision.exportId), ...entityData }),
                       },
                     });
                     garnishMapping.set(decision.exportId, newId);
@@ -940,6 +924,7 @@ export async function importCocktailsJson(
                         price: entityData.price ?? null,
                         link: entityData.link ?? null,
                         tags: entityData.tags ?? [],
+                        ...ingredientGuestInfoImportData({ ...exportData.ingredients.find((i) => i.id === decision.exportId), ...entityData }),
                       },
                     });
                     ingredientMapping.set(decision.exportId, newId);
@@ -1030,6 +1015,7 @@ export async function importCocktailsJson(
                   isArchived: exportCocktail.isArchived,
                   history: exportCocktail.history,
                   notes: exportCocktail.notes,
+                  ...cocktailGuestInfoImportData(exportCocktail),
                 },
               });
               imported.cocktails++;

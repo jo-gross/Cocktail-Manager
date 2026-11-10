@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { CompactCocktailRecipeInstruction } from './CompactCocktailRecipeInstruction';
 import { ShowCocktailInfoButton } from './ShowCocktailInfoButton';
 import { useRouter } from 'next/router';
-import { FaExclamationTriangle } from 'react-icons/fa';
+import { FaBan, FaCheck, FaExclamationTriangle } from 'react-icons/fa';
 import { CocktailRecipeCardSkeleton } from './CocktailRecipeCardSkeleton';
 import { fetchCocktail } from '@lib/network/cocktails';
 import type { RatingDto } from '@lib/schemas/ratings';
@@ -13,7 +13,9 @@ import StatisticActions from '../StatisticActions';
 import ExpandableText, { ExpandableTextHandle } from '../ExpandableText';
 import { CocktailDetailModal } from '../modals/CocktailDetailModal';
 import { ModalContext } from '@lib/context/ModalContextProvider';
-import { Badge, Card, CardBody } from '@components/ui';
+import { Badge, Button, Card, CardBody } from '@components/ui';
+import { alertApiV1Error, apiV1Mutate } from '@lib/network/apiV1';
+import { isCocktailUnavailable } from '@lib/cocktails/availability';
 
 export type CocktailRecipeOverviewItemRef = {
   refresh: () => void;
@@ -34,6 +36,8 @@ export type CocktailRecipeOverviewItemProps = {
   image?: string;
   showRating?: boolean;
   showDetailsOnClick?: boolean;
+  /** Shows the "heute aus" toggle (bartender view). */
+  showAvailabilityToggle?: boolean;
 };
 
 const CocktailRecipeCardItem = forwardRef<CocktailRecipeOverviewItemRef, CocktailRecipeOverviewItemProps>((props, ref) => {
@@ -78,14 +82,42 @@ const CocktailRecipeCardItem = forwardRef<CocktailRecipeOverviewItemRef, Cocktai
 
   const cocktailRecipe = typeof props.cocktailRecipe === 'string' ? loadedCocktailRecipe : props.cocktailRecipe;
 
+  // Bartender page selects the card via `?card=`; 'search'/'order' are pseudo views without a card.
+  const cardQuery = router.query.card as string | undefined;
+  const statisticCardId = cardQuery != undefined && cardQuery !== 'search' && cardQuery !== 'order' ? cardQuery : undefined;
+
+  // Local result of the availability toggle; only applies to the cocktail object it was made for (a refetch resets it).
+  const [availabilityOverride, setAvailabilityOverride] = useState<{ base: CocktailDto; unavailableUntil: string | null } | undefined>(undefined);
+  const [availabilitySaving, setAvailabilitySaving] = useState(false);
+  const effectiveCocktailRecipe =
+    cocktailRecipe && availabilityOverride?.base === cocktailRecipe
+      ? { ...cocktailRecipe, unavailableUntil: availabilityOverride.unavailableUntil }
+      : cocktailRecipe;
+  const unavailable = isCocktailUnavailable(effectiveCocktailRecipe?.unavailableUntil);
+
+  const toggleAvailability = async () => {
+    if (!cocktailRecipe) return;
+    setAvailabilitySaving(true);
+    try {
+      const updated = await apiV1Mutate<CocktailDto>(`/api/v1/workspaces/${workspaceId}/cocktails/${cocktailRecipe.id}/availability`, 'PUT', {
+        unavailable: !unavailable,
+      });
+      setAvailabilityOverride({ base: cocktailRecipe, unavailableUntil: updated.unavailableUntil });
+    } catch (error) {
+      alertApiV1Error(error, t('cocktail:error.updateAvailability'));
+    } finally {
+      setAvailabilitySaving(false);
+    }
+  };
+
   const modalContext = useContext(ModalContext);
 
   return (
     <div className={'col-span-1'}>
-      <Card variant="elevated" className="h-full flex-row">
+      <Card variant="elevated" className={`h-full flex-row ${unavailable ? 'opacity-70' : ''}`}>
         {cocktailRecipeLoading ? (
           <CocktailRecipeCardSkeleton />
-        ) : cocktailRecipe ? (
+        ) : cocktailRecipe && effectiveCocktailRecipe ? (
           <>
             <ShowCocktailInfoButton
               showInfo={(props.showInfo ?? false) && !(props.showDetailsOnClick ?? false)}
@@ -115,7 +147,7 @@ const CocktailRecipeCardItem = forwardRef<CocktailRecipeOverviewItemRef, Cocktai
                 style={(props.showDetailsOnClick ?? false) ? { cursor: 'pointer' } : {}}
               >
                 <CompactCocktailRecipeInstruction
-                  cocktailRecipe={cocktailRecipe}
+                  cocktailRecipe={effectiveCocktailRecipe}
                   specialPrice={props.specialPrice}
                   showImage={props.showImage ?? false}
                   showPrice={props.showPrice ?? true}
@@ -195,8 +227,26 @@ const CocktailRecipeCardItem = forwardRef<CocktailRecipeOverviewItemRef, Cocktai
                       cocktailId={cocktailRecipe.id}
                       cocktailName={cocktailRecipe.name}
                       actionSource={'CARD'}
-                      cardId={router.query.cardId as string | undefined}
+                      cardId={statisticCardId}
                     />
+                  </div>
+                ) : (
+                  <></>
+                )}
+
+                {props.showAvailabilityToggle ? (
+                  <div className={'mt-1 flex justify-end'}>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant={unavailable ? 'outline' : 'outline-error'}
+                      disabled={availabilitySaving}
+                      onClick={toggleAvailability}
+                      title={unavailable ? t('cocktail:markAvailableTip') : t('cocktail:markUnavailableTodayTip')}
+                    >
+                      {unavailable ? <FaCheck /> : <FaBan />}
+                      {unavailable ? t('cocktail:markAvailable') : t('cocktail:markUnavailableToday')}
+                    </Button>
                   </div>
                 ) : (
                   <></>

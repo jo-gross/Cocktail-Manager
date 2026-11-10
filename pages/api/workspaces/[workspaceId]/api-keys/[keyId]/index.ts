@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
+import { withWorkspaceSession } from '@middleware/api/authenticationMiddleware';
 import { withHttpMethods } from '@middleware/api/handleMethods';
 import { Role } from '@generated/prisma/client';
 import HTTPMethod from 'http-method-enum';
@@ -8,7 +8,7 @@ import { invalidateKeyCache } from '@middleware/api/jwtApiKeyMiddleware';
 import { withDeprecation } from '@middleware/api/withDeprecation';
 
 const legacyHandler = withHttpMethods({
-  [HTTPMethod.GET]: withWorkspacePermission([Role.ADMIN, Role.OWNER], async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
+  [HTTPMethod.GET]: withWorkspaceSession([Role.ADMIN, Role.OWNER], async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
     const keyId = req.query.keyId as string | undefined;
     if (!keyId) {
       return res.status(400).json({ message: 'keyId is required' });
@@ -51,7 +51,7 @@ const legacyHandler = withHttpMethods({
     });
   }),
 
-  [HTTPMethod.DELETE]: withWorkspacePermission([Role.ADMIN, Role.OWNER], async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
+  [HTTPMethod.DELETE]: withWorkspaceSession([Role.ADMIN, Role.OWNER], async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
     const keyId = req.query.keyId as string | undefined;
     if (!keyId) {
       return res.status(400).json({ message: 'keyId is required' });

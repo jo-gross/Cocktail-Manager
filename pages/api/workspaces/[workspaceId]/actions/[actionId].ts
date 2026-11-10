@@ -1,16 +1,16 @@
 import { withHttpMethods } from '@middleware/api/handleMethods';
 import HTTPMethod from 'http-method-enum';
 import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
-import { Role } from '@generated/prisma/client';
+import { Permission, Role } from '@generated/prisma/client';
 import prisma from '../../../../../prisma/prisma';
 import { updateTranslation } from '../admin/translation';
 import { withDeprecation } from '@middleware/api/withDeprecation';
 
 const legacyHandler = withHttpMethods({
-  [HTTPMethod.PUT]: withWorkspacePermission([Role.ADMIN], async (req, res, user, workspace) => {
+  [HTTPMethod.PUT]: withWorkspacePermission([Role.ADMIN], Permission.COCKTAILS_UPDATE, async (req, res, user, workspace) => {
     const actionId = req.query.actionId as string | undefined;
     if (!actionId) return res.status(400).json({ message: 'No action id' });
-    const action = await prisma.workspaceCocktailRecipeStepAction.findFirst({ where: { id: actionId } });
+    const action = await prisma.workspaceCocktailRecipeStepAction.findFirst({ where: { id: actionId, workspaceId: workspace.id } });
     if (action == null) return res.status(404).json({ message: 'Action not found' });
 
     const { actionGroup, translations } = req.body;
@@ -21,9 +21,11 @@ const legacyHandler = withHttpMethods({
 
     return res.json({ data: actions });
   }),
-  [HTTPMethod.DELETE]: withWorkspacePermission([Role.ADMIN], async (req, res, _user, _workspace) => {
+  [HTTPMethod.DELETE]: withWorkspacePermission([Role.ADMIN], Permission.COCKTAILS_UPDATE, async (req, res, _user, workspace) => {
     const actionId = req.query.actionId as string | undefined;
     if (!actionId) return res.status(400).json({ message: 'No action id' });
+    const existing = await prisma.workspaceCocktailRecipeStepAction.findFirst({ where: { id: actionId, workspaceId: workspace.id } });
+    if (existing == null) return res.status(404).json({ message: 'Action not found' });
 
     const action = await prisma.workspaceCocktailRecipeStepAction.delete({ where: { id: actionId } });
     return res.json({ data: action });

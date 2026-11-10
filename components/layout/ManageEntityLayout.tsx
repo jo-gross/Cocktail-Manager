@@ -1,6 +1,7 @@
 import { FaArrowLeft } from 'react-icons/fa';
 import Head from 'next/head';
 import React, { useContext } from 'react';
+import { useRouter } from 'next/router';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@components/ui';
 import { NotSavedLeaveConfirmation } from '../modals/NotSavedLeaveConfirmation';
@@ -24,12 +25,16 @@ interface ManageEntityLayoutProps {
   onSave?: () => void;
   /** Stretch content to fill the viewport height (for overview tables). */
   fullHeight?: boolean;
+  /** Always navigate to `backLink` instead of going back in the browser history (e.g. for areas with sub-pages). */
+  alwaysUseBackLink?: boolean;
 }
 
 export function ManageEntityLayout(props: ManageEntityLayoutProps) {
   const modalContext = useContext(ModalContext);
   const routingContext = useContext(RoutingContext);
+  const router = useRouter();
   const { t } = useTranslation('common');
+  const goBack = () => (props.alwaysUseBackLink ? router.push(props.backLink) : routingContext.conditionalBack(props.backLink));
 
   return (
     <>
@@ -57,11 +62,11 @@ export function ManageEntityLayout(props: ManageEntityLayoutProps) {
                         props.onSave?.();
                         await props.formRef?.current?.submitForm();
                       }}
-                      onNotSave={() => routingContext.conditionalBack(props.backLink)}
+                      onNotSave={goBack}
                     />,
                   );
                 } else {
-                  routingContext.conditionalBack(props.backLink);
+                  void goBack();
                 }
               }}
             >

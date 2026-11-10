@@ -68,6 +68,21 @@ export const PERMISSION_DESCRIPTIONS = {
 
   MONITOR_READ: 'Read signage/monitor configuration and slides',
   MONITOR_UPDATE: 'Update signage/monitor configuration and slides',
+
+  GUEST_MENUS_READ: 'Read guest menus (including drafts) and guest menu templates',
+  GUEST_MENUS_CREATE: 'Create guest menus and guest menu templates',
+  GUEST_MENUS_UPDATE: 'Update guest menu drafts, schedules and templates',
+  GUEST_MENUS_DELETE: 'Delete guest menus and guest menu templates',
+  GUEST_MENUS_PUBLISH: 'Publish and unpublish guest menus and set the public workspace slug',
+
+  TRANSLATIONS_READ: 'Read content translations (cocktails, ingredients, garnishes, glasses)',
+  TRANSLATIONS_UPDATE: 'Update content translations (cocktails, ingredients, garnishes, glasses)',
+
+  TAGS_READ: 'Read tag definitions and tag categories',
+  TAGS_UPDATE: 'Create, update, and delete tag definitions and tag categories',
+
+  BACKUPS_EXPORT: 'Export a full workspace backup (all workspace data; access codes, preview tokens and keys are never included)',
+  BACKUPS_IMPORT: 'Import a workspace backup into the workspace (creates all contained data)',
 } satisfies Record<Permission, string>;
 
 export type PermissionName = keyof typeof PERMISSION_DESCRIPTIONS;

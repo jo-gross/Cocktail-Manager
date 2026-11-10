@@ -186,8 +186,8 @@ export function CardGroupSection({
                   showImage={false}
                   showTags={true}
                   showDetailsOnClick={true}
-                  showPrice={group.groupPrice == undefined}
-                  specialPrice={group.groupPrice ?? undefined}
+                  showPrice={group.groupPrice == undefined && item.specialPrice == undefined}
+                  specialPrice={item.specialPrice ?? group.groupPrice ?? undefined}
                   showDescription={false}
                   showNotes={false}
                   showHistory={false}
@@ -254,6 +254,10 @@ export function CardGroupSection({
                         singleColumn={columns === 1}
                         canMoveLeft={itemIndex > 0}
                         canMoveRight={itemIndex < sortedItems.length - 1}
+                        specialPrice={item.specialPrice}
+                        onSpecialPriceChange={(price) =>
+                          onReorderItems(sortedItems.map((entry, index) => (index === itemIndex ? { ...entry, specialPrice: price } : entry)))
+                        }
                         onMoveLeft={() => {
                           const reordered = [...sortedItems];
                           const value = reordered[itemIndex];

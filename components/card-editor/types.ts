@@ -7,6 +7,8 @@ export type CardEditorGroupItem = {
 };
 
 export type CardEditorGroup = {
+  /** Persisted group id (stable across saves); undefined for groups not saved yet. */
+  id?: string;
   name: string;
   groupNumber: number;
   groupPrice?: number | null;

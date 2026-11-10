@@ -1,0 +1,3 @@
+-- AlterEnum
+ALTER TYPE "Permission" ADD VALUE 'BACKUPS_EXPORT';
+ALTER TYPE "Permission" ADD VALUE 'BACKUPS_IMPORT';

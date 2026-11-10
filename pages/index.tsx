@@ -3,6 +3,7 @@ import { useCallback, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Setting, Workspace, WorkspaceJoinRequest } from '@generated/prisma/client';
 import { Loading } from '@components/Loading';
+import { WorkspaceLogo } from '@components/workspaces/WorkspaceLogo';
 import Image from 'next/image';
 import { FaArrowRight, FaGoogle, FaKey } from 'react-icons/fa';
 import Link from 'next/link';
@@ -475,8 +476,9 @@ const WorkspacesPage: NextPageWithPullToRefresh = () => {
                 <div className={'col-span-full text-center'}>{t('auth:noWorkspaces')}</div>
               ) : (
                 workspaces.map((workspace) => (
-                  <Card key={`workspace-${workspace.id}`} className="h-40">
+                  <Card key={`workspace-${workspace.id}`} className="h-full min-h-40">
                     <CardBody>
+                      <WorkspaceLogo image={workspace.image} name={workspace.name} className="h-24 w-full" />
                       <div className={'text-center text-3xl font-bold'}>{workspace.name}</div>
                       <div className={'h-full'}></div>
                       <CardActions className="justify-center">

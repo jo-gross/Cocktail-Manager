@@ -63,7 +63,8 @@
     "search": "Failed to search cocktails",
     "exportPdf": "Failed to export PDF",
     "exportJson": "Failed to export JSON",
-    "createRating": "Failed to create rating"
+    "createRating": "Failed to create rating",
+    "updateAvailability": "Failed to change availability"
   },
   "queueNotePlaceholder": "Note",
   "optional": "(optional)",
@@ -141,5 +142,11 @@
   "tracking": {
     "markedAsMade": "Cocktail marked as made",
     "addedToQueue": "Cocktail added to queue"
-  }
+  },
+  "unavailableToday": "out",
+  "unavailableTodayTip": "Unavailable today – available again from the next bar day",
+  "markUnavailableToday": "Out today",
+  "markUnavailableTodayTip": "Mark the cocktail as unavailable until the next bar day starts",
+  "markAvailable": "Available again",
+  "markAvailableTip": "Mark the cocktail as available again"
 }

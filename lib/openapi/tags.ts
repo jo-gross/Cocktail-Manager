@@ -34,6 +34,8 @@ export const ApiTags = {
   garnishesImportExport: 'Garnishes / Import & export',
   garnishesMedia: 'Garnishes / Media',
 
+  guestInfoCore: 'Guest Info / Core',
+
   glassesCore: 'Glasses / Core',
   glassesLifecycle: 'Glasses / Lifecycle',
   glassesImportExport: 'Glasses / Import & export',
@@ -42,12 +44,18 @@ export const ApiTags = {
 
   iceCore: 'Ice / Core',
   tagsCore: 'Tags / Core',
+  tagsMetadata: 'Tags / Metadata',
+  contentTranslations: 'Translations / Content',
 
   unitsCore: 'Units / Core',
   unitsConversions: 'Units / Conversions',
 
   cardsCore: 'Cards / Core',
   cardsLifecycle: 'Cards / Lifecycle',
+
+  guestMenusCore: 'Guest Menus / Core',
+  guestMenusContent: 'Guest Menus / Content',
+  guestMenusTemplates: 'Guest Menus / Templates',
 
   calculationsCore: 'Calculations / Core',
   calculationsGroups: 'Calculations / Groups',
@@ -104,6 +112,8 @@ export const OPENAPI_TAGS: OpenApiTagObject[] = [
   { name: ApiTags.garnishesImportExport, ...subTag('Import & export', 'JSON export and import for garnishes.', 3) },
   { name: ApiTags.garnishesMedia, ...subTag('Media', 'Garnish image bytes.', 4) },
 
+  { name: ApiTags.guestInfoCore, ...subTag('Core', 'Allergens, additives and alcohol content for guests.', 1) },
+
   { name: ApiTags.glassesCore, ...subTag('Core', 'List, create, read, update and delete glasses.', 1) },
   { name: ApiTags.glassesLifecycle, ...subTag('Lifecycle', 'Clone glasses.', 2) },
   { name: ApiTags.glassesImportExport, ...subTag('Import & export', 'JSON export and import for glasses.', 3) },
@@ -112,12 +122,18 @@ export const OPENAPI_TAGS: OpenApiTagObject[] = [
 
   { name: ApiTags.iceCore, ...subTag('Core', 'List, create, read, update and delete ice types.', 1) },
   { name: ApiTags.tagsCore, ...subTag('Core', 'List cocktail tags.', 1) },
+  { name: ApiTags.tagsMetadata, ...subTag('Metadata', 'Tag definitions (labels, colors, visibility) and tag categories.', 2) },
+  { name: ApiTags.contentTranslations, ...subTag('Content', 'Translations of cocktail, ingredient, garnish and glass content.', 1) },
 
   { name: ApiTags.unitsCore, ...subTag('Core', 'List, create and delete measurement units.', 1) },
   { name: ApiTags.unitsConversions, ...subTag('Conversions', 'Unit conversion factors.', 2) },
 
   { name: ApiTags.cardsCore, ...subTag('Core', 'List, create, read, update and delete cocktail cards.', 1) },
   { name: ApiTags.cardsLifecycle, ...subTag('Lifecycle', 'Clone, archive and unarchive cards.', 2) },
+
+  { name: ApiTags.guestMenusCore, ...subTag('Core', 'Guest menus: list, create, meta data, schedule, priorities.', 1) },
+  { name: ApiTags.guestMenusContent, ...subTag('Content', 'Draft document, publishing, preview and QR codes.', 2) },
+  { name: ApiTags.guestMenusTemplates, ...subTag('Templates', 'Built-in and custom Liquid templates.', 3) },
 
   { name: ApiTags.calculationsCore, ...subTag('Core', 'Price calculations CRUD.', 1) },
   { name: ApiTags.calculationsGroups, ...subTag('Groups', 'Calculation groups and assignments.', 2) },
@@ -171,6 +187,7 @@ export const OPENAPI_TAG_GROUPS: Array<{ name: string; tags: ApiTagName[] }> = [
     name: 'Garnishes',
     tags: [ApiTags.garnishesCore, ApiTags.garnishesLifecycle, ApiTags.garnishesImportExport, ApiTags.garnishesMedia],
   },
+  { name: 'Guest Info', tags: [ApiTags.guestInfoCore] },
   {
     name: 'Glasses',
     tags: [
@@ -182,9 +199,11 @@ export const OPENAPI_TAG_GROUPS: Array<{ name: string; tags: ApiTagName[] }> = [
     ],
   },
   { name: 'Ice', tags: [ApiTags.iceCore] },
-  { name: 'Tags', tags: [ApiTags.tagsCore] },
+  { name: 'Tags', tags: [ApiTags.tagsCore, ApiTags.tagsMetadata] },
+  { name: 'Translations', tags: [ApiTags.contentTranslations] },
   { name: 'Units', tags: [ApiTags.unitsCore, ApiTags.unitsConversions] },
   { name: 'Cards', tags: [ApiTags.cardsCore, ApiTags.cardsLifecycle] },
+  { name: 'Guest Menus', tags: [ApiTags.guestMenusCore, ApiTags.guestMenusContent, ApiTags.guestMenusTemplates] },
   {
     name: 'Calculations',
     tags: [ApiTags.calculationsCore, ApiTags.calculationsGroups, ApiTags.calculationsImportExport],

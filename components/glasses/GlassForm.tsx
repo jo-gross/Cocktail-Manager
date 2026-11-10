@@ -20,6 +20,8 @@ import { z } from 'zod';
 import { zodFormikValidate } from '@lib/forms/zodFormikValidate';
 import { alertApiV1Error } from '@lib/network/apiV1';
 import { checkGlassName, createGlass, updateGlass } from '@lib/network/glasses';
+import { TranslatedFieldTabs } from '@components/translations/TranslatedFieldTabs';
+import { useEntityContentTranslations } from '@components/translations/useEntityContentTranslations';
 import type { GlassCreateInput, GlassUpdateInput } from '@lib/schemas/glasses';
 
 export interface GlassFormValues {
@@ -67,6 +69,7 @@ export function GlassForm(props: GlassFormProps) {
 
   const [hydratedImage, setHydratedImage] = useState<string | undefined>(undefined);
   const [imageHydrationDone, setImageHydrationDone] = useState(!props.glass?.hasImage);
+  const contentTranslations = useEntityContentTranslations('glass', props.glass?.id);
 
   useEffect(() => {
     let cancelled = false;
@@ -124,6 +127,7 @@ export function GlassForm(props: GlassFormProps) {
           }
           if (props.glass == undefined) {
             const created = await createGlass(workspaceId, body);
+            await contentTranslations.save(created.id);
             if (props.onSaved) {
               props.onSaved(created.id);
             } else {
@@ -132,6 +136,7 @@ export function GlassForm(props: GlassFormProps) {
             }
           } else {
             await updateGlass(workspaceId, props.glass.id, body);
+            await contentTranslations.save(props.glass.id);
             if (props.onSaved) {
               props.onSaved(props.glass.id);
             } else {
@@ -173,32 +178,34 @@ export function GlassForm(props: GlassFormProps) {
                 <span>*</span>
               </LabelTextAlt>
             </Label>
-            <Input
-              id={'name'}
-              name={'name'}
-              value={values.name}
-              autoComplete={'off'}
-              type={'text'}
-              placeholder={t('common:name')}
-              className={errors.name ? fieldErrorClass : undefined}
-              onChange={(event) => {
-                if (event.target.value.length > 2 && workspaceId) {
-                  checkGlassName(workspaceId, event.target.value)
-                    .then((match) => {
-                      if (match != null && match.id != props.glass?.id) {
-                        setSimilarGlass(match);
-                      } else {
-                        setSimilarGlass(undefined);
-                      }
-                    })
-                    .catch(() => setSimilarGlass(undefined));
-                } else {
-                  setSimilarGlass(undefined);
-                }
-                handleChange(event);
-              }}
-              onBlur={handleBlur}
-            />
+            <TranslatedFieldTabs translations={contentTranslations} field="name" sourceValue={values.name}>
+              <Input
+                id={'name'}
+                name={'name'}
+                value={values.name}
+                autoComplete={'off'}
+                type={'text'}
+                placeholder={t('common:name')}
+                className={errors.name ? fieldErrorClass : undefined}
+                onChange={(event) => {
+                  if (event.target.value.length > 2 && workspaceId) {
+                    checkGlassName(workspaceId, event.target.value)
+                      .then((match) => {
+                        if (match != null && match.id != props.glass?.id) {
+                          setSimilarGlass(match);
+                        } else {
+                          setSimilarGlass(undefined);
+                        }
+                      })
+                      .catch(() => setSimilarGlass(undefined));
+                  } else {
+                    setSimilarGlass(undefined);
+                  }
+                  handleChange(event);
+                }}
+                onBlur={handleBlur}
+              />
+            </TranslatedFieldTabs>
             {similarGlass && (
               <Label className="flex-row">
                 <LabelTextAlt className="text-warning">{t('manage:glassForm.similarExists', { name: similarGlass.name })}</LabelTextAlt>

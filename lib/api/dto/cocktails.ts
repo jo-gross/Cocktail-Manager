@@ -47,21 +47,22 @@ type GarnishWithGarnish = Pick<CocktailRecipeGarnish, 'garnishId' | 'garnishNumb
 };
 
 /** Minimal shape needed for the slim summary (list view). */
-type CocktailSummaryShape = Pick<CocktailRecipe, 'id' | 'name' | 'description' | 'tags' | 'price' | 'isArchived'> & {
+type CocktailSummaryShape = Pick<CocktailRecipe, 'id' | 'name' | 'description' | 'tags' | 'price' | 'isArchived' | 'unavailableUntil'> & {
   _count?: { CocktailRecipeImage: number };
   glass?: GlassWithCount | null;
 };
 
 /** Full shape needed for the detail view. */
-type CocktailFullShape = CocktailSummaryShape & {
-  description: string | null;
-  notes: string | null;
-  history: string | null;
-  ice?: Pick<Ice, 'id' | 'name'> | null;
-  garnishes: GarnishWithGarnish[];
-  steps: StepWithIngredients[];
-  ratings: Pick<CocktailRating, 'rating'>[];
-};
+type CocktailFullShape = CocktailSummaryShape &
+  Pick<CocktailRecipe, 'abvOverride' | 'extraAllergens' | 'extraAdditives'> & {
+    description: string | null;
+    notes: string | null;
+    history: string | null;
+    ice?: Pick<Ice, 'id' | 'name'> | null;
+    garnishes: GarnishWithGarnish[];
+    steps: StepWithIngredients[];
+    ratings: Pick<CocktailRating, 'rating'>[];
+  };
 
 function imageFields(hasImage: boolean, workspaceId: string, cocktailId: string): { hasImage: boolean; imageUrl: string | null } {
   return {
@@ -88,6 +89,7 @@ export function toCocktailSummaryDto(
     tags: cocktail.tags,
     price: cocktail.price,
     isArchived: cocktail.isArchived,
+    unavailableUntil: cocktail.unavailableUntil?.toISOString() ?? null,
     ...imageFields(hasImage, workspaceId, cocktail.id),
     glass: cocktail.glass
       ? { id: cocktail.glass.id, name: cocktail.glass.name, deposit: cocktail.glass.deposit, hasImage: cocktail.glass._count.GlassImage > 0 }
@@ -107,6 +109,9 @@ export function toCocktailDto(cocktail: CocktailFullShape, workspaceId: string):
     description: cocktail.description,
     notes: cocktail.notes,
     history: cocktail.history,
+    abvOverride: cocktail.abvOverride,
+    extraAllergens: cocktail.extraAllergens,
+    extraAdditives: cocktail.extraAdditives,
     ice: cocktail.ice ? { id: cocktail.ice.id, name: cocktail.ice.name } : null,
     garnishes: cocktail.garnishes.map((garnish) => ({
       garnishId: garnish.garnishId,

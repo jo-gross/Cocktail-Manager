@@ -11,6 +11,9 @@ import { normalizeString } from '@lib/StringUtils';
 import { ApiError } from '@lib/http/ApiError';
 import { toCocktailDto, toCocktailSummaryDto } from '@lib/api/dto/cocktails';
 import type { Prisma, User, Workspace } from '@generated/prisma/client';
+import { WorkspaceSettingKey } from '@generated/prisma/client';
+import { loadWorkspaceLocaleSettings } from '@lib/workspace/workspaceLocaleSettings.server';
+import { getNextBarDayStart } from '@lib/cards/activeCard';
 import type { CocktailCreateInput, CocktailDto, CocktailSummaryDto, CocktailUpdateInput } from '@lib/schemas/cocktails';
 
 /** Full include used for the detail DTO (with nested image counts + rating aggregates). */
@@ -136,6 +139,9 @@ export async function createCocktail(workspace: Workspace, user: User, input: Co
         history: input.history ?? null,
         tags: input.tags ?? [],
         price: input.price ?? null,
+        abvOverride: input.abvOverride,
+        extraAllergens: input.extraAllergens,
+        extraAdditives: input.extraAdditives,
         ice: input.iceId ? { connect: { id: input.iceId } } : undefined,
         glass: input.glassId ? { connect: { id: input.glassId } } : undefined,
         workspace: { connect: { id: workspace.id } },
@@ -212,6 +218,9 @@ export async function updateCocktail(workspace: Workspace, user: User, cocktailI
         history: input.history ?? null,
         tags: input.tags ?? [],
         price: input.price ?? null,
+        abvOverride: input.abvOverride,
+        extraAllergens: input.extraAllergens,
+        extraAdditives: input.extraAdditives,
         ice: input.iceId ? { connect: { id: input.iceId } } : { disconnect: true },
         glass: input.glassId ? { connect: { id: input.glassId } } : { disconnect: true },
         workspace: { connect: { id: workspace.id } },
@@ -397,6 +406,35 @@ export async function archiveCocktail(workspace: Workspace, cocktailId: string, 
   return updated;
 }
 
+/**
+ * "Heute aus": marks the cocktail unavailable until the next bar day starts
+ * (workspace timezone + statisticDayStartTime), or clears the flag.
+ */
+export async function setCocktailAvailability(workspace: Workspace, cocktailId: string, unavailable: boolean, now = new Date()): Promise<CocktailDto> {
+  const existing = await prisma.cocktailRecipe.findFirst({ where: { id: cocktailId, workspaceId: workspace.id }, select: { id: true } });
+  if (!existing) throw new ApiError(404, 'NOT_FOUND', 'Cocktail not found');
+
+  let unavailableUntil: Date | null = null;
+  if (unavailable) {
+    const [{ timezone }, dayStartSetting] = await Promise.all([
+      loadWorkspaceLocaleSettings(workspace.id),
+      prisma.workspaceSetting.findUnique({
+        where: { workspaceId_setting: { workspaceId: workspace.id, setting: WorkspaceSettingKey.statisticDayStartTime } },
+      }),
+    ]);
+    unavailableUntil = getNextBarDayStart(now, { timezone, dayStartTime: dayStartSetting?.value });
+  }
+
+  await prisma.cocktailRecipe.update({
+    where: { id: cocktailId, workspaceId: workspace.id },
+    data: { unavailableUntil },
+  });
+
+  const updated = await getCocktail(workspace, cocktailId);
+  if (!updated) throw new ApiError(500, 'INTERNAL_ERROR', 'Cocktail could not be loaded after availability change');
+  return updated;
+}
+
 export async function cloneCocktail(workspace: Workspace, user: User, cocktailId: string, name: string): Promise<CocktailDto> {
   const cloneId = await prisma.$transaction(async (tx) => {
     // Faithful replica of the legacy clone handler (deep copy incl. image, steps, ingredients and garnishes).
@@ -420,6 +458,9 @@ export async function cloneCocktail(workspace: Workspace, user: User, cocktailId
       history: existing.history,
       tags: existing.tags,
       price: existing.price,
+      abvOverride: existing.abvOverride,
+      extraAllergens: existing.extraAllergens,
+      extraAdditives: existing.extraAdditives,
       workspace: { connect: { id: workspace.id } },
     };
 

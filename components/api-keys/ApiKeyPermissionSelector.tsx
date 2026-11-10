@@ -68,6 +68,28 @@ const permissionCategories: Record<string, { label: string; permissions: Permiss
     label: 'MONITOR',
     permissions: [Permission.MONITOR_READ, Permission.MONITOR_UPDATE],
   },
+  GUEST_MENUS: {
+    label: 'GUEST_MENUS',
+    permissions: [
+      Permission.GUEST_MENUS_READ,
+      Permission.GUEST_MENUS_CREATE,
+      Permission.GUEST_MENUS_UPDATE,
+      Permission.GUEST_MENUS_DELETE,
+      Permission.GUEST_MENUS_PUBLISH,
+    ],
+  },
+  TRANSLATIONS: {
+    label: 'TRANSLATIONS',
+    permissions: [Permission.TRANSLATIONS_READ, Permission.TRANSLATIONS_UPDATE],
+  },
+  TAGS: {
+    label: 'TAGS',
+    permissions: [Permission.TAGS_READ, Permission.TAGS_UPDATE],
+  },
+  BACKUPS: {
+    label: 'BACKUPS',
+    permissions: [Permission.BACKUPS_EXPORT, Permission.BACKUPS_IMPORT],
+  },
 };
 
 // Get all permissions for ALL category (all unique permissions from all categories)
@@ -124,6 +146,17 @@ const permissionLabels: Record<Permission, string> = {
   [Permission.RATINGS_DELETE]: 'RATINGS_DELETE',
   [Permission.MONITOR_READ]: 'MONITOR_READ',
   [Permission.MONITOR_UPDATE]: 'MONITOR_UPDATE',
+  [Permission.GUEST_MENUS_READ]: 'GUEST_MENUS_READ',
+  [Permission.GUEST_MENUS_CREATE]: 'GUEST_MENUS_CREATE',
+  [Permission.GUEST_MENUS_UPDATE]: 'GUEST_MENUS_UPDATE',
+  [Permission.GUEST_MENUS_DELETE]: 'GUEST_MENUS_DELETE',
+  [Permission.GUEST_MENUS_PUBLISH]: 'GUEST_MENUS_PUBLISH',
+  [Permission.TRANSLATIONS_READ]: 'TRANSLATIONS_READ',
+  [Permission.TRANSLATIONS_UPDATE]: 'TRANSLATIONS_UPDATE',
+  [Permission.TAGS_READ]: 'TAGS_READ',
+  [Permission.TAGS_UPDATE]: 'TAGS_UPDATE',
+  [Permission.BACKUPS_EXPORT]: 'BACKUPS_EXPORT',
+  [Permission.BACKUPS_IMPORT]: 'BACKUPS_IMPORT',
 };
 
 export default function ApiKeyPermissionSelector(props: ApiKeyPermissionSelectorProps) {

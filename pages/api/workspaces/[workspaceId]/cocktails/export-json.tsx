@@ -2,7 +2,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import prisma from '../../../../../prisma/prisma';
 import { CocktailExportStructure } from '../../../../../types/CocktailExportStructure';
 import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
-import { Role } from '@generated/prisma/client';
+import { Role, Permission } from '@generated/prisma/client';
 import { withHttpMethods } from '@middleware/api/handleMethods';
 import HTTPMethod from 'http-method-enum';
 import packageJson from '../../../../../package.json';
@@ -17,7 +17,7 @@ export const config = {
 };
 
 const legacyHandler = withHttpMethods({
-  [HTTPMethod.POST]: withWorkspacePermission([Role.USER], async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
+  [HTTPMethod.POST]: withWorkspacePermission([Role.USER], Permission.COCKTAILS_READ, async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
     const workspaceId = workspace.id;
     const { cocktailIds } = req.body as { cocktailIds: string[] };
 

@@ -1,12 +1,12 @@
 import { withHttpMethods } from '@middleware/api/handleMethods';
 import HTTPMethod from 'http-method-enum';
-import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
+import { withWorkspaceSession } from '@middleware/api/authenticationMiddleware';
 import prisma from '../../../../prisma/prisma';
 import { Role } from '@generated/prisma/client';
 import { withDeprecation } from '@middleware/api/withDeprecation';
 
 const legacyHandler = withHttpMethods({
-  [HTTPMethod.POST]: withWorkspacePermission([Role.USER], async (req, res, user, workspace) => {
+  [HTTPMethod.POST]: withWorkspaceSession([Role.USER], async (req, res, user, workspace) => {
     const result = await prisma.workspaceUser.delete({
       where: {
         workspaceId_userId: {

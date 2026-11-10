@@ -10,6 +10,8 @@ import { z } from 'zod';
 import { zodFormikValidate } from '@lib/forms/zodFormikValidate';
 import { createIce } from '@lib/network/ices';
 import { alertApiV1Error } from '@lib/network/apiV1';
+import { useLabelLocales } from '@components/settings/EntityTranslationLabels';
+import { activeLabelValues, LabelTranslationInputs, labelValuesSchema, type LabelValues } from '@components/settings/LabelTranslationInputs';
 
 interface CreateIceModalProps {
   onSaved?: () => void;
@@ -23,14 +25,14 @@ export default function CreateIceModal({ onSaved }: CreateIceModalProps) {
   const router = useRouter();
 
   const { workspaceId } = router.query;
+  const labelLocales = useLabelLocales();
 
   const iceSchema = z.object({
     identifier: z
       .string()
       .min(1, t('settings:validation.invalidIdentifier'))
       .regex(/^[A-Z_]+$/, t('settings:validation.azOnly')),
-    labelDe: z.string().trim().min(1, t('settings:validation.invalidLabel')),
-    labelEn: z.string(),
+    labels: labelValuesSchema(labelLocales, t('settings:validation.invalidLabel')),
   });
 
   const validateIce = zodFormikValidate(iceSchema);
@@ -41,16 +43,12 @@ export default function CreateIceModal({ onSaved }: CreateIceModalProps) {
       <Formik
         initialValues={{
           identifier: '',
-          labelDe: '',
-          labelEn: '',
+          labels: {} as LabelValues,
         }}
         onSubmit={async (values) => {
           try {
-            if (!workspaceId) return;
-            const translations = {
-              de: values.labelDe.trim(),
-              en: values.labelEn.trim(),
-            };
+            if (!workspaceId || labelLocales.length === 0) return;
+            const translations = activeLabelValues(values.labels, labelLocales);
             await createIce(workspaceId, {
               name: values.identifier,
               translations,
@@ -78,28 +76,7 @@ export default function CreateIceModal({ onSaved }: CreateIceModalProps) {
               </Label>
               <Input id={'identifier'} name={'identifier'} value={values.identifier} onChange={handleChange} />
             </FormControl>
-            <div className={'grid grid-cols-2 gap-2'}>
-              <FormControl>
-                <Label className="flex-row items-center justify-between">
-                  <LabelText>{t('settings:labelDe')}</LabelText>
-                  <LabelTextAlt className="text-error">
-                    <span>{errors.labelDe && touched.labelDe ? errors.labelDe : ''}</span>
-                    <span>{t('common:required')}</span>
-                  </LabelTextAlt>
-                </Label>
-                <Input id={'labelDe'} name={'labelDe'} value={values.labelDe} onChange={handleChange} />
-              </FormControl>
-              <FormControl>
-                <Label className="flex-row items-center justify-between">
-                  <LabelText>{t('settings:labelEn')}</LabelText>
-                  <LabelTextAlt className="text-error">
-                    <span>{errors.labelEn && touched.labelEn ? errors.labelEn : ''}</span>
-                  </LabelTextAlt>
-                </Label>
-                <Input id={'labelEn'} name={'labelEn'} value={values.labelEn} onChange={handleChange} />
-                {!values.labelEn.trim() ? <span className="text-xs text-base-content/60">{t('settings:missingEnHint')}</span> : null}
-              </FormControl>
-            </div>
+            <LabelTranslationInputs locales={labelLocales} />
             <div className={'flex justify-end gap-2'}>
               <Button
                 variant="outline"
@@ -111,7 +88,7 @@ export default function CreateIceModal({ onSaved }: CreateIceModalProps) {
               >
                 {t('common:cancel')}
               </Button>
-              <Button variant="primary" type={'submit'}>
+              <Button variant="primary" type={'submit'} disabled={isSubmitting || labelLocales.length === 0}>
                 {isSubmitting ? <Loading size="sm" /> : null}
                 {t('common:create')}
               </Button>

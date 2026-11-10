@@ -3,13 +3,23 @@
  * (a bytes endpoint) instead of the raw base64 `content`; dates are YYYY-MM-DD.
  */
 import type { Signage, SignageSlide } from '@generated/prisma/client';
-import type { SignageFormatDto, SignageSlideDto } from '@lib/schemas/signage';
+import { GuestMenuSlideOptionsSchema, type GuestMenuSlideOptionsInput, type SignageFormatDto, type SignageSlideDto } from '@lib/schemas/signage';
+
+export type SignageSlideWithMenu = SignageSlide & { guestMenu?: { name: string } | null };
 
 function toDateOnly(date: Date | null): string | null {
   return date ? date.toISOString().slice(0, 10) : null;
 }
 
-export function toSignageSlideDto(slide: SignageSlide, workspaceId: string): SignageSlideDto {
+/** Stored `options` JSON → validated options (invalid/unknown values are dropped). */
+export function parseGuestMenuSlideOptions(value: unknown): GuestMenuSlideOptionsInput | null {
+  if (value == null || typeof value !== 'object') return null;
+  const parsed = GuestMenuSlideOptionsSchema.safeParse(value);
+  return parsed.success ? parsed.data : null;
+}
+
+export function toSignageSlideDto(slide: SignageSlideWithMenu, workspaceId: string): SignageSlideDto {
+  const isMenu = slide.type === 'GUEST_MENU';
   return {
     id: slide.id,
     order: slide.order,
@@ -18,11 +28,15 @@ export function toSignageSlideDto(slide: SignageSlide, workspaceId: string): Sig
     validFrom: toDateOnly(slide.validFrom),
     validTo: toDateOnly(slide.validTo),
     dateExclusive: slide.dateExclusive,
-    imageUrl: `/api/v1/workspaces/${workspaceId}/admin/signage/slides/${slide.id}/image`,
+    type: slide.type,
+    imageUrl: isMenu ? null : `/api/v1/workspaces/${workspaceId}/admin/signage/slides/${slide.id}/image`,
+    guestMenuId: isMenu ? slide.guestMenuId : null,
+    guestMenuName: isMenu ? (slide.guestMenu?.name ?? null) : null,
+    options: isMenu ? parseGuestMenuSlideOptions(slide.options) : null,
   };
 }
 
-export function toSignageFormatDto(signage: Signage, slides: SignageSlide[], workspaceId: string): SignageFormatDto {
+export function toSignageFormatDto(signage: Signage, slides: SignageSlideWithMenu[], workspaceId: string): SignageFormatDto {
   return {
     format: signage.format,
     backgroundColor: signage.backgroundColor,

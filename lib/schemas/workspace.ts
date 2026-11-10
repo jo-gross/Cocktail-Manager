@@ -8,11 +8,14 @@ import { z } from '@lib/openapi/zod';
 import { WorkspaceIdParam, DateTimeString, DeletionResult } from '@lib/schemas/common';
 import { ApiTags } from '@lib/openapi/tags';
 import type { ResourceApiDoc } from '@lib/openapi/types';
+import { validateWorkspaceSettingValue } from '@lib/workspace/workspaceLocaleSettings';
 
 const RoleEnum = z.enum(['OWNER', 'ADMIN', 'MANAGER', 'USER']).openapi('WorkspaceRole');
 
 /** Known workspace setting keys (mirrors Prisma WorkspaceSettingKey). */
-const WorkspaceSettingKeyEnum = z.enum(['translations', 'usePrices', 'statisticDayStartTime']).openapi('WorkspaceSettingKey');
+const WorkspaceSettingKeyEnum = z
+  .enum(['translations', 'usePrices', 'statisticDayStartTime', 'timezone', 'currency', 'contentLocales'])
+  .openapi('WorkspaceSettingKey');
 
 /** A workspace member — public user fields plus their role in this workspace. */
 export const WorkspaceMemberDtoSchema = z
@@ -41,6 +44,7 @@ export const WorkspaceDtoSchema = z
     isDemo: z.boolean(),
     expiresAt: DateTimeString.nullable().openapi({ description: 'When a demo workspace expires, or null.' }),
     isExternallyManaged: z.boolean().openapi({ description: 'Whether membership/roles are managed via an external identity provider.' }),
+    publicSlug: z.string().nullable().openapi({ description: 'Public slug for guest menus (`/m/{publicSlug}`), or null.' }),
     settings: WorkspaceSettingsDtoSchema,
     members: z.array(WorkspaceMemberDtoSchema),
   })
@@ -50,16 +54,54 @@ export type WorkspaceMemberDto = z.infer<typeof WorkspaceMemberDtoSchema>;
 export type WorkspaceSettingsDto = z.infer<typeof WorkspaceSettingsDtoSchema>;
 export type WorkspaceDto = z.infer<typeof WorkspaceDtoSchema>;
 
+/** Public guest-menu slug (`/m/{publicSlug}`): lowercase a-z, 0-9 and single dashes. */
+export const WORKSPACE_PUBLIC_SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+export const WORKSPACE_PUBLIC_SLUG_MIN_LENGTH = 3;
+export const WORKSPACE_PUBLIC_SLUG_MAX_LENGTH = 64;
+
+/**
+ * Slugs shaped like record ids (cuid / uuid) are reserved: `/m/{workspaceId}` must
+ * always resolve to that workspace, so a slug must never be able to shadow an id.
+ */
+const RESERVED_PUBLIC_SLUG_PATTERNS = [/^c[a-z0-9]{20,}$/, /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/];
+
+export function isReservedPublicSlug(slug: string): boolean {
+  return RESERVED_PUBLIC_SLUG_PATTERNS.some((pattern) => pattern.test(slug.toLowerCase()));
+}
+
+export const WorkspacePublicSlugSchema = z
+  .string()
+  .min(WORKSPACE_PUBLIC_SLUG_MIN_LENGTH)
+  .max(WORKSPACE_PUBLIC_SLUG_MAX_LENGTH)
+  .regex(WORKSPACE_PUBLIC_SLUG_PATTERN, { message: 'Only lowercase letters, digits and single dashes are allowed' });
+
 export const WorkspaceUpdateSchema = z
   .object({
-    name: z.string().min(1),
+    name: z.string().min(1).optional().openapi({ description: 'New workspace name; omitted keeps the current name.' }),
+    image: z
+      .string()
+      .max(2_000_000)
+      .regex(/^data:image\/(?:png|jpeg|gif|webp|avif);base64,[A-Za-z0-9+/]+={0,2}$/)
+      .nullish()
+      .openapi({ description: 'Workspace logo as a base64 image data URI; null removes it, omitted keeps it.' }),
+    publicSlug: WorkspacePublicSlugSchema.nullish().openapi({
+      description:
+        'Public slug for guest menus (`/m/{publicSlug}`), unique across workspaces; null removes it, omitted keeps it. Slugs shaped like ids (cuid `c` + 20 or more letters/digits, or a UUID) are rejected with 400 `PUBLIC_SLUG_RESERVED`, slugs used by another workspace or equal to a workspace id with 409 `PUBLIC_SLUG_TAKEN`.',
+    }),
   })
   .openapi('WorkspaceUpdateInput');
 
 export const WorkspaceSettingUpdateSchema = z
   .object({
     setting: WorkspaceSettingKeyEnum,
-    value: z.string().nullish().openapi({ description: 'New value for the setting; null clears it.' }),
+    value: z.string().nullish().openapi({
+      description:
+        'New value for the setting; null clears it. `timezone` must be an IANA time zone (default Europe/Berlin), `currency` an ISO 4217 code (default EUR), `contentLocales` a JSON string `{"primary":"de","additional":["en"]}`.',
+    }),
+  })
+  .superRefine((input, ctx) => {
+    const error = validateWorkspaceSettingValue(input.setting, input.value);
+    if (error) ctx.addIssue({ code: 'custom', path: ['value'], message: error });
   })
   .openapi('WorkspaceSettingUpdateInput');
 
@@ -85,14 +127,17 @@ export const workspaceItemApiDoc = {
       permission: 'WORKSPACE_UPDATE',
       tags: [ApiTags.workspaceCore],
       summary: 'Update workspace',
-      description: 'Update the workspace name.',
+      description: 'Update the workspace name, logo and/or the public guest-menu slug (409 when the slug is taken).',
       params: WorkspaceIdParam,
       body: WorkspaceUpdateSchema,
       response: WorkspaceDtoSchema,
+      errorResponses: { 409: 'The public slug is already used by another workspace.' },
     },
     DELETE: {
       roles: ['ADMIN'],
       permission: null,
+      // Destructive and not covered by any API-key scope: session-member auth only.
+      sessionOnly: true,
       tags: [ApiTags.workspaceCore],
       summary: 'Delete workspace',
       description: 'Permanently delete the workspace and all its data.',

@@ -20,7 +20,6 @@
   "login": "Sign in",
   "queue": "Queue",
   "cocktailSearch": "Cocktail search",
-  "searchShortcut": "Search (Shift + F)",
   "order": "Order",
   "settingsAtEnd": "Settings at the bottom",
   "recipeArea": "Recipe area",
@@ -30,9 +29,33 @@
   "inProgress": "In progress",
   "advancedStatistics": "Advanced statistics",
   "section": {
-    "cocktails": "Cocktails",
-    "display": "Display",
-    "numbers": "Numbers",
+    "recipes": "Recipes & bar",
+    "display": "Menus & guests",
+    "guestInfo": "Guest information",
+    "numbers": "Insights",
     "workspace": "Workspace"
-  }
+  },
+  "overview": {
+    "allergensAlcohol": "Allergens & alcohol",
+    "tagsFilters": "Tags & filters",
+    "members": "Members",
+    "description": {
+      "cocktails": "Create, edit and rate recipes",
+      "ingredients": "Maintain ingredients, prices and units",
+      "garnishes": "Manage garnishes and decorations",
+      "glasses": "Manage glasses with volume and image",
+      "cards": "Compose cards for the bar",
+      "guestMenus": "Design digital menus for guests",
+      "monitor": "Content for external screens",
+      "guestInfo": "Define allergens and alcohol details",
+      "tags": "Organize tags for filters and search",
+      "statistics": "Analyze orders and trends",
+      "calculations": "Plan quantities and costs for events",
+      "logs": "Trace every booking",
+      "members": "Manage members and roles",
+      "settings": "General, members, languages, recipe master data and API keys"
+    }
+  },
+  "guestInfo": "Guest information",
+  "guestMenus": "Guest menus"
 }

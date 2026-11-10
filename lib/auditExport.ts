@@ -1,4 +1,5 @@
 import { CocktailExportStructure } from '../types/CocktailExportStructure';
+import type { Additive, Allergen } from '@generated/prisma/client';
 
 // ────────────── EXPORT STRUCTURE INTERFACES ──────────────
 
@@ -24,6 +25,9 @@ export interface GarnishExportStructure {
     description?: string | null;
     notes?: string | null;
     price?: number | null;
+    allergens?: Allergen[];
+    additives?: Additive[];
+    guestInfoComplete?: boolean;
     workspaceId: string;
   };
 }
@@ -40,6 +44,12 @@ export interface IngredientExportStructure {
     price?: number | null;
     link?: string | null;
     tags?: string[];
+    abv?: number | null;
+    allergens?: Allergen[];
+    additives?: Additive[];
+    guestInfoComplete?: boolean;
+    hideOnGuestMenu?: boolean;
+    guestName?: string | null;
     workspaceId: string;
   };
   ingredientVolumes: Array<{
@@ -103,6 +113,10 @@ function numNull(value: unknown): number | null {
   return (value ?? null) as number | null;
 }
 
+function arr<T>(value: unknown): T[] {
+  return (Array.isArray(value) ? value : []) as T[];
+}
+
 // ────────────── CONVERSION FUNCTIONS ──────────────
 
 /**
@@ -126,6 +140,10 @@ export function buildCocktailExport(rawData: Record<string, unknown>, version: s
     iceId: strNull(recipe.iceId),
     glassId: strNull(recipe.glassId),
     isArchived: (recipe.isArchived ?? false) as boolean,
+    abvOverride: numNull(recipe.abvOverride),
+    extraAllergens: arr(recipe.extraAllergens),
+    extraAdditives: arr(recipe.extraAdditives),
+    unavailableUntil: (recipe.unavailableUntil ?? null) as Date | null,
     workspaceId: str(recipe.workspaceId),
   };
 
@@ -163,6 +181,7 @@ export function buildCocktailExport(rawData: Record<string, unknown>, version: s
           id: actionId,
           name: str(action.name),
           actionGroup: str(action.actionGroup),
+          dilutionPercent: numNull(action.dilutionPercent),
           workspaceId: str(action.workspaceId || recipe.workspaceId),
         });
       }
@@ -202,6 +221,12 @@ export function buildCocktailExport(rawData: Record<string, unknown>, version: s
               price: numNull(ingredient.price),
               link: strNull(ingredient.link),
               tags: (ingredient.tags ?? []) as string[],
+              abv: numNull(ingredient.abv),
+              allergens: arr(ingredient.allergens),
+              additives: arr(ingredient.additives),
+              guestInfoComplete: (ingredient.guestInfoComplete ?? false) as boolean,
+              hideOnGuestMenu: (ingredient.hideOnGuestMenu ?? false) as boolean,
+              guestName: strNull(ingredient.guestName),
               workspaceId: str(ingredient.workspaceId || recipe.workspaceId),
             });
           }
@@ -234,6 +259,9 @@ export function buildCocktailExport(rawData: Record<string, unknown>, version: s
           description: strNull(garnish.description),
           notes: strNull(garnish.notes),
           price: numNull(garnish.price),
+          allergens: arr(garnish.allergens),
+          additives: arr(garnish.additives),
+          guestInfoComplete: (garnish.guestInfoComplete ?? false) as boolean,
           workspaceId: str(garnish.workspaceId || recipe.workspaceId),
         });
       }
@@ -319,6 +347,9 @@ export function buildGarnishExport(rawData: Record<string, unknown>, version: st
       description: strNull(rawData.description),
       notes: strNull(rawData.notes),
       price: numNull(rawData.price),
+      allergens: arr(rawData.allergens),
+      additives: arr(rawData.additives),
+      guestInfoComplete: (rawData.guestInfoComplete ?? false) as boolean,
       workspaceId: str(rawData.workspaceId),
     },
   };
@@ -366,6 +397,12 @@ export function buildIngredientExport(rawData: Record<string, unknown>, version:
       price: numNull(rawData.price),
       link: strNull(rawData.link),
       tags: (rawData.tags ?? []) as string[],
+      abv: numNull(rawData.abv),
+      allergens: arr(rawData.allergens),
+      additives: arr(rawData.additives),
+      guestInfoComplete: (rawData.guestInfoComplete ?? false) as boolean,
+      hideOnGuestMenu: (rawData.hideOnGuestMenu ?? false) as boolean,
+      guestName: strNull(rawData.guestName),
       workspaceId: str(rawData.workspaceId),
     },
     ingredientVolumes,

@@ -8,6 +8,7 @@ import { z } from '@lib/openapi/zod';
 import { ApiTags } from '@lib/openapi/tags';
 import { WorkspaceIdParam, DeletionResult } from '@lib/schemas/common';
 import type { ResourceApiDoc } from '@lib/openapi/types';
+import { IngredientGuestInfoDtoShape, IngredientGuestInfoInputShape } from '@lib/schemas/guestInfo';
 
 /** A single unit volume of an ingredient (Prisma `IngredientVolume` → clean shape). */
 export const IngredientVolumeDtoSchema = z
@@ -37,6 +38,7 @@ export const IngredientDtoSchema = z
     volumes: z.array(IngredientVolumeDtoSchema),
     hasImage: z.boolean().openapi({ description: 'Whether the ingredient has an image.' }),
     imageUrl: z.string().nullable().openapi({ description: 'URL to fetch the ingredient image bytes, or null when hasImage is false.' }),
+    ...IngredientGuestInfoDtoShape,
   })
   .openapi('Ingredient');
 
@@ -60,6 +62,7 @@ export const IngredientCreateSchema = z
     tags: z.array(z.string()).optional(),
     units: z.array(IngredientVolumeInputSchema).optional().openapi({ description: 'Unit volumes to attach.' }),
     image: z.string().nullish().openapi({ description: 'Base64-encoded image (data URI) to attach.' }),
+    ...IngredientGuestInfoInputShape,
   })
   .openapi('IngredientCreateInput');
 
@@ -74,6 +77,7 @@ export const IngredientUpdateSchema = z
     tags: z.array(z.string()).optional(),
     units: z.array(IngredientVolumeInputSchema).optional().openapi({ description: 'Unit volumes to attach (replaces existing).' }),
     image: z.string().nullish().openapi({ description: 'Base64 image; omitting it removes the current image.' }),
+    ...IngredientGuestInfoInputShape,
   })
   .openapi('IngredientUpdateInput');
 
@@ -224,7 +228,7 @@ export const ingredientsExportJsonApiDoc = {
   operations: {
     POST: {
       roles: ['USER'],
-      permission: null,
+      permission: 'INGREDIENTS_READ',
       tags: [ApiTags.ingredientsImportExport],
       summary: 'Export ingredients as JSON',
       description:

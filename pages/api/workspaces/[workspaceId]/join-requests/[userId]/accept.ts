@@ -2,12 +2,12 @@ import { withHttpMethods } from '@middleware/api/handleMethods';
 import HTTPMethod from 'http-method-enum';
 import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
 import prisma from '../../../../../../prisma/prisma';
-import { Role } from '@generated/prisma/client';
+import { Permission, Role } from '@generated/prisma/client';
 import { sendJoinRequestAcceptedToUser } from '@lib/email/joinRequestNotifications';
 import { withDeprecation } from '@middleware/api/withDeprecation';
 
 const legacyHandler = withHttpMethods({
-  [HTTPMethod.POST]: withWorkspacePermission([Role.MANAGER], async (req, res, user, workspace) => {
+  [HTTPMethod.POST]: withWorkspacePermission([Role.MANAGER], Permission.USERS_UPDATE, async (req, res, user, workspace) => {
     const userId = req.query.userId as string;
     try {
       await prisma.$transaction(async (transaction) => {

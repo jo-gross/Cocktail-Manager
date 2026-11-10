@@ -10,7 +10,14 @@ import { withHttpMethods } from '@middleware/api/handleMethods';
 import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
 import { fail } from '@lib/http/responses';
 import { defineApiHandlers } from '@lib/openapi/apiDoc';
-import { signageApiDoc, signageSlideItemApiDoc, signageSlidesApiDoc } from '@lib/schemas/signage';
+import {
+  signageApiDoc,
+  signageGuestMenuSlideItemApiDoc,
+  signageGuestMenuSlidesApiDoc,
+  signageKeyApiDoc,
+  signageSlideItemApiDoc,
+  signageSlidesApiDoc,
+} from '@lib/schemas/signage';
 import * as signage from '@lib/api/controllers/signage';
 
 export const signageHandler = defineApiHandlers(signageApiDoc.operations, {
@@ -25,6 +32,19 @@ export const slidesHandler = defineApiHandlers(signageSlidesApiDoc.operations, {
 
 export const slideItemHandler = defineApiHandlers(signageSlideItemApiDoc.operations, {
   DELETE: ({ workspace, params }) => signage.deleteSlide(workspace, params.slideId),
+});
+
+export const guestMenuSlidesHandler = defineApiHandlers(signageGuestMenuSlidesApiDoc.operations, {
+  POST: ({ workspace, body }) => signage.createGuestMenuSlide(workspace, body),
+});
+
+export const guestMenuSlideItemHandler = defineApiHandlers(signageGuestMenuSlideItemApiDoc.operations, {
+  PATCH: ({ workspace, params, body }) => signage.updateGuestMenuSlide(workspace, params.slideId, body),
+});
+
+export const signageKeyHandler = defineApiHandlers(signageKeyApiDoc.operations, {
+  GET: ({ workspace }) => signage.getSignageKey(workspace),
+  POST: ({ workspace }) => signage.regenerateSignageKey(workspace),
 });
 
 export const slideImageHandler = withHttpMethods({

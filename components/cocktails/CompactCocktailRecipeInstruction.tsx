@@ -8,7 +8,8 @@ import { ModalContext } from '@lib/context/ModalContextProvider';
 import ImageModal from '../modals/ImageModal';
 import StarsComponent from '../StarsComponent';
 import type { RatingDto } from '@lib/schemas/ratings';
-import { Skeleton } from '@components/ui';
+import { Badge, Skeleton } from '@components/ui';
+import { isCocktailUnavailable } from '@lib/cocktails/availability';
 import '../../lib/NumberUtils';
 
 interface CompactCocktailRecipeInstructionProps {
@@ -57,11 +58,16 @@ export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeIns
     <div className={'grid grid-cols-4 gap-1'}>
       <div className={`${props.showPrice ? 'col-span-2' : 'col-span-3'} text-xl font-bold`}>
         {props.cocktailRecipe.name == '' ? '<Name>' : props.cocktailRecipe.name}
+        {isCocktailUnavailable(props.cocktailRecipe.unavailableUntil) ? (
+          <Badge variant="error" size="sm" className="ml-2 align-middle" title={t('cocktail:unavailableTodayTip')}>
+            {t('cocktail:unavailableToday')}
+          </Badge>
+        ) : null}
       </div>
       {props.showPrice == true ? (
         <div className={'col-span-1 text-right text-xl font-bold'}>
           {(props.specialPrice ?? props.cocktailRecipe.price) != undefined
-            ? (props.specialPrice?.formatPriceEfficent() ?? props.cocktailRecipe.price?.formatPriceEfficent() + ' €')
+            ? `${(props.specialPrice ?? props.cocktailRecipe.price)!.formatPriceEfficent()} €`
             : ''}
         </div>
       ) : (

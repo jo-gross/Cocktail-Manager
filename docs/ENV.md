@@ -23,6 +23,18 @@ For authentication-related environment variables, see [Authentication Methods](A
 | `DEPLOYMENT` | Deployment environment identifier | -       | `production`, `staging`, `development` |
 | `NODE_ENV`   | Node.js environment mode          | -       | `production`, `development`            |
 
+### Reverse Proxy / Public URL
+
+| Variable              | Description                                                                                                                                                                                                                              | Default | Example                                 |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- | --------------------------------------- |
+| `TRUST_PROXY`         | Which proxy headers identify the client IP for rate limits (guest menu PIN attempts, public menu/image endpoints). `false`/unset: socket address only. `true` or a number N: N-th `X-Forwarded-For` entry from the right (`true` = 1 = the address your nearest proxy saw), fallback `X-Real-IP`. `cloudflare`: `CF-Connecting-IP`. | `false` | `true`, `2`, `cloudflare`               |
+
+**Reverse proxy setups (nginx, Traefik, Caddy, Cloudflare, …):** set `TRUST_PROXY`. Without it every request reaches the app from the proxy's address, so all guests share **one** rate-limit bucket (a few wrong PIN entries by one guest can briefly lock out others). Only trust as many hops as you actually run – a client can prepend arbitrary entries to `X-Forwarded-For`, which is why the entries are counted from the right. Only use `cloudflare` if the app is reachable exclusively through Cloudflare. If an `X-Forwarded-For` header arrives while `TRUST_PROXY` is unset, the server logs a one-time warning.
+
+**Public URL:** canonical/`og:url` links and QR codes of guest menus use `NEXT_PUBLIC_APP_URL` (inlined at build time), `NEXTAUTH_URL` or `BETTER_AUTH_URL` (runtime, see [Authentication Methods](AUTH.md)). If none is set, the origin is taken from the request's `Host`/`X-Forwarded-Host` headers (logged once as a warning) – a spoofed `Host` header could then end up in cached guest menu pages. Set `BETTER_AUTH_URL` to the public URL in production.
+
+Independently of the client IP, guest menu PIN entry is limited per menu: after 30 wrong codes within about 10 minutes (from any IP) new unlock attempts get `429` with `Retry-After` until the budget refills; guests that already unlocked the menu are not affected.
+
 ### Workspace Management
 
 | Variable                              | Description                                                            | Default | Example                                                                                                         |
@@ -160,6 +172,8 @@ environment:
   - DATABASE_URL=postgres://postgres:postgres@postgres:5432/cocktail_recipe
   - DISABLE_WORKSPACE_CREATION=true
   - WORKSPACE_CREATION_DISABLED_MESSAGE='Your message here'
+  # Behind a reverse proxy (see "Reverse Proxy / Public URL")
+  - TRUST_PROXY=true
 ```
 
 **Note:** Variables related to workspace creation (`DISABLE_WORKSPACE_CREATION`, `WORKSPACE_CREATION_DISABLED_MESSAGE`) are loaded at runtime and can be changed without rebuilding the container.

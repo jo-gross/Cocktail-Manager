@@ -192,7 +192,9 @@
     "cards": "Card(s)",
     "cardDate": " - ({{date}})",
     "cocktailUnavailable": "Cocktail unavailable",
-    "titleCard": "The Cocktail-Manager • {{card}}"
+    "titleCard": "The Cocktail-Manager • {{card}}",
+    "guestMenuExtras": "Only on guest menu",
+    "guestMenuExtrasHint": "On the active guest menu “{{menu}}” but not on this card"
   },
   "statistics": {
     "today": "Today",
@@ -253,5 +255,7 @@
   "portrait": "Portrait",
   "landscape": "Landscape",
   "densityReduced": "Reduced",
-  "densityWide": "Wide"
+  "densityWide": "Wide",
+  "itemSpecialPrice": "Special price",
+  "removeItemSpecialPrice": "Remove special price"
 }

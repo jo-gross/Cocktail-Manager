@@ -1,0 +1,90 @@
+{
+  "title": "Übersetzungen",
+  "tileDescription": "Inhalte in weitere Sprachen übersetzen",
+  "errors": {
+    "load": "Übersetzungen konnten nicht geladen werden",
+    "save": "Übersetzungen konnten nicht gespeichert werden",
+    "import": "Import fehlgeschlagen",
+    "csvEmpty": "Die CSV-Datei ist leer",
+    "csvColumns": "Die CSV-Datei benötigt die Spalten entityType, entityId, field, locale und value"
+  },
+  "fieldTabs": {
+    "label": "Sprache",
+    "primary": "Ausgangssprache",
+    "missing": "Übersetzung fehlt"
+  },
+  "center": {
+    "exportCsv": "CSV exportieren",
+    "importCsv": "CSV importieren",
+    "save_one": "{{count}} Änderung speichern",
+    "save_other": "{{count}} Änderungen speichern",
+    "saved_one": "{{count}} Übersetzung gespeichert",
+    "saved_other": "{{count}} Übersetzungen gespeichert",
+    "imported_one": "{{count}} Übersetzung importiert",
+    "imported_other": "{{count}} Übersetzungen importiert",
+    "importIgnored_one": "{{count}} Zeile wurde ignoriert (ungültig oder unbekannter Eintrag)",
+    "importIgnored_other": "{{count}} Zeilen wurden ignoriert (ungültig oder unbekannte Einträge)",
+    "importNothing": "Die Datei enthält keine importierbaren Übersetzungen",
+    "noLocales": "Für diesen Workspace sind keine weiteren Inhaltssprachen eingerichtet. Lege zusätzliche Sprachen in den Workspace-Einstellungen fest.",
+    "openSettings": "Zu den Einstellungen",
+    "progress": "{{done}} von {{total}} übersetzt",
+    "language": "Sprache",
+    "entity": "Typ",
+    "allEntities": "Alle Typen",
+    "missingOnly": "Nur fehlende",
+    "entry": "Eintrag",
+    "field": "Feld",
+    "source": "Ausgangstext",
+    "translation": "Übersetzung",
+    "showMore_one": "{{count}} weiteren Eintrag anzeigen",
+    "showMore_other": "{{count}} weitere Einträge anzeigen"
+  },
+  "entityTypes": {
+    "cocktail": "Cocktail",
+    "ingredient": "Zutat",
+    "garnish": "Garnitur",
+    "glass": "Glas"
+  },
+  "fields": {
+    "name": "Name",
+    "guestName": "Gästename",
+    "description": "Beschreibung",
+    "history": "Geschichte"
+  },
+  "tags": {
+    "title": "Tags",
+    "tileDescription": "Kategorien, Beschriftungen und Sichtbarkeit von Tags",
+    "saved": "Tags gespeichert",
+    "errors": {
+      "load": "Tags konnten nicht geladen werden",
+      "save": "Tags konnten nicht gespeichert werden",
+      "delete": "Kategorie konnte nicht gelöscht werden"
+    },
+    "categories": "Kategorien",
+    "categoriesHint": "Kategorien gruppieren Tags, z. B. als Filter auf der Gästekarte. Reihenfolge per Ziehen oder Pfeiltasten ändern.",
+    "noCategories": "Noch keine Kategorien angelegt",
+    "addCategory": "Kategorie hinzufügen",
+    "createDefaults": "Standardkategorien anlegen",
+    "defaultsCreated": "Standardkategorien angelegt",
+    "newCategory": "Neue Kategorie",
+    "categoryName": "Name der Kategorie",
+    "showAsGuestFilter": "Als Gästefilter anzeigen",
+    "tagCount_one": "{{count}} Tag",
+    "tagCount_other": "{{count}} Tags",
+    "dragToReorder": "Zum Sortieren ziehen",
+    "moveUp": "Nach oben",
+    "moveDown": "Nach unten",
+    "deleteCategory": "Kategorie löschen",
+    "tags": "Tags",
+    "tagsHint": "Alle verwendeten Tags. Beschriftungen je Inhaltssprache ersetzen den Tag auf der Gästekarte; nicht öffentliche Tags werden Gästen nie angezeigt.",
+    "allCategories": "Alle Kategorien",
+    "noCategory": "Ohne Kategorie",
+    "tag": "Tag",
+    "category": "Kategorie",
+    "label": "Beschriftung",
+    "color": "Farbe",
+    "clearColor": "Farbe entfernen",
+    "public": "Öffentlich",
+    "usage": "{{cocktails}} Cocktails · {{ingredients}} Zutaten"
+  }
+}

@@ -8,6 +8,7 @@ import { createLog } from '@lib/auditLog';
 import { calculateGarnishSimilarity } from '@lib/findSimilarEntities';
 import { ApiError } from '@lib/http/ApiError';
 import { toGarnishDto } from '@lib/api/dto/garnishes';
+import { garnishGuestInfoImportData } from '@lib/guest-info/sanitize';
 import packageJson from '../../../package.json';
 import type { GarnishExportStructure } from '@lib/auditExport';
 import type { Prisma, User, Workspace } from '@generated/prisma/client';
@@ -41,6 +42,9 @@ export async function createGarnish(workspace: Workspace, user: User, input: Gar
         price: input.price ?? undefined,
         description: input.description ?? undefined,
         notes: input.notes ?? undefined,
+        allergens: input.allergens,
+        additives: input.additives,
+        guestInfoComplete: input.guestInfoComplete,
         workspace: { connect: { id: workspace.id } },
       },
     });
@@ -68,6 +72,9 @@ export async function updateGarnish(workspace: Workspace, user: User, garnishId:
         price: input.price ?? undefined,
         description: input.description ?? undefined,
         notes: input.notes ?? undefined,
+        allergens: input.allergens,
+        additives: input.additives,
+        guestInfoComplete: input.guestInfoComplete,
         workspace: { connect: { id: workspace.id } },
       },
     });
@@ -128,6 +135,9 @@ export async function cloneGarnish(workspace: Workspace, garnishId: string, name
         price: existing.price,
         description: existing.description,
         notes: existing.notes,
+        allergens: existing.allergens,
+        additives: existing.additives,
+        guestInfoComplete: existing.guestInfoComplete,
         workspace: { connect: { id: workspace.id } },
       },
     });
@@ -160,6 +170,9 @@ export async function exportGarnishesJson(workspace: Workspace, ids: string[]): 
       description: garnish.description,
       notes: garnish.notes,
       price: garnish.price,
+      allergens: garnish.allergens,
+      additives: garnish.additives,
+      guestInfoComplete: garnish.guestInfoComplete,
       workspaceId: garnish.workspaceId,
     },
   }));
@@ -239,6 +252,7 @@ export async function importGarnishesJson(
                 description: itemData.garnish.description ?? null,
                 notes: itemData.garnish.notes ?? null,
                 price: itemData.garnish.price ?? null,
+                ...garnishGuestInfoImportData(itemData.garnish),
               },
               include: { GarnishImage: true },
             });
@@ -251,6 +265,7 @@ export async function importGarnishesJson(
                 description: itemData.garnish.description ?? null,
                 notes: itemData.garnish.notes ?? null,
                 price: itemData.garnish.price ?? null,
+                ...garnishGuestInfoImportData(itemData.garnish),
                 workspaceId,
               },
               include: { GarnishImage: true },

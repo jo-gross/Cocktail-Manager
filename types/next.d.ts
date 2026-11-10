@@ -5,6 +5,8 @@ import type { AppProps } from 'next/app';
 // Jede Seite (NextPage) darf optional eine `pullToRefresh`-Funktion exportieren:
 export type NextPageWithPullToRefresh<P = object, IP = P> = NextPage<P, IP> & {
   pullToRefresh?: () => void | Promise<void>;
+  /** Public guest page (e.g. /m/…): rendered without auth/workspace/theme boundaries. */
+  guestPage?: boolean;
 };
 
 // Und den AppProps-Typ entsprechend erweitern:

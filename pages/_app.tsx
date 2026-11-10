@@ -40,6 +40,11 @@ const App = ({ Component, pageProps: { session: _session, ...pageProps } }: AppP
 
   const [, forceUpdate] = useReducer((x) => x + 1, 0);
 
+  // Public guest pages (/m/…) must not require auth, load a workspace or apply the app theme.
+  if (Component.guestPage) {
+    return <Component {...pageProps} />;
+  }
+
   return (
     <I18nextProvider i18n={i18n}>
       <OfflineContextProvider>

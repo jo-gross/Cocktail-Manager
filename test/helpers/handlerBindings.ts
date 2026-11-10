@@ -13,6 +13,8 @@ import * as cards from '@lib/api/v1/cards';
 import * as cocktails from '@lib/api/v1/cocktails';
 import * as garnishes from '@lib/api/v1/garnishes';
 import * as glasses from '@lib/api/v1/glasses';
+import * as guestInfo from '@lib/api/v1/guestInfo';
+import * as guestMenus from '@lib/api/v1/guestMenus';
 import * as ices from '@lib/api/v1/ices';
 import * as ingredients from '@lib/api/v1/ingredients';
 import * as joinCodes from '@lib/api/v1/joinCodes';
@@ -25,6 +27,7 @@ import * as signage from '@lib/api/v1/signage';
 import * as statistics from '@lib/api/v1/statistics';
 import * as statisticsAdvanced from '@lib/api/v1/statisticsAdvanced';
 import * as tags from '@lib/api/v1/tags';
+import * as contentTranslations from '@lib/api/v1/contentTranslations';
 import * as translations from '@lib/api/v1/translations';
 import * as units from '@lib/api/v1/units';
 import * as userSettings from '@lib/api/v1/userSettings';
@@ -32,6 +35,26 @@ import * as workspace from '@lib/api/v1/workspace';
 import * as workspaceUsers from '@lib/api/v1/workspaceUsers';
 
 import { actionsCollectionApiDoc, actionsItemApiDoc } from '@lib/schemas/actions';
+import { cocktailGuestInfoApiDoc, guestInfoBulkApiDoc, guestInfoOverviewApiDoc } from '@lib/schemas/guestInfo';
+import {
+  guestMenusActiveExtrasApiDoc,
+  guestMenusCollectionApiDoc,
+  guestMenusDraftApiDoc,
+  guestMenusDuplicateApiDoc,
+  guestMenusExportHtmlApiDoc,
+  guestMenusExportPdfApiDoc,
+  guestMenusItemApiDoc,
+  guestMenusPreviewApiDoc,
+  guestMenusPreviewTokenRegenerateApiDoc,
+  guestMenusPublishApiDoc,
+  guestMenusQrApiDoc,
+  guestMenusReorderApiDoc,
+  guestMenusTableTentApiDoc,
+  guestMenusUnpublishApiDoc,
+  guestMenuTemplatesBuiltInApiDoc,
+  guestMenuTemplatesCollectionApiDoc,
+  guestMenuTemplatesItemApiDoc,
+} from '@lib/schemas/guestMenus';
 import { apiKeysCollectionApiDoc, apiKeysItemApiDoc } from '@lib/schemas/apiKeys';
 import { auditLogsCollectionApiDoc } from '@lib/schemas/auditLogs';
 import {
@@ -55,6 +78,7 @@ import {
   cocktailsImportJsonApiDoc,
   cocktailsItemApiDoc,
   cocktailsUnarchiveApiDoc,
+  cocktailsAvailabilityApiDoc,
 } from '@lib/schemas/cocktails';
 import {
   garnishesCheckApiDoc,
@@ -92,7 +116,15 @@ import { leaveApiDoc } from '@lib/schemas/leave';
 import { meApiDoc } from '@lib/schemas/me';
 import { queueAddApiDoc, queueCollectionApiDoc, queueItemApiDoc, queueRemoveApiDoc } from '@lib/schemas/queue';
 import { ratingsCollectionApiDoc, ratingsItemApiDoc } from '@lib/schemas/ratings';
-import { signageApiDoc, signageSlideImageApiDoc, signageSlideItemApiDoc, signageSlidesApiDoc } from '@lib/schemas/signage';
+import {
+  signageApiDoc,
+  signageGuestMenuSlideItemApiDoc,
+  signageGuestMenuSlidesApiDoc,
+  signageKeyApiDoc,
+  signageSlideImageApiDoc,
+  signageSlideItemApiDoc,
+  signageSlidesApiDoc,
+} from '@lib/schemas/signage';
 import {
   statisticsCocktailsAddApiDoc,
   statisticsCocktailsCollectionApiDoc,
@@ -112,7 +144,14 @@ import {
   statisticsAdvancedSetsApiDoc,
   statisticsAdvancedTagsApiDoc,
 } from '@lib/schemas/statisticsAdvanced';
-import { tagsCollectionApiDoc } from '@lib/schemas/tags';
+import {
+  tagCategoriesCollectionApiDoc,
+  tagCategoriesDefaultsApiDoc,
+  tagCategoriesItemApiDoc,
+  tagDefinitionsApiDoc,
+  tagsCollectionApiDoc,
+} from '@lib/schemas/tags';
+import { contentTranslationsApiDoc } from '@lib/schemas/contentTranslations';
 import { translationsApiDoc, translationsCollectionApiDoc } from '@lib/schemas/translations';
 import { unitConversionsCollectionApiDoc, unitConversionsItemApiDoc, unitsCollectionApiDoc, unitsItemApiDoc } from '@lib/schemas/units';
 import { userSettingsApiDoc } from '@lib/schemas/userSettings';
@@ -151,6 +190,7 @@ export const handlerBindings: HandlerBinding[] = [
   { apiDoc: cocktailsCloneApiDoc, handler: cocktails.cloneHandler },
   { apiDoc: cocktailsArchiveApiDoc, handler: cocktails.archiveHandler },
   { apiDoc: cocktailsUnarchiveApiDoc, handler: cocktails.unarchiveHandler },
+  { apiDoc: cocktailsAvailabilityApiDoc, handler: cocktails.availabilityHandler },
   { apiDoc: cocktailsExportJsonApiDoc, handler: cocktails.exportJsonHandler },
   { apiDoc: cocktailsExportPdfApiDoc, handler: cocktails.exportPdfHandler },
   { apiDoc: cocktailsImportJsonApiDoc, handler: cocktails.importJsonHandler },
@@ -197,6 +237,9 @@ export const handlerBindings: HandlerBinding[] = [
   { apiDoc: signageSlidesApiDoc, handler: signage.slidesHandler },
   { apiDoc: signageSlideItemApiDoc, handler: signage.slideItemHandler },
   { apiDoc: signageSlideImageApiDoc, handler: signage.slideImageHandler },
+  { apiDoc: signageGuestMenuSlidesApiDoc, handler: signage.guestMenuSlidesHandler },
+  { apiDoc: signageGuestMenuSlideItemApiDoc, handler: signage.guestMenuSlideItemHandler },
+  { apiDoc: signageKeyApiDoc, handler: signage.signageKeyHandler },
   { apiDoc: statisticsCocktailsCollectionApiDoc, handler: statistics.cocktailsCollectionHandler },
   { apiDoc: statisticsCocktailsAddApiDoc, handler: statistics.cocktailsAddHandler },
   { apiDoc: statisticsCocktailsItemApiDoc, handler: statistics.cocktailsItemHandler },
@@ -213,8 +256,33 @@ export const handlerBindings: HandlerBinding[] = [
   { apiDoc: statisticsAdvancedSetsApiDoc, handler: statisticsAdvanced.setsHandler },
   { apiDoc: statisticsAdvancedSetItemApiDoc, handler: statisticsAdvanced.setItemHandler },
   { apiDoc: tagsCollectionApiDoc, handler: tags.collectionHandler },
+  { apiDoc: tagCategoriesCollectionApiDoc, handler: tags.categoriesCollectionHandler },
+  { apiDoc: tagCategoriesItemApiDoc, handler: tags.categoriesItemHandler },
+  { apiDoc: tagCategoriesDefaultsApiDoc, handler: tags.categoriesDefaultsHandler },
+  { apiDoc: tagDefinitionsApiDoc, handler: tags.definitionsHandler },
+  { apiDoc: contentTranslationsApiDoc, handler: contentTranslations.contentTranslationsHandler },
   { apiDoc: translationsCollectionApiDoc, handler: translations.translationsCollectionHandler },
   { apiDoc: translationsApiDoc, handler: translations.translationHandler },
+  { apiDoc: cocktailGuestInfoApiDoc, handler: guestInfo.cocktailGuestInfoHandler },
+  { apiDoc: guestInfoOverviewApiDoc, handler: guestInfo.overviewHandler },
+  { apiDoc: guestInfoBulkApiDoc, handler: guestInfo.bulkHandler },
+  { apiDoc: guestMenusCollectionApiDoc, handler: guestMenus.collectionHandler },
+  { apiDoc: guestMenusReorderApiDoc, handler: guestMenus.reorderHandler },
+  { apiDoc: guestMenusItemApiDoc, handler: guestMenus.itemHandler },
+  { apiDoc: guestMenusDraftApiDoc, handler: guestMenus.draftHandler },
+  { apiDoc: guestMenusPublishApiDoc, handler: guestMenus.publishHandler },
+  { apiDoc: guestMenusUnpublishApiDoc, handler: guestMenus.unpublishHandler },
+  { apiDoc: guestMenusDuplicateApiDoc, handler: guestMenus.duplicateHandler },
+  { apiDoc: guestMenusPreviewApiDoc, handler: guestMenus.previewHandler },
+  { apiDoc: guestMenusPreviewTokenRegenerateApiDoc, handler: guestMenus.previewTokenRegenerateHandler },
+  { apiDoc: guestMenusQrApiDoc, handler: guestMenus.qrHandler },
+  { apiDoc: guestMenusExportPdfApiDoc, handler: guestMenus.exportPdfHandler },
+  { apiDoc: guestMenusExportHtmlApiDoc, handler: guestMenus.exportHtmlHandler },
+  { apiDoc: guestMenusTableTentApiDoc, handler: guestMenus.tableTentHandler },
+  { apiDoc: guestMenusActiveExtrasApiDoc, handler: guestMenus.activeExtrasHandler },
+  { apiDoc: guestMenuTemplatesCollectionApiDoc, handler: guestMenus.templatesCollectionHandler },
+  { apiDoc: guestMenuTemplatesBuiltInApiDoc, handler: guestMenus.templatesBuiltInHandler },
+  { apiDoc: guestMenuTemplatesItemApiDoc, handler: guestMenus.templatesItemHandler },
   { apiDoc: unitsCollectionApiDoc, handler: units.collectionHandler },
   { apiDoc: unitsItemApiDoc, handler: units.itemHandler },
   { apiDoc: unitConversionsCollectionApiDoc, handler: units.conversionsCollectionHandler },

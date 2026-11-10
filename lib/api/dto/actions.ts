@@ -5,6 +5,6 @@
 import type { WorkspaceCocktailRecipeStepAction } from '@generated/prisma/client';
 import type { ActionDto } from '@lib/schemas/actions';
 
-export function toActionDto(action: Pick<WorkspaceCocktailRecipeStepAction, 'id' | 'name' | 'actionGroup'>): ActionDto {
-  return { id: action.id, name: action.name, actionGroup: action.actionGroup };
+export function toActionDto(action: Pick<WorkspaceCocktailRecipeStepAction, 'id' | 'name' | 'actionGroup' | 'dilutionPercent'>): ActionDto {
+  return { id: action.id, name: action.name, actionGroup: action.actionGroup, dilutionPercent: action.dilutionPercent };
 }

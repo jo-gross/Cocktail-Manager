@@ -3,11 +3,11 @@ import { useTranslation } from 'react-i18next';
 import { useRouter } from 'next/router';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { FaAngleDown, FaAngleLeft, FaAngleRight, FaAngleUp, FaTrashAlt } from 'react-icons/fa';
+import { FaAngleDown, FaAngleLeft, FaAngleRight, FaAngleUp, FaEuroSign, FaTimes, FaTrashAlt } from 'react-icons/fa';
 import { CompactCocktailRecipeInstruction } from '@components/cocktails/CompactCocktailRecipeInstruction';
 import type { CocktailDto, CocktailSummaryDto } from '@lib/schemas/cocktails';
 import { fetchCocktail } from '@lib/network/cocktails';
-import { Button, Card, CardBody, Skeleton } from '@components/ui';
+import { Button, ButtonGroup, Card, CardBody, Input, Skeleton } from '@components/ui';
 import '../../lib/NumberUtils';
 import { DragHandle } from './CardEditorToolbar';
 import { ItemActionMenu } from './ItemActionMenu';
@@ -27,6 +27,9 @@ interface CardGroupItemProps {
   onMoveLeft: () => void;
   onMoveRight: () => void;
   onRemove: () => void;
+  /** Item-specific price override on this card (null = none). */
+  specialPrice?: number | null;
+  onSpecialPriceChange: (price: number | null) => void;
 }
 
 export function CardGroupItem({
@@ -42,8 +45,13 @@ export function CardGroupItem({
   onMoveLeft,
   onMoveRight,
   onRemove,
+  specialPrice,
+  onSpecialPriceChange,
 }: CardGroupItemProps) {
-  const { t } = useTranslation('common');
+  const { t } = useTranslation(['common', 'manage']);
+  const hasSpecialPrice = specialPrice != undefined && String(specialPrice) !== '';
+  const [editingSpecialPrice, setEditingSpecialPrice] = useState(false);
+  const showSpecialPriceInput = hasSpecialPrice || editingSpecialPrice;
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: itemDragId(groupIndex, itemIndex),
     disabled: isArchived,
@@ -71,24 +79,69 @@ export function CardGroupItem({
   const moveBackLabel = singleColumn ? t('moveUp') : t('moveLeft');
   const moveForwardLabel = singleColumn ? t('moveDown') : t('moveRight');
 
+  const specialPriceInput = (
+    <ButtonGroup className="w-full">
+      <Input
+        type="number"
+        inputSize="sm"
+        joinItem
+        min={0}
+        step={0.01}
+        disabled={isArchived}
+        className="w-full min-w-0"
+        placeholder={t('manage:itemSpecialPrice')}
+        aria-label={t('manage:itemSpecialPrice')}
+        title={t('manage:itemSpecialPrice')}
+        value={specialPrice ?? ''}
+        onChange={(event) => {
+          const value = event.target.value;
+          onSpecialPriceChange(value === '' || !Number.isFinite(Number(value)) ? null : Number(value));
+        }}
+      />
+      <Button type="button" variant="primary" size="sm" joinItem tabIndex={-1}>
+        <FaEuroSign />
+      </Button>
+      {!isArchived ? (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          joinItem
+          aria-label={t('manage:removeItemSpecialPrice')}
+          title={t('manage:removeItemSpecialPrice')}
+          onClick={() => {
+            onSpecialPriceChange(null);
+            setEditingSpecialPrice(false);
+          }}
+        >
+          <FaTimes />
+        </Button>
+      ) : null}
+    </ButtonGroup>
+  );
+
   if (viewMode === 'names') {
     return (
       <div
         ref={setNodeRef}
         style={style}
-        className="col-span-1 flex min-h-12 shrink-0 items-center gap-2 self-start rounded-lg border border-base-300/60 bg-base-100 px-3 py-2"
+        className="col-span-1 flex min-h-12 shrink-0 flex-col gap-2 self-start rounded-lg border border-base-300/60 bg-base-100 px-3 py-2"
       >
-        {!isArchived ? <DragHandle attributes={attributes} listeners={listeners} /> : null}
-        <div className="min-w-0 flex-1 truncate font-medium">{cocktail?.name ?? (loadingCocktails ? '…' : t('unknown'))}</div>
-        {!isArchived ? (
-          <ItemActionMenu
-            actions={[
-              { label: moveBackLabel, icon: <MoveBackIcon />, onClick: onMoveLeft, disabled: !canMoveLeft },
-              { label: moveForwardLabel, icon: <MoveForwardIcon />, onClick: onMoveRight, disabled: !canMoveRight },
-              { label: t('delete'), icon: <FaTrashAlt />, onClick: onRemove, isDanger: true },
-            ]}
-          />
-        ) : null}
+        <div className="flex items-center gap-2">
+          {!isArchived ? <DragHandle attributes={attributes} listeners={listeners} /> : null}
+          <div className="min-w-0 flex-1 truncate font-medium">{cocktail?.name ?? (loadingCocktails ? '…' : t('unknown'))}</div>
+          {!isArchived ? (
+            <ItemActionMenu
+              actions={[
+                { label: moveBackLabel, icon: <MoveBackIcon />, onClick: onMoveLeft, disabled: !canMoveLeft },
+                { label: moveForwardLabel, icon: <MoveForwardIcon />, onClick: onMoveRight, disabled: !canMoveRight },
+                { label: t('manage:itemSpecialPrice'), icon: <FaEuroSign />, onClick: () => setEditingSpecialPrice(true), disabled: showSpecialPriceInput },
+                { label: t('delete'), icon: <FaTrashAlt />, onClick: onRemove, isDanger: true },
+              ]}
+            />
+          ) : null}
+        </div>
+        {showSpecialPriceInput ? specialPriceInput : null}
       </div>
     );
   }
@@ -131,8 +184,15 @@ export function CardGroupItem({
           </div>
         ) : null}
 
+        {!isArchived || hasSpecialPrice ? specialPriceInput : null}
+
         {loadedCocktail != undefined ? (
-          <CompactCocktailRecipeInstruction showPrice={true} showImage={false} cocktailRecipe={loadedCocktail} />
+          <CompactCocktailRecipeInstruction
+            showPrice={true}
+            showImage={false}
+            cocktailRecipe={loadedCocktail}
+            specialPrice={hasSpecialPrice ? (specialPrice ?? undefined) : undefined}
+          />
         ) : cocktailLoading || loadingCocktails || cocktail != undefined ? (
           <div className="flex flex-col gap-2">
             <Skeleton className="h-5 w-3/4" />

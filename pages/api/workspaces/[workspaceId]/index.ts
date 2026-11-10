@@ -1,6 +1,6 @@
 import { Prisma, Role, Permission } from '@generated/prisma/client';
 import { withHttpMethods } from '@middleware/api/handleMethods';
-import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
+import { withWorkspacePermission, withWorkspaceSession } from '@middleware/api/authenticationMiddleware';
 import { withDeprecation } from '@middleware/api/withDeprecation';
 import HTTPMethod from 'http-method-enum';
 import prisma from '../../../../prisma/prisma';
@@ -45,7 +45,8 @@ const legacyHandler = withHttpMethods({
 
     return res.json({ data: { ...workspace, WorkspaceSetting: settings, users: workspaceUsers, isExternallyManaged } });
   }),
-  [HTTPMethod.DELETE]: withWorkspacePermission([Role.ADMIN], async (req, res, user, workspace) => {
+  // Destructive and not covered by any API-key scope: session-member auth only.
+  [HTTPMethod.DELETE]: withWorkspaceSession([Role.ADMIN], async (req, res, user, workspace) => {
     const result = await prisma.workspace.delete({
       where: {
         id: workspace.id,

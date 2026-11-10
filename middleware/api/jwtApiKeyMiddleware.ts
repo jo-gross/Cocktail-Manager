@@ -2,6 +2,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import jwt from 'jsonwebtoken';
 import Keyv from 'keyv';
 import prisma from '../../prisma/prisma';
+import { asWorkspace } from '../../prisma/asWorkspace';
 import { Permission, Workspace, WorkspaceApiKey } from '@generated/prisma/client';
 import { constants as HttpStatus } from 'http2';
 
@@ -178,7 +179,7 @@ export async function authenticateApiKey(req: NextApiRequest): Promise<ApiKeyAut
 
     return {
       apiKey: keyRecord,
-      workspace: keyRecord.workspace,
+      workspace: asWorkspace(keyRecord.workspace),
       permissions: decoded.permissions,
     };
   } catch {

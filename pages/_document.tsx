@@ -1,4 +1,5 @@
 import { Head, Html, Main, NextScript } from 'next/document';
+import { THEME_INIT_SCRIPT } from '@lib/themeInitScript';
 
 export default function Document() {
   return (
@@ -8,7 +9,7 @@ export default function Document() {
         <meta name="description" content="Cocktailverwaltung" />
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem('theme');if(t){t=JSON.parse(t);if(t==='dark')document.documentElement.setAttribute('data-theme','dark');else if(t==='light')document.documentElement.setAttribute('data-theme','light')}}catch(e){}})()`,
+            __html: THEME_INIT_SCRIPT,
           }}
         />
 

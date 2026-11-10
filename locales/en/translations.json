@@ -1,0 +1,90 @@
+{
+  "title": "Translations",
+  "tileDescription": "Translate content into additional languages",
+  "errors": {
+    "load": "Could not load translations",
+    "save": "Could not save translations",
+    "import": "Import failed",
+    "csvEmpty": "The CSV file is empty",
+    "csvColumns": "The CSV file needs the columns entityType, entityId, field, locale and value"
+  },
+  "fieldTabs": {
+    "label": "Language",
+    "primary": "Primary language",
+    "missing": "Translation missing"
+  },
+  "center": {
+    "exportCsv": "Export CSV",
+    "importCsv": "Import CSV",
+    "save_one": "Save {{count}} change",
+    "save_other": "Save {{count}} changes",
+    "saved_one": "{{count}} translation saved",
+    "saved_other": "{{count}} translations saved",
+    "imported_one": "{{count}} translation imported",
+    "imported_other": "{{count}} translations imported",
+    "importIgnored_one": "{{count}} row was ignored (invalid or unknown entry)",
+    "importIgnored_other": "{{count}} rows were ignored (invalid or unknown entries)",
+    "importNothing": "The file contains no importable translations",
+    "noLocales": "This workspace has no additional content languages. Add languages in the workspace settings.",
+    "openSettings": "Open settings",
+    "progress": "{{done}} of {{total}} translated",
+    "language": "Language",
+    "entity": "Type",
+    "allEntities": "All types",
+    "missingOnly": "Missing only",
+    "entry": "Entry",
+    "field": "Field",
+    "source": "Source text",
+    "translation": "Translation",
+    "showMore_one": "Show {{count}} more entry",
+    "showMore_other": "Show {{count}} more entries"
+  },
+  "entityTypes": {
+    "cocktail": "Cocktail",
+    "ingredient": "Ingredient",
+    "garnish": "Garnish",
+    "glass": "Glass"
+  },
+  "fields": {
+    "name": "Name",
+    "guestName": "Guest name",
+    "description": "Description",
+    "history": "History"
+  },
+  "tags": {
+    "title": "Tags",
+    "tileDescription": "Tag categories, labels and visibility",
+    "saved": "Tags saved",
+    "errors": {
+      "load": "Could not load tags",
+      "save": "Could not save tags",
+      "delete": "Could not delete category"
+    },
+    "categories": "Categories",
+    "categoriesHint": "Categories group tags, e.g. as filters on the guest menu. Reorder by dragging or with the arrow buttons.",
+    "noCategories": "No categories yet",
+    "addCategory": "Add category",
+    "createDefaults": "Create default categories",
+    "defaultsCreated": "Default categories created",
+    "newCategory": "New category",
+    "categoryName": "Category name",
+    "showAsGuestFilter": "Show as guest filter",
+    "tagCount_one": "{{count}} tag",
+    "tagCount_other": "{{count}} tags",
+    "dragToReorder": "Drag to reorder",
+    "moveUp": "Move up",
+    "moveDown": "Move down",
+    "deleteCategory": "Delete category",
+    "tags": "Tags",
+    "tagsHint": "All tags in use. Labels per content language replace the tag on the guest menu; non-public tags are never shown to guests.",
+    "allCategories": "All categories",
+    "noCategory": "No category",
+    "tag": "Tag",
+    "category": "Category",
+    "label": "Label",
+    "color": "Color",
+    "clearColor": "Remove color",
+    "public": "Public",
+    "usage": "{{cocktails}} cocktails · {{ingredients}} ingredients"
+  }
+}

@@ -1,7 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import prisma from '../../../../../prisma/prisma';
 import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
-import { Role } from '@generated/prisma/client';
+import { Role, Permission } from '@generated/prisma/client';
 import { withHttpMethods } from '@middleware/api/handleMethods';
 import { withDeprecation } from '@middleware/api/withDeprecation';
 import HTTPMethod from 'http-method-enum';
@@ -9,7 +9,7 @@ import packageJson from '../../../../../package.json';
 import { CocktailCalculationExportStructure } from '../../../../../lib/auditExport';
 
 const legacyHandler = withHttpMethods({
-  [HTTPMethod.POST]: withWorkspacePermission([Role.USER], async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
+  [HTTPMethod.POST]: withWorkspacePermission([Role.USER], Permission.CALCULATIONS_READ, async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
     const { ids } = req.body as { ids: string[] };
 
     if (!ids || ids.length === 0) {

@@ -9,7 +9,23 @@ import type { IngredientDto } from '@lib/schemas/ingredients';
 
 type IngredientVolumeWithUnit = Pick<IngredientVolume, 'id' | 'volume'> & { unit: Pick<Unit, 'id' | 'name'> };
 
-type IngredientWithVolumes = Pick<Ingredient, 'id' | 'name' | 'shortName' | 'description' | 'notes' | 'price' | 'link' | 'tags'> & {
+type IngredientWithVolumes = Pick<
+  Ingredient,
+  | 'id'
+  | 'name'
+  | 'shortName'
+  | 'description'
+  | 'notes'
+  | 'price'
+  | 'link'
+  | 'tags'
+  | 'abv'
+  | 'allergens'
+  | 'additives'
+  | 'guestInfoComplete'
+  | 'hideOnGuestMenu'
+  | 'guestName'
+> & {
   IngredientVolume: IngredientVolumeWithUnit[];
 };
 
@@ -30,5 +46,11 @@ export function toIngredientDto(ingredient: IngredientWithVolumes, hasImage: boo
     })),
     hasImage,
     imageUrl: hasImage ? `/api/v1/workspaces/${workspaceId}/ingredients/${ingredient.id}/image` : null,
+    abv: ingredient.abv,
+    allergens: ingredient.allergens,
+    additives: ingredient.additives,
+    guestInfoComplete: ingredient.guestInfoComplete,
+    hideOnGuestMenu: ingredient.hideOnGuestMenu,
+    guestName: ingredient.guestName,
   };
 }

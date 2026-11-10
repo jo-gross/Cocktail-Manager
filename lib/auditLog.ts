@@ -1,5 +1,6 @@
 import { Prisma } from '@generated/prisma/client';
 import { diff, Diff } from 'deep-diff';
+import type { AppPrismaClient } from '../prisma/prisma';
 
 type AuditAction = 'CREATE' | 'UPDATE' | 'DELETE';
 
@@ -395,7 +396,7 @@ function buildSnapshot(entityType: string, data: Record<string, unknown> | null)
  * Builds a typed snapshot and computes a deep-diff for updates.
  */
 export async function createLog(
-  tx: Prisma.TransactionClient,
+  tx: Prisma.TransactionClient | AppPrismaClient,
   workspaceId: string,
   userId: string | undefined,
   entityType: string,

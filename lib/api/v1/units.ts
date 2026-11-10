@@ -13,7 +13,7 @@ export const collectionHandler = defineApiHandlers(unitsCollectionApiDoc.operati
 });
 
 export const itemHandler = defineApiHandlers(unitsItemApiDoc.operations, {
-  DELETE: ({ params }) => units.deleteUnit(params.unitId),
+  DELETE: ({ workspace, params }) => units.deleteUnit(workspace, params.unitId),
 });
 
 export const conversionsCollectionHandler = defineApiHandlers(unitConversionsCollectionApiDoc.operations, {

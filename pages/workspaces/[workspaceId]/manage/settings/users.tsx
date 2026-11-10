@@ -1,4 +1,5 @@
-import { ManageEntityLayout } from '@components/layout/ManageEntityLayout';
+import { SettingsLayout } from '@components/settings/SettingsLayout';
+import { SettingsSection } from '@components/settings/SettingsSection';
 import { useRouter } from 'next/router';
 import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -15,11 +16,9 @@ import {
   Alert,
   Button,
   ButtonGroup,
-  Card,
-  CardBody,
-  CardTitle,
   Loading as UiLoading,
   Select,
+  SkeletonTableRows,
   Table,
   TableBody,
   TableCell,
@@ -93,10 +92,10 @@ export default function ManageUsersPage() {
   };
 
   return (
-    <ManageEntityLayout backLink={`/workspaces/${workspaceId}/manage`} title={t('settings:title', { name: userContext.workspace?.name ?? '' })}>
-      <div className={'grid grid-cols-1 gap-2 md:grid-cols-2'}>
+    <SettingsLayout page="users">
+      <>
         {isExternallyManaged && (
-          <Alert variant="warning" className="md:col-span-2">
+          <Alert variant="warning">
             <FaExclamationTriangle />
             <div>
               <h3 className="font-bold">{t('settings:externallyManaged')}</h3>
@@ -104,10 +103,9 @@ export default function ManageUsersPage() {
             </div>
           </Alert>
         )}
-        <Card className="overflow-y-auto md:col-span-2">
-          <CardBody>
-            <CardTitle>{t('settings:usersTitle')}</CardTitle>
-            <Table zebra className="w-full rounded-xl border border-base-200">
+        <SettingsSection title={t('settings:usersTitle')} description={t('settings:users.membersHelp')}>
+          <div className="overflow-x-auto rounded-xl border border-base-300/60">
+            <Table zebra className="w-full">
               <TableHead>
                 <TableRow>
                   <TableHeaderCell>{t('common:name')}</TableHeaderCell>
@@ -118,11 +116,7 @@ export default function ManageUsersPage() {
               </TableHead>
               <TableBody>
                 {workspaceUsersLoading ? (
-                  <TableRow>
-                    <TableCell colSpan={4} className="w-full text-center">
-                      {t('common:loadingShort')}
-                    </TableCell>
-                  </TableRow>
+                  <SkeletonTableRows columns={4} rows={3} avatarColumn={-1} />
                 ) : (
                   [...workspaceUsers]
                     .sort((a, b) => (a.name ?? '').localeCompare(b.name ?? ''))
@@ -134,7 +128,7 @@ export default function ManageUsersPage() {
                         <TableRow key={workspaceUser.userId}>
                           <TableCell className="whitespace-nowrap">
                             {workspaceUser.name}
-                            {isCurrentUser ? ' (du)' : ''}
+                            {isCurrentUser ? ` (${t('settings:users.you')})` : ''}
                           </TableCell>
                           <TableCell>{workspaceUser.email}</TableCell>
                           <TableCell>
@@ -168,7 +162,7 @@ export default function ManageUsersPage() {
                               workspaceUser.role
                             )}
                           </TableCell>
-                          <TableCell className="flex justify-end">
+                          <TableCell className="text-right">
                             {userContext.isUserPermitted(Role.ADMIN) && !isCurrentUser ? (
                               <Button
                                 variant="error"
@@ -221,39 +215,32 @@ export default function ManageUsersPage() {
                 )}
               </TableBody>
             </Table>
-          </CardBody>
-        </Card>
+          </div>
+        </SettingsSection>
         {userContext.isUserPermitted(Role.MANAGER) && workspaceJoinRequests.length > 0 && (
-          <Card className="overflow-y-auto md:col-span-2">
-            <CardBody>
-              <CardTitle>{t('manage:joinRequests')}</CardTitle>
-              <Table zebra className="w-full rounded-xl border border-base-200">
+          <SettingsSection
+            title={t('manage:joinRequests')}
+            actions={
+              <Button type="button" variant="outline" size="sm" aria-label={t('settings:users.refreshJoinRequests')} onClick={loadWorkspaceJoinRequests}>
+                <FaSync aria-hidden />
+              </Button>
+            }
+          >
+            <div className="overflow-x-auto rounded-xl border border-base-300/60">
+              <Table zebra className="w-full">
                 <TableHead>
                   <TableRow>
                     <TableHeaderCell>{t('common:name')}</TableHeaderCell>
                     <TableHeaderCell>{t('manage:email')}</TableHeaderCell>
                     <TableHeaderCell>{t('manage:date')}</TableHeaderCell>
-                    <TableHeaderCell className="flex justify-end">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        shape="square"
-                        size="sm"
-                        className="border-primary text-primary hover:bg-primary/10"
-                        onClick={loadWorkspaceJoinRequests}
-                      >
-                        <FaSync />
-                      </Button>
+                    <TableHeaderCell>
+                      <span className="sr-only">{t('common:actions')}</span>
                     </TableHeaderCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {joinRequestsLoading ? (
-                    <TableRow>
-                      <TableCell colSpan={4} className="text-center">
-                        {t('common:loadingShort')}
-                      </TableCell>
-                    </TableRow>
+                    <SkeletonTableRows columns={4} rows={2} avatarColumn={-1} />
                   ) : (
                     [...workspaceJoinRequests]
                       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
@@ -325,14 +312,27 @@ export default function ManageUsersPage() {
                   )}
                 </TableBody>
               </Table>
-            </CardBody>
-          </Card>
+            </div>
+          </SettingsSection>
         )}
         {userContext.isUserPermitted(Role.MANAGER) && (
-          <Card className="overflow-y-auto md:col-span-2">
-            <CardBody>
-              <CardTitle>{t('settings:invitationCodes')}</CardTitle>
-              <Table zebra className="w-full rounded-xl border border-base-200">
+          <SettingsSection
+            title={t('settings:invitationCodes')}
+            description={t('settings:users.invitationCodesHelp')}
+            actions={
+              <Button
+                type="button"
+                variant="primary"
+                size="sm"
+                disabled={isExternallyManaged}
+                onClick={() => modalContext.openModal(<AddWorkspaceJoinCodeModal onCreated={() => loadWorkspaceJoinCodes()} />)}
+              >
+                <FaPlus aria-hidden /> {t('common:create')}
+              </Button>
+            }
+          >
+            <div className="overflow-x-auto rounded-xl border border-base-300/60">
+              <Table zebra className="w-full">
                 <TableHead>
                   <TableRow>
                     <TableHeaderCell>{t('manage:code')}</TableHeaderCell>
@@ -340,27 +340,14 @@ export default function ManageUsersPage() {
                     <TableHeaderCell>{t('manage:expiresAt')}</TableHeaderCell>
                     <TableHeaderCell>{t('manage:singleUseCode')}</TableHeaderCell>
                     <TableHeaderCell>{t('settings:used')}</TableHeaderCell>
-                    <TableHeaderCell className="flex justify-end">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="border-primary text-primary hover:bg-primary/10"
-                        disabled={isExternallyManaged}
-                        onClick={() => modalContext.openModal(<AddWorkspaceJoinCodeModal onCreated={() => loadWorkspaceJoinCodes()} />)}
-                      >
-                        <FaPlus /> {t('common:create')}
-                      </Button>
+                    <TableHeaderCell>
+                      <span className="sr-only">{t('common:actions')}</span>
                     </TableHeaderCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {workspaceJoinCodeLoading ? (
-                    <TableRow>
-                      <TableCell colSpan={6} className="text-center">
-                        {t('common:loadingShort')}
-                      </TableCell>
-                    </TableRow>
+                    <SkeletonTableRows columns={6} rows={2} avatarColumn={-1} />
                   ) : workspaceJoinCodes.length == 0 ? (
                     <TableRow>
                       <TableCell colSpan={6} className="text-center">
@@ -424,60 +411,61 @@ export default function ManageUsersPage() {
                               workspaceJoinCode.used
                             )}
                           </TableCell>
-                          <TableCell className="flex justify-end gap-2">
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              className="border-primary text-primary hover:bg-primary/10"
-                              onClick={() => {
-                                navigator.clipboard.writeText(window.location.origin + '/?code=' + workspaceJoinCode.code).then(() => {
-                                  alertService.info(t('common:success.copied'));
-                                });
-                              }}
-                            >
-                              <FaShareAlt />
-                              <div>{t('common:copyLink')}</div>
-                            </Button>
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              className="border-error text-error hover:bg-error/10"
-                              disabled={isExternallyManaged || workspaceJoinCodeDeleting[workspaceJoinCode.code]}
-                              onClick={() => {
-                                modalContext.openModal(
-                                  <DeleteConfirmationModal
-                                    onApprove={async () => {
-                                      setWorkspaceJoinCodeDeleting({ ...workspaceJoinCodeDeleting, [workspaceJoinCode.code]: true });
-                                      apiV1Mutate(`/api/v1/workspaces/${workspaceId}/join-codes/${workspaceJoinCode.code}`, 'DELETE')
-                                        .then(() => {
-                                          loadWorkspaceJoinCodes();
-                                          alertService.success(t('common:success.removed'));
-                                        })
-                                        .catch((error) => handleMutationError(error, t('errors:deleteJoinCode')))
-                                        .finally(() => {
-                                          setWorkspaceJoinCodeDeleting({ ...workspaceJoinCodeDeleting, [workspaceJoinCode.code]: false });
-                                        });
-                                    }}
-                                    spelling={'DELETE'}
-                                    entityName={t('entity:theJoinCode', { name: workspaceJoinCode.code })}
-                                  />,
-                                );
-                              }}
-                            >
-                              <FaTrashAlt />
-                            </Button>
+                          <TableCell>
+                            <div className="flex justify-end gap-2">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  navigator.clipboard.writeText(window.location.origin + '/?code=' + workspaceJoinCode.code).then(() => {
+                                    alertService.info(t('common:success.copied'));
+                                  });
+                                }}
+                              >
+                                <FaShareAlt />
+                                <div>{t('common:copyLink')}</div>
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className="border-error text-error hover:bg-error/10"
+                                disabled={isExternallyManaged || workspaceJoinCodeDeleting[workspaceJoinCode.code]}
+                                onClick={() => {
+                                  modalContext.openModal(
+                                    <DeleteConfirmationModal
+                                      onApprove={async () => {
+                                        setWorkspaceJoinCodeDeleting({ ...workspaceJoinCodeDeleting, [workspaceJoinCode.code]: true });
+                                        apiV1Mutate(`/api/v1/workspaces/${workspaceId}/join-codes/${workspaceJoinCode.code}`, 'DELETE')
+                                          .then(() => {
+                                            loadWorkspaceJoinCodes();
+                                            alertService.success(t('common:success.removed'));
+                                          })
+                                          .catch((error) => handleMutationError(error, t('errors:deleteJoinCode')))
+                                          .finally(() => {
+                                            setWorkspaceJoinCodeDeleting({ ...workspaceJoinCodeDeleting, [workspaceJoinCode.code]: false });
+                                          });
+                                      }}
+                                      spelling={'DELETE'}
+                                      entityName={t('entity:theJoinCode', { name: workspaceJoinCode.code })}
+                                    />,
+                                  );
+                                }}
+                              >
+                                <FaTrashAlt aria-hidden />
+                              </Button>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))
                   )}
                 </TableBody>
               </Table>
-            </CardBody>
-          </Card>
+            </div>
+          </SettingsSection>
         )}
-      </div>
-    </ManageEntityLayout>
+      </>
+    </SettingsLayout>
   );
 }

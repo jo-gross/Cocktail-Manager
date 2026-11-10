@@ -14,6 +14,10 @@ import orderDe from '../../locales/de/order.json';
 import statisticsDe from '../../locales/de/statistics.json';
 import monitorDe from '../../locales/de/monitor.json';
 import manageDe from '../../locales/de/manage.json';
+import guestMenuDe from '../../locales/de/guestMenu.json';
+import guestDe from '../../locales/de/guest.json';
+import guestInfoDe from '../../locales/de/guestInfo.json';
+import translationsDe from '../../locales/de/translations.json';
 
 import commonEn from '../../locales/en/common.json';
 import navEn from '../../locales/en/nav.json';
@@ -28,6 +32,10 @@ import orderEn from '../../locales/en/order.json';
 import statisticsEn from '../../locales/en/statistics.json';
 import monitorEn from '../../locales/en/monitor.json';
 import manageEn from '../../locales/en/manage.json';
+import guestMenuEn from '../../locales/en/guestMenu.json';
+import guestEn from '../../locales/en/guest.json';
+import guestInfoEn from '../../locales/en/guestInfo.json';
+import translationsEn from '../../locales/en/translations.json';
 
 export const defaultNS = 'common';
 
@@ -45,6 +53,10 @@ export const namespaces = [
   'statistics',
   'monitor',
   'manage',
+  'guestMenu',
+  'guest',
+  'guestInfo',
+  'translations',
 ] as const;
 
 export type TranslationNamespace = (typeof namespaces)[number];
@@ -64,6 +76,10 @@ export const resources = {
     statistics: statisticsDe,
     monitor: monitorDe,
     manage: manageDe,
+    guestMenu: guestMenuDe,
+    guest: guestDe,
+    guestInfo: guestInfoDe,
+    translations: translationsDe,
   },
   en: {
     common: commonEn,
@@ -79,6 +95,10 @@ export const resources = {
     statistics: statisticsEn,
     monitor: monitorEn,
     manage: manageEn,
+    guestMenu: guestMenuEn,
+    guest: guestEn,
+    guestInfo: guestInfoEn,
+    translations: translationsEn,
   },
 } as const;
 

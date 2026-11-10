@@ -16,8 +16,9 @@
  */
 import { z } from '@lib/openapi/zod';
 import { ApiTags } from '@lib/openapi/tags';
-import { WorkspaceIdParam, DeletionResult } from '@lib/schemas/common';
+import { WorkspaceIdParam, DeletionResult, DateTimeString } from '@lib/schemas/common';
 import type { ResourceApiDoc } from '@lib/openapi/types';
+import { CocktailGuestInfoDtoShape, CocktailGuestInfoInputShape } from '@lib/schemas/guestInfo';
 
 /** Slim glass reference embedded in a cocktail (Prisma `Glass` → clean shape). */
 export const CocktailGlassRefSchema = z
@@ -129,6 +130,9 @@ const CocktailBaseSchema = z.object({
   tags: z.array(z.string()),
   price: z.number().nullable(),
   isArchived: z.boolean().openapi({ description: 'Whether the cocktail is archived.' }),
+  unavailableUntil: DateTimeString.nullable().openapi({
+    description: 'Cocktail is marked as unavailable ("heute aus") until this instant (start of the next bar day), or null when available.',
+  }),
   hasImage: z.boolean().openapi({ description: 'Whether the cocktail has an image.' }),
   imageUrl: z.string().nullable().openapi({ description: 'URL to fetch the cocktail image bytes, or null when hasImage is false.' }),
   glass: CocktailGlassRefSchema.nullable(),
@@ -153,6 +157,7 @@ export const CocktailSummaryDtoSchema = CocktailBaseSchema.extend({
 export const CocktailDtoSchema = CocktailBaseSchema.extend({
   notes: z.string().nullable(),
   history: z.string().nullable(),
+  ...CocktailGuestInfoDtoShape,
   ice: CocktailIceRefSchema.nullable(),
   garnishes: z.array(CocktailGarnishDtoSchema),
   steps: z.array(CocktailStepDtoSchema),
@@ -214,6 +219,7 @@ export const CocktailCreateSchema = z
     image: z.string().nullish().openapi({ description: 'Base64-encoded image (data URI) to attach.' }),
     steps: z.array(CocktailStepInputSchema).optional().openapi({ description: 'Preparation steps (with their ingredients).' }),
     garnishes: z.array(CocktailGarnishInputSchema).optional().openapi({ description: 'Garnishes attached to the cocktail.' }),
+    ...CocktailGuestInfoInputShape,
   })
   .openapi('CocktailCreateInput');
 
@@ -235,6 +241,7 @@ export const CocktailUpdateSchema = z
       .array(CocktailGarnishInputSchema)
       .optional()
       .openapi({ description: 'Garnishes. Differentially applied via garnishId: present are updated/created, missing are deleted.' }),
+    ...CocktailGuestInfoInputShape,
   })
   .openapi('CocktailUpdateInput');
 
@@ -450,6 +457,36 @@ export const cocktailsUnarchiveApiDoc = {
   },
 } satisfies ResourceApiDoc;
 
+/** "Heute aus" toggle: unavailable until the next bar day starts (workspace timezone + statisticDayStartTime). */
+export const CocktailAvailabilitySchema = z
+  .object({
+    unavailable: z.boolean().openapi({
+      description: 'true marks the cocktail as unavailable until the next bar day starts; false makes it available again.',
+    }),
+  })
+  .openapi('CocktailAvailabilityInput');
+
+export type CocktailAvailabilityInput = z.infer<typeof CocktailAvailabilitySchema>;
+
+export const cocktailsAvailabilityApiDoc = {
+  basePath: '/workspaces/{workspaceId}/cocktails/{cocktailId}/availability',
+  legacyPath: false,
+  operations: {
+    PUT: {
+      roles: ['USER'],
+      permission: 'COCKTAILS_UPDATE',
+      tags: [ApiTags.cocktailsLifecycle],
+      summary: 'Set cocktail availability ("heute aus")',
+      description:
+        'Marks a cocktail as sold out for the current bar day (`unavailableUntil` = start of the next bar day, computed from the workspace `timezone` and `statisticDayStartTime`) or clears the flag.',
+      params: CocktailItemParams,
+      body: CocktailAvailabilitySchema,
+      response: CocktailDtoSchema,
+      errorResponses: { 404: 'Cocktail not found.' },
+    },
+  },
+} satisfies ResourceApiDoc;
+
 export const cocktailsExportJsonApiDoc = {
   basePath: '/workspaces/{workspaceId}/cocktails/export/json',
   legacyPath: false,
@@ -493,7 +530,7 @@ export const cocktailsImportJsonApiDoc = {
   operations: {
     POST: {
       roles: ['USER'],
-      permission: null,
+      permission: 'COCKTAILS_CREATE',
       tags: [ApiTags.cocktailsImportExport],
       summary: 'Import cocktails from JSON',
       description:

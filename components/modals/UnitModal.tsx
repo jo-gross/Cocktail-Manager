@@ -12,6 +12,8 @@ import { zodFormikValidate } from '@lib/forms/zodFormikValidate';
 import { createUnit } from '@lib/network/units';
 import { upsertTranslation } from '@lib/network/workspaces';
 import { alertApiV1Error } from '@lib/network/apiV1';
+import { useLabelLocales } from '@components/settings/EntityTranslationLabels';
+import { activeLabelValues, initialLabelValues, LabelTranslationInputs, labelValuesSchema } from '@components/settings/LabelTranslationInputs';
 
 interface UnitModalProps {
   unit?: UnitDto;
@@ -26,6 +28,7 @@ export default function UnitModal(props: UnitModalProps) {
   const router = useRouter();
 
   const { workspaceId } = router.query;
+  const labelLocales = useLabelLocales();
 
   const unitFormSchema = z.object({
     name: z
@@ -33,8 +36,7 @@ export default function UnitModal(props: UnitModalProps) {
       .trim()
       .min(1, t('settings:validation.invalidIdentifier'))
       .regex(/^[A-Z_]+$/, t('settings:validation.azOnly')),
-    labelDe: z.string().trim().min(1, t('settings:validation.invalidLabel')),
-    labelEn: z.string(),
+    labels: labelValuesSchema(labelLocales, t('settings:validation.invalidLabel')),
   });
 
   const validateUnit = zodFormikValidate(unitFormSchema);
@@ -45,16 +47,12 @@ export default function UnitModal(props: UnitModalProps) {
       <Formik
         initialValues={{
           name: props.unit?.name || '',
-          labelDe: props.unit != undefined ? (userContext.translations?.de?.[props.unit.name] ?? '') : '',
-          labelEn: props.unit != undefined ? (userContext.translations?.en?.[props.unit.name] ?? '') : '',
+          labels: initialLabelValues(userContext.translations, props.unit?.name),
         }}
         onSubmit={async (values) => {
           try {
-            if (!workspaceId) return;
-            const translations = {
-              de: values.labelDe.trim(),
-              en: values.labelEn.trim(),
-            };
+            if (!workspaceId || labelLocales.length === 0) return;
+            const translations = activeLabelValues(values.labels, labelLocales);
             if (props.unit == undefined) {
               await createUnit(workspaceId, {
                 name: values.name,
@@ -97,28 +95,7 @@ export default function UnitModal(props: UnitModalProps) {
                 disabled={props.unit != undefined}
               />
             </FormControl>
-            <div className={'grid grid-cols-2 gap-2'}>
-              <FormControl>
-                <Label className="flex-row items-center justify-between">
-                  <LabelText>{t('settings:labelDe')}</LabelText>
-                  <LabelTextAlt className="text-error">
-                    <span>{errors.labelDe && touched.labelDe ? errors.labelDe : ''}</span>
-                    <span>{t('common:required')}</span>
-                  </LabelTextAlt>
-                </Label>
-                <Input id={'labelDe'} name={'labelDe'} value={values.labelDe} onChange={handleChange} />
-              </FormControl>
-              <FormControl>
-                <Label className="flex-row items-center justify-between">
-                  <LabelText>{t('settings:labelEn')}</LabelText>
-                  <LabelTextAlt className="text-error">
-                    <span>{errors.labelEn && touched.labelEn ? errors.labelEn : ''}</span>
-                  </LabelTextAlt>
-                </Label>
-                <Input id={'labelEn'} name={'labelEn'} value={values.labelEn} onChange={handleChange} />
-                {!values.labelEn.trim() ? <span className="text-xs text-base-content/60">{t('settings:missingEnHint')}</span> : null}
-              </FormControl>
-            </div>
+            <LabelTranslationInputs locales={labelLocales} />
             <div className={'flex justify-end gap-2'}>
               <Button
                 variant="outline"
@@ -130,7 +107,7 @@ export default function UnitModal(props: UnitModalProps) {
               >
                 {t('common:cancel')}
               </Button>
-              <Button variant="primary" type={'submit'}>
+              <Button variant="primary" type={'submit'} disabled={isSubmitting || labelLocales.length === 0}>
                 {isSubmitting ? <Loading size="sm" /> : null}
                 {props.unit == undefined ? t('common:create') : t('common:save')}
               </Button>

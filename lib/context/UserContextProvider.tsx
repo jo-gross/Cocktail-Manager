@@ -4,11 +4,14 @@ import type { WorkspaceDto } from '@lib/schemas/workspace';
 import type { TranslationsDto } from '@lib/schemas/translations';
 import type { AppLocale } from '@lib/i18n/locales';
 import { DEFAULT_LOCALE } from '@lib/i18n/locales';
+import type { ContentLocales } from '@lib/workspace/workspaceLocaleSettings';
 
 interface UserContextProps {
   user: (User & { settings: UserSetting[] }) | undefined;
   workspace: WorkspaceDto | undefined;
   translations: TranslationsDto;
+  /** Content languages of the current workspace (label fallback order); `null` while unknown. */
+  contentLocales: ContentLocales | null;
   /** Active UI locale for entity labels (`getTranslation`). Kept in React state so locale changes re-render consumers. */
   uiLocale: AppLocale;
 
@@ -30,6 +33,7 @@ export const UserContext = createContext<UserContextProps>({
   user: undefined,
   workspace: undefined,
   translations: {},
+  contentLocales: null,
   uiLocale: DEFAULT_LOCALE,
   workspaceRefreshing: false,
   refreshUser: () => {},
