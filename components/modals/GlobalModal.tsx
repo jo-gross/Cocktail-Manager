@@ -4,9 +4,16 @@ import { Button, Modal, ModalBackdrop, ModalBox } from '@components/ui';
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import { FaArrowLeft, FaTimes } from 'react-icons/fa';
 import { AlertsContainer } from '../layout/AlertBoundary/AlertsContainer';
+import { useCloseOnBack } from '@lib/navigation/useCloseOnBack';
 
 interface GlobalModalProps {
   children: React.ReactNode;
+}
+
+/** One history entry per stacked modal: back closes the top-most one (mounted in stack order). */
+function ModalHistoryEntry({ onBack }: { onBack: () => void }) {
+  useCloseOnBack(true, onBack);
+  return null;
 }
 
 export function GlobalModal(props: GlobalModalProps) {
@@ -14,15 +21,17 @@ export function GlobalModal(props: GlobalModalProps) {
   const { t } = useTranslation(['common']);
 
   useEffect(() => {
-    const handleEsc = (event: KeyboardEvent) => {
-      if (event.keyCode === 27) {
-        modalContext.closeModal();
-      }
+    // Esc and the Android back button (close watcher) fire `cancel` on the open <dialog>. The native
+    // default would close the whole dialog and leave the modal stack behind – close only the top modal.
+    const dialog = document.getElementById('globalModal') as HTMLDialogElement | null;
+    const handleCancel = (event: Event) => {
+      event.preventDefault();
+      modalContext.closeModal();
     };
-    window.addEventListener('keydown', handleEsc);
+    dialog?.addEventListener('cancel', handleCancel);
 
     return () => {
-      window.removeEventListener('keydown', handleEsc);
+      dialog?.removeEventListener('cancel', handleCancel);
     };
   }, [modalContext]);
 
@@ -32,6 +41,9 @@ export function GlobalModal(props: GlobalModalProps) {
   return (
     <div>
       <div className={modalContext.content.length >= 1 ? 'print:hidden' : ''}>{props.children}</div>
+      {modalContext.content.map((_, index) => (
+        <ModalHistoryEntry key={index} onBack={modalContext.closeModal} />
+      ))}
       <Modal id="globalModal">
         <div className={'pointer-events-none fixed bottom-2 left-1/2 z-50 w-full max-w-fit -translate-x-1/2 overflow-hidden print:hidden'}>
           <AlertsContainer />

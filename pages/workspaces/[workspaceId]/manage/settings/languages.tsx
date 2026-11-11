@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useTranslation } from 'react-i18next';
@@ -14,10 +14,9 @@ function LanguageSettingsPage() {
   const { t } = useTranslation(['settings']);
   const router = useRouter();
   const workspaceId = typeof router.query.workspaceId === 'string' ? router.query.workspaceId : undefined;
-  const [labelsDirty, setLabelsDirty] = useState(false);
 
   return (
-    <SettingsLayout page="languages" unsavedChanges={labelsDirty}>
+    <SettingsLayout page="languages">
       {workspaceId ? (
         <>
           <ContentLanguagesSection workspaceId={workspaceId} />
@@ -34,7 +33,7 @@ function LanguageSettingsPage() {
               </Link>
             }
           />
-          <EntityLabelTranslationsSection workspaceId={workspaceId} onDirtyChange={setLabelsDirty} />
+          <EntityLabelTranslationsSection workspaceId={workspaceId} />
         </>
       ) : (
         <>

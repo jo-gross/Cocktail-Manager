@@ -6,6 +6,7 @@ import { Button, Loading, SkeletonTableRows, Table, TableBody, TableCell, TableH
 import CocktailStepActionModal from '@components/modals/CocktailStepActionModal';
 import EditTranslationModal from '@components/modals/EditTranslationModal';
 import { DeleteConfirmationModal } from '@components/modals/DeleteConfirmationModal';
+import { EntityNameLink } from '@components/manage/EntityNameLink';
 import { getDefaultDilutionPercent } from '@lib/guest-info/constants';
 import { UserContext } from '@lib/context/UserContextProvider';
 import { ModalContext } from '@lib/context/ModalContextProvider';
@@ -86,7 +87,9 @@ export function PreparationActionsSection({ workspaceId }: { workspaceId: string
               ) : (
                 actions.map((action) => (
                   <TableRow key={`action-${action.id}`}>
-                    <TableCell>{action.name}</TableCell>
+                    <TableCell>
+                      <EntityNameLink onClick={() => openActionModal(action)}>{action.name}</EntityNameLink>
+                    </TableCell>
                     <EntityTranslationCells translationKey={action.name} locales={labelLocales} />
                     <TableCell>{userContext.getTranslation(action.actionGroup)}</TableCell>
                     <TableCell className="text-right whitespace-nowrap">
@@ -153,7 +156,13 @@ export function PreparationActionsSection({ workspaceId }: { workspaceId: string
               ) : (
                 groups.map((group) => (
                   <TableRow key={`action-group-${group}`}>
-                    <TableCell>{group}</TableCell>
+                    <TableCell>
+                      <EntityNameLink
+                        onClick={() => modalContext.openModal(<EditTranslationModal identifier={group} slang={t('settings:slang.actionGroup')} />)}
+                      >
+                        {group}
+                      </EntityNameLink>
+                    </TableCell>
                     <EntityTranslationCells translationKey={group} locales={labelLocales} />
                     <TableCell>
                       <div className="flex justify-end">

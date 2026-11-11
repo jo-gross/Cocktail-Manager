@@ -5,6 +5,7 @@ import { Button, cn, Loading, SkeletonTableRows, Table, TableBody, TableCell, Ta
 import UnitModal from '@components/modals/UnitModal';
 import UnitConversionModal from '@components/modals/UnitConversionModal';
 import { DeleteConfirmationModal } from '@components/modals/DeleteConfirmationModal';
+import { EntityNameLink } from '@components/manage/EntityNameLink';
 import { UserContext } from '@lib/context/UserContextProvider';
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import { alertService } from '@lib/alertService';
@@ -145,7 +146,9 @@ export function UnitsSection({ workspaceId }: { workspaceId: string }) {
               ) : (
                 units.map((unit) => (
                   <TableRow key={`unit-${unit.id}`}>
-                    <TableCell>{unit.name}</TableCell>
+                    <TableCell>
+                      <EntityNameLink onClick={() => modalContext.openModal(<UnitModal unit={unit} onSaved={reloadUnits} />)}>{unit.name}</EntityNameLink>
+                    </TableCell>
                     <EntityTranslationCells translationKey={unit.name} locales={labelLocales} />
                     <TableCell>
                       <div className="flex justify-end gap-2">

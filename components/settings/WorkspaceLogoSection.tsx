@@ -1,4 +1,5 @@
 import { useContext, useState } from 'react';
+import { useReportUnsavedChanges } from '@lib/forms/useUnsavedChanges';
 import { useTranslation } from 'react-i18next';
 import CropComponent from '@components/CropComponent';
 import { UploadDropZone } from '@components/UploadDropZone';
@@ -20,6 +21,7 @@ export function WorkspaceLogoSection({ workspaceId }: { workspaceId: string }) {
   const [changing, setChanging] = useState(false);
   const [busy, setBusy] = useState(false);
   const image = draft === undefined ? workspace?.image : draft;
+  useReportUnsavedChanges(draft !== undefined || original !== undefined);
 
   const reset = () => {
     setDraft(undefined);

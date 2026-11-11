@@ -27,6 +27,9 @@ import { RoutingContext } from '@lib/context/RoutingContextProvider';
 import { resizeImage } from '@lib/ImageCompressor';
 import { autoCropImage } from '@lib/ImageUtils';
 import { FormValidationWarningModal } from '../modals/FormValidationWarningModal';
+import { FormikDirtyReporter } from '@lib/forms/FormikDirtyReporter';
+import { trimmed } from '@lib/forms/formDirty';
+import { useUnsavedChangesContext } from '@lib/forms/useUnsavedChanges';
 import {
   Button,
   ButtonGroup,
@@ -88,7 +91,6 @@ function createIngredientFormSchema(requiredMessage: string, imageNotCroppedMess
 
 interface IngredientFormProps {
   ingredient?: IngredientDto;
-  setUnsavedChanges?: (unsavedChanges: boolean) => void;
   formRef?: React.RefObject<FormikProps<FormValue> | null>;
   onSaved?: (id: string) => void;
 }
@@ -114,6 +116,27 @@ export interface FormValue extends IngredientGuestInfoFormValues {
   selectedUnit?: string;
 }
 
+/** Persisted part of the values (mirrors `onSubmit`); the link import / volume inputs are UI-only state. */
+function toComparableIngredient(values: FormValue) {
+  return {
+    name: trimmed(values.name),
+    shortName: trimmed(values.shortName),
+    notes: trimmed(values.notes),
+    description: trimmed(values.description),
+    price: values.price,
+    units: values.units.map((unit) => ({ unitId: unit.unitId, volume: unit.volume })),
+    link: trimmed(values.link),
+    tags: values.tags,
+    image: trimmed(values.image),
+    abv: values.abv,
+    allergens: [...values.allergens].sort(),
+    additives: [...values.additives].sort(),
+    guestInfoComplete: values.guestInfoComplete,
+    hideOnGuestMenu: values.hideOnGuestMenu,
+    guestName: trimmed(values.guestName),
+  };
+}
+
 export function IngredientForm(props: IngredientFormProps) {
   const router = useRouter();
   const workspaceId = router.query.workspaceId as string | undefined;
@@ -121,6 +144,7 @@ export function IngredientForm(props: IngredientFormProps) {
   const { t } = useTranslation(['ingredient', 'common', 'entity', 'errors', 'guestInfo']);
   const userContext = useContext(UserContext);
   const routingContext = useContext(RoutingContext);
+  const unsavedChanges = useUnsavedChangesContext();
 
   const formRef = props.formRef || React.createRef<FormikProps<FormValue>>();
 
@@ -270,7 +294,7 @@ export function IngredientForm(props: IngredientFormProps) {
               props.onSaved(created.id);
             } else {
               alertService.success(t('ingredient:success.created'));
-              await routingContext.conditionalBack(`/workspaces/${workspaceId}/manage/ingredients`);
+              await unsavedChanges.completeSave(() => routingContext.conditionalBack(`/workspaces/${workspaceId}/manage/ingredients`));
             }
           } else {
             await updateIngredient(workspaceId, props.ingredient.id, body);
@@ -279,7 +303,7 @@ export function IngredientForm(props: IngredientFormProps) {
               props.onSaved(props.ingredient.id);
             } else {
               alertService.success(t('ingredient:success.saved'));
-              await routingContext.conditionalBack(`/workspaces/${workspaceId}/manage/ingredients`);
+              await unsavedChanges.completeSave(() => routingContext.conditionalBack(`/workspaces/${workspaceId}/manage/ingredients`));
             }
           }
         } catch (error) {
@@ -287,30 +311,6 @@ export function IngredientForm(props: IngredientFormProps) {
         }
       }}
       validate={(values) => {
-        if (props.ingredient) {
-          const reducedOriginal = {
-            name: props.ingredient.name,
-            shortName: props.ingredient.shortName ?? '',
-            notes: props.ingredient.notes ?? '',
-            description: props.ingredient.description ?? '',
-            price: props.ingredient.price,
-            units: mappedUnits,
-            link: props.ingredient.link ?? '',
-            tags: props.ingredient.tags,
-            abv: props.ingredient.abv ?? '',
-            allergens: props.ingredient.allergens,
-            additives: props.ingredient.additives,
-            guestInfoComplete: props.ingredient.guestInfoComplete,
-            hideOnGuestMenu: props.ingredient.hideOnGuestMenu,
-            guestName: props.ingredient.guestName ?? '',
-          };
-          const reducedValues = _.omit(values, ['image', 'originalImage', 'fetchingExternalData', 'volume', 'selectedUnit']);
-
-          const areImageEqual = hydratedImage == values.image;
-          props.setUnsavedChanges?.(!_.isEqual(reducedOriginal, reducedValues) || !areImageEqual);
-        } else {
-          props.setUnsavedChanges?.(true);
-        }
         return zodFormikValidate(createIngredientFormSchema(t('errors:requiredField'), t('common:imageNotCropped'), t('guestInfo:form.abvRange')))(values);
       }}
     >
@@ -345,6 +345,7 @@ export function IngredientForm(props: IngredientFormProps) {
 
         return (
           <form onSubmit={handleFormSubmit} className={'grid grid-cols-1 gap-2 md:grid-cols-2'}>
+            <FormikDirtyReporter toComparable={toComparableIngredient} />
             <FormControl className={'col-span-full'}>
               <Label htmlFor={'link'} className="flex-row items-center justify-between">
                 <LabelText>{t('ingredient:importByLink')}</LabelText>

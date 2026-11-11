@@ -14,6 +14,7 @@ import { createPortal } from 'react-dom';
 import { AuditLogHistoryModal } from './modals/AuditLogHistoryModal';
 import { Button, Divider, Loading, Menu } from '@components/ui';
 import { alertApiV1Error, apiV1Fetch, apiV1Mutate } from '@lib/network/apiV1';
+import { useCloseOnBack } from '@lib/navigation/useCloseOnBack';
 
 interface ManageColumnProps {
   id: string;
@@ -54,6 +55,7 @@ export function ManageColumn(props: ManageColumnProps) {
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
   const buttonRef = useRef<HTMLButtonElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  useCloseOnBack(isDropdownOpen, () => setIsDropdownOpen(false));
 
   const calculateDropdownPosition = useCallback(() => {
     if (buttonRef.current) {

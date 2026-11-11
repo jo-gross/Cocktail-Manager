@@ -18,6 +18,7 @@ import { FaFileDownload, FaHistory } from 'react-icons/fa';
 import CocktailExportOptionsModal, { CocktailExportOptions } from '@components/modals/CocktailExportOptionsModal';
 import { AuditLogHistoryModal } from '@components/modals/AuditLogHistoryModal';
 import { Button, Divider, Loading as UiLoading } from '@components/ui';
+import { useUnsavedChangesContext } from '@lib/forms/useUnsavedChanges';
 
 function EditCocktailRecipe() {
   const router = useRouter();
@@ -32,7 +33,6 @@ function EditCocktailRecipe() {
   const [exportingPdf, setExportingPdf] = useState(false);
   const [chromiumAvailable, setChromiumAvailable] = useState(false);
 
-  const [unsavedChanges, setUnsavedChanges] = useState(false);
   const formRef = useRef<FormikProps<CocktailRecipeFormValues>>(null);
 
   const handleExportPdf = useCallback(() => {
@@ -110,10 +110,9 @@ function EditCocktailRecipe() {
     <ManageEntityLayout
       backLink={`/workspaces/${workspaceId}/manage/cocktails`}
       title={cocktailRecipe?.isArchived ? <span className={'italic'}>{t('manage:cocktailArchived')}</span> : t('common:cocktail_one')}
-      unsavedChanges={unsavedChanges}
       formRef={formRef}
     >
-      <CocktailRecipeForm cocktailRecipe={cocktailRecipe} setUnsavedChanges={setUnsavedChanges} formRef={formRef} />
+      <CocktailRecipeForm cocktailRecipe={cocktailRecipe} formRef={formRef} />
       {cocktailRecipe != undefined && userContext.isUserPermitted(Role.MANAGER) ? (
         <>
           <Divider />
@@ -135,49 +134,59 @@ function EditCocktailRecipe() {
               <FaHistory />
               {t('manage:history')}
             </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={async () => {
-                const archiveFunction = async () => {
-                  const response = await fetch(
-                    `/api/v1/workspaces/${workspaceId}/cocktails/${cocktailRecipe?.id}/${cocktailRecipe?.isArchived ? 'unarchive' : 'archive'}`,
-                    {
-                      method: 'PUT',
-                    },
-                  );
-
-                  const body = await response.json();
-                  if (response.ok) {
-                    router
-                      .replace(`/workspaces/${workspaceId}/manage/cocktails`)
-                      .then(() => alertService.success(cocktailRecipe?.isArchived ? t('cocktail:unarchivedSuccess') : t('cocktail:archivedSuccess')));
-                  } else {
-                    console.error('CocktailId -> (un)archive', response);
-                    alertService.error(
-                      body.error?.message ?? body.message ?? (cocktailRecipe?.isArchived ? t('cocktail:unarchiveError') : t('cocktail:archiveError')),
-                      response.status,
-                      response.statusText,
-                    );
-                  }
-                };
-
-                if (unsavedChanges) {
-                  modalContext.openModal(<NotSavedArchiveConfirmation archive={!cocktailRecipe.isArchived} onArchive={archiveFunction} />);
-                } else {
-                  await archiveFunction();
-                }
-              }}
-            >
-              {cocktailRecipe?.isArchived ? t('cocktail:unarchiveCocktail') : t('cocktail:archiveCocktail')}
-            </Button>
+            <CocktailArchiveButton cocktailRecipe={cocktailRecipe} workspaceId={workspaceId as string} />
           </div>
         </>
       ) : (
         <></>
       )}
     </ManageEntityLayout>
+  );
+}
+
+/** Rendered inside ManageEntityLayout so it can read the page's unsaved-changes state. */
+function CocktailArchiveButton({ cocktailRecipe, workspaceId }: { cocktailRecipe: CocktailDto; workspaceId: string }) {
+  const router = useRouter();
+  const { t } = useTranslation(['cocktail']);
+  const modalContext = useContext(ModalContext);
+  const unsavedChanges = useUnsavedChangesContext();
+
+  const archiveFunction = async () => {
+    const response = await fetch(`/api/v1/workspaces/${workspaceId}/cocktails/${cocktailRecipe.id}/${cocktailRecipe.isArchived ? 'unarchive' : 'archive'}`, {
+      method: 'PUT',
+    });
+
+    const body = await response.json();
+    if (response.ok) {
+      // The user already confirmed discarding unsaved changes.
+      unsavedChanges
+        .completeSave(() => router.replace(`/workspaces/${workspaceId}/manage/cocktails`))
+        .then(() => alertService.success(cocktailRecipe.isArchived ? t('cocktail:unarchivedSuccess') : t('cocktail:archivedSuccess')));
+    } else {
+      console.error('CocktailId -> (un)archive', response);
+      alertService.error(
+        body.error?.message ?? body.message ?? (cocktailRecipe.isArchived ? t('cocktail:unarchiveError') : t('cocktail:archiveError')),
+        response.status,
+        response.statusText,
+      );
+    }
+  };
+
+  return (
+    <Button
+      type="button"
+      variant="outline"
+      size="sm"
+      onClick={async () => {
+        if (unsavedChanges.dirty) {
+          modalContext.openModal(<NotSavedArchiveConfirmation archive={!cocktailRecipe.isArchived} onArchive={archiveFunction} />);
+        } else {
+          await archiveFunction();
+        }
+      }}
+    >
+      {cocktailRecipe.isArchived ? t('cocktail:unarchiveCocktail') : t('cocktail:archiveCocktail')}
+    </Button>
   );
 }
 

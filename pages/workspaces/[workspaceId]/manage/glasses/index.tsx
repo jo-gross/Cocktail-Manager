@@ -2,6 +2,7 @@ import { Role } from '@generated/prisma/client';
 import Link from 'next/link';
 import { ManageEntityLayout } from '@components/layout/ManageEntityLayout';
 import { ManageColumn } from '@components/ManageColumn';
+import { EntityNameLink } from '@components/manage/EntityNameLink';
 import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { useTranslation } from 'react-i18next';
@@ -49,6 +50,7 @@ const ManageGlassesOverviewPage: NextPageWithPullToRefresh = () => {
 
   const userContext = useContext(UserContext);
   const modalContext = useContext(ModalContext);
+  const canEdit = userContext.isUserPermitted(Role.MANAGER);
 
   const [glasses, setGlasses] = useState<GlassModel[]>([]);
   const [loading, setLoading] = useState(true);
@@ -297,7 +299,9 @@ const ManageGlassesOverviewPage: NextPageWithPullToRefresh = () => {
                         <AvatarImage src={glass.imageUrl ?? ''} alt={t('entity:singular.glass')} altComponent={<DefaultGlassIcon />} />
                       </TableImageCell>
                       <TableCell>
-                        <div className="font-bold">{glass.name}</div>
+                        <EntityNameLink className="font-bold" href={canEdit ? `/workspaces/${workspaceId}/manage/glasses/${glass.id}` : undefined}>
+                          {glass.name}
+                        </EntityNameLink>
                       </TableCell>
                       <TableCell>{glass.deposit.formatPrice()} €</TableCell>
                       <ManageColumn

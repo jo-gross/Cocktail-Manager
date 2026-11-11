@@ -5,6 +5,7 @@ import { Button, Loading, SkeletonTableRows, Table, TableBody, TableCell, TableH
 import CreateIceModal from '@components/modals/CreateIceModal';
 import EditTranslationModal from '@components/modals/EditTranslationModal';
 import { DeleteConfirmationModal } from '@components/modals/DeleteConfirmationModal';
+import { EntityNameLink } from '@components/manage/EntityNameLink';
 import { UserContext } from '@lib/context/UserContextProvider';
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import { alertService } from '@lib/alertService';
@@ -75,7 +76,13 @@ export function IceSection({ workspaceId }: { workspaceId: string }) {
             ) : (
               iceOptions.map((iceOption) => (
                 <TableRow key={`ice-option-${iceOption.id}`}>
-                  <TableCell>{iceOption.name}</TableCell>
+                  <TableCell>
+                    <EntityNameLink
+                      onClick={() => modalContext.openModal(<EditTranslationModal identifier={iceOption.name} slang={t('settings:slang.ice')} />)}
+                    >
+                      {iceOption.name}
+                    </EntityNameLink>
+                  </TableCell>
                   <EntityTranslationCells translationKey={iceOption.name} locales={labelLocales} />
                   <TableCell>
                     <div className="flex justify-end gap-2">

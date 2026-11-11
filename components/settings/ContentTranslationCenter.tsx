@@ -1,4 +1,5 @@
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { useReportUnsavedChanges } from '@lib/forms/useUnsavedChanges';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { Role } from '@generated/prisma/client';
@@ -62,13 +63,12 @@ function downloadText(content: string, filename: string, type: string) {
 
 interface ContentTranslationCenterProps {
   workspaceId: string;
-  onDirtyChange?: (dirty: boolean) => void;
   /** Receives the reload function (e.g. for pull-to-refresh). */
   refreshRef?: React.MutableRefObject<(() => void) | undefined>;
 }
 
 /** Translation center: translate cocktails, ingredients, garnishes and glasses into the additional content languages. */
-export function ContentTranslationCenter({ workspaceId, onDirtyChange, refreshRef }: ContentTranslationCenterProps) {
+export function ContentTranslationCenter({ workspaceId, refreshRef }: ContentTranslationCenterProps) {
   const { t } = useTranslation(['translations', 'common', 'manage']);
   const userContext = useContext(UserContext);
   const canEdit = userContext.isUserPermitted(Role.MANAGER);
@@ -152,7 +152,7 @@ export function ContentTranslationCenter({ workspaceId, onDirtyChange, refreshRe
     [rows, edits],
   );
 
-  useEffect(() => onDirtyChange?.(changedItems.length > 0), [changedItems.length, onDirtyChange]);
+  useReportUnsavedChanges(changedItems.length > 0);
 
   const handleSave = useCallback(async () => {
     if (changedItems.length === 0) return;

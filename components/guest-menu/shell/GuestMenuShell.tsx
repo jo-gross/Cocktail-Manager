@@ -418,7 +418,7 @@ export function GuestMenuShell({
 
       {interactive && (
         <>
-          <Sheet open={!!detailItem} onClose={() => setDetailId(null)} title={detailName} closeLabel={t('shell.close')} hideTitle>
+          <Sheet open={!!detailItem} onClose={() => setDetailId(null)} title={detailName} closeLabel={t('shell.close')} hideTitle closeOnBack={syncUrl}>
             {detailItem && <div className="gm-detail-body" dangerouslySetInnerHTML={{ __html: detailItem.detailHtml }} />}
           </Sheet>
           {filtersEnabled && (
@@ -433,6 +433,7 @@ export function GuestMenuShell({
               locale={dto.locale}
               currency={dto.currency}
               t={t}
+              closeOnBack={syncUrl}
             />
           )}
         </>

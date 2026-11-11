@@ -1,4 +1,5 @@
 import React, { useContext, useEffect, useMemo, useState } from 'react';
+import { useReportUnsavedChanges } from '@lib/forms/useUnsavedChanges';
 import { useTranslation } from 'react-i18next';
 import { FaSave } from 'react-icons/fa';
 import {
@@ -49,11 +50,10 @@ type Labels = Record<string, string>;
 
 interface EntityLabelTranslationsSectionProps {
   workspaceId: string;
-  onDirtyChange?: (dirty: boolean) => void;
 }
 
 /** Inline editor for the UI-language labels of preparation actions, action groups, units and ice. */
-export function EntityLabelTranslationsSection({ workspaceId, onDirtyChange }: EntityLabelTranslationsSectionProps) {
+export function EntityLabelTranslationsSection({ workspaceId }: EntityLabelTranslationsSectionProps) {
   const { t, i18n } = useTranslation(['settings', 'common', 'errors']);
   const userContext = useContext(UserContext);
   const contentLocales = useContentLocales(workspaceId);
@@ -88,7 +88,7 @@ export function EntityLabelTranslationsSection({ workspaceId, onDirtyChange }: E
   const invalidKeys = primaryLocale ? changedKeys.filter((key) => valueOf(key, primaryLocale).trim() === '') : [];
   const dirty = changedKeys.length > 0;
 
-  useEffect(() => onDirtyChange?.(dirty), [dirty, onDirtyChange]);
+  useReportUnsavedChanges(dirty);
 
   const visibleKeys = keysByKind[kind].filter((key) => !missingOnly || isMissing(key) || edits[key] !== undefined);
 

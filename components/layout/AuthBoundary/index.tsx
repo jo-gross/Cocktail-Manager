@@ -19,6 +19,7 @@ import { resolveLabelOrNull } from '@lib/i18n/labelFallback';
 import { getWorkspaceContentLocales, type ContentLocales } from '@lib/workspace/workspaceLocaleSettings';
 import { CONTENT_LOCALES_CHANGED_EVENT } from '@components/settings/useContentLocales';
 import type { UserSettingUpdateInput } from '@lib/schemas/userSettings';
+import { clearOfflineData } from '@lib/offline/invalidation';
 
 interface AlertBoundaryProps {
   children: React.ReactNode;
@@ -79,6 +80,8 @@ export function AuthBoundary(props: AlertBoundaryProps) {
       setWorkspace(undefined);
       setTranslations({});
       setContentLocales(null);
+      // Shared devices: no workspace data may outlive the session
+      clearOfflineData().catch(console.error);
     }
   }, [fetchUser, session?.user, user, userLoading, sessionLoading]);
 

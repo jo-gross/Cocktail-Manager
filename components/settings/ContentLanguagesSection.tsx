@@ -1,4 +1,5 @@
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useReportUnsavedChanges } from '@lib/forms/useUnsavedChanges';
 import { useTranslation } from 'react-i18next';
 import { Button, FormControl, Label, LabelText, Loading, Select, Skeleton } from '@components/ui';
 import { UserContext } from '@lib/context/UserContextProvider';
@@ -49,6 +50,7 @@ export function ContentLanguagesSection({ workspaceId }: { workspaceId: string }
   const languageName = useCallback((code: string) => displayName(code, 'language', i18n.language), [i18n.language]);
 
   const dirty = serializeContentLocales(contentLocales) !== serializeContentLocales(saved);
+  useReportUnsavedChanges(!loading && dirty);
 
   const save = async () => {
     if (!dirty) return;

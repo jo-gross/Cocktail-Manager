@@ -2,6 +2,7 @@ import { Role } from '@generated/prisma/client';
 import Link from 'next/link';
 import { ManageEntityLayout } from '@components/layout/ManageEntityLayout';
 import { ManageColumn } from '@components/ManageColumn';
+import { EntityNameLink } from '@components/manage/EntityNameLink';
 import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { useTranslation } from 'react-i18next';
@@ -48,6 +49,7 @@ const ManageGarnishesOverviewPage: NextPageWithPullToRefresh = () => {
 
   const userContext = useContext(UserContext);
   const modalContext = useContext(ModalContext);
+  const canEdit = userContext.isUserPermitted(Role.MANAGER);
 
   const [garnishes, setGarnishes] = useState<GarnishModel[]>([]);
   const [loading, setLoading] = useState(true);
@@ -292,7 +294,9 @@ const ManageGarnishesOverviewPage: NextPageWithPullToRefresh = () => {
                         <AvatarImage src={garnish.imageUrl ?? ''} alt={t('entity:singular.garnish')} />
                       </TableImageCell>
                       <TableCell>
-                        <div className="font-bold">{garnish.name}</div>
+                        <EntityNameLink className="font-bold" href={canEdit ? `/workspaces/${workspaceId}/manage/garnishes/${garnish.id}` : undefined}>
+                          {garnish.name}
+                        </EntityNameLink>
                       </TableCell>
                       <TableCell>{garnish.price?.formatPrice() ?? '-'} €</TableCell>
                       <ManageColumn

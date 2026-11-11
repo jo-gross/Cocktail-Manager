@@ -1,6 +1,7 @@
 import { ManageEntityLayout } from '@components/layout/ManageEntityLayout';
 import { PageCenter } from '@components/layout/PageCenter';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import type { FormikProps } from 'formik';
 import { useRouter } from 'next/router';
 import { useTranslation } from 'react-i18next';
 import { Loading } from '@components/Loading';
@@ -9,6 +10,7 @@ import { Role } from '@generated/prisma/client';
 import type { CardDto } from '@lib/schemas/cards';
 import type { CocktailSummaryDto } from '@lib/schemas/cocktails';
 import { CardEditorArchiveActions, CardEditorForm } from '@components/card-editor/CardEditorForm';
+import type { CardEditorFormValues } from '@components/card-editor/types';
 import { apiV1FetchSafe } from '@lib/network/apiV1';
 
 function EditCocktailCard() {
@@ -20,7 +22,7 @@ function EditCocktailCard() {
   const [loadingCard, setLoadingCard] = useState<boolean>(false);
   const [cocktails, setCocktails] = useState<CocktailSummaryDto[]>([]);
   const [loadingCocktails, setLoadingCocktails] = useState<boolean>(false);
-  const [unsavedChanges, setUnsavedChanges] = useState(false);
+  const formRef = useRef<FormikProps<CardEditorFormValues>>(null);
 
   useEffect(() => {
     if (!id || !workspaceId) return;
@@ -51,15 +53,9 @@ function EditCocktailCard() {
     <ManageEntityLayout
       backLink={`/workspaces/${workspaceId}/manage/cards`}
       title={card?.archived ? <span className={'italic'}>{t('manage:cardArchived')}</span> : t('manage:card')}
-      unsavedChanges={unsavedChanges}
+      formRef={formRef}
     >
-      <CardEditorForm
-        card={card}
-        cocktails={cocktails}
-        loadingCocktails={loadingCocktails}
-        workspaceId={workspaceId as string}
-        onUnsavedChangesChange={setUnsavedChanges}
-      />
+      <CardEditorForm card={card} cocktails={cocktails} loadingCocktails={loadingCocktails} workspaceId={workspaceId as string} formRef={formRef} />
       {card != undefined ? <CardEditorArchiveActions card={card} workspaceId={workspaceId as string} /> : null}
     </ManageEntityLayout>
   );

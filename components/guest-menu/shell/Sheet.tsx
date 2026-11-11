@@ -1,5 +1,6 @@
 import { useEffect, useRef, type ReactNode } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
+import { useCloseOnBack } from '@lib/navigation/useCloseOnBack';
 import { CloseIcon } from './icons';
 
 interface SheetProps {
@@ -11,13 +12,17 @@ interface SheetProps {
   footer?: ReactNode;
   /** Hide the title visually (still used as accessible name). */
   hideTitle?: boolean;
+  /** Browser back closes the sheet. Only for the page that owns the browser history (not the builder preview). */
+  closeOnBack?: boolean;
 }
 
-/** Bottom sheet (phone) / centered dialog (wide screens). Esc + backdrop close, focus restore, reduced motion aware. */
-export function Sheet({ open, onClose, title, closeLabel, children, footer, hideTitle }: SheetProps) {
+/** Bottom sheet (phone) / centered dialog (wide screens). Esc + backdrop (+ optional browser back) close, focus restore, reduced motion aware. */
+export function Sheet({ open, onClose, title, closeLabel, children, footer, hideTitle, closeOnBack = false }: SheetProps) {
   const reduceMotion = useReducedMotion();
   const closeRef = useRef<HTMLButtonElement>(null);
   const restoreFocus = useRef<HTMLElement | null>(null);
+
+  useCloseOnBack(open, onClose, closeOnBack);
 
   useEffect(() => {
     if (!open) return;

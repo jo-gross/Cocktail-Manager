@@ -850,7 +850,6 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                                         specialPrice={groupItem.specialPrice ?? group.groupPrice ?? undefined}
                                         cocktailRecipe={cocktailId}
                                         showStatisticActions={showStatisticActions}
-                                        showAvailabilityToggle={showStatisticActions}
                                         showDescription={showDescription}
                                         showNotes={showNotes}
                                         showHistory={showHistory}
@@ -911,7 +910,6 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                             showPrice={true}
                             cocktailRecipe={cocktailId}
                             showStatisticActions={showStatisticActions}
-                            showAvailabilityToggle={showStatisticActions}
                             showDescription={showDescription}
                             showNotes={showNotes}
                             showHistory={showHistory}
