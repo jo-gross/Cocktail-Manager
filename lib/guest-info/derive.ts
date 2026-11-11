@@ -6,6 +6,8 @@
 import {
   ADDITIVES,
   ALCOHOL_FREE_MAX_ABV,
+  ALLERGEN_SOURCE_PARENT,
+  ALLERGEN_SOURCES,
   ALLERGENS,
   ETHANOL_DENSITY_G_PER_ML,
   getAlcoholCategory,
@@ -14,12 +16,15 @@ import {
   type AlcoholCategory,
   type AlcoholStatus,
   type Allergen,
+  type AllergenSource,
 } from './constants';
 
 export interface GuestInfoIngredientInput {
   id: string;
   abv: number | null;
   allergens: Allergen[];
+  /** Specific cereals/nuts behind GLUTEN/NUTS. */
+  allergenSources?: AllergenSource[];
   additives: Additive[];
   guestInfoComplete: boolean;
 }
@@ -41,7 +46,7 @@ export interface GuestInfoStepInput {
 export interface GuestInfoGarnishInput {
   optional: boolean;
   isAlternative: boolean;
-  garnish: { allergens: Allergen[]; additives: Additive[]; guestInfoComplete: boolean };
+  garnish: { allergens: Allergen[]; allergenSources?: AllergenSource[]; additives: Additive[]; guestInfoComplete: boolean };
 }
 
 export interface GuestInfoCocktailInput {
@@ -58,7 +63,8 @@ export interface UnitToMlResolver {
 }
 
 export interface DerivedGuestInfo {
-  allergens: { code: Allergen; optional: boolean }[];
+  /** `sources`: the specified cereals/nuts of all contributing ingredients/garnishes (legal order). */
+  allergens: { code: Allergen; optional: boolean; sources: AllergenSource[] }[];
   additives: { code: Additive; optional: boolean }[];
   complete: boolean;
   alcohol: {
@@ -155,6 +161,11 @@ function collect<T extends string>(order: readonly T[], entries: Iterable<{ code
 export function deriveCocktailGuestInfo(cocktail: GuestInfoCocktailInput, toMl: UnitToMlResolver): DerivedGuestInfo {
   const allergenEntries: { code: Allergen; optional: boolean }[] = [];
   const additiveEntries: { code: Additive; optional: boolean }[] = [];
+  const allergenSources = new Set<AllergenSource>();
+  const addSources = (allergens: Allergen[], sources: AllergenSource[] | undefined) =>
+    sources?.forEach((source) => {
+      if (allergens.includes(ALLERGEN_SOURCE_PARENT[source])) allergenSources.add(source);
+    });
   let complete = true;
 
   for (const code of cocktail.extraAllergens) allergenEntries.push({ code, optional: false });
@@ -177,6 +188,7 @@ export function deriveCocktailGuestInfo(cocktail: GuestInfoCocktailInput, toMl: 
 
       if (!ingredient.guestInfoComplete) complete = false;
       for (const code of ingredient.allergens) allergenEntries.push({ code, optional });
+      addSources(ingredient.allergens, ingredient.allergenSources);
       for (const code of ingredient.additives) additiveEntries.push({ code, optional });
 
       // Optional ingredients are not part of the standard serving.
@@ -196,6 +208,7 @@ export function deriveCocktailGuestInfo(cocktail: GuestInfoCocktailInput, toMl: 
     const optional = entry.optional || entry.isAlternative;
     if (!entry.garnish.guestInfoComplete) complete = false;
     for (const code of entry.garnish.allergens) allergenEntries.push({ code, optional });
+    addSources(entry.garnish.allergens, entry.garnish.allergenSources);
     for (const code of entry.garnish.additives) additiveEntries.push({ code, optional });
   }
 
@@ -230,7 +243,10 @@ export function deriveCocktailGuestInfo(cocktail: GuestInfoCocktailInput, toMl: 
   }
 
   return {
-    allergens: collect(ALLERGENS, allergenEntries),
+    allergens: collect(ALLERGENS, allergenEntries).map((entry) => ({
+      ...entry,
+      sources: ALLERGEN_SOURCES.filter((source) => ALLERGEN_SOURCE_PARENT[source] === entry.code && allergenSources.has(source)),
+    })),
     additives: collect(ADDITIVES, additiveEntries),
     complete,
     alcohol,

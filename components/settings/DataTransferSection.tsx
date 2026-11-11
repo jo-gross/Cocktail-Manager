@@ -2,7 +2,8 @@ import React, { useContext, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
 import { useTranslation } from 'react-i18next';
 import { FaFileDownload, FaFileUpload } from 'react-icons/fa';
-import { Alert, Button, FileInput, FormControl, Label, LabelText, Loading } from '@components/ui';
+import { Alert, Button, FileInput, Loading } from '@components/ui';
+import { FormField } from '@components/forms/FormField';
 import { UserContext } from '@lib/context/UserContextProvider';
 import { alertService } from '@lib/alertService';
 import { formatDate } from '@lib/DateUtils';
@@ -111,10 +112,7 @@ export function DataTransferSection({ workspaceId }: { workspaceId: string }) {
             </div>
           </Alert>
         )}
-        <FormControl>
-          <Label htmlFor="backup-import-file">
-            <LabelText className="font-semibold">{t('settings:data.importFile')}</LabelText>
-          </Label>
+        <FormField label={t('settings:data.importFile')} htmlFor="backup-import-file">
           <FileInput
             id="backup-import-file"
             accept=".json,application/json"
@@ -122,7 +120,7 @@ export function DataTransferSection({ workspaceId }: { workspaceId: string }) {
             ref={importFileRef}
             onChange={(event) => setImportFile(event.target.files?.[0])}
           />
-        </FormControl>
+        </FormField>
       </SettingsSection>
     </>
   );

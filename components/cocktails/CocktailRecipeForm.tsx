@@ -1,11 +1,11 @@
-import { FaAngleDown, FaAngleUp, FaEuroSign, FaPlus, FaSearch, FaTrashAlt } from 'react-icons/fa';
-import { Field, FieldArray, Formik, FormikProps } from 'formik';
+import { FaPlus, FaTrashAlt } from 'react-icons/fa';
+import { FieldArray, Formik, FormikProps } from 'formik';
+import { arrayMove } from '@dnd-kit/sortable';
 import React, { createRef, useCallback, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRouter } from 'next/router';
 import type { ActionDto } from '@lib/schemas/actions';
-import { UploadDropZone } from '../UploadDropZone';
-import { convertBase64ToFile, convertToBase64, fetchImageAsBase64 } from '@lib/Base64Converter';
+import { convertBase64ToFile, fetchImageAsBase64 } from '@lib/Base64Converter';
 import { CocktailRecipeStepFull } from '../../models/CocktailRecipeStepFull';
 import CocktailRecipeCardItem from './CocktailRecipeCardItem';
 import { alertService } from '@lib/alertService';
@@ -13,7 +13,6 @@ import { CocktailRecipeGarnishFull } from '../../models/CocktailRecipeGarnishFul
 import { DeleteConfirmationModal } from '../modals/DeleteConfirmationModal';
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import _, { orderBy } from 'lodash';
-import { resizeImage } from '@lib/ImageCompressor';
 import { SelectModal } from '../modals/SelectModal';
 import FormModal from '../modals/FormModal';
 import { GarnishForm, GarnishFormValues } from '../garnishes/GarnishForm';
@@ -36,15 +35,12 @@ import { fetchIngredients } from '@lib/network/ingredients';
 import { fetchActions } from '@lib/network/actions';
 import { fetchUnits } from '@lib/network/units';
 import { calcCocktailTotalPrice } from '@lib/CocktailRecipeCalculation';
-import Image from 'next/image';
 import { fetchIce } from '@lib/network/ices';
 import { updateTags, validateTag } from '../../models/tags/TagUtils';
 import { TagInput } from '../TagInput';
-import CropComponent from '../CropComponent';
 import { alertApiV1Error, apiV1Fetch, apiV1Mutate } from '@lib/network/apiV1';
 import { TranslatedFieldTabs } from '@components/translations/TranslatedFieldTabs';
 import { useEntityContentTranslations } from '@components/translations/useEntityContentTranslations';
-import { FaCropSimple } from 'react-icons/fa6';
 import { RoutingContext } from '@lib/context/RoutingContextProvider';
 import { FormikDirtyReporter } from '@lib/forms/FormikDirtyReporter';
 import { trimmed } from '@lib/forms/formDirty';
@@ -52,30 +48,20 @@ import { useUnsavedChangesContext } from '@lib/forms/useUnsavedChanges';
 import '../../lib/NumberUtils';
 import { z } from 'zod';
 import { zodFormikValidate } from '@lib/forms/zodFormikValidate';
-import {
-  Badge,
-  Button,
-  ButtonGroup,
-  Card,
-  CardBody,
-  cn,
-  Divider,
-  FormControl,
-  Input,
-  Label,
-  LabelText,
-  LabelTextAlt,
-  Loading,
-  Select,
-  stackGap,
-  Textarea,
-  Toggle,
-  Tooltip,
-} from '@components/ui';
+import { Badge, Button, ButtonGroup, Input, InputAddon, Loading, Select, Textarea } from '@components/ui';
+import { EntityFormLayout, type FormNavSection } from '@components/forms/EntityFormLayout';
+import { FormSection } from '@components/forms/FormSection';
+import { FormField, visibleFieldError } from '@components/forms/FormField';
+import { FormSaveButton } from '@components/forms/FormSaveButton';
+import { FormikImageTile } from '@components/forms/FormikImageTile';
+import { TabbedCard } from '@components/forms/TabbedCard';
+import { CocktailGuestInfoPreview } from '@components/guest-info/CocktailGuestInfoPreview';
+import { PickerField } from '@components/forms/PickerField';
+import { SortableList } from '@components/forms/SortableList';
+import { ToggleField } from '@components/forms/ToggleField';
+import { CocktailCostSummary } from './CocktailCostSummary';
 import { CocktailGuestInfoFields, parseOptionalPercent, type CocktailGuestInfoFormValues } from '@components/guest-info/GuestInfoFormFields';
 import { ADDITIVES, ALLERGENS } from '@lib/guest-info/constants';
-
-const fieldErrorClass = 'border-error focus:border-error focus:ring-error/25';
 
 export interface CocktailRecipeFormValues extends CocktailGuestInfoFormValues {
   id: string;
@@ -100,13 +86,31 @@ export interface CocktailRecipeFormValues extends CocktailGuestInfoFormValues {
 interface CocktailRecipeFormProps {
   cocktailRecipe?: CocktailDto;
   formRef: React.RefObject<FormikProps<CocktailRecipeFormValues> | null>;
+  /** Extra sections from the page (e.g. export / history / archive), shown after the form sections. */
+  additionalSections?: React.ReactNode;
+}
+
+/**
+ * Repeated rows (steps, ingredient lines, garnishes) carry a client-side `_key`, so drag & drop and React
+ * keep track of a row across reorders and edits. Saved rows use their database id; `_key` is never sent.
+ */
+type Keyed<T> = T & { _key?: string };
+type KeyedStepIngredient = Keyed<CocktailRecipeStepFull['ingredients'][number]>;
+type KeyedStep = Keyed<CocktailRecipeStepFull> & { ingredients: KeyedStepIngredient[] };
+type KeyedGarnish = Keyed<CocktailRecipeGarnishFull> & { isAlternative?: boolean };
+
+let rowKeyCounter = 0;
+function newRowKey() {
+  rowKeyCounter += 1;
+  return `new-${rowKeyCounter}`;
 }
 
 /** Map v1 CocktailDto nested refs into the flat FK shape the form fields expect (ordered like they are displayed). */
-function mapCocktailDtoToFormSteps(cocktail: CocktailDto): CocktailRecipeStepFull[] {
+function mapCocktailDtoToFormSteps(cocktail: CocktailDto): KeyedStep[] {
   return orderBy(cocktail.steps, ['stepNumber'], ['asc']).map(
     (step) =>
       ({
+        _key: step.id,
         id: step.id,
         cocktailRecipeId: cocktail.id,
         stepNumber: step.stepNumber,
@@ -114,6 +118,7 @@ function mapCocktailDtoToFormSteps(cocktail: CocktailDto): CocktailRecipeStepFul
         actionId: step.action?.id ?? '',
         action: step.action ?? { id: '', name: '' },
         ingredients: orderBy(step.ingredients, ['ingredientNumber'], ['asc']).map((line) => ({
+          _key: line.id,
           id: line.id,
           amount: line.amount,
           optional: line.optional,
@@ -124,14 +129,15 @@ function mapCocktailDtoToFormSteps(cocktail: CocktailDto): CocktailRecipeStepFul
           ingredient: line.ingredient ?? null,
           cocktailRecipeStepId: step.id,
         })),
-      }) as CocktailRecipeStepFull,
+      }) as unknown as KeyedStep,
   );
 }
 
 function mapCocktailDtoToFormGarnishes(cocktail: CocktailDto): CocktailRecipeGarnishFull[] {
   return cocktail.garnishes.map(
-    (g) =>
+    (g, index) =>
       ({
+        _key: `garnish-${index}`,
         cocktailRecipeId: cocktail.id,
         garnishId: g.garnishId ?? g.garnish?.id ?? '',
         garnishNumber: g.garnishNumber,
@@ -181,24 +187,6 @@ function toComparableCocktail(values: CocktailRecipeFormValues) {
       isAlternative: (garnish as CocktailRecipeGarnishFull & { isAlternative?: boolean }).isAlternative ?? false,
     })),
   };
-}
-
-interface IngredientError {
-  amount?: string;
-  unit?: string;
-  ingredientId?: string;
-  optional?: string;
-}
-
-interface StepError {
-  action?: string;
-  ingredients?: IngredientError[];
-}
-
-interface GarnishError {
-  garnishId?: string;
-  optional?: string;
-  isAlternative?: string;
 }
 
 /**
@@ -590,201 +578,159 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
         }
       }}
     >
-      {({ values, setFieldValue, setFieldError, errors, handleChange, handleBlur, handleSubmit, isSubmitting, isValid }) => (
-        <form onSubmit={handleSubmit}>
-          <FormikDirtyReporter toComparable={toComparableCocktail} />
-          <div className={cn('grid grid-cols-1 md:grid-cols-3', stackGap)}>
-            <Card variant="surface" className="grid-cols-1 md:col-span-2">
-              <CardBody>
-                <div className={'text-center text-2xl font-bold'}>{t('cocktail:formTitle')}</div>
-                <Divider />
-                <div className={'grid grid-cols-2 gap-4'}>
-                  <div className={'col-span-2'}>
-                    <Label htmlFor={'name'} className="flex-row items-center justify-between">
-                      <LabelText>{t('cocktail:name')}</LabelText>
-                      <LabelTextAlt className="text-error">
-                        <>{errors.name && errors.name}</> *
-                      </LabelTextAlt>
-                    </Label>
-                    <TranslatedFieldTabs translations={contentTranslations} field="name" sourceValue={values.name}>
-                      <Input
-                        type="text"
-                        name="name"
-                        autoComplete={'off'}
-                        id={'name'}
-                        className={errors.name ? fieldErrorClass : undefined}
-                        onChange={(event) => {
-                          if (event.target.value.length > 2 && workspaceId) {
-                            apiV1Fetch<CocktailSummaryDto | null>(
-                              `/api/v1/workspaces/${workspaceId}/cocktails/check?name=${encodeURIComponent(event.target.value)}`,
-                            )
-                              .then((match) => {
-                                if (match != null && match.id != props.cocktailRecipe?.id) {
-                                  setSimilarCocktailRecipe(match);
-                                } else {
-                                  setSimilarCocktailRecipe(undefined);
-                                }
-                              })
-                              .catch(() => setSimilarCocktailRecipe(undefined));
-                          } else {
-                            setSimilarCocktailRecipe(undefined);
+      {(formik) => {
+        const { values, setFieldValue, setFieldError, handleChange, handleBlur, handleSubmit } = formik;
+        const steps = values.steps as KeyedStep[];
+        const formGarnishes = values.garnishes as KeyedGarnish[];
+        const nameError = visibleFieldError(formik, 'name');
+        const glassError = visibleFieldError(formik, 'glassId');
+        const iceError = visibleFieldError(formik, 'iceId');
+        const priceError = visibleFieldError(formik, 'price');
+        const tagsError = typeof formik.errors.tags === 'string' ? formik.errors.tags : undefined;
+        const suggestedTags = inheritTagsFromIngredients(steps, values.tags);
+        const guestInfoOverridden =
+          (values.abvOverride !== '' && values.abvOverride != null) || values.extraAllergens.length > 0 || values.extraAdditives.length > 0;
+
+        const sections: FormNavSection[] = [
+          { id: 'cocktail-general', label: t('common:form.section.general') },
+          { id: 'cocktail-preparation', label: t('cocktail:preparation') },
+          { id: 'cocktail-garnish', label: t('cocktail:garnish') },
+          { id: 'cocktail-texts', label: t('common:form.section.texts') },
+          { id: 'cocktail-guest-info', label: t('guestInfo:form.sectionTitle') },
+          { id: 'cocktail-preview', label: t('common:preview'), hideWhenWide: true },
+        ];
+
+        const moveGarnish = (from: number, to: number) => {
+          const reordered = arrayMove(formGarnishes, from, to).map((garnish, index) => ({ ...garnish, garnishNumber: index }));
+          // The first garnish can't be an alternative to a previous one.
+          if (reordered[0]?.isAlternative) reordered[0] = { ...reordered[0], isAlternative: false };
+          setFieldValue('garnishes', reordered);
+        };
+
+        return (
+          <form onSubmit={handleSubmit} noValidate>
+            <FormikDirtyReporter toComparable={toComparableCocktail} />
+            <FormSaveButton label={props.cocktailRecipe == undefined ? t('common:create') : t('common:save')} />
+            <EntityFormLayout
+              sections={sections}
+              stickyAside
+              trailing={props.additionalSections}
+              aside={
+                <TabbedCard
+                  id="cocktail-preview"
+                  tabs={[
+                    {
+                      id: 'preview',
+                      label: t('common:preview'),
+                      content: (
+                        <CocktailRecipeCardItem
+                          image={values.image}
+                          imageSlot={
+                            <FormikImageTile
+                              aspect={9 / 16}
+                              width={504}
+                              height={896}
+                              size="fill"
+                              alt={t('common:cocktailImageAlt')}
+                              cropInfo={t('common:imageCropInfoLong')}
+                            />
                           }
-                          handleChange(event);
-                        }}
-                        onBlur={handleBlur}
-                        value={values.name}
-                      />
-                    </TranslatedFieldTabs>
-                    {similarCocktailRecipe && (
-                      <Label className="flex-row">
-                        <LabelTextAlt className="text-warning">{t('cocktail:similarExists', { name: similarCocktailRecipe.name })}</LabelTextAlt>
-                      </Label>
-                    )}
-                  </div>
-                  <div className={'col-span-2'}>
-                    <Label htmlFor={'notes'} className="flex-row items-center justify-between">
-                      <LabelText>{t('cocktail:prepNotes')}</LabelText>
-                      <LabelTextAlt className="text-error">
-                        <>{errors.notes && errors.notes}</>
-                      </LabelTextAlt>
-                    </Label>
-                    <Textarea
-                      id={'notes'}
-                      name="notes"
-                      className={errors.notes ? fieldErrorClass : undefined}
-                      placeholder={t('cocktail:prepNotesPlaceholder')}
-                      onChange={handleChange}
-                      onBlur={handleBlur}
-                      value={values.notes}
-                      rows={5}
-                    />
-                  </div>
-                  <div className={'col-span-2'}>
-                    <Label htmlFor={'description'} className="flex-row items-center justify-between">
-                      <LabelText>{t('cocktail:description')}</LabelText>
-                      <LabelTextAlt className="text-error">
-                        <>{errors.description && errors.description}</>
-                      </LabelTextAlt>
-                    </Label>
-                    <TranslatedFieldTabs translations={contentTranslations} field="description" sourceValue={values.description} multiline>
-                      <Textarea
-                        id={'description'}
-                        name="description"
-                        className={errors.description ? fieldErrorClass : undefined}
-                        placeholder={t('cocktail:descriptionPlaceholder')}
-                        onChange={handleChange}
-                        onBlur={handleBlur}
-                        value={values.description}
-                        rows={5}
-                      />
-                    </TranslatedFieldTabs>
-                  </div>
-                  <div className={'col-span-2'}>
-                    <Label htmlFor={'history'} className="flex-row items-center justify-between">
-                      <LabelText>{t('cocktail:history')}</LabelText>
-                      <LabelTextAlt className="text-error">
-                        <>{errors.history && errors.history}</>
-                      </LabelTextAlt>
-                    </Label>
-                    <TranslatedFieldTabs translations={contentTranslations} field="history" sourceValue={values.history} multiline>
-                      <Textarea
-                        id={'history'}
-                        name="history"
-                        className={errors.history ? fieldErrorClass : undefined}
-                        placeholder={t('cocktail:historyPlaceholder')}
-                        onChange={handleChange}
-                        onBlur={handleBlur}
-                        value={values.history}
-                        rows={5}
-                      />
-                    </TranslatedFieldTabs>
-                  </div>
-                  <div className={'col-span-2 md:col-span-1'}>
-                    <Label htmlFor={'price'} className="flex-row items-center justify-between">
-                      <LabelText>{t('cocktail:price')}</LabelText>
-                      <LabelTextAlt className="text-error">
-                        <>{errors.price && errors.price}</>
-                      </LabelTextAlt>
-                    </Label>
-                    <ButtonGroup className="w-full">
-                      <Input
-                        id={'price'}
-                        type="number"
-                        className={errors.price ? fieldErrorClass : undefined}
-                        joinItem
-                        name="price"
-                        onChange={handleChange}
-                        onBlur={handleBlur}
-                        value={values.price ?? ''}
-                      />
-                      <Button type="button" variant="secondary" joinItem>
-                        <FaEuroSign />
-                      </Button>
-                    </ButtonGroup>
-                  </div>
-                  <div className={'col-span-2 md:col-span-1'}>
-                    <Label className="flex-row items-center justify-between">
-                      <LabelText>{t('cocktail:tags')}</LabelText>
-                      <LabelTextAlt className="text-error">
-                        <>{errors.tags && errors.tags}</>
-                      </LabelTextAlt>
-                    </Label>
-                    <div id={'tags'}>
-                      <TagInput
-                        value={values.tags}
-                        onChange={(tags: string[]) =>
-                          setFieldValue(
-                            'tags',
-                            updateTags(tags, (text) => setFieldError('tags', text ?? t('common:tagInvalid'))),
+                          cocktailRecipe={
+                            {
+                              hasImage: values.image != undefined,
+                              imageUrl: null,
+                              id: values.id,
+                              name: values.name,
+                              description: values.description.trim() == '' ? null : values.description.trim(),
+                              notes: values.notes.trim() == '' ? null : values.notes.trim(),
+                              history: values.history.trim() == '' ? null : values.history.trim(),
+                              tags: values.tags,
+                              price: values.price,
+                              ice: iceOptions.find((ice) => ice.id === values.iceId) ?? null,
+                              isArchived: false,
+                              glass: glasses.find((glass) => glass.id === values.glassId) ?? null,
+                              garnishes: values.garnishes,
+                              steps: values.steps,
+                              averageRating: null,
+                              ratingCount: 0,
+                            } as unknown as CocktailDto
+                          }
+                          showInfo={false}
+                          showTags={true}
+                          showDescription={true}
+                          showNotes={true}
+                          showHistory={true}
+                        />
+                      ),
+                    },
+                    {
+                      id: 'guests',
+                      label: t('cocktail:guestsTab'),
+                      content: workspaceId ? <CocktailGuestInfoPreview workspaceId={workspaceId} cocktailId={props.cocktailRecipe?.id} /> : null,
+                    },
+                    {
+                      id: 'finances',
+                      label: t('cocktail:finances'),
+                      content: (
+                        <CocktailCostSummary
+                          steps={steps}
+                          garnishes={formGarnishes}
+                          ingredients={ingredients}
+                          total={calcCocktailTotalPrice(values as unknown as CocktailRecipeFull, ingredients)}
+                        />
+                      ),
+                    },
+                  ]}
+                />
+              }
+            >
+              <FormSection id="cocktail-general" title={t('common:form.section.general')}>
+                <FormField
+                  label={t('cocktail:name')}
+                  htmlFor="name"
+                  required
+                  error={nameError}
+                  warning={similarCocktailRecipe ? t('cocktail:similarExists', { name: similarCocktailRecipe.name }) : undefined}
+                >
+                  <TranslatedFieldTabs translations={contentTranslations} field="name" sourceValue={values.name}>
+                    <Input
+                      id={'name'}
+                      name="name"
+                      autoComplete={'off'}
+                      enterKeyHint={'next'}
+                      error={!!nameError}
+                      onChange={(event) => {
+                        if (event.target.value.length > 2 && workspaceId) {
+                          apiV1Fetch<CocktailSummaryDto | null>(
+                            `/api/v1/workspaces/${workspaceId}/cocktails/check?name=${encodeURIComponent(event.target.value)}`,
                           )
+                            .then((match) => {
+                              if (match != null && match.id != props.cocktailRecipe?.id) {
+                                setSimilarCocktailRecipe(match);
+                              } else {
+                                setSimilarCocktailRecipe(undefined);
+                              }
+                            })
+                            .catch(() => setSimilarCocktailRecipe(undefined));
+                        } else {
+                          setSimilarCocktailRecipe(undefined);
                         }
-                        validate={(tag) => validateTag(tag, (text) => setFieldError('tags', text ?? t('common:tagInvalid')))}
-                      />
-                      {inheritTagsFromIngredients(values.steps, values.tags).length > 0 && (
-                        <>
-                          <Tooltip tip={t('cocktail:tagsFromIngredientsTip')}>
-                            <Label className="flex-row">
-                              <LabelText>{t('cocktail:tagsFromIngredients')}</LabelText>
-                            </Label>
-                          </Tooltip>
-                          <div className={'flex flex-row flex-wrap gap-2'}>
-                            {inheritTagsFromIngredients(values.steps, values.tags).map((tag) => {
-                              return (
-                                <Badge key={`tag-suggestion-${tag}`} outline className="gap-1">
-                                  {tag}
-                                  <Button
-                                    type="button"
-                                    variant="ghost"
-                                    shape="square"
-                                    size="xs"
-                                    className="h-4 min-h-4 w-4"
-                                    onClick={() => {
-                                      setFieldValue('tags', [...values.tags, tag]);
-                                    }}
-                                  >
-                                    <FaPlus />
-                                  </Button>
-                                </Badge>
-                              );
-                            })}
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                  <div>
-                    <Label htmlFor={'glassId'} className="flex-row items-center justify-between">
-                      <LabelText>{t('cocktail:glass')}</LabelText>
-                      <LabelTextAlt className="text-error">
-                        <>{errors.glassId && errors.glassId}</> *
-                      </LabelTextAlt>
-                    </Label>
+                        handleChange(event);
+                      }}
+                      onBlur={handleBlur}
+                      value={values.name}
+                    />
+                  </TranslatedFieldTabs>
+                </FormField>
+
+                <div className="grid grid-cols-1 gap-4 @xl:grid-cols-2">
+                  <FormField label={t('cocktail:glass')} htmlFor="glassId" required error={glassError}>
                     <ButtonGroup className="w-full">
                       <Select
                         id={'glassId'}
                         name="glassId"
-                        className={errors.glassId ? fieldErrorClass : undefined}
                         joinItem
+                        error={!!glassError}
                         onChange={(event) => {
                           handleChange(event);
                           setFieldValue(
@@ -793,15 +739,15 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                           );
                         }}
                         onBlur={handleBlur}
-                        value={values.glassId}
+                        value={values.glassId ?? ''}
                       >
                         {glassesLoading ? (
-                          <option disabled={true} defaultChecked={true}>
+                          <option disabled={true} value={values.glassId ?? ''}>
                             {t('common:loading')}
                           </option>
                         ) : (
                           <>
-                            <option value={undefined}>{t('common:select')}</option>
+                            <option value={''}>{t('common:select')}</option>
                             {glasses
                               .sort((a, b) => a.name.localeCompare(b.name))
                               .map((glass) => (
@@ -817,6 +763,8 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                         variant="outline"
                         shape="square"
                         joinItem
+                        aria-label={t('cocktail:selectGlass')}
+                        title={t('cocktail:selectGlass')}
                         onClick={() =>
                           modalContext.openModal(
                             <FormModal<GlassDto>
@@ -834,21 +782,15 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                           )
                         }
                       >
-                        <FaPlus />
+                        <FaPlus aria-hidden />
                       </Button>
                     </ButtonGroup>
-                  </div>
-                  <div>
-                    <Label htmlFor={'iceId'} className="flex-row items-center justify-between">
-                      <LabelText>{t('cocktail:ice')}</LabelText>
-                      <LabelTextAlt className="text-error">
-                        <>{errors.iceId && errors.iceId}</> *
-                      </LabelTextAlt>
-                    </Label>
+                  </FormField>
+                  <FormField label={t('cocktail:ice')} htmlFor="iceId" required error={iceError}>
                     <Select
                       id={'iceId'}
                       name="iceId"
-                      className={errors.iceId ? fieldErrorClass : undefined}
+                      error={!!iceError}
                       onChange={(event) => {
                         handleChange(event);
                         setFieldValue(
@@ -868,606 +810,293 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                           </option>
                         ))}
                     </Select>
-                  </div>
-                  <div className="col-span-2 flex items-center gap-3 py-2">
-                    <Divider className="my-0 flex-1" />
-                    <span className="shrink-0 text-sm font-medium text-base-content/70">{t('common:display')}</span>
-                    <Divider className="my-0 flex-1" />
-                  </div>
-                  <div className={'col-span-2'}>
-                    {values.image != undefined ? (
-                      <Label className="flex-row items-center justify-between">
-                        <LabelText>{t('common:imagePreview')}</LabelText>
-                      </Label>
-                    ) : (
-                      <></>
-                    )}
-                    {values.image == undefined && values.originalImage == undefined ? (
-                      <UploadDropZone
-                        onSelectedFilesChanged={async (file) => {
-                          if (file != undefined) {
-                            await setFieldValue('originalImage', file);
-                            await setFieldValue('image', undefined);
-                          } else {
-                            alertService.error(t('common:fileSelectError'));
-                          }
-                        }}
+                  </FormField>
+                  <FormField label={t('cocktail:price')} htmlFor="price" error={priceError}>
+                    <ButtonGroup className="w-full">
+                      <Input
+                        id={'price'}
+                        name="price"
+                        type="number"
+                        inputMode={'decimal'}
+                        step={'any'}
+                        joinItem
+                        error={!!priceError}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        value={values.price ?? ''}
                       />
-                    ) : values.image == undefined && values.originalImage != undefined ? (
-                      <div className={'w-full'}>
-                        <CropComponent
-                          isValid={isValid}
-                          aspect={9 / 16}
-                          imageToCrop={values.originalImage}
-                          onCroppedImageComplete={async (file) => {
-                            resizeImage(file, 504, 896, async (compressedImageFile) => {
-                              if (compressedImageFile) {
-                                await setFieldValue('image', await convertToBase64(new File([compressedImageFile], 'image.png', { type: 'image/png' })));
-                              } else {
-                                alertService.error(t('common:imageScaleError'));
-                              }
-                            });
-                          }}
-                          onCropCancel={async () => {
-                            await setFieldValue('originalImage', undefined);
-                            await setFieldValue('image', undefined);
-                          }}
-                        />
-                      </div>
-                    ) : (
-                      <div className={'relative'}>
-                        <div className={'absolute top-2 right-2 flex flex-row gap-2'}>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            shape="square"
-                            size="sm"
-                            onClick={async () => {
-                              await setFieldValue('image', undefined);
-                            }}
-                          >
-                            <FaCropSimple />
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            shape="square"
-                            size="sm"
-                            className="border-error text-error hover:bg-error/10"
-                            onClick={() =>
-                              modalContext.openModal(
-                                <DeleteConfirmationModal
-                                  spelling={'REMOVE'}
-                                  entityName={t('entity:theImage')}
-                                  onApprove={async () => {
-                                    await setFieldValue('image', undefined);
-                                    await setFieldValue('originalImage', undefined);
-                                  }}
-                                />,
-                              )
-                            }
-                          >
-                            <FaTrashAlt />
-                          </Button>
-                        </div>
-                        <div className={'bg-transparent-pattern relative h-32 w-[4.5rem] rounded-lg'}>
-                          <Image
-                            className={'w-fit rounded-lg'}
-                            src={values.image ?? ''}
-                            layout={'fill'}
-                            objectFit={'contain'}
-                            alt={t('common:cocktailImageAlt')}
-                          />
-                        </div>
-                        <div className={'pt-2 font-thin italic'}>{t('common:imageCropInfoLong')}</div>
+                      <InputAddon>€</InputAddon>
+                    </ButtonGroup>
+                  </FormField>
+                  <FormField label={t('cocktail:tags')} error={tagsError}>
+                    <TagInput
+                      value={values.tags}
+                      onChange={(tags: string[]) =>
+                        setFieldValue(
+                          'tags',
+                          updateTags(tags, (text) => setFieldError('tags', text ?? t('common:tagInvalid'))),
+                        )
+                      }
+                      validate={(tag) => validateTag(tag, (text) => setFieldError('tags', text ?? t('common:tagInvalid')))}
+                    />
+                    {suggestedTags.length > 0 && (
+                      <div className="flex flex-wrap items-center gap-2" title={t('cocktail:tagsFromIngredientsTip')}>
+                        <span className="text-xs text-base-content/60">{t('cocktail:tagsFromIngredients')}</span>
+                        {suggestedTags.map((tag) => (
+                          <Badge key={`tag-suggestion-${tag}`} outline className="gap-1 pointer-coarse:gap-1.5">
+                            {tag}
+                            <button
+                              type="button"
+                              aria-label={`${t('common:add')}: ${tag}`}
+                              className="flex h-4 w-4 cursor-pointer items-center justify-center rounded-sm hover:bg-base-300 focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none pointer-coarse:h-6 pointer-coarse:w-6"
+                              onClick={() => setFieldValue('tags', [...values.tags, tag])}
+                            >
+                              <FaPlus aria-hidden className="text-[0.6rem]" />
+                            </button>
+                          </Badge>
+                        ))}
                       </div>
                     )}
-                  </div>
+                  </FormField>
                 </div>
-              </CardBody>
-            </Card>
-            <div className={cn('flex flex-col', stackGap)}>
-              <Card variant="surface">
-                <CardBody>
-                  <div className={'text-center text-2xl font-bold'}>{t('common:preview')}</div>
-                  <Divider />
+              </FormSection>
 
-                  <CocktailRecipeCardItem
-                    image={values.image}
-                    cocktailRecipe={
-                      {
-                        hasImage: values.image != undefined,
-                        imageUrl: null,
-                        id: values.id,
-                        name: values.name,
-                        description: values.description.trim() == '' ? null : values.description.trim(),
-                        notes: values.notes.trim() == '' ? null : values.notes.trim(),
-                        history: values.history.trim() == '' ? null : values.history.trim(),
-                        tags: values.tags,
-                        price: values.price,
-                        ice: iceOptions.find((ice) => ice.id === values.iceId) ?? null,
-                        isArchived: false,
-                        glass: glasses.find((glass) => glass.id === values.glassId) ?? null,
-                        garnishes: values.garnishes,
-                        steps: values.steps,
-                        averageRating: null,
-                        ratingCount: 0,
-                      } as unknown as CocktailDto
-                    }
-                    showInfo={false}
-                    showTags={true}
-                    showImage={true}
-                    showDescription={true}
-                    showNotes={true}
-                    showHistory={true}
-                  />
-                </CardBody>
-              </Card>
-              <div className={'hidden md:flex md:flex-col'}>
-                <Button type="submit" variant="primary" wide disabled={isSubmitting || !isValid}>
-                  {isSubmitting ? <Loading size="sm" /> : <></>}
-                  {props.cocktailRecipe == undefined ? t('common:create') : t('common:update')}
-                </Button>
-                {!isValid && <div className={'font-thin text-error italic'}>{t('common:formIncomplete')}</div>}
-              </div>
-
-              <Card variant="surface">
-                <CardBody>
-                  <div className={'text-center text-2xl font-bold'}>{t('cocktail:finances')}</div>
-                  <Divider />
-                  <div className={'grid grid-cols-2 gap-1'}>
-                    <>
-                      <Divider size="sm" className="col-span-2">
-                        {t('cocktail:ingredients')}
-                      </Divider>
-                      {(values.steps as CocktailRecipeStepFull[]).filter((step) => step.ingredients.some((ingredient) => ingredient.ingredient != undefined))
-                        .length > 0 ? (
-                        <>
-                          {(values.steps as CocktailRecipeStepFull[])
-                            .map((step) => step.ingredients.filter((ingredient) => ingredient.ingredient != undefined))
-                            .flat()
-                            ?.map((stepIngredient, indexIngredient) => (
-                              <>
-                                <div key={`price-calculation-step-${indexIngredient}-name`}>
-                                  {stepIngredient.ingredient?.shortName ?? stepIngredient.ingredient?.name}
-                                </div>
-                                <div key={`price-calculation-step-${indexIngredient}-price`} className={'grid grid-cols-2'}>
-                                  {ingredients
-                                    .find((ingredient) => ingredient.id == stepIngredient.ingredientId)
-                                    ?.volumes.find((volumeUnits) => volumeUnits.unit.id == stepIngredient.unitId) != undefined ? (
-                                    <>
-                                      <div>
-                                        {t('common:unitTimesPrice', {
-                                          amount:
-                                            stepIngredient.amount?.toLocaleString(undefined, {
-                                              minimumFractionDigits: 0,
-                                              maximumFractionDigits: 2,
-                                            }) ?? 0,
-                                          unit: userContext.getTranslation(stepIngredient?.unit?.name ?? ''),
-                                          price: (
-                                            (stepIngredient.ingredient?.price ?? 0) /
-                                            (ingredients
-                                              .find((ingredient) => ingredient.id == stepIngredient.ingredientId)
-                                              ?.volumes.find((volumeUnits) => volumeUnits.unit.id == stepIngredient.unitId)?.volume ?? 1)
-                                          ).formatPrice(),
-                                        })}
-                                      </div>
-                                      <div className={'text-end'}>
-                                        {indexIngredient > 0 ? '+ ' : ''}
-                                        {(
-                                          ((stepIngredient.ingredient?.price ?? 0) /
-                                            (ingredients
-                                              .find((ingredient) => ingredient.id == stepIngredient.ingredientId)
-                                              ?.volumes.find((volumeUnits) => volumeUnits.unit.id == stepIngredient.unitId)?.volume ?? 1)) *
-                                          (stepIngredient.amount ?? 0)
-                                        ).formatPrice()}
-                                        €
-                                      </div>
-                                    </>
-                                  ) : (
-                                    <>
-                                      <div>-</div>
-                                      <div>-</div>
-                                    </>
-                                  )}
-                                </div>
-                              </>
-                            ))}
-                        </>
-                      ) : (
-                        <div className={'col-span-2 text-center font-thin italic'}>{t('cocktail:noIngredients')}</div>
-                      )}
-
-                      <Divider size="sm" className="col-span-2">
-                        {t('cocktail:garnish')}
-                      </Divider>
-                      {(values.garnishes as CocktailRecipeGarnishFull[]).length > 0 ? (
-                        <></>
-                      ) : (
-                        <div className={'col-span-2 text-center font-thin italic'}>{t('cocktail:noGarnishes')}</div>
-                      )}
-                      {(values.garnishes as CocktailRecipeGarnishFull[]).map((garnish) => {
-                        const isAlternative = (garnish as CocktailRecipeGarnishFull & { isAlternative?: boolean }).isAlternative;
-                        return (
-                          <React.Fragment key={`price-calculation-step-garnish-${garnish.garnishId}`}>
-                            <div className={`${isAlternative ? 'line-through opacity-50' : ''}`}>{garnish?.garnish?.name}</div>
-                            <div className={`grid grid-cols-2 ${isAlternative ? 'line-through opacity-50' : ''}`}>
-                              <div>{t('common:timesPrice', { price: (garnish?.garnish?.price ?? 0).formatPrice() })}</div>
-                              <div className={'text-end'}>
-                                {(values.steps as CocktailRecipeStepFull[]).some((step) => step.ingredients.length > 0) ? '+ ' : ''}
-                                {(garnish?.garnish?.price ?? 0).formatPrice()}€
-                              </div>
-                            </div>
-                          </React.Fragment>
-                        );
-                      })}
-                      {(values.garnishes as CocktailRecipeGarnishFull[]).some(
-                        (g) => (g as CocktailRecipeGarnishFull & { isAlternative?: boolean }).isAlternative,
-                      ) && <div className={'col-span-2 mt-1 text-xs font-thin italic'}>{t('cocktail:altGarnishNote')}</div>}
-                    </>
-                    <Divider size="sm" className="col-span-2"></Divider>
-                    <div>{t('common:sum')}</div>
-                    <div className={'grid grid-cols-3'}>
-                      <div></div>
-                      <div></div>
-                      <div className={'text-end font-bold'}>
-                        {calcCocktailTotalPrice(values as unknown as CocktailRecipeFull, ingredients).formatPrice() + ' €'}
-                      </div>
-                    </div>
-                  </div>
-                </CardBody>
-              </Card>
-            </div>
-
-            <Card variant="surface" className="col-span-full">
-              <CardBody>
-                <div className={'text-center text-2xl font-bold'}>{t('cocktail:preparation')}</div>
-
+              <FormSection id="cocktail-preparation" title={t('cocktail:preparation')}>
                 <FieldArray name={'steps'}>
                   {({ push: pushStep, remove: removeStep }) => (
-                    <div className={'col-span-2 space-y-4'}>
-                      {(values.steps as CocktailRecipeStepFull[]).map((step, indexStep) => (
-                        <Card key={`form-recipe-step-${indexStep}`} variant="inset" className={'flex w-full flex-col justify-between p-4'}>
-                          <div className={'grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4'}>
-                            <div className={'col-span-2 flex flex-row items-center justify-between gap-2 md:col-span-1 md:justify-start'}>
-                              <div className={'font-bold whitespace-nowrap'}>{t('cocktail:step', { n: indexStep + 1 })}</div>
-                              <FormControl>
-                                <Label className="w-fit flex-row items-center justify-start gap-1">
-                                  <LabelText>{t('common:optional')}</LabelText>
-                                  <Field
-                                    type={'checkbox'}
-                                    name={`steps.${indexStep}.optional`}
-                                    onChange={handleChange}
-                                    onBlur={handleBlur}
-                                    as={Toggle}
-                                    variant="primary"
-                                  />
-                                </Label>
-                              </FormControl>
-                            </div>
-                            <FormControl>
-                              <Select
-                                name={`steps.${indexStep}.actionId`}
-                                value={values.steps[indexStep].actionId}
-                                selectSize="sm"
-                                onChange={(event) => {
-                                  handleChange(event);
-                                  setFieldValue(
-                                    `steps.${indexStep}.action`,
-                                    actions.find((action) => action.id == event.target.value),
-                                  );
-                                }}
-                                onBlur={handleBlur}
-                              >
-                                {actionsLoading ? (
-                                  <option disabled={true}>{t('common:loadingShort')}</option>
-                                ) : (
-                                  Object.entries(_.groupBy(actions, 'actionGroup')).map(([group, groupActions]) => (
-                                    <optgroup key={`form-recipe-step-${indexStep}-action-group-${group}`} label={userContext.getTranslation(group)}>
-                                      {groupActions
-                                        .sort((a, b) => a.name.localeCompare(b.name))
-                                        .map((action, indexAction) => (
-                                          <option key={`form-recipe-step-${indexStep}-action-${indexAction}`} value={action.id}>
-                                            {userContext.getTranslation(action.name)}
-                                          </option>
-                                        ))}
-                                      )
-                                    </optgroup>
-                                  ))
-                                )}
-                              </Select>
-                            </FormControl>
-                            <div className={'space-x-2 justify-self-end'}>
+                    <div className="flex flex-col gap-3">
+                      {steps.length == 0 && <p className="text-sm text-base-content/60">{t('cocktail:noSteps')}</p>}
+                      <SortableList
+                        items={steps}
+                        getId={(step, index) => step._key ?? `step-${index}`}
+                        onMove={(from, to) =>
+                          setFieldValue(
+                            'steps',
+                            arrayMove(steps, from, to).map((step, index) => ({ ...step, stepNumber: index })),
+                          )
+                        }
+                        className="flex flex-col gap-3"
+                        renderItem={(step, indexStep, stepHandle) => (
+                          <div className="rounded-xl border border-base-300 bg-base-100">
+                            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 border-b border-base-300 py-1.5 pr-1.5 pl-1">
+                              {stepHandle}
+                              <span className="font-semibold whitespace-nowrap">{t('cocktail:step', { n: indexStep + 1 })}</span>
+                              <div className="min-w-40 flex-1">
+                                <Select
+                                  aria-label={t('cocktail:stepAction')}
+                                  name={`steps.${indexStep}.actionId`}
+                                  value={step.actionId}
+                                  onChange={(event) => {
+                                    handleChange(event);
+                                    setFieldValue(
+                                      `steps.${indexStep}.action`,
+                                      actions.find((action) => action.id == event.target.value),
+                                    );
+                                  }}
+                                  onBlur={handleBlur}
+                                >
+                                  {actionsLoading ? (
+                                    <option disabled={true}>{t('common:loadingShort')}</option>
+                                  ) : (
+                                    Object.entries(_.groupBy(actions, 'actionGroup')).map(([group, groupActions]) => (
+                                      <optgroup key={`form-recipe-step-${indexStep}-action-group-${group}`} label={userContext.getTranslation(group)}>
+                                        {groupActions
+                                          .sort((a, b) => a.name.localeCompare(b.name))
+                                          .map((action, indexAction) => (
+                                            <option key={`form-recipe-step-${indexStep}-action-${indexAction}`} value={action.id}>
+                                              {userContext.getTranslation(action.name)}
+                                            </option>
+                                          ))}
+                                      </optgroup>
+                                    ))
+                                  )}
+                                </Select>
+                              </div>
+                              <ToggleField
+                                label={t('common:optional')}
+                                toggleSize="sm"
+                                className="px-1"
+                                checked={step.optional ?? false}
+                                onCheckedChange={(checked) => setFieldValue(`steps.${indexStep}.optional`, checked)}
+                              />
                               <Button
-                                disabled={indexStep == 0}
                                 type="button"
-                                variant="outline"
+                                variant="ghost"
                                 shape="square"
-                                size="sm"
+                                className="text-error hover:bg-error/10"
+                                aria-label={`${t('common:remove')}: ${t('cocktail:step', { n: indexStep + 1 })}`}
                                 onClick={() => {
-                                  const value = values.steps[indexStep];
-                                  const reorderedSteps = (values.steps as CocktailRecipeStepFull[]).filter((_, i) => i != indexStep);
-                                  reorderedSteps.splice(indexStep - 1, 0, value);
-                                  setFieldValue(
-                                    'steps',
-                                    reorderedSteps.map((step, index) => ({ ...step, stepNumber: index })),
-                                  );
-                                }}
-                              >
-                                <FaAngleUp />
-                              </Button>
-                              <Button
-                                disabled={!(values.steps.length > 1) || indexStep == values.steps.length - 1}
-                                type="button"
-                                variant="outline"
-                                shape="square"
-                                size="sm"
-                                onClick={() => {
-                                  const value = values.steps[indexStep];
-                                  const reorderedSteps = (values.steps as CocktailRecipeStepFull[]).filter((_, i) => i != indexStep);
-                                  reorderedSteps.splice(indexStep + 1, 0, value);
-                                  setFieldValue(
-                                    'steps',
-                                    reorderedSteps.map((step, index) => ({ ...step, stepNumber: index })),
-                                  );
-                                }}
-                              >
-                                <FaAngleDown />
-                              </Button>
-                              <Button
-                                type="button"
-                                variant="error"
-                                shape="square"
-                                size="sm"
-                                onClick={() =>
+                                  if (step.ingredients.length == 0) {
+                                    removeStep(indexStep);
+                                    return;
+                                  }
                                   modalContext.openModal(
                                     <DeleteConfirmationModal
                                       spelling={'REMOVE'}
-                                      entityName={
-                                        t('cocktail:step', { n: indexStep + 1 }) + ' - ' + userContext.getTranslation(values.steps[indexStep].action.name)
-                                      }
+                                      entityName={t('cocktail:step', { n: indexStep + 1 }) + ' - ' + userContext.getTranslation(step.action?.name ?? '')}
                                       onApprove={async () => {
                                         removeStep(indexStep);
                                       }}
                                     />,
-                                  )
-                                }
+                                  );
+                                }}
                               >
-                                <FaTrashAlt />
+                                <FaTrashAlt aria-hidden />
                               </Button>
                             </div>
-                          </div>
-                          <Divider className="col-span-full font-thin">{t('cocktail:ingredients')}</Divider>
-                          <FieldArray name={`steps.${indexStep}.ingredients`}>
-                            {({ push: pushIngredient, remove: removeIngredient }) => (
-                              <>
-                                {step.ingredients
-                                  .sort((a, b) => a.ingredientNumber - b.ingredientNumber)
-                                  .map((ingredient, indexIngredient) => (
-                                    <>
-                                      {indexIngredient > 0 && <Divider size="sm" className="col-span-full" />}
-                                      <div key={`form-recipe-step-${indexStep}-ingredient-${indexIngredient}`} className="flex flex-row items-center gap-3">
-                                        <ButtonGroup vertical className="w-min items-center justify-center">
-                                          <Button
-                                            disabled={indexIngredient == 0}
-                                            type="button"
-                                            variant="outline"
-                                            shape="square"
-                                            size="xs"
-                                            joinItem
-                                            onClick={() => {
-                                              const value = values.steps[indexStep].ingredients[indexIngredient];
-                                              const reorderedGroups = (values.steps as CocktailRecipeStepFull[])[indexStep].ingredients.filter(
-                                                (_, i) => i != indexIngredient,
-                                              );
-                                              reorderedGroups.splice(indexIngredient - 1, 0, value);
-                                              setFieldValue(
-                                                `steps.${indexStep}.ingredients`,
-                                                reorderedGroups.map((group, groupIndex) => ({
-                                                  ...group,
-                                                  ingredientNumber: groupIndex,
-                                                })),
-                                              );
-                                            }}
-                                          >
-                                            <FaAngleUp />
-                                          </Button>
-                                          <Button
-                                            disabled={
-                                              !(values.steps[indexStep].ingredients.length > 1) ||
-                                              indexIngredient == values.steps[indexStep].ingredients.length - 1
-                                            }
-                                            type="button"
-                                            variant="outline"
-                                            shape="square"
-                                            size="xs"
-                                            joinItem
-                                            onClick={() => {
-                                              const value = values.steps[indexStep].ingredients[indexIngredient];
-                                              const reorderedGroups = (values.steps as CocktailRecipeStepFull[])[indexStep].ingredients.filter(
-                                                (_, i) => i != indexIngredient,
-                                              );
-                                              reorderedGroups.splice(indexIngredient + 1, 0, value);
-                                              setFieldValue(
-                                                `steps.${indexStep}.ingredients`,
-                                                reorderedGroups.map((group, groupIndex) => ({
-                                                  ...group,
-                                                  ingredientNumber: groupIndex,
-                                                })),
-                                              );
-                                            }}
-                                          >
-                                            <FaAngleDown />
-                                          </Button>
-                                        </ButtonGroup>
-                                        <div className={'grid w-full grid-cols-2 gap-1 md:grid-cols-4'}>
-                                          <FormControl className="col-span-2 md:col-span-1">
-                                            <Label className="w-fit flex-row items-center justify-start gap-1 md:flex-col">
-                                              <LabelText>{t('common:optional')}</LabelText>
-                                              <LabelTextAlt className="text-error">
-                                                {(errors.steps as StepError[])?.[indexStep]?.ingredients?.[indexIngredient]?.optional &&
-                                                  (errors.steps as StepError[])?.[indexStep]?.ingredients?.[indexIngredient]?.optional}
-                                              </LabelTextAlt>
-                                              <Field
-                                                type={'checkbox'}
-                                                name={`steps.${indexStep}.ingredients.${indexIngredient}.optional`}
-                                                onChange={handleChange}
-                                                onBlur={handleBlur}
-                                                as={Toggle}
-                                                variant="primary"
+                            <FieldArray name={`steps.${indexStep}.ingredients`}>
+                              {({ push: pushIngredient, remove: removeIngredient }) => (
+                                <div className="flex flex-col py-1 pr-1.5 pl-1">
+                                  {step.ingredients.length == 0 && <p className="px-3 py-2 text-sm text-base-content/60">{t('cocktail:noStepIngredients')}</p>}
+                                  <SortableList
+                                    items={step.ingredients as KeyedStepIngredient[]}
+                                    getId={(line, index) => line._key ?? `step-${indexStep}-ingredient-${index}`}
+                                    onMove={(from, to) =>
+                                      setFieldValue(
+                                        `steps.${indexStep}.ingredients`,
+                                        arrayMove(step.ingredients, from, to).map((line, index) => ({ ...line, ingredientNumber: index })),
+                                      )
+                                    }
+                                    className="flex flex-col divide-y divide-base-300"
+                                    renderItem={(line, indexIngredient, lineHandle) => {
+                                      const path = `steps.${indexStep}.ingredients.${indexIngredient}`;
+                                      const ingredientError = visibleFieldError(formik, `${path}.ingredientId`);
+                                      const unitError = visibleFieldError(formik, `${path}.unit`);
+                                      const amountError = visibleFieldError(formik, `${path}.amount`);
+                                      const lineIngredient = ingredients.find((ingredient) => ingredient.id == line.ingredientId);
+                                      return (
+                                        <div className="flex items-start gap-1 bg-base-100 py-1.5">
+                                          {lineHandle}
+                                          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+                                            <ButtonGroup className="min-w-0 flex-[1_1_16rem]">
+                                              <PickerField
+                                                joinItem
+                                                error={!!ingredientError}
+                                                value={ingredientsLoading ? t('common:loadingShort') : line.ingredient?.name}
+                                                placeholder={t('cocktail:chooseIngredient')}
+                                                onClick={() => openIngredientSelectModal(setFieldValue, indexStep, indexIngredient)}
                                               />
-                                            </Label>
-                                          </FormControl>
-                                          <ButtonGroup
-                                            key={`form-recipe-step${step.id}-ingredient-${ingredient.id}`}
-                                            className="col-span-2 flex w-full flex-row items-center"
-                                          >
-                                            <Input
-                                              id={`ingredient-${indexIngredient}-name`}
-                                              joinItem
-                                              className={`w-full cursor-pointer ${(errors.steps as StepError[])?.[indexStep]?.ingredients?.[indexIngredient]?.ingredientId ? fieldErrorClass : undefined}`}
-                                              value={
-                                                ingredientsLoading
-                                                  ? 'Lade...'
-                                                  : (values.steps[indexStep].ingredients?.[indexIngredient].ingredient?.name ?? t('cocktail:chooseIngredient'))
-                                              }
-                                              readOnly={true}
-                                              onClick={() => {
-                                                openIngredientSelectModal(setFieldValue, indexStep, indexIngredient);
-                                              }}
-                                            />
-                                            <Button
-                                              type="button"
-                                              variant="outline"
-                                              className="border-primary text-primary hover:bg-primary/10"
-                                              joinItem
-                                              onClick={() => {
-                                                openIngredientSelectModal(setFieldValue, indexStep, indexIngredient);
-                                              }}
-                                            >
-                                              <FaSearch />
-                                            </Button>
-                                            <Button
-                                              type="button"
-                                              variant="secondary"
-                                              joinItem
-                                              onClick={() => {
-                                                modalContext.openModal(
-                                                  <FormModal<IngredientDto>
-                                                    form={
-                                                      <IngredientForm
-                                                        formRef={createRef<FormikProps<IngredientFormValues>>()}
-                                                        onSaved={async (id) => {
-                                                          modalContext.closeAllModals();
-                                                          await setFieldValue(`steps.${indexStep}.ingredients.${indexIngredient}.ingredientId`, id);
-                                                          fetchIngredients(workspaceId, setIngredients, setIngredientsLoading);
-                                                        }}
-                                                      />
-                                                    }
-                                                    title={t('cocktail:createIngredient')}
-                                                  />,
-                                                );
-                                              }}
-                                            >
-                                              <FaPlus />
-                                            </Button>
-                                          </ButtonGroup>
-                                          <ButtonGroup className="col-span-2 flex w-full items-center md:col-span-1">
-                                            <Input
-                                              type="number"
-                                              name={`steps.${indexStep}.ingredients.${indexIngredient}.amount`}
-                                              joinItem
-                                              className="min-w-20"
-                                              onChange={handleChange}
-                                              onBlur={handleBlur}
-                                              value={values.steps[indexStep].ingredients[indexIngredient].amount ?? ''}
-                                            />
-                                            <div className={'tooltip'}></div>
-                                            <Select
-                                              name={`steps.${indexStep}.ingredients.${indexIngredient}.unitId`}
-                                              joinItem
-                                              className={
-                                                (errors.steps as StepError[])?.[indexStep]?.ingredients?.[indexIngredient]?.unit ? fieldErrorClass : undefined
-                                              }
-                                              onChange={async (e) => {
-                                                handleChange(e);
-                                                await setFieldValue(
-                                                  `steps.${indexStep}.ingredients.${indexIngredient}.unit`,
-                                                  units.find((u) => u.id == e.target.value),
-                                                );
-                                              }}
-                                              onBlur={handleBlur}
-                                              value={values.steps[indexStep].ingredients[indexIngredient].unitId ?? ''}
-                                            >
-                                              <option value={''} disabled>
-                                                {t('common:select')}
-                                              </option>
-
-                                              {values.steps[indexStep].ingredients[indexIngredient].unitId &&
-                                              ingredients
-                                                .find((ingredient) => ingredient.id == values.steps[indexStep].ingredients[indexIngredient]?.ingredientId)
-                                                ?.volumes.find((unit) => unit.unit.id == values.steps[indexStep].ingredients[indexIngredient].unitId) ==
-                                                undefined ? (
-                                                <option
-                                                  value={values.steps[indexStep].ingredients[indexIngredient]?.unitId}
-                                                  disabled={true}
-                                                  title={t('cocktail:unitUnavailable')}
+                                              <Button
+                                                type="button"
+                                                variant="outline"
+                                                shape="square"
+                                                joinItem
+                                                className="shrink-0"
+                                                aria-label={t('cocktail:createIngredient')}
+                                                title={t('cocktail:createIngredient')}
+                                                onClick={() => {
+                                                  modalContext.openModal(
+                                                    <FormModal<IngredientDto>
+                                                      form={
+                                                        <IngredientForm
+                                                          formRef={createRef<FormikProps<IngredientFormValues>>()}
+                                                          onSaved={async (id) => {
+                                                            modalContext.closeAllModals();
+                                                            await setFieldValue(`${path}.ingredientId`, id);
+                                                            fetchIngredients(workspaceId, setIngredients, setIngredientsLoading);
+                                                          }}
+                                                        />
+                                                      }
+                                                      title={t('cocktail:createIngredient')}
+                                                    />,
+                                                  );
+                                                }}
+                                              >
+                                                <FaPlus aria-hidden />
+                                              </Button>
+                                            </ButtonGroup>
+                                            <div className="flex min-w-0 flex-[1_1_20rem] items-center gap-2">
+                                              <ButtonGroup className="min-w-0 flex-1">
+                                                <Input
+                                                  type="number"
+                                                  inputMode={'decimal'}
+                                                  step={'any'}
+                                                  aria-label={t('common:quantity')}
+                                                  name={`${path}.amount`}
+                                                  joinItem
+                                                  error={!!amountError}
+                                                  className="flex-[0_0_4.5rem]"
+                                                  onChange={handleChange}
+                                                  onBlur={handleBlur}
+                                                  value={line.amount ?? ''}
+                                                />
+                                                <Select
+                                                  aria-label={t('cocktail:unit')}
+                                                  name={`${path}.unitId`}
+                                                  joinItem
+                                                  error={!!unitError}
+                                                  className="min-w-0 flex-1"
+                                                  onChange={async (e) => {
+                                                    handleChange(e);
+                                                    await setFieldValue(
+                                                      `${path}.unit`,
+                                                      units.find((u) => u.id == e.target.value),
+                                                    );
+                                                  }}
+                                                  onBlur={handleBlur}
+                                                  value={line.unitId ?? ''}
                                                 >
-                                                  {userContext.getTranslation(
-                                                    units.find((unit) => unit.id == values.steps[indexStep].ingredients[indexIngredient]?.unitId)?.name ?? '',
-                                                  )}{' '}
-                                                  ({t('cocktail:unitUnavailableShort')})
-                                                </option>
-                                              ) : (
-                                                <></>
-                                              )}
-                                              {ingredients
-                                                .find((ingredient) => ingredient.id == values.steps[indexStep].ingredients[indexIngredient]?.ingredientId)
-                                                ?.volumes?.sort((a, b) =>
-                                                  userContext.getTranslation(a.unit.name).localeCompare(userContext.getTranslation(b.unit.name)),
-                                                )
-                                                ?.map((value) => (
-                                                  <option
-                                                    key={`steps.${indexStep}.ingredients.${indexIngredient}.units-${value.unit.id}`}
-                                                    value={value.unit.id}
-                                                  >
-                                                    {userContext.getTranslation(value.unit.name)}
+                                                  <option value={''} disabled>
+                                                    {t('common:select')}
                                                   </option>
-                                                ))}
-                                            </Select>
-                                            <Button
-                                              type="button"
-                                              variant="error"
-                                              shape="square"
-                                              joinItem
-                                              onClick={() =>
-                                                modalContext.openModal(
-                                                  <DeleteConfirmationModal
-                                                    spelling={'REMOVE'}
-                                                    entityName={t('entity:theIngredient', {
-                                                      name: values.steps[indexStep].ingredients[indexIngredient].ingredient?.name ?? '',
-                                                    })}
-                                                    onApprove={async () => removeIngredient(indexIngredient)}
-                                                  />,
-                                                )
-                                              }
-                                            >
-                                              <FaTrashAlt />
-                                            </Button>
-                                          </ButtonGroup>
+                                                  {line.unitId && lineIngredient?.volumes.find((unit) => unit.unit.id == line.unitId) == undefined ? (
+                                                    <option value={line.unitId} disabled={true} title={t('cocktail:unitUnavailable')}>
+                                                      {userContext.getTranslation(units.find((unit) => unit.id == line.unitId)?.name ?? '')} (
+                                                      {t('cocktail:unitUnavailableShort')})
+                                                    </option>
+                                                  ) : null}
+                                                  {lineIngredient?.volumes
+                                                    ?.sort((a, b) =>
+                                                      userContext.getTranslation(a.unit.name).localeCompare(userContext.getTranslation(b.unit.name)),
+                                                    )
+                                                    ?.map((value) => (
+                                                      <option key={`${path}.units-${value.unit.id}`} value={value.unit.id}>
+                                                        {userContext.getTranslation(value.unit.name)}
+                                                      </option>
+                                                    ))}
+                                                </Select>
+                                              </ButtonGroup>
+                                              <ToggleField
+                                                label={t('common:optional')}
+                                                toggleSize="sm"
+                                                checked={line.optional ?? false}
+                                                onCheckedChange={(checked) => setFieldValue(`${path}.optional`, checked)}
+                                              />
+                                              <Button
+                                                type="button"
+                                                variant="ghost"
+                                                shape="square"
+                                                className="text-error hover:bg-error/10"
+                                                aria-label={`${t('common:remove')}: ${line.ingredient?.name ?? t('common:ingredientLabel')}`}
+                                                onClick={() => {
+                                                  if (line.ingredient == undefined) {
+                                                    removeIngredient(indexIngredient);
+                                                    return;
+                                                  }
+                                                  modalContext.openModal(
+                                                    <DeleteConfirmationModal
+                                                      spelling={'REMOVE'}
+                                                      entityName={t('entity:theIngredient', { name: line.ingredient?.name ?? '' })}
+                                                      onApprove={async () => removeIngredient(indexIngredient)}
+                                                    />,
+                                                  );
+                                                }}
+                                              >
+                                                <FaTrashAlt aria-hidden />
+                                              </Button>
+                                            </div>
+                                          </div>
                                         </div>
-                                      </div>
-                                    </>
-                                  ))}
-
-                                <div className={'flex w-full justify-end pt-2'}>
+                                      );
+                                    }}
+                                  />
                                   <Button
                                     type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    className="gap-2"
+                                    variant="ghost"
+                                    className="self-start text-primary"
                                     onClick={() =>
                                       pushIngredient({
+                                        _key: newRowKey(),
                                         amount: 0,
                                         unitId: '',
                                         unit: undefined,
@@ -1476,277 +1105,236 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                                       })
                                     }
                                   >
-                                    <FaPlus />
-                                    <span>{t('cocktail:addIngredient')}</span>
+                                    <FaPlus aria-hidden />
+                                    {t('cocktail:addIngredient')}
                                   </Button>
                                 </div>
-                              </>
-                            )}
-                          </FieldArray>
-                        </Card>
-                      ))}
-                      <div className={'flex justify-center'}>
-                        <Button
-                          type="button"
-                          variant="primary"
-                          size="sm"
-                          className="gap-2"
-                          onClick={() => {
-                            const step = {
-                              id: '',
-                              cocktailRecipeId: '',
-                              actionId: actions[0].id,
-                              action: actions[0],
-                              stepNumber: values.steps.length,
-                              ingredients: [],
-                              optional: false,
-                            };
-                            pushStep(step);
-                          }}
-                        >
-                          <FaPlus /> <span>{t('cocktail:addStep')}</span>
-                        </Button>
-                      </div>
+                              )}
+                            </FieldArray>
+                          </div>
+                        )}
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        block
+                        className="border-dashed"
+                        disabled={actions.length == 0}
+                        onClick={() => {
+                          pushStep({
+                            _key: newRowKey(),
+                            id: '',
+                            cocktailRecipeId: '',
+                            actionId: actions[0].id,
+                            action: actions[0],
+                            stepNumber: values.steps.length,
+                            ingredients: [],
+                            optional: false,
+                          });
+                        }}
+                      >
+                        <FaPlus aria-hidden />
+                        {t('cocktail:addStep')}
+                      </Button>
                     </div>
                   )}
                 </FieldArray>
-                <Divider className="col-span-2">{t('cocktail:garnish')}</Divider>
+                <FormField label={t('cocktail:prepNotes')} htmlFor="notes">
+                  <Textarea
+                    id={'notes'}
+                    name="notes"
+                    placeholder={t('cocktail:prepNotesPlaceholder')}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    value={values.notes}
+                    rows={3}
+                  />
+                </FormField>
+              </FormSection>
+
+              <FormSection id="cocktail-garnish" title={t('cocktail:garnish')}>
                 <FieldArray name={'garnishes'}>
                   {({ push: pushGarnish, remove: removeGarnish }) => (
-                    <div className={'col-span-2 space-y-4'}>
-                      {values.garnishes.map((garnish: CocktailRecipeGarnishFull, indexGarnish: number) => (
-                        <Card key={`form-recipe-garnish-${indexGarnish}`} variant="inset" className="flex flex-row gap-3 p-4">
-                          <div className={'flex flex-none items-center'}>
-                            <ButtonGroup vertical className="w-min items-center justify-center">
-                              <Button
-                                disabled={indexGarnish == 0}
-                                type="button"
-                                variant="outline"
-                                shape="square"
-                                size="xs"
-                                joinItem
-                                onClick={() => {
-                                  const value = values.garnishes[indexGarnish];
-                                  const reorderedGroups = (values.garnishes as CocktailRecipeGarnishFull[]).filter((_, i) => i != indexGarnish);
-                                  reorderedGroups.splice(indexGarnish - 1, 0, value);
-
-                                  // Ensure the item at index 0 has isAlternative = false
-                                  const firstGarnish = reorderedGroups[0] as CocktailRecipeGarnishFull & { isAlternative?: boolean };
-                                  if (firstGarnish.isAlternative) {
-                                    firstGarnish.isAlternative = false;
-                                  }
-
-                                  setFieldValue(
-                                    `garnishes`,
-                                    reorderedGroups.map((garnish, garnishIndex) => ({
-                                      ...garnish,
-                                      garnishNumber: garnishIndex,
-                                    })),
-                                  );
-                                }}
-                              >
-                                <FaAngleUp />
-                              </Button>
-                              <Button
-                                disabled={!(values.garnishes.length > 1) || indexGarnish == values.garnishes.length - 1}
-                                type="button"
-                                variant="outline"
-                                shape="square"
-                                size="xs"
-                                joinItem
-                                onClick={() => {
-                                  const value = values.garnishes[indexGarnish];
-                                  const reorderedGroups = (values.garnishes as CocktailRecipeGarnishFull[]).filter((_, i) => i != indexGarnish);
-                                  reorderedGroups.splice(indexGarnish + 1, 0, value);
-
-                                  // Ensure the item at index 0 has isAlternative = false
-                                  const firstGarnish = reorderedGroups[0] as CocktailRecipeGarnishFull & { isAlternative?: boolean };
-                                  if (firstGarnish.isAlternative) {
-                                    firstGarnish.isAlternative = false;
-                                  }
-
-                                  setFieldValue(
-                                    `garnishes`,
-                                    reorderedGroups.map((garnishes, garnishIndex) => ({
-                                      ...garnishes,
-                                      garnishNumber: garnishIndex,
-                                    })),
-                                  );
-                                }}
-                              >
-                                <FaAngleDown />
-                              </Button>
-                            </ButtonGroup>
-                          </div>
-                          <div className={'grid w-full flex-2 grid-cols-1 gap-3 md:grid-cols-2'}>
-                            <div className={''}>
-                              <Label className="flex-row items-center justify-between">
-                                <LabelText>{t('cocktail:garnish')}</LabelText>
-                                <LabelTextAlt className="text-error">
-                                  {(errors.garnishes as GarnishError[])?.[indexGarnish]?.garnishId &&
-                                    (errors.garnishes as GarnishError[])?.[indexGarnish]?.garnishId}
-                                </LabelTextAlt>
-                              </Label>
-                              <ButtonGroup className="w-full">
-                                <Input
-                                  joinItem
-                                  className={`w-full cursor-pointer ${(errors.garnishes as GarnishError[])?.[indexGarnish]?.garnishId ? fieldErrorClass : undefined}`}
-                                  value={
-                                    garnishesLoading ? t('common:loadingShort') : (values.garnishes[indexGarnish].garnish?.name ?? t('cocktail:chooseGarnish'))
-                                  }
-                                  readOnly={true}
-                                  onClick={() => {
-                                    openGarnishSelectModal(setFieldValue, indexGarnish);
-                                  }}
-                                />
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  className="border-primary text-primary hover:bg-primary/10"
-                                  joinItem
-                                  onClick={() => {
-                                    openGarnishSelectModal(setFieldValue, indexGarnish);
-                                  }}
-                                >
-                                  <FaSearch />
-                                </Button>
-                                <Button
-                                  type="button"
-                                  variant="secondary"
-                                  joinItem
-                                  onClick={() => {
-                                    modalContext.openModal(
-                                      <FormModal<GarnishDto>
-                                        form={
-                                          <GarnishForm
-                                            formRef={createRef<FormikProps<GarnishFormValues>>()}
-                                            onSaved={async (id) => {
-                                              modalContext.closeAllModals();
-                                              await setFieldValue(`garnishes.${indexGarnish}.garnishId`, id);
-                                              fetchGarnishes(workspaceId, setGarnishes, setGarnishesLoading);
-                                            }}
-                                          />
+                    <div className="flex flex-col gap-3">
+                      {formGarnishes.length == 0 && <p className="text-sm text-base-content/60">{t('cocktail:noGarnishesYet')}</p>}
+                      <SortableList
+                        items={formGarnishes}
+                        getId={(garnish, index) => garnish._key ?? `garnish-${index}`}
+                        onMove={moveGarnish}
+                        className="flex flex-col gap-3"
+                        renderItem={(garnish, indexGarnish, garnishHandle) => {
+                          const garnishError = visibleFieldError(formik, `garnishes.${indexGarnish}.garnishId`);
+                          return (
+                            <div className="flex items-start gap-1 rounded-xl border border-base-300 bg-base-100 py-1.5 pr-1.5 pl-1">
+                              {garnishHandle}
+                              <div className="flex min-w-0 flex-1 flex-col gap-2">
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <ButtonGroup className="min-w-0 flex-[1_1_16rem]">
+                                    <PickerField
+                                      joinItem
+                                      error={!!garnishError}
+                                      value={garnishesLoading ? t('common:loadingShort') : garnish.garnish?.name}
+                                      placeholder={t('cocktail:chooseGarnish')}
+                                      onClick={() => openGarnishSelectModal(setFieldValue, indexGarnish)}
+                                    />
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      shape="square"
+                                      joinItem
+                                      className="shrink-0"
+                                      aria-label={t('cocktail:createGarnish')}
+                                      title={t('cocktail:createGarnish')}
+                                      onClick={() => {
+                                        modalContext.openModal(
+                                          <FormModal<GarnishDto>
+                                            form={
+                                              <GarnishForm
+                                                formRef={createRef<FormikProps<GarnishFormValues>>()}
+                                                onSaved={async (id) => {
+                                                  modalContext.closeAllModals();
+                                                  await setFieldValue(`garnishes.${indexGarnish}.garnishId`, id);
+                                                  fetchGarnishes(workspaceId, setGarnishes, setGarnishesLoading);
+                                                }}
+                                              />
+                                            }
+                                            title={t('cocktail:createGarnish')}
+                                          />,
+                                        );
+                                      }}
+                                    >
+                                      <FaPlus aria-hidden />
+                                    </Button>
+                                  </ButtonGroup>
+                                  <div className="flex items-center gap-2">
+                                    <ToggleField
+                                      label={t('common:optional')}
+                                      toggleSize="sm"
+                                      checked={garnish.optional ?? false}
+                                      onCheckedChange={(checked) => setFieldValue(`garnishes.${indexGarnish}.optional`, checked)}
+                                    />
+                                    {indexGarnish > 0 && (
+                                      <ToggleField
+                                        label={t('cocktail:alternative')}
+                                        toggleSize="sm"
+                                        variant="secondary"
+                                        checked={garnish.isAlternative ?? false}
+                                        onCheckedChange={(checked) => setFieldValue(`garnishes.${indexGarnish}.isAlternative`, checked)}
+                                      />
+                                    )}
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      shape="square"
+                                      className="text-error hover:bg-error/10"
+                                      aria-label={`${t('common:remove')}: ${garnish.garnish?.name ?? t('cocktail:garnish')}`}
+                                      onClick={() => {
+                                        if (garnish.garnish == undefined) {
+                                          removeGarnish(indexGarnish);
+                                          return;
                                         }
-                                        title={t('cocktail:createGarnish')}
-                                      />,
-                                    );
-                                  }}
-                                >
-                                  <FaPlus />
-                                </Button>
-                              </ButtonGroup>
-                            </div>
-                            <div className={'row-span-2'}>
-                              <Label className="flex-row items-center justify-between">
-                                <LabelText>{t('cocktail:garnishDescription')}</LabelText>
-                                <LabelTextAlt className="text-error">{/*{errors.garnishDescription  && errors.garnishDescription}*/}</LabelTextAlt>
-                              </Label>
-                              <Textarea
-                                value={values.garnishes[indexGarnish].description ?? ''}
-                                name={`garnishes.${indexGarnish}.description`}
-                                className="h-24 w-full"
-                                onChange={handleChange}
-                                onBlur={handleBlur}
-                              />
-                            </div>
-                            <FormControl>
-                              <Label className="w-fit flex-col items-start justify-start gap-1">
-                                <LabelText>{t('common:optional')}</LabelText>
-                                <LabelTextAlt className="text-error">
-                                  {(errors.garnishes as GarnishError[])?.[indexGarnish]?.optional &&
-                                    (errors.garnishes as GarnishError[])?.[indexGarnish]?.optional}
-                                </LabelTextAlt>
-                                <Field
-                                  type={'checkbox'}
-                                  name={`garnishes.${indexGarnish}.optional`}
+                                        modalContext.openModal(
+                                          <DeleteConfirmationModal
+                                            spelling={'REMOVE'}
+                                            entityName={t('entity:theGarnish', { name: garnish.garnish?.name ?? '' })}
+                                            onApprove={async () => removeGarnish(indexGarnish)}
+                                          />,
+                                        );
+                                      }}
+                                    >
+                                      <FaTrashAlt aria-hidden />
+                                    </Button>
+                                  </div>
+                                </div>
+                                <Textarea
+                                  aria-label={t('cocktail:garnishDescription')}
+                                  placeholder={t('cocktail:garnishDescription')}
+                                  value={garnish.description ?? ''}
+                                  name={`garnishes.${indexGarnish}.description`}
+                                  rows={2}
                                   onChange={handleChange}
                                   onBlur={handleBlur}
-                                  as={Toggle}
-                                  variant="primary"
                                 />
-                              </Label>
-                            </FormControl>
-                            {indexGarnish > 0 && (
-                              <FormControl>
-                                <Label className="w-fit flex-col items-start justify-start gap-1">
-                                  <LabelText>{t('cocktail:alternative')}</LabelText>
-                                  <LabelTextAlt className="text-error">
-                                    {(errors.garnishes as GarnishError[])?.[indexGarnish]?.isAlternative &&
-                                      (errors.garnishes as GarnishError[])?.[indexGarnish]?.isAlternative}
-                                  </LabelTextAlt>
-                                  <Field
-                                    type={'checkbox'}
-                                    name={`garnishes.${indexGarnish}.isAlternative`}
-                                    onChange={handleChange}
-                                    onBlur={handleBlur}
-                                    as={Toggle}
-                                    variant="secondary"
-                                  />
-                                </Label>
-                              </FormControl>
-                            )}
-                          </div>
-                          <div className={'flex-1'}>
-                            <Button
-                              type="button"
-                              variant="error"
-                              shape="square"
-                              size="sm"
-                              onClick={() =>
-                                modalContext.openModal(
-                                  <DeleteConfirmationModal
-                                    spelling={'REMOVE'}
-                                    entityName={t('entity:theGarnish', { name: values.garnishes[indexGarnish].garnish.name })}
-                                    onApprove={async () => removeGarnish(indexGarnish)}
-                                  />,
-                                )
-                              }
-                            >
-                              <FaTrashAlt />
-                            </Button>
-                          </div>
-                        </Card>
-                      ))}
-
-                      <div className={'flex justify-center'}>
-                        <Button
-                          type="button"
-                          variant="primary"
-                          size="sm"
-                          className="gap-2"
-                          onClick={() => {
-                            const cocktailRecipeGarnish = {
-                              cocktailRecipeId: '',
-                              garnishId: '',
-                              garnish: undefined,
-                              optional: false,
-                              garnishNumber: values.garnishes.length - 1,
-                              description: '',
-                            };
-                            pushGarnish(cocktailRecipeGarnish);
-                          }}
-                        >
-                          <FaPlus /> <span>{t('cocktail:addGarnish')}</span>
-                        </Button>
-                      </div>
+                              </div>
+                            </div>
+                          );
+                        }}
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        block
+                        className="border-dashed"
+                        onClick={() => {
+                          pushGarnish({
+                            _key: newRowKey(),
+                            cocktailRecipeId: '',
+                            garnishId: '',
+                            garnish: undefined,
+                            optional: false,
+                            garnishNumber: values.garnishes.length,
+                            description: '',
+                          });
+                        }}
+                      >
+                        <FaPlus aria-hidden />
+                        {t('cocktail:addGarnish')}
+                      </Button>
                     </div>
                   )}
                 </FieldArray>
-                <Divider className="col-span-2">{t('guestInfo:form.sectionTitle')}</Divider>
-                {workspaceId && <CocktailGuestInfoFields workspaceId={workspaceId} cocktailId={props.cocktailRecipe?.id} />}
-              </CardBody>
-            </Card>
+              </FormSection>
 
-            <div className={'md:hidden'}>
-              <Button type="submit" variant="primary" wide disabled={isSubmitting}>
-                {isSubmitting ? <Loading size="sm" /> : <></>}
-                {props.cocktailRecipe == undefined ? t('common:create') : t('common:update')}
-              </Button>
-              {!isValid && <div className={'font-thin text-error italic'}>{t('common:formIncomplete')}</div>}
-            </div>
-          </div>
-        </form>
-      )}
+              <FormSection id="cocktail-texts" title={t('common:form.section.texts')}>
+                <FormField label={t('cocktail:description')} htmlFor="description">
+                  <TranslatedFieldTabs translations={contentTranslations} field="description" sourceValue={values.description} multiline>
+                    <Textarea
+                      id={'description'}
+                      name="description"
+                      placeholder={t('cocktail:descriptionPlaceholder')}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      value={values.description}
+                      rows={4}
+                    />
+                  </TranslatedFieldTabs>
+                </FormField>
+                <FormField label={t('cocktail:history')} htmlFor="history">
+                  <TranslatedFieldTabs translations={contentTranslations} field="history" sourceValue={values.history} multiline>
+                    <Textarea
+                      id={'history'}
+                      name="history"
+                      placeholder={t('cocktail:historyPlaceholder')}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      value={values.history}
+                      rows={4}
+                    />
+                  </TranslatedFieldTabs>
+                </FormField>
+              </FormSection>
+
+              {/* Collapsed by default: these fields override what is derived from the ingredients. */}
+              <FormSection
+                id="cocktail-guest-info"
+                collapsible
+                forceOpen={visibleFieldError(formik, 'abvOverride') != undefined}
+                title={t('guestInfo:form.overrideTitle')}
+                description={t('guestInfo:form.overrideHint')}
+                badge={
+                  guestInfoOverridden ? (
+                    <Badge variant="warning" size="sm">
+                      {t('guestInfo:form.overridesActive')}
+                    </Badge>
+                  ) : undefined
+                }
+              >
+                <CocktailGuestInfoFields />
+              </FormSection>
+            </EntityFormLayout>
+          </form>
+        );
+      }}
     </Formik>
   );
 }

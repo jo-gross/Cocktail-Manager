@@ -1,7 +1,8 @@
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useReportUnsavedChanges } from '@lib/forms/useUnsavedChanges';
 import { useTranslation } from 'react-i18next';
-import { Button, FormControl, Label, LabelText, Loading, Select, Skeleton } from '@components/ui';
+import { Button, Loading, Select, Skeleton } from '@components/ui';
+import { FormField } from '@components/forms/FormField';
 import { UserContext } from '@lib/context/UserContextProvider';
 import { alertService } from '@lib/alertService';
 import { alertApiV1Error } from '@lib/network/apiV1';
@@ -87,10 +88,7 @@ export function ContentLanguagesSection({ workspaceId }: { workspaceId: string }
         </div>
       ) : (
         <>
-          <FormControl>
-            <Label htmlFor="primary-content-language">
-              <LabelText className="font-semibold">{t('settings:primaryContentLanguage')}</LabelText>
-            </Label>
+          <FormField label={t('settings:primaryContentLanguage')} htmlFor="primary-content-language">
             <Select
               id="primary-content-language"
               aria-describedby="primary-content-language-help"
@@ -109,12 +107,9 @@ export function ContentLanguagesSection({ workspaceId }: { workspaceId: string }
             <p id="primary-content-language-help" className="mt-1 text-xs text-base-content/60">
               {t('settings:primaryContentLanguageHelp')}
             </p>
-          </FormControl>
+          </FormField>
 
-          <FormControl>
-            <Label htmlFor="additional-content-language">
-              <LabelText className="font-semibold">{t('settings:additionalContentLanguages')}</LabelText>
-            </Label>
+          <FormField label={t('settings:additionalContentLanguages')} htmlFor="additional-content-language">
             <AdditionalContentLanguages
               inputId="additional-content-language"
               options={localeOptions}
@@ -123,7 +118,7 @@ export function ContentLanguagesSection({ workspaceId }: { workspaceId: string }
               languageName={languageName}
               onChange={(additional) => setContentLocales((previous) => ({ ...previous, additional }))}
             />
-          </FormControl>
+          </FormField>
         </>
       )}
     </SettingsSection>

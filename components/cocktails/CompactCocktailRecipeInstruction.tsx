@@ -18,6 +18,8 @@ interface CompactCocktailRecipeInstructionProps {
   specialPrice?: number;
   showImage?: boolean;
   image?: string;
+  /** Replaces the image column (always shown), e.g. with an editable image in the recipe form. */
+  imageSlot?: React.ReactNode;
 
   showRating?: { ratings: RatingDto[]; loading: boolean; error: boolean };
 }
@@ -134,7 +136,7 @@ export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeIns
       </div>
       <div className={'col-span-4 border-b border-base-100'}></div>
       <div className={`col-span-4 grid grid-cols-5 gap-1`}>
-        <div className={`${props.showImage == true && props.cocktailRecipe.hasImage ? 'col-span-3' : 'col-span-5'}`}>
+        <div className={`${props.imageSlot != undefined || (props.showImage == true && props.cocktailRecipe.hasImage) ? 'col-span-3' : 'col-span-5'}`}>
           {props.cocktailRecipe.steps
             ?.sort((a, b) => a.stepNumber - b.stepNumber)
             ?.map((step, _index) => (
@@ -187,7 +189,9 @@ export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeIns
             </div>
           </div>
         </div>
-        {props.showImage && props.cocktailRecipe.hasImage ? (
+        {props.imageSlot != undefined ? (
+          <div className={'col-span-2 w-full self-start'}>{props.imageSlot}</div>
+        ) : props.showImage && props.cocktailRecipe.hasImage ? (
           <div className={'col-span-2 h-full w-full items-start self-start justify-self-center'}>
             <ImageWithSkeleton
               onClick={() => modalContext.openModal(<ImageModal image={props.image ?? props.cocktailRecipe.imageUrl ?? ''} />)}

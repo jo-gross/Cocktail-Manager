@@ -118,7 +118,7 @@ export function FilterSheet({ open, onClose, entries, facets, filters, onChange,
             {facets.allergens.map((allergen) => (
               <FilterChip
                 key={allergen}
-                label={t(`guestInfo:allergenWithout.${allergen}`)}
+                label={t(`guestInfo:allergen.${allergen}`)}
                 count={countWithout(entries, filters, facets.categories, allergen)}
                 pressed={filters.without.includes(allergen)}
                 onToggle={() => onChange({ ...filters, without: toggle(filters.without, allergen) })}

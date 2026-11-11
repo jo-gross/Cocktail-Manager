@@ -12,7 +12,8 @@ import { toIngredientDto } from '@lib/api/dto/ingredients';
 import { ingredientGuestInfoImportData } from '@lib/guest-info/sanitize';
 import packageJson from '../../../package.json';
 import type { IngredientExportStructure } from '@lib/auditExport';
-import type { Prisma, User, Workspace } from '@generated/prisma/client';
+import type { Allergen, AllergenSource, Prisma, User, Workspace } from '@generated/prisma/client';
+import { nextAllergenSources } from '@lib/guest-info/constants';
 import type { IngredientCreateInput, IngredientDto, IngredientUpdateInput } from '@lib/schemas/ingredients';
 
 const ingredientInclude = {
@@ -21,10 +22,11 @@ const ingredientInclude = {
 } satisfies Prisma.IngredientInclude;
 
 /** Guest-info fields of a create/update input; omitted fields stay unchanged, a blank guest name is stored as null. */
-function guestInfoData(input: IngredientCreateInput | IngredientUpdateInput) {
+function guestInfoData(input: IngredientCreateInput | IngredientUpdateInput, existing?: { allergens: Allergen[]; allergenSources: AllergenSource[] } | null) {
   return {
     abv: input.abv,
     allergens: input.allergens,
+    allergenSources: nextAllergenSources(input, existing),
     additives: input.additives,
     guestInfoComplete: input.guestInfoComplete,
     hideOnGuestMenu: input.hideOnGuestMenu,
@@ -109,7 +111,7 @@ export async function updateIngredient(workspace: Workspace, user: User, ingredi
         price: input.price ?? undefined,
         link: input.link ?? undefined,
         tags: input.tags ?? undefined,
-        ...guestInfoData(input),
+        ...guestInfoData(input, oldIngredient),
         workspace: { connect: { id: workspace.id } },
       },
     });
@@ -235,6 +237,7 @@ export async function cloneIngredient(workspace: Workspace, ingredientId: string
         tags: existing.tags,
         abv: existing.abv,
         allergens: existing.allergens,
+        allergenSources: existing.allergenSources,
         additives: existing.additives,
         guestInfoComplete: existing.guestInfoComplete,
         hideOnGuestMenu: existing.hideOnGuestMenu,
@@ -332,6 +335,7 @@ export async function exportIngredientsJson(workspace: Workspace, ids: string[])
         tags: ingredient.tags,
         abv: ingredient.abv,
         allergens: ingredient.allergens,
+        allergenSources: ingredient.allergenSources,
         additives: ingredient.additives,
         guestInfoComplete: ingredient.guestInfoComplete,
         hideOnGuestMenu: ingredient.hideOnGuestMenu,

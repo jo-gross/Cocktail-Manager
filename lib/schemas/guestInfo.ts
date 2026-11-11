@@ -7,10 +7,17 @@
 import { z } from '@lib/openapi/zod';
 import { ApiTags } from '@lib/openapi/tags';
 import { WorkspaceIdParam } from '@lib/schemas/common';
-import { ADDITIVES, ALCOHOL_CATEGORIES, ALLERGENS } from '@lib/guest-info/constants';
+import { ADDITIVES, ALCOHOL_CATEGORIES, ALLERGEN_SOURCES, ALLERGENS } from '@lib/guest-info/constants';
 import type { ResourceApiDoc } from '@lib/openapi/types';
 
 export const AllergenSchema = z.enum(ALLERGENS).openapi('Allergen', { description: 'Allergen per Regulation (EU) No 1169/2011, Annex II.' });
+export const AllergenSourceSchema = z.enum(ALLERGEN_SOURCES).openapi('AllergenSource', {
+  description: 'Specific cereal (GLUTEN) or nut (NUTS) named in Annex II of Regulation (EU) No 1169/2011.',
+});
+const allergenSourcesInput = z
+  .array(AllergenSourceSchema)
+  .optional()
+  .openapi({ description: 'Specific cereals/nuts behind GLUTEN/NUTS. Sources whose allergen is not set are dropped.' });
 export const AdditiveSchema = z.enum(ADDITIVES).openapi('Additive', { description: 'Labelling-relevant additive.' });
 
 /** ABV in % vol (0–100). */
@@ -20,6 +27,7 @@ export const AbvSchema = z.coerce.number().min(0).max(100);
 export const IngredientGuestInfoInputShape = {
   abv: AbvSchema.nullish().openapi({ description: 'Alcohol by volume in % vol (0–100), null if unknown.' }),
   allergens: z.array(AllergenSchema).optional(),
+  allergenSources: allergenSourcesInput,
   additives: z.array(AdditiveSchema).optional(),
   guestInfoComplete: z.boolean().optional().openapi({ description: 'Allergen/additive information has been verified as complete.' }),
   hideOnGuestMenu: z.boolean().optional().openapi({ description: 'Do not list this ingredient on guest menus.' }),
@@ -29,6 +37,7 @@ export const IngredientGuestInfoInputShape = {
 /** Guest-information fields shared by the garnish create/update inputs (all optional → untouched on update). */
 export const GarnishGuestInfoInputShape = {
   allergens: z.array(AllergenSchema).optional(),
+  allergenSources: allergenSourcesInput,
   additives: z.array(AdditiveSchema).optional(),
   guestInfoComplete: z.boolean().optional().openapi({ description: 'Allergen/additive information has been verified as complete.' }),
 };
@@ -43,6 +52,7 @@ export const CocktailGuestInfoInputShape = {
 export const IngredientGuestInfoDtoShape = {
   abv: z.number().nullable().openapi({ description: 'Alcohol by volume in % vol, null if unknown.' }),
   allergens: z.array(AllergenSchema),
+  allergenSources: z.array(AllergenSourceSchema),
   additives: z.array(AdditiveSchema),
   guestInfoComplete: z.boolean(),
   hideOnGuestMenu: z.boolean(),
@@ -51,6 +61,7 @@ export const IngredientGuestInfoDtoShape = {
 
 export const GarnishGuestInfoDtoShape = {
   allergens: z.array(AllergenSchema),
+  allergenSources: z.array(AllergenSourceSchema),
   additives: z.array(AdditiveSchema),
   guestInfoComplete: z.boolean(),
 };
@@ -64,7 +75,11 @@ export const CocktailGuestInfoDtoShape = {
 export const DerivedGuestInfoSchema = z
   .object({
     allergens: z.array(
-      z.object({ code: AllergenSchema, optional: z.boolean().openapi({ description: 'Only contained in optional/alternative components.' }) }),
+      z.object({
+        code: AllergenSchema,
+        optional: z.boolean().openapi({ description: 'Only contained in optional/alternative components.' }),
+        sources: z.array(AllergenSourceSchema).openapi({ description: 'Specified cereals/nuts of the contributing ingredients/garnishes.' }),
+      }),
     ),
     additives: z.array(z.object({ code: AdditiveSchema, optional: z.boolean() })),
     complete: z.boolean().openapi({ description: 'All involved ingredients and garnishes have verified guest information.' }),

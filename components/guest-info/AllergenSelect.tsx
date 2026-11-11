@@ -11,7 +11,7 @@ export interface AllergenSelectProps {
   className?: string;
 }
 
-/** Chip multi-select for the 14 EU allergens (short label, full name as tooltip). */
+/** Chip multi-select for the 14 EU allergens, labelled with the same designation guests see (`guestInfo:allergen.<CODE>`). */
 export function AllergenSelect(props: AllergenSelectProps) {
   const { t } = useTranslation(['guestInfo']);
   return (
@@ -19,8 +19,7 @@ export function AllergenSelect(props: AllergenSelectProps) {
       {...props}
       aria-label={t('guestInfo:allergensTitle')}
       options={ALLERGENS}
-      getLabel={(code) => t(`guestInfo:allergenShort.${code}`)}
-      getTitle={(code) => t(`guestInfo:allergen.${code}`)}
+      getLabel={(code) => t(`guestInfo:allergen.${code}`)}
       getPrefix={(code) => ALLERGEN_CODES[code]}
     />
   );

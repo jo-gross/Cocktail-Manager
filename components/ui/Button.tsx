@@ -36,15 +36,16 @@ const variantClasses: Record<ButtonVariant, string> = {
   warning: `bg-warning text-warning-content hover:bg-warning/90 focus-visible:ring-warning ${filledHoverClasses}`,
 };
 
+// On touch screens (coarse pointer) small controls grow to finger size: `sm` → 44px, `xs` → 36px.
 const sizeClasses: Record<ButtonSize, string> = {
-  xs: 'min-h-7 h-7 px-2 text-xs gap-1',
-  sm: 'min-h-9 h-9 px-3 text-sm gap-1.5',
+  xs: 'min-h-7 h-7 px-2 text-xs gap-1 pointer-coarse:min-h-9 pointer-coarse:h-9',
+  sm: 'min-h-9 h-9 px-3 text-sm gap-1.5 pointer-coarse:min-h-11 pointer-coarse:h-11',
   md: 'min-h-11 h-11 px-4 text-sm gap-2',
 };
 
 const iconSizeClasses: Record<ButtonSize, string> = {
-  xs: 'min-h-7 h-7 w-7 p-0',
-  sm: 'min-h-9 h-9 w-9 p-0',
+  xs: 'min-h-7 h-7 w-7 p-0 pointer-coarse:min-h-9 pointer-coarse:h-9 pointer-coarse:w-9',
+  sm: 'min-h-9 h-9 w-9 p-0 pointer-coarse:min-h-11 pointer-coarse:h-11 pointer-coarse:w-11',
   md: 'min-h-11 h-11 w-11 p-0',
 };
 

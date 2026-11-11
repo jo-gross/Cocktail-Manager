@@ -130,7 +130,8 @@
     "calculationsDeleted": "{{count}} calculation(s) deleted",
     "shoppingListCheckboxTip": "These checkboxes can help when shopping, for example",
     "calculationSaved": "Calculation saved successfully",
-    "saveTitle": "Save calculation"
+    "saveTitle": "Save calculation",
+    "print": "Print"
   },
   "monitor": {
     "title": "Monitor",

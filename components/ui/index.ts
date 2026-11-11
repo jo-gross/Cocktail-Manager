@@ -27,6 +27,9 @@ export type { SelectProps, SelectSize } from './Select';
 export { Label, LabelText, LabelTextAlt } from './Label';
 export type { LabelProps, LabelTextProps, LabelTextAltProps } from './Label';
 
+export { InputAddon } from './InputAddon';
+export type { InputAddonProps } from './InputAddon';
+
 export { FieldError } from './FieldError';
 export type { FieldErrorProps } from './FieldError';
 

@@ -111,7 +111,7 @@ describe('renderMenuSlots', () => {
     ],
     {
       guestInfo: new Map([
-        ['c1', guestInfo({ allergens: [{ code: 'MILK', optional: false }], additives: [{ code: 'CAFFEINE', optional: false }] })],
+        ['c1', guestInfo({ allergens: [{ code: 'MILK', optional: false, sources: [] }], additives: [{ code: 'CAFFEINE', optional: false }] })],
         ['c2', guestInfo({ alcohol: { abv: 0, status: 'calculated', category: 'alcoholFree', alcoholFree: true, grams: 0, volumeMl: 100 } })],
       ]),
     },

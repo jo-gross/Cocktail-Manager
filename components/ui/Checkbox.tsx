@@ -8,8 +8,8 @@ export interface CheckboxProps extends Omit<React.InputHTMLAttributes<HTMLInputE
 }
 
 const sizeClasses: Record<CheckboxSize, string> = {
-  sm: 'h-4 w-4',
-  md: 'h-5 w-5',
+  sm: 'h-4 w-4 pointer-coarse:h-6 pointer-coarse:w-6',
+  md: 'h-5 w-5 pointer-coarse:h-6 pointer-coarse:w-6',
 };
 
 export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(function Checkbox({ checkboxSize = 'md', className, ...props }, ref) {

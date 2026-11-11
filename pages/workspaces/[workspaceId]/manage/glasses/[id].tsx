@@ -7,7 +7,6 @@ import { Role } from '@generated/prisma/client';
 import { Loading } from '@components/Loading';
 import { withPagePermission } from '@middleware/ui/withPagePermission';
 import { FormikProps } from 'formik';
-import { SingleFormLayout } from '@components/layout/SingleFormLayout';
 import type { GlassDto } from '@lib/schemas/glasses';
 import { PageCenter } from '@components/layout/PageCenter';
 import { apiV1FetchSafe } from '@lib/network/apiV1';
@@ -40,10 +39,14 @@ function EditGlassPage() {
       <Loading />
     </PageCenter>
   ) : (
-    <ManageEntityLayout backLink={`/workspaces/${workspaceId}/manage/glasses`} title={t('nav:glasses')} formRef={formRef}>
-      <SingleFormLayout title={t('entity:formTitle.glass')}>
-        <GlassForm glass={glass} formRef={formRef} />
-      </SingleFormLayout>
+    <ManageEntityLayout
+      backLink={`/workspaces/${workspaceId}/manage/glasses`}
+      title={glass?.name ?? t('entity:formTitle.glass')}
+      subtitle={glass ? t('nav:glasses') : undefined}
+      formRef={formRef}
+      showUnsavedHint={false}
+    >
+      <GlassForm glass={glass} formRef={formRef} />
     </ManageEntityLayout>
   );
 }

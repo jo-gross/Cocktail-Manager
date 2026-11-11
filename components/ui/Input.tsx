@@ -12,7 +12,8 @@ export interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElem
 }
 
 const inputSizeClasses: Record<InputSize, string> = {
-  sm: 'min-h-9 h-9 px-2.5 text-sm',
+  // 44px on touch screens, like `md`.
+  sm: 'min-h-9 h-9 px-2.5 text-sm pointer-coarse:min-h-11 pointer-coarse:h-11',
   md: 'min-h-11 h-11 px-3 text-sm',
 };
 
@@ -21,6 +22,12 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
   ref,
 ) {
   return (
-    <input ref={ref} type={type ?? 'text'} className={cn(fieldClassName({ error, bordered, joinItem }), inputSizeClasses[inputSize], className)} {...props} />
+    <input
+      ref={ref}
+      type={type ?? 'text'}
+      aria-invalid={error || undefined}
+      className={cn(fieldClassName({ error, bordered, joinItem }), inputSizeClasses[inputSize], className)}
+      {...props}
+    />
   );
 });

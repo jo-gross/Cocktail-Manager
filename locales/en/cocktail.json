@@ -148,5 +148,11 @@
   "markUnavailableToday": "Out today",
   "markUnavailableTodayTip": "Mark the cocktail as unavailable until the next bar day starts",
   "markAvailable": "Available again",
-  "markAvailableTip": "Mark the cocktail as available again"
+  "markAvailableTip": "Mark the cocktail as available again",
+  "stepAction": "Action",
+  "unit": "Unit",
+  "noSteps": "No preparation steps yet.",
+  "noStepIngredients": "No ingredients in this step yet.",
+  "noGarnishesYet": "No garnish yet.",
+  "guestsTab": "Guests"
 }

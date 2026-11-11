@@ -6,11 +6,13 @@ import type { DerivedGuestInfo } from '@lib/guest-info/derive';
 import type { CocktailGuestInfoResponse } from '@lib/schemas/guestInfo';
 import { getCocktailGuestInfo } from '@lib/network/guestInfo';
 import { AlcoholBadge, formatAlcohol } from './AlcoholBadge';
+import { formatAllergenLabel } from '@lib/guest-info/format';
 
-/** "ca. 14 % vol · enthält Ei, Sulfite · optional: Milch" */
+/** "ca. 14 % vol · enthält Eier, Glutenhaltiges Getreide (Gerste) · optional: Milch (einschließlich Laktose)" */
 export function formatGuestInfoSummary(info: DerivedGuestInfo, t: TFunction<['guestInfo']>, locale: string): string {
-  const required = info.allergens.filter((a) => !a.optional).map((a) => t(`guestInfo:allergenShort.${a.code}`));
-  const optional = info.allergens.filter((a) => a.optional).map((a) => t(`guestInfo:allergenShort.${a.code}`));
+  const label = (entry: DerivedGuestInfo['allergens'][number]) => formatAllergenLabel(t as unknown as (key: string) => string, entry.code, entry.sources);
+  const required = info.allergens.filter((a) => !a.optional).map(label);
+  const optional = info.allergens.filter((a) => a.optional).map(label);
   const parts = [formatAlcohol(info.alcohol, t, locale)];
   parts.push(required.length > 0 ? t('guestInfo:form.contains', { list: required.join(', ') }) : t('guestInfo:form.noAllergens'));
   if (optional.length > 0) parts.push(`${t('guestInfo:optional')}: ${optional.join(', ')}`);

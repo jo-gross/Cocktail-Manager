@@ -5,7 +5,7 @@ import classNames from 'classnames';
 import { useTranslation } from 'react-i18next';
 import '../lib/ArrayUtils';
 import { useRouter } from 'next/router';
-import { Badge, Button } from '@components/ui';
+import { Badge } from '@components/ui';
 import { apiV1Fetch } from '@lib/network/apiV1';
 
 interface TagOption {
@@ -19,8 +19,9 @@ interface TagInputProps {
   validate?: (tag: string) => boolean;
 }
 
+// Same height, border and focus ring as the other form fields (Input / Select).
 const inputControlClasses =
-  'w-full min-h-10 h-10 rounded-field border border-base-content/20 bg-base-100 px-3 text-sm text-base-content outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/25';
+  'w-full min-h-11 h-11 rounded-lg border border-base-300 bg-base-100 px-3 text-sm pointer-coarse:text-base text-base-content outline-none transition-colors focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-1 focus-within:ring-offset-base-100';
 
 export function TagInput(props: TagInputProps) {
   const { t } = useTranslation('common');
@@ -81,7 +82,7 @@ export function TagInput(props: TagInputProps) {
           multiValue: () => classNames('invisible', 'w-0'),
           option: ({ isDisabled, isFocused, isSelected }) =>
             classNames(
-              'cursor-pointer px-3 py-2',
+              'cursor-pointer px-3 py-2.5 pointer-coarse:py-3',
               isDisabled && 'text-base-content/30',
               isFocused && 'bg-secondary text-secondary-content',
               isSelected && !isFocused && 'bg-primary text-primary-content',
@@ -92,21 +93,17 @@ export function TagInput(props: TagInputProps) {
       />
       <div className="flex flex-wrap gap-1 pt-2">
         {props.value.map((tag) => (
-          <Badge key={tag} variant="primary" className="gap-1">
+          <Badge key={tag} variant="primary" className="gap-1 pointer-coarse:gap-1.5">
             {tag}
-            <Button
+            {/* Compact like before; only the remove target grows on touch screens. */}
+            <button
               type="button"
-              variant="ghost"
-              shape="square"
-              size="xs"
-              className="h-4 min-h-4 w-4 text-inherit hover:bg-primary-content/20"
-              onClick={() => {
-                const newTags = props.value.filter((t) => t !== tag);
-                props.onChange(newTags);
-              }}
+              aria-label={`${t('remove')}: ${tag}`}
+              className="flex h-4 w-4 cursor-pointer items-center justify-center rounded-sm text-inherit hover:bg-primary-content/20 focus-visible:ring-2 focus-visible:ring-primary-content focus-visible:outline-none pointer-coarse:h-6 pointer-coarse:w-6"
+              onClick={() => props.onChange(props.value.filter((existing) => existing !== tag))}
             >
               &times;
-            </Button>
+            </button>
           </Badge>
         ))}
       </div>

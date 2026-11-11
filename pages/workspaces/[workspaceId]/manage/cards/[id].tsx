@@ -12,10 +12,11 @@ import type { CocktailSummaryDto } from '@lib/schemas/cocktails';
 import { CardEditorArchiveActions, CardEditorForm } from '@components/card-editor/CardEditorForm';
 import type { CardEditorFormValues } from '@components/card-editor/types';
 import { apiV1FetchSafe } from '@lib/network/apiV1';
+import { Badge } from '@components/ui';
 
 function EditCocktailCard() {
   const router = useRouter();
-  const { t } = useTranslation(['manage', 'common', 'cocktail', 'errors']);
+  const { t } = useTranslation(['manage', 'common', 'cocktail', 'errors', 'nav']);
   const { id, workspaceId } = router.query;
 
   const [card, setCard] = useState<CardDto | undefined>(undefined);
@@ -52,8 +53,17 @@ function EditCocktailCard() {
   ) : (
     <ManageEntityLayout
       backLink={`/workspaces/${workspaceId}/manage/cards`}
-      title={card?.archived ? <span className={'italic'}>{t('manage:cardArchived')}</span> : t('manage:card')}
+      title={card?.name || t('manage:card')}
+      subtitle={
+        card ? (
+          <span className="inline-flex items-center gap-2">
+            {t('nav:cards')}
+            {card.archived && <Badge variant="warning">{t('common:archived')}</Badge>}
+          </span>
+        ) : undefined
+      }
       formRef={formRef}
+      showUnsavedHint={false}
     >
       <CardEditorForm card={card} cocktails={cocktails} loadingCocktails={loadingCocktails} workspaceId={workspaceId as string} formRef={formRef} />
       {card != undefined ? <CardEditorArchiveActions card={card} workspaceId={workspaceId as string} /> : null}

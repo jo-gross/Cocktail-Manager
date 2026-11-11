@@ -1,9 +1,9 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { DndContext, DragEndEvent, PointerSensor, closestCenter, useSensor, useSensors } from '@dnd-kit/core';
-import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { DndContext, DragEndEvent, KeyboardSensor, PointerSensor, closestCenter, useSensor, useSensors } from '@dnd-kit/core';
+import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { FieldArray, Formik, FormikErrors, FormikProps } from 'formik';
 import { z } from 'zod';
-import { FaTrashAlt } from 'react-icons/fa';
+import { FaArchive, FaBoxOpen, FaTrashAlt } from 'react-icons/fa';
 import { useRouter } from 'next/router';
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import { RoutingContext } from '@lib/context/RoutingContextProvider';
@@ -15,7 +15,11 @@ import { DeleteConfirmationModal } from '@components/modals/DeleteConfirmationMo
 import type { CardDto } from '@lib/schemas/cards';
 import type { CocktailSummaryDto } from '@lib/schemas/cocktails';
 import { alertApiV1Error, apiV1Mutate } from '@lib/network/apiV1';
-import { Button, Divider, FormControl, Input, Label, LabelText, LabelTextAlt } from '@components/ui';
+import { Button, Input } from '@components/ui';
+import { EntityFormLayout } from '@components/forms/EntityFormLayout';
+import { FormSection } from '@components/forms/FormSection';
+import { FormField, visibleFieldError } from '@components/forms/FormField';
+import { FormSaveButton } from '@components/forms/FormSaveButton';
 import { useTranslation } from 'react-i18next';
 import { CardEditorToolbar } from './CardEditorToolbar';
 import { CardGroupSection } from './CardGroupSection';
@@ -155,7 +159,11 @@ export function CardEditorForm({ card, cocktails, loadingCocktails, workspaceId,
   const columns = getColumnsForWidth(effectiveWidth, density);
   const stackHeader = effectiveWidth < 640;
 
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    // Keyboard alternative to dragging (focus a handle, Space, arrows, Space) – replaces the up/down buttons.
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
 
   return (
     <Formik<CardEditorFormValues>
@@ -200,7 +208,9 @@ export function CardEditorForm({ card, cocktails, loadingCocktails, workspaceId,
         }
       }}
     >
-      {({ values, setFieldValue, errors, touched, handleChange, handleBlur, handleSubmit, isSubmitting }) => {
+      {(formik) => {
+        const { values, setFieldValue, errors, touched, handleChange, handleBlur, handleSubmit } = formik;
+        const nameError = visibleFieldError(formik, 'name');
         const sortedGroups = [...values.groups].sort((a, b) => a.groupNumber - b.groupNumber);
         const groupIds = sortedGroups.map((_, index) => groupDragId(index));
 
@@ -230,16 +240,36 @@ export function CardEditorForm({ card, cocktails, loadingCocktails, workspaceId,
         };
 
         return (
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit} noValidate>
             <FormikDirtyReporter toComparable={toComparableCard} />
-            <div className="flex flex-col gap-3">
+            {!card?.archived ? <FormSaveButton label={card == undefined ? t('common:create') : t('common:save')} /> : null}
+            <EntityFormLayout fullWidth>
+              {viewMode !== 'preview' ? (
+                <FormSection title={t('common:form.section.general')}>
+                  <div className="grid grid-cols-1 gap-4 @xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+                    <FormField label={t('manage:card')} htmlFor="card-name" required error={nameError}>
+                      <Input
+                        id="card-name"
+                        name="name"
+                        autoComplete="off"
+                        disabled={card?.archived}
+                        error={!!nameError}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        value={values.name}
+                      />
+                    </FormField>
+                    <FormField label={t('common:date')} htmlFor="card-date">
+                      <Input id="card-date" type="date" disabled={card?.archived} name="date" onChange={handleChange} onBlur={handleBlur} value={values.date} />
+                    </FormField>
+                  </div>
+                </FormSection>
+              ) : null}
               <CardEditorToolbar
                 viewMode={viewMode}
                 onViewModeChange={setViewMode}
                 isArchived={card?.archived}
-                isSubmitting={isSubmitting}
                 onAddGroup={() => setFieldValue('groups', [...sortedGroups, { name: '', items: [], groupNumber: sortedGroups.length }])}
-                onSave={() => handleSubmit()}
                 device={device}
                 onDeviceChange={setDevice}
                 density={density}
@@ -251,36 +281,7 @@ export function CardEditorForm({ card, cocktails, loadingCocktails, workspaceId,
                 isDeviceDisabled={isDeviceDisabled}
                 isTabletSizeDisabled={isTabletSizeDisabled}
                 isOrientationDisabled={isOrientationDisabled}
-              >
-                {viewMode !== 'preview' ? (
-                  <div className="flex flex-col gap-2 md:flex-row">
-                    <FormControl>
-                      <Label className="flex-row items-center justify-between">
-                        <LabelText>{t('manage:card')}</LabelText>
-                        <LabelTextAlt className="text-error">
-                          <span>{errors.name && touched.name ? errors.name : ''}</span>
-                          <span>*</span>
-                        </LabelTextAlt>
-                      </Label>
-                      <Input
-                        type="text"
-                        disabled={card?.archived}
-                        className={errors.name && touched.name ? 'border-error' : undefined}
-                        name="name"
-                        onChange={handleChange}
-                        onBlur={handleBlur}
-                        value={values.name}
-                      />
-                    </FormControl>
-                    <FormControl>
-                      <Label className="flex-row items-center justify-between">
-                        <LabelText>{t('common:date')}</LabelText>
-                      </Label>
-                      <Input type="date" disabled={card?.archived} name="date" onChange={handleChange} onBlur={handleBlur} value={values.date} />
-                    </FormControl>
-                  </div>
-                ) : null}
-              </CardEditorToolbar>
+              />
 
               <FieldArray name="groups">
                 {({ remove: removeGroup }) => (
@@ -309,14 +310,6 @@ export function CardEditorForm({ card, cocktails, loadingCocktails, workspaceId,
                               values={values}
                               onFieldChange={handleChange}
                               onFieldBlur={handleBlur}
-                              onMoveGroupUp={() => {
-                                if (groupIndex === 0) return;
-                                setFieldValue('groups', reorderGroups(sortedGroups, groupIndex, groupIndex - 1));
-                              }}
-                              onMoveGroupDown={() => {
-                                if (groupIndex >= sortedGroups.length - 1) return;
-                                setFieldValue('groups', reorderGroups(sortedGroups, groupIndex, groupIndex + 1));
-                              }}
                               onRemoveGroup={() =>
                                 modalContext.openModal(
                                   <DeleteConfirmationModal
@@ -336,7 +329,7 @@ export function CardEditorForm({ card, cocktails, loadingCocktails, workspaceId,
                   </DndContext>
                 )}
               </FieldArray>
-            </div>
+            </EntityFormLayout>
           </form>
         );
       }}
@@ -357,51 +350,51 @@ export function CardEditorArchiveActions({ card, workspaceId }: CardEditorArchiv
   const router = useRouter();
 
   return (
-    <>
-      <Divider />
-      <div className="flex items-center justify-end gap-2">
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={async () => {
-            try {
-              await apiV1Mutate<CardDto>(`/api/v1/workspaces/${workspaceId}/cards/${card.id}/${card.archived ? 'unarchive' : 'archive'}`, 'PUT');
-              await unsavedChanges.completeSave(() => router.replace(`/workspaces/${workspaceId}/manage/cards`));
-              alertService.success(card.archived ? t('entity:cardUnarchiveSuccess') : t('entity:cardArchiveSuccess'));
-            } catch (error) {
-              alertApiV1Error(error, card.archived ? t('errors:unarchiveCard') : t('errors:archiveCard'));
+    <div className="mt-4 md:mt-6">
+      <FormSection title={t('common:form.moreActions')}>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={async () => {
+              try {
+                await apiV1Mutate<CardDto>(`/api/v1/workspaces/${workspaceId}/cards/${card.id}/${card.archived ? 'unarchive' : 'archive'}`, 'PUT');
+                await unsavedChanges.completeSave(() => router.replace(`/workspaces/${workspaceId}/manage/cards`));
+                alertService.success(card.archived ? t('entity:cardUnarchiveSuccess') : t('entity:cardArchiveSuccess'));
+              } catch (error) {
+                alertApiV1Error(error, card.archived ? t('errors:unarchiveCard') : t('errors:archiveCard'));
+              }
+            }}
+          >
+            {card.archived ? <FaBoxOpen aria-hidden /> : <FaArchive aria-hidden />}
+            {card.archived ? t('unarchiveCard') : t('archiveCard')}
+          </Button>
+          <Button
+            type="button"
+            variant="outline-error"
+            onClick={() =>
+              modalContext.openModal(
+                <DeleteConfirmationModal
+                  spelling={'DELETE'}
+                  entityName={t('entity:theCard', { name: card.name })}
+                  onApprove={async () => {
+                    try {
+                      await apiV1Mutate(`/api/v1/workspaces/${workspaceId}/cards/${card.id}`, 'DELETE');
+                      alertService.success(t('entity:cardDeleted'));
+                      await unsavedChanges.completeSave(() => routingContext.conditionalBack(`/workspaces/${workspaceId}/manage/cards`));
+                    } catch (error) {
+                      alertApiV1Error(error, t('errors:deleteCard'));
+                    }
+                  }}
+                />,
+              )
             }
-          }}
-        >
-          {card.archived ? t('unarchiveCard') : t('archiveCard')}
-        </Button>
-        <Button
-          type="button"
-          variant="outline-error"
-          size="sm"
-          onClick={() =>
-            modalContext.openModal(
-              <DeleteConfirmationModal
-                spelling={'DELETE'}
-                entityName={t('entity:theCard', { name: card.name })}
-                onApprove={async () => {
-                  try {
-                    await apiV1Mutate(`/api/v1/workspaces/${workspaceId}/cards/${card.id}`, 'DELETE');
-                    alertService.success(t('entity:cardDeleted'));
-                    await unsavedChanges.completeSave(() => routingContext.conditionalBack(`/workspaces/${workspaceId}/manage/cards`));
-                  } catch (error) {
-                    alertApiV1Error(error, t('errors:deleteCard'));
-                  }
-                }}
-              />,
-            )
-          }
-        >
-          <FaTrashAlt />
-          {t('deleteCard')}
-        </Button>
-      </div>
-    </>
+          >
+            <FaTrashAlt aria-hidden />
+            {t('deleteCard')}
+          </Button>
+        </div>
+      </FormSection>
+    </div>
   );
 }

@@ -7,7 +7,6 @@ import { Loading } from '@components/Loading';
 import { IngredientForm, FormValue } from '@components/ingredients/IngredientForm';
 import { withPagePermission } from '@middleware/ui/withPagePermission';
 import { FormikProps } from 'formik';
-import { SingleFormLayout } from '@components/layout/SingleFormLayout';
 import type { IngredientDto } from '@lib/schemas/ingredients';
 import { PageCenter } from '@components/layout/PageCenter';
 import { apiV1FetchSafe } from '@lib/network/apiV1';
@@ -40,10 +39,14 @@ function EditCocktailRecipe() {
       <Loading />
     </PageCenter>
   ) : (
-    <ManageEntityLayout backLink={`/workspaces/${workspaceId}/manage/ingredients`} title={t('nav:ingredients')} formRef={formRef}>
-      <SingleFormLayout title={t('entity:formTitle.ingredient')}>
-        <IngredientForm ingredient={ingredient} formRef={formRef} />
-      </SingleFormLayout>
+    <ManageEntityLayout
+      backLink={`/workspaces/${workspaceId}/manage/ingredients`}
+      title={ingredient?.name ?? t('entity:formTitle.ingredient')}
+      subtitle={ingredient ? t('nav:ingredients') : undefined}
+      formRef={formRef}
+      showUnsavedHint={false}
+    >
+      <IngredientForm ingredient={ingredient} formRef={formRef} />
     </ManageEntityLayout>
   );
 }

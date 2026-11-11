@@ -6,6 +6,7 @@ describe('guest-info import sanitizing', () => {
     expect(ingredientGuestInfoImportData({ name: 'Gin' })).toEqual({
       abv: undefined,
       allergens: undefined,
+      allergenSources: undefined,
       additives: undefined,
       guestInfoComplete: undefined,
       hideOnGuestMenu: undefined,
@@ -16,9 +17,19 @@ describe('guest-info import sanitizing', () => {
   it('filters unknown codes and keeps legal order', () => {
     expect(garnishGuestInfoImportData({ allergens: ['MILK', 'FOO', 'GLUTEN'], additives: ['CAFFEINE'], guestInfoComplete: true })).toEqual({
       allergens: ['GLUTEN', 'MILK'],
+      allergenSources: [],
       additives: ['CAFFEINE'],
       guestInfoComplete: true,
     });
+  });
+
+  it('keeps only cereals/nuts whose allergen is set', () => {
+    expect(ingredientGuestInfoImportData({ allergens: ['GLUTEN'], allergenSources: ['OATS', 'WHEAT', 'ALMONDS', 'FOO'] }).allergenSources).toEqual([
+      'WHEAT',
+      'OATS',
+    ]);
+    // Without allergens (older export) the sources stay untouched as well.
+    expect(garnishGuestInfoImportData({ allergenSources: ['WHEAT'] }).allergenSources).toBeUndefined();
   });
 
   it('validates percentages', () => {

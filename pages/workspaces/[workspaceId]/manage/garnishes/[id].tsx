@@ -7,7 +7,6 @@ import { Role } from '@generated/prisma/client';
 import { Loading } from '@components/Loading';
 import { withPagePermission } from '@middleware/ui/withPagePermission';
 import { FormikProps } from 'formik';
-import { SingleFormLayout } from '@components/layout/SingleFormLayout';
 import type { GarnishDto } from '@lib/schemas/garnishes';
 import { PageCenter } from '@components/layout/PageCenter';
 import { apiV1FetchSafe } from '@lib/network/apiV1';
@@ -40,10 +39,14 @@ function EditGarnishPage() {
       <Loading />
     </PageCenter>
   ) : (
-    <ManageEntityLayout backLink={`/workspaces/${workspaceId}/manage/garnishes`} title={t('nav:garnishes')} formRef={formRef}>
-      <SingleFormLayout title={t('entity:formTitle.garnish')}>
-        <GarnishForm garnish={garnish} formRef={formRef} />
-      </SingleFormLayout>
+    <ManageEntityLayout
+      backLink={`/workspaces/${workspaceId}/manage/garnishes`}
+      title={garnish?.name ?? t('entity:formTitle.garnish')}
+      subtitle={garnish ? t('nav:garnishes') : undefined}
+      formRef={formRef}
+      showUnsavedHint={false}
+    >
+      <GarnishForm garnish={garnish} formRef={formRef} />
     </ManageEntityLayout>
   );
 }

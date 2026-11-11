@@ -209,5 +209,22 @@
   "ingredientImageAlt": "Zutatenbild",
   "profileImageAlt": "Profilbild",
   "cropAlt": "Zuschneiden",
-  "monitorSlideAlt": "Monitor-Slide"
+  "monitorSlideAlt": "Monitor-Slide",
+  "form": {
+    "sectionNav": "Abschnitte",
+    "fieldsToCheck_one": "{{count}} Feld prüfen",
+    "fieldsToCheck_other": "{{count}} Felder prüfen",
+    "saveShortcut": "{{label}} (⌘S / Strg+S)",
+    "recrop": "Neu zuschneiden",
+    "removeImage": "Bild entfernen",
+    "createNew": "Neu anlegen",
+    "moreActions": "Weitere Aktionen",
+    "section": {
+      "general": "Allgemein",
+      "texts": "Texte"
+    },
+    "addImage": "Bild hinzufügen",
+    "editImage": "Bild bearbeiten",
+    "chooseNewImage": "Neues Bild wählen"
+  }
 }

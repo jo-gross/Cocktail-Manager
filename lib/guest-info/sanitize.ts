@@ -2,11 +2,22 @@
  * Lenient parsing of guest-information fields from untrusted JSON (imports).
  * Missing fields yield `undefined` so older exports leave existing values untouched.
  */
-import { ADDITIVES, ALLERGENS, type Additive, type Allergen } from './constants';
+import { ADDITIVES, ALLERGEN_SOURCES, ALLERGENS, pruneAllergenSources, type Additive, type Allergen, type AllergenSource } from './constants';
 
 export function parseAllergens(value: unknown): Allergen[] | undefined {
   if (!Array.isArray(value)) return undefined;
   return ALLERGENS.filter((code) => value.includes(code));
+}
+
+export function parseAllergenSources(value: unknown): AllergenSource[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+  return ALLERGEN_SOURCES.filter((code) => value.includes(code));
+}
+
+/** Sources of an import: only together with the allergens (older exports have none → cleared with the allergens). */
+function importAllergenSources(allergens: Allergen[] | undefined, value: unknown): AllergenSource[] | undefined {
+  if (allergens === undefined) return undefined;
+  return pruneAllergenSources(allergens, parseAllergenSources(value) ?? []);
 }
 
 export function parseAdditives(value: unknown): Additive[] | undefined {
@@ -33,9 +44,11 @@ export function parseNullableString(value: unknown): string | null | undefined {
 /** Guest-info fields of an exported ingredient, ready for a Prisma create/update. */
 export function ingredientGuestInfoImportData(entity: object) {
   const data = entity as Record<string, unknown>;
+  const allergens = parseAllergens(data.allergens);
   return {
     abv: parsePercent(data.abv),
-    allergens: parseAllergens(data.allergens),
+    allergens,
+    allergenSources: importAllergenSources(allergens, data.allergenSources),
     additives: parseAdditives(data.additives),
     guestInfoComplete: parseBoolean(data.guestInfoComplete),
     hideOnGuestMenu: parseBoolean(data.hideOnGuestMenu),
@@ -46,8 +59,10 @@ export function ingredientGuestInfoImportData(entity: object) {
 /** Guest-info fields of an exported garnish, ready for a Prisma create/update. */
 export function garnishGuestInfoImportData(entity: object) {
   const data = entity as Record<string, unknown>;
+  const allergens = parseAllergens(data.allergens);
   return {
-    allergens: parseAllergens(data.allergens),
+    allergens,
+    allergenSources: importAllergenSources(allergens, data.allergenSources),
     additives: parseAdditives(data.additives),
     guestInfoComplete: parseBoolean(data.guestInfoComplete),
   };

@@ -100,11 +100,11 @@ describe('deriveCocktailGuestInfo – allergens & additives', () => {
       toMl,
     );
     expect(result.allergens).toEqual([
-      { code: 'GLUTEN', optional: true },
-      { code: 'EGGS', optional: true },
-      { code: 'MILK', optional: true },
-      { code: 'NUTS', optional: false },
-      { code: 'SULPHITES', optional: false },
+      { code: 'GLUTEN', optional: true, sources: [] },
+      { code: 'EGGS', optional: true, sources: [] },
+      { code: 'MILK', optional: true, sources: [] },
+      { code: 'NUTS', optional: false, sources: [] },
+      { code: 'SULPHITES', optional: false, sources: [] },
     ]);
     expect(result.additives).toEqual([
       { code: 'COLORING', optional: true },
@@ -122,7 +122,34 @@ describe('deriveCocktailGuestInfo – allergens & additives', () => {
       }),
       toMl,
     );
-    expect(result.allergens).toEqual([{ code: 'EGGS', optional: false }]);
+    expect(result.allergens).toEqual([{ code: 'EGGS', optional: false, sources: [] }]);
+  });
+
+  it('merges the specified cereals/nuts of all components in legal order', () => {
+    const result = deriveCocktailGuestInfo(
+      cocktail({
+        extraAllergens: ['GLUTEN'],
+        steps: [
+          step('SHAKE', [
+            item(ing('whisky', 40, { allergens: ['GLUTEN'], allergenSources: ['BARLEY'] }), 4),
+            item(ing('orgeat', 0, { allergens: ['NUTS'], allergenSources: ['ALMONDS'] }), 2),
+          ]),
+        ],
+        garnishes: [
+          {
+            optional: false,
+            isAlternative: false,
+            // A source without its allergen (stale data) is ignored.
+            garnish: { allergens: ['GLUTEN'], allergenSources: ['WHEAT', 'HAZELNUTS'], additives: [], guestInfoComplete: true },
+          },
+        ],
+      }),
+      toMl,
+    );
+    expect(result.allergens).toEqual([
+      { code: 'GLUTEN', optional: false, sources: ['WHEAT', 'BARLEY'] },
+      { code: 'NUTS', optional: false, sources: ['ALMONDS'] },
+    ]);
   });
 
   it('is incomplete if any involved ingredient or garnish is incomplete', () => {

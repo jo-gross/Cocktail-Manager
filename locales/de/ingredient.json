@@ -37,5 +37,6 @@
     "imageScale": "Bild konnte nicht skaliert werden.",
     "imageAutoCrop": "Bild konnte nicht automatisch zugeschnitten werden.",
     "fileSelect": "Datei konnte nicht ausgewählt werden."
-  }
+  },
+  "volumesHint": "Wie viel einer Einheit der Preis abdeckt (z. B. 70 cl pro Flasche) – daraus ergibt sich der Preis pro Einheit."
 }

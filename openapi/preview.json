@@ -2990,6 +2990,12 @@
               "$ref": "#/components/schemas/Allergen"
             }
           },
+          "allergenSources": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AllergenSource"
+            }
+          },
           "additives": {
             "type": "array",
             "items": {
@@ -3009,9 +3015,30 @@
           "hasImage",
           "imageUrl",
           "allergens",
+          "allergenSources",
           "additives",
           "guestInfoComplete"
         ]
+      },
+      "AllergenSource": {
+        "type": "string",
+        "enum": [
+          "WHEAT",
+          "SPELT",
+          "KHORASAN_WHEAT",
+          "RYE",
+          "BARLEY",
+          "OATS",
+          "ALMONDS",
+          "HAZELNUTS",
+          "WALNUTS",
+          "CASHEWS",
+          "PECANS",
+          "BRAZIL_NUTS",
+          "PISTACHIOS",
+          "MACADAMIA_NUTS"
+        ],
+        "description": "Specific cereal (GLUTEN) or nut (NUTS) named in Annex II of Regulation (EU) No 1169/2011."
       },
       "GarnishCreateInput": {
         "type": "object",
@@ -3055,6 +3082,13 @@
             "items": {
               "$ref": "#/components/schemas/Allergen"
             }
+          },
+          "allergenSources": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AllergenSource"
+            },
+            "description": "Specific cereals/nuts behind GLUTEN/NUTS. Sources whose allergen is not set are dropped."
           },
           "additives": {
             "type": "array",
@@ -3108,6 +3142,13 @@
             "items": {
               "$ref": "#/components/schemas/Allergen"
             }
+          },
+          "allergenSources": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AllergenSource"
+            },
+            "description": "Specific cereals/nuts behind GLUTEN/NUTS. Sources whose allergen is not set are dropped."
           },
           "additives": {
             "type": "array",
@@ -3415,6 +3456,12 @@
               "$ref": "#/components/schemas/Allergen"
             }
           },
+          "allergenSources": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AllergenSource"
+            }
+          },
           "additives": {
             "type": "array",
             "items": {
@@ -3448,6 +3495,7 @@
           "imageUrl",
           "abv",
           "allergens",
+          "allergenSources",
           "additives",
           "guestInfoComplete",
           "hideOnGuestMenu",
@@ -3581,6 +3629,13 @@
               "$ref": "#/components/schemas/Allergen"
             }
           },
+          "allergenSources": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AllergenSource"
+            },
+            "description": "Specific cereals/nuts behind GLUTEN/NUTS. Sources whose allergen is not set are dropped."
+          },
           "additives": {
             "type": "array",
             "items": {
@@ -3694,6 +3749,13 @@
             "items": {
               "$ref": "#/components/schemas/Allergen"
             }
+          },
+          "allergenSources": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AllergenSource"
+            },
+            "description": "Specific cereals/nuts behind GLUTEN/NUTS. Sources whose allergen is not set are dropped."
           },
           "additives": {
             "type": "array",

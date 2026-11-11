@@ -1,10 +1,11 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { FaDesktop, FaGripVertical, FaMobileAlt, FaTabletAlt } from 'react-icons/fa';
+import { FaDesktop, FaGripVertical, FaMobileAlt, FaPlus, FaTabletAlt } from 'react-icons/fa';
 import { MdStayCurrentLandscape, MdStayCurrentPortrait } from 'react-icons/md';
 import type { DraggableAttributes } from '@dnd-kit/core';
 import type { SyntheticListenerMap } from '@dnd-kit/core/dist/hooks/utilities';
-import { Button, ButtonGroup, Card, CardBody, Divider } from '@components/ui';
+import { Button, ButtonGroup, Card, CardBody } from '@components/ui';
+import { dragHandleClassName } from '@components/forms/SortableList';
 import {
   CARD_EDITOR_DENSITIES,
   CARD_EDITOR_ORIENTATIONS,
@@ -21,9 +22,7 @@ interface CardEditorToolbarProps {
   viewMode: CardEditorViewMode;
   onViewModeChange: (mode: CardEditorViewMode) => void;
   isArchived?: boolean;
-  isSubmitting?: boolean;
   onAddGroup?: () => void;
-  onSave?: () => void;
   device?: CardEditorDevice;
   onDeviceChange?: (device: CardEditorDevice) => void;
   density?: CardEditorDensity;
@@ -38,8 +37,6 @@ interface CardEditorToolbarProps {
   isTabletSizeDisabled?: (tabletSize: CardEditorTabletSize) => boolean;
   /** Predicate returning true when an orientation is wider than the available viewport. */
   isOrientationDisabled?: (orientation: CardEditorOrientation) => boolean;
-  /** Extra content (e.g. name/date fields) rendered inside the same card below the controls. */
-  children?: React.ReactNode;
 }
 
 const ORIENTATION_ICONS: Record<CardEditorOrientation, React.ReactNode> = {
@@ -51,9 +48,7 @@ export function CardEditorToolbar({
   viewMode,
   onViewModeChange,
   isArchived = false,
-  isSubmitting = false,
   onAddGroup,
-  onSave,
   device,
   onDeviceChange,
   density,
@@ -65,7 +60,6 @@ export function CardEditorToolbar({
   isDeviceDisabled,
   isTabletSizeDisabled,
   isOrientationDisabled,
-  children,
 }: CardEditorToolbarProps) {
   const { t } = useTranslation(['manage', 'common']);
   const showPreviewControls = device != undefined && density != undefined;
@@ -79,14 +73,9 @@ export function CardEditorToolbar({
   ];
 
   return (
-    <Card variant="surface" className="sticky top-0 z-20">
+    // Sticks right below the page header (whose height is exposed as --manage-header-h).
+    <Card variant="surface" className="sticky top-[var(--manage-header-h,0px)] z-10">
       <CardBody className="gap-3">
-        {children != null ? (
-          <>
-            {children}
-            <Divider size="sm" />
-          </>
-        ) : null}
         <div className="flex flex-row flex-wrap items-end gap-x-4 gap-y-2">
           <div className="flex flex-col gap-1">
             <span className="text-xs font-medium text-base-content/70">{t('common:display')}</span>
@@ -181,11 +170,9 @@ export function CardEditorToolbar({
           ) : null}
           {!isArchived ? (
             <div className="ml-auto flex items-end gap-2">
-              <Button type="button" variant="secondary" size="sm" className="md:h-10" onClick={onAddGroup}>
+              <Button type="button" variant="outline" size="sm" onClick={onAddGroup}>
+                <FaPlus aria-hidden />
                 {t('addGroup')}
-              </Button>
-              <Button type="button" variant="primary" size="sm" className="md:h-10" disabled={isSubmitting} onClick={onSave}>
-                {t('common:save')}
               </Button>
             </div>
           ) : null}
@@ -200,8 +187,9 @@ export function DragHandle({ attributes, listeners }: { attributes?: DraggableAt
   return (
     <button
       type="button"
-      className="cursor-grab rounded-md p-1 text-base-content/50 hover:bg-base-200 hover:text-base-content active:cursor-grabbing"
+      className={`${dragHandleClassName} cursor-grab active:cursor-grabbing`}
       aria-label={t('dragToSort')}
+      title={t('dragToSort')}
       {...attributes}
       {...listeners}
     >

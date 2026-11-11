@@ -193,7 +193,7 @@ describe('buildPublicMenuDto – availability, on request, guest info', () => {
     ],
     {
       guestInfo: new Map([
-        ['in', guestInfo({ allergens: [{ code: 'MILK', optional: false }], additives: [{ code: 'CAFFEINE', optional: true }] })],
+        ['in', guestInfo({ allergens: [{ code: 'MILK', optional: false, sources: [] }], additives: [{ code: 'CAFFEINE', optional: true }] })],
         ['out', guestInfo({ complete: false, alcohol: { abv: 0, status: 'calculated', category: 'alcoholFree', alcoholFree: true, grams: 0, volumeMl: 100 } })],
       ]),
     },
@@ -231,6 +231,21 @@ describe('buildPublicMenuDto – availability, on request, guest info', () => {
     expect(dto.footnotes.allergens.map((a) => a.short)).toEqual(['G']);
     expect(dto.footnotes.additives.map((a) => a.number)).toEqual([11]);
     expect(first.allergens?.[0]).toMatchObject({ code: 'MILK', short: 'G', optional: false });
+  });
+
+  it('names the specified cereals/nuts per item and merges them in the footnote legend', () => {
+    const withSources = resolverData([cocktail({ id: 'sour', name: 'Whisky Sour' }), cocktail({ id: 'mule', name: 'Moscow Mule' })], {
+      guestInfo: new Map([
+        ['sour', guestInfo({ allergens: [{ code: 'GLUTEN', optional: false, sources: ['BARLEY'] }] })],
+        ['mule', guestInfo({ allergens: [{ code: 'GLUTEN', optional: false, sources: ['WHEAT'] }] })],
+      ]),
+    });
+    const doc = manualDocument(['sour', 'mule'], (d) => {
+      d.outputs.web.fields = { ...d.outputs.web.fields, allergenDisplay: 'footnotes' };
+    });
+    const { dto } = buildPublicMenuDto(buildInput(doc), withSources);
+    expect(items(dto).map((item) => item.allergens?.[0].label)).toEqual(['Glutenhaltiges Getreide (Gerste)', 'Glutenhaltiges Getreide (Weizen)']);
+    expect(dto.footnotes.allergens).toEqual([expect.objectContaining({ short: 'A', label: 'Glutenhaltiges Getreide (Weizen, Gerste)' })]);
   });
 
   it('normalizes field modes for monitor/print', () => {

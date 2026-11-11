@@ -130,7 +130,8 @@
     "calculationsDeleted": "{{count}} Kalkulation(en) gelöscht",
     "shoppingListCheckboxTip": "Diese Kästchen sollen z.B. beim Einkaufen helfen",
     "calculationSaved": "Kalkulation erfolgreich gespeichert",
-    "saveTitle": "Kalkulation speichern"
+    "saveTitle": "Kalkulation speichern",
+    "print": "Drucken"
   },
   "monitor": {
     "title": "Monitor",

@@ -21,6 +21,7 @@ type IngredientWithVolumes = Pick<
   | 'tags'
   | 'abv'
   | 'allergens'
+  | 'allergenSources'
   | 'additives'
   | 'guestInfoComplete'
   | 'hideOnGuestMenu'
@@ -48,6 +49,7 @@ export function toIngredientDto(ingredient: IngredientWithVolumes, hasImage: boo
     imageUrl: hasImage ? `/api/v1/workspaces/${workspaceId}/ingredients/${ingredient.id}/image` : null,
     abv: ingredient.abv,
     allergens: ingredient.allergens,
+    allergenSources: ingredient.allergenSources,
     additives: ingredient.additives,
     guestInfoComplete: ingredient.guestInfoComplete,
     hideOnGuestMenu: ingredient.hideOnGuestMenu,

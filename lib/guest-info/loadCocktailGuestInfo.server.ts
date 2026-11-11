@@ -25,7 +25,7 @@ export const guestInfoCocktailSelect = {
           unitId: true,
           unit: { select: { name: true } },
           ingredient: {
-            select: { id: true, name: true, abv: true, allergens: true, additives: true, guestInfoComplete: true },
+            select: { id: true, name: true, abv: true, allergens: true, allergenSources: true, additives: true, guestInfoComplete: true },
           },
         },
       },
@@ -36,7 +36,7 @@ export const guestInfoCocktailSelect = {
     select: {
       optional: true,
       isAlternative: true,
-      garnish: { select: { id: true, name: true, allergens: true, additives: true, guestInfoComplete: true } },
+      garnish: { select: { id: true, name: true, allergens: true, allergenSources: true, additives: true, guestInfoComplete: true } },
     },
   },
 } satisfies Prisma.CocktailRecipeSelect;

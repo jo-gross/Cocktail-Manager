@@ -66,11 +66,13 @@ Vorschau: `?preview={previewToken}` zeigt Entwurf, ignoriert Zeitplan.
 
 ## Gästeinformationen
 
-- `Ingredient`: `abv`, `allergens Allergen[]`, `additives Additive[]`, `guestInfoComplete`, `hideOnGuestMenu`, `guestName`.
-- `Garnish`: `allergens`, `additives`, `guestInfoComplete`.
+- `Ingredient`: `abv`, `allergens Allergen[]`, `allergenSources AllergenSource[]`, `additives Additive[]`, `guestInfoComplete`, `hideOnGuestMenu`, `guestName`.
+- `Garnish`: `allergens`, `allergenSources`, `additives`, `guestInfoComplete`.
+- `AllergenSource`: die in Anhang II „namentlich“ genannten Getreide (bei `GLUTEN`) und Schalenfrüchte (bei `NUTS`); optional, nur zusammen mit dem Allergen gespeichert.
 - `CocktailRecipe`: `abvOverride`, `extraAllergens`, `extraAdditives`, `unavailableUntil`.
 - `WorkspaceCocktailRecipeStepAction.dilutionPercent` (Default per actionGroup: SHAKE 25, STIR 20, sonst 10).
 - Ableitung (`lib/guest-info`): Allergene/Zusatzstoffe = Union (optionale/alternative als `optional`), Vollständigkeit = alle beteiligten `guestInfoComplete`. ABV: Mengen → ml über Unit-Conversions, + Verwässerung, Status `calculated|manual|unknown`. „alkoholfrei“ nur wenn alle ABV bekannt und ≤ 0,5 %. Kategorien: alkoholfrei ≤0,5 / leicht <10 / mittel ≤20 / stark >20.
+- Bezeichnungen: Allergene heißen überall gleich – Bezeichnung nach LMIV Anhang II (`guestInfo:allergen.*`), keine umgangssprachlichen Kurzformen; Buchstaben-Codes A–R nach österr. Allergeninformationsverordnung. Angegebene Getreide/Schalenfrüchte stehen in Klammern dahinter („Glutenhaltiges Getreide (Weizen, Gerste)“, `lib/guest-info/format.ts`); in der Fußnoten-Legende die Gesamtmenge der Karte.
 - „Ohne X“-Filter zeigt nur Cocktails mit vollständigen Angaben.
 
 ## Design / Vorlagen

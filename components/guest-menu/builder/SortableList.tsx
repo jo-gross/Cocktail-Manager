@@ -23,7 +23,7 @@ export function DragHandle({ attributes, listeners, disabled, label }: DragHandl
       aria-label={label}
       title={label}
       className={cn(
-        'flex h-8 w-6 shrink-0 cursor-grab touch-none items-center justify-center text-base-content/40 hover:text-base-content',
+        'flex h-8 w-6 shrink-0 cursor-grab touch-none items-center justify-center text-base-content/40 hover:text-base-content pointer-coarse:h-11 pointer-coarse:w-8',
         disabled && 'invisible',
       )}
       onClick={(event) => event.stopPropagation()}
