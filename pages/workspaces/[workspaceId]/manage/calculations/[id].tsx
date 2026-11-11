@@ -1,5 +1,5 @@
 import { ManageEntityLayout } from '@components/layout/ManageEntityLayout';
-import React, { useCallback, useContext, useEffect, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRouter } from 'next/router';
 import type { CocktailDto, CocktailGarnishRef, CocktailIngredientRef, CocktailUnitRef } from '@lib/schemas/cocktails';
@@ -20,10 +20,11 @@ import { fetchIngredients } from '@lib/network/ingredients';
 import _ from 'lodash';
 import { fetchUnits } from '@lib/network/units';
 import { formatDate } from '@lib/DateUtils';
-import { RoutingContext } from '@lib/context/RoutingContextProvider';
 import { createCalculation, getCalculation, updateCalculation } from '@lib/network/calculations';
 import { alertApiV1Error, apiV1Fetch } from '@lib/network/apiV1';
 import '../../../../../lib/NumberUtils';
+import { isFormDirty } from '@lib/forms/formDirty';
+import { navigationGuards } from '@lib/navigation/navigationGuards';
 import {
   Button,
   ButtonGroup,
@@ -72,11 +73,27 @@ interface IngredientShoppingUnit {
   checked: boolean;
 }
 
+/** What gets persisted – the unsaved-changes check compares this against the last loaded/saved state. */
+function toCalculationSnapshot(name: string, showSalesStuff: boolean, items: CocktailCalculationItem[], shoppingUnits: IngredientShoppingUnit[]) {
+  return {
+    name,
+    showSalesStuff,
+    // Order is not persisted (incrementing an amount moves the item to the end).
+    items: _.sortBy(
+      items.map((item) => ({ cocktailId: item.cocktail.id, plannedAmount: item.plannedAmount, customPrice: item.customPrice })),
+      'cocktailId',
+    ),
+    shoppingUnits: _.sortBy(
+      shoppingUnits.map((unit) => ({ ingredientId: unit.ingredientId, unitId: unit.unitId, checked: unit.checked })),
+      'ingredientId',
+    ),
+  };
+}
+
 export default function CalculationPage() {
   const { t } = useTranslation(['manage', 'common', 'cocktail', 'nav', 'errors', 'entity']);
   const modalContext = useContext(ModalContext);
   const userContext = useContext(UserContext);
-  const routingContext = useContext(RoutingContext);
 
   const router = useRouter();
   const { id } = router.query;
@@ -86,10 +103,7 @@ export default function CalculationPage() {
   const [calculationName, setCalculationName] = useState<string>('');
   const [cocktailCalculationItems, setCocktailCalculationItems] = useState<CocktailCalculationItem[]>([]);
 
-  const [originalItems, setOriginalItems] = useState<string>('[]');
-  const [originalName, setOriginalName] = useState<string>('');
-  const [originalIngredientShoppingUnits, setOriginalIngredientShoppingUnits] = useState<string>('[]');
-  const [originalShowSalesStuff, setOriginalShowSalesStuff] = useState<boolean>(true);
+  const [savedSnapshot, setSavedSnapshot] = useState(() => toCalculationSnapshot('', true, [], []));
 
   const [ingredientCalculationItems, setIngredientCalculationItems] = useState<IngredientCalculationItem[]>([]);
   const [garnishCalculationItems, setGarnishCalculationItems] = useState<GarnishCalculationItem[]>([]);
@@ -101,8 +115,6 @@ export default function CalculationPage() {
   const [saving, setSaving] = useState(false);
 
   const [showSalesStuff, setShowSalesStuff] = useState<boolean>(true);
-
-  const [unsavedChanges, setUnsavedChanges] = useState(false);
 
   const [ingredients, setIngredients] = useState<IngredientModel[]>([]);
   const [ingredientsLoading, setIngredientsLoading] = useState(false);
@@ -118,30 +130,10 @@ export default function CalculationPage() {
     fetchUnits(workspaceId, setUnits, setUnitsLoading);
   }, [workspaceId]);
 
-  /**
-   * check for unsaved changes
-   */
-  useEffect(() => {
-    if (
-      originalItems != JSON.stringify(cocktailCalculationItems) ||
-      originalIngredientShoppingUnits != JSON.stringify(ingredientShoppingUnits) ||
-      originalName != calculationName ||
-      originalShowSalesStuff != showSalesStuff
-    ) {
-      setUnsavedChanges(true);
-    } else {
-      setUnsavedChanges(false);
-    }
-  }, [
-    cocktailCalculationItems,
-    originalItems,
-    ingredientShoppingUnits,
-    originalIngredientShoppingUnits,
-    originalName,
-    calculationName,
-    originalShowSalesStuff,
-    showSalesStuff,
-  ]);
+  const unsavedChanges = useMemo(
+    () => isFormDirty(toCalculationSnapshot(calculationName, showSalesStuff, cocktailCalculationItems, ingredientShoppingUnits), savedSnapshot),
+    [calculationName, showSalesStuff, cocktailCalculationItems, ingredientShoppingUnits, savedSnapshot],
+  );
 
   // Fetch Calculation (slim item refs) then hydrate each cocktail via CocktailDto
   useEffect(() => {
@@ -151,18 +143,11 @@ export default function CalculationPage() {
     setLoading(true);
     getCalculation(workspaceId, id as string)
       .then(async (data: CalculationDto) => {
-        setCalculationName(data.name);
-        setShowSalesStuff(data.showSalesStuff ?? false);
-        setOriginalName(data.name);
-        setOriginalShowSalesStuff(data.showSalesStuff ?? false);
-
         const shoppingUnits: IngredientShoppingUnit[] = (data.ingredientShoppingUnits ?? []).map((unit) => ({
           ingredientId: unit.ingredient.id,
           unitId: unit.unit.id,
           checked: unit.checked,
         }));
-        setIngredientShoppingUnits(shoppingUnits);
-        setOriginalIngredientShoppingUnits(JSON.stringify(shoppingUnits));
 
         const hydratedItems = await Promise.all(
           data.items.map(async (item) => {
@@ -174,8 +159,12 @@ export default function CalculationPage() {
             } satisfies CocktailCalculationItem;
           }),
         );
+        // Set values and baseline together, so the page is never "dirty" while loading.
+        setCalculationName(data.name);
+        setShowSalesStuff(data.showSalesStuff ?? false);
+        setIngredientShoppingUnits(shoppingUnits);
         setCocktailCalculationItems(hydratedItems);
-        setOriginalItems(JSON.stringify(hydratedItems));
+        setSavedSnapshot(toCalculationSnapshot(data.name, data.showSalesStuff ?? false, hydratedItems, shoppingUnits));
       })
       .catch((error) => {
         console.error('CocktailCalculation -> useEffect[init, id != create]', error);
@@ -276,9 +265,9 @@ export default function CalculationPage() {
   }, [cocktailCalculationItems]);
 
   const saveCalculationBackend = useCallback(
-    (redirect: boolean = true) => {
-      if (!id) return;
-      if (!calculationName) return;
+    async (redirect: boolean = true): Promise<boolean> => {
+      if (!id) return false;
+      if (!calculationName) return false;
 
       const currentScrollTop = window.scrollY;
 
@@ -296,45 +285,42 @@ export default function CalculationPage() {
         ingredientShoppingUnits: ingredientShoppingUnits,
       };
 
-      const savePromise =
-        id == 'create'
-          ? createCalculation(workspaceId!, body).then(async (created) => {
-              setOriginalItems(JSON.stringify(cocktailCalculationItems));
-              setOriginalShowSalesStuff(showSalesStuff);
-              setOriginalName(calculationName);
-              setOriginalIngredientShoppingUnits(JSON.stringify(ingredientShoppingUnits));
-              if (redirect) {
-                await router.replace(`/workspaces/${workspaceId}/manage/calculations/${created.id}`);
-              }
-              alertService.success(t('common:success.created'));
-            })
-          : updateCalculation(workspaceId!, id as string, body).then(async (updated) => {
-              setOriginalItems(JSON.stringify(cocktailCalculationItems));
-              setOriginalShowSalesStuff(showSalesStuff);
-              setOriginalName(calculationName);
-              setOriginalIngredientShoppingUnits(JSON.stringify(ingredientShoppingUnits));
-              if (redirect) {
-                await router.replace(`/workspaces/${workspaceId}/manage/calculations/${updated.id}`);
-              }
-              alertService.success(t('manage:calculations.calculationSaved'));
-            });
+      const snapshot = toCalculationSnapshot(calculationName, showSalesStuff, cocktailCalculationItems, ingredientShoppingUnits);
+      const redirectTo = async (calculationId: string) => {
+        if (!redirect) return;
+        // The new state is saved – the baseline update has not rendered yet.
+        navigationGuards.allowNextNavigation();
+        await router.replace(`/workspaces/${workspaceId}/manage/calculations/${calculationId}`);
+      };
 
-      savePromise
-        .catch((error) => {
-          console.error('CalculationId -> saveCalculation', error);
-          alertApiV1Error(error, id == 'create' ? t('errors:createCalculation') : t('errors:updateCalculation'));
-        })
-        .finally(() => {
-          setSaving(false);
-          window.scrollTo(0, currentScrollTop);
-        });
+      try {
+        if (id == 'create') {
+          const created = await createCalculation(workspaceId!, body);
+          setSavedSnapshot(snapshot);
+          await redirectTo(created.id);
+          alertService.success(t('common:success.created'));
+        } else {
+          const updated = await updateCalculation(workspaceId!, id as string, body);
+          setSavedSnapshot(snapshot);
+          await redirectTo(updated.id);
+          alertService.success(t('manage:calculations.calculationSaved'));
+        }
+        return true;
+      } catch (error) {
+        console.error('CalculationId -> saveCalculation', error);
+        alertApiV1Error(error, id == 'create' ? t('errors:createCalculation') : t('errors:updateCalculation'));
+        return false;
+      } finally {
+        setSaving(false);
+        window.scrollTo(0, currentScrollTop);
+      }
     },
     [ingredientShoppingUnits, id, calculationName, showSalesStuff, cocktailCalculationItems, workspaceId, router, t],
   );
 
   useEffect(() => {
     if (shouldSave) {
-      saveCalculationBackend();
+      void saveCalculationBackend();
       triggerSave(false);
     }
   }, [shouldSave, saveCalculationBackend]);
@@ -351,7 +337,7 @@ export default function CalculationPage() {
     if (!calculationName) return;
 
     if (id == 'create') {
-      saveCalculationBackend();
+      void saveCalculationBackend();
     }
   }, [calculationName, id, saveCalculationBackend]);
 
@@ -479,10 +465,10 @@ export default function CalculationPage() {
       onSave={async () => {
         if (id == 'create' && calculationName.trim() == '') {
           openNameModal();
-        } else {
-          saveCalculationBackend(false);
-          await routingContext.conditionalBack(`/workspaces/${workspaceId}/manage/calculations`);
+          return false;
         }
+        // Resolves true on success – the leave guard then continues the blocked navigation.
+        return saveCalculationBackend(false);
       }}
       title={
         calculationName.trim() == '' ? (
@@ -525,7 +511,7 @@ export default function CalculationPage() {
             if (id == 'create' && calculationName.trim() == '') {
               openNameModal();
             } else {
-              saveCalculationBackend();
+              void saveCalculationBackend();
             }
           }}
         >

@@ -2,6 +2,7 @@ import { Role } from '@generated/prisma/client';
 import Link from 'next/link';
 import { ManageEntityLayout } from '@components/layout/ManageEntityLayout';
 import { ManageColumn } from '@components/ManageColumn';
+import { EntityNameLink } from '@components/manage/EntityNameLink';
 import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRouter } from 'next/router';
@@ -54,6 +55,7 @@ const CocktailsOverviewPage: NextPageWithPullToRefresh = () => {
 
   const userContext = useContext(UserContext);
   const modalContext = useContext(ModalContext);
+  const canEdit = userContext.isUserPermitted(Role.MANAGER);
 
   const [cocktailRecipes, setCocktailRecipes] = useState<CocktailSummaryDto[]>([]);
   const [loading, setLoading] = useState(true);
@@ -386,7 +388,8 @@ const CocktailsOverviewPage: NextPageWithPullToRefresh = () => {
           <AvatarImage src={cocktailRecipe.imageUrl ?? ''} alt={t('common:cocktailImageAlt')} />
         </TableImageCell>
         <TableCell className={isArchived ? 'italic' : ''}>
-          {cocktailRecipe.name} {isArchived && t('common:archivedParen')}
+          <EntityNameLink href={canEdit ? `/workspaces/${workspaceId}/manage/cocktails/${cocktailRecipe.id}` : undefined}>{cocktailRecipe.name}</EntityNameLink>{' '}
+          {isArchived && t('common:archivedParen')}
         </TableCell>
         <TableCell>
           <span className={'whitespace-nowrap'}>{t('common:euroValue', { value: cocktailRecipe.price?.formatPrice() ?? '-' })}</span>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useRouter } from 'next/router';
 import { SettingsLayout } from '@components/settings/SettingsLayout';
 import { SettingsSectionSkeleton } from '@components/settings/SettingsSection';
@@ -11,15 +11,10 @@ const refreshRef: React.MutableRefObject<(() => void) | undefined> = { current: 
 const TranslationSettingsPage: NextPageWithPullToRefresh = () => {
   const router = useRouter();
   const workspaceId = typeof router.query.workspaceId === 'string' ? router.query.workspaceId : undefined;
-  const [dirty, setDirty] = useState(false);
 
   return (
-    <SettingsLayout page="translations" unsavedChanges={dirty} wide>
-      {workspaceId ? (
-        <ContentTranslationCenter workspaceId={workspaceId} onDirtyChange={setDirty} refreshRef={refreshRef} />
-      ) : (
-        <SettingsSectionSkeleton rows={6} />
-      )}
+    <SettingsLayout page="translations" wide>
+      {workspaceId ? <ContentTranslationCenter workspaceId={workspaceId} refreshRef={refreshRef} /> : <SettingsSectionSkeleton rows={6} />}
     </SettingsLayout>
   );
 };

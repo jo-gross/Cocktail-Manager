@@ -11,6 +11,7 @@ import { alertService } from '../alertService';
 import type { PaginationMeta } from '@lib/http/responses';
 import { resolveApiErrorMessage } from '@lib/i18n/apiErrors';
 import { i18n } from '@lib/i18n/client';
+import { invalidateOfflineCacheForMutation } from '@lib/offline/invalidation';
 
 export interface ApiV1ErrorBody {
   code: string;
@@ -106,12 +107,15 @@ export async function apiV1FetchPaginated<T>(path: string, init?: RequestInit): 
 /**
  * Convenience POST/PUT/PATCH/DELETE helper with a JSON body.
  */
-export function apiV1Mutate<T>(path: string, method: 'POST' | 'PUT' | 'PATCH' | 'DELETE', body?: unknown): Promise<T> {
-  return apiV1Fetch<T>(path, {
+export async function apiV1Mutate<T>(path: string, method: 'POST' | 'PUT' | 'PATCH' | 'DELETE', body?: unknown): Promise<T> {
+  const result = await apiV1Fetch<T>(path, {
     method,
     headers: body !== undefined ? { 'Content-Type': 'application/json' } : undefined,
     body: body !== undefined ? JSON.stringify(body) : undefined,
   });
+  // Offline copies of the mutated entity are stale now
+  await invalidateOfflineCacheForMutation(path).catch((error) => console.error('apiV1Mutate -> invalidateOfflineCache', path, error));
+  return result;
 }
 
 /**

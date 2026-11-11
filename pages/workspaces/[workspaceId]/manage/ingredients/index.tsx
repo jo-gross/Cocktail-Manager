@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { useRouter } from 'next/router';
 import { FaCheck, FaChevronDown, FaFileDownload, FaFileUpload, FaInfoCircle, FaPlus, FaTimes } from 'react-icons/fa';
 import { ManageColumn } from '@components/ManageColumn';
+import { EntityNameLink } from '@components/manage/EntityNameLink';
 import { UserContext } from '@lib/context/UserContextProvider';
 import AvatarImage from '../../../../../components/AvatarImage';
 import ListSearchField from '../../../../../components/ListSearchField';
@@ -50,6 +51,7 @@ const IngredientsOverviewPage: NextPageWithPullToRefresh = () => {
 
   const userContext = useContext(UserContext);
   const modalContext = useContext(ModalContext);
+  const canEdit = userContext.isUserPermitted(Role.MANAGER);
 
   const [ingredients, setIngredients] = useState<IngredientModel[]>([]);
   const [loading, setLoading] = useState(false);
@@ -326,7 +328,11 @@ const IngredientsOverviewPage: NextPageWithPullToRefresh = () => {
                       >
                         <AvatarImage src={ingredient.imageUrl ?? ''} alt={t('entity:singular.ingredient')} />
                       </TableImageCell>
-                      <TableCell className={''}>{ingredient.name}</TableCell>
+                      <TableCell className={''}>
+                        <EntityNameLink href={canEdit ? `/workspaces/${workspaceId}/manage/ingredients/${ingredient.id}` : undefined}>
+                          {ingredient.name}
+                        </EntityNameLink>
+                      </TableCell>
                       <TableCell>{ingredient.shortName}</TableCell>
                       <TableCell>
                         <Button

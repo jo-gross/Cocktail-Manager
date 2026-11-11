@@ -1,5 +1,6 @@
 import type { PrecacheEntry, SerwistGlobalConfig } from 'serwist';
-import { Serwist, NetworkOnly, StaleWhileRevalidate, ExpirationPlugin } from 'serwist';
+import { Serwist, NetworkFirst, NetworkOnly, StaleWhileRevalidate, ExpirationPlugin } from 'serwist';
+import { classifySwRequest, SW_CACHE_NAMES, SW_LEGACY_CACHE_NAMES } from '../lib/offline/swRouting';
 
 declare global {
   interface WorkerGlobalScope extends SerwistGlobalConfig {
@@ -9,44 +10,65 @@ declare global {
 
 declare const self: ServiceWorkerGlobalScope;
 
+const FOURTEEN_DAYS = 14 * 24 * 60 * 60;
+
+// Routing rules live in lib/offline/swRouting.ts (unit-tested).
+// API data is network first: online reads always show the latest saved state, the cached copy
+// is only used when the network fails (offline bartender view).
 const serwist = new Serwist({
   precacheEntries: self.__SW_MANIFEST,
   skipWaiting: true,
   clientsClaim: true,
   navigationPreload: true,
   runtimeCaching: [
-    // /queue und /ratings → immer vom Netzwerk holen (kein Cache)
     {
-      matcher: /\/queue$/,
+      matcher: ({ url, sameOrigin, request }) => classifySwRequest({ url, sameOrigin, mode: request.mode }) === 'network-only',
       handler: new NetworkOnly(),
     },
     {
-      matcher: /\/ratings$/,
-      handler: new NetworkOnly(),
+      matcher: ({ url, sameOrigin, request }) => classifySwRequest({ url, sameOrigin, mode: request.mode }) === 'api-image',
+      handler: new NetworkFirst({
+        cacheName: SW_CACHE_NAMES.apiImages,
+        plugins: [new ExpirationPlugin({ maxEntries: 500, maxAgeSeconds: FOURTEEN_DAYS })],
+      }),
+      method: 'GET',
     },
-    // Gästekarten (/m/…, /api/public/…) → nie im SW-Cache: geschützte Karten dürfen
-    // nicht länger als das Zugangs-Cookie lesbar bleiben (HTTP-Cache-Header gelten weiter)
     {
-      // inkl. Client-Navigation: /_next/data/{buildId}/m/….json
-      matcher: ({ url, sameOrigin }) =>
-        sameOrigin && (url.pathname.startsWith('/m/') || url.pathname.startsWith('/api/public/') || /^\/_next\/data\/[^/]+\/m\//.test(url.pathname)),
-      handler: new NetworkOnly(),
+      matcher: ({ url, sameOrigin, request }) => classifySwRequest({ url, sameOrigin, mode: request.mode }) === 'api',
+      handler: new NetworkFirst({
+        cacheName: SW_CACHE_NAMES.api,
+        plugins: [new ExpirationPlugin({ maxEntries: 200, maxAgeSeconds: FOURTEEN_DAYS })],
+      }),
+      method: 'GET',
     },
-    // Allgemeine HTTP(S) GET-Requests → StaleWhileRevalidate
+    {
+      matcher: ({ url, sameOrigin, request }) => classifySwRequest({ url, sameOrigin, mode: request.mode }) === 'page',
+      handler: new NetworkFirst({
+        cacheName: SW_CACHE_NAMES.pages,
+        plugins: [new ExpirationPlugin({ maxEntries: 50, maxAgeSeconds: FOURTEEN_DAYS })],
+      }),
+      method: 'GET',
+    },
+    // Remaining HTTP(S) GET requests (static files, fonts, external assets) → StaleWhileRevalidate
     {
       matcher: /^https?.*/,
       handler: new StaleWhileRevalidate({
-        cacheName: 'http-cache',
+        cacheName: SW_CACHE_NAMES.static,
         plugins: [
           new ExpirationPlugin({
             maxEntries: 200,
-            maxAgeSeconds: 14 * 24 * 60 * 60, // 14 Tage
+            maxAgeSeconds: FOURTEEN_DAYS,
           }),
         ],
       }),
       method: 'GET',
     },
   ],
+});
+
+// Drop caches of older SW versions (they hold stale, partly authenticated API responses).
+self.addEventListener('activate', (event) => {
+  event.waitUntil(Promise.all(SW_LEGACY_CACHE_NAMES.map((name) => caches.delete(name))));
 });
 
 serwist.addEventListeners();

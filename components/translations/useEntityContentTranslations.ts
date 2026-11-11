@@ -7,6 +7,7 @@ import { alertApiV1Error } from '@lib/network/apiV1';
 import { CONTENT_TRANSLATION_FIELDS, type ContentTranslationEntityType } from '@lib/translations/contentTranslationFields';
 import { i18n } from '@lib/i18n/client';
 import type { ContentTranslationsUpdateInput } from '@lib/schemas/contentTranslations';
+import { useReportUnsavedChanges } from '@lib/forms/useUnsavedChanges';
 
 const cellKey = (field: string, locale: string) => `${field}:${locale}`;
 
@@ -83,6 +84,8 @@ export function useEntityContentTranslations(entityType: ContentTranslationEntit
     }
     return items;
   }, [entityType, contentLocales.additional, values, initial]);
+  // Translation tabs count as unsaved changes of the surrounding page.
+  useReportUnsavedChanges(changedItems.length > 0);
 
   const save = useCallback(
     async (savedEntityId: string) => {

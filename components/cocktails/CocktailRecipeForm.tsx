@@ -45,8 +45,10 @@ import { alertApiV1Error, apiV1Fetch, apiV1Mutate } from '@lib/network/apiV1';
 import { TranslatedFieldTabs } from '@components/translations/TranslatedFieldTabs';
 import { useEntityContentTranslations } from '@components/translations/useEntityContentTranslations';
 import { FaCropSimple } from 'react-icons/fa6';
-import DeepDiff from 'deep-diff';
 import { RoutingContext } from '@lib/context/RoutingContextProvider';
+import { FormikDirtyReporter } from '@lib/forms/FormikDirtyReporter';
+import { trimmed } from '@lib/forms/formDirty';
+import { useUnsavedChangesContext } from '@lib/forms/useUnsavedChanges';
 import '../../lib/NumberUtils';
 import { z } from 'zod';
 import { zodFormikValidate } from '@lib/forms/zodFormikValidate';
@@ -97,13 +99,12 @@ export interface CocktailRecipeFormValues extends CocktailGuestInfoFormValues {
 
 interface CocktailRecipeFormProps {
   cocktailRecipe?: CocktailDto;
-  setUnsavedChanges?: (unsavedChanges: boolean) => void;
   formRef: React.RefObject<FormikProps<CocktailRecipeFormValues> | null>;
 }
 
-/** Map v1 CocktailDto nested refs into the flat FK shape the form fields expect. */
+/** Map v1 CocktailDto nested refs into the flat FK shape the form fields expect (ordered like they are displayed). */
 function mapCocktailDtoToFormSteps(cocktail: CocktailDto): CocktailRecipeStepFull[] {
-  return cocktail.steps.map(
+  return orderBy(cocktail.steps, ['stepNumber'], ['asc']).map(
     (step) =>
       ({
         id: step.id,
@@ -112,7 +113,7 @@ function mapCocktailDtoToFormSteps(cocktail: CocktailDto): CocktailRecipeStepFul
         optional: step.optional,
         actionId: step.action?.id ?? '',
         action: step.action ?? { id: '', name: '' },
-        ingredients: step.ingredients.map((line) => ({
+        ingredients: orderBy(step.ingredients, ['ingredientNumber'], ['asc']).map((line) => ({
           id: line.id,
           amount: line.amount,
           optional: line.optional,
@@ -140,6 +141,46 @@ function mapCocktailDtoToFormGarnishes(cocktail: CocktailDto): CocktailRecipeGar
         garnish: g.garnish,
       }) as unknown as CocktailRecipeGarnishFull,
   );
+}
+
+/**
+ * The persisted part of the form values (mirrors `onSubmit`) for the unsaved-changes check.
+ * Display objects (`ingredient`, `unit`, `action`, `garnish`, `ice`, `glass`) are replaced with the
+ * richer list DTOs after the lists loaded and must not count as a change; numbering follows the array order.
+ */
+function toComparableCocktail(values: CocktailRecipeFormValues) {
+  return {
+    name: values.name,
+    description: trimmed(values.description),
+    notes: trimmed(values.notes),
+    history: trimmed(values.history),
+    price: values.price,
+    tags: values.tags,
+    iceId: values.iceId,
+    glassId: values.glassId,
+    image: values.image,
+    abvOverride: values.abvOverride,
+    extraAllergens: [...values.extraAllergens].sort(),
+    extraAdditives: [...values.extraAdditives].sort(),
+    steps: values.steps.map((step) => ({
+      id: step.id,
+      optional: step.optional ?? false,
+      actionId: step.actionId,
+      ingredients: step.ingredients.map((ingredient) => ({
+        id: ingredient.id,
+        amount: ingredient.amount,
+        optional: ingredient.optional ?? false,
+        unitId: ingredient.unitId,
+        ingredientId: ingredient.ingredientId,
+      })),
+    })),
+    garnishes: values.garnishes.map((garnish) => ({
+      garnishId: garnish.garnishId,
+      description: garnish.description,
+      optional: garnish.optional ?? false,
+      isAlternative: (garnish as CocktailRecipeGarnishFull & { isAlternative?: boolean }).isAlternative ?? false,
+    })),
+  };
 }
 
 interface IngredientError {
@@ -241,6 +282,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
   const modalContext = useContext(ModalContext);
   const userContext = useContext(UserContext);
   const routingContext = useContext(RoutingContext);
+  const unsavedChanges = useUnsavedChangesContext();
   const { t } = useTranslation(['cocktail', 'common', 'entity', 'errors', 'guestInfo']);
 
   const [iceOptions, setIceOptions] = useState<IceDto[]>([]);
@@ -476,52 +518,6 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
       innerRef={formRef}
       initialValues={initValue}
       validate={(values) => {
-        if (props.cocktailRecipe) {
-          const mappedOriginal = {
-            id: props.cocktailRecipe.id,
-            name: props.cocktailRecipe.name,
-            description: props.cocktailRecipe.description ?? '',
-            notes: props.cocktailRecipe.notes ?? '',
-            history: props.cocktailRecipe.history ?? '',
-            price: props.cocktailRecipe.price,
-            tags: props.cocktailRecipe.tags,
-            iceId: props.cocktailRecipe.ice?.id ?? null,
-            glassId: props.cocktailRecipe.glass?.id,
-            garnishes: mapCocktailDtoToFormGarnishes(props.cocktailRecipe),
-            steps: mapCocktailDtoToFormSteps(props.cocktailRecipe),
-            workspaceId: workspaceId!,
-            abvOverride: props.cocktailRecipe.abvOverride ?? '',
-            extraAllergens: props.cocktailRecipe.extraAllergens,
-            extraAdditives: props.cocktailRecipe.extraAdditives,
-          };
-          const reducedValues = _.omit(values, ['image', 'ice', 'glass', 'isArchived', 'originalImage']);
-
-          if (mappedOriginal.steps != undefined) {
-            mappedOriginal.steps = orderBy(mappedOriginal.steps, ['stepNumber'], ['asc']);
-            mappedOriginal.steps.forEach((step) => {
-              step.ingredients = orderBy(step.ingredients, ['ingredientNumber'], ['asc']);
-            });
-          }
-          if (values.steps != undefined) {
-            values.steps = orderBy(values.steps, ['stepNumber'], ['asc']);
-            (values.steps as CocktailRecipeStepFull[]).forEach((step) => {
-              step.ingredients = orderBy(step.ingredients, ['ingredientNumber'], ['asc']);
-
-              step.ingredients = _.map(step.ingredients, (obj) => {
-                return _.assign({}, obj, { ingredient: _.omit(obj.ingredient, 'volumes') });
-              });
-            });
-          }
-          console.debug('Difference', DeepDiff.diff(mappedOriginal, reducedValues));
-
-          // Update schemas delete the image when `image` is omitted; keep existing by re-sending hydrated base64.
-          const areImageEqual = hydratedImage == values.image;
-
-          props.setUnsavedChanges?.(!_.isEqual(mappedOriginal, reducedValues) || !areImageEqual);
-        } else {
-          props.setUnsavedChanges?.(true);
-        }
-
         const errors = zodFormikValidate(cocktailFormSchema(t('errors:requiredField'), t('common:imageNotCropped'), t('guestInfo:form.abvRange')))(values) as
           Record<string, unknown> | undefined;
         return errors;
@@ -581,12 +577,13 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
             const created = await apiV1Mutate<CocktailDto>(`/api/v1/workspaces/${workspaceId}/cocktails`, 'POST', body);
             await contentTranslations.save(created.id);
             alertService.success(t('cocktail:success.created'));
-            await routingContext.conditionalBack(`/workspaces/${workspaceId}/manage/cocktails`);
+            await unsavedChanges.completeSave(() => routingContext.conditionalBack(`/workspaces/${workspaceId}/manage/cocktails`));
           } else {
-            await apiV1Mutate<CocktailDto>(`/api/v1/workspaces/${workspaceId}/cocktails/${props.cocktailRecipe.id}`, 'PUT', body);
-            await contentTranslations.save(props.cocktailRecipe.id);
+            const cocktailId = props.cocktailRecipe.id;
+            await apiV1Mutate<CocktailDto>(`/api/v1/workspaces/${workspaceId}/cocktails/${cocktailId}`, 'PUT', body);
+            await contentTranslations.save(cocktailId);
             alertService.success(t('cocktail:success.updated'));
-            await routingContext.conditionalBack(`/workspaces/${workspaceId}/manage/cocktails#${props.cocktailRecipe.id}`);
+            await unsavedChanges.completeSave(() => routingContext.conditionalBack(`/workspaces/${workspaceId}/manage/cocktails#${cocktailId}`));
           }
         } catch (error) {
           alertApiV1Error(error, props.cocktailRecipe == undefined ? t('cocktail:error.create') : t('cocktail:error.save'));
@@ -595,6 +592,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
     >
       {({ values, setFieldValue, setFieldError, errors, handleChange, handleBlur, handleSubmit, isSubmitting, isValid }) => (
         <form onSubmit={handleSubmit}>
+          <FormikDirtyReporter toComparable={toComparableCocktail} />
           <div className={cn('grid grid-cols-1 md:grid-cols-3', stackGap)}>
             <Card variant="surface" className="grid-cols-1 md:col-span-2">
               <CardBody>

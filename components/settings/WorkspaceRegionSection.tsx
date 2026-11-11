@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useReportUnsavedChanges } from '@lib/forms/useUnsavedChanges';
 import { useTranslation } from 'react-i18next';
 import { Button, FormControl, Input, Label, LabelText, Loading, Select, Skeleton } from '@components/ui';
 import { alertService } from '@lib/alertService';
@@ -53,6 +54,7 @@ export function WorkspaceRegionSection({ workspaceId }: { workspaceId: string })
   const currencies = useMemo(() => currencyOptions(values.currency), [values.currency]);
 
   const dirty = values.timezone !== saved.timezone || values.currency !== saved.currency || values.dayStart !== saved.dayStart;
+  useReportUnsavedChanges(dirty);
   const valid = isValidTimezone(values.timezone) && isValidCurrency(values.currency) && /^\d{2}:\d{2}$/.test(values.dayStart);
 
   const save = async () => {

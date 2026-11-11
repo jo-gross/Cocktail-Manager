@@ -12,8 +12,10 @@ import type { GarnishCreateInput, GarnishDto, GarnishUpdateInput } from '@lib/sc
 import Image from 'next/image';
 import CropComponent from '../CropComponent';
 import { FaCropSimple } from 'react-icons/fa6';
-import _ from 'lodash';
 import { RoutingContext } from '@lib/context/RoutingContextProvider';
+import { FormikDirtyReporter } from '@lib/forms/FormikDirtyReporter';
+import { trimmed } from '@lib/forms/formDirty';
+import { useUnsavedChangesContext } from '@lib/forms/useUnsavedChanges';
 import { resizeImage } from '@lib/ImageCompressor';
 import { Button, ButtonGroup, Divider, FormControl, Input, Label, LabelText, LabelTextAlt, Loading, Textarea } from '@components/ui';
 import { z } from 'zod';
@@ -55,12 +57,25 @@ function createGarnishFormSchema(requiredMessage: string, imageNotCroppedMessage
 
 interface GarnishFormProps {
   garnish?: GarnishDto;
-  setUnsavedChanges?: (unsavedChanges: boolean) => void;
   formRef?: React.RefObject<FormikProps<GarnishFormValues> | null>;
   onSaved?: (id: string) => void;
 }
 
 const fieldErrorClass = 'border-error focus:border-error focus:ring-error/25';
+
+/** Persisted part of the values (mirrors `onSubmit`). */
+function toComparableGarnish(values: GarnishFormValues) {
+  return {
+    name: values.name,
+    price: values.price,
+    description: trimmed(values.description),
+    notes: trimmed(values.notes),
+    image: values.image,
+    allergens: [...values.allergens].sort(),
+    additives: [...values.additives].sort(),
+    guestInfoComplete: values.guestInfoComplete,
+  };
+}
 
 export function GarnishForm(props: GarnishFormProps) {
   const { t } = useTranslation(['manage', 'common', 'entity', 'errors']);
@@ -68,6 +83,7 @@ export function GarnishForm(props: GarnishFormProps) {
   const { workspaceId } = router.query;
   const modalContext = useContext(ModalContext);
   const routingContext = useContext(RoutingContext);
+  const unsavedChanges = useUnsavedChangesContext();
 
   const formRef = props.formRef || React.createRef<FormikProps<GarnishFormValues>>();
 
@@ -146,7 +162,7 @@ export function GarnishForm(props: GarnishFormProps) {
               props.onSaved(created.id);
             } else {
               alertService.success(t('manage:garnishForm.success.created'));
-              await routingContext.conditionalBack(`/workspaces/${workspaceId}/manage/garnishes`);
+              await unsavedChanges.completeSave(() => routingContext.conditionalBack(`/workspaces/${workspaceId}/manage/garnishes`));
             }
           } else {
             await updateGarnish(workspaceId, props.garnish.id, body);
@@ -155,7 +171,7 @@ export function GarnishForm(props: GarnishFormProps) {
               props.onSaved(props.garnish.id);
             } else {
               alertService.success(t('manage:garnishForm.success.saved'));
-              await routingContext.conditionalBack(`/workspaces/${workspaceId}/manage/garnishes`);
+              await unsavedChanges.completeSave(() => routingContext.conditionalBack(`/workspaces/${workspaceId}/manage/garnishes`));
             }
           }
         } catch (error) {
@@ -163,28 +179,12 @@ export function GarnishForm(props: GarnishFormProps) {
         }
       }}
       validate={(values) => {
-        if (props.garnish) {
-          const reducedOriginal = {
-            name: props.garnish.name,
-            price: props.garnish.price ?? undefined,
-            description: props.garnish.description ?? '',
-            notes: props.garnish.notes ?? '',
-            allergens: props.garnish.allergens,
-            additives: props.garnish.additives,
-            guestInfoComplete: props.garnish.guestInfoComplete,
-          };
-          const reducedValues = _.omit(values, ['image', 'originalImage']);
-          const areImageEqual = hydratedImage == values.image;
-          props.setUnsavedChanges?.(!_.isEqual(reducedOriginal, reducedValues) || !areImageEqual);
-        } else {
-          props.setUnsavedChanges?.(true);
-        }
-
         return zodFormikValidate(createGarnishFormSchema(t('errors:requiredField'), t('common:imageNotCropped')))(values);
       }}
     >
       {({ values, errors, handleChange, handleBlur, handleSubmit, isSubmitting, isValid, setFieldValue }) => (
         <form onSubmit={handleSubmit} className={'grid grid-cols-1 gap-2 md:grid-cols-2'}>
+          <FormikDirtyReporter toComparable={toComparableGarnish} />
           <div className={'col-span-full flex flex-row flex-wrap gap-2'}>
             <FormControl className={'flex-1'}>
               <Label htmlFor={'name'} className="flex-row items-center justify-between">

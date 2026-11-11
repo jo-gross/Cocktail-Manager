@@ -41,6 +41,7 @@ import { getGuestMenus } from '@lib/network/guestMenus';
 import type { GuestMenuSummaryDto } from '@lib/schemas/guestMenus';
 import { GuestMenuSlideForm, type GuestMenuSlideFormValue } from '@components/signage/GuestMenuSlideForm';
 import { FaListAlt } from 'react-icons/fa';
+import { isFormDirty } from '@lib/forms/formDirty';
 
 interface SignageFormatState {
   slides: SignageSlideView[];
@@ -143,6 +144,23 @@ function buildFormatPayload(state: SignageFormatState): SignageSettingsUpdatePay
     slideDurationSeconds: state.slideDurationSeconds,
     mirrorSourceFormat: state.mirrorSourceFormat ?? null,
   };
+}
+
+/**
+ * Order, duration and background are only persisted by "save order and duration" – uploads, deletes,
+ * toggles and mirroring are saved immediately, so only slides known on both sides are compared.
+ */
+function isSignageFormatDirty(current: SignageFormatState, saved: SignageFormatState): boolean {
+  const toComparable = (state: SignageFormatState, comparedIds: Set<string>) => ({
+    slideOrder: state.slides.map((slide) => slide.id).filter((id) => comparedIds.has(id)),
+    backgroundColor: state.backgroundColor,
+    backgroundMode: state.backgroundMode,
+    slideDurationSeconds: state.slideDurationSeconds,
+  });
+  return isFormDirty(
+    toComparable(current, new Set(saved.slides.map((slide) => slide.id))),
+    toComparable(saved, new Set(current.slides.map((slide) => slide.id))),
+  );
 }
 
 function SignageFormatEditor({
@@ -492,6 +510,9 @@ const ManageMonitorPage: NextPageWithPullToRefresh = () => {
   const [signageLoading, setSignageLoading] = useState<boolean>(true);
   const [landscape, setLandscape] = useState<SignageFormatState>(defaultFormatState);
   const [portrait, setPortrait] = useState<SignageFormatState>(defaultFormatState);
+  const [savedFormats, setSavedFormats] = useState<{ landscape: SignageFormatState; portrait: SignageFormatState } | null>(null);
+  const signageDirty =
+    savedFormats != null && (isSignageFormatDirty(landscape, savedFormats.landscape) || isSignageFormatDirty(portrait, savedFormats.portrait));
   const [updatingSignage, setUpdatingSignage] = useState<boolean>(false);
   const [landscapeUploading, setLandscapeUploading] = useState(false);
   const [portraitUploading, setPortraitUploading] = useState(false);
@@ -510,8 +531,8 @@ const ManageMonitorPage: NextPageWithPullToRefresh = () => {
       .catch((error) => console.error('ManageMonitorPage -> getGuestMenus', error));
   }, [workspaceId]);
 
-  const handleUpdateSignage = useCallback(async () => {
-    if (!workspaceId) return;
+  const handleUpdateSignage = useCallback(async (): Promise<boolean> => {
+    if (!workspaceId) return false;
     setUpdatingSignage(true);
 
     const payload: SignageSettingsUpdatePayload = {
@@ -521,9 +542,12 @@ const ManageMonitorPage: NextPageWithPullToRefresh = () => {
 
     try {
       await updateSignageSettings(workspaceId, payload);
+      setSavedFormats({ landscape, portrait });
       alertService.success(t('manage:monitor.orderAndDurationSaved'));
+      return true;
     } catch (error) {
       alertApiV1Error(error, t('errors:generic'));
+      return false;
     } finally {
       setUpdatingSignage(false);
     }
@@ -566,6 +590,7 @@ const ManageMonitorPage: NextPageWithPullToRefresh = () => {
 
         setLandscape(nextLandscape);
         setPortrait(nextPortrait);
+        setSavedFormats({ landscape: nextLandscape, portrait: nextPortrait });
       })
       .catch((error) => {
         console.error('SettingsPage -> fetchSignage', error);
@@ -652,6 +677,8 @@ const ManageMonitorPage: NextPageWithPullToRefresh = () => {
     try {
       await updateSignageSettings(workspaceId, payload);
       setState(nextState);
+      // Mirroring persists the whole format (incl. order and duration).
+      setSavedFormats((saved) => (saved ? { ...saved, [formatPayloadKey(format)]: nextState } : saved));
       alertService.success(
         mirrorSourceFormat
           ? t('manage:monitor.mirroringEnabled', { format: formatLabel(mirrorSourceFormat, (key) => t(key)) })
@@ -687,7 +714,12 @@ const ManageMonitorPage: NextPageWithPullToRefresh = () => {
   };
 
   return (
-    <ManageEntityLayout title={t('manage:monitor.title')} backLink={`/workspaces/${workspaceId}/manage`}>
+    <ManageEntityLayout
+      title={t('manage:monitor.title')}
+      backLink={`/workspaces/${workspaceId}/manage`}
+      unsavedChanges={signageDirty}
+      onSave={handleUpdateSignage}
+    >
       {userContext.isUserPermitted(Role.MANAGER) ? (
         <Card>
           <CardBody>
@@ -765,7 +797,7 @@ const ManageMonitorPage: NextPageWithPullToRefresh = () => {
                 />
               </div>
             )}
-            <Button type="button" variant="primary" disabled={updatingSignage || signageLoading} onClick={handleUpdateSignage}>
+            <Button type="button" variant="primary" disabled={updatingSignage || signageLoading} onClick={() => void handleUpdateSignage()}>
               {updatingSignage ? <UiLoading size="sm" /> : null}
               {t('manage:monitor.saveOrderAndDuration')}
             </Button>

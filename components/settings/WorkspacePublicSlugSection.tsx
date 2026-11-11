@@ -1,4 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
+import { useReportUnsavedChanges } from '@lib/forms/useUnsavedChanges';
 import { useTranslation } from 'react-i18next';
 import { FaArrowUpRightFromSquare, FaCopy } from 'react-icons/fa6';
 import { Button, ButtonGroup, FormControl, Input, Label, LabelText, LabelTextAlt, Loading, Skeleton } from '@components/ui';
@@ -50,6 +51,7 @@ export function WorkspacePublicSlugSection({ workspaceId }: { workspaceId: strin
   const slugReserved = trimmed !== '' && isReservedPublicSlug(trimmed);
   const slugError = (trimmed !== '' && !isValidPublicSlug(trimmed)) || slugReserved;
   const dirty = trimmed !== savedSlug;
+  useReportUnsavedChanges(!loading && dirty);
   const publicUrl = savedSlug ? `${origin}/m/${savedSlug}` : '';
 
   const save = async () => {

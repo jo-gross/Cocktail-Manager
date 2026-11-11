@@ -20,7 +20,6 @@ function EditCocktailRecipe() {
   const [loading, setLoading] = useState(true);
   const [ingredient, setIngredient] = useState<IngredientDto | undefined>(undefined);
 
-  const [unsavedChanges, setUnsavedChanges] = useState(false);
   const formRef = useRef<FormikProps<FormValue>>(null);
 
   useEffect(() => {
@@ -41,14 +40,9 @@ function EditCocktailRecipe() {
       <Loading />
     </PageCenter>
   ) : (
-    <ManageEntityLayout
-      backLink={`/workspaces/${workspaceId}/manage/ingredients`}
-      title={t('nav:ingredients')}
-      unsavedChanges={unsavedChanges}
-      formRef={formRef}
-    >
+    <ManageEntityLayout backLink={`/workspaces/${workspaceId}/manage/ingredients`} title={t('nav:ingredients')} formRef={formRef}>
       <SingleFormLayout title={t('entity:formTitle.ingredient')}>
-        <IngredientForm ingredient={ingredient} setUnsavedChanges={setUnsavedChanges} formRef={formRef} />
+        <IngredientForm ingredient={ingredient} formRef={formRef} />
       </SingleFormLayout>
     </ManageEntityLayout>
   );

@@ -28,7 +28,7 @@ import '../../lib/NumberUtils';
 import CocktailExportOptionsModal, { CocktailExportOptions } from './CocktailExportOptionsModal';
 import { AuditLogHistoryModal } from './AuditLogHistoryModal';
 import { alertApiV1Error, apiV1Mutate } from '@lib/network/apiV1';
-import { isCocktailUnavailable } from '@lib/cocktails/availability';
+import { emitCocktailAvailabilityChanged, isCocktailUnavailable } from '@lib/cocktails/availability';
 
 interface CocktailDetailModalProps {
   cocktailId: string;
@@ -69,6 +69,8 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
         unavailable: !isCocktailUnavailable(loadedCocktail.unavailableUntil),
       });
       setLoadedCocktail((previous) => (previous ? { ...previous, unavailableUntil: updated.unavailableUntil } : updated));
+      // Cards behind the modal update their "aus" state without reload
+      emitCocktailAvailabilityChanged({ cocktailId: loadedCocktail.id, unavailableUntil: updated.unavailableUntil });
     } catch (error) {
       alertApiV1Error(error, t('cocktail:error.updateAvailability'));
     } finally {

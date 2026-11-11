@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { ManageEntityLayout } from '@components/layout/ManageEntityLayout';
 import { ManageColumn } from '@components/ManageColumn';
+import { EntityNameLink } from '@components/manage/EntityNameLink';
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRouter } from 'next/router';
@@ -59,6 +60,8 @@ const CocktailCalculationOverviewPage: NextPageWithPullToRefresh = () => {
 
   const modalContext = useContext(ModalContext);
   const userContext = useContext(UserContext);
+  const canEdit = userContext.isUserPermitted(Role.USER);
+  const calculationEditHref = (id: string) => (canEdit ? `/workspaces/${workspaceId}/manage/calculations/${id}` : undefined);
 
   const [cocktailCalculations, setCocktailCalculations] = useState<CalculationSummaryDto[]>([]);
   const [calculationGroups, setCalculationGroups] = useState<CalculationGroupDto[]>([]);
@@ -595,7 +598,9 @@ const CocktailCalculationOverviewPage: NextPageWithPullToRefresh = () => {
                                   onChange={() => handleToggleSelect(cocktailCalculation.id)}
                                 />
                               </TableCell>
-                              <TableCell>{cocktailCalculation.name}</TableCell>
+                              <TableCell>
+                                <EntityNameLink href={calculationEditHref(cocktailCalculation.id)}>{cocktailCalculation.name}</EntityNameLink>
+                              </TableCell>
                               <TableCell>
                                 {cocktailCalculation.items
                                   .map((calculationItem) => calculationItem.cocktail.name)
@@ -649,7 +654,9 @@ const CocktailCalculationOverviewPage: NextPageWithPullToRefresh = () => {
                                 onChange={() => handleToggleSelect(cocktailCalculation.id)}
                               />
                             </TableCell>
-                            <TableCell>{cocktailCalculation.name}</TableCell>
+                            <TableCell>
+                              <EntityNameLink href={calculationEditHref(cocktailCalculation.id)}>{cocktailCalculation.name}</EntityNameLink>
+                            </TableCell>
                             <TableCell>
                               {cocktailCalculation.items
                                 .map((calculationItem) => calculationItem.cocktail.name)

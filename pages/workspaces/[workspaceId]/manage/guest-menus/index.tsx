@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { FaCopy, FaDownload, FaEllipsisV, FaLink, FaLock, FaPen, FaPlus, FaStar, FaRegStar, FaTrash } from 'react-icons/fa';
 import { Role } from '@generated/prisma/client';
 import { ManageEntityLayout } from '@components/layout/ManageEntityLayout';
+import { EntityNameLink } from '@components/manage/EntityNameLink';
 import { Alert, Badge, Button, Card, CardBody, cn, Divider, Dropdown, DropdownContent, Menu, MenuItem, Skeleton, Toggle } from '@components/ui';
 import { DeleteConfirmationModal } from '@components/modals/DeleteConfirmationModal';
 import { CreateGuestMenuModal } from '@components/guest-menu/manage/CreateGuestMenuModal';
@@ -234,9 +235,9 @@ function GuestMenusPage() {
                     <span className="h-10 w-1.5 shrink-0 rounded-full" style={{ background: MENU_COLORS[index % MENU_COLORS.length] }} />
                     <div className="flex min-w-0 flex-1 flex-col gap-1">
                       <div className="flex flex-wrap items-center gap-2">
-                        <Link href={`/workspaces/${workspaceId}/manage/guest-menus/${menu.id}`} className="truncate font-semibold hover:underline">
+                        <EntityNameLink href={`/workspaces/${workspaceId}/manage/guest-menus/${menu.id}`} className="min-w-0 truncate font-semibold">
                           {menu.name}
-                        </Link>
+                        </EntityNameLink>
                         {menu.isActive && (
                           <Badge size="sm" variant="primary">
                             {t('guestMenu:status.active')}

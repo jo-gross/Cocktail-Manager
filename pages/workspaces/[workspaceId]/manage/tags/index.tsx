@@ -13,6 +13,7 @@ import { UserContext } from '@lib/context/UserContextProvider';
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import { alertService } from '@lib/alertService';
 import { alertApiV1Error } from '@lib/network/apiV1';
+import { isFormDirty } from '@lib/forms/formDirty';
 import {
   createDefaultTagCategories,
   createTagCategory,
@@ -203,7 +204,7 @@ const ManageTagsPage: NextPageWithPullToRefresh = () => {
     if (categories.length !== savedCategories.length) return true;
     return categories.some((category, index) => {
       const saved = savedCategories[index];
-      return saved.id !== category.id || saved.showAsGuestFilter !== category.showAsGuestFilter || JSON.stringify(saved.name) !== JSON.stringify(category.name);
+      return saved.id !== category.id || saved.showAsGuestFilter !== category.showAsGuestFilter || isFormDirty(category.name, saved.name);
     });
   }, [categories, savedCategories]);
 
@@ -213,7 +214,7 @@ const ManageTagsPage: NextPageWithPullToRefresh = () => {
         const original = definitions.find((definition) => definition.tag === tag);
         if (!original) return false;
         return (
-          JSON.stringify(original.label ?? {}) !== JSON.stringify(draft.label ?? {}) ||
+          isFormDirty(draft.label, original.label) ||
           original.categoryId !== draft.categoryId ||
           original.color !== draft.color ||
           original.isPublic !== draft.isPublic
@@ -224,8 +225,8 @@ const ManageTagsPage: NextPageWithPullToRefresh = () => {
 
   const dirty = categoriesDirty || changedDefinitions.length > 0;
 
-  const handleSave = useCallback(async () => {
-    if (!workspaceId) return;
+  const handleSave = useCallback(async (): Promise<boolean> => {
+    if (!workspaceId) return false;
     setSaving(true);
     try {
       if (categoriesDirty) {
@@ -250,8 +251,10 @@ const ManageTagsPage: NextPageWithPullToRefresh = () => {
         applyCategories(await getTagCategories(workspaceId));
       }
       alertService.success(t('translations:tags.saved'));
+      return true;
     } catch (error) {
       alertApiV1Error(error, t('translations:tags.errors.save'));
+      return false;
     } finally {
       setSaving(false);
     }
@@ -354,9 +357,17 @@ const ManageTagsPage: NextPageWithPullToRefresh = () => {
       backLink={`/workspaces/${workspaceId}/manage`}
       title={t('translations:tags.title')}
       unsavedChanges={dirty}
+      onSave={canEdit ? handleSave : undefined}
       actions={
         canEdit && (
-          <Button type="button" variant="primary" size="sm" className="md:h-10 md:min-h-10 md:px-4" disabled={!dirty || saving} onClick={handleSave}>
+          <Button
+            type="button"
+            variant="primary"
+            size="sm"
+            className="md:h-10 md:min-h-10 md:px-4"
+            disabled={!dirty || saving}
+            onClick={() => void handleSave()}
+          >
             {saving ? <Loading size="sm" /> : <FaSave />}
             {t('common:save')}
           </Button>

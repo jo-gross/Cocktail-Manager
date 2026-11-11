@@ -8,12 +8,13 @@ import { useTranslation } from 'react-i18next';
 import { alertService } from '@lib/alertService';
 import { DeleteConfirmationModal } from '../modals/DeleteConfirmationModal';
 import { ModalContext } from '@lib/context/ModalContextProvider';
-import _ from 'lodash';
 import type { GlassDto } from '@lib/schemas/glasses';
 import Image from 'next/image';
 import CropComponent from '../CropComponent';
 import { FaCropSimple } from 'react-icons/fa6';
 import { RoutingContext } from '@lib/context/RoutingContextProvider';
+import { FormikDirtyReporter } from '@lib/forms/FormikDirtyReporter';
+import { useUnsavedChangesContext } from '@lib/forms/useUnsavedChanges';
 import { resizeImage } from '@lib/ImageCompressor';
 import { Button, ButtonGroup, Divider, FormControl, Input, Label, LabelText, LabelTextAlt, Loading } from '@components/ui';
 import { z } from 'zod';
@@ -49,12 +50,21 @@ function createGlassFormSchema(requiredMessage: string, imageNotCroppedMessage: 
 
 interface GlassFormProps {
   glass?: GlassDto;
-  setUnsavedChanges?: (unsavedChanges: boolean) => void;
   formRef?: React.RefObject<FormikProps<GlassFormValues> | null>;
   onSaved?: (id: string) => void;
 }
 
 const fieldErrorClass = 'border-error focus:border-error focus:ring-error/25';
+
+/** Persisted part of the values (mirrors `onSubmit`, where volume 0 means "no volume"). */
+function toComparableGlass(values: GlassFormValues) {
+  return {
+    name: values.name,
+    deposit: values.deposit,
+    volume: values.volume == 0 ? undefined : values.volume,
+    image: values.image,
+  };
+}
 
 export function GlassForm(props: GlassFormProps) {
   const { t } = useTranslation(['manage', 'common', 'entity', 'errors']);
@@ -62,6 +72,7 @@ export function GlassForm(props: GlassFormProps) {
   const { workspaceId } = router.query;
   const modalContext = useContext(ModalContext);
   const routingContext = useContext(RoutingContext);
+  const unsavedChanges = useUnsavedChangesContext();
 
   const formRef = props.formRef;
 
@@ -132,7 +143,7 @@ export function GlassForm(props: GlassFormProps) {
               props.onSaved(created.id);
             } else {
               alertService.success(t('manage:glassForm.success.created'));
-              await routingContext.conditionalBack(`/workspaces/${workspaceId}/manage/glasses`);
+              await unsavedChanges.completeSave(() => routingContext.conditionalBack(`/workspaces/${workspaceId}/manage/glasses`));
             }
           } else {
             await updateGlass(workspaceId, props.glass.id, body);
@@ -141,7 +152,7 @@ export function GlassForm(props: GlassFormProps) {
               props.onSaved(props.glass.id);
             } else {
               alertService.success(t('manage:glassForm.success.saved'));
-              await routingContext.conditionalBack(`/workspaces/${workspaceId}/manage/glasses`);
+              await unsavedChanges.completeSave(() => routingContext.conditionalBack(`/workspaces/${workspaceId}/manage/glasses`));
             }
           }
         } catch (error) {
@@ -149,25 +160,12 @@ export function GlassForm(props: GlassFormProps) {
         }
       }}
       validate={(values) => {
-        if (props.glass) {
-          const reducedOriginal = {
-            name: props.glass.name,
-            deposit: props.glass.deposit,
-            volume: props.glass.volume ?? 0,
-          };
-          const reducedValues = _.omit(values, ['image', 'originalImage']);
-          const areImageEqual = hydratedImage == values.image;
-
-          props.setUnsavedChanges?.(!_.isEqual(reducedOriginal, reducedValues) || !areImageEqual);
-        } else {
-          props.setUnsavedChanges?.(true);
-        }
-
         return zodFormikValidate(createGlassFormSchema(t('errors:requiredField'), t('common:imageNotCropped')))(values);
       }}
     >
       {({ values, setFieldValue, errors, handleChange, handleBlur, handleSubmit, isSubmitting, isValid }) => (
         <form onSubmit={handleSubmit} className={'grid w-full grid-cols-1 gap-2 md:max-w-4xl md:grid-cols-2'}>
+          <FormikDirtyReporter toComparable={toComparableGlass} />
           <FormControl className={'col-span-full'}>
             <Label htmlFor={'name'} className="flex-row items-center justify-between">
               <LabelText>{t('common:name')}</LabelText>

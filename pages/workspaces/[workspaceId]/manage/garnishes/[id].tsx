@@ -20,7 +20,6 @@ function EditGarnishPage() {
   const [garnish, setGarnish] = useState<GarnishDto | undefined>(undefined);
   const [loading, setLoading] = useState(true);
 
-  const [unsavedChanges, setUnsavedChanges] = useState(false);
   const formRef = useRef<FormikProps<GarnishFormValues>>(null);
 
   useEffect(() => {
@@ -41,9 +40,9 @@ function EditGarnishPage() {
       <Loading />
     </PageCenter>
   ) : (
-    <ManageEntityLayout backLink={`/workspaces/${workspaceId}/manage/garnishes`} title={t('nav:garnishes')} unsavedChanges={unsavedChanges} formRef={formRef}>
+    <ManageEntityLayout backLink={`/workspaces/${workspaceId}/manage/garnishes`} title={t('nav:garnishes')} formRef={formRef}>
       <SingleFormLayout title={t('entity:formTitle.garnish')}>
-        <GarnishForm garnish={garnish} setUnsavedChanges={setUnsavedChanges} formRef={formRef} />
+        <GarnishForm garnish={garnish} formRef={formRef} />
       </SingleFormLayout>
     </ManageEntityLayout>
   );

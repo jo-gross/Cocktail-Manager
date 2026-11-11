@@ -5,7 +5,8 @@ import { alertService } from '@lib/alertService';
 import { Button, Loading } from '@components/ui';
 
 interface NotSavedConfirmationProps {
-  onSave: () => Promise<void>;
+  /** Omit when the page can't be saved from here – only cancel / discard are offered then. */
+  onSave?: () => Promise<void>;
   onNotSave?: () => void;
   onCancel?: () => void;
   isSaving?: boolean;
@@ -16,6 +17,7 @@ export function NotSavedLeaveConfirmation(props: NotSavedConfirmationProps) {
   const { t } = useTranslation(['entity', 'common', 'errors']);
 
   const [isSaving, setIsSaving] = useState(false);
+  const onSave = props.onSave;
 
   return (
     <div className="flex flex-col space-y-4">
@@ -41,25 +43,27 @@ export function NotSavedLeaveConfirmation(props: NotSavedConfirmationProps) {
         >
           {t('common:doNotSave')}
         </Button>
-        <Button
-          disabled={isSaving || props.isSaving}
-          variant="primary"
-          onClick={async () => {
-            setIsSaving(true);
-            try {
-              await props.onSave();
-              modalContext.closeModal();
-            } catch (error) {
-              console.error('NotSavedConfirmation -> onSave', error);
-              alertService.error(t('errors:save'));
-            } finally {
-              setIsSaving(false);
-            }
-          }}
-        >
-          {isSaving || props.isSaving ? <Loading size="sm" /> : null}
-          {t('common:save')}
-        </Button>
+        {onSave && (
+          <Button
+            disabled={isSaving || props.isSaving}
+            variant="primary"
+            onClick={async () => {
+              setIsSaving(true);
+              try {
+                await onSave();
+                modalContext.closeModal();
+              } catch (error) {
+                console.error('NotSavedConfirmation -> onSave', error);
+                alertService.error(t('errors:save'));
+              } finally {
+                setIsSaving(false);
+              }
+            }}
+          >
+            {isSaving || props.isSaving ? <Loading size="sm" /> : null}
+            {t('common:save')}
+          </Button>
+        )}
       </div>
     </div>
   );

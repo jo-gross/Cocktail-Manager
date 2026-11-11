@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { FaEllipsisV } from 'react-icons/fa';
 import { useTranslation } from 'react-i18next';
 import { Button, Menu } from '@components/ui';
+import { useCloseOnBack } from '@lib/navigation/useCloseOnBack';
 
 export interface ItemAction {
   label: string;
@@ -29,6 +30,7 @@ export function ItemActionMenu({ actions, ariaLabel }: ItemActionMenuProps) {
   const [position, setPosition] = useState({ top: 0, left: 0 });
   const buttonRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  useCloseOnBack(isOpen, () => setIsOpen(false));
 
   const calculatePosition = useCallback(() => {
     if (!buttonRef.current) return;

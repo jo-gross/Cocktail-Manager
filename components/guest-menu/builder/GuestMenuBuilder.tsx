@@ -17,6 +17,7 @@ import { UserContext } from '@lib/context/UserContextProvider';
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import { ConfirmActionModal } from '@components/modals/ConfirmActionModal';
 import { alertService } from '@lib/alertService';
+import { useUnsavedChanges } from '@lib/forms/useUnsavedChanges';
 import { ApiV1RequestError, alertApiV1Error } from '@lib/network/apiV1';
 import {
   getGuestMenu,
@@ -223,13 +224,8 @@ export function GuestMenuBuilder({ workspaceId, menuId }: { workspaceId: string;
     return () => window.clearTimeout(timer);
   }, [document, canEdit, saveNow]);
 
-  useEffect(() => {
-    const onBeforeUnload = (event: BeforeUnloadEvent) => {
-      if (saveStatus === 'dirty' || saveStatus === 'saving' || saveStatus === 'error') event.preventDefault();
-    };
-    window.addEventListener('beforeunload', onBeforeUnload);
-    return () => window.removeEventListener('beforeunload', onBeforeUnload);
-  }, [saveStatus]);
+  // Autosave usually wins the race – the prompt only shows when leaving before it ran or after it failed.
+  useUnsavedChanges({ dirty: canEdit && saveStatus !== 'saved', onSave: saveNow });
 
   // Preview ------------------------------------------------------------------
   const metaVersion = menu ? `${menu.sourceMode}|${menu.sourceCardId}|${menu.locales.join(',')}|${menu.name}|${menu.slug}` : '';

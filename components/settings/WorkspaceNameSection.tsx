@@ -1,4 +1,5 @@
 import React, { useContext, useState } from 'react';
+import { useReportUnsavedChanges } from '@lib/forms/useUnsavedChanges';
 import { useTranslation } from 'react-i18next';
 import { Button, FormControl, Input, Label, LabelText, LabelTextAlt, Loading } from '@components/ui';
 import { UserContext } from '@lib/context/UserContextProvider';
@@ -22,6 +23,7 @@ export function WorkspaceNameSection({ workspaceId }: { workspaceId: string }) {
   const trimmed = name.trim();
   const invalid = trimmed.length < NAME_MIN_LENGTH || trimmed.length > NAME_MAX_LENGTH;
   const changed = trimmed !== currentName;
+  useReportUnsavedChanges(draft !== null && changed);
 
   const save = async () => {
     if (invalid || !changed) return;

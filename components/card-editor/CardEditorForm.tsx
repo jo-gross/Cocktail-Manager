@@ -1,15 +1,16 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { DndContext, DragEndEvent, PointerSensor, closestCenter, useSensor, useSensors } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { FieldArray, Formik, FormikErrors } from 'formik';
+import { FieldArray, Formik, FormikErrors, FormikProps } from 'formik';
 import { z } from 'zod';
 import { FaTrashAlt } from 'react-icons/fa';
-import _ from 'lodash';
 import { useRouter } from 'next/router';
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import { RoutingContext } from '@lib/context/RoutingContextProvider';
 import { alertService } from '@lib/alertService';
 import { zodFormikValidate } from '@lib/forms/zodFormikValidate';
+import { FormikDirtyReporter } from '@lib/forms/FormikDirtyReporter';
+import { useUnsavedChangesContext } from '@lib/forms/useUnsavedChanges';
 import { DeleteConfirmationModal } from '@components/modals/DeleteConfirmationModal';
 import type { CardDto } from '@lib/schemas/cards';
 import type { CocktailSummaryDto } from '@lib/schemas/cocktails';
@@ -86,18 +87,37 @@ function mapCardToFormValues(card?: CardDto): CardEditorFormValues {
   };
 }
 
+/** Persisted part of the values in display order (mirrors `onSubmit`). */
+function toComparableCard(values: CardEditorFormValues) {
+  return {
+    name: values.name,
+    date: values.date,
+    groups: [...values.groups]
+      .sort((a, b) => a.groupNumber - b.groupNumber)
+      .map((group) => ({
+        id: group.id,
+        name: group.name,
+        groupPrice: toPriceInput(group.groupPrice),
+        items: [...group.items]
+          .sort((a, b) => a.itemNumber - b.itemNumber)
+          .map((item) => ({ cocktailId: item.cocktailId, specialPrice: toPriceInput(item.specialPrice) })),
+      })),
+  };
+}
+
 interface CardEditorFormProps {
   card?: CardDto;
   cocktails: CocktailSummaryDto[];
   loadingCocktails: boolean;
   workspaceId: string;
-  onUnsavedChangesChange: (unsaved: boolean) => void;
+  formRef?: React.RefObject<FormikProps<CardEditorFormValues> | null>;
 }
 
-export function CardEditorForm({ card, cocktails, loadingCocktails, workspaceId, onUnsavedChangesChange }: CardEditorFormProps) {
+export function CardEditorForm({ card, cocktails, loadingCocktails, workspaceId, formRef }: CardEditorFormProps) {
   const { t } = useTranslation(['manage', 'common', 'entity', 'errors']);
   const modalContext = useContext(ModalContext);
   const routingContext = useContext(RoutingContext);
+  const unsavedChanges = useUnsavedChangesContext();
   const [viewMode, setViewMode] = useState<CardEditorViewMode>('names');
   const [device, setDevice] = useState<CardEditorDevice>('desktop');
   const [density, setDensity] = useState<CardEditorDensity>('wide');
@@ -139,11 +159,10 @@ export function CardEditorForm({ card, cocktails, loadingCocktails, workspaceId,
 
   return (
     <Formik<CardEditorFormValues>
+      innerRef={formRef}
       initialValues={mapCardToFormValues(card)}
       enableReinitialize
       validate={(values) => {
-        onUnsavedChangesChange(!_.isEqual(values, mapCardToFormValues(card)));
-
         return zodFormikValidate(createCardFormSchema(t('errors:requiredField')))(values);
       }}
       onSubmit={async (values) => {
@@ -170,11 +189,11 @@ export function CardEditorForm({ card, cocktails, loadingCocktails, workspaceId,
           if (card == undefined) {
             await apiV1Mutate<CardDto>(`/api/v1/workspaces/${workspaceId}/cards`, 'POST', input);
             alertService.success(t('entity:cardCreated'));
-            await routingContext.conditionalBack(`/workspaces/${workspaceId}/manage/cards`);
+            await unsavedChanges.completeSave(() => routingContext.conditionalBack(`/workspaces/${workspaceId}/manage/cards`));
           } else {
             await apiV1Mutate<CardDto>(`/api/v1/workspaces/${workspaceId}/cards/${card.id}`, 'PUT', input);
             alertService.success(t('entity:cardSaved'));
-            await routingContext.conditionalBack(`/workspaces/${workspaceId}/manage/cards`);
+            await unsavedChanges.completeSave(() => routingContext.conditionalBack(`/workspaces/${workspaceId}/manage/cards`));
           }
         } catch (error) {
           alertApiV1Error(error, card == undefined ? t('errors:createCard') : t('errors:saveCard'));
@@ -212,6 +231,7 @@ export function CardEditorForm({ card, cocktails, loadingCocktails, workspaceId,
 
         return (
           <form onSubmit={handleSubmit}>
+            <FormikDirtyReporter toComparable={toComparableCard} />
             <div className="flex flex-col gap-3">
               <CardEditorToolbar
                 viewMode={viewMode}
@@ -333,6 +353,7 @@ export function CardEditorArchiveActions({ card, workspaceId }: CardEditorArchiv
   const { t } = useTranslation(['manage', 'common', 'entity', 'errors']);
   const modalContext = useContext(ModalContext);
   const routingContext = useContext(RoutingContext);
+  const unsavedChanges = useUnsavedChangesContext();
   const router = useRouter();
 
   return (
@@ -346,7 +367,7 @@ export function CardEditorArchiveActions({ card, workspaceId }: CardEditorArchiv
           onClick={async () => {
             try {
               await apiV1Mutate<CardDto>(`/api/v1/workspaces/${workspaceId}/cards/${card.id}/${card.archived ? 'unarchive' : 'archive'}`, 'PUT');
-              await router.replace(`/workspaces/${workspaceId}/manage/cards`);
+              await unsavedChanges.completeSave(() => router.replace(`/workspaces/${workspaceId}/manage/cards`));
               alertService.success(card.archived ? t('entity:cardUnarchiveSuccess') : t('entity:cardArchiveSuccess'));
             } catch (error) {
               alertApiV1Error(error, card.archived ? t('errors:unarchiveCard') : t('errors:archiveCard'));
@@ -368,7 +389,7 @@ export function CardEditorArchiveActions({ card, workspaceId }: CardEditorArchiv
                   try {
                     await apiV1Mutate(`/api/v1/workspaces/${workspaceId}/cards/${card.id}`, 'DELETE');
                     alertService.success(t('entity:cardDeleted'));
-                    await routingContext.conditionalBack(`/workspaces/${workspaceId}/manage/cards`);
+                    await unsavedChanges.completeSave(() => routingContext.conditionalBack(`/workspaces/${workspaceId}/manage/cards`));
                   } catch (error) {
                     alertApiV1Error(error, t('errors:deleteCard'));
                   }

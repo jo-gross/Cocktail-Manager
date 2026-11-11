@@ -12,6 +12,7 @@ import type { GuestInfoBulkUpdateInput, GuestInfoOverview, GuestInfoOverviewGarn
 import { AllergenSelect } from '@components/guest-info/AllergenSelect';
 import { AdditiveSelect } from '@components/guest-info/AdditiveSelect';
 import { parseOptionalPercent } from '@components/guest-info/GuestInfoFormFields';
+import { isFormDirty } from '@lib/forms/formDirty';
 import { NextPageWithPullToRefresh } from '../../../../../types/next';
 import {
   Button,
@@ -38,6 +39,11 @@ type Kind = 'ingredients' | 'garnishes';
 type IngredientRow = GuestInfoOverviewIngredient & { abvInput: number | string };
 type IngredientPatch = Partial<Pick<IngredientRow, 'abvInput' | 'allergens' | 'additives' | 'guestInfoComplete'>>;
 type GarnishPatch = Partial<Pick<GuestInfoOverviewGarnish, 'allergens' | 'additives' | 'guestInfoComplete'>>;
+
+/** Persisted guest-info fields of a row – a patch only counts when it differs from the loaded row. */
+function toComparableGuestInfo(row: { abvInput?: number | string; allergens: string[]; additives: string[]; guestInfoComplete: boolean }) {
+  return { abv: row.abvInput, allergens: [...row.allergens].sort(), additives: [...row.additives].sort(), guestInfoComplete: row.guestInfoComplete };
+}
 
 function ProgressBar({ value, total }: { value: number; total: number }) {
   const percent = total > 0 ? Math.round((value / total) * 100) : 0;
@@ -96,7 +102,29 @@ const ManageGuestInfoPage: NextPageWithPullToRefresh = () => {
     [overview, garnishPatches],
   );
 
-  const unsavedCount = Object.keys(ingredientPatches).length + Object.keys(garnishPatches).length;
+  const changedIngredientIds = useMemo(
+    () =>
+      (overview?.ingredients ?? [])
+        .filter((original) => {
+          const patch = ingredientPatches[original.id];
+          if (!patch) return false;
+          const originalRow = { ...original, abvInput: original.abv ?? '' };
+          return isFormDirty(toComparableGuestInfo({ ...originalRow, ...patch }), toComparableGuestInfo(originalRow));
+        })
+        .map((ingredient) => ingredient.id),
+    [overview, ingredientPatches],
+  );
+  const changedGarnishIds = useMemo(
+    () =>
+      (overview?.garnishes ?? [])
+        .filter((original) => {
+          const patch = garnishPatches[original.id];
+          return patch != undefined && isFormDirty(toComparableGuestInfo({ ...original, ...patch }), toComparableGuestInfo(original));
+        })
+        .map((garnish) => garnish.id),
+    [overview, garnishPatches],
+  );
+  const unsavedCount = changedIngredientIds.length + changedGarnishIds.length;
   const rows = kind === 'ingredients' ? ingredients : garnishes;
   const completeCount = rows.filter((row) => row.guestInfoComplete).length;
   const visibleRows = rows.filter(
@@ -112,25 +140,31 @@ const ManageGuestInfoPage: NextPageWithPullToRefresh = () => {
     return !Number.isFinite(value) || value < 0 || value > 100;
   });
 
-  const save = async () => {
-    if (!workspaceId || unsavedCount === 0) return;
+  const save = async (): Promise<boolean> => {
+    if (!workspaceId || unsavedCount === 0 || invalidAbv) return false;
     const body: GuestInfoBulkUpdateInput = {
-      ingredients: Object.entries(ingredientPatches).map(([id, patch]) => ({
-        id,
-        abv: 'abvInput' in patch ? parseOptionalPercent(patch.abvInput) : undefined,
-        allergens: patch.allergens,
-        additives: patch.additives,
-        guestInfoComplete: patch.guestInfoComplete,
-      })),
-      garnishes: Object.entries(garnishPatches).map(([id, patch]) => ({ id, ...patch })),
+      ingredients: Object.entries(ingredientPatches)
+        .filter(([id]) => changedIngredientIds.includes(id))
+        .map(([id, patch]) => ({
+          id,
+          abv: 'abvInput' in patch ? parseOptionalPercent(patch.abvInput) : undefined,
+          allergens: patch.allergens,
+          additives: patch.additives,
+          guestInfoComplete: patch.guestInfoComplete,
+        })),
+      garnishes: Object.entries(garnishPatches)
+        .filter(([id]) => changedGarnishIds.includes(id))
+        .map(([id, patch]) => ({ id, ...patch })),
     };
     setSaving(true);
     try {
       await bulkUpdateGuestInfo(workspaceId, body);
       alertService.success(t('guestInfo:maintenance.saved'));
       load();
+      return true;
     } catch (error) {
       alertApiV1Error(error, t('guestInfo:maintenance.saveError'));
+      return false;
     } finally {
       setSaving(false);
     }
@@ -143,6 +177,7 @@ const ManageGuestInfoPage: NextPageWithPullToRefresh = () => {
       title={t('guestInfo:maintenance.title')}
       backLink={`/workspaces/${workspaceId}/manage`}
       unsavedChanges={unsavedCount > 0}
+      onSave={canEdit ? save : undefined}
       actions={
         canEdit ? (
           <div className="flex items-center gap-2">
@@ -156,7 +191,7 @@ const ManageGuestInfoPage: NextPageWithPullToRefresh = () => {
               variant="primary"
               size="sm"
               className="md:h-10 md:min-h-10 md:px-4"
-              onClick={save}
+              onClick={() => void save()}
               disabled={saving || unsavedCount === 0 || invalidAbv}
             >
               {saving ? <Loading size="sm" /> : null}

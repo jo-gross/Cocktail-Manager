@@ -45,9 +45,10 @@ interface FilterSheetProps {
   locale: string;
   currency: string;
   t: GuestText;
+  closeOnBack?: boolean;
 }
 
-export function FilterSheet({ open, onClose, entries, facets, filters, onChange, resultCount, locale, currency, t }: FilterSheetProps) {
+export function FilterSheet({ open, onClose, entries, facets, filters, onChange, resultCount, locale, currency, t, closeOnBack }: FilterSheetProps) {
   const footer = (
     <>
       <button type="button" className="gm-shell-btn" onClick={() => onChange(EMPTY_FILTERS)}>
@@ -60,7 +61,7 @@ export function FilterSheet({ open, onClose, entries, facets, filters, onChange,
   );
 
   return (
-    <Sheet open={open} onClose={onClose} title={t('shell.filtersTitle')} closeLabel={t('shell.close')} footer={footer}>
+    <Sheet open={open} onClose={onClose} title={t('shell.filtersTitle')} closeLabel={t('shell.close')} footer={footer} closeOnBack={closeOnBack}>
       {facets.custom.length > 0 && (
         <section className="gm-shell-group">
           <h3>{facets.customTitle || t('shell.customFilters')}</h3>

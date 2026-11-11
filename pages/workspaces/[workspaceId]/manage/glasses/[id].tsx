@@ -20,7 +20,6 @@ function EditGlassPage() {
   const [loading, setLoading] = useState(true);
   const [glass, setGlass] = useState<GlassDto | undefined>(undefined);
 
-  const [unsavedChanges, setUnsavedChanges] = useState(false);
   const formRef = useRef<FormikProps<GlassFormValues>>(null);
 
   useEffect(() => {
@@ -41,9 +40,9 @@ function EditGlassPage() {
       <Loading />
     </PageCenter>
   ) : (
-    <ManageEntityLayout backLink={`/workspaces/${workspaceId}/manage/glasses`} title={t('nav:glasses')} unsavedChanges={unsavedChanges} formRef={formRef}>
+    <ManageEntityLayout backLink={`/workspaces/${workspaceId}/manage/glasses`} title={t('nav:glasses')} formRef={formRef}>
       <SingleFormLayout title={t('entity:formTitle.glass')}>
-        <GlassForm glass={glass} setUnsavedChanges={setUnsavedChanges} formRef={formRef} />
+        <GlassForm glass={glass} formRef={formRef} />
       </SingleFormLayout>
     </ManageEntityLayout>
   );

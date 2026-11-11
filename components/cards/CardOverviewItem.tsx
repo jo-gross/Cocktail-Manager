@@ -11,6 +11,7 @@ import { alertService } from '@lib/alertService';
 import { RoutingContext } from '@lib/context/RoutingContextProvider';
 import { Badge, Button, Card, CardActions, CardBody, CardTitle } from '@components/ui';
 import CardSnapshot from './CardSnapshot';
+import { EntityNameLink } from '@components/manage/EntityNameLink';
 import { alertApiV1Error, apiV1Mutate } from '@lib/network/apiV1';
 import { getActiveLocale } from '@lib/i18n/client';
 
@@ -80,6 +81,7 @@ export default function CardOverviewItem(props: CardOverviewItemProps) {
   const modalContext = useContext(ModalContext);
   const routingContext = useContext(RoutingContext);
   const { t } = useTranslation(['common', 'entity']);
+  const canEdit = userContext.isUserPermitted(Role.MANAGER);
 
   const groupCount = props.card.groupCount;
   const cocktailCount = props.card.itemCount;
@@ -88,10 +90,10 @@ export default function CardOverviewItem(props: CardOverviewItemProps) {
     <Card key={'card-' + props.card.id} variant="elevated">
       <div className="border-b border-base-300/60 bg-base-200/60 px-4 py-3">
         <CardTitle className={props.card.archived ? 'text-base-content/70 italic' : undefined}>
-          <span className="min-w-0 flex-1 truncate">
+          <EntityNameLink className="min-w-0 flex-1 truncate" href={canEdit ? `/workspaces/${props.workspaceId}/manage/cards/${props.card.id}` : undefined}>
             {props.card.archived ? t('common:archivedPrefix') : ''}
             {props.card.name}
-          </span>
+          </EntityNameLink>
           <DateBadge cardDate={props.card.date} today={props.today} />
         </CardTitle>
       </div>
@@ -100,7 +102,7 @@ export default function CardOverviewItem(props: CardOverviewItemProps) {
         <div className="text-sm text-base-content/70">
           {groupCount} {t('common:group', { count: groupCount })} · {cocktailCount} {t('common:cocktail', { count: cocktailCount })}
         </div>
-        {userContext.isUserPermitted(Role.MANAGER) ? (
+        {canEdit ? (
           <CardActions className="justify-end">
             <Button
               type="button"
