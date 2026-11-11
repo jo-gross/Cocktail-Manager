@@ -1,5 +1,23 @@
 [
   {
+    "version": "1.21.3",
+    "date": "2026-11-10",
+    "highlights": [
+      "Bug fix: Unit conversion logic fixed to prevent an error on garnish edit"
+    ]
+  },
+  {
+    "version": "1.21.0",
+    "date": "2026-09-24",
+    "highlights": [
+      "Added multi-language support (DE, EN)",
+      "API migration to OpenAPI, versioned, and added API-tests",
+      "Signage monitor enhancement, multi slide and PDF",
+      "Add monitor api to api key permissions",
+      "Improved card form with draggable components and enhanced style"
+    ]
+  },
+  {
     "version": "1.20.1",
     "date": "2026-02-22",
     "highlights": [

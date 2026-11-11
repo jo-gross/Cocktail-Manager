@@ -23,6 +23,7 @@ import { NextPageWithPullToRefresh } from '../types/next';
 import { createWorkspace, fetchWorkspacesSafe, type WorkspaceListItem } from '@lib/network/workspaces';
 import { withdrawOwnJoinRequest } from '@lib/network/workspaceUsers';
 import { alertApiV1Error } from '@lib/network/apiV1';
+import { getUnseenEntries, type UserChangelogEntry } from '@lib/changelog/userChangelog';
 import {
   Button,
   ButtonGroup,
@@ -257,29 +258,28 @@ const WorkspacesPage: NextPageWithPullToRefresh = () => {
         if (!response.ok) throw new Error('Failed to fetch changelog');
         return response.json();
       })
-      .then((entries: Array<{ version: string; date: string; highlights: string[] }>) => {
-        const currentEntry = entries.find((e) => e.version === packageInfo.version);
-        const recentEntries = entries.slice(0, 3);
-
-        modalContext.openModal(
-          <div className={'flex flex-col gap-4'}>
-            <div className={'w-full text-center text-2xl font-bold'}>{t('auth:newVersion', { version: packageInfo.version })}</div>
-            {currentEntry && (
+      .then((entries: UserChangelogEntry[]) => {
+        // Releases without user facing changes (e.g. dependency updates) don't open the modal
+        const [latestEntry, ...olderEntries] = getUnseenEntries(entries, packageInfo.version, lastSeenVersion);
+        if (latestEntry) {
+          modalContext.openModal(
+            <div className={'flex flex-col gap-4'}>
+              <div className={'w-full text-center text-2xl font-bold'}>{t('auth:newVersion', { version: packageInfo.version })}</div>
               <div className={'flex flex-col gap-2'}>
+                {latestEntry.version !== packageInfo.version && (
+                  <div className={'text-sm font-semibold'}>{t('common:versionDate', { version: latestEntry.version, date: latestEntry.date })}</div>
+                )}
                 <ul className={'list-disc space-y-1 pl-5'}>
-                  {currentEntry.highlights.map((highlight, i) => (
+                  {latestEntry.highlights.map((highlight, i) => (
                     <li key={i}>{highlight}</li>
                   ))}
                 </ul>
               </div>
-            )}
-            {recentEntries.length > 1 && (
-              <details className={'mt-2'}>
-                <summary className={'cursor-pointer text-sm text-base-content/60'}>{t('auth:previousVersions')}</summary>
-                <div className={'mt-2 flex flex-col gap-3'}>
-                  {recentEntries
-                    .filter((e) => e.version !== packageInfo.version)
-                    .map((entry) => (
+              {olderEntries.length > 0 && (
+                <details className={'mt-2'}>
+                  <summary className={'cursor-pointer text-sm text-base-content/60'}>{t('auth:previousVersions')}</summary>
+                  <div className={'mt-2 flex flex-col gap-3'}>
+                    {olderEntries.map((entry) => (
                       <div key={entry.version} className={'flex flex-col gap-1'}>
                         <div className={'text-sm font-semibold'}>{t('common:versionDate', { version: entry.version, date: entry.date })}</div>
                         <ul className={'list-disc space-y-0.5 pl-5 text-sm'}>
@@ -289,16 +289,17 @@ const WorkspacesPage: NextPageWithPullToRefresh = () => {
                         </ul>
                       </div>
                     ))}
-                </div>
-              </details>
-            )}
-            <div className={'w-full text-center text-sm italic'}>
-              <Link href={'https://github.com/jo-gross/Cocktail-Manager/releases'} className={'link'} target={'_blank'}>
-                {t('auth:viewAllChanges')}
-              </Link>
-            </div>
-          </div>,
-        );
+                  </div>
+                </details>
+              )}
+              <div className={'w-full text-center text-sm italic'}>
+                <Link href={'https://github.com/jo-gross/Cocktail-Manager/releases'} className={'link'} target={'_blank'}>
+                  {t('auth:viewAllChanges')}
+                </Link>
+              </div>
+            </div>,
+          );
+        }
 
         userContext.updateUserSetting(Setting.lastSeenVersion, packageInfo.version);
       })
