@@ -209,5 +209,22 @@
   "ingredientImageAlt": "Ingredient image",
   "profileImageAlt": "Profile image",
   "cropAlt": "Crop",
-  "monitorSlideAlt": "Monitor slide"
+  "monitorSlideAlt": "Monitor slide",
+  "form": {
+    "sectionNav": "Sections",
+    "fieldsToCheck_one": "Check {{count}} field",
+    "fieldsToCheck_other": "Check {{count}} fields",
+    "saveShortcut": "{{label}} (⌘S / Ctrl+S)",
+    "recrop": "Crop again",
+    "removeImage": "Remove image",
+    "createNew": "Create new",
+    "moreActions": "More actions",
+    "section": {
+      "general": "General",
+      "texts": "Texts"
+    },
+    "addImage": "Add image",
+    "editImage": "Edit image",
+    "chooseNewImage": "Choose new image"
+  }
 }

@@ -98,10 +98,10 @@ export function ItemActionMenu({ actions, ariaLabel }: ItemActionMenuProps) {
   const menu =
     isOpen && typeof document !== 'undefined'
       ? createPortal(
-          <div ref={menuRef} style={{ position: 'fixed', top: position.top, left: position.left }}>
+          <div ref={menuRef} style={{ position: 'fixed', top: position.top, left: position.left, zIndex: 50 }}>
             <Menu
               size="sm"
-              className="z-9999 w-52 gap-1 rounded-box border border-base-200 bg-base-100 p-2 shadow-lg [&_button]:flex [&_button]:w-full [&_button]:items-center [&_button]:gap-2 [&_button]:rounded-field [&_button]:px-3 [&_button]:py-2 [&_button]:text-left [&_button]:hover:bg-base-200 [&_button:disabled]:cursor-not-allowed [&_button:disabled]:opacity-50"
+              className="z-9999 w-52 gap-1 rounded-box border border-base-200 bg-base-100 p-2 shadow-lg [&_button]:flex [&_button]:min-h-10 [&_button]:w-full [&_button]:items-center [&_button]:gap-2 [&_button]:rounded-field [&_button]:px-3 [&_button]:py-2 [&_button]:text-left [&_button]:hover:bg-base-200 pointer-coarse:[&_button]:min-h-11 [&_button:disabled]:cursor-not-allowed [&_button:disabled]:opacity-50"
             >
               {actions.map((action, index) => (
                 <li key={`item-action-${index}`}>

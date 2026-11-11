@@ -11,5 +11,13 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(function 
   { error = false, bordered = true, className, rows = 3, ...props },
   ref,
 ) {
-  return <textarea ref={ref} rows={rows} className={cn(fieldClassName({ error, bordered }), 'min-h-[2.5rem] px-3 py-2 text-sm', className)} {...props} />;
+  return (
+    <textarea
+      ref={ref}
+      rows={rows}
+      aria-invalid={error || undefined}
+      className={cn(fieldClassName({ error, bordered }), 'min-h-[2.5rem] px-3 py-2 text-sm', className)}
+      {...props}
+    />
+  );
 });

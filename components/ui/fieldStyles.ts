@@ -12,6 +12,8 @@ export function fieldClassName({ error = false, bordered = true, joinItem = fals
   return cn(
     'w-full bg-base-100 text-base-content transition-colors',
     'placeholder:text-base-content/40',
+    // iOS Safari zooms into fields below 16px on focus.
+    'pointer-coarse:text-base',
     'focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-offset-base-100',
     bordered ? 'border' : 'border-0',
     joinItem ? 'rounded-none focus:z-10' : 'rounded-lg',

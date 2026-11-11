@@ -3,10 +3,14 @@
  * Pure module: runtime lists mirror the Prisma enums and are type-checked
  * against them, so this file can be used on the client without the Prisma runtime.
  * Labels live in the `guestInfo` i18n namespace (`guestInfo:allergen.<CODE>` etc.).
+ *
+ * Allergens have exactly one designation everywhere (management chips, guest legend, filters):
+ * the one of Annex II of Regulation (EU) No 1169/2011 (LMIV), e.g. „Schalenfrüchte“ – not „Nüsse“.
+ * Do not add colloquial short forms; that is what the letter codes below are for.
  */
-import type { Additive, Allergen } from '@generated/prisma/client';
+import type { Additive, Allergen, AllergenSource } from '@generated/prisma/client';
 
-export type { Additive, Allergen };
+export type { Additive, Allergen, AllergenSource };
 
 /** The 14 allergens of Regulation (EU) No 1169/2011, Annex II, in legal order. */
 export const ALLERGENS = [
@@ -42,15 +46,83 @@ export const ADDITIVES = [
   'QUININE',
 ] as const satisfies readonly Additive[];
 
+/**
+ * The cereals and nuts Annex II names for GLUTEN („namentlich Weizen (wie Dinkel und Khorasan-Weizen),
+ * Roggen, Gerste, Hafer“) and NUTS („namentlich Mandeln, Haselnüsse, …“), in legal order.
+ * Optional detail on ingredients/garnishes, shown in brackets: „Glutenhaltiges Getreide (Weizen)“.
+ */
+export const ALLERGEN_SOURCES = [
+  'WHEAT',
+  'SPELT',
+  'KHORASAN_WHEAT',
+  'RYE',
+  'BARLEY',
+  'OATS',
+  'ALMONDS',
+  'HAZELNUTS',
+  'WALNUTS',
+  'CASHEWS',
+  'PECANS',
+  'BRAZIL_NUTS',
+  'PISTACHIOS',
+  'MACADAMIA_NUTS',
+] as const satisfies readonly AllergenSource[];
+
+/** The allergen a source belongs to. */
+export const ALLERGEN_SOURCE_PARENT: Record<AllergenSource, Allergen> = {
+  WHEAT: 'GLUTEN',
+  SPELT: 'GLUTEN',
+  KHORASAN_WHEAT: 'GLUTEN',
+  RYE: 'GLUTEN',
+  BARLEY: 'GLUTEN',
+  OATS: 'GLUTEN',
+  ALMONDS: 'NUTS',
+  HAZELNUTS: 'NUTS',
+  WALNUTS: 'NUTS',
+  CASHEWS: 'NUTS',
+  PECANS: 'NUTS',
+  BRAZIL_NUTS: 'NUTS',
+  PISTACHIOS: 'NUTS',
+  MACADAMIA_NUTS: 'NUTS',
+};
+
+/** Sources of `allergen`, in legal order. */
+export function allergenSourcesOf(allergen: Allergen): AllergenSource[] {
+  return ALLERGEN_SOURCES.filter((source) => ALLERGEN_SOURCE_PARENT[source] === allergen);
+}
+
+/** Allergens that can be specified further (GLUTEN, NUTS). */
+export const SPECIFIABLE_ALLERGENS: Allergen[] = ALLERGENS.filter((allergen) => allergenSourcesOf(allergen).length > 0);
+
+/** Keeps only known sources whose allergen is selected, deduplicated and in legal order. */
+export function pruneAllergenSources(allergens: readonly Allergen[], sources: readonly AllergenSource[]): AllergenSource[] {
+  return ALLERGEN_SOURCES.filter((source) => sources.includes(source) && allergens.includes(ALLERGEN_SOURCE_PARENT[source]));
+}
+
+/**
+ * Sources to store for an update: recomputed when the allergens or the sources change (so removing GLUTEN
+ * also drops „Weizen“), `undefined` = leave untouched.
+ */
+export function nextAllergenSources(
+  input: { allergens?: Allergen[]; allergenSources?: AllergenSource[] },
+  existing?: { allergens: Allergen[]; allergenSources: AllergenSource[] } | null,
+): AllergenSource[] | undefined {
+  if (input.allergens === undefined && input.allergenSources === undefined) return undefined;
+  return pruneAllergenSources(input.allergens ?? existing?.allergens ?? [], input.allergenSources ?? existing?.allergenSources ?? []);
+}
+
 // Compile-time guard: fails if a Prisma enum value is missing from the lists above.
 type MissingAllergen = Exclude<Allergen, (typeof ALLERGENS)[number]>;
 type MissingAdditive = Exclude<Additive, (typeof ADDITIVES)[number]>;
+type MissingAllergenSource = Exclude<AllergenSource, (typeof ALLERGEN_SOURCES)[number]>;
 const _allergensComplete: MissingAllergen extends never ? true : never = true;
 const _additivesComplete: MissingAdditive extends never ? true : never = true;
+const _allergenSourcesComplete: MissingAllergenSource extends never ? true : never = true;
 void _allergensComplete;
 void _additivesComplete;
+void _allergenSourcesComplete;
 
-/** Common letter codes for allergen footnotes (A–R, as used in AT/DE gastronomy). */
+/** Letter codes for allergen footnotes (A–R) of the Austrian Allergeninformationsverordnung (BGBl. II 175/2014), also common in DE. */
 export const ALLERGEN_CODES: Record<Allergen, string> = {
   GLUTEN: 'A',
   CRUSTACEANS: 'B',

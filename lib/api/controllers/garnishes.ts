@@ -4,6 +4,7 @@
  * Legacy routes remain wrapped-but-untouched and keep their raw Prisma shapes.
  */
 import prisma from '../../../prisma/prisma';
+import { nextAllergenSources } from '@lib/guest-info/constants';
 import { createLog } from '@lib/auditLog';
 import { calculateGarnishSimilarity } from '@lib/findSimilarEntities';
 import { ApiError } from '@lib/http/ApiError';
@@ -43,6 +44,7 @@ export async function createGarnish(workspace: Workspace, user: User, input: Gar
         description: input.description ?? undefined,
         notes: input.notes ?? undefined,
         allergens: input.allergens,
+        allergenSources: nextAllergenSources(input),
         additives: input.additives,
         guestInfoComplete: input.guestInfoComplete,
         workspace: { connect: { id: workspace.id } },
@@ -73,6 +75,7 @@ export async function updateGarnish(workspace: Workspace, user: User, garnishId:
         description: input.description ?? undefined,
         notes: input.notes ?? undefined,
         allergens: input.allergens,
+        allergenSources: nextAllergenSources(input, oldGarnish),
         additives: input.additives,
         guestInfoComplete: input.guestInfoComplete,
         workspace: { connect: { id: workspace.id } },
@@ -136,6 +139,7 @@ export async function cloneGarnish(workspace: Workspace, garnishId: string, name
         description: existing.description,
         notes: existing.notes,
         allergens: existing.allergens,
+        allergenSources: existing.allergenSources,
         additives: existing.additives,
         guestInfoComplete: existing.guestInfoComplete,
         workspace: { connect: { id: workspace.id } },
@@ -171,6 +175,7 @@ export async function exportGarnishesJson(workspace: Workspace, ids: string[]): 
       notes: garnish.notes,
       price: garnish.price,
       allergens: garnish.allergens,
+      allergenSources: garnish.allergenSources,
       additives: garnish.additives,
       guestInfoComplete: garnish.guestInfoComplete,
       workspaceId: garnish.workspaceId,

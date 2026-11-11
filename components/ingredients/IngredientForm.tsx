@@ -3,11 +3,9 @@ import { useRouter } from 'next/router';
 import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { updateTags, validateTag } from '../../models/tags/TagUtils';
-import { UploadDropZone } from '../UploadDropZone';
 import { convertBase64ToFile, convertToBase64, fetchImageAsBase64 } from '@lib/Base64Converter';
-import { FaSyncAlt, FaTrashAlt } from 'react-icons/fa';
+import { FaPlus, FaSyncAlt, FaTrashAlt } from 'react-icons/fa';
 import { alertService } from '@lib/alertService';
-import { DeleteConfirmationModal } from '../modals/DeleteConfirmationModal';
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import _ from 'lodash';
 import type { IngredientCreateInput, IngredientDto, IngredientUpdateInput } from '@lib/schemas/ingredients';
@@ -18,10 +16,7 @@ import { alertApiV1Error } from '@lib/network/apiV1';
 import { checkIngredientLink, checkIngredientName, createIngredient, updateIngredient } from '@lib/network/ingredients';
 import { TranslatedFieldTabs } from '@components/translations/TranslatedFieldTabs';
 import { useEntityContentTranslations } from '@components/translations/useEntityContentTranslations';
-import Image from 'next/image';
 import { TagInput } from '../TagInput';
-import CropComponent from '../CropComponent';
-import { FaCropSimple } from 'react-icons/fa6';
 import '../../lib/ArrayUtils';
 import { RoutingContext } from '@lib/context/RoutingContextProvider';
 import { resizeImage } from '@lib/ImageCompressor';
@@ -30,31 +25,16 @@ import { FormValidationWarningModal } from '../modals/FormValidationWarningModal
 import { FormikDirtyReporter } from '@lib/forms/FormikDirtyReporter';
 import { trimmed } from '@lib/forms/formDirty';
 import { useUnsavedChangesContext } from '@lib/forms/useUnsavedChanges';
-import {
-  Button,
-  ButtonGroup,
-  Divider,
-  FormControl,
-  Input,
-  Label,
-  LabelText,
-  LabelTextAlt,
-  Loading,
-  Select,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeaderCell,
-  TableRow,
-  Textarea,
-} from '@components/ui';
+import { Button, ButtonGroup, Input, InputAddon, Loading, Select, Textarea } from '@components/ui';
+import { EntityFormLayout } from '@components/forms/EntityFormLayout';
+import { FormSection } from '@components/forms/FormSection';
+import { FormField, visibleFieldError } from '@components/forms/FormField';
+import { FormSaveButton } from '@components/forms/FormSaveButton';
+import { FormikImageTile } from '@components/forms/FormikImageTile';
 import { z } from 'zod';
 import { zodFormikValidate } from '@lib/forms/zodFormikValidate';
 import { IngredientGuestInfoFields, parseOptionalPercent, type IngredientGuestInfoFormValues } from '@components/guest-info/GuestInfoFormFields';
-import { ADDITIVES, ALLERGENS } from '@lib/guest-info/constants';
-
-const fieldErrorClass = 'border-error focus:border-error focus:ring-error/25';
+import { ADDITIVES, ALLERGEN_SOURCES, ALLERGENS } from '@lib/guest-info/constants';
 
 function createIngredientFormSchema(requiredMessage: string, imageNotCroppedMessage: string, abvRangeMessage: string) {
   return z
@@ -78,6 +58,7 @@ function createIngredientFormSchema(requiredMessage: string, imageNotCroppedMess
       originalImage: z.any().optional(),
       abv: z.union([z.literal(''), z.coerce.number().min(0, abvRangeMessage).max(100, abvRangeMessage)]),
       allergens: z.array(z.enum(ALLERGENS)),
+      allergenSources: z.array(z.enum(ALLERGEN_SOURCES)),
       additives: z.array(z.enum(ADDITIVES)),
       guestInfoComplete: z.boolean(),
       hideOnGuestMenu: z.boolean(),
@@ -92,6 +73,7 @@ function createIngredientFormSchema(requiredMessage: string, imageNotCroppedMess
 interface IngredientFormProps {
   ingredient?: IngredientDto;
   formRef?: React.RefObject<FormikProps<FormValue> | null>;
+  /** Embedded use (e.g. "create ingredient" from the cocktail form): called instead of redirecting. */
   onSaved?: (id: string) => void;
 }
 
@@ -130,6 +112,7 @@ function toComparableIngredient(values: FormValue) {
     image: trimmed(values.image),
     abv: values.abv,
     allergens: [...values.allergens].sort(),
+    allergenSources: [...values.allergenSources].sort(),
     additives: [...values.additives].sort(),
     guestInfoComplete: values.guestInfoComplete,
     hideOnGuestMenu: values.hideOnGuestMenu,
@@ -141,12 +124,13 @@ export function IngredientForm(props: IngredientFormProps) {
   const router = useRouter();
   const workspaceId = router.query.workspaceId as string | undefined;
   const modalContext = useContext(ModalContext);
-  const { t } = useTranslation(['ingredient', 'common', 'entity', 'errors', 'guestInfo']);
+  const { t } = useTranslation(['ingredient', 'common', 'entity', 'errors', 'guestInfo', 'cocktail']);
   const userContext = useContext(UserContext);
   const routingContext = useContext(RoutingContext);
   const unsavedChanges = useUnsavedChangesContext();
 
   const formRef = props.formRef || React.createRef<FormikProps<FormValue>>();
+  const embedded = props.onSaved != undefined;
 
   const [loadingUnits, setUnitsLoading] = useState(false);
   const [allUnits, setAllUnits] = useState<UnitDto[]>([]);
@@ -206,6 +190,7 @@ export function IngredientForm(props: IngredientFormProps) {
     originalImage: hydratedImage ? convertBase64ToFile(hydratedImage) : undefined,
     abv: props.ingredient?.abv ?? '',
     allergens: props.ingredient?.allergens ?? [],
+    allergenSources: props.ingredient?.allergenSources ?? [],
     additives: props.ingredient?.additives ?? [],
     guestInfoComplete: props.ingredient?.guestInfoComplete ?? false,
     hideOnGuestMenu: props.ingredient?.hideOnGuestMenu ?? false,
@@ -275,6 +260,7 @@ export function IngredientForm(props: IngredientFormProps) {
             tags: values.tags,
             abv: parseOptionalPercent(values.abv),
             allergens: values.allergens,
+            allergenSources: values.allergenSources,
             additives: values.additives,
             guestInfoComplete: values.guestInfoComplete,
             hideOnGuestMenu: values.hideOnGuestMenu,
@@ -314,7 +300,27 @@ export function IngredientForm(props: IngredientFormProps) {
         return zodFormikValidate(createIngredientFormSchema(t('errors:requiredField'), t('common:imageNotCropped'), t('guestInfo:form.abvRange')))(values);
       }}
     >
-      {({ values, setFieldValue, errors, setFieldError, handleChange, handleBlur, handleSubmit, isSubmitting, isValid, submitForm }) => {
+      {(formik) => {
+        const { values, setFieldValue, setFieldError, handleChange, handleBlur, handleSubmit, submitForm } = formik;
+        const nameError = visibleFieldError(formik, 'name');
+        const priceError = visibleFieldError(formik, 'price');
+        const tagsError = typeof formik.errors.tags === 'string' ? formik.errors.tags : undefined;
+        const unitName = (unitId: string) => userContext.getTranslation(allUnits.find((unit) => unit.id == unitId)?.name ?? 'N/A');
+        const formatVolume = (volume: number) => volume.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+        const volumeSuggestions = _.uniqBy(
+          defaultConversions
+            .filter((conversion) => values.units.map((u) => u.unitId).includes(conversion.fromUnitId))
+            .filter((conversion) => !values.units.map((u) => u.unitId).includes(conversion.toUnitId))
+            .map((suggestion) => {
+              const fromUnit = values.units.find((u) => u.unitId == suggestion.fromUnitId);
+              return {
+                unitId: suggestion.toUnitId,
+                volume: suggestion.factor * (fromUnit?.volume ?? 0),
+              };
+            }),
+          (suggestion) => suggestion.unitId,
+        );
+
         const checkValidationWarnings = (): string[] => {
           const warnings: string[] = [];
           if (!values.units || values.units.length === 0) {
@@ -344,542 +350,337 @@ export function IngredientForm(props: IngredientFormProps) {
         };
 
         return (
-          <form onSubmit={handleFormSubmit} className={'grid grid-cols-1 gap-2 md:grid-cols-2'}>
+          <form onSubmit={handleFormSubmit} noValidate>
             <FormikDirtyReporter toComparable={toComparableIngredient} />
-            <FormControl className={'col-span-full'}>
-              <Label htmlFor={'link'} className="flex-row items-center justify-between">
-                <LabelText>{t('ingredient:importByLink')}</LabelText>
-                <LabelTextAlt className={'space-x-2 text-error'}>
-                  <span>
-                    <>{errors.link && errors.link}</>
-                  </span>
-                </LabelTextAlt>
-              </Label>
-              <ButtonGroup>
-                <Input
-                  id={'link'}
-                  type={'text'}
-                  placeholder={''}
-                  className={errors.link ? fieldErrorClass : undefined}
-                  joinItem
-                  onChange={async (event) => {
-                    checkSimilarLink(event.target.value);
-                    handleChange(event);
-                  }}
-                  onBlur={handleBlur}
-                  value={values.link}
-                  name={'link'}
-                />
-                <Button
-                  variant="primary"
-                  joinItem
-                  type={'button'}
-                  disabled={
-                    !(
-                      values.link.includes('expert24.com') ||
-                      values.link.includes('conalco.de') ||
-                      values.link.includes('rumundco.de') ||
-                      values.link.includes('delicando.com')
-                    ) || values.fetchingExternalData
-                  }
-                  onClick={async () => {
-                    await setFieldValue('fetchingExternalData', true);
-                    fetch(`/api/scraper/ingredient?url=${values.link}`)
-                      .then((response) => {
-                        if (response.ok) {
-                          response.json().then(async (data) => {
-                            await setFieldValue('name', data.name);
-                            if (data.price != 0) {
-                              await setFieldValue('price', data.price);
-                            }
-
-                            if (data.image) {
-                              try {
-                                const imageFile = convertBase64ToFile(data.image);
-                                // Automatisch das Bild zuschneiden (aspect 1:1 für quadratisch)
-                                const croppedImage = await autoCropImage(imageFile, 1, 'transparent');
-                                // Bild auf 400x400 skalieren
-                                resizeImage(croppedImage, 400, 400, async (compressedImageFile) => {
-                                  if (compressedImageFile) {
-                                    await setFieldValue('image', await convertToBase64(new File([compressedImageFile], 'image.png', { type: 'image/png' })));
-                                    await setFieldValue('originalImage', imageFile);
-                                  } else {
-                                    alertService.error(t('ingredient:error.imageScale'));
-                                  }
-                                });
-                              } catch (error) {
-                                console.error('Failed to auto-crop image:', error);
-                                alertService.error(t('ingredient:error.imageAutoCrop'));
-                              }
-                            }
-                            const selectedUnitId = allUnits.find((unit) => unit.name == 'CL')?.id ?? '';
-                            checkSimilarName(data.name);
-
-                            if (data.volume != 0 && selectedUnitId != '') {
-                              await setFieldValue('units', [{ unitId: selectedUnitId, volume: data.volume }]);
-                            } else {
-                              if (data.volume != 0) {
-                                await setFieldValue('volume', data.volume);
-                              }
-                              await setFieldValue('selectedUnit', selectedUnitId);
-                            }
-
-                            alertService.info(t('ingredient:info.dataLoaded'));
-                          });
-                        } else {
-                          alertService.warn(t('ingredient:warn.noUrlData'));
-                        }
-                      })
-                      .finally(async () => {
-                        await setFieldValue('fetchingExternalData', false);
-                      });
-                  }}
+            <FormSaveButton label={props.ingredient ? t('common:save') : t('common:create')} />
+            <EntityFormLayout embedded={embedded}>
+              <FormSection title={t('common:form.section.general')}>
+                <FormField
+                  label={t('ingredient:importByLink')}
+                  htmlFor="link"
+                  warning={similarLinkIngredient ? t('ingredient:similarUrlExists', { name: similarLinkIngredient.name }) : undefined}
                 >
-                  {values.fetchingExternalData ? <Loading size="sm" /> : null}
-                  <FaSyncAlt />
-                </Button>
-              </ButtonGroup>
-              {similarLinkIngredient && (
-                <Label className="flex-row">
-                  <LabelTextAlt className="text-warning">{t('ingredient:similarUrlExists', { name: similarLinkIngredient.name })}</LabelTextAlt>
-                </Label>
-              )}
-            </FormControl>
-
-            <Divider size="sm" className={'col-span-full'} />
-
-            <div className={'grid grid-cols-1 gap-2 xl:grid-cols-2'}>
-              <FormControl className={'col-span-full'}>
-                <Label htmlFor={'name'} className="flex-row items-center justify-between">
-                  <LabelText>{t('ingredient:name')}</LabelText>
-                  <LabelTextAlt className={'space-x-2 text-error'}>
-                    <span>
-                      <>{errors.name && errors.name}</>
-                    </span>
-                    <span>*</span>
-                  </LabelTextAlt>
-                </Label>
-                <TranslatedFieldTabs translations={contentTranslations} field="name" sourceValue={values.name}>
-                  <Input
-                    id={'name'}
-                    type={'text'}
-                    autoComplete={'off'}
-                    className={errors.name ? fieldErrorClass : undefined}
-                    onChange={(event) => {
-                      if (event.target.value.length > 2) {
-                        checkSimilarName(event.target.value);
-                      } else {
-                        setSimilarIngredient(undefined);
-                      }
-                      handleChange(event);
-                    }}
-                    onBlur={handleBlur}
-                    value={values.name}
-                    name={'name'}
-                  />
-                </TranslatedFieldTabs>
-                {similarIngredient && (
-                  <Label className="flex-row">
-                    <LabelTextAlt className="text-warning">{t('ingredient:similarExists', { name: similarIngredient.name })}</LabelTextAlt>
-                  </Label>
-                )}
-              </FormControl>
-              <div className={'flex flex-col gap-2'}>
-                <FormControl>
-                  <Label htmlFor={'shortName'} className="flex-row items-center justify-between">
-                    <LabelText>{t('ingredient:shortName')}</LabelText>
-                    <LabelTextAlt className={'space-x-2 text-error'}>
-                      <span>
-                        <>{errors.shortName && errors.shortName}</>
-                      </span>
-                    </LabelTextAlt>
-                  </Label>
-                  <Input
-                    id={'shortName'}
-                    type={'text'}
-                    className={errors.shortName ? fieldErrorClass : undefined}
-                    onChange={handleChange}
-                    onBlur={handleBlur}
-                    value={values.shortName}
-                    name={'shortName'}
-                  />
-                </FormControl>
-                <FormControl>
-                  <Label htmlFor={'price'} className="flex-row items-center justify-between">
-                    <LabelText>{t('ingredient:price')}</LabelText>
-                    <LabelTextAlt className={'space-x-2 text-error'}>
-                      <span>
-                        <>{errors.price && errors.price}</>
-                      </span>
-                    </LabelTextAlt>
-                  </Label>
                   <ButtonGroup className="w-full">
                     <Input
-                      id={'price'}
-                      type={'number'}
-                      className={errors.price ? fieldErrorClass : undefined}
+                      id={'link'}
+                      name={'link'}
+                      type={'url'}
+                      inputMode={'url'}
+                      autoComplete={'off'}
+                      placeholder={'https://'}
                       joinItem
-                      value={values.price ?? ''}
-                      onChange={handleChange}
+                      onChange={async (event) => {
+                        checkSimilarLink(event.target.value);
+                        handleChange(event);
+                      }}
                       onBlur={handleBlur}
-                      name={'price'}
+                      value={values.link}
                     />
-                    <Button type="button" variant="secondary" joinItem>
-                      €
+                    <Button
+                      variant="primary"
+                      joinItem
+                      type={'button'}
+                      aria-label={t('ingredient:importByLink')}
+                      title={t('ingredient:importByLink')}
+                      disabled={
+                        !(
+                          values.link.includes('expert24.com') ||
+                          values.link.includes('conalco.de') ||
+                          values.link.includes('rumundco.de') ||
+                          values.link.includes('delicando.com')
+                        ) || values.fetchingExternalData
+                      }
+                      onClick={async () => {
+                        await setFieldValue('fetchingExternalData', true);
+                        fetch(`/api/scraper/ingredient?url=${values.link}`)
+                          .then((response) => {
+                            if (response.ok) {
+                              response.json().then(async (data) => {
+                                await setFieldValue('name', data.name);
+                                if (data.price != 0) {
+                                  await setFieldValue('price', data.price);
+                                }
+
+                                if (data.image) {
+                                  try {
+                                    const imageFile = convertBase64ToFile(data.image);
+                                    // Automatisch das Bild zuschneiden (aspect 1:1 für quadratisch)
+                                    const croppedImage = await autoCropImage(imageFile, 1, 'transparent');
+                                    // Bild auf 400x400 skalieren
+                                    resizeImage(croppedImage, 400, 400, async (compressedImageFile) => {
+                                      if (compressedImageFile) {
+                                        await setFieldValue(
+                                          'image',
+                                          await convertToBase64(new File([compressedImageFile], 'image.png', { type: 'image/png' })),
+                                        );
+                                        await setFieldValue('originalImage', imageFile);
+                                      } else {
+                                        alertService.error(t('ingredient:error.imageScale'));
+                                      }
+                                    });
+                                  } catch (error) {
+                                    console.error('Failed to auto-crop image:', error);
+                                    alertService.error(t('ingredient:error.imageAutoCrop'));
+                                  }
+                                }
+                                const selectedUnitId = allUnits.find((unit) => unit.name == 'CL')?.id ?? '';
+                                checkSimilarName(data.name);
+
+                                if (data.volume != 0 && selectedUnitId != '') {
+                                  await setFieldValue('units', [{ unitId: selectedUnitId, volume: data.volume }]);
+                                } else {
+                                  if (data.volume != 0) {
+                                    await setFieldValue('volume', data.volume);
+                                  }
+                                  await setFieldValue('selectedUnit', selectedUnitId);
+                                }
+
+                                alertService.info(t('ingredient:info.dataLoaded'));
+                              });
+                            } else {
+                              alertService.warn(t('ingredient:warn.noUrlData'));
+                            }
+                          })
+                          .finally(async () => {
+                            await setFieldValue('fetchingExternalData', false);
+                          });
+                      }}
+                    >
+                      {values.fetchingExternalData ? <Loading size="sm" /> : <FaSyncAlt aria-hidden />}
                     </Button>
                   </ButtonGroup>
-                </FormControl>
-              </div>
-              <div>
-                <Label className="flex-row items-center justify-between">
-                  <LabelText>{t('ingredient:tags')}</LabelText>
-                  <LabelTextAlt className="text-error">
-                    <>{errors.tags && errors.tags}</>
-                  </LabelTextAlt>
-                </Label>
-                <TagInput
-                  value={values.tags}
-                  onChange={(tags) =>
-                    setFieldValue(
-                      'tags',
-                      updateTags(tags, (text) => setFieldError('tags', text ?? t('common:tagInvalid'))),
-                    )
-                  }
-                  validate={(tag) => validateTag(tag, (text) => setFieldError('tags', text ?? t('common:tagInvalid')))}
-                />
-              </div>
+                </FormField>
+
+                <div className="flex flex-col gap-4 @lg:flex-row @lg:items-start">
+                  <FormikImageTile aspect={1} width={400} height={400} alt={t('common:ingredientImageAlt')} cropInfo={t('common:imageCropInfoLong')} />
+                  <div className="flex min-w-0 flex-1 flex-col gap-4">
+                    <FormField
+                      label={t('ingredient:name')}
+                      htmlFor="name"
+                      required
+                      error={nameError}
+                      warning={similarIngredient ? t('ingredient:similarExists', { name: similarIngredient.name }) : undefined}
+                    >
+                      <TranslatedFieldTabs translations={contentTranslations} field="name" sourceValue={values.name}>
+                        <Input
+                          id={'name'}
+                          name={'name'}
+                          autoComplete={'off'}
+                          enterKeyHint={'next'}
+                          error={!!nameError}
+                          onChange={(event) => {
+                            if (event.target.value.length > 2) {
+                              checkSimilarName(event.target.value);
+                            } else {
+                              setSimilarIngredient(undefined);
+                            }
+                            handleChange(event);
+                          }}
+                          onBlur={handleBlur}
+                          value={values.name}
+                        />
+                      </TranslatedFieldTabs>
+                    </FormField>
+
+                    <div className="grid grid-cols-1 gap-4 @xl:grid-cols-2">
+                      <FormField label={t('ingredient:shortName')} htmlFor="shortName">
+                        <Input id={'shortName'} name={'shortName'} autoComplete={'off'} onChange={handleChange} onBlur={handleBlur} value={values.shortName} />
+                      </FormField>
+                      <FormField label={t('ingredient:price')} htmlFor="price" error={priceError}>
+                        <ButtonGroup className="w-full">
+                          <Input
+                            id={'price'}
+                            name={'price'}
+                            type={'number'}
+                            inputMode={'decimal'}
+                            step={'any'}
+                            joinItem
+                            error={!!priceError}
+                            value={values.price ?? ''}
+                            onChange={handleChange}
+                            onBlur={handleBlur}
+                          />
+                          <InputAddon>€</InputAddon>
+                        </ButtonGroup>
+                      </FormField>
+                    </div>
+                  </div>
+                </div>
+
+                <FormField label={t('ingredient:tags')} error={tagsError}>
+                  <TagInput
+                    value={values.tags}
+                    onChange={(tags) =>
+                      setFieldValue(
+                        'tags',
+                        updateTags(tags, (text) => setFieldError('tags', text ?? t('common:tagInvalid'))),
+                      )
+                    }
+                    validate={(tag) => validateTag(tag, (text) => setFieldError('tags', text ?? t('common:tagInvalid')))}
+                  />
+                </FormField>
+              </FormSection>
 
               <FieldArray name={'units'}>
                 {({ push: pushUnit, remove: removeUnit }) => (
-                  <>
-                    <div>
-                      <LabelText>{t('ingredient:volumes')}</LabelText>
-                      <div className={'overflow-x-auto'}>
-                        <Table zebra className="bg-base-300">
-                          <TableHead>
-                            <TableRow>
-                              <TableHeaderCell colSpan={4}>{t('ingredient:availableUnits')}</TableHeaderCell>
-                            </TableRow>
-                          </TableHead>
-                          <TableBody>
-                            {values.units.length == 0 ? (
-                              <TableRow>
-                                <TableCell colSpan={4} className={'text-center'}>
-                                  {t('ingredient:noUnitsAdded')}
-                                </TableCell>
-                              </TableRow>
-                            ) : (
-                              (values.units as FormUnitValue[]).map((unit, index) => (
-                                <TableRow key={`selected-units-${unit.unitId}`}>
-                                  <TableCell>
-                                    {unit.volume.toLocaleString(undefined, {
-                                      minimumFractionDigits: 0,
-                                      maximumFractionDigits: 2,
-                                    })}
-                                  </TableCell>
-                                  <TableCell>
-                                    {userContext.getTranslation(allUnits.find((availableUnit) => availableUnit.id == unit.unitId)?.name ?? 'N/A')}
-                                  </TableCell>
-                                  <TableCell>
-                                    {values.price != undefined && typeof values.price === 'number'
-                                      ? (values.price / unit.volume).toFixed(2).replace(/\D00(?=\D*$)/, '')
-                                      : '-'}{' '}
-                                    {t('common:euroPerUnit', {
-                                      unit: userContext.getTranslation(allUnits.find((availableUnit) => availableUnit.id == unit.unitId)?.name ?? 'N/A'),
-                                    })}
-                                  </TableCell>
-                                  <TableCell className={'flex flex-row items-center justify-center'}>
-                                    <Button
-                                      type="button"
-                                      variant="error"
-                                      shape="square"
-                                      size="sm"
-                                      onClick={() => {
-                                        removeUnit(index);
-                                      }}
-                                    >
-                                      <FaTrashAlt />
-                                    </Button>
-                                  </TableCell>
-                                </TableRow>
-                              ))
-                            )}
-                          </TableBody>
-                        </Table>
-                      </div>
-                    </div>
-                    <div>
-                      <FormControl>
-                        <Label htmlFor={'anotherVolume'} className="flex-row items-center justify-between">
-                          <LabelText>{t('ingredient:addVolume')}</LabelText>
-                          <LabelTextAlt className={'space-x-2 text-error'}>
-                            <span>
-                              <>{errors.volume && errors.volume}</>
+                  <FormSection title={t('ingredient:volumes')} description={t('ingredient:volumesHint')}>
+                    <ul className="divide-y divide-base-300 overflow-hidden rounded-lg border border-base-300 bg-base-100">
+                      {values.units.length == 0 ? (
+                        <li className="px-3 py-3 text-sm text-base-content/60">{t('ingredient:noUnitsAdded')}</li>
+                      ) : (
+                        (values.units as FormUnitValue[]).map((unit, index) => (
+                          <li key={`selected-units-${unit.unitId}`} className="flex min-h-12 items-center gap-3 py-1 pr-1 pl-3">
+                            <span className="min-w-0 flex-1 font-medium">
+                              {formatVolume(unit.volume)} {unitName(unit.unitId)}
                             </span>
-                            <span>*</span>
-                          </LabelTextAlt>
-                        </Label>
-                        <ButtonGroup className="w-full">
-                          <Input
-                            id={'anotherVolume'}
-                            type={'number'}
-                            inputSize="sm"
-                            className={errors.volume ? fieldErrorClass : undefined}
-                            joinItem
-                            value={values.volume}
-                            onChange={handleChange}
-                            onBlur={handleBlur}
-                            name={'volume'}
-                          />
-                          <Select
-                            selectSize="sm"
-                            className={errors.selectedUnit ? `${fieldErrorClass} flex-1` : 'flex-1'}
-                            joinItem
-                            onChange={handleChange}
-                            onBlur={handleBlur}
-                            name={'selectedUnit'}
-                            value={values.selectedUnit}
-                          >
-                            {loadingUnits ? (
-                              <option value={''} disabled={true}>
-                                {t('common:loadingShort')}
+                            <span className="text-sm text-base-content/70 tabular-nums">
+                              {values.price != undefined && typeof values.price === 'number'
+                                ? (values.price / unit.volume).toFixed(2).replace(/\D00(?=\D*$)/, '')
+                                : '-'}{' '}
+                              {t('common:euroPerUnit', { unit: unitName(unit.unitId) })}
+                            </span>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              shape="square"
+                              className="text-error hover:bg-error/10"
+                              aria-label={`${t('common:remove')}: ${formatVolume(unit.volume)} ${unitName(unit.unitId)}`}
+                              onClick={() => removeUnit(index)}
+                            >
+                              <FaTrashAlt aria-hidden />
+                            </Button>
+                          </li>
+                        ))
+                      )}
+                    </ul>
+
+                    <FormField label={t('ingredient:addVolume')} htmlFor="anotherVolume">
+                      <ButtonGroup className="w-full">
+                        <Input
+                          id={'anotherVolume'}
+                          name={'volume'}
+                          type={'number'}
+                          inputMode={'decimal'}
+                          step={'any'}
+                          className="flex-[2]"
+                          joinItem
+                          value={values.volume ?? ''}
+                          onChange={handleChange}
+                          onBlur={handleBlur}
+                        />
+                        <Select
+                          aria-label={t('cocktail:unit')}
+                          className="flex-[3]"
+                          joinItem
+                          onChange={handleChange}
+                          onBlur={handleBlur}
+                          name={'selectedUnit'}
+                          value={values.selectedUnit ?? ''}
+                        >
+                          {loadingUnits ? (
+                            <option value={''} disabled={true}>
+                              {t('common:loadingShort')}
+                            </option>
+                          ) : allUnits.length == 0 ? (
+                            <option value={''}>{t('ingredient:noUnitsAvailable')}</option>
+                          ) : (
+                            <>
+                              <option value={''} disabled>
+                                {t('common:selectEllipsis')}
                               </option>
-                            ) : allUnits.length == 0 ? (
-                              <option value={''}>{t('ingredient:noUnitsAvailable')}</option>
-                            ) : (
-                              <>
-                                <option value={''} disabled>
-                                  {t('common:selectEllipsis')}
-                                </option>
-                                {allUnits
-                                  .sort((a, b) => userContext.getTranslation(a.name).localeCompare(userContext.getTranslation(b.name)))
-                                  .map((unit) => (
-                                    <option
-                                      key={`unit-option-${unit.id}`}
-                                      value={unit.id}
-                                      disabled={(values.units as FormUnitValue[]).find((u) => u.unitId == unit.id) != undefined}
-                                    >
-                                      {userContext.getTranslation(unit.name)}
-                                    </option>
-                                  ))}
-                              </>
-                            )}
-                          </Select>
-                          <Button
-                            variant="primary"
-                            size="sm"
-                            joinItem
-                            type={'button'}
-                            disabled={
-                              loadingUnits || values.volume == 0 || values.selectedUnit == '' || isNaN(values.volume ?? 0) || values.selectedUnit == undefined
-                            }
-                            onClick={async () => {
-                              const volume = values.volume ?? 0;
-                              pushUnit({ unitId: values.selectedUnit ?? '', volume } as FormUnitValue);
-                              await setFieldValue('selectedUnit', '');
-                            }}
-                          >
-                            {t('common:add')}
-                          </Button>
-                        </ButtonGroup>
-                      </FormControl>
-                      <div>
-                        <LabelText>{t('ingredient:volumeSuggestions')}</LabelText>
-                        <ul className={'list-inside list-disc'}>
-                          {_.uniqBy(
-                            defaultConversions
-                              .filter((conversion) => values.units.map((u) => u.unitId).includes(conversion.fromUnitId))
-                              .filter((conversion) => !values.units.map((u) => u.unitId).includes(conversion.toUnitId))
-                              .map((suggestion) => {
-                                const fromUnit = values.units.find((u) => u.unitId == suggestion.fromUnitId);
-                                return {
-                                  unitId: suggestion.toUnitId,
-                                  volume: suggestion.factor * (fromUnit?.volume ?? 0),
-                                };
-                              }),
-                            function (e) {
-                              return e.unitId;
-                            },
-                          ).mapWithFallback(
-                            (suggestion, suggestionIndex) => (
-                              <li key={`unit-conversion-suggestion-${suggestionIndex}`} className={'space-x-2 italic'}>
-                                <span className={'p-2'}>{suggestion.volume.toFixed(2).replace(/\D00(?=\D*$)/, '')}</span>
-                                <span className={'p-2'}>
-                                  {userContext.getTranslation(allUnits.find((unit) => unit.id == suggestion.unitId)?.name ?? 'N/A')}
-                                </span>
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={async () => {
-                                    pushUnit(suggestion);
-                                  }}
-                                >
-                                  {t('common:add')}
-                                </Button>
-                              </li>
-                            ),
-                            <div className={'italic'}>{t('ingredient:noMoreSuggestions')}</div>,
+                              {allUnits
+                                .sort((a, b) => userContext.getTranslation(a.name).localeCompare(userContext.getTranslation(b.name)))
+                                .map((unit) => (
+                                  <option
+                                    key={`unit-option-${unit.id}`}
+                                    value={unit.id}
+                                    disabled={(values.units as FormUnitValue[]).find((u) => u.unitId == unit.id) != undefined}
+                                  >
+                                    {userContext.getTranslation(unit.name)}
+                                  </option>
+                                ))}
+                            </>
                           )}
-                        </ul>
+                        </Select>
+                        <Button
+                          variant="primary"
+                          joinItem
+                          type={'button'}
+                          disabled={
+                            loadingUnits || !values.volume || values.selectedUnit == '' || isNaN(values.volume ?? 0) || values.selectedUnit == undefined
+                          }
+                          onClick={async () => {
+                            const volume = values.volume ?? 0;
+                            pushUnit({ unitId: values.selectedUnit ?? '', volume } as FormUnitValue);
+                            await setFieldValue('selectedUnit', '');
+                          }}
+                        >
+                          <FaPlus aria-hidden />
+                          {t('common:add')}
+                        </Button>
+                      </ButtonGroup>
+                    </FormField>
+
+                    {volumeSuggestions.length > 0 && (
+                      <div className="flex flex-col gap-2">
+                        <span className="text-sm font-medium">{t('ingredient:volumeSuggestions')}</span>
+                        <div className="flex flex-wrap gap-2">
+                          {volumeSuggestions.map((suggestion) => (
+                            <Button
+                              key={`unit-conversion-suggestion-${suggestion.unitId}`}
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => pushUnit(suggestion)}
+                            >
+                              <FaPlus aria-hidden />
+                              {suggestion.volume.toFixed(2).replace(/\D00(?=\D*$)/, '')} {unitName(suggestion.unitId)}
+                            </Button>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  </>
+                    )}
+                  </FormSection>
                 )}
               </FieldArray>
 
-              <div className={'col-span-full'}>
-                <div className="flex items-center gap-3 py-2">
-                  <Divider className="my-0 flex-1" />
-                  <span className="shrink-0 text-sm font-medium text-base-content/70">{t('common:imagePreview')}</span>
-                  <Divider className="my-0 flex-1" />
-                </div>
-                {values.image == undefined && values.originalImage == undefined ? (
-                  <UploadDropZone
-                    onSelectedFilesChanged={async (file) => {
-                      if (file != undefined) {
-                        await setFieldValue('image', undefined);
-                        await setFieldValue('originalImage', file);
-                      } else {
-                        alertService.error(t('ingredient:error.fileSelect'));
-                      }
-                    }}
-                  />
-                ) : values.image == undefined && values.originalImage != undefined ? (
-                  <div className={'w-full'}>
-                    <CropComponent
-                      isValid={isValid}
-                      aspect={1}
-                      imageToCrop={values.originalImage}
-                      onCroppedImageComplete={async (file) => {
-                        resizeImage(file, 400, 400, async (compressedImageFile) => {
-                          if (compressedImageFile) {
-                            await setFieldValue('image', await convertToBase64(new File([compressedImageFile], 'image.png', { type: 'image/png' })));
-                          } else {
-                            alertService.error(t('ingredient:error.imageScale'));
-                          }
-                        });
-                      }}
-                      onCropCancel={async () => {
-                        await setFieldValue('originalImage', undefined);
-                        await setFieldValue('image', undefined);
-                      }}
+              <FormSection title={t('common:form.section.texts')}>
+                <FormField label={t('ingredient:description')} htmlFor="description">
+                  <TranslatedFieldTabs translations={contentTranslations} field="description" sourceValue={values.description} multiline>
+                    <Textarea
+                      id={'description'}
+                      name={'description'}
+                      value={values.description}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      placeholder={t('ingredient:descriptionPlaceholder')}
+                      rows={4}
                     />
-                  </div>
-                ) : (
-                  <div className={'w-full'}>
-                    <div className={'relative'}>
-                      <div className={'absolute top-2 right-2 z-20 flex flex-row gap-2'}>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          shape="square"
-                          size="sm"
-                          onClick={async () => {
-                            await setFieldValue('image', undefined);
-                          }}
-                        >
-                          <FaCropSimple />
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          shape="square"
-                          size="sm"
-                          className="border-error text-error hover:bg-error/10"
-                          onClick={() =>
-                            modalContext.openModal(
-                              <DeleteConfirmationModal
-                                spelling={'REMOVE'}
-                                entityName={t('entity:theImage')}
-                                onApprove={async () => {
-                                  await setFieldValue('originalImage', undefined);
-                                  await setFieldValue('image', undefined);
-                                }}
-                              />,
-                            )
-                          }
-                        >
-                          <FaTrashAlt />
-                        </Button>
-                      </div>
-                      <div className={'bg-transparent-pattern relative h-32 w-32 rounded-lg'}>
-                        <Image
-                          className={'w-fit rounded-lg'}
-                          src={values.image ?? ''}
-                          layout={'fill'}
-                          objectFit={'contain'}
-                          alt={t('common:ingredientImageAlt')}
-                        />
-                      </div>
-                      <div className={'pt-2 font-thin italic'}>{t('common:imageCropInfoLong')}</div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-            <div className={'flex h-full flex-col gap-2'}>
-              <FormControl className={'col-span-full'}>
-                <Label htmlFor={'description'} className="flex-row items-center justify-between">
-                  <LabelText>{t('ingredient:description')}</LabelText>
-                  <LabelTextAlt className={'space-x-2 text-error'}>
-                    <span>
-                      <>{errors.description && errors.description}</>
-                    </span>
-                  </LabelTextAlt>
-                </Label>
-                <TranslatedFieldTabs translations={contentTranslations} field="description" sourceValue={values.description} multiline>
+                  </TranslatedFieldTabs>
+                </FormField>
+                <FormField label={t('ingredient:notes')} htmlFor="notes">
                   <Textarea
-                    id={'description'}
-                    className={errors.description ? fieldErrorClass : undefined}
-                    value={values.description}
+                    id={'notes'}
+                    name={'notes'}
+                    value={values.notes}
                     onChange={handleChange}
                     onBlur={handleBlur}
-                    name={'description'}
-                    placeholder={t('ingredient:descriptionPlaceholder')}
-                    rows={5}
+                    placeholder={t('ingredient:notesPlaceholder')}
+                    rows={3}
                   />
-                </TranslatedFieldTabs>
-              </FormControl>
+                </FormField>
+              </FormSection>
 
-              <FormControl className={'col-span-full'}>
-                <Label htmlFor={'notes'} className="flex-row items-center justify-between">
-                  <LabelText>{t('ingredient:notes')}</LabelText>
-                  <LabelTextAlt className={'space-x-2 text-error'}>
-                    <span>
-                      <>{errors.notes && errors.notes}</>
-                    </span>
-                  </LabelTextAlt>
-                </Label>
-                <Textarea
-                  id={'notes'}
-                  className={errors.notes ? fieldErrorClass : undefined}
-                  value={values.notes}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  name={'notes'}
-                  placeholder={t('ingredient:notesPlaceholder')}
-                  rows={5}
+              <FormSection title={t('guestInfo:form.sectionTitle')} description={t('guestInfo:form.sectionHint')}>
+                <IngredientGuestInfoFields
+                  wrapGuestName={(input) => (
+                    <TranslatedFieldTabs translations={contentTranslations} field="guestName" sourceValue={values.guestName}>
+                      {input}
+                    </TranslatedFieldTabs>
+                  )}
                 />
-              </FormControl>
-              <IngredientGuestInfoFields
-                wrapGuestName={(input) => (
-                  <TranslatedFieldTabs translations={contentTranslations} field="guestName" sourceValue={values.guestName}>
-                    {input}
-                  </TranslatedFieldTabs>
-                )}
-              />
-              <div className={'flex-grow'}></div>
-              <div className={'col-span-full'}>
-                <FormControl>
-                  <Button type={'submit'} variant="primary" disabled={isSubmitting || !isValid}>
-                    {isSubmitting ? <Loading size="sm" /> : null}
-                    {t('common:save')}
-                  </Button>
-                </FormControl>
-                {!isValid && <div className={'font-thin text-error italic'}>{t('common:formIncomplete')}</div>}
-              </div>
-            </div>
+              </FormSection>
+            </EntityFormLayout>
           </form>
         );
       }}

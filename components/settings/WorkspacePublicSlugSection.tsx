@@ -2,7 +2,8 @@ import React, { useContext, useEffect, useState } from 'react';
 import { useReportUnsavedChanges } from '@lib/forms/useUnsavedChanges';
 import { useTranslation } from 'react-i18next';
 import { FaArrowUpRightFromSquare, FaCopy } from 'react-icons/fa6';
-import { Button, ButtonGroup, FormControl, Input, Label, LabelText, LabelTextAlt, Loading, Skeleton } from '@components/ui';
+import { Button, ButtonGroup, Input, InputAddon, Loading, Skeleton } from '@components/ui';
+import { FormField } from '@components/forms/FormField';
 import { UserContext } from '@lib/context/UserContextProvider';
 import { alertService } from '@lib/alertService';
 import { alertApiV1Error } from '@lib/network/apiV1';
@@ -85,24 +86,22 @@ export function WorkspacePublicSlugSection({ workspaceId }: { workspaceId: strin
         <Skeleton className="h-16 w-full" />
       ) : (
         <>
-          <FormControl>
-            <Label htmlFor="workspace-public-slug" className="justify-between">
-              <LabelText className="font-semibold">{t('settings:public.slugLabel')}</LabelText>
-              <LabelTextAlt id="workspace-public-slug-error" className="text-error">
-                {slugReserved ? t('settings:publicSlugReserved') : slugError ? t('settings:publicSlugInvalid') : ''}
-              </LabelTextAlt>
-            </Label>
+          <FormField
+            label={t('settings:public.slugLabel')}
+            htmlFor="workspace-public-slug"
+            error={slugReserved ? t('settings:publicSlugReserved') : slugError ? t('settings:publicSlugInvalid') : undefined}
+            hint={<span id="workspace-public-slug-help">{t('settings:publicSlugHelp', { slug: trimmed || '…' })}</span>}
+          >
             <ButtonGroup>
-              <span aria-hidden className="flex items-center border border-base-300 bg-base-200 px-3 font-mono text-sm text-base-content/60">
+              <InputAddon aria-hidden className="font-mono">
                 {'/m/'}
-              </span>
+              </InputAddon>
               <Input
                 id="workspace-public-slug"
                 type="text"
                 joinItem
                 value={slug}
                 error={slugError}
-                aria-invalid={slugError || undefined}
                 aria-describedby="workspace-public-slug-error workspace-public-slug-help"
                 placeholder={t('settings:publicSlugPlaceholder')}
                 maxLength={WORKSPACE_PUBLIC_SLUG_MAX_LENGTH}
@@ -110,10 +109,7 @@ export function WorkspacePublicSlugSection({ workspaceId }: { workspaceId: strin
                 onChange={(event) => setSlug(event.target.value.toLowerCase())}
               />
             </ButtonGroup>
-            <p id="workspace-public-slug-help" className="mt-1 text-xs text-base-content/60">
-              {t('settings:publicSlugHelp', { slug: trimmed || '…' })}
-            </p>
-          </FormControl>
+          </FormField>
 
           {publicUrl ? (
             <div className="flex flex-col gap-2 rounded-xl border border-base-300 bg-base-100 p-3 sm:flex-row sm:items-center sm:justify-between">

@@ -112,8 +112,8 @@ export default function CropComponent(props: CropComponentProps) {
   };
 
   return (
-    <div className="relative flex h-full w-full flex-col items-center justify-center gap-2">
-      <div className={'flex h-full w-full flex-col gap-2 md:flex-row'}>
+    <div className="@container relative flex h-full w-full flex-col items-center justify-center gap-2">
+      <div className={'flex h-full w-full flex-col gap-3 @lg:flex-row'}>
         <div className={`h-auto w-fit ${props.isValid == true ? '' : 'rounded-2xl border-2 border-error p-2 pb-1'}`}>
           <ReactCrop
             crop={crop || { width: 0, height: 0, unit: '%', x: 0, y: 0 }}
@@ -121,7 +121,8 @@ export default function CropComponent(props: CropComponentProps) {
             aspect={props.aspect}
             className={`h-auto w-fit`}
           >
-            <div className={`relative h-96 max-h-96 w-96 max-w-96`} ref={containerRef} id={'image-container-ref'}>
+            {/* Square crop area, at most 24rem and never wider than the surrounding container. */}
+            <div className={`relative aspect-square w-[min(24rem,calc(100cqw-1.5rem))]`} ref={containerRef} id={'image-container-ref'}>
               {/*<div className={'bg-transparent-pattern absolute h-full w-full'}></div>*/}
               <div
                 className={`absolute h-full w-full ${backgroundColor === 'transparent' ? 'bg-transparent-pattern' : `bg-[${customColor.toLowerCase()}]`}`}
@@ -131,7 +132,7 @@ export default function CropComponent(props: CropComponentProps) {
                 ref={(imgRef) => setImageRef(imgRef)}
                 src={URL.createObjectURL(props.imageToCrop)}
                 alt={t('cropAlt')}
-                className={'absolute top-0 right-0 bottom-0 left-0 m-auto max-h-96 max-w-96 object-contain'}
+                className={'absolute top-0 right-0 bottom-0 left-0 m-auto max-h-full max-w-full object-contain'}
                 onLoad={() => {
                   setImageLoaded(true);
                 }}

@@ -6,6 +6,7 @@ import prisma from '../../../prisma/prisma';
 import { createLog } from '@lib/auditLog';
 import { ApiError } from '@lib/http/ApiError';
 import { deriveCocktailGuestInfo } from '@lib/guest-info/derive';
+import { nextAllergenSources } from '@lib/guest-info/constants';
 import { guestInfoCocktailSelect, loadCocktailGuestInfo, loadUnitToMlResolver, toGuestInfoCocktailInput } from '@lib/guest-info/loadCocktailGuestInfo.server';
 import type { User, Workspace } from '@generated/prisma/client';
 import type { CocktailGuestInfoResponse, GuestInfoBulkUpdateInput, GuestInfoOverview } from '@lib/schemas/guestInfo';
@@ -73,6 +74,7 @@ export async function getGuestInfoOverview(workspace: Workspace): Promise<GuestI
         name: true,
         abv: true,
         allergens: true,
+        allergenSources: true,
         additives: true,
         guestInfoComplete: true,
         hideOnGuestMenu: true,
@@ -87,6 +89,7 @@ export async function getGuestInfoOverview(workspace: Workspace): Promise<GuestI
         id: true,
         name: true,
         allergens: true,
+        allergenSources: true,
         additives: true,
         guestInfoComplete: true,
         _count: { select: { CocktailRecipeGarnishes: true } },
@@ -137,6 +140,7 @@ export async function bulkUpdateGuestInfo(
           data: {
             abv: data.abv,
             allergens: data.allergens,
+            allergenSources: nextAllergenSources(data, old),
             additives: data.additives,
             guestInfoComplete: data.guestInfoComplete,
             hideOnGuestMenu: data.hideOnGuestMenu,
@@ -153,7 +157,12 @@ export async function bulkUpdateGuestInfo(
         if (!old) throw new ApiError(404, 'NOT_FOUND', `Garnish ${id} not found`);
         const updated = await tx.garnish.update({
           where: { id },
-          data: { allergens: data.allergens, additives: data.additives, guestInfoComplete: data.guestInfoComplete },
+          data: {
+            allergens: data.allergens,
+            allergenSources: nextAllergenSources(data, old),
+            additives: data.additives,
+            guestInfoComplete: data.guestInfoComplete,
+          },
         });
         await createLog(tx, workspace.id, user.id, 'Garnish', id, 'UPDATE', old, updated);
         garnishes++;

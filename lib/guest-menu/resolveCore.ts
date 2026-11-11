@@ -7,7 +7,17 @@
  * users, non-public tags, hidden (`hideOnGuestMenu`) ingredients, archived
  * cocktails, amounts (unless `fields.amounts` ≠ off), fields set to `off`.
  */
-import { ADDITIVE_NUMBERS, ALCOHOL_CATEGORIES, ALLERGEN_CODES, ALLERGENS, type AlcoholCategory, type Allergen } from '@lib/guest-info/constants';
+import {
+  ADDITIVE_NUMBERS,
+  ALCOHOL_CATEGORIES,
+  ALLERGEN_CODES,
+  ALLERGEN_SOURCES,
+  ALLERGENS,
+  type AlcoholCategory,
+  type Allergen,
+  type AllergenSource,
+} from '@lib/guest-info/constants';
+import { formatAllergenLabel } from '@lib/guest-info/format';
 import type { DerivedGuestInfo } from '@lib/guest-info/derive';
 import { getAllContentLocales, type WorkspaceLocaleSettings } from '@lib/workspace/workspaceLocaleSettings';
 import { resolveLocalizedText, type LocalizedText } from './localizedText';
@@ -322,7 +332,8 @@ export function buildPublicMenuDto(input: BuildPublicMenuInput, data: ResolverDa
   };
 
   // Footnote tracking --------------------------------------------------------
-  const usedFootnoteAllergens = new Set<Allergen>();
+  // Allergen → specified cereals/nuts of all items using it (for the footnote legend).
+  const usedFootnoteAllergens = new Map<Allergen, Set<AllergenSource>>();
   const usedAdditives = new Map<string, PublicAdditiveDto>();
   let anyApproxAlcohol = false;
 
@@ -440,10 +451,15 @@ export function buildPublicMenuDto(input: BuildPublicMenuInput, data: ResolverDa
       item.allergens = info.allergens.map((entry): PublicAllergenDto => ({
         code: entry.code,
         short: ALLERGEN_CODES[entry.code],
-        label: t(`guestInfo:allergen.${entry.code}`),
+        label: formatAllergenLabel(t, entry.code, entry.sources),
         optional: entry.optional,
       }));
-      if (fields.allergenDisplay !== 'icons') info.allergens.forEach((entry) => usedFootnoteAllergens.add(entry.code));
+      if (fields.allergenDisplay !== 'icons')
+        info.allergens.forEach((entry) => {
+          const sources = usedFootnoteAllergens.get(entry.code) ?? new Set<AllergenSource>();
+          entry.sources.forEach((source) => sources.add(source));
+          usedFootnoteAllergens.set(entry.code, sources);
+        });
     }
     if (info && isTruthyMode(fields.additives)) {
       item.additives = info.additives.map((entry): PublicAdditiveDto => {
@@ -692,7 +708,11 @@ export function buildPublicMenuDto(input: BuildPublicMenuInput, data: ResolverDa
   const footnoteAllergens: PublicAllergenDto[] = ALLERGENS.filter((code) => usedFootnoteAllergens.has(code)).map((code) => ({
     code,
     short: ALLERGEN_CODES[code],
-    label: t(`guestInfo:allergen.${code}`),
+    label: formatAllergenLabel(
+      t,
+      code,
+      ALLERGEN_SOURCES.filter((source) => usedFootnoteAllergens.get(code)?.has(source)),
+    ),
     optional: false,
   }));
   const footnoteAdditives = [...usedAdditives.values()].sort((a, b) => a.number - b.number);

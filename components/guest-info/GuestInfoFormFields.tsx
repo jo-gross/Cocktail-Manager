@@ -6,14 +6,18 @@
 import React from 'react';
 import { useFormikContext } from 'formik';
 import { useTranslation } from 'react-i18next';
-import { Divider, FormControl, Input, Label, LabelText, LabelTextAlt, Toggle } from '@components/ui';
-import type { Additive, Allergen } from '@lib/guest-info/constants';
+import { Input } from '@components/ui';
+import { FormField, visibleFieldError } from '@components/forms/FormField';
+import { ToggleField } from '@components/forms/ToggleField';
+import { pruneAllergenSources, type Additive, type Allergen, type AllergenSource } from '@lib/guest-info/constants';
 import { AllergenSelect } from './AllergenSelect';
+import { AllergenSourceFields } from './AllergenSourceFields';
 import { AdditiveSelect } from './AdditiveSelect';
-import { CocktailGuestInfoPreview } from './CocktailGuestInfoPreview';
 
 export interface GarnishGuestInfoFormValues {
   allergens: Allergen[];
+  /** Specific cereals/nuts behind GLUTEN/NUTS. */
+  allergenSources: AllergenSource[];
   additives: Additive[];
   guestInfoComplete: boolean;
 }
@@ -38,35 +42,13 @@ export function parseOptionalPercent(value: number | string | null | undefined):
   return Number.isFinite(parsed) ? parsed : null;
 }
 
-export function SectionTitle() {
-  const { t } = useTranslation(['guestInfo']);
-  return (
-    <div className="col-span-full flex items-center gap-3 py-2">
-      <Divider className="my-0 flex-1" />
-      <span className="shrink-0 text-sm font-medium text-base-content/70">{t('guestInfo:form.sectionTitle')}</span>
-      <Divider className="my-0 flex-1" />
-    </div>
-  );
-}
-
-function ToggleRow(props: { name: string; checked: boolean; label: string; hint?: string; onChange: (checked: boolean) => void }) {
-  return (
-    <FormControl>
-      <Label htmlFor={props.name} className="cursor-pointer flex-row items-center gap-3">
-        <Toggle id={props.name} name={props.name} checked={props.checked} onChange={(event) => props.onChange(event.target.checked)} />
-        <span className="flex flex-col">
-          <LabelText>{props.label}</LabelText>
-          {props.hint && <LabelTextAlt>{props.hint}</LabelTextAlt>}
-        </span>
-      </Label>
-    </FormControl>
-  );
-}
-
 function AllergenAdditiveFields(props: {
   allergens: Allergen[];
   additives: Additive[];
   onAllergens: (value: Allergen[]) => void;
+  /** Ingredients/garnishes can name the specific cereals/nuts (cocktail extras can't). */
+  allergenSources?: AllergenSource[];
+  onAllergenSources?: (value: AllergenSource[]) => void;
   onAdditives: (value: Additive[]) => void;
   allergensLabel?: string;
   additivesLabel?: string;
@@ -74,57 +56,60 @@ function AllergenAdditiveFields(props: {
   const { t } = useTranslation(['guestInfo']);
   return (
     <>
-      <FormControl className="col-span-full">
-        <Label className="flex-row items-center justify-between">
-          <LabelText>{props.allergensLabel ?? t('guestInfo:allergensTitle')}</LabelText>
-        </Label>
+      <FormField label={props.allergensLabel ?? t('guestInfo:allergensTitle')} className="col-span-full">
         <AllergenSelect value={props.allergens} onChange={props.onAllergens} />
-      </FormControl>
-      <FormControl className="col-span-full">
-        <Label className="flex-row items-center justify-between">
-          <LabelText>{props.additivesLabel ?? t('guestInfo:additivesTitle')}</LabelText>
-        </Label>
+        {props.allergenSources && props.onAllergenSources ? (
+          <AllergenSourceFields allergens={props.allergens} value={props.allergenSources} onChange={props.onAllergenSources} />
+        ) : null}
+      </FormField>
+      <FormField label={props.additivesLabel ?? t('guestInfo:additivesTitle')} className="col-span-full">
         <AdditiveSelect value={props.additives} onChange={props.onAdditives} />
-      </FormControl>
+      </FormField>
     </>
   );
 }
 
+/** Guest information of a garnish; render inside a FormSection (it brings no heading of its own). */
 export function GarnishGuestInfoFields() {
   const { t } = useTranslation(['guestInfo']);
   const { values, setFieldValue } = useFormikContext<GarnishGuestInfoFormValues>();
   return (
-    <div className="col-span-full grid grid-cols-1 gap-2">
-      <SectionTitle />
+    <div className="grid grid-cols-1 gap-4">
       <AllergenAdditiveFields
         allergens={values.allergens}
         additives={values.additives}
-        onAllergens={(value) => setFieldValue('allergens', value)}
+        onAllergens={(value) => {
+          setFieldValue('allergens', value);
+          // Deselecting GLUTEN / NUTS also drops „Weizen“, „Haselnüsse“ …
+          setFieldValue('allergenSources', pruneAllergenSources(value, values.allergenSources));
+        }}
+        allergenSources={values.allergenSources}
+        onAllergenSources={(value) => setFieldValue('allergenSources', value)}
         onAdditives={(value) => setFieldValue('additives', value)}
       />
-      <ToggleRow
+      <ToggleField
         name="guestInfoComplete"
         checked={values.guestInfoComplete}
         label={t('guestInfo:form.complete')}
         hint={t('guestInfo:form.completeHint')}
-        onChange={(checked) => setFieldValue('guestInfoComplete', checked)}
+        onCheckedChange={(checked) => setFieldValue('guestInfoComplete', checked)}
       />
     </div>
   );
 }
 
-/** `wrapGuestName` lets the ingredient form add translation tabs around the guest name input. */
+/**
+ * Guest information of an ingredient; render inside a FormSection.
+ * `wrapGuestName` lets the ingredient form add translation tabs around the guest name input.
+ */
 export function IngredientGuestInfoFields(props: { wrapGuestName?: (input: React.ReactElement) => React.ReactNode } = {}) {
   const { t } = useTranslation(['guestInfo']);
-  const { values, errors, handleChange, handleBlur, setFieldValue } = useFormikContext<IngredientGuestInfoFormValues>();
+  const formik = useFormikContext<IngredientGuestInfoFormValues>();
+  const { values, handleChange, handleBlur, setFieldValue } = formik;
+  const abvError = visibleFieldError(formik, 'abv');
   return (
-    <div className="col-span-full grid grid-cols-1 gap-2 md:grid-cols-2">
-      <SectionTitle />
-      <FormControl>
-        <Label htmlFor="abv" className="flex-row items-center justify-between">
-          <LabelText>{t('guestInfo:form.abv')}</LabelText>
-          <LabelTextAlt className="text-error">{errors.abv as string | undefined}</LabelTextAlt>
-        </Label>
+    <div className="grid grid-cols-1 gap-4 @xl:grid-cols-2">
+      <FormField label={t('guestInfo:form.abv')} htmlFor="abv" hint={t('guestInfo:form.abvHint')} error={abvError}>
         <Input
           id="abv"
           name="abv"
@@ -134,18 +119,13 @@ export function IngredientGuestInfoFields(props: { wrapGuestName?: (input: React
           max={100}
           step={0.1}
           placeholder={t('guestInfo:form.abvPlaceholder')}
+          error={!!abvError}
           value={values.abv}
           onChange={handleChange}
           onBlur={handleBlur}
         />
-        <Label className="flex-row">
-          <LabelTextAlt>{t('guestInfo:form.abvHint')}</LabelTextAlt>
-        </Label>
-      </FormControl>
-      <FormControl>
-        <Label htmlFor="guestName" className="flex-row items-center justify-between">
-          <LabelText>{t('guestInfo:form.guestName')}</LabelText>
-        </Label>
+      </FormField>
+      <FormField label={t('guestInfo:form.guestName')} htmlFor="guestName">
         {(props.wrapGuestName ?? ((input: React.ReactElement) => input))(
           <Input
             id="guestName"
@@ -158,42 +138,55 @@ export function IngredientGuestInfoFields(props: { wrapGuestName?: (input: React
             onBlur={handleBlur}
           />,
         )}
-      </FormControl>
+      </FormField>
       <AllergenAdditiveFields
         allergens={values.allergens}
         additives={values.additives}
-        onAllergens={(value) => setFieldValue('allergens', value)}
+        onAllergens={(value) => {
+          setFieldValue('allergens', value);
+          // Deselecting GLUTEN / NUTS also drops „Weizen“, „Haselnüsse“ …
+          setFieldValue('allergenSources', pruneAllergenSources(value, values.allergenSources));
+        }}
+        allergenSources={values.allergenSources}
+        onAllergenSources={(value) => setFieldValue('allergenSources', value)}
         onAdditives={(value) => setFieldValue('additives', value)}
       />
-      <ToggleRow
+      <ToggleField
         name="guestInfoComplete"
         checked={values.guestInfoComplete}
         label={t('guestInfo:form.complete')}
         hint={t('guestInfo:form.completeHint')}
-        onChange={(checked) => setFieldValue('guestInfoComplete', checked)}
+        onCheckedChange={(checked) => setFieldValue('guestInfoComplete', checked)}
       />
-      <ToggleRow
+      <ToggleField
         name="hideOnGuestMenu"
         checked={values.hideOnGuestMenu}
         label={t('guestInfo:form.hideOnGuestMenu')}
         hint={t('guestInfo:form.hideOnGuestMenuHint')}
-        onChange={(checked) => setFieldValue('hideOnGuestMenu', checked)}
+        onCheckedChange={(checked) => setFieldValue('hideOnGuestMenu', checked)}
       />
     </div>
   );
 }
 
-export function CocktailGuestInfoFields(props: { workspaceId: string | string[]; cocktailId?: string; reloadKey?: unknown }) {
+/**
+ * Overrides of the guest information a cocktail derives from its ingredients; render inside a
+ * (collapsible) FormSection. The derived values are shown by CocktailGuestInfoPreview.
+ */
+export function CocktailGuestInfoFields() {
   const { t } = useTranslation(['guestInfo']);
-  const { values, errors, handleChange, handleBlur, setFieldValue } = useFormikContext<CocktailGuestInfoFormValues>();
+  const formik = useFormikContext<CocktailGuestInfoFormValues>();
+  const { values, handleChange, handleBlur, setFieldValue } = formik;
+  const abvOverrideError = visibleFieldError(formik, 'abvOverride');
   return (
-    <div className="col-span-full grid grid-cols-1 gap-2">
-      <CocktailGuestInfoPreview workspaceId={props.workspaceId} cocktailId={props.cocktailId} reloadKey={props.reloadKey} />
-      <FormControl className="max-w-xs">
-        <Label htmlFor="abvOverride" className="flex-row items-center justify-between">
-          <LabelText>{t('guestInfo:form.abvOverride')}</LabelText>
-          <LabelTextAlt className="text-error">{errors.abvOverride as string | undefined}</LabelTextAlt>
-        </Label>
+    <div className="grid grid-cols-1 gap-4">
+      <FormField
+        label={t('guestInfo:form.abvOverride')}
+        htmlFor="abvOverride"
+        hint={t('guestInfo:form.abvOverrideHint')}
+        error={abvOverrideError}
+        className="max-w-xs"
+      >
         <Input
           id="abvOverride"
           name="abvOverride"
@@ -203,14 +196,12 @@ export function CocktailGuestInfoFields(props: { workspaceId: string | string[];
           max={100}
           step={0.1}
           placeholder={t('guestInfo:form.abvOverridePlaceholder')}
+          error={!!abvOverrideError}
           value={values.abvOverride}
           onChange={handleChange}
           onBlur={handleBlur}
         />
-        <Label className="flex-row">
-          <LabelTextAlt>{t('guestInfo:form.abvOverrideHint')}</LabelTextAlt>
-        </Label>
-      </FormControl>
+      </FormField>
       <AllergenAdditiveFields
         allergens={values.extraAllergens}
         additives={values.extraAdditives}

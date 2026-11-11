@@ -2,22 +2,19 @@ import { Formik, FormikProps } from 'formik';
 import { useRouter } from 'next/router';
 import React, { useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { UploadDropZone } from '../UploadDropZone';
-import { convertBase64ToFile, convertToBase64, fetchImageAsBase64 } from '@lib/Base64Converter';
-import { FaTrashAlt } from 'react-icons/fa';
+import { convertBase64ToFile, fetchImageAsBase64 } from '@lib/Base64Converter';
 import { alertService } from '@lib/alertService';
-import { DeleteConfirmationModal } from '../modals/DeleteConfirmationModal';
-import { ModalContext } from '@lib/context/ModalContextProvider';
 import type { GarnishCreateInput, GarnishDto, GarnishUpdateInput } from '@lib/schemas/garnishes';
-import Image from 'next/image';
-import CropComponent from '../CropComponent';
-import { FaCropSimple } from 'react-icons/fa6';
 import { RoutingContext } from '@lib/context/RoutingContextProvider';
 import { FormikDirtyReporter } from '@lib/forms/FormikDirtyReporter';
 import { trimmed } from '@lib/forms/formDirty';
 import { useUnsavedChangesContext } from '@lib/forms/useUnsavedChanges';
-import { resizeImage } from '@lib/ImageCompressor';
-import { Button, ButtonGroup, Divider, FormControl, Input, Label, LabelText, LabelTextAlt, Loading, Textarea } from '@components/ui';
+import { ButtonGroup, Input, InputAddon, Loading, Textarea } from '@components/ui';
+import { EntityFormLayout } from '@components/forms/EntityFormLayout';
+import { FormSection } from '@components/forms/FormSection';
+import { FormField, visibleFieldError } from '@components/forms/FormField';
+import { FormSaveButton } from '@components/forms/FormSaveButton';
+import { FormikImageTile } from '@components/forms/FormikImageTile';
 import { z } from 'zod';
 import { zodFormikValidate } from '@lib/forms/zodFormikValidate';
 import { alertApiV1Error } from '@lib/network/apiV1';
@@ -25,7 +22,7 @@ import { checkGarnishName, createGarnish, updateGarnish } from '@lib/network/gar
 import { TranslatedFieldTabs } from '@components/translations/TranslatedFieldTabs';
 import { useEntityContentTranslations } from '@components/translations/useEntityContentTranslations';
 import { GarnishGuestInfoFields, type GarnishGuestInfoFormValues } from '@components/guest-info/GuestInfoFormFields';
-import { ADDITIVES, ALLERGENS } from '@lib/guest-info/constants';
+import { ADDITIVES, ALLERGEN_SOURCES, ALLERGENS } from '@lib/guest-info/constants';
 
 export interface GarnishFormValues extends GarnishGuestInfoFormValues {
   name: string;
@@ -46,6 +43,7 @@ function createGarnishFormSchema(requiredMessage: string, imageNotCroppedMessage
       image: z.string().optional(),
       originalImage: z.instanceof(File).optional(),
       allergens: z.array(z.enum(ALLERGENS)),
+      allergenSources: z.array(z.enum(ALLERGEN_SOURCES)),
       additives: z.array(z.enum(ADDITIVES)),
       guestInfoComplete: z.boolean(),
     })
@@ -58,10 +56,9 @@ function createGarnishFormSchema(requiredMessage: string, imageNotCroppedMessage
 interface GarnishFormProps {
   garnish?: GarnishDto;
   formRef?: React.RefObject<FormikProps<GarnishFormValues> | null>;
+  /** Embedded use (e.g. "create garnish" from the cocktail form): called instead of redirecting. */
   onSaved?: (id: string) => void;
 }
-
-const fieldErrorClass = 'border-error focus:border-error focus:ring-error/25';
 
 /** Persisted part of the values (mirrors `onSubmit`). */
 function toComparableGarnish(values: GarnishFormValues) {
@@ -72,20 +69,21 @@ function toComparableGarnish(values: GarnishFormValues) {
     notes: trimmed(values.notes),
     image: values.image,
     allergens: [...values.allergens].sort(),
+    allergenSources: [...values.allergenSources].sort(),
     additives: [...values.additives].sort(),
     guestInfoComplete: values.guestInfoComplete,
   };
 }
 
 export function GarnishForm(props: GarnishFormProps) {
-  const { t } = useTranslation(['manage', 'common', 'entity', 'errors']);
+  const { t } = useTranslation(['manage', 'common', 'entity', 'errors', 'guestInfo']);
   const router = useRouter();
   const { workspaceId } = router.query;
-  const modalContext = useContext(ModalContext);
   const routingContext = useContext(RoutingContext);
   const unsavedChanges = useUnsavedChangesContext();
 
   const formRef = props.formRef || React.createRef<FormikProps<GarnishFormValues>>();
+  const embedded = props.onSaved != undefined;
 
   const [similarGarnish, setSimilarGarnish] = useState<Pick<GarnishDto, 'id' | 'name'> | undefined>();
 
@@ -133,6 +131,7 @@ export function GarnishForm(props: GarnishFormProps) {
         image: hydratedImage,
         originalImage: hydratedImage ? convertBase64ToFile(hydratedImage) : undefined,
         allergens: props.garnish?.allergens ?? [],
+        allergenSources: props.garnish?.allergenSources ?? [],
         additives: props.garnish?.additives ?? [],
         guestInfoComplete: props.garnish?.guestInfoComplete ?? false,
       }}
@@ -145,6 +144,7 @@ export function GarnishForm(props: GarnishFormProps) {
             description: values.description?.trim() == '' ? null : values.description?.trim(),
             notes: values.notes?.trim() == '' ? null : values.notes?.trim(),
             allergens: values.allergens,
+            allergenSources: values.allergenSources,
             additives: values.additives,
             guestInfoComplete: values.guestInfoComplete,
           };
@@ -182,219 +182,111 @@ export function GarnishForm(props: GarnishFormProps) {
         return zodFormikValidate(createGarnishFormSchema(t('errors:requiredField'), t('common:imageNotCropped')))(values);
       }}
     >
-      {({ values, errors, handleChange, handleBlur, handleSubmit, isSubmitting, isValid, setFieldValue }) => (
-        <form onSubmit={handleSubmit} className={'grid grid-cols-1 gap-2 md:grid-cols-2'}>
-          <FormikDirtyReporter toComparable={toComparableGarnish} />
-          <div className={'col-span-full flex flex-row flex-wrap gap-2'}>
-            <FormControl className={'flex-1'}>
-              <Label htmlFor={'name'} className="flex-row items-center justify-between">
-                <LabelText>{t('common:name')}</LabelText>
-                <LabelTextAlt className={'space-x-2 text-error'}>
-                  <span>
-                    <>{errors.name && errors.name}</>
-                  </span>
-                  <span>*</span>
-                </LabelTextAlt>
-              </Label>
-              <TranslatedFieldTabs translations={contentTranslations} field="name" sourceValue={values.name}>
-                <Input
-                  id={'name'}
-                  type={'text'}
-                  autoComplete={'off'}
-                  placeholder={t('common:name')}
-                  className={errors.name ? fieldErrorClass : undefined}
-                  onChange={(event) => {
-                    if (event.target.value.length > 2 && workspaceId) {
-                      checkGarnishName(workspaceId, event.target.value)
-                        .then((match) => {
-                          if (match != null && match.id != props.garnish?.id) {
-                            setSimilarGarnish(match);
-                          } else {
-                            setSimilarGarnish(undefined);
-                          }
-                        })
-                        .catch(() => setSimilarGarnish(undefined));
-                    } else {
-                      setSimilarGarnish(undefined);
-                    }
-                    handleChange(event);
-                  }}
-                  onBlur={handleBlur}
-                  value={values.name}
-                  name={'name'}
-                />
-              </TranslatedFieldTabs>
-              {similarGarnish && (
-                <Label className="flex-row">
-                  <LabelTextAlt className="text-warning">{t('manage:garnishForm.similarExists', { name: similarGarnish.name })}</LabelTextAlt>
-                </Label>
-              )}
-            </FormControl>
-
-            <FormControl>
-              <Label htmlFor={'price'} className="flex-row items-center justify-between">
-                <LabelText>{t('common:price')}</LabelText>
-                <LabelTextAlt className={'space-x-2 text-error'}>
-                  <>{errors.price && errors.price}</>
-                </LabelTextAlt>
-              </Label>
-              <ButtonGroup className="w-full">
-                <Input
-                  id={'price'}
-                  type={'number'}
-                  placeholder={t('common:price')}
-                  className={errors.price ? fieldErrorClass : undefined}
-                  joinItem
-                  value={values.price}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  name={'price'}
-                />
-                <Button type="button" variant="secondary" joinItem>
-                  €
-                </Button>
-              </ButtonGroup>
-            </FormControl>
-          </div>
-          <div className={''}>
-            <div className="flex items-center gap-3 py-2">
-              <Divider className="my-0 flex-1" />
-              <span className="shrink-0 text-sm font-medium text-base-content/70">{t('common:imagePreview')}</span>
-              <Divider className="my-0 flex-1" />
-            </div>
-            {values.image == undefined && values.originalImage == undefined ? (
-              <UploadDropZone
-                onSelectedFilesChanged={async (file) => {
-                  if (file != undefined) {
-                    await setFieldValue('originalImage', file);
-                    await setFieldValue('image', undefined);
-                  } else {
-                    alertService.error(t('common:fileSelectError'));
-                  }
-                }}
-              />
-            ) : values.image == undefined && values.originalImage != undefined ? (
-              <div className={'w-full'}>
-                <CropComponent
-                  isValid={isValid}
-                  aspect={1}
-                  imageToCrop={values.originalImage}
-                  onCroppedImageComplete={async (file) => {
-                    resizeImage(file, 400, 400, async (compressedImageFile) => {
-                      if (compressedImageFile) {
-                        await setFieldValue('image', await convertToBase64(new File([compressedImageFile], 'image.png', { type: 'image/png' })));
-                      } else {
-                        alertService.error(t('common:imageScaleError'));
-                      }
-                    });
-                  }}
-                  onCropCancel={async () => {
-                    await setFieldValue('image', undefined);
-                    await setFieldValue('originalImage', undefined);
-                  }}
-                />
-              </div>
-            ) : (
-              <div className={'relative'}>
-                <div className={'absolute top-2 right-2 flex flex-row gap-2'}>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    shape="square"
-                    size="sm"
-                    onClick={async () => {
-                      await setFieldValue('image', undefined);
-                    }}
-                  >
-                    <FaCropSimple />
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    shape="square"
-                    size="sm"
-                    className="border-error text-error hover:bg-error/10"
-                    onClick={() => {
-                      modalContext.openModal(
-                        <DeleteConfirmationModal
-                          spelling={'REMOVE'}
-                          entityName={t('entity:theImage')}
-                          onApprove={async () => {
-                            await setFieldValue('originalImage', undefined);
-                            await setFieldValue('image', undefined);
-                          }}
-                        />,
-                      );
-                    }}
-                  >
-                    <FaTrashAlt />
-                  </Button>
+      {(formik) => {
+        const { values, handleChange, handleBlur, handleSubmit } = formik;
+        const nameError = visibleFieldError(formik, 'name');
+        const priceError = visibleFieldError(formik, 'price');
+        return (
+          <form onSubmit={handleSubmit} noValidate>
+            <FormikDirtyReporter toComparable={toComparableGarnish} />
+            <FormSaveButton label={props.garnish ? t('common:save') : t('common:create')} />
+            <EntityFormLayout embedded={embedded}>
+              <FormSection title={t('common:form.section.general')}>
+                <div className="flex flex-col gap-4 @lg:flex-row @lg:items-start">
+                  <FormikImageTile aspect={1} width={400} height={400} alt={t('common:garnishImageAlt')} cropInfo={t('manage:garnishForm.imageCropInfo')} />
+                  <div className="flex min-w-0 flex-1 flex-col gap-4">
+                    <div className="grid grid-cols-1 gap-4 @xl:grid-cols-[minmax(0,1fr)_12rem]">
+                      <FormField
+                        label={t('common:name')}
+                        htmlFor="name"
+                        required
+                        error={nameError}
+                        warning={similarGarnish ? t('manage:garnishForm.similarExists', { name: similarGarnish.name }) : undefined}
+                      >
+                        <TranslatedFieldTabs translations={contentTranslations} field="name" sourceValue={values.name}>
+                          <Input
+                            id={'name'}
+                            name={'name'}
+                            autoComplete={'off'}
+                            enterKeyHint={'next'}
+                            error={!!nameError}
+                            value={values.name}
+                            onChange={(event) => {
+                              if (event.target.value.length > 2 && workspaceId) {
+                                checkGarnishName(workspaceId, event.target.value)
+                                  .then((match) => {
+                                    if (match != null && match.id != props.garnish?.id) {
+                                      setSimilarGarnish(match);
+                                    } else {
+                                      setSimilarGarnish(undefined);
+                                    }
+                                  })
+                                  .catch(() => setSimilarGarnish(undefined));
+                              } else {
+                                setSimilarGarnish(undefined);
+                              }
+                              handleChange(event);
+                            }}
+                            onBlur={handleBlur}
+                          />
+                        </TranslatedFieldTabs>
+                      </FormField>
+                      <FormField label={t('common:price')} htmlFor="price" error={priceError}>
+                        <ButtonGroup className="w-full">
+                          <Input
+                            id={'price'}
+                            name={'price'}
+                            type={'number'}
+                            inputMode={'decimal'}
+                            step={'any'}
+                            joinItem
+                            error={!!priceError}
+                            value={values.price ?? ''}
+                            onChange={handleChange}
+                            onBlur={handleBlur}
+                          />
+                          <InputAddon>€</InputAddon>
+                        </ButtonGroup>
+                      </FormField>
+                    </div>
+                  </div>
                 </div>
-                <div className={'bg-transparent-pattern relative h-32 w-32 rounded-lg'}>
-                  <Image className={'w-fit rounded-lg'} src={values.image ?? ''} layout={'fill'} objectFit={'contain'} alt={t('common:garnishImageAlt')} />
-                </div>
-                <div className={'pt-2 font-thin italic'}>{t('manage:garnishForm.imageCropInfo')}</div>
-              </div>
-            )}
-          </div>
+              </FormSection>
 
-          <div className={'flex flex-col gap-2'}>
-            <FormControl>
-              <Label htmlFor={'notes'} className="flex-row items-center justify-between">
-                <LabelText>{t('common:notes')}</LabelText>
-                <LabelTextAlt className={'space-x-2 text-error'}>
-                  <span>
-                    <>{errors.notes && errors.notes}</>
-                  </span>
-                </LabelTextAlt>
-              </Label>
-              <Textarea
-                id={'notes'}
-                className={errors.notes ? fieldErrorClass : undefined}
-                value={values.notes}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                name={'notes'}
-                placeholder={t('manage:garnishForm.notesPlaceholder')}
-                rows={5}
-              />
-            </FormControl>
+              <FormSection title={t('common:form.section.texts')}>
+                <FormField label={t('manage:garnishForm.description')} htmlFor="description">
+                  <TranslatedFieldTabs translations={contentTranslations} field="description" sourceValue={values.description} multiline>
+                    <Textarea
+                      id={'description'}
+                      name={'description'}
+                      value={values.description}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      placeholder={t('manage:garnishForm.descriptionPlaceholder')}
+                      rows={4}
+                    />
+                  </TranslatedFieldTabs>
+                </FormField>
+                <FormField label={t('common:notes')} htmlFor="notes">
+                  <Textarea
+                    id={'notes'}
+                    name={'notes'}
+                    value={values.notes}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    placeholder={t('manage:garnishForm.notesPlaceholder')}
+                    rows={3}
+                  />
+                </FormField>
+              </FormSection>
 
-            <FormControl>
-              <Label htmlFor={'description'} className="flex-row items-center justify-between">
-                <LabelText>{t('manage:garnishForm.description')}</LabelText>
-                <LabelTextAlt className={'space-x-2 text-error'}>
-                  <span>
-                    <>{errors.description && errors.description}</>
-                  </span>
-                </LabelTextAlt>
-              </Label>
-              <TranslatedFieldTabs translations={contentTranslations} field="description" sourceValue={values.description} multiline>
-                <Textarea
-                  id={'description'}
-                  className={errors.description ? fieldErrorClass : undefined}
-                  value={values.description}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  name={'description'}
-                  placeholder={t('manage:garnishForm.descriptionPlaceholder')}
-                  rows={5}
-                />
-              </TranslatedFieldTabs>
-            </FormControl>
-            <GarnishGuestInfoFields />
-            <div className={'w-full items-center justify-end'}>
-              <FormControl>
-                <Button disabled={isSubmitting || !isValid} type={'submit'} variant="primary" wide>
-                  {isSubmitting ? <Loading size="sm" /> : null}
-                  {t('common:save')}
-                </Button>
-              </FormControl>
-              {!isValid && <div className={'font-thin text-error italic'}>{t('common:formIncomplete')}</div>}
-            </div>
-          </div>
-        </form>
-      )}
+              <FormSection title={t('guestInfo:form.sectionTitle')} description={t('guestInfo:form.sectionHint')}>
+                <GarnishGuestInfoFields />
+              </FormSection>
+            </EntityFormLayout>
+          </form>
+        );
+      }}
     </Formik>
   );
 }

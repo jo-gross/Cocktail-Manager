@@ -14,15 +14,16 @@ import { UserContext } from '@lib/context/UserContextProvider';
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import { NotSavedArchiveConfirmation } from '@components/modals/NotSavedArchiveConfirmation';
 import { fetchCocktailWithImage } from '@lib/network/cocktails';
-import { FaFileDownload, FaHistory } from 'react-icons/fa';
+import { FaArchive, FaBoxOpen, FaFileDownload, FaHistory } from 'react-icons/fa';
 import CocktailExportOptionsModal, { CocktailExportOptions } from '@components/modals/CocktailExportOptionsModal';
 import { AuditLogHistoryModal } from '@components/modals/AuditLogHistoryModal';
-import { Button, Divider, Loading as UiLoading } from '@components/ui';
+import { Badge, Button, Loading as UiLoading } from '@components/ui';
+import { FormSection } from '@components/forms/FormSection';
 import { useUnsavedChangesContext } from '@lib/forms/useUnsavedChanges';
 
 function EditCocktailRecipe() {
   const router = useRouter();
-  const { t, i18n } = useTranslation(['manage', 'common', 'cocktail', 'errors']);
+  const { t, i18n } = useTranslation(['manage', 'common', 'cocktail', 'errors', 'nav']);
   const { id, workspaceId } = router.query;
 
   const userContext = useContext(UserContext);
@@ -109,37 +110,47 @@ function EditCocktailRecipe() {
   ) : (
     <ManageEntityLayout
       backLink={`/workspaces/${workspaceId}/manage/cocktails`}
-      title={cocktailRecipe?.isArchived ? <span className={'italic'}>{t('manage:cocktailArchived')}</span> : t('common:cocktail_one')}
+      title={cocktailRecipe?.name ?? t('cocktail:formTitle')}
+      subtitle={
+        cocktailRecipe ? (
+          <span className="inline-flex items-center gap-2">
+            {t('nav:cocktails')}
+            {cocktailRecipe.isArchived && <Badge variant="warning">{t('common:archived')}</Badge>}
+          </span>
+        ) : undefined
+      }
       formRef={formRef}
+      showUnsavedHint={false}
     >
-      <CocktailRecipeForm cocktailRecipe={cocktailRecipe} formRef={formRef} />
-      {cocktailRecipe != undefined && userContext.isUserPermitted(Role.MANAGER) ? (
-        <>
-          <Divider />
-          <div className={'flex items-center justify-end gap-2'}>
-            {chromiumAvailable && (
-              <Button type="button" variant="outline" size="sm" onClick={handleExportPdf} disabled={exportingPdf}>
-                {exportingPdf ? <UiLoading size="sm" /> : <FaFileDownload />}
-                {t('manage:exportPdf')}
-              </Button>
-            )}
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() =>
-                modalContext.openModal(<AuditLogHistoryModal entityType={'CocktailRecipe'} entityId={cocktailRecipe.id} entityName={cocktailRecipe.name} />)
-              }
-            >
-              <FaHistory />
-              {t('manage:history')}
-            </Button>
-            <CocktailArchiveButton cocktailRecipe={cocktailRecipe} workspaceId={workspaceId as string} />
-          </div>
-        </>
-      ) : (
-        <></>
-      )}
+      <CocktailRecipeForm
+        cocktailRecipe={cocktailRecipe}
+        formRef={formRef}
+        additionalSections={
+          cocktailRecipe != undefined && userContext.isUserPermitted(Role.MANAGER) ? (
+            <FormSection title={t('common:form.moreActions')}>
+              <div className="flex flex-wrap gap-2">
+                {chromiumAvailable && (
+                  <Button type="button" variant="outline" onClick={handleExportPdf} disabled={exportingPdf}>
+                    {exportingPdf ? <UiLoading size="sm" /> : <FaFileDownload aria-hidden />}
+                    {t('manage:exportPdf')}
+                  </Button>
+                )}
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() =>
+                    modalContext.openModal(<AuditLogHistoryModal entityType={'CocktailRecipe'} entityId={cocktailRecipe.id} entityName={cocktailRecipe.name} />)
+                  }
+                >
+                  <FaHistory aria-hidden />
+                  {t('manage:history')}
+                </Button>
+                <CocktailArchiveButton cocktailRecipe={cocktailRecipe} workspaceId={workspaceId as string} />
+              </div>
+            </FormSection>
+          ) : undefined
+        }
+      />
     </ManageEntityLayout>
   );
 }
@@ -176,7 +187,6 @@ function CocktailArchiveButton({ cocktailRecipe, workspaceId }: { cocktailRecipe
     <Button
       type="button"
       variant="outline"
-      size="sm"
       onClick={async () => {
         if (unsavedChanges.dirty) {
           modalContext.openModal(<NotSavedArchiveConfirmation archive={!cocktailRecipe.isArchived} onArchive={archiveFunction} />);
@@ -185,6 +195,7 @@ function CocktailArchiveButton({ cocktailRecipe, workspaceId }: { cocktailRecipe
         }
       }}
     >
+      {cocktailRecipe.isArchived ? <FaBoxOpen aria-hidden /> : <FaArchive aria-hidden />}
       {cocktailRecipe.isArchived ? t('cocktail:unarchiveCocktail') : t('cocktail:archiveCocktail')}
     </Button>
   );

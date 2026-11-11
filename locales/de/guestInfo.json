@@ -6,10 +6,10 @@
     "GLUTEN": "Glutenhaltiges Getreide",
     "CRUSTACEANS": "Krebstiere",
     "EGGS": "Eier",
-    "FISH": "Fisch",
+    "FISH": "Fische",
     "PEANUTS": "Erdnüsse",
-    "SOY": "Soja",
-    "MILK": "Milch (inkl. Laktose)",
+    "SOY": "Sojabohnen",
+    "MILK": "Milch (einschließlich Laktose)",
     "NUTS": "Schalenfrüchte",
     "CELERY": "Sellerie",
     "MUSTARD": "Senf",
@@ -18,37 +18,21 @@
     "LUPIN": "Lupinen",
     "MOLLUSCS": "Weichtiere"
   },
-  "allergenShort": {
-    "GLUTEN": "Gluten",
-    "CRUSTACEANS": "Krebstiere",
-    "EGGS": "Ei",
-    "FISH": "Fisch",
-    "PEANUTS": "Erdnuss",
-    "SOY": "Soja",
-    "MILK": "Milch",
-    "NUTS": "Nüsse",
-    "CELERY": "Sellerie",
-    "MUSTARD": "Senf",
-    "SESAME": "Sesam",
-    "SULPHITES": "Sulfite",
-    "LUPIN": "Lupine",
-    "MOLLUSCS": "Weichtiere"
-  },
-  "allergenWithout": {
-    "GLUTEN": "Ohne Gluten",
-    "CRUSTACEANS": "Ohne Krebstiere",
-    "EGGS": "Ohne Ei",
-    "FISH": "Ohne Fisch",
-    "PEANUTS": "Ohne Erdnuss",
-    "SOY": "Ohne Soja",
-    "MILK": "Ohne Milch",
-    "NUTS": "Ohne Nüsse",
-    "CELERY": "Ohne Sellerie",
-    "MUSTARD": "Ohne Senf",
-    "SESAME": "Ohne Sesam",
-    "SULPHITES": "Ohne Sulfite",
-    "LUPIN": "Ohne Lupine",
-    "MOLLUSCS": "Ohne Weichtiere"
+  "allergenSource": {
+    "WHEAT": "Weizen",
+    "SPELT": "Dinkel",
+    "KHORASAN_WHEAT": "Khorasan-Weizen",
+    "RYE": "Roggen",
+    "BARLEY": "Gerste",
+    "OATS": "Hafer",
+    "ALMONDS": "Mandeln",
+    "HAZELNUTS": "Haselnüsse",
+    "WALNUTS": "Walnüsse",
+    "CASHEWS": "Kaschunüsse",
+    "PECANS": "Pecannüsse",
+    "BRAZIL_NUTS": "Paranüsse",
+    "PISTACHIOS": "Pistazien",
+    "MACADAMIA_NUTS": "Macadamianüsse"
   },
   "additive": {
     "COLORING": "mit Farbstoff",
@@ -117,7 +101,15 @@
     "incompleteSources": "Angaben unvollständig: {{list}}",
     "dilution": "Verwässerung (%)",
     "dilutionHint": "Für die Alkoholberechnung. Leer = Standard ({{value}} %)",
-    "abvRange": "Wert zwischen 0 und 100"
+    "abvRange": "Wert zwischen 0 und 100",
+    "overrideTitle": "Gästeinformationen anpassen",
+    "overrideHint": "Überschreibt die aus den Zutaten berechneten Angaben – nur nötig, wenn diese nicht stimmen.",
+    "overridesActive": "Angepasst",
+    "allergenSources": {
+      "GLUTEN": "Welches glutenhaltige Getreide?",
+      "NUTS": "Welche Schalenfrüchte?",
+      "hint": "Optional – erscheint in Klammern hinter dem Allergen, z. B. „Glutenhaltiges Getreide (Weizen)“."
+    }
   },
   "maintenance": {
     "title": "Gästeinformationen",

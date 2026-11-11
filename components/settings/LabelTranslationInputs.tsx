@@ -2,7 +2,8 @@ import React from 'react';
 import { getIn, useFormikContext } from 'formik';
 import { useTranslation } from 'react-i18next';
 import { z } from 'zod';
-import { FormControl, Input, Label, LabelText, LabelTextAlt, Skeleton } from '@components/ui';
+import { Input, Skeleton } from '@components/ui';
+import { FormField } from '@components/forms/FormField';
 import type { TranslationsDto } from '@lib/schemas/translations';
 import { displayName } from './localeOptions';
 
@@ -73,14 +74,13 @@ export function LabelTranslationInputs({ locales, name = 'labels', inputSize }: 
         const showError = !!error && (submitCount > 0 || !!getIn(touched, [name, locale]));
 
         return (
-          <FormControl key={locale}>
-            <Label htmlFor={id} className="flex-row items-center justify-between">
-              <LabelText>{displayName(locale, 'language', i18n.language)}</LabelText>
-              <LabelTextAlt className="text-error">
-                <span>{showError ? error : ''}</span>
-                {isPrimary ? <span>{t('common:required')}</span> : null}
-              </LabelTextAlt>
-            </Label>
+          <FormField
+            key={locale}
+            label={displayName(locale, 'language', i18n.language)}
+            htmlFor={id}
+            required={isPrimary}
+            error={showError ? error : undefined}
+          >
             <Input
               id={id}
               name={id}
@@ -88,12 +88,11 @@ export function LabelTranslationInputs({ locales, name = 'labels', inputSize }: 
               inputSize={inputSize}
               value={value}
               error={showError}
-              aria-invalid={showError || undefined}
               placeholder={isPrimary ? undefined : t('settings:languages.missingLabelHint')}
               onChange={(event) => void setFieldValue(name, { ...labels, [locale]: event.target.value })}
               onBlur={() => void setFieldTouched(`${name}.${locale}`, true)}
             />
-          </FormControl>
+          </FormField>
         );
       })}
     </div>

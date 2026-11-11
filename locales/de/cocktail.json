@@ -148,5 +148,11 @@
   "markUnavailableToday": "Heute aus",
   "markUnavailableTodayTip": "Cocktail bis zum Beginn des nächsten Bartags als nicht verfügbar markieren",
   "markAvailable": "Wieder verfügbar",
-  "markAvailableTip": "Cocktail wieder als verfügbar markieren"
+  "markAvailableTip": "Cocktail wieder als verfügbar markieren",
+  "stepAction": "Aktion",
+  "unit": "Einheit",
+  "noSteps": "Noch keine Zubereitungsschritte.",
+  "noStepIngredients": "Noch keine Zutaten in diesem Schritt.",
+  "noGarnishesYet": "Noch keine Garnitur.",
+  "guestsTab": "Gäste"
 }

@@ -293,6 +293,8 @@ model Garnish {
   notes                   String?
   price                   Float?
   allergens               Allergen[]              @default([])
+  /// Specific cereals / nuts behind GLUTEN / NUTS (optional detail, see AllergenSource)
+  allergenSources         AllergenSource[]        @default([])
   additives               Additive[]              @default([])
   guestInfoComplete       Boolean                 @default(false)
   CocktailRecipeGarnishes CocktailRecipeGarnish[]
@@ -431,6 +433,8 @@ model Ingredient {
   tags                     String[]
   abv                      Float?
   allergens                Allergen[]                 @default([])
+  /// Specific cereals / nuts behind GLUTEN / NUTS (optional detail, see AllergenSource)
+  allergenSources          AllergenSource[]           @default([])
   additives                Additive[]                 @default([])
   guestInfoComplete        Boolean                    @default(false)
   hideOnGuestMenu          Boolean                    @default(false)
@@ -781,6 +785,24 @@ enum Allergen {
   SULPHITES
   LUPIN
   MOLLUSCS
+}
+
+/// The cereals (GLUTEN) and nuts (NUTS) named in Annex II of Regulation (EU) No 1169/2011.
+enum AllergenSource {
+  WHEAT
+  SPELT
+  KHORASAN_WHEAT
+  RYE
+  BARLEY
+  OATS
+  ALMONDS
+  HAZELNUTS
+  WALNUTS
+  CASHEWS
+  PECANS
+  BRAZIL_NUTS
+  PISTACHIOS
+  MACADAMIA_NUTS
 }
 
 enum Additive {

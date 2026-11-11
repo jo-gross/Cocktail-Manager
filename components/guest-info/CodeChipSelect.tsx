@@ -28,7 +28,7 @@ export function CodeChipSelect<T extends string>(props: CodeChipSelectProps<T>) 
   };
 
   return (
-    <div role="group" aria-label={props['aria-label']} className={cn('flex flex-wrap gap-1', props.className)}>
+    <div role="group" aria-label={props['aria-label']} className={cn('flex flex-wrap gap-1.5 pointer-coarse:gap-2', props.className)}>
       {props.options.map((code) => {
         const active = selected.has(code);
         const label = props.getLabel(code);
@@ -43,7 +43,8 @@ export function CodeChipSelect<T extends string>(props: CodeChipSelectProps<T>) 
             className={cn(
               'inline-flex items-center gap-1 rounded-full border transition-colors',
               'focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-60',
-              props.size === 'xs' ? 'h-6 px-2 text-xs' : 'h-7 px-2.5 text-sm',
+              // Larger on touch screens: chips are toggled with a finger, often in long lists.
+              props.size === 'xs' ? 'h-6 px-2 text-xs pointer-coarse:h-9 pointer-coarse:px-3' : 'h-8 px-3 text-sm pointer-coarse:h-10 pointer-coarse:px-3.5',
               active ? 'border-primary bg-primary text-primary-content' : 'border-base-300 bg-base-100 text-base-content hover:bg-base-200',
             )}
           >

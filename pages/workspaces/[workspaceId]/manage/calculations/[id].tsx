@@ -4,7 +4,9 @@ import { useTranslation } from 'react-i18next';
 import { useRouter } from 'next/router';
 import type { CocktailDto, CocktailGarnishRef, CocktailIngredientRef, CocktailUnitRef } from '@lib/schemas/cocktails';
 import type { CalculationDto } from '@lib/schemas/calculations';
-import { FaInfoCircle, FaPencilAlt, FaPrint, FaSave, FaTrashAlt } from 'react-icons/fa';
+import { FaInfoCircle, FaPencilAlt, FaPlus, FaPrint, FaSave, FaTrashAlt } from 'react-icons/fa';
+import { FormSection } from '@components/forms/FormSection';
+import { ToggleField } from '@components/forms/ToggleField';
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import { SearchModal } from '@components/modals/SearchModal';
 import { alertService } from '@lib/alertService';
@@ -28,14 +30,10 @@ import { navigationGuards } from '@lib/navigation/navigationGuards';
 import {
   Button,
   ButtonGroup,
-  Card,
-  CardBody,
   Checkbox,
   Divider,
-  FormControl,
   Input,
-  Label,
-  LabelText,
+  InputAddon,
   Loading as UiLoading,
   Select,
   Table,
@@ -44,7 +42,6 @@ import {
   TableHead,
   TableHeaderCell,
   TableRow,
-  Toggle,
   Tooltip,
 } from '@components/ui';
 
@@ -474,37 +471,44 @@ export default function CalculationPage() {
         calculationName.trim() == '' ? (
           t('manage:calculations.title')
         ) : (
-          <div className={'flex flex-col items-center justify-center md:flex-row md:gap-2 print:flex-row'}>
-            <div className={'flex'}>
-              <div>{calculationName}</div>
-              <Button
-                type="button"
-                variant="outline"
-                shape="circle"
-                size="xs"
-                className="border-info text-info hover:bg-info/10 print:hidden"
-                onClick={openNameModal}
-              >
-                <FaPencilAlt />
-              </Button>
-            </div>
-
-            <span>{'-'}</span>
-            <span>{t('manage:calculations.title')}</span>
-            <div className={'hidden print:flex'}>({formatDate(new Date())})</div>
-          </div>
+          <span className="inline-flex items-center gap-2">
+            <span>{calculationName}</span>
+            <Button
+              type="button"
+              variant="ghost"
+              shape="square"
+              size="sm"
+              className="text-info print:hidden"
+              aria-label={t('common:rename')}
+              title={t('common:rename')}
+              onClick={openNameModal}
+            >
+              <FaPencilAlt aria-hidden />
+            </Button>
+            <span className="hidden print:inline">
+              {' - '}
+              {t('manage:calculations.title')} ({formatDate(new Date())})
+            </span>
+          </span>
         )
       }
+      subtitle={calculationName.trim() == '' ? undefined : t('manage:calculations.title')}
       actions={[
-        <Button key={'print-calculation'} type="button" variant="outline" shape="square" size="sm" className="md:h-10 md:w-10" onClick={() => window.print()}>
-          <FaPrint />
+        <Button
+          key={'print-calculation'}
+          type="button"
+          variant="outline"
+          shape="square"
+          aria-label={t('manage:calculations.print')}
+          title={t('manage:calculations.print')}
+          onClick={() => window.print()}
+        >
+          <FaPrint aria-hidden />
         </Button>,
         <Button
           key={'save-calculation'}
           type="button"
           variant="primary"
-          size="sm"
-          className="md:h-10"
           disabled={saving}
           onClick={() => {
             if (saving) return;
@@ -525,14 +529,32 @@ export default function CalculationPage() {
           <Loading />
         </PageCenter>
       ) : (
-        <div className={'grid grid-cols-1 gap-2 md:grid-cols-2 xl:gap-4 print:grid-cols-1 print:gap-1'}>
-          <div className={'col-span-1 row-span-3 w-full'}>
-            <Card>
-              <CardBody>
-                <div className={'text-center text-2xl font-bold print:text-xl'}>{t('manage:calculations.drinksOverview')}</div>
-                <div className={'print:hidden'}>
-                  <Divider size="sm" />
-                </div>
+        // Two columns only when there is room for the tables (iPad landscape and wider), decided by the container width.
+        <div className="@container">
+          <div className="grid grid-cols-1 gap-4 md:gap-6 @5xl:grid-cols-2 print:grid-cols-1 print:gap-1">
+            <div className={'col-span-1 w-full @5xl:row-span-2'}>
+              <FormSection
+                title={t('manage:calculations.drinksOverview')}
+                actions={
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="print:hidden"
+                    onClick={() =>
+                      modalContext.openModal(
+                        <SearchModal
+                          onCocktailSelectedObject={(cocktail) => {
+                            addCocktailToSelection(cocktail.id);
+                          }}
+                        />,
+                      )
+                    }
+                  >
+                    <FaPlus aria-hidden />
+                    {t('common:add')}
+                  </Button>
+                }
+              >
                 <div className="overflow-x-auto">
                   <Table compact className="w-full">
                     <TableHead>
@@ -546,23 +568,8 @@ export default function CalculationPage() {
                             <TableHeaderCell>{t('common:customPrice')}</TableHeaderCell>
                           </>
                         ) : null}
-                        <TableHeaderCell className="flex justify-end print:hidden">
-                          <Button
-                            type="button"
-                            variant="primary"
-                            size="sm"
-                            onClick={() =>
-                              modalContext.openModal(
-                                <SearchModal
-                                  onCocktailSelectedObject={(cocktail) => {
-                                    addCocktailToSelection(cocktail.id);
-                                  }}
-                                />,
-                              )
-                            }
-                          >
-                            {t('common:add')}
-                          </Button>
+                        <TableHeaderCell className="print:hidden">
+                          <span className="sr-only">{t('common:actions')}</span>
                         </TableHeaderCell>
                       </TableRow>
                     </TableHead>
@@ -577,8 +584,10 @@ export default function CalculationPage() {
                             <TableCell>
                               <Input
                                 inputSize="sm"
-                                className="w-full print:hidden"
+                                className="w-full min-w-16 print:hidden"
                                 type="number"
+                                inputMode="numeric"
+                                aria-label={t('manage:calculations.plannedAmount')}
                                 min={1}
                                 step={1}
                                 value={cocktail.plannedAmount}
@@ -680,9 +689,11 @@ export default function CalculationPage() {
                                   <ButtonGroup className="print:hidden">
                                     <Input
                                       type="number"
+                                      inputMode="decimal"
                                       inputSize="sm"
                                       joinItem
                                       className="w-20"
+                                      aria-label={t('common:customPrice')}
                                       step={0.01}
                                       value={cocktail.customPrice ?? ''}
                                       onChange={(event) => {
@@ -699,9 +710,7 @@ export default function CalculationPage() {
                                         setCocktailCalculationItems(updatedItems);
                                       }}
                                     />
-                                    <Button type="button" variant="secondary" joinItem size="sm" tabIndex={-1}>
-                                      €
-                                    </Button>
+                                    <InputAddon>€</InputAddon>
                                   </ButtonGroup>
                                   <div className="hidden print:flex">{cocktail.customPrice?.formatPrice() ?? '-'} €</div>
                                 </TableCell>
@@ -711,9 +720,10 @@ export default function CalculationPage() {
                               <div className="flex items-center justify-end">
                                 <Button
                                   type="button"
-                                  variant="error"
+                                  variant="ghost"
                                   shape="square"
-                                  size="sm"
+                                  className="text-error hover:bg-error/10"
+                                  aria-label={`${t('common:remove')}: ${cocktail.cocktail.name}`}
                                   onClick={() => {
                                     modalContext.openModal(
                                       <DeleteConfirmationModal
@@ -737,22 +747,20 @@ export default function CalculationPage() {
                     </TableBody>
                   </Table>
                 </div>
-              </CardBody>
-            </Card>
-          </div>
-          <div className={'col-span-1 w-full'}>
-            <Card>
-              <CardBody>
-                <div className={'text-center text-2xl font-bold print:text-xl'}>{t('cocktail:finances')}</div>
-                <div className={'print:hidden'}>
-                  <Divider size="sm" />
-                  <FormControl>
-                    <Label className="flex-row items-center justify-between">
-                      <LabelText>{t('manage:calculations.businessView')}</LabelText>
-                      <Toggle checked={showSalesStuff} onChange={(event) => setShowSalesStuff(event.target.checked)} />
-                    </Label>
-                  </FormControl>
-                </div>
+              </FormSection>
+            </div>
+            <div className={'col-span-1 w-full'}>
+              <FormSection
+                title={t('cocktail:finances')}
+                actions={
+                  <ToggleField
+                    className="print:hidden"
+                    label={t('manage:calculations.businessView')}
+                    checked={showSalesStuff}
+                    onCheckedChange={setShowSalesStuff}
+                  />
+                }
+              >
                 <div className={'overflow-x-auto'}>
                   <Table compact className="w-full">
                     <TableHead>
@@ -849,23 +857,19 @@ export default function CalculationPage() {
                     </TableBody>
                   </Table>
                 </div>
-              </CardBody>
-            </Card>
-          </div>
-          <div className={'col-span-1 w-full'}>
-            <Card>
-              <CardBody>
-                <div className={'text-center text-2xl font-bold print:text-xl'}>{t('manage:calculations.shoppingList')}</div>
-                <div className={'print:hidden'}>
-                  <Divider size="sm" />
-                </div>
-                <div className={'flex items-center justify-between'}>
-                  <div className={'text-lg font-bold'}>{t('cocktail:ingredients')}</div>
-                  <Button type="button" variant="outline" size="sm" onClick={handleCSVExport}>
-                    <FaSave />
+              </FormSection>
+            </div>
+            <div className={'col-span-1 w-full'}>
+              <FormSection
+                title={t('manage:calculations.shoppingList')}
+                actions={
+                  <Button type="button" variant="outline" className="print:hidden" onClick={handleCSVExport}>
+                    <FaSave aria-hidden />
                     {t('manage:calculations.exportCsv')}
                   </Button>
-                </div>
+                }
+              >
+                <h3 className="text-xs font-semibold tracking-wide text-base-content/60 uppercase">{t('cocktail:ingredients')}</h3>
                 <div className={'overflow-x-auto'}>
                   <Table compact className="w-full">
                     <TableHead>
@@ -987,7 +991,7 @@ export default function CalculationPage() {
                     </TableBody>
                   </Table>
                 </div>
-                <div className={'text-lg font-bold'}>{t('nav:garnishes')}</div>
+                <h3 className="text-xs font-semibold tracking-wide text-base-content/60 uppercase">{t('nav:garnishes')}</h3>
                 <div className={'overflow-x-auto'}>
                   <Table compact className="w-full">
                     <TableHead>
@@ -1021,8 +1025,8 @@ export default function CalculationPage() {
                     </TableBody>
                   </Table>
                 </div>
-              </CardBody>
-            </Card>
+              </FormSection>
+            </div>
           </div>
         </div>
       )}

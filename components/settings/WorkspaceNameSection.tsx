@@ -1,7 +1,8 @@
 import React, { useContext, useState } from 'react';
 import { useReportUnsavedChanges } from '@lib/forms/useUnsavedChanges';
 import { useTranslation } from 'react-i18next';
-import { Button, FormControl, Input, Label, LabelText, LabelTextAlt, Loading } from '@components/ui';
+import { Button, Input, Loading } from '@components/ui';
+import { FormField } from '@components/forms/FormField';
 import { UserContext } from '@lib/context/UserContextProvider';
 import { updateWorkspace } from '@lib/network/workspaces';
 import { alertApiV1Error } from '@lib/network/apiV1';
@@ -51,13 +52,9 @@ export function WorkspaceNameSection({ workspaceId }: { workspaceId: string }) {
         </Button>
       }
     >
-      <FormControl>
-        <Label htmlFor="workspace-name" className="justify-between">
-          <LabelText className="font-semibold">{t('common:name')}</LabelText>
-          <LabelTextAlt className="text-error">{invalid ? t('settings:general.nameInvalid') : ''}</LabelTextAlt>
-        </Label>
+      <FormField label={t('common:name')} htmlFor="workspace-name" required error={invalid ? t('settings:general.nameInvalid') : undefined}>
         <Input id="workspace-name" value={name} maxLength={NAME_MAX_LENGTH} error={invalid} onChange={(event) => setDraft(event.target.value)} />
-      </FormControl>
+      </FormField>
     </SettingsSection>
   );
 }

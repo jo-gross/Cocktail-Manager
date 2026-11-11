@@ -37,5 +37,6 @@
     "imageScale": "Image could not be scaled.",
     "imageAutoCrop": "Image could not be auto-cropped.",
     "fileSelect": "File could not be selected."
-  }
+  },
+  "volumesHint": "How much of a unit the price covers (e.g. 70 cl per bottle) – this yields the price per unit."
 }

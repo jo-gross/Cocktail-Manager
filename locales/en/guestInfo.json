@@ -9,8 +9,8 @@
     "FISH": "Fish",
     "PEANUTS": "Peanuts",
     "SOY": "Soybeans",
-    "MILK": "Milk (incl. lactose)",
-    "NUTS": "Tree nuts",
+    "MILK": "Milk (including lactose)",
+    "NUTS": "Nuts",
     "CELERY": "Celery",
     "MUSTARD": "Mustard",
     "SESAME": "Sesame seeds",
@@ -18,37 +18,21 @@
     "LUPIN": "Lupin",
     "MOLLUSCS": "Molluscs"
   },
-  "allergenShort": {
-    "GLUTEN": "Gluten",
-    "CRUSTACEANS": "Crustaceans",
-    "EGGS": "Egg",
-    "FISH": "Fish",
-    "PEANUTS": "Peanut",
-    "SOY": "Soy",
-    "MILK": "Milk",
-    "NUTS": "Nuts",
-    "CELERY": "Celery",
-    "MUSTARD": "Mustard",
-    "SESAME": "Sesame",
-    "SULPHITES": "Sulphites",
-    "LUPIN": "Lupin",
-    "MOLLUSCS": "Molluscs"
-  },
-  "allergenWithout": {
-    "GLUTEN": "Gluten-free",
-    "CRUSTACEANS": "No crustaceans",
-    "EGGS": "No egg",
-    "FISH": "No fish",
-    "PEANUTS": "No peanuts",
-    "SOY": "No soy",
-    "MILK": "No milk",
-    "NUTS": "No nuts",
-    "CELERY": "No celery",
-    "MUSTARD": "No mustard",
-    "SESAME": "No sesame",
-    "SULPHITES": "No sulphites",
-    "LUPIN": "No lupin",
-    "MOLLUSCS": "No molluscs"
+  "allergenSource": {
+    "WHEAT": "Wheat",
+    "SPELT": "Spelt",
+    "KHORASAN_WHEAT": "Khorasan wheat",
+    "RYE": "Rye",
+    "BARLEY": "Barley",
+    "OATS": "Oats",
+    "ALMONDS": "Almonds",
+    "HAZELNUTS": "Hazelnuts",
+    "WALNUTS": "Walnuts",
+    "CASHEWS": "Cashews",
+    "PECANS": "Pecan nuts",
+    "BRAZIL_NUTS": "Brazil nuts",
+    "PISTACHIOS": "Pistachio nuts",
+    "MACADAMIA_NUTS": "Macadamia nuts"
   },
   "additive": {
     "COLORING": "with colouring",
@@ -117,7 +101,15 @@
     "incompleteSources": "Information incomplete: {{list}}",
     "dilution": "Dilution (%)",
     "dilutionHint": "Used for the alcohol calculation. Empty = default ({{value}} %)",
-    "abvRange": "Value between 0 and 100"
+    "abvRange": "Value between 0 and 100",
+    "overrideTitle": "Adjust guest information",
+    "overrideHint": "Overrides the values derived from the ingredients – only needed if they are wrong.",
+    "overridesActive": "Adjusted",
+    "allergenSources": {
+      "GLUTEN": "Which cereals?",
+      "NUTS": "Which nuts?",
+      "hint": "Optional – shown in brackets after the allergen, e.g. “Cereals containing gluten (wheat)”."
+    }
   },
   "maintenance": {
     "title": "Guest information",

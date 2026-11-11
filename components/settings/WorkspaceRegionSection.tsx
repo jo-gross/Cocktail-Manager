@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useReportUnsavedChanges } from '@lib/forms/useUnsavedChanges';
 import { useTranslation } from 'react-i18next';
-import { Button, FormControl, Input, Label, LabelText, Loading, Select, Skeleton } from '@components/ui';
+import { Button, Input, Loading, Select, Skeleton } from '@components/ui';
+import { FormField } from '@components/forms/FormField';
 import { alertService } from '@lib/alertService';
 import { alertApiV1Error } from '@lib/network/apiV1';
 import { getWorkspaceSettings, updateWorkspaceSetting } from '@lib/network/workspaces';
@@ -92,10 +93,7 @@ export function WorkspaceRegionSection({ workspaceId }: { workspaceId: string })
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
-          <FormControl>
-            <Label htmlFor="workspace-timezone">
-              <LabelText className="font-semibold">{t('settings:timezone')}</LabelText>
-            </Label>
+          <FormField label={t('settings:timezone')} htmlFor="workspace-timezone">
             <Select
               id="workspace-timezone"
               value={values.timezone}
@@ -107,12 +105,9 @@ export function WorkspaceRegionSection({ workspaceId }: { workspaceId: string })
                 </option>
               ))}
             </Select>
-          </FormControl>
+          </FormField>
 
-          <FormControl>
-            <Label htmlFor="workspace-currency">
-              <LabelText className="font-semibold">{t('settings:currency')}</LabelText>
-            </Label>
+          <FormField label={t('settings:currency')} htmlFor="workspace-currency">
             <Select
               id="workspace-currency"
               value={values.currency}
@@ -124,19 +119,16 @@ export function WorkspaceRegionSection({ workspaceId }: { workspaceId: string })
                 </option>
               ))}
             </Select>
-          </FormControl>
+          </FormField>
 
-          <FormControl>
-            <Label htmlFor="workspace-day-start">
-              <LabelText className="font-semibold">{t('settings:dayStartTime')}</LabelText>
-            </Label>
+          <FormField label={t('settings:dayStartTime')} htmlFor="workspace-day-start">
             <Input
               id="workspace-day-start"
               type="time"
               value={values.dayStart}
               onChange={(event) => setValues((previous) => ({ ...previous, dayStart: event.target.value }))}
             />
-          </FormControl>
+          </FormField>
 
           <p className="text-sm text-base-content/70 md:col-span-2">
             {t('settings:dayStartHelp')} {t('settings:timezoneHelp')}

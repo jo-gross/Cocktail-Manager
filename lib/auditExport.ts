@@ -1,5 +1,5 @@
 import { CocktailExportStructure } from '../types/CocktailExportStructure';
-import type { Additive, Allergen } from '@generated/prisma/client';
+import type { Additive, Allergen, AllergenSource } from '@generated/prisma/client';
 
 // ────────────── EXPORT STRUCTURE INTERFACES ──────────────
 
@@ -26,6 +26,7 @@ export interface GarnishExportStructure {
     notes?: string | null;
     price?: number | null;
     allergens?: Allergen[];
+    allergenSources?: AllergenSource[];
     additives?: Additive[];
     guestInfoComplete?: boolean;
     workspaceId: string;
@@ -46,6 +47,7 @@ export interface IngredientExportStructure {
     tags?: string[];
     abv?: number | null;
     allergens?: Allergen[];
+    allergenSources?: AllergenSource[];
     additives?: Additive[];
     guestInfoComplete?: boolean;
     hideOnGuestMenu?: boolean;
@@ -223,6 +225,7 @@ export function buildCocktailExport(rawData: Record<string, unknown>, version: s
               tags: (ingredient.tags ?? []) as string[],
               abv: numNull(ingredient.abv),
               allergens: arr(ingredient.allergens),
+              allergenSources: arr(ingredient.allergenSources),
               additives: arr(ingredient.additives),
               guestInfoComplete: (ingredient.guestInfoComplete ?? false) as boolean,
               hideOnGuestMenu: (ingredient.hideOnGuestMenu ?? false) as boolean,
@@ -260,6 +263,7 @@ export function buildCocktailExport(rawData: Record<string, unknown>, version: s
           notes: strNull(garnish.notes),
           price: numNull(garnish.price),
           allergens: arr(garnish.allergens),
+          allergenSources: arr(garnish.allergenSources),
           additives: arr(garnish.additives),
           guestInfoComplete: (garnish.guestInfoComplete ?? false) as boolean,
           workspaceId: str(garnish.workspaceId || recipe.workspaceId),
@@ -348,6 +352,7 @@ export function buildGarnishExport(rawData: Record<string, unknown>, version: st
       notes: strNull(rawData.notes),
       price: numNull(rawData.price),
       allergens: arr(rawData.allergens),
+      allergenSources: arr(rawData.allergenSources),
       additives: arr(rawData.additives),
       guestInfoComplete: (rawData.guestInfoComplete ?? false) as boolean,
       workspaceId: str(rawData.workspaceId),
@@ -399,6 +404,7 @@ export function buildIngredientExport(rawData: Record<string, unknown>, version:
       tags: (rawData.tags ?? []) as string[],
       abv: numNull(rawData.abv),
       allergens: arr(rawData.allergens),
+      allergenSources: arr(rawData.allergenSources),
       additives: arr(rawData.additives),
       guestInfoComplete: (rawData.guestInfoComplete ?? false) as boolean,
       hideOnGuestMenu: (rawData.hideOnGuestMenu ?? false) as boolean,

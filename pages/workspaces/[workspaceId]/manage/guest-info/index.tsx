@@ -20,8 +20,6 @@ import {
   CardBody,
   Checkbox,
   Input,
-  Label,
-  LabelText,
   Loading,
   SkeletonTableRows,
   Tab,
@@ -32,8 +30,8 @@ import {
   TableHeaderCell,
   TableRow,
   Tabs,
-  Toggle,
 } from '@components/ui';
+import { ToggleField } from '@components/forms/ToggleField';
 
 type Kind = 'ingredients' | 'garnishes';
 type IngredientRow = GuestInfoOverviewIngredient & { abvInput: number | string };
@@ -222,10 +220,7 @@ const ManageGuestInfoPage: NextPageWithPullToRefresh = () => {
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
               />
-              <Label className="cursor-pointer flex-row items-center gap-2">
-                <Toggle checked={onlyIncomplete} onChange={(event) => setOnlyIncomplete(event.target.checked)} toggleSize="sm" />
-                <LabelText>{t('guestInfo:maintenance.onlyIncomplete')}</LabelText>
-              </Label>
+              <ToggleField toggleSize="sm" label={t('guestInfo:maintenance.onlyIncomplete')} checked={onlyIncomplete} onCheckedChange={setOnlyIncomplete} />
             </div>
           </div>
 

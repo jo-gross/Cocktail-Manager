@@ -3,26 +3,14 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { SortableContext, rectSortingStrategy } from '@dnd-kit/sortable';
 import { FieldArray, FormikErrors } from 'formik';
-import { FaAngleDown, FaAngleUp, FaEuroSign, FaTrashAlt } from 'react-icons/fa';
+import { FaPlus, FaTrashAlt } from 'react-icons/fa';
 import CocktailRecipeCardItem from '@components/cocktails/CocktailRecipeCardItem';
 import { SearchModal } from '@components/modals/SearchModal';
 import { DeleteConfirmationModal } from '@components/modals/DeleteConfirmationModal';
 import type { CocktailSummaryDto } from '@lib/schemas/cocktails';
 import { useTranslation } from 'react-i18next';
-import {
-  Button,
-  ButtonGroup,
-  Card,
-  CardBody,
-  Collapse,
-  CollapseContent,
-  CollapseTitle,
-  FormControl,
-  Input,
-  Label,
-  LabelText,
-  LabelTextAlt,
-} from '@components/ui';
+import { Button, ButtonGroup, Card, CardBody, Collapse, CollapseContent, CollapseTitle, Input, InputAddon } from '@components/ui';
+import { FormField } from '@components/forms/FormField';
 import { CardGroupItem } from './CardGroupItem';
 import { DragHandle } from './CardEditorToolbar';
 import { CardEditorGroup, CardEditorViewMode } from './types';
@@ -47,8 +35,6 @@ interface CardGroupSectionProps {
   values: { groups: CardEditorGroup[] };
   onFieldChange: React.ChangeEventHandler<HTMLInputElement>;
   onFieldBlur: React.FocusEventHandler<HTMLInputElement>;
-  onMoveGroupUp: () => void;
-  onMoveGroupDown: () => void;
   onRemoveGroup: () => void;
   onReorderItems: (items: CardEditorGroup['items']) => void;
   openModal: (modal: React.ReactNode) => void;
@@ -68,8 +54,6 @@ export function CardGroupSection({
   values,
   onFieldChange,
   onFieldBlur,
-  onMoveGroupUp,
-  onMoveGroupDown,
   onRemoveGroup,
   onReorderItems,
   openModal,
@@ -96,67 +80,59 @@ export function CardGroupSection({
     </div>
   ) : null;
 
+  const nameError = errors?.name && touched?.name ? errors.name : undefined;
+  const priceError = errors?.groupPrice && touched?.groupPrice ? errors.groupPrice : undefined;
+
   const nameField = (
-    <FormControl className={stackHeader ? undefined : 'sm:flex-2'}>
-      <Label className="flex-row items-center justify-between">
-        <LabelText>{t('group')}</LabelText>
-        <LabelTextAlt className="text-error">
-          <span>{errors?.name && touched?.name ? errors.name : ''}</span>
-          <span>*</span>
-        </LabelTextAlt>
-      </Label>
+    <FormField label={t('group')} htmlFor={`group-${groupIndex}-name`} required error={nameError} className={stackHeader ? undefined : 'sm:flex-2'}>
       <Input
-        type="text"
+        id={`group-${groupIndex}-name`}
+        autoComplete="off"
         disabled={isArchived}
-        className={`w-full ${errors?.name && touched?.name ? 'border-error' : ''}`}
+        error={!!nameError}
         name={`groups.${groupIndex}.name`}
         onChange={onFieldChange}
         onBlur={onFieldBlur}
         value={values.groups[groupIndex].name}
       />
-    </FormControl>
+    </FormField>
   );
 
   const priceField = (
-    <FormControl className={stackHeader ? undefined : 'sm:flex-1'}>
-      <Label className="flex-row items-center justify-between">
-        <LabelText>{t('groupPrice')}</LabelText>
-        <LabelTextAlt className="text-error">
-          <span>{errors?.groupPrice && touched?.groupPrice ? errors.groupPrice : ''}</span>
-        </LabelTextAlt>
-      </Label>
+    <FormField label={t('groupPrice')} htmlFor={`group-${groupIndex}-price`} error={priceError} className={stackHeader ? undefined : 'sm:flex-1'}>
       <ButtonGroup className="w-full">
         <Input
+          id={`group-${groupIndex}-price`}
           type="number"
+          inputMode="decimal"
           disabled={isArchived}
           min={0}
           step={0.01}
           joinItem
-          className={`w-full ${errors?.groupPrice && touched?.groupPrice ? 'border-error' : ''}`}
+          error={!!priceError}
           name={`groups.${groupIndex}.groupPrice`}
           onChange={onFieldChange}
           onBlur={onFieldBlur}
           value={values.groups[groupIndex].groupPrice ?? ''}
         />
-        <Button type="button" variant="primary" joinItem tabIndex={-1}>
-          <FaEuroSign />
-        </Button>
+        <InputAddon>€</InputAddon>
       </ButtonGroup>
-    </FormControl>
+    </FormField>
   );
 
+  // Reordering happens via the drag handle (touch, mouse, keyboard) – no extra up/down buttons.
   const actionButtons = !isArchived ? (
-    <div className="flex shrink-0 space-x-2">
-      <Button type="button" variant="outline" shape="square" size="sm" disabled={groupIndex === 0} onClick={onMoveGroupUp}>
-        <FaAngleUp />
-      </Button>
-      <Button type="button" variant="outline" shape="square" size="sm" disabled={groupIndex === values.groups.length - 1} onClick={onMoveGroupDown}>
-        <FaAngleDown />
-      </Button>
-      <Button type="button" variant="outline-error" shape="square" size="sm" onClick={onRemoveGroup}>
-        <FaTrashAlt />
-      </Button>
-    </div>
+    <Button
+      type="button"
+      variant="ghost"
+      shape="square"
+      className="shrink-0 text-error hover:bg-error/10"
+      aria-label={`${t('common:remove')}: ${group.name || t('group')}`}
+      title={t('common:remove')}
+      onClick={onRemoveGroup}
+    >
+      <FaTrashAlt aria-hidden />
+    </Button>
   ) : null;
 
   const renderPreview = () => (
@@ -225,9 +201,9 @@ export function CardGroupSection({
             {priceField}
           </div>
         ) : (
-          <div className="flex items-center gap-2">
+          <div className="flex items-end gap-2">
             {dragHandle}
-            <div className="flex flex-1 flex-col gap-2 sm:flex-row">
+            <div className="flex flex-1 flex-col gap-3 sm:flex-row">
               {nameField}
               {priceField}
             </div>
@@ -291,27 +267,26 @@ export function CardGroupSection({
                 </div>
               </SortableContext>
               {!isArchived ? (
-                <div className="flex flex-row justify-end">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="border-secondary text-secondary hover:bg-secondary/10"
-                    onClick={() =>
-                      openModal(
-                        <SearchModal
-                          selectedCocktails={sortedItems.map((entry) => entry.cocktailId)}
-                          onCocktailSelectedObject={(cocktail) => {
-                            pushItem({ cocktailId: cocktail.id, itemNumber: sortedItems.length });
-                          }}
-                          selectionLabel={t('common:add')}
-                        />,
-                      )
-                    }
-                  >
-                    {t('addCocktail')}
-                  </Button>
-                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  block
+                  className="border-dashed"
+                  onClick={() =>
+                    openModal(
+                      <SearchModal
+                        selectedCocktails={sortedItems.map((entry) => entry.cocktailId)}
+                        onCocktailSelectedObject={(cocktail) => {
+                          pushItem({ cocktailId: cocktail.id, itemNumber: sortedItems.length });
+                        }}
+                        selectionLabel={t('common:add')}
+                      />,
+                    )
+                  }
+                >
+                  <FaPlus aria-hidden />
+                  {t('addCocktail')}
+                </Button>
               ) : null}
             </>
           )}

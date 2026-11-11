@@ -1,22 +1,19 @@
 import { Formik, FormikProps } from 'formik';
-import { UploadDropZone } from '../UploadDropZone';
-import { convertBase64ToFile, convertToBase64, fetchImageAsBase64 } from '@lib/Base64Converter';
+import { convertBase64ToFile, fetchImageAsBase64 } from '@lib/Base64Converter';
 import { useRouter } from 'next/router';
-import { FaTrashAlt } from 'react-icons/fa';
 import React, { useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { alertService } from '@lib/alertService';
-import { DeleteConfirmationModal } from '../modals/DeleteConfirmationModal';
-import { ModalContext } from '@lib/context/ModalContextProvider';
 import type { GlassDto } from '@lib/schemas/glasses';
-import Image from 'next/image';
-import CropComponent from '../CropComponent';
-import { FaCropSimple } from 'react-icons/fa6';
 import { RoutingContext } from '@lib/context/RoutingContextProvider';
 import { FormikDirtyReporter } from '@lib/forms/FormikDirtyReporter';
 import { useUnsavedChangesContext } from '@lib/forms/useUnsavedChanges';
-import { resizeImage } from '@lib/ImageCompressor';
-import { Button, ButtonGroup, Divider, FormControl, Input, Label, LabelText, LabelTextAlt, Loading } from '@components/ui';
+import { ButtonGroup, Input, InputAddon, Loading } from '@components/ui';
+import { EntityFormLayout } from '@components/forms/EntityFormLayout';
+import { FormSection } from '@components/forms/FormSection';
+import { FormField, visibleFieldError } from '@components/forms/FormField';
+import { FormSaveButton } from '@components/forms/FormSaveButton';
+import { FormikImageTile } from '@components/forms/FormikImageTile';
 import { z } from 'zod';
 import { zodFormikValidate } from '@lib/forms/zodFormikValidate';
 import { alertApiV1Error } from '@lib/network/apiV1';
@@ -51,10 +48,9 @@ function createGlassFormSchema(requiredMessage: string, imageNotCroppedMessage: 
 interface GlassFormProps {
   glass?: GlassDto;
   formRef?: React.RefObject<FormikProps<GlassFormValues> | null>;
+  /** Embedded use (e.g. "create glass" from the cocktail form): called instead of redirecting. */
   onSaved?: (id: string) => void;
 }
-
-const fieldErrorClass = 'border-error focus:border-error focus:ring-error/25';
 
 /** Persisted part of the values (mirrors `onSubmit`, where volume 0 means "no volume"). */
 function toComparableGlass(values: GlassFormValues) {
@@ -70,11 +66,11 @@ export function GlassForm(props: GlassFormProps) {
   const { t } = useTranslation(['manage', 'common', 'entity', 'errors']);
   const router = useRouter();
   const { workspaceId } = router.query;
-  const modalContext = useContext(ModalContext);
   const routingContext = useContext(RoutingContext);
   const unsavedChanges = useUnsavedChangesContext();
 
   const formRef = props.formRef;
+  const embedded = props.onSaved != undefined;
 
   const [similarGlass, setSimilarGlass] = useState<Pick<GlassDto, 'id' | 'name'> | undefined>(undefined);
 
@@ -163,200 +159,99 @@ export function GlassForm(props: GlassFormProps) {
         return zodFormikValidate(createGlassFormSchema(t('errors:requiredField'), t('common:imageNotCropped')))(values);
       }}
     >
-      {({ values, setFieldValue, errors, handleChange, handleBlur, handleSubmit, isSubmitting, isValid }) => (
-        <form onSubmit={handleSubmit} className={'grid w-full grid-cols-1 gap-2 md:max-w-4xl md:grid-cols-2'}>
-          <FormikDirtyReporter toComparable={toComparableGlass} />
-          <FormControl className={'col-span-full'}>
-            <Label htmlFor={'name'} className="flex-row items-center justify-between">
-              <LabelText>{t('common:name')}</LabelText>
-              <LabelTextAlt className={'space-x-2 text-error'}>
-                <span>
-                  <>{errors.name && errors.name}</>
-                </span>
-                <span>*</span>
-              </LabelTextAlt>
-            </Label>
-            <TranslatedFieldTabs translations={contentTranslations} field="name" sourceValue={values.name}>
-              <Input
-                id={'name'}
-                name={'name'}
-                value={values.name}
-                autoComplete={'off'}
-                type={'text'}
-                placeholder={t('common:name')}
-                className={errors.name ? fieldErrorClass : undefined}
-                onChange={(event) => {
-                  if (event.target.value.length > 2 && workspaceId) {
-                    checkGlassName(workspaceId, event.target.value)
-                      .then((match) => {
-                        if (match != null && match.id != props.glass?.id) {
-                          setSimilarGlass(match);
-                        } else {
-                          setSimilarGlass(undefined);
-                        }
-                      })
-                      .catch(() => setSimilarGlass(undefined));
-                  } else {
-                    setSimilarGlass(undefined);
-                  }
-                  handleChange(event);
-                }}
-                onBlur={handleBlur}
-              />
-            </TranslatedFieldTabs>
-            {similarGlass && (
-              <Label className="flex-row">
-                <LabelTextAlt className="text-warning">{t('manage:glassForm.similarExists', { name: similarGlass.name })}</LabelTextAlt>
-              </Label>
-            )}
-          </FormControl>
-
-          <FormControl>
-            <Label htmlFor={'deposit'} className="flex-row items-center justify-between">
-              <LabelText>{t('common:deposit')}</LabelText>
-              <LabelTextAlt className={'space-x-2 text-error'}>
-                <span>
-                  <>{errors.deposit && errors.deposit}</>
-                </span>
-              </LabelTextAlt>
-            </Label>
-            <ButtonGroup className="w-full">
-              <Input
-                id={'deposit'}
-                type={'number'}
-                placeholder={t('common:deposit')}
-                className={errors.deposit ? fieldErrorClass : undefined}
-                joinItem
-                value={values.deposit}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                name={'deposit'}
-              />
-              <Button type="button" variant="secondary" joinItem>
-                €
-              </Button>
-            </ButtonGroup>
-          </FormControl>
-          <FormControl>
-            <Label htmlFor={'volume'} className="flex-row items-center justify-between">
-              <LabelText>{t('common:volume')}</LabelText>
-            </Label>
-            <ButtonGroup className="w-full">
-              <Input
-                id={'volume'}
-                type={'number'}
-                placeholder={'38cl'}
-                joinItem
-                value={values.volume}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                name={'volume'}
-              />
-              <Button type="button" variant="secondary" joinItem>
-                {t('common:cl')}
-              </Button>
-            </ButtonGroup>
-          </FormControl>
-          <div className="col-span-full flex items-center gap-3 py-2">
-            <Divider className="my-0 flex-1" />
-            <span className="shrink-0 text-sm font-medium text-base-content/70">{t('common:display')}</span>
-            <Divider className="my-0 flex-1" />
-          </div>
-          <FormControl className={'col-span-full'}>
-            {values.image != undefined ? (
-              <Label className="flex-row">
-                <LabelText>{t('common:imagePreview')}</LabelText>
-              </Label>
-            ) : (
-              <></>
-            )}
-            {values.image == undefined && values.originalImage == undefined ? (
-              <UploadDropZone
-                onSelectedFilesChanged={async (file) => {
-                  if (file != undefined) {
-                    await setFieldValue('originalImage', file);
-                    await setFieldValue('image', undefined);
-                  } else {
-                    alertService.error(t('common:fileSelectError'));
-                  }
-                }}
-              />
-            ) : values.image == undefined && values.originalImage != undefined ? (
-              <div className={'w-full'}>
-                <CropComponent
-                  isValid={isValid}
-                  aspect={1}
-                  imageToCrop={values.originalImage}
-                  onCroppedImageComplete={async (file) => {
-                    resizeImage(file, 400, 400, async (compressedImageFile) => {
-                      if (compressedImageFile) {
-                        await setFieldValue('image', await convertToBase64(new File([compressedImageFile], 'image.png', { type: 'image/png' })));
-                      } else {
-                        alertService.error(t('common:imageScaleError'));
-                      }
-                    });
-                  }}
-                  onCropCancel={async () => {
-                    await setFieldValue('originalImage', undefined);
-                    await setFieldValue('image', undefined);
-                  }}
-                />
-              </div>
-            ) : (
-              <div className={'relative'}>
-                <div className={'absolute top-2 right-2 flex flex-row gap-2'}>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    shape="square"
-                    size="sm"
-                    onClick={async () => {
-                      await setFieldValue('image', undefined);
-                    }}
-                  >
-                    <FaCropSimple />
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    shape="square"
-                    size="sm"
-                    className="border-error text-error hover:bg-error/10"
-                    onClick={() =>
-                      modalContext.openModal(
-                        <DeleteConfirmationModal
-                          spelling={'REMOVE'}
-                          entityName={t('entity:theImage')}
-                          onApprove={async () => {
-                            await setFieldValue('image', undefined);
-                            await setFieldValue('originalImage', undefined);
+      {(formik) => {
+        const { values, handleChange, handleBlur, handleSubmit } = formik;
+        const nameError = visibleFieldError(formik, 'name');
+        const depositError = visibleFieldError(formik, 'deposit');
+        const volumeError = visibleFieldError(formik, 'volume');
+        return (
+          <form onSubmit={handleSubmit} noValidate>
+            <FormikDirtyReporter toComparable={toComparableGlass} />
+            <FormSaveButton label={props.glass ? t('common:save') : t('common:create')} />
+            <EntityFormLayout embedded={embedded}>
+              <FormSection title={t('common:form.section.general')}>
+                <div className="flex flex-col gap-4 @lg:flex-row @lg:items-start">
+                  <FormikImageTile aspect={1} width={400} height={400} alt={t('common:glassImageAlt')} cropInfo={t('manage:glassForm.imageCropInfo')} />
+                  <div className="flex min-w-0 flex-1 flex-col gap-4">
+                    <FormField
+                      label={t('common:name')}
+                      htmlFor="name"
+                      required
+                      error={nameError}
+                      warning={similarGlass ? t('manage:glassForm.similarExists', { name: similarGlass.name }) : undefined}
+                    >
+                      <TranslatedFieldTabs translations={contentTranslations} field="name" sourceValue={values.name}>
+                        <Input
+                          id={'name'}
+                          name={'name'}
+                          value={values.name}
+                          autoComplete={'off'}
+                          enterKeyHint={'next'}
+                          error={!!nameError}
+                          onChange={(event) => {
+                            if (event.target.value.length > 2 && workspaceId) {
+                              checkGlassName(workspaceId, event.target.value)
+                                .then((match) => {
+                                  if (match != null && match.id != props.glass?.id) {
+                                    setSimilarGlass(match);
+                                  } else {
+                                    setSimilarGlass(undefined);
+                                  }
+                                })
+                                .catch(() => setSimilarGlass(undefined));
+                            } else {
+                              setSimilarGlass(undefined);
+                            }
+                            handleChange(event);
                           }}
-                        />,
-                      )
-                    }
-                  >
-                    <FaTrashAlt />
-                  </Button>
+                          onBlur={handleBlur}
+                        />
+                      </TranslatedFieldTabs>
+                    </FormField>
+                    <div className="grid grid-cols-1 gap-4 @md:grid-cols-2">
+                      <FormField label={t('common:deposit')} htmlFor="deposit" error={depositError}>
+                        <ButtonGroup className="w-full">
+                          <Input
+                            id={'deposit'}
+                            name={'deposit'}
+                            type={'number'}
+                            inputMode={'decimal'}
+                            step={'any'}
+                            joinItem
+                            error={!!depositError}
+                            value={values.deposit}
+                            onChange={handleChange}
+                            onBlur={handleBlur}
+                          />
+                          <InputAddon>€</InputAddon>
+                        </ButtonGroup>
+                      </FormField>
+                      <FormField label={t('common:volume')} htmlFor="volume" error={volumeError}>
+                        <ButtonGroup className="w-full">
+                          <Input
+                            id={'volume'}
+                            name={'volume'}
+                            type={'number'}
+                            inputMode={'decimal'}
+                            step={'any'}
+                            placeholder={'38'}
+                            joinItem
+                            error={!!volumeError}
+                            value={values.volume}
+                            onChange={handleChange}
+                            onBlur={handleBlur}
+                          />
+                          <InputAddon>{t('common:cl')}</InputAddon>
+                        </ButtonGroup>
+                      </FormField>
+                    </div>
+                  </div>
                 </div>
-                <div className={'bg-transparent-pattern relative h-32 w-32 rounded-lg'}>
-                  <Image className={'w-fit rounded-lg'} src={values.image ?? ''} layout={'fill'} objectFit={'contain'} alt={t('common:glassImageAlt')} />
-                </div>
-                <div className={'pt-2 font-thin italic'}>{t('manage:glassForm.imageCropInfo')}</div>
-              </div>
-            )}
-          </FormControl>
-          <Divider className="col-span-full" />
-          <div className={'col-span-full'}>
-            <FormControl>
-              <Button disabled={isSubmitting || !isValid} type={'submit'} variant="primary">
-                {isSubmitting ? <Loading size="sm" /> : null}
-                {t('common:save')}
-              </Button>
-            </FormControl>
-            {!isValid && <div className={'font-thin text-error italic'}>{t('common:formIncomplete')}</div>}
-          </div>
-        </form>
-      )}
+              </FormSection>
+            </EntityFormLayout>
+          </form>
+        );
+      }}
     </Formik>
   );
 }

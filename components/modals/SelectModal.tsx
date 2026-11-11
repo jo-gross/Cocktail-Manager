@@ -3,7 +3,7 @@ import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import { alertService } from '@lib/alertService';
 import { useTranslation } from 'react-i18next';
-import { Button, ButtonGroup, Input, Loading } from '@components/ui';
+import { ButtonGroup, Input, InputAddon, Loading } from '@components/ui';
 
 interface SelectModalProps<T> {
   title: string;
@@ -56,12 +56,17 @@ export function SelectModal<T>(props: SelectModalProps<T>) {
   }, [fetchElements]);
 
   return (
-    <div className={'grid w-full grid-cols-1 gap-2 p-0.5 md:p-2'}>
-      <div className={'w-max text-2xl font-bold'}>{props.title}</div>
-      <ButtonGroup className="pb-2">
+    <div className="flex w-[min(36rem,calc(100vw-3rem))] flex-col gap-3">
+      <h2 className="pr-10 text-2xl font-bold">{props.title}</h2>
+      <ButtonGroup>
+        <InputAddon aria-hidden>
+          <BsSearch />
+        </InputAddon>
         <Input
           joinItem
-          className="w-full"
+          type="search"
+          aria-label={props.title}
+          placeholder={t('common:search')}
           value={search}
           autoFocus={true}
           onChange={async (e) => {
@@ -71,49 +76,38 @@ export function SelectModal<T>(props: SelectModalProps<T>) {
             }
           }}
         />
-        <Button joinItem variant="outline" shape="square" type="button" tabIndex={-1}>
-          <BsSearch />
-        </Button>
       </ButtonGroup>
-      <>
-        {isLoading ? (
-          <Loading />
-        ) : elements.length == 0 ? (
-          search != '' ? (
-            <div>{t('common:noEntriesFound')}</div>
-          ) : (
-            <div>{t('common:pleaseEnterSearch')}</div>
-          )
-        ) : (
-          elements.sort(props.compareFunction).map((element, index) => {
+      {isLoading ? (
+        <Loading />
+      ) : elements.length == 0 ? (
+        <p className="py-4 text-center text-sm text-base-content/60">{search != '' ? t('common:noEntriesFound') : t('common:pleaseEnterSearch')}</p>
+      ) : (
+        // The whole row is the tap target (≥ 56px) instead of a small "Select" button.
+        <ul className="flex flex-col gap-2">
+          {elements.sort(props.compareFunction).map((element, index) => {
             const isSelected = isElementSelected(element);
             return (
-              <div
-                key={'select-modal-' + index}
-                tabIndex={index}
-                className={`rounded-box border border-base-300 bg-base-100 ${isSelected ? 'opacity-60' : ''}`}
-              >
-                <div className={`md:p-3' flex justify-between p-2 text-xl font-medium`}>
-                  {props.elementComponent(element)}
-                  <Button
-                    type="button"
-                    disabled={isSelected}
-                    variant="primary"
-                    size="sm"
-                    onClick={() => {
-                      props.onElementSelected?.(element);
-                      setSearch('');
-                      modalContext.closeModal();
-                    }}
-                  >
-                    {props.selectionLabel ?? t('common:select')}
-                  </Button>
-                </div>
-              </div>
+              <li key={'select-modal-' + index}>
+                <button
+                  type="button"
+                  disabled={isSelected}
+                  onClick={() => {
+                    props.onElementSelected?.(element);
+                    setSearch('');
+                    modalContext.closeModal();
+                  }}
+                  className="flex min-h-14 w-full cursor-pointer items-center justify-between gap-3 rounded-xl border border-base-300 bg-base-100 px-4 py-2 text-left text-lg font-medium transition-colors hover:bg-base-200 focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none disabled:cursor-default disabled:opacity-60"
+                >
+                  <span className="min-w-0 flex-1">{props.elementComponent(element)}</span>
+                  <span className="shrink-0 text-sm font-medium text-primary">
+                    {isSelected ? t('common:selected') : (props.selectionLabel ?? t('common:select'))}
+                  </span>
+                </button>
+              </li>
             );
-          })
-        )}
-      </>
+          })}
+        </ul>
+      )}
     </div>
   );
 }

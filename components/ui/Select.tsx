@@ -12,7 +12,8 @@ export interface SelectProps extends Omit<React.SelectHTMLAttributes<HTMLSelectE
 }
 
 const selectSizeClasses: Record<SelectSize, string> = {
-  sm: 'min-h-9 h-9 pl-2.5 pr-8 text-sm',
+  // 44px on touch screens, like `md`.
+  sm: 'min-h-9 h-9 pl-2.5 pr-8 text-sm pointer-coarse:min-h-11 pointer-coarse:h-11',
   md: 'min-h-11 h-11 pl-3 pr-9 text-sm',
 };
 
@@ -24,6 +25,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select
   return (
     <select
       ref={ref}
+      aria-invalid={error || undefined}
       className={cn(fieldClassName({ error, bordered, joinItem }), selectSizeClasses[selectSize], 'cursor-pointer bg-base-100', className)}
       {...props}
     >

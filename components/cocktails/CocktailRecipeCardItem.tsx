@@ -33,6 +33,8 @@ export type CocktailRecipeOverviewItemProps = {
   showHistory?: boolean;
   showStatisticActions?: boolean;
   image?: string;
+  /** Replaces the image column, e.g. with an editable image in the recipe form. */
+  imageSlot?: React.ReactNode;
   showRating?: boolean;
   showDetailsOnClick?: boolean;
 };
@@ -145,6 +147,7 @@ const CocktailRecipeCardItem = forwardRef<CocktailRecipeOverviewItemRef, Cocktai
                   showImage={props.showImage ?? false}
                   showPrice={props.showPrice ?? true}
                   image={props.image}
+                  imageSlot={props.imageSlot}
                   showRating={props.showRating ? { ratings: cocktailRatings, loading: cocktailRatingsLoading, error: cocktailRatingsError } : undefined}
                 />
               </div>

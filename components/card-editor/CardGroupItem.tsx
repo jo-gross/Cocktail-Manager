@@ -7,7 +7,7 @@ import { FaAngleDown, FaAngleLeft, FaAngleRight, FaAngleUp, FaEuroSign, FaTimes,
 import { CompactCocktailRecipeInstruction } from '@components/cocktails/CompactCocktailRecipeInstruction';
 import type { CocktailDto, CocktailSummaryDto } from '@lib/schemas/cocktails';
 import { fetchCocktail } from '@lib/network/cocktails';
-import { Button, ButtonGroup, Card, CardBody, Input, Skeleton } from '@components/ui';
+import { Button, ButtonGroup, Card, CardBody, Input, InputAddon, Skeleton } from '@components/ui';
 import '../../lib/NumberUtils';
 import { DragHandle } from './CardEditorToolbar';
 import { ItemActionMenu } from './ItemActionMenu';
@@ -79,10 +79,18 @@ export function CardGroupItem({
   const moveBackLabel = singleColumn ? t('moveUp') : t('moveLeft');
   const moveForwardLabel = singleColumn ? t('moveDown') : t('moveRight');
 
+  const itemActions = [
+    { label: moveBackLabel, icon: <MoveBackIcon />, onClick: onMoveLeft, disabled: !canMoveLeft },
+    { label: moveForwardLabel, icon: <MoveForwardIcon />, onClick: onMoveRight, disabled: !canMoveRight },
+    { label: t('manage:itemSpecialPrice'), icon: <FaEuroSign />, onClick: () => setEditingSpecialPrice(true), disabled: showSpecialPriceInput },
+    { label: t('delete'), icon: <FaTrashAlt />, onClick: onRemove, isDanger: true },
+  ];
+
   const specialPriceInput = (
     <ButtonGroup className="w-full">
       <Input
         type="number"
+        inputMode="decimal"
         inputSize="sm"
         joinItem
         min={0}
@@ -98,9 +106,7 @@ export function CardGroupItem({
           onSpecialPriceChange(value === '' || !Number.isFinite(Number(value)) ? null : Number(value));
         }}
       />
-      <Button type="button" variant="primary" size="sm" joinItem tabIndex={-1}>
-        <FaEuroSign />
-      </Button>
+      <InputAddon>€</InputAddon>
       {!isArchived ? (
         <Button
           type="button"
@@ -130,16 +136,7 @@ export function CardGroupItem({
         <div className="flex items-center gap-2">
           {!isArchived ? <DragHandle attributes={attributes} listeners={listeners} /> : null}
           <div className="min-w-0 flex-1 truncate font-medium">{cocktail?.name ?? (loadingCocktails ? '…' : t('unknown'))}</div>
-          {!isArchived ? (
-            <ItemActionMenu
-              actions={[
-                { label: moveBackLabel, icon: <MoveBackIcon />, onClick: onMoveLeft, disabled: !canMoveLeft },
-                { label: moveForwardLabel, icon: <MoveForwardIcon />, onClick: onMoveRight, disabled: !canMoveRight },
-                { label: t('manage:itemSpecialPrice'), icon: <FaEuroSign />, onClick: () => setEditingSpecialPrice(true), disabled: showSpecialPriceInput },
-                { label: t('delete'), icon: <FaTrashAlt />, onClick: onRemove, isDanger: true },
-              ]}
-            />
-          ) : null}
+          {!isArchived ? <ItemActionMenu actions={itemActions} /> : null}
         </div>
         {showSpecialPriceInput ? specialPriceInput : null}
       </div>
@@ -152,39 +149,11 @@ export function CardGroupItem({
         {!isArchived ? (
           <div className="flex items-center justify-between gap-2">
             <DragHandle attributes={attributes} listeners={listeners} />
-            <div className="flex justify-end space-x-2">
-              <Button
-                type="button"
-                variant="outline"
-                shape="square"
-                size="sm"
-                disabled={!canMoveLeft}
-                onClick={onMoveLeft}
-                aria-label={moveBackLabel}
-                title={moveBackLabel}
-              >
-                <MoveBackIcon />
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                shape="square"
-                size="sm"
-                disabled={!canMoveRight}
-                onClick={onMoveRight}
-                aria-label={moveForwardLabel}
-                title={moveForwardLabel}
-              >
-                <MoveForwardIcon />
-              </Button>
-              <Button type="button" variant="outline-error" shape="square" size="sm" onClick={onRemove} aria-label={t('delete')} title={t('delete')}>
-                <FaTrashAlt />
-              </Button>
-            </div>
+            <ItemActionMenu actions={itemActions} />
           </div>
         ) : null}
 
-        {!isArchived || hasSpecialPrice ? specialPriceInput : null}
+        {showSpecialPriceInput ? specialPriceInput : null}
 
         {loadedCocktail != undefined ? (
           <CompactCocktailRecipeInstruction
