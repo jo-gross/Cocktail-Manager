@@ -8,6 +8,7 @@ import { z } from '@lib/openapi/zod';
 import { WorkspaceIdParam, DeletionResult } from '@lib/schemas/common';
 import { ApiTags } from '@lib/openapi/tags';
 import type { ResourceApiDoc } from '@lib/openapi/types';
+import { isValidContentLocale } from '@lib/workspace/workspaceLocaleSettings';
 
 /** Public tags DTO — the deduplicated list of tag strings in the workspace. */
 export const TagsDtoSchema = z.array(z.string()).openapi('Tags');
@@ -34,6 +35,12 @@ export const LocalizedTextSchema = z
   .record(z.string(), z.string())
   .openapi('LocalizedText', { description: 'Text per content locale, e.g. { "de": "Fruchtig", "en": "Fruity" }.', example: { de: 'Fruchtig', en: 'Fruity' } });
 
+/** Bounded `LocalizedText` for request bodies. */
+const LocalizedTextInputSchema = z
+  .record(z.string().refine(isValidContentLocale, { message: 'Invalid locale code' }), z.string().max(200))
+  .refine((value) => Object.keys(value).length <= 50, { message: 'At most 50 locales' })
+  .openapi({ description: 'Text per content locale, e.g. { "de": "Fruchtig", "en": "Fruity" }.', example: { de: 'Fruchtig', en: 'Fruity' } });
+
 const TagColorSchema = z
   .string()
   .regex(/^#[0-9a-fA-F]{6}$/, 'Color must be a hex color like #ff8800')
@@ -52,18 +59,20 @@ export const TagCategoryDtoSchema = z
 
 export type TagCategoryDto = z.infer<typeof TagCategoryDtoSchema>;
 
+const TagCategoryOrderSchema = z.number().int().min(0).max(100_000);
+
 export const TagCategoryCreateSchema = z
   .object({
-    name: LocalizedTextSchema,
-    order: z.number().int().optional().openapi({ description: 'Sort order; defaults to the end of the list.' }),
+    name: LocalizedTextInputSchema,
+    order: TagCategoryOrderSchema.optional().openapi({ description: 'Sort order; defaults to the end of the list.' }),
     showAsGuestFilter: z.boolean().optional().openapi({ description: 'Default true.' }),
   })
   .openapi('TagCategoryCreateInput');
 
 export const TagCategoryUpdateSchema = z
   .object({
-    name: LocalizedTextSchema.optional(),
-    order: z.number().int().optional(),
+    name: LocalizedTextInputSchema.optional(),
+    order: TagCategoryOrderSchema.optional(),
     showAsGuestFilter: z.boolean().optional(),
   })
   .openapi('TagCategoryUpdateInput');
@@ -71,12 +80,13 @@ export const TagCategoryUpdateSchema = z
 export const TagCategoriesBulkUpdateSchema = z
   .array(
     z.object({
-      id: z.string().optional().openapi({ description: 'Existing category id; omit to create a new category.' }),
-      name: LocalizedTextSchema,
-      order: z.number().int(),
+      id: z.string().min(1).max(100).optional().openapi({ description: 'Existing category id; omit to create a new category.' }),
+      name: LocalizedTextInputSchema,
+      order: TagCategoryOrderSchema,
       showAsGuestFilter: z.boolean(),
     }),
   )
+  .max(500)
   .openapi('TagCategoriesBulkUpdateInput', { description: 'Categories to upsert (existing categories not listed stay untouched).' });
 
 export const TagCategoryItemParams = WorkspaceIdParam.extend({ categoryId: z.string() });
@@ -104,9 +114,9 @@ export const TagDefinitionsBulkUpdateSchema = z
   .array(
     z
       .object({
-        tag: z.string().min(1),
-        label: LocalizedTextSchema.nullable().optional(),
-        categoryId: z.string().nullable().optional(),
+        tag: z.string().min(1).max(200),
+        label: LocalizedTextInputSchema.nullable().optional(),
+        categoryId: z.string().min(1).max(100).nullable().optional(),
         color: TagColorSchema.optional(),
         isPublic: z.boolean().optional(),
       })
@@ -147,7 +157,7 @@ export const tagCategoriesCollectionApiDoc = {
       params: WorkspaceIdParam,
       body: TagCategoriesBulkUpdateSchema,
       response: z.array(TagCategoryDtoSchema),
-      errorResponses: { 404: 'A referenced category does not exist in this workspace.' },
+      errorResponses: { 400: 'INVALID_REFERENCE: a category id does not exist in this workspace.' },
     },
   },
 } satisfies ResourceApiDoc;
@@ -173,6 +183,7 @@ export const tagCategoriesItemApiDoc = {
       description: 'Deletes the category; assigned tag definitions keep existing without a category.',
       params: TagCategoryItemParams,
       response: DeletionResult,
+      errorResponses: { 404: 'Category not found.' },
     },
   },
 } satisfies ResourceApiDoc;
@@ -214,7 +225,7 @@ export const tagDefinitionsApiDoc = {
       params: WorkspaceIdParam,
       body: TagDefinitionsBulkUpdateSchema,
       response: z.array(TagDefinitionDtoSchema),
-      errorResponses: { 404: 'A referenced category does not exist in this workspace.' },
+      errorResponses: { 400: 'INVALID_REFERENCE: a category id does not exist in this workspace.' },
     },
   },
 } satisfies ResourceApiDoc;

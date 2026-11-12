@@ -6,6 +6,7 @@
 import prisma from '../../../prisma/prisma';
 import type { Workspace } from '@generated/prisma/client';
 import { ApiError } from '@lib/http/ApiError';
+import { BULK_TX_TIMEOUT_MS, runTx, type Tx } from '@lib/db/tx';
 import { loadWorkspaceLocaleSettings } from '@lib/workspace/workspaceLocaleSettings.server';
 import {
   CONTENT_TRANSLATION_ENTITY_TYPES,
@@ -22,6 +23,14 @@ import type {
 } from '@lib/schemas/contentTranslations';
 
 type FieldValues = Partial<Record<AnyContentTranslationField, string | null>>;
+
+interface TranslationGroup {
+  entityType: ContentTranslationEntityType;
+  entityId: string;
+  locale: string;
+  data: FieldValues;
+  count: number;
+}
 
 interface TranslatableEntity {
   id: string;
@@ -119,7 +128,7 @@ export async function upsertContentTranslations(workspace: Workspace, input: Con
   }
 
   // Group by entity + locale so each translation row is written once.
-  const groups = new Map<string, { entityType: ContentTranslationEntityType; entityId: string; locale: string; data: FieldValues; count: number }>();
+  const groups = new Map<string, TranslationGroup>();
   for (const item of input.items) {
     const key = `${item.entityType}\u0000${item.entityId}\u0000${item.locale}`;
     const group = groups.get(key) ?? { entityType: item.entityType, entityId: item.entityId, locale: item.locale, data: {}, count: 0 };
@@ -128,85 +137,89 @@ export async function upsertContentTranslations(workspace: Workspace, input: Con
     groups.set(key, group);
   }
 
-  // Only entities of this workspace may be translated.
-  const validIds = new Map<ContentTranslationEntityType, Set<string>>();
-  for (const entityType of CONTENT_TRANSLATION_ENTITY_TYPES) {
-    const ids = [...new Set([...groups.values()].filter((group) => group.entityType === entityType).map((group) => group.entityId))];
-    if (ids.length === 0) continue;
-    const where = { workspaceId: workspace.id, id: { in: ids } };
-    const select = { id: true } as const;
-    const found =
-      entityType === 'cocktail'
-        ? await prisma.cocktailRecipe.findMany({ where, select })
-        : entityType === 'ingredient'
-          ? await prisma.ingredient.findMany({ where, select })
-          : entityType === 'garnish'
-            ? await prisma.garnish.findMany({ where, select })
-            : await prisma.glass.findMany({ where, select });
-    validIds.set(entityType, new Set(found.map((row) => row.id)));
-  }
-
-  let updated = 0;
-  let skipped = 0;
-  await prisma.$transaction(
+  return runTx(
     async (tx) => {
+      // Only entities of this workspace may be translated; other ids are skipped.
+      const validIds = new Map<ContentTranslationEntityType, Set<string>>();
+      for (const entityType of CONTENT_TRANSLATION_ENTITY_TYPES) {
+        const ids = [...new Set([...groups.values()].filter((group) => group.entityType === entityType).map((group) => group.entityId))];
+        if (ids.length === 0) continue;
+        const where = { workspaceId: workspace.id, id: { in: ids } };
+        const select = { id: true } as const;
+        const found =
+          entityType === 'cocktail'
+            ? await tx.cocktailRecipe.findMany({ where, select })
+            : entityType === 'ingredient'
+              ? await tx.ingredient.findMany({ where, select })
+              : entityType === 'garnish'
+                ? await tx.garnish.findMany({ where, select })
+                : await tx.glass.findMany({ where, select });
+        validIds.set(entityType, new Set(found.map((row) => row.id)));
+      }
+
+      let updated = 0;
+      let skipped = 0;
       for (const group of groups.values()) {
         if (!validIds.get(group.entityType)?.has(group.entityId)) {
           skipped += group.count;
           continue;
         }
-        const { entityId, locale, data } = group;
-        switch (group.entityType) {
-          case 'cocktail': {
-            const row = await tx.cocktailRecipeTranslation.upsert({
-              where: { cocktailId_locale: { cocktailId: entityId, locale } },
-              create: { cocktailId: entityId, locale, name: data.name, description: data.description, history: data.history },
-              update: { name: data.name, description: data.description, history: data.history },
-            });
-            if (row.name == null && row.description == null && row.history == null) {
-              await tx.cocktailRecipeTranslation.delete({ where: { cocktailId_locale: { cocktailId: entityId, locale } } });
-            }
-            break;
-          }
-          case 'ingredient': {
-            const row = await tx.ingredientTranslation.upsert({
-              where: { ingredientId_locale: { ingredientId: entityId, locale } },
-              create: { ingredientId: entityId, locale, name: data.name, guestName: data.guestName, description: data.description },
-              update: { name: data.name, guestName: data.guestName, description: data.description },
-            });
-            if (row.name == null && row.guestName == null && row.description == null) {
-              await tx.ingredientTranslation.delete({ where: { ingredientId_locale: { ingredientId: entityId, locale } } });
-            }
-            break;
-          }
-          case 'garnish': {
-            const row = await tx.garnishTranslation.upsert({
-              where: { garnishId_locale: { garnishId: entityId, locale } },
-              create: { garnishId: entityId, locale, name: data.name, description: data.description },
-              update: { name: data.name, description: data.description },
-            });
-            if (row.name == null && row.description == null) {
-              await tx.garnishTranslation.delete({ where: { garnishId_locale: { garnishId: entityId, locale } } });
-            }
-            break;
-          }
-          case 'glass': {
-            const row = await tx.glassTranslation.upsert({
-              where: { glassId_locale: { glassId: entityId, locale } },
-              create: { glassId: entityId, locale, name: data.name },
-              update: { name: data.name },
-            });
-            if (row.name == null) {
-              await tx.glassTranslation.delete({ where: { glassId_locale: { glassId: entityId, locale } } });
-            }
-            break;
-          }
-        }
+        await writeGroup(tx, group);
         updated += group.count;
       }
+      return { updated, skipped };
     },
-    { timeout: 60_000 },
+    { timeout: BULK_TX_TIMEOUT_MS },
   );
+}
 
-  return { updated, skipped };
+/** Upserts one translation row; a row whose fields are all empty is deleted instead. */
+async function writeGroup(tx: Tx, group: TranslationGroup): Promise<void> {
+  const { entityId, locale, data } = group;
+  switch (group.entityType) {
+    case 'cocktail': {
+      const row = await tx.cocktailRecipeTranslation.upsert({
+        where: { cocktailId_locale: { cocktailId: entityId, locale } },
+        create: { cocktailId: entityId, locale, name: data.name, description: data.description, history: data.history },
+        update: { name: data.name, description: data.description, history: data.history },
+      });
+      if (row.name == null && row.description == null && row.history == null) {
+        await tx.cocktailRecipeTranslation.delete({ where: { cocktailId_locale: { cocktailId: entityId, locale } } });
+      }
+      break;
+    }
+    case 'ingredient': {
+      const row = await tx.ingredientTranslation.upsert({
+        where: { ingredientId_locale: { ingredientId: entityId, locale } },
+        create: { ingredientId: entityId, locale, name: data.name, guestName: data.guestName, description: data.description },
+        update: { name: data.name, guestName: data.guestName, description: data.description },
+      });
+      if (row.name == null && row.guestName == null && row.description == null) {
+        await tx.ingredientTranslation.delete({ where: { ingredientId_locale: { ingredientId: entityId, locale } } });
+      }
+      break;
+    }
+    case 'garnish': {
+      const row = await tx.garnishTranslation.upsert({
+        where: { garnishId_locale: { garnishId: entityId, locale } },
+        create: { garnishId: entityId, locale, name: data.name, description: data.description },
+        update: { name: data.name, description: data.description },
+      });
+      if (row.name == null && row.description == null) {
+        await tx.garnishTranslation.delete({ where: { garnishId_locale: { garnishId: entityId, locale } } });
+      }
+      break;
+    }
+    case 'glass': {
+      const row = await tx.glassTranslation.upsert({
+        where: { glassId_locale: { glassId: entityId, locale } },
+        create: { glassId: entityId, locale, name: data.name },
+        update: { name: data.name },
+      });
+      if (row.name == null) {
+        await tx.glassTranslation.delete({ where: { glassId_locale: { glassId: entityId, locale } } });
+      }
+      break;
+    }
+  }
 }

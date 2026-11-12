@@ -15,7 +15,12 @@ const EntityTypeSchema = z.enum(CONTENT_TRANSLATION_ENTITY_TYPES).openapi({ desc
 const FieldSchema = z.enum(ALL_CONTENT_TRANSLATION_FIELDS).openapi({
   description: 'Translatable field. cocktail: name/description/history, ingredient: name/guestName/description, garnish: name/description, glass: name.',
 });
-const LocaleSchema = z.string().refine(isValidContentLocale, { message: 'Invalid locale code' }).openapi({ example: 'en' });
+/** Upper bound for one translated text (descriptions and histories are the longest fields). */
+export const CONTENT_TRANSLATION_VALUE_MAX_LENGTH = 10_000;
+/** Upper bound for items per bulk request (a CSV import sends all rows at once). */
+export const CONTENT_TRANSLATION_MAX_ITEMS = 20_000;
+
+const LocaleSchema = z.string().max(35).refine(isValidContentLocale, { message: 'Invalid locale code' }).openapi({ example: 'en' });
 
 export const ContentTranslationRowSchema = z
   .object({
@@ -44,7 +49,7 @@ export type ContentTranslationsDto = z.infer<typeof ContentTranslationsDtoSchema
 export const ContentTranslationsQuerySchema = z.object({
   locale: LocaleSchema.optional().openapi({ description: 'Target locale. Defaults to all additional content locales of the workspace.' }),
   entity: EntityTypeSchema.optional().openapi({ description: 'Only rows of this entity type.' }),
-  entityId: z.string().optional().openapi({ description: 'Only rows of this entity (requires `entity`).' }),
+  entityId: z.string().max(100).optional().openapi({ description: 'Only rows of this entity (requires `entity`).' }),
   missingOnly: z
     .enum(['true', 'false'])
     .optional()
@@ -57,10 +62,10 @@ export type ContentTranslationsQuery = z.infer<typeof ContentTranslationsQuerySc
 export const ContentTranslationUpsertItemSchema = z
   .object({
     entityType: EntityTypeSchema,
-    entityId: z.string().min(1),
+    entityId: z.string().min(1).max(100),
     field: FieldSchema,
     locale: LocaleSchema,
-    value: z.string().nullable().openapi({ description: 'Translated value; null or empty string clears it.' }),
+    value: z.string().max(CONTENT_TRANSLATION_VALUE_MAX_LENGTH).nullable().openapi({ description: 'Translated value; null or empty string clears it.' }),
   })
   .superRefine((item, ctx) => {
     if (!isTranslatableField(item.entityType, item.field)) {
@@ -71,7 +76,7 @@ export const ContentTranslationUpsertItemSchema = z
 
 export const ContentTranslationsUpdateSchema = z
   .object({
-    items: z.array(ContentTranslationUpsertItemSchema).max(20000),
+    items: z.array(ContentTranslationUpsertItemSchema).max(CONTENT_TRANSLATION_MAX_ITEMS),
   })
   .openapi('ContentTranslationsUpdateInput');
 
@@ -106,7 +111,8 @@ export const contentTranslationsApiDoc = {
       permission: 'TRANSLATIONS_UPDATE',
       tags: [ApiTags.contentTranslations],
       summary: 'Bulk upsert content translations',
-      description: 'Writes translated values per entity, field and locale. Empty values clear a translation.',
+      description:
+        'Writes translated values per entity, field and locale in one transaction. Empty values clear a translation. Items of entities that do not exist in this workspace are skipped (counted in `skipped`).',
       params: WorkspaceIdParam,
       body: ContentTranslationsUpdateSchema,
       response: ContentTranslationsUpdateResultSchema,

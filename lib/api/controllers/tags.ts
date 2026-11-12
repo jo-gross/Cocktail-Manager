@@ -21,6 +21,8 @@ import type { DeletionResult } from '@lib/schemas/common';
 import type { LocalizedText } from '@lib/guest-menu/localizedText';
 import { ApiError } from '@lib/http/ApiError';
 import { getMissingDefaultTagCategories } from '@lib/tags/defaultTagCategories';
+import { assertIdsInWorkspace } from '@lib/api/scope';
+import { lockWorkspaceScope, runTx } from '@lib/db/tx';
 
 export async function listTags(workspace: Workspace): Promise<TagsDto> {
   const cocktailTags = await prisma.cocktailRecipe.findMany({
@@ -78,29 +80,35 @@ export async function listTagCategories(workspace: Workspace): Promise<TagCatego
   return categories.map(toTagCategoryDto);
 }
 
+const TAG_CATEGORIES_LOCK = 'tag-categories';
+
+/** Appends at the end unless `order` is given; the lock serializes concurrent `max(order) + 1`. */
 export async function createTagCategory(workspace: Workspace, input: TagCategoryCreateInput): Promise<TagCategoryDto> {
-  let order = input.order;
-  if (order == undefined) {
-    const last = await prisma.tagCategory.findFirst({ where: { workspaceId: workspace.id }, orderBy: { order: 'desc' }, select: { order: true } });
-    order = (last?.order ?? -1) + 1;
-  }
-  const category = await prisma.tagCategory.create({
-    data: {
-      workspaceId: workspace.id,
-      name: cleanLocalizedText(input.name),
-      order,
-      showAsGuestFilter: input.showAsGuestFilter ?? true,
-    },
-    include: { _count: { select: { tags: true } } },
+  const category = await runTx(async (tx) => {
+    await lockWorkspaceScope(tx, workspace.id, TAG_CATEGORIES_LOCK);
+    let order = input.order;
+    if (order == undefined) {
+      const last = await tx.tagCategory.findFirst({ where: { workspaceId: workspace.id }, orderBy: { order: 'desc' }, select: { order: true } });
+      order = (last?.order ?? -1) + 1;
+    }
+    return tx.tagCategory.create({
+      data: {
+        workspaceId: workspace.id,
+        name: cleanLocalizedText(input.name),
+        order,
+        showAsGuestFilter: input.showAsGuestFilter ?? true,
+      },
+      include: { _count: { select: { tags: true } } },
+    });
   });
   return toTagCategoryDto(category);
 }
 
 export async function updateTagCategory(workspace: Workspace, categoryId: string, input: TagCategoryUpdateInput): Promise<TagCategoryDto> {
-  const existing = await prisma.tagCategory.findFirst({ where: { id: categoryId, workspaceId: workspace.id } });
+  const existing = await prisma.tagCategory.findFirst({ where: { id: categoryId, workspaceId: workspace.id }, select: { id: true } });
   if (!existing) throw new ApiError(404, 'NOT_FOUND', 'Tag category not found');
   const category = await prisma.tagCategory.update({
-    where: { id: categoryId },
+    where: { id: categoryId, workspaceId: workspace.id },
     data: {
       name: input.name ? cleanLocalizedText(input.name) : undefined,
       order: input.order,
@@ -112,39 +120,35 @@ export async function updateTagCategory(workspace: Workspace, categoryId: string
 }
 
 export async function upsertTagCategories(workspace: Workspace, input: TagCategoriesBulkUpdateInput): Promise<TagCategoryDto[]> {
-  const ids = input.map((category) => category.id).filter((id): id is string => !!id);
-  const existing = await prisma.tagCategory.findMany({ where: { workspaceId: workspace.id, id: { in: ids } }, select: { id: true } });
-  if (existing.length !== new Set(ids).size) throw new ApiError(404, 'NOT_FOUND', 'Tag category not found');
-
-  await prisma.$transaction(
-    input.map((category) =>
-      category.id
-        ? prisma.tagCategory.update({
-            where: { id: category.id },
-            data: { name: cleanLocalizedText(category.name), order: category.order, showAsGuestFilter: category.showAsGuestFilter },
-          })
-        : prisma.tagCategory.create({
-            data: {
-              workspaceId: workspace.id,
-              name: cleanLocalizedText(category.name),
-              order: category.order,
-              showAsGuestFilter: category.showAsGuestFilter,
-            },
-          }),
-    ),
-  );
+  await runTx(async (tx) => {
+    await lockWorkspaceScope(tx, workspace.id, TAG_CATEGORIES_LOCK);
+    await assertIdsInWorkspace(tx, workspace.id, { tagCategory: input.map((category) => category.id) });
+    for (const category of input) {
+      const data = { name: cleanLocalizedText(category.name), order: category.order, showAsGuestFilter: category.showAsGuestFilter };
+      if (category.id) {
+        await tx.tagCategory.update({ where: { id: category.id, workspaceId: workspace.id }, data });
+      } else {
+        await tx.tagCategory.create({ data: { ...data, workspaceId: workspace.id } });
+      }
+    }
+  });
   return listTagCategories(workspace);
 }
 
 export async function deleteTagCategory(workspace: Workspace, categoryId: string): Promise<DeletionResult> {
-  return prisma.tagCategory.deleteMany({ where: { id: categoryId, workspaceId: workspace.id } });
+  const result = await prisma.tagCategory.deleteMany({ where: { id: categoryId, workspaceId: workspace.id } });
+  if (result.count === 0) throw new ApiError(404, 'NOT_FOUND', 'Tag category not found');
+  return result;
 }
 
+/** Idempotent: concurrent calls are serialized by the lock, so each default is created once. */
 export async function createDefaultTagCategories(workspace: Workspace): Promise<TagCategoryDto[]> {
-  const existing = await prisma.tagCategory.findMany({ where: { workspaceId: workspace.id }, select: { name: true, order: true } });
-  const missing = getMissingDefaultTagCategories(existing);
-  if (missing.length > 0) {
-    await prisma.tagCategory.createMany({
+  await runTx(async (tx) => {
+    await lockWorkspaceScope(tx, workspace.id, TAG_CATEGORIES_LOCK);
+    const existing = await tx.tagCategory.findMany({ where: { workspaceId: workspace.id }, select: { name: true, order: true } });
+    const missing = getMissingDefaultTagCategories(existing);
+    if (missing.length === 0) return;
+    await tx.tagCategory.createMany({
       data: missing.map((category) => ({
         workspaceId: workspace.id,
         name: category.name,
@@ -152,7 +156,7 @@ export async function createDefaultTagCategories(workspace: Workspace): Promise<
         showAsGuestFilter: category.showAsGuestFilter,
       })),
     });
-  }
+  });
   return listTagCategories(workspace);
 }
 
@@ -194,11 +198,7 @@ export async function listTagDefinitions(workspace: Workspace): Promise<TagDefin
 }
 
 export async function upsertTagDefinitions(workspace: Workspace, input: TagDefinitionsBulkUpdateInput): Promise<TagDefinitionDto[]> {
-  const categoryIds = [...new Set(input.map((definition) => definition.categoryId).filter((id): id is string => !!id))];
-  if (categoryIds.length > 0) {
-    const categories = await prisma.tagCategory.count({ where: { workspaceId: workspace.id, id: { in: categoryIds } } });
-    if (categories !== categoryIds.length) throw new ApiError(404, 'NOT_FOUND', 'Tag category not found');
-  }
+  await assertIdsInWorkspace(prisma, workspace.id, { tagCategory: input.map((definition) => definition.categoryId) });
 
   const toJsonLabel = (label: LocalizedText | null | undefined) => {
     if (label === undefined) return undefined;

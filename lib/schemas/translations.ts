@@ -7,6 +7,28 @@ import { z } from '@lib/openapi/zod';
 import { WorkspaceIdParam } from '@lib/schemas/common';
 import { ApiTags } from '@lib/openapi/tags';
 import type { ResourceApiDoc } from '@lib/openapi/types';
+import { isValidContentLocale } from '@lib/workspace/workspaceLocaleSettings';
+
+export const TRANSLATION_KEY_MAX_LENGTH = 200;
+export const TRANSLATION_VALUE_MAX_LENGTH = 500;
+export const TRANSLATION_MAX_LANGUAGES = 50;
+
+/** Names that would hit `Object.prototype` when used as keys of the stored JSON blob. */
+const RESERVED_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
+
+/** A display-name key (the action/unit/ice name), bounded and never a prototype key. */
+export const TranslationKeySchema = z
+  .string()
+  .min(1)
+  .max(TRANSLATION_KEY_MAX_LENGTH)
+  .refine((key) => !RESERVED_KEYS.has(key), { message: 'Reserved translation key' });
+
+/** Display names keyed by language code (BCP 47, e.g. `de`, `en-GB`); bounded in size. */
+export const LabelTranslationsSchema = z
+  .record(z.string().refine(isValidContentLocale, { message: 'Invalid language code' }), z.string().max(TRANSLATION_VALUE_MAX_LENGTH))
+  .refine((translations) => Object.keys(translations).length <= TRANSLATION_MAX_LANGUAGES, {
+    message: `At most ${TRANSLATION_MAX_LANGUAGES} languages`,
+  });
 
 /** Parsed translation catalog: language → key → display name. */
 export const TranslationsDtoSchema = z
@@ -17,8 +39,8 @@ export type TranslationsDto = z.infer<typeof TranslationsDtoSchema>;
 
 export const TranslationUpdateSchema = z
   .object({
-    key: z.string().min(1).openapi({ description: 'The translation key (e.g. an action/unit/ice name).' }),
-    translations: z.record(z.string(), z.string()).openapi({ description: 'Display names keyed by language code, e.g. { "de": "Shaken" }.' }),
+    key: TranslationKeySchema.openapi({ description: 'The translation key (e.g. an action/unit/ice name).' }),
+    translations: LabelTranslationsSchema.openapi({ description: 'Display names keyed by language code, e.g. { "de": "Shaken" }.' }),
   })
   .openapi('TranslationUpdateInput');
 

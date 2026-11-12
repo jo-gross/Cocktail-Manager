@@ -1,17 +1,24 @@
 /**
- * Version-agnostic business logic for units and unit conversions (v1). Same DB
- * operations as the legacy handlers, but returns clean public DTOs
- * (lib/api/dto/units.ts). Legacy routes remain wrapped-but-untouched and keep
- * their raw Prisma shapes. Item lookups are scoped by `workspaceId` (ids are
- * global, so a bare-id write could hit another workspace).
+ * Version-agnostic business logic for units and unit conversions (v1). Returns
+ * clean public DTOs (lib/api/dto/units.ts). Item lookups are scoped by
+ * `workspaceId` (ids are global, so a bare-id write could hit another workspace).
+ *
+ * Every write to conversions (and unit deletes, which cascade into them) runs in
+ * one transaction that holds the `unit-conversions` workspace lock and ends with
+ * {@link regenerateUnitConversionsTx}, so concurrent edits never see or leave a
+ * half-regenerated set of derived conversions.
  */
 import { Graph, shortestPath } from 'graph-data-structure';
 import prisma from '../../../prisma/prisma';
-import { updateTranslationAtomic as updateTranslation } from '@lib/translations/workspaceTranslations';
+import { updateTranslation } from '@lib/translations/workspaceTranslations';
 import { toUnitConversionDto, toUnitDto } from '@lib/api/dto/units';
 import { ApiError } from '@lib/http/ApiError';
-import type { Prisma, Unit, UnitConversion, Workspace } from '@generated/prisma/client';
+import { assertIdsInWorkspace } from '@lib/api/scope';
+import { lockWorkspaceScope, runTx, type Tx } from '@lib/db/tx';
+import type { Prisma, UnitConversion, Workspace } from '@generated/prisma/client';
 import type { UnitConversionCreateInput, UnitConversionDto, UnitConversionUpdateInput, UnitCreateInput, UnitDto } from '@lib/schemas/units';
+
+const UNIT_CONVERSIONS_LOCK = 'unit-conversions';
 
 export async function listUnits(workspace: Workspace, opts: { search?: string }): Promise<UnitDto[]> {
   const where: Prisma.UnitWhereInput = { workspaceId: workspace.id };
@@ -23,24 +30,49 @@ export async function listUnits(workspace: Workspace, opts: { search?: string })
 }
 
 export async function createUnit(workspace: Workspace, input: UnitCreateInput): Promise<UnitDto> {
-  await updateTranslation(workspace.id, input.name, input.translations ?? {});
-
-  const created = await prisma.unit.create({
-    data: {
-      name: input.name,
-      workspace: { connect: { id: workspace.id } },
-    },
+  const created = await runTx(async (tx) => {
+    const unit = await tx.unit.create({ data: { name: input.name, workspaceId: workspace.id } });
+    if (input.translations) await updateTranslation(tx, workspace.id, input.name, input.translations);
+    return unit;
   });
-
   return toUnitDto(created);
 }
 
-export async function deleteUnit(workspace: Workspace, unitId: string): Promise<UnitDto> {
-  const existing = await prisma.unit.findFirst({ where: { id: unitId, workspaceId: workspace.id } });
-  if (!existing) throw new ApiError(404, 'NOT_FOUND', 'Unit not found');
+function isForeignKeyViolation(error: unknown): boolean {
+  return typeof error === 'object' && error !== null && (error as { code?: unknown }).code === 'P2003';
+}
 
-  const deleted = await prisma.unit.delete({ where: { id: unitId } });
-  return toUnitDto(deleted);
+/**
+ * Deletes a unit that no cocktail recipe uses (the FK is RESTRICT). Ingredient
+ * volumes, shopping units and conversions of the unit cascade; the derived
+ * conversions are regenerated because paths through the unit are gone.
+ */
+export async function deleteUnit(workspace: Workspace, unitId: string): Promise<UnitDto> {
+  try {
+    const deleted = await runTx(async (tx) => {
+      await lockWorkspaceScope(tx, workspace.id, UNIT_CONVERSIONS_LOCK);
+      const existing = await tx.unit.findFirst({ where: { id: unitId, workspaceId: workspace.id } });
+      if (!existing) throw new ApiError(404, 'NOT_FOUND', 'Unit not found');
+
+      const usages = await tx.cocktailRecipeIngredient.count({ where: { unitId } });
+      if (usages > 0) {
+        const cocktails = await tx.cocktailRecipe.findMany({
+          where: { workspaceId: workspace.id, steps: { some: { ingredients: { some: { unitId } } } } },
+          select: { id: true, name: true },
+        });
+        throw new ApiError(409, 'UNIT_IN_USE', `The unit is still used in ${cocktails.length} cocktail(s) and cannot be deleted.`, { cocktails });
+      }
+
+      const unit = await tx.unit.delete({ where: { id: unitId, workspaceId: workspace.id } });
+      await regenerateUnitConversionsTx(tx, workspace.id);
+      return unit;
+    });
+    return toUnitDto(deleted);
+  } catch (error) {
+    // A cocktail started using the unit after the check above.
+    if (isForeignKeyViolation(error)) throw new ApiError(409, 'UNIT_IN_USE', 'The unit is still used in cocktails and cannot be deleted.');
+    throw error;
+  }
 }
 
 export async function listUnitConversions(workspace: Workspace): Promise<UnitConversionDto[]> {
@@ -48,147 +80,147 @@ export async function listUnitConversions(workspace: Workspace): Promise<UnitCon
   return conversions.map(toUnitConversionDto);
 }
 
+/**
+ * Creates a manual conversion; its inverse and all other derived conversions
+ * are (re)generated. A manual conversion between the same units (either
+ * direction) is a conflict; derived rows for the pair are simply replaced.
+ */
 export async function createUnitConversion(workspace: Workspace, input: UnitConversionCreateInput): Promise<UnitConversionDto[]> {
-  const unitCount = await prisma.unit.count({ where: { id: { in: [input.fromUnitId, input.toUnitId] }, workspaceId: workspace.id } });
-  if (unitCount !== new Set([input.fromUnitId, input.toUnitId]).size) throw new ApiError(404, 'NOT_FOUND', 'Unit not found');
+  const conversions = await runTx(async (tx) => {
+    await lockWorkspaceScope(tx, workspace.id, UNIT_CONVERSIONS_LOCK);
+    await assertIdsInWorkspace(tx, workspace.id, { unit: [input.fromUnitId, input.toUnitId] });
 
-  await prisma.unitConversion.create({
-    data: {
-      fromUnit: { connect: { id: input.fromUnitId } },
-      toUnit: { connect: { id: input.toUnitId } },
-      factor: input.factor,
-      workspace: { connect: { id: workspace.id } },
-    },
-  });
-  await prisma.unitConversion.create({
-    data: {
-      fromUnit: { connect: { id: input.toUnitId } },
-      toUnit: { connect: { id: input.fromUnitId } },
-      factor: 1 / input.factor,
-      autoGenerated: true,
-      workspace: { connect: { id: workspace.id } },
-    },
-  });
+    const pair = [
+      { fromUnitId: input.fromUnitId, toUnitId: input.toUnitId },
+      { fromUnitId: input.toUnitId, toUnitId: input.fromUnitId },
+    ];
+    const manual = await tx.unitConversion.findFirst({ where: { workspaceId: workspace.id, autoGenerated: false, OR: pair }, select: { id: true } });
+    if (manual) throw new ApiError(409, 'UNIT_CONVERSION_EXISTS', 'A conversion between these units already exists');
 
-  const conversions = await regenerateUnitConversions(workspace.id);
+    await tx.unitConversion.deleteMany({ where: { workspaceId: workspace.id, autoGenerated: true, OR: pair } });
+    await tx.unitConversion.create({
+      data: { fromUnitId: input.fromUnitId, toUnitId: input.toUnitId, factor: input.factor, workspaceId: workspace.id },
+    });
+    return regenerateUnitConversionsTx(tx, workspace.id);
+  });
   return conversions.map(toUnitConversionDto);
 }
 
-async function assertUnitConversionInWorkspace(workspace: Workspace, unitConversionId: string) {
-  const existing = await prisma.unitConversion.findFirst({ where: { id: unitConversionId, workspaceId: workspace.id } });
+/** Loads a manual conversion of the workspace (derived ones are recomputed and cannot be edited). */
+async function findManualConversion(tx: Tx, workspace: Workspace, unitConversionId: string): Promise<UnitConversion> {
+  const existing = await tx.unitConversion.findFirst({ where: { id: unitConversionId, workspaceId: workspace.id } });
   if (!existing) throw new ApiError(404, 'NOT_FOUND', 'Unit conversion not found');
+  if (existing.autoGenerated) {
+    throw new ApiError(409, 'AUTO_GENERATED_CONVERSION', 'Derived conversions are recalculated automatically; change a manual conversion instead');
+  }
+  return existing;
 }
 
 export async function updateUnitConversion(workspace: Workspace, unitConversionId: string, input: UnitConversionUpdateInput): Promise<UnitConversionDto> {
-  await assertUnitConversionInWorkspace(workspace, unitConversionId);
-  const updated = await prisma.unitConversion.update({
-    where: { id: unitConversionId },
-    data: { factor: input.factor },
+  const updated = await runTx(async (tx) => {
+    await lockWorkspaceScope(tx, workspace.id, UNIT_CONVERSIONS_LOCK);
+    await findManualConversion(tx, workspace, unitConversionId);
+    const conversion = await tx.unitConversion.update({ where: { id: unitConversionId, workspaceId: workspace.id }, data: { factor: input.factor } });
+    await regenerateUnitConversionsTx(tx, workspace.id);
+    return conversion;
   });
-  await regenerateUnitConversions(workspace.id);
   return toUnitConversionDto(updated);
 }
 
 export async function deleteUnitConversion(workspace: Workspace, unitConversionId: string): Promise<UnitConversionDto> {
-  await assertUnitConversionInWorkspace(workspace, unitConversionId);
-  const deleted = await prisma.unitConversion.delete({ where: { id: unitConversionId } });
-  await regenerateUnitConversions(workspace.id);
+  const deleted = await runTx(async (tx) => {
+    await lockWorkspaceScope(tx, workspace.id, UNIT_CONVERSIONS_LOCK);
+    const existing = await findManualConversion(tx, workspace, unitConversionId);
+    await tx.unitConversion.delete({ where: { id: unitConversionId, workspaceId: workspace.id } });
+    await regenerateUnitConversionsTx(tx, workspace.id);
+    return existing;
+  });
   return toUnitConversionDto(deleted);
 }
 
-/**
- * Faithful replica of the legacy regenerateUnitConversions (pages/api/workspaces/
- * [workspaceId]/units/conversions/index.ts): recomputes all auto-generated
- * conversions from the manually defined ones via shortest-path traversal.
- */
-export async function regenerateUnitConversions(workspaceId: string): Promise<UnitConversion[]> {
-  // Recalculate all unit conversions
-  await prisma.unitConversion.deleteMany({
-    where: {
-      workspaceId: workspaceId,
-      AND: {
-        autoGenerated: true,
-      },
-    },
-  });
+type ConversionEdge = Pick<UnitConversion, 'fromUnitId' | 'toUnitId' | 'factor'>;
 
-  const nodes: Unit[] = await prisma.unit.findMany({ where: { workspaceId: workspaceId } });
-  const paths: UnitConversion[] = await prisma.unitConversion.findMany({ where: { workspaceId: workspaceId } });
+/**
+ * Derives the missing conversions from the manual ones: for every ordered pair
+ * of units connected through manual conversions, the factors along the
+ * shortest path are multiplied (an edge used against its direction contributes
+ * 1 / factor). Pairs that already have a conversion are skipped; the inverse of
+ * every derived conversion is derived from the same path. Pure.
+ */
+export function deriveUnitConversions(unitIds: string[], manual: ConversionEdge[]): ConversionEdge[] {
+  const key = (from: string, to: string) => `${from}\u0000${to}`;
+  const factors = new Map<string, number>();
+  for (const conversion of manual) factors.set(key(conversion.fromUnitId, conversion.toUnitId), conversion.factor);
+
+  const edgeFactor = (from: string, to: string): number => {
+    const direct = factors.get(key(from, to));
+    if (direct !== undefined) return direct;
+    const inverse = factors.get(key(to, from));
+    return inverse ? 1 / inverse : 1;
+  };
 
   const graph = new Graph<string>();
-  nodes.forEach((node) => graph.addNode(node.id));
-  paths.forEach((path) => {
-    graph.addEdge(path.fromUnitId, path.toUnitId);
-    graph.addEdge(path.toUnitId, path.fromUnitId);
+  unitIds.forEach((id) => graph.addNode(id));
+  manual.forEach((conversion) => {
+    graph.addEdge(conversion.fromUnitId, conversion.toUnitId);
+    graph.addEdge(conversion.toUnitId, conversion.fromUnitId);
   });
 
-  function generatePairCombinations(units: string[]): [string, string][] {
-    const combinations: [string, string][] = [];
+  const known = new Set(factors.keys());
+  const derived: ConversionEdge[] = [];
+  const add = (fromUnitId: string, toUnitId: string, factor: number) => {
+    if (known.has(key(fromUnitId, toUnitId))) return;
+    known.add(key(fromUnitId, toUnitId));
+    derived.push({ fromUnitId, toUnitId, factor });
+  };
 
-    for (let i = 0; i < units.length; i++) {
-      for (let j = i + 1; j < units.length; j++) {
-        combinations.push([units[i], units[j]]);
-        combinations.push([units[j], units[i]]);
+  for (let i = 0; i < unitIds.length; i++) {
+    for (let j = 0; j < unitIds.length; j++) {
+      if (i === j) continue;
+      const from = unitIds[i];
+      const to = unitIds[j];
+      if (known.has(key(from, to)) && known.has(key(to, from))) continue;
+
+      let nodes: string[];
+      try {
+        nodes = shortestPath(graph, from, to).nodes;
+      } catch {
+        continue; // not connected
       }
+      let factor = 1;
+      for (let step = 0; step < nodes.length - 1; step++) factor *= edgeFactor(nodes[step], nodes[step + 1]);
+      add(from, to, factor);
+      add(to, from, 1 / factor);
     }
-
-    return combinations;
   }
+  return derived;
+}
 
-  const combinations = generatePairCombinations(nodes.map((node) => node.id));
+/**
+ * Recomputes all auto-generated conversions of the workspace from the manual
+ * ones. Takes the `unit-conversions` lock and uses only `tx`. Returns all
+ * conversions (manual first, then derived).
+ */
+export async function regenerateUnitConversionsTx(tx: Tx, workspaceId: string): Promise<UnitConversion[]> {
+  await lockWorkspaceScope(tx, workspaceId, UNIT_CONVERSIONS_LOCK);
+  await tx.unitConversion.deleteMany({ where: { workspaceId, autoGenerated: true } });
 
-  const allConnections: string[][] = [];
+  const units = await tx.unit.findMany({ where: { workspaceId }, select: { id: true }, orderBy: { id: 'asc' } });
+  const manual = await tx.unitConversion.findMany({ where: { workspaceId }, orderBy: { id: 'asc' } });
 
-  combinations.forEach((combination) => {
-    try {
-      const path = shortestPath(graph, combination[0], combination[1]);
-      allConnections.push(path.nodes);
-    } catch {}
+  const derived = deriveUnitConversions(
+    units.map((unit) => unit.id),
+    manual,
+  );
+  if (derived.length === 0) return manual;
+
+  const created = await tx.unitConversion.createManyAndReturn({
+    data: derived.map((conversion) => ({ ...conversion, autoGenerated: true, workspaceId })),
   });
+  return [...manual, ...created];
+}
 
-  const allConversions: UnitConversion[] = paths;
-
-  for (const connection of allConnections) {
-    const fromOrig = connection[0];
-    let to = connection[1];
-    let factor = 1;
-    for (let i = 0; i < connection.length - 1; i++) {
-      const from = connection[i];
-      to = connection[i + 1];
-      const foundFactor =
-        paths.find((path) => path.fromUnitId === from && path.toUnitId === to)?.factor ||
-        1 / (paths.find((path) => path.fromUnitId === to && path.toUnitId === from)?.factor ?? 1) ||
-        1 ||
-        1;
-      factor *= foundFactor;
-    }
-    if (!paths.find((path) => path.fromUnitId === fromOrig && path.toUnitId === to)) {
-      allConversions.push(
-        await prisma.unitConversion.create({
-          data: {
-            fromUnit: { connect: { id: fromOrig } },
-            toUnit: { connect: { id: to } },
-            factor: factor,
-            autoGenerated: true,
-            workspace: { connect: { id: workspaceId } },
-          },
-        }),
-      );
-    }
-    if (!paths.find((path) => path.fromUnitId === to && path.toUnitId === fromOrig)) {
-      allConversions.push(
-        await prisma.unitConversion.create({
-          data: {
-            fromUnit: { connect: { id: to } },
-            toUnit: { connect: { id: fromOrig } },
-            factor: 1 / factor,
-            autoGenerated: true,
-            workspace: { connect: { id: workspaceId } },
-          },
-        }),
-      );
-    }
-  }
-
-  return allConversions;
+/** Standalone variant (own transaction) for callers outside a transaction, e.g. workspace creation. */
+export function regenerateUnitConversions(workspaceId: string): Promise<UnitConversion[]> {
+  return runTx((tx) => regenerateUnitConversionsTx(tx, workspaceId));
 }
