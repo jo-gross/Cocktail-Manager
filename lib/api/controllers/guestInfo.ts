@@ -4,6 +4,8 @@
  */
 import prisma from '../../../prisma/prisma';
 import { createLog } from '@lib/auditLog';
+import { assertIdsInWorkspace } from '@lib/api/scope';
+import { BULK_TX_TIMEOUT_MS, runTx } from '@lib/db/tx';
 import { ApiError } from '@lib/http/ApiError';
 import { deriveCocktailGuestInfo } from '@lib/guest-info/derive';
 import { nextAllergenSources } from '@lib/guest-info/constants';
@@ -129,14 +131,19 @@ export async function bulkUpdateGuestInfo(
   const ingredientUpdates = input.ingredients ?? [];
   const garnishUpdates = input.garnishes ?? [];
 
-  return prisma.$transaction(
+  return runTx(
     async (tx) => {
+      // All ids are checked up front: a foreign/unknown id rejects the whole batch (400) before any write.
+      await assertIdsInWorkspace(tx, workspace.id, {
+        ingredient: ingredientUpdates.map((update) => update.id),
+        garnish: garnishUpdates.map((update) => update.id),
+      });
+
       let ingredients = 0;
       for (const { id, ...data } of ingredientUpdates) {
-        const old = await tx.ingredient.findFirst({ where: { id, workspaceId: workspace.id } });
-        if (!old) throw new ApiError(404, 'NOT_FOUND', `Ingredient ${id} not found`);
+        const old = await tx.ingredient.findFirstOrThrow({ where: { id, workspaceId: workspace.id } });
         const updated = await tx.ingredient.update({
-          where: { id },
+          where: { id, workspaceId: workspace.id },
           data: {
             abv: data.abv,
             allergens: data.allergens,
@@ -153,10 +160,9 @@ export async function bulkUpdateGuestInfo(
 
       let garnishes = 0;
       for (const { id, ...data } of garnishUpdates) {
-        const old = await tx.garnish.findFirst({ where: { id, workspaceId: workspace.id } });
-        if (!old) throw new ApiError(404, 'NOT_FOUND', `Garnish ${id} not found`);
+        const old = await tx.garnish.findFirstOrThrow({ where: { id, workspaceId: workspace.id } });
         const updated = await tx.garnish.update({
-          where: { id },
+          where: { id, workspaceId: workspace.id },
           data: {
             allergens: data.allergens,
             allergenSources: nextAllergenSources(data, old),
@@ -170,6 +176,6 @@ export async function bulkUpdateGuestInfo(
 
       return { ingredients, garnishes };
     },
-    { timeout: 30_000 },
+    { timeout: BULK_TX_TIMEOUT_MS },
   );
 }

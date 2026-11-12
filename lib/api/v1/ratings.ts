@@ -7,10 +7,10 @@ import { defineApiHandlers } from '@lib/openapi/apiDoc';
 import * as ratings from '@lib/api/controllers/ratings';
 
 export const collectionHandler = defineApiHandlers(ratingsCollectionApiDoc.operations, {
-  GET: ({ params }) => ratings.listRatings(params.cocktailId),
-  POST: ({ params, body }) => ratings.createRating(params.cocktailId, body),
+  GET: ({ workspace, params }) => ratings.listRatings(workspace, params.cocktailId),
+  POST: ({ workspace, params, body }) => ratings.createRating(workspace, params.cocktailId, body),
 });
 
 export const itemHandler = defineApiHandlers(ratingsItemApiDoc.operations, {
-  DELETE: ({ workspace, params }) => ratings.deleteRating(workspace, params.ratingId),
+  DELETE: ({ workspace, params }) => ratings.deleteRating(workspace, params.cocktailId, params.ratingId),
 });

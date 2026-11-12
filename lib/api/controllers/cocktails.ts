@@ -1,11 +1,15 @@
 /**
- * Version-agnostic business logic for cocktails (v1). Faithfully replicates the
- * DB operations of the legacy handlers (including the differential PUT of
- * steps/ingredients/garnishes and the cascade DELETE), but returns clean public
- * DTOs (lib/api/dto/cocktails.ts). Legacy routes remain wrapped-but-untouched.
+ * Business logic for cocktails (v1): CRUD with the differential PUT of
+ * steps/ingredients/garnishes, archive/availability flags and clone. Returns
+ * clean public DTOs (lib/api/dto/cocktails.ts). Every id from a request body is
+ * checked against the workspace (and child ids against the cocktail) inside the
+ * write transaction.
  */
 import prisma from '../../../prisma/prisma';
-import { createCocktailRecipeAuditLog } from '@lib/auditLog';
+import { createCocktailRecipeAuditLog, createLog } from '@lib/auditLog';
+import { assertIdsInWorkspace } from '@lib/api/scope';
+import { lockWorkspaceScope, runTx, type Tx } from '@lib/db/tx';
+import { decodeStoredImage, type DecodedImage } from '@lib/images/imageResponse';
 import { calculateCocktailRecipeSimilarity } from '@lib/findSimilarEntities';
 import { normalizeString } from '@lib/StringUtils';
 import { ApiError } from '@lib/http/ApiError';
@@ -14,7 +18,14 @@ import type { Prisma, User, Workspace } from '@generated/prisma/client';
 import { WorkspaceSettingKey } from '@generated/prisma/client';
 import { loadWorkspaceLocaleSettings } from '@lib/workspace/workspaceLocaleSettings.server';
 import { getNextBarDayStart } from '@lib/cards/activeCard';
-import type { CocktailCreateInput, CocktailDto, CocktailSummaryDto, CocktailUpdateInput } from '@lib/schemas/cocktails';
+import type {
+  CocktailCreateInput,
+  CocktailDto,
+  CocktailGarnishInput,
+  CocktailStepIngredientInput,
+  CocktailSummaryDto,
+  CocktailUpdateInput,
+} from '@lib/schemas/cocktails';
 
 /** Full include used for the detail DTO (with nested image counts + rating aggregates). */
 const fullInclude = {
@@ -128,8 +139,43 @@ export async function getCocktail(workspace: Workspace, cocktailId: string): Pro
   return cocktail ? toCocktailDto(cocktail, workspace.id) : null;
 }
 
+/** Every id a create/update body references must belong to the workspace (400 INVALID_REFERENCE otherwise). */
+async function assertCocktailRefsInWorkspace(tx: Tx, workspaceId: string, input: CocktailCreateInput | CocktailUpdateInput): Promise<void> {
+  const steps = input.steps ?? [];
+  const lines = steps.flatMap((step) => step.ingredients ?? []);
+  await assertIdsInWorkspace(tx, workspaceId, {
+    glass: [input.glassId],
+    ice: [input.iceId],
+    action: steps.map((step) => step.actionId),
+    ingredient: lines.map((line) => line.ingredientId),
+    unit: lines.map((line) => line.unitId),
+    garnish: (input.garnishes ?? []).map((garnish) => garnish.garnishId),
+  });
+}
+
+function stepIngredientData(ing: CocktailStepIngredientInput) {
+  return {
+    amount: ing.amount ?? null,
+    optional: ing.optional ?? false,
+    ingredientNumber: ing.ingredientNumber,
+    unitId: ing.unitId ?? null,
+    ingredientId: ing.ingredientId ?? null,
+  };
+}
+
+function garnishData(garnish: CocktailGarnishInput) {
+  return {
+    garnishNumber: garnish.garnishNumber,
+    description: garnish.description ?? null,
+    optional: garnish.optional ?? false,
+    isAlternative: garnish.isAlternative ?? false,
+  };
+}
+
 export async function createCocktail(workspace: Workspace, user: User, input: CocktailCreateInput): Promise<CocktailDto> {
-  const createdId = await prisma.$transaction(async (tx) => {
+  const createdId = await runTx(async (tx) => {
+    await assertCocktailRefsInWorkspace(tx, workspace.id, input);
+
     const createdCocktail = await tx.cocktailRecipe.create({
       data: {
         id: input.id,
@@ -142,9 +188,9 @@ export async function createCocktail(workspace: Workspace, user: User, input: Co
         abvOverride: input.abvOverride,
         extraAllergens: input.extraAllergens,
         extraAdditives: input.extraAdditives,
-        ice: input.iceId ? { connect: { id: input.iceId } } : undefined,
-        glass: input.glassId ? { connect: { id: input.glassId } } : undefined,
-        workspace: { connect: { id: workspace.id } },
+        iceId: input.iceId ?? null,
+        glassId: input.glassId ?? null,
+        workspaceId: workspace.id,
       },
     });
 
@@ -165,29 +211,13 @@ export async function createCocktail(workspace: Workspace, user: User, input: Co
       });
 
       for (const ing of step.ingredients ?? []) {
-        await tx.cocktailRecipeIngredient.create({
-          data: {
-            amount: ing.amount ?? null,
-            optional: ing.optional ?? false,
-            ingredientNumber: ing.ingredientNumber,
-            unitId: ing.unitId ?? null,
-            ingredientId: ing.ingredientId ?? null,
-            cocktailRecipeStepId: createdStep.id,
-          },
-        });
+        await tx.cocktailRecipeIngredient.create({ data: { ...stepIngredientData(ing), cocktailRecipeStepId: createdStep.id } });
       }
     }
 
     for (const garnish of input.garnishes ?? []) {
       await tx.cocktailRecipeGarnish.create({
-        data: {
-          cocktailRecipeId: createdCocktail.id,
-          garnishId: garnish.garnishId,
-          garnishNumber: garnish.garnishNumber,
-          description: garnish.description ?? null,
-          optional: garnish.optional ?? false,
-          isAlternative: garnish.isAlternative ?? false,
-        },
+        data: { cocktailRecipeId: createdCocktail.id, garnishId: garnish.garnishId, ...garnishData(garnish) },
       });
     }
 
@@ -202,15 +232,45 @@ export async function createCocktail(workspace: Workspace, user: User, input: Co
   return created;
 }
 
+/**
+ * Step / ingredient-line ids in an update body may only reference rows of the
+ * cocktail being updated (never another cocktail's or workspace's rows), and
+ * each at most once.
+ */
+function assertOwnChildIds(input: CocktailUpdateInput, oldStepIds: Set<string>, oldLineIds: Set<string>): void {
+  const seenSteps = new Set<string>();
+  const seenLines = new Set<string>();
+  const issues: string[] = [];
+  for (const step of input.steps ?? []) {
+    if (step.id) {
+      if (!oldStepIds.has(step.id) || seenSteps.has(step.id)) issues.push(`step ${step.id}`);
+      seenSteps.add(step.id);
+    }
+    for (const line of step.ingredients ?? []) {
+      if (!line.id) continue;
+      if (!oldLineIds.has(line.id) || seenLines.has(line.id)) issues.push(`ingredient line ${line.id}`);
+      seenLines.add(line.id);
+    }
+  }
+  if (issues.length > 0) {
+    throw new ApiError(400, 'INVALID_REFERENCE', 'Steps or ingredient lines do not belong to this cocktail', issues);
+  }
+}
+
 export async function updateCocktail(workspace: Workspace, user: User, cocktailId: string, input: CocktailUpdateInput): Promise<CocktailDto> {
-  const existing = await prisma.cocktailRecipe.findFirst({ where: { id: cocktailId, workspaceId: workspace.id }, select: { id: true } });
-  if (!existing) throw new ApiError(404, 'NOT_FOUND', 'Cocktail not found');
+  await runTx(async (tx) => {
+    // Serializes concurrent updates of the same cocktail (differential child writes).
+    await lockWorkspaceScope(tx, workspace.id, `cocktail:${cocktailId}`);
+    const oldCocktail = await tx.cocktailRecipe.findFirst({ where: { id: cocktailId, workspaceId: workspace.id }, include: auditInclude });
+    if (!oldCocktail) throw new ApiError(404, 'NOT_FOUND', 'Cocktail not found');
 
-  await prisma.$transaction(async (tx) => {
-    const oldCocktail = await tx.cocktailRecipe.findUnique({ where: { id: cocktailId }, include: auditInclude });
+    const oldStepIds = new Set(oldCocktail.steps.map((step) => step.id));
+    const oldLineIds = new Set(oldCocktail.steps.flatMap((step) => step.ingredients.map((line) => line.id)));
+    assertOwnChildIds(input, oldStepIds, oldLineIds);
+    await assertCocktailRefsInWorkspace(tx, workspace.id, input);
 
-    const updatedCocktail = await tx.cocktailRecipe.update({
-      where: { id: cocktailId },
+    await tx.cocktailRecipe.update({
+      where: { id: cocktailId, workspaceId: workspace.id },
       data: {
         name: input.name,
         description: input.description ?? null,
@@ -223,7 +283,6 @@ export async function updateCocktail(workspace: Workspace, user: User, cocktailI
         extraAdditives: input.extraAdditives,
         ice: input.iceId ? { connect: { id: input.iceId } } : { disconnect: true },
         glass: input.glassId ? { connect: { id: input.glassId } } : { disconnect: true },
-        workspace: { connect: { id: workspace.id } },
       },
     });
 
@@ -233,108 +292,46 @@ export async function updateCocktail(workspace: Workspace, user: User, cocktailI
       await tx.cocktailRecipeImage.create({ data: { cocktailRecipeId: cocktailId, image: input.image } });
     }
 
-    // ---- Steps & Ingredients: differential update via ids ----
-    const existingSteps = oldCocktail?.steps ?? [];
-    const existingStepMap = new Map(existingSteps.map((s) => [s.id, s]));
-
+    // ---- Steps & ingredient lines: differential update via ids ----
+    // Upsert steps first, then lines (a line may move to another step of this
+    // cocktail), and delete what is no longer present last, so a moved line is
+    // never removed by the cascade of its former step.
     const incomingSteps = input.steps ?? [];
-    const existingIncomingSteps = incomingSteps.filter((s) => s.id && s.id !== '');
-    const incomingStepIds = new Set(existingIncomingSteps.map((s) => s.id));
+    const keptStepIds = new Set<string>();
+    const keptLineIds = new Set<string>();
 
-    // Delete steps that no longer exist.
-    const stepsToDelete = existingSteps.filter((s) => !incomingStepIds.has(s.id));
-    for (const step of stepsToDelete) {
-      await tx.cocktailRecipeStep.delete({ where: { id: step.id } });
-    }
-
-    // Update existing steps (and their ingredients differentially).
-    for (const step of existingIncomingSteps) {
-      const updatedStep = await tx.cocktailRecipeStep.update({
-        where: { id: step.id },
-        data: {
-          stepNumber: step.stepNumber,
-          optional: step.optional ?? false,
-          actionId: step.actionId,
-        },
-      });
-
-      const oldStep = existingStepMap.get(step.id!);
-      const existingIngredients = oldStep?.ingredients ?? [];
-
-      const incomingIngredients = step.ingredients ?? [];
-      const incomingExistingIngredients = incomingIngredients.filter((i) => i.id && i.id !== '');
-      const incomingIngredientIds = new Set(incomingExistingIngredients.map((i) => i.id));
-
-      // Delete ingredients that no longer exist.
-      const ingredientsToDelete = existingIngredients.filter((i) => !incomingIngredientIds.has(i.id));
-      for (const ing of ingredientsToDelete) {
-        await tx.cocktailRecipeIngredient.delete({ where: { id: ing.id } });
-      }
-
-      // Update existing ingredients.
-      for (const ing of incomingExistingIngredients) {
-        await tx.cocktailRecipeIngredient.update({
-          where: { id: ing.id },
-          data: {
-            amount: ing.amount ?? null,
-            optional: ing.optional ?? false,
-            ingredientNumber: ing.ingredientNumber,
-            unitId: ing.unitId ?? null,
-            ingredientId: ing.ingredientId ?? null,
-          },
-        });
-      }
-
-      // Create new ingredients (without an existing id).
-      const newIngredients = incomingIngredients.filter((i) => !i.id || i.id === '');
-      for (const ing of newIngredients) {
-        await tx.cocktailRecipeIngredient.create({
-          data: {
-            amount: ing.amount ?? null,
-            optional: ing.optional ?? false,
-            ingredientNumber: ing.ingredientNumber,
-            unitId: ing.unitId ?? null,
-            ingredientId: ing.ingredientId ?? null,
-            cocktailRecipeStepId: updatedStep.id,
-          },
-        });
-      }
-    }
-
-    // Create new steps (without an existing id).
-    const newSteps = incomingSteps.filter((s) => !s.id || s.id === '');
-    for (const step of newSteps) {
-      const createdStep = await tx.cocktailRecipeStep.create({
-        data: {
-          actionId: step.actionId,
-          stepNumber: step.stepNumber,
-          optional: step.optional ?? false,
-          cocktailRecipeId: updatedCocktail.id,
-        },
-      });
+    for (const step of incomingSteps) {
+      const stepData = { stepNumber: step.stepNumber, optional: step.optional ?? false, actionId: step.actionId };
+      const stepId = step.id
+        ? (await tx.cocktailRecipeStep.update({ where: { id: step.id, cocktailRecipeId: cocktailId }, data: stepData })).id
+        : (await tx.cocktailRecipeStep.create({ data: { ...stepData, cocktailRecipeId: cocktailId } })).id;
+      keptStepIds.add(stepId);
 
       for (const ing of step.ingredients ?? []) {
-        await tx.cocktailRecipeIngredient.create({
-          data: {
-            amount: ing.amount ?? null,
-            optional: ing.optional ?? false,
-            ingredientNumber: ing.ingredientNumber,
-            unitId: ing.unitId ?? null,
-            ingredientId: ing.ingredientId ?? null,
-            cocktailRecipeStepId: createdStep.id,
-          },
-        });
+        const lineData = { ...stepIngredientData(ing), cocktailRecipeStepId: stepId };
+        if (ing.id) {
+          await tx.cocktailRecipeIngredient.update({ where: { id: ing.id }, data: lineData });
+          keptLineIds.add(ing.id);
+        } else {
+          await tx.cocktailRecipeIngredient.create({ data: lineData });
+        }
       }
+    }
+
+    const linesToDelete = [...oldLineIds].filter((id) => !keptLineIds.has(id));
+    if (linesToDelete.length > 0) {
+      await tx.cocktailRecipeIngredient.deleteMany({ where: { id: { in: linesToDelete }, cocktailRecipeStep: { cocktailRecipeId: cocktailId } } });
+    }
+    const stepsToDelete = [...oldStepIds].filter((id) => !keptStepIds.has(id));
+    if (stepsToDelete.length > 0) {
+      await tx.cocktailRecipeStep.deleteMany({ where: { id: { in: stepsToDelete }, cocktailRecipeId: cocktailId } });
     }
 
     // ---- Garnishes: differential update via composite (garnishId) ----
-    const existingGarnishes = oldCocktail?.garnishes ?? [];
-    const existingGarnishIds = new Set(existingGarnishes.map((g) => g.garnishId));
-
+    const existingGarnishIds = new Set(oldCocktail.garnishes.map((g) => g.garnishId));
     const incomingGarnishes = input.garnishes ?? [];
     const incomingGarnishIds = new Set(incomingGarnishes.map((g) => g.garnishId));
 
-    // Delete garnishes that no longer exist.
     const garnishIdsToDelete = Array.from(existingGarnishIds).filter((id) => !incomingGarnishIds.has(id));
     if (garnishIdsToDelete.length > 0) {
       await tx.cocktailRecipeGarnish.deleteMany({
@@ -342,28 +339,15 @@ export async function updateCocktail(workspace: Workspace, user: User, cocktailI
       });
     }
 
-    // Update existing / create new garnishes.
     for (const garnish of incomingGarnishes) {
       if (existingGarnishIds.has(garnish.garnishId)) {
         await tx.cocktailRecipeGarnish.update({
           where: { garnishId_cocktailRecipeId: { garnishId: garnish.garnishId, cocktailRecipeId: cocktailId } },
-          data: {
-            garnishNumber: garnish.garnishNumber,
-            description: garnish.description ?? null,
-            optional: garnish.optional ?? false,
-            isAlternative: garnish.isAlternative ?? false,
-          },
+          data: garnishData(garnish),
         });
       } else {
         await tx.cocktailRecipeGarnish.create({
-          data: {
-            cocktailRecipeId: cocktailId,
-            garnishId: garnish.garnishId,
-            garnishNumber: garnish.garnishNumber,
-            description: garnish.description ?? null,
-            optional: garnish.optional ?? false,
-            isAlternative: garnish.isAlternative ?? false,
-          },
+          data: { cocktailRecipeId: cocktailId, garnishId: garnish.garnishId, ...garnishData(garnish) },
         });
       }
     }
@@ -378,8 +362,9 @@ export async function updateCocktail(workspace: Workspace, user: User, cocktailI
 }
 
 export async function deleteCocktail(workspace: Workspace, user: User, cocktailId: string): Promise<{ count: number }> {
-  await prisma.$transaction(async (tx) => {
-    const oldCocktail = await tx.cocktailRecipe.findUnique({ where: { id: cocktailId }, include: auditInclude });
+  await runTx(async (tx) => {
+    const oldCocktail = await tx.cocktailRecipe.findFirst({ where: { id: cocktailId, workspaceId: workspace.id }, include: auditInclude });
+    if (!oldCocktail) throw new ApiError(404, 'NOT_FOUND', 'Cocktail not found');
 
     await tx.cocktailRecipeIngredient.deleteMany({ where: { cocktailRecipeStep: { cocktailRecipeId: cocktailId } } });
     await tx.cocktailRecipeStep.deleteMany({ where: { cocktailRecipeId: cocktailId } });
@@ -391,15 +376,37 @@ export async function deleteCocktail(workspace: Workspace, user: User, cocktailI
   return { count: 1 };
 }
 
-export async function archiveCocktail(workspace: Workspace, cocktailId: string, isArchived: boolean): Promise<CocktailDto> {
-  const existing = await prisma.cocktailRecipe.findFirst({ where: { id: cocktailId, workspaceId: workspace.id }, select: { id: true } });
-  if (!existing) throw new ApiError(404, 'NOT_FOUND', 'Cocktail not found');
+/** Flag changes (archive, availability) are not part of the recipe snapshot, so they are logged as a plain field diff. */
+async function updateCocktailFlags(
+  workspace: Workspace,
+  user: User,
+  cocktailId: string,
+  data: { isArchived?: boolean; unavailableUntil?: Date | null },
+): Promise<void> {
+  await runTx(async (tx) => {
+    const old = await tx.cocktailRecipe.findFirst({
+      where: { id: cocktailId, workspaceId: workspace.id },
+      select: { name: true, isArchived: true, unavailableUntil: true },
+    });
+    if (!old) throw new ApiError(404, 'NOT_FOUND', 'Cocktail not found');
 
-  // Legacy: bare update of the isArchived flag (no audit log).
-  await prisma.cocktailRecipe.update({
-    where: { id: cocktailId, workspaceId: workspace.id },
-    data: { isArchived },
+    const updated = await tx.cocktailRecipe.update({
+      where: { id: cocktailId, workspaceId: workspace.id },
+      data,
+      select: { name: true, isArchived: true, unavailableUntil: true },
+    });
+
+    const pick = (row: typeof old) => ({
+      name: row.name,
+      ...('isArchived' in data ? { isArchived: row.isArchived } : {}),
+      ...('unavailableUntil' in data ? { unavailableUntil: row.unavailableUntil?.toISOString() ?? null } : {}),
+    });
+    await createLog(tx, workspace.id, user.id, 'CocktailRecipe', cocktailId, 'UPDATE', pick(old), pick(updated));
   });
+}
+
+export async function archiveCocktail(workspace: Workspace, user: User, cocktailId: string, isArchived: boolean): Promise<CocktailDto> {
+  await updateCocktailFlags(workspace, user, cocktailId, { isArchived });
 
   const updated = await getCocktail(workspace, cocktailId);
   if (!updated) throw new ApiError(500, 'INTERNAL_ERROR', 'Cocktail could not be loaded after archive');
@@ -410,10 +417,13 @@ export async function archiveCocktail(workspace: Workspace, cocktailId: string, 
  * "Heute aus": marks the cocktail unavailable until the next bar day starts
  * (workspace timezone + statisticDayStartTime), or clears the flag.
  */
-export async function setCocktailAvailability(workspace: Workspace, cocktailId: string, unavailable: boolean, now = new Date()): Promise<CocktailDto> {
-  const existing = await prisma.cocktailRecipe.findFirst({ where: { id: cocktailId, workspaceId: workspace.id }, select: { id: true } });
-  if (!existing) throw new ApiError(404, 'NOT_FOUND', 'Cocktail not found');
-
+export async function setCocktailAvailability(
+  workspace: Workspace,
+  user: User,
+  cocktailId: string,
+  unavailable: boolean,
+  now = new Date(),
+): Promise<CocktailDto> {
   let unavailableUntil: Date | null = null;
   if (unavailable) {
     const [{ timezone }, dayStartSetting] = await Promise.all([
@@ -425,10 +435,7 @@ export async function setCocktailAvailability(workspace: Workspace, cocktailId: 
     unavailableUntil = getNextBarDayStart(now, { timezone, dayStartTime: dayStartSetting?.value });
   }
 
-  await prisma.cocktailRecipe.update({
-    where: { id: cocktailId, workspaceId: workspace.id },
-    data: { unavailableUntil },
-  });
+  await updateCocktailFlags(workspace, user, cocktailId, { unavailableUntil });
 
   const updated = await getCocktail(workspace, cocktailId);
   if (!updated) throw new ApiError(500, 'INTERNAL_ERROR', 'Cocktail could not be loaded after availability change');
@@ -436,80 +443,74 @@ export async function setCocktailAvailability(workspace: Workspace, cocktailId: 
 }
 
 export async function cloneCocktail(workspace: Workspace, user: User, cocktailId: string, name: string): Promise<CocktailDto> {
-  const cloneId = await prisma.$transaction(async (tx) => {
-    // Faithful replica of the legacy clone handler (deep copy incl. image, steps, ingredients and garnishes).
+  const cloneId = await runTx(async (tx) => {
+    // Deep copy incl. image, steps, ingredients and garnishes. All referenced ids come
+    // from the scoped source cocktail, so they belong to this workspace.
     const existing = await tx.cocktailRecipe.findFirst({
       where: { id: cocktailId, workspaceId: workspace.id },
       include: {
-        ice: true,
-        glass: { include: { _count: { select: { GlassImage: true } } } },
         CocktailRecipeImage: { select: { image: true } },
-        garnishes: { include: { garnish: true } },
-        steps: { include: { action: true, ingredients: { include: { ingredient: true, unit: true } } } },
+        garnishes: true,
+        steps: { include: { ingredients: true }, orderBy: { stepNumber: 'asc' } },
       },
     });
 
     if (!existing) throw new ApiError(404, 'NOT_FOUND', 'Cocktail not found');
 
-    const createData: Prisma.CocktailRecipeCreateInput = {
-      name,
-      description: existing.description,
-      notes: existing.notes,
-      history: existing.history,
-      tags: existing.tags,
-      price: existing.price,
-      abvOverride: existing.abvOverride,
-      extraAllergens: existing.extraAllergens,
-      extraAdditives: existing.extraAdditives,
-      workspace: { connect: { id: workspace.id } },
-    };
+    const createClone = await tx.cocktailRecipe.create({
+      data: {
+        name,
+        description: existing.description,
+        notes: existing.notes,
+        history: existing.history,
+        tags: existing.tags,
+        price: existing.price,
+        abvOverride: existing.abvOverride,
+        extraAllergens: existing.extraAllergens,
+        extraAdditives: existing.extraAdditives,
+        iceId: existing.iceId,
+        glassId: existing.glassId,
+        workspaceId: workspace.id,
+      },
+    });
 
-    if (existing.iceId) createData.ice = { connect: { id: existing.iceId } };
-    if (existing.glassId) createData.glass = { connect: { id: existing.glassId } };
-
-    const createClone = await tx.cocktailRecipe.create({ data: createData });
-
-    if (existing.CocktailRecipeImage && existing.CocktailRecipeImage.length > 0) {
+    if (existing.CocktailRecipeImage.length > 0) {
       await tx.cocktailRecipeImage.create({
-        data: { image: existing.CocktailRecipeImage[0].image, cocktailRecipe: { connect: { id: createClone.id } } },
+        data: { image: existing.CocktailRecipeImage[0].image, cocktailRecipeId: createClone.id },
       });
     }
 
-    if (existing.steps && existing.steps.length > 0) {
-      const sortedSteps = [...existing.steps].sort((a, b) => a.stepNumber - b.stepNumber);
-      for (const step of sortedSteps) {
-        await tx.cocktailRecipeStep.create({
-          data: {
-            action: { connect: { id: step.actionId } },
-            stepNumber: step.stepNumber,
-            optional: step.optional,
-            cocktailRecipe: { connect: { id: createClone.id } },
-            ingredients: {
-              create: step.ingredients.map((stepIngredient) => ({
-                amount: stepIngredient.amount,
-                optional: stepIngredient.optional,
-                ingredientNumber: stepIngredient.ingredientNumber,
-                unit: { connect: { id: stepIngredient.unitId } },
-                ingredient: { connect: { id: stepIngredient.ingredientId } },
-              })),
-            },
+    for (const step of existing.steps) {
+      await tx.cocktailRecipeStep.create({
+        data: {
+          actionId: step.actionId,
+          stepNumber: step.stepNumber,
+          optional: step.optional,
+          cocktailRecipeId: createClone.id,
+          ingredients: {
+            create: step.ingredients.map((stepIngredient) => ({
+              amount: stepIngredient.amount,
+              optional: stepIngredient.optional,
+              ingredientNumber: stepIngredient.ingredientNumber,
+              unitId: stepIngredient.unitId,
+              ingredientId: stepIngredient.ingredientId,
+            })),
           },
-        });
-      }
+        },
+      });
     }
 
-    if (existing.garnishes && existing.garnishes.length > 0) {
-      for (const garnish of existing.garnishes) {
-        await tx.cocktailRecipeGarnish.create({
-          data: {
-            cocktailRecipe: { connect: { id: createClone.id } },
-            garnish: { connect: { id: garnish.garnishId } },
-            garnishNumber: garnish.garnishNumber,
-            description: garnish.description,
-            optional: garnish.optional,
-          },
-        });
-      }
+    for (const garnish of existing.garnishes) {
+      await tx.cocktailRecipeGarnish.create({
+        data: {
+          cocktailRecipeId: createClone.id,
+          garnishId: garnish.garnishId,
+          garnishNumber: garnish.garnishNumber,
+          description: garnish.description,
+          optional: garnish.optional,
+          isAlternative: garnish.isAlternative,
+        },
+      });
     }
 
     const fullClone = await tx.cocktailRecipe.findUnique({ where: { id: createClone.id }, include: auditInclude });
@@ -541,15 +542,10 @@ export async function checkCocktail(workspace: Workspace, name: string): Promise
   return best && maxSimilarity > 0.5 ? toCocktailSummaryDto(best, workspace.id) : null;
 }
 
-export async function getCocktailImage(workspace: Workspace, cocktailId: string): Promise<{ contentType: string; bytes: Buffer } | null> {
+export async function getCocktailImage(workspace: Workspace, cocktailId: string): Promise<DecodedImage | null> {
   const result = await prisma.cocktailRecipeImage.findFirst({
     where: { cocktailRecipeId: cocktailId, cocktailRecipe: { workspaceId: workspace.id } },
     select: { image: true },
   });
-
-  if (!result?.image) return null;
-
-  const contentType = result.image.split(';')[0].split(':')[1];
-  const decoded = result.image.split(',')[1];
-  return { contentType, bytes: Buffer.from(decoded, 'base64') };
+  return decodeStoredImage(result?.image);
 }
