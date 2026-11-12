@@ -1,19 +1,32 @@
 /**
- * Version-agnostic business logic for glasses (v1). Same DB operations as the
- * legacy handlers, but returns clean public DTOs (lib/api/dto/glasses.ts).
- * Legacy routes remain wrapped-but-untouched and keep their raw Prisma shapes.
+ * Version-agnostic business logic for glasses (v1). Returns clean public DTOs
+ * (lib/api/dto/glasses.ts). Every path/body id is scoped to the caller's workspace.
  */
 import prisma from '../../../prisma/prisma';
 import { createLog } from '@lib/auditLog';
 import { calculateGlassSimilarity } from '@lib/findSimilarEntities';
 import { ApiError } from '@lib/http/ApiError';
+import { assertIdsInWorkspace, assertInWorkspace } from '@lib/api/scope';
+import { BULK_TX_TIMEOUT_MS, runTx, type Tx } from '@lib/db/tx';
+import { decodeStoredImage, type DecodedImage } from '@lib/images/imageResponse';
 import { toGlassDto } from '@lib/api/dto/glasses';
 import packageJson from '../../../package.json';
 import type { GlassExportStructure } from '@lib/auditExport';
 import type { Prisma, User, Workspace } from '@generated/prisma/client';
-import type { GlassCreateInput, GlassDto, GlassUpdateInput } from '@lib/schemas/glasses';
+import { GlassExportItemSchema } from '@lib/schemas/glasses';
+import type { GlassCreateInput, GlassDto, GlassExportItem, GlassImportJsonBody, GlassUpdateInput } from '@lib/schemas/glasses';
 
 const includeImageCount = { _count: { select: { GlassImage: true } } } satisfies Prisma.GlassInclude;
+
+/**
+ * Locks the glass row for the rest of the transaction and proves it belongs to
+ * the workspace (404 otherwise). The row lock also blocks concurrent inserts of
+ * cocktails referencing the glass (FK checks take a KEY SHARE lock on it).
+ */
+async function lockGlass(tx: Tx, workspaceId: string, glassId: string): Promise<void> {
+  const rows = await tx.$queryRaw<Array<{ id: string }>>`SELECT id FROM "Glass" WHERE id = ${glassId} AND "workspaceId" = ${workspaceId} FOR UPDATE`;
+  if (rows.length === 0) throw new ApiError(404, 'NOT_FOUND', 'Glass not found');
+}
 
 export async function listGlasses(workspace: Workspace, opts: { search?: string }): Promise<GlassDto[]> {
   const where: Prisma.GlassWhereInput = { workspaceId: workspace.id };
@@ -33,19 +46,19 @@ export async function getGlass(workspace: Workspace, glassId: string): Promise<G
 }
 
 export async function createGlass(workspace: Workspace, user: User, input: GlassCreateInput): Promise<GlassDto> {
-  const createdGlass = await prisma.$transaction(async (tx) => {
+  const createdGlass = await runTx(async (tx) => {
     const created = await tx.glass.create({
       data: {
         id: input.id,
         name: input.name,
         volume: input.volume ?? undefined,
         deposit: input.deposit,
-        workspace: { connect: { id: workspace.id } },
+        workspaceId: workspace.id,
       },
     });
 
     if (input.image) {
-      await tx.glassImage.create({ data: { image: input.image, glass: { connect: { id: created.id } } } });
+      await tx.glassImage.create({ data: { image: input.image, glassId: created.id } });
     }
 
     const fullGlass = await tx.glass.findUnique({ where: { id: created.id }, include: { GlassImage: true } });
@@ -57,17 +70,16 @@ export async function createGlass(workspace: Workspace, user: User, input: Glass
 }
 
 export async function updateGlass(workspace: Workspace, user: User, glassId: string, input: GlassUpdateInput): Promise<GlassDto> {
-  const updatedGlass = await prisma.$transaction(async (tx) => {
-    const oldGlass = await tx.glass.findUnique({ where: { id: glassId }, include: { GlassImage: true } });
+  const updatedGlass = await runTx(async (tx) => {
+    await lockGlass(tx, workspace.id, glassId);
+    const oldGlass = await tx.glass.findUniqueOrThrow({ where: { id: glassId }, include: { GlassImage: true } });
 
     const updated = await tx.glass.update({
-      where: { id: glassId },
+      where: { id: glassId, workspaceId: workspace.id },
       data: {
-        id: glassId,
         name: input.name,
         volume: input.volume ?? undefined,
         deposit: input.deposit,
-        workspace: { connect: { id: workspace.id } },
       },
     });
 
@@ -85,17 +97,19 @@ export async function updateGlass(workspace: Workspace, user: User, glassId: str
 }
 
 export async function deleteGlass(workspace: Workspace, user: User, glassId: string): Promise<{ count: number }> {
-  const cocktails = await prisma.cocktailRecipe.findMany({
-    where: { glassId, workspaceId: workspace.id },
-    select: { id: true, name: true },
-  });
+  await runTx(async (tx) => {
+    // Lock first: a cocktail saved concurrently either commits before (→ 409 below) or fails its FK check afterwards.
+    await lockGlass(tx, workspace.id, glassId);
 
-  if (cocktails.length > 0) {
-    throw new ApiError(409, 'GLASS_IN_USE', `The glass is still used in ${cocktails.length} cocktail(s) and cannot be deleted.`, { cocktails });
-  }
+    const cocktails = await tx.cocktailRecipe.findMany({
+      where: { glassId, workspaceId: workspace.id },
+      select: { id: true, name: true },
+    });
+    if (cocktails.length > 0) {
+      throw new ApiError(409, 'GLASS_IN_USE', `The glass is still used in ${cocktails.length} cocktail(s) and cannot be deleted.`, { cocktails });
+    }
 
-  await prisma.$transaction(async (tx) => {
-    const oldGlass = await tx.glass.findUnique({ where: { id: glassId }, include: { GlassImage: true } });
+    const oldGlass = await tx.glass.findUniqueOrThrow({ where: { id: glassId }, include: { GlassImage: true } });
     await tx.glass.delete({ where: { id: glassId, workspaceId: workspace.id } });
     await createLog(tx, workspace.id, user.id, 'Glass', glassId, 'DELETE', oldGlass, null);
   });
@@ -121,8 +135,8 @@ export async function checkGlass(workspace: Workspace, name: string): Promise<Gl
   return best && maxSimilarity > 0.5 ? toGlassDto(best, best._count.GlassImage > 0, workspace.id) : null;
 }
 
-export async function cloneGlass(workspace: Workspace, glassId: string, name: string): Promise<GlassDto> {
-  return prisma.$transaction(async (tx) => {
+export async function cloneGlass(workspace: Workspace, user: User, glassId: string, name: string): Promise<GlassDto> {
+  return runTx(async (tx) => {
     const existing = await tx.glass.findFirst({
       where: { id: glassId, workspaceId: workspace.id },
       include: { GlassImage: { select: { image: true } } },
@@ -133,22 +147,27 @@ export async function cloneGlass(workspace: Workspace, glassId: string, name: st
     const createClone = await tx.glass.create({
       data: {
         name,
+        notes: existing.notes,
         deposit: existing.deposit,
         volume: existing.volume,
-        workspace: { connect: { id: workspace.id } },
+        workspaceId: workspace.id,
       },
     });
 
-    const hasImage = Boolean(existing.GlassImage && existing.GlassImage.length > 0);
+    const hasImage = existing.GlassImage.length > 0;
     if (hasImage) {
       await tx.glassImage.create({ data: { glassId: createClone.id, image: existing.GlassImage[0].image } });
     }
+
+    const fullClone = await tx.glass.findUnique({ where: { id: createClone.id }, include: { GlassImage: true } });
+    await createLog(tx, workspace.id, user.id, 'Glass', createClone.id, 'CREATE', null, fullClone);
 
     return toGlassDto(createClone, hasImage, workspace.id);
   });
 }
 
 export async function getGlassReferences(workspace: Workspace, glassId: string): Promise<Array<{ id: string; name: string }>> {
+  await assertInWorkspace(prisma, 'glass', glassId, workspace.id);
   return prisma.cocktailRecipe.findMany({
     where: { glassId, workspaceId: workspace.id },
     select: { id: true, name: true },
@@ -181,38 +200,58 @@ export async function exportGlassesJson(workspace: Workspace, ids: string[]): Pr
   return exportData.length === 1 ? exportData[0] : exportData;
 }
 
-interface GlassImportDecision {
-  exportName: string;
-  decision: 'import' | 'overwrite' | 'rename' | 'skip';
-  existingId?: string;
-  newName?: string;
-  data: GlassExportStructure;
+interface ImportItemIssue {
+  index: number;
+  name: string;
+  issues: unknown;
+}
+
+function exportItemName(item: unknown): string {
+  const name = (item as { glass?: { name?: unknown } } | null)?.glass?.name;
+  return typeof name === 'string' && name.length > 0 ? name : 'Unbekannt';
+}
+
+function invalidImport(issues: ImportItemIssue[]): ApiError {
+  return new ApiError(400, 'INVALID_IMPORT_ITEMS', `${issues.length} import item(s) are invalid; nothing was imported.`, issues);
+}
+
+function glassImportData(item: GlassExportItem, name: string) {
+  return {
+    name,
+    notes: item.glass.notes ?? null,
+    volume: item.glass.volume ?? null,
+    deposit: item.glass.deposit ?? 0,
+  };
 }
 
 /**
- * Faithful replica of the legacy import three-phase flow. Returns the exact
- * legacy payloads per phase, sent verbatim by the route (not { data }-enveloped).
+ * Three-phase JSON import. Returns the legacy payloads per phase, sent verbatim
+ * by the route (not { data }-enveloped). `execute` is all-or-nothing: every item
+ * and every overwrite target is validated before the single write transaction.
  */
-export async function importGlassesJson(
-  workspace: Workspace,
-  user: User,
-  body: { phase: 'validate' | 'prepare-mapping' | 'execute'; exportData: GlassExportStructure | GlassExportStructure[]; decisions?: GlassImportDecision[] },
-): Promise<unknown> {
+export async function importGlassesJson(workspace: Workspace, user: User, body: GlassImportJsonBody): Promise<unknown> {
   const workspaceId = workspace.id;
-  const items: GlassExportStructure[] = Array.isArray(body.exportData) ? body.exportData : [body.exportData];
+  const items: unknown[] = body.exportData === undefined ? [] : Array.isArray(body.exportData) ? body.exportData : [body.exportData];
 
   if (body.phase === 'validate') {
     const entities = items.map((item) => {
-      if (!item?.glass?.name) return { name: 'Unbekannt', valid: false };
-      return { name: item.glass.name, valid: true };
+      const parsed = GlassExportItemSchema.safeParse(item);
+      return parsed.success ? { name: parsed.data.glass.name, valid: true } : { name: exportItemName(item), valid: false, issues: parsed.error.issues };
     });
     return { valid: entities.every((e) => e.valid), entities };
   }
 
   if (body.phase === 'prepare-mapping') {
+    const issues: ImportItemIssue[] = [];
+    items.forEach((item, index) => {
+      const parsed = GlassExportItemSchema.safeParse(item);
+      if (!parsed.success) issues.push({ index, name: exportItemName(item), issues: parsed.error.issues });
+    });
+    if (issues.length > 0) throw invalidImport(issues);
+
     const existingGlasses = await prisma.glass.findMany({ where: { workspaceId }, select: { id: true, name: true } });
     const entities = items.map((item) => {
-      const name = item.glass?.name || 'Unbekannt';
+      const name = exportItemName(item);
       const conflicts = existingGlasses.filter((e) => e.name.toLowerCase() === name.toLowerCase());
       return { name, data: item, conflicts: conflicts.map((c) => ({ id: c.id, name: c.name })) };
     });
@@ -225,54 +264,58 @@ export async function importGlassesJson(
       throw new ApiError(400, 'NO_DECISIONS', 'No decisions provided');
     }
 
-    const results: Array<{ name: string; status: string; message?: string }> = [];
+    const issues: ImportItemIssue[] = [];
+    const plan = decisions.map((decision, index) => {
+      if (decision.decision === 'skip') return { decision, item: null };
+      const parsed = GlassExportItemSchema.safeParse(decision.data);
+      if (!parsed.success) {
+        issues.push({ index, name: decision.exportName ?? exportItemName(decision.data), issues: parsed.error.issues });
+        return { decision, item: null };
+      }
+      if (decision.decision === 'overwrite' && !decision.existingId) {
+        issues.push({ index, name: parsed.data.glass.name, issues: [{ path: ['existingId'], message: 'existingId is required to overwrite' }] });
+      }
+      return { decision, item: parsed.data };
+    });
+    if (issues.length > 0) throw invalidImport(issues);
 
-    await prisma.$transaction(async (tx) => {
-      for (const decision of decisions) {
-        if (decision.decision === 'skip') {
-          results.push({ name: decision.exportName, status: 'skipped' });
-          continue;
-        }
+    const overwriteIds = decisions.filter((d) => d.decision === 'overwrite').map((d) => d.existingId);
+    await assertIdsInWorkspace(prisma, workspaceId, { glass: overwriteIds });
 
-        const itemData = decision.data;
-        if (!itemData?.glass) continue;
+    const results = await runTx(
+      async (tx) => {
+        const txResults: Array<{ name: string; status: 'created' | 'overwritten' | 'skipped' }> = [];
+        for (const { decision, item } of plan) {
+          if (!item) {
+            txResults.push({ name: decision.exportName ?? exportItemName(decision.data), status: 'skipped' });
+            continue;
+          }
 
-        const finalName = decision.decision === 'rename' && decision.newName ? decision.newName : itemData.glass.name;
+          const finalName = decision.decision === 'rename' && decision.newName ? decision.newName : item.glass.name;
 
-        try {
           if (decision.decision === 'overwrite' && decision.existingId) {
-            const oldData = await tx.glass.findUnique({ where: { id: decision.existingId }, include: { GlassImage: true } });
+            const oldData = await tx.glass.findFirst({ where: { id: decision.existingId, workspaceId }, include: { GlassImage: true } });
+            if (!oldData) throw new ApiError(400, 'INVALID_REFERENCE', 'Referenced records do not exist in this workspace: Glass');
             const updated = await tx.glass.update({
-              where: { id: decision.existingId },
-              data: {
-                name: finalName,
-                notes: itemData.glass.notes ?? null,
-                volume: itemData.glass.volume ?? null,
-                deposit: itemData.glass.deposit ?? 0,
-              },
+              where: { id: decision.existingId, workspaceId },
+              data: glassImportData(item, finalName),
               include: { GlassImage: true },
             });
             await createLog(tx, workspaceId, user.id, 'Glass', decision.existingId, 'UPDATE', oldData, updated);
-            results.push({ name: finalName, status: 'overwritten' });
+            txResults.push({ name: finalName, status: 'overwritten' });
           } else {
             const created = await tx.glass.create({
-              data: {
-                name: finalName,
-                notes: itemData.glass.notes ?? null,
-                volume: itemData.glass.volume ?? null,
-                deposit: itemData.glass.deposit ?? 0,
-                workspaceId,
-              },
+              data: { ...glassImportData(item, finalName), workspaceId },
               include: { GlassImage: true },
             });
             await createLog(tx, workspaceId, user.id, 'Glass', created.id, 'CREATE', null, created);
-            results.push({ name: finalName, status: 'created' });
+            txResults.push({ name: finalName, status: 'created' });
           }
-        } catch (err: unknown) {
-          results.push({ name: finalName, status: 'error', message: err instanceof Error ? err.message : 'Unknown error' });
         }
-      }
-    });
+        return txResults;
+      },
+      { timeout: BULK_TX_TIMEOUT_MS },
+    );
 
     return { success: true, results };
   }
@@ -280,15 +323,11 @@ export async function importGlassesJson(
   throw new ApiError(400, 'INVALID_PHASE', 'Invalid phase');
 }
 
-export async function getGlassImage(workspace: Workspace, glassId: string): Promise<{ contentType: string; bytes: Buffer } | null> {
+export async function getGlassImage(workspace: Workspace, glassId: string): Promise<DecodedImage | null> {
   const result = await prisma.glassImage.findFirst({
     where: { glassId, glass: { workspaceId: workspace.id } },
     select: { image: true },
   });
 
-  if (!result?.image) return null;
-
-  const contentType = result.image.split(';')[0].split(':')[1];
-  const decoded = result.image.split(',')[1];
-  return { contentType, bytes: Buffer.from(decoded, 'base64') };
+  return decodeStoredImage(result?.image);
 }

@@ -1,21 +1,30 @@
 /**
- * Version-agnostic business logic for garnishes (v1). Same DB operations as the
- * legacy handlers, but returns clean public DTOs (lib/api/dto/garnishes.ts).
- * Legacy routes remain wrapped-but-untouched and keep their raw Prisma shapes.
+ * Version-agnostic business logic for garnishes (v1). Returns clean public DTOs
+ * (lib/api/dto/garnishes.ts). Every path/body id is scoped to the caller's workspace.
  */
 import prisma from '../../../prisma/prisma';
 import { nextAllergenSources } from '@lib/guest-info/constants';
 import { createLog } from '@lib/auditLog';
 import { calculateGarnishSimilarity } from '@lib/findSimilarEntities';
 import { ApiError } from '@lib/http/ApiError';
+import { assertIdsInWorkspace } from '@lib/api/scope';
+import { BULK_TX_TIMEOUT_MS, runTx, type Tx } from '@lib/db/tx';
+import { decodeStoredImage, type DecodedImage } from '@lib/images/imageResponse';
 import { toGarnishDto } from '@lib/api/dto/garnishes';
 import { garnishGuestInfoImportData } from '@lib/guest-info/sanitize';
 import packageJson from '../../../package.json';
 import type { GarnishExportStructure } from '@lib/auditExport';
 import type { Prisma, User, Workspace } from '@generated/prisma/client';
-import type { GarnishCreateInput, GarnishDto, GarnishUpdateInput } from '@lib/schemas/garnishes';
+import { GarnishExportItemSchema } from '@lib/schemas/garnishes';
+import type { GarnishCreateInput, GarnishDto, GarnishExportItem, GarnishImportJsonBody, GarnishUpdateInput } from '@lib/schemas/garnishes';
 
 const includeImageCount = { _count: { select: { GarnishImage: true } } } satisfies Prisma.GarnishInclude;
+
+/** Locks the garnish row for the rest of the transaction and proves it belongs to the workspace (404 otherwise). */
+async function lockGarnish(tx: Tx, workspaceId: string, garnishId: string): Promise<void> {
+  const rows = await tx.$queryRaw<Array<{ id: string }>>`SELECT id FROM "Garnish" WHERE id = ${garnishId} AND "workspaceId" = ${workspaceId} FOR UPDATE`;
+  if (rows.length === 0) throw new ApiError(404, 'NOT_FOUND', 'Garnish not found');
+}
 
 export async function listGarnishes(workspace: Workspace, opts: { search?: string }): Promise<GarnishDto[]> {
   const where: Prisma.GarnishWhereInput = { workspaceId: workspace.id };
@@ -35,7 +44,7 @@ export async function getGarnish(workspace: Workspace, garnishId: string): Promi
 }
 
 export async function createGarnish(workspace: Workspace, user: User, input: GarnishCreateInput): Promise<GarnishDto> {
-  const createdGarnish = await prisma.$transaction(async (tx) => {
+  const createdGarnish = await runTx(async (tx) => {
     const created = await tx.garnish.create({
       data: {
         id: input.id,
@@ -47,12 +56,12 @@ export async function createGarnish(workspace: Workspace, user: User, input: Gar
         allergenSources: nextAllergenSources(input),
         additives: input.additives,
         guestInfoComplete: input.guestInfoComplete,
-        workspace: { connect: { id: workspace.id } },
+        workspaceId: workspace.id,
       },
     });
 
     if (input.image) {
-      await tx.garnishImage.create({ data: { image: input.image, garnish: { connect: { id: created.id } } } });
+      await tx.garnishImage.create({ data: { image: input.image, garnishId: created.id } });
     }
 
     const fullGarnish = await tx.garnish.findUnique({ where: { id: created.id }, include: { GarnishImage: true } });
@@ -64,11 +73,12 @@ export async function createGarnish(workspace: Workspace, user: User, input: Gar
 }
 
 export async function updateGarnish(workspace: Workspace, user: User, garnishId: string, input: GarnishUpdateInput): Promise<GarnishDto> {
-  const updatedGarnish = await prisma.$transaction(async (tx) => {
-    const oldGarnish = await tx.garnish.findUnique({ where: { id: garnishId }, include: { GarnishImage: true } });
+  const updatedGarnish = await runTx(async (tx) => {
+    await lockGarnish(tx, workspace.id, garnishId);
+    const oldGarnish = await tx.garnish.findUniqueOrThrow({ where: { id: garnishId }, include: { GarnishImage: true } });
 
     const updated = await tx.garnish.update({
-      where: { id: garnishId },
+      where: { id: garnishId, workspaceId: workspace.id },
       data: {
         name: input.name,
         price: input.price ?? undefined,
@@ -78,7 +88,6 @@ export async function updateGarnish(workspace: Workspace, user: User, garnishId:
         allergenSources: nextAllergenSources(input, oldGarnish),
         additives: input.additives,
         guestInfoComplete: input.guestInfoComplete,
-        workspace: { connect: { id: workspace.id } },
       },
     });
 
@@ -95,9 +104,11 @@ export async function updateGarnish(workspace: Workspace, user: User, garnishId:
   return toGarnishDto(updatedGarnish, Boolean(input.image), workspace.id);
 }
 
+/** Deleting a garnish removes it from the cocktails that use it (CocktailRecipeGarnish cascades). */
 export async function deleteGarnish(workspace: Workspace, user: User, garnishId: string): Promise<{ count: number }> {
-  await prisma.$transaction(async (tx) => {
-    const oldGarnish = await tx.garnish.findUnique({ where: { id: garnishId }, include: { GarnishImage: true } });
+  await runTx(async (tx) => {
+    await lockGarnish(tx, workspace.id, garnishId);
+    const oldGarnish = await tx.garnish.findUniqueOrThrow({ where: { id: garnishId }, include: { GarnishImage: true } });
     await tx.garnish.delete({ where: { id: garnishId, workspaceId: workspace.id } });
     await createLog(tx, workspace.id, user.id, 'Garnish', garnishId, 'DELETE', oldGarnish, null);
   });
@@ -123,8 +134,8 @@ export async function checkGarnish(workspace: Workspace, name: string): Promise<
   return best && maxSimilarity > 0.5 ? toGarnishDto(best, best._count.GarnishImage > 0, workspace.id) : null;
 }
 
-export async function cloneGarnish(workspace: Workspace, garnishId: string, name: string): Promise<GarnishDto> {
-  return prisma.$transaction(async (tx) => {
+export async function cloneGarnish(workspace: Workspace, user: User, garnishId: string, name: string): Promise<GarnishDto> {
+  return runTx(async (tx) => {
     const existing = await tx.garnish.findFirst({
       where: { id: garnishId, workspaceId: workspace.id },
       include: { GarnishImage: { select: { image: true } } },
@@ -142,14 +153,17 @@ export async function cloneGarnish(workspace: Workspace, garnishId: string, name
         allergenSources: existing.allergenSources,
         additives: existing.additives,
         guestInfoComplete: existing.guestInfoComplete,
-        workspace: { connect: { id: workspace.id } },
+        workspaceId: workspace.id,
       },
     });
 
-    const hasImage = Boolean(existing.GarnishImage && existing.GarnishImage.length > 0);
+    const hasImage = existing.GarnishImage.length > 0;
     if (hasImage) {
       await tx.garnishImage.create({ data: { garnishId: createClone.id, image: existing.GarnishImage[0].image } });
     }
+
+    const fullClone = await tx.garnish.findUnique({ where: { id: createClone.id }, include: { GarnishImage: true } });
+    await createLog(tx, workspace.id, user.id, 'Garnish', createClone.id, 'CREATE', null, fullClone);
 
     return toGarnishDto(createClone, hasImage, workspace.id);
   });
@@ -185,42 +199,59 @@ export async function exportGarnishesJson(workspace: Workspace, ids: string[]): 
   return exportData.length === 1 ? exportData[0] : exportData;
 }
 
-interface GarnishImportDecision {
-  exportName: string;
-  decision: 'import' | 'overwrite' | 'rename' | 'skip';
-  existingId?: string;
-  newName?: string;
-  data: GarnishExportStructure;
+interface ImportItemIssue {
+  index: number;
+  name: string;
+  issues: unknown;
+}
+
+function exportItemName(item: unknown): string {
+  const name = (item as { garnish?: { name?: unknown } } | null)?.garnish?.name;
+  return typeof name === 'string' && name.length > 0 ? name : 'Unbekannt';
+}
+
+function invalidImport(issues: ImportItemIssue[]): ApiError {
+  return new ApiError(400, 'INVALID_IMPORT_ITEMS', `${issues.length} import item(s) are invalid; nothing was imported.`, issues);
+}
+
+function garnishImportData(item: GarnishExportItem, name: string) {
+  return {
+    name,
+    description: item.garnish.description ?? null,
+    notes: item.garnish.notes ?? null,
+    price: item.garnish.price ?? null,
+    ...garnishGuestInfoImportData(item.garnish),
+  };
 }
 
 /**
- * Faithful replica of the legacy import three-phase flow. Returns the exact
- * legacy payloads per phase, sent verbatim by the route (not { data }-enveloped).
+ * Three-phase JSON import. Returns the legacy payloads per phase, sent verbatim
+ * by the route (not { data }-enveloped). `execute` is all-or-nothing: every item
+ * and every overwrite target is validated before the single write transaction.
  */
-export async function importGarnishesJson(
-  workspace: Workspace,
-  user: User,
-  body: {
-    phase: 'validate' | 'prepare-mapping' | 'execute';
-    exportData: GarnishExportStructure | GarnishExportStructure[];
-    decisions?: GarnishImportDecision[];
-  },
-): Promise<unknown> {
+export async function importGarnishesJson(workspace: Workspace, user: User, body: GarnishImportJsonBody): Promise<unknown> {
   const workspaceId = workspace.id;
-  const items: GarnishExportStructure[] = Array.isArray(body.exportData) ? body.exportData : [body.exportData];
+  const items: unknown[] = body.exportData === undefined ? [] : Array.isArray(body.exportData) ? body.exportData : [body.exportData];
 
   if (body.phase === 'validate') {
     const entities = items.map((item) => {
-      if (!item?.garnish?.name) return { name: 'Unbekannt', valid: false };
-      return { name: item.garnish.name, valid: true };
+      const parsed = GarnishExportItemSchema.safeParse(item);
+      return parsed.success ? { name: parsed.data.garnish.name, valid: true } : { name: exportItemName(item), valid: false, issues: parsed.error.issues };
     });
     return { valid: entities.every((e) => e.valid), entities };
   }
 
   if (body.phase === 'prepare-mapping') {
+    const issues: ImportItemIssue[] = [];
+    items.forEach((item, index) => {
+      const parsed = GarnishExportItemSchema.safeParse(item);
+      if (!parsed.success) issues.push({ index, name: exportItemName(item), issues: parsed.error.issues });
+    });
+    if (issues.length > 0) throw invalidImport(issues);
+
     const existingGarnishes = await prisma.garnish.findMany({ where: { workspaceId }, select: { id: true, name: true } });
     const entities = items.map((item) => {
-      const name = item.garnish?.name || 'Unbekannt';
+      const name = exportItemName(item);
       const conflicts = existingGarnishes.filter((e) => e.name.toLowerCase() === name.toLowerCase());
       return { name, data: item, conflicts: conflicts.map((c) => ({ id: c.id, name: c.name })) };
     });
@@ -233,56 +264,58 @@ export async function importGarnishesJson(
       throw new ApiError(400, 'NO_DECISIONS', 'No decisions provided');
     }
 
-    const results: Array<{ name: string; status: string; message?: string }> = [];
+    const issues: ImportItemIssue[] = [];
+    const plan = decisions.map((decision, index) => {
+      if (decision.decision === 'skip') return { decision, item: null };
+      const parsed = GarnishExportItemSchema.safeParse(decision.data);
+      if (!parsed.success) {
+        issues.push({ index, name: decision.exportName ?? exportItemName(decision.data), issues: parsed.error.issues });
+        return { decision, item: null };
+      }
+      if (decision.decision === 'overwrite' && !decision.existingId) {
+        issues.push({ index, name: parsed.data.garnish.name, issues: [{ path: ['existingId'], message: 'existingId is required to overwrite' }] });
+      }
+      return { decision, item: parsed.data };
+    });
+    if (issues.length > 0) throw invalidImport(issues);
 
-    await prisma.$transaction(async (tx) => {
-      for (const decision of decisions) {
-        if (decision.decision === 'skip') {
-          results.push({ name: decision.exportName, status: 'skipped' });
-          continue;
-        }
+    const overwriteIds = decisions.filter((d) => d.decision === 'overwrite').map((d) => d.existingId);
+    await assertIdsInWorkspace(prisma, workspaceId, { garnish: overwriteIds });
 
-        const itemData = decision.data;
-        if (!itemData?.garnish) continue;
+    const results = await runTx(
+      async (tx) => {
+        const txResults: Array<{ name: string; status: 'created' | 'overwritten' | 'skipped' }> = [];
+        for (const { decision, item } of plan) {
+          if (!item) {
+            txResults.push({ name: decision.exportName ?? exportItemName(decision.data), status: 'skipped' });
+            continue;
+          }
 
-        const finalName = decision.decision === 'rename' && decision.newName ? decision.newName : itemData.garnish.name;
+          const finalName = decision.decision === 'rename' && decision.newName ? decision.newName : item.garnish.name;
 
-        try {
           if (decision.decision === 'overwrite' && decision.existingId) {
-            const oldData = await tx.garnish.findUnique({ where: { id: decision.existingId }, include: { GarnishImage: true } });
+            const oldData = await tx.garnish.findFirst({ where: { id: decision.existingId, workspaceId }, include: { GarnishImage: true } });
+            if (!oldData) throw new ApiError(400, 'INVALID_REFERENCE', 'Referenced records do not exist in this workspace: Garnish');
             const updated = await tx.garnish.update({
-              where: { id: decision.existingId },
-              data: {
-                name: finalName,
-                description: itemData.garnish.description ?? null,
-                notes: itemData.garnish.notes ?? null,
-                price: itemData.garnish.price ?? null,
-                ...garnishGuestInfoImportData(itemData.garnish),
-              },
+              where: { id: decision.existingId, workspaceId },
+              data: garnishImportData(item, finalName),
               include: { GarnishImage: true },
             });
             await createLog(tx, workspaceId, user.id, 'Garnish', decision.existingId, 'UPDATE', oldData, updated);
-            results.push({ name: finalName, status: 'overwritten' });
+            txResults.push({ name: finalName, status: 'overwritten' });
           } else {
             const created = await tx.garnish.create({
-              data: {
-                name: finalName,
-                description: itemData.garnish.description ?? null,
-                notes: itemData.garnish.notes ?? null,
-                price: itemData.garnish.price ?? null,
-                ...garnishGuestInfoImportData(itemData.garnish),
-                workspaceId,
-              },
+              data: { ...garnishImportData(item, finalName), workspaceId },
               include: { GarnishImage: true },
             });
             await createLog(tx, workspaceId, user.id, 'Garnish', created.id, 'CREATE', null, created);
-            results.push({ name: finalName, status: 'created' });
+            txResults.push({ name: finalName, status: 'created' });
           }
-        } catch (err: unknown) {
-          results.push({ name: finalName, status: 'error', message: err instanceof Error ? err.message : 'Unknown error' });
         }
-      }
-    });
+        return txResults;
+      },
+      { timeout: BULK_TX_TIMEOUT_MS },
+    );
 
     return { success: true, results };
   }
@@ -290,15 +323,11 @@ export async function importGarnishesJson(
   throw new ApiError(400, 'INVALID_PHASE', 'Invalid phase');
 }
 
-export async function getGarnishImage(workspace: Workspace, garnishId: string): Promise<{ contentType: string; bytes: Buffer } | null> {
+export async function getGarnishImage(workspace: Workspace, garnishId: string): Promise<DecodedImage | null> {
   const result = await prisma.garnishImage.findFirst({
     where: { garnishId, garnish: { workspaceId: workspace.id } },
     select: { image: true },
   });
 
-  if (!result?.image) return null;
-
-  const contentType = result.image.split(';')[0].split(':')[1];
-  const decoded = result.image.split(',')[1];
-  return { contentType, bytes: Buffer.from(decoded, 'base64') };
+  return decodeStoredImage(result?.image);
 }
