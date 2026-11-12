@@ -14,7 +14,8 @@ export async function setup() {
     throw new Error('DATABASE_URL must be set for integration tests (see .env.test)');
   }
 
-  execSync('pnpm prisma generate', { stdio: 'inherit', env: process.env });
+  // Parallel runs against separate databases share generated/; let them skip regeneration.
+  if (!process.env.SKIP_PRISMA_GENERATE) execSync('pnpm prisma generate', { stdio: 'inherit', env: process.env });
   execSync('pnpm prisma migrate deploy', {
     stdio: 'inherit',
     env: process.env,

@@ -70,9 +70,40 @@ export function createMockResponse(): NextApiResponse & { _result: HandlerResult
       result.headersSent = true;
       return this;
     },
-    setHeader(name: string, value: string | number) {
+    setHeader(name: string, value: string | number | string[]) {
       result.headers[name] = value;
       return this;
+    },
+    getHeader(name: string) {
+      return result.headers[name];
+    },
+    removeHeader(name: string) {
+      delete result.headers[name];
+      return this;
+    },
+    write(chunk: unknown) {
+      result.body = result.body === undefined ? chunk : result.body;
+      return true;
+    },
+    end(data?: unknown) {
+      if (data !== undefined) {
+        result.body = data;
+        if (typeof data === 'string') {
+          try {
+            result.json = JSON.parse(data);
+          } catch {
+            // not JSON
+          }
+        }
+      }
+      result.headersSent = true;
+      return this;
+    },
+    set statusCode(code: number) {
+      result.status = code;
+    },
+    get statusCode() {
+      return result.status;
     },
     get headersSent() {
       return result.headersSent;
