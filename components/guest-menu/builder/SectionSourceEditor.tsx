@@ -39,9 +39,7 @@ function ChipSelect({
   const [query, setQuery] = useState('');
   const labels = useMemo(() => new Map(options.map((option) => [option.value, option.label])), [options]);
   const normalized = query.trim().toLowerCase();
-  const available = options
-    .filter((option) => !selected.includes(option.value) && (normalized === '' || option.label.toLowerCase().includes(normalized)))
-    .slice(0, 40);
+  const available = options.filter((option) => !selected.includes(option.value) && (normalized === '' || option.label.toLowerCase().includes(normalized)));
   return (
     <div className="flex flex-col gap-1.5">
       {selected.length > 0 && (

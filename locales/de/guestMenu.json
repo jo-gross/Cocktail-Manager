@@ -193,6 +193,8 @@
       "hint": "Zeigt, welche Karte unter dem Bar-Link angezeigt wird. Blasse Felder: Standardkarte, weil keine andere gilt. Nur veröffentlichte und aktive Karten werden angezeigt.",
       "overlaps_one": "{{count}} Überschneidung von Karten mit Zeitplan",
       "overlaps_other": "{{count}} Überschneidungen von Karten mit Zeitplan",
+      "overlapsMore_one": "… und {{count}} weitere Überschneidung",
+      "overlapsMore_other": "… und {{count}} weitere Überschneidungen",
       "overlapLine": "{{day}} {{from}}–{{to}}: {{menus}} – angezeigt wird {{winner}} (Priorität)"
     }
   },

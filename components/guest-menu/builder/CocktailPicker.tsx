@@ -19,8 +19,7 @@ export function CocktailPicker({ value, onChange }: { value: string[]; onChange:
       .filter(
         (cocktail) =>
           normalized === '' || cocktail.name.toLowerCase().includes(normalized) || cocktail.tags.some((tag) => tag.toLowerCase().includes(normalized)),
-      )
-      .slice(0, 30);
+      );
   }, [data.cocktails, query, selected]);
 
   return (
