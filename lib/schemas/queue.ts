@@ -62,7 +62,6 @@ export type QueueUpdateInput = z.infer<typeof QueueUpdateSchema>;
 
 export const queueCollectionApiDoc = {
   basePath: '/workspaces/{workspaceId}/queue',
-  legacyPath: true,
   operations: {
     GET: {
       roles: ['USER'],
@@ -78,7 +77,6 @@ export const queueCollectionApiDoc = {
 
 export const queueAddApiDoc = {
   basePath: '/workspaces/{workspaceId}/queue/add',
-  legacyPath: true,
   operations: {
     POST: {
       roles: ['USER'],
@@ -95,7 +93,6 @@ export const queueAddApiDoc = {
 
 export const queueRemoveApiDoc = {
   basePath: '/workspaces/{workspaceId}/queue/remove',
-  legacyPath: true,
   operations: {
     POST: {
       roles: ['USER'],
@@ -113,7 +110,6 @@ export const queueRemoveApiDoc = {
 
 export const queueItemApiDoc = {
   basePath: '/workspaces/{workspaceId}/queue/{queueItemId}',
-  legacyPath: true,
   operations: {
     PUT: {
       roles: ['USER'],

@@ -90,7 +90,6 @@ export const StatisticItemParams = WorkspaceIdParam.extend({ cocktailStatisticId
 
 export const statisticsCocktailsCollectionApiDoc = {
   basePath: '/workspaces/{workspaceId}/statistics/cocktails',
-  legacyPath: true,
   operations: {
     GET: {
       roles: ['USER'],
@@ -107,7 +106,6 @@ export const statisticsCocktailsCollectionApiDoc = {
 
 export const statisticsCocktailsAddApiDoc = {
   basePath: '/workspaces/{workspaceId}/statistics/cocktails/add',
-  legacyPath: true,
   operations: {
     POST: {
       roles: ['USER'],
@@ -127,7 +125,6 @@ export const statisticsCocktailsAddApiDoc = {
 
 export const statisticsCocktailsItemApiDoc = {
   basePath: '/workspaces/{workspaceId}/statistics/cocktails/{cocktailStatisticId}',
-  legacyPath: true,
   operations: {
     DELETE: {
       roles: ['MANAGER'],
@@ -143,7 +140,6 @@ export const statisticsCocktailsItemApiDoc = {
 
 export const statisticsLogsCollectionApiDoc = {
   basePath: '/workspaces/{workspaceId}/statistics/logs',
-  legacyPath: true,
   operations: {
     GET: {
       roles: ['USER'],
@@ -162,7 +158,6 @@ export const statisticsLogsCollectionApiDoc = {
 
 export const statisticsLogsItemApiDoc = {
   basePath: '/workspaces/{workspaceId}/statistics/logs/{cocktailStatisticId}',
-  legacyPath: true,
   operations: {
     DELETE: {
       roles: ['MANAGER'],

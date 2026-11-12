@@ -6,7 +6,7 @@ import prisma from '../../../prisma/prisma';
 import { constants as HttpStatus } from 'http2';
 import { $Enums } from '@generated/prisma/client';
 import { randomUUID } from 'crypto';
-import { regenerateUnitConversions } from '../workspaces/[workspaceId]/units/conversions';
+import { regenerateUnitConversions } from '@lib/api/controllers/units';
 import WorkspaceSettingKey = $Enums.WorkspaceSettingKey;
 
 export default withHttpMethods({

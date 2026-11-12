@@ -46,7 +46,6 @@ export type AuditLogListQuery = z.infer<typeof AuditLogListQuerySchema>;
 
 export const auditLogsCollectionApiDoc = {
   basePath: '/workspaces/{workspaceId}/audit-logs',
-  legacyPath: true,
   operations: {
     GET: {
       roles: ['USER'],

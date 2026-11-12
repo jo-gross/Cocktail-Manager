@@ -16,7 +16,6 @@ export type TagsDto = z.infer<typeof TagsDtoSchema>;
 
 export const tagsCollectionApiDoc = {
   basePath: '/workspaces/{workspaceId}/tags',
-  legacyPath: true,
   operations: {
     GET: {
       roles: ['USER'],
@@ -120,7 +119,6 @@ export type TagDefinitionsBulkUpdateInput = z.infer<typeof TagDefinitionsBulkUpd
 
 export const tagCategoriesCollectionApiDoc = {
   basePath: '/workspaces/{workspaceId}/tags/categories',
-  legacyPath: false,
   operations: {
     GET: {
       roles: ['USER'],
@@ -156,7 +154,6 @@ export const tagCategoriesCollectionApiDoc = {
 
 export const tagCategoriesItemApiDoc = {
   basePath: '/workspaces/{workspaceId}/tags/categories/{categoryId}',
-  legacyPath: false,
   operations: {
     PUT: {
       roles: ['MANAGER'],
@@ -182,7 +179,6 @@ export const tagCategoriesItemApiDoc = {
 
 export const tagCategoriesDefaultsApiDoc = {
   basePath: '/workspaces/{workspaceId}/tags/categories/defaults',
-  legacyPath: false,
   operations: {
     POST: {
       roles: ['MANAGER'],
@@ -198,7 +194,6 @@ export const tagCategoriesDefaultsApiDoc = {
 
 export const tagDefinitionsApiDoc = {
   basePath: '/workspaces/{workspaceId}/tags/definitions',
-  legacyPath: false,
   operations: {
     GET: {
       roles: ['USER'],

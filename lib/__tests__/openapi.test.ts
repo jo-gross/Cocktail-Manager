@@ -10,33 +10,8 @@ describe('OpenAPI spec generation', () => {
     expect(committed).toBe(generated);
   });
 
-  it('committed v1.json and preview.json variants are up to date (drift guard)', async () => {
-    for (const [file, variant] of [
-      ['openapi/v1.json', 'v1'],
-      ['openapi/preview.json', 'preview'],
-    ] as const) {
-      const generated = await generateOpenApiJson(variant);
-      const committed = readFileSync(file, 'utf8');
-      expect(committed, `${file} drift`).toBe(generated);
-    }
-  });
-
-  it('splits paths cleanly between the v1 and preview variants', async () => {
-    const v1 = JSON.parse(await generateOpenApiJson('v1'));
-    const preview = JSON.parse(await generateOpenApiJson('preview'));
-    expect(Object.keys(v1.paths).length).toBeGreaterThan(0);
-    expect(Object.keys(preview.paths).length).toBeGreaterThan(0);
-
-    for (const p of Object.keys(v1.paths)) {
-      expect(p.startsWith('/api/v1/'), `${p} should be a v1 path`).toBe(true);
-    }
-    for (const p of Object.keys(preview.paths)) {
-      expect(p.startsWith('/api/') && !p.startsWith('/api/v1/'), `${p} should be a legacy path`).toBe(true);
-      // Preview endpoints are documented as their own version, NOT as deprecated.
-      for (const method of Object.keys(preview.paths[p])) {
-        expect(preview.paths[p][method].deprecated, `${method} ${p} should not be deprecated in preview`).toBeUndefined();
-      }
-    }
+  it('committed v1.json matches openapi.json (drift guard)', () => {
+    expect(readFileSync('openapi/v1.json', 'utf8')).toBe(readFileSync('openapi/openapi.json', 'utf8'));
   });
 
   it('produces a valid OpenAPI 3.1 document', async () => {
@@ -49,22 +24,14 @@ describe('OpenAPI spec generation', () => {
     await expect(Parser.validate(structuredClone(doc))).resolves.toBeTruthy();
   });
 
-  it('mirrors every v1 operation as a deprecated legacy operation', async () => {
+  it('documents only the versioned /api/v1 surface (no deprecated legacy mirrors)', async () => {
     const doc = JSON.parse(await generateOpenApiJson());
-    const v1Paths = Object.keys(doc.paths).filter((p) => p.startsWith('/api/v1/'));
-    expect(v1Paths.length).toBeGreaterThan(0);
-
-    // Every deprecated legacy operation must have a non-deprecated v1 counterpart.
-    // (The reverse need not hold: some v1 endpoints are new and have no legacy mirror.)
-    const legacyPaths = Object.keys(doc.paths).filter((p) => p.startsWith('/api/') && !p.startsWith('/api/v1/'));
-    expect(legacyPaths.length).toBeGreaterThan(0);
-
-    for (const legacyPath of legacyPaths) {
-      const v1Path = legacyPath.replace('/api/', '/api/v1/');
-      expect(doc.paths[v1Path], `v1 counterpart for ${legacyPath}`).toBeDefined();
-      for (const method of Object.keys(doc.paths[legacyPath])) {
-        expect(doc.paths[legacyPath][method].deprecated, `${method} ${legacyPath} deprecated`).toBe(true);
-        expect(doc.paths[v1Path][method]?.deprecated, `${method} ${v1Path} not deprecated`).toBeUndefined();
+    const paths = Object.keys(doc.paths);
+    expect(paths.length).toBeGreaterThan(0);
+    for (const path of paths) {
+      expect(path.startsWith('/api/v1/'), `${path} should be a v1 path`).toBe(true);
+      for (const method of Object.keys(doc.paths[path])) {
+        expect(doc.paths[path][method].deprecated, `${method} ${path} not deprecated`).toBeUndefined();
       }
     }
   });

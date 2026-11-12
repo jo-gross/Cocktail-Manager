@@ -312,7 +312,6 @@ export type CocktailListQuery = z.infer<typeof CocktailListQuerySchema>;
 
 export const cocktailsCollectionApiDoc = {
   basePath: '/workspaces/{workspaceId}/cocktails',
-  legacyPath: true,
   operations: {
     GET: {
       roles: ['USER'],
@@ -339,7 +338,6 @@ export const cocktailsCollectionApiDoc = {
 
 export const cocktailsItemApiDoc = {
   basePath: '/workspaces/{workspaceId}/cocktails/{cocktailId}',
-  legacyPath: true,
   operations: {
     GET: {
       roles: ['USER'],
@@ -375,7 +373,6 @@ export const cocktailsItemApiDoc = {
 
 export const cocktailsCheckApiDoc = {
   basePath: '/workspaces/{workspaceId}/cocktails/check',
-  legacyPath: true,
   operations: {
     GET: {
       roles: ['USER'],
@@ -392,7 +389,6 @@ export const cocktailsCheckApiDoc = {
 
 export const cocktailsImageApiDoc = {
   basePath: '/workspaces/{workspaceId}/cocktails/{cocktailId}/image',
-  legacyPath: true,
   operations: {
     GET: {
       roles: ['USER'],
@@ -409,7 +405,6 @@ export const cocktailsImageApiDoc = {
 
 export const cocktailsCloneApiDoc = {
   basePath: '/workspaces/{workspaceId}/cocktails/{cocktailId}/clone',
-  legacyPath: true,
   operations: {
     POST: {
       roles: ['MANAGER'],
@@ -427,7 +422,6 @@ export const cocktailsCloneApiDoc = {
 
 export const cocktailsArchiveApiDoc = {
   basePath: '/workspaces/{workspaceId}/cocktails/{cocktailId}/archive',
-  legacyPath: true,
   operations: {
     PUT: {
       roles: ['MANAGER'],
@@ -443,7 +437,6 @@ export const cocktailsArchiveApiDoc = {
 
 export const cocktailsUnarchiveApiDoc = {
   basePath: '/workspaces/{workspaceId}/cocktails/{cocktailId}/unarchive',
-  legacyPath: true,
   operations: {
     PUT: {
       roles: ['MANAGER'],
@@ -470,7 +463,6 @@ export type CocktailAvailabilityInput = z.infer<typeof CocktailAvailabilitySchem
 
 export const cocktailsAvailabilityApiDoc = {
   basePath: '/workspaces/{workspaceId}/cocktails/{cocktailId}/availability',
-  legacyPath: false,
   operations: {
     PUT: {
       roles: ['USER'],
@@ -489,7 +481,6 @@ export const cocktailsAvailabilityApiDoc = {
 
 export const cocktailsExportJsonApiDoc = {
   basePath: '/workspaces/{workspaceId}/cocktails/export/json',
-  legacyPath: false,
   operations: {
     POST: {
       roles: ['USER'],
@@ -508,7 +499,6 @@ export const cocktailsExportJsonApiDoc = {
 
 export const cocktailsExportPdfApiDoc = {
   basePath: '/workspaces/{workspaceId}/cocktails/export/pdf',
-  legacyPath: false,
   operations: {
     POST: {
       roles: ['USER'],
@@ -526,7 +516,6 @@ export const cocktailsExportPdfApiDoc = {
 
 export const cocktailsImportJsonApiDoc = {
   basePath: '/workspaces/{workspaceId}/cocktails/import/json',
-  legacyPath: false,
   operations: {
     POST: {
       roles: ['USER'],

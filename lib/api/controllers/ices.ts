@@ -4,7 +4,7 @@
  * remain wrapped-but-untouched and keep their raw Prisma shapes.
  */
 import prisma from '../../../prisma/prisma';
-import { updateTranslation } from '../../../pages/api/workspaces/[workspaceId]/admin/translation';
+import { updateTranslationAtomic as updateTranslation } from '@lib/translations/workspaceTranslations';
 import { toIceDto } from '@lib/api/dto/ices';
 import type { Prisma, Workspace } from '@generated/prisma/client';
 import type { IceCreateInput, IceDto, IceUpdateInput } from '@lib/schemas/ices';

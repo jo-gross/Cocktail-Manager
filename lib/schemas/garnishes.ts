@@ -72,7 +72,6 @@ export type GarnishListQuery = z.infer<typeof GarnishListQuerySchema>;
 
 export const garnishesCollectionApiDoc = {
   basePath: '/workspaces/{workspaceId}/garnishes',
-  legacyPath: true,
   operations: {
     GET: {
       roles: ['USER'],
@@ -98,7 +97,6 @@ export const garnishesCollectionApiDoc = {
 
 export const garnishesItemApiDoc = {
   basePath: '/workspaces/{workspaceId}/garnishes/{garnishId}',
-  legacyPath: true,
   operations: {
     GET: {
       roles: ['USER'],
@@ -131,7 +129,6 @@ export const garnishesItemApiDoc = {
 
 export const garnishesCheckApiDoc = {
   basePath: '/workspaces/{workspaceId}/garnishes/check',
-  legacyPath: true,
   operations: {
     GET: {
       roles: ['USER'],
@@ -148,7 +145,6 @@ export const garnishesCheckApiDoc = {
 
 export const garnishesCloneApiDoc = {
   basePath: '/workspaces/{workspaceId}/garnishes/{garnishId}/clone',
-  legacyPath: true,
   operations: {
     POST: {
       roles: ['MANAGER'],
@@ -166,7 +162,6 @@ export const garnishesCloneApiDoc = {
 
 export const garnishesExportJsonApiDoc = {
   basePath: '/workspaces/{workspaceId}/garnishes/export/json',
-  legacyPath: false,
   operations: {
     POST: {
       roles: ['USER'],
@@ -184,7 +179,6 @@ export const garnishesExportJsonApiDoc = {
 
 export const garnishesImportJsonApiDoc = {
   basePath: '/workspaces/{workspaceId}/garnishes/import/json',
-  legacyPath: false,
   operations: {
     POST: {
       roles: ['MANAGER'],
@@ -204,7 +198,6 @@ export const garnishesImportJsonApiDoc = {
 
 export const garnishesImageApiDoc = {
   basePath: '/workspaces/{workspaceId}/garnishes/{garnishId}/image',
-  legacyPath: true,
   operations: {
     GET: {
       roles: ['USER'],

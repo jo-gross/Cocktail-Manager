@@ -41,7 +41,6 @@ export const AdvancedOverviewResponseSchema = passthrough()
 
 export const statisticsAdvancedOverviewApiDoc = {
   basePath: '/workspaces/{workspaceId}/statistics/advanced/overview',
-  legacyPath: true,
   operations: {
     GET: {
       roles: ['USER'],
@@ -75,7 +74,6 @@ export const AdvancedCocktailRankingResponseSchema = z
 
 export const statisticsAdvancedCocktailsApiDoc = {
   basePath: '/workspaces/{workspaceId}/statistics/advanced/cocktails',
-  legacyPath: true,
   operations: {
     GET: {
       roles: ['USER'],
@@ -111,7 +109,6 @@ export const AdvancedCocktailAllResponseSchema = z
 
 export const statisticsAdvancedCocktailsAllApiDoc = {
   basePath: '/workspaces/{workspaceId}/statistics/advanced/cocktails/all',
-  legacyPath: true,
   operations: {
     GET: {
       roles: ['USER'],
@@ -142,7 +139,6 @@ export const AdvancedCocktailDetailResponseSchema = z
 
 export const statisticsAdvancedCocktailItemApiDoc = {
   basePath: '/workspaces/{workspaceId}/statistics/advanced/cocktails/{cocktailId}',
-  legacyPath: true,
   operations: {
     GET: {
       roles: ['USER'],
@@ -200,7 +196,6 @@ export const AdvancedCocktailOrdersResponseSchema = z
 
 export const statisticsAdvancedCocktailOrdersApiDoc = {
   basePath: '/workspaces/{workspaceId}/statistics/advanced/cocktails/{cocktailId}/orders',
-  legacyPath: true,
   operations: {
     GET: {
       roles: ['USER'],
@@ -237,7 +232,6 @@ export const AdvancedIngredientsResponseSchema = z
 
 export const statisticsAdvancedIngredientsApiDoc = {
   basePath: '/workspaces/{workspaceId}/statistics/advanced/ingredients',
-  legacyPath: true,
   operations: {
     GET: {
       roles: ['USER'],
@@ -273,7 +267,6 @@ export const AdvancedTagsResponseSchema = z
 
 export const statisticsAdvancedTagsApiDoc = {
   basePath: '/workspaces/{workspaceId}/statistics/advanced/tags',
-  legacyPath: true,
   operations: {
     GET: {
       roles: ['USER'],
@@ -310,7 +303,6 @@ export const AdvancedCompareResponseSchema = z
 
 export const statisticsAdvancedCompareApiDoc = {
   basePath: '/workspaces/{workspaceId}/statistics/advanced/compare',
-  legacyPath: true,
   operations: {
     GET: {
       roles: ['USER'],
@@ -364,7 +356,6 @@ export const AdvancedSetDeleteQuerySchema = z.object({
 
 export const statisticsAdvancedSetsApiDoc = {
   basePath: '/workspaces/{workspaceId}/statistics/advanced/sets',
-  legacyPath: true,
   operations: {
     GET: {
       roles: ['USER'],
@@ -424,7 +415,6 @@ export const AdvancedSetDetailResponseSchema = z
 
 export const statisticsAdvancedSetItemApiDoc = {
   basePath: '/workspaces/{workspaceId}/statistics/advanced/sets/{setId}',
-  legacyPath: true,
   operations: {
     GET: {
       roles: ['USER'],

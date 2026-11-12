@@ -168,7 +168,6 @@ export const GuestInfoBulkUpdateResultSchema = z.object({
 
 export const cocktailGuestInfoApiDoc = {
   basePath: '/workspaces/{workspaceId}/cocktails/{cocktailId}/guest-info',
-  legacyPath: false,
   operations: {
     GET: {
       roles: ['USER'],
@@ -186,7 +185,6 @@ export const cocktailGuestInfoApiDoc = {
 
 export const guestInfoOverviewApiDoc = {
   basePath: '/workspaces/{workspaceId}/guest-info/overview',
-  legacyPath: false,
   operations: {
     GET: {
       roles: ['USER'],
@@ -202,7 +200,6 @@ export const guestInfoOverviewApiDoc = {
 
 export const guestInfoBulkApiDoc = {
   basePath: '/workspaces/{workspaceId}/guest-info/bulk',
-  legacyPath: false,
   operations: {
     PUT: {
       roles: ['MANAGER'],

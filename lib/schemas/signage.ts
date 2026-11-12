@@ -115,7 +115,6 @@ export const SlideItemParams = WorkspaceIdParam.extend({ slideId: z.string() });
 
 export const signageApiDoc = {
   basePath: '/workspaces/{workspaceId}/admin/signage',
-  legacyPath: true,
   operations: {
     GET: {
       roles: ['USER'],
@@ -140,7 +139,6 @@ export const signageApiDoc = {
 
 export const signageSlidesApiDoc = {
   basePath: '/workspaces/{workspaceId}/admin/signage/slides',
-  legacyPath: true,
   operations: {
     POST: {
       roles: ['MANAGER'],
@@ -168,7 +166,6 @@ export const signageSlidesApiDoc = {
 
 export const signageSlideItemApiDoc = {
   basePath: '/workspaces/{workspaceId}/admin/signage/slides/{slideId}',
-  legacyPath: true,
   operations: {
     DELETE: {
       roles: ['MANAGER'],
@@ -184,7 +181,6 @@ export const signageSlideItemApiDoc = {
 
 export const signageGuestMenuSlidesApiDoc = {
   basePath: '/workspaces/{workspaceId}/admin/signage/slides/guest-menu',
-  legacyPath: false,
   operations: {
     POST: {
       roles: ['MANAGER'],
@@ -203,7 +199,6 @@ export const signageGuestMenuSlidesApiDoc = {
 
 export const signageGuestMenuSlideItemApiDoc = {
   basePath: '/workspaces/{workspaceId}/admin/signage/slides/{slideId}/guest-menu',
-  legacyPath: false,
   operations: {
     PATCH: {
       roles: ['MANAGER'],
@@ -221,7 +216,6 @@ export const signageGuestMenuSlideItemApiDoc = {
 
 export const signageSlideImageApiDoc = {
   basePath: '/workspaces/{workspaceId}/admin/signage/slides/{slideId}/image',
-  legacyPath: false,
   operations: {
     GET: {
       roles: ['USER'],
@@ -248,7 +242,6 @@ export type SignageKeyDto = z.infer<typeof SignageKeyDtoSchema>;
 
 export const signageKeyApiDoc = {
   basePath: '/workspaces/{workspaceId}/admin/signage/key',
-  legacyPath: false,
   operations: {
     GET: {
       roles: ['MANAGER'],

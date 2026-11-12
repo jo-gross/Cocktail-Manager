@@ -34,7 +34,6 @@ export const JoinRequestUserParams = WorkspaceIdParam.extend({ userId: z.string(
 
 export const joinRequestsCollectionApiDoc = {
   basePath: '/workspaces/{workspaceId}/join-requests',
-  legacyPath: true,
   operations: {
     GET: {
       roles: ['MANAGER'],
@@ -60,7 +59,6 @@ export const joinRequestsCollectionApiDoc = {
 
 export const joinRequestsAcceptApiDoc = {
   basePath: '/workspaces/{workspaceId}/join-requests/{userId}/accept',
-  legacyPath: true,
   operations: {
     POST: {
       roles: ['MANAGER'],
@@ -77,7 +75,6 @@ export const joinRequestsAcceptApiDoc = {
 
 export const joinRequestsRejectApiDoc = {
   basePath: '/workspaces/{workspaceId}/join-requests/{userId}/reject',
-  legacyPath: true,
   operations: {
     POST: {
       roles: ['MANAGER'],

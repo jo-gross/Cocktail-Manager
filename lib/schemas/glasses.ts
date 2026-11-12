@@ -74,7 +74,6 @@ export type GlassListQuery = z.infer<typeof GlassListQuerySchema>;
 
 export const glassesCollectionApiDoc = {
   basePath: '/workspaces/{workspaceId}/glasses',
-  legacyPath: true,
   operations: {
     GET: {
       roles: ['USER'],
@@ -100,7 +99,6 @@ export const glassesCollectionApiDoc = {
 
 export const glassesItemApiDoc = {
   basePath: '/workspaces/{workspaceId}/glasses/{glassId}',
-  legacyPath: true,
   operations: {
     GET: {
       roles: ['USER'],
@@ -134,7 +132,6 @@ export const glassesItemApiDoc = {
 
 export const glassesCheckApiDoc = {
   basePath: '/workspaces/{workspaceId}/glasses/check',
-  legacyPath: true,
   operations: {
     GET: {
       roles: ['USER'],
@@ -151,7 +148,6 @@ export const glassesCheckApiDoc = {
 
 export const glassesCloneApiDoc = {
   basePath: '/workspaces/{workspaceId}/glasses/{glassId}/clone',
-  legacyPath: true,
   operations: {
     POST: {
       roles: ['MANAGER'],
@@ -169,7 +165,6 @@ export const glassesCloneApiDoc = {
 
 export const glassesReferencesApiDoc = {
   basePath: '/workspaces/{workspaceId}/glasses/{glassId}/references',
-  legacyPath: true,
   operations: {
     GET: {
       roles: ['USER'],
@@ -185,7 +180,6 @@ export const glassesReferencesApiDoc = {
 
 export const glassesExportJsonApiDoc = {
   basePath: '/workspaces/{workspaceId}/glasses/export/json',
-  legacyPath: false,
   operations: {
     POST: {
       roles: ['USER'],
@@ -203,7 +197,6 @@ export const glassesExportJsonApiDoc = {
 
 export const glassesImportJsonApiDoc = {
   basePath: '/workspaces/{workspaceId}/glasses/import/json',
-  legacyPath: false,
   operations: {
     POST: {
       roles: ['MANAGER'],
@@ -223,7 +216,6 @@ export const glassesImportJsonApiDoc = {
 
 export const glassesImageApiDoc = {
   basePath: '/workspaces/{workspaceId}/glasses/{glassId}/image',
-  legacyPath: true,
   operations: {
     GET: {
       roles: ['USER'],

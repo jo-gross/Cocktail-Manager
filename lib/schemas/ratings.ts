@@ -37,7 +37,6 @@ export const RatingItemParams = WorkspaceIdParam.extend({ cocktailId: z.string()
 
 export const ratingsCollectionApiDoc = {
   basePath: '/workspaces/{workspaceId}/cocktails/{cocktailId}/ratings',
-  legacyPath: true,
   operations: {
     GET: {
       roles: ['USER'],
@@ -62,7 +61,6 @@ export const ratingsCollectionApiDoc = {
 
 export const ratingsItemApiDoc = {
   basePath: '/workspaces/{workspaceId}/cocktails/{cocktailId}/ratings/{ratingId}',
-  legacyPath: true,
   operations: {
     DELETE: {
       roles: ['MANAGER'],

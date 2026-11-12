@@ -51,7 +51,6 @@ export type IceListQuery = z.infer<typeof IceListQuerySchema>;
 
 export const icesCollectionApiDoc = {
   basePath: '/workspaces/{workspaceId}/ice',
-  legacyPath: true,
   operations: {
     GET: {
       roles: ['USER'],
@@ -77,7 +76,6 @@ export const icesCollectionApiDoc = {
 
 export const icesItemApiDoc = {
   basePath: '/workspaces/{workspaceId}/ice/{iceId}',
-  legacyPath: true,
   operations: {
     GET: {
       roles: ['USER'],

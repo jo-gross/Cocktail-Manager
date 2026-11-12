@@ -1,6 +1,7 @@
 import { Prisma } from '@generated/prisma/client';
 import { diff, Diff } from 'deep-diff';
 import type { AppPrismaClient } from '../prisma/prisma';
+import { actorUserId } from './http/requestAuth';
 
 type AuditAction = 'CREATE' | 'UPDATE' | 'DELETE';
 
@@ -429,7 +430,7 @@ export async function createLog(
   await tx.auditLog.create({
     data: {
       workspaceId,
-      userId,
+      userId: actorUserId(userId),
       entityType,
       entityId,
       action,
@@ -477,7 +478,7 @@ export async function createCocktailRecipeAuditLog(
   await tx.auditLog.create({
     data: {
       workspaceId,
-      userId,
+      userId: actorUserId(userId),
       entityType: 'CocktailRecipe',
       entityId,
       action,

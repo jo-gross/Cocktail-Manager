@@ -239,7 +239,6 @@ const PUBLISH_ERRORS = { 422: 'Template validation failed (`error.issues`: Guest
 
 export const guestMenusCollectionApiDoc = {
   basePath: '/workspaces/{workspaceId}/guest-menus',
-  legacyPath: false,
   operations: {
     GET: {
       roles: ['USER'],
@@ -266,7 +265,6 @@ export const guestMenusCollectionApiDoc = {
 
 export const guestMenusReorderApiDoc = {
   basePath: '/workspaces/{workspaceId}/guest-menus/reorder',
-  legacyPath: false,
   operations: {
     PUT: {
       roles: ['MANAGER'],
@@ -282,7 +280,6 @@ export const guestMenusReorderApiDoc = {
 
 export const guestMenusItemApiDoc = {
   basePath: '/workspaces/{workspaceId}/guest-menus/{menuId}',
-  legacyPath: false,
   operations: {
     GET: {
       roles: ['USER'],
@@ -319,7 +316,6 @@ export const guestMenusItemApiDoc = {
 
 export const guestMenusDraftApiDoc = {
   basePath: '/workspaces/{workspaceId}/guest-menus/{menuId}/draft',
-  legacyPath: false,
   operations: {
     PUT: {
       roles: ['MANAGER'],
@@ -337,7 +333,6 @@ export const guestMenusDraftApiDoc = {
 
 export const guestMenusPublishApiDoc = {
   basePath: '/workspaces/{workspaceId}/guest-menus/{menuId}/publish',
-  legacyPath: false,
   operations: {
     POST: {
       roles: ['MANAGER'],
@@ -354,7 +349,6 @@ export const guestMenusPublishApiDoc = {
 
 export const guestMenusUnpublishApiDoc = {
   basePath: '/workspaces/{workspaceId}/guest-menus/{menuId}/unpublish',
-  legacyPath: false,
   operations: {
     POST: {
       roles: ['MANAGER'],
@@ -371,7 +365,6 @@ export const guestMenusUnpublishApiDoc = {
 
 export const guestMenusDuplicateApiDoc = {
   basePath: '/workspaces/{workspaceId}/guest-menus/{menuId}/duplicate',
-  legacyPath: false,
   operations: {
     POST: {
       roles: ['MANAGER'],
@@ -390,7 +383,6 @@ export const guestMenusDuplicateApiDoc = {
 
 export const guestMenusPreviewTokenRegenerateApiDoc = {
   basePath: '/workspaces/{workspaceId}/guest-menus/{menuId}/preview-token/regenerate',
-  legacyPath: false,
   operations: {
     POST: {
       roles: ['MANAGER'],
@@ -407,7 +399,6 @@ export const guestMenusPreviewTokenRegenerateApiDoc = {
 
 export const guestMenusPreviewApiDoc = {
   basePath: '/workspaces/{workspaceId}/guest-menus/{menuId}/preview',
-  legacyPath: false,
   operations: {
     GET: {
       roles: ['MANAGER'],
@@ -426,7 +417,6 @@ export const guestMenusPreviewApiDoc = {
 
 export const guestMenusQrApiDoc = {
   basePath: '/workspaces/{workspaceId}/guest-menus/{menuId}/qr.svg',
-  legacyPath: false,
   operations: {
     GET: {
       roles: ['USER'],
@@ -443,7 +433,6 @@ export const guestMenusQrApiDoc = {
 
 export const guestMenuTemplatesCollectionApiDoc = {
   basePath: '/workspaces/{workspaceId}/guest-menus/templates',
-  legacyPath: false,
   operations: {
     GET: {
       roles: ['USER'],
@@ -469,7 +458,6 @@ export const guestMenuTemplatesCollectionApiDoc = {
 
 export const guestMenuTemplatesBuiltInApiDoc = {
   basePath: '/workspaces/{workspaceId}/guest-menus/templates/built-in',
-  legacyPath: false,
   operations: {
     GET: {
       roles: ['USER'],
@@ -485,7 +473,6 @@ export const guestMenuTemplatesBuiltInApiDoc = {
 
 export const guestMenuTemplatesItemApiDoc = {
   basePath: '/workspaces/{workspaceId}/guest-menus/templates/{templateId}',
-  legacyPath: false,
   operations: {
     GET: {
       roles: ['USER'],
@@ -550,7 +537,6 @@ const PDF_ERRORS = { 404: 'Guest menu (or published document) not found.', 503: 
 
 export const guestMenusExportPdfApiDoc = {
   basePath: '/workspaces/{workspaceId}/guest-menus/{menuId}/export/pdf',
-  legacyPath: false,
   operations: {
     POST: {
       roles: ['USER'],
@@ -569,7 +555,6 @@ export const guestMenusExportPdfApiDoc = {
 
 export const guestMenusExportHtmlApiDoc = {
   basePath: '/workspaces/{workspaceId}/guest-menus/{menuId}/export/html',
-  legacyPath: false,
   operations: {
     GET: {
       roles: ['USER'],
@@ -587,7 +572,6 @@ export const guestMenusExportHtmlApiDoc = {
 
 export const guestMenusTableTentApiDoc = {
   basePath: '/workspaces/{workspaceId}/guest-menus/{menuId}/export/table-tent.pdf',
-  legacyPath: false,
   operations: {
     GET: {
       roles: ['USER'],
@@ -619,7 +603,6 @@ export type GuestMenuExtrasDto = z.infer<typeof GuestMenuExtrasDtoSchema>;
 
 export const guestMenusActiveExtrasApiDoc = {
   basePath: '/workspaces/{workspaceId}/guest-menus/active/extras',
-  legacyPath: false,
   operations: {
     GET: {
       roles: ['USER'],

@@ -125,7 +125,6 @@ export type CardListQuery = z.infer<typeof CardListQuerySchema>;
 
 export const cardsCollectionApiDoc = {
   basePath: '/workspaces/{workspaceId}/cards',
-  legacyPath: true,
   operations: {
     GET: {
       roles: ['USER'],
@@ -151,7 +150,6 @@ export const cardsCollectionApiDoc = {
 
 export const cardsItemApiDoc = {
   basePath: '/workspaces/{workspaceId}/cards/{cardId}',
-  legacyPath: true,
   operations: {
     GET: {
       roles: ['USER'],
@@ -186,7 +184,6 @@ export const cardsItemApiDoc = {
 
 export const cardsArchiveApiDoc = {
   basePath: '/workspaces/{workspaceId}/cards/{cardId}/archive',
-  legacyPath: true,
   operations: {
     PUT: {
       roles: ['MANAGER'],
@@ -202,7 +199,6 @@ export const cardsArchiveApiDoc = {
 
 export const cardsUnarchiveApiDoc = {
   basePath: '/workspaces/{workspaceId}/cards/{cardId}/unarchive',
-  legacyPath: true,
   operations: {
     PUT: {
       roles: ['MANAGER'],
@@ -218,7 +214,6 @@ export const cardsUnarchiveApiDoc = {
 
 export const cardsCloneApiDoc = {
   basePath: '/workspaces/{workspaceId}/cards/{cardId}/clone',
-  legacyPath: true,
   operations: {
     POST: {
       roles: ['MANAGER'],

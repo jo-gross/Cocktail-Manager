@@ -6,7 +6,7 @@ import { withHttpMethods } from '@middleware/api/handleMethods';
 import { randomUUID } from 'crypto';
 import { readFileSync, existsSync } from 'fs';
 import { join, dirname, extname } from 'path';
-import { regenerateUnitConversions } from '../workspaces/[workspaceId]/units/conversions';
+import { regenerateUnitConversions } from '@lib/api/controllers/units';
 import WorkspaceSettingKey = $Enums.WorkspaceSettingKey;
 
 interface DemoConfig {

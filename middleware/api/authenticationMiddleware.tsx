@@ -6,7 +6,7 @@ import { constants as HttpStatus } from 'http2';
 import { auth } from '@lib/auth';
 import { authenticateApiKey, checkMasterApiKey } from './jwtApiKeyMiddleware';
 import { hasPermission } from '@lib/permissions/apiKeyPermissions';
-import { setRequestApiKeyPermissions } from '@lib/http/requestAuth';
+import { MASTER_API_KEY_USER_ID, setRequestApiKeyPermissions } from '@lib/http/requestAuth';
 
 /**
  * Helper function to get session from BetterAuth
@@ -83,8 +83,6 @@ export function withAuthentication(fn: (fnReq: NextApiRequest, fnRes: NextApiRes
     const session = await getBetterAuthSession(req);
 
     if (session == null) {
-      // Debug: Log cookies for troubleshooting
-      console.log('Auth failed - no session. Cookies:', req.headers.cookie);
       return res.status(HttpStatus.HTTP_STATUS_UNAUTHORIZED).json({ message: 'not authenticated' });
     }
 
@@ -139,7 +137,7 @@ export function withWorkspacePermission(
       }
       // Master key has full access - create a dummy user for compatibility
       const dummyUser: User = {
-        id: 'master-api-key',
+        id: MASTER_API_KEY_USER_ID,
         name: 'Master API Key',
         email: null,
         emailVerified: false,

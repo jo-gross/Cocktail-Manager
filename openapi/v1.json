@@ -3,7 +3,7 @@
   "info": {
     "title": "Cocktail Manager API",
     "version": "1.0.0",
-    "description": "Stable, versioned (`/api/v1`) REST API of the Cocktail Manager. Authenticate with a workspace API key (Bearer JWT). This is the recommended contract for all integrations."
+    "description": "Versioned (`/api/v1`) REST API of the Cocktail Manager. Authenticate with a workspace API key (Bearer JWT) or, for the operations marked as such, a logged-in session."
   },
   "servers": [
     {

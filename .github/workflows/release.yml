@@ -97,6 +97,10 @@ jobs:
           git tag -f "$RELEASE_TAG"
           git push --force origin "refs/tags/$RELEASE_TAG"
 
+      - name: Resolve release commit
+        id: commit
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
       - name: Build application
         run: pnpm build
 
@@ -119,6 +123,8 @@ jobs:
           context: .
           file: Dockerfile
           push: true
+          build-args: |
+            GIT_SHA=${{ steps.commit.outputs.sha }}
           tags: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }}

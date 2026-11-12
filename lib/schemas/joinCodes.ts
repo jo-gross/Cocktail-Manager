@@ -34,7 +34,6 @@ export const JoinCodeItemParams = WorkspaceIdParam.extend({ code: z.string() });
 
 export const joinCodesCollectionApiDoc = {
   basePath: '/workspaces/{workspaceId}/join-codes',
-  legacyPath: true,
   operations: {
     GET: {
       roles: ['MANAGER'],
@@ -58,7 +57,6 @@ export const joinCodesCollectionApiDoc = {
 
 export const joinCodesItemApiDoc = {
   basePath: '/workspaces/{workspaceId}/join-codes/{code}',
-  legacyPath: true,
   operations: {
     DELETE: {
       roles: ['MANAGER'],

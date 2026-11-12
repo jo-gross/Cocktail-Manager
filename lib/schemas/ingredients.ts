@@ -113,7 +113,6 @@ export type IngredientListQuery = z.infer<typeof IngredientListQuerySchema>;
 
 export const ingredientsCollectionApiDoc = {
   basePath: '/workspaces/{workspaceId}/ingredients',
-  legacyPath: true,
   operations: {
     GET: {
       roles: ['USER'],
@@ -139,7 +138,6 @@ export const ingredientsCollectionApiDoc = {
 
 export const ingredientsItemApiDoc = {
   basePath: '/workspaces/{workspaceId}/ingredients/{ingredientId}',
-  legacyPath: true,
   operations: {
     GET: {
       roles: ['USER'],
@@ -173,7 +171,6 @@ export const ingredientsItemApiDoc = {
 
 export const ingredientsCheckApiDoc = {
   basePath: '/workspaces/{workspaceId}/ingredients/check',
-  legacyPath: true,
   operations: {
     GET: {
       roles: ['USER'],
@@ -190,7 +187,6 @@ export const ingredientsCheckApiDoc = {
 
 export const ingredientsCloneApiDoc = {
   basePath: '/workspaces/{workspaceId}/ingredients/{ingredientId}/clone',
-  legacyPath: true,
   operations: {
     POST: {
       roles: ['MANAGER'],
@@ -208,7 +204,6 @@ export const ingredientsCloneApiDoc = {
 
 export const ingredientsReferencesApiDoc = {
   basePath: '/workspaces/{workspaceId}/ingredients/{ingredientId}/references',
-  legacyPath: true,
   operations: {
     GET: {
       roles: ['USER'],
@@ -224,7 +219,6 @@ export const ingredientsReferencesApiDoc = {
 
 export const ingredientsExportJsonApiDoc = {
   basePath: '/workspaces/{workspaceId}/ingredients/export/json',
-  legacyPath: false,
   operations: {
     POST: {
       roles: ['USER'],
@@ -242,7 +236,6 @@ export const ingredientsExportJsonApiDoc = {
 
 export const ingredientsImportJsonApiDoc = {
   basePath: '/workspaces/{workspaceId}/ingredients/import/json',
-  legacyPath: false,
   operations: {
     POST: {
       roles: ['MANAGER'],
@@ -262,7 +255,6 @@ export const ingredientsImportJsonApiDoc = {
 
 export const ingredientsImageApiDoc = {
   basePath: '/workspaces/{workspaceId}/ingredients/{ingredientId}/image',
-  legacyPath: true,
   operations: {
     GET: {
       roles: ['USER'],

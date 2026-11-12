@@ -204,7 +204,6 @@ export type CalculationImportJsonInput = z.infer<typeof CalculationImportJsonSch
 
 export const calculationsExportJsonApiDoc = {
   basePath: '/workspaces/{workspaceId}/calculations/export/json',
-  legacyPath: false,
   operations: {
     POST: {
       roles: ['USER'],
@@ -225,7 +224,6 @@ export const calculationsExportJsonApiDoc = {
 
 export const calculationsImportJsonApiDoc = {
   basePath: '/workspaces/{workspaceId}/calculations/import/json',
-  legacyPath: false,
   operations: {
     POST: {
       roles: ['USER'],
@@ -246,7 +244,6 @@ export const calculationsImportJsonApiDoc = {
 
 export const calculationsCollectionApiDoc = {
   basePath: '/workspaces/{workspaceId}/calculations',
-  legacyPath: true,
   operations: {
     GET: {
       roles: ['USER'],
@@ -273,7 +270,6 @@ export const calculationsCollectionApiDoc = {
 
 export const calculationsItemApiDoc = {
   basePath: '/workspaces/{workspaceId}/calculations/{calculationId}',
-  legacyPath: true,
   operations: {
     GET: {
       roles: ['USER'],
@@ -309,7 +305,6 @@ export const calculationsItemApiDoc = {
 
 export const calculationGroupsCollectionApiDoc = {
   basePath: '/workspaces/{workspaceId}/calculations/groups',
-  legacyPath: true,
   operations: {
     GET: {
       roles: ['USER'],
@@ -335,7 +330,6 @@ export const calculationGroupsCollectionApiDoc = {
 
 export const calculationGroupsItemApiDoc = {
   basePath: '/workspaces/{workspaceId}/calculations/groups/{groupId}',
-  legacyPath: true,
   operations: {
     PUT: {
       roles: ['USER'],
@@ -362,7 +356,6 @@ export const calculationGroupsItemApiDoc = {
 
 export const calculationGroupsAssignApiDoc = {
   basePath: '/workspaces/{workspaceId}/calculations/groups/assign',
-  legacyPath: true,
   operations: {
     POST: {
       roles: ['USER'],

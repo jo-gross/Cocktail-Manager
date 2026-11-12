@@ -50,8 +50,8 @@ vi.mock('../../../middleware/api/jwtApiKeyMiddleware', () => ({
   checkMasterApiKey: vi.fn().mockReturnValue(false),
 }));
 
-import exportHandler from '../../../pages/api/workspaces/[workspaceId]/admin/backups/export';
-import importHandler from '../../../pages/api/workspaces/[workspaceId]/admin/backups/import';
+import exportHandler from '@lib/backup/exportHandler';
+import importHandler from '@lib/backup/importHandler';
 import { auth } from '@lib/auth';
 import { authenticateApiKey } from '../../../middleware/api/jwtApiKeyMiddleware';
 

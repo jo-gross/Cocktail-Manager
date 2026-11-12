@@ -66,7 +66,6 @@ export type ActionListQuery = z.infer<typeof ActionListQuerySchema>;
 
 export const actionsCollectionApiDoc = {
   basePath: '/workspaces/{workspaceId}/actions',
-  legacyPath: true,
   operations: {
     GET: {
       roles: ['USER'],
@@ -92,7 +91,6 @@ export const actionsCollectionApiDoc = {
 
 export const actionsItemApiDoc = {
   basePath: '/workspaces/{workspaceId}/actions/{actionId}',
-  legacyPath: true,
   operations: {
     PUT: {
       roles: ['ADMIN'],

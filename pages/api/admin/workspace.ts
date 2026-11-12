@@ -3,7 +3,7 @@ import { withHttpMethods } from '@middleware/api/handleMethods';
 import HTTPMethod from 'http-method-enum';
 import { checkMasterApiKey } from '@middleware/api/jwtApiKeyMiddleware';
 import { constants as HttpStatus } from 'http2';
-import { regenerateUnitConversions } from '../workspaces/[workspaceId]/units/conversions';
+import { regenerateUnitConversions } from '@lib/api/controllers/units';
 import { createWorkspaceWithDefaults } from '@lib/workspace/createWorkspaceWithDefaults';
 import prisma from '../../../prisma/prisma';
 

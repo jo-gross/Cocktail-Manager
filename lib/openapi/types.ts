@@ -50,12 +50,9 @@ export type ApiDoc = Partial<Record<HttpVerb, RouteSpec>>;
 export interface ResourceApiDoc {
   /**
    * URL path WITHOUT the /api or /api/v1 prefix, using {param} templating,
-   * e.g. '/workspaces/{workspaceId}/glasses'. The generator emits it at
-   * /api/v1{basePath} (canonical) and, if legacyPath, /api{basePath} (deprecated).
+   * e.g. '/workspaces/{workspaceId}/glasses'. The generator emits it at /api/v1{basePath}.
    */
   basePath: string;
-  /** Also emit a deprecated mirror at /api{basePath} (default true). */
-  legacyPath?: boolean;
   operations: ApiDoc;
 }
 

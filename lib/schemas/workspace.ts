@@ -110,7 +110,6 @@ export type WorkspaceSettingUpdateInput = z.infer<typeof WorkspaceSettingUpdateS
 
 export const workspaceItemApiDoc = {
   basePath: '/workspaces/{workspaceId}',
-  legacyPath: true,
   operations: {
     GET: {
       roles: ['USER'],
@@ -149,7 +148,6 @@ export const workspaceItemApiDoc = {
 
 export const workspaceSettingsApiDoc = {
   basePath: '/workspaces/{workspaceId}/settings',
-  legacyPath: true,
   operations: {
     GET: {
       roles: ['USER'],

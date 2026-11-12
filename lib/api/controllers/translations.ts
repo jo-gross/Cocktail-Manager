@@ -4,7 +4,7 @@
  * and reused by the ice/action controllers) and returns clean DTOs.
  */
 import prisma from '../../../prisma/prisma';
-import { updateTranslation } from '../../../pages/api/workspaces/[workspaceId]/admin/translation';
+import { updateTranslationAtomic as updateTranslation } from '@lib/translations/workspaceTranslations';
 import type { Workspace } from '@generated/prisma/client';
 import type { TranslationUpdateInput, TranslationsDto } from '@lib/schemas/translations';
 

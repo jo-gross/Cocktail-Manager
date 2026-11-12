@@ -4,7 +4,7 @@
  * item lookups by `workspaceId` (the legacy PUT/DELETE looked up by bare id).
  */
 import prisma from '../../../prisma/prisma';
-import { updateTranslation } from '../../../pages/api/workspaces/[workspaceId]/admin/translation';
+import { updateTranslationAtomic as updateTranslation } from '@lib/translations/workspaceTranslations';
 import { toActionDto } from '@lib/api/dto/actions';
 import { ApiError } from '@lib/http/ApiError';
 import type { Prisma, Workspace } from '@generated/prisma/client';

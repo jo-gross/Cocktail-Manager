@@ -55,7 +55,6 @@ export const ApiKeyItemParams = WorkspaceIdParam.extend({ keyId: z.string() });
 
 export const apiKeysCollectionApiDoc = {
   basePath: '/workspaces/{workspaceId}/api-keys',
-  legacyPath: true,
   operations: {
     GET: {
       roles: ['ADMIN'],
@@ -82,7 +81,6 @@ export const apiKeysCollectionApiDoc = {
 
 export const apiKeysItemApiDoc = {
   basePath: '/workspaces/{workspaceId}/api-keys/{keyId}',
-  legacyPath: true,
   operations: {
     GET: {
       roles: ['ADMIN'],

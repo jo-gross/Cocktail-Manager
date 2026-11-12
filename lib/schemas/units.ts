@@ -74,7 +74,6 @@ export type UnitConversionUpdateInput = z.infer<typeof UnitConversionUpdateSchem
 
 export const unitsCollectionApiDoc = {
   basePath: '/workspaces/{workspaceId}/units',
-  legacyPath: true,
   operations: {
     GET: {
       roles: ['USER'],
@@ -100,7 +99,6 @@ export const unitsCollectionApiDoc = {
 
 export const unitsItemApiDoc = {
   basePath: '/workspaces/{workspaceId}/units/{unitId}',
-  legacyPath: true,
   operations: {
     DELETE: {
       roles: ['ADMIN'],
@@ -115,7 +113,6 @@ export const unitsItemApiDoc = {
 
 export const unitConversionsCollectionApiDoc = {
   basePath: '/workspaces/{workspaceId}/units/conversions',
-  legacyPath: true,
   operations: {
     GET: {
       roles: ['USER'],
@@ -141,7 +138,6 @@ export const unitConversionsCollectionApiDoc = {
 
 export const unitConversionsItemApiDoc = {
   basePath: '/workspaces/{workspaceId}/units/conversions/{unitConversionId}',
-  legacyPath: true,
   operations: {
     PUT: {
       roles: ['ADMIN'],

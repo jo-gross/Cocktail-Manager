@@ -19,6 +19,8 @@ ENV DEPLOYMENT=${DEPLOYMENT:-$NODE_ENV}
 ARG DEMO_MODE
 ENV DEMO_MODE=${DEMO_MODE:-false}
 ENV NEXT_TELEMETRY_DISABLED=1
+ARG GIT_SHA
+ENV GIT_SHA=${GIT_SHA}
 
 RUN corepack enable pnpm && corepack prepare --activate && pnpm run build
 
@@ -31,6 +33,8 @@ ENV DEPLOYMENT=${DEPLOYMENT:-$NODE_ENV}
 ARG DEMO_MODE
 ENV DEMO_MODE=${DEMO_MODE:-false}
 ENV NEXT_TELEMETRY_DISABLED=1
+ARG GIT_SHA
+ENV GIT_SHA=${GIT_SHA}
 
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs

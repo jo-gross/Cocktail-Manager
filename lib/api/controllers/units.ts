@@ -7,7 +7,7 @@
  */
 import { Graph, shortestPath } from 'graph-data-structure';
 import prisma from '../../../prisma/prisma';
-import { updateTranslation } from '../../../pages/api/workspaces/[workspaceId]/admin/translation';
+import { updateTranslationAtomic as updateTranslation } from '@lib/translations/workspaceTranslations';
 import { toUnitConversionDto, toUnitDto } from '@lib/api/dto/units';
 import { ApiError } from '@lib/http/ApiError';
 import type { Prisma, Unit, UnitConversion, Workspace } from '@generated/prisma/client';

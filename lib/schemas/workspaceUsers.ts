@@ -37,7 +37,6 @@ export type WorkspaceUserUpdateInput = z.infer<typeof WorkspaceUserUpdateSchema>
 
 export const workspaceUsersCollectionApiDoc = {
   basePath: '/workspaces/{workspaceId}/users',
-  legacyPath: true,
   operations: {
     GET: {
       roles: ['USER'],
@@ -53,7 +52,6 @@ export const workspaceUsersCollectionApiDoc = {
 
 export const workspaceUsersItemApiDoc = {
   basePath: '/workspaces/{workspaceId}/users/{userId}',
-  legacyPath: true,
   operations: {
     PUT: {
       roles: ['ADMIN'],

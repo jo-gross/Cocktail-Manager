@@ -31,7 +31,6 @@ export type MeDto = z.infer<typeof MeDtoSchema>;
 export const meApiDoc = {
   basePath: '/me',
   // New v1-only endpoint: no unversioned/legacy mirror.
-  legacyPath: false,
   operations: {
     GET: {
       roles: ['USER'],

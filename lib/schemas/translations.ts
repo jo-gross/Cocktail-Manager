@@ -29,7 +29,6 @@ export type TranslationUpdateInput = z.infer<typeof TranslationUpdateSchema>;
 /** Canonical translations resource: GET catalog + PUT merge a key. */
 export const translationsCollectionApiDoc = {
   basePath: '/workspaces/{workspaceId}/translations',
-  legacyPath: false,
   operations: {
     GET: {
       roles: ['USER'],
@@ -59,7 +58,6 @@ export const translationsCollectionApiDoc = {
  */
 export const translationsApiDoc = {
   basePath: '/workspaces/{workspaceId}/admin/translation',
-  legacyPath: true,
   operations: {
     PUT: {
       roles: ['ADMIN'],

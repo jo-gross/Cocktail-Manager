@@ -49,7 +49,6 @@ export type UserSettingDto = z.infer<typeof UserSettingDtoSchema>;
 
 export const userSettingsApiDoc = {
   basePath: '/users/settings',
-  legacyPath: true,
   operations: {
     PUT: {
       roles: ['USER'],

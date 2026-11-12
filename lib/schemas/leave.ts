@@ -12,7 +12,6 @@ export const LeaveResultSchema = z.object({ ok: z.boolean() }).openapi('LeaveRes
 
 export const leaveApiDoc = {
   basePath: '/workspaces/{workspaceId}/leave',
-  legacyPath: true,
   operations: {
     POST: {
       roles: ['USER'],

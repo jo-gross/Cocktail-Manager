@@ -88,7 +88,6 @@ export type ContentTranslationsUpdateResult = z.infer<typeof ContentTranslations
 
 export const contentTranslationsApiDoc = {
   basePath: '/workspaces/{workspaceId}/translations/content',
-  legacyPath: false,
   operations: {
     GET: {
       roles: ['USER'],
