@@ -193,6 +193,8 @@
       "hint": "Shows which menu the bar link displays. Faded cells: default menu because no other applies. Only published and enabled menus are shown.",
       "overlaps_one": "{{count}} overlap of scheduled menus",
       "overlaps_other": "{{count}} overlaps of scheduled menus",
+      "overlapsMore_one": "… and {{count}} more overlap",
+      "overlapsMore_other": "… and {{count}} more overlaps",
       "overlapLine": "{{day}} {{from}}–{{to}}: {{menus}} – shown: {{winner}} (priority)"
     }
   },

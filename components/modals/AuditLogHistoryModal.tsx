@@ -41,6 +41,8 @@ type AuditLog = AuditLogDto & {
 
 const LONG_TEXT_FIELDS = ['description', 'preparation', 'history', 'notes'];
 
+const AUDIT_PAGE_SIZE = 100;
+
 /** Maps snapshot keys to i18n header keys under entity:auditHeader.* */
 const GROUP_HEADER_KEYS = {
   name: 'name',
@@ -83,12 +85,37 @@ export function AuditLogHistoryModal({ entityType, entityId, entityName }: Audit
   const { t: ti18n } = useTranslation(['common', 'entity', 'cocktail']);
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
 
   useEffect(() => {
     if (workspaceId && entityId) {
-      fetchAuditLogsSafe(workspaceId, { entityType, entityId, limit: 100 }, (logs) => setLogs(logs as AuditLog[]), setLoading);
+      fetchAuditLogsSafe(
+        workspaceId,
+        { entityType, entityId, limit: AUDIT_PAGE_SIZE },
+        (logs, pagination) => {
+          setLogs(logs as AuditLog[]);
+          setPage(pagination.page);
+          setHasMore(pagination.page < pagination.totalPages);
+        },
+        setLoading,
+      );
     }
   }, [workspaceId, entityId, entityType]);
+
+  const loadMore = () =>
+    fetchAuditLogsSafe(
+      workspaceId,
+      { entityType, entityId, limit: AUDIT_PAGE_SIZE, page: page + 1 },
+      (more, pagination) => {
+        // Offset paging: entries created meanwhile shift the pages, so skip already loaded ones.
+        setLogs((previous) => [...previous, ...(more as AuditLog[]).filter((log) => !previous.some((existing) => existing.id === log.id))]);
+        setPage(pagination.page);
+        setHasMore(pagination.page < pagination.totalPages);
+      },
+      setLoadingMore,
+    );
 
   const t = (text: string) => userContext.getTranslation(text);
 
@@ -974,6 +1001,12 @@ export function AuditLogHistoryModal({ entityType, entityId, entityName }: Audit
                   {renderDiff(log)}
                 </div>
               ))}
+            {hasMore && (
+              <Button variant="outline" block disabled={loadingMore} onClick={loadMore}>
+                {loadingMore ? <Loading size="xs" /> : null}
+                {ti18n('entity:auditLoadMore')}
+              </Button>
+            )}
           </div>
         )}
       </div>

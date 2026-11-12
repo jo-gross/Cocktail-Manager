@@ -91,6 +91,7 @@
   "cardDuplicateError": "Failed to duplicate card",
   "auditHistoryTitle": "Edit history",
   "auditNoHistory": "No history found.",
+  "auditLoadMore": "Load older changes",
   "auditEntityAdded": "+ \"{{name}}\" added",
   "auditEntityDeleted": "− \"{{name}}\" deleted",
   "auditImageAdded": "+ Added",

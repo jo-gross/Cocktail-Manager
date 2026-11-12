@@ -91,6 +91,7 @@
   "cardDuplicateError": "Fehler beim Duplizieren der Karte",
   "auditHistoryTitle": "Bearbeitungshistorie",
   "auditNoHistory": "Kein Verlauf gefunden.",
+  "auditLoadMore": "Ältere Änderungen laden",
   "auditEntityAdded": "+ \"{{name}}\" hinzugefügt",
   "auditEntityDeleted": "− \"{{name}}\" gelöscht",
   "auditImageAdded": "+ Hinzugefügt",

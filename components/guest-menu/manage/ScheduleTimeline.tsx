@@ -126,6 +126,7 @@ export function ScheduleTimeline({ menus, timezone, dayStartTime }: { menus: Gue
                 })}
               </li>
             ))}
+            {overlaps.length > 8 && <li className="text-base-content/60">{t('list.timeline.overlapsMore', { count: overlaps.length - 8 })}</li>}
           </ul>
         </div>
       )}
