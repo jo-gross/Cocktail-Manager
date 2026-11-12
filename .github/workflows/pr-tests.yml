@@ -99,6 +99,9 @@ jobs:
       - name: 'Run integration tests'
         run: pnpm test:integration
         env:
+          # Every documented /api/v1 operation must be exercised with a 2xx at least once
+          # (see test/globalSetup.ts, allowlist: test/api-coverage-allowlist.json).
+          API_COVERAGE_ENFORCE: '1'
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/cocktail_recipe_test
           BETTER_AUTH_SECRET: test-better-auth-secret
           BETTER_AUTH_URL: http://localhost:3000

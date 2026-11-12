@@ -9,6 +9,7 @@
 import type { Prisma } from '@generated/prisma/client';
 import prisma, { type AppPrismaClient } from '../../prisma/prisma';
 import { isRetryableTransactionError } from '@lib/http/prismaErrors';
+import { ApiError } from '@lib/http/ApiError';
 
 /** Either the root client or an interactive transaction client. */
 export type Db = Prisma.TransactionClient | AppPrismaClient;
@@ -20,7 +21,7 @@ export interface RunTxOptions {
   /** Max time the transaction callback may run (ms). */
   timeout?: number;
   isolationLevel?: Prisma.TransactionIsolationLevel;
-  /** Retries for serialization failures / deadlocks (default 2 with Serializable, else 0). */
+  /** Retries for serialization failures / deadlocks (default 3 with Serializable, else 0); then 409 TRANSACTION_CONFLICT. */
   retries?: number;
 }
 
@@ -30,7 +31,7 @@ export const DEFAULT_TX_MAX_WAIT_MS = 5_000;
 export const BULK_TX_TIMEOUT_MS = 120_000;
 
 export async function runTx<T>(fn: (tx: Tx) => Promise<T>, options: RunTxOptions = {}): Promise<T> {
-  const { retries = options.isolationLevel === 'Serializable' ? 2 : 0, ...txOptions } = options;
+  const { retries = options.isolationLevel === 'Serializable' ? 3 : 0, ...txOptions } = options;
   for (let attempt = 0; ; attempt++) {
     try {
       return await prisma.$transaction((tx) => fn(tx), {
@@ -39,8 +40,9 @@ export async function runTx<T>(fn: (tx: Tx) => Promise<T>, options: RunTxOptions
         isolationLevel: txOptions.isolationLevel,
       });
     } catch (error) {
-      if (attempt < retries && isRetryableTransactionError(error)) continue;
-      throw error;
+      if (!isRetryableTransactionError(error)) throw error;
+      if (attempt < retries) continue;
+      throw new ApiError(409, 'TRANSACTION_CONFLICT', 'The request conflicted with a concurrent change, please retry');
     }
   }
 }

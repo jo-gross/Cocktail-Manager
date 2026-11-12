@@ -119,6 +119,10 @@ export async function invokeHandler(handler: ApiHandler, options: MockRequestOpt
   const req = createMockRequest(options);
   const res = createMockResponse();
   await handler(req, res);
+  if (process.env.API_COVERAGE_FILE) {
+    const { recordInvocation } = await import('./apiCoverage');
+    await recordInvocation(handler, req.method, res._result.status);
+  }
   return res._result;
 }
 

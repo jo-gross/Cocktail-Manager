@@ -67,6 +67,13 @@ const GROUP_HEADER_KEYS = {
   checked: 'checked',
   plannedAmount: 'plannedAmount',
   customPrice: 'customPrice',
+  abv: 'abv',
+  allergens: 'allergens',
+  allergenSources: 'allergenSources',
+  additives: 'additives',
+  guestInfoComplete: 'guestInfoComplete',
+  hideOnGuestMenu: 'hideOnGuestMenu',
+  guestName: 'guestName',
 } as const;
 
 type AuditHeaderKey = (typeof GROUP_HEADER_KEYS)[keyof typeof GROUP_HEADER_KEYS];

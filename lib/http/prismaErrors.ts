@@ -21,12 +21,18 @@ export function isRetryableTransactionError(error: unknown): boolean {
   if (typeof error !== 'object' || error === null) return false;
   const code = (error as { code?: unknown }).code;
   if (code === 'P2034') return true;
+  // Failures raised at COMMIT arrive as raw driver-adapter errors.
+  const cause = (error as { cause?: { originalCode?: unknown; kind?: unknown } }).cause;
+  if (cause?.originalCode === '40001' || cause?.originalCode === '40P01' || cause?.kind === 'TransactionWriteConflict') return true;
   const message = error instanceof Error ? error.message : '';
   return /could not serialize access|deadlock detected|40001|40P01/.test(message);
 }
 
 export function prismaErrorToApiError(error: unknown): ApiError | null {
   if (error instanceof ApiError) return error;
+  if (isRetryableTransactionError(error)) {
+    return new ApiError(409, 'TRANSACTION_CONFLICT', 'The request conflicted with a concurrent change, please retry');
+  }
   if (!isPrismaKnownError(error)) return null;
 
   switch (error.code) {

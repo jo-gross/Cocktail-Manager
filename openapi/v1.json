@@ -260,7 +260,8 @@
               "string",
               "null"
             ],
-            "description": "Setting value as string, or null to clear."
+            "maxLength": 1000,
+            "description": "Setting value as string (max 1000 characters), or null to clear."
           }
         },
         "required": [
@@ -438,16 +439,18 @@
           "name": {
             "type": "string",
             "minLength": 1,
-            "description": "New workspace name; omitted keeps the current name."
+            "maxLength": 100,
+            "description": "New workspace name (trimmed, 1–100 characters); omitted keeps the current name."
           },
           "image": {
             "type": [
               "string",
               "null"
             ],
-            "maxLength": 2000000,
-            "pattern": "^data:image\\/(?:png|jpeg|gif|webp|avif);base64,[A-Za-z0-9+/]+={0,2}$",
-            "description": "Workspace logo as a base64 image data URI; null removes it, omitted keeps it."
+            "maxLength": 10000000,
+            "pattern": "^data:image\\/(?:png|jpeg|jpg|gif|webp|avif|bmp|heic|heif|tiff);base64,[A-Za-z0-9+/]+={0,2}$",
+            "description": "Workspace logo as a base64 raster image data URI; null removes it, omitted keeps it.",
+            "example": "data:image/png;base64,iVBORw0KGgo="
           },
           "publicSlug": {
             "type": [
@@ -506,11 +509,13 @@
         "properties": {
           "name": {
             "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "maxLength": 100
           },
           "actionGroup": {
             "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "maxLength": 100
           },
           "dilutionPercent": {
             "type": [
@@ -524,7 +529,8 @@
           "translations": {
             "type": "object",
             "additionalProperties": {
-              "type": "string"
+              "type": "string",
+              "maxLength": 500
             },
             "description": "Optional display-name translations keyed by language code, e.g. { \"en\": \"Shake\" }."
           }
@@ -539,7 +545,8 @@
         "properties": {
           "actionGroup": {
             "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "maxLength": 100
           },
           "dilutionPercent": {
             "type": [
@@ -553,7 +560,8 @@
           "translations": {
             "type": "object",
             "additionalProperties": {
-              "type": "string"
+              "type": "string",
+              "maxLength": 500
             },
             "description": "Optional display-name translations keyed by language code, e.g. { \"en\": \"Shake\" }."
           }
@@ -783,16 +791,16 @@
                 "type": [
                   "string",
                   "null"
-                ]
+                ],
+                "maxLength": 64
               },
               "backgroundMode": {
                 "$ref": "#/components/schemas/SignageBackgroundMode"
               },
               "slideDurationSeconds": {
-                "type": [
-                  "integer",
-                  "null"
-                ]
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 86400
               },
               "mirrorSourceFormat": {
                 "allOf": [
@@ -811,7 +819,9 @@
                 "type": "array",
                 "items": {
                   "$ref": "#/components/schemas/SignageSlideOrder"
-                }
+                },
+                "maxItems": 1000,
+                "description": "New `order` per slide of this format; ids of other formats/workspaces are ignored."
               }
             },
             "required": [
@@ -826,16 +836,16 @@
                 "type": [
                   "string",
                   "null"
-                ]
+                ],
+                "maxLength": 64
               },
               "backgroundMode": {
                 "$ref": "#/components/schemas/SignageBackgroundMode"
               },
               "slideDurationSeconds": {
-                "type": [
-                  "integer",
-                  "null"
-                ]
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 86400
               },
               "mirrorSourceFormat": {
                 "allOf": [
@@ -854,7 +864,9 @@
                 "type": "array",
                 "items": {
                   "$ref": "#/components/schemas/SignageSlideOrder"
-                }
+                },
+                "maxItems": 1000,
+                "description": "New `order` per slide of this format; ids of other formats/workspaces are ignored."
               }
             },
             "required": [
@@ -868,13 +880,17 @@
         "type": "object",
         "properties": {
           "id": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
           },
           "order": {
             "type": [
               "integer",
               "null"
-            ]
+            ],
+            "minimum": 0,
+            "maximum": 1000000
           }
         },
         "required": [
@@ -911,10 +927,15 @@
           "slides": {
             "type": "array",
             "items": {
-              "type": "string"
+              "type": "string",
+              "maxLength": 10000000,
+              "pattern": "^data:image\\/(?:png|jpeg|jpg|gif|webp|avif|bmp|heic|heif|tiff);base64,[A-Za-z0-9+/]+={0,2}$",
+              "description": "Base64-encoded raster image as data URI, e.g. `data:image/png;base64,…`.",
+              "example": "data:image/png;base64,iVBORw0KGgo="
             },
             "minItems": 1,
-            "description": "Base64-encoded slide images (data URIs) to append."
+            "maxItems": 100,
+            "description": "Base64-encoded raster slide images (data URIs) to append (max 100 per request)."
           }
         },
         "required": [
@@ -928,9 +949,12 @@
           "slideIds": {
             "type": "array",
             "items": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
             },
-            "minItems": 1
+            "minItems": 1,
+            "maxItems": 1000
           },
           "enabled": {
             "type": "boolean"
@@ -938,20 +962,27 @@
           "weekdays": {
             "type": "array",
             "items": {
-              "type": "integer"
-            }
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 6
+            },
+            "maxItems": 7
           },
           "validFrom": {
             "type": [
               "string",
               "null"
-            ]
+            ],
+            "maxLength": 40,
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}(?:T[\\d:.]+(?:Z|[+-]\\d{2}:?\\d{2})?)?$"
           },
           "validTo": {
             "type": [
               "string",
               "null"
-            ]
+            ],
+            "maxLength": 40,
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}(?:T[\\d:.]+(?:Z|[+-]\\d{2}:?\\d{2})?)?$"
           },
           "dateExclusive": {
             "type": "boolean"
@@ -969,6 +1000,8 @@
               "string",
               "null"
             ],
+            "minLength": 1,
+            "maxLength": 64,
             "description": "Menu to show; null = the currently active guest menu."
           },
           "options": {
@@ -987,6 +1020,8 @@
               "string",
               "null"
             ],
+            "minLength": 1,
+            "maxLength": 64,
             "description": "Menu to show; null = the currently active guest menu."
           },
           "options": {
@@ -1015,12 +1050,14 @@
           "key": {
             "type": "string",
             "minLength": 1,
+            "maxLength": 200,
             "description": "The translation key (e.g. an action/unit/ice name)."
           },
           "translations": {
             "type": "object",
             "additionalProperties": {
-              "type": "string"
+              "type": "string",
+              "maxLength": 500
             },
             "description": "Display names keyed by language code, e.g. { \"de\": \"Shaken\" }."
           }
@@ -1166,21 +1203,24 @@
         "properties": {
           "name": {
             "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "maxLength": 100
           },
           "expiresAt": {
             "type": [
               "string",
               "null"
             ],
-            "description": "ISO expiry timestamp, or null/omitted for no expiry."
+            "maxLength": 40,
+            "description": "ISO expiry timestamp in the future (400 `INVALID_EXPIRY` otherwise), or null/omitted for no expiry."
           },
           "permissions": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/Permission"
             },
-            "description": "Permission scopes to grant the key."
+            "maxItems": 58,
+            "description": "Permission scopes to grant the key (duplicates are ignored)."
           }
         },
         "required": [
@@ -1367,7 +1407,8 @@
         "properties": {
           "name": {
             "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "maxLength": 255
           },
           "showSalesStuff": {
             "type": [
@@ -1381,6 +1422,8 @@
               "string",
               "null"
             ],
+            "minLength": 1,
+            "maxLength": 100,
             "description": "Group to assign the calculation to, or null/omitted for none."
           },
           "calculationItems": {
@@ -1389,13 +1432,17 @@
               "type": "object",
               "properties": {
                 "cocktailId": {
-                  "type": "string"
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 100
                 },
                 "plannedAmount": {
                   "type": [
                     "integer",
                     "null"
                   ],
+                  "minimum": 0,
+                  "maximum": 1000000,
                   "description": "Planned number of cocktails for this item."
                 },
                 "customPrice": {
@@ -1403,6 +1450,8 @@
                     "number",
                     "null"
                   ],
+                  "minimum": 0,
+                  "maximum": 1000000,
                   "description": "Overridden price for this item, or null."
                 }
               },
@@ -1411,6 +1460,7 @@
                 "plannedAmount"
               ]
             },
+            "maxItems": 500,
             "description": "Cocktail items in this calculation."
           },
           "ingredientShoppingUnits": {
@@ -1419,10 +1469,14 @@
               "type": "object",
               "properties": {
                 "ingredientId": {
-                  "type": "string"
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 100
                 },
                 "unitId": {
-                  "type": "string"
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 100
                 },
                 "checked": {
                   "type": [
@@ -1436,6 +1490,7 @@
                 "unitId"
               ]
             },
+            "maxItems": 2000,
             "description": "Ingredient shopping units for this calculation."
           }
         },
@@ -1520,7 +1575,8 @@
         "properties": {
           "name": {
             "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "maxLength": 255
           },
           "showSalesStuff": {
             "type": [
@@ -1534,6 +1590,8 @@
               "string",
               "null"
             ],
+            "minLength": 1,
+            "maxLength": 100,
             "description": "Group to assign the calculation to; null/omitted disconnects it."
           },
           "calculationItems": {
@@ -1542,13 +1600,17 @@
               "type": "object",
               "properties": {
                 "cocktailId": {
-                  "type": "string"
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 100
                 },
                 "plannedAmount": {
                   "type": [
                     "integer",
                     "null"
                   ],
+                  "minimum": 0,
+                  "maximum": 1000000,
                   "description": "Planned number of cocktails for this item."
                 },
                 "customPrice": {
@@ -1556,6 +1618,8 @@
                     "number",
                     "null"
                   ],
+                  "minimum": 0,
+                  "maximum": 1000000,
                   "description": "Overridden price for this item, or null."
                 }
               },
@@ -1564,6 +1628,7 @@
                 "plannedAmount"
               ]
             },
+            "maxItems": 500,
             "description": "Cocktail items; fully replaces the existing items."
           },
           "ingredientShoppingUnits": {
@@ -1572,10 +1637,14 @@
               "type": "object",
               "properties": {
                 "ingredientId": {
-                  "type": "string"
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 100
                 },
                 "unitId": {
-                  "type": "string"
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 100
                 },
                 "checked": {
                   "type": [
@@ -1589,6 +1658,7 @@
                 "unitId"
               ]
             },
+            "maxItems": 2000,
             "description": "Ingredient shopping units; fully replaces the existing ones."
           }
         },
@@ -1604,8 +1674,11 @@
           "ids": {
             "type": "array",
             "items": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100
             },
+            "maxItems": 500,
             "description": "Ids of the calculations to export."
           }
         },
@@ -1642,7 +1715,8 @@
         "properties": {
           "name": {
             "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "maxLength": 100
           },
           "isDefaultExpanded": {
             "type": [
@@ -1661,7 +1735,8 @@
         "properties": {
           "name": {
             "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "maxLength": 100
           },
           "isDefaultExpanded": {
             "type": [
@@ -1692,9 +1767,12 @@
           "calculationIds": {
             "type": "array",
             "items": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100
             },
             "minItems": 1,
+            "maxItems": 500,
             "description": "Calculations to (re)assign."
           },
           "groupId": {
@@ -1702,6 +1780,8 @@
               "string",
               "null"
             ],
+            "minLength": 1,
+            "maxLength": 100,
             "description": "Target group, or null to remove group assignment."
           }
         },
@@ -1725,22 +1805,185 @@
             "description": "Raw export dump (single object or array) as produced by POST /calculations/export/json (round-trip format, kept verbatim)."
           },
           "decisions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "exportName": {
+                  "type": "string",
+                  "maxLength": 255
+                },
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "import",
+                    "overwrite",
+                    "rename",
+                    "skip"
+                  ]
+                },
+                "existingId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "minLength": 1,
+                  "maxLength": 100
+                },
+                "newName": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "maxLength": 255
+                },
+                "groupDecision": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "enum": [
+                    "keep-exported",
+                    "use-existing",
+                    "create-new",
+                    "no-group",
+                    null
+                  ]
+                },
+                "existingGroupId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "minLength": 1,
+                  "maxLength": 100
+                },
+                "newGroupName": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "maxLength": 100
+                },
+                "newGroupDefaultExpanded": {
+                  "type": [
+                    "boolean",
+                    "null"
+                  ]
+                },
+                "data": {}
+              },
+              "required": [
+                "exportName",
+                "decision"
+              ]
+            },
+            "maxItems": 500,
             "description": "Per-entity import decisions, required for the \"execute\" phase."
           },
           "cocktailMappings": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "exportName": {
+                  "type": "string",
+                  "maxLength": 255
+                },
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "use-existing",
+                    "skip"
+                  ]
+                },
+                "existingId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "minLength": 1,
+                  "maxLength": 100
+                }
+              },
+              "required": [
+                "exportName",
+                "decision"
+              ]
+            },
+            "maxItems": 5000,
             "description": "Cocktail name → id mappings for the \"execute\" phase."
           },
           "ingredientMappings": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "exportName": {
+                  "type": "string",
+                  "maxLength": 255
+                },
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "use-existing",
+                    "skip"
+                  ]
+                },
+                "existingId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "minLength": 1,
+                  "maxLength": 100
+                }
+              },
+              "required": [
+                "exportName",
+                "decision"
+              ]
+            },
+            "maxItems": 5000,
             "description": "Ingredient name → id mappings for the \"execute\" phase."
           },
           "unitMappings": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "exportName": {
+                  "type": "string",
+                  "maxLength": 255
+                },
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "use-existing",
+                    "skip"
+                  ]
+                },
+                "existingId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "minLength": 1,
+                  "maxLength": 100
+                }
+              },
+              "required": [
+                "exportName",
+                "decision"
+              ]
+            },
+            "maxItems": 5000,
             "description": "Unit name → id mappings for the \"execute\" phase."
           }
         },
         "required": [
           "phase"
-        ],
-        "additionalProperties": {}
+        ]
       },
       "CardSummary": {
         "type": "object",
@@ -1881,11 +2124,14 @@
         "properties": {
           "id": {
             "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
             "description": "Optional client-supplied CUID."
           },
           "name": {
             "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "maxLength": 255
           },
           "date": {
             "type": [
@@ -1902,17 +2148,22 @@
               "properties": {
                 "id": {
                   "type": "string",
-                  "description": "Optional client-supplied CUID."
+                  "minLength": 1,
+                  "maxLength": 100,
+                  "description": "Optional client-supplied CUID; on update, ids of the card’s existing groups keep the group (and its id)."
                 },
                 "name": {
                   "type": "string",
-                  "minLength": 1
+                  "minLength": 1,
+                  "maxLength": 255
                 },
                 "groupNumber": {
                   "type": [
                     "integer",
                     "null"
                   ],
+                  "minimum": 0,
+                  "maximum": 100000,
                   "description": "Ordering index; auto-assigned when omitted."
                 },
                 "groupPrice": {
@@ -1920,6 +2171,8 @@
                     "number",
                     "null"
                   ],
+                  "minimum": 0,
+                  "maximum": 1000000,
                   "description": "Uniform group price, or null."
                 },
                 "items": {
@@ -1928,13 +2181,17 @@
                     "type": "object",
                     "properties": {
                       "cocktailId": {
-                        "type": "string"
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 100
                       },
                       "itemNumber": {
                         "type": [
                           "integer",
                           "null"
                         ],
+                        "minimum": 0,
+                        "maximum": 100000,
                         "description": "Ordering index; auto-assigned when omitted."
                       },
                       "specialPrice": {
@@ -1942,6 +2199,8 @@
                           "number",
                           "null"
                         ],
+                        "minimum": 0,
+                        "maximum": 1000000,
                         "description": "Overridden price for this item, or null."
                       }
                     },
@@ -1949,6 +2208,7 @@
                       "cocktailId"
                     ]
                   },
+                  "maxItems": 500,
                   "description": "Items in this group."
                 }
               },
@@ -1956,6 +2216,7 @@
                 "name"
               ]
             },
+            "maxItems": 100,
             "description": "Groups (with their items) to create."
           }
         },
@@ -1968,7 +2229,8 @@
         "properties": {
           "name": {
             "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "maxLength": 255
           },
           "date": {
             "type": [
@@ -1985,17 +2247,22 @@
               "properties": {
                 "id": {
                   "type": "string",
-                  "description": "Optional client-supplied CUID."
+                  "minLength": 1,
+                  "maxLength": 100,
+                  "description": "Optional client-supplied CUID; on update, ids of the card’s existing groups keep the group (and its id)."
                 },
                 "name": {
                   "type": "string",
-                  "minLength": 1
+                  "minLength": 1,
+                  "maxLength": 255
                 },
                 "groupNumber": {
                   "type": [
                     "integer",
                     "null"
                   ],
+                  "minimum": 0,
+                  "maximum": 100000,
                   "description": "Ordering index; auto-assigned when omitted."
                 },
                 "groupPrice": {
@@ -2003,6 +2270,8 @@
                     "number",
                     "null"
                   ],
+                  "minimum": 0,
+                  "maximum": 1000000,
                   "description": "Uniform group price, or null."
                 },
                 "items": {
@@ -2011,13 +2280,17 @@
                     "type": "object",
                     "properties": {
                       "cocktailId": {
-                        "type": "string"
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 100
                       },
                       "itemNumber": {
                         "type": [
                           "integer",
                           "null"
                         ],
+                        "minimum": 0,
+                        "maximum": 100000,
                         "description": "Ordering index; auto-assigned when omitted."
                       },
                       "specialPrice": {
@@ -2025,6 +2298,8 @@
                           "number",
                           "null"
                         ],
+                        "minimum": 0,
+                        "maximum": 1000000,
                         "description": "Overridden price for this item, or null."
                       }
                     },
@@ -2032,6 +2307,7 @@
                       "cocktailId"
                     ]
                   },
+                  "maxItems": 500,
                   "description": "Items in this group."
                 }
               },
@@ -2039,6 +2315,7 @@
                 "name"
               ]
             },
+            "maxItems": 100,
             "description": "Groups (with their items); fully replaces the existing groups/items."
           }
         },
@@ -2052,6 +2329,7 @@
           "name": {
             "type": "string",
             "minLength": 1,
+            "maxLength": 255,
             "description": "Name for the cloned card."
           }
         },
@@ -2633,47 +2911,61 @@
         "properties": {
           "id": {
             "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "pattern": "^[A-Za-z0-9_-]+$",
             "description": "Optional client-supplied CUID."
           },
           "name": {
             "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "maxLength": 255
           },
           "description": {
             "type": [
               "string",
               "null"
-            ]
+            ],
+            "maxLength": 20000
           },
           "notes": {
             "type": [
               "string",
               "null"
-            ]
+            ],
+            "maxLength": 20000
           },
           "history": {
             "type": [
               "string",
               "null"
-            ]
+            ],
+            "maxLength": 20000
           },
           "tags": {
             "type": "array",
             "items": {
-              "type": "string"
-            }
+              "type": "string",
+              "maxLength": 100
+            },
+            "maxItems": 100
           },
           "price": {
             "type": [
               "number",
               "null"
-            ]
+            ],
+            "minimum": -1000000,
+            "maximum": 1000000
           },
           "iceId": {
             "type": [
               "string",
               "null"
             ],
+            "minLength": 1,
+            "maxLength": 64,
+            "pattern": "^[A-Za-z0-9_-]+$",
             "description": "Ice id, or null."
           },
           "glassId": {
@@ -2681,6 +2973,9 @@
               "string",
               "null"
             ],
+            "minLength": 1,
+            "maxLength": 64,
+            "pattern": "^[A-Za-z0-9_-]+$",
             "description": "Glass id, or null."
           },
           "image": {
@@ -2688,7 +2983,10 @@
               "string",
               "null"
             ],
-            "description": "Base64-encoded image (data URI) to attach."
+            "maxLength": 10000000,
+            "pattern": "^data:image\\/(?:png|jpeg|jpg|gif|webp|avif|bmp|heic|heif|tiff);base64,[A-Za-z0-9+/]+={0,2}$",
+            "description": "Base64-encoded raster image (data URI) to attach.",
+            "example": "data:image/png;base64,iVBORw0KGgo="
           },
           "steps": {
             "type": "array",
@@ -2697,6 +2995,9 @@
               "properties": {
                 "id": {
                   "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64,
+                  "pattern": "^[A-Za-z0-9_-]+$",
                   "description": "Existing step id; omit/empty for a new step."
                 },
                 "stepNumber": {
@@ -2704,6 +3005,8 @@
                     "integer",
                     "null"
                   ],
+                  "minimum": 0,
+                  "maximum": 10000,
                   "description": "Ordering index of the step within the recipe."
                 },
                 "optional": {
@@ -2712,6 +3015,9 @@
                 },
                 "actionId": {
                   "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64,
+                  "pattern": "^[A-Za-z0-9_-]+$",
                   "description": "Action id for this step."
                 },
                 "ingredients": {
@@ -2721,6 +3027,9 @@
                     "properties": {
                       "id": {
                         "type": "string",
+                        "minLength": 1,
+                        "maxLength": 64,
+                        "pattern": "^[A-Za-z0-9_-]+$",
                         "description": "Existing ingredient-line id; omit/empty for a new line."
                       },
                       "amount": {
@@ -2728,6 +3037,8 @@
                           "number",
                           "null"
                         ],
+                        "minimum": -1000000,
+                        "maximum": 1000000,
                         "description": "Amount in the given unit, or null."
                       },
                       "optional": {
@@ -2739,6 +3050,8 @@
                           "integer",
                           "null"
                         ],
+                        "minimum": 0,
+                        "maximum": 10000,
                         "description": "Ordering index within the step."
                       },
                       "unitId": {
@@ -2746,6 +3059,9 @@
                           "string",
                           "null"
                         ],
+                        "minLength": 1,
+                        "maxLength": 64,
+                        "pattern": "^[A-Za-z0-9_-]+$",
                         "description": "Unit id, or null."
                       },
                       "ingredientId": {
@@ -2753,6 +3069,9 @@
                           "string",
                           "null"
                         ],
+                        "minLength": 1,
+                        "maxLength": 64,
+                        "pattern": "^[A-Za-z0-9_-]+$",
                         "description": "Ingredient id, or null."
                       }
                     },
@@ -2760,6 +3079,7 @@
                       "ingredientNumber"
                     ]
                   },
+                  "maxItems": 100,
                   "description": "Ingredient lines within this step."
                 }
               },
@@ -2768,6 +3088,7 @@
                 "actionId"
               ]
             },
+            "maxItems": 100,
             "description": "Preparation steps (with their ingredients)."
           },
           "garnishes": {
@@ -2776,20 +3097,26 @@
               "type": "object",
               "properties": {
                 "garnishId": {
-                  "type": "string"
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64,
+                  "pattern": "^[A-Za-z0-9_-]+$"
                 },
                 "garnishNumber": {
                   "type": [
                     "integer",
                     "null"
                   ],
+                  "minimum": 0,
+                  "maximum": 10000,
                   "description": "Ordering index of the garnish within the recipe."
                 },
                 "description": {
                   "type": [
                     "string",
                     "null"
-                  ]
+                  ],
+                  "maxLength": 2000
                 },
                 "optional": {
                   "type": "boolean",
@@ -2805,6 +3132,7 @@
                 "garnishNumber"
               ]
             },
+            "maxItems": 100,
             "description": "Garnishes attached to the cocktail."
           },
           "abvOverride": {
@@ -2821,6 +3149,7 @@
             "items": {
               "$ref": "#/components/schemas/Allergen"
             },
+            "maxItems": 100,
             "description": "Allergens added on top of the ingredient-derived ones."
           },
           "extraAdditives": {
@@ -2828,6 +3157,7 @@
             "items": {
               "$ref": "#/components/schemas/Additive"
             },
+            "maxItems": 100,
             "description": "Additives added on top of the ingredient-derived ones."
           }
         },
@@ -2840,43 +3170,54 @@
         "properties": {
           "name": {
             "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "maxLength": 255
           },
           "description": {
             "type": [
               "string",
               "null"
-            ]
+            ],
+            "maxLength": 20000
           },
           "notes": {
             "type": [
               "string",
               "null"
-            ]
+            ],
+            "maxLength": 20000
           },
           "history": {
             "type": [
               "string",
               "null"
-            ]
+            ],
+            "maxLength": 20000
           },
           "tags": {
             "type": "array",
             "items": {
-              "type": "string"
-            }
+              "type": "string",
+              "maxLength": 100
+            },
+            "maxItems": 100
           },
           "price": {
             "type": [
               "number",
               "null"
-            ]
+            ],
+            "minimum": -1000000,
+            "maximum": 1000000
           },
           "iceId": {
             "type": [
               "string",
               "null"
             ],
+            "minLength": 1,
+            "maxLength": 64,
+            "pattern": "^[A-Za-z0-9_-]+$",
             "description": "Ice id, or null."
           },
           "glassId": {
@@ -2884,6 +3225,9 @@
               "string",
               "null"
             ],
+            "minLength": 1,
+            "maxLength": 64,
+            "pattern": "^[A-Za-z0-9_-]+$",
             "description": "Glass id, or null."
           },
           "image": {
@@ -2891,7 +3235,10 @@
               "string",
               "null"
             ],
-            "description": "Base64 image; omitting it removes the current image."
+            "maxLength": 10000000,
+            "pattern": "^data:image\\/(?:png|jpeg|jpg|gif|webp|avif|bmp|heic|heif|tiff);base64,[A-Za-z0-9+/]+={0,2}$",
+            "description": "Base64 raster image (data URI); omitting it removes the current image.",
+            "example": "data:image/png;base64,iVBORw0KGgo="
           },
           "steps": {
             "type": "array",
@@ -2900,6 +3247,9 @@
               "properties": {
                 "id": {
                   "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64,
+                  "pattern": "^[A-Za-z0-9_-]+$",
                   "description": "Existing step id; omit/empty for a new step."
                 },
                 "stepNumber": {
@@ -2907,6 +3257,8 @@
                     "integer",
                     "null"
                   ],
+                  "minimum": 0,
+                  "maximum": 10000,
                   "description": "Ordering index of the step within the recipe."
                 },
                 "optional": {
@@ -2915,6 +3267,9 @@
                 },
                 "actionId": {
                   "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64,
+                  "pattern": "^[A-Za-z0-9_-]+$",
                   "description": "Action id for this step."
                 },
                 "ingredients": {
@@ -2924,6 +3279,9 @@
                     "properties": {
                       "id": {
                         "type": "string",
+                        "minLength": 1,
+                        "maxLength": 64,
+                        "pattern": "^[A-Za-z0-9_-]+$",
                         "description": "Existing ingredient-line id; omit/empty for a new line."
                       },
                       "amount": {
@@ -2931,6 +3289,8 @@
                           "number",
                           "null"
                         ],
+                        "minimum": -1000000,
+                        "maximum": 1000000,
                         "description": "Amount in the given unit, or null."
                       },
                       "optional": {
@@ -2942,6 +3302,8 @@
                           "integer",
                           "null"
                         ],
+                        "minimum": 0,
+                        "maximum": 10000,
                         "description": "Ordering index within the step."
                       },
                       "unitId": {
@@ -2949,6 +3311,9 @@
                           "string",
                           "null"
                         ],
+                        "minLength": 1,
+                        "maxLength": 64,
+                        "pattern": "^[A-Za-z0-9_-]+$",
                         "description": "Unit id, or null."
                       },
                       "ingredientId": {
@@ -2956,6 +3321,9 @@
                           "string",
                           "null"
                         ],
+                        "minLength": 1,
+                        "maxLength": 64,
+                        "pattern": "^[A-Za-z0-9_-]+$",
                         "description": "Ingredient id, or null."
                       }
                     },
@@ -2963,6 +3331,7 @@
                       "ingredientNumber"
                     ]
                   },
+                  "maxItems": 100,
                   "description": "Ingredient lines within this step."
                 }
               },
@@ -2971,7 +3340,8 @@
                 "actionId"
               ]
             },
-            "description": "Steps (with ingredients). Differentially applied via ids: lines with ids are updated, without ids created, missing ids deleted."
+            "maxItems": 100,
+            "description": "Steps (with ingredients). Differentially applied via ids: lines with ids are updated, without ids created, missing ids deleted. Ids must belong to this cocktail."
           },
           "garnishes": {
             "type": "array",
@@ -2979,20 +3349,26 @@
               "type": "object",
               "properties": {
                 "garnishId": {
-                  "type": "string"
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64,
+                  "pattern": "^[A-Za-z0-9_-]+$"
                 },
                 "garnishNumber": {
                   "type": [
                     "integer",
                     "null"
                   ],
+                  "minimum": 0,
+                  "maximum": 10000,
                   "description": "Ordering index of the garnish within the recipe."
                 },
                 "description": {
                   "type": [
                     "string",
                     "null"
-                  ]
+                  ],
+                  "maxLength": 2000
                 },
                 "optional": {
                   "type": "boolean",
@@ -3008,6 +3384,7 @@
                 "garnishNumber"
               ]
             },
+            "maxItems": 100,
             "description": "Garnishes. Differentially applied via garnishId: present are updated/created, missing are deleted."
           },
           "abvOverride": {
@@ -3024,6 +3401,7 @@
             "items": {
               "$ref": "#/components/schemas/Allergen"
             },
+            "maxItems": 100,
             "description": "Allergens added on top of the ingredient-derived ones."
           },
           "extraAdditives": {
@@ -3031,6 +3409,7 @@
             "items": {
               "$ref": "#/components/schemas/Additive"
             },
+            "maxItems": 100,
             "description": "Additives added on top of the ingredient-derived ones."
           }
         },
@@ -3056,6 +3435,7 @@
           "name": {
             "type": "string",
             "minLength": 1,
+            "maxLength": 255,
             "description": "Name for the cloned cocktail."
           }
         },
@@ -3401,21 +3781,22 @@
               "string",
               "null"
             ],
-            "description": "Name of the rater."
+            "maxLength": 100,
+            "description": "Name of the rater (max. 100 characters)."
           },
           "rating": {
-            "type": [
-              "integer",
-              "null"
-            ],
-            "description": "Rating value."
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5,
+            "description": "Rating value (1–5)."
           },
           "comment": {
             "type": [
               "string",
               "null"
             ],
-            "description": "Optional comment."
+            "maxLength": 2000,
+            "description": "Optional comment (max. 2000 characters)."
           }
         },
         "required": [
@@ -3428,9 +3809,12 @@
           "cocktailIds": {
             "type": "array",
             "items": {
-              "type": "string"
+              "type": "string",
+              "maxLength": 64
             },
-            "description": "Ids of the cocktails to export."
+            "minItems": 1,
+            "maxItems": 5000,
+            "description": "Ids of the cocktails to export (max. 5000)."
           }
         },
         "required": [
@@ -3443,9 +3827,12 @@
           "cocktailIds": {
             "type": "array",
             "items": {
-              "type": "string"
+              "type": "string",
+              "maxLength": 64
             },
-            "description": "Ids of the cocktails to render."
+            "minItems": 1,
+            "maxItems": 200,
+            "description": "Ids of the cocktails to render (max. 200)."
           },
           "exportImage": {
             "type": "boolean",
@@ -3592,56 +3979,69 @@
         "properties": {
           "id": {
             "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
             "description": "Optional client-supplied CUID."
           },
           "name": {
             "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "maxLength": 255
           },
           "price": {
             "type": [
               "number",
               "null"
             ],
+            "minimum": 0,
+            "maximum": 1000000,
             "description": "Price in currency units."
           },
           "description": {
             "type": [
               "string",
               "null"
-            ]
+            ],
+            "maxLength": 10000
           },
           "notes": {
             "type": [
               "string",
               "null"
-            ]
+            ],
+            "maxLength": 10000
           },
           "image": {
             "type": [
               "string",
               "null"
             ],
-            "description": "Base64-encoded image (data URI) to attach."
+            "maxLength": 10000000,
+            "pattern": "^data:image\\/(?:png|jpeg|jpg|gif|webp|avif|bmp|heic|heif|tiff);base64,[A-Za-z0-9+/]+={0,2}$",
+            "description": "Base64-encoded raster image (data URI) to attach.",
+            "example": "data:image/png;base64,iVBORw0KGgo="
           },
           "allergens": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/Allergen"
-            }
+            },
+            "maxItems": 100
           },
           "allergenSources": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/AllergenSource"
             },
+            "maxItems": 100,
             "description": "Specific cereals/nuts behind GLUTEN/NUTS. Sources whose allergen is not set are dropped."
           },
           "additives": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/Additive"
-            }
+            },
+            "maxItems": 100
           },
           "guestInfoComplete": {
             "type": "boolean",
@@ -3657,51 +4057,62 @@
         "properties": {
           "name": {
             "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "maxLength": 255
           },
           "price": {
             "type": [
               "number",
               "null"
-            ]
+            ],
+            "minimum": 0,
+            "maximum": 1000000
           },
           "description": {
             "type": [
               "string",
               "null"
-            ]
+            ],
+            "maxLength": 10000
           },
           "notes": {
             "type": [
               "string",
               "null"
-            ]
+            ],
+            "maxLength": 10000
           },
           "image": {
             "type": [
               "string",
               "null"
             ],
-            "description": "Base64 image; omitting it removes the current image."
+            "maxLength": 10000000,
+            "pattern": "^data:image\\/(?:png|jpeg|jpg|gif|webp|avif|bmp|heic|heif|tiff);base64,[A-Za-z0-9+/]+={0,2}$",
+            "description": "Base64 raster image (data URI); omitting it removes the current image.",
+            "example": "data:image/png;base64,iVBORw0KGgo="
           },
           "allergens": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/Allergen"
-            }
+            },
+            "maxItems": 100
           },
           "allergenSources": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/AllergenSource"
             },
+            "maxItems": 100,
             "description": "Specific cereals/nuts behind GLUTEN/NUTS. Sources whose allergen is not set are dropped."
           },
           "additives": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/Additive"
-            }
+            },
+            "maxItems": 100
           },
           "guestInfoComplete": {
             "type": "boolean",
@@ -3718,6 +4129,7 @@
           "name": {
             "type": "string",
             "minLength": 1,
+            "maxLength": 255,
             "description": "Name for the cloned garnish."
           }
         },
@@ -3731,13 +4143,92 @@
           "ids": {
             "type": "array",
             "items": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
             },
+            "minItems": 1,
+            "maxItems": 500,
             "description": "IDs of the garnishes to export."
           }
         },
         "required": [
           "ids"
+        ]
+      },
+      "GarnishImportInput": {
+        "type": "object",
+        "properties": {
+          "phase": {
+            "type": "string",
+            "enum": [
+              "validate",
+              "prepare-mapping",
+              "execute"
+            ]
+          },
+          "exportData": {
+            "anyOf": [
+              {
+                "type": "array",
+                "items": {},
+                "maxItems": 500
+              },
+              {
+                "type": "object",
+                "additionalProperties": {}
+              }
+            ],
+            "description": "Garnish export structure (single object or array). Required for `validate` and `prepare-mapping`."
+          },
+          "decisions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "exportName": {
+                  "type": "string",
+                  "maxLength": 255
+                },
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "import",
+                    "overwrite",
+                    "rename",
+                    "skip"
+                  ]
+                },
+                "existingId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "minLength": 1,
+                  "maxLength": 128,
+                  "description": "Garnish of this workspace to overwrite (required for `overwrite`)."
+                },
+                "newName": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "maxLength": 255
+                },
+                "data": {
+                  "description": "Export item to import (validated unless the decision is `skip`)."
+                }
+              },
+              "required": [
+                "decision"
+              ]
+            },
+            "maxItems": 500,
+            "description": "Per-item decisions. Required for `execute`."
+          }
+        },
+        "required": [
+          "phase"
         ]
       },
       "Glass": {
@@ -3793,17 +4284,22 @@
         "properties": {
           "id": {
             "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
             "description": "Optional client-supplied CUID."
           },
           "name": {
             "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "maxLength": 255
           },
           "deposit": {
             "type": [
               "number",
               "null"
             ],
+            "minimum": 0,
+            "maximum": 1000000,
             "description": "Deposit in currency units."
           },
           "volume": {
@@ -3811,6 +4307,8 @@
               "number",
               "null"
             ],
+            "minimum": 0,
+            "maximum": 1000000,
             "description": "Volume in cl."
           },
           "image": {
@@ -3818,7 +4316,10 @@
               "string",
               "null"
             ],
-            "description": "Base64-encoded image (data URI) to attach."
+            "maxLength": 10000000,
+            "pattern": "^data:image\\/(?:png|jpeg|jpg|gif|webp|avif|bmp|heic|heif|tiff);base64,[A-Za-z0-9+/]+={0,2}$",
+            "description": "Base64-encoded raster image (data URI) to attach.",
+            "example": "data:image/png;base64,iVBORw0KGgo="
           }
         },
         "required": [
@@ -3831,26 +4332,34 @@
         "properties": {
           "name": {
             "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "maxLength": 255
           },
           "deposit": {
             "type": [
               "number",
               "null"
-            ]
+            ],
+            "minimum": 0,
+            "maximum": 1000000
           },
           "volume": {
             "type": [
               "number",
               "null"
-            ]
+            ],
+            "minimum": 0,
+            "maximum": 1000000
           },
           "image": {
             "type": [
               "string",
               "null"
             ],
-            "description": "Base64 image; omitting it removes the current image."
+            "maxLength": 10000000,
+            "pattern": "^data:image\\/(?:png|jpeg|jpg|gif|webp|avif|bmp|heic|heif|tiff);base64,[A-Za-z0-9+/]+={0,2}$",
+            "description": "Base64 raster image (data URI); omitting it removes the current image.",
+            "example": "data:image/png;base64,iVBORw0KGgo="
           }
         },
         "required": [
@@ -3864,6 +4373,7 @@
           "name": {
             "type": "string",
             "minLength": 1,
+            "maxLength": 255,
             "description": "Name for the cloned glass."
           }
         },
@@ -3892,13 +4402,92 @@
           "ids": {
             "type": "array",
             "items": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
             },
+            "minItems": 1,
+            "maxItems": 500,
             "description": "IDs of the glasses to export."
           }
         },
         "required": [
           "ids"
+        ]
+      },
+      "GlassImportInput": {
+        "type": "object",
+        "properties": {
+          "phase": {
+            "type": "string",
+            "enum": [
+              "validate",
+              "prepare-mapping",
+              "execute"
+            ]
+          },
+          "exportData": {
+            "anyOf": [
+              {
+                "type": "array",
+                "items": {},
+                "maxItems": 500
+              },
+              {
+                "type": "object",
+                "additionalProperties": {}
+              }
+            ],
+            "description": "Glass export structure (single object or array). Required for `validate` and `prepare-mapping`."
+          },
+          "decisions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "exportName": {
+                  "type": "string",
+                  "maxLength": 255
+                },
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "import",
+                    "overwrite",
+                    "rename",
+                    "skip"
+                  ]
+                },
+                "existingId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "minLength": 1,
+                  "maxLength": 128,
+                  "description": "Glass of this workspace to overwrite (required for `overwrite`)."
+                },
+                "newName": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "maxLength": 255
+                },
+                "data": {
+                  "description": "Export item to import (validated unless the decision is `skip`)."
+                }
+              },
+              "required": [
+                "decision"
+              ]
+            },
+            "maxItems": 500,
+            "description": "Per-item decisions. Required for `execute`."
+          }
+        },
+        "required": [
+          "phase"
         ]
       },
       "GuestInfoBulkUpdateInput": {
@@ -3910,7 +4499,8 @@
               "type": "object",
               "properties": {
                 "id": {
-                  "type": "string"
+                  "type": "string",
+                  "maxLength": 64
                 },
                 "abv": {
                   "type": [
@@ -3925,13 +4515,15 @@
                   "type": "array",
                   "items": {
                     "$ref": "#/components/schemas/Allergen"
-                  }
+                  },
+                  "maxItems": 100
                 },
                 "additives": {
                   "type": "array",
                   "items": {
                     "$ref": "#/components/schemas/Additive"
-                  }
+                  },
+                  "maxItems": 100
                 },
                 "guestInfoComplete": {
                   "type": "boolean",
@@ -3946,6 +4538,7 @@
                     "string",
                     "null"
                   ],
+                  "maxLength": 255,
                   "description": "Name shown to guests instead of the internal name."
                 }
               },
@@ -3961,26 +4554,30 @@
               "type": "object",
               "properties": {
                 "id": {
-                  "type": "string"
+                  "type": "string",
+                  "maxLength": 64
                 },
                 "allergens": {
                   "type": "array",
                   "items": {
                     "$ref": "#/components/schemas/Allergen"
-                  }
+                  },
+                  "maxItems": 100
                 },
                 "allergenSources": {
                   "type": "array",
                   "items": {
                     "$ref": "#/components/schemas/AllergenSource"
                   },
+                  "maxItems": 100,
                   "description": "Specific cereals/nuts behind GLUTEN/NUTS. Sources whose allergen is not set are dropped."
                 },
                 "additives": {
                   "type": "array",
                   "items": {
                     "$ref": "#/components/schemas/Additive"
-                  }
+                  },
+                  "maxItems": 100
                 },
                 "guestInfoComplete": {
                   "type": "boolean",
@@ -6426,7 +7023,9 @@
             "type": [
               "string",
               "null"
-            ]
+            ],
+            "minLength": 1,
+            "maxLength": 64
           },
           "locales": {
             "type": "array",
@@ -6535,7 +7134,9 @@
             "type": [
               "string",
               "null"
-            ]
+            ],
+            "minLength": 1,
+            "maxLength": 64
           },
           "locales": {
             "type": "array",
@@ -6687,9 +7288,12 @@
           "menuIds": {
             "type": "array",
             "items": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
             },
             "minItems": 1,
+            "maxItems": 1000,
             "description": "Menu ids in priority order; priority = index (0 = highest)."
           }
         },
@@ -7222,16 +7826,20 @@
         "properties": {
           "id": {
             "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
             "description": "Optional client-supplied CUID."
           },
           "name": {
             "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "maxLength": 100
           },
           "translations": {
             "type": "object",
             "additionalProperties": {
-              "type": "string"
+              "type": "string",
+              "maxLength": 500
             },
             "description": "Optional display-name translations keyed by language code, e.g. { \"en\": \"Crushed ice\" }."
           }
@@ -7245,12 +7853,14 @@
         "properties": {
           "name": {
             "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "maxLength": 100
           },
           "translations": {
             "type": "object",
             "additionalProperties": {
-              "type": "string"
+              "type": "string",
+              "maxLength": 500
             },
             "description": "Optional display-name translations keyed by language code, e.g. { \"en\": \"Crushed ice\" }."
           }
@@ -7420,47 +8030,58 @@
         "properties": {
           "id": {
             "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
             "description": "Optional client-supplied CUID."
           },
           "name": {
             "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "maxLength": 255
           },
           "shortName": {
             "type": [
               "string",
               "null"
-            ]
+            ],
+            "maxLength": 255
           },
           "description": {
             "type": [
               "string",
               "null"
-            ]
+            ],
+            "maxLength": 10000
           },
           "notes": {
             "type": [
               "string",
               "null"
-            ]
+            ],
+            "maxLength": 10000
           },
           "price": {
             "type": [
               "number",
               "null"
-            ]
+            ],
+            "minimum": 0,
+            "maximum": 1000000
           },
           "link": {
             "type": [
               "string",
               "null"
-            ]
+            ],
+            "maxLength": 2048
           },
           "tags": {
             "type": "array",
             "items": {
-              "type": "string"
-            }
+              "type": "string",
+              "maxLength": 255
+            },
+            "maxItems": 100
           },
           "units": {
             "type": "array",
@@ -7468,13 +8089,18 @@
               "type": "object",
               "properties": {
                 "unitId": {
-                  "type": "string"
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 128,
+                  "description": "Unit of this workspace."
                 },
                 "volume": {
                   "type": [
                     "number",
                     "null"
                   ],
+                  "minimum": 0,
+                  "maximum": 1000000,
                   "description": "Volume amount in the given unit."
                 }
               },
@@ -7483,14 +8109,18 @@
                 "volume"
               ]
             },
-            "description": "Unit volumes to attach."
+            "maxItems": 100,
+            "description": "Unit volumes to attach (units of this workspace, each at most once)."
           },
           "image": {
             "type": [
               "string",
               "null"
             ],
-            "description": "Base64-encoded image (data URI) to attach."
+            "maxLength": 10000000,
+            "pattern": "^data:image\\/(?:png|jpeg|jpg|gif|webp|avif|bmp|heic|heif|tiff);base64,[A-Za-z0-9+/]+={0,2}$",
+            "description": "Base64-encoded raster image (data URI) to attach.",
+            "example": "data:image/png;base64,iVBORw0KGgo="
           },
           "abv": {
             "type": [
@@ -7505,20 +8135,23 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/Allergen"
-            }
+            },
+            "maxItems": 100
           },
           "allergenSources": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/AllergenSource"
             },
+            "maxItems": 100,
             "description": "Specific cereals/nuts behind GLUTEN/NUTS. Sources whose allergen is not set are dropped."
           },
           "additives": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/Additive"
-            }
+            },
+            "maxItems": 100
           },
           "guestInfoComplete": {
             "type": "boolean",
@@ -7533,6 +8166,7 @@
               "string",
               "null"
             ],
+            "maxLength": 255,
             "description": "Name shown to guests instead of the internal name."
           }
         },
@@ -7545,43 +8179,52 @@
         "properties": {
           "name": {
             "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "maxLength": 255
           },
           "shortName": {
             "type": [
               "string",
               "null"
-            ]
+            ],
+            "maxLength": 255
           },
           "description": {
             "type": [
               "string",
               "null"
-            ]
+            ],
+            "maxLength": 10000
           },
           "notes": {
             "type": [
               "string",
               "null"
-            ]
+            ],
+            "maxLength": 10000
           },
           "price": {
             "type": [
               "number",
               "null"
-            ]
+            ],
+            "minimum": 0,
+            "maximum": 1000000
           },
           "link": {
             "type": [
               "string",
               "null"
-            ]
+            ],
+            "maxLength": 2048
           },
           "tags": {
             "type": "array",
             "items": {
-              "type": "string"
-            }
+              "type": "string",
+              "maxLength": 255
+            },
+            "maxItems": 100
           },
           "units": {
             "type": "array",
@@ -7589,13 +8232,18 @@
               "type": "object",
               "properties": {
                 "unitId": {
-                  "type": "string"
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 128,
+                  "description": "Unit of this workspace."
                 },
                 "volume": {
                   "type": [
                     "number",
                     "null"
                   ],
+                  "minimum": 0,
+                  "maximum": 1000000,
                   "description": "Volume amount in the given unit."
                 }
               },
@@ -7604,14 +8252,18 @@
                 "volume"
               ]
             },
-            "description": "Unit volumes to attach (replaces existing)."
+            "maxItems": 100,
+            "description": "Unit volumes (units of this workspace, each at most once). Replaces the existing volumes; omitting it keeps them unchanged."
           },
           "image": {
             "type": [
               "string",
               "null"
             ],
-            "description": "Base64 image; omitting it removes the current image."
+            "maxLength": 10000000,
+            "pattern": "^data:image\\/(?:png|jpeg|jpg|gif|webp|avif|bmp|heic|heif|tiff);base64,[A-Za-z0-9+/]+={0,2}$",
+            "description": "Base64 raster image (data URI); omitting it removes the current image.",
+            "example": "data:image/png;base64,iVBORw0KGgo="
           },
           "abv": {
             "type": [
@@ -7626,20 +8278,23 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/Allergen"
-            }
+            },
+            "maxItems": 100
           },
           "allergenSources": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/AllergenSource"
             },
+            "maxItems": 100,
             "description": "Specific cereals/nuts behind GLUTEN/NUTS. Sources whose allergen is not set are dropped."
           },
           "additives": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/Additive"
-            }
+            },
+            "maxItems": 100
           },
           "guestInfoComplete": {
             "type": "boolean",
@@ -7654,6 +8309,7 @@
               "string",
               "null"
             ],
+            "maxLength": 255,
             "description": "Name shown to guests instead of the internal name."
           }
         },
@@ -7667,6 +8323,7 @@
           "name": {
             "type": "string",
             "minLength": 1,
+            "maxLength": 255,
             "description": "Name for the cloned ingredient."
           }
         },
@@ -7695,13 +8352,92 @@
           "ids": {
             "type": "array",
             "items": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
             },
+            "minItems": 1,
+            "maxItems": 500,
             "description": "IDs of the ingredients to export."
           }
         },
         "required": [
           "ids"
+        ]
+      },
+      "IngredientImportInput": {
+        "type": "object",
+        "properties": {
+          "phase": {
+            "type": "string",
+            "enum": [
+              "validate",
+              "prepare-mapping",
+              "execute"
+            ]
+          },
+          "exportData": {
+            "anyOf": [
+              {
+                "type": "array",
+                "items": {},
+                "maxItems": 500
+              },
+              {
+                "type": "object",
+                "additionalProperties": {}
+              }
+            ],
+            "description": "Ingredient export structure (single object or array). Required for `validate` and `prepare-mapping`."
+          },
+          "decisions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "exportName": {
+                  "type": "string",
+                  "maxLength": 255
+                },
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "import",
+                    "overwrite",
+                    "rename",
+                    "skip"
+                  ]
+                },
+                "existingId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "minLength": 1,
+                  "maxLength": 128,
+                  "description": "Ingredient of this workspace to overwrite (required for `overwrite`)."
+                },
+                "newName": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "maxLength": 255
+                },
+                "data": {
+                  "description": "Export item to import (validated unless the decision is `skip`)."
+                }
+              },
+              "required": [
+                "decision"
+              ]
+            },
+            "maxItems": 500,
+            "description": "Per-item decisions. Required for `execute`."
+          }
+        },
+        "required": [
+          "phase"
         ]
       },
       "JoinCode": {
@@ -7746,23 +8482,22 @@
         "properties": {
           "code": {
             "type": "string",
-            "minLength": 1
+            "pattern": "^[A-Za-z0-9_-]{8,64}$",
+            "description": "Join code (8–64 characters of `A-Z a-z 0-9 _ -`). Omit it to let the server generate a random code. Codes are unique across all workspaces; a taken code returns 409 `CODE_TAKEN`."
           },
           "expires": {
             "type": [
               "string",
               "null"
             ],
+            "maxLength": 40,
             "description": "ISO expiry timestamp, or null/omitted for no expiry."
           },
           "onlyUseOnce": {
             "type": "boolean",
             "description": "Whether the code can only be used once (default false)."
           }
-        },
-        "required": [
-          "code"
-        ]
+        }
       },
       "JoinRequest": {
         "type": "object",
@@ -7906,19 +8641,22 @@
         "properties": {
           "cocktailId": {
             "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "maxLength": 100
           },
           "notes": {
             "type": [
               "string",
               "null"
             ],
+            "maxLength": 500,
             "description": "Optional notes. Empty or \"-\" is treated as no notes."
           },
           "amount": {
             "type": "integer",
             "minimum": 1,
-            "description": "How many identical items to enqueue (default 1)."
+            "maximum": 50,
+            "description": "How many identical items to enqueue (default 1, at most 50)."
           }
         },
         "required": [
@@ -7930,13 +8668,15 @@
         "properties": {
           "cocktailId": {
             "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "maxLength": 100
           },
           "notes": {
             "type": [
               "string",
               "null"
             ],
+            "maxLength": 500,
             "description": "Notes to match. Empty or \"-\" matches items without notes."
           }
         },
@@ -7955,6 +8695,7 @@
               "string",
               "null"
             ],
+            "maxLength": 10000,
             "description": "New value for the setting; null clears it. `timezone` must be an IANA time zone (default Europe/Berlin), `currency` an ISO 4217 code (default EUR), `contentLocales` a JSON string `{\"primary\":\"de\",\"additional\":[\"en\"]}`."
           }
         },
@@ -8231,10 +8972,17 @@
         "properties": {
           "name": {
             "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
             "description": "Set name."
           },
           "type": {
             "type": "string",
+            "enum": [
+              "TAG_SET",
+              "INGREDIENT_SET",
+              "COCKTAIL_SET"
+            ],
             "description": "SavedSetType (COCKTAIL_SET | TAG_SET | INGREDIENT_SET)."
           },
           "logic": {
@@ -8242,14 +8990,22 @@
               "string",
               "null"
             ],
+            "enum": [
+              "AND",
+              "OR",
+              null
+            ],
             "description": "SavedSetLogic (AND | OR), or null."
           },
           "items": {
             "type": "array",
             "items": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 255
             },
-            "description": "Member names/ids for the set."
+            "maxItems": 500,
+            "description": "Member names/ids for the set (cocktail ids for COCKTAIL_SET, which must belong to the workspace)."
           }
         },
         "required": [
@@ -8263,10 +9019,14 @@
         "properties": {
           "id": {
             "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
             "description": "Id of the set to update."
           },
           "name": {
             "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
             "description": "New name (optional)."
           },
           "logic": {
@@ -8274,13 +9034,21 @@
               "string",
               "null"
             ],
+            "enum": [
+              "AND",
+              "OR",
+              null
+            ],
             "description": "New logic (AND | OR) or null (optional)."
           },
           "items": {
             "type": "array",
             "items": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 255
             },
+            "maxItems": 500,
             "description": "New member list (optional)."
           }
         },
@@ -8446,18 +9214,23 @@
         "properties": {
           "cocktailId": {
             "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
             "description": "ID of the cocktail that was made."
           },
           "cocktailCardId": {
             "type": "string",
+            "maxLength": 100,
             "description": "ID of the cocktail card. The sentinel value `search` is treated as no card."
           },
           "actionSource": {
             "type": "string",
+            "maxLength": 100,
             "description": "Free-form origin tag for the statistic entry."
           },
           "notes": {
             "type": "string",
+            "maxLength": 500,
             "description": "Queue note to match when removing a queued cocktail (`-` matches an empty note)."
           },
           "ignoreQueue": {
@@ -8519,10 +9292,21 @@
         "type": "object",
         "properties": {
           "name": {
-            "$ref": "#/components/schemas/LocalizedText"
+            "type": "object",
+            "additionalProperties": {
+              "type": "string",
+              "maxLength": 200
+            },
+            "description": "Text per content locale, e.g. { \"de\": \"Fruchtig\", \"en\": \"Fruity\" }.",
+            "example": {
+              "de": "Fruchtig",
+              "en": "Fruity"
+            }
           },
           "order": {
             "type": "integer",
+            "minimum": 0,
+            "maximum": 100000,
             "description": "Sort order; defaults to the end of the list."
           },
           "showAsGuestFilter": {
@@ -8541,13 +9325,26 @@
           "properties": {
             "id": {
               "type": "string",
+              "minLength": 1,
+              "maxLength": 100,
               "description": "Existing category id; omit to create a new category."
             },
             "name": {
-              "$ref": "#/components/schemas/LocalizedText"
+              "type": "object",
+              "additionalProperties": {
+                "type": "string",
+                "maxLength": 200
+              },
+              "description": "Text per content locale, e.g. { \"de\": \"Fruchtig\", \"en\": \"Fruity\" }.",
+              "example": {
+                "de": "Fruchtig",
+                "en": "Fruity"
+              }
             },
             "order": {
-              "type": "integer"
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 100000
             },
             "showAsGuestFilter": {
               "type": "boolean"
@@ -8559,16 +9356,28 @@
             "showAsGuestFilter"
           ]
         },
+        "maxItems": 500,
         "description": "Categories to upsert (existing categories not listed stay untouched)."
       },
       "TagCategoryUpdateInput": {
         "type": "object",
         "properties": {
           "name": {
-            "$ref": "#/components/schemas/LocalizedText"
+            "type": "object",
+            "additionalProperties": {
+              "type": "string",
+              "maxLength": 200
+            },
+            "description": "Text per content locale, e.g. { \"de\": \"Fruchtig\", \"en\": \"Fruity\" }.",
+            "example": {
+              "de": "Fruchtig",
+              "en": "Fruity"
+            }
           },
           "order": {
-            "type": "integer"
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100000
           },
           "showAsGuestFilter": {
             "type": "boolean"
@@ -8649,26 +9458,31 @@
         "properties": {
           "tag": {
             "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "maxLength": 200
           },
           "label": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/LocalizedText"
-              },
-              {
-                "type": [
-                  "object",
-                  "null"
-                ]
-              }
-            ]
+            "type": [
+              "object",
+              "null"
+            ],
+            "additionalProperties": {
+              "type": "string",
+              "maxLength": 200
+            },
+            "description": "Text per content locale, e.g. { \"de\": \"Fruchtig\", \"en\": \"Fruity\" }.",
+            "example": {
+              "de": "Fruchtig",
+              "en": "Fruity"
+            }
           },
           "categoryId": {
             "type": [
               "string",
               "null"
-            ]
+            ],
+            "minLength": 1,
+            "maxLength": 100
           },
           "color": {
             "type": [
@@ -8829,7 +9643,8 @@
           },
           "entityId": {
             "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "maxLength": 100
           },
           "field": {
             "type": "string",
@@ -8843,6 +9658,7 @@
           },
           "locale": {
             "type": "string",
+            "maxLength": 35,
             "example": "en"
           },
           "value": {
@@ -8850,6 +9666,7 @@
               "string",
               "null"
             ],
+            "maxLength": 10000,
             "description": "Translated value; null or empty string clears it."
           }
         },
@@ -8881,12 +9698,14 @@
         "properties": {
           "name": {
             "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "maxLength": 100
           },
           "translations": {
             "type": "object",
             "additionalProperties": {
-              "type": "string"
+              "type": "string",
+              "maxLength": 500
             },
             "description": "Optional display-name translations keyed by language code, e.g. { \"en\": \"Centiliter\" }."
           }
@@ -8929,18 +9748,19 @@
         "properties": {
           "fromUnitId": {
             "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "maxLength": 100
           },
           "toUnitId": {
             "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "maxLength": 100
           },
           "factor": {
-            "type": [
-              "number",
-              "null"
-            ],
-            "description": "Multiplier to convert a quantity from the source unit to the target unit."
+            "type": "number",
+            "minimum": 1e-9,
+            "maximum": 1000000000,
+            "description": "Multiplier to convert a quantity from the source unit to the target unit (> 0)."
           }
         },
         "required": [
@@ -8953,11 +9773,10 @@
         "type": "object",
         "properties": {
           "factor": {
-            "type": [
-              "number",
-              "null"
-            ],
-            "description": "Multiplier to convert a quantity from the source unit to the target unit."
+            "type": "number",
+            "minimum": 1e-9,
+            "maximum": 1000000000,
+            "description": "Multiplier to convert a quantity from the source unit to the target unit (> 0)."
           }
         },
         "required": [
@@ -9266,7 +10085,7 @@
       },
       "put": {
         "summary": "Update workspace",
-        "description": "**Required API-key permission:** `WORKSPACE_UPDATE` — Update workspace settings\n\nUpdate the workspace name, logo and/or the public guest-menu slug (409 when the slug is taken).",
+        "description": "**Required API-key permission:** `WORKSPACE_UPDATE` — Update workspace settings\n\nUpdate the workspace name, logo and/or the public guest-menu slug (409 when the slug is taken). API keys additionally need `GUEST_MENUS_PUBLISH` to change `publicSlug`.",
         "tags": [
           "Workspace / Core"
         ],
@@ -9342,7 +10161,7 @@
             }
           },
           "403": {
-            "description": "Insufficient permissions",
+            "description": "An API key without `GUEST_MENUS_PUBLISH` tried to change the public slug.",
             "content": {
               "application/json": {
                 "schema": {
@@ -9366,7 +10185,7 @@
       },
       "delete": {
         "summary": "Delete workspace",
-        "description": "**Authentication:** requires a logged-in workspace-member session. API keys (workspace or the instance master key) are NOT accepted for this operation.\n\nPermanently delete the workspace and all its data.",
+        "description": "**Authentication:** requires a logged-in workspace-member session. API keys (workspace or the instance master key) are NOT accepted for this operation.\n\nPermanently delete the workspace and all its data. Owner session only.",
         "tags": [
           "Workspace / Core"
         ],
@@ -9472,6 +10291,7 @@
           {
             "schema": {
               "type": "string",
+              "maxLength": 100,
               "description": "Case-insensitive name filter."
             },
             "required": false,
@@ -9823,6 +10643,16 @@
           },
           "404": {
             "description": "Action not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "ACTION_IN_USE: the action is still used in cocktail recipes.",
             "content": {
               "application/json": {
                 "schema": {
@@ -10363,7 +11193,7 @@
             }
           },
           "404": {
-            "description": "Slides not found.",
+            "description": "At least one slide id is not a slide of this workspace (SLIDES_NOT_FOUND); nothing is changed.",
             "content": {
               "application/json": {
                 "schema": {
@@ -10417,7 +11247,9 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
             },
             "required": true,
             "name": "slideId",
@@ -10518,7 +11350,9 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
             },
             "required": true,
             "name": "slideId",
@@ -10628,7 +11462,9 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
             },
             "required": true,
             "name": "slideId",
@@ -11098,7 +11934,9 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100
             },
             "required": true,
             "name": "keyId",
@@ -11192,7 +12030,9 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100
             },
             "required": true,
             "name": "keyId",
@@ -11293,6 +12133,7 @@
           {
             "schema": {
               "type": "string",
+              "maxLength": 100,
               "description": "Filter by entity type, e.g. `Glass`."
             },
             "required": false,
@@ -11303,6 +12144,7 @@
           {
             "schema": {
               "type": "string",
+              "maxLength": 100,
               "description": "Filter by entity ID."
             },
             "required": false,
@@ -11314,6 +12156,7 @@
             "schema": {
               "type": "integer",
               "minimum": 1,
+              "maximum": 100000,
               "default": 1,
               "description": "1-based page number."
             },
@@ -11326,11 +12169,12 @@
             "schema": {
               "type": "integer",
               "minimum": 1,
+              "maximum": 200,
               "default": 50,
-              "description": "Items per page."
+              "description": "Items per page (max 200)."
             },
             "required": false,
-            "description": "Items per page.",
+            "description": "Items per page (max 200).",
             "name": "limit",
             "in": "query"
           }
@@ -11478,7 +12322,7 @@
       },
       "post": {
         "summary": "Create calculation",
-        "description": "**Required API-key permission:** `CALCULATIONS_CREATE` — Create cost calculations",
+        "description": "**Required API-key permission:** `CALCULATIONS_CREATE` — Create cost calculations\n\nNot available to the instance master key (calculations record the updating user).",
         "tags": [
           "Calculations / Core"
         ],
@@ -11534,7 +12378,7 @@
             }
           },
           "400": {
-            "description": "Invalid group.",
+            "description": "Invalid group, or a cocktail/ingredient/unit that does not exist in this workspace.",
             "content": {
               "application/json": {
                 "schema": {
@@ -11554,7 +12398,7 @@
             }
           },
           "403": {
-            "description": "Insufficient permissions",
+            "description": "Master API key cannot write calculations.",
             "content": {
               "application/json": {
                 "schema": {
@@ -11669,7 +12513,7 @@
       },
       "put": {
         "summary": "Update calculation",
-        "description": "**Required API-key permission:** `CALCULATIONS_UPDATE` — Update cost calculations\n\nReplaces the calculation metadata and its full set of items and ingredient shopping units.",
+        "description": "**Required API-key permission:** `CALCULATIONS_UPDATE` — Update cost calculations\n\nReplaces the calculation metadata and its full set of items and ingredient shopping units. Not available to the instance master key (calculations record the updating user).",
         "tags": [
           "Calculations / Core"
         ],
@@ -11733,7 +12577,7 @@
             }
           },
           "400": {
-            "description": "Invalid group.",
+            "description": "Invalid group, or a cocktail/ingredient/unit that does not exist in this workspace.",
             "content": {
               "application/json": {
                 "schema": {
@@ -11753,7 +12597,17 @@
             }
           },
           "403": {
-            "description": "Insufficient permissions",
+            "description": "Master API key cannot write calculations.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Calculation not found.",
             "content": {
               "application/json": {
                 "schema": {
@@ -11843,6 +12697,16 @@
           },
           "403": {
             "description": "Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Calculation not found.",
             "content": {
               "application/json": {
                 "schema": {
@@ -12428,7 +13292,7 @@
             }
           },
           "400": {
-            "description": "Validation error",
+            "description": "A calculation does not exist in this workspace.",
             "content": {
               "application/json": {
                 "schema": {
@@ -12474,14 +13338,14 @@
     "/api/v1/workspaces/{workspaceId}/calculations/import/json": {
       "post": {
         "summary": "Import calculations from JSON",
-        "description": "**Required API-key permission:** `CALCULATIONS_READ` — Read cost calculations\n\nThree-phase import (`validate` → `prepare-mapping` → `execute`) of an export dump produced by POST /calculations/export/json. The response shape depends on the phase and is returned verbatim (not wrapped in a data envelope).",
+        "description": "**Required API-key permission:** `CALCULATIONS_CREATE` — Create cost calculations\n\nThree-phase import (`validate` → `prepare-mapping` → `execute`) of an export dump produced by POST /calculations/export/json. The response shape depends on the phase and is returned verbatim (not wrapped in a data envelope). The execute phase is all-or-nothing: every decision and referenced id is validated first; any invalid item or foreign/unknown id writes nothing and returns 400 with per-item issues. All writes run in one transaction. Not available to the instance master key (calculations record the updating user).",
         "tags": [
           "Calculations / Import & export"
         ],
         "security": [
           {
             "WorkspaceApiKeyAuth": [
-              "CALCULATIONS_READ"
+              "CALCULATIONS_CREATE"
             ]
           },
           {
@@ -12527,7 +13391,7 @@
             }
           },
           "400": {
-            "description": "Invalid phase or missing decisions.",
+            "description": "Invalid phase, missing decisions, invalid items or references (nothing was imported).",
             "content": {
               "application/json": {
                 "schema": {
@@ -12547,7 +13411,7 @@
             }
           },
           "403": {
-            "description": "Insufficient permissions",
+            "description": "Master API key cannot write calculations.",
             "content": {
               "application/json": {
                 "schema": {
@@ -12556,8 +13420,8 @@
               }
             }
           },
-          "500": {
-            "description": "Import failed.",
+          "409": {
+            "description": "Conflict with a concurrent change (nothing was imported).",
             "content": {
               "application/json": {
                 "schema": {
@@ -12567,7 +13431,7 @@
             }
           }
         },
-        "x-required-permission": "CALCULATIONS_READ"
+        "x-required-permission": "CALCULATIONS_CREATE"
       }
     },
     "/api/v1/workspaces/{workspaceId}/cards": {
@@ -12723,7 +13587,7 @@
             }
           },
           "400": {
-            "description": "Validation error",
+            "description": "A cocktail does not exist in this workspace or appears twice in a group.",
             "content": {
               "application/json": {
                 "schema": {
@@ -12744,6 +13608,16 @@
           },
           "403": {
             "description": "Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "A supplied id is already in use.",
             "content": {
               "application/json": {
                 "schema": {
@@ -12858,7 +13732,7 @@
       },
       "put": {
         "summary": "Update card",
-        "description": "**Required API-key permission:** `CARDS_UPDATE` — Update cocktail cards\n\nReplaces the card metadata and its full set of groups/items.",
+        "description": "**Required API-key permission:** `CARDS_UPDATE` — Update cocktail cards\n\nReplaces the card metadata and its full set of groups/items. Groups whose id belongs to this card keep their id (guest menus reference them); other groups are created, missing ones deleted.",
         "tags": [
           "Cards / Core"
         ],
@@ -12922,7 +13796,7 @@
             }
           },
           "400": {
-            "description": "Validation error",
+            "description": "A cocktail does not exist in this workspace or appears twice in a group.",
             "content": {
               "application/json": {
                 "schema": {
@@ -12943,6 +13817,26 @@
           },
           "403": {
             "description": "Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Card not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "A supplied group id is already in use.",
             "content": {
               "application/json": {
                 "schema": {
@@ -13032,6 +13926,16 @@
           },
           "403": {
             "description": "Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Card not found.",
             "content": {
               "application/json": {
                 "schema": {
@@ -13388,6 +14292,7 @@
           {
             "schema": {
               "type": "string",
+              "maxLength": 200,
               "description": "Case-insensitive filter over name, tags, garnishes and ingredients."
             },
             "required": false,
@@ -13398,6 +14303,7 @@
           {
             "schema": {
               "type": "string",
+              "maxLength": 100,
               "description": "Comma-separated extra projections to embed in each summary: `garnishes`, `ingredients`."
             },
             "required": false,
@@ -13583,7 +14489,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "maxLength": 64
             },
             "required": true,
             "name": "cocktailId",
@@ -13682,7 +14589,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "maxLength": 64
             },
             "required": true,
             "name": "cocktailId",
@@ -13790,7 +14698,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "maxLength": 64
             },
             "required": true,
             "name": "cocktailId",
@@ -13881,7 +14790,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "maxLength": 64
             },
             "required": true,
             "name": "cocktailId",
@@ -13982,7 +14892,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "maxLength": 64
             },
             "required": true,
             "name": "cocktailId",
@@ -14092,7 +15003,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "maxLength": 64
             },
             "required": true,
             "name": "cocktailId",
@@ -14202,7 +15114,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "maxLength": 64
             },
             "required": true,
             "name": "cocktailId",
@@ -14303,7 +15216,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "maxLength": 64
             },
             "required": true,
             "name": "cocktailId",
@@ -14381,7 +15295,7 @@
     "/api/v1/workspaces/{workspaceId}/cocktails/{cocktailId}/ratings": {
       "get": {
         "summary": "List ratings",
-        "description": "**Required API-key permission:** `RATINGS_READ` — Read cocktail ratings\n\nList all ratings of a cocktail.",
+        "description": "**Required API-key permission:** `RATINGS_READ` — Read cocktail ratings\n\nList all ratings of a cocktail (newest first).",
         "tags": [
           "Ratings / Core"
         ],
@@ -14409,7 +15323,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "maxLength": 64
             },
             "required": true,
             "name": "cocktailId",
@@ -14467,6 +15382,16 @@
                 }
               }
             }
+          },
+          "404": {
+            "description": "Cocktail not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           }
         },
         "x-required-permission": "RATINGS_READ"
@@ -14501,7 +15426,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "maxLength": 64
             },
             "required": true,
             "name": "cocktailId",
@@ -14565,6 +15491,16 @@
                 }
               }
             }
+          },
+          "404": {
+            "description": "Cocktail not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           }
         },
         "x-required-permission": "RATINGS_CREATE"
@@ -14601,7 +15537,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "maxLength": 64
             },
             "required": true,
             "name": "cocktailId",
@@ -14609,7 +15546,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "maxLength": 64
             },
             "required": true,
             "name": "ratingId",
@@ -14710,7 +15648,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "maxLength": 64
             },
             "required": true,
             "name": "cocktailId",
@@ -14812,6 +15751,7 @@
           {
             "schema": {
               "type": "string",
+              "maxLength": 255,
               "description": "Name to check for a similar existing cocktail (min. 3 chars)."
             },
             "required": true,
@@ -14883,13 +15823,15 @@
     "/api/v1/workspaces/{workspaceId}/cocktails/export/json": {
       "post": {
         "summary": "Export cocktails as JSON",
-        "description": "**Authentication:** requires a valid session or API key (no specific permission).\n\nReturns a self-contained JSON dump (cocktails plus their referenced glasses, garnishes, ingredients, units, ice and step actions, including images) that can be re-imported via POST /cocktails/import/json. The exact dump shape is preserved verbatim for a lossless round-trip.",
+        "description": "**Required API-key permission:** `COCKTAILS_READ` — Read cocktail recipes\n\nReturns a self-contained JSON dump (cocktails plus their referenced glasses, garnishes, ingredients, units, ice and step actions, including images) that can be re-imported via POST /cocktails/import/json. The exact dump shape is preserved verbatim for a lossless round-trip.",
         "tags": [
           "Cocktails / Import & export"
         ],
         "security": [
           {
-            "WorkspaceApiKeyAuth": []
+            "WorkspaceApiKeyAuth": [
+              "COCKTAILS_READ"
+            ]
           },
           {
             "InstanceApiKeyAuth": []
@@ -14934,7 +15876,7 @@
             }
           },
           "400": {
-            "description": "No cocktails selected.",
+            "description": "No cocktails selected or too many ids.",
             "content": {
               "application/json": {
                 "schema": {
@@ -14973,7 +15915,8 @@
               }
             }
           }
-        }
+        },
+        "x-required-permission": "COCKTAILS_READ"
       }
     },
     "/api/v1/workspaces/{workspaceId}/cocktails/export/pdf": {
@@ -15028,7 +15971,7 @@
             }
           },
           "400": {
-            "description": "cocktailIds missing or empty.",
+            "description": "cocktailIds missing, empty or more than 200.",
             "content": {
               "application/json": {
                 "schema": {
@@ -15084,7 +16027,7 @@
     "/api/v1/workspaces/{workspaceId}/cocktails/import/json": {
       "post": {
         "summary": "Import cocktails from JSON",
-        "description": "**Required API-key permission:** `COCKTAILS_CREATE` — Create cocktail recipes\n\nThree-phase import (`validate` → `prepare-mapping` → `execute`) of an export dump produced by POST /cocktails/export/json. The response shape depends on the phase and is returned verbatim (not wrapped in a data envelope).",
+        "description": "**Required API-key permission:** `COCKTAILS_CREATE` — Create cocktail recipes\n\nThree-phase import (`validate` → `prepare-mapping` → `execute`) of an export dump produced by POST /cocktails/export/json. The response shape depends on the phase and is returned verbatim (not wrapped in a data envelope). The import is all-or-nothing: every item and referenced id is validated first; on any problem nothing is written and 400 lists the issues. API keys additionally need COCKTAILS_UPDATE to overwrite existing cocktails.",
         "tags": [
           "Cocktails / Import & export"
         ],
@@ -15137,7 +16080,7 @@
             }
           },
           "400": {
-            "description": "Invalid structure/phase or missing mapping decisions.",
+            "description": "Invalid structure/phase, missing mapping decisions or invalid items/references (nothing was imported).",
             "content": {
               "application/json": {
                 "schema": {
@@ -15157,7 +16100,7 @@
             }
           },
           "403": {
-            "description": "Insufficient permissions",
+            "description": "API key lacks COCKTAILS_UPDATE for overwrites.",
             "content": {
               "application/json": {
                 "schema": {
@@ -15166,8 +16109,8 @@
               }
             }
           },
-          "500": {
-            "description": "Import failed.",
+          "409": {
+            "description": "Conflicting concurrent change (nothing was imported).",
             "content": {
               "application/json": {
                 "schema": {
@@ -15212,6 +16155,7 @@
           {
             "schema": {
               "type": "string",
+              "maxLength": 255,
               "description": "Case-insensitive name filter."
             },
             "required": false,
@@ -15397,7 +16341,9 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
             },
             "required": true,
             "name": "garnishId",
@@ -15496,7 +16442,9 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
             },
             "required": true,
             "name": "garnishId",
@@ -15594,7 +16542,9 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
             },
             "required": true,
             "name": "garnishId",
@@ -15685,7 +16635,9 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
             },
             "required": true,
             "name": "garnishId",
@@ -15795,7 +16747,9 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
             },
             "required": true,
             "name": "garnishId",
@@ -15902,6 +16856,7 @@
           {
             "schema": {
               "type": "string",
+              "maxLength": 255,
               "description": "Name to check for a similar existing garnish (min. 3 chars)."
             },
             "required": true,
@@ -16062,7 +17017,7 @@
     "/api/v1/workspaces/{workspaceId}/garnishes/import/json": {
       "post": {
         "summary": "Import garnishes from JSON",
-        "description": "**Required API-key permission:** `GARNISHES_CREATE` — Create garnishes\n\nImports garnishes from the portable JSON export format via a three-phase flow (validate / prepare-mapping / execute). Consumes exactly what the export endpoint produces.",
+        "description": "**Required API-key permission:** `GARNISHES_CREATE` — Create garnishes\n\nImports garnishes from the portable JSON export format via a three-phase flow (validate / prepare-mapping / execute). Consumes exactly what the export endpoint produces. `execute` is all-or-nothing: if any item or referenced garnish is invalid nothing is written (400 with per-item issues), and all writes run in one transaction.",
         "tags": [
           "Garnishes / Import & export"
         ],
@@ -16093,7 +17048,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "description": "Import request: { phase, exportData, decisions? }. exportData is the garnish export structure (single object or array)."
+                "$ref": "#/components/schemas/GarnishImportInput"
               }
             }
           }
@@ -16115,7 +17070,7 @@
             }
           },
           "400": {
-            "description": "Validation error",
+            "description": "Invalid request or import items; nothing was imported.",
             "content": {
               "application/json": {
                 "schema": {
@@ -16180,6 +17135,7 @@
           {
             "schema": {
               "type": "string",
+              "maxLength": 255,
               "description": "Case-insensitive name filter."
             },
             "required": false,
@@ -16365,7 +17321,9 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
             },
             "required": true,
             "name": "glassId",
@@ -16464,7 +17422,9 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
             },
             "required": true,
             "name": "glassId",
@@ -16562,7 +17522,9 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
             },
             "required": true,
             "name": "glassId",
@@ -16663,7 +17625,9 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
             },
             "required": true,
             "name": "glassId",
@@ -16773,7 +17737,9 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
             },
             "required": true,
             "name": "glassId",
@@ -16879,7 +17845,9 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
             },
             "required": true,
             "name": "glassId",
@@ -16974,6 +17942,7 @@
           {
             "schema": {
               "type": "string",
+              "maxLength": 255,
               "description": "Name to check for a similar existing glass (min. 3 chars)."
             },
             "required": true,
@@ -17134,7 +18103,7 @@
     "/api/v1/workspaces/{workspaceId}/glasses/import/json": {
       "post": {
         "summary": "Import glasses from JSON",
-        "description": "**Required API-key permission:** `GLASSES_CREATE` — Create glasses\n\nImports glasses from the portable JSON export format via a three-phase flow (validate / prepare-mapping / execute). Consumes exactly what the export endpoint produces.",
+        "description": "**Required API-key permission:** `GLASSES_CREATE` — Create glasses\n\nImports glasses from the portable JSON export format via a three-phase flow (validate / prepare-mapping / execute). Consumes exactly what the export endpoint produces. `execute` is all-or-nothing: if any item or referenced glass is invalid nothing is written (400 with per-item issues), and all writes run in one transaction.",
         "tags": [
           "Glasses / Import & export"
         ],
@@ -17165,7 +18134,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "description": "Import request: { phase, exportData, decisions? }. exportData is the glass export structure (single object or array)."
+                "$ref": "#/components/schemas/GlassImportInput"
               }
             }
           }
@@ -17187,7 +18156,7 @@
             }
           },
           "400": {
-            "description": "Validation error",
+            "description": "Invalid request or import items; nothing was imported.",
             "content": {
               "application/json": {
                 "schema": {
@@ -17293,7 +18262,7 @@
             }
           },
           "400": {
-            "description": "Validation error",
+            "description": "An ingredient or garnish id does not belong to this workspace (nothing was updated).",
             "content": {
               "application/json": {
                 "schema": {
@@ -17552,7 +18521,7 @@
             }
           },
           "400": {
-            "description": "Validation error",
+            "description": "`sourceCardId` is not a card of this workspace (INVALID_REFERENCE).",
             "content": {
               "application/json": {
                 "schema": {
@@ -17582,7 +18551,7 @@
             }
           },
           "409": {
-            "description": "Slug already in use.",
+            "description": "Slug already in use (SLUG_TAKEN).",
             "content": {
               "application/json": {
                 "schema": {
@@ -17626,7 +18595,9 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
             },
             "required": true,
             "name": "menuId",
@@ -17725,7 +18696,9 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
             },
             "required": true,
             "name": "menuId",
@@ -17761,7 +18734,7 @@
             }
           },
           "400": {
-            "description": "Validation error",
+            "description": "`sourceCardId` is not a card of this workspace (INVALID_REFERENCE).",
             "content": {
               "application/json": {
                 "schema": {
@@ -17801,7 +18774,7 @@
             }
           },
           "409": {
-            "description": "Slug already in use.",
+            "description": "Slug already in use (SLUG_TAKEN).",
             "content": {
               "application/json": {
                 "schema": {
@@ -17843,7 +18816,9 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
             },
             "required": true,
             "name": "menuId",
@@ -17898,6 +18873,16 @@
                 }
               }
             }
+          },
+          "404": {
+            "description": "Guest menu not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           }
         },
         "x-required-permission": "GUEST_MENUS_DELETE"
@@ -17934,7 +18919,9 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
             },
             "required": true,
             "name": "menuId",
@@ -18044,7 +19031,9 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
             },
             "required": true,
             "name": "menuId",
@@ -18120,7 +19109,7 @@
             }
           },
           "409": {
-            "description": "Slug already in use.",
+            "description": "Slug already in use (SLUG_TAKEN).",
             "content": {
               "application/json": {
                 "schema": {
@@ -18164,7 +19153,9 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
             },
             "required": true,
             "name": "menuId",
@@ -18302,7 +19293,9 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
             },
             "required": true,
             "name": "menuId",
@@ -18415,7 +19408,9 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
             },
             "required": true,
             "name": "menuId",
@@ -18558,7 +19553,9 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
             },
             "required": true,
             "name": "menuId",
@@ -18691,7 +19688,9 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
             },
             "required": true,
             "name": "menuId",
@@ -18792,7 +19791,9 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
             },
             "required": true,
             "name": "menuId",
@@ -18858,6 +19859,16 @@
               }
             }
           },
+          "409": {
+            "description": "The menu changed while publishing (CONFLICT) – publish again.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Template validation failed (`error.issues`: GuestMenuPublishIssue[] with slot + line).",
             "content": {
@@ -18903,7 +19914,9 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
             },
             "required": true,
             "name": "menuId",
@@ -19045,7 +20058,9 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
             },
             "required": true,
             "name": "menuId",
@@ -19299,6 +20314,16 @@
                 }
               }
             }
+          },
+          "404": {
+            "description": "A menu id is not a guest menu of this workspace.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           }
         },
         "x-required-permission": "GUEST_MENUS_UPDATE"
@@ -19521,7 +20546,9 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
             },
             "required": true,
             "name": "templateId",
@@ -19620,7 +20647,9 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
             },
             "required": true,
             "name": "templateId",
@@ -19738,7 +20767,9 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
             },
             "required": true,
             "name": "templateId",
@@ -19786,6 +20817,16 @@
           },
           "403": {
             "description": "Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Template not found.",
             "content": {
               "application/json": {
                 "schema": {
@@ -19923,6 +20964,7 @@
           {
             "schema": {
               "type": "string",
+              "maxLength": 100,
               "description": "Case-insensitive name filter."
             },
             "required": false,
@@ -20271,13 +21313,23 @@
                 }
               }
             }
+          },
+          "404": {
+            "description": "Ice not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           }
         },
         "x-required-permission": "ICE_UPDATE"
       },
       "delete": {
         "summary": "Delete ice",
-        "description": "**Required API-key permission:** `ICE_DELETE` — Delete ice types",
+        "description": "**Required API-key permission:** `ICE_DELETE` — Delete ice types\n\nDeletes the ice; cocktails using it keep existing without ice.",
         "tags": [
           "Ice / Core"
         ],
@@ -20407,6 +21459,7 @@
           {
             "schema": {
               "type": "string",
+              "maxLength": 255,
               "description": "Case-insensitive name/short-name filter."
             },
             "required": false,
@@ -20592,7 +21645,9 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
             },
             "required": true,
             "name": "ingredientId",
@@ -20691,7 +21746,9 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
             },
             "required": true,
             "name": "ingredientId",
@@ -20789,7 +21846,9 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
             },
             "required": true,
             "name": "ingredientId",
@@ -20890,7 +21949,9 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
             },
             "required": true,
             "name": "ingredientId",
@@ -21000,7 +22061,9 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
             },
             "required": true,
             "name": "ingredientId",
@@ -21106,7 +22169,9 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
             },
             "required": true,
             "name": "ingredientId",
@@ -21201,6 +22266,7 @@
           {
             "schema": {
               "type": "string",
+              "maxLength": 255,
               "description": "Name to check for a similar existing ingredient (min. 3 chars)."
             },
             "required": false,
@@ -21211,6 +22277,7 @@
           {
             "schema": {
               "type": "string",
+              "maxLength": 2048,
               "description": "Link to check for a similar existing ingredient."
             },
             "required": false,
@@ -21371,7 +22438,7 @@
     "/api/v1/workspaces/{workspaceId}/ingredients/import/json": {
       "post": {
         "summary": "Import ingredients from JSON",
-        "description": "**Required API-key permission:** `INGREDIENTS_CREATE` — Create ingredients\n\nImports ingredients from the portable JSON export format via a three-phase flow (validate / prepare-mapping / execute). Consumes exactly what the export endpoint produces; missing units are recreated by name.",
+        "description": "**Required API-key permission:** `INGREDIENTS_CREATE` — Create ingredients\n\nImports ingredients from the portable JSON export format via a three-phase flow (validate / prepare-mapping / execute). Consumes exactly what the export endpoint produces; missing units are recreated by name. `execute` is all-or-nothing: if any item or referenced ingredient is invalid nothing is written (400 with per-item issues), and all writes run in one transaction.",
         "tags": [
           "Ingredients / Import & export"
         ],
@@ -21402,7 +22469,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "description": "Import request: { phase, exportData, decisions? }. exportData is the ingredient export structure (single object or array)."
+                "$ref": "#/components/schemas/IngredientImportInput"
               }
             }
           }
@@ -21424,7 +22491,7 @@
             }
           },
           "400": {
-            "description": "Validation error",
+            "description": "Invalid request or import items; nothing was imported.",
             "content": {
               "application/json": {
                 "schema": {
@@ -21628,6 +22695,16 @@
                 }
               }
             }
+          },
+          "409": {
+            "description": "The join code is already used (`CODE_TAKEN`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           }
         },
         "x-required-permission": "USERS_UPDATE"
@@ -21664,7 +22741,9 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
             },
             "required": true,
             "name": "code",
@@ -21821,7 +22900,7 @@
       },
       "delete": {
         "summary": "Withdraw own join request",
-        "description": "**Authentication:** requires a logged-in workspace-member session. API keys (workspace or the instance master key) are NOT accepted for this operation.\n\nWithdraws the calling user's own pending join request. Session-only — API keys are not accepted.",
+        "description": "**Authentication:** requires a logged-in workspace-member session. API keys (workspace or the instance master key) are NOT accepted for this operation.\n\nWithdraws the calling user's own pending join request. The caller does not need to be a member (applicants are not). Session-only — API keys are not accepted.",
         "tags": [
           "Workspace / Membership"
         ],
@@ -21936,7 +23015,9 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100
             },
             "required": true,
             "name": "userId",
@@ -22037,7 +23118,9 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100
             },
             "required": true,
             "name": "userId",
@@ -22110,7 +23193,7 @@
     "/api/v1/workspaces/{workspaceId}/leave": {
       "post": {
         "summary": "Leave workspace",
-        "description": "**Authentication:** requires a logged-in workspace-member session. API keys (workspace or the instance master key) are NOT accepted for this operation.\n\nRemoves the calling user from the workspace. Session-only — API keys are not accepted.",
+        "description": "**Authentication:** requires a logged-in workspace-member session. API keys (workspace or the instance master key) are NOT accepted for this operation.\n\nRemoves the calling user from the workspace. Session-only — API keys are not accepted. The last owner cannot leave.",
         "tags": [
           "Workspace / Membership"
         ],
@@ -22173,6 +23256,16 @@
           },
           "403": {
             "description": "Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The caller is the last owner of the workspace (`LAST_OWNER`).",
             "content": {
               "application/json": {
                 "schema": {
@@ -22442,7 +23535,7 @@
             }
           },
           "400": {
-            "description": "Validation error",
+            "description": "The cocktail does not exist in this workspace.",
             "content": {
               "application/json": {
                 "schema": {
@@ -22478,7 +23571,7 @@
     "/api/v1/workspaces/{workspaceId}/queue/remove": {
       "post": {
         "summary": "Remove from queue",
-        "description": "**Required API-key permission:** `QUEUE_DELETE` — Remove cocktails from the queue\n\nRemove the oldest queue item matching the given cocktail and notes.",
+        "description": "**Required API-key permission:** `QUEUE_DELETE` — Remove cocktails from the queue\n\nAtomically remove the oldest queue item matching the given cocktail and notes (concurrent calls each remove a different item).",
         "tags": [
           "Queue / Core"
         ],
@@ -22782,6 +23875,7 @@
           {
             "schema": {
               "type": "string",
+              "maxLength": 64,
               "description": "Inclusive start date (interpreted with the workspace day-start-time setting)."
             },
             "required": false,
@@ -22792,6 +23886,7 @@
           {
             "schema": {
               "type": "string",
+              "maxLength": 64,
               "description": "Inclusive end date (interpreted with the workspace day-start-time setting)."
             },
             "required": false,
@@ -22893,6 +23988,7 @@
           {
             "schema": {
               "type": "string",
+              "maxLength": 64,
               "description": "Inclusive start date (interpreted with the workspace day-start-time setting)."
             },
             "required": false,
@@ -22903,6 +23999,7 @@
           {
             "schema": {
               "type": "string",
+              "maxLength": 64,
               "description": "Inclusive end date (interpreted with the workspace day-start-time setting)."
             },
             "required": false,
@@ -23014,6 +24111,7 @@
           {
             "schema": {
               "type": "string",
+              "maxLength": 64,
               "description": "Inclusive start date (day-start-time aware)."
             },
             "required": false,
@@ -23024,6 +24122,7 @@
           {
             "schema": {
               "type": "string",
+              "maxLength": 64,
               "description": "Inclusive end date (day-start-time aware)."
             },
             "required": false,
@@ -23034,6 +24133,7 @@
           {
             "schema": {
               "type": "string",
+              "maxLength": 200,
               "description": "Case-insensitive filter over formatted date, weekday, user (name/email) and card name."
             },
             "required": false,
@@ -23043,7 +24143,9 @@
           },
           {
             "schema": {
-              "type": "string",
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
               "description": "1-based page number (default 1)."
             },
             "required": false,
@@ -23053,11 +24155,14 @@
           },
           {
             "schema": {
-              "type": "string",
-              "description": "Items per page (default 50)."
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 50,
+              "description": "Items per page (default 50, at most 200)."
             },
             "required": false,
-            "description": "Items per page (default 50).",
+            "description": "Items per page (default 50, at most 200).",
             "name": "limit",
             "in": "query"
           }
@@ -23157,6 +24262,7 @@
           {
             "schema": {
               "type": "string",
+              "maxLength": 64,
               "description": "Inclusive start date (interpreted with the workspace day-start-time setting)."
             },
             "required": false,
@@ -23167,6 +24273,7 @@
           {
             "schema": {
               "type": "string",
+              "maxLength": 64,
               "description": "Inclusive end date (interpreted with the workspace day-start-time setting)."
             },
             "required": false,
@@ -23274,10 +24381,12 @@
           {
             "schema": {
               "type": "string",
-              "description": "JSON-encoded array of tag/ingredient names (a bare string is treated as a single item)."
+              "minLength": 1,
+              "maxLength": 51800,
+              "description": "JSON-encoded array of tag/ingredient names (a bare string is treated as a single item); at most 200 names."
             },
             "required": true,
-            "description": "JSON-encoded array of tag/ingredient names (a bare string is treated as a single item).",
+            "description": "JSON-encoded array of tag/ingredient names (a bare string is treated as a single item); at most 200 names.",
             "name": "items",
             "in": "query"
           },
@@ -23298,6 +24407,7 @@
           {
             "schema": {
               "type": "string",
+              "maxLength": 64,
               "description": "Inclusive start date (day-start-time aware); all-time when omitted."
             },
             "required": false,
@@ -23308,6 +24418,7 @@
           {
             "schema": {
               "type": "string",
+              "maxLength": 64,
               "description": "Inclusive end date (day-start-time aware); all-time when omitted."
             },
             "required": false,
@@ -23401,6 +24512,7 @@
           {
             "schema": {
               "type": "string",
+              "maxLength": 64,
               "description": "Inclusive start date (interpreted with the workspace day-start-time setting)."
             },
             "required": false,
@@ -23411,6 +24523,7 @@
           {
             "schema": {
               "type": "string",
+              "maxLength": 64,
               "description": "Inclusive end date (interpreted with the workspace day-start-time setting)."
             },
             "required": false,
@@ -23504,6 +24617,7 @@
           {
             "schema": {
               "type": "string",
+              "maxLength": 64,
               "description": "Inclusive start date (interpreted with the workspace day-start-time setting)."
             },
             "required": false,
@@ -23514,6 +24628,7 @@
           {
             "schema": {
               "type": "string",
+              "maxLength": 64,
               "description": "Inclusive end date (interpreted with the workspace day-start-time setting)."
             },
             "required": false,
@@ -23607,6 +24722,11 @@
           {
             "schema": {
               "type": "string",
+              "enum": [
+                "TAG_SET",
+                "INGREDIENT_SET",
+                "COCKTAIL_SET"
+              ],
               "description": "Filter by a single SavedSetType."
             },
             "required": false,
@@ -23617,6 +24737,7 @@
           {
             "schema": {
               "type": "string",
+              "maxLength": 100,
               "description": "Comma-separated list of SavedSetTypes to filter by (ignored when `type` is set)."
             },
             "required": false,
@@ -23682,14 +24803,14 @@
       },
       "post": {
         "summary": "Create a saved statistics set",
-        "description": "**Required API-key permission:** `STATISTICS_READ` — Read sales statistics",
+        "description": "**Required API-key permission:** `STATISTICS_CREATE` — Record sales statistics",
         "tags": [
           "Statistics / Advanced"
         ],
         "security": [
           {
             "WorkspaceApiKeyAuth": [
-              "STATISTICS_READ"
+              "STATISTICS_CREATE"
             ]
           },
           {
@@ -23738,7 +24859,7 @@
             }
           },
           "400": {
-            "description": "Missing required fields, or invalid type/logic.",
+            "description": "Missing required fields, invalid type/logic, or a cocktail that does not exist in this workspace.",
             "content": {
               "application/json": {
                 "schema": {
@@ -23768,18 +24889,18 @@
             }
           }
         },
-        "x-required-permission": "STATISTICS_READ"
+        "x-required-permission": "STATISTICS_CREATE"
       },
       "put": {
         "summary": "Update a saved statistics set",
-        "description": "**Required API-key permission:** `STATISTICS_READ` — Read sales statistics",
+        "description": "**Required API-key permission:** `STATISTICS_CREATE` — Record sales statistics",
         "tags": [
           "Statistics / Advanced"
         ],
         "security": [
           {
             "WorkspaceApiKeyAuth": [
-              "STATISTICS_READ"
+              "STATISTICS_CREATE"
             ]
           },
           {
@@ -23828,7 +24949,7 @@
             }
           },
           "400": {
-            "description": "id is required.",
+            "description": "id is required, or a cocktail that does not exist in this workspace.",
             "content": {
               "application/json": {
                 "schema": {
@@ -23868,18 +24989,18 @@
             }
           }
         },
-        "x-required-permission": "STATISTICS_READ"
+        "x-required-permission": "STATISTICS_CREATE"
       },
       "delete": {
         "summary": "Delete a saved statistics set",
-        "description": "**Required API-key permission:** `STATISTICS_READ` — Read sales statistics",
+        "description": "**Required API-key permission:** `STATISTICS_DELETE` — Delete statistics entries",
         "tags": [
           "Statistics / Advanced"
         ],
         "security": [
           {
             "WorkspaceApiKeyAuth": [
-              "STATISTICS_READ"
+              "STATISTICS_DELETE"
             ]
           },
           {
@@ -23901,6 +25022,8 @@
           {
             "schema": {
               "type": "string",
+              "minLength": 1,
+              "maxLength": 100,
               "description": "Id of the set to delete."
             },
             "required": true,
@@ -23969,7 +25092,7 @@
             }
           }
         },
-        "x-required-permission": "STATISTICS_READ"
+        "x-required-permission": "STATISTICS_DELETE"
       }
     },
     "/api/v1/workspaces/{workspaceId}/statistics/advanced/sets/{setId}": {
@@ -24012,6 +25135,7 @@
           {
             "schema": {
               "type": "string",
+              "maxLength": 64,
               "description": "Inclusive start date (interpreted with the workspace day-start-time setting)."
             },
             "required": false,
@@ -24022,6 +25146,7 @@
           {
             "schema": {
               "type": "string",
+              "maxLength": 64,
               "description": "Inclusive end date (interpreted with the workspace day-start-time setting)."
             },
             "required": false,
@@ -24125,6 +25250,7 @@
           {
             "schema": {
               "type": "string",
+              "maxLength": 64,
               "description": "Inclusive start date (interpreted with the workspace day-start-time setting)."
             },
             "required": false,
@@ -24135,6 +25261,7 @@
           {
             "schema": {
               "type": "string",
+              "maxLength": 64,
               "description": "Inclusive end date (interpreted with the workspace day-start-time setting)."
             },
             "required": false,
@@ -24228,6 +25355,7 @@
           {
             "schema": {
               "type": "string",
+              "maxLength": 64,
               "description": "Inclusive start date (interpreted with the workspace day-start-time setting)."
             },
             "required": false,
@@ -24238,6 +25366,7 @@
           {
             "schema": {
               "type": "string",
+              "maxLength": 64,
               "description": "Inclusive end date (interpreted with the workspace day-start-time setting)."
             },
             "required": false,
@@ -24462,7 +25591,7 @@
             }
           },
           "400": {
-            "description": "Ambiguous cocktail-queue entries; specify a note to remove one.",
+            "description": "Ambiguous cocktail-queue entries (specify a note to remove one), or the cocktail/card does not exist in this workspace.",
             "content": {
               "application/json": {
                 "schema": {
@@ -24527,6 +25656,7 @@
           {
             "schema": {
               "type": "string",
+              "maxLength": 64,
               "description": "Inclusive start date (interpreted with the workspace day-start-time setting)."
             },
             "required": false,
@@ -24537,6 +25667,7 @@
           {
             "schema": {
               "type": "string",
+              "maxLength": 64,
               "description": "Inclusive end date (interpreted with the workspace day-start-time setting)."
             },
             "required": false,
@@ -24547,6 +25678,7 @@
           {
             "schema": {
               "type": "string",
+              "maxLength": 200,
               "description": "Case-insensitive filter over cocktail, card and user name."
             },
             "required": false,
@@ -24570,11 +25702,12 @@
             "schema": {
               "type": "integer",
               "minimum": 1,
+              "maximum": 200,
               "default": 50,
-              "description": "Items per page."
+              "description": "Items per page (at most 200)."
             },
             "required": false,
-            "description": "Items per page.",
+            "description": "Items per page (at most 200).",
             "name": "limit",
             "in": "query"
           }
@@ -25055,7 +26188,7 @@
             }
           },
           "400": {
-            "description": "Validation error",
+            "description": "INVALID_REFERENCE: a category id does not exist in this workspace.",
             "content": {
               "application/json": {
                 "schema": {
@@ -25076,16 +26209,6 @@
           },
           "403": {
             "description": "Insufficient permissions",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "A referenced category does not exist in this workspace.",
             "content": {
               "application/json": {
                 "schema": {
@@ -25285,6 +26408,16 @@
           },
           "403": {
             "description": "Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Category not found.",
             "content": {
               "application/json": {
                 "schema": {
@@ -25529,7 +26662,7 @@
             }
           },
           "400": {
-            "description": "Validation error",
+            "description": "INVALID_REFERENCE: a category id does not exist in this workspace.",
             "content": {
               "application/json": {
                 "schema": {
@@ -25550,16 +26683,6 @@
           },
           "403": {
             "description": "Insufficient permissions",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "A referenced category does not exist in this workspace.",
             "content": {
               "application/json": {
                 "schema": {
@@ -25777,6 +26900,7 @@
           {
             "schema": {
               "type": "string",
+              "maxLength": 35,
               "example": "en",
               "description": "Target locale. Defaults to all additional content locales of the workspace."
             },
@@ -25804,6 +26928,7 @@
           {
             "schema": {
               "type": "string",
+              "maxLength": 100,
               "description": "Only rows of this entity (requires `entity`)."
             },
             "required": false,
@@ -25880,7 +27005,7 @@
       },
       "put": {
         "summary": "Bulk upsert content translations",
-        "description": "**Required API-key permission:** `TRANSLATIONS_UPDATE` — Update content translations (cocktails, ingredients, garnishes, glasses)\n\nWrites translated values per entity, field and locale. Empty values clear a translation.",
+        "description": "**Required API-key permission:** `TRANSLATIONS_UPDATE` — Update content translations (cocktails, ingredients, garnishes, glasses)\n\nWrites translated values per entity, field and locale in one transaction. Empty values clear a translation. Items of entities that do not exist in this workspace are skipped (counted in `skipped`).",
         "tags": [
           "Translations / Content"
         ],
@@ -26001,6 +27126,7 @@
           {
             "schema": {
               "type": "string",
+              "maxLength": 100,
               "description": "Case-insensitive name filter."
             },
             "required": false,
@@ -26158,7 +27284,7 @@
     "/api/v1/workspaces/{workspaceId}/units/{unitId}": {
       "delete": {
         "summary": "Delete unit",
-        "description": "**Required API-key permission:** `UNITS_UPDATE` — Create, update, and delete units and unit conversions",
+        "description": "**Required API-key permission:** `UNITS_UPDATE` — Create, update, and delete units and unit conversions\n\nDeletes a unit that no cocktail uses (ingredient volumes in this unit are removed) and regenerates the derived conversions.",
         "tags": [
           "Units / Core"
         ],
@@ -26234,6 +27360,26 @@
           },
           "403": {
             "description": "Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unit not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "UNIT_IN_USE: the unit is still used in cocktail recipes.",
             "content": {
               "application/json": {
                 "schema": {
@@ -26392,7 +27538,7 @@
             }
           },
           "400": {
-            "description": "Validation error",
+            "description": "INVALID_REFERENCE: a unit does not exist in this workspace.",
             "content": {
               "application/json": {
                 "schema": {
@@ -26413,6 +27559,16 @@
           },
           "403": {
             "description": "Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "UNIT_CONVERSION_EXISTS: a manual conversion between these units already exists.",
             "content": {
               "application/json": {
                 "schema": {
@@ -26520,6 +27676,26 @@
                 }
               }
             }
+          },
+          "404": {
+            "description": "Unit conversion not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "AUTO_GENERATED_CONVERSION: derived conversions cannot be changed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           }
         },
         "x-required-permission": "UNITS_UPDATE"
@@ -26602,6 +27778,26 @@
           },
           "403": {
             "description": "Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unit conversion not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "AUTO_GENERATED_CONVERSION: derived conversions cannot be deleted.",
             "content": {
               "application/json": {
                 "schema": {
@@ -26703,7 +27899,7 @@
     "/api/v1/workspaces/{workspaceId}/users/{userId}": {
       "put": {
         "summary": "Update workspace user role",
-        "description": "**Required API-key permission:** `USERS_UPDATE` — Update member roles",
+        "description": "**Required API-key permission:** `USERS_UPDATE` — Update member roles\n\nChanges the role of a member. Granting `OWNER` or changing the role of an owner requires an owner session (or the instance master key); workspace API keys never may. The last owner cannot be demoted.",
         "tags": [
           "Workspace Users / Core"
         ],
@@ -26731,7 +27927,9 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100
             },
             "required": true,
             "name": "userId",
@@ -26787,7 +27985,7 @@
             }
           },
           "403": {
-            "description": "A user cannot change their own role.",
+            "description": "A user cannot change their own role, or the owner role is granted/revoked without owner rights (`OWNER_REQUIRED`).",
             "content": {
               "application/json": {
                 "schema": {
@@ -26805,13 +28003,23 @@
                 }
               }
             }
+          },
+          "409": {
+            "description": "The last owner cannot be demoted (`LAST_OWNER`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           }
         },
         "x-required-permission": "USERS_UPDATE"
       },
       "delete": {
         "summary": "Remove workspace user",
-        "description": "**Required API-key permission:** `USERS_DELETE` — Remove members from the workspace",
+        "description": "**Required API-key permission:** `USERS_DELETE` — Remove members from the workspace\n\nRemoves a member. Removing an owner requires an owner session (or the instance master key); workspace API keys never may. The last owner cannot be removed.",
         "tags": [
           "Workspace Users / Core"
         ],
@@ -26839,7 +28047,9 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100
             },
             "required": true,
             "name": "userId",
@@ -26886,7 +28096,7 @@
             }
           },
           "403": {
-            "description": "A user cannot remove themselves.",
+            "description": "A user cannot remove themselves, or an owner is removed without owner rights (`OWNER_REQUIRED`).",
             "content": {
               "application/json": {
                 "schema": {
@@ -26897,6 +28107,16 @@
           },
           "404": {
             "description": "Workspace user not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The last owner cannot be removed (`LAST_OWNER`).",
             "content": {
               "application/json": {
                 "schema": {

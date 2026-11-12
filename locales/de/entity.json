@@ -158,7 +158,14 @@
     "unit": "Einheit",
     "checked": "Ausgewählt",
     "plannedAmount": "Geplante Menge",
-    "customPrice": "Sonderpreis"
+    "customPrice": "Sonderpreis",
+    "abv": "Alkoholgehalt",
+    "allergens": "Allergene",
+    "allergenSources": "Allergen-Quellen",
+    "additives": "Zusatzstoffe",
+    "guestInfoComplete": "Gästeinfo vollständig",
+    "hideOnGuestMenu": "Auf Gästekarte ausgeblendet",
+    "guestName": "Name für Gäste"
   },
   "importStepConflicts": "Konflikte",
   "importStepAssignment": "Zuordnung",

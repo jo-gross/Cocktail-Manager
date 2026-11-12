@@ -158,7 +158,14 @@
     "unit": "Unit",
     "checked": "Selected",
     "plannedAmount": "Planned amount",
-    "customPrice": "Special price"
+    "customPrice": "Special price",
+    "abv": "Alcohol content",
+    "allergens": "Allergens",
+    "allergenSources": "Allergen sources",
+    "additives": "Additives",
+    "guestInfoComplete": "Guest info complete",
+    "hideOnGuestMenu": "Hidden on guest menu",
+    "guestName": "Guest name"
   },
   "importStepConflicts": "Conflicts",
   "importStepAssignment": "Mapping",
