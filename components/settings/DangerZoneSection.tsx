@@ -4,6 +4,8 @@ import { useTranslation } from 'react-i18next';
 import { Button, Loading } from '@components/ui';
 import { DeleteConfirmationModal } from '@components/modals/DeleteConfirmationModal';
 import { ModalContext } from '@lib/context/ModalContextProvider';
+import { UserContext } from '@lib/context/UserContextProvider';
+import { Role } from '@generated/prisma/client';
 import { deleteWorkspace } from '@lib/network/workspaces';
 import { alertApiV1Error } from '@lib/network/apiV1';
 import { alertService } from '@lib/alertService';
@@ -13,6 +15,9 @@ export function DangerZoneSection({ workspaceId }: { workspaceId: string }) {
   const { t } = useTranslation(['settings', 'common', 'errors']);
   const router = useRouter();
   const modalContext = useContext(ModalContext);
+  const userContext = useContext(UserContext);
+  // Deleting a workspace is owner-only (the API rejects other roles).
+  const isOwner = userContext.isUserPermitted(Role.OWNER);
   const [deleting, setDeleting] = useState(false);
 
   const handleDelete = async () => {
@@ -40,7 +45,7 @@ export function DangerZoneSection({ workspaceId }: { workspaceId: string }) {
           type="button"
           variant="outline-error"
           className="shrink-0"
-          disabled={deleting}
+          disabled={deleting || !isOwner}
           onClick={() =>
             modalContext.openModal(<DeleteConfirmationModal onApprove={handleDelete} entityName={t('settings:thisWorkspace')} spelling={'DELETE'} />)
           }

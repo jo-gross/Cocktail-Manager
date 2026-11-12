@@ -30,7 +30,7 @@ export type JoinRequestDto = z.infer<typeof JoinRequestDtoSchema>;
 
 export const AcceptRejectResultSchema = z.object({ ok: z.boolean() }).openapi('JoinRequestActionResult');
 
-export const JoinRequestUserParams = WorkspaceIdParam.extend({ userId: z.string() });
+export const JoinRequestUserParams = WorkspaceIdParam.extend({ userId: z.string().min(1).max(100) });
 
 export const joinRequestsCollectionApiDoc = {
   basePath: '/workspaces/{workspaceId}/join-requests',
@@ -49,7 +49,8 @@ export const joinRequestsCollectionApiDoc = {
       sessionOnly: true,
       tags: [ApiTags.workspaceMembership],
       summary: 'Withdraw own join request',
-      description: "Withdraws the calling user's own pending join request. Session-only — API keys are not accepted.",
+      description:
+        "Withdraws the calling user's own pending join request. The caller does not need to be a member (applicants are not). Session-only — API keys are not accepted.",
       params: WorkspaceIdParam,
       response: DeletionResult,
       errorResponses: { 404: 'No pending join request.' },

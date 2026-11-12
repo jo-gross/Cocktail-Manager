@@ -19,9 +19,10 @@ export const leaveApiDoc = {
       sessionOnly: true,
       tags: [ApiTags.workspaceMembership],
       summary: 'Leave workspace',
-      description: 'Removes the calling user from the workspace. Session-only — API keys are not accepted.',
+      description: 'Removes the calling user from the workspace. Session-only — API keys are not accepted. The last owner cannot leave.',
       params: WorkspaceIdParam,
       response: LeaveResultSchema,
+      errorResponses: { 409: 'The caller is the last owner of the workspace (`LAST_OWNER`).' },
     },
   },
 } satisfies ResourceApiDoc;

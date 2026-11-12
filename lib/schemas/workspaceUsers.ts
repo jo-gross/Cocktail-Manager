@@ -31,7 +31,7 @@ export const WorkspaceUserUpdateSchema = z
   })
   .openapi('WorkspaceUserUpdateInput');
 
-export const WorkspaceUserItemParams = WorkspaceIdParam.extend({ userId: z.string() });
+export const WorkspaceUserItemParams = WorkspaceIdParam.extend({ userId: z.string().min(1).max(100) });
 
 export type WorkspaceUserUpdateInput = z.infer<typeof WorkspaceUserUpdateSchema>;
 
@@ -58,19 +58,31 @@ export const workspaceUsersItemApiDoc = {
       permission: 'USERS_UPDATE',
       tags: [ApiTags.workspaceUsersCore],
       summary: 'Update workspace user role',
+      description:
+        'Changes the role of a member. Granting `OWNER` or changing the role of an owner requires an owner session (or the instance master key); workspace API keys never may. The last owner cannot be demoted.',
       params: WorkspaceUserItemParams,
       body: WorkspaceUserUpdateSchema,
       response: WorkspaceUserDtoSchema,
-      errorResponses: { 403: 'A user cannot change their own role.', 404: 'Workspace user not found.' },
+      errorResponses: {
+        403: 'A user cannot change their own role, or the owner role is granted/revoked without owner rights (`OWNER_REQUIRED`).',
+        404: 'Workspace user not found.',
+        409: 'The last owner cannot be demoted (`LAST_OWNER`).',
+      },
     },
     DELETE: {
       roles: ['ADMIN'],
       permission: 'USERS_DELETE',
       tags: [ApiTags.workspaceUsersCore],
       summary: 'Remove workspace user',
+      description:
+        'Removes a member. Removing an owner requires an owner session (or the instance master key); workspace API keys never may. The last owner cannot be removed.',
       params: WorkspaceUserItemParams,
       response: DeletionResult,
-      errorResponses: { 403: 'A user cannot remove themselves.', 404: 'Workspace user not found.' },
+      errorResponses: {
+        403: 'A user cannot remove themselves, or an owner is removed without owner rights (`OWNER_REQUIRED`).',
+        404: 'Workspace user not found.',
+        409: 'The last owner cannot be removed (`LAST_OWNER`).',
+      },
     },
   },
 } satisfies ResourceApiDoc;

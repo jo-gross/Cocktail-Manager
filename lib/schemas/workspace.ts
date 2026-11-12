@@ -9,6 +9,10 @@ import { WorkspaceIdParam, DateTimeString, DeletionResult } from '@lib/schemas/c
 import { ApiTags } from '@lib/openapi/tags';
 import type { ResourceApiDoc } from '@lib/openapi/types';
 import { validateWorkspaceSettingValue } from '@lib/workspace/workspaceLocaleSettings';
+import { ImageDataUriSchema } from '@lib/images/imageSchema';
+
+/** Workspace display name: trimmed, 1–100 characters. */
+export const WorkspaceNameSchema = z.string().trim().min(1).max(100);
 
 const RoleEnum = z.enum(['OWNER', 'ADMIN', 'MANAGER', 'USER']).openapi('WorkspaceRole');
 
@@ -77,13 +81,8 @@ export const WorkspacePublicSlugSchema = z
 
 export const WorkspaceUpdateSchema = z
   .object({
-    name: z.string().min(1).optional().openapi({ description: 'New workspace name; omitted keeps the current name.' }),
-    image: z
-      .string()
-      .max(2_000_000)
-      .regex(/^data:image\/(?:png|jpeg|gif|webp|avif);base64,[A-Za-z0-9+/]+={0,2}$/)
-      .nullish()
-      .openapi({ description: 'Workspace logo as a base64 image data URI; null removes it, omitted keeps it.' }),
+    name: WorkspaceNameSchema.optional().openapi({ description: 'New workspace name (trimmed, 1–100 characters); omitted keeps the current name.' }),
+    image: ImageDataUriSchema.nullish().openapi({ description: 'Workspace logo as a base64 raster image data URI; null removes it, omitted keeps it.' }),
     publicSlug: WorkspacePublicSlugSchema.nullish().openapi({
       description:
         'Public slug for guest menus (`/m/{publicSlug}`), unique across workspaces; null removes it, omitted keeps it. Slugs shaped like ids (cuid `c` + 20 or more letters/digits, or a UUID) are rejected with 400 `PUBLIC_SLUG_RESERVED`, slugs used by another workspace or equal to a workspace id with 409 `PUBLIC_SLUG_TAKEN`.',
@@ -94,7 +93,7 @@ export const WorkspaceUpdateSchema = z
 export const WorkspaceSettingUpdateSchema = z
   .object({
     setting: WorkspaceSettingKeyEnum,
-    value: z.string().nullish().openapi({
+    value: z.string().max(10_000).nullish().openapi({
       description:
         'New value for the setting; null clears it. `timezone` must be an IANA time zone (default Europe/Berlin), `currency` an ISO 4217 code (default EUR), `contentLocales` a JSON string `{"primary":"de","additional":["en"]}`.',
     }),
@@ -126,20 +125,24 @@ export const workspaceItemApiDoc = {
       permission: 'WORKSPACE_UPDATE',
       tags: [ApiTags.workspaceCore],
       summary: 'Update workspace',
-      description: 'Update the workspace name, logo and/or the public guest-menu slug (409 when the slug is taken).',
+      description:
+        'Update the workspace name, logo and/or the public guest-menu slug (409 when the slug is taken). API keys additionally need `GUEST_MENUS_PUBLISH` to change `publicSlug`.',
       params: WorkspaceIdParam,
       body: WorkspaceUpdateSchema,
       response: WorkspaceDtoSchema,
-      errorResponses: { 409: 'The public slug is already used by another workspace.' },
+      errorResponses: {
+        403: 'An API key without `GUEST_MENUS_PUBLISH` tried to change the public slug.',
+        409: 'The public slug is already used by another workspace.',
+      },
     },
     DELETE: {
-      roles: ['ADMIN'],
+      roles: ['OWNER'],
       permission: null,
-      // Destructive and not covered by any API-key scope: session-member auth only.
+      // Destructive and not covered by any API-key scope: owner session only.
       sessionOnly: true,
       tags: [ApiTags.workspaceCore],
       summary: 'Delete workspace',
-      description: 'Permanently delete the workspace and all its data.',
+      description: 'Permanently delete the workspace and all its data. Owner session only.',
       params: WorkspaceIdParam,
       response: DeletionResult,
     },

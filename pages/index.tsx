@@ -57,7 +57,7 @@ const WorkspacesPage: NextPageWithPullToRefresh = () => {
   const [workspacesFetched, setWorkspacesFetched] = useState(false);
 
   const [openWorkspaceJoinRequestLoading, setOpenWorkspaceJoinRequestLoading] = useState(false);
-  const [openWorkspaceJoinRequest, setOpenWorkspaceJoinRequest] = useState<(WorkspaceJoinRequest & { workspace: Workspace })[]>([]);
+  const [openWorkspaceJoinRequest, setOpenWorkspaceJoinRequest] = useState<(WorkspaceJoinRequest & { workspace: Pick<Workspace, 'id' | 'name'> })[]>([]);
   const [joinRequestCanceling, setJoinRequestCanceling] = useState<Record<string, boolean>>({});
 
   const [newWorkspaceName, setNewWorkspaceName] = useState('');
@@ -172,7 +172,7 @@ const WorkspacesPage: NextPageWithPullToRefresh = () => {
       const signInResponse = await fetch('/api/auth/demo-login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: body.data.userId }),
+        body: JSON.stringify({ userId: body.data.userId, loginToken: body.data.loginToken }),
       });
 
       if (signInResponse.ok) {
@@ -211,10 +211,13 @@ const WorkspacesPage: NextPageWithPullToRefresh = () => {
             try {
               if (response.body) {
                 const body = await response.json();
-                if (body?.data?.key == 'JOIN_ALREADY_REQUESTED') {
+                const errorCode = body?.error?.code;
+                if (errorCode == 'JOIN_ALREADY_REQUESTED') {
                   alertService.info(t('auth:alert.alreadyRequested'));
-                } else if (body?.data?.key == 'ALREADY_IN_WORKSPACE') {
+                } else if (errorCode == 'ALREADY_IN_WORKSPACE') {
                   alertService.info(t('auth:alert.alreadyMember'));
+                } else if (errorCode == 'RATE_LIMITED') {
+                  alertService.error(body.error.message, response.status);
                 } else {
                   alertService.error(t('auth:alert.invalidCode'));
                 }

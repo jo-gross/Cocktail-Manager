@@ -1,14 +1,12 @@
 import { NextApiRequest, NextApiResponse } from 'next';
+import HTTPMethod from 'http-method-enum';
+import { withHttpMethods } from '@middleware/api/handleMethods';
 
 /**
  * Returns the list of available authentication providers
  * This is used by the frontend to show the correct login buttons
  */
-export default function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== 'GET') {
-    return res.status(405).json({ message: 'Method not allowed' });
-  }
-
+async function getAuthProviders(req: NextApiRequest, res: NextApiResponse) {
   const providers: Array<{ id: string; name: string; type: 'social' | 'oidc' }> = [];
 
   // Check for Google
@@ -31,3 +29,5 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 
   return res.status(200).json({ data: providers });
 }
+
+export default withHttpMethods({ [HTTPMethod.GET]: getAuthProviders });

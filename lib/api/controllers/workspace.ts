@@ -8,6 +8,7 @@
 import prisma from '../../../prisma/prisma';
 import { isWorkspaceExternallyManaged } from '@lib/config/externalWorkspace';
 import { ApiError } from '@lib/http/ApiError';
+import { deleteDemoWorkspace } from '@lib/demo/cleanup';
 import { toWorkspaceDto, toWorkspaceSettingsDto } from '@lib/api/dto/workspace';
 import type { User, Workspace } from '@generated/prisma/client';
 import {
@@ -40,7 +41,7 @@ async function loadWorkspaceDto(workspaceId: string): Promise<WorkspaceDto> {
  */
 export async function getWorkspace(workspace: Workspace, user: User): Promise<WorkspaceDto> {
   if (workspace.isDemo && workspace.expiresAt && workspace.expiresAt < new Date()) {
-    await prisma.workspace.delete({ where: { id: workspace.id } });
+    await deleteDemoWorkspace(workspace.id);
     throw new ApiError(410, 'WORKSPACE_EXPIRED', 'Demo workspace has expired and has been deleted');
   }
 

@@ -15,8 +15,12 @@ interface AddWorkspaceJoinCodeModalProps {
   onCreated?: () => void;
 }
 
+const JOIN_CODE_ALPHABET = 'abcdefghijklmnopqrstuvwxyz0123456789';
+
+/** 12 random characters; the API requires at least 8 characters of [A-Za-z0-9_-]. */
 function generateJoinCode() {
-  return Math.random().toString(36).slice(2, 8).toLowerCase();
+  const bytes = crypto.getRandomValues(new Uint8Array(12));
+  return Array.from(bytes, (byte) => JOIN_CODE_ALPHABET[byte % JOIN_CODE_ALPHABET.length]).join('');
 }
 
 export default function AddWorkspaceJoinCodeModal(props: AddWorkspaceJoinCodeModalProps) {

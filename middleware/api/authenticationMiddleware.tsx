@@ -4,9 +4,32 @@ import { asWorkspace } from '../../prisma/asWorkspace';
 import { Role, User, Workspace, Permission } from '@generated/prisma/client';
 import { constants as HttpStatus } from 'http2';
 import { auth } from '@lib/auth';
+import { fail } from '@lib/http/responses';
 import { authenticateApiKey, checkMasterApiKey } from './jwtApiKeyMiddleware';
 import { hasPermission } from '@lib/permissions/apiKeyPermissions';
 import { MASTER_API_KEY_USER_ID, setRequestApiKeyPermissions } from '@lib/http/requestAuth';
+
+/** Value of cookie `name` from a Cookie header (values may contain `=`, e.g. signed tokens). */
+function readCookie(cookieHeader: string | undefined, name: string): string | undefined {
+  if (!cookieHeader) return undefined;
+  for (const part of cookieHeader.split(';')) {
+    const separator = part.indexOf('=');
+    if (separator === -1) continue;
+    if (part.slice(0, separator).trim() !== name) continue;
+    const value = part.slice(separator + 1).trim();
+    try {
+      return decodeURIComponent(value);
+    } catch {
+      return value;
+    }
+  }
+  return undefined;
+}
+
+/** v1 error envelope plus the historic top-level `message` for older clients. */
+function authFail(res: NextApiResponse, status: number, code: string, message: string) {
+  return res.status(status).json({ ...fail(code, message), message });
+}
 
 /**
  * Helper function to get session from BetterAuth
@@ -33,45 +56,33 @@ async function getBetterAuthSession(req: NextApiRequest) {
 
   // Fallback: Check for demo session directly via cookie
   // This is needed because demo sessions are created manually, not through BetterAuth
-  const cookieHeader = req.headers.cookie;
-  if (cookieHeader) {
-    const cookies = cookieHeader.split(';').reduce(
-      (acc, cookie) => {
-        const [key, value] = cookie.trim().split('=');
-        acc[key] = value;
-        return acc;
+  const sessionToken = readCookie(req.headers.cookie, 'better-auth.session_token');
+  if (sessionToken) {
+    // Look up session directly in database
+    const dbSession = await prisma.session.findFirst({
+      where: {
+        token: sessionToken,
+        expiresAt: { gt: new Date() },
       },
-      {} as Record<string, string>,
-    );
+      include: { user: true },
+    });
 
-    const sessionToken = cookies['better-auth.session_token'];
-    if (sessionToken) {
-      // Look up session directly in database
-      const dbSession = await prisma.session.findFirst({
-        where: {
-          token: sessionToken,
-          expiresAt: { gt: new Date() },
+    if (dbSession) {
+      return {
+        session: {
+          id: dbSession.id,
+          token: dbSession.token,
+          userId: dbSession.userId,
+          expiresAt: dbSession.expiresAt,
         },
-        include: { user: true },
-      });
-
-      if (dbSession) {
-        return {
-          session: {
-            id: dbSession.id,
-            token: dbSession.token,
-            userId: dbSession.userId,
-            expiresAt: dbSession.expiresAt,
-          },
-          user: {
-            id: dbSession.user.id,
-            name: dbSession.user.name,
-            email: dbSession.user.email,
-            image: dbSession.user.image,
-            emailVerified: dbSession.user.emailVerified,
-          },
-        };
-      }
+        user: {
+          id: dbSession.user.id,
+          name: dbSession.user.name,
+          email: dbSession.user.email,
+          image: dbSession.user.image,
+          emailVerified: dbSession.user.emailVerified,
+        },
+      };
     }
   }
 
@@ -82,17 +93,17 @@ export function withAuthentication(fn: (fnReq: NextApiRequest, fnRes: NextApiRes
   return async (req: NextApiRequest, res: NextApiResponse) => {
     const session = await getBetterAuthSession(req);
 
-    if (session == null) {
-      return res.status(HttpStatus.HTTP_STATUS_UNAUTHORIZED).json({ message: 'not authenticated' });
+    if (session == null || !session.user?.id) {
+      return authFail(res, HttpStatus.HTTP_STATUS_UNAUTHORIZED, 'UNAUTHENTICATED', 'not authenticated');
     }
 
     const userResult = await prisma.user.findUnique({
       where: {
-        id: session.user?.id,
+        id: session.user.id,
       },
     });
     if (userResult == null) {
-      return res.status(HttpStatus.HTTP_STATUS_UNAUTHORIZED).json({ message: 'user is not permitted' });
+      return authFail(res, HttpStatus.HTTP_STATUS_UNAUTHORIZED, 'UNAUTHENTICATED', 'user is not permitted');
     }
 
     return fn(req, res, userResult);
@@ -121,19 +132,18 @@ export function withWorkspacePermission(
   const handler = typeof apiKeyPermissionOrFn === 'function' ? apiKeyPermissionOrFn : fn!;
 
   return async (req: NextApiRequest, res: NextApiResponse) => {
-    const workspaceId = req.query.workspaceId as string | undefined;
-    if (workspaceId == undefined) {
-      return res.status(HttpStatus.HTTP_STATUS_BAD_REQUEST).json({ message: 'workspaceId is required' });
+    const workspaceId = req.query.workspaceId;
+    if (typeof workspaceId !== 'string' || workspaceId.length === 0) {
+      return authFail(res, HttpStatus.HTTP_STATUS_BAD_REQUEST, 'VALIDATION_ERROR', 'workspaceId is required');
     }
 
     // Check for master API key first
     if (checkMasterApiKey(req)) {
       const workspaceResult = await prisma.workspace.findUnique({
         where: { id: workspaceId },
-        include: { users: true },
       });
       if (!workspaceResult) {
-        return res.status(HttpStatus.HTTP_STATUS_NOT_FOUND).json({ message: 'Workspace not found' });
+        return authFail(res, HttpStatus.HTTP_STATUS_NOT_FOUND, 'NOT_FOUND', 'Workspace not found');
       }
       // Master key has full access - create a dummy user for compatibility
       const dummyUser: User = {
@@ -154,7 +164,7 @@ export function withWorkspacePermission(
     if (apiKeyAuth) {
       // Verify workspace matches
       if (apiKeyAuth.workspace.id !== workspaceId) {
-        return res.status(HttpStatus.HTTP_STATUS_FORBIDDEN).json({ message: 'API key is not valid for this workspace' });
+        return authFail(res, HttpStatus.HTTP_STATUS_FORBIDDEN, 'FORBIDDEN', 'API key is not valid for this workspace');
       }
 
       // Check permissions if required
@@ -162,16 +172,17 @@ export function withWorkspacePermission(
         const hasRequiredPermission = hasPermission(apiKeyAuth.permissions, apiKeyPermission);
 
         if (!hasRequiredPermission) {
-          return res.status(HttpStatus.HTTP_STATUS_FORBIDDEN).json({ message: 'API key does not have required permission' });
+          return authFail(res, HttpStatus.HTTP_STATUS_FORBIDDEN, 'FORBIDDEN', 'API key does not have required permission');
         }
       }
 
       // Act as the real user who created the key. Handlers use `user.id` to
       // write audit logs and to `connect` user relations (e.g. a calculation's
       // updatedByUser), which are FK-constrained to a real User row — so a
-      // synthetic id would fail with P2003/P2025. createdByUserId is a required
-      // FK with onDelete: Cascade, so it always references an existing user for
-      // any key that still authenticates.
+      // synthetic id would fail with P2003/P2025. authenticateApiKey only accepts
+      // keys whose creator is still an ADMIN/OWNER member of the key's workspace.
+      // Handlers that must not grant the creator's session role to the key check
+      // getRequestApiKeyPermissions(req).
       const dummyUser: User = {
         id: apiKeyAuth.apiKey.createdByUserId,
         name: apiKeyAuth.apiKey.name,
@@ -220,21 +231,20 @@ export function withWorkspaceSession(
 ): (req: NextApiRequest, res: NextApiResponse) => Promise<void> {
   const allowedRoles = escalateRoles(permissions);
   return async (req: NextApiRequest, res: NextApiResponse) => {
-    const workspaceId = req.query.workspaceId as string | undefined;
-    if (workspaceId == undefined) {
-      return res.status(HttpStatus.HTTP_STATUS_BAD_REQUEST).json({ message: 'workspaceId is required' });
+    const workspaceId = req.query.workspaceId;
+    if (typeof workspaceId !== 'string' || workspaceId.length === 0) {
+      return authFail(res, HttpStatus.HTTP_STATUS_BAD_REQUEST, 'VALIDATION_ERROR', 'workspaceId is required');
     }
 
     return withAuthentication(async (sessionReq: NextApiRequest, sessionRes: NextApiResponse, user: User) => {
       const workspaceResult = await prisma.workspace.findFirst({
         where: {
           id: workspaceId,
-          users: { some: { user: user, role: { in: allowedRoles } } },
+          users: { some: { userId: user.id, role: { in: allowedRoles } } },
         },
-        include: { users: true },
       });
       if (workspaceResult == null) {
-        return sessionRes.status(HttpStatus.HTTP_STATUS_FORBIDDEN).json({ message: 'User is not permitted' });
+        return authFail(sessionRes, HttpStatus.HTTP_STATUS_FORBIDDEN, 'FORBIDDEN', 'User is not permitted');
       }
 
       return fn(sessionReq, sessionRes, user, asWorkspace(workspaceResult));
