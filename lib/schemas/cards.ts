@@ -68,42 +68,56 @@ export type CardGroupDto = z.infer<typeof CardGroupDtoSchema>;
 export type CardSummaryDto = z.infer<typeof CardSummaryDtoSchema>;
 export type CardDto = z.infer<typeof CardDtoSchema>;
 
+export const MAX_CARD_NAME_LENGTH = 255;
+export const MAX_CARD_GROUPS = 100;
+export const MAX_CARD_GROUP_ITEMS = 500;
+const MAX_CARD_ORDER_INDEX = 100_000;
+const MAX_CARD_PRICE = 1_000_000;
+const CardIdString = z.string().min(1).max(100);
+const CardDateInput = z.coerce.date().nullish();
+
 /** Nested item input for create/update (mirrors the legacy `items: [{ cocktailId, itemNumber, specialPrice }]`). */
 export const CardItemInputSchema = z.object({
-  cocktailId: z.string(),
-  itemNumber: z.coerce.number().int().optional().openapi({ description: 'Ordering index; auto-assigned when omitted.' }),
-  specialPrice: z.coerce.number().nullish().openapi({ description: 'Overridden price for this item, or null.' }),
+  cocktailId: CardIdString,
+  itemNumber: z.coerce.number().int().min(0).max(MAX_CARD_ORDER_INDEX).optional().openapi({ description: 'Ordering index; auto-assigned when omitted.' }),
+  specialPrice: z.coerce.number().min(0).max(MAX_CARD_PRICE).nullish().openapi({ description: 'Overridden price for this item, or null.' }),
 });
 
 /** Nested group input for create/update. */
 export const CardGroupInputSchema = z.object({
-  id: z.string().optional().openapi({ description: 'Optional client-supplied CUID.' }),
-  name: z.string().min(1),
-  groupNumber: z.coerce.number().int().optional().openapi({ description: 'Ordering index; auto-assigned when omitted.' }),
-  groupPrice: z.coerce.number().nullish().openapi({ description: 'Uniform group price, or null.' }),
-  items: z.array(CardItemInputSchema).optional().openapi({ description: 'Items in this group.' }),
+  id: CardIdString.optional().openapi({
+    description: 'Optional client-supplied CUID; on update, ids of the card’s existing groups keep the group (and its id).',
+  }),
+  name: z.string().min(1).max(MAX_CARD_NAME_LENGTH),
+  groupNumber: z.coerce.number().int().min(0).max(MAX_CARD_ORDER_INDEX).optional().openapi({ description: 'Ordering index; auto-assigned when omitted.' }),
+  groupPrice: z.coerce.number().min(0).max(MAX_CARD_PRICE).nullish().openapi({ description: 'Uniform group price, or null.' }),
+  items: z.array(CardItemInputSchema).max(MAX_CARD_GROUP_ITEMS).optional().openapi({ description: 'Items in this group.' }),
 });
 
 export const CardCreateSchema = z
   .object({
-    id: z.string().optional().openapi({ description: 'Optional client-supplied CUID.' }),
-    name: z.string().min(1),
-    date: z.coerce.date().nullish().openapi({ description: 'Optional date the card is scheduled for.' }),
-    groups: z.array(CardGroupInputSchema).optional().openapi({ description: 'Groups (with their items) to create.' }),
+    id: CardIdString.optional().openapi({ description: 'Optional client-supplied CUID.' }),
+    name: z.string().min(1).max(MAX_CARD_NAME_LENGTH),
+    date: CardDateInput.openapi({ description: 'Optional date the card is scheduled for.' }),
+    groups: z.array(CardGroupInputSchema).max(MAX_CARD_GROUPS).optional().openapi({ description: 'Groups (with their items) to create.' }),
   })
   .openapi('CardCreateInput');
 
 export const CardUpdateSchema = z
   .object({
-    name: z.string().min(1),
-    date: z.coerce.date().nullish().openapi({ description: 'Optional date the card is scheduled for.' }),
-    groups: z.array(CardGroupInputSchema).optional().openapi({ description: 'Groups (with their items); fully replaces the existing groups/items.' }),
+    name: z.string().min(1).max(MAX_CARD_NAME_LENGTH),
+    date: CardDateInput.openapi({ description: 'Optional date the card is scheduled for.' }),
+    groups: z
+      .array(CardGroupInputSchema)
+      .max(MAX_CARD_GROUPS)
+      .optional()
+      .openapi({ description: 'Groups (with their items); fully replaces the existing groups/items.' }),
   })
   .openapi('CardUpdateInput');
 
 export const CardCloneSchema = z
   .object({
-    name: z.string().min(1).openapi({ description: 'Name for the cloned card.' }),
+    name: z.string().min(1).max(MAX_CARD_NAME_LENGTH).openapi({ description: 'Name for the cloned card.' }),
   })
   .openapi('CardCloneInput');
 
@@ -144,6 +158,7 @@ export const cardsCollectionApiDoc = {
       params: WorkspaceIdParam,
       body: CardCreateSchema,
       response: CardDtoSchema,
+      errorResponses: { 400: 'A cocktail does not exist in this workspace or appears twice in a group.', 409: 'A supplied id is already in use.' },
     },
   },
 } satisfies ResourceApiDoc;
@@ -166,10 +181,16 @@ export const cardsItemApiDoc = {
       permission: 'CARDS_UPDATE',
       tags: [ApiTags.cardsCore],
       summary: 'Update card',
-      description: 'Replaces the card metadata and its full set of groups/items.',
+      description:
+        'Replaces the card metadata and its full set of groups/items. Groups whose id belongs to this card keep their id (guest menus reference them); other groups are created, missing ones deleted.',
       params: CardItemParams,
       body: CardUpdateSchema,
       response: CardDtoSchema,
+      errorResponses: {
+        400: 'A cocktail does not exist in this workspace or appears twice in a group.',
+        404: 'Card not found.',
+        409: 'A supplied group id is already in use.',
+      },
     },
     DELETE: {
       roles: ['ADMIN'],
@@ -178,6 +199,7 @@ export const cardsItemApiDoc = {
       summary: 'Delete card',
       params: CardItemParams,
       response: DeletionResult,
+      errorResponses: { 404: 'Card not found.' },
     },
   },
 } satisfies ResourceApiDoc;

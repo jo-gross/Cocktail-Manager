@@ -8,10 +8,16 @@
  *
  * Only obvious Prisma-isms are cleaned up (no `_count` leaks, camelCase, slim
  * cocktail refs) — none of the computed aggregates are re-invented.
+ *
+ * Every query is scoped by `workspaceId` (including cocktail lookups by ids taken
+ * from statistics or saved sets); no raw SQL is used here.
  */
 import prisma from '../../../prisma/prisma';
 import { ApiError } from '@lib/http/ApiError';
-import { Prisma, SavedSetLogic, SavedSetType, WorkspaceSettingKey } from '@generated/prisma/client';
+import { assertIdsInWorkspace } from '@lib/api/scope';
+import { MAX_COMPARE_ITEMS, MAX_SET_ITEM_LENGTH } from '@lib/schemas/statisticsAdvanced';
+import { Prisma, SavedSetType, WorkspaceSettingKey } from '@generated/prisma/client';
+import type { SavedSetLogic } from '@generated/prisma/client';
 import { formatDateLocal, getEndOfDay, getLogicalDate, getStartOfDay, getStartOfMonth, getStartOfWeek } from '@lib/dateHelpers';
 import type { Workspace } from '@generated/prisma/client';
 
@@ -117,12 +123,19 @@ async function getChartDataForPeriod(workspaceId: string, startDate: Date, endDa
     take: 10,
   });
 
-  const topCocktailsWithNames = await Promise.all(
-    topCocktails.map(async (item) => {
-      const cocktail = await prisma.cocktailRecipe.findUnique({ where: { id: item.cocktailId }, select: { name: true } });
-      return { cocktailId: item.cocktailId, name: cocktail?.name || 'Unknown', count: item._count.cocktailId };
-    }),
+  const topCocktailNames = new Map(
+    (
+      await prisma.cocktailRecipe.findMany({
+        where: { id: { in: topCocktails.map((item) => item.cocktailId) }, workspaceId },
+        select: { id: true, name: true },
+      })
+    ).map((cocktail) => [cocktail.id, cocktail.name]),
   );
+  const topCocktailsWithNames = topCocktails.map((item) => ({
+    cocktailId: item.cocktailId,
+    name: topCocktailNames.get(item.cocktailId) || 'Unknown',
+    count: item._count.cocktailId,
+  }));
 
   const hourDistribution: Record<number, number> = {};
   stats.forEach((stat) => {
@@ -338,10 +351,10 @@ export async function getCocktailRanking(workspace: Workspace, opts: { startDate
   const totalCurrent = currentStats.reduce((sum, stat) => sum + stat._count.cocktailId, 0);
   const previousMap = new Map(previousStats.map((stat) => [stat.cocktailId, stat._count.cocktailId]));
 
-  const cocktailsWithStats = await Promise.all(
-    currentStats.map(async (stat) => {
-      const cocktail = await prisma.cocktailRecipe.findUnique({
-        where: { id: stat.cocktailId },
+  const rankedCocktails = new Map(
+    (
+      await prisma.cocktailRecipe.findMany({
+        where: { id: { in: currentStats.map((stat) => stat.cocktailId) }, workspaceId: workspace.id },
         select: {
           id: true,
           name: true,
@@ -359,41 +372,44 @@ export async function getCocktailRanking(workspace: Workspace, opts: { startDate
             },
           },
         },
-      });
-
-      if (!cocktail) return null;
-
-      const currentCount = stat._count.cocktailId;
-      const previousCount = previousMap.get(stat.cocktailId) || 0;
-      const percentage = totalCurrent > 0 ? (currentCount / totalCurrent) * 100 : 0;
-      const delta = previousCount > 0 ? ((currentCount - previousCount) / previousCount) * 100 : currentCount > 0 ? 100 : 0;
-
-      const ingredients = cocktail.steps.flatMap((step) =>
-        step.ingredients
-          .filter((ing) => ing.ingredient != null && ing.unit != null)
-          .map((ing) => ({
-            ingredientId: ing.ingredient!.id,
-            ingredientName: ing.ingredient!.name,
-            ingredientPrice: ing.ingredient!.price || 0,
-            amount: ing.amount || 0,
-            unitId: ing.unit!.id,
-            unitName: ing.unit!.name,
-            availableUnits: ing.ingredient!.IngredientVolume.map((iv) => ({ unitId: iv.unitId, unitName: iv.unit.name, volume: iv.volume })),
-          })),
-      );
-
-      return {
-        cocktailId: cocktail.id,
-        name: cocktail.name,
-        tags: cocktail.tags || [],
-        count: currentCount,
-        percentage,
-        delta,
-        previousCount,
-        ingredients,
-      };
-    }),
+      })
+    ).map((cocktail) => [cocktail.id, cocktail]),
   );
+
+  const cocktailsWithStats = currentStats.map((stat) => {
+    const cocktail = rankedCocktails.get(stat.cocktailId);
+    if (!cocktail) return null;
+
+    const currentCount = stat._count.cocktailId;
+    const previousCount = previousMap.get(stat.cocktailId) || 0;
+    const percentage = totalCurrent > 0 ? (currentCount / totalCurrent) * 100 : 0;
+    const delta = previousCount > 0 ? ((currentCount - previousCount) / previousCount) * 100 : currentCount > 0 ? 100 : 0;
+
+    const ingredients = cocktail.steps.flatMap((step) =>
+      step.ingredients
+        .filter((ing) => ing.ingredient != null && ing.unit != null)
+        .map((ing) => ({
+          ingredientId: ing.ingredient!.id,
+          ingredientName: ing.ingredient!.name,
+          ingredientPrice: ing.ingredient!.price || 0,
+          amount: ing.amount || 0,
+          unitId: ing.unit!.id,
+          unitName: ing.unit!.name,
+          availableUnits: ing.ingredient!.IngredientVolume.map((iv) => ({ unitId: iv.unitId, unitName: iv.unit.name, volume: iv.volume })),
+        })),
+    );
+
+    return {
+      cocktailId: cocktail.id,
+      name: cocktail.name,
+      tags: cocktail.tags || [],
+      count: currentCount,
+      percentage,
+      delta,
+      previousCount,
+      ingredients,
+    };
+  });
 
   const filtered = cocktailsWithStats.filter((c): c is NonNullable<typeof c> => c !== null);
   filtered.sort((a, b) => b.count - a.count);
@@ -624,7 +640,7 @@ export async function getCocktailDetail(workspace: Workspace, cocktailId: string
 export async function getCocktailOrders(
   workspace: Workspace,
   cocktailId: string,
-  opts: { startDate?: string; endDate?: string; page?: string; limit?: string; search?: string },
+  opts: { startDate?: string; endDate?: string; page: number; limit: number; search?: string },
 ): Promise<unknown> {
   const cocktail = await prisma.cocktailRecipe.findFirst({
     where: { id: cocktailId, workspaceId: workspace.id },
@@ -637,8 +653,8 @@ export async function getCocktailOrders(
 
   const dayStartTime = await getDayStartTime(workspace.id);
 
-  const pageNumber = opts.page ? parseInt(opts.page, 10) : 1;
-  const pageSize = opts.limit ? parseInt(opts.limit, 10) : 50;
+  const pageNumber = opts.page;
+  const pageSize = opts.limit;
   const skip = (pageNumber - 1) * pageSize;
   const take = pageSize;
 
@@ -860,25 +876,28 @@ export async function getTags(workspace: Workspace, opts: { startDate?: string; 
 
 // ────────────── compare ──────────────
 
+/** `items` is a JSON array of names; anything that is not a JSON array is treated as one name (legacy). */
+function parseCompareItems(raw: string): string[] {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    parsed = undefined;
+  }
+  const items: unknown[] = Array.isArray(parsed) ? parsed : [raw];
+  if (items.length > MAX_COMPARE_ITEMS || !items.every((item): item is string => typeof item === 'string' && item.length <= MAX_SET_ITEM_LENGTH)) {
+    throw new ApiError(400, 'VALIDATION_ERROR', `items must be a JSON array of at most ${MAX_COMPARE_ITEMS} names`);
+  }
+  return items;
+}
+
 export async function compareSet(
   workspace: Workspace,
   opts: { type: 'TAG_SET' | 'INGREDIENT_SET'; items: string; logic?: 'AND' | 'OR'; startDate?: string; endDate?: string },
 ): Promise<unknown> {
   const { type } = opts;
+  const itemArray = parseCompareItems(opts.items);
   const dayStartTime = await getDayStartTime(workspace.id);
-
-  let itemArray: string[];
-  if (typeof opts.items === 'string') {
-    try {
-      itemArray = JSON.parse(opts.items);
-    } catch {
-      itemArray = [opts.items];
-    }
-  } else if (Array.isArray(opts.items)) {
-    itemArray = opts.items as string[];
-  } else {
-    itemArray = [opts.items as string];
-  }
 
   const comparisonLogic = opts.logic || 'AND';
 
@@ -991,7 +1010,7 @@ export async function compareSet(
   const cocktailPercentage = totalUniqueCocktailsInPeriod > 0 ? (matchingCocktailIds.length / totalUniqueCocktailsInPeriod) * 100 : 0;
 
   const cocktails = await prisma.cocktailRecipe.findMany({
-    where: { id: { in: matchingCocktailIds } },
+    where: { id: { in: matchingCocktailIds }, workspaceId: workspace.id },
     select: { id: true, name: true },
   });
 
@@ -1009,7 +1028,7 @@ export async function compareSet(
   if (type === 'TAG_SET') {
     const ingredientCounts: Record<string, number> = {};
     const cocktailsWithIngredients = await prisma.cocktailRecipe.findMany({
-      where: { id: { in: matchingCocktailIds } },
+      where: { id: { in: matchingCocktailIds }, workspaceId: workspace.id },
       include: { steps: { include: { ingredients: { include: { ingredient: { select: { name: true } } } } } } },
     });
 
@@ -1029,7 +1048,7 @@ export async function compareSet(
   } else if (type === 'INGREDIENT_SET') {
     const tagCounts: Record<string, number> = {};
     const cocktailsWithTags = await prisma.cocktailRecipe.findMany({
-      where: { id: { in: matchingCocktailIds } },
+      where: { id: { in: matchingCocktailIds }, workspaceId: workspace.id },
       select: { tags: true },
     });
 
@@ -1071,11 +1090,11 @@ export async function compareSet(
 
 // ────────────── sets (collection) ──────────────
 
-export async function listSavedSets(workspace: Workspace, opts: { type?: string; types?: string }): Promise<unknown> {
+export async function listSavedSets(workspace: Workspace, opts: { type?: SavedSetType; types?: string }): Promise<unknown> {
   const where: Prisma.StatisticSavedSetWhereInput = { workspaceId: workspace.id };
 
   if (opts.type) {
-    where.type = opts.type as SavedSetType;
+    where.type = opts.type;
   } else if (opts.types) {
     const typeList = opts.types.split(',').filter((t) => Object.values(SavedSetType).includes(t as SavedSetType));
     if (typeList.length > 0) {
@@ -1088,71 +1107,62 @@ export async function listSavedSets(workspace: Workspace, opts: { type?: string;
   return { data: sets };
 }
 
-export async function createSavedSet(workspace: Workspace, input: { name: string; type: string; logic?: string | null; items: string[] }): Promise<unknown> {
-  const { name, type, logic, items } = input;
-
-  if (!name || !type || !items || !Array.isArray(items)) {
-    throw new ApiError(400, 'VALIDATION_ERROR', 'name, type, and items (array) are required');
-  }
-
-  if (!Object.values(SavedSetType).includes(type as SavedSetType)) {
-    throw new ApiError(400, 'INVALID_TYPE', 'Invalid type');
-  }
-
-  if (logic && !Object.values(SavedSetLogic).includes(logic as SavedSetLogic)) {
-    throw new ApiError(400, 'INVALID_LOGIC', 'Invalid logic');
+export async function createSavedSet(
+  workspace: Workspace,
+  input: { name: string; type: SavedSetType; logic?: SavedSetLogic | null; items: string[] },
+): Promise<unknown> {
+  if (input.type === SavedSetType.COCKTAIL_SET) {
+    await assertIdsInWorkspace(prisma, workspace.id, { cocktail: input.items });
   }
 
   const set = await prisma.statisticSavedSet.create({
     data: {
       workspaceId: workspace.id,
-      name,
-      type: type as SavedSetType,
-      logic: logic ? (logic as SavedSetLogic) : null,
-      items,
+      name: input.name,
+      type: input.type,
+      logic: input.logic ?? null,
+      items: input.items,
     },
   });
 
   return { data: set };
 }
 
-export async function updateSavedSet(workspace: Workspace, input: { id?: string; name?: string; logic?: string | null; items?: string[] }): Promise<unknown> {
+export async function updateSavedSet(
+  workspace: Workspace,
+  input: { id: string; name?: string; logic?: SavedSetLogic | null; items?: string[] },
+): Promise<unknown> {
   const { id, name, logic, items } = input;
 
-  if (!id) {
-    throw new ApiError(400, 'VALIDATION_ERROR', 'id is required');
-  }
-
-  const existingSet = await prisma.statisticSavedSet.findFirst({ where: { id, workspaceId: workspace.id } });
-
+  const existingSet = await prisma.statisticSavedSet.findFirst({ where: { id, workspaceId: workspace.id }, select: { type: true } });
   if (!existingSet) {
     throw new ApiError(404, 'NOT_FOUND', 'Set not found');
   }
+  if (items !== undefined && existingSet.type === SavedSetType.COCKTAIL_SET) {
+    await assertIdsInWorkspace(prisma, workspace.id, { cocktail: items });
+  }
 
-  const updateData: Prisma.StatisticSavedSetUpdateInput = {};
+  const updateData: Prisma.StatisticSavedSetUpdateManyMutationInput = {};
   if (name !== undefined) updateData.name = name;
-  if (logic !== undefined) updateData.logic = logic ? (logic as SavedSetLogic) : null;
+  if (logic !== undefined) updateData.logic = logic ?? null;
   if (items !== undefined) updateData.items = items;
 
-  const set = await prisma.statisticSavedSet.update({ where: { id }, data: updateData });
+  const { count } = await prisma.statisticSavedSet.updateMany({ where: { id, workspaceId: workspace.id }, data: updateData });
+  const set = count > 0 ? await prisma.statisticSavedSet.findFirst({ where: { id, workspaceId: workspace.id } }) : null;
+  if (!set) {
+    throw new ApiError(404, 'NOT_FOUND', 'Set not found');
+  }
 
   return { data: set };
 }
 
-export async function deleteSavedSet(workspace: Workspace, id: string | undefined): Promise<{ count: number }> {
-  if (!id) {
-    throw new ApiError(400, 'VALIDATION_ERROR', 'id is required');
-  }
-
-  const existingSet = await prisma.statisticSavedSet.findFirst({ where: { id, workspaceId: workspace.id } });
-
-  if (!existingSet) {
+export async function deleteSavedSet(workspace: Workspace, id: string): Promise<{ count: number }> {
+  const { count } = await prisma.statisticSavedSet.deleteMany({ where: { id, workspaceId: workspace.id } });
+  if (count === 0) {
     throw new ApiError(404, 'NOT_FOUND', 'Set not found');
   }
 
-  await prisma.statisticSavedSet.delete({ where: { id } });
-
-  return { count: 1 };
+  return { count };
 }
 
 // ────────────── sets/{setId} ──────────────
@@ -1166,7 +1176,7 @@ export async function getSavedSetDetail(workspace: Workspace, setId: string, opt
     throw new ApiError(404, 'NOT_FOUND', 'Set not found');
   }
 
-  const items = set.items as string[];
+  const items = Array.isArray(set.items) ? set.items.filter((item): item is string => typeof item === 'string') : [];
 
   let start: Date;
   let end: Date;
@@ -1182,7 +1192,9 @@ export async function getSavedSetDetail(workspace: Workspace, setId: string, opt
   let matchingCocktailIds: string[] = [];
 
   if (set.type === 'COCKTAIL_SET') {
-    matchingCocktailIds = items;
+    // Only cocktails of this workspace (stale or foreign ids are ignored).
+    const cocktails = await prisma.cocktailRecipe.findMany({ where: { id: { in: items }, workspaceId: workspace.id }, select: { id: true } });
+    matchingCocktailIds = cocktails.map((c) => c.id);
   } else if (set.type === 'TAG_SET') {
     const cocktails = await prisma.cocktailRecipe.findMany({
       where: {
@@ -1225,7 +1237,7 @@ export async function getSavedSetDetail(workspace: Workspace, setId: string, opt
   const cocktailPercentageAll = totalCocktailsInWorkspace > 0 ? (matchingCocktailIds.length / totalCocktailsInWorkspace) * 100 : 0;
 
   const cocktails = await prisma.cocktailRecipe.findMany({
-    where: { id: { in: matchingCocktailIds } },
+    where: { id: { in: matchingCocktailIds }, workspaceId: workspace.id },
     select: { id: true, name: true },
   });
 
@@ -1243,7 +1255,7 @@ export async function getSavedSetDetail(workspace: Workspace, setId: string, opt
   if (set.type === 'TAG_SET') {
     const ingredientCounts: Record<string, number> = {};
     const cocktailsWithIngredients = await prisma.cocktailRecipe.findMany({
-      where: { id: { in: matchingCocktailIds } },
+      where: { id: { in: matchingCocktailIds }, workspaceId: workspace.id },
       include: { steps: { include: { ingredients: { include: { ingredient: { select: { name: true } } } } } } },
     });
 
@@ -1263,7 +1275,7 @@ export async function getSavedSetDetail(workspace: Workspace, setId: string, opt
   } else if (set.type === 'INGREDIENT_SET') {
     const tagCounts: Record<string, number> = {};
     const cocktailsWithTags = await prisma.cocktailRecipe.findMany({
-      where: { id: { in: matchingCocktailIds } },
+      where: { id: { in: matchingCocktailIds }, workspaceId: workspace.id },
       select: { tags: true },
     });
 

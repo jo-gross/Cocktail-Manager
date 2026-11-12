@@ -16,13 +16,21 @@
  */
 import { z } from '@lib/openapi/zod';
 import { WorkspaceIdParam, DateTimeString, DeletionResult } from '@lib/schemas/common';
+import { MAX_STATISTIC_PAGE_SIZE, MAX_STATISTIC_SEARCH_LENGTH, StatisticDateQueryParam } from '@lib/schemas/statistics';
 import { ApiTags } from '@lib/openapi/tags';
 import type { ResourceApiDoc } from '@lib/openapi/types';
 
+const SAVED_SET_TYPES = ['TAG_SET', 'INGREDIENT_SET', 'COCKTAIL_SET'] as const;
+const SAVED_SET_LOGICS = ['AND', 'OR'] as const;
+export const MAX_SAVED_SET_ITEMS = 500;
+/** Max members of an ad-hoc compare set (and max length of each member name). */
+export const MAX_COMPARE_ITEMS = 200;
+export const MAX_SET_ITEM_LENGTH = 255;
+
 /** Optional inclusive date-range filter shared by most advanced reads (day-start-time aware). */
 export const AdvancedDateRangeQuerySchema = z.object({
-  startDate: z.string().optional().openapi({ description: 'Inclusive start date (interpreted with the workspace day-start-time setting).' }),
-  endDate: z.string().optional().openapi({ description: 'Inclusive end date (interpreted with the workspace day-start-time setting).' }),
+  startDate: StatisticDateQueryParam.optional().openapi({ description: 'Inclusive start date (interpreted with the workspace day-start-time setting).' }),
+  endDate: StatisticDateQueryParam.optional().openapi({ description: 'Inclusive end date (interpreted with the workspace day-start-time setting).' }),
 });
 
 /** Slim cocktail reference embedded in advanced-analytics rows. */
@@ -158,11 +166,21 @@ export const statisticsAdvancedCocktailItemApiDoc = {
 // ────────────── cocktails/{cocktailId}/orders ──────────────
 
 export const AdvancedCocktailOrdersQuerySchema = z.object({
-  startDate: z.string().optional().openapi({ description: 'Inclusive start date (day-start-time aware).' }),
-  endDate: z.string().optional().openapi({ description: 'Inclusive end date (day-start-time aware).' }),
-  search: z.string().optional().openapi({ description: 'Case-insensitive filter over formatted date, weekday, user (name/email) and card name.' }),
-  page: z.string().optional().openapi({ description: '1-based page number (default 1).' }),
-  limit: z.string().optional().openapi({ description: 'Items per page (default 50).' }),
+  startDate: StatisticDateQueryParam.optional().openapi({ description: 'Inclusive start date (day-start-time aware).' }),
+  endDate: StatisticDateQueryParam.optional().openapi({ description: 'Inclusive end date (day-start-time aware).' }),
+  search: z
+    .string()
+    .max(MAX_STATISTIC_SEARCH_LENGTH)
+    .optional()
+    .openapi({ description: 'Case-insensitive filter over formatted date, weekday, user (name/email) and card name.' }),
+  page: z.coerce.number().int().min(1).default(1).openapi({ description: '1-based page number (default 1).' }),
+  limit: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(MAX_STATISTIC_PAGE_SIZE)
+    .default(50)
+    .openapi({ description: `Items per page (default 50, at most ${MAX_STATISTIC_PAGE_SIZE}).` }),
 });
 
 /** Slim user reference embedded in an order row. */
@@ -286,10 +304,16 @@ export const statisticsAdvancedTagsApiDoc = {
 
 export const AdvancedCompareQuerySchema = z.object({
   type: z.enum(['TAG_SET', 'INGREDIENT_SET']).openapi({ description: 'What the items represent.' }),
-  items: z.string().openapi({ description: 'JSON-encoded array of tag/ingredient names (a bare string is treated as a single item).' }),
-  logic: z.enum(['AND', 'OR']).optional().openapi({ description: 'Match logic across items (default AND).' }),
-  startDate: z.string().optional().openapi({ description: 'Inclusive start date (day-start-time aware); all-time when omitted.' }),
-  endDate: z.string().optional().openapi({ description: 'Inclusive end date (day-start-time aware); all-time when omitted.' }),
+  items: z
+    .string()
+    .min(1)
+    .max(MAX_COMPARE_ITEMS * (MAX_SET_ITEM_LENGTH + 4))
+    .openapi({
+      description: `JSON-encoded array of tag/ingredient names (a bare string is treated as a single item); at most ${MAX_COMPARE_ITEMS} names.`,
+    }),
+  logic: z.enum(SAVED_SET_LOGICS).optional().openapi({ description: 'Match logic across items (default AND).' }),
+  startDate: StatisticDateQueryParam.optional().openapi({ description: 'Inclusive start date (day-start-time aware); all-time when omitted.' }),
+  endDate: StatisticDateQueryParam.optional().openapi({ description: 'Inclusive end date (day-start-time aware); all-time when omitted.' }),
 });
 
 export const AdvancedCompareResponseSchema = z
@@ -328,30 +352,32 @@ export const SavedSetItemSchema = passthrough()
   .openapi('AdvancedStatisticsSavedSet');
 
 export const AdvancedSetsListQuerySchema = z.object({
-  type: z.string().optional().openapi({ description: 'Filter by a single SavedSetType.' }),
-  types: z.string().optional().openapi({ description: 'Comma-separated list of SavedSetTypes to filter by (ignored when `type` is set).' }),
+  type: z.enum(SAVED_SET_TYPES).optional().openapi({ description: 'Filter by a single SavedSetType.' }),
+  types: z.string().max(100).optional().openapi({ description: 'Comma-separated list of SavedSetTypes to filter by (ignored when `type` is set).' }),
 });
+
+const SavedSetItems = z.array(z.string().min(1).max(MAX_SET_ITEM_LENGTH)).max(MAX_SAVED_SET_ITEMS);
 
 export const AdvancedSetCreateSchema = z
   .object({
-    name: z.string().openapi({ description: 'Set name.' }),
-    type: z.string().openapi({ description: 'SavedSetType (COCKTAIL_SET | TAG_SET | INGREDIENT_SET).' }),
-    logic: z.string().nullish().openapi({ description: 'SavedSetLogic (AND | OR), or null.' }),
-    items: z.array(z.string()).openapi({ description: 'Member names/ids for the set.' }),
+    name: z.string().trim().min(1).max(100).openapi({ description: 'Set name.' }),
+    type: z.enum(SAVED_SET_TYPES).openapi({ description: 'SavedSetType (COCKTAIL_SET | TAG_SET | INGREDIENT_SET).' }),
+    logic: z.enum(SAVED_SET_LOGICS).nullish().openapi({ description: 'SavedSetLogic (AND | OR), or null.' }),
+    items: SavedSetItems.openapi({ description: 'Member names/ids for the set (cocktail ids for COCKTAIL_SET, which must belong to the workspace).' }),
   })
   .openapi('AdvancedStatisticsSavedSetCreateInput');
 
 export const AdvancedSetUpdateSchema = z
   .object({
-    id: z.string().openapi({ description: 'Id of the set to update.' }),
-    name: z.string().optional().openapi({ description: 'New name (optional).' }),
-    logic: z.string().nullish().openapi({ description: 'New logic (AND | OR) or null (optional).' }),
-    items: z.array(z.string()).optional().openapi({ description: 'New member list (optional).' }),
+    id: z.string().min(1).max(100).openapi({ description: 'Id of the set to update.' }),
+    name: z.string().trim().min(1).max(100).optional().openapi({ description: 'New name (optional).' }),
+    logic: z.enum(SAVED_SET_LOGICS).nullish().openapi({ description: 'New logic (AND | OR) or null (optional).' }),
+    items: SavedSetItems.optional().openapi({ description: 'New member list (optional).' }),
   })
   .openapi('AdvancedStatisticsSavedSetUpdateInput');
 
 export const AdvancedSetDeleteQuerySchema = z.object({
-  id: z.string().openapi({ description: 'Id of the set to delete.' }),
+  id: z.string().min(1).max(100).openapi({ description: 'Id of the set to delete.' }),
 });
 
 export const statisticsAdvancedSetsApiDoc = {
@@ -369,27 +395,28 @@ export const statisticsAdvancedSetsApiDoc = {
     },
     POST: {
       roles: ['USER'],
-      permission: 'STATISTICS_READ',
+      permission: 'STATISTICS_CREATE',
       tags: [ApiTags.statisticsAdvanced],
       summary: 'Create a saved statistics set',
       params: WorkspaceIdParam,
       body: AdvancedSetCreateSchema,
       response: SavedSetItemSchema,
-      errorResponses: { 400: 'Missing required fields, or invalid type/logic.' },
+      errorResponses: { 400: 'Missing required fields, invalid type/logic, or a cocktail that does not exist in this workspace.' },
     },
     PUT: {
       roles: ['USER'],
-      permission: 'STATISTICS_READ',
+      // There is no STATISTICS_UPDATE scope; saved sets are written with the create scope.
+      permission: 'STATISTICS_CREATE',
       tags: [ApiTags.statisticsAdvanced],
       summary: 'Update a saved statistics set',
       params: WorkspaceIdParam,
       body: AdvancedSetUpdateSchema,
       response: SavedSetItemSchema,
-      errorResponses: { 400: 'id is required.', 404: 'Set not found.' },
+      errorResponses: { 400: 'id is required, or a cocktail that does not exist in this workspace.', 404: 'Set not found.' },
     },
     DELETE: {
       roles: ['USER'],
-      permission: 'STATISTICS_READ',
+      permission: 'STATISTICS_DELETE',
       tags: [ApiTags.statisticsAdvanced],
       summary: 'Delete a saved statistics set',
       params: WorkspaceIdParam,

@@ -107,60 +107,83 @@ export type CalculationSummaryDto = z.infer<typeof CalculationSummaryDtoSchema>;
 export type CalculationDto = z.infer<typeof CalculationDtoSchema>;
 export type CalculationGroupDto = z.infer<typeof CalculationGroupDtoSchema>;
 
+// ────────────── Input bounds ──────────────
+
+export const MAX_CALCULATION_NAME_LENGTH = 255;
+export const MAX_CALCULATION_GROUP_NAME_LENGTH = 100;
+export const MAX_CALCULATION_ITEMS = 500;
+export const MAX_CALCULATION_SHOPPING_UNITS = 2000;
+export const MAX_CALCULATION_IDS = 500;
+const MAX_PLANNED_AMOUNT = 1_000_000;
+const MAX_PRICE = 1_000_000;
+const MAX_ID_LENGTH = 100;
+const MAX_REFERENCE_NAME_LENGTH = 255;
+
+const IdString = z.string().min(1).max(MAX_ID_LENGTH);
+const PlannedAmount = z.coerce.number().int().min(0).max(MAX_PLANNED_AMOUNT);
+const Price = z.coerce.number().min(0).max(MAX_PRICE);
+
 /** Nested item input for create/update (mirrors the legacy `calculationItems: [{ cocktailId, plannedAmount, customPrice }]`). */
 export const CalculationItemInputSchema = z.object({
-  cocktailId: z.string(),
-  plannedAmount: z.coerce.number().int().openapi({ description: 'Planned number of cocktails for this item.' }),
-  customPrice: z.coerce.number().nullish().openapi({ description: 'Overridden price for this item, or null.' }),
+  cocktailId: IdString,
+  plannedAmount: PlannedAmount.openapi({ description: 'Planned number of cocktails for this item.' }),
+  customPrice: Price.nullish().openapi({ description: 'Overridden price for this item, or null.' }),
 });
 
 /** Nested ingredient shopping unit input for create/update. */
 export const CalculationShoppingUnitInputSchema = z.object({
-  ingredientId: z.string(),
-  unitId: z.string(),
+  ingredientId: IdString,
+  unitId: IdString,
   checked: z.coerce.boolean(),
 });
 
 export const CalculationCreateSchema = z
   .object({
-    name: z.string().min(1),
+    name: z.string().trim().min(1).max(MAX_CALCULATION_NAME_LENGTH),
     showSalesStuff: z.coerce.boolean().optional().openapi({ description: 'Whether to show sales figures (default true).' }),
-    groupId: z.string().nullish().openapi({ description: 'Group to assign the calculation to, or null/omitted for none.' }),
-    calculationItems: z.array(CalculationItemInputSchema).openapi({ description: 'Cocktail items in this calculation.' }),
-    ingredientShoppingUnits: z.array(CalculationShoppingUnitInputSchema).openapi({ description: 'Ingredient shopping units for this calculation.' }),
+    groupId: IdString.nullish().openapi({ description: 'Group to assign the calculation to, or null/omitted for none.' }),
+    calculationItems: z.array(CalculationItemInputSchema).max(MAX_CALCULATION_ITEMS).openapi({ description: 'Cocktail items in this calculation.' }),
+    ingredientShoppingUnits: z
+      .array(CalculationShoppingUnitInputSchema)
+      .max(MAX_CALCULATION_SHOPPING_UNITS)
+      .openapi({ description: 'Ingredient shopping units for this calculation.' }),
   })
   .openapi('CalculationCreateInput');
 
 export const CalculationUpdateSchema = z
   .object({
-    name: z.string().min(1),
+    name: z.string().trim().min(1).max(MAX_CALCULATION_NAME_LENGTH),
     showSalesStuff: z.coerce.boolean().optional().openapi({ description: 'Whether to show sales figures.' }),
-    groupId: z.string().nullish().openapi({ description: 'Group to assign the calculation to; null/omitted disconnects it.' }),
-    calculationItems: z.array(CalculationItemInputSchema).openapi({ description: 'Cocktail items; fully replaces the existing items.' }),
+    groupId: IdString.nullish().openapi({ description: 'Group to assign the calculation to; null/omitted disconnects it.' }),
+    calculationItems: z
+      .array(CalculationItemInputSchema)
+      .max(MAX_CALCULATION_ITEMS)
+      .openapi({ description: 'Cocktail items; fully replaces the existing items.' }),
     ingredientShoppingUnits: z
       .array(CalculationShoppingUnitInputSchema)
+      .max(MAX_CALCULATION_SHOPPING_UNITS)
       .openapi({ description: 'Ingredient shopping units; fully replaces the existing ones.' }),
   })
   .openapi('CalculationUpdateInput');
 
 export const CalculationGroupCreateSchema = z
   .object({
-    name: z.string().min(1),
+    name: z.string().trim().min(1).max(MAX_CALCULATION_GROUP_NAME_LENGTH),
     isDefaultExpanded: z.coerce.boolean().optional().openapi({ description: 'Whether the group is expanded by default (default false).' }),
   })
   .openapi('CalculationGroupCreateInput');
 
 export const CalculationGroupUpdateSchema = z
   .object({
-    name: z.string().min(1),
+    name: z.string().trim().min(1).max(MAX_CALCULATION_GROUP_NAME_LENGTH),
     isDefaultExpanded: z.coerce.boolean().optional().openapi({ description: 'Whether the group is expanded by default.' }),
   })
   .openapi('CalculationGroupUpdateInput');
 
 export const CalculationGroupAssignSchema = z
   .object({
-    calculationIds: z.array(z.string()).min(1).openapi({ description: 'Calculations to (re)assign.' }),
-    groupId: z.string().nullish().openapi({ description: 'Target group, or null to remove group assignment.' }),
+    calculationIds: z.array(IdString).min(1).max(MAX_CALCULATION_IDS).openapi({ description: 'Calculations to (re)assign.' }),
+    groupId: IdString.nullish().openapi({ description: 'Target group, or null to remove group assignment.' }),
   })
   .openapi('CalculationGroupAssignInput');
 
@@ -176,29 +199,110 @@ export type CalculationGroupAssignInput = z.infer<typeof CalculationGroupAssignS
 /** Export request body — ids of the calculations to dump (mirrors the legacy handler). */
 export const CalculationExportJsonSchema = z
   .object({
-    ids: z.array(z.string()).openapi({ description: 'Ids of the calculations to export.' }),
+    ids: z.array(IdString).max(MAX_CALCULATION_IDS).openapi({ description: 'Ids of the calculations to export.' }),
   })
   .openapi('CalculationExportJsonInput');
 export type CalculationExportJsonInput = z.infer<typeof CalculationExportJsonSchema>;
 
+export const MAX_CALCULATION_IMPORT_ITEMS = 500;
+const MAX_IMPORT_MAPPINGS = 5000;
+
 /**
- * Import request body. The `exportData` payload MUST retain the exact raw shape
- * produced by the export endpoint (see lib/auditExport.ts,
- * CocktailCalculationExportStructure) so the export → import round-trip stays
- * lossless; hence it is modelled loosely (kept verbatim).
+ * One calculation of an export dump (see lib/auditExport.ts,
+ * CocktailCalculationExportStructure). Only the fields the import reads are
+ * checked; everything else (ids, export metadata) passes through untouched.
+ */
+export const CalculationExportItemSchema = z
+  .object({
+    calculation: z
+      .object({
+        name: z.string().trim().min(1).max(MAX_CALCULATION_NAME_LENGTH),
+        showSalesStuff: z.boolean().optional(),
+        groupName: z.string().max(MAX_CALCULATION_GROUP_NAME_LENGTH).nullish(),
+      })
+      .passthrough(),
+    cocktailCalculationItems: z
+      .array(
+        z
+          .object({
+            cocktailName: z.string().min(1).max(MAX_REFERENCE_NAME_LENGTH),
+            plannedAmount: z.number().int().min(0).max(MAX_PLANNED_AMOUNT),
+            customPrice: z.number().min(0).max(MAX_PRICE).nullish(),
+          })
+          .passthrough(),
+      )
+      .max(MAX_CALCULATION_ITEMS)
+      .default([]),
+    ingredientShoppingUnits: z
+      .array(
+        z
+          .object({
+            ingredientName: z.string().min(1).max(MAX_REFERENCE_NAME_LENGTH),
+            unitName: z.string().min(1).max(MAX_REFERENCE_NAME_LENGTH),
+            checked: z.boolean().optional(),
+          })
+          .passthrough(),
+      )
+      .max(MAX_CALCULATION_SHOPPING_UNITS)
+      .default([]),
+  })
+  .passthrough();
+export type CalculationExportItem = z.infer<typeof CalculationExportItemSchema>;
+
+export const CalculationImportDecisionSchema = z.object({
+  exportName: z.string().max(MAX_CALCULATION_NAME_LENGTH),
+  decision: z.enum(['import', 'overwrite', 'rename', 'skip']),
+  existingId: IdString.nullish(),
+  newName: z.string().max(MAX_CALCULATION_NAME_LENGTH).nullish(),
+  groupDecision: z.enum(['keep-exported', 'use-existing', 'create-new', 'no-group']).nullish(),
+  existingGroupId: IdString.nullish(),
+  newGroupName: z.string().max(MAX_CALCULATION_GROUP_NAME_LENGTH).nullish(),
+  newGroupDefaultExpanded: z.boolean().nullish(),
+  /** One item of the export dump; validated per item by the controller so issues can be reported per decision. */
+  data: z.unknown(),
+});
+export type CalculationImportDecision = z.infer<typeof CalculationImportDecisionSchema>;
+
+export const CalculationImportMappingSchema = z.object({
+  exportName: z.string().max(MAX_REFERENCE_NAME_LENGTH),
+  decision: z.enum(['use-existing', 'skip']),
+  existingId: IdString.nullish(),
+});
+export type CalculationImportMapping = z.infer<typeof CalculationImportMappingSchema>;
+
+/**
+ * Import request body. `exportData` keeps the raw shape produced by the export
+ * endpoint (round-trip format) and is validated per item by the controller so
+ * the validate phase can report invalid items instead of rejecting the request.
  */
 export const CalculationImportJsonSchema = z
   .object({
     phase: z.enum(['validate', 'prepare-mapping', 'execute']).openapi({ description: 'Import phase to run.' }),
     exportData: z
-      .any()
+      .unknown()
+      .optional()
       .openapi({ description: 'Raw export dump (single object or array) as produced by POST /calculations/export/json (round-trip format, kept verbatim).' }),
-    decisions: z.any().optional().openapi({ description: 'Per-entity import decisions, required for the "execute" phase.' }),
-    cocktailMappings: z.any().optional().openapi({ description: 'Cocktail name → id mappings for the "execute" phase.' }),
-    ingredientMappings: z.any().optional().openapi({ description: 'Ingredient name → id mappings for the "execute" phase.' }),
-    unitMappings: z.any().optional().openapi({ description: 'Unit name → id mappings for the "execute" phase.' }),
+    decisions: z
+      .array(CalculationImportDecisionSchema)
+      .max(MAX_CALCULATION_IMPORT_ITEMS)
+      .optional()
+      .openapi({ description: 'Per-entity import decisions, required for the "execute" phase.' }),
+    cocktailMappings: z
+      .array(CalculationImportMappingSchema)
+      .max(MAX_IMPORT_MAPPINGS)
+      .optional()
+      .openapi({ description: 'Cocktail name → id mappings for the "execute" phase.' }),
+    ingredientMappings: z
+      .array(CalculationImportMappingSchema)
+      .max(MAX_IMPORT_MAPPINGS)
+      .optional()
+      .openapi({ description: 'Ingredient name → id mappings for the "execute" phase.' }),
+    unitMappings: z
+      .array(CalculationImportMappingSchema)
+      .max(MAX_IMPORT_MAPPINGS)
+      .optional()
+      .openapi({ description: 'Unit name → id mappings for the "execute" phase.' }),
   })
-  .passthrough()
   .openapi('CalculationImportJsonInput');
 export type CalculationImportJsonInput = z.infer<typeof CalculationImportJsonSchema>;
 
@@ -227,17 +331,23 @@ export const calculationsImportJsonApiDoc = {
   operations: {
     POST: {
       roles: ['USER'],
-      permission: 'CALCULATIONS_READ',
+      permission: 'CALCULATIONS_CREATE',
       tags: [ApiTags.calculationsImportExport],
       summary: 'Import calculations from JSON',
       description:
-        'Three-phase import (`validate` → `prepare-mapping` → `execute`) of an export dump produced by POST /calculations/export/json. The response shape depends on the phase and is returned verbatim (not wrapped in a data envelope).',
+        'Three-phase import (`validate` → `prepare-mapping` → `execute`) of an export dump produced by POST /calculations/export/json. The response shape depends on the phase and is returned verbatim (not wrapped in a data envelope). ' +
+        'The execute phase is all-or-nothing: every decision and referenced id is validated first; any invalid item or foreign/unknown id writes nothing and returns 400 with per-item issues. ' +
+        'All writes run in one transaction. Not available to the instance master key (calculations record the updating user).',
       params: WorkspaceIdParam,
       body: CalculationImportJsonSchema,
       response: z
         .any()
         .openapi({ description: 'Phase-dependent import result (validation summary, mapping suggestions, or import results). Returned verbatim.' }),
-      errorResponses: { 400: 'Invalid phase or missing decisions.', 500: 'Import failed.' },
+      errorResponses: {
+        400: 'Invalid phase, missing decisions, invalid items or references (nothing was imported).',
+        403: 'Master API key cannot write calculations.',
+        409: 'Conflict with a concurrent change (nothing was imported).',
+      },
     },
   },
 } satisfies ResourceApiDoc;
@@ -260,10 +370,14 @@ export const calculationsCollectionApiDoc = {
       permission: 'CALCULATIONS_CREATE',
       tags: [ApiTags.calculationsCore],
       summary: 'Create calculation',
+      description: 'Not available to the instance master key (calculations record the updating user).',
       params: WorkspaceIdParam,
       body: CalculationCreateSchema,
       response: CalculationSummaryDtoSchema,
-      errorResponses: { 400: 'Invalid group.' },
+      errorResponses: {
+        400: 'Invalid group, or a cocktail/ingredient/unit that does not exist in this workspace.',
+        403: 'Master API key cannot write calculations.',
+      },
     },
   },
 } satisfies ResourceApiDoc;
@@ -286,11 +400,16 @@ export const calculationsItemApiDoc = {
       permission: 'CALCULATIONS_UPDATE',
       tags: [ApiTags.calculationsCore],
       summary: 'Update calculation',
-      description: 'Replaces the calculation metadata and its full set of items and ingredient shopping units.',
+      description:
+        'Replaces the calculation metadata and its full set of items and ingredient shopping units. Not available to the instance master key (calculations record the updating user).',
       params: CalculationItemParams,
       body: CalculationUpdateSchema,
       response: CalculationSummaryDtoSchema,
-      errorResponses: { 400: 'Invalid group.' },
+      errorResponses: {
+        400: 'Invalid group, or a cocktail/ingredient/unit that does not exist in this workspace.',
+        403: 'Master API key cannot write calculations.',
+        404: 'Calculation not found.',
+      },
     },
     DELETE: {
       roles: ['ADMIN'],
@@ -299,6 +418,7 @@ export const calculationsItemApiDoc = {
       summary: 'Delete calculation',
       params: CalculationItemParams,
       response: DeletionResult,
+      errorResponses: { 404: 'Calculation not found.' },
     },
   },
 } satisfies ResourceApiDoc;
@@ -366,7 +486,7 @@ export const calculationGroupsAssignApiDoc = {
       params: WorkspaceIdParam,
       body: CalculationGroupAssignSchema,
       response: z.object({ updatedCount: z.number().int() }).openapi('GroupAssignmentResult'),
-      errorResponses: { 404: 'Group not found.' },
+      errorResponses: { 400: 'A calculation does not exist in this workspace.', 404: 'Group not found.' },
     },
   },
 } satisfies ResourceApiDoc;
