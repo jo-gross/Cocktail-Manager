@@ -1,10 +1,15 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { BackupStructure, SignageBackupRecord, SignageSlideBackupRecord } from './backupStructure';
-import prisma from '../../prisma/prisma';
 import { randomUUID } from 'crypto';
+import HTTPMethod from 'http-method-enum';
 import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
-import { MonitorFormat, Permission, Prisma, Role } from '@generated/prisma/client';
+import { withHttpMethods } from '@middleware/api/handleMethods';
+import { MonitorFormat, Permission, Prisma, Role, type User, type Workspace } from '@generated/prisma/client';
 import { ensureSignageContainer } from '@lib/signage/signageApiHelpers';
+import { createLog } from '@lib/auditLog';
+import { lockWorkspaceScope, runTx, type Tx } from '@lib/db/tx';
+import { ApiError } from '@lib/http/ApiError';
+import { MASTER_API_KEY_USER_ID } from '@lib/http/requestAuth';
+import type { GuestMenuDocument } from '@lib/guest-menu/schema';
 import {
   importedGuestMenuSafeState,
   normalizeBackupGuestMenuSlug,
@@ -13,8 +18,12 @@ import {
   validateBackupWorkspaceSetting,
   type BackupImportReport,
 } from '@lib/backup/backupSecurity';
+import { BackupImportSchema, findBackupReferenceIssues, type BackupImportData } from '@lib/backup/backupSchema';
 
-const IMPORT_TRANSACTION_TIMEOUT_MS = 30 * 60 * 1000;
+/** Long (large backups with images) but bounded; validation happens before the transaction. */
+const IMPORT_TRANSACTION_TIMEOUT_MS = 10 * 60 * 1000;
+const IMPORT_TRANSACTION_MAX_WAIT_MS = 10_000;
+const MAX_REPORTED_VALIDATION_ISSUES = 100;
 
 function createImportLogger(workspaceId: string) {
   const startedAt = Date.now();
@@ -55,43 +64,6 @@ function convertUnit(unit: string): string {
   }
 }
 
-function parseBackupDate(value: string | Date | null | undefined): Date | null {
-  if (value == null || value === '') {
-    return null;
-  }
-  const parsed = value instanceof Date ? value : new Date(value);
-  return Number.isNaN(parsed.getTime()) ? null : parsed;
-}
-
-function normalizeSignageSlide(slide: SignageSlideBackupRecord, workspaceId: string) {
-  return {
-    id: randomUUID(),
-    workspaceId,
-    format: slide.format,
-    type: slide.type ?? 'IMAGE',
-    content: slide.content ?? '',
-    // guestMenuId is linked after the guest menus were imported (new ids).
-    options: slide.options == null ? Prisma.DbNull : (slide.options as Prisma.InputJsonValue),
-    order: slide.order,
-    enabled: slide.enabled ?? true,
-    weekdays: slide.weekdays ?? [],
-    validFrom: parseBackupDate(slide.validFrom),
-    validTo: parseBackupDate(slide.validTo),
-    dateExclusive: slide.dateExclusive ?? false,
-  };
-}
-
-function normalizeSignageRecord(signage: SignageBackupRecord, workspaceId: string) {
-  return {
-    workspaceId,
-    format: signage.format,
-    backgroundColor: signage.backgroundColor ?? null,
-    backgroundMode: signage.backgroundMode ?? 'COLOR',
-    slideDurationSeconds: signage.slideDurationSeconds ?? 10,
-    mirrorSourceFormat: signage.mirrorSourceFormat ?? null,
-  };
-}
-
 function convertIce(ice: string): string {
   switch (ice) {
     case 'Crushed':
@@ -107,767 +79,660 @@ function convertIce(ice: string): string {
   }
 }
 
+/** Legacy step `tool` → action name. */
+function convertTool(tool: string): string {
+  return tool == 'PESTLE' ? 'MUDDLE' : tool == 'POUR' ? 'WITHOUT' : tool;
+}
+
+function parseBackupDate(value: string | Date | null | undefined): Date | null {
+  if (value == null || value === '') {
+    return null;
+  }
+  const parsed = value instanceof Date ? value : new Date(value);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+type BackupSlide = NonNullable<BackupImportData['signageSlides']>[number];
+type BackupSignage = NonNullable<BackupImportData['signage']>[number];
+
+function normalizeSignageSlide(
+  slide: Pick<BackupSlide, 'format' | 'type' | 'content' | 'options' | 'enabled' | 'weekdays' | 'validFrom' | 'validTo' | 'dateExclusive'>,
+  workspaceId: string,
+  order: number,
+) {
+  return {
+    id: randomUUID(),
+    workspaceId,
+    format: slide.format,
+    type: slide.type ?? 'IMAGE',
+    content: slide.content ?? '',
+    // guestMenuId is linked after the guest menus were imported (new ids).
+    options: slide.options == null ? Prisma.DbNull : (slide.options as Prisma.InputJsonValue),
+    order,
+    enabled: slide.enabled ?? true,
+    weekdays: slide.weekdays ?? [],
+    validFrom: parseBackupDate(slide.validFrom),
+    validTo: parseBackupDate(slide.validTo),
+    dateExclusive: slide.dateExclusive ?? false,
+  };
+}
+
+function normalizeSignageRecord(signage: BackupSignage, workspaceId: string) {
+  return {
+    workspaceId,
+    format: signage.format,
+    backgroundColor: signage.backgroundColor ?? null,
+    backgroundMode: signage.backgroundMode ?? 'COLOR',
+    slideDurationSeconds: signage.slideDurationSeconds ?? 10,
+    mirrorSourceFormat: signage.mirrorSourceFormat ?? null,
+  };
+}
+
+/** Old id → new id for every record that is always created new (decided before the transaction). */
+function newIds(rows: Array<{ id: string }> | undefined): Map<string, string> {
+  return new Map((rows ?? []).map((row) => [row.id, randomUUID()]));
+}
+
+/** Request body → parsed JSON (the UI sends the backup as text). */
+function readBody(req: NextApiRequest): unknown {
+  if (typeof req.body !== 'string') return req.body;
+  try {
+    return JSON.parse(req.body);
+  } catch {
+    throw new ApiError(400, 'INVALID_JSON', 'The backup file is not valid JSON');
+  }
+}
+
+interface PreparedImport {
+  data: BackupImportData;
+  report: BackupImportReport;
+  settings: Array<{ setting: Prisma.WorkspaceSettingCreateManyInput['setting']; value: string | null }>;
+  templates: Array<{ newId: string; name: string; definition: Prisma.InputJsonValue }>;
+  guestMenus: Array<{ menu: NonNullable<BackupImportData['guestMenus']>[number]; draft: GuestMenuDocument }>;
+  ids: {
+    garnish: Map<string, string>;
+    ingredient: Map<string, string>;
+    glass: Map<string, string>;
+    cocktail: Map<string, string>;
+    step: Map<string, string>;
+    card: Map<string, string>;
+    cardGroup: Map<string, string>;
+    calculation: Map<string, string>;
+    template: Map<string, string>;
+  };
+}
+
 /**
- * Imports a backup into the workspace (admins; API keys need BACKUPS_IMPORT). The payload is
- * untrusted: settings, custom templates and guest menu documents are validated (invalid ones are
- * skipped and listed in `report.skipped`), imported guest menus are disabled and unpublished.
+ * Validates the whole backup without touching the database: structure (zod), references inside
+ * the backup (400 on any broken one) and the per-item security rules for settings, custom
+ * templates and guest menu documents (those invalid items are skipped and reported, as before).
  */
-export default withWorkspacePermission([Role.ADMIN], Permission.BACKUPS_IMPORT, async (req: NextApiRequest, res: NextApiResponse, user, _workspace) => {
-  const workspaceId = req.query.workspaceId as string | undefined;
-  if (!workspaceId) return res.status(400).json({ message: 'No workspace id' });
+export function prepareBackupImport(body: unknown): PreparedImport {
+  const parsed = BackupImportSchema.safeParse(body);
+  if (!parsed.success) {
+    throw new ApiError(400, 'VALIDATION_ERROR', 'The backup file is invalid', parsed.error.issues.slice(0, MAX_REPORTED_VALIDATION_ISSUES));
+  }
+  const data = parsed.data;
+  const referenceIssues = findBackupReferenceIssues(data);
+  if (referenceIssues.length > 0) {
+    throw new ApiError(400, 'INVALID_REFERENCE', 'The backup contains broken references', referenceIssues);
+  }
 
-  if (req.method === 'POST') {
-    try {
-      const importLogger = createImportLogger(workspaceId);
-      importLogger.step('Import started');
-      const report: BackupImportReport = { skipped: [] };
+  const report: BackupImportReport = { skipped: [] };
+  const settings: PreparedImport['settings'] = [];
+  for (const workspaceSetting of data.workspaceSettings) {
+    const validated = validateBackupWorkspaceSetting({ setting: workspaceSetting.setting, value: workspaceSetting.value ?? null });
+    if (validated.ok) settings.push(validated.value);
+    else report.skipped.push({ type: 'workspaceSetting', name: String(workspaceSetting.setting), reason: validated.reason });
+  }
 
-      await prisma.$transaction(
-        async (transaction) => {
-          const data: BackupStructure = JSON.parse(await req.body);
+  const ids: PreparedImport['ids'] = {
+    garnish: newIds(data.garnish),
+    ingredient: newIds(data.ingredient),
+    glass: newIds(data.glass),
+    cocktail: newIds(data.cocktailRecipe),
+    step: newIds(data.cocktailRecipeStep),
+    card: newIds(data.cocktailCard),
+    cardGroup: newIds(data.cocktailCardGroup),
+    calculation: newIds(data.calculation),
+    template: new Map(),
+  };
 
-          importLogger.step('Backup payload parsed', {
-            workspaceSettings: data.workspaceSettings?.length ?? 0,
-            units: data.units?.length ?? 0,
-            ingredients: data.ingredient?.length ?? 0,
-            cocktails: data.cocktailRecipe?.length ?? 0,
-            calculations: data.calculation?.length ?? 0,
-            signage: data.signage?.length ?? 0,
-            signageSlides: data.signageSlides?.length ?? 0,
-          });
+  const templates: PreparedImport['templates'] = [];
+  for (const template of data.guestMenuTemplates ?? []) {
+    const validated = validateBackupGuestMenuTemplate(template);
+    if (!validated.ok) {
+      // Menus referencing it fall back to the default template.
+      report.skipped.push({ type: 'guestMenuTemplate', name: String(template.name), reason: validated.reason });
+      continue;
+    }
+    const newId = randomUUID();
+    ids.template.set(template.id, newId);
+    templates.push({ newId, name: validated.value.name, definition: validated.value.definition as Prisma.InputJsonValue });
+  }
 
-          if (data.workspaceSettings?.length > 0) {
-            importLogger.step('Importing workspace settings', { count: data.workspaceSettings.length });
-            for (const workspaceSetting of data.workspaceSettings) {
-              const validated = validateBackupWorkspaceSetting(workspaceSetting);
-              if (!validated.ok) {
-                report.skipped.push({ type: 'workspaceSetting', name: String(workspaceSetting.setting), reason: validated.reason });
-                continue;
-              }
-              const { setting, value } = validated.value;
-              await transaction.workspaceSetting.upsert({
-                where: { workspaceId_setting: { workspaceId, setting } },
-                update: { value },
-                create: { workspaceId, setting, value },
-              });
-            }
-          }
+  const idMaps = { cocktails: ids.cocktail, ingredients: ids.ingredient, cardGroups: ids.cardGroup, templates: ids.template };
+  const guestMenus: PreparedImport['guestMenus'] = [];
+  for (const menu of data.guestMenus ?? []) {
+    const draft = prepareBackupGuestMenuDocument(menu.draft, idMaps);
+    if (draft.ok) guestMenus.push({ menu, draft: draft.value });
+    else report.skipped.push({ type: 'guestMenu', name: String(menu.name), reason: draft.reason });
+  }
 
-          const unitMapping: { id: string; newId: string }[] = [];
-          if (data.units?.length > 0) {
-            importLogger.step('Importing units', { count: data.units.length });
+  return { data, report, settings, templates, guestMenus, ids };
+}
 
-            for (const g of data.units) {
-              const originalUnitId = g.id;
-              const existingUnit = await transaction.unit.findFirst({
-                where: { name: g.name, workspaceId: workspaceId },
-              });
-              if (existingUnit == null) {
-                g.id = randomUUID();
-                g.workspaceId = workspaceId;
-                await transaction.unit.create({ data: g });
-                unitMapping.push({ id: originalUnitId, newId: g.id });
-              } else {
-                unitMapping.push({ id: originalUnitId, newId: existingUnit.id });
-              }
-            }
-          }
+/** Calculations need a real user (required FK); the master key acts as the workspace's owner. */
+async function resolveCalculationUserId(tx: Tx, user: User, workspaceId: string): Promise<string> {
+  if (user.id !== MASTER_API_KEY_USER_ID) return user.id;
+  const owner = await tx.workspaceUser.findFirst({
+    where: { workspaceId, role: { in: [Role.OWNER, Role.ADMIN] } },
+    orderBy: { role: 'desc' },
+    select: { userId: true },
+  });
+  if (!owner) throw new ApiError(403, 'REAL_USER_REQUIRED', 'Importing calculations with the master key requires a workspace owner or admin');
+  return owner.userId;
+}
 
-          if (data.unitConversions?.length > 0) {
-            importLogger.step('Importing unit conversions', { count: data.unitConversions.length });
+/** Writes a prepared backup. Runs inside ONE transaction: any error rolls back everything. */
+async function executeBackupImport(tx: Tx, prepared: PreparedImport, user: User, workspaceId: string) {
+  const { data, ids } = prepared;
+  const importLogger = createImportLogger(workspaceId);
 
-            for (const g of data.unitConversions) {
-              const newFromId = unitMapping.find((gm) => gm.id === g.fromUnitId)?.newId;
-              const newToId = unitMapping.find((gm) => gm.id === g.toUnitId)?.newId;
-              if (newFromId != undefined && newToId != undefined) {
-                const existingUnitConversion = await transaction.unitConversion.findFirst({
-                  where: {
-                    workspaceId: workspaceId,
-                    fromUnitId: newFromId,
-                    toUnitId: newToId,
-                  },
-                });
-                if (existingUnitConversion == null) {
-                  g.id = randomUUID();
-                  g.fromUnitId = newFromId;
-                  g.toUnitId = newToId;
-                  g.workspaceId = workspaceId;
-                  await transaction.unitConversion.create({ data: g });
-                }
-              }
-            }
-          }
+  // Same scopes as the regular endpoints (slide order, tag categories, conversions, menu slugs).
+  await lockWorkspaceScope(tx, workspaceId, 'guest-menus');
+  await lockWorkspaceScope(tx, workspaceId, 'signage-slides');
+  await lockWorkspaceScope(tx, workspaceId, 'tag-categories');
+  await lockWorkspaceScope(tx, workspaceId, 'unit-conversions');
 
-          const actionMapping: { id: string; newId: string }[] = [];
-          if (data.stepActions?.length > 0) {
-            importLogger.step('Importing step actions', { count: data.stepActions.length });
-            for (const g of data.stepActions) {
-              const existingAction = await transaction.workspaceCocktailRecipeStepAction.findFirst({
-                where: { name: g.name, workspaceId: workspaceId, actionGroup: g.actionGroup },
-              });
-              if (existingAction == null) {
-                const newId = randomUUID();
-                actionMapping.push({ id: g.id, newId: newId });
-                g.id = newId;
-                g.workspaceId = workspaceId;
+  for (const { setting, value } of prepared.settings) {
+    await tx.workspaceSetting.upsert({
+      where: { workspaceId_setting: { workspaceId, setting } },
+      update: { value },
+      create: { workspaceId, setting, value },
+    });
+  }
 
-                await transaction.workspaceCocktailRecipeStepAction.create({ data: g });
-              } else {
-                actionMapping.push({ id: g.id, newId: existingAction.id });
-              }
-            }
-          }
+  const unitIdsByName = new Map<string, string>();
+  const ensureUnit = async (name: string): Promise<string> => {
+    const known = unitIdsByName.get(name);
+    if (known) return known;
+    const existing = await tx.unit.findFirst({ where: { name, workspaceId }, select: { id: true } });
+    const id = existing?.id ?? (await tx.unit.create({ data: { id: randomUUID(), name, workspaceId } })).id;
+    unitIdsByName.set(name, id);
+    return id;
+  };
 
-          const actions = await transaction.workspaceCocktailRecipeStepAction.findMany({ where: { workspaceId } });
+  const unitMapping = new Map<string, string>();
+  if (data.units.length > 0) importLogger.step('Importing units', { count: data.units.length });
+  for (const unit of data.units) unitMapping.set(unit.id, await ensureUnit(unit.name));
 
-          const garnishMapping: { id: string; newId: string }[] = [];
-          const garnishImageMapping: { garnishId: string; image: string }[] = [];
-          if (data.garnish?.length > 0) {
-            importLogger.step('Importing garnishes', { count: data.garnish.length });
-            data.garnish?.forEach((g) => {
-              const garnishMappingItem = { id: g.id, newId: randomUUID() };
-              // @ts-expect-error causing older backup version support
-              if (g.image != undefined) {
-                // @ts-expect-error causing older backup version support
-                garnishImageMapping.push({ garnishId: garnishMappingItem.newId, image: g.image });
-              }
-              g.id = garnishMappingItem.newId;
-              g.workspaceId = workspaceId;
-              // @ts-expect-error causing older backup version support
-              g.image = undefined;
-              garnishMapping.push(garnishMappingItem);
-            });
-            await transaction.garnish.createMany({ data: data.garnish, skipDuplicates: true });
-          }
-          if (data.garnishImages?.length > 0) {
-            for (const image of data.garnishImages) {
-              const garnish = garnishMapping.find((gm) => gm.id === image.garnishId);
-              if (garnish) {
-                garnishImageMapping.push({ garnishId: garnish.newId, image: image.image });
-              }
-            }
-          }
-          await transaction.garnishImage.createMany({ data: garnishImageMapping, skipDuplicates: true });
-
-          const ingredientMapping: { id: string; newId: string }[] = [];
-          const ingredientImageMapping: { ingredientId: string; image: string }[] = [];
-
-          const oldVolumes: { ingredientId: string; unitId: string; volume: number }[] = [];
-
-          if (data.ingredient?.length > 0) {
-            importLogger.step('Importing ingredients', { count: data.ingredient.length });
-
-            for (const g of data.ingredient) {
-              const ingredientMappingItem = { id: g.id, newId: randomUUID() };
-              // @ts-expect-error causing older backup version support
-              if (g.image != undefined) {
-                // @ts-expect-error causing older backup version support
-                ingredientImageMapping.push({ ingredientId: ingredientMappingItem.newId, image: g.image });
-              }
-              g.id = ingredientMappingItem.newId;
-              g.workspaceId = workspaceId;
-              // @ts-expect-error causing older backup version support
-              g.image = undefined;
-              // Enable older backup imports
-              // @ts-expect-error causing older backup version support
-              if (g.volume != undefined && g.unit != undefined) {
-                // @ts-expect-error causing older backup version support
-                const unitIdentifier = convertUnit(g.unit);
-                const unit = await transaction.unit.findFirst({ where: { name: unitIdentifier, workspaceId: workspaceId } });
-                let unitId = unit?.id;
-                if (unitId == undefined) {
-                  unitId = randomUUID();
-                  await transaction.unit.create({ data: { id: unitId, name: unitIdentifier, workspaceId: workspaceId } });
-                }
-                oldVolumes.push({
-                  ingredientId: g.id,
-                  // @ts-expect-error causing older backup version support
-                  volume: g.volume,
-                  unitId: unitId,
-                });
-              }
-              // @ts-expect-error causing older backup version support
-              g.volume = undefined;
-              // @ts-expect-error causing older backup version support
-              g.unit = undefined;
-              ingredientMapping.push(ingredientMappingItem);
-            }
-            await transaction.ingredient.createMany({ data: data.ingredient, skipDuplicates: true });
-          }
-          importLogger.step('Mapped legacy ingredient volumes', { count: oldVolumes.length });
-          if (data.ingredientImages?.length > 0) {
-            for (const image of data.ingredientImages) {
-              const ingredient = ingredientMapping.find((gm) => gm.id === image.ingredientId);
-              if (ingredient) {
-                ingredientImageMapping.push({ ingredientId: ingredient.newId, image: image.image });
-              }
-            }
-          }
-          for (const volume of oldVolumes) {
-            if (volume.unitId != undefined) {
-              await transaction.ingredientVolume.create({
-                data: {
-                  id: randomUUID(),
-                  ingredientId: volume.ingredientId,
-                  unitId: volume.unitId,
-                  volume: volume.volume,
-                  workspaceId: workspaceId,
-                },
-              });
-            }
-          }
-          if (data.ingredientVolumes?.length > 0) {
-            for (const volume of data.ingredientVolumes) {
-              const newIngredientId = ingredientMapping.find((gm) => gm.id === volume.ingredientId)?.newId;
-              const newUnitId = unitMapping.find((gm) => gm.id === volume.unitId)?.newId;
-
-              if (newIngredientId != undefined && newUnitId != undefined) {
-                const existingVolume = await transaction.ingredientVolume.findFirst({
-                  where: {
-                    ingredientId: newIngredientId,
-                    unitId: newUnitId,
-                    workspaceId: workspaceId,
-                  },
-                });
-                if (existingVolume == null) {
-                  volume.id = randomUUID();
-                  volume.ingredientId = newIngredientId;
-                  volume.unitId = newUnitId;
-                  volume.workspaceId = workspaceId;
-                  await transaction.ingredientVolume.create({ data: volume });
-                }
-              }
-            }
-          }
-          await transaction.ingredientImage.createMany({ data: ingredientImageMapping, skipDuplicates: true });
-
-          const glassMapping: { id: string; newId: string }[] = [];
-          const glassImageMapping: { glassId: string; image: string }[] = [];
-          if (data.glass?.length > 0) {
-            importLogger.step('Importing glasses', { count: data.glass.length });
-            data.glass?.forEach((g) => {
-              const glassMappingItem = { id: g.id, newId: randomUUID() };
-              // @ts-expect-error causing older backup version support
-              if (g.image != undefined) {
-                // @ts-expect-error causing older backup version support
-                glassImageMapping.push({ glassId: glassMappingItem.newId, image: g.image });
-              }
-              g.id = glassMappingItem.newId;
-              g.workspaceId = workspaceId;
-              // @ts-expect-error causing older backup version support
-              g.image = undefined;
-              glassMapping.push(glassMappingItem);
-            });
-            await transaction.glass.createMany({ data: data.glass, skipDuplicates: true });
-          }
-          if (data.glassImages?.length > 0) {
-            for (const image of data.glassImages) {
-              const glass = glassMapping.find((gm) => gm.id === image.glassId);
-              if (glass) {
-                glassImageMapping.push({ glassId: glass.newId, image: image.image });
-              }
-            }
-          }
-          await transaction.glassImage.createMany({ data: glassImageMapping, skipDuplicates: true });
-
-          const iceMapping: { id: string; newId: string }[] = [];
-          if (data.ice?.length > 0) {
-            importLogger.step('Importing ice', { count: data.ice.length });
-            const iceToCreate: typeof data.ice = [];
-            for (const ice of data.ice) {
-              const existing = await transaction.ice.findFirst({ where: { workspaceId: workspaceId, name: ice.name } });
-              if (existing) {
-                iceMapping.push({ id: ice.id, newId: existing.id });
-              } else {
-                const originalIceId = ice.id;
-                ice.id = randomUUID();
-                ice.workspaceId = workspaceId;
-                iceMapping.push({ id: originalIceId, newId: ice.id });
-                iceToCreate.push(ice);
-              }
-            }
-            if (iceToCreate.length > 0) {
-              await transaction.ice.createMany({ data: iceToCreate, skipDuplicates: true });
-            }
-          }
-
-          // ensure that all oldIce is imported
-          let oldIceMapping: { name: string; newId: string }[] = [];
-          if (data.cocktailRecipe?.length > 0) {
-            for (const cocktail of data.cocktailRecipe) {
-              // @ts-expect-error causing older backup version support
-              if (cocktail.glassWithIce != undefined) {
-                // @ts-expect-error causing older backup version support
-                const iceIdentifier = convertIce(cocktail.glassWithIce);
-                if (oldIceMapping.find((ice) => ice.name == iceIdentifier) == undefined) {
-                  const ice = await transaction.ice.findFirst({ where: { name: iceIdentifier, workspaceId: workspaceId } });
-                  if (ice == undefined) {
-                    const result = await transaction.ice.create({ data: { id: randomUUID(), name: iceIdentifier, workspaceId: workspaceId } });
-                    oldIceMapping = [...oldIceMapping, { name: iceIdentifier, newId: result.id }];
-                  } else {
-                    oldIceMapping = [...oldIceMapping, { name: iceIdentifier, newId: ice.id }];
-                  }
-                }
-              }
-            }
-          }
-          importLogger.step('Mapped legacy ice references', { count: oldIceMapping.length });
-
-          const cocktailRecipeMapping: { id: string; newId: string }[] = [];
-          const cocktailRecipeImageMapping: { cocktailRecipeId: string; image: string }[] = [];
-          if (data.cocktailRecipe?.length > 0) {
-            importLogger.step('Importing cocktail recipes', { count: data.cocktailRecipe.length });
-            data.cocktailRecipe?.forEach((g) => {
-              const cocktailRecipeMappingItem = { id: g.id, newId: randomUUID() };
-              // @ts-expect-error causing older backup version support
-              if (g.image != undefined) {
-                // @ts-expect-error causing older backup version support
-                cocktailRecipeImageMapping.push({ cocktailRecipeId: cocktailRecipeMappingItem.newId, image: g.image });
-              }
-              g.id = cocktailRecipeMappingItem.newId;
-              // @ts-expect-error causing older backup version support
-              g.iceId = iceMapping.find((ice) => ice.id === g.iceId)?.newId;
-              if (g.iceId == undefined) {
-                // @ts-expect-error causing older backup version support
-                g.iceId = oldIceMapping.find((ice) => ice.name == convertIce(g.glassWithIce))?.newId;
-
-                if (g.iceId == undefined) {
-                  console.error('IceId is undefined', g);
-                  throw new Error('IceId is undefined');
-                }
-              }
-              g.glassId = glassMapping.find((gm) => gm.id === g.glassId)!.newId;
-              g.workspaceId = workspaceId;
-              // @ts-expect-error causing older backup version support
-              g.image = undefined;
-              // @ts-expect-error causing older backup version support
-              g.glassWithIce = undefined;
-              cocktailRecipeMapping.push(cocktailRecipeMappingItem);
-            });
-
-            await Promise.all(
-              data.cocktailRecipe.map(async (g) => {
-                if ((await transaction.ice.findFirst({ where: { id: g.iceId! } })) == null) {
-                  console.error('Ice not found', g.iceId);
-                  const ice = (await transaction.ice.findMany({ where: { workspaceId: workspaceId } })).filter((i) => i.id == g.iceId);
-                  importLogger.step('Missing ice reference detected while importing cocktail', {
-                    cocktailName: g.name,
-                    iceId: g.iceId,
-                    availableIceCount: ice.length,
-                  });
-                  console.error('Cocktail', g.name);
-                }
-              }),
-            );
-
-            await transaction.cocktailRecipe.createMany({ data: data.cocktailRecipe, skipDuplicates: true });
-          }
-          if (data.cocktailRecipeImage?.length > 0) {
-            for (const image of data.cocktailRecipeImage) {
-              const cocktail = cocktailRecipeMapping.find((gm) => gm.id === image.cocktailRecipeId);
-              if (cocktail) {
-                cocktailRecipeImageMapping.push({ cocktailRecipeId: cocktail.newId, image: image.image });
-              }
-            }
-          }
-          await transaction.cocktailRecipeImage.createMany({ data: cocktailRecipeImageMapping, skipDuplicates: true });
-
-          const cocktailRecipeStepMapping: { id: string; newId: string }[] = [];
-          if (data.cocktailRecipeStep?.length > 0) {
-            importLogger.step('Importing cocktail recipe steps', { count: data.cocktailRecipeStep.length });
-            data.cocktailRecipeStep?.forEach((g) => {
-              const cocktailRecipeStepMappingItem = { id: g.id, newId: randomUUID() };
-              g.id = cocktailRecipeStepMappingItem.newId;
-              g.cocktailRecipeId = cocktailRecipeMapping.find((gm) => gm.id === g.cocktailRecipeId)!.newId;
-              cocktailRecipeStepMapping.push(cocktailRecipeStepMappingItem);
-            });
-            const cocktailRecipeSteps = data.cocktailRecipeStep?.map((step) => {
-              if (step.actionId == undefined) {
-                return {
-                  id: step.id,
-                  stepNumber: step.stepNumber,
-                  cocktailRecipeId: step.cocktailRecipeId,
-                  actionId: actions.find(
-                    // @ts-expect-error - For old versions, where the actionId does not exist
-                    (action) => action.name == (step.tool == 'PESTLE' ? 'MUDDLE' : step.tool == 'POUR' ? 'WITHOUT' : step.tool),
-                  )!.id,
-                };
-              } else {
-                step.actionId = actionMapping.find((gm) => gm.id === step.actionId)!.newId;
-              }
-              return step;
-            });
-            await transaction.cocktailRecipeStep.createMany({ data: cocktailRecipeSteps, skipDuplicates: true });
-          }
-
-          if (data.cocktailRecipeGarnish?.length > 0) {
-            importLogger.step('Importing cocktail recipe garnishes', { count: data.cocktailRecipeGarnish.length });
-            data.cocktailRecipeGarnish?.forEach((g) => {
-              g.cocktailRecipeId = cocktailRecipeMapping.find((gm) => gm.id === g.cocktailRecipeId)!.newId;
-              g.garnishId = garnishMapping.find((gm) => gm.id === g.garnishId)!.newId;
-            });
-
-            await transaction.cocktailRecipeGarnish.createMany({
-              data: data.cocktailRecipeGarnish,
-              skipDuplicates: true,
-            });
-          }
-          if (data.cocktailRecipeIngredient?.length > 0) {
-            importLogger.step('Importing cocktail recipe ingredients', { count: data.cocktailRecipeIngredient.length });
-            for (const g of data.cocktailRecipeIngredient) {
-              g.id = randomUUID();
-              g.cocktailRecipeStepId = cocktailRecipeStepMapping.find((gm) => gm.id === g.cocktailRecipeStepId)!.newId;
-              g.ingredientId = ingredientMapping.find((gm) => gm.id === g.ingredientId)!.newId;
-              if (g.unitId != undefined) {
-                const mappedUnitId = unitMapping.find((gm) => gm.id === g.unitId)?.newId;
-                if (mappedUnitId != undefined) {
-                  g.unitId = mappedUnitId;
-                } else {
-                  importLogger.step('Missing unit reference while importing cocktail recipe ingredient', {
-                    unitId: g.unitId,
-                    cocktailRecipeStepId: g.cocktailRecipeStepId,
-                  });
-                  g.unitId = null;
-                }
-              }
-              // @ts-expect-error causing older backup version support
-              if (g.unit != undefined) {
-                // @ts-expect-error causing older backup version support
-                const unitIdentifier = convertUnit(g.unit);
-                const unit = await transaction.unit.findFirst({ where: { name: unitIdentifier, workspaceId: workspaceId } });
-                let unitId = unit?.id;
-                if (unitId == undefined) {
-                  unitId = randomUUID();
-                  await transaction.unit.create({ data: { id: unitId, name: unitIdentifier, workspaceId: workspaceId } });
-                }
-                g.unitId = unitId;
-              }
-              // @ts-expect-error causing older backup version support
-              g.unit = undefined;
-            }
-            await transaction.cocktailRecipeIngredient.createMany({
-              data: data.cocktailRecipeIngredient,
-              skipDuplicates: true,
-            });
-          }
-
-          const cocktailCardMapping: { id: string; newId: string }[] = [];
-          if (data.cocktailCard?.length > 0) {
-            importLogger.step('Importing cocktail cards', { count: data.cocktailCard.length });
-            data.cocktailCard?.forEach((g) => {
-              const cocktailCardMappingItem = { id: g.id, newId: randomUUID() };
-              g.id = cocktailCardMappingItem.newId;
-              g.workspaceId = workspaceId;
-              cocktailCardMapping.push(cocktailCardMappingItem);
-            });
-            await transaction.cocktailCard.createMany({ data: data.cocktailCard, skipDuplicates: true });
-          }
-
-          const cocktailCardGroupMapping: { id: string; newId: string }[] = [];
-          if (data.cocktailCardGroup?.length > 0) {
-            importLogger.step('Importing cocktail card groups', { count: data.cocktailCardGroup.length });
-            data.cocktailCardGroup?.forEach((g) => {
-              const cocktailCardGroupMappingItem = { id: g.id, newId: randomUUID() };
-              g.id = cocktailCardGroupMappingItem.newId;
-              g.cocktailCardId = cocktailCardMapping.find((gm) => gm.id === g.cocktailCardId)!.newId;
-              cocktailCardGroupMapping.push(cocktailCardGroupMappingItem);
-            });
-            await transaction.cocktailCardGroup.createMany({ data: data.cocktailCardGroup, skipDuplicates: true });
-          }
-
-          if (data.cocktailCardGroupItem?.length > 0) {
-            importLogger.step('Importing cocktail card group items', { count: data.cocktailCardGroupItem.length });
-            data.cocktailCardGroupItem?.forEach((g) => {
-              g.cocktailId = cocktailRecipeMapping.find((gm) => gm.id === g.cocktailId)!.newId;
-              g.cocktailCardGroupId = cocktailCardGroupMapping.find((gm) => gm.id === g.cocktailCardGroupId)!.newId;
-            });
-            await transaction.cocktailCardGroupItem.createMany({
-              data: data.cocktailCardGroupItem,
-              skipDuplicates: true,
-            });
-          }
-
-          const cocktailCalculationGroupMapping: { id: string; newId: string }[] = [];
-          if (data.calculationGroups?.length > 0) {
-            importLogger.step('Importing calculation groups', { count: data.calculationGroups.length });
-            for (const group of data.calculationGroups) {
-              const existingGroup = await transaction.cocktailCalculationGroup.findFirst({
-                where: { workspaceId, name: group.name },
-              });
-              if (existingGroup) {
-                cocktailCalculationGroupMapping.push({ id: group.id, newId: existingGroup.id });
-                await transaction.cocktailCalculationGroup.update({
-                  where: { id: existingGroup.id },
-                  data: { isDefaultExpanded: group.isDefaultExpanded },
-                });
-              } else {
-                const newId = randomUUID();
-                cocktailCalculationGroupMapping.push({ id: group.id, newId });
-                await transaction.cocktailCalculationGroup.create({
-                  data: {
-                    id: newId,
-                    name: group.name,
-                    workspaceId,
-                    isDefaultExpanded: group.isDefaultExpanded,
-                  },
-                });
-              }
-            }
-          }
-
-          const cocktailCalculationMapping: { id: string; newId: string }[] = [];
-          if (data.calculation?.length > 0) {
-            importLogger.step('Importing calculations', { count: data.calculation.length });
-            data.calculation?.forEach((g) => {
-              const cocktailCalculationMappingItem = { id: g.id, newId: randomUUID() };
-              g.id = cocktailCalculationMappingItem.newId;
-              g.workspaceId = workspaceId;
-              g.updatedByUserId = user.id;
-              g.groupId = g.groupId ? (cocktailCalculationGroupMapping.find((gm) => gm.id === g.groupId)?.newId ?? null) : null;
-              cocktailCalculationMapping.push(cocktailCalculationMappingItem);
-            });
-            await transaction.cocktailCalculation.createMany({ data: data.calculation, skipDuplicates: true });
-          }
-
-          if (data.calculationItems?.length > 0) {
-            importLogger.step('Importing calculation items', { count: data.calculationItems.length });
-            data.calculationItems?.forEach((g) => {
-              g.cocktailId = cocktailRecipeMapping.find((gm) => gm.id === g.cocktailId)!.newId;
-              g.calculationId = cocktailCalculationMapping.find((gm) => gm.id === g.calculationId)!.newId;
-            });
-            await transaction.cocktailCalculationItems.createMany({ data: data.calculationItems, skipDuplicates: true });
-          }
-
-          const signageRecords = data.signage ?? [];
-          if (signageRecords.length > 0) {
-            importLogger.step('Importing signage', { count: signageRecords.length });
-            for (const signageRecord of signageRecords) {
-              const normalizedSignage = normalizeSignageRecord(signageRecord, workspaceId);
-              await transaction.signage.upsert({
-                where: {
-                  workspaceId_format: {
-                    workspaceId,
-                    format: signageRecord.format,
-                  },
-                },
-                create: normalizedSignage,
-                update: {
-                  backgroundColor: normalizedSignage.backgroundColor,
-                  backgroundMode: normalizedSignage.backgroundMode,
-                  slideDurationSeconds: normalizedSignage.slideDurationSeconds,
-                  mirrorSourceFormat: normalizedSignage.mirrorSourceFormat,
-                },
-              });
-
-              const legacyContent = signageRecord.content;
-              const hasSlidesForFormat = data.signageSlides?.some((slide) => slide.format === signageRecord.format);
-              if (legacyContent && !hasSlidesForFormat) {
-                await transaction.signageSlide.create({
-                  data: normalizeSignageSlide(
-                    {
-                      format: signageRecord.format,
-                      content: legacyContent,
-                      order: 0,
-                    },
-                    workspaceId,
-                  ),
-                });
-              }
-            }
-          }
-
-          const signageSlideRecords = data.signageSlides ?? [];
-          /** New slide id → guest menu id from the backup (remapped after the guest menu import). */
-          const signageSlideMenuLinks: { slideId: string; backupMenuId: string }[] = [];
-          if (signageSlideRecords.length > 0) {
-            importLogger.step('Importing signage slides', { count: signageSlideRecords.length });
-            for (const slide of signageSlideRecords) {
-              await ensureSignageContainer(transaction, workspaceId, slide.format as MonitorFormat);
-              const created = await transaction.signageSlide.create({
-                data: normalizeSignageSlide(slide, workspaceId),
-              });
-              if (slide.type === 'GUEST_MENU' && slide.guestMenuId) {
-                signageSlideMenuLinks.push({ slideId: created.id, backupMenuId: slide.guestMenuId });
-              }
-            }
-          }
-
-          const tagCategoryMapping: { id: string; newId: string }[] = [];
-          if ((data.tagCategories?.length ?? 0) > 0) {
-            importLogger.step('Importing tag categories', { count: data.tagCategories!.length });
-            const existingCategories = await transaction.tagCategory.findMany({ where: { workspaceId } });
-            const nameKey = (name: unknown) =>
-              name && typeof name === 'object'
-                ? Object.values(name as Record<string, unknown>)
-                    .filter((value): value is string => typeof value === 'string' && value.trim() !== '')
-                    .map((value) => value.trim().toLocaleLowerCase())
-                : [];
-            for (const category of data.tagCategories!) {
-              const keys = nameKey(category.name);
-              const existing = existingCategories.find((candidate) => nameKey(candidate.name).some((key) => keys.includes(key)));
-              if (existing) {
-                tagCategoryMapping.push({ id: category.id, newId: existing.id });
-              } else {
-                const created = await transaction.tagCategory.create({
-                  data: {
-                    workspaceId,
-                    name: (category.name ?? {}) as Prisma.InputJsonValue,
-                    order: category.order ?? 0,
-                    showAsGuestFilter: category.showAsGuestFilter ?? true,
-                  },
-                });
-                existingCategories.push(created);
-                tagCategoryMapping.push({ id: category.id, newId: created.id });
-              }
-            }
-          }
-
-          if ((data.tagDefinitions?.length ?? 0) > 0) {
-            importLogger.step('Importing tag definitions', { count: data.tagDefinitions!.length });
-            for (const definition of data.tagDefinitions!) {
-              const values = {
-                label: definition.label == null ? Prisma.DbNull : (definition.label as Prisma.InputJsonValue),
-                categoryId: definition.categoryId ? (tagCategoryMapping.find((cm) => cm.id === definition.categoryId)?.newId ?? null) : null,
-                color: definition.color ?? null,
-                isPublic: definition.isPublic ?? true,
-              };
-              await transaction.tagDefinition.upsert({
-                where: { workspaceId_tag: { workspaceId, tag: definition.tag } },
-                create: { workspaceId, tag: definition.tag, ...values },
-                update: values,
-              });
-            }
-          }
-
-          const mapTranslations = <T extends { locale: string }>(rows: T[] | undefined, getId: (row: T) => string, mapping: { id: string; newId: string }[]) =>
-            (rows ?? []).flatMap((row) => {
-              const newId = mapping.find((m) => m.id === getId(row))?.newId;
-              return newId ? [{ row, newId }] : [];
-            });
-          const cocktailTranslations = mapTranslations(data.cocktailRecipeTranslations, (row) => row.cocktailId, cocktailRecipeMapping);
-          const ingredientTranslations = mapTranslations(data.ingredientTranslations, (row) => row.ingredientId, ingredientMapping);
-          const garnishTranslations = mapTranslations(data.garnishTranslations, (row) => row.garnishId, garnishMapping);
-          const glassTranslations = mapTranslations(data.glassTranslations, (row) => row.glassId, glassMapping);
-          if (cocktailTranslations.length + ingredientTranslations.length + garnishTranslations.length + glassTranslations.length > 0) {
-            importLogger.step('Importing content translations', {
-              cocktails: cocktailTranslations.length,
-              ingredients: ingredientTranslations.length,
-              garnishes: garnishTranslations.length,
-              glasses: glassTranslations.length,
-            });
-            await transaction.cocktailRecipeTranslation.createMany({
-              data: cocktailTranslations.map(({ row, newId }) => ({
-                cocktailId: newId,
-                locale: row.locale,
-                name: row.name ?? null,
-                description: row.description ?? null,
-                history: row.history ?? null,
-              })),
-              skipDuplicates: true,
-            });
-            await transaction.ingredientTranslation.createMany({
-              data: ingredientTranslations.map(({ row, newId }) => ({
-                ingredientId: newId,
-                locale: row.locale,
-                name: row.name ?? null,
-                guestName: row.guestName ?? null,
-                description: row.description ?? null,
-              })),
-              skipDuplicates: true,
-            });
-            await transaction.garnishTranslation.createMany({
-              data: garnishTranslations.map(({ row, newId }) => ({
-                garnishId: newId,
-                locale: row.locale,
-                name: row.name ?? null,
-                description: row.description ?? null,
-              })),
-              skipDuplicates: true,
-            });
-            await transaction.glassTranslation.createMany({
-              data: glassTranslations.map(({ row, newId }) => ({ glassId: newId, locale: row.locale, name: row.name ?? null })),
-              skipDuplicates: true,
-            });
-          }
-
-          const guestMenuTemplateMapping = new Map<string, string>();
-          if ((data.guestMenuTemplates?.length ?? 0) > 0) {
-            importLogger.step('Importing guest menu templates', { count: data.guestMenuTemplates!.length });
-            for (const template of data.guestMenuTemplates!) {
-              const validated = validateBackupGuestMenuTemplate(template);
-              if (!validated.ok) {
-                // Menus referencing it fall back to the default template.
-                report.skipped.push({ type: 'guestMenuTemplate', name: String(template.name), reason: validated.reason });
-                continue;
-              }
-              const created = await transaction.guestMenuTemplate.create({
-                data: { workspaceId, name: validated.value.name, definition: validated.value.definition as Prisma.InputJsonValue },
-              });
-              guestMenuTemplateMapping.set(template.id, created.id);
-            }
-          }
-
-          const guestMenuMapping = new Map<string, string>();
-          if ((data.guestMenus?.length ?? 0) > 0) {
-            importLogger.step('Importing guest menus', { count: data.guestMenus!.length });
-            const idMaps = {
-              cocktails: new Map(cocktailRecipeMapping.map((m) => [m.id, m.newId])),
-              ingredients: new Map(ingredientMapping.map((m) => [m.id, m.newId])),
-              cardGroups: new Map(cocktailCardGroupMapping.map((m) => [m.id, m.newId])),
-              templates: guestMenuTemplateMapping,
-            };
-            const takenSlugs = new Set((await transaction.guestMenu.findMany({ where: { workspaceId }, select: { slug: true } })).map((menu) => menu.slug));
-            for (const menu of data.guestMenus!) {
-              const draft = prepareBackupGuestMenuDocument(menu.draft, idMaps);
-              if (!draft.ok) {
-                report.skipped.push({ type: 'guestMenu', name: String(menu.name), reason: draft.reason });
-                continue;
-              }
-              const baseSlug = normalizeBackupGuestMenuSlug(menu.slug);
-              let slug = baseSlug;
-              for (let i = 2; takenSlugs.has(slug); i++) slug = `${baseSlug}-${i}`;
-              takenSlugs.add(slug);
-              const sourceCardId = menu.sourceCardId ? (cocktailCardMapping.find((m) => m.id === menu.sourceCardId)?.newId ?? null) : null;
-              const createdMenu = await transaction.guestMenu.create({
-                data: {
-                  workspaceId,
-                  name: menu.name,
-                  slug,
-                  // Never live after an import: disabled, unpublished, not default, no access code, new preview token.
-                  ...importedGuestMenuSafeState(),
-                  priority: menu.priority ?? 0,
-                  validFrom: menu.validFrom ?? null,
-                  validTo: menu.validTo ?? null,
-                  weekdays: menu.weekdays ?? [],
-                  timeFrom: menu.timeFrom ?? null,
-                  timeTo: menu.timeTo ?? null,
-                  inactiveBehavior: menu.inactiveBehavior ?? 'NOTICE_WITH_LINK',
-                  sourceMode: menu.sourceMode === 'FIXED_CARD' && !sourceCardId ? 'NONE' : (menu.sourceMode ?? 'NONE'),
-                  sourceCardId,
-                  locales: menu.locales ?? [],
-                  draft: draft.value as Prisma.InputJsonValue,
-                },
-              });
-              guestMenuMapping.set(menu.id, createdMenu.id);
-            }
-          }
-
-          // Guest menu signage slides: point to the re-created menus (unknown menus → active menu).
-          for (const link of signageSlideMenuLinks) {
-            const guestMenuId = guestMenuMapping.get(link.backupMenuId);
-            if (guestMenuId) await transaction.signageSlide.update({ where: { id: link.slideId }, data: { guestMenuId } });
-          }
-
-          importLogger.step('Import transaction finished', { skipped: report.skipped.length });
-        },
-        { timeout: IMPORT_TRANSACTION_TIMEOUT_MS },
-      );
-
-      importLogger.step('Import request completed successfully');
-      return res.status(200).json({ msg: 'Success', report });
-    } catch (error) {
-      console.error(error);
-      return res.status(500).json({ msg: 'Error' });
+  for (const conversion of data.unitConversions) {
+    const fromUnitId = unitMapping.get(conversion.fromUnitId);
+    const toUnitId = unitMapping.get(conversion.toUnitId);
+    if (fromUnitId == undefined || toUnitId == undefined) continue;
+    const existing = await tx.unitConversion.findFirst({ where: { workspaceId, fromUnitId, toUnitId }, select: { id: true } });
+    if (existing == null) {
+      await tx.unitConversion.create({
+        data: { id: randomUUID(), fromUnitId, toUnitId, workspaceId, factor: conversion.factor, autoGenerated: conversion.autoGenerated },
+      });
     }
   }
+
+  const actionMapping = new Map<string, string>();
+  for (const action of data.stepActions) {
+    const existing = await tx.workspaceCocktailRecipeStepAction.findFirst({
+      where: { name: action.name, workspaceId, actionGroup: action.actionGroup },
+      select: { id: true },
+    });
+    if (existing) {
+      actionMapping.set(action.id, existing.id);
+    } else {
+      const id = randomUUID();
+      await tx.workspaceCocktailRecipeStepAction.create({
+        data: { id, name: action.name, actionGroup: action.actionGroup, dilutionPercent: action.dilutionPercent, workspaceId },
+      });
+      actionMapping.set(action.id, id);
+    }
+  }
+  const actions = await tx.workspaceCocktailRecipeStepAction.findMany({ where: { workspaceId }, select: { id: true, name: true } });
+
+  if (data.garnish.length > 0) {
+    importLogger.step('Importing garnishes', { count: data.garnish.length });
+    await tx.garnish.createMany({
+      data: data.garnish.map(({ image: _image, id, ...garnish }) => ({ ...garnish, id: ids.garnish.get(id)!, workspaceId })),
+      skipDuplicates: true,
+    });
+  }
+  const garnishImages = [
+    ...data.garnish.flatMap((garnish) => (garnish.image ? [{ garnishId: ids.garnish.get(garnish.id)!, image: garnish.image }] : [])),
+    ...data.garnishImages.flatMap((row) => (ids.garnish.has(row.garnishId) ? [{ garnishId: ids.garnish.get(row.garnishId)!, image: row.image }] : [])),
+  ];
+  await tx.garnishImage.createMany({ data: garnishImages, skipDuplicates: true });
+
+  if (data.ingredient.length > 0) {
+    importLogger.step('Importing ingredients', { count: data.ingredient.length });
+    await tx.ingredient.createMany({
+      data: data.ingredient.map(({ image: _image, volume: _volume, unit: _unit, id, ...ingredient }) => ({
+        ...ingredient,
+        id: ids.ingredient.get(id)!,
+        workspaceId,
+      })),
+      skipDuplicates: true,
+    });
+  }
+  // Older backups stored one volume + unit name on the ingredient.
+  for (const ingredient of data.ingredient) {
+    if (ingredient.volume == undefined || ingredient.unit == undefined) continue;
+    await tx.ingredientVolume.create({
+      data: {
+        id: randomUUID(),
+        ingredientId: ids.ingredient.get(ingredient.id)!,
+        unitId: await ensureUnit(convertUnit(ingredient.unit)),
+        volume: ingredient.volume,
+        workspaceId,
+      },
+    });
+  }
+  for (const volume of data.ingredientVolumes) {
+    const ingredientId = ids.ingredient.get(volume.ingredientId);
+    const unitId = unitMapping.get(volume.unitId);
+    if (ingredientId == undefined || unitId == undefined) continue;
+    const existing = await tx.ingredientVolume.findFirst({ where: { ingredientId, unitId, workspaceId }, select: { id: true } });
+    if (existing == null) await tx.ingredientVolume.create({ data: { id: randomUUID(), ingredientId, unitId, volume: volume.volume, workspaceId } });
+  }
+  const ingredientImages = [
+    ...data.ingredient.flatMap((ingredient) => (ingredient.image ? [{ ingredientId: ids.ingredient.get(ingredient.id)!, image: ingredient.image }] : [])),
+    ...data.ingredientImages.flatMap((row) =>
+      ids.ingredient.has(row.ingredientId) ? [{ ingredientId: ids.ingredient.get(row.ingredientId)!, image: row.image }] : [],
+    ),
+  ];
+  await tx.ingredientImage.createMany({ data: ingredientImages, skipDuplicates: true });
+
+  if (data.glass.length > 0) {
+    importLogger.step('Importing glasses', { count: data.glass.length });
+    await tx.glass.createMany({
+      data: data.glass.map(({ image: _image, id, ...glass }) => ({ ...glass, id: ids.glass.get(id)!, workspaceId })),
+      skipDuplicates: true,
+    });
+  }
+  const glassImages = [
+    ...data.glass.flatMap((glass) => (glass.image ? [{ glassId: ids.glass.get(glass.id)!, image: glass.image }] : [])),
+    ...data.glassImages.flatMap((row) => (ids.glass.has(row.glassId) ? [{ glassId: ids.glass.get(row.glassId)!, image: row.image }] : [])),
+  ];
+  await tx.glassImage.createMany({ data: glassImages, skipDuplicates: true });
+
+  const iceIdsByName = new Map<string, string>();
+  const ensureIce = async (name: string): Promise<string> => {
+    const known = iceIdsByName.get(name);
+    if (known) return known;
+    const existing = await tx.ice.findFirst({ where: { workspaceId, name }, select: { id: true } });
+    const id = existing?.id ?? (await tx.ice.create({ data: { id: randomUUID(), name, workspaceId } })).id;
+    iceIdsByName.set(name, id);
+    return id;
+  };
+  const iceMapping = new Map<string, string>();
+  for (const ice of data.ice) iceMapping.set(ice.id, await ensureIce(ice.name));
+
+  if (data.cocktailRecipe.length > 0) {
+    importLogger.step('Importing cocktail recipes', { count: data.cocktailRecipe.length });
+    const cocktails: Prisma.CocktailRecipeCreateManyInput[] = [];
+    for (const { image: _image, glassWithIce, id, iceId, glassId, unavailableUntil, ...cocktail } of data.cocktailRecipe) {
+      // Older backups stored the ice as a name on the cocktail.
+      const mappedIceId = (iceId != null ? iceMapping.get(iceId) : undefined) ?? (glassWithIce ? await ensureIce(convertIce(glassWithIce)) : null);
+      cocktails.push({
+        ...cocktail,
+        id: ids.cocktail.get(id)!,
+        iceId: mappedIceId,
+        glassId: glassId != null ? ids.glass.get(glassId)! : null,
+        unavailableUntil: parseBackupDate(unavailableUntil),
+        workspaceId,
+      });
+    }
+    await tx.cocktailRecipe.createMany({ data: cocktails, skipDuplicates: true });
+  }
+  const cocktailImages = [
+    ...data.cocktailRecipe.flatMap((cocktail) => (cocktail.image ? [{ cocktailRecipeId: ids.cocktail.get(cocktail.id)!, image: cocktail.image }] : [])),
+    ...data.cocktailRecipeImage.flatMap((row) =>
+      ids.cocktail.has(row.cocktailRecipeId) ? [{ cocktailRecipeId: ids.cocktail.get(row.cocktailRecipeId)!, image: row.image }] : [],
+    ),
+  ];
+  await tx.cocktailRecipeImage.createMany({ data: cocktailImages, skipDuplicates: true });
+
+  if (data.cocktailRecipeStep.length > 0) {
+    importLogger.step('Importing cocktail recipe steps', { count: data.cocktailRecipeStep.length });
+    await tx.cocktailRecipeStep.createMany({
+      data: data.cocktailRecipeStep.map((step) => {
+        let actionId = step.actionId != null ? actionMapping.get(step.actionId) : undefined;
+        if (actionId == undefined && step.tool) actionId = actions.find((action) => action.name == convertTool(step.tool!))?.id;
+        if (actionId == undefined) throw new ApiError(400, 'INVALID_REFERENCE', `Unknown action for a step of cocktail "${step.cocktailRecipeId}"`);
+        return {
+          id: ids.step.get(step.id)!,
+          stepNumber: step.stepNumber,
+          optional: step.optional,
+          actionId,
+          cocktailRecipeId: ids.cocktail.get(step.cocktailRecipeId)!,
+        };
+      }),
+      skipDuplicates: true,
+    });
+  }
+
+  if (data.cocktailRecipeGarnish.length > 0) {
+    await tx.cocktailRecipeGarnish.createMany({
+      data: data.cocktailRecipeGarnish.map((garnish) => ({
+        cocktailRecipeId: ids.cocktail.get(garnish.cocktailRecipeId)!,
+        garnishId: ids.garnish.get(garnish.garnishId)!,
+        description: garnish.description,
+        garnishNumber: garnish.garnishNumber,
+        optional: garnish.optional ?? false,
+        isAlternative: garnish.isAlternative ?? false,
+      })),
+      skipDuplicates: true,
+    });
+  }
+
+  if (data.cocktailRecipeIngredient.length > 0) {
+    importLogger.step('Importing cocktail recipe ingredients', { count: data.cocktailRecipeIngredient.length });
+    const recipeIngredients: Prisma.CocktailRecipeIngredientCreateManyInput[] = [];
+    for (const ingredient of data.cocktailRecipeIngredient) {
+      // Unknown units become "no unit" (as before); older backups stored a unit name.
+      let unitId = ingredient.unitId != null ? (unitMapping.get(ingredient.unitId) ?? null) : null;
+      if (ingredient.unit != undefined) unitId = await ensureUnit(convertUnit(ingredient.unit));
+      recipeIngredients.push({
+        id: randomUUID(),
+        ingredientNumber: ingredient.ingredientNumber,
+        optional: ingredient.optional,
+        amount: ingredient.amount,
+        unitId,
+        ingredientId: ingredient.ingredientId != null ? ids.ingredient.get(ingredient.ingredientId)! : null,
+        cocktailRecipeStepId: ids.step.get(ingredient.cocktailRecipeStepId)!,
+      });
+    }
+    await tx.cocktailRecipeIngredient.createMany({ data: recipeIngredients, skipDuplicates: true });
+  }
+
+  if (data.cocktailCard.length > 0) {
+    await tx.cocktailCard.createMany({
+      data: data.cocktailCard.map((card) => ({
+        id: ids.card.get(card.id)!,
+        name: card.name,
+        date: parseBackupDate(card.date),
+        archived: card.archived,
+        workspaceId,
+      })),
+      skipDuplicates: true,
+    });
+  }
+  if (data.cocktailCardGroup.length > 0) {
+    await tx.cocktailCardGroup.createMany({
+      data: data.cocktailCardGroup.map((group) => ({
+        id: ids.cardGroup.get(group.id)!,
+        groupNumber: group.groupNumber,
+        name: group.name,
+        cocktailCardId: ids.card.get(group.cocktailCardId)!,
+        groupPrice: group.groupPrice,
+      })),
+      skipDuplicates: true,
+    });
+  }
+  if (data.cocktailCardGroupItem.length > 0) {
+    await tx.cocktailCardGroupItem.createMany({
+      data: data.cocktailCardGroupItem.map((item) => ({
+        itemNumber: item.itemNumber,
+        cocktailCardGroupId: ids.cardGroup.get(item.cocktailCardGroupId)!,
+        cocktailId: ids.cocktail.get(item.cocktailId)!,
+        specialPrice: item.specialPrice,
+      })),
+      skipDuplicates: true,
+    });
+  }
+
+  const calculationGroupMapping = new Map<string, string>();
+  for (const group of data.calculationGroups) {
+    const existing = await tx.cocktailCalculationGroup.findFirst({ where: { workspaceId, name: group.name }, select: { id: true } });
+    if (existing) {
+      calculationGroupMapping.set(group.id, existing.id);
+      await tx.cocktailCalculationGroup.updateMany({ where: { id: existing.id, workspaceId }, data: { isDefaultExpanded: group.isDefaultExpanded } });
+    } else {
+      const id = randomUUID();
+      calculationGroupMapping.set(group.id, id);
+      await tx.cocktailCalculationGroup.create({ data: { id, name: group.name, workspaceId, isDefaultExpanded: group.isDefaultExpanded } });
+    }
+  }
+
+  if (data.calculation.length > 0) {
+    importLogger.step('Importing calculations', { count: data.calculation.length });
+    const updatedByUserId = await resolveCalculationUserId(tx, user, workspaceId);
+    await tx.cocktailCalculation.createMany({
+      data: data.calculation.map((calculation) => ({
+        id: ids.calculation.get(calculation.id)!,
+        name: calculation.name,
+        showSalesStuff: calculation.showSalesStuff,
+        groupId: calculation.groupId ? (calculationGroupMapping.get(calculation.groupId) ?? null) : null,
+        workspaceId,
+        updatedByUserId,
+      })),
+      skipDuplicates: true,
+    });
+  }
+  if (data.calculationItems.length > 0) {
+    await tx.cocktailCalculationItems.createMany({
+      data: data.calculationItems.map((item) => ({
+        plannedAmount: item.plannedAmount,
+        customPrice: item.customPrice,
+        cocktailId: ids.cocktail.get(item.cocktailId)!,
+        calculationId: ids.calculation.get(item.calculationId)!,
+      })),
+      skipDuplicates: true,
+    });
+  }
+
+  // Imported slides are appended after the workspace's existing slides of the same format.
+  const nextSlideOrder = new Map<MonitorFormat, number>();
+  const takeSlideOrder = async (format: MonitorFormat): Promise<number> => {
+    let next = nextSlideOrder.get(format);
+    if (next === undefined) {
+      const last = await tx.signageSlide.findFirst({ where: { workspaceId, format }, orderBy: { order: 'desc' }, select: { order: true } });
+      next = last ? last.order + 1 : 0;
+    }
+    nextSlideOrder.set(format, next + 1);
+    return next;
+  };
+
+  for (const signageRecord of data.signage ?? []) {
+    const normalizedSignage = normalizeSignageRecord(signageRecord, workspaceId);
+    await tx.signage.upsert({
+      where: { workspaceId_format: { workspaceId, format: signageRecord.format } },
+      create: normalizedSignage,
+      update: {
+        backgroundColor: normalizedSignage.backgroundColor,
+        backgroundMode: normalizedSignage.backgroundMode,
+        slideDurationSeconds: normalizedSignage.slideDurationSeconds,
+        mirrorSourceFormat: normalizedSignage.mirrorSourceFormat,
+      },
+    });
+
+    const legacyContent = signageRecord.content;
+    const hasSlidesForFormat = data.signageSlides?.some((slide) => slide.format === signageRecord.format);
+    if (legacyContent && !hasSlidesForFormat) {
+      await tx.signageSlide.create({
+        data: normalizeSignageSlide({ format: signageRecord.format, content: legacyContent }, workspaceId, await takeSlideOrder(signageRecord.format)),
+      });
+    }
+  }
+
+  /** New slide id → guest menu id from the backup (remapped after the guest menu import). */
+  const signageSlideMenuLinks: { slideId: string; backupMenuId: string }[] = [];
+  const slides = [...(data.signageSlides ?? [])].sort((a, b) => a.order - b.order);
+  if (slides.length > 0) importLogger.step('Importing signage slides', { count: slides.length });
+  for (const slide of slides) {
+    await ensureSignageContainer(tx, workspaceId, slide.format);
+    const created = await tx.signageSlide.create({ data: normalizeSignageSlide(slide, workspaceId, await takeSlideOrder(slide.format)) });
+    if (slide.type === 'GUEST_MENU' && slide.guestMenuId) {
+      signageSlideMenuLinks.push({ slideId: created.id, backupMenuId: slide.guestMenuId });
+    }
+  }
+
+  const tagCategoryMapping = new Map<string, string>();
+  if ((data.tagCategories?.length ?? 0) > 0) {
+    const existingCategories = await tx.tagCategory.findMany({ where: { workspaceId } });
+    const nameKey = (name: unknown) =>
+      name && typeof name === 'object'
+        ? Object.values(name as Record<string, unknown>)
+            .filter((value): value is string => typeof value === 'string' && value.trim() !== '')
+            .map((value) => value.trim().toLocaleLowerCase())
+        : [];
+    for (const category of data.tagCategories!) {
+      const keys = nameKey(category.name);
+      const existing = existingCategories.find((candidate) => nameKey(candidate.name).some((key) => keys.includes(key)));
+      if (existing) {
+        tagCategoryMapping.set(category.id, existing.id);
+      } else {
+        const created = await tx.tagCategory.create({
+          data: {
+            workspaceId,
+            name: (category.name ?? {}) as Prisma.InputJsonValue,
+            order: category.order ?? 0,
+            showAsGuestFilter: category.showAsGuestFilter ?? true,
+          },
+        });
+        existingCategories.push(created);
+        tagCategoryMapping.set(category.id, created.id);
+      }
+    }
+  }
+
+  for (const definition of data.tagDefinitions ?? []) {
+    const values = {
+      label: definition.label == null ? Prisma.DbNull : (definition.label as Prisma.InputJsonValue),
+      categoryId: definition.categoryId ? (tagCategoryMapping.get(definition.categoryId) ?? null) : null,
+      color: definition.color ?? null,
+      isPublic: definition.isPublic ?? true,
+    };
+    await tx.tagDefinition.upsert({
+      where: { workspaceId_tag: { workspaceId, tag: definition.tag } },
+      create: { workspaceId, tag: definition.tag, ...values },
+      update: values,
+    });
+  }
+
+  const mapTranslations = <T>(rows: T[] | undefined, getId: (row: T) => string, mapping: Map<string, string>) =>
+    (rows ?? []).flatMap((row) => {
+      const newId = mapping.get(getId(row));
+      return newId ? [{ row, newId }] : [];
+    });
+  const cocktailTranslations = mapTranslations(data.cocktailRecipeTranslations, (row) => row.cocktailId, ids.cocktail);
+  const ingredientTranslations = mapTranslations(data.ingredientTranslations, (row) => row.ingredientId, ids.ingredient);
+  const garnishTranslations = mapTranslations(data.garnishTranslations, (row) => row.garnishId, ids.garnish);
+  const glassTranslations = mapTranslations(data.glassTranslations, (row) => row.glassId, ids.glass);
+  await tx.cocktailRecipeTranslation.createMany({
+    data: cocktailTranslations.map(({ row, newId }) => ({
+      cocktailId: newId,
+      locale: row.locale,
+      name: row.name,
+      description: row.description,
+      history: row.history,
+    })),
+    skipDuplicates: true,
+  });
+  await tx.ingredientTranslation.createMany({
+    data: ingredientTranslations.map(({ row, newId }) => ({
+      ingredientId: newId,
+      locale: row.locale,
+      name: row.name,
+      guestName: row.guestName,
+      description: row.description,
+    })),
+    skipDuplicates: true,
+  });
+  await tx.garnishTranslation.createMany({
+    data: garnishTranslations.map(({ row, newId }) => ({ garnishId: newId, locale: row.locale, name: row.name, description: row.description })),
+    skipDuplicates: true,
+  });
+  await tx.glassTranslation.createMany({
+    data: glassTranslations.map(({ row, newId }) => ({ glassId: newId, locale: row.locale, name: row.name })),
+    skipDuplicates: true,
+  });
+
+  for (const template of prepared.templates) {
+    await tx.guestMenuTemplate.create({ data: { id: template.newId, workspaceId, name: template.name, definition: template.definition } });
+  }
+
+  const guestMenuMapping = new Map<string, string>();
+  if (prepared.guestMenus.length > 0) {
+    importLogger.step('Importing guest menus', { count: prepared.guestMenus.length });
+    const takenSlugs = new Set((await tx.guestMenu.findMany({ where: { workspaceId }, select: { slug: true } })).map((menu) => menu.slug));
+    for (const { menu, draft } of prepared.guestMenus) {
+      const baseSlug = normalizeBackupGuestMenuSlug(menu.slug);
+      let slug = baseSlug;
+      for (let i = 2; takenSlugs.has(slug); i++) slug = `${baseSlug}-${i}`;
+      takenSlugs.add(slug);
+      const sourceCardId = menu.sourceCardId ? (ids.card.get(menu.sourceCardId) ?? null) : null;
+      const createdMenu = await tx.guestMenu.create({
+        data: {
+          workspaceId,
+          name: menu.name,
+          slug,
+          // Never live after an import: disabled, unpublished, not default, no access code, new preview token.
+          ...importedGuestMenuSafeState(),
+          priority: menu.priority ?? 0,
+          validFrom: parseBackupDate(menu.validFrom),
+          validTo: parseBackupDate(menu.validTo),
+          weekdays: menu.weekdays ?? [],
+          timeFrom: menu.timeFrom ?? null,
+          timeTo: menu.timeTo ?? null,
+          inactiveBehavior: menu.inactiveBehavior ?? 'NOTICE_WITH_LINK',
+          sourceMode: menu.sourceMode === 'FIXED_CARD' && !sourceCardId ? 'NONE' : (menu.sourceMode ?? 'NONE'),
+          sourceCardId,
+          locales: menu.locales ?? [],
+          draft: draft as unknown as Prisma.InputJsonValue,
+        },
+      });
+      guestMenuMapping.set(menu.id, createdMenu.id);
+    }
+  }
+
+  // Guest menu signage slides: point to the re-created menus (unknown menus → active menu).
+  for (const link of signageSlideMenuLinks) {
+    const guestMenuId = guestMenuMapping.get(link.backupMenuId);
+    if (guestMenuId) await tx.signageSlide.update({ where: { id: link.slideId }, data: { guestMenuId } });
+  }
+
+  const counts = {
+    cocktails: data.cocktailRecipe.length,
+    ingredients: data.ingredient.length,
+    garnishes: data.garnish.length,
+    glasses: data.glass.length,
+    cards: data.cocktailCard.length,
+    calculations: data.calculation.length,
+    signageSlides: slides.length,
+    guestMenus: guestMenuMapping.size,
+    skipped: prepared.report.skipped.length,
+  };
+  await createLog(tx, workspaceId, user.id, 'WorkspaceBackup', workspaceId, 'CREATE', null, { action: 'IMPORT', ...counts });
+  importLogger.step('Import transaction finished', counts);
+}
+
+async function importBackup(req: NextApiRequest, res: NextApiResponse, user: User, workspace: Workspace) {
+  const workspaceId = workspace.id;
+  // Parse and validate everything before opening the transaction.
+  const prepared = prepareBackupImport(readBody(req));
+
+  await runTx((tx) => executeBackupImport(tx, prepared, user, workspaceId), {
+    timeout: IMPORT_TRANSACTION_TIMEOUT_MS,
+    maxWait: IMPORT_TRANSACTION_MAX_WAIT_MS,
+  });
+
+  return res.status(200).json({ msg: 'Success', report: prepared.report });
+}
+
+/**
+ * Imports a backup into the workspace (admins; API keys need BACKUPS_IMPORT). All-or-nothing:
+ * the payload is validated first (structure, references → 400, nothing written), then written in
+ * one transaction. Settings, custom templates and guest menu documents that fail the security
+ * rules are skipped and listed in `report.skipped`; imported guest menus are disabled and unpublished.
+ */
+export default withHttpMethods({
+  [HTTPMethod.POST]: withWorkspacePermission([Role.ADMIN], Permission.BACKUPS_IMPORT, importBackup),
 });

@@ -4,6 +4,7 @@ import { asWorkspace } from '../../prisma/asWorkspace';
 import { User, Workspace } from '@generated/prisma/client';
 import { constants as HttpStatus } from 'http2';
 import { auth } from '@lib/auth';
+import { deleteDemoWorkspace } from '@lib/demo/cleanup';
 
 /**
  * Helper function to get session from BetterAuth
@@ -19,7 +20,12 @@ async function getBetterAuthSession(req: NextApiRequest) {
   }
 
   // Get session from BetterAuth
-  return auth.api.getSession({ headers });
+  try {
+    return await auth.api.getSession({ headers });
+  } catch (error) {
+    console.error('BetterAuth getSession error:', error);
+    return null;
+  }
 }
 
 /**
@@ -83,12 +89,8 @@ export function withDemoWorkspacePermission(fn: (req: NextApiRequest, res: NextA
 
     // Check if workspace has expired
     if (workspaceResult.expiresAt && workspaceResult.expiresAt < new Date()) {
-      // Workspace has expired, delete it
-      await prisma.workspace.delete({
-        where: {
-          id: workspaceId,
-        },
-      });
+      // Workspace has expired: delete it together with its orphaned demo users (atomic)
+      await deleteDemoWorkspace(workspaceId);
 
       return res.status(HttpStatus.HTTP_STATUS_GONE).json({ message: 'Demo workspace has expired and has been deleted' });
     }

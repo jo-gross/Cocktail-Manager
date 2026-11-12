@@ -2,21 +2,27 @@ import prisma from '../../prisma/prisma';
 import { $Enums, Prisma, Role } from '@generated/prisma/client';
 import { randomUUID } from 'crypto';
 import { DEFAULT_TAG_CATEGORIES } from '@lib/tags/defaultTagCategories';
+import type { Db } from '@lib/db/tx';
 import WorkspaceSettingKey = $Enums.WorkspaceSettingKey;
 
 interface CreateWorkspaceOptions {
   name: string;
+  description?: string | null;
   userId?: string;
   role?: Role;
   joinCode?: string;
+  /** Demo workspaces (see `/api/demo/create-workspace`). */
+  demo?: { demoUserId: string; expiresAt: Date };
 }
 
 /**
  * Creates a workspace with all default data (Ice, Actions, Units, Conversions, Settings)
- * Optionally creates a user and/or join code
+ * Optionally creates a user and/or join code. It is a single nested create; pass `db`
+ * (a transaction client) to make it part of a larger transaction. Callers run
+ * `regenerateUnitConversions` after commit.
  */
-export async function createWorkspaceWithDefaults(options: CreateWorkspaceOptions) {
-  const { name, userId, role, joinCode } = options;
+export async function createWorkspaceWithDefaults(options: CreateWorkspaceOptions, db: Db = prisma) {
+  const { name, description, userId, role, joinCode, demo } = options;
 
   const grammId = randomUUID();
   const clId = randomUUID();
@@ -28,6 +34,8 @@ export async function createWorkspaceWithDefaults(options: CreateWorkspaceOption
 
   const workspaceData: Prisma.WorkspaceCreateInput = {
     name: name,
+    ...(description !== undefined ? { description } : {}),
+    ...(demo ? { isDemo: true, demoUserId: demo.demoUserId, expiresAt: demo.expiresAt } : {}),
     Ice: {
       createMany: {
         data: [
@@ -274,7 +282,7 @@ export async function createWorkspaceWithDefaults(options: CreateWorkspaceOption
     };
   }
 
-  return await prisma.workspace.create({
+  return await db.workspace.create({
     data: workspaceData,
   });
 }

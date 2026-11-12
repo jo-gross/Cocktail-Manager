@@ -119,6 +119,7 @@ The `API_KEY_REVOKED_CACHE_TTL_MINUTES` controls how long revoked API keys are c
 | `DEMO_MODE`                  | Enables demo mode (set to `"true"` to enable)      | `false` | `"true"`                                 |
 | `DEMO_WORKSPACE_CONFIG_PATH` | Path to the demo workspace configuration JSON file | -       | `/app/config/demo-workspace-config.json` |
 | `DEMO_TTL_HOURS`             | Time-to-live for demo workspaces in hours          | `24`    | `24`                                     |
+| `DEMO_CLEANUP_SECRET`        | Bearer secret for `POST /api/demo/cleanup` (alternatively the `INSTANCE_MASTER_API_KEY`); without it only the master key can trigger the cleanup | - | `openssl rand -hex 32` |
 
 **Note:** When `DEMO_MODE` is enabled:
 
@@ -127,6 +128,18 @@ The `API_KEY_REVOKED_CACHE_TTL_MINUTES` controls how long revoked API keys are c
 - Demo workspaces are automatically deleted after the TTL expires
 - Demo mode configuration is loaded at runtime. Changes take effect after restarting the container (no rebuild
   required).
+- `POST /api/demo/create-workspace` is rate-limited per client IP (5 per hour, see `TRUST_PROXY`) and returns a
+  short-lived (5 min), single-use `loginToken` (HMAC with `BETTER_AUTH_SECRET`); `POST /api/auth/demo-login` only
+  creates a session for that token.
+- `POST /api/demo/cleanup` requires `Authorization: Bearer <DEMO_CLEANUP_SECRET>` or the master key. The cron script
+  `scripts/cleanup-demo-workspaces.js` talks to the database directly and needs no secret.
+
+### Backups
+
+Workspace backups (`/api/v1/workspaces/{id}/admin/backups/import`) embed all images as base64. The request body limit is
+**100 MB** (set in the route file); larger backups have to be split or have their images compressed. Imports are
+all-or-nothing: the file is validated completely first (invalid structure or broken references → `400`, nothing
+written) and then written in a single transaction (max. 10 minutes).
 
 ### E-Mail / SMTP
 

@@ -65,7 +65,7 @@ You can also trigger cleanup manually:
 
 ```bash
 # Via API endpoint (if running)
-curl -X POST http://localhost:3001/api/demo/cleanup
+curl -X POST -H "Authorization: Bearer $DEMO_CLEANUP_SECRET" http://localhost:3001/api/demo/cleanup
 
 # Or directly via script
 docker exec cocktail-manager-demo-cleanup node scripts/cleanup-demo-workspaces.js

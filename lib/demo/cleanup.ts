@@ -1,66 +1,65 @@
+import type { Prisma } from '@generated/prisma/client';
 import prisma from '../../prisma/prisma';
+import { runTx, type Tx } from '@lib/db/tx';
 
 /**
- * Cleanup function to delete expired demo workspaces
- * This function can be called from a cron job or API endpoint
+ * Demo users are created by `/api/demo/create-workspace`: no e-mail and no
+ * better-auth account. Once they have no workspace membership left they are
+ * useless and are removed (sessions cascade).
  */
-export async function cleanupExpiredDemoWorkspaces() {
-  try {
-    const now = new Date();
+const ORPHAN_DEMO_USER_WHERE: Prisma.UserWhereInput = {
+  email: null,
+  workspaces: { none: {} },
+  accounts: { none: {} },
+};
 
-    // Find all expired demo workspaces
-    const expiredWorkspaces = await prisma.workspace.findMany({
-      where: {
-        isDemo: true,
-        expiresAt: {
-          lte: now,
-        },
-      },
-      include: {
-        users: true,
-      },
-    });
+async function deleteOrphanDemoUsers(tx: Tx, userIds?: string[]): Promise<number> {
+  const result = await tx.user.deleteMany({
+    where: { ...ORPHAN_DEMO_USER_WHERE, ...(userIds ? { id: { in: userIds } } : {}) },
+  });
+  return result.count;
+}
 
-    console.log(`Found ${expiredWorkspaces.length} expired demo workspace(s) to delete`);
+async function deleteDemoWorkspaceInTx(tx: Tx, workspaceId: string): Promise<boolean> {
+  const workspace = await tx.workspace.findFirst({
+    where: { id: workspaceId, isDemo: true },
+    select: { id: true, demoUserId: true, users: { select: { userId: true } } },
+  });
+  if (!workspace) return false;
 
-    for (const workspace of expiredWorkspaces) {
-      // Delete workspace (cascade will delete all related data)
-      await prisma.workspace.delete({
-        where: {
-          id: workspace.id,
-        },
-      });
+  const memberIds = workspace.users.map((member) => member.userId);
+  if (workspace.demoUserId) memberIds.push(workspace.demoUserId);
 
-      console.log(`Deleted expired demo workspace: ${workspace.id} (${workspace.name})`);
+  // Cascades to all workspace content and memberships.
+  await tx.workspace.deleteMany({ where: { id: workspace.id, isDemo: true } });
+  await deleteOrphanDemoUsers(tx, memberIds);
+  return true;
+}
 
-      // Check if demo user has any other workspaces
-      if (workspace.demoUserId) {
-        const userWorkspaces = await prisma.workspace.findMany({
-          where: {
-            users: {
-              some: {
-                userId: workspace.demoUserId,
-              },
-            },
-          },
-        });
+/** Deletes one demo workspace and its demo users that have no other membership (atomic). */
+export async function deleteDemoWorkspace(workspaceId: string): Promise<boolean> {
+  return runTx((tx) => deleteDemoWorkspaceInTx(tx, workspaceId));
+}
 
-        // If user has no other workspaces, delete the demo user
-        if (userWorkspaces.length === 0) {
-          await prisma.user.delete({
-            where: {
-              id: workspace.demoUserId,
-            },
-          });
+export interface DemoCleanupResult {
+  deletedWorkspaces: number;
+  deletedUsers: number;
+}
 
-          console.log(`Deleted demo user: ${workspace.demoUserId}`);
-        }
-      }
-    }
+/**
+ * Deletes expired demo workspaces (each together with its now orphaned demo users)
+ * and sweeps orphaned demo users left behind by older code paths.
+ * Called from `/api/demo/cleanup`; `scripts/cleanup-demo-workspaces.js` mirrors it for cron.
+ */
+export async function cleanupExpiredDemoWorkspaces(now = new Date()): Promise<DemoCleanupResult> {
+  const expiredWorkspaces = await prisma.workspace.findMany({ where: { isDemo: true, expiresAt: { lte: now } }, select: { id: true } });
 
-    return expiredWorkspaces.length;
-  } catch (error) {
-    console.error('Error cleaning up expired demo workspaces:', error);
-    throw error;
+  let deletedWorkspaces = 0;
+  for (const workspace of expiredWorkspaces) {
+    if (await deleteDemoWorkspace(workspace.id)) deletedWorkspaces++;
   }
+
+  const deletedUsers = await runTx((tx) => deleteOrphanDemoUsers(tx));
+  console.info(`[DemoCleanup] Deleted ${deletedWorkspaces} expired demo workspace(s) and ${deletedUsers} orphaned demo user(s)`);
+  return { deletedWorkspaces, deletedUsers };
 }
