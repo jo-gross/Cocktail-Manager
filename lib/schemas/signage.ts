@@ -6,7 +6,21 @@
 import { z } from '@lib/openapi/zod';
 import { WorkspaceIdParam, DeletionResult } from '@lib/schemas/common';
 import { ApiTags } from '@lib/openapi/tags';
+import { ImageDataUriSchema } from '@lib/images/imageSchema';
 import type { ResourceApiDoc } from '@lib/openapi/types';
+
+/** Max images per upload request (a PDF is split into one slide per page). */
+export const MAX_SLIDES_PER_UPLOAD = 100;
+/** Max slide ids per order/patch request. */
+export const MAX_SLIDE_IDS = 1000;
+
+const SlideId = z.string().min(1).max(64);
+/** `YYYY-MM-DD` (date inputs); a time part is tolerated and ignored by the date column. */
+const SlideDate = z
+  .string()
+  .max(40)
+  .regex(/^\d{4}-\d{2}-\d{2}(?:T[\d:.]+(?:Z|[+-]\d{2}:?\d{2})?)?$/, 'Expected YYYY-MM-DD')
+  .refine((value) => !Number.isNaN(Date.parse(value)), 'Invalid date');
 
 export const MonitorFormatEnum = z.enum(['LANDSCAPE', 'PORTRAIT']).openapi('MonitorFormat');
 export const SignageBackgroundModeEnum = z.enum(['COLOR', 'BLURRED']).openapi('SignageBackgroundMode');
@@ -58,11 +72,14 @@ export const SignageFormatDtoSchema = z
 export type SignageFormatDto = z.infer<typeof SignageFormatDtoSchema>;
 
 export const SignageFormatSettingsSchema = z.object({
-  backgroundColor: z.string().nullish(),
+  backgroundColor: z.string().max(64).nullish(),
   backgroundMode: SignageBackgroundModeEnum.optional(),
-  slideDurationSeconds: z.coerce.number().int(),
+  slideDurationSeconds: z.coerce.number().int().min(1).max(86_400),
   mirrorSourceFormat: MonitorFormatEnum.nullish(),
-  slides: z.array(z.object({ id: z.string(), order: z.coerce.number().int() }).openapi('SignageSlideOrder')),
+  slides: z
+    .array(z.object({ id: SlideId, order: z.coerce.number().int().min(0).max(1_000_000) }).openapi('SignageSlideOrder'))
+    .max(MAX_SLIDE_IDS)
+    .openapi({ description: 'New `order` per slide of this format; ids of other formats/workspaces are ignored.' }),
 });
 export type SignageFormatSettingsInput = z.infer<typeof SignageFormatSettingsSchema>;
 
@@ -77,7 +94,11 @@ export type SignageSettingsUpdateInput = z.infer<typeof SignageSettingsUpdateSch
 export const SignageSlideCreateSchema = z
   .object({
     format: MonitorFormatEnum,
-    slides: z.array(z.string()).min(1).openapi({ description: 'Base64-encoded slide images (data URIs) to append.' }),
+    slides: z
+      .array(ImageDataUriSchema)
+      .min(1)
+      .max(MAX_SLIDES_PER_UPLOAD)
+      .openapi({ description: `Base64-encoded raster slide images (data URIs) to append (max ${MAX_SLIDES_PER_UPLOAD} per request).` }),
   })
   .openapi('SignageSlideCreateInput');
 export type SignageSlideCreateInput = z.infer<typeof SignageSlideCreateSchema>;
@@ -85,7 +106,7 @@ export type SignageSlideCreateInput = z.infer<typeof SignageSlideCreateSchema>;
 export const SignageGuestMenuSlideCreateSchema = z
   .object({
     format: MonitorFormatEnum,
-    guestMenuId: z.string().nullable().openapi({ description: 'Menu to show; null = the currently active guest menu.' }),
+    guestMenuId: SlideId.nullable().openapi({ description: 'Menu to show; null = the currently active guest menu.' }),
     options: GuestMenuSlideOptionsSchema.nullish(),
   })
   .openapi('SignageGuestMenuSlideCreateInput');
@@ -93,7 +114,7 @@ export type SignageGuestMenuSlideCreateInput = z.infer<typeof SignageGuestMenuSl
 
 export const SignageGuestMenuSlideUpdateSchema = z
   .object({
-    guestMenuId: z.string().nullable().optional().openapi({ description: 'Menu to show; null = the currently active guest menu.' }),
+    guestMenuId: SlideId.nullable().optional().openapi({ description: 'Menu to show; null = the currently active guest menu.' }),
     options: GuestMenuSlideOptionsSchema.nullish(),
   })
   .openapi('SignageGuestMenuSlideUpdateInput');
@@ -101,17 +122,17 @@ export type SignageGuestMenuSlideUpdateInput = z.infer<typeof SignageGuestMenuSl
 
 export const SignageSlidePatchSchema = z
   .object({
-    slideIds: z.array(z.string()).min(1),
+    slideIds: z.array(SlideId).min(1).max(MAX_SLIDE_IDS),
     enabled: z.boolean().optional(),
-    weekdays: z.array(z.number().int()).optional(),
-    validFrom: z.string().nullish(),
-    validTo: z.string().nullish(),
+    weekdays: z.array(z.number().int().min(0).max(6)).max(7).optional(),
+    validFrom: SlideDate.nullish(),
+    validTo: SlideDate.nullish(),
     dateExclusive: z.boolean().optional(),
   })
   .openapi('SignageSlidePatchInput');
 export type SignageSlidePatchInput = z.infer<typeof SignageSlidePatchSchema>;
 
-export const SlideItemParams = WorkspaceIdParam.extend({ slideId: z.string() });
+export const SlideItemParams = WorkspaceIdParam.extend({ slideId: SlideId });
 
 export const signageApiDoc = {
   basePath: '/workspaces/{workspaceId}/admin/signage',
@@ -159,7 +180,11 @@ export const signageSlidesApiDoc = {
       params: WorkspaceIdParam,
       body: SignageSlidePatchSchema,
       response: z.array(SignageSlideDtoSchema),
-      errorResponses: { 400: 'No slide ids or no update fields.', 404: 'Slides not found.', 409: 'Exclusive date ranges overlap.' },
+      errorResponses: {
+        400: 'No slide ids or no update fields.',
+        404: 'At least one slide id is not a slide of this workspace (SLIDES_NOT_FOUND); nothing is changed.',
+        409: 'Exclusive date ranges overlap.',
+      },
     },
   },
 } satisfies ResourceApiDoc;

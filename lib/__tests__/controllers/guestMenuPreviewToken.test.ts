@@ -2,10 +2,15 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createDefaultGuestMenuDocument } from '@lib/guest-menu/schema';
 
-const mockPrisma = vi.hoisted(() => ({
-  guestMenu: { findFirst: vi.fn(), findMany: vi.fn(), update: vi.fn() },
-  workspaceUser: { findFirst: vi.fn() },
-}));
+const mockPrisma = vi.hoisted(() => {
+  const client = {
+    guestMenu: { findFirst: vi.fn(), findMany: vi.fn(), update: vi.fn() },
+    workspaceUser: { findFirst: vi.fn() },
+    // Interactive transactions run the callback with the same mock client.
+    $transaction: vi.fn(async (fn: (tx: unknown) => unknown) => fn(client)),
+  };
+  return client;
+});
 const createLog = vi.hoisted(() => vi.fn());
 
 vi.mock('../../../prisma/prisma', () => ({ default: mockPrisma }));

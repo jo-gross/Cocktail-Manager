@@ -99,7 +99,7 @@ const MetaFields = {
   timeTo: TimeOfDay.nullable(),
   inactiveBehavior: GuestMenuInactiveBehaviorEnum,
   sourceMode: GuestMenuSourceModeEnum,
-  sourceCardId: z.string().nullable(),
+  sourceCardId: z.string().min(1).max(64).nullable(),
   locales: z.array(LocaleCode).max(20),
 };
 
@@ -145,7 +145,12 @@ export type GuestMenuDuplicateInput = z.infer<typeof GuestMenuDuplicateSchema>;
 
 export const GuestMenuReorderSchema = z
   .object({
-    menuIds: z.array(z.string()).min(1).openapi({ description: 'Menu ids in priority order; priority = index (0 = highest).' }),
+    menuIds: z
+      .array(z.string().min(1).max(64))
+      .min(1)
+      .max(1000)
+      .refine((ids) => new Set(ids).size === ids.length, 'Menu ids must be unique')
+      .openapi({ description: 'Menu ids in priority order; priority = index (0 = highest).' }),
   })
   .openapi('GuestMenuReorderInput');
 export type GuestMenuReorderInput = z.infer<typeof GuestMenuReorderSchema>;
@@ -232,8 +237,8 @@ export const BuiltInGuestMenuTemplatesSchema = z
 
 // Params ---------------------------------------------------------------------
 
-export const GuestMenuItemParams = WorkspaceIdParam.extend({ menuId: z.string() });
-export const GuestMenuTemplateItemParams = WorkspaceIdParam.extend({ templateId: z.string() });
+export const GuestMenuItemParams = WorkspaceIdParam.extend({ menuId: z.string().min(1).max(64) });
+export const GuestMenuTemplateItemParams = WorkspaceIdParam.extend({ templateId: z.string().min(1).max(64) });
 
 const PUBLISH_ERRORS = { 422: 'Template validation failed (`error.issues`: GuestMenuPublishIssue[] with slot + line).' };
 
@@ -258,7 +263,7 @@ export const guestMenusCollectionApiDoc = {
       body: GuestMenuCreateSchema,
       response: GuestMenuDtoSchema,
       status: 201,
-      errorResponses: { 409: 'Slug already in use.' },
+      errorResponses: { 400: '`sourceCardId` is not a card of this workspace (INVALID_REFERENCE).', 409: 'Slug already in use (SLUG_TAKEN).' },
     },
   },
 } satisfies ResourceApiDoc;
@@ -274,6 +279,7 @@ export const guestMenusReorderApiDoc = {
       params: WorkspaceIdParam,
       body: GuestMenuReorderSchema,
       response: z.array(GuestMenuSummaryDtoSchema),
+      errorResponses: { 404: 'A menu id is not a guest menu of this workspace.' },
     },
   },
 } satisfies ResourceApiDoc;
@@ -301,7 +307,11 @@ export const guestMenusItemApiDoc = {
       params: GuestMenuItemParams,
       body: GuestMenuUpdateSchema,
       response: GuestMenuDtoSchema,
-      errorResponses: { 404: 'Guest menu not found.', 409: 'Slug already in use.' },
+      errorResponses: {
+        400: '`sourceCardId` is not a card of this workspace (INVALID_REFERENCE).',
+        404: 'Guest menu not found.',
+        409: 'Slug already in use (SLUG_TAKEN).',
+      },
     },
     DELETE: {
       roles: ['MANAGER'],
@@ -310,6 +320,7 @@ export const guestMenusItemApiDoc = {
       summary: 'Delete guest menu',
       params: GuestMenuItemParams,
       response: DeletionResult,
+      errorResponses: { 404: 'Guest menu not found.' },
     },
   },
 } satisfies ResourceApiDoc;
@@ -342,7 +353,7 @@ export const guestMenusPublishApiDoc = {
       description: 'Validates and test-renders all enabled outputs, then copies the draft to `published`.',
       params: GuestMenuItemParams,
       response: GuestMenuDtoSchema,
-      errorResponses: { 404: 'Guest menu not found.', ...PUBLISH_ERRORS },
+      errorResponses: { 404: 'Guest menu not found.', 409: 'The menu changed while publishing (CONFLICT) – publish again.', ...PUBLISH_ERRORS },
     },
   },
 } satisfies ResourceApiDoc;
@@ -376,7 +387,7 @@ export const guestMenusDuplicateApiDoc = {
       body: GuestMenuDuplicateSchema,
       response: GuestMenuDtoSchema,
       status: 201,
-      errorResponses: { 404: 'Guest menu not found.', 409: 'Slug already in use.' },
+      errorResponses: { 404: 'Guest menu not found.', 409: 'Slug already in use (SLUG_TAKEN).' },
     },
   },
 } satisfies ResourceApiDoc;
@@ -501,7 +512,7 @@ export const guestMenuTemplatesItemApiDoc = {
       summary: 'Delete custom guest menu template',
       params: GuestMenuTemplateItemParams,
       response: DeletionResult,
-      errorResponses: { 409: 'Template is used by a guest menu.' },
+      errorResponses: { 404: 'Template not found.', 409: 'Template is used by a guest menu.' },
     },
   },
 } satisfies ResourceApiDoc;

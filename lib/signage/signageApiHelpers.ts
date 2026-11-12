@@ -1,4 +1,5 @@
 import { $Enums } from '@generated/prisma/client';
+import type { Db } from '@lib/db/tx';
 import { GuestMenuSlideOptions, SignageFormatView, SignageSlideView } from './types';
 
 type MonitorFormat = $Enums.MonitorFormat;
@@ -38,34 +39,12 @@ export function mapSignageSlide(slide: {
   };
 }
 
-export async function ensureSignageContainer(
-  tx: {
-    signage: {
-      findUnique: (args: { where: { workspaceId_format: { workspaceId: string; format: MonitorFormat } } }) => Promise<unknown>;
-      create: (args: { data: { workspaceId: string; format: MonitorFormat; slideDurationSeconds: number } }) => Promise<unknown>;
-    };
-  },
-  workspaceId: string,
-  format: MonitorFormat,
-) {
-  const existing = await tx.signage.findUnique({
-    where: {
-      workspaceId_format: {
-        workspaceId,
-        format,
-      },
-    },
-  });
-
-  if (!existing) {
-    await tx.signage.create({
-      data: {
-        workspaceId,
-        format,
-        slideDurationSeconds: 10,
-      },
-    });
-  }
+/**
+ * Creates the per-format `Signage` row if missing. `INSERT … ON CONFLICT DO NOTHING`
+ * (Prisma's upsert on the compound key is find-then-create and races).
+ */
+export async function ensureSignageContainer(db: Db, workspaceId: string, format: MonitorFormat) {
+  await db.signage.createMany({ data: [{ workspaceId, format, slideDurationSeconds: 10 }], skipDuplicates: true });
 }
 
 export function resolveSignageSlides(

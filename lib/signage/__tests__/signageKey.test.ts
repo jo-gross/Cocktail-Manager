@@ -65,21 +65,30 @@ interface SlideResult {
   guestMenuAccessTokens?: string[];
 }
 
-async function callSignage(query: Record<string, string>) {
+async function requestSignage(query: Record<string, string>) {
   const headers: Record<string, string> = {};
-  let body: { content: { slides: SlideResult[] }[] } | undefined;
+  let status = 200;
+  let body: { content: { slides: SlideResult[] }[]; error?: { code: string } } | undefined;
   const res = {
     setHeader: (name: string, value: string) => {
       headers[name.toLowerCase()] = value;
       return res;
     },
-    status: () => res,
+    status: (code: number) => {
+      status = code;
+      return res;
+    },
     json: (value: typeof body) => {
       body = value;
       return res;
     },
   } as unknown as NextApiResponse;
-  await handler({ method: 'GET', query: { id: 'ws1', includeInactive: 'true', ...query } } as unknown as NextApiRequest, res);
+  await handler({ method: 'GET', query: { id: 'ws1', ...query }, headers: {} } as unknown as NextApiRequest, res);
+  return { status, headers, body };
+}
+
+async function callSignage(query: Record<string, string>) {
+  const { headers, body } = await requestSignage(query);
   const slides = body!.content[0].slides;
   return { headers, menuSlide: slides.find((slide) => slide.id === 's2')!, imageSlide: slides.find((slide) => slide.id === 's1')! };
 }
@@ -139,5 +148,31 @@ describe('/api/signage/{id} access tokens', () => {
     expect(menuSlide.guestMenuAccessTokens).toHaveLength(1);
     expect(verifyAccessToken(menuSlide.guestMenuAccessTokens![0])).toMatchObject({ k: 'signage', m: 'menu1', v: 2 });
     expect(headers['cache-control']).toBe('private, no-store');
+  });
+});
+
+describe('/api/signage/{id} includeInactive', () => {
+  beforeEach(() => {
+    state.signageKey = 'secret-key';
+  });
+
+  it('is rejected without key, with a wrong key and when the workspace has no key', async () => {
+    expect((await requestSignage({ includeInactive: 'true' })).status).toBe(403);
+    expect((await requestSignage({ includeInactive: 'true', key: 'wrong-key' })).status).toBe(403);
+    state.signageKey = null;
+    const result = await requestSignage({ includeInactive: 'true', key: 'secret-key' });
+    expect(result.status).toBe(403);
+    expect(result.body?.error?.code).toBe('FORBIDDEN');
+  });
+
+  it('returns all slides with the valid key, never cached publicly', async () => {
+    const { status, body, headers } = await requestSignage({ includeInactive: 'true', key: 'secret-key' });
+    expect(status).toBe(200);
+    expect(body!.content[0].slides.map((slide) => slide.id)).toEqual(['s1', 's2']);
+    expect(headers['cache-control']).toBe('private, no-store');
+  });
+
+  it('rejects an invalid query', async () => {
+    expect((await requestSignage({ format: 'SQUARE' })).status).toBe(400);
   });
 });

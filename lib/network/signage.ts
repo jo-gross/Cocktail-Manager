@@ -10,11 +10,26 @@ import type {
   SignageSlidePatchInput,
 } from '@lib/schemas/signage';
 import type { DeletionResult } from '@lib/schemas/common';
+import type { SignageFormatView } from '@lib/signage/types';
 
-export function getSignageSettings(
-  workspaceId: string | string[],
-): Promise<{ landscape?: SignageFormatDto; portrait?: SignageFormatDto } | SignageFormatDto[]> {
-  return apiV1Fetch(`/api/v1/workspaces/${workspaceId}/admin/signage`);
+export function getSignageSettings(workspaceId: string | string[]): Promise<SignageFormatDto[]> {
+  return apiV1Fetch<SignageFormatDto[]>(`/api/v1/workspaces/${workspaceId}/admin/signage`);
+}
+
+/**
+ * Signage access tokens (slide id → tokens) for previews of PIN-protected guest menus, from the
+ * public monitor feed. Needs the monitor key; without it (or on errors) the map is empty.
+ */
+export async function getSignagePreviewAccessTokens(workspaceId: string | string[], key: string): Promise<Map<string, string[]>> {
+  const response = await fetch(`/api/signage/${workspaceId}?includeInactive=true&key=${encodeURIComponent(key)}`);
+  if (!response.ok) return new Map();
+  const data = (await response.json()) as { content?: SignageFormatView[] };
+  return new Map(
+    (data.content ?? [])
+      .flatMap((format) => format.slides)
+      .filter((slide) => slide.guestMenuAccessTokens && slide.guestMenuAccessTokens.length > 0)
+      .map((slide) => [slide.id, slide.guestMenuAccessTokens!]),
+  );
 }
 
 export function updateSignageSettings(workspaceId: string | string[], body: SignageSettingsUpdateInput): Promise<unknown> {

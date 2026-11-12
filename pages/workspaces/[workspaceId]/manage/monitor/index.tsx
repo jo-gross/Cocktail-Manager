@@ -33,6 +33,8 @@ import {
   createSignageSlides,
   deleteSignageSlide,
   getSignageKey,
+  getSignagePreviewAccessTokens,
+  getSignageSettings,
   patchSignageSlides,
   updateGuestMenuSignageSlide,
   updateSignageSettings,
@@ -556,25 +558,38 @@ const ManageMonitorPage: NextPageWithPullToRefresh = () => {
   const fetchSignage = useCallback(() => {
     if (workspaceId == undefined) return;
     setSignageLoading(true);
-    // The monitor key is also needed for the preview of protected guest menus.
-    getSignageKey(workspaceId)
-      .catch((error) => {
+    // All slides (incl. inactive ones) come from the admin API. The monitor key is only needed for
+    // the preview of protected guest menus: their access tokens come from the public monitor feed.
+    Promise.all([
+      getSignageSettings(workspaceId),
+      getSignageKey(workspaceId).catch((error) => {
         console.error('ManageMonitorPage -> getSignageKey', error);
         return null;
-      })
-      .then((keyDto) => {
+      }),
+    ])
+      .then(async ([formats, keyDto]) => {
         setSignageKey(keyDto);
-        const keyQuery = keyDto?.key ? `&key=${encodeURIComponent(keyDto.key)}` : '';
-        return fetch(`/api/signage/${workspaceId}?includeInactive=true${keyQuery}`);
+        const hasMenuSlides = formats.some((signage) => signage.slides.some((slide) => slide.type === 'GUEST_MENU'));
+        const accessTokens =
+          hasMenuSlides && keyDto?.key
+            ? await getSignagePreviewAccessTokens(workspaceId, keyDto.key).catch((error) => {
+                console.error('ManageMonitorPage -> getSignagePreviewAccessTokens', error);
+                return new Map<string, string[]>();
+              })
+            : new Map<string, string[]>();
+        return { formats, accessTokens };
       })
-      .then(async (response) => response.json())
-      .then((data) => {
+      .then(({ formats, accessTokens }) => {
         const nextLandscape = defaultFormatState();
         const nextPortrait = defaultFormatState();
 
-        data.content.forEach((signage: SignageFormatView) => {
+        formats.forEach((signage) => {
           const formatState: SignageFormatState = {
-            slides: signage.slides,
+            slides: signage.slides.map((slide) => {
+              const view = toSignageSlideView(slide);
+              const tokens = accessTokens.get(slide.id);
+              return tokens ? { ...view, guestMenuAccessTokens: tokens } : view;
+            }),
             backgroundColor: signage.backgroundColor ?? null,
             backgroundMode: signage.backgroundMode ?? 'COLOR',
             slideDurationSeconds: signage.slideDurationSeconds,

@@ -9,8 +9,10 @@ import { Permission, Role } from '@generated/prisma/client';
 import { withHttpMethods } from '@middleware/api/handleMethods';
 import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
 import { fail } from '@lib/http/responses';
+import { sendImage } from '@lib/images/imageResponse';
 import { defineApiHandlers } from '@lib/openapi/apiDoc';
 import {
+  SlideItemParams,
   signageApiDoc,
   signageGuestMenuSlideItemApiDoc,
   signageGuestMenuSlidesApiDoc,
@@ -49,13 +51,13 @@ export const signageKeyHandler = defineApiHandlers(signageKeyApiDoc.operations, 
 
 export const slideImageHandler = withHttpMethods({
   [HTTPMethod.GET]: withWorkspacePermission([Role.USER], Permission.MONITOR_READ, async (req: NextApiRequest, res: NextApiResponse, _user, workspace) => {
-    const slideId = req.query.slideId as string | undefined;
-    if (!slideId) return res.status(400).json(fail('VALIDATION_ERROR', 'No slide id'));
+    const params = SlideItemParams.safeParse(req.query);
+    if (!params.success) return res.status(400).json(fail('VALIDATION_ERROR', 'Invalid request params', params.error.issues));
 
-    const image = await signage.getSlideImage(workspace, slideId);
+    const image = await signage.getSlideImage(workspace, params.data.slideId);
     if (!image) return res.status(404).json(fail('NOT_FOUND', 'No slide image found'));
 
-    res.writeHead(200, { 'Content-Type': image.contentType, 'Content-Length': image.bytes.length });
-    return res.send(image.bytes);
+    // Image slides are never edited in place (only replaced), so short private caching is safe.
+    return sendImage(res, image, 'private, max-age=300');
   }),
 });
