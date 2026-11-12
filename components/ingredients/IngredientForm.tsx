@@ -497,7 +497,8 @@ export function IngredientForm(props: IngredientFormProps) {
                             joinItem
                             error={!!priceError}
                             value={values.price ?? ''}
-                            onChange={handleChange}
+                            // Formik's handleChange turns a cleared number input into '', which the API coerces to 0.
+                            onChange={(event) => setFieldValue('price', event.target.value === '' ? null : parseFloat(event.target.value))}
                             onBlur={handleBlur}
                           />
                           <InputAddon>€</InputAddon>
