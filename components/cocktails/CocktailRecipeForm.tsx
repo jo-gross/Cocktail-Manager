@@ -821,7 +821,8 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                         step={'any'}
                         joinItem
                         error={!!priceError}
-                        onChange={handleChange}
+                        // Formik's handleChange turns a cleared number input into '' (rendered by the preview, coerced to 0 by the API).
+                        onChange={(event) => setFieldValue('price', event.target.value === '' ? null : parseFloat(event.target.value))}
                         onBlur={handleBlur}
                         value={values.price ?? ''}
                       />
