@@ -416,7 +416,12 @@ export default function EntityImportModal({ workspaceId, entityType, onImportCom
         body: JSON.stringify(body),
       });
 
-      const result = await response.json();
+      const result = await response.json().catch(() => ({}));
+      // Imports are all-or-nothing: a failed request wrote nothing.
+      if (!response.ok) {
+        alertService.error(result.message ?? result.error?.message ?? t('errors:import'));
+        return;
+      }
       setResults(result.results || []);
       setImportComplete(true);
 

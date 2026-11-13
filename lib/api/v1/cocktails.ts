@@ -1,7 +1,8 @@
 /**
  * v1 handler wiring for cocktails: validated, typed ctx → shared controllers
- * (which return clean DTOs). The image endpoint serves binary bytes and is
- * therefore hand-wired (outside defineApiHandlers, which JSON-envelopes).
+ * (which return clean DTOs). The image endpoint serves binary bytes and the
+ * export/import endpoints raw dumps, so they are hand-wired (outside
+ * defineApiHandlers, which JSON-envelopes) and validate their input themselves.
  */
 import type { NextApiRequest, NextApiResponse } from 'next';
 import HTTPMethod from 'http-method-enum';
@@ -10,7 +11,12 @@ import { withHttpMethods } from '@middleware/api/handleMethods';
 import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
 import { fail } from '@lib/http/responses';
 import { ApiError } from '@lib/http/ApiError';
+import { getRequestApiKeyPermissions } from '@lib/http/requestAuth';
+import { sendImage } from '@lib/images/imageResponse';
 import {
+  CocktailExportJsonSchema,
+  CocktailExportPdfSchema,
+  CocktailImportJsonSchema,
   cocktailsArchiveApiDoc,
   cocktailsAvailabilityApiDoc,
   cocktailsCheckApiDoc,
@@ -47,14 +53,13 @@ export const checkHandler = defineApiHandlers(cocktailsCheckApiDoc.operations, {
 
 export const imageHandler = withHttpMethods({
   [HTTPMethod.GET]: withWorkspacePermission([Role.USER], Permission.COCKTAILS_READ, async (req: NextApiRequest, res: NextApiResponse, _user, workspace) => {
-    const cocktailId = req.query.cocktailId as string | undefined;
-    if (!cocktailId) return res.status(400).json(fail('VALIDATION_ERROR', 'No cocktail id'));
+    const cocktailId = req.query.cocktailId;
+    if (typeof cocktailId !== 'string' || cocktailId.length === 0) return res.status(400).json(fail('VALIDATION_ERROR', 'No cocktail id'));
 
     const image = await cocktails.getCocktailImage(workspace, cocktailId);
     if (!image) return res.status(404).json(fail('NOT_FOUND', 'No cocktail image found'));
 
-    res.writeHead(200, { 'Content-Type': image.contentType, 'Content-Length': image.bytes.length });
-    return res.send(image.bytes);
+    return sendImage(res, image);
   }),
 });
 
@@ -63,21 +68,26 @@ export const cloneHandler = defineApiHandlers(cocktailsCloneApiDoc.operations, {
 });
 
 export const archiveHandler = defineApiHandlers(cocktailsArchiveApiDoc.operations, {
-  PUT: ({ workspace, params }) => cocktails.archiveCocktail(workspace, params.cocktailId, true),
+  PUT: ({ workspace, user, params }) => cocktails.archiveCocktail(workspace, user, params.cocktailId, true),
 });
 
 export const unarchiveHandler = defineApiHandlers(cocktailsUnarchiveApiDoc.operations, {
-  PUT: ({ workspace, params }) => cocktails.archiveCocktail(workspace, params.cocktailId, false),
+  PUT: ({ workspace, user, params }) => cocktails.archiveCocktail(workspace, user, params.cocktailId, false),
 });
 
 export const availabilityHandler = defineApiHandlers(cocktailsAvailabilityApiDoc.operations, {
-  PUT: ({ workspace, params, body }) => cocktails.setCocktailAvailability(workspace, params.cocktailId, body.unavailable),
+  PUT: ({ workspace, user, params, body }) => cocktails.setCocktailAvailability(workspace, user, params.cocktailId, body.unavailable),
 });
 
 // Export/import serve the raw legacy data-dump format (NOT the clean DTO envelope)
 // so the export → import round-trip stays lossless. They are therefore hand-wired
-// (roles/permission still single-sourced from the ApiDoc) and write the controller
-// results verbatim, exactly as the legacy handlers did.
+// (roles/permission still single-sourced from the ApiDoc), validate their bodies
+// themselves and write the controller results verbatim. Error bodies carry the
+// legacy `message` (read by the import wizard) plus the v1 `error` envelope.
+
+function sendInvalidBody(res: NextApiResponse, issues: unknown) {
+  return res.status(400).json(cocktailsPorting.portingError('VALIDATION_ERROR', 'Invalid request body', { issues }));
+}
 
 const exportJsonSpec = cocktailsExportJsonApiDoc.operations.POST!;
 export const exportJsonHandler = withHttpMethods({
@@ -85,8 +95,9 @@ export const exportJsonHandler = withHttpMethods({
     exportJsonSpec.roles,
     exportJsonSpec.permission,
     async (req: NextApiRequest, res: NextApiResponse, _user, workspace) => {
-      const { cocktailIds } = (req.body ?? {}) as { cocktailIds?: string[] };
-      const result = await cocktailsPorting.exportCocktailsJson(workspace, cocktailIds ?? []);
+      const parsed = CocktailExportJsonSchema.safeParse(req.body ?? {});
+      if (!parsed.success) return sendInvalidBody(res, parsed.error.issues);
+      const result = await cocktailsPorting.exportCocktailsJson(workspace, parsed.data.cocktailIds);
       return res.status(result.status).json(result.body);
     },
   ),
@@ -98,7 +109,9 @@ export const exportPdfHandler = withHttpMethods({
     exportPdfSpec.roles,
     exportPdfSpec.permission,
     async (req: NextApiRequest, res: NextApiResponse, _user, workspace) => {
-      const result = await cocktailsPorting.exportCocktailsPdf(workspace, req.body ?? {});
+      const parsed = CocktailExportPdfSchema.safeParse(req.body ?? {});
+      if (!parsed.success) return sendInvalidBody(res, parsed.error.issues);
+      const result = await cocktailsPorting.exportCocktailsPdf(workspace, parsed.data);
       if (result.kind === 'error') return res.status(result.status).json(result.body);
 
       res.setHeader('Content-Type', 'application/pdf');
@@ -115,7 +128,9 @@ export const importJsonHandler = withHttpMethods({
     importJsonSpec.roles,
     importJsonSpec.permission,
     async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
-      const result = await cocktailsPorting.importCocktailsJson(workspace, user, req.body ?? {});
+      const parsed = CocktailImportJsonSchema.safeParse(req.body ?? {});
+      if (!parsed.success) return sendInvalidBody(res, parsed.error.issues);
+      const result = await cocktailsPorting.importCocktailsJson(workspace, user, parsed.data, getRequestApiKeyPermissions(req));
       return res.status(result.status).json(result.body);
     },
   ),

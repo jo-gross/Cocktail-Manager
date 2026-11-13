@@ -1,6 +1,11 @@
 import { config } from 'dotenv';
 import { resolve } from 'node:path';
 import { execSync } from 'node:child_process';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import type { CoverageRecord } from './helpers/apiCoverage';
+
+const COVERAGE_ALLOWLIST = resolve(process.cwd(), 'test/api-coverage-allowlist.json');
 
 export async function setup() {
   config({ path: resolve(process.cwd(), '.env.test') });
@@ -14,13 +19,46 @@ export async function setup() {
     throw new Error('DATABASE_URL must be set for integration tests (see .env.test)');
   }
 
-  execSync('pnpm prisma generate', { stdio: 'inherit', env: process.env });
+  // Parallel runs against separate databases share generated/; let them skip regeneration.
+  if (!process.env.SKIP_PRISMA_GENERATE) execSync('pnpm prisma generate', { stdio: 'inherit', env: process.env });
   execSync('pnpm prisma migrate deploy', {
     stdio: 'inherit',
     env: process.env,
   });
+
+  // Operation coverage: workers append invocations here (see test/helpers/apiCoverage.ts).
+  if (process.env.API_COVERAGE_ENFORCE) {
+    process.env.API_COVERAGE_FILE = resolve(tmpdir(), `api-coverage-${process.pid}.ndjson`);
+    writeFileSync(process.env.API_COVERAGE_FILE, '');
+  }
 }
 
+/**
+ * With API_COVERAGE_ENFORCE=1 (CI, full run): every documented v1 operation must
+ * have been answered with a 2xx at least once, unless listed in
+ * test/api-coverage-allowlist.json. Fails the run otherwise.
+ */
 export async function teardown() {
-  // No global teardown required — per-test truncation handles isolation.
+  const file = process.env.API_COVERAGE_FILE;
+  if (!process.env.API_COVERAGE_ENFORCE || !file || !existsSync(file)) return;
+
+  const { flattenOperations } = await import('../lib/openapi/flattenOperations');
+  const records = readFileSync(file, 'utf8')
+    .split('\n')
+    .filter(Boolean)
+    .map((line) => JSON.parse(line) as CoverageRecord);
+  const succeeded = new Set(records.filter((r) => r.status >= 200 && r.status < 300).map((r) => `${r.method} ${r.basePath}`));
+  const allowlist: string[] = existsSync(COVERAGE_ALLOWLIST) ? JSON.parse(readFileSync(COVERAGE_ALLOWLIST, 'utf8')) : [];
+
+  const operations = (await flattenOperations()).map((op) => `${op.method} ${op.basePath}`);
+  const uncovered = operations.filter((op) => !succeeded.has(op) && !allowlist.includes(op));
+  const nowCovered = allowlist.filter((op) => succeeded.has(op));
+
+  console.info(
+    `[api-coverage] ${operations.length - operations.filter((op) => !succeeded.has(op)).length}/${operations.length} operations exercised with a 2xx response.`,
+  );
+  if (nowCovered.length > 0) console.info(`[api-coverage] Covered now, remove from the allowlist:\n  ${nowCovered.join('\n  ')}`);
+  if (uncovered.length > 0) {
+    throw new Error(`[api-coverage] Operations without a successful integration test call:\n  ${uncovered.join('\n  ')}`);
+  }
 }

@@ -6,12 +6,16 @@ import { constants as HttpStatus } from 'http2';
  * different origin — most importantly the OpenAPI "Try it out" console in the
  * docs site (Docusaurus), which runs on a separate host from the API.
  *
- * The v1 API authenticates every request with a Bearer API key (see
- * jwtApiKeyMiddleware), never with cookies, so the default policy is a wildcard
- * origin: a cross-origin page still needs a valid key to do anything, and a
- * wildcard never exposes credentialed (cookie-bearing) responses. To lock the
- * API down to specific origins, set API_CORS_ALLOWED_ORIGINS to a
- * comma-separated allowlist (e.g. "https://staging.cocktail-manager.app").
+ * Cross-origin callers authenticate with a Bearer API key (see
+ * jwtApiKeyMiddleware). The app's own pages also use the session cookie, but
+ * they are same-origin. `Access-Control-Allow-Credentials` is therefore NEVER
+ * sent: browsers then refuse to expose any cookie-authenticated cross-origin
+ * response, whether the origin is the wildcard or an allowlisted one, so a
+ * foreign page can never read data with a visitor's session. The default policy
+ * is a wildcard origin (a cross-origin page still needs a valid key to do
+ * anything). To lock the API down to specific origins, set
+ * API_CORS_ALLOWED_ORIGINS to a comma-separated allowlist (e.g.
+ * "https://staging.cocktail-manager.app"); only allowlisted origins are echoed.
  */
 
 // Request headers the docs console sends that are NOT CORS-safelisted and must

@@ -1,2 +1,4 @@
-// v1 canonical route — delegates to the legacy backup export handler.
-export { default, config } from '../../../../../workspaces/[workspaceId]/admin/backups/export';
+// v1 canonical route — thin re-export. Path is defined by this file's location.
+// The export contains all images and may exceed Next's 4 MB response warning limit.
+export const config = { api: { responseLimit: false } };
+export { default } from '@lib/backup/exportHandler';

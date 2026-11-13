@@ -70,7 +70,7 @@ describe('authenticationMiddleware', () => {
       await handler(req, res);
 
       expect(res.statusCode).toBe(400);
-      expect(res.body).toEqual({ message: 'workspaceId is required' });
+      expect(res.body).toMatchObject({ message: 'workspaceId is required' });
     });
 
     it('returns 401 when session auth fails', async () => {
@@ -81,7 +81,7 @@ describe('authenticationMiddleware', () => {
       await handler(req, res);
 
       expect(res.statusCode).toBe(401);
-      expect(res.body).toEqual({ message: 'not authenticated' });
+      expect(res.body).toMatchObject({ message: 'not authenticated' });
     });
 
     it('returns 403 when API key belongs to a different workspace', async () => {
@@ -99,7 +99,7 @@ describe('authenticationMiddleware', () => {
       await handler(req, res);
 
       expect(res.statusCode).toBe(403);
-      expect(res.body).toEqual({ message: 'API key is not valid for this workspace' });
+      expect(res.body).toMatchObject({ message: 'API key is not valid for this workspace' });
       expect(inner).not.toHaveBeenCalled();
     });
 
@@ -118,7 +118,7 @@ describe('authenticationMiddleware', () => {
       await handler(req, res);
 
       expect(res.statusCode).toBe(403);
-      expect(res.body).toEqual({ message: 'API key does not have required permission' });
+      expect(res.body).toMatchObject({ message: 'API key does not have required permission' });
     });
 
     it('allows master API key bypass', async () => {

@@ -15,7 +15,24 @@ const nextConfig = {
       },
     ],
   },
+  poweredByHeader: false,
+  async headers() {
+    const base = [
+      { key: 'X-Content-Type-Options', value: 'nosniff' },
+      { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+    ];
+    // App and API must not be framed by other sites (clickjacking). Public guest
+    // menus (/m/*) and signage set their own frame policy and stay embeddable.
+    const noForeignFraming = [{ key: 'X-Frame-Options', value: 'SAMEORIGIN' }];
+    return [
+      { source: '/:path*', headers: base },
+      { source: '/', headers: noForeignFraming },
+      { source: '/workspaces/:path*', headers: noForeignFraming },
+      { source: '/api/:path*', headers: noForeignFraming },
+    ];
+  },
   env: {
+    GIT_SHA: process.env.GIT_SHA,
     DEPLOYMENT: process.env.DEPLOYMENT,
     DEMO_MODE: process.env.DEMO_MODE,
     NEXT_PUBLIC_DEMO_MODE: process.env.DEMO_MODE,

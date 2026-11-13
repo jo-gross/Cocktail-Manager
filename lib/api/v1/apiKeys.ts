@@ -18,5 +18,5 @@ export const itemHandler = defineApiHandlers(apiKeysItemApiDoc.operations, {
     if (!key) throw new ApiError(404, 'NOT_FOUND', 'API key not found');
     return key;
   },
-  DELETE: ({ workspace, params }) => apiKeys.deleteApiKey(workspace, params.keyId),
+  DELETE: ({ workspace, user, params }) => apiKeys.deleteApiKey(workspace, user, params.keyId),
 });

@@ -6,7 +6,7 @@
  */
 import { z } from '@lib/openapi/zod';
 import { WorkspaceIdParam, DateTimeString, DeletionResult } from '@lib/schemas/common';
-import { PermissionEnum } from '@lib/schemas/permissions';
+import { PERMISSION_NAMES, PermissionEnum } from '@lib/schemas/permissions';
 import { ApiTags } from '@lib/openapi/tags';
 import type { ResourceApiDoc } from '@lib/openapi/types';
 
@@ -41,9 +41,18 @@ export const ApiKeyCreateResultSchema = z
 
 export const ApiKeyCreateSchema = z
   .object({
-    name: z.string().min(1),
-    expiresAt: z.string().nullish().openapi({ description: 'ISO expiry timestamp, or null/omitted for no expiry.' }),
-    permissions: z.array(PermissionEnum).optional().openapi({ description: 'Permission scopes to grant the key.' }),
+    name: z.string().trim().min(1).max(100),
+    expiresAt: z
+      .string()
+      .max(40)
+      .refine((value) => !Number.isNaN(Date.parse(value)), { message: 'Invalid date' })
+      .nullish()
+      .openapi({ description: 'ISO expiry timestamp in the future (400 `INVALID_EXPIRY` otherwise), or null/omitted for no expiry.' }),
+    permissions: z
+      .array(PermissionEnum)
+      .max(PERMISSION_NAMES.length)
+      .optional()
+      .openapi({ description: 'Permission scopes to grant the key (duplicates are ignored).' }),
   })
   .openapi('ApiKeyCreateInput');
 
@@ -51,11 +60,10 @@ export type ApiKeyDto = z.infer<typeof ApiKeyDtoSchema>;
 export type ApiKeyCreateResult = z.infer<typeof ApiKeyCreateResultSchema>;
 export type ApiKeyCreateInput = z.infer<typeof ApiKeyCreateSchema>;
 
-export const ApiKeyItemParams = WorkspaceIdParam.extend({ keyId: z.string() });
+export const ApiKeyItemParams = WorkspaceIdParam.extend({ keyId: z.string().min(1).max(100) });
 
 export const apiKeysCollectionApiDoc = {
   basePath: '/workspaces/{workspaceId}/api-keys',
-  legacyPath: true,
   operations: {
     GET: {
       roles: ['ADMIN'],
@@ -82,7 +90,6 @@ export const apiKeysCollectionApiDoc = {
 
 export const apiKeysItemApiDoc = {
   basePath: '/workspaces/{workspaceId}/api-keys/{keyId}',
-  legacyPath: true,
   operations: {
     GET: {
       roles: ['ADMIN'],

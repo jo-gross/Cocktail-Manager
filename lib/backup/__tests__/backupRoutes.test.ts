@@ -27,7 +27,8 @@ function createModelMock() {
 
 function createClientMock() {
   const models = new Map<string, ReturnType<typeof createModelMock>>();
-  return new Proxy({} as Record<string, ReturnType<typeof createModelMock>>, {
+  // Advisory locks (lockWorkspaceScope) use $executeRaw.
+  return new Proxy({ $executeRaw: vi.fn(async () => 0) } as unknown as Record<string, ReturnType<typeof createModelMock>>, {
     get(target, model: string) {
       if (model in target) return target[model];
       if (!models.has(model)) models.set(model, createModelMock());
@@ -50,8 +51,8 @@ vi.mock('../../../middleware/api/jwtApiKeyMiddleware', () => ({
   checkMasterApiKey: vi.fn().mockReturnValue(false),
 }));
 
-import exportHandler from '../../../pages/api/workspaces/[workspaceId]/admin/backups/export';
-import importHandler from '../../../pages/api/workspaces/[workspaceId]/admin/backups/import';
+import exportHandler from '@lib/backup/exportHandler';
+import importHandler from '@lib/backup/importHandler';
 import { auth } from '@lib/auth';
 import { authenticateApiKey } from '../../../middleware/api/jwtApiKeyMiddleware';
 
@@ -93,7 +94,8 @@ function useApiKey(permissions: string[]) {
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.prisma = createClientMock() as never;
-  mocks.prisma.$transaction = vi.fn(async (fn: (client: unknown) => Promise<unknown>) => fn(createClientMock())) as never;
+  // The export reads inside a (RepeatableRead) transaction: hand it the root mock so per-test stubs apply.
+  mocks.prisma.$transaction = vi.fn(async (fn: (client: unknown) => Promise<unknown>) => fn(mocks.prisma)) as never;
   vi.mocked(authenticateApiKey).mockResolvedValue(null);
   vi.mocked(auth.api.getSession).mockResolvedValue(null);
   vi.spyOn(console, 'info').mockImplementation(() => undefined);
@@ -108,7 +110,7 @@ describe.each([
     const res = createRes();
     await handler(request(method, {}), res);
     expect(res.statusCode).toBe(403);
-    expect(res.body).toEqual({ message: 'API key does not have required permission' });
+    expect(res.body).toMatchObject({ message: 'API key does not have required permission' });
   });
 
   it('accepts API keys with the backup permission', async () => {

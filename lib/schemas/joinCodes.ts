@@ -20,21 +20,33 @@ export const JoinCodeDtoSchema = z
 
 export type JoinCodeDto = z.infer<typeof JoinCodeDtoSchema>;
 
+/** Client-chosen join codes: 8–64 characters of [A-Za-z0-9_-]. Codes are unique across all workspaces. */
+export const JOIN_CODE_PATTERN = /^[A-Za-z0-9_-]{8,64}$/;
+
+export const JoinCodeSchema = z.string().regex(JOIN_CODE_PATTERN, { message: 'Join codes must be 8–64 characters of A–Z, a–z, 0–9, _ or -' });
+
 export const JoinCodeCreateSchema = z
   .object({
-    code: z.string().min(1),
-    expires: z.string().nullish().openapi({ description: 'ISO expiry timestamp, or null/omitted for no expiry.' }),
+    code: JoinCodeSchema.optional().openapi({
+      description:
+        'Join code (8–64 characters of `A-Z a-z 0-9 _ -`). Omit it to let the server generate a random code. Codes are unique across all workspaces; a taken code returns 409 `CODE_TAKEN`.',
+    }),
+    expires: z
+      .string()
+      .max(40)
+      .refine((value) => !Number.isNaN(Date.parse(value)), { message: 'Invalid date' })
+      .nullish()
+      .openapi({ description: 'ISO expiry timestamp, or null/omitted for no expiry.' }),
     onlyUseOnce: z.boolean().optional().openapi({ description: 'Whether the code can only be used once (default false).' }),
   })
   .openapi('JoinCodeCreateInput');
 
 export type JoinCodeCreateInput = z.infer<typeof JoinCodeCreateSchema>;
 
-export const JoinCodeItemParams = WorkspaceIdParam.extend({ code: z.string() });
+export const JoinCodeItemParams = WorkspaceIdParam.extend({ code: z.string().min(1).max(64) });
 
 export const joinCodesCollectionApiDoc = {
   basePath: '/workspaces/{workspaceId}/join-codes',
-  legacyPath: true,
   operations: {
     GET: {
       roles: ['MANAGER'],
@@ -52,13 +64,13 @@ export const joinCodesCollectionApiDoc = {
       params: WorkspaceIdParam,
       body: JoinCodeCreateSchema,
       response: JoinCodeDtoSchema,
+      errorResponses: { 409: 'The join code is already used (`CODE_TAKEN`).' },
     },
   },
 } satisfies ResourceApiDoc;
 
 export const joinCodesItemApiDoc = {
   basePath: '/workspaces/{workspaceId}/join-codes/{code}',
-  legacyPath: true,
   operations: {
     DELETE: {
       roles: ['MANAGER'],

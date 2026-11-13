@@ -8,7 +8,27 @@ import { z } from '@lib/openapi/zod';
 import { ApiTags } from '@lib/openapi/tags';
 import { WorkspaceIdParam, DeletionResult } from '@lib/schemas/common';
 import type { ResourceApiDoc } from '@lib/openapi/types';
+import { ImageDataUriSchema } from '@lib/images/imageSchema';
 import { IngredientGuestInfoDtoShape, IngredientGuestInfoInputShape } from '@lib/schemas/guestInfo';
+
+const ID_MAX = 128;
+const NAME_MAX = 255;
+const TEXT_MAX = 10_000;
+const LINK_MAX = 2048;
+const AMOUNT_MAX = 1_000_000;
+const TAGS_MAX = 100;
+const VOLUMES_MAX = 100;
+/** Max ids per export request and items per import request. */
+export const INGREDIENT_BULK_MAX = 500;
+
+const IdString = z.string().min(1).max(ID_MAX);
+const TagList = z.array(z.string().max(NAME_MAX)).max(TAGS_MAX);
+/** Guest-info code lists of an import item; unknown codes are dropped by the import sanitizer. */
+const ImportCodeList = z.array(z.string().max(64)).max(100).nullish();
+
+function hasUniqueUnitIds(units: Array<{ unitId: string }> | undefined): boolean {
+  return !units || new Set(units.map((unit) => unit.unitId)).size === units.length;
+}
 
 /** A single unit volume of an ingredient (Prisma `IngredientVolume` → clean shape). */
 export const IngredientVolumeDtoSchema = z
@@ -46,58 +66,145 @@ export type IngredientDto = z.infer<typeof IngredientDtoSchema>;
 
 /** Nested unit input for create/update (mirrors the legacy `units: [{ unitId, volume }]`). */
 export const IngredientVolumeInputSchema = z.object({
-  unitId: z.string(),
-  volume: z.coerce.number().openapi({ description: 'Volume amount in the given unit.' }),
+  unitId: IdString.openapi({ description: 'Unit of this workspace.' }),
+  volume: z.coerce.number().min(0).max(AMOUNT_MAX).openapi({ description: 'Volume amount in the given unit.' }),
 });
+
+const IngredientUnitsInput = z
+  .array(IngredientVolumeInputSchema)
+  .max(VOLUMES_MAX)
+  .refine(hasUniqueUnitIds, { message: 'Each unit may only be used once' })
+  .optional();
 
 export const IngredientCreateSchema = z
   .object({
-    id: z.string().optional().openapi({ description: 'Optional client-supplied CUID.' }),
-    name: z.string().min(1),
-    shortName: z.string().nullish(),
-    description: z.string().nullish(),
-    notes: z.string().nullish(),
-    price: z.coerce.number().nullish(),
-    link: z.string().nullish(),
-    tags: z.array(z.string()).optional(),
-    units: z.array(IngredientVolumeInputSchema).optional().openapi({ description: 'Unit volumes to attach.' }),
-    image: z.string().nullish().openapi({ description: 'Base64-encoded image (data URI) to attach.' }),
+    id: IdString.optional().openapi({ description: 'Optional client-supplied CUID.' }),
+    name: z.string().min(1).max(NAME_MAX),
+    shortName: z.string().max(NAME_MAX).nullish(),
+    description: z.string().max(TEXT_MAX).nullish(),
+    notes: z.string().max(TEXT_MAX).nullish(),
+    price: z.coerce.number().min(0).max(AMOUNT_MAX).nullish(),
+    link: z.string().max(LINK_MAX).nullish(),
+    tags: TagList.optional(),
+    units: IngredientUnitsInput.openapi({ description: 'Unit volumes to attach (units of this workspace, each at most once).' }),
+    image: ImageDataUriSchema.nullish().openapi({ description: 'Base64-encoded raster image (data URI) to attach.' }),
     ...IngredientGuestInfoInputShape,
   })
   .openapi('IngredientCreateInput');
 
 export const IngredientUpdateSchema = z
   .object({
-    name: z.string().min(1),
-    shortName: z.string().nullish(),
-    description: z.string().nullish(),
-    notes: z.string().nullish(),
-    price: z.coerce.number().nullish(),
-    link: z.string().nullish(),
-    tags: z.array(z.string()).optional(),
-    units: z.array(IngredientVolumeInputSchema).optional().openapi({ description: 'Unit volumes to attach (replaces existing).' }),
-    image: z.string().nullish().openapi({ description: 'Base64 image; omitting it removes the current image.' }),
+    name: z.string().min(1).max(NAME_MAX),
+    shortName: z.string().max(NAME_MAX).nullish(),
+    description: z.string().max(TEXT_MAX).nullish(),
+    notes: z.string().max(TEXT_MAX).nullish(),
+    price: z.coerce.number().min(0).max(AMOUNT_MAX).nullish(),
+    link: z.string().max(LINK_MAX).nullish(),
+    tags: TagList.optional(),
+    units: IngredientUnitsInput.openapi({
+      description: 'Unit volumes (units of this workspace, each at most once). Replaces the existing volumes; omitting it keeps them unchanged.',
+    }),
+    image: ImageDataUriSchema.nullish().openapi({ description: 'Base64 raster image (data URI); omitting it removes the current image.' }),
     ...IngredientGuestInfoInputShape,
   })
   .openapi('IngredientUpdateInput');
 
 export const IngredientListQuerySchema = z.object({
-  search: z.string().optional().openapi({ description: 'Case-insensitive name/short-name filter.' }),
+  search: z.string().max(NAME_MAX).optional().openapi({ description: 'Case-insensitive name/short-name filter.' }),
 });
 
 export const IngredientCheckQuerySchema = z.object({
-  name: z.string().optional().openapi({ description: 'Name to check for a similar existing ingredient (min. 3 chars).' }),
-  link: z.string().optional().openapi({ description: 'Link to check for a similar existing ingredient.' }),
+  name: z.string().max(NAME_MAX).optional().openapi({ description: 'Name to check for a similar existing ingredient (min. 3 chars).' }),
+  link: z.string().max(LINK_MAX).optional().openapi({ description: 'Link to check for a similar existing ingredient.' }),
 });
 
-export const IngredientItemParams = WorkspaceIdParam.extend({ ingredientId: z.string() });
+export const IngredientItemParams = WorkspaceIdParam.extend({ ingredientId: IdString });
 
 /** Body for cloning an ingredient — the new name to assign to the copy. */
 export const IngredientCloneSchema = z
   .object({
-    name: z.string().min(1).openapi({ description: 'Name for the cloned ingredient.' }),
+    name: z.string().min(1).max(NAME_MAX).openapi({ description: 'Name for the cloned ingredient.' }),
   })
   .openapi('IngredientCloneInput');
+
+export const IngredientExportJsonBodySchema = z
+  .object({ ids: z.array(IdString).min(1).max(INGREDIENT_BULK_MAX).openapi({ description: 'IDs of the ingredients to export.' }) })
+  .openapi('IngredientExportInput');
+
+/**
+ * One item of the portable export format (`IngredientExportStructure`); unknown keys are ignored.
+ * Volumes reference units of the same item by their exported id; units are matched by name on import.
+ */
+export const IngredientExportItemSchema = z
+  .object({
+    ingredient: z.object({
+      name: z.string().min(1).max(NAME_MAX),
+      shortName: z.string().max(NAME_MAX).nullish(),
+      description: z.string().max(TEXT_MAX).nullish(),
+      notes: z.string().max(TEXT_MAX).nullish(),
+      price: z.number().min(0).max(AMOUNT_MAX).nullish(),
+      link: z.string().max(LINK_MAX).nullish(),
+      tags: TagList.nullish(),
+      abv: z.number().min(0).max(100).nullish(),
+      allergens: ImportCodeList,
+      allergenSources: ImportCodeList,
+      additives: ImportCodeList,
+      guestInfoComplete: z.boolean().nullish(),
+      hideOnGuestMenu: z.boolean().nullish(),
+      guestName: z.string().max(NAME_MAX).nullish(),
+    }),
+    ingredientVolumes: z
+      .array(z.object({ volume: z.number().min(0).max(AMOUNT_MAX), unitId: IdString }))
+      .max(VOLUMES_MAX)
+      .nullish(),
+    units: z
+      .array(z.object({ id: IdString, name: z.string().min(1).max(NAME_MAX) }))
+      .max(VOLUMES_MAX)
+      .nullish(),
+  })
+  .superRefine((item, ctx) => {
+    const unitNames = new Map((item.units ?? []).map((unit) => [unit.id, unit.name]));
+    const usedNames = new Set<string>();
+    (item.ingredientVolumes ?? []).forEach((volume, index) => {
+      const name = unitNames.get(volume.unitId);
+      if (name === undefined) {
+        ctx.addIssue({ code: 'custom', path: ['ingredientVolumes', index, 'unitId'], message: 'Volume references a unit that is not part of the export' });
+      } else if (usedNames.has(name)) {
+        ctx.addIssue({ code: 'custom', path: ['ingredientVolumes', index, 'unitId'], message: 'Each unit may only be used once' });
+      } else {
+        usedNames.add(name);
+      }
+    });
+  });
+
+export type IngredientExportItem = z.infer<typeof IngredientExportItemSchema>;
+
+export const IngredientImportDecisionSchema = z.object({
+  exportName: z.string().max(NAME_MAX).optional(),
+  decision: z.enum(['import', 'overwrite', 'rename', 'skip']),
+  existingId: IdString.nullish().openapi({ description: 'Ingredient of this workspace to overwrite (required for `overwrite`).' }),
+  newName: z.string().max(NAME_MAX).nullish(),
+  data: z.unknown().openapi({ description: 'Export item to import (validated unless the decision is `skip`).' }),
+});
+
+export type IngredientImportDecision = z.infer<typeof IngredientImportDecisionSchema>;
+
+export const IngredientImportJsonBodySchema = z
+  .object({
+    phase: z.enum(['validate', 'prepare-mapping', 'execute']),
+    exportData: z
+      .union([z.array(z.unknown()).max(INGREDIENT_BULK_MAX), z.record(z.string(), z.unknown())])
+      .optional()
+      .openapi({ description: 'Ingredient export structure (single object or array). Required for `validate` and `prepare-mapping`.' }),
+    decisions: z
+      .array(IngredientImportDecisionSchema)
+      .max(INGREDIENT_BULK_MAX)
+      .optional()
+      .openapi({ description: 'Per-item decisions. Required for `execute`.' }),
+  })
+  .openapi('IngredientImportInput');
+
+export type IngredientImportJsonBody = z.infer<typeof IngredientImportJsonBodySchema>;
 
 /** Slim cocktail reference (id + name) used in the references list. */
 export const IngredientReferenceSchema = z
@@ -113,7 +220,6 @@ export type IngredientListQuery = z.infer<typeof IngredientListQuerySchema>;
 
 export const ingredientsCollectionApiDoc = {
   basePath: '/workspaces/{workspaceId}/ingredients',
-  legacyPath: true,
   operations: {
     GET: {
       roles: ['USER'],
@@ -139,7 +245,6 @@ export const ingredientsCollectionApiDoc = {
 
 export const ingredientsItemApiDoc = {
   basePath: '/workspaces/{workspaceId}/ingredients/{ingredientId}',
-  legacyPath: true,
   operations: {
     GET: {
       roles: ['USER'],
@@ -173,7 +278,6 @@ export const ingredientsItemApiDoc = {
 
 export const ingredientsCheckApiDoc = {
   basePath: '/workspaces/{workspaceId}/ingredients/check',
-  legacyPath: true,
   operations: {
     GET: {
       roles: ['USER'],
@@ -190,7 +294,6 @@ export const ingredientsCheckApiDoc = {
 
 export const ingredientsCloneApiDoc = {
   basePath: '/workspaces/{workspaceId}/ingredients/{ingredientId}/clone',
-  legacyPath: true,
   operations: {
     POST: {
       roles: ['MANAGER'],
@@ -208,7 +311,6 @@ export const ingredientsCloneApiDoc = {
 
 export const ingredientsReferencesApiDoc = {
   basePath: '/workspaces/{workspaceId}/ingredients/{ingredientId}/references',
-  legacyPath: true,
   operations: {
     GET: {
       roles: ['USER'],
@@ -224,7 +326,6 @@ export const ingredientsReferencesApiDoc = {
 
 export const ingredientsExportJsonApiDoc = {
   basePath: '/workspaces/{workspaceId}/ingredients/export/json',
-  legacyPath: false,
   operations: {
     POST: {
       roles: ['USER'],
@@ -234,7 +335,7 @@ export const ingredientsExportJsonApiDoc = {
       description:
         'Exports the selected ingredients (with their unit volumes and units) in the portable JSON export format. A single ingredient yields one export object; multiple ingredients yield an array. This payload is the exact input accepted by the import endpoint.',
       params: WorkspaceIdParam,
-      body: z.object({ ids: z.array(z.string()).openapi({ description: 'IDs of the ingredients to export.' }) }).openapi('IngredientExportInput'),
+      body: IngredientExportJsonBodySchema,
       response: z.any().openapi({ description: 'Legacy ingredient export structure (single object or array). Round-trips with the import endpoint.' }),
     },
   },
@@ -242,7 +343,6 @@ export const ingredientsExportJsonApiDoc = {
 
 export const ingredientsImportJsonApiDoc = {
   basePath: '/workspaces/{workspaceId}/ingredients/import/json',
-  legacyPath: false,
   operations: {
     POST: {
       roles: ['MANAGER'],
@@ -250,19 +350,17 @@ export const ingredientsImportJsonApiDoc = {
       tags: [ApiTags.ingredientsImportExport],
       summary: 'Import ingredients from JSON',
       description:
-        'Imports ingredients from the portable JSON export format via a three-phase flow (validate / prepare-mapping / execute). Consumes exactly what the export endpoint produces; missing units are recreated by name.',
+        'Imports ingredients from the portable JSON export format via a three-phase flow (validate / prepare-mapping / execute). Consumes exactly what the export endpoint produces; missing units are recreated by name. `execute` is all-or-nothing: if any item or referenced ingredient is invalid nothing is written (400 with per-item issues), and all writes run in one transaction.',
       params: WorkspaceIdParam,
-      body: z
-        .any()
-        .openapi({ description: 'Import request: { phase, exportData, decisions? }. exportData is the ingredient export structure (single object or array).' }),
+      body: IngredientImportJsonBodySchema,
       response: z.any().openapi({ description: 'Phase-dependent legacy import result (validation summary, mapping proposal or execution results).' }),
+      errorResponses: { 400: 'Invalid request or import items; nothing was imported.' },
     },
   },
 } satisfies ResourceApiDoc;
 
 export const ingredientsImageApiDoc = {
   basePath: '/workspaces/{workspaceId}/ingredients/{ingredientId}/image',
-  legacyPath: true,
   operations: {
     GET: {
       roles: ['USER'],

@@ -36,17 +36,16 @@ export const AuditLogDtoSchema = z
 export type AuditLogDto = z.infer<typeof AuditLogDtoSchema>;
 
 export const AuditLogListQuerySchema = z.object({
-  entityType: z.string().optional().openapi({ description: 'Filter by entity type, e.g. `Glass`.' }),
-  entityId: z.string().optional().openapi({ description: 'Filter by entity ID.' }),
-  page: z.coerce.number().int().min(1).default(1).openapi({ description: '1-based page number.' }),
-  limit: z.coerce.number().int().min(1).default(50).openapi({ description: 'Items per page.' }),
+  entityType: z.string().max(100).optional().openapi({ description: 'Filter by entity type, e.g. `Glass`.' }),
+  entityId: z.string().max(100).optional().openapi({ description: 'Filter by entity ID.' }),
+  page: z.coerce.number().int().min(1).max(100_000).default(1).openapi({ description: '1-based page number.' }),
+  limit: z.coerce.number().int().min(1).max(200).default(50).openapi({ description: 'Items per page (max 200).' }),
 });
 
 export type AuditLogListQuery = z.infer<typeof AuditLogListQuerySchema>;
 
 export const auditLogsCollectionApiDoc = {
   basePath: '/workspaces/{workspaceId}/audit-logs',
-  legacyPath: true,
   operations: {
     GET: {
       roles: ['USER'],

@@ -8,19 +8,15 @@
 import { mkdirSync, readdirSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { buildOpenApiDocument, type ApiVariant } from '@lib/openapi/buildDocument';
+import { buildOpenApiDocument } from '@lib/openapi/buildDocument';
 import { isResourceApiDoc } from '@lib/openapi/types';
 import type { ResourceApiDoc } from '@lib/openapi/types';
 
 /**
- * Emitted specs. `openapi.json` is the combined download + drift-guard target;
- * `v1.json` and `preview.json` are the two switchable Docusaurus versions.
+ * Emitted specs. `openapi.json` is the download + drift-guard target; `v1.json`
+ * is the same document under the name the Docusaurus site references.
  */
-const OUTPUTS: Array<[file: string, variant: ApiVariant]> = [
-  ['openapi/openapi.json', 'combined'],
-  ['openapi/v1.json', 'v1'],
-  ['openapi/preview.json', 'preview'],
-];
+const OUTPUTS = ['openapi/openapi.json', 'openapi/v1.json'];
 
 const SCHEMAS_DIR = 'lib/schemas';
 
@@ -42,21 +38,19 @@ export async function collectResourceApiDocs(): Promise<ResourceApiDoc[]> {
   return resources.sort((a, b) => a.basePath.localeCompare(b.basePath));
 }
 
-export async function generateOpenApiJson(variant: ApiVariant = 'combined'): Promise<string> {
+export async function generateOpenApiJson(): Promise<string> {
   const resources = await collectResourceApiDocs();
-  const doc = buildOpenApiDocument(resources, variant);
+  const doc = buildOpenApiDocument(resources);
   return JSON.stringify(doc, null, 2) + '\n';
 }
 
 async function main() {
   mkdirSync('openapi', { recursive: true });
-  for (const [file, variant] of OUTPUTS) {
-    const json = await generateOpenApiJson(variant);
+  const json = await generateOpenApiJson();
+  const doc = JSON.parse(json);
+  for (const file of OUTPUTS) {
     writeFileSync(file, json);
-    const doc = JSON.parse(json);
-    console.log(
-      `Wrote ${file} (${variant}): ${Object.keys(doc.paths ?? {}).length} paths, ${Object.keys(doc.components?.schemas ?? {}).length} component schemas.`,
-    );
+    console.log(`Wrote ${file}: ${Object.keys(doc.paths ?? {}).length} paths, ${Object.keys(doc.components?.schemas ?? {}).length} component schemas.`);
   }
 }
 

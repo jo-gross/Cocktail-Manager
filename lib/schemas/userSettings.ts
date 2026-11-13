@@ -31,7 +31,7 @@ export const UserSettingKeyEnum = z
 export const UserSettingUpdateSchema = z
   .object({
     setting: UserSettingKeyEnum,
-    value: z.string().nullable().openapi({ description: 'Setting value as string, or null to clear.' }),
+    value: z.string().max(1000).nullable().openapi({ description: 'Setting value as string (max 1000 characters), or null to clear.' }),
   })
   .openapi('UserSettingUpdateInput');
 
@@ -49,7 +49,6 @@ export type UserSettingDto = z.infer<typeof UserSettingDtoSchema>;
 
 export const userSettingsApiDoc = {
   basePath: '/users/settings',
-  legacyPath: true,
   operations: {
     PUT: {
       roles: ['USER'],

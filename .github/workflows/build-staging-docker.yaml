@@ -46,6 +46,7 @@ jobs:
           push: true
           build-args: |
             DEPLOYMENT=staging
+            GIT_SHA=${{ github.sha }}
           tags: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:staging-${{ github.sha }}
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:staging-latest

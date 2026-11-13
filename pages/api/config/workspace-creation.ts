@@ -1,10 +1,8 @@
 import { NextApiRequest, NextApiResponse } from 'next';
+import HTTPMethod from 'http-method-enum';
+import { withHttpMethods } from '@middleware/api/handleMethods';
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== 'GET') {
-    return res.status(405).json({ message: 'Method not allowed' });
-  }
-
+async function getWorkspaceCreationConfig(req: NextApiRequest, res: NextApiResponse) {
   return res.json({
     data: {
       disabled: process.env.DISABLE_WORKSPACE_CREATION === 'true',
@@ -12,3 +10,5 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     },
   });
 }
+
+export default withHttpMethods({ [HTTPMethod.GET]: getWorkspaceCreationConfig });

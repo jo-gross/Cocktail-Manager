@@ -1,12 +1,15 @@
 /**
  * Version-agnostic business logic for cocktail statistics (v1, core endpoints).
- * Same DB operations as the legacy handlers, but returns clean public DTOs
- * (lib/api/dto/statistics.ts) plus PaginationMeta where paginated. Legacy routes
- * remain wrapped-but-untouched and keep their raw Prisma shapes.
+ * Returns clean public DTOs (lib/api/dto/statistics.ts) plus PaginationMeta
+ * where paginated. Every path/body id is scoped to the caller's workspace.
  */
 import prisma from '../../../prisma/prisma';
 import { getEndOfDay, getStartOfDay } from '@lib/dateHelpers';
 import { ApiError } from '@lib/http/ApiError';
+import { actorUserId } from '@lib/http/requestAuth';
+import { assertIdsInWorkspace } from '@lib/api/scope';
+import { runTx } from '@lib/db/tx';
+import { consumeOldestQueueItem } from '@lib/api/controllers/queue';
 import { StatisticBadRequestMessage } from '../../../models/StatisticBadRequest';
 import { toCocktailStatisticItemDto } from '@lib/api/dto/statistics';
 import { Prisma, WorkspaceSettingKey } from '@generated/prisma/client';
@@ -95,72 +98,60 @@ export async function listStatisticLogs(
   };
 }
 
+/**
+ * Records that a cocktail was made and, unless `ignoreQueue`, consumes the
+ * matching queue item. Both happen in one transaction; the queue item is taken
+ * with `SKIP LOCKED`, so two bartenders finishing the same cocktail each consume
+ * a different item (or none when the queue ran empty) instead of failing.
+ */
 export async function addCocktailStatistic(workspace: Workspace, user: User, input: CocktailStatisticCreateInput): Promise<CocktailStatisticItemDto> {
-  const { cocktailId, cocktailCardId, actionSource, notes, ignoreQueue } = input;
+  const { cocktailId, actionSource, notes, ignoreQueue } = input;
+  const cardId = input.cocktailCardId && input.cocktailCardId !== 'search' ? input.cocktailCardId : null;
 
-  let cardId = cocktailCardId;
-  if (cardId === 'search') {
-    cardId = undefined;
-  }
+  const created = await runTx(async (tx) => {
+    await assertIdsInWorkspace(tx, workspace.id, { cocktail: [cocktailId], card: [cardId] });
 
-  const data: Prisma.CocktailStatisticItemCreateInput = {
-    date: new Date(),
-    workspace: { connect: { id: workspace.id } },
-    user: { connect: { id: user.id } },
-    cocktail: { connect: { id: cocktailId } },
-    cocktailCard: cardId ? { connect: { id: cardId } } : undefined,
-    actionSource: actionSource,
-  };
-
-  if (!ignoreQueue) {
-    const items = await prisma.cocktailQueue.findMany({
-      where: { workspaceId: workspace.id, cocktailId },
-    });
-    // If there are items in the queue, then some could be removed.
-    if (items.length !== 0) {
+    if (!ignoreQueue) {
       if (notes) {
-        const searchNote: string | null = notes === '-' ? null : notes;
-        const queueItem = await prisma.cocktailQueue.findFirst({
-          where: { workspaceId: workspace.id, cocktailId, notes: searchNote },
-          orderBy: { createdAt: 'asc' },
-        });
-        if (queueItem) {
-          await prisma.cocktailQueue.delete({ where: { id: queueItem.id } });
-        }
+        await consumeOldestQueueItem(tx, workspace.id, cocktailId, notes === '-' ? null : notes);
       } else {
-        // Ask user which one to remove: list the oldest cocktail grouped by cocktailId and notes.
-        const oldestEntries = await prisma.cocktailQueue.groupBy({
+        // Without notes only un-noted items may be consumed; if noted ones exist the caller must choose.
+        const oldestEntries = await tx.cocktailQueue.groupBy({
           by: ['cocktailId', 'notes'],
           where: { workspaceId: workspace.id, cocktailId },
           _min: { createdAt: true, id: true },
           orderBy: { _min: { createdAt: 'asc' } },
         });
-
-        const notesEntry = oldestEntries.find((entry) => entry.notes != null);
-
-        if (notesEntry == null && oldestEntries.length > 0 && oldestEntries[0]._min?.id != null) {
-          await prisma.cocktailQueue.delete({ where: { id: oldestEntries[0]._min.id } });
-        } else {
+        if (oldestEntries.some((entry) => entry.notes != null)) {
           throw new ApiError(400, 'STATISTIC_QUEUE_AMBIGUOUS', StatisticBadRequestMessage, oldestEntries);
+        }
+        if (oldestEntries.length > 0) {
+          await consumeOldestQueueItem(tx, workspace.id, cocktailId, null);
         }
       }
     }
-  }
 
-  const created = await prisma.cocktailStatisticItem.create({ data, include: statisticItemInclude });
+    return tx.cocktailStatisticItem.create({
+      data: {
+        date: new Date(),
+        workspaceId: workspace.id,
+        userId: actorUserId(user.id),
+        cocktailId,
+        cocktailCardId: cardId,
+        actionSource,
+      },
+      include: statisticItemInclude,
+    });
+  });
+
   return toCocktailStatisticItemDto(created);
 }
 
 export async function deleteCocktailStatistic(workspace: Workspace, cocktailStatisticId: string): Promise<{ count: number }> {
-  const existing = await prisma.cocktailStatisticItem.findUnique({
-    where: { id: cocktailStatisticId, workspaceId: workspace.id },
-    select: { id: true },
-  });
-  if (!existing) throw new ApiError(404, 'NOT_FOUND', 'Cocktail statistic not found');
-
-  await prisma.cocktailStatisticItem.delete({
+  const { count } = await prisma.cocktailStatisticItem.deleteMany({
     where: { id: cocktailStatisticId, workspaceId: workspace.id },
   });
+  if (count === 0) throw new ApiError(404, 'NOT_FOUND', 'Cocktail statistic not found');
 
-  return { count: 1 };
+  return { count };
 }

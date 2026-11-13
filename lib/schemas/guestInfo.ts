@@ -16,6 +16,7 @@ export const AllergenSourceSchema = z.enum(ALLERGEN_SOURCES).openapi('AllergenSo
 });
 const allergenSourcesInput = z
   .array(AllergenSourceSchema)
+  .max(100)
   .optional()
   .openapi({ description: 'Specific cereals/nuts behind GLUTEN/NUTS. Sources whose allergen is not set are dropped.' });
 export const AdditiveSchema = z.enum(ADDITIVES).openapi('Additive', { description: 'Labelling-relevant additive.' });
@@ -26,27 +27,27 @@ export const AbvSchema = z.coerce.number().min(0).max(100);
 /** Guest-information fields shared by the ingredient create/update inputs (all optional → untouched on update). */
 export const IngredientGuestInfoInputShape = {
   abv: AbvSchema.nullish().openapi({ description: 'Alcohol by volume in % vol (0–100), null if unknown.' }),
-  allergens: z.array(AllergenSchema).optional(),
+  allergens: z.array(AllergenSchema).max(100).optional(),
   allergenSources: allergenSourcesInput,
-  additives: z.array(AdditiveSchema).optional(),
+  additives: z.array(AdditiveSchema).max(100).optional(),
   guestInfoComplete: z.boolean().optional().openapi({ description: 'Allergen/additive information has been verified as complete.' }),
   hideOnGuestMenu: z.boolean().optional().openapi({ description: 'Do not list this ingredient on guest menus.' }),
-  guestName: z.string().nullish().openapi({ description: 'Name shown to guests instead of the internal name.' }),
+  guestName: z.string().max(255).nullish().openapi({ description: 'Name shown to guests instead of the internal name.' }),
 };
 
 /** Guest-information fields shared by the garnish create/update inputs (all optional → untouched on update). */
 export const GarnishGuestInfoInputShape = {
-  allergens: z.array(AllergenSchema).optional(),
+  allergens: z.array(AllergenSchema).max(100).optional(),
   allergenSources: allergenSourcesInput,
-  additives: z.array(AdditiveSchema).optional(),
+  additives: z.array(AdditiveSchema).max(100).optional(),
   guestInfoComplete: z.boolean().optional().openapi({ description: 'Allergen/additive information has been verified as complete.' }),
 };
 
 /** Guest-information fields of the cocktail create/update inputs (all optional → untouched on update). */
 export const CocktailGuestInfoInputShape = {
   abvOverride: AbvSchema.nullish().openapi({ description: 'Manual ABV in % vol; overrides the calculated value. null = calculate.' }),
-  extraAllergens: z.array(AllergenSchema).optional().openapi({ description: 'Allergens added on top of the ingredient-derived ones.' }),
-  extraAdditives: z.array(AdditiveSchema).optional().openapi({ description: 'Additives added on top of the ingredient-derived ones.' }),
+  extraAllergens: z.array(AllergenSchema).max(100).optional().openapi({ description: 'Allergens added on top of the ingredient-derived ones.' }),
+  extraAdditives: z.array(AdditiveSchema).max(100).optional().openapi({ description: 'Additives added on top of the ingredient-derived ones.' }),
 };
 
 export const IngredientGuestInfoDtoShape = {
@@ -141,7 +142,7 @@ export const GuestInfoBulkUpdateSchema = z
     ingredients: z
       .array(
         z.object({
-          id: z.string(),
+          id: z.string().max(64),
           abv: IngredientGuestInfoInputShape.abv,
           allergens: IngredientGuestInfoInputShape.allergens,
           additives: IngredientGuestInfoInputShape.additives,
@@ -153,7 +154,7 @@ export const GuestInfoBulkUpdateSchema = z
       .max(1000)
       .optional(),
     garnishes: z
-      .array(z.object({ id: z.string(), ...GarnishGuestInfoInputShape }))
+      .array(z.object({ id: z.string().max(64), ...GarnishGuestInfoInputShape }))
       .max(1000)
       .optional(),
   })
@@ -168,7 +169,6 @@ export const GuestInfoBulkUpdateResultSchema = z.object({
 
 export const cocktailGuestInfoApiDoc = {
   basePath: '/workspaces/{workspaceId}/cocktails/{cocktailId}/guest-info',
-  legacyPath: false,
   operations: {
     GET: {
       roles: ['USER'],
@@ -177,7 +177,7 @@ export const cocktailGuestInfoApiDoc = {
       summary: 'Get derived guest information of a cocktail',
       description:
         'Allergens, additives and alcohol content derived from the ingredients, garnishes and steps of the cocktail (plus manual extras/override), including which component contributes what.',
-      params: WorkspaceIdParam.extend({ cocktailId: z.string() }),
+      params: WorkspaceIdParam.extend({ cocktailId: z.string().max(64) }),
       response: CocktailGuestInfoResponseSchema,
       errorResponses: { 404: 'Cocktail not found.' },
     },
@@ -186,7 +186,6 @@ export const cocktailGuestInfoApiDoc = {
 
 export const guestInfoOverviewApiDoc = {
   basePath: '/workspaces/{workspaceId}/guest-info/overview',
-  legacyPath: false,
   operations: {
     GET: {
       roles: ['USER'],
@@ -202,7 +201,6 @@ export const guestInfoOverviewApiDoc = {
 
 export const guestInfoBulkApiDoc = {
   basePath: '/workspaces/{workspaceId}/guest-info/bulk',
-  legacyPath: false,
   operations: {
     PUT: {
       roles: ['MANAGER'],
@@ -214,6 +212,7 @@ export const guestInfoBulkApiDoc = {
       params: WorkspaceIdParam,
       body: GuestInfoBulkUpdateSchema,
       response: GuestInfoBulkUpdateResultSchema,
+      errorResponses: { 400: 'An ingredient or garnish id does not belong to this workspace (nothing was updated).' },
     },
   },
 } satisfies ResourceApiDoc;

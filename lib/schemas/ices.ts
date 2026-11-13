@@ -6,6 +6,7 @@
  */
 import { z } from '@lib/openapi/zod';
 import { WorkspaceIdParam } from '@lib/schemas/common';
+import { LabelTranslationsSchema, TranslationKeySchema } from '@lib/schemas/translations';
 import { ApiTags } from '@lib/openapi/tags';
 import type { ResourceApiDoc } from '@lib/openapi/types';
 
@@ -20,27 +21,27 @@ export const IceDtoSchema = z
 export type IceDto = z.infer<typeof IceDtoSchema>;
 
 /** Optional per-language display-name overrides, keyed by language code. */
-const TranslationsSchema = z
-  .record(z.string(), z.string())
-  .openapi({ description: 'Optional display-name translations keyed by language code, e.g. { "en": "Crushed ice" }.' });
+const TranslationsSchema = LabelTranslationsSchema.openapi({
+  description: 'Optional display-name translations keyed by language code, e.g. { "en": "Crushed ice" }.',
+});
 
 export const IceCreateSchema = z
   .object({
-    id: z.string().optional().openapi({ description: 'Optional client-supplied CUID.' }),
-    name: z.string().min(1),
+    id: z.string().min(1).max(100).optional().openapi({ description: 'Optional client-supplied CUID.' }),
+    name: TranslationKeySchema.max(100),
     translations: TranslationsSchema.optional(),
   })
   .openapi('IceCreateInput');
 
 export const IceUpdateSchema = z
   .object({
-    name: z.string().min(1),
+    name: TranslationKeySchema.max(100),
     translations: TranslationsSchema.optional(),
   })
   .openapi('IceUpdateInput');
 
 export const IceListQuerySchema = z.object({
-  search: z.string().optional().openapi({ description: 'Case-insensitive name filter.' }),
+  search: z.string().max(100).optional().openapi({ description: 'Case-insensitive name filter.' }),
 });
 
 export const IceItemParams = WorkspaceIdParam.extend({ iceId: z.string() });
@@ -51,7 +52,6 @@ export type IceListQuery = z.infer<typeof IceListQuerySchema>;
 
 export const icesCollectionApiDoc = {
   basePath: '/workspaces/{workspaceId}/ice',
-  legacyPath: true,
   operations: {
     GET: {
       roles: ['USER'],
@@ -77,7 +77,6 @@ export const icesCollectionApiDoc = {
 
 export const icesItemApiDoc = {
   basePath: '/workspaces/{workspaceId}/ice/{iceId}',
-  legacyPath: true,
   operations: {
     GET: {
       roles: ['USER'],
@@ -96,12 +95,14 @@ export const icesItemApiDoc = {
       params: IceItemParams,
       body: IceUpdateSchema,
       response: IceDtoSchema,
+      errorResponses: { 404: 'Ice not found.' },
     },
     DELETE: {
       roles: ['ADMIN'],
       permission: 'ICE_DELETE',
       tags: [ApiTags.iceCore],
       summary: 'Delete ice',
+      description: 'Deletes the ice; cocktails using it keep existing without ice.',
       params: IceItemParams,
       response: IceDtoSchema,
       errorResponses: { 404: 'Ice not found.' },

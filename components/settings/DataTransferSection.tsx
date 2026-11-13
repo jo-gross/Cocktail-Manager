@@ -7,7 +7,7 @@ import { FormField } from '@components/forms/FormField';
 import { UserContext } from '@lib/context/UserContextProvider';
 import { alertService } from '@lib/alertService';
 import { formatDate } from '@lib/DateUtils';
-import type { BackupStructure } from '../../pages/api/workspaces/[workspaceId]/admin/backups/backupStructure';
+import type { BackupStructure } from '@lib/backup/backupStructure';
 import type { BackupImportReport, BackupImportSkippedItem } from '@lib/backup/backupSecurity';
 import { SettingsSection } from './SettingsSection';
 

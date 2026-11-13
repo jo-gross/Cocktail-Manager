@@ -46,7 +46,7 @@ async function waitForAppReady(): Promise<void> {
   throw new Error('App did not become ready within timeout');
 }
 
-async function createDemoWorkspace(): Promise<{ workspaceId: string; userId: string }> {
+async function createDemoWorkspace(): Promise<{ workspaceId: string; userId: string; loginToken: string }> {
   const response = await fetch(`${BASE_URL}/api/demo/create-workspace`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -58,33 +58,27 @@ async function createDemoWorkspace(): Promise<{ workspaceId: string; userId: str
 
   const result = await response.json();
   console.log(`Demo workspace created: ${result.data.workspaceId}`);
-  return { workspaceId: result.data.workspaceId, userId: result.data.userId };
+  return { workspaceId: result.data.workspaceId, userId: result.data.userId, loginToken: result.data.loginToken };
 }
 
-async function authenticateDemo(page: Page, userId: string): Promise<void> {
-  await page.goto(`${BASE_URL}/api/auth/signin`);
+async function authenticateDemo(page: Page, loginToken: string): Promise<void> {
+  await page.goto(BASE_URL);
   await page.waitForLoadState('networkidle');
 
-  const csrfResponse = await page.evaluate(async (baseUrl) => {
-    const res = await fetch(`${baseUrl}/api/auth/csrf`);
-    return res.json();
-  }, BASE_URL);
-
-  await page.evaluate(
-    async ({ baseUrl, csrfToken, userId }) => {
-      const res = await fetch(`${baseUrl}/api/auth/callback/demo`, {
+  // Same flow as the demo button on the start page: the one-time token from
+  // create-workspace is exchanged for a session cookie.
+  const status = await page.evaluate(
+    async ({ baseUrl, token }) => {
+      const res = await fetch(`${baseUrl}/api/auth/demo-login`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({
-          csrfToken,
-          userId,
-        }),
-        redirect: 'follow',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ loginToken: token }),
       });
-      return res.url;
+      return res.status;
     },
-    { baseUrl: BASE_URL, csrfToken: csrfResponse.csrfToken, userId },
+    { baseUrl: BASE_URL, token: loginToken },
   );
+  if (status !== 200) throw new Error(`Demo login failed with status ${status}`);
 
   await page.goto(BASE_URL);
   await page.waitForLoadState('networkidle');
@@ -124,13 +118,13 @@ async function run(): Promise<void> {
 
   await waitForAppReady();
 
-  const { workspaceId, userId } = await createDemoWorkspace();
+  const { workspaceId, loginToken } = await createDemoWorkspace();
 
   const browser: Browser = await chromium.launch({ headless: true });
   const context = await browser.newContext({ viewport: DESKTOP_VIEWPORT });
   const page = await context.newPage();
 
-  await authenticateDemo(page, userId);
+  await authenticateDemo(page, loginToken);
 
   // Close any modals that might appear
   try {

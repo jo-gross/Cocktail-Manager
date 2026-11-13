@@ -1,0 +1,5 @@
+[
+  "POST /workspaces/{workspaceId}/cocktails/export/pdf",
+  "POST /workspaces/{workspaceId}/guest-menus/{menuId}/export/pdf",
+  "GET /workspaces/{workspaceId}/guest-menus/{menuId}/export/table-tent.pdf"
+]

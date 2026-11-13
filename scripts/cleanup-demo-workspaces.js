@@ -1,90 +1,66 @@
 #!/usr/bin/env node
 
 /**
- * Script to cleanup expired demo workspaces
- * This script can be called from a cron job
+ * Script to cleanup expired demo workspaces (mirror of lib/demo/cleanup.ts for cron jobs)
  * Usage: node scripts/cleanup-demo-workspaces.js
+ *
+ * Each expired demo workspace is deleted together with its demo users that have no
+ * other membership in one transaction; afterwards orphaned demo users (no e-mail,
+ * no membership, no login account) are removed.
  */
 
-// Try to load Prisma from different possible locations
 let PrismaClient;
+let PrismaPg;
 try {
-  // Try standalone build location first (Docker)
+  // Generated client (standalone build and local dev)
   PrismaClient = require('../generated/prisma').PrismaClient;
+  PrismaPg = require('@prisma/adapter-pg').PrismaPg;
 } catch (e) {
-  try {
-    // Try node_modules location (local dev)
-    PrismaClient = require('@prisma/client').PrismaClient;
-  } catch (e2) {
-    try {
-      // Try relative path from node_modules
-      PrismaClient = require('../node_modules/@prisma/client').PrismaClient;
-    } catch (e3) {
-      console.error('Could not load Prisma Client. Make sure Prisma is generated.');
-      console.error('Errors:', e.message, e2.message, e3.message);
-      process.exit(1);
-    }
-  }
+  console.error('Could not load Prisma Client. Make sure Prisma is generated.');
+  console.error('Error:', e.message);
+  process.exit(1);
 }
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }) });
+
+const ORPHAN_DEMO_USER_WHERE = { email: null, workspaces: { none: {} }, accounts: { none: {} } };
+
+async function deleteDemoWorkspace(workspaceId) {
+  return prisma.$transaction(async (tx) => {
+    const workspace = await tx.workspace.findFirst({
+      where: { id: workspaceId, isDemo: true },
+      select: { id: true, demoUserId: true, users: { select: { userId: true } } },
+    });
+    if (!workspace) return false;
+    const memberIds = workspace.users.map((member) => member.userId);
+    if (workspace.demoUserId) memberIds.push(workspace.demoUserId);
+
+    // Cascades to all workspace content and memberships.
+    await tx.workspace.deleteMany({ where: { id: workspace.id, isDemo: true } });
+    await tx.user.deleteMany({ where: { ...ORPHAN_DEMO_USER_WHERE, id: { in: memberIds } } });
+    return true;
+  });
+}
 
 async function cleanupExpiredDemoWorkspaces() {
   try {
-    const now = new Date();
-
-    // Find all expired demo workspaces
     const expiredWorkspaces = await prisma.workspace.findMany({
-      where: {
-        isDemo: true,
-        expiresAt: {
-          lte: now,
-        },
-      },
-      include: {
-        users: true,
-      },
+      where: { isDemo: true, expiresAt: { lte: new Date() } },
+      select: { id: true },
     });
-
     console.log(`Found ${expiredWorkspaces.length} expired demo workspace(s) to delete`);
 
+    let deletedWorkspaces = 0;
     for (const workspace of expiredWorkspaces) {
-      // Delete workspace (cascade will delete all related data)
-      await prisma.workspace.delete({
-        where: {
-          id: workspace.id,
-        },
-      });
-
-      console.log(`Deleted expired demo workspace: ${workspace.id} (${workspace.name})`);
-
-      // Check if demo user has any other workspaces
-      if (workspace.demoUserId) {
-        const userWorkspaces = await prisma.workspace.findMany({
-          where: {
-            users: {
-              some: {
-                userId: workspace.demoUserId,
-              },
-            },
-          },
-        });
-
-        // If user has no other workspaces, delete the demo user
-        if (userWorkspaces.length === 0) {
-          await prisma.user.delete({
-            where: {
-              id: workspace.demoUserId,
-            },
-          });
-
-          console.log(`Deleted demo user: ${workspace.demoUserId}`);
-        }
+      if (await deleteDemoWorkspace(workspace.id)) {
+        deletedWorkspaces++;
+        console.log(`Deleted expired demo workspace: ${workspace.id}`);
       }
     }
 
-    console.log(`Cleanup completed. Deleted ${expiredWorkspaces.length} expired demo workspace(s)`);
-    return expiredWorkspaces.length;
+    const { count: deletedUsers } = await prisma.user.deleteMany({ where: ORPHAN_DEMO_USER_WHERE });
+    console.log(`Cleanup completed. Deleted ${deletedWorkspaces} expired demo workspace(s) and ${deletedUsers} orphaned demo user(s)`);
+    return deletedWorkspaces;
   } catch (error) {
     console.error('Error cleaning up expired demo workspaces:', error);
     throw error;
@@ -96,7 +72,7 @@ async function cleanupExpiredDemoWorkspaces() {
 // Run cleanup if script is executed directly
 if (require.main === module) {
   cleanupExpiredDemoWorkspaces()
-    .then((count) => {
+    .then(() => {
       process.exit(0);
     })
     .catch((error) => {

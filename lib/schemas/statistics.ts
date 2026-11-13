@@ -57,31 +57,46 @@ export type CocktailStatisticItemDto = z.infer<typeof CocktailStatisticItemDtoSc
 /** Body for logging a cocktail statistic entry (mirrors the legacy add endpoint). */
 export const CocktailStatisticCreateSchema = z
   .object({
-    cocktailId: z.string().openapi({ description: 'ID of the cocktail that was made.' }),
-    cocktailCardId: z.string().optional().openapi({ description: 'ID of the cocktail card. The sentinel value `search` is treated as no card.' }),
-    actionSource: z.string().optional().openapi({ description: 'Free-form origin tag for the statistic entry.' }),
-    notes: z.string().optional().openapi({ description: 'Queue note to match when removing a queued cocktail (`-` matches an empty note).' }),
+    cocktailId: z.string().min(1).max(100).openapi({ description: 'ID of the cocktail that was made.' }),
+    cocktailCardId: z.string().max(100).optional().openapi({ description: 'ID of the cocktail card. The sentinel value `search` is treated as no card.' }),
+    actionSource: z.string().max(100).optional().openapi({ description: 'Free-form origin tag for the statistic entry.' }),
+    notes: z.string().max(500).optional().openapi({ description: 'Queue note to match when removing a queued cocktail (`-` matches an empty note).' }),
     ignoreQueue: z.boolean().optional().openapi({ description: 'When true, skips the cocktail-queue reconciliation.' }),
   })
   .openapi('CocktailStatisticCreateInput');
 
 export type CocktailStatisticCreateInput = z.infer<typeof CocktailStatisticCreateSchema>;
 
+/** Date query parameter (ISO date or timestamp); unparsable values are rejected with 400 instead of failing the query. */
+export const StatisticDateQueryParam = z
+  .string()
+  .max(64)
+  .refine((value) => !Number.isNaN(Date.parse(value)), { message: 'Invalid date' });
+
+export const MAX_STATISTIC_PAGE_SIZE = 200;
+export const MAX_STATISTIC_SEARCH_LENGTH = 200;
+
 /** Query for the cocktail-statistics list (date-range filter, dayStartTime aware). */
 export const CocktailStatisticListQuerySchema = z.object({
-  startDate: z.string().optional().openapi({ description: 'Inclusive start date (interpreted with the workspace day-start-time setting).' }),
-  endDate: z.string().optional().openapi({ description: 'Inclusive end date (interpreted with the workspace day-start-time setting).' }),
+  startDate: StatisticDateQueryParam.optional().openapi({ description: 'Inclusive start date (interpreted with the workspace day-start-time setting).' }),
+  endDate: StatisticDateQueryParam.optional().openapi({ description: 'Inclusive end date (interpreted with the workspace day-start-time setting).' }),
 });
 
 export type CocktailStatisticListQuery = z.infer<typeof CocktailStatisticListQuerySchema>;
 
 /** Query for the paginated statistics log list. */
 export const StatisticLogListQuerySchema = z.object({
-  startDate: z.string().optional().openapi({ description: 'Inclusive start date (interpreted with the workspace day-start-time setting).' }),
-  endDate: z.string().optional().openapi({ description: 'Inclusive end date (interpreted with the workspace day-start-time setting).' }),
-  search: z.string().optional().openapi({ description: 'Case-insensitive filter over cocktail, card and user name.' }),
+  startDate: StatisticDateQueryParam.optional().openapi({ description: 'Inclusive start date (interpreted with the workspace day-start-time setting).' }),
+  endDate: StatisticDateQueryParam.optional().openapi({ description: 'Inclusive end date (interpreted with the workspace day-start-time setting).' }),
+  search: z.string().max(MAX_STATISTIC_SEARCH_LENGTH).optional().openapi({ description: 'Case-insensitive filter over cocktail, card and user name.' }),
   page: z.coerce.number().int().min(1).default(1).openapi({ description: '1-based page number.' }),
-  limit: z.coerce.number().int().min(1).default(50).openapi({ description: 'Items per page.' }),
+  limit: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(MAX_STATISTIC_PAGE_SIZE)
+    .default(50)
+    .openapi({ description: `Items per page (at most ${MAX_STATISTIC_PAGE_SIZE}).` }),
 });
 
 export type StatisticLogListQuery = z.infer<typeof StatisticLogListQuerySchema>;
@@ -90,7 +105,6 @@ export const StatisticItemParams = WorkspaceIdParam.extend({ cocktailStatisticId
 
 export const statisticsCocktailsCollectionApiDoc = {
   basePath: '/workspaces/{workspaceId}/statistics/cocktails',
-  legacyPath: true,
   operations: {
     GET: {
       roles: ['USER'],
@@ -107,7 +121,6 @@ export const statisticsCocktailsCollectionApiDoc = {
 
 export const statisticsCocktailsAddApiDoc = {
   basePath: '/workspaces/{workspaceId}/statistics/cocktails/add',
-  legacyPath: true,
   operations: {
     POST: {
       roles: ['USER'],
@@ -120,14 +133,15 @@ export const statisticsCocktailsAddApiDoc = {
       params: WorkspaceIdParam,
       body: CocktailStatisticCreateSchema,
       response: CocktailStatisticItemDtoSchema,
-      errorResponses: { 400: 'Ambiguous cocktail-queue entries; specify a note to remove one.' },
+      errorResponses: {
+        400: 'Ambiguous cocktail-queue entries (specify a note to remove one), or the cocktail/card does not exist in this workspace.',
+      },
     },
   },
 } satisfies ResourceApiDoc;
 
 export const statisticsCocktailsItemApiDoc = {
   basePath: '/workspaces/{workspaceId}/statistics/cocktails/{cocktailStatisticId}',
-  legacyPath: true,
   operations: {
     DELETE: {
       roles: ['MANAGER'],
@@ -143,7 +157,6 @@ export const statisticsCocktailsItemApiDoc = {
 
 export const statisticsLogsCollectionApiDoc = {
   basePath: '/workspaces/{workspaceId}/statistics/logs',
-  legacyPath: true,
   operations: {
     GET: {
       roles: ['USER'],
@@ -162,7 +175,6 @@ export const statisticsLogsCollectionApiDoc = {
 
 export const statisticsLogsItemApiDoc = {
   basePath: '/workspaces/{workspaceId}/statistics/logs/{cocktailStatisticId}',
-  legacyPath: true,
   operations: {
     DELETE: {
       roles: ['MANAGER'],

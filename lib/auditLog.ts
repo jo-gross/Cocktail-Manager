@@ -1,6 +1,7 @@
 import { Prisma } from '@generated/prisma/client';
 import { diff, Diff } from 'deep-diff';
 import type { AppPrismaClient } from '../prisma/prisma';
+import { actorUserId } from './http/requestAuth';
 
 type AuditAction = 'CREATE' | 'UPDATE' | 'DELETE';
 
@@ -58,7 +59,18 @@ export interface GlassAuditSnapshot {
 
 // ────────────── GARNISH SNAPSHOT ──────────────
 
-export interface GarnishAuditSnapshot {
+/** Guest-information fields shared by ingredients and garnishes (allergens, additives, …). */
+export interface GuestInfoAuditFields {
+  abv?: string;
+  allergens?: Record<string, true>;
+  allergenSources?: Record<string, true>;
+  additives?: Record<string, true>;
+  guestInfoComplete?: true;
+  hideOnGuestMenu?: true;
+  guestName?: string;
+}
+
+export interface GarnishAuditSnapshot extends GuestInfoAuditFields {
   name: string;
   description?: string;
   notes?: string;
@@ -68,7 +80,7 @@ export interface GarnishAuditSnapshot {
 
 // ────────────── INGREDIENT SNAPSHOT ──────────────
 
-export interface IngredientAuditSnapshot {
+export interface IngredientAuditSnapshot extends GuestInfoAuditFields {
   name: string;
   shortName?: string;
   description?: string;
@@ -126,6 +138,26 @@ function stripImages(data: unknown): unknown {
 }
 
 // ────────────── SNAPSHOT BUILDERS ──────────────
+
+function asFlagRecord(values: unknown): Record<string, true> | undefined {
+  if (!Array.isArray(values) || values.length === 0) return undefined;
+  return values.reduce<Record<string, true>>((acc, value) => {
+    acc[String(value)] = true;
+    return acc;
+  }, {});
+}
+
+function buildGuestInfoFields(data: Record<string, unknown>): GuestInfoAuditFields {
+  return {
+    abv: data.abv != null ? `${data.abv} %` : undefined,
+    allergens: asFlagRecord(data.allergens),
+    allergenSources: asFlagRecord(data.allergenSources),
+    additives: asFlagRecord(data.additives),
+    guestInfoComplete: data.guestInfoComplete ? true : undefined,
+    hideOnGuestMenu: data.hideOnGuestMenu ? true : undefined,
+    guestName: (data.guestName as string) ?? undefined,
+  };
+}
 
 function buildCocktailSnapshot(data: Record<string, unknown> | null): CocktailRecipeAuditSnapshot | null {
   if (!data) return null;
@@ -266,6 +298,7 @@ function buildGarnishEntitySnapshot(data: Record<string, unknown> | null): Garni
     description: (data.description as string) ?? undefined,
     notes: (data.notes as string) ?? undefined,
     price: data.price != null ? `${data.price} €` : undefined,
+    ...buildGuestInfoFields(data),
   };
 
   const garnishImages = data.GarnishImage as Array<Record<string, unknown>> | undefined;
@@ -295,6 +328,7 @@ function buildIngredientSnapshot(data: Record<string, unknown> | null): Ingredie
           return acc;
         }, {})
       : undefined,
+    ...buildGuestInfoFields(data),
   };
 
   const volumes = (data.IngredientVolume || data.units) as Array<Record<string, unknown>> | undefined;
@@ -429,7 +463,7 @@ export async function createLog(
   await tx.auditLog.create({
     data: {
       workspaceId,
-      userId,
+      userId: actorUserId(userId),
       entityType,
       entityId,
       action,
@@ -477,7 +511,7 @@ export async function createCocktailRecipeAuditLog(
   await tx.auditLog.create({
     data: {
       workspaceId,
-      userId,
+      userId: actorUserId(userId),
       entityType: 'CocktailRecipe',
       entityId,
       action,

@@ -6,6 +6,7 @@ const mockPrisma = vi.hoisted(() => ({
   glass: {
     findMany: vi.fn(),
     findUnique: vi.fn(),
+    findUniqueOrThrow: vi.fn(),
     findFirst: vi.fn(),
     create: vi.fn(),
     update: vi.fn(),
@@ -20,6 +21,7 @@ const mockPrisma = vi.hoisted(() => ({
     findMany: vi.fn(),
   },
   $transaction: vi.fn(),
+  $queryRaw: vi.fn(),
 }));
 
 mockPrisma.$transaction.mockImplementation((fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma));
@@ -67,22 +69,33 @@ describe('glasses controller', () => {
   });
 
   describe('deleteGlass', () => {
+    it('throws 404 when the glass is not in the workspace', async () => {
+      mockPrisma.$queryRaw.mockResolvedValue([]);
+
+      await expect(glassesController.deleteGlass(workspace, user, 'g1')).rejects.toMatchObject({ status: 404, code: 'NOT_FOUND' });
+      expect(mockPrisma.glass.delete).not.toHaveBeenCalled();
+    });
+
     it('throws 409 when glass is referenced by cocktails', async () => {
+      mockPrisma.$queryRaw.mockResolvedValue([{ id: 'g1' }]);
       mockPrisma.cocktailRecipe.findMany.mockResolvedValue([{ id: 'c1', name: 'Mojito' }]);
 
       await expect(glassesController.deleteGlass(workspace, user, 'g1')).rejects.toMatchObject({
         status: 409,
         code: 'GLASS_IN_USE',
       });
+      expect(mockPrisma.glass.delete).not.toHaveBeenCalled();
     });
 
     it('deletes glass when no references exist', async () => {
+      mockPrisma.$queryRaw.mockResolvedValue([{ id: 'g1' }]);
       mockPrisma.cocktailRecipe.findMany.mockResolvedValue([]);
-      mockPrisma.glass.findUnique.mockResolvedValue({ id: 'g1', GlassImage: [] });
+      mockPrisma.glass.findUniqueOrThrow.mockResolvedValue({ id: 'g1', GlassImage: [] });
       mockPrisma.glass.delete.mockResolvedValue({ id: 'g1' });
 
       const result = await glassesController.deleteGlass(workspace, user, 'g1');
       expect(result).toEqual({ count: 1 });
+      expect(mockPrisma.glass.delete).toHaveBeenCalledWith({ where: { id: 'g1', workspaceId: 'ws-1' } });
     });
   });
 

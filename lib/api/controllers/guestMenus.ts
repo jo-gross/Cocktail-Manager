@@ -8,6 +8,8 @@ import prisma from '../../../prisma/prisma';
 import { Permission, Prisma, Role, type GuestMenu, type User, type Workspace } from '@generated/prisma/client';
 import { ApiError } from '@lib/http/ApiError';
 import { createLog } from '@lib/auditLog';
+import { assertIdsInWorkspace } from '@lib/api/scope';
+import { lockWorkspaceScope, runTx, type Tx } from '@lib/db/tx';
 import { toGuestMenuDto, toGuestMenuSummaryDto, toGuestMenuTemplateDto, type GuestMenuDtoContext } from '@lib/api/dto/guestMenus';
 import { createDefaultGuestMenuDocument, CUSTOM_TEMPLATE_PREFIX, GUEST_MENU_OUTPUTS, type GuestMenuDocument } from '@lib/guest-menu/schema';
 import { getScheduleNow, resolveActiveMenu } from '@lib/guest-menu/schedule';
@@ -70,10 +72,18 @@ export function slugify(value: string): string {
   return slug || 'karte';
 }
 
-async function uniqueSlug(workspaceId: string, base: string, excludeId?: string): Promise<string> {
+/**
+ * Serializes guest menu writes that depend on other menus of the workspace
+ * (slug uniqueness, max priority + 1, the single default flag, reorder).
+ */
+const GUEST_MENUS_LOCK = 'guest-menus';
+
+const SLUG_TAKEN_MESSAGE = 'A guest menu with this slug already exists';
+
+async function uniqueSlug(tx: Tx, workspaceId: string, base: string, excludeId?: string): Promise<string> {
   const existing = new Set(
     (
-      await prisma.guestMenu.findMany({
+      await tx.guestMenu.findMany({
         where: { workspaceId, slug: { startsWith: base }, ...(excludeId ? { id: { not: excludeId } } : {}) },
         select: { slug: true },
       })
@@ -87,15 +97,24 @@ async function uniqueSlug(workspaceId: string, base: string, excludeId?: string)
   return `${base}-${Date.now().toString(36)}`;
 }
 
-async function assertSlugFree(workspaceId: string, slug: string, excludeId?: string) {
-  const taken = await prisma.guestMenu.findFirst({ where: { workspaceId, slug, ...(excludeId ? { id: { not: excludeId } } : {}) }, select: { id: true } });
-  if (taken) throw new ApiError(409, 'SLUG_TAKEN', 'A guest menu with this slug already exists');
+async function assertSlugFree(tx: Tx, workspaceId: string, slug: string, excludeId?: string) {
+  const taken = await tx.guestMenu.findFirst({ where: { workspaceId, slug, ...(excludeId ? { id: { not: excludeId } } : {}) }, select: { id: true } });
+  if (taken) throw new ApiError(409, 'SLUG_TAKEN', SLUG_TAKEN_MESSAGE);
 }
 
-async function assertCardInWorkspace(workspaceId: string, cardId: string | null | undefined) {
-  if (!cardId) return;
-  const card = await prisma.cocktailCard.findFirst({ where: { id: cardId, workspaceId }, select: { id: true } });
-  if (!card) throw new ApiError(400, 'VALIDATION_ERROR', 'sourceCardId does not belong to this workspace');
+/** The (workspaceId, slug) unique index is the last line of defence (e.g. against backup imports) → same 409 as the check. */
+async function withSlugConflict<T>(fn: () => Promise<T>): Promise<T> {
+  try {
+    return await fn();
+  } catch (error) {
+    if ((error as { code?: unknown } | null)?.code === 'P2002') throw new ApiError(409, 'SLUG_TAKEN', SLUG_TAKEN_MESSAGE);
+    throw error;
+  }
+}
+
+async function nextPriority(tx: Tx, workspaceId: string): Promise<number> {
+  const max = await tx.guestMenu.aggregate({ where: { workspaceId }, _max: { priority: true } });
+  return (max._max.priority ?? -1) + 1;
 }
 
 function toDbDate(value: string | null | undefined): Date | null | undefined {
@@ -151,30 +170,34 @@ function guestMenuAuditSnapshot(menu: GuestMenu): Record<string, unknown> {
   };
 }
 
-/** Logs create / meta update / publish / unpublish / delete (never draft autosaves). Failures don't fail the request. */
+/** Logs create / meta update / publish / unpublish / delete (never draft autosaves) in the transaction of the change. */
 async function auditGuestMenu(
+  tx: Tx,
   workspace: Pick<Workspace, 'id'>,
   user: Pick<User, 'id'> | undefined,
   action: 'CREATE' | 'UPDATE' | 'DELETE',
   before: GuestMenu | null,
   after: GuestMenu | null,
+  extra?: Record<string, unknown>,
 ) {
   const entityId = (after ?? before)?.id;
   if (!entityId) return;
-  try {
-    await createLog(
-      prisma,
-      workspace.id,
-      user?.id,
-      'GuestMenu',
-      entityId,
-      action,
-      before ? guestMenuAuditSnapshot(before) : null,
-      after ? guestMenuAuditSnapshot(after) : null,
-    );
-  } catch (error) {
-    console.error('[guest menu audit]', error);
-  }
+  await createLog(
+    tx,
+    workspace.id,
+    user?.id,
+    'GuestMenu',
+    entityId,
+    action,
+    before ? guestMenuAuditSnapshot(before) : null,
+    after ? { ...guestMenuAuditSnapshot(after), ...extra } : null,
+  );
+}
+
+async function findMenuInTx(tx: Tx, workspace: Pick<Workspace, 'id'>, menuId: string): Promise<GuestMenu> {
+  const menu = await tx.guestMenu.findFirst({ where: { id: menuId, workspaceId: workspace.id } });
+  if (!menu) throw new ApiError(404, 'NOT_FOUND', 'Guest menu not found');
+  return menu;
 }
 
 export async function listGuestMenus(
@@ -199,10 +222,6 @@ export async function getGuestMenu(
 }
 
 export async function createGuestMenu(workspace: Workspace, input: GuestMenuCreateInput, user?: Pick<User, 'id'>): Promise<GuestMenuDto> {
-  const slug = input.slug ?? (await uniqueSlug(workspace.id, slugify(input.name)));
-  await assertSlugFree(workspace.id, slug);
-  await assertCardInWorkspace(workspace.id, input.sourceCardId);
-
   const settings = await loadWorkspaceGuestSettings(workspace.id);
   const sourceMode = input.sourceMode ?? (input.sourceCardId ? 'FIXED_CARD' : 'ACTIVE_CARD');
   let document: GuestMenuDocument =
@@ -217,73 +236,93 @@ export async function createGuestMenu(workspace: Workspace, input: GuestMenuCrea
     };
   }
 
-  const maxPriority = await prisma.guestMenu.aggregate({ where: { workspaceId: workspace.id }, _max: { priority: true } });
-  const menu = await prisma.guestMenu.create({
-    data: {
-      workspaceId: workspace.id,
-      name: input.name,
-      slug,
-      sourceMode,
-      sourceCardId: input.sourceCardId ?? null,
-      locales: input.locales ?? [],
-      priority: (maxPriority._max.priority ?? -1) + 1,
-      draft: json(document),
-      previewToken: generatePreviewToken(),
-    },
-  });
-  await auditGuestMenu(workspace, user, 'CREATE', null, menu);
+  const menu = await withSlugConflict(() =>
+    runTx(async (tx) => {
+      await lockWorkspaceScope(tx, workspace.id, GUEST_MENUS_LOCK);
+      const slug = input.slug ?? (await uniqueSlug(tx, workspace.id, slugify(input.name)));
+      await assertSlugFree(tx, workspace.id, slug);
+      await assertIdsInWorkspace(tx, workspace.id, { card: [input.sourceCardId] });
+      const created = await tx.guestMenu.create({
+        data: {
+          workspaceId: workspace.id,
+          name: input.name,
+          slug,
+          sourceMode,
+          sourceCardId: input.sourceCardId ?? null,
+          locales: input.locales ?? [],
+          priority: await nextPriority(tx, workspace.id),
+          draft: json(document),
+          previewToken: generatePreviewToken(),
+        },
+      });
+      await auditGuestMenu(tx, workspace, user, 'CREATE', null, created);
+      return created;
+    }),
+  );
   return toDto(workspace, menu);
 }
 
 export async function updateGuestMenu(workspace: Workspace, menuId: string, input: GuestMenuUpdateInput, user?: Pick<User, 'id'>): Promise<GuestMenuDto> {
-  const menu = await findMenuOrThrow(workspace, menuId);
-  if (input.slug !== undefined && input.slug !== menu.slug) await assertSlugFree(workspace.id, input.slug, menu.id);
-  if (input.sourceCardId !== undefined) await assertCardInWorkspace(workspace.id, input.sourceCardId);
-  // Set/change → new hash; remove → null. Both bump the version (invalidates cookies + signage tokens).
-  const accessCode =
-    input.accessCode === undefined || (input.accessCode === null && menu.accessCodeHash == null)
-      ? undefined
-      : { accessCodeHash: input.accessCode === null ? null : await hashAccessCode(input.accessCode), accessCodeVersion: { increment: 1 } };
+  await findMenuOrThrow(workspace, menuId);
+  // bcrypt before the transaction (slow); whether it is applied is decided on the locked row.
+  const accessCodeHash = typeof input.accessCode === 'string' ? await hashAccessCode(input.accessCode) : null;
 
-  const updated = await prisma.$transaction(async (tx) => {
-    if (input.isDefault === true) {
-      await tx.guestMenu.updateMany({ where: { workspaceId: workspace.id, id: { not: menu.id }, isDefault: true }, data: { isDefault: false } });
-    }
-    return tx.guestMenu.update({
-      where: { id: menu.id },
-      data: {
-        name: input.name,
-        slug: input.slug,
-        enabled: input.enabled,
-        isDefault: input.isDefault,
-        priority: input.priority,
-        validFrom: toDbDate(input.validFrom),
-        validTo: toDbDate(input.validTo),
-        weekdays: input.weekdays ? [...new Set(input.weekdays)].sort((a, b) => a - b) : undefined,
-        timeFrom: input.timeFrom,
-        timeTo: input.timeTo,
-        inactiveBehavior: input.inactiveBehavior,
-        sourceMode: input.sourceMode,
-        sourceCardId: input.sourceCardId,
-        locales: input.locales,
-        ...accessCode,
-      },
-    });
-  });
-  await auditGuestMenu(workspace, user, 'UPDATE', menu, updated);
+  const updated = await withSlugConflict(() =>
+    runTx(async (tx) => {
+      // Slug uniqueness and the single default flag depend on the other menus.
+      await lockWorkspaceScope(tx, workspace.id, GUEST_MENUS_LOCK);
+      const menu = await findMenuInTx(tx, workspace, menuId);
+      if (input.slug !== undefined && input.slug !== menu.slug) await assertSlugFree(tx, workspace.id, input.slug, menu.id);
+      if (input.sourceCardId !== undefined) await assertIdsInWorkspace(tx, workspace.id, { card: [input.sourceCardId] });
+      // Set/change → new hash; remove → null. Both bump the version (invalidates cookies + signage tokens).
+      const accessCode =
+        input.accessCode === undefined || (input.accessCode === null && menu.accessCodeHash == null)
+          ? undefined
+          : { accessCodeHash: input.accessCode === null ? null : accessCodeHash, accessCodeVersion: { increment: 1 } };
+
+      if (input.isDefault === true) {
+        await tx.guestMenu.updateMany({ where: { workspaceId: workspace.id, id: { not: menu.id }, isDefault: true }, data: { isDefault: false } });
+      }
+      const result = await tx.guestMenu.update({
+        where: { id: menu.id, workspaceId: workspace.id },
+        data: {
+          name: input.name,
+          slug: input.slug,
+          enabled: input.enabled,
+          isDefault: input.isDefault,
+          priority: input.priority,
+          validFrom: toDbDate(input.validFrom),
+          validTo: toDbDate(input.validTo),
+          weekdays: input.weekdays ? [...new Set(input.weekdays)].sort((a, b) => a - b) : undefined,
+          timeFrom: input.timeFrom,
+          timeTo: input.timeTo,
+          inactiveBehavior: input.inactiveBehavior,
+          sourceMode: input.sourceMode,
+          sourceCardId: input.sourceCardId,
+          locales: input.locales,
+          ...accessCode,
+        },
+      });
+      await auditGuestMenu(tx, workspace, user, 'UPDATE', menu, result);
+      return result;
+    }),
+  );
   return toDto(workspace, updated);
 }
 
 export async function deleteGuestMenu(workspace: Workspace, menuId: string, user?: Pick<User, 'id'>): Promise<{ count: number }> {
-  const menu = await prisma.guestMenu.findFirst({ where: { id: menuId, workspaceId: workspace.id } });
-  const result = await prisma.guestMenu.deleteMany({ where: { id: menuId, workspaceId: workspace.id } });
-  if (menu && result.count > 0) await auditGuestMenu(workspace, user, 'DELETE', menu, null);
-  return result;
+  return runTx(async (tx) => {
+    const menu = await findMenuInTx(tx, workspace, menuId);
+    const result = await tx.guestMenu.deleteMany({ where: { id: menu.id, workspaceId: workspace.id } });
+    if (result.count === 0) throw new ApiError(404, 'NOT_FOUND', 'Guest menu not found');
+    await auditGuestMenu(tx, workspace, user, 'DELETE', menu, null);
+    return { count: result.count };
+  });
 }
 
 export async function saveGuestMenuDraft(workspace: Workspace, menuId: string, document: GuestMenuDocument): Promise<GuestMenuDto> {
   await findMenuOrThrow(workspace, menuId);
-  const updated = await prisma.guestMenu.update({ where: { id: menuId }, data: { draft: json(document) } });
+  const updated = await prisma.guestMenu.update({ where: { id: menuId, workspaceId: workspace.id }, data: { draft: json(document) } });
   return toDto(workspace, updated);
 }
 
@@ -291,77 +330,101 @@ export async function publishGuestMenu(workspace: Workspace, menuId: string, use
   const menu = await findMenuOrThrow(workspace, menuId);
   const document = parseStoredDocument(menu.draft);
   if (!document) throw new ApiError(422, 'INVALID_DOCUMENT', 'The draft document is invalid; save it again to see the errors');
+  // Validation test-renders every output (slow) – outside the transaction.
   const issues = await validateForPublish(
     { id: workspace.id, name: workspace.name, publicSlug: workspace.publicSlug, hasImage: !!workspace.image },
     menu,
     document,
   );
   if (issues.length > 0) throw new ApiError(422, 'TEMPLATE_ERROR', 'Template validation failed', issues);
-  const updated = await prisma.guestMenu.update({ where: { id: menuId }, data: { published: json(document), publishedAt: new Date() } });
-  await auditGuestMenu(workspace, user, 'UPDATE', menu, updated);
+
+  const updated = await runTx(async (tx) => {
+    // Optimistic check: publish exactly the validated draft, not one saved in the meantime.
+    const result = await tx.guestMenu.updateMany({
+      where: { id: menu.id, workspaceId: workspace.id, updatedAt: menu.updatedAt },
+      data: { published: json(document), publishedAt: new Date() },
+    });
+    if (result.count === 0) {
+      await findMenuInTx(tx, workspace, menu.id);
+      throw new ApiError(409, 'CONFLICT', 'The guest menu was changed while publishing; please publish again');
+    }
+    const after = await findMenuInTx(tx, workspace, menu.id);
+    await auditGuestMenu(tx, workspace, user, 'UPDATE', menu, after);
+    return after;
+  });
   return toDto(workspace, updated);
 }
 
 export async function unpublishGuestMenu(workspace: Workspace, menuId: string, user?: Pick<User, 'id'>): Promise<GuestMenuDto> {
-  const menu = await findMenuOrThrow(workspace, menuId);
-  const updated = await prisma.guestMenu.update({ where: { id: menuId }, data: { published: Prisma.DbNull, publishedAt: null } });
-  await auditGuestMenu(workspace, user, 'UPDATE', menu, updated);
+  const updated = await runTx(async (tx) => {
+    const menu = await findMenuInTx(tx, workspace, menuId);
+    const result = await tx.guestMenu.update({ where: { id: menu.id, workspaceId: workspace.id }, data: { published: Prisma.DbNull, publishedAt: null } });
+    await auditGuestMenu(tx, workspace, user, 'UPDATE', menu, result);
+    return result;
+  });
   return toDto(workspace, updated);
 }
 
 export async function duplicateGuestMenu(workspace: Workspace, menuId: string, input: GuestMenuDuplicateInput, user?: Pick<User, 'id'>): Promise<GuestMenuDto> {
-  const menu = await findMenuOrThrow(workspace, menuId);
-  const name = input.name ?? `${menu.name} (2)`;
-  const slug = input.slug ?? (await uniqueSlug(workspace.id, slugify(name)));
-  await assertSlugFree(workspace.id, slug);
-  const maxPriority = await prisma.guestMenu.aggregate({ where: { workspaceId: workspace.id }, _max: { priority: true } });
-  const created = await prisma.guestMenu.create({
-    data: {
-      workspaceId: workspace.id,
-      name,
-      slug,
-      enabled: false,
-      isDefault: false,
-      priority: (maxPriority._max.priority ?? -1) + 1,
-      validFrom: menu.validFrom,
-      validTo: menu.validTo,
-      weekdays: menu.weekdays,
-      timeFrom: menu.timeFrom,
-      timeTo: menu.timeTo,
-      inactiveBehavior: menu.inactiveBehavior,
-      sourceMode: menu.sourceMode,
-      sourceCardId: menu.sourceCardId,
-      locales: menu.locales,
-      draft: json(menu.draft),
-      previewToken: generatePreviewToken(),
-    },
-  });
-  await auditGuestMenu(workspace, user, 'CREATE', null, created);
+  const created = await withSlugConflict(() =>
+    runTx(async (tx) => {
+      await lockWorkspaceScope(tx, workspace.id, GUEST_MENUS_LOCK);
+      const menu = await findMenuInTx(tx, workspace, menuId);
+      const name = input.name ?? `${menu.name} (2)`;
+      const slug = input.slug ?? (await uniqueSlug(tx, workspace.id, slugify(name)));
+      await assertSlugFree(tx, workspace.id, slug);
+      const copy = await tx.guestMenu.create({
+        data: {
+          workspaceId: workspace.id,
+          name,
+          slug,
+          enabled: false,
+          isDefault: false,
+          priority: await nextPriority(tx, workspace.id),
+          validFrom: menu.validFrom,
+          validTo: menu.validTo,
+          weekdays: menu.weekdays,
+          timeFrom: menu.timeFrom,
+          timeTo: menu.timeTo,
+          inactiveBehavior: menu.inactiveBehavior,
+          sourceMode: menu.sourceMode,
+          sourceCardId: menu.sourceCardId,
+          locales: menu.locales,
+          draft: json(menu.draft),
+          previewToken: generatePreviewToken(),
+        },
+      });
+      await auditGuestMenu(tx, workspace, user, 'CREATE', null, copy);
+      return copy;
+    }),
+  );
   return toDto(workspace, created);
 }
 
 /** New draft preview token: invalidates all shared `?preview=` links of the menu. */
 export async function regenerateGuestMenuPreviewToken(workspace: Workspace, menuId: string, user?: Pick<User, 'id'>): Promise<GuestMenuDto> {
-  const menu = await findMenuOrThrow(workspace, menuId);
-  const updated = await prisma.guestMenu.update({ where: { id: menu.id }, data: { previewToken: generatePreviewToken() } });
-  try {
+  const updated = await runTx(async (tx) => {
+    const menu = await findMenuInTx(tx, workspace, menuId);
+    const result = await tx.guestMenu.update({ where: { id: menu.id, workspaceId: workspace.id }, data: { previewToken: generatePreviewToken() } });
     // Never the token itself – only that (and when) it was replaced.
-    await createLog(prisma, workspace.id, user?.id, 'GuestMenu', menu.id, 'UPDATE', guestMenuAuditSnapshot(menu), {
-      ...guestMenuAuditSnapshot(updated),
-      previewTokenRegeneratedAt: updated.updatedAt.toISOString(),
-    });
-  } catch (error) {
-    console.error('[guest menu audit]', error);
-  }
+    await auditGuestMenu(tx, workspace, user, 'UPDATE', menu, result, { previewTokenRegeneratedAt: result.updatedAt.toISOString() });
+    return result;
+  });
   return toDto(workspace, updated);
 }
 
 export async function reorderGuestMenus(workspace: Workspace, input: GuestMenuReorderInput): Promise<GuestMenuSummaryDto[]> {
-  const menus = await prisma.guestMenu.findMany({ where: { workspaceId: workspace.id }, select: { id: true } });
-  const known = new Set(menus.map((menu) => menu.id));
-  const unknown = input.menuIds.filter((id) => !known.has(id));
-  if (unknown.length > 0) throw new ApiError(404, 'NOT_FOUND', `Guest menus not found: ${unknown.join(', ')}`);
-  await prisma.$transaction(input.menuIds.map((id, index) => prisma.guestMenu.update({ where: { id }, data: { priority: index } })));
+  await runTx(async (tx) => {
+    await lockWorkspaceScope(tx, workspace.id, GUEST_MENUS_LOCK);
+    const known = new Set(
+      (await tx.guestMenu.findMany({ where: { workspaceId: workspace.id, id: { in: input.menuIds } }, select: { id: true } })).map((menu) => menu.id),
+    );
+    const unknown = input.menuIds.filter((id) => !known.has(id));
+    if (unknown.length > 0) throw new ApiError(404, 'NOT_FOUND', 'Guest menus not found', { menuIds: unknown });
+    for (const [index, id] of input.menuIds.entries()) {
+      await tx.guestMenu.updateMany({ where: { id, workspaceId: workspace.id }, data: { priority: index } });
+    }
+  });
   return listGuestMenus(workspace);
 }
 
@@ -457,11 +520,15 @@ export async function createGuestMenuTemplate(workspace: Workspace, input: Guest
 export async function updateGuestMenuTemplate(workspace: Workspace, templateId: string, input: GuestMenuTemplateInput): Promise<GuestMenuTemplateDto> {
   await getGuestMenuTemplate(workspace, templateId);
   assertTemplateValid(input);
-  const template = await prisma.guestMenuTemplate.update({ where: { id: templateId }, data: { name: input.name, definition: json(input.definition) } });
+  const template = await prisma.guestMenuTemplate.update({
+    where: { id: templateId, workspaceId: workspace.id },
+    data: { name: input.name, definition: json(input.definition) },
+  });
   return toGuestMenuTemplateDto(template);
 }
 
 export async function deleteGuestMenuTemplate(workspace: Workspace, templateId: string): Promise<{ count: number }> {
+  await getGuestMenuTemplate(workspace, templateId);
   const ref = `${CUSTOM_TEMPLATE_PREFIX}${templateId}`;
   const menus = await prisma.guestMenu.findMany({ where: { workspaceId: workspace.id }, select: { name: true, draft: true, published: true } });
   const users = menus.filter((menu) =>
@@ -471,7 +538,9 @@ export async function deleteGuestMenuTemplate(workspace: Workspace, templateId: 
     }),
   );
   if (users.length > 0) throw new ApiError(409, 'TEMPLATE_IN_USE', `Template is used by: ${users.map((menu) => menu.name).join(', ')}`);
-  return prisma.guestMenuTemplate.deleteMany({ where: { id: templateId, workspaceId: workspace.id } });
+  const result = await prisma.guestMenuTemplate.deleteMany({ where: { id: templateId, workspaceId: workspace.id } });
+  if (result.count === 0) throw new ApiError(404, 'NOT_FOUND', 'Template not found');
+  return result;
 }
 
 // ---------------------------------------------------------------------------

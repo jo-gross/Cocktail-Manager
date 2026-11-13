@@ -1,7 +1,7 @@
 /**
  * Builds the OpenAPI 3.1 document from the collected ResourceApiDocs.
- * Each v1 operation is emitted at /api/v1{basePath}; if legacyPath is not
- * disabled, a deprecated mirror is emitted at /api{basePath} (single source).
+ * Each operation is emitted at /api/v1{basePath}. The unversioned /api paths
+ * were removed; /api/v1 is the only API surface.
  *
  * The required API-key permission is surfaced three ways per operation:
  *  - as a 3.1 security "role name"        → security: [{ ApiKeyAuth: ['X'] }]
@@ -16,14 +16,6 @@ import { ErrorResponse, dataEnvelope } from '@lib/schemas/common';
 import { PERMISSION_DESCRIPTIONS, PermissionEnum } from '@lib/schemas/permissions';
 
 export const API_VERSION = '1.0.0';
-
-/**
- * Which surface to emit:
- *  - 'combined': canonical /api/v1 + a deprecated mirror of each legacy /api path (single download).
- *  - 'v1':       only the stable /api/v1 paths (no deprecation) — the "v1" docs version.
- *  - 'preview':  only the historic unversioned /api paths, documented on their own (not deprecated) — the "preview" docs version.
- */
-export type ApiVariant = 'combined' | 'v1' | 'preview';
 
 const HTTP_METHODS = ['get', 'put', 'post', 'delete', 'patch', 'options', 'head', 'trace'];
 const errorContent = { 'application/json': { schema: ErrorResponse } };
@@ -52,7 +44,7 @@ function successResponse(spec: RouteSpec) {
   };
 }
 
-export function buildOpenApiDocument(resources: ResourceApiDoc[], variant: ApiVariant = 'combined') {
+export function buildOpenApiDocument(resources: ResourceApiDoc[]) {
   const registry = new OpenAPIRegistry();
 
   registry.registerComponent('securitySchemes', 'WorkspaceApiKeyAuth', {
@@ -89,9 +81,7 @@ export function buildOpenApiDocument(resources: ResourceApiDoc[], variant: ApiVa
   // Documented in components even though it is referenced only from descriptions.
   registry.register('Permission', PermissionEnum);
 
-  const registerOperation = (fullPath: string, method: HttpVerb, spec: RouteSpec, successor?: string) => {
-    const deprecated = successor !== undefined;
-
+  const registerOperation = (fullPath: string, method: HttpVerb, spec: RouteSpec) => {
     const request: Record<string, unknown> = {};
     if (spec.params) request.params = spec.params;
     if (spec.query) request.query = spec.query;
@@ -107,22 +97,16 @@ export function buildOpenApiDocument(resources: ResourceApiDoc[], variant: ApiVa
       responses[Number(code)] = { description, content: errorContent };
     }
 
-    const description = [
-      authNote(spec),
-      deprecated
-        ? `**Deprecated.** Use \`${successor}\` instead. This unversioned endpoint keeps its historic behavior but may be removed in a future release.`
-        : spec.description,
-    ]
+    const description = [authNote(spec), spec.description]
       .filter(Boolean)
       .join('\n\n');
 
     registry.registerPath({
       method: method.toLowerCase() as Lowercase<HttpVerb>,
       path: fullPath,
-      summary: deprecated ? `[Deprecated] ${spec.summary}` : spec.summary,
+      summary: spec.summary,
       description,
       tags: spec.tags,
-      deprecated: deprecated || undefined,
       security: spec.sessionOnly
         ? [{ SessionCookieAuth: [] }]
         : spec.permission
@@ -134,52 +118,20 @@ export function buildOpenApiDocument(resources: ResourceApiDoc[], variant: ApiVa
   };
 
   for (const resource of resources) {
-    const emitLegacy = resource.legacyPath !== false;
     for (const [method, spec] of Object.entries(resource.operations) as Array<[HttpVerb, RouteSpec]>) {
-      const v1Path = `/api/v1${resource.basePath}`;
-      const legacyPath = `/api${resource.basePath}`;
-      if (variant === 'v1') {
-        registerOperation(v1Path, method, spec);
-      } else if (variant === 'preview') {
-        // The "preview" surface is the historic unversioned API — documented on its
-        // own (non-deprecated) so consumers can switch to it in the docs version picker.
-        if (emitLegacy) registerOperation(legacyPath, method, spec);
-      } else {
-        // combined: canonical v1 + a deprecated mirror of the legacy path (single source of truth).
-        registerOperation(v1Path, method, spec);
-        if (emitLegacy) registerOperation(legacyPath, method, spec, v1Path);
-      }
+      registerOperation(`/api/v1${resource.basePath}`, method, spec);
     }
   }
-
-  const info = {
-    combined: {
-      title: 'Cocktail Manager API',
-      description:
-        'External REST API of the Cocktail Manager. Authenticate with a workspace API key (Bearer JWT). ' +
-        'The `/api/v1` paths are the stable, versioned contract; unversioned paths are deprecated.',
-    },
-    v1: {
-      title: 'Cocktail Manager API',
-      description:
-        'Stable, versioned (`/api/v1`) REST API of the Cocktail Manager. Authenticate with a workspace ' +
-        'API key (Bearer JWT). This is the recommended contract for all integrations.',
-    },
-    preview: {
-      title: 'Cocktail Manager API (Preview)',
-      description:
-        'Preview surface: the historic, unversioned (`/api`) REST API. Kept for backwards compatibility — ' +
-        'new integrations should switch to the stable **v1** version. Authenticate with a workspace API key (Bearer JWT).',
-    },
-  }[variant];
 
   const generator = new OpenApiGeneratorV31(registry.definitions);
   const doc = generator.generateDocument({
     openapi: '3.1.0',
     info: {
-      title: info.title,
+      title: 'Cocktail Manager API',
       version: API_VERSION,
-      description: info.description,
+      description:
+        'Versioned (`/api/v1`) REST API of the Cocktail Manager. Authenticate with a workspace API key (Bearer JWT) ' +
+        'or, for the operations marked as such, a logged-in session.',
     },
     servers: [
       { url: 'https://app.cocktail-manager.de', description: 'Produktion' },

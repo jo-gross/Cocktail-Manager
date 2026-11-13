@@ -24,29 +24,29 @@ export type RatingDto = z.infer<typeof RatingDtoSchema>;
 
 export const RatingCreateSchema = z
   .object({
-    name: z.string().nullish().openapi({ description: 'Name of the rater.' }),
-    rating: z.coerce.number().int().openapi({ description: 'Rating value.' }),
-    comment: z.string().nullish().openapi({ description: 'Optional comment.' }),
+    name: z.string().trim().max(100).nullish().openapi({ description: 'Name of the rater (max. 100 characters).' }),
+    rating: z.coerce.number().int().min(1).max(5).openapi({ description: 'Rating value (1–5).' }),
+    comment: z.string().trim().max(2_000).nullish().openapi({ description: 'Optional comment (max. 2000 characters).' }),
   })
   .openapi('RatingCreateInput');
 
 export type RatingCreateInput = z.infer<typeof RatingCreateSchema>;
 
-export const RatingCollectionParams = WorkspaceIdParam.extend({ cocktailId: z.string() });
-export const RatingItemParams = WorkspaceIdParam.extend({ cocktailId: z.string(), ratingId: z.string() });
+export const RatingCollectionParams = WorkspaceIdParam.extend({ cocktailId: z.string().max(64) });
+export const RatingItemParams = WorkspaceIdParam.extend({ cocktailId: z.string().max(64), ratingId: z.string().max(64) });
 
 export const ratingsCollectionApiDoc = {
   basePath: '/workspaces/{workspaceId}/cocktails/{cocktailId}/ratings',
-  legacyPath: true,
   operations: {
     GET: {
       roles: ['USER'],
       permission: 'RATINGS_READ',
       tags: [ApiTags.ratingsCore],
       summary: 'List ratings',
-      description: 'List all ratings of a cocktail.',
+      description: 'List all ratings of a cocktail (newest first).',
       params: RatingCollectionParams,
       response: z.array(RatingDtoSchema),
+      errorResponses: { 404: 'Cocktail not found.' },
     },
     POST: {
       roles: ['USER'],
@@ -56,13 +56,13 @@ export const ratingsCollectionApiDoc = {
       params: RatingCollectionParams,
       body: RatingCreateSchema,
       response: RatingDtoSchema,
+      errorResponses: { 404: 'Cocktail not found.' },
     },
   },
 } satisfies ResourceApiDoc;
 
 export const ratingsItemApiDoc = {
   basePath: '/workspaces/{workspaceId}/cocktails/{cocktailId}/ratings/{ratingId}',
-  legacyPath: true,
   operations: {
     DELETE: {
       roles: ['MANAGER'],

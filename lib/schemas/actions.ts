@@ -8,6 +8,7 @@
 import { z } from '@lib/openapi/zod';
 import { ApiTags } from '@lib/openapi/tags';
 import { WorkspaceIdParam } from '@lib/schemas/common';
+import { LabelTranslationsSchema, TranslationKeySchema } from '@lib/schemas/translations';
 import type { ResourceApiDoc } from '@lib/openapi/types';
 
 /** Public step-action DTO — no `workspaceId` (implied by the path). */
@@ -33,14 +34,14 @@ const DilutionPercentSchema = z.coerce
   .openapi({ description: 'Dilution in % of the liquid volume; null = default for the action. Omit to keep unchanged.' });
 
 /** Optional per-language display-name overrides, keyed by language code. */
-const TranslationsSchema = z
-  .record(z.string(), z.string())
-  .openapi({ description: 'Optional display-name translations keyed by language code, e.g. { "en": "Shake" }.' });
+const TranslationsSchema = LabelTranslationsSchema.openapi({
+  description: 'Optional display-name translations keyed by language code, e.g. { "en": "Shake" }.',
+});
 
 export const ActionCreateSchema = z
   .object({
-    name: z.string().min(1),
-    actionGroup: z.string().min(1),
+    name: TranslationKeySchema.max(100),
+    actionGroup: z.string().min(1).max(100),
     dilutionPercent: DilutionPercentSchema,
     translations: TranslationsSchema.optional(),
   })
@@ -48,14 +49,14 @@ export const ActionCreateSchema = z
 
 export const ActionUpdateSchema = z
   .object({
-    actionGroup: z.string().min(1),
+    actionGroup: z.string().min(1).max(100),
     dilutionPercent: DilutionPercentSchema,
     translations: TranslationsSchema.optional(),
   })
   .openapi('ActionUpdateInput');
 
 export const ActionListQuerySchema = z.object({
-  search: z.string().optional().openapi({ description: 'Case-insensitive name filter.' }),
+  search: z.string().max(100).optional().openapi({ description: 'Case-insensitive name filter.' }),
 });
 
 export const ActionItemParams = WorkspaceIdParam.extend({ actionId: z.string() });
@@ -66,7 +67,6 @@ export type ActionListQuery = z.infer<typeof ActionListQuerySchema>;
 
 export const actionsCollectionApiDoc = {
   basePath: '/workspaces/{workspaceId}/actions',
-  legacyPath: true,
   operations: {
     GET: {
       roles: ['USER'],
@@ -92,7 +92,6 @@ export const actionsCollectionApiDoc = {
 
 export const actionsItemApiDoc = {
   basePath: '/workspaces/{workspaceId}/actions/{actionId}',
-  legacyPath: true,
   operations: {
     PUT: {
       roles: ['ADMIN'],
@@ -112,7 +111,7 @@ export const actionsItemApiDoc = {
       summary: 'Delete step action',
       params: ActionItemParams,
       response: ActionDtoSchema,
-      errorResponses: { 404: 'Action not found.' },
+      errorResponses: { 404: 'Action not found.', 409: 'ACTION_IN_USE: the action is still used in cocktail recipes.' },
     },
   },
 } satisfies ResourceApiDoc;

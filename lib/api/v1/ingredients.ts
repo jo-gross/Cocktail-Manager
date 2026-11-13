@@ -5,16 +5,21 @@
  */
 import type { NextApiRequest, NextApiResponse } from 'next';
 import HTTPMethod from 'http-method-enum';
-import { Permission, Role } from '@generated/prisma/client';
 import { withHttpMethods } from '@middleware/api/handleMethods';
 import { withWorkspacePermission } from '@middleware/api/authenticationMiddleware';
 import { fail } from '@lib/http/responses';
 import { ApiError } from '@lib/http/ApiError';
+import { prismaErrorToApiError } from '@lib/http/prismaErrors';
+import { sendImage } from '@lib/images/imageResponse';
 import {
+  IngredientExportJsonBodySchema,
+  IngredientImportJsonBodySchema,
+  IngredientItemParams,
   ingredientsCheckApiDoc,
   ingredientsCloneApiDoc,
   ingredientsCollectionApiDoc,
   ingredientsExportJsonApiDoc,
+  ingredientsImageApiDoc,
   ingredientsImportJsonApiDoc,
   ingredientsItemApiDoc,
   ingredientsReferencesApiDoc,
@@ -42,56 +47,66 @@ export const checkHandler = defineApiHandlers(ingredientsCheckApiDoc.operations,
 });
 
 export const cloneHandler = defineApiHandlers(ingredientsCloneApiDoc.operations, {
-  POST: ({ workspace, params, body }) => ingredients.cloneIngredient(workspace, params.ingredientId, body.name),
+  POST: ({ workspace, user, params, body }) => ingredients.cloneIngredient(workspace, user, params.ingredientId, body.name),
 });
 
 export const referencesHandler = defineApiHandlers(ingredientsReferencesApiDoc.operations, {
   GET: ({ workspace, params }) => ingredients.getIngredientReferences(workspace, params.ingredientId),
 });
 
+/**
+ * Error body of the raw export/import endpoints: the legacy top-level `message`
+ * (read by the frontend) plus the standard v1 `error` object. Unexpected errors
+ * are logged and answered generically.
+ */
+function sendRawError(res: NextApiResponse, error: unknown, fallbackMessage: string) {
+  const apiError = prismaErrorToApiError(error);
+  if (apiError) return res.status(apiError.status).json({ message: apiError.message, ...fail(apiError.code, apiError.message, apiError.issues) });
+  console.error(`${fallbackMessage}:`, error);
+  return res.status(500).json({ message: fallbackMessage, ...fail('INTERNAL_ERROR', fallbackMessage) });
+}
+
 // Export/import preserve the exact legacy JSON format (no { data } envelope) so the
 // export→import round-trip keeps working; hence they are hand-wired instead of
 // going through defineApiHandlers (which JSON-envelopes via sendOk).
-const exportSpec = ingredientsExportJsonApiDoc.operations.POST!;
+const exportSpec = ingredientsExportJsonApiDoc.operations.POST;
 export const exportJsonHandler = withHttpMethods({
   [HTTPMethod.POST]: withWorkspacePermission(exportSpec.roles, exportSpec.permission, async (req: NextApiRequest, res: NextApiResponse, _user, workspace) => {
-    const { ids } = (req.body ?? {}) as { ids?: string[] };
-    if (!ids || ids.length === 0) return res.status(400).json({ message: 'No ingredients selected' });
+    const parsed = IngredientExportJsonBodySchema.safeParse(req.body);
+    if (!parsed.success)
+      return sendRawError(res, new ApiError(400, 'VALIDATION_ERROR', 'No valid ingredients selected', parsed.error.issues), 'Failed to export');
 
     try {
-      const exportData = await ingredients.exportIngredientsJson(workspace, ids);
-      return res.json(exportData);
+      return res.json(await ingredients.exportIngredientsJson(workspace, parsed.data.ids));
     } catch (error) {
-      if (error instanceof ApiError) return res.status(error.status).json({ message: error.message });
-      console.error('Ingredient export error:', error);
-      return res.status(500).json({ message: 'Failed to export' });
+      return sendRawError(res, error, 'Failed to export');
     }
   }),
 });
 
-const importSpec = ingredientsImportJsonApiDoc.operations.POST!;
+const importSpec = ingredientsImportJsonApiDoc.operations.POST;
 export const importJsonHandler = withHttpMethods({
   [HTTPMethod.POST]: withWorkspacePermission(importSpec.roles, importSpec.permission, async (req: NextApiRequest, res: NextApiResponse, user, workspace) => {
+    const parsed = IngredientImportJsonBodySchema.safeParse(req.body);
+    if (!parsed.success) return sendRawError(res, new ApiError(400, 'VALIDATION_ERROR', 'Invalid import request', parsed.error.issues), 'Import failed');
+
     try {
-      const result = await ingredients.importIngredientsJson(workspace, user, req.body);
-      return res.json(result);
+      return res.json(await ingredients.importIngredientsJson(workspace, user, parsed.data));
     } catch (error) {
-      if (error instanceof ApiError) return res.status(error.status).json({ message: error.message });
-      console.error('Ingredient import error:', error);
-      return res.status(500).json({ message: error instanceof Error ? error.message : 'Import failed' });
+      return sendRawError(res, error, 'Import failed');
     }
   }),
 });
 
+const imageSpec = ingredientsImageApiDoc.operations.GET;
 export const imageHandler = withHttpMethods({
-  [HTTPMethod.GET]: withWorkspacePermission([Role.USER], Permission.INGREDIENTS_READ, async (req: NextApiRequest, res: NextApiResponse, _user, workspace) => {
-    const ingredientId = req.query.ingredientId as string | undefined;
-    if (!ingredientId) return res.status(400).json(fail('VALIDATION_ERROR', 'No ingredient id'));
+  [HTTPMethod.GET]: withWorkspacePermission(imageSpec.roles, imageSpec.permission, async (req: NextApiRequest, res: NextApiResponse, _user, workspace) => {
+    const params = IngredientItemParams.safeParse(req.query);
+    if (!params.success) return res.status(400).json(fail('VALIDATION_ERROR', 'Invalid request params', params.error.issues));
 
-    const image = await ingredients.getIngredientImage(workspace, ingredientId);
+    const image = await ingredients.getIngredientImage(workspace, params.data.ingredientId);
     if (!image) return res.status(404).json(fail('NOT_FOUND', 'No ingredient image found'));
 
-    res.writeHead(200, { 'Content-Type': image.contentType, 'Content-Length': image.bytes.length });
-    return res.send(image.bytes);
+    return sendImage(res, image);
   }),
 });

@@ -20,3 +20,14 @@ export function setRequestApiKeyPermissions(req: IncomingMessage, permissions: R
 export function getRequestApiKeyPermissions(req: IncomingMessage): RequestApiKeyPermissions | null {
   return apiKeyAuth.get(req) ?? null;
 }
+
+/** Synthetic user id the instance master key acts as (no User row exists). */
+export const MASTER_API_KEY_USER_ID = 'master-api-key';
+
+/**
+ * User id to store in nullable user FKs (audit logs, statistics). The master key
+ * has no user row, so it is recorded as `null` instead of failing the FK.
+ */
+export function actorUserId(userId: string | null | undefined): string | null {
+  return !userId || userId === MASTER_API_KEY_USER_ID ? null : userId;
+}

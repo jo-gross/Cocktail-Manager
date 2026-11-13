@@ -10,7 +10,7 @@ import * as cards from '@lib/api/controllers/cards';
 
 export const collectionHandler = defineApiHandlers(cardsCollectionApiDoc.operations, {
   GET: ({ workspace, query }) => cards.listCards(workspace, query),
-  POST: ({ workspace, body }) => cards.createCard(workspace, body),
+  POST: ({ workspace, user, body }) => cards.createCard(workspace, user, body),
 });
 
 export const itemHandler = defineApiHandlers(cardsItemApiDoc.operations, {
@@ -19,18 +19,18 @@ export const itemHandler = defineApiHandlers(cardsItemApiDoc.operations, {
     if (!card) throw new ApiError(404, 'NOT_FOUND', 'Card not found');
     return card;
   },
-  PUT: ({ workspace, params, body }) => cards.updateCard(workspace, params.cardId, body),
-  DELETE: ({ workspace, params }) => cards.deleteCard(workspace, params.cardId),
+  PUT: ({ workspace, user, params, body }) => cards.updateCard(workspace, user, params.cardId, body),
+  DELETE: ({ workspace, user, params }) => cards.deleteCard(workspace, user, params.cardId),
 });
 
 export const archiveHandler = defineApiHandlers(cardsArchiveApiDoc.operations, {
-  PUT: ({ workspace, params }) => cards.archiveCard(workspace, params.cardId, true),
+  PUT: ({ workspace, user, params }) => cards.archiveCard(workspace, user, params.cardId, true),
 });
 
 export const unarchiveHandler = defineApiHandlers(cardsUnarchiveApiDoc.operations, {
-  PUT: ({ workspace, params }) => cards.archiveCard(workspace, params.cardId, false),
+  PUT: ({ workspace, user, params }) => cards.archiveCard(workspace, user, params.cardId, false),
 });
 
 export const cloneHandler = defineApiHandlers(cardsCloneApiDoc.operations, {
-  POST: ({ workspace, params, body }) => cards.cloneCard(workspace, params.cardId, body.name),
+  POST: ({ workspace, user, params, body }) => cards.cloneCard(workspace, user, params.cardId, body.name),
 });

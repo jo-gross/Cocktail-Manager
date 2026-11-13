@@ -1,15 +1,18 @@
 import { NextApiRequest, NextApiResponse } from 'next';
+import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 import Keyv from 'keyv';
 import prisma from '../../prisma/prisma';
 import { asWorkspace } from '../../prisma/asWorkspace';
-import { Permission, Workspace, WorkspaceApiKey } from '@generated/prisma/client';
+import { Permission, Role, Workspace, WorkspaceApiKey } from '@generated/prisma/client';
 import { constants as HttpStatus } from 'http2';
+import { sendFail } from '@lib/http/responses';
 
 export interface ApiKeyJwtPayload {
   type: 'api-key'; // Type claim to quickly identify API key tokens
   keyId: string;
   workspaceId: string;
+  /** Informational only — authorization uses the key's ApiKeyPermission rows. */
   permissions: Permission[];
   iat: number;
   exp?: number;
@@ -18,8 +21,12 @@ export interface ApiKeyJwtPayload {
 export interface ApiKeyAuthResult {
   apiKey: WorkspaceApiKey;
   workspace: Workspace;
+  /** Loaded from the database (ApiKeyPermission), never from the token claims. */
   permissions: Permission[];
 }
+
+/** Roles a key's creator must still hold in the key's workspace for the key to authenticate. */
+const API_KEY_CREATOR_ROLES: Role[] = [Role.ADMIN, Role.OWNER];
 
 // Cache for revoked keys (configurable TTL via API_KEY_REVOKED_CACHE_TTL_MINUTES, default: 15 minutes)
 const getRevokedKeysCacheTtl = (): number => {
@@ -130,62 +137,78 @@ export async function authenticateApiKey(req: NextApiRequest): Promise<ApiKeyAut
     return null;
   }
 
+  let decoded: ApiKeyJwtPayload;
   try {
     // Verify JWT signature (only if it's an API key token)
-    const secret = getJwtSecret();
-    const decoded = jwt.verify(apiKeyToken, secret) as ApiKeyJwtPayload;
-
-    // Check expiration (from JWT exp claim)
-    if (decoded.exp && decoded.exp < Date.now() / 1000) {
-      return null;
-    }
-
-    // Check if key is revoked (with caching)
-    if (await isKeyRevoked(decoded.keyId)) {
-      return null;
-    }
-
-    // Load key from DB (only once, for workspace and lastUsedAt update)
-    const keyRecord = await prisma.workspaceApiKey.findUnique({
-      where: { keyId: decoded.keyId },
-      include: {
-        workspace: true,
-      },
-    });
-
-    if (!keyRecord) {
-      return null;
-    }
-
-    // Check expiration from DB (in case it was changed after token creation)
-    if (keyRecord.expiresAt && keyRecord.expiresAt < new Date()) {
-      return null;
-    }
-
-    // Verify workspace matches
-    if (keyRecord.workspaceId !== decoded.workspaceId) {
-      return null;
-    }
-
-    // Update lastUsedAt (async, don't wait)
-    prisma.workspaceApiKey
-      .update({
-        where: { id: keyRecord.id },
-        data: { lastUsedAt: new Date() },
-      })
-      .catch((err) => {
-        console.error('Failed to update lastUsedAt:', err);
-      });
-
-    return {
-      apiKey: keyRecord,
-      workspace: asWorkspace(keyRecord.workspace),
-      permissions: decoded.permissions,
-    };
+    decoded = jwt.verify(apiKeyToken, getJwtSecret()) as ApiKeyJwtPayload;
   } catch {
     // JWT verification failed (invalid signature, expired, etc.)
     return null;
   }
+
+  // Check expiration (from JWT exp claim)
+  if (decoded.exp && decoded.exp < Date.now() / 1000) {
+    return null;
+  }
+  if (typeof decoded.keyId !== 'string' || typeof decoded.workspaceId !== 'string') {
+    return null;
+  }
+
+  // Check if key is revoked (with caching)
+  if (await isKeyRevoked(decoded.keyId)) {
+    return null;
+  }
+
+  // Load key, its permissions and the creator's current membership from the DB. The token claims
+  // are not trusted for authorization: permissions and the creator's role may have changed since
+  // the token was minted.
+  const keyRecord = await prisma.workspaceApiKey.findUnique({
+    where: { keyId: decoded.keyId },
+    include: {
+      workspace: true,
+      permissions: { select: { permission: true } },
+    },
+  });
+
+  if (!keyRecord || keyRecord.revoked) {
+    return null;
+  }
+
+  // Check expiration from DB (in case it was changed after token creation)
+  if (keyRecord.expiresAt && keyRecord.expiresAt < new Date()) {
+    return null;
+  }
+
+  // Verify workspace matches
+  if (keyRecord.workspaceId !== decoded.workspaceId) {
+    return null;
+  }
+
+  // The key acts as its creator, so it must not outlive the creator's admin rights in the workspace.
+  const creatorMembership = await prisma.workspaceUser.findFirst({
+    where: { workspaceId: keyRecord.workspaceId, userId: keyRecord.createdByUserId, role: { in: API_KEY_CREATOR_ROLES } },
+    select: { role: true },
+  });
+  if (!creatorMembership) {
+    return null;
+  }
+
+  // Update lastUsedAt (async, don't wait)
+  prisma.workspaceApiKey
+    .updateMany({
+      where: { id: keyRecord.id },
+      data: { lastUsedAt: new Date() },
+    })
+    .catch((err) => {
+      console.error('Failed to update lastUsedAt:', err);
+    });
+
+  const { workspace, permissions, ...apiKey } = keyRecord;
+  return {
+    apiKey,
+    workspace: asWorkspace(workspace),
+    permissions: permissions.map((row) => row.permission),
+  };
 }
 
 /**
@@ -220,17 +243,11 @@ export function isMasterApiKey(key: string): boolean {
     return false;
   }
 
-  // Direct comparison (master key is stored in plain text in env, not hashed)
-  // Use constant-time comparison to prevent timing attacks
-  if (key.length !== masterKey.length) {
-    return false;
-  }
-
-  let result = 0;
-  for (let i = 0; i < key.length; i++) {
-    result |= key.charCodeAt(i) ^ masterKey.charCodeAt(i);
-  }
-  return result === 0;
+  // Compare fixed-length digests in constant time so neither the content nor the length of the
+  // master key leaks through response timing.
+  const provided = crypto.createHash('sha256').update(key).digest();
+  const expected = crypto.createHash('sha256').update(masterKey).digest();
+  return crypto.timingSafeEqual(provided, expected);
 }
 
 /**
@@ -252,7 +269,7 @@ export function withApiKeyAuthentication(fn: (req: NextApiRequest, res: NextApiR
   return async (req: NextApiRequest, res: NextApiResponse) => {
     const authResult = await authenticateApiKey(req);
     if (!authResult) {
-      return res.status(HttpStatus.HTTP_STATUS_UNAUTHORIZED).json({ message: 'Invalid or expired API key' });
+      return sendFail(res, HttpStatus.HTTP_STATUS_UNAUTHORIZED, 'UNAUTHORIZED', 'Invalid or expired API key');
     }
 
     return fn(req, res, authResult);

@@ -6,6 +6,7 @@
  */
 import { z } from '@lib/openapi/zod';
 import { WorkspaceIdParam } from '@lib/schemas/common';
+import { LabelTranslationsSchema, TranslationKeySchema } from '@lib/schemas/translations';
 import { ApiTags } from '@lib/openapi/tags';
 import type { ResourceApiDoc } from '@lib/openapi/types';
 
@@ -33,19 +34,19 @@ export const UnitConversionDtoSchema = z
 export type UnitConversionDto = z.infer<typeof UnitConversionDtoSchema>;
 
 /** Optional per-language display-name overrides, keyed by language code. */
-const TranslationsSchema = z
-  .record(z.string(), z.string())
-  .openapi({ description: 'Optional display-name translations keyed by language code, e.g. { "en": "Centiliter" }.' });
+const TranslationsSchema = LabelTranslationsSchema.openapi({
+  description: 'Optional display-name translations keyed by language code, e.g. { "en": "Centiliter" }.',
+});
 
 export const UnitCreateSchema = z
   .object({
-    name: z.string().min(1),
+    name: TranslationKeySchema.max(100),
     translations: TranslationsSchema.optional(),
   })
   .openapi('UnitCreateInput');
 
 export const UnitListQuerySchema = z.object({
-  search: z.string().optional().openapi({ description: 'Case-insensitive name filter.' }),
+  search: z.string().max(100).optional().openapi({ description: 'Case-insensitive name filter.' }),
 });
 
 export const UnitItemParams = WorkspaceIdParam.extend({ unitId: z.string() });
@@ -53,17 +54,25 @@ export const UnitItemParams = WorkspaceIdParam.extend({ unitId: z.string() });
 export type UnitCreateInput = z.infer<typeof UnitCreateSchema>;
 export type UnitListQuery = z.infer<typeof UnitListQuerySchema>;
 
+/** Positive and bounded, so the inverse (1 / factor) stays finite. */
+const ConversionFactorSchema = z.coerce
+  .number()
+  .min(1e-9)
+  .max(1e9)
+  .openapi({ description: 'Multiplier to convert a quantity from the source unit to the target unit (> 0).' });
+
 export const UnitConversionCreateSchema = z
   .object({
-    fromUnitId: z.string().min(1),
-    toUnitId: z.string().min(1),
-    factor: z.coerce.number().openapi({ description: 'Multiplier to convert a quantity from the source unit to the target unit.' }),
+    fromUnitId: z.string().min(1).max(100),
+    toUnitId: z.string().min(1).max(100),
+    factor: ConversionFactorSchema,
   })
+  .refine((input) => input.fromUnitId !== input.toUnitId, { message: 'Source and target unit must differ', path: ['toUnitId'] })
   .openapi('UnitConversionCreateInput');
 
 export const UnitConversionUpdateSchema = z
   .object({
-    factor: z.coerce.number().openapi({ description: 'Multiplier to convert a quantity from the source unit to the target unit.' }),
+    factor: ConversionFactorSchema,
   })
   .openapi('UnitConversionUpdateInput');
 
@@ -74,7 +83,6 @@ export type UnitConversionUpdateInput = z.infer<typeof UnitConversionUpdateSchem
 
 export const unitsCollectionApiDoc = {
   basePath: '/workspaces/{workspaceId}/units',
-  legacyPath: true,
   operations: {
     GET: {
       roles: ['USER'],
@@ -100,22 +108,22 @@ export const unitsCollectionApiDoc = {
 
 export const unitsItemApiDoc = {
   basePath: '/workspaces/{workspaceId}/units/{unitId}',
-  legacyPath: true,
   operations: {
     DELETE: {
       roles: ['ADMIN'],
       permission: 'UNITS_UPDATE',
       tags: [ApiTags.unitsCore],
       summary: 'Delete unit',
+      description: 'Deletes a unit that no cocktail uses (ingredient volumes in this unit are removed) and regenerates the derived conversions.',
       params: UnitItemParams,
       response: UnitDtoSchema,
+      errorResponses: { 404: 'Unit not found.', 409: 'UNIT_IN_USE: the unit is still used in cocktail recipes.' },
     },
   },
 } satisfies ResourceApiDoc;
 
 export const unitConversionsCollectionApiDoc = {
   basePath: '/workspaces/{workspaceId}/units/conversions',
-  legacyPath: true,
   operations: {
     GET: {
       roles: ['USER'],
@@ -135,13 +143,16 @@ export const unitConversionsCollectionApiDoc = {
       params: WorkspaceIdParam,
       body: UnitConversionCreateSchema,
       response: z.array(UnitConversionDtoSchema),
+      errorResponses: {
+        400: 'INVALID_REFERENCE: a unit does not exist in this workspace.',
+        409: 'UNIT_CONVERSION_EXISTS: a manual conversion between these units already exists.',
+      },
     },
   },
 } satisfies ResourceApiDoc;
 
 export const unitConversionsItemApiDoc = {
   basePath: '/workspaces/{workspaceId}/units/conversions/{unitConversionId}',
-  legacyPath: true,
   operations: {
     PUT: {
       roles: ['ADMIN'],
@@ -152,6 +163,7 @@ export const unitConversionsItemApiDoc = {
       params: UnitConversionItemParams,
       body: UnitConversionUpdateSchema,
       response: UnitConversionDtoSchema,
+      errorResponses: { 404: 'Unit conversion not found.', 409: 'AUTO_GENERATED_CONVERSION: derived conversions cannot be changed.' },
     },
     DELETE: {
       roles: ['ADMIN'],
@@ -161,6 +173,7 @@ export const unitConversionsItemApiDoc = {
       description: 'Delete a conversion and regenerate all derived conversions.',
       params: UnitConversionItemParams,
       response: UnitConversionDtoSchema,
+      errorResponses: { 404: 'Unit conversion not found.', 409: 'AUTO_GENERATED_CONVERSION: derived conversions cannot be deleted.' },
     },
   },
 } satisfies ResourceApiDoc;

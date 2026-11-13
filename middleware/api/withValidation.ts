@@ -12,7 +12,7 @@ import { constants as HttpStatus } from 'http2';
 import type { z } from 'zod';
 import type { HandlerCtx, RouteSpec } from '@lib/openapi/types';
 import { sendFail, sendOk } from '@lib/http/responses';
-import { ApiError } from '@lib/http/ApiError';
+import { prismaErrorToApiError } from '@lib/http/prismaErrors';
 
 function parsePart(schema: z.ZodTypeAny | undefined, data: unknown) {
   if (!schema) return { ok: true as const, data: undefined };
@@ -52,14 +52,16 @@ export function withValidation<S extends RouteSpec>(spec: S, handler: (ctx: Hand
       }
       return undefined;
     } catch (error) {
-      if (error instanceof ApiError) {
-        return sendFail(res, error.status, error.code, error.message, error.issues);
+      if (res.headersSent) {
+        console.error('withValidation handler error after response was sent:', error);
+        return undefined;
+      }
+      const apiError = prismaErrorToApiError(error);
+      if (apiError) {
+        return sendFail(res, apiError.status, apiError.code, apiError.message, apiError.issues);
       }
       console.error('withValidation handler error:', error);
-      if (!res.headersSent) {
-        return sendFail(res, HttpStatus.HTTP_STATUS_INTERNAL_SERVER_ERROR, 'INTERNAL_ERROR', 'Internal error occurred!');
-      }
-      return undefined;
+      return sendFail(res, HttpStatus.HTTP_STATUS_INTERNAL_SERVER_ERROR, 'INTERNAL_ERROR', 'Internal error occurred!');
     }
   };
 }

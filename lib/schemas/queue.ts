@@ -33,18 +33,27 @@ export const QueueItemDtoSchema = z
 
 export type QueueItemDto = z.infer<typeof QueueItemDtoSchema>;
 
+export const MAX_QUEUE_ADD_AMOUNT = 50;
+export const MAX_QUEUE_NOTES_LENGTH = 500;
+
 export const QueueAddSchema = z
   .object({
-    cocktailId: z.string().min(1),
-    notes: z.string().nullish().openapi({ description: 'Optional notes. Empty or "-" is treated as no notes.' }),
-    amount: z.coerce.number().int().min(1).optional().openapi({ description: 'How many identical items to enqueue (default 1).' }),
+    cocktailId: z.string().min(1).max(100),
+    notes: z.string().max(MAX_QUEUE_NOTES_LENGTH).nullish().openapi({ description: 'Optional notes. Empty or "-" is treated as no notes.' }),
+    amount: z.coerce
+      .number()
+      .int()
+      .min(1)
+      .max(MAX_QUEUE_ADD_AMOUNT)
+      .optional()
+      .openapi({ description: `How many identical items to enqueue (default 1, at most ${MAX_QUEUE_ADD_AMOUNT}).` }),
   })
   .openapi('QueueAddInput');
 
 export const QueueRemoveSchema = z
   .object({
-    cocktailId: z.string().min(1),
-    notes: z.string().nullish().openapi({ description: 'Notes to match. Empty or "-" matches items without notes.' }),
+    cocktailId: z.string().min(1).max(100),
+    notes: z.string().max(MAX_QUEUE_NOTES_LENGTH).nullish().openapi({ description: 'Notes to match. Empty or "-" matches items without notes.' }),
   })
   .openapi('QueueRemoveInput');
 
@@ -62,7 +71,6 @@ export type QueueUpdateInput = z.infer<typeof QueueUpdateSchema>;
 
 export const queueCollectionApiDoc = {
   basePath: '/workspaces/{workspaceId}/queue',
-  legacyPath: true,
   operations: {
     GET: {
       roles: ['USER'],
@@ -78,7 +86,6 @@ export const queueCollectionApiDoc = {
 
 export const queueAddApiDoc = {
   basePath: '/workspaces/{workspaceId}/queue/add',
-  legacyPath: true,
   operations: {
     POST: {
       roles: ['USER'],
@@ -89,20 +96,20 @@ export const queueAddApiDoc = {
       params: WorkspaceIdParam,
       body: QueueAddSchema,
       response: z.array(QueueItemDtoSchema),
+      errorResponses: { 400: 'The cocktail does not exist in this workspace.' },
     },
   },
 } satisfies ResourceApiDoc;
 
 export const queueRemoveApiDoc = {
   basePath: '/workspaces/{workspaceId}/queue/remove',
-  legacyPath: true,
   operations: {
     POST: {
       roles: ['USER'],
       permission: 'QUEUE_DELETE',
       tags: [ApiTags.queueCore],
       summary: 'Remove from queue',
-      description: 'Remove the oldest queue item matching the given cocktail and notes.',
+      description: 'Atomically remove the oldest queue item matching the given cocktail and notes (concurrent calls each remove a different item).',
       params: WorkspaceIdParam,
       body: QueueRemoveSchema,
       response: QueueItemDtoSchema,
@@ -113,7 +120,6 @@ export const queueRemoveApiDoc = {
 
 export const queueItemApiDoc = {
   basePath: '/workspaces/{workspaceId}/queue/{queueItemId}',
-  legacyPath: true,
   operations: {
     PUT: {
       roles: ['USER'],

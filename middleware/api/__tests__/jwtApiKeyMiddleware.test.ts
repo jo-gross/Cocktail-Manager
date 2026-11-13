@@ -18,6 +18,14 @@ describe('jwtApiKeyMiddleware', () => {
       expect(isMasterApiKey('wrong-key')).toBe(false);
     });
 
+    it('returns false for keys of the same length, prefixes and extensions', () => {
+      const sameLength = TEST_MASTER_API_KEY.slice(0, -1) + (TEST_MASTER_API_KEY.endsWith('0') ? '1' : '0');
+      expect(isMasterApiKey(sameLength)).toBe(false);
+      expect(isMasterApiKey(TEST_MASTER_API_KEY.slice(0, -1))).toBe(false);
+      expect(isMasterApiKey(`${TEST_MASTER_API_KEY}x`)).toBe(false);
+      expect(isMasterApiKey('')).toBe(false);
+    });
+
     it('returns false when master key env is unset', () => {
       delete process.env.INSTANCE_MASTER_API_KEY;
       expect(isMasterApiKey(TEST_MASTER_API_KEY)).toBe(false);
