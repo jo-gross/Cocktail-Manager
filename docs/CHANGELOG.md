@@ -1,3 +1,24 @@
+## [1.22.0](https://github.com/jo-gross/Cocktail-Manager/releases/tag/v1.22.0) (2026-11-13)
+
+## What's Changed
+
+- chore: backend hardening (#1457) @jo-gross
+- fix: lists that silently end (guest menu pickers, edit history, schedule overlaps) (#1459) @jo-gross
+- fix(forms): cleared cocktail/ingredient price crashes preview and saves as 0 € (#1458) @jo-gross
+- feat: new form layout for cocktail, ingredients, garnishes (#1456) @jo-gross
+- chore: implement user changelog updates and extraction logic (#1455) @jo-gross
+- feat: back closes modals, reliable unsaved-changes guard (#1454) @jo-gross
+- feat: guest menus with card designer, monitor and print output (#1450) @jo-gross
+
+## Dependencies
+
+- build(deps): bump i18next from 26.7.2 to 27.0.1 (#1451) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps-dev): bump @tailwindcss/postcss from 4.3.4 to 4.3.5 (#1453) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps): bump nodemailer from 10.3.1 to 10.4.0 (#1452) @[dependabot[bot]](https://github.com/apps/dependabot)
+
+**Full Changelog**: https://github.com/jo-gross/Cocktail-Manager/compare/v1.21.3...v1.21.4
+
+
 ## [1.21.3](https://github.com/jo-gross/Cocktail-Manager/releases/tag/v1.21.3) (2026-11-10)
 
 ## What's Changed

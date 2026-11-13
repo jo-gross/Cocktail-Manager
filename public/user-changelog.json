@@ -1,5 +1,16 @@
 [
   {
+    "version": "1.22.0",
+    "date": "2026-11-13",
+    "highlights": [
+      "Bug fix: Lists that silently end (guest menu pickers, edit history, schedule overlaps)",
+      "Bug fix: Cleared cocktail/ingredient price crashes preview and saves as 0 €",
+      "New form layout for cocktail, ingredients, garnishes",
+      "Back closes modals, reliable unsaved-changes guard",
+      "Guest menus with card designer, monitor and print output"
+    ]
+  },
+  {
     "version": "1.21.3",
     "date": "2026-11-10",
     "highlights": [
