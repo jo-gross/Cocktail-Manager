@@ -4,17 +4,7 @@ import type { OnboardingChecklistItem, OnboardingChecklistItemId, OnboardingDto 
 export type { OnboardingChecklistItem, OnboardingChecklistItemId };
 export type OnboardingStatus = OnboardingDto;
 
-/** Same ids as `ONBOARDING_CHECKLIST_ITEMS` in @lib/schemas/onboarding (kept here to keep zod out of the page bundle). */
-export const ONBOARDING_CHECKLIST_ITEMS: readonly OnboardingChecklistItemId[] = [
-  'glasses',
-  'ingredients',
-  'cocktails',
-  'cards',
-  'prices',
-  'guestInfo',
-  'team',
-  'guestMenu',
-];
+export { ONBOARDING_CHECKLIST_ITEMS } from '@lib/onboarding/checklistItems';
 
 /** Throws `ApiV1RequestError`; callers treat failures (e.g. 404 on older servers) as "no checklist". */
 export function fetchOnboardingStatus(workspaceId: string): Promise<OnboardingStatus> {
@@ -24,4 +14,11 @@ export function fetchOnboardingStatus(workspaceId: string): Promise<OnboardingSt
 /** Marks the setup wizard as completed (idempotent). */
 export function completeOnboarding(workspaceId: string): Promise<OnboardingStatus> {
   return apiV1Mutate<OnboardingStatus>(`/api/v1/workspaces/${encodeURIComponent(workspaceId)}/onboarding/complete`, 'POST');
+}
+
+/** Marks a checklist item as done without doing it (`skipped: true`) or reverts that, for the whole workspace. */
+export function setChecklistItemSkipped(workspaceId: string, itemId: OnboardingChecklistItemId, skipped: boolean): Promise<OnboardingStatus> {
+  return apiV1Mutate<OnboardingStatus>(`/api/v1/workspaces/${encodeURIComponent(workspaceId)}/onboarding/checklist/${encodeURIComponent(itemId)}`, 'PUT', {
+    skipped,
+  });
 }

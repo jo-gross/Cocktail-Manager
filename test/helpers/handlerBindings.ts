@@ -41,7 +41,7 @@ import * as workspaceUsers from '@lib/api/v1/workspaceUsers';
 import { actionsCollectionApiDoc, actionsItemApiDoc } from '@lib/schemas/actions';
 import { adminTemplatesAccessApiDoc, adminTemplatesCloneApiDoc, adminTemplatesCollectionApiDoc, adminTemplatesItemApiDoc } from '@lib/schemas/adminTemplates';
 import { guidesCollectionApiDoc, guidesItemApiDoc } from '@lib/schemas/guides';
-import { onboardingApiDoc, onboardingCompleteApiDoc } from '@lib/schemas/onboarding';
+import { onboardingApiDoc, onboardingChecklistItemApiDoc, onboardingCompleteApiDoc } from '@lib/schemas/onboarding';
 import { templatesApplyApiDoc, templatesCollectionApiDoc, templatesItemsApiDoc } from '@lib/schemas/templates';
 import { cocktailGuestInfoApiDoc, guestInfoBulkApiDoc, guestInfoOverviewApiDoc } from '@lib/schemas/guestInfo';
 import {
@@ -243,6 +243,7 @@ export const handlerBindings: HandlerBinding[] = [
   { apiDoc: guidesItemApiDoc, handler: guides.itemHandler },
   { apiDoc: onboardingApiDoc, handler: onboarding.onboardingHandler },
   { apiDoc: onboardingCompleteApiDoc, handler: onboarding.completeHandler },
+  { apiDoc: onboardingChecklistItemApiDoc, handler: onboarding.checklistItemHandler },
   { apiDoc: templatesCollectionApiDoc, handler: templates.collectionHandler },
   { apiDoc: templatesItemsApiDoc, handler: templates.itemsHandler },
   { apiDoc: templatesApplyApiDoc, handler: templates.applyHandler },

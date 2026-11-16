@@ -76,7 +76,8 @@ nutzen. Nach dem Anlegen auf `/` → Redirect in den Assistenten.
 
 - Changelog-Modal: Abschnitt „Touren zu neuen Funktionen“ (`announce.since` > `lastSeenVersion`); im Workspace
   „Neu“-Badges an den Manage-Links.
-- `/workspaces/[id]/manage/help`: Einrichtungs-Checkliste (live, plus Fortschrittskarte in der Bar-Ansicht),
+- `/workspaces/[id]/manage/help`: Einrichtungs-Checkliste (live, plus Fortschrittskarte in der Bar-Ansicht;
+  Punkte lassen sich workspaceweit „Als erledigt markieren“, wenn man sie bewusst nicht möchte, Touren ebenso),
   Touren mit Status, „Was ist neu“ (`user-changelog.json`), für ADMIN „Startinhalte hinzufügen“.
 
 ## 5. Demo (eigene Instanz)
@@ -140,6 +141,7 @@ Migration: `setupCompletedAt = now()` für bestehende Workspaces.
 | POST | `/api/v1/workspaces/{id}/templates/{key}/apply` | MANAGER + `*_CREATE` |
 | GET | `/api/v1/workspaces/{id}/onboarding` | USER |
 | POST | `/api/v1/workspaces/{id}/onboarding/complete` | ADMIN |
+| PUT | `/api/v1/workspaces/{id}/onboarding/checklist/{itemId}` `{ skipped }` → Setting `onboardingChecklistSkipped` | MANAGER + `WORKSPACE_UPDATE` |
 | GET/PUT | `/api/v1/me/guides(/{guideId})` | Session |
 | GET/POST | `/api/admin/templates` | Master-Key |
 | PATCH/DELETE | `/api/admin/templates/{key}` | Master-Key |

@@ -18,7 +18,7 @@ const RoleEnum = z.enum(['OWNER', 'ADMIN', 'MANAGER', 'USER']).openapi('Workspac
 
 /** Known workspace setting keys (mirrors Prisma WorkspaceSettingKey). */
 const WorkspaceSettingKeyEnum = z
-  .enum(['translations', 'usePrices', 'statisticDayStartTime', 'timezone', 'currency', 'contentLocales'])
+  .enum(['translations', 'usePrices', 'statisticDayStartTime', 'timezone', 'currency', 'contentLocales', 'onboardingChecklistSkipped'])
   .openapi('WorkspaceSettingKey');
 
 /** A workspace member — public user fields plus their role in this workspace. */
@@ -97,7 +97,7 @@ export const WorkspaceSettingUpdateSchema = z
     setting: WorkspaceSettingKeyEnum,
     value: z.string().max(10_000).nullish().openapi({
       description:
-        'New value for the setting; null clears it. `timezone` must be an IANA time zone (default Europe/Berlin), `currency` an ISO 4217 code (default EUR), `contentLocales` a JSON string `{"primary":"de","additional":["en"]}`.',
+        'New value for the setting; null clears it. `timezone` must be an IANA time zone (default Europe/Berlin), `currency` an ISO 4217 code (default EUR), `contentLocales` a JSON string `{"primary":"de","additional":["en"]}`, `onboardingChecklistSkipped` a JSON array of checklist item ids (prefer `PUT /onboarding/checklist/{itemId}`).',
     }),
   })
   .superRefine((input, ctx) => {

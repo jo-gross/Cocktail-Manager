@@ -4,7 +4,8 @@ import { useRouter } from 'next/router';
 import { useTranslation } from 'react-i18next';
 import { withPagePermission } from '@middleware/ui/withPagePermission';
 import { ManageEntityLayout } from '@components/layout/ManageEntityLayout';
-import { Button, Loading } from '@components/ui';
+import { FaArrowLeft, FaArrowRight } from 'react-icons/fa';
+import { Button, Loading, Skeleton } from '@components/ui';
 import { SetupStepper } from '@components/onboarding/SetupStepper';
 import { LanguageStep } from '@components/onboarding/steps/LanguageStep';
 import { BasicsStep } from '@components/onboarding/steps/BasicsStep';
@@ -52,6 +53,7 @@ function SetupPage() {
   const step: SetupStep = isSetupStep(queryStep) && steps.includes(queryStep) ? queryStep : 'language';
 
   const saveRef = useRef<StepSave | null>(null);
+  const headingRef = useRef<HTMLHeadingElement>(null);
   const [navigating, setNavigating] = useState(false);
   const [businessType, setBusinessType] = useState<BusinessType | null>(null);
   const [contentLocaleDraft, setContentLocaleDraft] = useState<string | null>(null);
@@ -87,6 +89,8 @@ function SetupPage() {
         saveRef.current = null;
         await router.replace({ pathname: router.pathname, query: { ...router.query, step: target } }, undefined, { shallow: true });
         window.scrollTo({ top: 0 });
+        // Move the focus to the new step's title (screen readers announce the step change).
+        headingRef.current?.focus({ preventScroll: true });
       } finally {
         setNavigating(false);
       }
@@ -107,7 +111,8 @@ function SetupPage() {
       subtitle={workspace?.name}
       actions={
         workspaceId && step !== 'done' ? (
-          <Link href={`/workspaces/${workspaceId}`}>
+          // On narrow screens the back arrow already leaves the wizard; the text button would collide with the title.
+          <Link href={`/workspaces/${workspaceId}`} className="hidden sm:block">
             <Button type="button" variant="ghost">
               {t('onboarding:continueLater')}
             </Button>
@@ -115,7 +120,7 @@ function SetupPage() {
         ) : null
       }
     >
-      <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 pb-8">
+      <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 md:gap-8">
         <SetupStepper
           steps={steps}
           current={step}
@@ -124,49 +129,64 @@ function SetupPage() {
           onSelect={(target) => void goTo(target, { save: true })}
         />
 
-        <header className="flex flex-col gap-1">
-          <h2 className="text-2xl font-bold">{t(`onboarding:steps.${step}.title`)}</h2>
-          <p className="text-base-content/70">{t(`onboarding:steps.${step}.description`)}</p>
-        </header>
+        <div className="flex flex-col gap-4 md:gap-6">
+          {/* The done step brings its own hero header. */}
+          {step !== 'done' ? (
+            <header className="flex flex-col gap-1">
+              <h1 ref={headingRef} tabIndex={-1} className="text-2xl font-bold outline-none">
+                {t(`onboarding:steps.${step}.title`)}
+              </h1>
+              <p className="text-sm text-base-content/70">{t(`onboarding:steps.${step}.description`)}</p>
+            </header>
+          ) : null}
 
-        {!workspaceId || !workspace ? (
-          <Loading />
-        ) : step === 'language' ? (
-          <LanguageStep workspaceId={workspaceId} saveRef={saveRef} onContentLocaleChange={setContentLocaleDraft} />
-        ) : step === 'basics' ? (
-          <BasicsStep workspaceId={workspaceId} saveRef={saveRef} businessType={businessType} onBusinessTypeChange={chooseBusinessType} />
-        ) : step === 'content' ? (
-          <ContentStep
-            workspaceId={workspaceId}
-            saveRef={saveRef}
-            locale={contentLocale}
-            applied={applied}
-            onApplied={(entry) => setApplied((previous) => [...previous, entry])}
-            onStartEmpty={skip}
-          />
-        ) : step === 'team' ? (
-          <TeamStep workspaceId={workspaceId} saveRef={saveRef} onLinkChange={setTeamLink} />
-        ) : (
-          <DoneStep workspaceId={workspaceId} saveRef={saveRef} contentLocale={contentLocale} applied={applied} teamLink={teamLink} />
-        )}
+          {!workspaceId || !workspace ? (
+            <div className="flex flex-col gap-4 md:gap-6" aria-busy="true">
+              <Skeleton className="h-48 w-full rounded-2xl" />
+              <Skeleton className="h-48 w-full rounded-2xl" />
+            </div>
+          ) : step === 'language' ? (
+            <LanguageStep workspaceId={workspaceId} saveRef={saveRef} onContentLocaleChange={setContentLocaleDraft} />
+          ) : step === 'basics' ? (
+            <BasicsStep workspaceId={workspaceId} saveRef={saveRef} businessType={businessType} onBusinessTypeChange={chooseBusinessType} />
+          ) : step === 'content' ? (
+            <ContentStep
+              workspaceId={workspaceId}
+              saveRef={saveRef}
+              locale={contentLocale}
+              applied={applied}
+              onApplied={(entry) => setApplied((previous) => [...previous, entry])}
+              onStartEmpty={skip}
+            />
+          ) : step === 'team' ? (
+            <TeamStep workspaceId={workspaceId} saveRef={saveRef} onLinkChange={setTeamLink} />
+          ) : (
+            <DoneStep workspaceId={workspaceId} saveRef={saveRef} contentLocale={contentLocale} applied={applied} teamLink={teamLink} />
+          )}
+        </div>
+      </div>
 
-        {step !== 'done' ? (
-          <div className="sticky bottom-0 z-10 -mx-2 flex flex-wrap items-center justify-between gap-2 border-t border-base-300 bg-base-100/95 px-2 py-3 backdrop-blur">
-            <Button type="button" variant="ghost" disabled={isFirst || navigating} onClick={back}>
+      {step !== 'done' ? (
+        // Full-bleed action bar; the primary action always sits at the right edge of the content column.
+        <div className="sticky bottom-0 z-10 -mx-4 mt-8 -mb-4 border-t border-base-300 bg-base-100/95 backdrop-blur md:-mx-5 md:-mb-5">
+          <div className="mx-auto flex w-full max-w-3xl items-center justify-between gap-2 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:px-0">
+            <Button type="button" variant="ghost" disabled={navigating} onClick={back} className={isFirst ? 'invisible' : undefined}>
+              <FaArrowLeft aria-hidden />
               {t('common:back')}
             </Button>
-            <div className="flex gap-2">
-              <Button type="button" variant="outline" disabled={navigating} onClick={skip}>
+            <div className="flex items-center gap-2">
+              <Button type="button" variant="ghost" disabled={navigating} onClick={skip}>
                 {t('common:skip')}
               </Button>
               <Button type="button" variant="primary" disabled={navigating} onClick={next}>
                 {navigating ? <Loading size="sm" /> : null}
                 {t('common:next')}
+                {navigating ? null : <FaArrowRight aria-hidden />}
               </Button>
             </div>
           </div>
-        ) : null}
-      </div>
+        </div>
+      ) : null}
     </ManageEntityLayout>
   );
 }

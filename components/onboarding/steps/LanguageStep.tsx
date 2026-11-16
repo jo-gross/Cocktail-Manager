@@ -105,7 +105,7 @@ export function LanguageStep({ workspaceId, saveRef, onContentLocaleChange }: Se
   }, [saveRef, loaded, contentLocales, region, workspaceId, refreshWorkspace, t]);
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-4 md:gap-6">
       <FormSection title={t('onboarding:language.uiTitle')} description={t('onboarding:language.uiHelp')}>
         <ButtonGroup aria-label={t('settings:language.label')}>
           {SUPPORTED_LOCALES.map((locale) => (

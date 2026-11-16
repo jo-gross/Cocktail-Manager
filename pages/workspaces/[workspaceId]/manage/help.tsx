@@ -11,9 +11,10 @@ import { StartContentModal } from '@components/onboarding/StartContentModal';
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import { useOnboardingStatus } from '@components/tour/useOnboardingStatus';
 import { UserContext } from '@lib/context/UserContextProvider';
-import { checklistItemHref, summarizeChecklist } from '@lib/tours/checklist';
-import { ONBOARDING_CHECKLIST_ITEMS } from '@lib/network/onboarding';
-import type { TourStatus } from '@lib/tours/registry';
+import { checklistItemHref, isChecklistItemSettled, summarizeChecklist } from '@lib/tours/checklist';
+import { ONBOARDING_CHECKLIST_ITEMS, setChecklistItemSkipped, type OnboardingChecklistItemId } from '@lib/network/onboarding';
+import { alertApiV1Error } from '@lib/network/apiV1';
+import { tourGuideId, type TourStatus } from '@lib/tours/registry';
 import type { UserChangelogEntry } from '@lib/changelog/userChangelog';
 
 const STATUS_VARIANT: Record<TourStatus, BadgeVariant> = {
@@ -40,7 +41,8 @@ function HelpSection({ title, children }: { title: string; children: React.React
 
 function SetupChecklist({ workspaceId }: { workspaceId: string }) {
   const { t } = useTranslation('tours');
-  const { status, loading, failed } = useOnboardingStatus(workspaceId);
+  const { status, setStatus, loading, failed } = useOnboardingStatus(workspaceId);
+  const [saving, setSaving] = useState<OnboardingChecklistItemId | null>(null);
 
   if (loading && !status) return <Skeleton className="h-48 w-full rounded-2xl" />;
   if (failed || !status) {
@@ -53,6 +55,17 @@ function SetupChecklist({ workspaceId }: { workspaceId: string }) {
     );
   }
 
+  const toggleSkipped = async (itemId: OnboardingChecklistItemId, skipped: boolean) => {
+    setSaving(itemId);
+    try {
+      setStatus(await setChecklistItemSkipped(workspaceId, itemId, skipped));
+    } catch (error) {
+      alertApiV1Error(error, t('help.checklist.saveError'));
+    } finally {
+      setSaving(null);
+    }
+  };
+
   const summary = summarizeChecklist(status.checklist);
   const items = status.checklist.filter((item) => (ONBOARDING_CHECKLIST_ITEMS as readonly string[]).includes(item.id));
   return (
@@ -62,24 +75,62 @@ function SetupChecklist({ workspaceId }: { workspaceId: string }) {
         <progress className="h-1.5 w-full overflow-hidden rounded-full accent-primary" value={summary.done} max={summary.total} />
       </div>
       <ul className="mt-2 divide-y divide-base-300">
-        {items.map((item) => (
-          <li key={item.id}>
-            <Link
-              href={checklistItemHref(workspaceId, item.id)}
-              className="group flex items-center gap-3 px-4 py-3 transition-colors hover:bg-base-200/60 focus-visible:bg-base-200/60 focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none focus-visible:ring-inset motion-reduce:transition-none md:px-5"
-            >
-              {item.done ? (
-                <FaCheckCircle aria-hidden="true" className="shrink-0 text-success" />
+        {items.map((item) => {
+          const settled = isChecklistItemSettled(item);
+          // Skipping only matters while the data does not fulfil the item.
+          const skippedOnly = !item.done && item.skipped;
+          const label = t(`help.checklist.items.${item.id}`);
+          return (
+            <li key={item.id} className="flex items-center gap-1 pr-2 md:pr-3">
+              <Link
+                href={checklistItemHref(workspaceId, item.id)}
+                className="group flex min-w-0 flex-1 items-center gap-3 py-3 pl-4 transition-colors hover:bg-base-200/60 focus-visible:bg-base-200/60 focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none focus-visible:ring-inset motion-reduce:transition-none md:pl-5"
+              >
+                {item.done ? (
+                  <FaCheckCircle aria-hidden="true" className="shrink-0 text-success" />
+                ) : skippedOnly ? (
+                  <FaCheckCircle aria-hidden="true" className="shrink-0 text-base-content/40" />
+                ) : (
+                  <FaRegCircle aria-hidden="true" className="shrink-0 text-base-content/40" />
+                )}
+                <span className="sr-only">{item.done ? t('help.checklist.done') : skippedOnly ? t('help.checklist.skipped') : t('help.checklist.open')}</span>
+                <span className={settled ? 'min-w-0 flex-1 text-base-content/60' : 'min-w-0 flex-1 font-medium'}>{label}</span>
+                {skippedOnly && (
+                  <Badge variant="ghost" size="sm" aria-hidden="true">
+                    {t('help.checklist.skipped')}
+                  </Badge>
+                )}
+                {!settled && item.open > 0 && <span className="text-sm text-base-content/60">{t('help.checklist.openCount', { count: item.open })}</span>}
+                <FaChevronRight aria-hidden="true" className="shrink-0 text-xs text-base-content/30 group-hover:text-base-content/60" />
+              </Link>
+              {skippedOnly ? (
+                <Button
+                  variant="ghost"
+                  size="xs"
+                  loading={saving === item.id}
+                  disabled={saving !== null}
+                  aria-label={t('help.checklist.undoLabel', { item: label })}
+                  onClick={() => toggleSkipped(item.id, false)}
+                >
+                  {t('help.checklist.undo')}
+                </Button>
               ) : (
-                <FaRegCircle aria-hidden="true" className="shrink-0 text-base-content/40" />
+                !item.done && (
+                  <Button
+                    variant="ghost"
+                    size="xs"
+                    loading={saving === item.id}
+                    disabled={saving !== null}
+                    aria-label={t('help.checklist.markDoneLabel', { item: label })}
+                    onClick={() => toggleSkipped(item.id, true)}
+                  >
+                    {t('help.checklist.markDone')}
+                  </Button>
+                )
               )}
-              <span className="sr-only">{item.done ? t('help.checklist.done') : t('help.checklist.open')}</span>
-              <span className={item.done ? 'flex-1 text-base-content/60' : 'flex-1 font-medium'}>{t(`help.checklist.items.${item.id}`)}</span>
-              {!item.done && item.open > 0 && <span className="text-sm text-base-content/60">{t('help.checklist.openCount', { count: item.open })}</span>}
-              <FaChevronRight aria-hidden="true" className="shrink-0 text-xs text-base-content/30 group-hover:text-base-content/60" />
-            </Link>
-          </li>
-        ))}
+            </li>
+          );
+        })}
       </ul>
     </Card>
   );
@@ -121,7 +172,7 @@ function SetupTools({ workspaceId }: { workspaceId: string }) {
 
 function TourList() {
   const { t } = useTranslation('tours');
-  const { tours, getTourStatus, startTour } = useTour();
+  const { tours, getTourStatus, startTour, setGuideStatus } = useTour();
 
   if (tours.length === 0) {
     return (
@@ -153,9 +204,21 @@ function TourList() {
                 <span className="text-sm text-base-content/60">{t(tour.description)}</span>
                 <span className="text-xs text-base-content/50">{t('help.tours.steps', { count: tour.steps.length })}</span>
               </div>
-              <Button variant={status === 'COMPLETED' || status === 'STARTED' ? 'outline' : 'primary'} size="sm" onClick={() => startTour(tour.id)}>
-                {status === 'COMPLETED' || status === 'STARTED' ? t('help.tours.restart') : t('help.tours.start')}
-              </Button>
+              <div className="flex flex-wrap gap-2">
+                {status !== 'COMPLETED' && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    aria-label={t('help.tours.markDoneLabel', { tour: t(tour.title) })}
+                    onClick={() => setGuideStatus(tourGuideId(tour.id), 'COMPLETED', tour.version)}
+                  >
+                    {t('help.tours.markDone')}
+                  </Button>
+                )}
+                <Button variant={status === 'COMPLETED' || status === 'STARTED' ? 'outline' : 'primary'} size="sm" onClick={() => startTour(tour.id)}>
+                  {status === 'COMPLETED' || status === 'STARTED' ? t('help.tours.restart') : t('help.tours.start')}
+                </Button>
+              </div>
             </li>
           );
         })}

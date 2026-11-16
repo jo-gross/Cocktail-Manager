@@ -2,12 +2,11 @@ import React, { useContext, useEffect, useId, useState } from 'react';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { FaCheckCircle } from 'react-icons/fa';
-import { Alert, Button, Card, CardBody, Loading, Radio, Skeleton } from '@components/ui';
+import { Alert, Badge, Button, Loading, Radio, Skeleton, cn } from '@components/ui';
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import { alertService } from '@lib/alertService';
 import { alertApiV1Error } from '@lib/network/apiV1';
 import { applyTemplate, listCatalogTemplates, type TemplateApplyResultDto, type TemplateSummaryDto } from '@lib/network/templates';
-import { settingsHref } from '@components/settings/settingsNavigation';
 import {
   emptyTemplateSelection,
   TEMPLATE_ITEM_KINDS,
@@ -17,6 +16,7 @@ import {
 } from '@lib/onboarding/templateSelection';
 import { TemplatePickerDialog } from './TemplatePickerDialog';
 import { TemplateAttribution } from './TemplateAttribution';
+import { SetupHint } from './SetupHint';
 
 type ApplyMode = 'all' | 'basics' | 'selection';
 const APPLY_MODES: ApplyMode[] = ['all', 'basics', 'selection'];
@@ -53,6 +53,7 @@ function TemplateTile({
   const modalContext = useContext(ModalContext);
   const formatCounts = useFormatCounts();
   const groupName = useId();
+  const titleId = useId();
   const [mode, setMode] = useState<ApplyMode>('all');
   const [selection, setSelection] = useState<TemplateSelectionIds>(emptyTemplateSelection);
   const [applying, setApplying] = useState(false);
@@ -92,31 +93,51 @@ function TemplateTile({
   const basicsCounts = { ...template.counts, cocktails: 0, cards: 0 };
 
   return (
-    <Card>
-      <CardBody compact className="flex flex-col gap-3">
-        <div className="flex flex-col gap-1">
-          <h3 className="flex items-center gap-2 text-lg font-semibold">
+    <article
+      aria-labelledby={titleId}
+      className={cn(
+        '@container flex h-full flex-col gap-4 rounded-xl border bg-base-100 p-4 transition-colors',
+        applied ? 'border-success ring-1 ring-success' : 'border-base-300',
+      )}
+    >
+      <header className="flex flex-col gap-1">
+        <div className="flex items-start justify-between gap-2">
+          <h3 id={titleId} className="text-lg leading-snug font-semibold">
             {template.name}
-            {applied ? <FaCheckCircle aria-label={t('onboarding:content.applied')} className="text-success" /> : null}
           </h3>
-          {template.description ? <p className="text-sm text-base-content/70">{template.description}</p> : null}
-          <p className="text-xs text-base-content/60">{formatCounts(template.counts)}</p>
+          {applied ? (
+            <Badge variant="success" size="sm" className="shrink-0 gap-1">
+              <FaCheckCircle aria-hidden />
+              {t('onboarding:content.applied')}
+            </Badge>
+          ) : null}
         </div>
+        {template.description ? <p className="text-sm text-base-content/70">{template.description}</p> : null}
+      </header>
 
-        <fieldset className="flex flex-col gap-2" disabled={applying}>
-          <legend className="sr-only">{t('onboarding:content.modeLabel', { template: template.name })}</legend>
-          {APPLY_MODES.map((entry) => (
-            <label key={entry} className="flex cursor-pointer items-start gap-2 text-sm">
+      {/* Side by side when the tile is wide (single collection), stacked in a two-column grid. */}
+      <fieldset className="grid gap-2 @xl:grid-cols-3" disabled={applying}>
+        <legend className="sr-only">{t('onboarding:content.modeLabel', { template: template.name })}</legend>
+        {APPLY_MODES.map((entry) => {
+          const checked = mode === entry;
+          return (
+            <label
+              key={entry}
+              className={cn(
+                'flex cursor-pointer items-start gap-3 rounded-lg border px-3 py-2.5 text-sm transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-primary',
+                checked ? 'border-primary bg-primary/10' : 'border-base-300 hover:bg-base-200',
+              )}
+            >
               <Radio
                 name={groupName}
                 className="mt-0.5"
-                checked={mode === entry}
+                checked={checked}
                 onChange={() => {
                   setMode(entry);
                   if (entry === 'selection' && selectedCount === 0) openPicker();
                 }}
               />
-              <span className="flex flex-col">
+              <span className="flex min-w-0 flex-col">
                 <span className="font-medium">{t(`onboarding:content.mode.${entry}`)}</span>
                 <span className="text-xs text-base-content/60">
                   {entry === 'all'
@@ -129,9 +150,25 @@ function TemplateTile({
                 </span>
               </span>
             </label>
-          ))}
-        </fieldset>
+          );
+        })}
+      </fieldset>
 
+      {applied ? (
+        <div role="status" className="flex flex-col gap-0.5 rounded-lg bg-base-200 px-3 py-2 text-sm">
+          <span className="font-medium">{t('onboarding:content.result.title')}</span>
+          <span>{t('onboarding:content.result.created', { items: formatCounts(applied.result.created) || t('onboarding:content.result.none') })}</span>
+          {TEMPLATE_ITEM_KINDS.some((kind) => applied.result.linked[kind] > 0) ? (
+            <span className="text-base-content/70">{t('onboarding:content.result.linked', { items: formatCounts(applied.result.linked) })}</span>
+          ) : null}
+          {TEMPLATE_ITEM_KINDS.some((kind) => applied.result.skipped[kind] > 0) ? (
+            <span className="text-base-content/70">{t('onboarding:content.result.skipped', { items: formatCounts(applied.result.skipped) })}</span>
+          ) : null}
+        </div>
+      ) : null}
+
+      {/* Pinned to the bottom so the actions line up across tiles of different length. */}
+      <div className="mt-auto flex flex-col gap-3">
         <div className="flex flex-wrap items-center justify-end gap-2">
           {mode === 'selection' ? (
             <Button type="button" variant="ghost" size="sm" disabled={applying} onClick={openPicker}>
@@ -143,23 +180,9 @@ function TemplateTile({
             {applied ? t('onboarding:content.applyAgain') : t('onboarding:content.apply')}
           </Button>
         </div>
-
-        {applied ? (
-          <div role="status" className="flex flex-col gap-0.5 rounded-lg bg-base-200 px-3 py-2 text-sm">
-            <span className="font-medium">{t('onboarding:content.result.title')}</span>
-            <span>{t('onboarding:content.result.created', { items: formatCounts(applied.result.created) || t('onboarding:content.result.none') })}</span>
-            {TEMPLATE_ITEM_KINDS.some((kind) => applied.result.linked[kind] > 0) ? (
-              <span className="text-base-content/70">{t('onboarding:content.result.linked', { items: formatCounts(applied.result.linked) })}</span>
-            ) : null}
-            {TEMPLATE_ITEM_KINDS.some((kind) => applied.result.skipped[kind] > 0) ? (
-              <span className="text-base-content/70">{t('onboarding:content.result.skipped', { items: formatCounts(applied.result.skipped) })}</span>
-            ) : null}
-          </div>
-        ) : null}
-
         <TemplateAttribution templateKey={template.key} locale={locale} source={template.source} />
-      </CardBody>
-    </Card>
+      </div>
+    </article>
   );
 }
 
@@ -169,12 +192,10 @@ interface StartContentPanelProps {
   locale: string;
   applied: AppliedTemplate[];
   onApplied: (applied: AppliedTemplate) => void;
-  /** Show "Import a backup instead" (setup wizard). */
-  showBackupLink?: boolean;
 }
 
 /** Start content collections (CATALOG templates) with "all / basics / select" and the result of applying them. */
-export function StartContentPanel({ workspaceId, locale, applied, onApplied, showBackupLink = false }: StartContentPanelProps) {
+export function StartContentPanel({ workspaceId, locale, applied, onApplied }: StartContentPanelProps) {
   const { t } = useTranslation(['onboarding']);
   const [templates, setTemplates] = useState<TemplateSummaryDto[] | null>(null);
   const [failed, setFailed] = useState(false);
@@ -204,15 +225,15 @@ export function StartContentPanel({ workspaceId, locale, applied, onApplied, sho
         <Alert variant="warning">{t('onboarding:content.loadError')}</Alert>
       ) : !templates ? (
         <div className="grid gap-4 md:grid-cols-2" aria-busy="true">
-          <Skeleton className="h-56 w-full rounded-2xl" />
-          <Skeleton className="h-56 w-full rounded-2xl" />
+          <Skeleton className="h-72 w-full rounded-xl" />
+          <Skeleton className="h-72 w-full rounded-xl" />
         </div>
       ) : offered.length === 0 ? (
         <p className="text-sm text-base-content/70">{t('onboarding:content.none')}</p>
       ) : (
         <>
-          {otherLanguage ? <p className="text-sm text-base-content/70">{t('onboarding:content.otherLanguage')}</p> : null}
-          <div className="grid gap-4 md:grid-cols-2">
+          {otherLanguage ? <SetupHint>{t('onboarding:content.otherLanguage')}</SetupHint> : null}
+          <div className={cn('grid gap-4', offered.length > 1 && 'md:grid-cols-2')}>
             {offered.map((template) => (
               <TemplateTile
                 key={template.key}
@@ -227,20 +248,17 @@ export function StartContentPanel({ workspaceId, locale, applied, onApplied, sho
         </>
       )}
 
-      <ul className="list-disc space-y-1 pl-5 text-sm text-base-content/70">
-        <li>{t('onboarding:content.hintPrices')}</li>
-        <li>
-          {t('onboarding:content.hintAllergens')}{' '}
-          <Link href={`/workspaces/${workspaceId}/manage/guest-info`} className="link">
-            {t('onboarding:content.hintAllergensLink')}
-          </Link>
-        </li>
-      </ul>
-      {showBackupLink ? (
-        <Link href={settingsHref(workspaceId, 'data')} className="link self-start text-sm">
-          {t('onboarding:content.importBackup')}
-        </Link>
-      ) : null}
+      <SetupHint>
+        <ul className="flex flex-col gap-1">
+          <li>{t('onboarding:content.hintPrices')}</li>
+          <li>
+            {t('onboarding:content.hintAllergens')}{' '}
+            <Link href={`/workspaces/${workspaceId}/manage/guest-info`} className="link font-medium">
+              {t('onboarding:content.hintAllergensLink')}
+            </Link>
+          </li>
+        </ul>
+      </SetupHint>
     </div>
   );
 }

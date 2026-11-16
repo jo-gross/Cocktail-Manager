@@ -10,6 +10,8 @@ import { shouldShowChecklistCard, summarizeChecklist } from '@lib/tours/checklis
 import { basicsBarTour } from '@lib/tours/definitions/basicsBar';
 import { useTour } from './TourContext';
 import { useOnboardingStatus } from './useOnboardingStatus';
+import { setChecklistItemSkipped } from '@lib/network/onboarding';
+import { alertApiV1Error } from '@lib/network/apiV1';
 import { useSetupBannerVisible } from '@components/onboarding/WorkspaceStatusBanner';
 
 const LATER_KEY = `tour:later:${basicsBarTour.id}`;
@@ -34,7 +36,8 @@ export function BarOnboardingOffers() {
 
   const workspace = userContext.workspace;
   const isManager = userContext.isUserPermitted(Role.MANAGER);
-  const { status: onboarding } = useOnboardingStatus(workspace?.id, isManager);
+  const { status: onboarding, setStatus: setOnboarding } = useOnboardingStatus(workspace?.id, isManager);
+  const [skipping, setSkipping] = useState(false);
   // The setup wizard offers the tour at its end.
   const setupOpen = useSetupBannerVisible();
 
@@ -85,6 +88,8 @@ export function BarOnboardingOffers() {
 
   if (showChecklist && onboarding) {
     const summary = summarizeChecklist(onboarding.checklist);
+    const next = summary.next;
+    const nextLabel = next ? t(`help.checklist.items.${next.id}`) : '';
     return (
       <div className="px-2 pt-2 print:hidden">
         <Card>
@@ -92,8 +97,28 @@ export function BarOnboardingOffers() {
             <div className="flex min-w-0 flex-1 flex-col gap-1">
               <h2 className="font-bold">{t('offers.checklist.title', { done: summary.done, total: summary.total })}</h2>
               <progress className="h-1.5 w-full max-w-xs overflow-hidden rounded-full accent-primary" value={summary.done} max={summary.total} />
-              {summary.next && (
-                <p className="text-sm text-base-content/70">{t('offers.checklist.next', { item: t(`help.checklist.items.${summary.next.id}`) })}</p>
+              {next && (
+                <div className="flex flex-wrap items-center gap-x-2">
+                  <p className="text-sm text-base-content/70">{t('offers.checklist.next', { item: nextLabel })}</p>
+                  <Button
+                    variant="ghost"
+                    size="xs"
+                    loading={skipping}
+                    aria-label={t('help.checklist.markDoneLabel', { item: nextLabel })}
+                    onClick={async () => {
+                      setSkipping(true);
+                      try {
+                        setOnboarding(await setChecklistItemSkipped(workspace.id, next.id, true));
+                      } catch (error) {
+                        alertApiV1Error(error, t('help.checklist.saveError'));
+                      } finally {
+                        setSkipping(false);
+                      }
+                    }}
+                  >
+                    {t('help.checklist.markDone')}
+                  </Button>
+                </div>
               )}
             </div>
             <Link href={`/workspaces/${workspace.id}/manage/help`}>

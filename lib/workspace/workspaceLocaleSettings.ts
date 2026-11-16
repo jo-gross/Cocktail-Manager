@@ -6,6 +6,7 @@
  * values with `loadWorkspaceLocaleSettings` (workspaceLocaleSettings.server.ts).
  */
 import { z } from 'zod';
+import { validateChecklistSkippedValue } from '@lib/onboarding/checklistItems';
 
 export const DEFAULT_WORKSPACE_TIMEZONE = 'Europe/Berlin';
 export const DEFAULT_WORKSPACE_CURRENCY = 'EUR';
@@ -102,6 +103,8 @@ export function validateWorkspaceSettingValue(setting: string, value: string | n
       const parsed = ContentLocalesSchema.safeParse(json);
       return parsed.success ? null : `contentLocales: ${parsed.error.issues.map((i) => i.message).join(', ')}`;
     }
+    case 'onboardingChecklistSkipped':
+      return validateChecklistSkippedValue(value);
     default:
       return null;
   }

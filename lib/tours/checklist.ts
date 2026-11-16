@@ -16,10 +16,15 @@ export function checklistItemHref(workspaceId: string, id: OnboardingChecklistIt
   return `/workspaces/${workspaceId}/manage/${ITEM_PATHS[id] ?? ''}`;
 }
 
+/** Done by the data or marked as done by a manager (`skipped` is missing on older servers). */
+export function isChecklistItemSettled(item: Pick<OnboardingChecklistItem, 'done' | 'skipped'>): boolean {
+  return item.done || item.skipped === true;
+}
+
 export interface ChecklistSummary {
   done: number;
   total: number;
-  /** First open item, `undefined` when everything is done. */
+  /** First open item (neither done nor skipped), `undefined` when everything is settled. */
   next: OnboardingChecklistItem | undefined;
   complete: boolean;
 }
@@ -27,8 +32,8 @@ export interface ChecklistSummary {
 export function summarizeChecklist(items: OnboardingChecklistItem[]): ChecklistSummary {
   // Unknown ids (newer server) are ignored – the client has no label or link for them.
   const known = items.filter((item) => Object.hasOwn(ITEM_PATHS, item.id));
-  const done = known.filter((item) => item.done).length;
-  return { done, total: known.length, next: known.find((item) => !item.done), complete: done === known.length };
+  const done = known.filter(isChecklistItemSettled).length;
+  return { done, total: known.length, next: known.find((item) => !isChecklistItemSettled(item)), complete: done === known.length };
 }
 
 /** The progress card in the bar view: only after the setup wizard, while items are open and not dismissed. */

@@ -111,6 +111,8 @@ enum WorkspaceSettingKey {
   timezone
   currency
   contentLocales
+  /// JSON array of onboarding checklist item ids marked as done without doing them
+  onboardingChecklistSkipped
 }
 
 model UserSetting {

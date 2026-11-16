@@ -34,5 +34,5 @@ export function useOnboardingStatus(workspaceId: string | undefined, enabled = t
     };
   }, [workspaceId, enabled]);
 
-  return { status, loading, failed };
+  return { status, setStatus, loading, failed };
 }

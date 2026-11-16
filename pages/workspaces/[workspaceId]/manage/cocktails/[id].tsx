@@ -13,7 +13,8 @@ import { PageCenter } from '@components/layout/PageCenter';
 import { UserContext } from '@lib/context/UserContextProvider';
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import { NotSavedArchiveConfirmation } from '@components/modals/NotSavedArchiveConfirmation';
-import { fetchCocktailWithImage } from '@lib/network/cocktails';
+import { loadCocktailDetail } from '@lib/network/cocktails';
+import { useEntityEditor } from '@lib/forms/useEntityEditor';
 import { FaArchive, FaBoxOpen, FaFileDownload, FaHistory } from 'react-icons/fa';
 import CocktailExportOptionsModal, { CocktailExportOptions } from '@components/modals/CocktailExportOptionsModal';
 import { AuditLogHistoryModal } from '@components/modals/AuditLogHistoryModal';
@@ -22,15 +23,12 @@ import { FormSection } from '@components/forms/FormSection';
 import { useUnsavedChangesContext } from '@lib/forms/useUnsavedChanges';
 
 function EditCocktailRecipe() {
-  const router = useRouter();
   const { t, i18n } = useTranslation(['manage', 'common', 'cocktail', 'errors', 'nav']);
-  const { id, workspaceId } = router.query;
+  const { entity: cocktailRecipe, loading, workspaceId } = useEntityEditor<CocktailDto>(loadCocktailDetail);
 
   const userContext = useContext(UserContext);
   const modalContext = useContext(ModalContext);
 
-  const [cocktailRecipe, setCocktailRecipe] = useState<CocktailDto | undefined>(undefined);
-  const [loading, setLoading] = useState(true);
   const [exportingPdf, setExportingPdf] = useState(false);
   const [chromiumAvailable, setChromiumAvailable] = useState(false);
 
@@ -90,8 +88,6 @@ function EditCocktailRecipe() {
   }, [workspaceId, cocktailRecipe, modalContext, t]);
 
   useEffect(() => {
-    fetchCocktailWithImage(workspaceId as string, id as string, setCocktailRecipe, setLoading);
-
     fetch('/api/chromium-status')
       .then((res) => res.json())
       .then((data) => {
@@ -145,7 +141,7 @@ function EditCocktailRecipe() {
                   <FaHistory aria-hidden />
                   {t('manage:history')}
                 </Button>
-                <CocktailArchiveButton cocktailRecipe={cocktailRecipe} workspaceId={workspaceId as string} />
+                <CocktailArchiveButton cocktailRecipe={cocktailRecipe} workspaceId={workspaceId!} />
               </div>
             </FormSection>
           ) : undefined

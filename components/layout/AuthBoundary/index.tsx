@@ -20,6 +20,8 @@ import { getWorkspaceContentLocales, type ContentLocales } from '@lib/workspace/
 import { CONTENT_LOCALES_CHANGED_EVENT } from '@components/settings/useContentLocales';
 import type { UserSettingUpdateInput } from '@lib/schemas/userSettings';
 import { clearOfflineData } from '@lib/offline/invalidation';
+import { classifyRequestError } from '@lib/network/requestErrors';
+import { waitForPageToStay } from '@lib/pageLifecycle';
 
 interface AlertBoundaryProps {
   children: React.ReactNode;
@@ -60,6 +62,9 @@ export function AuthBoundary(props: AlertBoundaryProps) {
       })
       .catch(async (error) => {
         console.error('AuthBoundary -> fetchUser', error);
+        // A reload/redirect during login cancels the request: no reason to end the fresh session
+        const kind = classifyRequestError(error);
+        if ((kind === 'aborted' || kind === 'network') && !(await waitForPageToStay())) return;
         alertService.error(t('auth:error.loadUser'));
         await authClient.signOut();
       })

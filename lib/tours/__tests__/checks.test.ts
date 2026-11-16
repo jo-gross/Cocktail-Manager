@@ -56,6 +56,18 @@ describe('checklist', () => {
     expect(checklistItemHref('ws', 'team')).toBe('/workspaces/ws/manage/settings/users');
   });
 
+  it('counts items marked as done without doing them', () => {
+    const withSkipped = [
+      { id: 'glasses' as const, done: true, skipped: false, open: 0 },
+      { id: 'cards' as const, done: false, skipped: true, open: 1 },
+      { id: 'guestMenu' as const, done: false, skipped: false, open: 1 },
+    ];
+    expect(summarizeChecklist(withSkipped)).toEqual({ done: 2, total: 3, next: withSkipped[2], complete: false });
+    const allSettled = withSkipped.map((item) => ({ ...item, skipped: true }));
+    expect(summarizeChecklist(allSettled)).toMatchObject({ done: 3, next: undefined, complete: true });
+    expect(shouldShowChecklistCard({ setupCompletedAt: '2026-11-15T00:00:00Z', checklist: allSettled }, false)).toBe(false);
+  });
+
   it('shows the progress card only after the wizard, while open and not dismissed', () => {
     const status = { setupCompletedAt: '2026-11-15T00:00:00Z', checklist: items };
     expect(shouldShowChecklistCard(status, false)).toBe(true);

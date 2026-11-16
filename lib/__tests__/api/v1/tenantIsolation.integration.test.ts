@@ -52,6 +52,12 @@ const PATH_PARAM_SOURCE: Record<string, (ids: Ids) => Record<string, string>> = 
   [`POST ${WS}/templates/{key}/apply`]: () => ({ key: 'no-such-template' }),
 };
 
+/**
+ * Path params that name a fixed value instead of a tenant entity; such operations carry no foreign id.
+ * Calls against a foreign workspace are covered in onboardingChecklist.integration.test.ts.
+ */
+const NON_ENTITY_PATH_OPERATIONS = new Set([`PUT ${WS}/onboarding/checklist/{itemId}`]);
+
 function pathParams(op: FlatOperation, ids: Ids): Record<string, string> {
   const custom = PATH_PARAM_SOURCE[key(op)];
   if (custom) return custom(ids);
@@ -85,6 +91,7 @@ function responseText(result: HandlerResult): string {
 }
 
 function involvesForeignId(op: FlatOperation): boolean {
+  if (NON_ENTITY_PATH_OPERATIONS.has(key(op))) return false;
   return (
     /\{(?!workspaceId\})\w+\}/.test(op.basePath) ||
     Boolean(FOREIGN_ID_OVERRIDES[key(op)]?.query) ||

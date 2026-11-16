@@ -108,6 +108,12 @@
       "openCount": "{{count}} open",
       "done": "Done",
       "open": "Open",
+      "skipped": "Skipped",
+      "markDone": "Mark as done",
+      "markDoneLabel": "Mark “{{item}}” as done",
+      "undo": "Undo",
+      "undoLabel": "Reopen “{{item}}”",
+      "saveError": "The item could not be saved.",
       "items": {
         "glasses": "Add glasses",
         "ingredients": "Add ingredients",
@@ -124,6 +130,8 @@
       "empty": "No tours available.",
       "start": "Start",
       "restart": "Start again",
+      "markDone": "Mark as done",
+      "markDoneLabel": "Mark the tour “{{tour}}” as done",
       "steps": "{{count}} steps",
       "category": {
         "basics": "Basics",

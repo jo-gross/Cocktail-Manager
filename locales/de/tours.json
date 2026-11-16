@@ -108,6 +108,12 @@
       "openCount": "{{count}} offen",
       "done": "Erledigt",
       "open": "Offen",
+      "skipped": "Übersprungen",
+      "markDone": "Als erledigt markieren",
+      "markDoneLabel": "„{{item}}“ als erledigt markieren",
+      "undo": "Rückgängig",
+      "undoLabel": "„{{item}}“ wieder öffnen",
+      "saveError": "Der Punkt konnte nicht gespeichert werden.",
       "items": {
         "glasses": "Gläser anlegen",
         "ingredients": "Zutaten anlegen",
@@ -124,6 +130,8 @@
       "empty": "Keine Touren verfügbar.",
       "start": "Starten",
       "restart": "Erneut starten",
+      "markDone": "Als erledigt markieren",
+      "markDoneLabel": "Tour „{{tour}}“ als erledigt markieren",
       "steps": "{{count}} Schritte",
       "category": {
         "basics": "Grundlagen",

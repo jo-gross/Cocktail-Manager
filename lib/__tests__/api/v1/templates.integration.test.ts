@@ -591,8 +591,8 @@ describe('onboarding', () => {
     await prisma.cocktailRecipe.create({ data: { workspaceId, name: 'A', glassId: glass.id } });
     await prisma.cocktailRecipe.create({ data: { workspaceId, name: 'B', price: 5 } });
     const partial = dataOf<OnboardingDto>(await callAs(roleUser(seeded, 'USER'), onboardingHandler, { method: 'GET', query }));
-    expect(partial.checklist.find((item) => item.id === 'prices')).toEqual({ id: 'prices', done: false, open: 1 });
-    expect(partial.checklist.find((item) => item.id === 'glasses')).toEqual({ id: 'glasses', done: true, open: 0 });
+    expect(partial.checklist.find((item) => item.id === 'prices')).toEqual({ id: 'prices', done: false, skipped: false, open: 1 });
+    expect(partial.checklist.find((item) => item.id === 'glasses')).toEqual({ id: 'glasses', done: true, skipped: false, open: 0 });
 
     const completed = await callAs(roleUser(seeded, 'ADMIN'), completeHandler, { method: 'POST', query });
     expect(completed.status).toBe(200);

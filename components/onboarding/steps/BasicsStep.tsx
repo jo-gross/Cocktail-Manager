@@ -1,11 +1,12 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FaGlassMartiniAlt, FaHome, FaUtensils } from 'react-icons/fa';
+import { FaCheckCircle, FaGlassMartiniAlt, FaHome, FaUtensils } from 'react-icons/fa';
 import { MdCelebration } from 'react-icons/md';
-import { Alert, Button, Loading, cn } from '@components/ui';
+import { Button, Loading, cn } from '@components/ui';
 import { FormSection } from '@components/forms/FormSection';
 import { isValidWorkspaceName, WorkspaceNameField } from '@components/settings/WorkspaceNameField';
 import { WorkspaceLogoField } from '@components/settings/WorkspaceLogoField';
+import { SetupHint } from '../SetupHint';
 import { UserContext } from '@lib/context/UserContextProvider';
 import { alertApiV1Error } from '@lib/network/apiV1';
 import { getWorkspaceSettings, updateWorkspace, updateWorkspaceSetting } from '@lib/network/workspaces';
@@ -95,7 +96,7 @@ export function BasicsStep({ workspaceId, saveRef, businessType, onBusinessTypeC
   };
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-4 md:gap-6">
       <FormSection title={t('onboarding:basics.nameTitle')} description={t('settings:general.nameHelp')}>
         <WorkspaceNameField id="setup-workspace-name" value={value} onChange={setName} />
       </FormSection>
@@ -106,7 +107,7 @@ export function BasicsStep({ workspaceId, saveRef, businessType, onBusinessTypeC
       </FormSection>
 
       <FormSection title={t('onboarding:basics.typeTitle')} description={t('onboarding:basics.typeHelp')}>
-        <div role="radiogroup" aria-label={t('onboarding:basics.typeTitle')} className="grid gap-3 sm:grid-cols-2">
+        <div role="radiogroup" aria-label={t('onboarding:basics.typeTitle')} className="grid auto-rows-fr gap-3 sm:grid-cols-2">
           {BUSINESS_TYPES.map((type) => {
             const selected = businessType === type;
             return (
@@ -117,33 +118,47 @@ export function BasicsStep({ workspaceId, saveRef, businessType, onBusinessTypeC
                 aria-checked={selected}
                 onClick={() => onBusinessTypeChange(type)}
                 className={cn(
-                  'flex min-h-11 cursor-pointer items-start gap-3 rounded-xl border p-3 text-left transition-colors focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none',
-                  selected ? 'border-primary bg-primary/10' : 'border-base-300 hover:bg-base-200',
+                  'flex h-full min-h-11 cursor-pointer items-start gap-3 rounded-xl border bg-base-100 p-4 text-left transition-colors focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none',
+                  selected ? 'border-primary bg-primary/10 ring-1 ring-primary' : 'border-base-300 hover:border-base-400 hover:bg-base-200',
                 )}
               >
-                <span aria-hidden className={cn('mt-0.5 text-xl', selected ? 'text-primary' : 'text-base-content/60')}>
+                <span
+                  aria-hidden
+                  className={cn(
+                    'flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-lg',
+                    selected ? 'bg-primary text-primary-content' : 'bg-base-200 text-base-content/70',
+                  )}
+                >
                   {BUSINESS_TYPE_ICONS[type]}
                 </span>
-                <span className="flex flex-col">
+                <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                   <span className="font-medium">{t(`onboarding:basics.types.${type}.title`)}</span>
                   <span className="text-sm text-base-content/60">{t(`onboarding:basics.types.${type}.help`)}</span>
                 </span>
+                <FaCheckCircle aria-hidden className={cn('mt-0.5 shrink-0 text-primary', !selected && 'invisible')} />
               </button>
             );
           })}
         </div>
         {suggestion ? (
-          <Alert variant="info">
+          <SetupHint>
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <span>{t('onboarding:basics.dayStartSuggestion', { time: suggestion })}</span>
-              <Button type="button" size="sm" variant="outline" disabled={dayStartSaving} onClick={() => void applyDayStart(suggestion)}>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="shrink-0 border-info-content/50 text-info-content hover:bg-info-content/10"
+                disabled={dayStartSaving}
+                onClick={() => void applyDayStart(suggestion)}
+              >
                 {dayStartSaving ? <Loading size="sm" /> : null}
                 {t('onboarding:basics.dayStartApply', { time: suggestion })}
               </Button>
             </div>
-          </Alert>
+          </SetupHint>
         ) : null}
-        {businessType === 'private' ? <p className="text-sm text-base-content/70">{t('onboarding:basics.privateHint')}</p> : null}
+        {businessType === 'private' ? <SetupHint>{t('onboarding:basics.privateHint')}</SetupHint> : null}
       </FormSection>
     </div>
   );

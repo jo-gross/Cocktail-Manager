@@ -88,9 +88,12 @@ export async function readTemplateContent(
   return { data: parsed.data, locale: contentLocales ? parseContentLocales(contentLocales).primary : (template.locales[0] ?? 'de') };
 }
 
-/** Template settings for a target: never its content languages (the target decides). */
+/** Settings a template never passes on: the target decides its content languages and owns its onboarding state. */
+const TARGET_OWNED_SETTINGS: readonly string[] = ['contentLocales', 'onboardingChecklistSkipped'];
+
+/** Template settings for a target: never its content languages or onboarding state (the target decides). */
 export function withoutContentLocales(data: BackupImportData): BackupImportData {
-  return { ...data, workspaceSettings: data.workspaceSettings.filter((row) => row.setting !== 'contentLocales') };
+  return { ...data, workspaceSettings: data.workspaceSettings.filter((row) => !TARGET_OWNED_SETTINGS.includes(row.setting)) };
 }
 
 async function loadExistingContent(workspaceId: string) {

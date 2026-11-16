@@ -6,8 +6,9 @@ import { z } from '@lib/openapi/zod';
 import { ApiTags } from '@lib/openapi/tags';
 import { DateTimeString, WorkspaceIdParam } from '@lib/schemas/common';
 import type { ResourceApiDoc } from '@lib/openapi/types';
+import { ONBOARDING_CHECKLIST_ITEMS } from '@lib/onboarding/checklistItems';
 
-export const ONBOARDING_CHECKLIST_ITEMS = ['glasses', 'ingredients', 'cocktails', 'cards', 'prices', 'guestInfo', 'team', 'guestMenu'] as const;
+export { ONBOARDING_CHECKLIST_ITEMS };
 
 export const OnboardingChecklistItemIdEnum = z.enum(ONBOARDING_CHECKLIST_ITEMS).openapi('OnboardingChecklistItemId', {
   description:
@@ -17,7 +18,8 @@ export const OnboardingChecklistItemIdEnum = z.enum(ONBOARDING_CHECKLIST_ITEMS).
 export const OnboardingChecklistItemSchema = z
   .object({
     id: OnboardingChecklistItemIdEnum,
-    done: z.boolean(),
+    done: z.boolean().openapi({ description: 'The condition is met by the data of the workspace.' }),
+    skipped: z.boolean().openapi({ description: 'A manager marked the item as done without doing it. Progress counts `done || skipped`.' }),
     /** Items that still need work (e.g. cocktails without price); 0 when done. */
     open: z.number().int().openapi({ description: 'Items that still need work (e.g. cocktails without price); 0 when done.' }),
   })
@@ -30,6 +32,15 @@ export const OnboardingDtoSchema = z
   })
   .openapi('Onboarding');
 
+export const OnboardingChecklistItemParams = WorkspaceIdParam.extend({ itemId: OnboardingChecklistItemIdEnum });
+
+export const OnboardingChecklistItemUpdateSchema = z
+  .object({
+    skipped: z.boolean().openapi({ description: 'true marks the item as done without doing it, false reverts that.' }),
+  })
+  .openapi('OnboardingChecklistItemUpdateInput');
+
+export type OnboardingChecklistItemUpdateInput = z.infer<typeof OnboardingChecklistItemUpdateSchema>;
 export type OnboardingChecklistItemId = z.infer<typeof OnboardingChecklistItemIdEnum>;
 export type OnboardingChecklistItem = z.infer<typeof OnboardingChecklistItemSchema>;
 export type OnboardingDto = z.infer<typeof OnboardingDtoSchema>;
@@ -59,6 +70,23 @@ export const onboardingCompleteApiDoc = {
       summary: 'Complete setup',
       description: 'Marks the setup assistant as completed (idempotent: keeps the first completion time).',
       params: WorkspaceIdParam,
+      response: OnboardingDtoSchema,
+    },
+  },
+} satisfies ResourceApiDoc;
+
+export const onboardingChecklistItemApiDoc = {
+  basePath: '/workspaces/{workspaceId}/onboarding/checklist/{itemId}',
+  operations: {
+    PUT: {
+      roles: ['MANAGER'],
+      permission: 'WORKSPACE_UPDATE',
+      tags: [ApiTags.onboardingCore],
+      summary: 'Mark checklist item as done',
+      description:
+        'Marks a checklist item as done without doing it (`skipped: true`, e.g. a bar that does not want a guest menu) or reverts that. Applies to the whole workspace; idempotent. Stored in the workspace setting `onboardingChecklistSkipped`.',
+      params: OnboardingChecklistItemParams,
+      body: OnboardingChecklistItemUpdateSchema,
       response: OnboardingDtoSchema,
     },
   },

@@ -2,7 +2,8 @@
   "title": "Setup",
   "continueLater": "Continue later",
   "stepper": {
-    "label": "Setup steps"
+    "label": "Setup steps",
+    "progress": "Step {{current}} of {{total}}"
   },
   "steps": {
     "language": {
@@ -80,6 +81,7 @@
     "privateHint": "For private use we skip the team step. You can still open it above."
   },
   "content": {
+    "collectionsTitle": "Collections",
     "emptyTitle": "Start empty",
     "emptyHelp": "You create everything yourself or import a backup.",
     "startEmpty": "Start empty",

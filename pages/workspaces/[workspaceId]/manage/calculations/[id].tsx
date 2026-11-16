@@ -24,6 +24,7 @@ import { fetchUnits } from '@lib/network/units';
 import { formatDate } from '@lib/DateUtils';
 import { createCalculation, getCalculation, updateCalculation } from '@lib/network/calculations';
 import { alertApiV1Error, apiV1Fetch } from '@lib/network/apiV1';
+import { CREATE_ENTITY_ID } from '@lib/forms/useEntityEditor';
 import '../../../../../lib/NumberUtils';
 import { isFormDirty } from '@lib/forms/formDirty';
 import { navigationGuards } from '@lib/navigation/navigationGuards';
@@ -135,7 +136,7 @@ export default function CalculationPage() {
   // Fetch Calculation (slim item refs) then hydrate each cocktail via CocktailDto
   useEffect(() => {
     if (!id) return;
-    if (id == 'create') return;
+    if (id == CREATE_ENTITY_ID) return;
     if (!workspaceId) return;
     setLoading(true);
     getCalculation(workspaceId, id as string)
@@ -291,7 +292,7 @@ export default function CalculationPage() {
       };
 
       try {
-        if (id == 'create') {
+        if (id == CREATE_ENTITY_ID) {
           const created = await createCalculation(workspaceId!, body);
           setSavedSnapshot(snapshot);
           await redirectTo(created.id);
@@ -305,7 +306,7 @@ export default function CalculationPage() {
         return true;
       } catch (error) {
         console.error('CalculationId -> saveCalculation', error);
-        alertApiV1Error(error, id == 'create' ? t('errors:createCalculation') : t('errors:updateCalculation'));
+        alertApiV1Error(error, id == CREATE_ENTITY_ID ? t('errors:createCalculation') : t('errors:updateCalculation'));
         return false;
       } finally {
         setSaving(false);
@@ -333,7 +334,7 @@ export default function CalculationPage() {
     if (!id) return;
     if (!calculationName) return;
 
-    if (id == 'create') {
+    if (id == CREATE_ENTITY_ID) {
       void saveCalculationBackend();
     }
   }, [calculationName, id, saveCalculationBackend]);
@@ -460,7 +461,7 @@ export default function CalculationPage() {
       backLink={`/workspaces/${workspaceId}/manage/calculations`}
       unsavedChanges={unsavedChanges}
       onSave={async () => {
-        if (id == 'create' && calculationName.trim() == '') {
+        if (id == CREATE_ENTITY_ID && calculationName.trim() == '') {
           openNameModal();
           return false;
         }
@@ -512,7 +513,7 @@ export default function CalculationPage() {
           disabled={saving}
           onClick={() => {
             if (saving) return;
-            if (id == 'create' && calculationName.trim() == '') {
+            if (id == CREATE_ENTITY_ID && calculationName.trim() == '') {
               openNameModal();
             } else {
               void saveCalculationBackend();
@@ -915,7 +916,7 @@ export default function CalculationPage() {
                                       checked: event.target.checked,
                                     });
                                     setIngredientShoppingUnits(updatedItems);
-                                    if (id != 'create') {
+                                    if (id != CREATE_ENTITY_ID) {
                                       triggerSave(true);
                                     }
                                   }}

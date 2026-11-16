@@ -981,6 +981,12 @@
               "string",
               "null"
             ]
+          },
+          "onboardingChecklistSkipped": {
+            "type": [
+              "string",
+              "null"
+            ]
           }
         },
         "description": "Workspace settings keyed by setting name; values are strings or null."
@@ -9214,7 +9220,12 @@
             "$ref": "#/components/schemas/OnboardingChecklistItemId"
           },
           "done": {
-            "type": "boolean"
+            "type": "boolean",
+            "description": "The condition is met by the data of the workspace."
+          },
+          "skipped": {
+            "type": "boolean",
+            "description": "A manager marked the item as done without doing it. Progress counts `done || skipped`."
           },
           "open": {
             "type": "integer",
@@ -9224,6 +9235,7 @@
         "required": [
           "id",
           "done",
+          "skipped",
           "open"
         ]
       },
@@ -9240,6 +9252,18 @@
           "guestMenu"
         ],
         "description": "`glasses`/`ingredients`/`cocktails`/`cards`: at least one exists, `prices`: every active cocktail has a price, `guestInfo`: guest information of all ingredients and garnishes is confirmed, `team`: more than one member or a join code, `guestMenu`: a published, enabled guest menu."
+      },
+      "OnboardingChecklistItemUpdateInput": {
+        "type": "object",
+        "properties": {
+          "skipped": {
+            "type": "boolean",
+            "description": "true marks the item as done without doing it, false reverts that."
+          }
+        },
+        "required": [
+          "skipped"
+        ]
       },
       "QueueItem": {
         "type": "object",
@@ -9361,7 +9385,7 @@
               "null"
             ],
             "maxLength": 10000,
-            "description": "New value for the setting; null clears it. `timezone` must be an IANA time zone (default Europe/Berlin), `currency` an ISO 4217 code (default EUR), `contentLocales` a JSON string `{\"primary\":\"de\",\"additional\":[\"en\"]}`."
+            "description": "New value for the setting; null clears it. `timezone` must be an IANA time zone (default Europe/Berlin), `currency` an ISO 4217 code (default EUR), `contentLocales` a JSON string `{\"primary\":\"de\",\"additional\":[\"en\"]}`, `onboardingChecklistSkipped` a JSON array of checklist item ids (prefer `PUT /onboarding/checklist/{itemId}`)."
           }
         },
         "required": [
@@ -9376,7 +9400,8 @@
           "statisticDayStartTime",
           "timezone",
           "currency",
-          "contentLocales"
+          "contentLocales",
+          "onboardingChecklistSkipped"
         ]
       },
       "AdvancedStatisticsCocktailRanking": {
@@ -25066,6 +25091,107 @@
           }
         },
         "x-required-permission": "WORKSPACE_READ"
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/onboarding/checklist/{itemId}": {
+      "put": {
+        "summary": "Mark checklist item as done",
+        "description": "**Required API-key permission:** `WORKSPACE_UPDATE` — Update workspace settings\n\nMarks a checklist item as done without doing it (`skipped: true`, e.g. a bar that does not want a guest menu) or reverts that. Applies to the whole workspace; idempotent. Stored in the workspace setting `onboardingChecklistSkipped`.",
+        "tags": [
+          "Onboarding / Core"
+        ],
+        "security": [
+          {
+            "WorkspaceApiKeyAuth": [
+              "WORKSPACE_UPDATE"
+            ]
+          },
+          {
+            "InstanceApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "Workspace ID",
+              "example": "ckw0a1b2c3d4e5f6g7h8"
+            },
+            "required": true,
+            "description": "Workspace ID",
+            "name": "workspaceId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "$ref": "#/components/schemas/OnboardingChecklistItemId"
+            },
+            "required": true,
+            "description": "`glasses`/`ingredients`/`cocktails`/`cards`: at least one exists, `prices`: every active cocktail has a price, `guestInfo`: guest information of all ingredients and garnishes is confirmed, `team`: more than one member or a join code, `guestMenu`: a published, enabled guest menu.",
+            "name": "itemId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OnboardingChecklistItemUpdateInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Mark checklist item as done",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Onboarding"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-required-permission": "WORKSPACE_UPDATE"
       }
     },
     "/api/v1/workspaces/{workspaceId}/onboarding/complete": {

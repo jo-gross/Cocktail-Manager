@@ -2,7 +2,8 @@
   "title": "Einrichtung",
   "continueLater": "Später fortsetzen",
   "stepper": {
-    "label": "Schritte der Einrichtung"
+    "label": "Schritte der Einrichtung",
+    "progress": "Schritt {{current}} von {{total}}"
   },
   "steps": {
     "language": {
@@ -80,6 +81,7 @@
     "privateHint": "Für die private Nutzung überspringen wir den Team-Schritt. Du kannst ihn oben trotzdem öffnen."
   },
   "content": {
+    "collectionsTitle": "Sammlungen",
     "emptyTitle": "Leer starten",
     "emptyHelp": "Du legst alles selbst an oder importierst ein Backup.",
     "startEmpty": "Leer starten",
