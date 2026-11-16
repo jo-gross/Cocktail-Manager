@@ -5,8 +5,8 @@ verification details are in `SOURCES.md`.
 
 ## Template source line (short)
 
-> Recipes based on the IBA official cocktail specifications (iba-world.com). Descriptions: original texts by the
-> Cocktail-Manager project. Photos: Wikimedia Commons contributors (CC0, Public Domain, CC BY 2.0/4.0,
+> Classic recipes, oriented on common bar standards (incl. IBA specifications); not affiliated with or endorsed by
+> the IBA. Descriptions: original texts by the Cocktail-Manager project. Photos: Wikimedia Commons contributors (CC0, Public Domain, CC BY 2.0/4.0,
 > CC BY-SA 2.0/3.0/4.0). See the image credits for authors and licenses.
 
 ## Cocktail photos

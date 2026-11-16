@@ -1,17 +1,17 @@
 {
   "key": "all-time-classics",
   "kind": "CATALOG",
-  "version": 1,
+  "version": 2,
   "name": { "de": "All Time Classics", "en": "All Time Classics" },
   "description": {
-    "de": "22 weltbekannte Klassiker nach IBA-Spezifikation – mit Gläsern, Zutaten, Garnituren, Fotos und einer fertigen Karte. Ohne Preise; Allergene und Alkoholgehalt sind Richtwerte zum Prüfen.",
-    "en": "22 world-famous classics following the IBA specs – with glasses, ingredients, garnishes, photos and a ready-made menu card. No prices; allergens and ABV are indicative values to review."
+    "de": "22 weltbekannte Klassiker, orientiert an gängigen Bar-Standards (u. a. IBA; keine Verbindung zur IBA) – mit Gläsern, Zutaten, Garnituren, Fotos und einer fertigen Karte. Ohne Preise; Allergene und Alkoholgehalt sind Richtwerte zum Prüfen.",
+    "en": "22 world-famous classics, oriented on common bar standards (incl. IBA; not affiliated with the IBA) – with glasses, ingredients, garnishes, photos and a ready-made menu card. No prices; allergens and ABV are indicative values to review."
   },
   "locales": ["de", "en"],
   "published": true,
   "isDefault": false,
   "sortOrder": 10,
-  "source": "Recipes based on the IBA official cocktail specifications (iba-world.com). Descriptions: original texts by the Cocktail-Manager project. Photos: Wikimedia Commons contributors (CC0, Public Domain, CC BY 2.0/4.0, CC BY-SA 2.0/3.0/4.0). See the image credits for authors and licenses.",
+  "source": "Classic recipes, oriented on common bar standards (incl. IBA specifications); not affiliated with or endorsed by the IBA. Descriptions: original texts by the Cocktail-Manager project. Photos: Wikimedia Commons contributors (CC0, Public Domain, CC BY 2.0/4.0, CC BY-SA 2.0/3.0/4.0). See the image credits for authors and licenses.",
   "attributions": {
     "aperol-spritz.jpg": "\"Aperol Spritz - July 2024\" by Sarah Stierch, https://commons.wikimedia.org/wiki/File:Aperol_Spritz_-_July_2024_-_Sarah_Stierch.jpg, CC0 1.0",
     "bloody-mary.jpg": "\"Bloody Mary Coctail with celery stalk\" by Evan Swigart, https://commons.wikimedia.org/wiki/File:Bloody_Mary_Coctail_with_celery_stalk_-_Evan_Swigart.jpg, CC BY 2.0 https://creativecommons.org/licenses/by/2.0/",

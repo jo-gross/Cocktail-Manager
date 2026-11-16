@@ -16,9 +16,9 @@
     ]
   },
   "tags": {
-    "iba-unforgettables": { "category": "Properties", "label": { "de": "IBA – The Unforgettables", "en": "IBA – The Unforgettables" } },
-    "iba-contemporary-classics": { "category": "Properties", "label": { "de": "IBA – Contemporary Classics", "en": "IBA – Contemporary Classics" } },
-    "iba-new-era": { "category": "Properties", "label": { "de": "IBA – New Era", "en": "IBA – New Era" } },
+    "classic": { "category": "Properties", "label": { "de": "Klassiker", "en": "Classic" } },
+    "contemporary-classic": { "category": "Properties", "label": { "de": "Moderner Klassiker", "en": "Contemporary classic" } },
+    "new-classic": { "category": "Properties", "label": { "de": "Neuer Klassiker", "en": "New classic" } },
     "low-abv": { "category": "Properties", "label": { "de": "Wenig Alkohol", "en": "Low ABV" } },
     "brunch": { "category": "Properties", "label": { "de": "Brunch", "en": "Brunch" } },
     "gin": { "category": "Spirit", "label": { "de": "Gin", "en": "Gin" } },
@@ -509,7 +509,7 @@
         "de": "Der Name entstand im 19. Jahrhundert in den USA, als Gäste ihren Whiskey-Cocktail ausdrücklich „nach alter Art“ bestellten – nur Spirituose, Zucker, Wasser und Bitters statt der neuen, verspielteren Varianten.",
         "en": "The name dates back to 19th-century America, when guests asked for their whiskey cocktail made the 'old-fashioned' way – just spirit, sugar, water and bitters instead of the newer, fancier versions."
       },
-      "tags": ["iba-unforgettables", "whiskey", "stirred", "spirit-forward"],
+      "tags": ["classic", "whiskey", "stirred", "spirit-forward"],
       "glass": "tumbler",
       "ice": "ICE_CUBES",
       "garnishes": [{ "key": "orange-zest" }, { "key": "cocktail-cherry" }],
@@ -539,7 +539,7 @@
         "de": "Der Überlieferung nach ließ sich Graf Camillo Negroni um 1919 in Florenz seinen Americano mit Gin statt Soda verstärken. Seitdem trägt der Drink seinen Namen.",
         "en": "As the story goes, Count Camillo Negroni asked for his Americano to be strengthened with gin instead of soda in Florence around 1919, and the drink has carried his name ever since."
       },
-      "tags": ["iba-unforgettables", "gin", "bitter", "stirred", "aperitif"],
+      "tags": ["classic", "gin", "bitter", "stirred", "aperitif"],
       "glass": "tumbler",
       "ice": "ICE_CUBES",
       "garnishes": [{ "key": "orange-slice" }],
@@ -569,7 +569,7 @@
         "de": "Benannt nach dem Ort Daiquirí an der Ostküste Kubas, wo amerikanische Bergbauingenieure die Mischung um 1900 bekannt gemacht haben sollen.",
         "en": "Named after Daiquirí on Cuba's south-eastern coast, where American mining engineers are said to have popularised the mix around 1900."
       },
-      "tags": ["iba-unforgettables", "rum", "sour", "shaken"],
+      "tags": ["classic", "rum", "sour", "shaken"],
       "glass": "coupe",
       "ice": "WITHOUT_ICE",
       "garnishes": [],
@@ -599,7 +599,7 @@
         "de": "Wer die Margarita erfunden hat, ist umstritten – mehrere Bars in Mexiko und den USA beanspruchen sie für die 1930er- bis 1940er-Jahre. Der Name („Gänseblümchen“) verweist auf die ältere Drink-Familie der Daisies.",
         "en": "Who invented the Margarita is disputed – several bars in Mexico and the US claim it for the 1930s or 1940s. Its name, Spanish for 'daisy', points to the older family of Daisy drinks."
       },
-      "tags": ["iba-contemporary-classics", "tequila", "sour", "shaken"],
+      "tags": ["contemporary-classic", "tequila", "sour", "shaken"],
       "glass": "coupe",
       "ice": "WITHOUT_ICE",
       "garnishes": [{ "key": "salt-rim", "optional": true }],
@@ -629,7 +629,7 @@
         "de": "Der Martini entwickelte sich im späten 19. Jahrhundert aus süßeren Gin-Wermut-Drinks wie dem Martinez und wurde im Lauf des 20. Jahrhunderts immer trockener.",
         "en": "The Martini grew out of sweeter gin-and-vermouth drinks such as the Martinez in the late 19th century and became steadily drier throughout the 20th century."
       },
-      "tags": ["iba-unforgettables", "gin", "stirred", "spirit-forward"],
+      "tags": ["classic", "gin", "stirred", "spirit-forward"],
       "glass": "cocktail-glass",
       "ice": "WITHOUT_ICE",
       "garnishes": [{ "key": "lemon-zest" }, { "key": "green-olive", "optional": true }],
@@ -658,7 +658,7 @@
         "de": "Der Manhattan taucht um 1880 in New York auf. Die beliebte Geschichte, er sei für ein Bankett im Manhattan Club erfunden worden, gilt als Legende.",
         "en": "The Manhattan appears in New York around the 1880s. The popular tale that it was created for a banquet at the Manhattan Club is generally considered a legend."
       },
-      "tags": ["iba-unforgettables", "whiskey", "stirred", "spirit-forward"],
+      "tags": ["classic", "whiskey", "stirred", "spirit-forward"],
       "glass": "cocktail-glass",
       "ice": "WITHOUT_ICE",
       "garnishes": [{ "key": "cocktail-cherry" }],
@@ -688,7 +688,7 @@
         "de": "Der Mojito stammt aus Kuba und geht auf ältere Mischungen aus Zuckerrohrschnaps, Limette und Minze zurück. In Havanna wurde er im 20. Jahrhundert zum Klassiker.",
         "en": "The Mojito comes from Cuba and descends from older mixes of cane spirit, lime and mint. It became a classic in Havana during the 20th century."
       },
-      "tags": ["iba-contemporary-classics", "rum", "highball", "refreshing"],
+      "tags": ["contemporary-classic", "rum", "highball", "refreshing"],
       "glass": "highball",
       "ice": "ICE_CUBES",
       "garnishes": [{ "key": "mint-sprig" }, { "key": "lime-slice" }],
@@ -726,7 +726,7 @@
         "de": "Sours gehören zu den ältesten Cocktailfamilien; ein Whiskey Sour ist bereits in Jerry Thomas’ Barhandbuch von 1862 beschrieben.",
         "en": "Sours are one of the oldest cocktail families; a Whiskey Sour is already described in Jerry Thomas's bartender's guide of 1862."
       },
-      "tags": ["iba-unforgettables", "whiskey", "sour", "shaken"],
+      "tags": ["classic", "whiskey", "sour", "shaken"],
       "glass": "tumbler",
       "ice": "ICE_CUBES",
       "garnishes": [{ "key": "orange-slice" }, { "key": "cocktail-cherry" }, { "key": "orange-zest", "optional": true }],
@@ -757,7 +757,7 @@
         "de": "Entstanden Anfang der 1940er-Jahre in Los Angeles, um den damals in den USA kaum bekannten Wodka und Ginger Beer zu verkaufen. Der Kupferbecher wurde schnell zum Markenzeichen.",
         "en": "Created in Los Angeles in the early 1940s to help sell vodka and ginger beer, both little known to Americans at the time. The copper mug quickly became its trademark look."
       },
-      "tags": ["iba-contemporary-classics", "vodka", "highball", "refreshing"],
+      "tags": ["contemporary-classic", "vodka", "highball", "refreshing"],
       "glass": "copper-mug",
       "ice": "ICE_CUBES",
       "garnishes": [{ "key": "lime-slice" }],
@@ -787,7 +787,7 @@
         "de": "Der Drink wurde in den 1870er-Jahren in den USA populär, angeheizt durch einen bekannten Scherz um einen erfundenen „Tom Collins“. Jerry Thomas veröffentlichte 1876 ein Rezept.",
         "en": "The drink became popular in the US in the 1870s, helped along by a well-known prank about a fictitious 'Tom Collins'. Jerry Thomas published a recipe in 1876."
       },
-      "tags": ["iba-unforgettables", "gin", "highball", "sour", "refreshing"],
+      "tags": ["classic", "gin", "highball", "sour", "refreshing"],
       "glass": "highball",
       "ice": "ICE_CUBES",
       "garnishes": [{ "key": "lemon-slice" }, { "key": "cocktail-cherry" }],
@@ -818,7 +818,7 @@
         "de": "Der Spritz geht auf das 19. Jahrhundert in Venetien zurück, als österreichische Soldaten den Wein mit Wasser verdünnten. Die Variante mit Aperol setzte sich ab der Mitte des 20. Jahrhunderts durch.",
         "en": "The Spritz goes back to 19th-century Veneto, where Austrian soldiers diluted the local wine with water. The Aperol version took hold from the mid-20th century onwards."
       },
-      "tags": ["iba-new-era", "wine", "aperitif", "bubbly", "low-abv"],
+      "tags": ["new-classic", "wine", "aperitif", "bubbly", "low-abv"],
       "glass": "wine-glass",
       "ice": "ICE_CUBES",
       "garnishes": [{ "key": "orange-slice" }],
@@ -848,7 +848,7 @@
         "de": "Brasiliens Nationalcocktail stammt vermutlich aus dem ländlichen Bundesstaat São Paulo des frühen 20. Jahrhunderts. Der Name ist eine Verkleinerungsform von „caipira“, einem Wort für Landbewohner.",
         "en": "Brazil's national cocktail most likely comes from the countryside of São Paulo state in the early 20th century. Its name is a diminutive of 'caipira', a word for country folk."
       },
-      "tags": ["iba-contemporary-classics", "cachaca", "muddled", "refreshing"],
+      "tags": ["contemporary-classic", "cachaca", "muddled", "refreshing"],
       "glass": "double-old-fashioned",
       "ice": "ICE_CRUSHED",
       "garnishes": [],
@@ -878,7 +878,7 @@
         "de": "Mehrere Barkeeper beanspruchen die Erfindung in den 1980er-Jahren für sich. Weltweit berühmt wurde der „Cosmo“ in den 1990ern, nicht zuletzt durch eine bekannte New Yorker TV-Serie.",
         "en": "Several bartenders claim to have created it in the 1980s. The 'Cosmo' became world-famous in the 1990s, not least thanks to a well-known New York TV series."
       },
-      "tags": ["iba-contemporary-classics", "vodka", "sour", "shaken", "fruity"],
+      "tags": ["contemporary-classic", "vodka", "sour", "shaken", "fruity"],
       "glass": "cocktail-glass",
       "ice": "WITHOUT_ICE",
       "garnishes": [{ "key": "lemon-zest" }],
@@ -909,7 +909,7 @@
         "de": "Der Londoner Barkeeper Dick Bradsell soll ihn Ende der 1980er-Jahre für einen Gast kreiert haben, der einen Drink zum Wachwerden und gleichzeitig Entspannen wollte.",
         "en": "London bartender Dick Bradsell is credited with creating it in the late 1980s for a guest who wanted a drink that would both wake them up and help them unwind."
       },
-      "tags": ["iba-new-era", "vodka", "coffee", "shaken", "after-dinner"],
+      "tags": ["new-classic", "vodka", "coffee", "shaken", "after-dinner"],
       "glass": "cocktail-glass",
       "ice": "WITHOUT_ICE",
       "garnishes": [{ "key": "coffee-beans" }],
@@ -940,7 +940,7 @@
         "de": "Victor „Trader Vic“ Bergeron mixte den Mai Tai 1944 in seinem Restaurant in Oakland. Der Name geht auf das tahitianische „maita'i“ für „gut“ zurück.",
         "en": "Victor 'Trader Vic' Bergeron mixed the Mai Tai at his Oakland restaurant in 1944. The name comes from the Tahitian word 'maita'i', meaning 'good'."
       },
-      "tags": ["iba-contemporary-classics", "rum", "tiki", "shaken"],
+      "tags": ["contemporary-classic", "rum", "tiki", "shaken"],
       "glass": "double-old-fashioned",
       "ice": "ICE_CRUSHED",
       "garnishes": [{ "key": "pineapple-wedge" }, { "key": "mint-sprig" }, { "key": "lime-zest" }],
@@ -973,7 +973,7 @@
         "de": "Die Piña Colada stammt aus Puerto Rico, wo mehrere Bars in San Juan die Erfindung in den 1950er- und 1960er-Jahren für sich beanspruchen. Seit 1978 gilt sie als Nationalgetränk der Insel.",
         "en": "The Piña Colada comes from Puerto Rico, where several San Juan bars claim to have invented it in the 1950s and 1960s. It has been the island's official national drink since 1978."
       },
-      "tags": ["iba-contemporary-classics", "rum", "tropical", "blended", "creamy"],
+      "tags": ["contemporary-classic", "rum", "tropical", "blended", "creamy"],
       "glass": "hurricane",
       "ice": "ICE_CRUSHED",
       "garnishes": [{ "key": "pineapple-wedge" }, { "key": "cocktail-cherry" }],
@@ -1003,7 +1003,7 @@
         "de": "Als Urheber gilt meist der Barkeeper Fernand Petiot, der in den 1920er-Jahren in Paris arbeitete und den Drink später in New York verfeinerte. Die genaue Herkunft ist jedoch umstritten.",
         "en": "It is usually credited to bartender Fernand Petiot, who worked in Paris in the 1920s and later refined the drink in New York, though its exact origin is disputed."
       },
-      "tags": ["iba-contemporary-classics", "vodka", "savoury", "stirred", "brunch"],
+      "tags": ["contemporary-classic", "vodka", "savoury", "stirred", "brunch"],
       "glass": "highball",
       "ice": "ICE_CUBES",
       "garnishes": [{ "key": "celery-stalk" }, { "key": "lemon-wedge", "optional": true }],
@@ -1037,7 +1037,7 @@
         "de": "Der Sidecar entstand um das Ende des Ersten Weltkriegs, vermutlich in Paris oder London. Erste gedruckte Rezepte erschienen 1922.",
         "en": "The Sidecar emerged around the end of the First World War, probably in Paris or London. The first printed recipes appeared in 1922."
       },
-      "tags": ["iba-unforgettables", "brandy", "sour", "shaken"],
+      "tags": ["classic", "brandy", "sour", "shaken"],
       "glass": "coupe",
       "ice": "WITHOUT_ICE",
       "garnishes": [],
@@ -1067,7 +1067,7 @@
         "de": "Benannt nach dem französischen 75-mm-Feldgeschütz des Ersten Weltkriegs – wegen seiner durchschlagenden Wirkung. Rezepte finden sich in Barbüchern der 1920er-Jahre.",
         "en": "Named after the French 75 mm field gun of the First World War, a nod to its kick. Recipes appear in bar books from the 1920s."
       },
-      "tags": ["iba-contemporary-classics", "gin", "bubbly", "shaken"],
+      "tags": ["contemporary-classic", "gin", "bubbly", "shaken"],
       "glass": "champagne-flute",
       "ice": "WITHOUT_ICE",
       "garnishes": [],
@@ -1098,7 +1098,7 @@
         "de": "Die Herkunft der Paloma („Taube“) ist nicht eindeutig belegt; sie entstand vermutlich Mitte des 20. Jahrhunderts in Mexiko und gilt dort als einer der beliebtesten Tequila-Drinks.",
         "en": "The origin of the Paloma ('dove') is not clearly documented; it probably arose in Mexico in the mid-20th century and is one of the country's most popular tequila drinks."
       },
-      "tags": ["iba-new-era", "tequila", "highball", "refreshing"],
+      "tags": ["new-classic", "tequila", "highball", "refreshing"],
       "glass": "highball",
       "ice": "ICE_CUBES",
       "garnishes": [{ "key": "lime-slice" }],
@@ -1129,7 +1129,7 @@
         "de": "Benannt nach einer Pariser Zeitschrift des amerikanischen Autors Erskine Gwynne. Das Rezept erschien 1927 in Harry MacElhones Barbuch.",
         "en": "Named after a Paris magazine run by American writer Erskine Gwynne. The recipe appeared in Harry MacElhone's bar book in 1927."
       },
-      "tags": ["iba-unforgettables", "whiskey", "bitter", "stirred", "spirit-forward"],
+      "tags": ["classic", "whiskey", "bitter", "stirred", "spirit-forward"],
       "glass": "coupe",
       "ice": "WITHOUT_ICE",
       "garnishes": [{ "key": "orange-zest" }, { "key": "lemon-zest", "optional": true }],

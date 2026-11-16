@@ -554,7 +554,7 @@ describe('All Time Classics (built-in catalog)', () => {
     expect(await prisma.glassImage.count({ where: { glass: { workspaceId } } })).toBe(9);
     // Only definitions of tags in use: ingredient tags, no cocktail-only tags.
     expect(await prisma.tagDefinition.count({ where: { workspaceId, tag: 'spirit' } })).toBe(1);
-    expect(await prisma.tagDefinition.count({ where: { workspaceId, tag: { in: ['stirred', 'iba-unforgettables'] } } })).toBe(0);
+    expect(await prisma.tagDefinition.count({ where: { workspaceId, tag: { in: ['stirred', 'classic'] } } })).toBe(0);
     expect(await prisma.tagDefinition.findUniqueOrThrow({ where: { workspaceId_tag: { workspaceId, tag: 'gin' } } })).toMatchObject({
       label: { de: 'Wacholder' },
       isPublic: false,

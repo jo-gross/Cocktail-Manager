@@ -81,6 +81,11 @@ and copies them into a read-only template workspace on startup.
   (Campari, Aperol, Angostura).
 - **Texts**: All descriptions and history notes (de + en) are **original texts** written for this template. Nothing
   was copied from IBA, Wikipedia (CC BY-SA) or other sources. The listed sources were used only to check facts.
+- **IBA name**: The IBA is cited as a fact source only (`SOURCES.md`), never as branding. User-facing texts say
+  "oriented on common bar standards (incl. IBA); not affiliated with the IBA", and tags are neutral (`classic`,
+  `contemporary-classic`, `new-classic`), not IBA category names. Keep it that way: the template must not look like an
+  official or endorsed IBA collection, and it should not reproduce the IBA list as a whole (EU database right) – stay
+  with a curated selection.
 - **Guest info**: ABV, allergens (EU 14, `Allergen` enum), allergen sources and additives (`Additive` enum) are
   **indicative** defaults for typical generic products. They were set only where clearly applicable, e.g. EGGS for
   egg white, SULPHITES for wine-based products, NUTS/ALMONDS for orgeat, FISH for Worcestershire sauce, CELERY for
@@ -100,7 +105,7 @@ and copies them into a read-only template workspace on startup.
 - `ice` uses the default ice names (`ICE_CUBES`, `ICE_CRUSHED`, `WITHOUT_ICE`). Units use the default unit names.
 - `shortName`, `allergenSources` and garnish `allergens`/`additives` are optional extras that match the Prisma
   fields.
-- `tags` on items are language-neutral slugs (e.g. `iba-unforgettables`, `stirred`); their de/en labels and
+- `tags` on items are language-neutral slugs (e.g. `classic`, `stirred`); their de/en labels and
   categories are in the top-level `tags` map. Ingredient spirit tags use the same slugs as the cocktail tags
   (`tequila`, `cachaca`) so guest-menu filters match both.
 
