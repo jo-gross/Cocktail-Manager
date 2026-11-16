@@ -6,6 +6,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import type { ResourceApiDoc } from '@lib/openapi/types';
 
 import * as actions from '@lib/api/v1/actions';
+import * as adminTemplates from '@lib/api/v1/adminTemplates';
 import * as apiKeys from '@lib/api/v1/apiKeys';
 import * as auditLogs from '@lib/api/v1/auditLogs';
 import * as calculations from '@lib/api/v1/calculations';
@@ -13,6 +14,7 @@ import * as cards from '@lib/api/v1/cards';
 import * as cocktails from '@lib/api/v1/cocktails';
 import * as garnishes from '@lib/api/v1/garnishes';
 import * as glasses from '@lib/api/v1/glasses';
+import * as guides from '@lib/api/v1/guides';
 import * as guestInfo from '@lib/api/v1/guestInfo';
 import * as guestMenus from '@lib/api/v1/guestMenus';
 import * as ices from '@lib/api/v1/ices';
@@ -21,12 +23,14 @@ import * as joinCodes from '@lib/api/v1/joinCodes';
 import * as joinRequests from '@lib/api/v1/joinRequests';
 import * as leave from '@lib/api/v1/leave';
 import * as me from '@lib/api/v1/me';
+import * as onboarding from '@lib/api/v1/onboarding';
 import * as queue from '@lib/api/v1/queue';
 import * as ratings from '@lib/api/v1/ratings';
 import * as signage from '@lib/api/v1/signage';
 import * as statistics from '@lib/api/v1/statistics';
 import * as statisticsAdvanced from '@lib/api/v1/statisticsAdvanced';
 import * as tags from '@lib/api/v1/tags';
+import * as templates from '@lib/api/v1/templates';
 import * as contentTranslations from '@lib/api/v1/contentTranslations';
 import * as translations from '@lib/api/v1/translations';
 import * as units from '@lib/api/v1/units';
@@ -35,6 +39,10 @@ import * as workspace from '@lib/api/v1/workspace';
 import * as workspaceUsers from '@lib/api/v1/workspaceUsers';
 
 import { actionsCollectionApiDoc, actionsItemApiDoc } from '@lib/schemas/actions';
+import { adminTemplatesAccessApiDoc, adminTemplatesCloneApiDoc, adminTemplatesCollectionApiDoc, adminTemplatesItemApiDoc } from '@lib/schemas/adminTemplates';
+import { guidesCollectionApiDoc, guidesItemApiDoc } from '@lib/schemas/guides';
+import { onboardingApiDoc, onboardingCompleteApiDoc } from '@lib/schemas/onboarding';
+import { templatesApplyApiDoc, templatesCollectionApiDoc, templatesItemsApiDoc } from '@lib/schemas/templates';
 import { cocktailGuestInfoApiDoc, guestInfoBulkApiDoc, guestInfoOverviewApiDoc } from '@lib/schemas/guestInfo';
 import {
   guestMenusActiveExtrasApiDoc,
@@ -168,6 +176,10 @@ export interface HandlerBinding {
 export const handlerBindings: HandlerBinding[] = [
   { apiDoc: actionsCollectionApiDoc, handler: actions.collectionHandler },
   { apiDoc: actionsItemApiDoc, handler: actions.itemHandler },
+  { apiDoc: adminTemplatesCollectionApiDoc, handler: adminTemplates.collectionHandler },
+  { apiDoc: adminTemplatesItemApiDoc, handler: adminTemplates.itemHandler },
+  { apiDoc: adminTemplatesCloneApiDoc, handler: adminTemplates.cloneHandler },
+  { apiDoc: adminTemplatesAccessApiDoc, handler: adminTemplates.accessHandler },
   { apiDoc: apiKeysCollectionApiDoc, handler: apiKeys.collectionHandler },
   { apiDoc: apiKeysItemApiDoc, handler: apiKeys.itemHandler },
   { apiDoc: auditLogsCollectionApiDoc, handler: auditLogs.collectionHandler },
@@ -227,6 +239,13 @@ export const handlerBindings: HandlerBinding[] = [
   { apiDoc: leaveApiDoc, handler: leave.leaveHandler },
   { apiDoc: meApiDoc, handler: me.meHandler },
   { apiDoc: userSettingsApiDoc, handler: userSettings.userSettingsHandler },
+  { apiDoc: guidesCollectionApiDoc, handler: guides.collectionHandler },
+  { apiDoc: guidesItemApiDoc, handler: guides.itemHandler },
+  { apiDoc: onboardingApiDoc, handler: onboarding.onboardingHandler },
+  { apiDoc: onboardingCompleteApiDoc, handler: onboarding.completeHandler },
+  { apiDoc: templatesCollectionApiDoc, handler: templates.collectionHandler },
+  { apiDoc: templatesItemsApiDoc, handler: templates.itemsHandler },
+  { apiDoc: templatesApplyApiDoc, handler: templates.applyHandler },
   { apiDoc: queueCollectionApiDoc, handler: queue.collectionHandler },
   { apiDoc: queueAddApiDoc, handler: queue.addHandler },
   { apiDoc: queueRemoveApiDoc, handler: queue.removeHandler },

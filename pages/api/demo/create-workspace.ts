@@ -5,12 +5,11 @@ import { withHttpMethods } from '@middleware/api/handleMethods';
 import { randomUUID } from 'crypto';
 import { readFileSync, existsSync } from 'fs';
 import { join, dirname, extname } from 'path';
-import { regenerateUnitConversions } from '@lib/api/controllers/units';
 import { BULK_TX_TIMEOUT_MS, runTx } from '@lib/db/tx';
 import { applyRateLimit, TokenBucketRateLimiter } from '@lib/http/rateLimit';
 import { sendFail } from '@lib/http/responses';
 import { createDemoLoginToken } from '@lib/demo/loginToken';
-import { createWorkspaceWithDefaults } from '@lib/workspace/createWorkspaceWithDefaults';
+import { createWorkspaceTx, loadBaseTemplate } from '@lib/templates/createWorkspace';
 
 interface DemoConfig {
   workspace: {
@@ -140,6 +139,7 @@ export default withHttpMethods({
       return sendFail(res, 500, 'DEMO_CONFIG_ERROR', 'Error creating demo workspace');
     }
     const { config, images } = demoConfig;
+    const base = await loadBaseTemplate();
 
     const ttlHours = parseInt(process.env.DEMO_TTL_HOURS || '24', 10);
     const expiresAt = new Date(Date.now() + (Number.isFinite(ttlHours) && ttlHours > 0 ? ttlHours : 24) * 60 * 60 * 1000);
@@ -150,15 +150,17 @@ export default withHttpMethods({
         // Demo user without e-mail; it can only log in via a demo login token.
         await tx.user.create({ data: { id: demoUserId, name: 'Demo Nutzer', email: null } });
 
-        const workspace = await createWorkspaceWithDefaults(
+        const workspace = await createWorkspaceTx(
+          tx,
           {
             name: config.workspace.name,
             description: config.workspace.description || null,
-            userId: demoUserId,
-            role: Role.OWNER,
+            owner: { userId: demoUserId, role: Role.OWNER },
             demo: { demoUserId, expiresAt },
+            // The demo is ready to use; it does not start in the setup assistant.
+            setupCompleted: true,
           },
-          tx,
+          base,
         );
 
         const iceTypes = await tx.ice.findMany({ where: { workspaceId: workspace.id } });
@@ -305,13 +307,6 @@ export default withHttpMethods({
       },
       { timeout: BULK_TX_TIMEOUT_MS },
     );
-
-    // Opens its own transaction; derived data, the workspace is usable without it.
-    try {
-      await regenerateUnitConversions(workspaceId);
-    } catch (error) {
-      console.error(`[DemoWorkspace][${workspaceId}] Regenerating unit conversions failed:`, error);
-    }
 
     return res.json({
       data: {

@@ -18,6 +18,7 @@ import guestMenuDe from '../../locales/de/guestMenu.json';
 import guestDe from '../../locales/de/guest.json';
 import guestInfoDe from '../../locales/de/guestInfo.json';
 import translationsDe from '../../locales/de/translations.json';
+import toursDe from '../../locales/de/tours.json';
 
 import commonEn from '../../locales/en/common.json';
 import navEn from '../../locales/en/nav.json';
@@ -36,6 +37,7 @@ import guestMenuEn from '../../locales/en/guestMenu.json';
 import guestEn from '../../locales/en/guest.json';
 import guestInfoEn from '../../locales/en/guestInfo.json';
 import translationsEn from '../../locales/en/translations.json';
+import toursEn from '../../locales/en/tours.json';
 
 export const defaultNS = 'common';
 
@@ -57,6 +59,7 @@ export const namespaces = [
   'guest',
   'guestInfo',
   'translations',
+  'tours',
 ] as const;
 
 export type TranslationNamespace = (typeof namespaces)[number];
@@ -80,6 +83,7 @@ export const resources = {
     guest: guestDe,
     guestInfo: guestInfoDe,
     translations: translationsDe,
+    tours: toursDe,
   },
   en: {
     common: commonEn,
@@ -99,6 +103,7 @@ export const resources = {
     guest: guestEn,
     guestInfo: guestInfoEn,
     translations: translationsEn,
+    tours: toursEn,
   },
 } as const;
 

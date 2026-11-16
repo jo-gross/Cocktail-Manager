@@ -33,7 +33,8 @@
     "display": "Menus & guests",
     "guestInfo": "Guest information",
     "numbers": "Insights",
-    "workspace": "Workspace"
+    "workspace": "Workspace",
+    "help": "Help"
   },
   "overview": {
     "allergensAlcohol": "Allergens & alcohol",
@@ -53,9 +54,11 @@
       "calculations": "Plan quantities and costs for events",
       "logs": "Trace every booking",
       "members": "Manage members and roles",
-      "settings": "General, members, languages, recipe master data and API keys"
+      "settings": "General, members, languages, recipe master data and API keys",
+      "help": "Tours, setup checklist and what's new"
     }
   },
   "guestInfo": "Guest information",
-  "guestMenus": "Guest menus"
+  "guestMenus": "Guest menus",
+  "help": "Help & tutorials"
 }

@@ -1,4 +1,8 @@
-import prisma from '../../prisma/prisma';
+/**
+ * Test-only copy of the former `lib/workspace/createWorkspaceWithDefaults.ts` (replaced by the
+ * BASE template, `lib/templates/createWorkspace.ts`). The defaults test compares both.
+ */
+import prisma from '../../../prisma/prisma';
 import { $Enums, Prisma, Role } from '@generated/prisma/client';
 import { randomUUID } from 'crypto';
 import { DEFAULT_TAG_CATEGORIES } from '@lib/tags/defaultTagCategories';
@@ -21,7 +25,7 @@ interface CreateWorkspaceOptions {
  * (a transaction client) to make it part of a larger transaction. Callers run
  * `regenerateUnitConversions` after commit.
  */
-export async function createWorkspaceWithDefaults(options: CreateWorkspaceOptions, db: Db = prisma) {
+export async function createLegacyWorkspaceWithDefaults(options: CreateWorkspaceOptions, db: Db = prisma) {
   const { name, description, userId, role, joinCode, demo } = options;
 
   const grammId = randomUUID();

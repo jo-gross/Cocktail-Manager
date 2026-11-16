@@ -207,6 +207,10 @@ const GuestMenuSchema = z.object({
   sourceCardId: NullableId,
   locales: z.array(Locale).max(50).nullish(),
   draft: BoundedJson,
+  /** Only used by template imports (`keepGuestMenuState`); backup imports always create disabled, unpublished menus. */
+  enabled: z.boolean().nullish(),
+  isDefault: z.boolean().nullish(),
+  published: BoundedJson.nullish(),
 });
 
 export const BackupImportSchema = z.object({

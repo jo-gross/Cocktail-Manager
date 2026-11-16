@@ -62,8 +62,27 @@ model User {
   WorkspaceJoinRequest  WorkspaceJoinRequest[]
   WorkspaceApiKey       WorkspaceApiKey[]
   AuditLog              AuditLog[]
+  guideProgress         UserGuideProgress[]
 
   @@map("User")
+}
+
+enum GuideStatus {
+  STARTED
+  COMPLETED
+  DISMISSED
+}
+
+/// Per-user progress of tours/checklists ("tour:basics-bar", "checklist:<workspaceId>").
+model UserGuideProgress {
+  userId    String
+  guideId   String
+  version   Int         @default(1)
+  status    GuideStatus
+  updatedAt DateTime    @updatedAt
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, guideId])
 }
 
 enum Setting {
@@ -203,6 +222,9 @@ model Workspace {
   publicSlug                        String?                             @unique
   /// Bearer secret of the monitor link (`/signage?id=…&key=…`); required for signage access tokens of protected guest menus. Never exported in backups.
   signageKey                        String?
+  /// null = setup assistant not completed
+  setupCompletedAt                  DateTime?
+  template                          WorkspaceTemplate?
   users                             WorkspaceUser[]
   Glass                             Glass[]
   Garnish                           Garnish[]
@@ -229,6 +251,31 @@ model Workspace {
   GuestMenuTemplate                 GuestMenuTemplate[]
   TagCategory                       TagCategory[]
   TagDefinition                     TagDefinition[]
+}
+
+enum TemplateKind {
+  BASE
+  CATALOG
+  DEMO
+}
+
+/// Marks a workspace as template (docs/plans/ONBOARDING-PLAN.md). Built-in templates come from `templates/<key>/` and have no members.
+model WorkspaceTemplate {
+  workspaceId String       @id
+  workspace   Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  key         String       @unique
+  kind        TemplateKind
+  /// LocalizedText
+  name        Json
+  description Json?
+  locales     String[]
+  source      String?
+  builtIn     Boolean      @default(false)
+  version     Int          @default(1)
+  published   Boolean      @default(false)
+  isDefault   Boolean      @default(false)
+  sortOrder   Int          @default(0)
+  updatedAt   DateTime     @updatedAt
 }
 
 model Signage {

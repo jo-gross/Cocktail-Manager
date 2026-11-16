@@ -1,0 +1,164 @@
+{
+  "engine": {
+    "next": "Weiter",
+    "back": "Zurück",
+    "done": "Fertig",
+    "skip": "Überspringen",
+    "end": "Tour beenden",
+    "progress": "{{current}} / {{total}}",
+    "actionHint": "Probier es aus: Tippe auf den markierten Bereich.",
+    "resume": "Tour fortsetzen",
+    "paused": {
+      "title": "Tour pausiert",
+      "body": "Du hast die Seite der Tour verlassen. Möchtest du weitermachen?"
+    },
+    "notAvailable": "Diese Tour ist hier nicht verfügbar."
+  },
+  "basicsBar": {
+    "title": "Grundlagen: Bar-Ansicht",
+    "description": "Karten, Suche, Warteschlange und Ansichtsoptionen – in zwei Minuten.",
+    "steps": {
+      "welcome": {
+        "title": "Willkommen in der Bar-Ansicht",
+        "body": "Hier arbeitest du während des Service: Rezepte nachschlagen, Bestellungen erfassen und abhaken. Wir zeigen dir kurz das Wichtigste."
+      },
+      "cardSelection": {
+        "title": "Karte wählen",
+        "body": "Wähle hier, welche Karte angezeigt wird – oder wechsle zur Suche über alle Cocktails bzw. zur Bestellansicht."
+      },
+      "search": {
+        "title": "Suche",
+        "body": "Finde jeden Cocktail über Name oder Zutat. Tipp: Mit Shift + F öffnest du die Suche jederzeit."
+      },
+      "cocktailCard": {
+        "title": "Cocktail",
+        "body": "Jede Kachel zeigt Rezept, Glas und Preis. Tippe darauf, um alle Details mit Zubereitung, Bewertungen und Notizen zu öffnen."
+      },
+      "addToQueue": {
+        "title": "Auf die Liste setzen",
+        "body": "Mit „Liste“ kommt der Cocktail in die Warteschlange – auf Wunsch mit Notiz, z. B. „ohne Eis“."
+      },
+      "queue": {
+        "title": "Warteschlange",
+        "body": "Offene Bestellungen sammeln sich hier. Mit dem Haken markierst du einen Cocktail als fertig – er zählt dann in die Statistik."
+      },
+      "viewOptions": {
+        "title": "Ansichtsoptionen",
+        "body": "Hier stellst du die Anzeige ein: Bilder, Tags, Beschreibung, Bewertungen und die Statistik-Aktionen für Liste und Warteschlange."
+      },
+      "manage": {
+        "title": "Verwalten",
+        "body": "Über das Zahnrad gelangst du zur Verwaltung: Rezepte, Zutaten, Karten und Statistik. Unter „Hilfe & Tutorials“ kannst du diese Tour jederzeit wiederholen."
+      }
+    }
+  },
+  "basicsManage": {
+    "title": "Grundlagen: Verwaltung",
+    "description": "Von der Zutat über das Rezept bis zur Karte.",
+    "steps": {
+      "welcome": {
+        "title": "Die Verwaltung",
+        "body": "Hier pflegst du alles, was in der Bar-Ansicht erscheint. Wir gehen gemeinsam den Weg von der Zutat bis zur Karte."
+      },
+      "ingredients": {
+        "title": "Zutaten",
+        "body": "Cocktails bestehen aus Zutaten. Öffne die Zutatenliste."
+      },
+      "createIngredient": {
+        "title": "Neue Zutat",
+        "body": "Mit dem Plus legst du eine Zutat an."
+      },
+      "ingredientForm": {
+        "title": "Zutat erfassen",
+        "body": "Name, Flaschenpreis und Menge reichen für den Anfang – daraus berechnet die App die Kosten pro Cocktail. Speichern kannst du später, wir machen weiter."
+      },
+      "cocktails": {
+        "title": "Cocktails",
+        "body": "Weiter zu den Rezepten."
+      },
+      "createCocktail": {
+        "title": "Neuer Cocktail",
+        "body": "Mit dem Plus legst du ein Rezept an."
+      },
+      "cocktailForm": {
+        "title": "Rezept erfassen",
+        "body": "Glas, Zutaten mit Menge, Zubereitungsschritte und Preis – danach erscheint der Cocktail in Suche und Karten."
+      },
+      "cards": {
+        "title": "Karten",
+        "body": "Karten bestimmen, was in der Bar-Ansicht angezeigt wird."
+      },
+      "createCard": {
+        "title": "Karte anlegen",
+        "body": "Stell Gruppen wie „Sours“ oder „Highballs“ mit Cocktails zusammen und lege fest, an welchen Tagen die Karte aktiv ist."
+      },
+      "help": {
+        "title": "Hilfe & Tutorials",
+        "body": "Hier findest du alle Touren, die Einrichtungs-Checkliste und die Neuigkeiten."
+      }
+    }
+  },
+  "help": {
+    "title": "Hilfe & Tutorials",
+    "newBadge": "Neu",
+    "checklist": {
+      "title": "Einrichtung",
+      "progress": "{{done}} von {{total}} erledigt",
+      "unavailable": "Die Checkliste ist gerade nicht verfügbar.",
+      "openCount": "{{count}} offen",
+      "done": "Erledigt",
+      "open": "Offen",
+      "items": {
+        "glasses": "Gläser anlegen",
+        "ingredients": "Zutaten anlegen",
+        "cocktails": "Cocktails anlegen",
+        "cards": "Eine Karte zusammenstellen",
+        "prices": "Preise hinterlegen",
+        "guestInfo": "Allergene & Alkohol prüfen",
+        "team": "Team einladen",
+        "guestMenu": "Gästekarte veröffentlichen"
+      }
+    },
+    "tours": {
+      "title": "Touren",
+      "empty": "Keine Touren verfügbar.",
+      "start": "Starten",
+      "restart": "Erneut starten",
+      "steps": "{{count}} Schritte",
+      "category": {
+        "basics": "Grundlagen",
+        "feature": "Neue Funktion"
+      },
+      "status": {
+        "NEW": "Neu",
+        "STARTED": "Begonnen",
+        "COMPLETED": "Abgeschlossen",
+        "DISMISSED": "Ausgeblendet"
+      }
+    },
+    "changelog": {
+      "title": "Was ist neu",
+      "empty": "Noch keine Einträge.",
+      "error": "Die Neuigkeiten konnten nicht geladen werden."
+    }
+  },
+  "offers": {
+    "welcome": {
+      "title": "Willkommen bei {{workspace}} – kurze Tour?",
+      "body": "In zwei Minuten zeigen wir dir die Bar-Ansicht.",
+      "start": "Tour starten",
+      "later": "Später",
+      "never": "Nein danke"
+    },
+    "checklist": {
+      "title": "Einrichtung: {{done}} von {{total}} erledigt",
+      "next": "Als Nächstes: {{item}}",
+      "open": "Zur Checkliste",
+      "dismiss": "Ausblenden"
+    }
+  },
+  "changelog": {
+    "toursTitle": "Touren zu neuen Funktionen",
+    "startTour": "Tour starten"
+  }
+}

@@ -354,7 +354,7 @@ export function IngredientForm(props: IngredientFormProps) {
             <FormikDirtyReporter toComparable={toComparableIngredient} />
             <FormSaveButton label={props.ingredient ? t('common:save') : t('common:create')} />
             <EntityFormLayout embedded={embedded}>
-              <FormSection title={t('common:form.section.general')}>
+              <FormSection title={t('common:form.section.general')} tourTarget="manage.ingredientForm">
                 <FormField
                   label={t('ingredient:importByLink')}
                   htmlFor="link"

@@ -43,6 +43,7 @@ import {
   useSortableData,
 } from '@components/ui';
 import type { SortDirection } from '@components/ui';
+import { tourTarget } from '@lib/tours/targets';
 
 const IngredientsOverviewPage: NextPageWithPullToRefresh = () => {
   const { t } = useTranslation(['manage', 'common', 'nav', 'entity', 'errors']);
@@ -262,7 +263,7 @@ const IngredientsOverviewPage: NextPageWithPullToRefresh = () => {
             </DropdownContent>
           </Dropdown>
           {userContext.isUserPermitted(Role.MANAGER) && (
-            <Link href={`/workspaces/${workspaceId}/manage/ingredients/create`}>
+            <Link href={`/workspaces/${workspaceId}/manage/ingredients/create`} {...tourTarget('manage.ingredients.create')}>
               <Button variant="primary" shape="square" size="sm" className="md:h-10 md:min-h-10 md:w-10">
                 <FaPlus />
               </Button>

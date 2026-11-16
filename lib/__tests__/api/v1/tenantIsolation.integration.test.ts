@@ -13,6 +13,7 @@
 import { describe, expect, it } from 'vitest';
 import { flattenOperations, type FlatOperation } from '@lib/openapi/flattenOperations';
 import { createDefaultGuestMenuDocument } from '@lib/guest-menu/schema';
+import { ensureBuiltInTemplates } from '@lib/templates/sync';
 import { handlerBindings } from '@test/helpers/handlerBindings';
 import { sampleFromSchema } from '@test/helpers/sampleFromSchema';
 import { callAs, errorCodeOf, roleUser, seedTenantPair, type Caller } from '@test/helpers/scenario';
@@ -47,6 +48,8 @@ const FOREIGN_ID_OVERRIDES: Record<string, Override> = {
 const PATH_PARAM_SOURCE: Record<string, (ids: Ids) => Record<string, string>> = {
   [`POST ${WS}/join-requests/{userId}/accept`]: (ids) => ({ userId: ids.applicantUserId }),
   [`POST ${WS}/join-requests/{userId}/reject`]: (ids) => ({ userId: ids.applicantUserId }),
+  // Templates are instance-wide; foreign ids in the selection are covered in templates.integration.test.ts.
+  [`POST ${WS}/templates/{key}/apply`]: () => ({ key: 'no-such-template' }),
 };
 
 function pathParams(op: FlatOperation, ids: Ids): Record<string, string> {
@@ -94,6 +97,8 @@ describe('tenant isolation over all v1 operations (integration)', () => {
     const { a, b } = await seedTenantPair();
     const graphB = await seedTenantGraph(b, MARKER);
     await seedTenantGraph(a, 'TENANT-A-OWN');
+    // Built-in templates are synced into the database on first use (instance bootstrap, not tenant data).
+    await ensureBuiltInTemplates({ force: true });
 
     const operations = (await flattenOperations()).filter((op) => op.basePath.startsWith(`${WS}/`) && involvesForeignId(op));
     expect(operations.length).toBeGreaterThan(40);

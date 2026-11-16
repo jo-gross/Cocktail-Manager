@@ -47,6 +47,7 @@ import {
   toggleSort,
 } from '@components/ui';
 import type { SortDirection } from '@components/ui';
+import { tourTarget } from '@lib/tours/targets';
 
 const CocktailsOverviewPage: NextPageWithPullToRefresh = () => {
   const { t, i18n } = useTranslation(['manage', 'common', 'cocktail', 'nav', 'errors']);
@@ -495,7 +496,7 @@ const CocktailsOverviewPage: NextPageWithPullToRefresh = () => {
             </DropdownContent>
           </Dropdown>
           {userContext.isUserPermitted(Role.MANAGER) && (
-            <Link href={`/workspaces/${workspaceId}/manage/cocktails/create`}>
+            <Link href={`/workspaces/${workspaceId}/manage/cocktails/create`} {...tourTarget('manage.cocktails.create')}>
               <Button variant="primary" shape="square" size="sm" className="md:h-10 md:min-h-10 md:w-10">
                 <FaPlus />
               </Button>

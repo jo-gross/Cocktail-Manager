@@ -684,7 +684,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                 />
               }
             >
-              <FormSection id="cocktail-general" title={t('common:form.section.general')}>
+              <FormSection id="cocktail-general" title={t('common:form.section.general')} tourTarget="manage.cocktailForm">
                 <FormField
                   label={t('cocktail:name')}
                   htmlFor="name"

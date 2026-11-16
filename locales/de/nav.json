@@ -33,7 +33,8 @@
     "display": "Karten & Gäste",
     "guestInfo": "Gästeinformationen",
     "numbers": "Auswertung",
-    "workspace": "Workspace"
+    "workspace": "Workspace",
+    "help": "Hilfe"
   },
   "overview": {
     "allergensAlcohol": "Allergene & Alkohol",
@@ -53,9 +54,11 @@
       "calculations": "Mengen und Kosten für Events planen",
       "logs": "Alle Buchungen nachvollziehen",
       "members": "Mitglieder und Rollen verwalten",
-      "settings": "Allgemein, Mitglieder, Sprachen, Rezept-Stammdaten und API-Keys"
+      "settings": "Allgemein, Mitglieder, Sprachen, Rezept-Stammdaten und API-Keys",
+      "help": "Touren, Einrichtungs-Checkliste und Neuigkeiten"
     }
   },
   "guestInfo": "Gästeinformationen",
-  "guestMenus": "Gästekarten"
+  "guestMenus": "Gästekarten",
+  "help": "Hilfe & Tutorials"
 }

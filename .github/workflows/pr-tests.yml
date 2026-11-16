@@ -37,6 +37,9 @@ jobs:
       - name: 'Check untranslated JSX strings'
         run: pnpm i18n:lint
 
+      - name: 'Check tour targets and texts'
+        run: pnpm tours:check
+
   Test:
     runs-on: ubuntu-latest
 

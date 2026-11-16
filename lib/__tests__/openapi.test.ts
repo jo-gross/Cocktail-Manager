@@ -24,12 +24,15 @@ describe('OpenAPI spec generation', () => {
     await expect(Parser.validate(structuredClone(doc))).resolves.toBeTruthy();
   });
 
-  it('documents only the versioned /api/v1 surface (no deprecated legacy mirrors)', async () => {
+  it('documents only the versioned /api/v1 surface and the master-key admin routes (no deprecated legacy mirrors)', async () => {
     const doc = JSON.parse(await generateOpenApiJson());
     const paths = Object.keys(doc.paths);
     expect(paths.length).toBeGreaterThan(0);
     for (const path of paths) {
-      expect(path.startsWith('/api/v1/'), `${path} should be a v1 path`).toBe(true);
+      const adminOnly =
+        path.startsWith('/api/admin/') &&
+        Object.values(doc.paths[path]).every((op) => JSON.stringify((op as { security?: unknown }).security) === '[{"InstanceApiKeyAuth":[]}]');
+      expect(path.startsWith('/api/v1/') || adminOnly, `${path} should be a v1 path or a master-key admin path`).toBe(true);
       for (const method of Object.keys(doc.paths[path])) {
         expect(doc.paths[path][method].deprecated, `${method} ${path} not deprecated`).toBeUndefined();
       }
@@ -57,7 +60,7 @@ describe('OpenAPI spec generation', () => {
       const rel = resource.basePath.replace(/\{(\w+)\}/g, '[$1]');
       // Pages Router allows either a folder route (…/x/index.ts) or a flat file (…/x.ts).
       const candidates = [`${rel}/index.ts`, `${rel}/index.tsx`, `${rel}.ts`, `${rel}.tsx`];
-      const exists = candidates.some((c) => existsSync(resolve(`pages/api/v1${c}`)));
+      const exists = candidates.some((c) => existsSync(resolve(`pages${resource.pathPrefix ?? '/api/v1'}${c}`)));
       expect(exists, `route file for ${resource.basePath}`).toBe(true);
     }
   });

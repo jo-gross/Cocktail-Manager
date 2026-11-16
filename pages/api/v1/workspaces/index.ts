@@ -6,11 +6,12 @@ import HTTPMethod from 'http-method-enum';
 import { withHttpMethods } from '@middleware/api/handleMethods';
 import { sendFail, sendOk } from '@lib/http/responses';
 import { WorkspaceNameSchema } from '@lib/schemas/workspace';
-import { regenerateUnitConversions } from '@lib/api/controllers/units';
-import { createWorkspaceWithDefaults } from '@lib/workspace/createWorkspaceWithDefaults';
+import { createWorkspace } from '@lib/templates/createWorkspace';
+import { TemplateLocaleSchema } from '@lib/templates/manifest';
 import prisma from '../../../../prisma/prisma';
 
-const WorkspaceCreateSchema = z.object({ name: WorkspaceNameSchema });
+/** `locale`: primary content language (optional, the setup assistant can change it later). */
+const WorkspaceCreateSchema = z.object({ name: WorkspaceNameSchema, locale: TemplateLocaleSchema.optional() });
 
 /** Slim list item (lib/network/workspaces.ts `WorkspaceListItem`) — no other members' data. */
 const listItemSelect = { id: true, name: true, description: true, image: true } as const;
@@ -30,14 +31,12 @@ export default withHttpMethods({
       return sendFail(res, 400, 'VALIDATION_ERROR', 'Invalid request body', parsed.error.issues);
     }
 
-    const result = await createWorkspaceWithDefaults({
+    // Errors are answered with a clean 500 envelope by withHttpMethods.
+    const result = await createWorkspace({
       name: parsed.data.name,
-      userId: user.id,
-      role: Role.OWNER,
+      owner: { userId: user.id, role: Role.OWNER },
+      locale: parsed.data.locale,
     });
-
-    // Errors here (and above) are answered with a clean 500 envelope by withHttpMethods.
-    await regenerateUnitConversions(result.id);
 
     return sendOk(res, { id: result.id, name: result.name, description: result.description, image: result.image });
   }),

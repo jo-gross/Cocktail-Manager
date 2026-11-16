@@ -33,6 +33,9 @@ import type { CardDto, CardSummaryDto } from '@lib/schemas/cards';
 import type { QueueItemDto } from '@lib/schemas/queue';
 import type { GuestMenuExtrasDto } from '@lib/schemas/guestMenus';
 import { getActiveGuestMenuExtras } from '@lib/network/guestMenus';
+import { tourTarget } from '@lib/tours/targets';
+import { useTourAction } from '@components/tour/TourContext';
+import { BarOnboardingOffers } from '@components/tour/BarOnboardingOffers';
 import {
   Button,
   ButtonGroup,
@@ -59,7 +62,7 @@ const GUEST_MENU_EXTRAS_GROUP_ID = '__guest-menu-extras';
 const OverviewPage: NextPageWithPullToRefresh = () => {
   const modalContext = useContext(ModalContext);
   const userContext = useContext(UserContext);
-  const { t, i18n } = useTranslation(['nav', 'common', 'settings', 'manage', 'entity']);
+  const { t, i18n } = useTranslation(['nav', 'common', 'settings', 'manage', 'entity', 'tours']);
   const { isOnline, isOfflineMode } = useOffline();
   const router = useRouter();
   const { workspaceId } = router.query;
@@ -319,6 +322,8 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
     if (!isMenuExpanded) return;
 
     function handleOutside(e: MouseEvent) {
+      // Clicks in a running tour (e.g. "Weiter" while it explains the menu) must not collapse it.
+      if ((e.target as Element | null)?.closest?.('[data-tour-overlay]')) return;
       if (actionButtonRef.current && !actionButtonRef.current.contains(e.target as Node)) {
         setIsMenuExpanded(false);
       }
@@ -358,6 +363,15 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
 
   const [maxDropdownHeight, setMaxDropdownHeight] = useState(0);
   const actionButtonRef = useRef<HTMLDivElement>(null);
+  const viewOptionsButtonRef = useRef<HTMLButtonElement>(null);
+
+  // Tour steps on the floating buttons: show them (collapsed by default) / open the view options dropdown.
+  useTourAction('bar.expandMenu', () => setIsMenuExpanded(true));
+  useTourAction('bar.openViewOptions', async () => {
+    setIsMenuExpanded(true);
+    await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
+    viewOptionsButtonRef.current?.focus({ preventScroll: true });
+  });
 
   const [windowHeight, setWindowHeight] = useState<number>(0);
 
@@ -631,11 +645,13 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
       </Head>
 
       <div className={'static min-h-screen'}>
+        <BarOnboardingOffers />
         <div
           className={`grid grid-cols-1 gap-2 p-2 ${showStatisticActions && cocktailQueue.length > 0 && !isOffline ? 'lg:grid-cols-8 xl:grid-cols-6' : ''} print:grid-cols-5 print:overflow-clip print:p-0`}
         >
           {showStatisticActions && cocktailQueue.length > 0 && !isOffline ? (
             <aside
+              {...tourTarget('bar.queue')}
               className={`sticky order-first col-span-5 flex w-full flex-col rounded-xl bg-base-300 p-2 pb-0 lg:order-last lg:col-span-2 xl:col-span-1 print:hidden ${process.env.NODE_ENV == 'development' || process.env.DEPLOYMENT == 'staging' ? 'md:top-12' : 'md:top-2'} h-fit ${process.env.NODE_ENV == 'development' || process.env.DEPLOYMENT == 'staging' ? 'max-h-[calc(100vh-3.5rem)]' : 'max-h-[calc(100vh-1rem)]'}`}
             >
               {showTime ? <div className={'pb-2'}>{timeComponent}</div> : <></>}
@@ -748,7 +764,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
               </div>
             ) : selectedCardId == 'search' || selectedCardId == undefined ? (
               <div className={'flex flex-col-reverse gap-2 md:flex-row'}>
-                <Card className="w-full flex-1">
+                <Card className="w-full flex-1" {...tourTarget('bar.search')}>
                   <CardBody compact>
                     <SearchModal
                       ref={searchPageSearchRef}
@@ -949,7 +965,16 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
             }
           >
             <Dropdown align="end" placement="top" className={'pt-2' + (showSettingsAtBottom ? ' mr-1' : '')}>
-              <Button type="button" shape="square" variant="primary" className="rounded-xl md:h-12 md:min-h-12 md:w-12 md:px-0" tabIndex={0}>
+              <Button
+                ref={viewOptionsButtonRef}
+                type="button"
+                shape="square"
+                variant="primary"
+                className="rounded-xl md:h-12 md:min-h-12 md:w-12 md:px-0"
+                tabIndex={0}
+                aria-label={t('tours:basicsBar.steps.viewOptions.title')}
+                {...tourTarget('bar.viewOptions')}
+              >
                 <FaEye />
               </Button>
               <DropdownContent
@@ -967,107 +992,109 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                   }}
                 >
                   <div className={'flex flex-col gap-2'}>
-                    <Label className="flex-row items-center justify-between">
-                      <LabelText className="font-bold">{t('nav:cocktailSearch')}</LabelText>
-                      <Radio
-                        name="card-radio"
-                        value={'search'}
-                        checked={selectedCardId == 'search' || selectedCardId == undefined}
-                        readOnly={true}
-                        onClick={() => {
-                          setSelectedCardId('search');
-                          router
-                            .replace(
-                              {
-                                pathname: '/workspaces/[workspaceId]',
-                                query: { card: 'search', workspaceId: workspaceId },
-                              },
-                              undefined,
-                              { shallow: true },
-                            )
-                            .then();
-                        }}
-                      />
-                    </Label>
-                    <Label className="flex-row items-center justify-between">
-                      <LabelText className="font-bold">{t('nav:order')}</LabelText>
-                      <Radio
-                        name="card-radio"
-                        value={'order'}
-                        checked={selectedCardId == 'order'}
-                        readOnly={true}
-                        onClick={() => {
-                          setSelectedCardId('order');
-                          router
-                            .replace(
-                              {
-                                pathname: '/workspaces/[workspaceId]',
-                                query: { card: 'order', workspaceId: workspaceId },
-                              },
-                              undefined,
-                              { shallow: true },
-                            )
-                            .then();
-                        }}
-                      />
-                    </Label>
-                    <Divider>
-                      {t('manage:overview.cards')}
-                      {loadingCards && <UiLoading size="xs" />}
-                    </Divider>
-                    {loadingCards && cocktailCards.length == 0 ? (
-                      <UiLoading />
-                    ) : cocktailCards.length == 0 ? (
-                      <div className={'flex items-center justify-between'}>
-                        <div>{t('entity:noCards')}</div>
-                        <Link href={`/workspaces/${workspaceId}/manage/cards/create`}>
-                          <Button type="button" variant="outline" shape="square" size="sm" className="border-primary text-primary hover:bg-primary/10">
-                            <FaPlus />
-                          </Button>
-                        </Link>
-                      </div>
-                    ) : (
-                      cocktailCards.sort(sortCards).map((card) => (
-                        <FormControl key={'card-' + card.id}>
-                          <Label className="flex-row items-center justify-between">
-                            <LabelText className="font-bold">
-                              {card.name}
-                              {card.date != undefined ? (
-                                <span>
-                                  {t('manage:overview.cardDate', {
-                                    date:
-                                      getCardDateKey(card.date) == logicalToday
-                                        ? t('common:today')
-                                        : new Date(card.date).toLocaleDateString(i18n.language?.startsWith('en') ? 'en-US' : 'de-DE'),
-                                  })}
-                                </span>
-                              ) : (
-                                ''
-                              )}
-                            </LabelText>
-                            <Radio
-                              name="card-radio"
-                              value={card.id}
-                              checked={selectedCardId === card.id}
-                              readOnly={true}
-                              onClick={() => {
-                                setSelectedCardId(card.id);
-                                router
-                                  .replace(
-                                    {
-                                      pathname: '/workspaces/[workspaceId]',
-                                      query: { card: card.id, workspaceId: workspaceId },
-                                    },
-                                    undefined,
-                                    { shallow: true },
-                                  )
-                                  .then();
-                              }}
-                            />
-                          </Label>
-                        </FormControl>
-                      ))
-                    )}
+                    <div className={'flex flex-col gap-2'} {...tourTarget('bar.cardSelection')}>
+                      <Label className="flex-row items-center justify-between">
+                        <LabelText className="font-bold">{t('nav:cocktailSearch')}</LabelText>
+                        <Radio
+                          name="card-radio"
+                          value={'search'}
+                          checked={selectedCardId == 'search' || selectedCardId == undefined}
+                          readOnly={true}
+                          onClick={() => {
+                            setSelectedCardId('search');
+                            router
+                              .replace(
+                                {
+                                  pathname: '/workspaces/[workspaceId]',
+                                  query: { card: 'search', workspaceId: workspaceId },
+                                },
+                                undefined,
+                                { shallow: true },
+                              )
+                              .then();
+                          }}
+                        />
+                      </Label>
+                      <Label className="flex-row items-center justify-between">
+                        <LabelText className="font-bold">{t('nav:order')}</LabelText>
+                        <Radio
+                          name="card-radio"
+                          value={'order'}
+                          checked={selectedCardId == 'order'}
+                          readOnly={true}
+                          onClick={() => {
+                            setSelectedCardId('order');
+                            router
+                              .replace(
+                                {
+                                  pathname: '/workspaces/[workspaceId]',
+                                  query: { card: 'order', workspaceId: workspaceId },
+                                },
+                                undefined,
+                                { shallow: true },
+                              )
+                              .then();
+                          }}
+                        />
+                      </Label>
+                      <Divider>
+                        {t('manage:overview.cards')}
+                        {loadingCards && <UiLoading size="xs" />}
+                      </Divider>
+                      {loadingCards && cocktailCards.length == 0 ? (
+                        <UiLoading />
+                      ) : cocktailCards.length == 0 ? (
+                        <div className={'flex items-center justify-between'}>
+                          <div>{t('entity:noCards')}</div>
+                          <Link href={`/workspaces/${workspaceId}/manage/cards/create`}>
+                            <Button type="button" variant="outline" shape="square" size="sm" className="border-primary text-primary hover:bg-primary/10">
+                              <FaPlus />
+                            </Button>
+                          </Link>
+                        </div>
+                      ) : (
+                        cocktailCards.sort(sortCards).map((card) => (
+                          <FormControl key={'card-' + card.id}>
+                            <Label className="flex-row items-center justify-between">
+                              <LabelText className="font-bold">
+                                {card.name}
+                                {card.date != undefined ? (
+                                  <span>
+                                    {t('manage:overview.cardDate', {
+                                      date:
+                                        getCardDateKey(card.date) == logicalToday
+                                          ? t('common:today')
+                                          : new Date(card.date).toLocaleDateString(i18n.language?.startsWith('en') ? 'en-US' : 'de-DE'),
+                                    })}
+                                  </span>
+                                ) : (
+                                  ''
+                                )}
+                              </LabelText>
+                              <Radio
+                                name="card-radio"
+                                value={card.id}
+                                checked={selectedCardId === card.id}
+                                readOnly={true}
+                                onClick={() => {
+                                  setSelectedCardId(card.id);
+                                  router
+                                    .replace(
+                                      {
+                                        pathname: '/workspaces/[workspaceId]',
+                                        query: { card: card.id, workspaceId: workspaceId },
+                                      },
+                                      undefined,
+                                      { shallow: true },
+                                    )
+                                    .then();
+                                }}
+                              />
+                            </Label>
+                          </FormControl>
+                        ))
+                      )}
+                    </div>
 
                     <Divider>{t('common:display')}</Divider>
                     <div className={`flex flex-col gap-2`}>
@@ -1345,6 +1372,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                     variant="primary"
                     className="rounded-xl md:h-12 md:min-h-12 md:w-12 md:px-0"
                     onClick={() => modalContext.openModal(<SearchModal showStatisticActions={showStatisticActions} />)}
+                    {...tourTarget('bar.search')}
                   >
                     <FaSearch />
                   </Button>
@@ -1360,7 +1388,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
                 </Button>
               </Tooltip>
             ) : (
-              <Link href={`/workspaces/${workspaceId}/manage`}>
+              <Link href={`/workspaces/${workspaceId}/manage`} {...tourTarget('bar.manageLink')}>
                 <Button type="button" shape="square" variant="primary" className="rounded-xl md:h-12 md:min-h-12 md:w-12 md:px-0">
                   <BsFillGearFill />
                 </Button>

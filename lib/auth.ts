@@ -173,13 +173,15 @@ async function handleExternalWorkspaceManagement(userId: string, groups: string[
       let workspace = await prisma.workspace.findUnique({ where: { id: workspaceId } });
       if (!workspace) {
         console.log('[ExternalWorkspace] Creating workspace:', workspaceId);
-        workspace = await prisma.workspace.create({
-          data: {
-            id: workspaceId,
-            name: workspaceName || workspaceId,
-            isDemo: false,
-          },
-        });
+        // Imported lazily: the creation pipeline (backup import) imports the auth middleware, which imports this module.
+        const { createWorkspace } = await import('@lib/templates/createWorkspace');
+        try {
+          workspace = await createWorkspace({ id: workspaceId, name: (workspaceName || workspaceId).slice(0, 100) });
+        } catch (error) {
+          // A concurrent login created it first.
+          workspace = await prisma.workspace.findUnique({ where: { id: workspaceId } });
+          if (!workspace) throw error;
+        }
       }
 
       // Update/Create WorkspaceUser

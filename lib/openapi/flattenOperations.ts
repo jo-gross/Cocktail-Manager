@@ -18,7 +18,7 @@ export function flattenResourceApiDoc(resource: ResourceApiDoc): FlatOperation[]
     basePath: resource.basePath,
     method,
     spec: resource.operations[method]!,
-    v1Path: `/api/v1${resource.basePath}`,
+    v1Path: `${resource.pathPrefix ?? '/api/v1'}${resource.basePath}`,
   }));
 }
 

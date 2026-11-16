@@ -17,11 +17,13 @@
     "analyze": "ANALYZE=true next build --webpack",
     "generate:screenshots": "tsx scripts/generate-screenshots.ts",
     "openapi:generate": "tsx scripts/generate-openapi.ts",
+    "templates:pull": "tsx scripts/templates-pull.ts",
     "format:check": "prettier --check .",
     "format:fix": "prettier --write .",
     "i18n:extract": "i18next 'components/**/*.{ts,tsx}' 'pages/**/*.{ts,tsx}' 'lib/**/*.{ts,tsx}'",
     "i18n:check": "node scripts/check-i18n-keys.mjs",
     "i18n:lint": "node scripts/check-i18n-literals.mjs",
+    "tours:check": "node scripts/check-tour-targets.mjs",
     "start:migrate": "prisma migrate deploy && pnpm start",
     "prepare": "husky"
   },

@@ -49,6 +49,8 @@ export const WorkspaceDtoSchema = z
     expiresAt: DateTimeString.nullable().openapi({ description: 'When a demo workspace expires, or null.' }),
     isExternallyManaged: z.boolean().openapi({ description: 'Whether membership/roles are managed via an external identity provider.' }),
     publicSlug: z.string().nullable().openapi({ description: 'Public slug for guest menus (`/m/{publicSlug}`), or null.' }),
+    setupCompletedAt: DateTimeString.nullable().openapi({ description: 'When the setup assistant was completed; null = not yet.' }),
+    isTemplate: z.boolean().openapi({ description: 'The workspace is a template (start content); it cannot be deleted.' }),
     settings: WorkspaceSettingsDtoSchema,
     members: z.array(WorkspaceMemberDtoSchema),
   })
@@ -142,9 +144,10 @@ export const workspaceItemApiDoc = {
       sessionOnly: true,
       tags: [ApiTags.workspaceCore],
       summary: 'Delete workspace',
-      description: 'Permanently delete the workspace and all its data. Owner session only.',
+      description: 'Permanently delete the workspace and all its data. Owner session only. Workspaces marked as template cannot be deleted.',
       params: WorkspaceIdParam,
       response: DeletionResult,
+      errorResponses: { 409: 'The workspace is a template (`TEMPLATE_IN_USE`).' },
     },
   },
 } satisfies ResourceApiDoc;

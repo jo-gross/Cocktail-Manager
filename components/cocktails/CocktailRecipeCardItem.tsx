@@ -10,6 +10,7 @@ import { fetchCocktail } from '@lib/network/cocktails';
 import type { RatingDto } from '@lib/schemas/ratings';
 import { fetchCocktailRatings } from '@lib/network/cocktailRatings';
 import StatisticActions from '../StatisticActions';
+import { tourTarget } from '@lib/tours/targets';
 import ExpandableText, { ExpandableTextHandle } from '../ExpandableText';
 import { CocktailDetailModal } from '../modals/CocktailDetailModal';
 import { ModalContext } from '@lib/context/ModalContextProvider';
@@ -108,7 +109,7 @@ const CocktailRecipeCardItem = forwardRef<CocktailRecipeOverviewItemRef, Cocktai
   const modalContext = useContext(ModalContext);
 
   return (
-    <div className={'col-span-1'}>
+    <div className={'col-span-1'} {...tourTarget('bar.cocktailCard')}>
       <Card variant="elevated" className={`h-full flex-row ${unavailable ? 'opacity-70' : ''}`}>
         {cocktailRecipeLoading ? (
           <CocktailRecipeCardSkeleton />

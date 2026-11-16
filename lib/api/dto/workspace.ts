@@ -31,10 +31,11 @@ export function toWorkspaceSettingsDto(settings: Pick<WorkspaceSetting, 'setting
 }
 
 export function toWorkspaceDto(
-  workspace: Pick<Workspace, 'id' | 'name' | 'description' | 'image' | 'isDemo' | 'expiresAt' | 'publicSlug'>,
+  workspace: Pick<Workspace, 'id' | 'name' | 'description' | 'image' | 'isDemo' | 'expiresAt' | 'publicSlug' | 'setupCompletedAt'>,
   settings: Pick<WorkspaceSetting, 'setting' | 'value'>[],
   members: MemberWithUser[],
   isExternallyManaged: boolean,
+  isTemplate = false,
 ): WorkspaceDto {
   return {
     id: workspace.id,
@@ -45,6 +46,8 @@ export function toWorkspaceDto(
     expiresAt: workspace.expiresAt ? workspace.expiresAt.toISOString() : null,
     isExternallyManaged,
     publicSlug: workspace.publicSlug,
+    setupCompletedAt: workspace.setupCompletedAt ? workspace.setupCompletedAt.toISOString() : null,
+    isTemplate,
     settings: toWorkspaceSettingsDto(settings),
     members: members.map(toMemberDto),
   };

@@ -24,6 +24,7 @@ import { createWorkspace, fetchWorkspacesSafe, type WorkspaceListItem } from '@l
 import { withdrawOwnJoinRequest } from '@lib/network/workspaceUsers';
 import { alertApiV1Error } from '@lib/network/apiV1';
 import { getUnseenEntries, type UserChangelogEntry } from '@lib/changelog/userChangelog';
+import { getAnnouncedTours, TOURS } from '@lib/tours/registry';
 import {
   Button,
   ButtonGroup,
@@ -64,7 +65,8 @@ const WorkspacesPage: NextPageWithPullToRefresh = () => {
   const [joinWorkspaceId, setJoinWorkspaceId] = useState('');
 
   const userContext = useContext(UserContext);
-  const { t } = useTranslation(['auth', 'common', 'nav']);
+  const { t } = useTranslation(['auth', 'common', 'nav', 'tours']);
+  const { t: tTours } = useTranslation('tours');
 
   const [joiningWorkspace, setJoiningWorkspace] = useState(false);
   const [creatingWorkspace, setCreatingWorkspace] = useState(false);
@@ -250,7 +252,8 @@ const WorkspacesPage: NextPageWithPullToRefresh = () => {
   );
 
   useEffect(() => {
-    if (!userContext.user || changeLogFetch) return;
+    // Waits for the workspaces: tours for new features are started in the most recently opened one.
+    if (!userContext.user || changeLogFetch || !workspacesFetched) return;
 
     const lastSeenVersion = userContext.user.settings?.find((s) => s.setting == Setting.lastSeenVersion)?.value;
     if (lastSeenVersion === packageInfo.version) return;
@@ -264,20 +267,45 @@ const WorkspacesPage: NextPageWithPullToRefresh = () => {
       .then((entries: UserChangelogEntry[]) => {
         // Releases without user facing changes (e.g. dependency updates) don't open the modal
         const [latestEntry, ...olderEntries] = getUnseenEntries(entries, packageInfo.version, lastSeenVersion);
-        if (latestEntry) {
+        // Workspaces are sorted by last opened
+        const tourWorkspace = workspaces[0];
+        const announcedTours = tourWorkspace ? getAnnouncedTours(TOURS, packageInfo.version, lastSeenVersion) : [];
+        if (latestEntry || announcedTours.length > 0) {
           modalContext.openModal(
             <div className={'flex flex-col gap-4'}>
               <div className={'w-full text-center text-2xl font-bold'}>{t('auth:newVersion', { version: packageInfo.version })}</div>
-              <div className={'flex flex-col gap-2'}>
-                {latestEntry.version !== packageInfo.version && (
-                  <div className={'text-sm font-semibold'}>{t('common:versionDate', { version: latestEntry.version, date: latestEntry.date })}</div>
-                )}
-                <ul className={'list-disc space-y-1 pl-5'}>
-                  {latestEntry.highlights.map((highlight, i) => (
-                    <li key={i}>{highlight}</li>
-                  ))}
-                </ul>
-              </div>
+              {latestEntry && (
+                <div className={'flex flex-col gap-2'}>
+                  {latestEntry.version !== packageInfo.version && (
+                    <div className={'text-sm font-semibold'}>{t('common:versionDate', { version: latestEntry.version, date: latestEntry.date })}</div>
+                  )}
+                  <ul className={'list-disc space-y-1 pl-5'}>
+                    {latestEntry.highlights.map((highlight, i) => (
+                      <li key={i}>{highlight}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {announcedTours.length > 0 && (
+                <div className={'flex flex-col gap-2'}>
+                  <div className={'text-sm font-semibold'}>{t('tours:changelog.toursTitle')}</div>
+                  <ul className={'flex flex-col gap-2'}>
+                    {announcedTours.map((tour) => (
+                      <li key={tour.id} className={'flex items-center justify-between gap-3'}>
+                        <div className={'flex min-w-0 flex-col'}>
+                          <span className={'font-medium'}>{tTours(tour.title)}</span>
+                          <span className={'text-sm text-base-content/60'}>{tTours(tour.description)}</span>
+                        </div>
+                        <Link href={`/workspaces/${tourWorkspace.id}?tour=${tour.id}`} onClick={() => modalContext.closeAllModals()}>
+                          <Button variant="primary" size="sm">
+                            {t('tours:changelog.startTour')}
+                          </Button>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
               {olderEntries.length > 0 && (
                 <details className={'mt-2'}>
                   <summary className={'cursor-pointer text-sm text-base-content/60'}>{t('auth:previousVersions')}</summary>
@@ -309,7 +337,7 @@ const WorkspacesPage: NextPageWithPullToRefresh = () => {
       .catch((error) => {
         console.error('Failed to load user changelog', error);
       });
-  }, [changeLogFetch, modalContext, userContext, userContext.user]);
+  }, [changeLogFetch, modalContext, userContext, userContext.user, workspaces, workspacesFetched, tTours]);
 
   useEffect(() => {
     if (!userContext.user) {

@@ -33,7 +33,8 @@ describe('Manage overview', () => {
     for (const heading of Object.values(en.section)) {
       expect(html).toContain(heading.replace('&', '&amp;'));
     }
-    expect(html.match(/<section aria-labelledby=/g)).toHaveLength(5);
+    // Recipes, guest info, display, numbers, workspace, help
+    expect(html.match(/<section aria-labelledby=/g)).toHaveLength(6);
     expect(html).toContain(en.overview.description.cocktails);
     // Workspace = a single settings entry (members, languages and API keys live in the settings area).
     expect(html).toContain('href="/workspaces/ws/manage/settings"');
@@ -46,7 +47,9 @@ describe('Manage overview', () => {
 
   it('hides manager and admin entries for regular users and links them to the members page', async () => {
     const html = await render('USER' as Role);
-    expect(html.match(/<section aria-labelledby=/g)).toHaveLength(4);
+    expect(html.match(/<section aria-labelledby=/g)).toHaveLength(5);
+    // Help & tutorials is available for every role
+    expect(html).toContain('href="/workspaces/ws/manage/help"');
     expect(html).not.toContain(en.section.display.replace('&', '&amp;'));
     expect(html).not.toContain('href="/workspaces/ws/manage/cards"');
     expect(html).not.toContain('href="/workspaces/ws/manage/settings"');
