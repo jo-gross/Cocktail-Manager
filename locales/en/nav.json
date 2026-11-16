@@ -60,5 +60,8 @@
   },
   "guestInfo": "Guest information",
   "guestMenus": "Guest menus",
-  "help": "Help & tutorials"
+  "help": "Help & tutorials",
+  "profileMenu": "Profile menu for {{name}}",
+  "openTodos_one": "{{count}} open checklist item",
+  "openTodos_other": "{{count}} open checklist items"
 }

@@ -6,7 +6,6 @@ import { UserContext } from '@lib/context/UserContextProvider';
 import Image, { ImageProps } from 'next/image';
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import ImageModal from '../modals/ImageModal';
-import { ImageCredit } from '../ImageCredit';
 import StarsComponent from '../StarsComponent';
 import type { RatingDto } from '@lib/schemas/ratings';
 import { Badge, Skeleton } from '@components/ui';
@@ -206,7 +205,6 @@ export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeIns
               height={534}
               unoptimized={true}
             />
-            <ImageCredit credit={props.cocktailRecipe.imageCredit} variant={'overlay'} />
           </div>
         ) : (
           <></>

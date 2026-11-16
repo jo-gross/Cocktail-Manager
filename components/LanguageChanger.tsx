@@ -9,9 +9,10 @@ import { Setting } from '@generated/prisma/client';
 interface LanguageChangerProps {
   disabled?: boolean;
   size?: ButtonSize;
+  fullWidth?: boolean;
 }
 
-export default function LanguageChanger({ disabled = false, size }: LanguageChangerProps) {
+export default function LanguageChanger({ disabled = false, size, fullWidth = false }: LanguageChangerProps) {
   const { t } = useTranslation('settings');
   const userContext = useContext(UserContext);
   const current = userContext.uiLocale;
@@ -25,11 +26,25 @@ export default function LanguageChanger({ disabled = false, size }: LanguageChan
   };
 
   return (
-    <ButtonGroup className={`self-center ${disabled ? 'opacity-50' : ''}`} aria-label={t('language.label')}>
-      <Button joinItem size={size} variant={current === 'de' ? 'primary' : 'outline'} disabled={disabled} onClick={() => void setLanguage('de')}>
+    <ButtonGroup className={`${fullWidth ? 'w-full' : 'self-center'} ${disabled ? 'opacity-50' : ''}`} aria-label={t('language.label')}>
+      <Button
+        joinItem
+        size={size}
+        className={fullWidth ? 'min-w-0 flex-1' : undefined}
+        variant={current === 'de' ? 'primary' : 'outline'}
+        disabled={disabled}
+        onClick={() => void setLanguage('de')}
+      >
         <span aria-hidden="true">{LOCALE_FLAGS.de}</span> {t('labelDe')}
       </Button>
-      <Button joinItem size={size} variant={current === 'en' ? 'primary' : 'outline'} disabled={disabled} onClick={() => void setLanguage('en')}>
+      <Button
+        joinItem
+        size={size}
+        className={fullWidth ? 'min-w-0 flex-1' : undefined}
+        variant={current === 'en' ? 'primary' : 'outline'}
+        disabled={disabled}
+        onClick={() => void setLanguage('en')}
+      >
         <span aria-hidden="true">{LOCALE_FLAGS.en}</span> {t('labelEn')}
       </Button>
     </ButtonGroup>

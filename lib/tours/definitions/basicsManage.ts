@@ -93,6 +93,7 @@ export const basicsManageTour = defineTour({
       kind: 'highlight',
       route: MANAGE,
       target: 'manage.help',
+      prepare: 'manage.openProfileMenu',
       title: 'basicsManage.steps.help.title',
       body: 'basicsManage.steps.help.body',
     },
