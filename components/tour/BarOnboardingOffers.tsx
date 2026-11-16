@@ -10,6 +10,7 @@ import { shouldShowChecklistCard, summarizeChecklist } from '@lib/tours/checklis
 import { basicsBarTour } from '@lib/tours/definitions/basicsBar';
 import { useTour } from './TourContext';
 import { useOnboardingStatus } from './useOnboardingStatus';
+import { useSetupBannerVisible } from '@components/onboarding/WorkspaceStatusBanner';
 
 const LATER_KEY = `tour:later:${basicsBarTour.id}`;
 
@@ -34,8 +35,10 @@ export function BarOnboardingOffers() {
   const workspace = userContext.workspace;
   const isManager = userContext.isUserPermitted(Role.MANAGER);
   const { status: onboarding } = useOnboardingStatus(workspace?.id, isManager);
+  // The setup wizard offers the tour at its end.
+  const setupOpen = useSetupBannerVisible();
 
-  if (!workspace || !userContext.user || !progressLoaded || activeTourId) return null;
+  if (!workspace || !userContext.user || !progressLoaded || activeTourId || setupOpen) return null;
 
   // Only with confirmed server progress: existing users have a DISMISSED row from the migration, which an empty
   // local copy (offline, API error) must not hide.

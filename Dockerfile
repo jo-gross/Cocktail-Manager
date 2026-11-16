@@ -16,8 +16,6 @@ COPY . .
 ENV NODE_ENV=production
 ARG DEPLOYMENT
 ENV DEPLOYMENT=${DEPLOYMENT:-$NODE_ENV}
-ARG DEMO_MODE
-ENV DEMO_MODE=${DEMO_MODE:-false}
 ENV NEXT_TELEMETRY_DISABLED=1
 ARG GIT_SHA
 ENV GIT_SHA=${GIT_SHA}
@@ -30,8 +28,6 @@ WORKDIR /app
 ENV NODE_ENV=production
 ARG DEPLOYMENT
 ENV DEPLOYMENT=${DEPLOYMENT:-$NODE_ENV}
-ARG DEMO_MODE
-ENV DEMO_MODE=${DEMO_MODE:-false}
 ENV NEXT_TELEMETRY_DISABLED=1
 ARG GIT_SHA
 ENV GIT_SHA=${GIT_SHA}
@@ -46,9 +42,7 @@ RUN chown nextjs:nodejs .next
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
-COPY --from=builder --chown=nextjs:nodejs /app/config ./config
 COPY --from=builder --chown=nextjs:nodejs /app/templates ./templates
-COPY --from=builder --chown=nextjs:nodejs /app/scripts ./scripts
 COPY --from=builder --chown=nextjs:nodejs /app/prisma.config.ts ./
 
 COPY --from=deps --chown=nextjs:nodejs /app/node_modules ./node_modules

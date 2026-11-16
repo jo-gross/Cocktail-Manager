@@ -546,6 +546,13 @@
             },
             "description": "Content languages; the first one is the primary language."
           },
+          "source": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Origin and license summary of the content (e.g. recipe sources, photo licenses); show it with the template. Per-image credits: `imageCredit` of the items."
+          },
           "builtIn": {
             "type": "boolean"
           },
@@ -568,6 +575,7 @@
           "name",
           "description",
           "locales",
+          "source",
           "builtIn",
           "version",
           "isDefault",
@@ -625,12 +633,20 @@
                 },
                 "hasImage": {
                   "type": "boolean"
+                },
+                "imageCredit": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Attribution of the image (title, author, source, license), to be shown wherever the image is displayed; null = none required or known."
                 }
               },
               "required": [
                 "id",
                 "name",
-                "hasImage"
+                "hasImage",
+                "imageCredit"
               ]
             }
           },
@@ -647,12 +663,20 @@
                 },
                 "hasImage": {
                   "type": "boolean"
+                },
+                "imageCredit": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Attribution of the image (title, author, source, license), to be shown wherever the image is displayed; null = none required or known."
                 }
               },
               "required": [
                 "id",
                 "name",
-                "hasImage"
+                "hasImage",
+                "imageCredit"
               ]
             }
           },
@@ -669,12 +693,20 @@
                 },
                 "hasImage": {
                   "type": "boolean"
+                },
+                "imageCredit": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Attribution of the image (title, author, source, license), to be shown wherever the image is displayed; null = none required or known."
                 }
               },
               "required": [
                 "id",
                 "name",
-                "hasImage"
+                "hasImage",
+                "imageCredit"
               ]
             }
           },
@@ -691,6 +723,13 @@
                 },
                 "hasImage": {
                   "type": "boolean"
+                },
+                "imageCredit": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Attribution of the image (title, author, source, license), to be shown wherever the image is displayed; null = none required or known."
                 },
                 "glassId": {
                   "type": [
@@ -715,6 +754,7 @@
                 "id",
                 "name",
                 "hasImage",
+                "imageCredit",
                 "glassId",
                 "ingredientIds",
                 "garnishIds"

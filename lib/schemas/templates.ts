@@ -43,6 +43,10 @@ export const TemplateSummaryDtoSchema = z
     name: z.string(),
     description: z.string().nullable(),
     locales: z.array(z.string()).openapi({ description: 'Content languages; the first one is the primary language.' }),
+    source: z.string().nullable().openapi({
+      description:
+        'Origin and license summary of the content (e.g. recipe sources, photo licenses); show it with the template. Per-image credits: `imageCredit` of the items.',
+    }),
     builtIn: z.boolean(),
     version: z.number().int(),
     isDefault: z.boolean(),
@@ -51,7 +55,14 @@ export const TemplateSummaryDtoSchema = z
   })
   .openapi('TemplateSummary');
 
-const TemplateItemSchema = z.object({ id: z.string(), name: z.string(), hasImage: z.boolean() });
+const TemplateItemSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  hasImage: z.boolean(),
+  imageCredit: z.string().nullable().openapi({
+    description: 'Attribution of the image (title, author, source, license), to be shown wherever the image is displayed; null = none required or known.',
+  }),
+});
 
 export const TemplateItemsDtoSchema = z
   .object({

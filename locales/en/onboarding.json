@@ -1,0 +1,211 @@
+{
+  "title": "Setup",
+  "continueLater": "Continue later",
+  "stepper": {
+    "label": "Setup steps"
+  },
+  "steps": {
+    "language": {
+      "title": "Language & region",
+      "description": "Which language do you work in, and where is your bar?"
+    },
+    "basics": {
+      "title": "Basics",
+      "description": "Name, logo and type of your business."
+    },
+    "content": {
+      "title": "Start content",
+      "description": "Start with ready-made glasses, ingredients, garnishes and cocktails – or completely empty."
+    },
+    "team": {
+      "title": "Team",
+      "description": "Invite your colleagues. You can also do this later in the settings."
+    },
+    "done": {
+      "title": "Done",
+      "description": "Your workspace is set up."
+    }
+  },
+  "kinds": {
+    "glasses": "Glasses",
+    "ingredients": "Ingredients",
+    "garnishes": "Garnishes",
+    "cocktails": "Cocktails",
+    "cards": "Cards"
+  },
+  "counts": {
+    "glasses_one": "{{count}} glass",
+    "glasses_other": "{{count}} glasses",
+    "ingredients_one": "{{count}} ingredient",
+    "ingredients_other": "{{count}} ingredients",
+    "garnishes_one": "{{count}} garnish",
+    "garnishes_other": "{{count}} garnishes",
+    "cocktails_one": "{{count}} cocktail",
+    "cocktails_other": "{{count}} cocktails",
+    "cards_one": "{{count}} card",
+    "cards_other": "{{count}} cards"
+  },
+  "language": {
+    "uiTitle": "App language",
+    "uiHelp": "Only applies to you. Other members choose their own language.",
+    "contentTitle": "Content language",
+    "contentHelp": "You maintain cocktails, ingredients and cards in this language. Start content is created in this language.",
+    "regionTitle": "Region",
+    "regionHelp": "We took the time zone and currency from your browser – please check them."
+  },
+  "basics": {
+    "nameTitle": "Name",
+    "typeTitle": "Type of business",
+    "typeHelp": "Helps us suggest sensible defaults. It is not saved.",
+    "types": {
+      "bar": {
+        "title": "Bar",
+        "help": "Cocktail bar, pub, club"
+      },
+      "restaurant": {
+        "title": "Restaurant & hotel",
+        "help": "Bar as part of a restaurant or hotel"
+      },
+      "event": {
+        "title": "Events & catering",
+        "help": "Mobile bar, events, festivals"
+      },
+      "private": {
+        "title": "Private",
+        "help": "Home bar, parties, your own recipe collection"
+      }
+    },
+    "dayStartSuggestion": "Bars often close after midnight. Start the statistics day at {{time}} so that one night counts as one day.",
+    "dayStartApply": "Use {{time}}",
+    "privateHint": "For private use we skip the team step. You can still open it above."
+  },
+  "content": {
+    "emptyTitle": "Start empty",
+    "emptyHelp": "You create everything yourself or import a backup.",
+    "startEmpty": "Start empty",
+    "loadError": "The collections could not be loaded. You can add them later under “Help & tutorials”.",
+    "none": "There are no collections for this language yet.",
+    "otherLanguage": "There are no collections for your content language yet. These are in another language.",
+    "modeLabel": "Scope for {{template}}",
+    "mode": {
+      "all": "Everything",
+      "basics": "Basics only",
+      "selection": "Select …",
+      "selectionHelp": "Pick single cocktails, ingredients, glasses …"
+    },
+    "selectionCount_one": "{{count}} item selected",
+    "selectionCount_other": "{{count}} items selected",
+    "editSelection": "Change selection",
+    "apply": "Add",
+    "applyAgain": "Add again",
+    "applied": "Added",
+    "appliedToast": "“{{template}}” was added.",
+    "applyError": "The collection could not be added.",
+    "result": {
+      "title": "Result",
+      "created": "Created: {{items}}",
+      "linked": "Already there, linked: {{items}}",
+      "skipped": "Skipped (name exists): {{items}}",
+      "none": "nothing"
+    },
+    "hintPrices": "Prices stay empty – enter your own prices.",
+    "hintAllergens": "Allergens and alcohol content are prefilled but must be confirmed by you.",
+    "hintAllergensLink": "Go to allergens & alcohol",
+    "importBackup": "Import a backup instead",
+    "attribution": "Sources & image credits",
+    "itemCredit": "{{name}}: {{credit}}",
+    "imageCredit": "Image: {{credit}}",
+    "noAttribution": "No information.",
+    "modalTitle": "Add start content",
+    "modalHelp": "Add collections completely or partly. Existing items with the same name are reused.",
+    "picker": {
+      "title": "{{template}}: selection",
+      "help": "What a cocktail needs (glass, ingredients, garnishes) and the cocktails of a card are selected automatically.",
+      "tabsLabel": "Areas",
+      "search": "Search",
+      "selectAll": "Select all",
+      "selectNone": "Select none",
+      "loadError": "The items could not be loaded.",
+      "empty": "No matches.",
+      "requiredBy": "Needed by {{names}}",
+      "requiredByMore_one": "Needed by {{names}} and {{count}} more",
+      "requiredByMore_other": "Needed by {{names}} and {{count}} more",
+      "selected_one": "{{count}} item selected",
+      "selected_other": "{{count}} items selected",
+      "confirm": "Use selection"
+    }
+  },
+  "team": {
+    "linkTitle": "Invitation link",
+    "linkHelp": "Whoever opens the link sends a join request. You confirm it under Settings → Users and assign the role there.",
+    "link": "Link",
+    "copy": "Copy",
+    "copied": "Link copied",
+    "copyError": "The link could not be copied.",
+    "code": "Join code: {{code}}",
+    "qrAlt": "QR code for the invitation link",
+    "create": "Create invitation link",
+    "rolesTitle": "Roles",
+    "rolesHelp": "Each role includes the permissions of the roles above it.",
+    "roles": {
+      "USER": {
+        "name": "User",
+        "help": "Bar view: look up recipes, prepare and log cocktails."
+      },
+      "MANAGER": {
+        "name": "Manager",
+        "help": "Maintains cocktails, ingredients, cards and guest menus, admits members."
+      },
+      "ADMIN": {
+        "name": "Admin",
+        "help": "Changes settings, languages, API keys and data."
+      },
+      "OWNER": {
+        "name": "Owner",
+        "help": "May delete the workspace."
+      }
+    },
+    "manage": "Manage members & join codes"
+  },
+  "done": {
+    "title": "{{workspace}} is ready",
+    "body": "A short tour shows you the bar view. Afterwards the checklist under “Help & tutorials” helps you with the next steps.",
+    "summaryTitle": "Summary",
+    "summary": {
+      "language": "Content language",
+      "content": "Start content",
+      "contentApplied": "{{templates}} – {{items}}",
+      "contentEmpty": "Started empty",
+      "team": "Team",
+      "teamLink": "Invitation link created",
+      "teamNone": "Nobody invited yet"
+    },
+    "pricesHint": "Remember: enter prices and confirm allergens.",
+    "startTour": "Start the basics tour",
+    "later": "Later",
+    "helpHint": "Tours, checklist and news are always available under",
+    "helpLink": "Help & tutorials"
+  },
+  "banner": {
+    "setupTitle": "Continue setup",
+    "setupBody": "A few steps are still missing: language, start content and team.",
+    "setupAction": "Continue",
+    "template": "Template: changes apply to newly created workspaces."
+  },
+  "help": {
+    "title": "Setup",
+    "startContent": {
+      "title": "Add start content",
+      "description": "Take over glasses, ingredients, garnishes and cocktails from ready-made collections.",
+      "action": "Open collections"
+    },
+    "wizard": {
+      "title": "Open the setup assistant again",
+      "description": "Go through language, region, name, logo and team step by step again.",
+      "action": "Open assistant"
+    }
+  },
+  "emptyState": {
+    "addFromTemplates": "Add from templates"
+  }
+}

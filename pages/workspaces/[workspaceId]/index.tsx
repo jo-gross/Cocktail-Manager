@@ -36,6 +36,7 @@ import { getActiveGuestMenuExtras } from '@lib/network/guestMenus';
 import { tourTarget } from '@lib/tours/targets';
 import { useTourAction } from '@components/tour/TourContext';
 import { BarOnboardingOffers } from '@components/tour/BarOnboardingOffers';
+import { WorkspaceStatusBanner } from '@components/onboarding/WorkspaceStatusBanner';
 import {
   Button,
   ButtonGroup,
@@ -645,6 +646,7 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
       </Head>
 
       <div className={'static min-h-screen'}>
+        <WorkspaceStatusBanner className="px-2 pt-2" />
         <BarOnboardingOffers />
         <div
           className={`grid grid-cols-1 gap-2 p-2 ${showStatisticActions && cocktailQueue.length > 0 && !isOffline ? 'lg:grid-cols-8 xl:grid-cols-6' : ''} print:grid-cols-5 print:overflow-clip print:p-0`}

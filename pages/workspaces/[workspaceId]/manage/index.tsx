@@ -19,6 +19,7 @@ import packageInfo from '../../../../package.json';
 import LanguageChanger from '@components/LanguageChanger';
 import { Button, Divider, Dropdown, DropdownContent, Menu } from '@components/ui';
 import { useNewFeatureTours } from '@components/tour/useNewFeatureTours';
+import { WorkspaceStatusBanner } from '@components/onboarding/WorkspaceStatusBanner';
 
 export default function ManagePage() {
   const router = useRouter();
@@ -118,6 +119,7 @@ export default function ManagePage() {
           </Dropdown>,
         ]}
       >
+        <WorkspaceStatusBanner className="mx-auto mb-6 w-full max-w-5xl" />
         <div className="mx-auto grid w-full max-w-5xl grid-cols-1 gap-6 lg:grid-cols-2">
           <div className="flex flex-col gap-6">
             <ManageGroup title={t('nav:section.recipes')}>

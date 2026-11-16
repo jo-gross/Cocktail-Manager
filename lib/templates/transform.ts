@@ -38,8 +38,8 @@ export function findUnknownSelectionIds(data: BackupImportData, selection: Templ
 
 /**
  * Reduces the template to the selected items plus everything they need: card → cocktails,
- * cocktail → glass, ingredients, garnishes (units, ice, step actions, tag metadata and settings are
- * always kept). `basics` = all glasses, ingredients and garnishes. Calculations, signage and guest
+ * cocktail → glass, ingredients, garnishes (units, ice, step actions, tag categories and settings are
+ * always kept; tag definitions only for tags of the kept cocktails and ingredients). `basics` = all glasses, ingredients and garnishes. Calculations, signage and guest
  * menus are only part of `all`.
  */
 export function selectTemplateContent(data: BackupImportData, mode: TemplateApplyMode, selection: TemplateSelection = {}): BackupImportData {
@@ -69,12 +69,14 @@ export function selectTemplateContent(data: BackupImportData, mode: TemplateAppl
   const glasses = new Set([...picked.glasses, ...cocktailRows.flatMap((row) => (row.glassId ? [row.glassId] : []))]);
   const ingredients = new Set([...picked.ingredients, ...recipeIngredients.flatMap((row) => (row.ingredientId ? [row.ingredientId] : []))]);
   const garnishes = new Set([...picked.garnishes, ...recipeGarnishes.map((row) => row.garnishId)]);
+  const ingredientRows = data.ingredient.filter((row) => ingredients.has(row.id));
+  const tags = new Set([...cocktailRows, ...ingredientRows].flatMap((row) => row.tags));
 
   return {
     ...data,
     garnish: data.garnish.filter((row) => garnishes.has(row.id)),
     garnishImages: data.garnishImages.filter((row) => garnishes.has(row.garnishId)),
-    ingredient: data.ingredient.filter((row) => ingredients.has(row.id)),
+    ingredient: ingredientRows,
     ingredientVolumes: data.ingredientVolumes.filter((row) => ingredients.has(row.ingredientId)),
     ingredientImages: data.ingredientImages.filter((row) => ingredients.has(row.ingredientId)),
     glass: data.glass.filter((row) => glasses.has(row.id)),
@@ -92,6 +94,7 @@ export function selectTemplateContent(data: BackupImportData, mode: TemplateAppl
     calculationItems: [],
     signage: [],
     signageSlides: [],
+    tagDefinitions: data.tagDefinitions?.filter((row) => tags.has(row.tag)),
     cocktailRecipeTranslations: data.cocktailRecipeTranslations?.filter((row) => cocktails.has(row.cocktailId)),
     ingredientTranslations: data.ingredientTranslations?.filter((row) => ingredients.has(row.ingredientId)),
     garnishTranslations: data.garnishTranslations?.filter((row) => garnishes.has(row.garnishId)),

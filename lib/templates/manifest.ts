@@ -15,6 +15,9 @@ export const TemplateKeySchema = z.string().min(1).max(64).regex(TEMPLATE_KEY_PA
 
 export const TemplateLocaleSchema = z.string().max(35).refine(isValidContentLocale, 'Invalid locale code (expected e.g. "de" or "en")');
 
+/** File name inside a template's `images/`: no directories, no leading dot. */
+export const TEMPLATE_IMAGE_NAME_PATTERN = /^[A-Za-z0-9_-][A-Za-z0-9._-]{0,199}$/;
+
 export const TemplateLocalizedTextSchema = z
   .record(TemplateLocaleSchema, z.string().trim().min(1).max(500))
   .refine((value) => Object.keys(value).length > 0, 'At least one language is required');
@@ -29,6 +32,11 @@ export const TemplateManifestSchema = z.object({
   /** Content languages; the first one is the primary language of the content (names on the entities). */
   locales: z.array(TemplateLocaleSchema).min(1).max(20),
   source: z.string().max(500).optional(),
+  /** Credit line per image file of `images/` (license attribution, shown wherever the image is offered). */
+  attributions: z
+    .record(z.string().regex(TEMPLATE_IMAGE_NAME_PATTERN, 'Image file name inside images/'), z.string().trim().min(1).max(1000))
+    .refine((value) => Object.keys(value).length <= 1000, 'Too many attributions')
+    .optional(),
   published: z.boolean().default(false),
   isDefault: z.boolean().default(false),
   sortOrder: z.number().int().min(-10_000).max(10_000).default(0),

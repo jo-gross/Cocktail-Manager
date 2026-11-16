@@ -85,6 +85,24 @@ describe('selectTemplateContent', () => {
     expect(selected.cocktailCard).toEqual([]);
   });
 
+  it('keeps only tag definitions of the kept cocktails and ingredients', () => {
+    const data = BackupImportSchema.parse({
+      ...template(),
+      ingredient: template().ingredient.map((row) => (row.id === 'in-gin' ? { ...row, tags: ['spirit'] } : row)),
+      cocktailRecipe: template().cocktailRecipe.map((row) => ({ ...row, tags: ['sour'] })),
+      tagCategories: [{ id: 'cat', name: { de: 'Stil', en: 'Style' } }],
+      tagDefinitions: [
+        { tag: 'spirit', categoryId: 'cat' },
+        { tag: 'sour', categoryId: 'cat' },
+        { tag: 'unused', categoryId: 'cat' },
+      ],
+    });
+    expect(selectTemplateContent(data, 'basics').tagDefinitions?.map((row) => row.tag)).toEqual(['spirit']);
+    expect(selectTemplateContent(data, 'selection', { cocktails: ['c-daiquiri'] }).tagDefinitions?.map((row) => row.tag)).toEqual(['sour']);
+    expect(selectTemplateContent(data, 'basics').tagCategories).toHaveLength(1);
+    expect(selectTemplateContent(data, 'all').tagDefinitions).toHaveLength(3);
+  });
+
   it('reports ids that are not part of the template', () => {
     expect(findUnknownSelectionIds(template(), { glasses: ['g-coupe', 'foreign'], cards: ['card-summer'] })).toEqual(['glasses:foreign']);
   });

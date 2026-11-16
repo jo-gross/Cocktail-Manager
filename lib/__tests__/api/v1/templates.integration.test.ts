@@ -261,8 +261,14 @@ describe('templates API', () => {
 
     const list = await callAs(user, templatesHandler, { method: 'GET', query: { kind: 'CATALOG', locale: 'en' } });
     expect(list.status).toBe(200);
-    expect(dataOf<TemplateSummaryDto[]>(list)).toEqual([
-      expect.objectContaining({ key: 'classics', name: 'Classics', counts: { glasses: 2, ingredients: 3, garnishes: 1, cocktails: 1, cards: 1 } }),
+    // Built-in catalogs (all-time-classics) may be listed too, depending on the sync state.
+    expect(dataOf<TemplateSummaryDto[]>(list).filter((template) => !template.builtIn)).toEqual([
+      expect.objectContaining({
+        key: 'classics',
+        name: 'Classics',
+        source: null,
+        counts: { glasses: 2, ingredients: 3, garnishes: 1, cocktails: 1, cards: 1 },
+      }),
     ]);
 
     const items = await callAs(user, templateItemsHandler, { method: 'GET', query: { key: 'classics', locale: 'en' } });
@@ -274,6 +280,7 @@ describe('templates API', () => {
         id: catalog.daiquiri.id,
         name: 'Daiquiri',
         hasImage: false,
+        imageCredit: null,
         glassId: catalog.glass.id,
         ingredientIds: [catalog.rum.id, catalog.lime.id],
         garnishIds: [catalog.wheel.id],
@@ -407,6 +414,157 @@ describe('templates API', () => {
       'CARDS_CREATE',
     ]);
     expect((await callAs({ apiKeyJwt: fullKey.jwt }, applyHandler, { method: 'POST', query, body: { mode: 'basics' } })).status).toBe(200);
+  });
+});
+
+describe('All Time Classics (built-in catalog)', () => {
+  const KEY = 'all-time-classics';
+  const COUNTS = { glasses: 10, ingredients: 45, garnishes: 15, cocktails: 22, cards: 1 };
+  const NONE = { glasses: 0, ingredients: 0, garnishes: 0, cocktails: 0, cards: 0 };
+
+  async function metadataCounts(workspaceId: string) {
+    return {
+      units: await prisma.unit.count({ where: { workspaceId } }),
+      actions: await prisma.workspaceCocktailRecipeStepAction.count({ where: { workspaceId } }),
+      ice: await prisma.ice.count({ where: { workspaceId } }),
+      tagCategories: await prisma.tagCategory.count({ where: { workspaceId } }),
+    };
+  }
+
+  it('is listed with its source and per-image credits', async () => {
+    await syncBuiltInTemplates();
+    const { a } = await seedTenantPair();
+    const user = roleUser(a, 'USER');
+
+    const list = dataOf<TemplateSummaryDto[]>(await callAs(user, templatesHandler, { method: 'GET', query: { kind: 'CATALOG', locale: 'en' } }));
+    expect(list.find((template) => template.key === KEY)).toMatchObject({
+      name: 'All Time Classics',
+      builtIn: true,
+      locales: ['de', 'en'],
+      counts: COUNTS,
+      source: expect.stringContaining('Wikimedia Commons'),
+    });
+
+    const items = dataOf<TemplateItemsDto>(await callAs(user, templateItemsHandler, { method: 'GET', query: { key: KEY, locale: 'en' } }));
+    expect(items.cocktails).toHaveLength(22);
+    expect(items.cocktails.filter((cocktail) => cocktail.hasImage && cocktail.imageCredit)).toHaveLength(22);
+    expect(items.cocktails.find((cocktail) => cocktail.name === 'Gin & Tonic')?.imageCredit).toContain('CC BY 4.0');
+    expect(items.cocktails.find((cocktail) => cocktail.name === 'Old Fashioned')?.imageCredit).toContain('© Erich Wagner (www.eventografie.de)');
+    const glasses = Object.fromEntries(items.glasses.map((glass) => [glass.name, glass]));
+    expect(glasses['Copper Mug']).toMatchObject({ hasImage: false, imageCredit: null });
+    expect(glasses['Coupe']?.imageCredit).toContain('Will Murray (Willscrlt)');
+    expect(items.ingredients.every((ingredient) => ingredient.imageCredit === null)).toBe(true);
+    expect(items.cards).toEqual([{ id: expect.any(String), name: 'All Time Classics', cocktailIds: expect.any(Array) }]);
+    expect(items.cards[0]!.cocktailIds).toHaveLength(22);
+  });
+
+  it('imports completely into a fresh German workspace, without prices and with unconfirmed guest info', async () => {
+    await syncBuiltInTemplates();
+    const target = await createWorkspace({ name: 'Bar DE', locale: 'de' });
+    const workspaceId = target.id;
+    const before = await metadataCounts(workspaceId);
+
+    const result = await applyTemplate(workspaceId, KEY, { mode: 'all' });
+    expect(result).toEqual({ template: KEY, created: COUNTS, linked: NONE, skipped: NONE });
+    // Units, actions, ice and tag categories are the workspace's defaults (matched by name).
+    expect(await metadataCounts(workspaceId)).toEqual(before);
+
+    const ginTonic = await prisma.cocktailRecipe.findFirstOrThrow({
+      where: { workspaceId, name: 'Gin Tonic' },
+      include: {
+        translations: true,
+        glass: true,
+        ice: true,
+        CocktailRecipeImage: true,
+        steps: {
+          orderBy: { stepNumber: 'asc' },
+          include: { action: true, ingredients: { orderBy: { ingredientNumber: 'asc' }, include: { unit: true, ingredient: true } } },
+        },
+      },
+    });
+    expect(ginTonic).toMatchObject({ price: null, description: expect.stringContaining('Tonic Water'), tags: ['gin', 'highball', 'refreshing'] });
+    expect(ginTonic.translations).toEqual([expect.objectContaining({ locale: 'en', name: 'Gin & Tonic' })]);
+    expect(ginTonic.glass?.name).toBe('Ballonglas');
+    expect(ginTonic.ice?.name).toBe('ICE_CUBES');
+    expect(ginTonic.CocktailRecipeImage).toHaveLength(1);
+    expect(ginTonic.steps.map((step) => step.action.name)).toEqual(['BUILD_IN_GLASS', 'STIR']);
+    expect(ginTonic.steps[0]!.ingredients.map((row) => `${row.ingredient?.name}:${row.amount}${row.unit?.name}`)).toEqual([
+      'Gin (London Dry):4CL',
+      'Tonic Water:12CL',
+    ]);
+
+    const orgeat = await prisma.ingredient.findFirstOrThrow({
+      where: { workspaceId, name: 'Mandelsirup (Orgeat)' },
+      include: { IngredientVolume: { include: { unit: true } } },
+    });
+    expect(orgeat).toMatchObject({ price: null, abv: 0, allergens: ['NUTS'], allergenSources: ['ALMONDS'], guestInfoComplete: false });
+    expect(orgeat.IngredientVolume.map((row) => `${row.volume}${row.unit.name}`)).toEqual(['70CL']);
+    expect(await prisma.ingredient.count({ where: { workspaceId, OR: [{ price: { not: null } }, { guestInfoComplete: true }] } })).toBe(0);
+    expect(await prisma.cocktailRecipeImage.count({ where: { cocktailRecipe: { workspaceId } } })).toBe(22);
+    expect(await prisma.glassImage.count({ where: { glass: { workspaceId } } })).toBe(9);
+
+    const card = await prisma.cocktailCard.findFirstOrThrow({
+      where: { workspaceId },
+      include: { groups: { orderBy: { groupNumber: 'asc' }, include: { _count: { select: { items: true } } } } },
+    });
+    expect(card.name).toBe('All Time Classics');
+    expect(card.groups.map((group) => `${group.name}:${group._count.items}`)).toEqual([
+      'Aperitivo:3',
+      'Gin:4',
+      'Whiskey & Cognac:4',
+      'Rum & Cachaça:5',
+      'Vodka:4',
+      'Tequila:2',
+    ]);
+
+    const gin = await prisma.tagDefinition.findUniqueOrThrow({ where: { workspaceId_tag: { workspaceId, tag: 'gin' } }, include: { category: true } });
+    expect(gin).toMatchObject({ label: { de: 'Gin', en: 'Gin' }, isPublic: true, category: { name: { de: 'Spirituose', en: 'Spirit' } } });
+    expect(await prisma.tagDefinition.findUnique({ where: { workspaceId_tag: { workspaceId, tag: 'syrup' } } })).toMatchObject({ isPublic: false });
+  });
+
+  it('imports into an English workspace with English primary texts (language pivot)', async () => {
+    await syncBuiltInTemplates();
+    const target = await createWorkspace({ name: 'Bar EN', locale: 'en' });
+    const workspaceId = target.id;
+
+    const result = await applyTemplate(workspaceId, KEY, { mode: 'all' });
+    expect(result.created).toEqual(COUNTS);
+
+    const ginTonic = await prisma.cocktailRecipe.findFirstOrThrow({ where: { workspaceId, name: 'Gin & Tonic' }, include: { translations: true } });
+    expect(ginTonic.description).toContain('tonic water');
+    expect(ginTonic.translations).toEqual([expect.objectContaining({ locale: 'de', name: 'Gin Tonic', description: expect.stringContaining('Tonic Water') })]);
+    const vermouth = await prisma.ingredient.findFirstOrThrow({ where: { workspaceId, name: 'Sweet Red Vermouth' }, include: { translations: true } });
+    expect(vermouth.translations).toEqual([expect.objectContaining({ locale: 'de', name: 'Roter Wermut (süß)' })]);
+    expect(await prisma.glass.count({ where: { workspaceId, name: { in: ['Coupe', 'Copper Mug', 'Balloon Glass'] } } })).toBe(3);
+    expect(await prisma.garnish.count({ where: { workspaceId, name: 'Lime Wedge' } })).toBe(1);
+    // No German primary names left.
+    expect(await prisma.cocktailRecipe.count({ where: { workspaceId, name: 'Gin Tonic' } })).toBe(0);
+  });
+
+  it('"basics" imports glasses, ingredients and garnishes but no cocktails, and keeps own tag definitions', async () => {
+    await syncBuiltInTemplates();
+    const target = await createWorkspace({ name: 'Bar Basics', locale: 'de' });
+    const workspaceId = target.id;
+    await prisma.tagDefinition.create({ data: { workspaceId, tag: 'gin', label: { de: 'Wacholder' }, isPublic: false } });
+
+    const result = await applyTemplate(workspaceId, KEY, { mode: 'basics' });
+    expect(result.created).toEqual({ glasses: 10, ingredients: 45, garnishes: 15, cocktails: 0, cards: 0 });
+    expect(await prisma.cocktailRecipe.count({ where: { workspaceId } })).toBe(0);
+    expect(await prisma.cocktailCard.count({ where: { workspaceId } })).toBe(0);
+    expect(await prisma.glassImage.count({ where: { glass: { workspaceId } } })).toBe(9);
+    // Only definitions of tags in use: ingredient tags, no cocktail-only tags.
+    expect(await prisma.tagDefinition.count({ where: { workspaceId, tag: 'spirit' } })).toBe(1);
+    expect(await prisma.tagDefinition.count({ where: { workspaceId, tag: { in: ['stirred', 'iba-unforgettables'] } } })).toBe(0);
+    expect(await prisma.tagDefinition.findUniqueOrThrow({ where: { workspaceId_tag: { workspaceId, tag: 'gin' } } })).toMatchObject({
+      label: { de: 'Wacholder' },
+      isPublic: false,
+      categoryId: null,
+    });
+
+    // Applying everything afterwards adds the cocktails and links the existing basics.
+    const all = await applyTemplate(workspaceId, KEY, { mode: 'all' });
+    expect(all.created).toEqual({ ...NONE, cocktails: 22, cards: 1 });
+    expect(all.linked).toEqual({ glasses: 10, ingredients: 45, garnishes: 15, cocktails: 0, cards: 0 });
   });
 });
 

@@ -50,6 +50,7 @@ async function createDemoWorkspace(): Promise<{ workspaceId: string; userId: str
   const response = await fetch(`${BASE_URL}/api/demo/create-workspace`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ locale: 'de' }),
   });
 
   if (!response.ok) {

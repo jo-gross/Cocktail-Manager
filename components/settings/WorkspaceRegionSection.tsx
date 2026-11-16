@@ -1,32 +1,18 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useReportUnsavedChanges } from '@lib/forms/useUnsavedChanges';
 import { useTranslation } from 'react-i18next';
-import { Button, Input, Loading, Select, Skeleton } from '@components/ui';
-import { FormField } from '@components/forms/FormField';
+import { Button, Loading, Skeleton } from '@components/ui';
 import { alertService } from '@lib/alertService';
 import { alertApiV1Error } from '@lib/network/apiV1';
 import { getWorkspaceSettings, updateWorkspaceSetting } from '@lib/network/workspaces';
-import {
-  DEFAULT_WORKSPACE_CURRENCY,
-  DEFAULT_WORKSPACE_TIMEZONE,
-  getWorkspaceLocaleSettings,
-  isValidCurrency,
-  isValidTimezone,
-} from '@lib/workspace/workspaceLocaleSettings';
+import { DEFAULT_WORKSPACE_CURRENCY, DEFAULT_WORKSPACE_TIMEZONE, getWorkspaceLocaleSettings } from '@lib/workspace/workspaceLocaleSettings';
 import { SettingsSection } from './SettingsSection';
-import { currencyOptions, displayName, timezoneOptions } from './localeOptions';
-
-const DEFAULT_DAY_START = '00:00';
-
-interface RegionValues {
-  timezone: string;
-  currency: string;
-  dayStart: string;
-}
+import { DEFAULT_DAY_START } from '@lib/onboarding/setupWizard';
+import { isValidRegion, RegionFields, type RegionValues } from './RegionFields';
 
 /** Timezone, currency and the statistics day start – they jointly define the "bar day". */
 export function WorkspaceRegionSection({ workspaceId }: { workspaceId: string }) {
-  const { t, i18n } = useTranslation(['settings', 'common', 'errors']);
+  const { t } = useTranslation(['settings', 'common', 'errors']);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState<RegionValues>({ timezone: DEFAULT_WORKSPACE_TIMEZONE, currency: DEFAULT_WORKSPACE_CURRENCY, dayStart: DEFAULT_DAY_START });
@@ -51,12 +37,9 @@ export function WorkspaceRegionSection({ workspaceId }: { workspaceId: string })
     };
   }, [workspaceId, t]);
 
-  const timezones = useMemo(() => timezoneOptions(values.timezone), [values.timezone]);
-  const currencies = useMemo(() => currencyOptions(values.currency), [values.currency]);
-
   const dirty = values.timezone !== saved.timezone || values.currency !== saved.currency || values.dayStart !== saved.dayStart;
   useReportUnsavedChanges(dirty);
-  const valid = isValidTimezone(values.timezone) && isValidCurrency(values.currency) && /^\d{2}:\d{2}$/.test(values.dayStart);
+  const valid = isValidRegion(values);
 
   const save = async () => {
     if (!dirty || !valid) return;
@@ -92,49 +75,7 @@ export function WorkspaceRegionSection({ workspaceId }: { workspaceId: string })
           <Skeleton className="h-16 w-full" />
         </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2">
-          <FormField label={t('settings:timezone')} htmlFor="workspace-timezone">
-            <Select
-              id="workspace-timezone"
-              value={values.timezone}
-              onChange={(event) => setValues((previous) => ({ ...previous, timezone: event.target.value }))}
-            >
-              {timezones.map((value) => (
-                <option key={value} value={value}>
-                  {value}
-                </option>
-              ))}
-            </Select>
-          </FormField>
-
-          <FormField label={t('settings:currency')} htmlFor="workspace-currency">
-            <Select
-              id="workspace-currency"
-              value={values.currency}
-              onChange={(event) => setValues((previous) => ({ ...previous, currency: event.target.value }))}
-            >
-              {currencies.map((value) => (
-                <option key={value} value={value}>
-                  {value} – {displayName(value, 'currency', i18n.language)}
-                </option>
-              ))}
-            </Select>
-          </FormField>
-
-          <FormField label={t('settings:dayStartTime')} htmlFor="workspace-day-start">
-            <Input
-              id="workspace-day-start"
-              type="time"
-              value={values.dayStart}
-              onChange={(event) => setValues((previous) => ({ ...previous, dayStart: event.target.value }))}
-            />
-          </FormField>
-
-          <p className="text-sm text-base-content/70 md:col-span-2">
-            {t('settings:dayStartHelp')} {t('settings:timezoneHelp')}
-          </p>
-          <p className="text-xs text-base-content/60 md:col-span-2">{t('settings:dayStartCurrent', { time: saved.dayStart })}</p>
-        </div>
+        <RegionFields value={values} onChange={setValues} footnote={t('settings:dayStartCurrent', { time: saved.dayStart })} />
       )}
     </SettingsSection>
   );

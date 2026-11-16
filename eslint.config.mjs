@@ -124,7 +124,6 @@ const eslintConfig = defineConfig([
     'public/**',
     'generated/**',
     'docs/**',
-    'scripts/cleanup-demo-workspaces.js',
     'next-env.d.ts',
     'eslint.config.mjs',
     'i18next-parser.config.cjs',

@@ -6,6 +6,7 @@ import type { User, Workspace, WorkspaceTemplate } from '@generated/prisma/clien
 import prisma from '../../../prisma/prisma';
 import { resolveLocalizedText, type LocalizedText } from '@lib/guest-menu/localizedText';
 import { applyTemplate, ensureBuiltInTemplatesSafe, findTemplate } from '@lib/templates/applyTemplate';
+import { builtInImageCredits, type TemplateCreditKind } from '@lib/templates/credits';
 import type { TemplateApplyInput, TemplateApplyResultDto, TemplateItemsDto, TemplateListQuery, TemplateSummaryDto } from '@lib/schemas/templates';
 
 const countSelect = { _count: { select: { Glass: true, Ingredient: true, Garnish: true, CocktailRecipe: true, CocktailCard: true } } } as const;
@@ -35,6 +36,7 @@ export async function listTemplates(query: TemplateListQuery): Promise<TemplateS
       name: localized(template.name, query.locale, template.locales) || template.key,
       description: description || null,
       locales: template.locales,
+      source: template.source,
       builtIn: template.builtIn,
       version: template.version,
       isDefault: template.isDefault,
@@ -90,18 +92,24 @@ export async function getTemplateItems(key: string, requestedLocale: string | un
 
   const byName = <T extends { name: string }>(rows: T[]) => rows.sort((a, b) => a.name.localeCompare(b.name, locale));
   const unique = (ids: Array<string | null>) => [...new Set(ids.filter((id): id is string => id != null))];
+  const credits = builtInImageCredits(template);
+  /** Items are matched by their primary name (`row.name`), see lib/templates/credits.ts. */
+  const toItem = (kind: TemplateCreditKind, row: { id: string; name: string; translations: Array<{ name: string | null }> }, imageCount: number) => ({
+    id: row.id,
+    name: nameIn(row),
+    hasImage: imageCount > 0,
+    imageCredit: imageCount > 0 ? (credits?.[kind].get(row.name) ?? null) : null,
+  });
 
   return {
     key: template.key,
     locale,
-    glasses: byName(glasses.map((row) => ({ id: row.id, name: nameIn(row), hasImage: row._count.GlassImage > 0 }))),
-    ingredients: byName(ingredients.map((row) => ({ id: row.id, name: nameIn(row), hasImage: row._count.IngredientImage > 0 }))),
-    garnishes: byName(garnishes.map((row) => ({ id: row.id, name: nameIn(row), hasImage: row._count.GarnishImage > 0 }))),
+    glasses: byName(glasses.map((row) => toItem('glass', row, row._count.GlassImage))),
+    ingredients: byName(ingredients.map((row) => toItem('ingredient', row, row._count.IngredientImage))),
+    garnishes: byName(garnishes.map((row) => toItem('garnish', row, row._count.GarnishImage))),
     cocktails: byName(
       cocktails.map((row) => ({
-        id: row.id,
-        name: nameIn(row),
-        hasImage: row._count.CocktailRecipeImage > 0,
+        ...toItem('cocktail', row, row._count.CocktailRecipeImage),
         glassId: row.glassId,
         ingredientIds: unique(row.steps.flatMap((step) => step.ingredients.map((ingredient) => ingredient.ingredientId))),
         garnishIds: unique(row.garnishes.map((garnish) => garnish.garnishId)),

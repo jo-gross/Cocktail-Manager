@@ -5,6 +5,7 @@ import { withHttpMethods } from '@middleware/api/handleMethods';
 import { checkMasterApiKey } from '@middleware/api/jwtApiKeyMiddleware';
 import { sendFail } from '@lib/http/responses';
 import { cleanupExpiredDemoWorkspaces } from '@lib/demo/cleanup';
+import { isDemoMode } from '@lib/demo/config';
 
 function digest(value: string): Buffer {
   return createHash('sha256').update(value).digest();
@@ -27,7 +28,7 @@ function isAuthorized(req: NextApiRequest): boolean {
  */
 export default withHttpMethods({
   [HTTPMethod.POST]: async (req: NextApiRequest, res: NextApiResponse) => {
-    if (process.env.DEMO_MODE !== 'true') {
+    if (!isDemoMode()) {
       return sendFail(res, 403, 'DEMO_DISABLED', 'Demo mode is not enabled');
     }
     if (!isAuthorized(req)) {

@@ -181,7 +181,7 @@ export interface BackupImportOptions {
   stripPrices?: boolean;
   /** Ingredients/garnishes come with allergens and ABV, but `guestInfoComplete = false` (to be confirmed by the bar). */
   guestInfoUnconfirmed?: boolean;
-  /** `replace` (default) overwrites settings; `merge` only adds missing settings and missing labels of `translations`. */
+  /** `replace` (default) overwrites settings and tag definitions; `merge` only adds missing settings, missing labels of `translations` and missing tag definitions. */
   settings?: 'replace' | 'merge';
   /** Audit log entry (default: `WorkspaceBackup` / `IMPORT`). */
   audit?: { entityType: string; action: string; details?: Record<string, unknown> };
@@ -725,7 +725,8 @@ export async function executeBackupImport(
     await tx.tagDefinition.upsert({
       where: { workspaceId_tag: { workspaceId, tag: definition.tag } },
       create: { workspaceId, tag: definition.tag, ...values },
-      update: values,
+      // Templates (`merge`) keep the workspace's own label/category/visibility of a tag.
+      update: options.settings === 'merge' ? {} : values,
     });
   }
 

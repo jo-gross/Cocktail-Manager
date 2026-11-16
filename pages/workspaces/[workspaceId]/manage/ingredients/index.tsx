@@ -44,6 +44,7 @@ import {
 } from '@components/ui';
 import type { SortDirection } from '@components/ui';
 import { tourTarget } from '@lib/tours/targets';
+import { AddFromTemplatesButton } from '@components/onboarding/AddFromTemplatesButton';
 
 const IngredientsOverviewPage: NextPageWithPullToRefresh = () => {
   const { t } = useTranslation(['manage', 'common', 'nav', 'entity', 'errors']);
@@ -314,7 +315,10 @@ const IngredientsOverviewPage: NextPageWithPullToRefresh = () => {
                 ) : sortedIngredients.length == 0 ? (
                   <TableRow>
                     <TableCell colSpan={12} className="text-center">
-                      {t('manage:noEntriesFound')}
+                      <div className="flex flex-col items-center gap-2">
+                        <span>{t('manage:noEntriesFound')}</span>
+                        {ingredients.length == 0 && <AddFromTemplatesButton onApplied={() => fetchIngredients(workspaceId, setIngredients, setLoading)} />}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ) : (

@@ -18,6 +18,7 @@
     "generate:screenshots": "tsx scripts/generate-screenshots.ts",
     "openapi:generate": "tsx scripts/generate-openapi.ts",
     "templates:pull": "tsx scripts/templates-pull.ts",
+    "templates:build-catalog": "tsx scripts/build-catalog-template.ts",
     "format:check": "prettier --check .",
     "format:fix": "prettier --write .",
     "i18n:extract": "i18next 'components/**/*.{ts,tsx}' 'pages/**/*.{ts,tsx}' 'lib/**/*.{ts,tsx}'",

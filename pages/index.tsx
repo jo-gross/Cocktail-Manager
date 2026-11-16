@@ -19,6 +19,7 @@ import { MdOutlineCancel } from 'react-icons/md';
 import { DeleteConfirmationModal } from '@components/modals/DeleteConfirmationModal';
 import ThemeChanger from '@components/ThemeChanger';
 import LanguageChanger from '@components/LanguageChanger';
+import { DemoStartButtons, useDemoConfig } from '@components/demo/DemoStartButtons';
 import { NextPageWithPullToRefresh } from '../types/next';
 import { createWorkspace, fetchWorkspacesSafe, type WorkspaceListItem } from '@lib/network/workspaces';
 import { withdrawOwnJoinRequest } from '@lib/network/workspaceUsers';
@@ -73,7 +74,7 @@ const WorkspacesPage: NextPageWithPullToRefresh = () => {
 
   const [changeLogFetch, setChangelogFetch] = useState(false);
   const [workspaceCreationConfig, setWorkspaceCreationConfig] = useState<{ disabled: boolean; message: string | null } | null>(null);
-  const [creatingDemoWorkspace, setCreatingDemoWorkspace] = useState(false);
+  const demoConfig = useDemoConfig();
   const [authProviders, setAuthProviders] = useState<AuthProvider[]>([]);
 
   const fetchWorkspaces = useCallback(() => {
@@ -143,53 +144,18 @@ const WorkspacesPage: NextPageWithPullToRefresh = () => {
   const createNewWorkspace = useCallback(() => {
     if (!userContext.user) return;
     setCreatingWorkspace(true);
-    createWorkspace({ name: newWorkspaceName })
-      .then(() => setNewWorkspaceName(''))
-      .then(() => fetchWorkspaces())
+    // Content language = UI language; the setup wizard can change it.
+    createWorkspace({ name: newWorkspaceName, locale: userContext.uiLocale })
+      .then(async (workspace) => {
+        setNewWorkspaceName('');
+        await router.push(`/workspaces/${workspace.id}/setup`);
+      })
       .catch((error) => {
         console.error('WorkspacesOverview -> createNewWorkspace', error);
         alertApiV1Error(error, t('auth:error.createWorkspace'));
       })
       .finally(() => setCreatingWorkspace(false));
-  }, [userContext.user, newWorkspaceName, fetchWorkspaces, t]);
-
-  const createDemoWorkspace = useCallback(async () => {
-    setCreatingDemoWorkspace(true);
-    try {
-      const response = await fetch('/api/demo/create-workspace', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      const body = await response.json();
-
-      if (!response.ok) {
-        alertService.error(body.error?.message ?? body.message ?? t('auth:error.createDemoWorkspace'), response.status, response.statusText);
-        return;
-      }
-
-      // Sign in as demo user via custom demo-login endpoint
-      const signInResponse = await fetch('/api/auth/demo-login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: body.data.userId, loginToken: body.data.loginToken }),
-      });
-
-      if (signInResponse.ok) {
-        // Redirect to workspace
-        router.push(`/workspaces/${body.data.workspaceId}`);
-      } else {
-        alertService.error(t('auth:error.demoLogin'));
-      }
-    } catch (error) {
-      console.error('WorkspacesOverview -> createDemoWorkspace', error);
-      alertService.error(t('auth:error.createDemoWorkspace'));
-    } finally {
-      setCreatingDemoWorkspace(false);
-    }
-  }, [router, t]);
+  }, [userContext.user, userContext.uiLocale, newWorkspaceName, router, t]);
 
   const joinWorkspace = useCallback(
     (code: string) => {
@@ -450,17 +416,10 @@ const WorkspacesPage: NextPageWithPullToRefresh = () => {
                 <h1 className="text-center text-3xl font-bold">{t('common:appName')}</h1>
                 {versionLine}
                 <Divider className="w-full">{t('auth:login')}</Divider>
-                {process.env.NEXT_PUBLIC_DEMO_MODE === 'true' ? (
-                  <Button variant="primary" className="w-full" onClick={createDemoWorkspace} disabled={creatingDemoWorkspace}>
-                    {creatingDemoWorkspace ? (
-                      <>
-                        <UiLoading size="sm" />
-                        {t('auth:demoCreating')}
-                      </>
-                    ) : (
-                      t('auth:demoStart')
-                    )}
-                  </Button>
+                {demoConfig == null ? (
+                  <UiLoading size="sm" />
+                ) : demoConfig.enabled ? (
+                  <DemoStartButtons ttlHours={demoConfig.ttlHours} />
                 ) : authProviders.length > 0 ? (
                   <div className="flex w-full flex-col gap-2">
                     {authProviders.map((provider) => (

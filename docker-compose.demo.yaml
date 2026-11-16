@@ -21,15 +21,12 @@ services:
     links:
       - postgres
       - chromium-service-demo
-    # Use pre-built image from GitHub Container Registry
+    # The regular image; DEMO_MODE=true at runtime turns it into a demo instance.
     # To build locally, uncomment the build section and comment out the image line
     # build:
     #   context: .
     #   dockerfile: Dockerfile
-    #   args:
-    #     DEPLOYMENT: 'demo'
-    #     DEMO_MODE: 'true'
-    image: ghcr.io/jo-gross/cocktail-manager-demo:latest
+    image: ghcr.io/jo-gross/cocktail-manager:latest
     container_name: cocktail-manager-demo
     ports:
       - '3001:3000' # Different port to avoid conflicts
@@ -39,12 +36,11 @@ services:
       - DATABASE_URL=postgres://postgres:postgres@postgres:5432/cocktail_recipe_demo
       - CHROMIUM_HOST=chromium-service-demo
       - DEMO_MODE=true
-      - DEMO_WORKSPACE_CONFIG_PATH=/app/config/demo-workspace-config.json
       - DEMO_TTL_HOURS=24
+      # Optional: external trigger for POST /api/demo/cleanup (the app already cleans up hourly)
+      # - DEMO_CLEANUP_SECRET=change-me
       - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET:-demo-secret-change-in-production}
       - BETTER_AUTH_URL=${BETTER_AUTH_URL:-http://localhost:3001}
-    volumes:
-      - ./config:/app/config:ro # Mount config directory
     networks:
       - cocktail-recipe-demo-network
     restart: unless-stopped
@@ -66,32 +62,9 @@ services:
       - '9223:9222' # Different port to avoid conflicts
     restart: unless-stopped
 
-  cleanup-cron:
-    image: ghcr.io/jo-gross/cocktail-manager-demo:latest
-    container_name: cocktail-manager-demo-cleanup
-    depends_on:
-      - postgres
-      - cocktail-manager-demo
-    environment:
-      - DATABASE_URL=postgres://postgres:postgres@postgres:5432/cocktail_recipe_demo
-    networks:
-      - cocktail-recipe-demo-network
-    # Use the same image but run cleanup script via cron
-    # Runs every hour at minute 0 (0 * * * *)
-    entrypoint: /bin/sh
-    command: >
-      -c "
-      echo '0 * * * * cd /app && corepack enable pnpm && corepack prepare pnpm@11.25.0 --activate && node scripts/cleanup-demo-workspaces.js >> /var/log/cleanup.log 2>&1' | crontab - &&
-      crond -f -l 2
-      "
-    volumes:
-      - cleanup_logs:/var/log
-    restart: unless-stopped
-
 networks:
   cocktail-recipe-demo-network:
     driver: bridge
 
 volumes:
   postgres_data_demo:
-  cleanup_logs:

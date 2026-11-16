@@ -1,74 +1,73 @@
 # Demo Mode Setup
 
-This guide explains how to set up and run the Cocktail Manager in Demo Mode.
+This guide explains how to set up and run the Cocktail Manager as a demo instance.
 
 ## Overview
 
-Demo Mode allows potential customers to try the software without requiring login credentials. Each visitor can create a
-demo workspace with pre-configured data that is automatically deleted after 24 hours.
+Demo Mode allows potential customers to try the software without requiring login credentials. Each visitor gets a
+throw-away demo user and workspace that is automatically deleted after 24 hours:
+
+- **Start demo:** a complete sample bar (recipes in German and English, two cocktail cards, a published guest menu,
+  digital signage, a calculation) in the visitor's language, with generated activity (statistics of the last 14 days,
+  ratings, queue). The basics tour is offered in the bar view.
+- **Try the setup:** an empty workspace that starts in the setup assistant.
+
+The demo is a separate instance of the **regular image**: `DEMO_MODE=true` at runtime switches it to demo mode, no
+special build is needed.
 
 ## Quick Start
 
 1. **Start the demo instance:**
 
-The demo uses a pre-built Docker image from GitHub Container Registry. Simply start the containers:
-
 ```bash
 docker-compose -f docker-compose.demo.yaml up -d
 ```
 
-**Note:** The image is automatically built and pushed to `ghcr.io/jo-gross/cocktail-manager-demo:latest` via GitHub Actions when changes are pushed to the main branch.
+The compose file uses the regular image `ghcr.io/jo-gross/cocktail-manager:latest` (built by the release workflow).
 
-**To build locally instead** (e.g., for development), uncomment the `build` section and comment out the `image` line in `docker-compose.demo.yaml`, then run:
+**To build locally instead** (e.g., for development), uncomment the `build` section and comment out the `image` line in
+`docker-compose.demo.yaml`, then run:
 
 ```bash
 docker-compose -f docker-compose.demo.yaml up -d --build
 ```
 
-2. **Access the demo:**
+2. **Access the demo:** open `http://localhost:3001`
+3. **Click "Demo starten"** (or "Einrichtung ausprobieren")
 
-Open your browser and navigate to `http://localhost:3001`
-
-3. **Click "Demo starten"** to create a demo workspace
+For local development without Docker: `DEMO_MODE=true pnpm dev` (see `.env.demo`).
 
 ## Configuration
 
 ### Environment Variables
 
-The demo instance uses the following environment variables (set in `docker-compose.demo.yaml`):
-
-- `DEMO_MODE=true` - Enables demo mode
-- `DEMO_WORKSPACE_CONFIG_PATH=/app/config/demo-workspace-config.json` - Path to demo configuration
+- `DEMO_MODE=true` - Enables demo mode (runtime; the client reads it from `GET /api/config/demo`)
 - `DEMO_TTL_HOURS=24` - Time-to-live for demo workspaces in hours
+- `DEMO_CLEANUP_SECRET` - Optional bearer secret for `POST /api/demo/cleanup`
 
-### Demo Configuration File
+See [docs/ENV.md](docs/ENV.md#demo-mode) for details.
 
-Edit `config/demo-workspace-config.json` to customize the demo data:
+### Demo Content
 
-- Workspace name and description
-- Cocktail recipes with ingredients, steps, and garnishes
-- Glasses
-- Ingredients
-- Garnishes
+The content comes from the built-in `DEMO` template [`templates/demo/`](templates/demo/README.md) (manifest, backup
+format, images). It is copied into the database on start; each demo clones the default `DEMO` template in the
+visitor's language. To change the content, maintain it in a workspace and pull it back into the repo with
+`pnpm templates:pull` – see [`templates/demo/README.md`](templates/demo/README.md).
 
 ## Cleanup
 
-The cleanup job runs automatically every hour via a cron job in the `cleanup-cron` container. It:
+The app process deletes expired demo workspaces every hour (started in `instrumentation.ts` when `DEMO_MODE=true`):
 
-- Finds all expired demo workspaces (where `expiresAt < now()`)
+- Finds all expired demo workspaces (where `expiresAt <= now()`)
 - Deletes expired workspaces and all related data
 - Deletes demo users if they have no remaining workspaces
 
+Errors are logged (`[DemoCleanup]`); the next run tries again.
+
 ### Manual Cleanup
 
-You can also trigger cleanup manually:
-
 ```bash
-# Via API endpoint (if running)
 curl -X POST -H "Authorization: Bearer $DEMO_CLEANUP_SECRET" http://localhost:3001/api/demo/cleanup
-
-# Or directly via script
-docker exec cocktail-manager-demo-cleanup node scripts/cleanup-demo-workspaces.js
 ```
 
 ## Ports
@@ -99,10 +98,10 @@ docker-compose -f docker-compose.demo.yaml down -v
 
 ### Cleanup not working
 
-Check the cleanup logs:
+Check the application logs for `[DemoCleanup]` entries:
 
 ```bash
-docker logs cocktail-manager-demo-cleanup
+docker logs cocktail-manager-demo 2>&1 | grep DemoCleanup
 ```
 
 ### Database connection issues
@@ -113,54 +112,10 @@ Ensure the postgres container is running:
 docker ps | grep postgres-demo
 ```
 
-### Config file not found
+### Demo button missing
 
-Make sure the `config` directory is mounted correctly. The docker-compose file mounts `./config:/app/config:ro`
-
-## Docker Image
-
-### Pre-built Image
-
-The demo uses a pre-built Docker image from GitHub Container Registry:
-
-- **Image:** `ghcr.io/jo-gross/cocktail-manager-demo:latest`
-- **Built via:** GitHub Actions (`.github/workflows/build-demo-image.yml`)
-- **Build args:** `DEPLOYMENT=demo`, `DEMO_MODE=true`
-
-### Building the Image
-
-The image is automatically built and pushed when:
-
-- A GitHub Release is published
-- Workflow is manually triggered via GitHub Actions UI
-
-The image version is automatically read from `package.json` and used as the image tag.
-
-### Image Tags
-
-The workflow creates two tags for each build:
-
-- `<version>` - Version from `package.json` (e.g., `1.17.1`)
-- `latest` - Always points to the latest published release
-
-**Example:** If `package.json` has version `1.17.1`, the image will be tagged as:
-
-- `ghcr.io/jo-gross/cocktail-manager-demo:1.17.1`
-- `ghcr.io/jo-gross/cocktail-manager-demo:latest`
-
-### Pulling the Image
-
-To pull the latest image manually:
-
-```bash
-docker pull ghcr.io/jo-gross/cocktail-manager-demo:latest
-```
-
-**Note:** You may need to authenticate with GitHub Container Registry:
-
-```bash
-echo $GITHUB_TOKEN | docker login ghcr.io -u USERNAME --password-stdin
-```
+The start page shows the demo buttons only when `GET /api/config/demo` returns `enabled: true`, i.e. the container runs
+with `DEMO_MODE=true`.
 
 ## Production Deployment
 
@@ -169,4 +124,4 @@ For production deployment, ensure:
 1. Set a strong `BETTER_AUTH_SECRET`
 2. Set the correct `BETTER_AUTH_URL`
 3. Use proper database credentials
-4. Configure authentication providers if needed (see `docs/AUTH.md`)
+4. Set `TRUST_PROXY=true` behind a reverse proxy, so the per-IP rate limit of demo creation works

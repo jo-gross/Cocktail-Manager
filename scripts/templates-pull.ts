@@ -8,7 +8,7 @@
  */
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { extname, join } from 'node:path';
 import prisma from '../prisma/prisma';
 import { readWorkspaceBackup } from '../lib/backup/readWorkspaceBackup';
 import { BackupImportSchema } from '../lib/backup/backupSchema';
@@ -33,6 +33,24 @@ function parseArgs(argv: string[]) {
   return { workspaceId, key, kind: kind as TemplateKindName | undefined };
 }
 
+function imageName(bytes: Buffer, extension: string): string {
+  return `${createHash('sha256').update(bytes).digest('hex').slice(0, 16)}${extension}`;
+}
+
+/** Image credits follow their image to its content-addressed name; credits of images that are gone are dropped. */
+function remapAttributions(attributions: Record<string, string> | undefined, imagesDir: string, images: Map<string, Buffer>) {
+  if (!attributions) return undefined;
+  const next: Record<string, string> = {};
+  for (const [file, credit] of Object.entries(attributions)) {
+    const path = join(imagesDir, file);
+    const mimeType = TEMPLATE_IMAGE_MIME_TYPES[extname(file).toLowerCase()];
+    if (!existsSync(path) || !mimeType) continue;
+    const name = imageName(readFileSync(path), EXTENSION_BY_MIME[mimeType]!);
+    if (images.has(name)) next[name] = credit;
+  }
+  return next;
+}
+
 /** Moves data-URI images into `images/` (content-addressed, so unchanged images keep their name). */
 function extractImages(value: unknown, images: Map<string, Buffer>, field?: string): unknown {
   if (typeof value === 'string' && field && IMAGE_FIELDS.has(field)) {
@@ -40,7 +58,7 @@ function extractImages(value: unknown, images: Map<string, Buffer>, field?: stri
     const extension = match ? EXTENSION_BY_MIME[match[1]!.toLowerCase()] : undefined;
     if (!match || !extension) return value;
     const bytes = Buffer.from(match[2]!, 'base64');
-    const name = `${createHash('sha256').update(bytes).digest('hex').slice(0, 16)}${extension}`;
+    const name = imageName(bytes, extension);
     images.set(name, bytes);
     return `${TEMPLATE_IMAGE_PREFIX}${name}`;
   }
@@ -77,7 +95,8 @@ async function main() {
   let manifest: TemplateManifest;
   if (existsSync(manifestPath)) {
     const previous = TemplateManifestSchema.parse(JSON.parse(readFileSync(manifestPath, 'utf-8')));
-    manifest = { ...previous, kind: kind ?? previous.kind, version: previous.version + 1, locales };
+    const attributions = remapAttributions(previous.attributions, join(dir, 'images'), images);
+    manifest = { ...previous, kind: kind ?? previous.kind, version: previous.version + 1, locales, ...(attributions ? { attributions } : {}) };
   } else {
     manifest = TemplateManifestSchema.parse({ key, kind: kind ?? 'CATALOG', version: 1, name: { [locales[0]!]: workspace.name }, locales });
   }

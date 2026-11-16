@@ -7,6 +7,8 @@ import { Role } from '@generated/prisma/client';
 import { ManageEntityLayout } from '@components/layout/ManageEntityLayout';
 import { Badge, Button, Card, CardBody, Skeleton, type BadgeVariant } from '@components/ui';
 import { useTour } from '@components/tour/TourContext';
+import { StartContentModal } from '@components/onboarding/StartContentModal';
+import { ModalContext } from '@lib/context/ModalContextProvider';
 import { useOnboardingStatus } from '@components/tour/useOnboardingStatus';
 import { UserContext } from '@lib/context/UserContextProvider';
 import { checklistItemHref, summarizeChecklist } from '@lib/tours/checklist';
@@ -78,6 +80,40 @@ function SetupChecklist({ workspaceId }: { workspaceId: string }) {
             </Link>
           </li>
         ))}
+      </ul>
+    </Card>
+  );
+}
+
+function SetupTools({ workspaceId }: { workspaceId: string }) {
+  const { t } = useTranslation('onboarding');
+  const modalContext = useContext(ModalContext);
+  const userContext = useContext(UserContext);
+  const locale = userContext.contentLocales?.primary ?? userContext.uiLocale;
+
+  return (
+    <Card className="overflow-hidden">
+      <ul className="divide-y divide-base-300">
+        <li className="flex flex-col gap-3 px-4 py-3 md:flex-row md:items-center md:px-5">
+          <div className="flex min-w-0 flex-1 flex-col gap-1">
+            <span className="font-medium">{t('help.startContent.title')}</span>
+            <span className="text-sm text-base-content/60">{t('help.startContent.description')}</span>
+          </div>
+          <Button variant="primary" size="sm" onClick={() => modalContext.openModal(<StartContentModal workspaceId={workspaceId} locale={locale} />)}>
+            {t('help.startContent.action')}
+          </Button>
+        </li>
+        <li className="flex flex-col gap-3 px-4 py-3 md:flex-row md:items-center md:px-5">
+          <div className="flex min-w-0 flex-1 flex-col gap-1">
+            <span className="font-medium">{t('help.wizard.title')}</span>
+            <span className="text-sm text-base-content/60">{t('help.wizard.description')}</span>
+          </div>
+          <Link href={`/workspaces/${workspaceId}/setup`}>
+            <Button variant="outline" size="sm">
+              {t('help.wizard.action')}
+            </Button>
+          </Link>
+        </li>
       </ul>
     </Card>
   );
@@ -187,7 +223,7 @@ function WhatsNew() {
 
 export default function HelpPage() {
   const router = useRouter();
-  const { t } = useTranslation(['tours']);
+  const { t } = useTranslation(['tours', 'onboarding']);
   const userContext = useContext(UserContext);
   const workspaceId = router.query.workspaceId as string | undefined;
 
@@ -197,6 +233,11 @@ export default function HelpPage() {
         {workspaceId && userContext.isUserPermitted(Role.MANAGER) && (
           <HelpSection title={t('tours:help.checklist.title')}>
             <SetupChecklist workspaceId={workspaceId} />
+          </HelpSection>
+        )}
+        {workspaceId && userContext.isUserPermitted(Role.ADMIN) && (
+          <HelpSection title={t('onboarding:help.title')}>
+            <SetupTools workspaceId={workspaceId} />
           </HelpSection>
         )}
         <HelpSection title={t('tours:help.tours.title')}>

@@ -6,7 +6,7 @@
  */
 import { existsSync, readdirSync, readFileSync, statSync } from 'fs';
 import { extname, join } from 'path';
-import { TEMPLATE_KEY_PATTERN, TemplateManifestSchema, type TemplateManifest } from '@lib/templates/manifest';
+import { TEMPLATE_IMAGE_NAME_PATTERN, TEMPLATE_KEY_PATTERN, TemplateManifestSchema, type TemplateManifest } from '@lib/templates/manifest';
 
 export const TEMPLATES_DIR = join(process.cwd(), 'templates');
 
@@ -19,9 +19,6 @@ export const TEMPLATE_IMAGE_MIME_TYPES: Record<string, string> = {
   '.gif': 'image/gif',
   '.webp': 'image/webp',
 };
-
-/** File name inside `images/`: no directories, no leading dot. */
-const IMAGE_NAME_PATTERN = /^[A-Za-z0-9_-][A-Za-z0-9._-]{0,199}$/;
 
 export interface BuiltInTemplate {
   manifest: TemplateManifest;
@@ -39,7 +36,7 @@ export function listBuiltInTemplateKeys(dir = TEMPLATES_DIR): string[] {
 /** Reads `images/<name>` of a template as data URI; throws for anything that is not a raster image file there. */
 export function readTemplateImage(templateDir: string, reference: string): string {
   const name = reference.slice(TEMPLATE_IMAGE_PREFIX.length);
-  if (!reference.startsWith(TEMPLATE_IMAGE_PREFIX) || !IMAGE_NAME_PATTERN.test(name) || name.includes('..')) {
+  if (!reference.startsWith(TEMPLATE_IMAGE_PREFIX) || !TEMPLATE_IMAGE_NAME_PATTERN.test(name) || name.includes('..')) {
     throw new Error(`Invalid template image reference "${reference.slice(0, 100)}"`);
   }
   const mimeType = TEMPLATE_IMAGE_MIME_TYPES[extname(name).toLowerCase()];

@@ -48,6 +48,7 @@ import {
 } from '@components/ui';
 import type { SortDirection } from '@components/ui';
 import { tourTarget } from '@lib/tours/targets';
+import { AddFromTemplatesButton } from '@components/onboarding/AddFromTemplatesButton';
 
 const CocktailsOverviewPage: NextPageWithPullToRefresh = () => {
   const { t, i18n } = useTranslation(['manage', 'common', 'cocktail', 'nav', 'errors']);
@@ -549,10 +550,13 @@ const CocktailsOverviewPage: NextPageWithPullToRefresh = () => {
                   <SkeletonTableRows columns={chromiumAvailable ? 8 : 7} avatarColumn={chromiumAvailable ? 1 : 0} />
                 ) : (
                   <>
-                    {groupedCocktails['false']?.filter(cocktailFilter(filterString)).length == 0 ? (
+                    {(groupedCocktails['false'] ?? []).filter(cocktailFilter(filterString)).length == 0 ? (
                       <TableRow>
                         <TableCell colSpan={chromiumAvailable ? 8 : 7} className={'text-center'}>
-                          {t('manage:noCocktailsFound')}
+                          <div className="flex flex-col items-center gap-2">
+                            <span>{t('manage:noCocktailsFound')}</span>
+                            {cocktailRecipes.length == 0 && <AddFromTemplatesButton onApplied={() => refreshCocktails()} />}
+                          </div>
                         </TableCell>
                       </TableRow>
                     ) : (

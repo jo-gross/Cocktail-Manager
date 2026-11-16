@@ -1,0 +1,1181 @@
+{
+  "meta": {
+    "key": "all-time-classics",
+    "kind": "CATALOG",
+    "status": "draft",
+    "version": 0,
+    "languages": ["de", "en"],
+    "createdAt": "2026-11-15",
+    "notes": [
+      "Draft content for the built-in CATALOG template 'All Time Classics'. Not yet in backup format.",
+      "Recipe amounts follow the IBA official specs (ml converted to cl) unless a cocktail's sources say otherwise.",
+      "abv, allergens and additives are INDICATIVE defaults for generic products; they vary by brand. Import with guestInfoComplete = false.",
+      "Descriptions and history notes are original texts written for this template (not copied from IBA, Wikipedia or other sources).",
+      "amount: null means 'top up' or 'to taste' (no fixed amount in the source spec).",
+      "Images: see SOURCES.md / ATTRIBUTION.md for license and attribution of every file in images/."
+    ]
+  },
+  "tags": {
+    "iba-unforgettables": { "category": "Properties", "label": { "de": "IBA – The Unforgettables", "en": "IBA – The Unforgettables" } },
+    "iba-contemporary-classics": { "category": "Properties", "label": { "de": "IBA – Contemporary Classics", "en": "IBA – Contemporary Classics" } },
+    "iba-new-era": { "category": "Properties", "label": { "de": "IBA – New Era", "en": "IBA – New Era" } },
+    "low-abv": { "category": "Properties", "label": { "de": "Wenig Alkohol", "en": "Low ABV" } },
+    "brunch": { "category": "Properties", "label": { "de": "Brunch", "en": "Brunch" } },
+    "gin": { "category": "Spirit", "label": { "de": "Gin", "en": "Gin" } },
+    "vodka": { "category": "Spirit", "label": { "de": "Wodka", "en": "Vodka" } },
+    "rum": { "category": "Spirit", "label": { "de": "Rum", "en": "Rum" } },
+    "whiskey": { "category": "Spirit", "label": { "de": "Whiskey", "en": "Whiskey" } },
+    "tequila": { "category": "Spirit", "label": { "de": "Tequila", "en": "Tequila" } },
+    "cachaca": { "category": "Spirit", "label": { "de": "Cachaça", "en": "Cachaça" } },
+    "brandy": { "category": "Spirit", "label": { "de": "Brandy", "en": "Brandy" } },
+    "wine": { "category": "Spirit", "label": { "de": "Wein", "en": "Wine" } },
+    "stirred": { "category": "Style", "label": { "de": "Gerührt", "en": "Stirred" } },
+    "shaken": { "category": "Style", "label": { "de": "Geschüttelt", "en": "Shaken" } },
+    "muddled": { "category": "Style", "label": { "de": "Gemuddelt", "en": "Muddled" } },
+    "blended": { "category": "Style", "label": { "de": "Im Blender", "en": "Blended" } },
+    "highball": { "category": "Style", "label": { "de": "Longdrink", "en": "Highball" } },
+    "sour": { "category": "Style", "label": { "de": "Sour", "en": "Sour" } },
+    "tiki": { "category": "Style", "label": { "de": "Tiki", "en": "Tiki" } },
+    "aperitif": { "category": "Style", "label": { "de": "Aperitif", "en": "Aperitif" } },
+    "after-dinner": { "category": "Style", "label": { "de": "Digestif", "en": "After-dinner" } },
+    "spirit-forward": { "category": "Flavor", "label": { "de": "Kräftig", "en": "Spirit-forward" } },
+    "bitter": { "category": "Flavor", "label": { "de": "Bitter", "en": "Bitter" } },
+    "refreshing": { "category": "Flavor", "label": { "de": "Erfrischend", "en": "Refreshing" } },
+    "fruity": { "category": "Flavor", "label": { "de": "Fruchtig", "en": "Fruity" } },
+    "coffee": { "category": "Flavor", "label": { "de": "Kaffee", "en": "Coffee" } },
+    "tropical": { "category": "Flavor", "label": { "de": "Tropisch", "en": "Tropical" } },
+    "creamy": { "category": "Flavor", "label": { "de": "Cremig", "en": "Creamy" } },
+    "savoury": { "category": "Flavor", "label": { "de": "Herzhaft", "en": "Savoury" } },
+    "bubbly": { "category": "Flavor", "label": { "de": "Prickelnd", "en": "Sparkling" } },
+    "orange": { "category": "Flavor", "label": { "de": "Orange", "en": "Orange" } },
+    "citrus": { "category": "Flavor", "label": { "de": "Zitrus", "en": "Citrus" } },
+    "coconut": { "category": "Flavor", "label": { "de": "Kokos", "en": "Coconut" } },
+    "spirit": { "category": "Properties", "public": false, "label": { "de": "Spirituose", "en": "Spirit" } },
+    "flavoured": { "category": "Properties", "public": false, "label": { "de": "Aromatisiert", "en": "Flavoured" } },
+    "liqueur": { "category": "Properties", "public": false, "label": { "de": "Likör", "en": "Liqueur" } },
+    "aromatised-wine": { "category": "Properties", "public": false, "label": { "de": "Aromatisierter Wein", "en": "Aromatised wine" } },
+    "vermouth": { "category": "Properties", "public": false, "label": { "de": "Wermut", "en": "Vermouth" } },
+    "sparkling": { "category": "Properties", "public": false, "label": { "de": "Schaumwein", "en": "Sparkling wine" } },
+    "bitters": { "category": "Properties", "public": false, "label": { "de": "Bitters", "en": "Bitters" } },
+    "juice": { "category": "Properties", "public": false, "label": { "de": "Saft", "en": "Juice" } },
+    "fresh": { "category": "Properties", "public": false, "label": { "de": "Frisch", "en": "Fresh" } },
+    "syrup": { "category": "Properties", "public": false, "label": { "de": "Sirup", "en": "Syrup" } },
+    "sweetener": { "category": "Properties", "public": false, "label": { "de": "Süßungsmittel", "en": "Sweetener" } },
+    "filler": { "category": "Properties", "public": false, "label": { "de": "Filler", "en": "Mixer" } },
+    "seasoning": { "category": "Properties", "public": false, "label": { "de": "Gewürz", "en": "Seasoning" } },
+    "texture": { "category": "Properties", "public": false, "label": { "de": "Textur", "en": "Texture" } },
+    "herb": { "category": "Properties", "public": false, "label": { "de": "Kräuter", "en": "Herb" } },
+    "fruit": { "category": "Properties", "public": false, "label": { "de": "Frucht", "en": "Fruit" } }
+  },
+  "cards": [
+    {
+      "key": "all-time-classics",
+      "name": "All Time Classics",
+      "groups": [
+        { "key": "aperitivo", "name": "Aperitivo", "cocktails": ["negroni", "boulevardier", "aperol-spritz"] },
+        { "key": "gin", "name": "Gin", "cocktails": ["dry-martini", "tom-collins", "french-75", "gin-tonic"] },
+        { "key": "whiskey-cognac", "name": "Whiskey & Cognac", "cocktails": ["old-fashioned", "manhattan", "whiskey-sour", "sidecar"] },
+        { "key": "rum-cachaca", "name": "Rum & Cachaça", "cocktails": ["daiquiri", "mojito", "caipirinha", "mai-tai", "pina-colada"] },
+        { "key": "vodka", "name": "Vodka", "cocktails": ["moscow-mule", "cosmopolitan", "espresso-martini", "bloody-mary"] },
+        { "key": "tequila", "name": "Tequila", "cocktails": ["margarita", "paloma"] }
+      ]
+    }
+  ],
+  "glasses": [
+    { "key": "tumbler", "name": { "de": "Tumbler (Old Fashioned)", "en": "Old Fashioned Glass" }, "volumeMl": 300, "image": "file:images/glass-tumbler.png" },
+    {
+      "key": "double-old-fashioned",
+      "name": { "de": "Doppelter Tumbler", "en": "Double Old Fashioned Glass" },
+      "volumeMl": 400,
+      "image": "file:images/glass-double-old-fashioned.png"
+    },
+    { "key": "highball", "name": { "de": "Highball-Glas", "en": "Highball Glass" }, "volumeMl": 350, "image": "file:images/glass-highball.png" },
+    {
+      "key": "cocktail-glass",
+      "name": { "de": "Cocktailschale (Martini)", "en": "Cocktail Glass (Martini)" },
+      "volumeMl": 200,
+      "image": "file:images/glass-cocktail.png"
+    },
+    { "key": "coupe", "name": { "de": "Coupette", "en": "Coupe" }, "volumeMl": 200, "image": "file:images/glass-coupe.png" },
+    { "key": "champagne-flute", "name": { "de": "Sektflöte", "en": "Champagne Flute" }, "volumeMl": 200, "image": "file:images/glass-champagne-flute.png" },
+    { "key": "wine-glass", "name": { "de": "Weinglas (groß)", "en": "Wine Glass (large)" }, "volumeMl": 500, "image": "file:images/glass-wine.png" },
+    { "key": "copper-mug", "name": { "de": "Kupferbecher", "en": "Copper Mug" }, "volumeMl": 450 },
+    { "key": "hurricane", "name": { "de": "Hurricane-Glas", "en": "Hurricane Glass" }, "volumeMl": 450, "image": "file:images/glass-hurricane.png" },
+    { "key": "balloon-glass", "name": { "de": "Ballonglas", "en": "Balloon Glass" }, "volumeMl": 600, "image": "file:images/glass-balloon.png" }
+  ],
+  "ingredients": [
+    {
+      "key": "gin",
+      "name": { "de": "Gin (London Dry)", "en": "Gin (London Dry)" },
+      "abv": 40,
+      "allergens": [],
+      "additives": [],
+      "tags": ["spirit", "gin"],
+      "bottleVolumeCl": 70
+    },
+    {
+      "key": "old-tom-gin",
+      "name": { "de": "Old Tom Gin", "en": "Old Tom Gin" },
+      "abv": 40,
+      "allergens": [],
+      "additives": [],
+      "tags": ["spirit", "gin"],
+      "bottleVolumeCl": 70
+    },
+    {
+      "key": "vodka",
+      "name": { "de": "Wodka", "en": "Vodka" },
+      "abv": 40,
+      "allergens": [],
+      "additives": [],
+      "tags": ["spirit", "vodka"],
+      "bottleVolumeCl": 70
+    },
+    {
+      "key": "citrus-vodka",
+      "name": { "de": "Zitronen-Wodka", "en": "Citrus Vodka" },
+      "abv": 40,
+      "allergens": [],
+      "additives": [],
+      "tags": ["spirit", "vodka", "flavoured"],
+      "bottleVolumeCl": 70
+    },
+    {
+      "key": "white-rum",
+      "name": { "de": "Weißer Rum", "en": "White Rum" },
+      "abv": 40,
+      "allergens": [],
+      "additives": [],
+      "tags": ["spirit", "rum"],
+      "bottleVolumeCl": 70
+    },
+    {
+      "key": "jamaican-rum",
+      "name": { "de": "Jamaika-Rum (gereift)", "en": "Aged Jamaican Rum" },
+      "shortName": { "de": "Jamaika-Rum", "en": "Jamaican Rum" },
+      "abv": 40,
+      "allergens": [],
+      "additives": [],
+      "tags": ["spirit", "rum"],
+      "bottleVolumeCl": 70
+    },
+    {
+      "key": "martinique-rum",
+      "name": { "de": "Rum aus Martinique (Melasse)", "en": "Martinique Molasses Rum" },
+      "shortName": { "de": "Martinique-Rum", "en": "Martinique Rum" },
+      "abv": 40,
+      "allergens": [],
+      "additives": [],
+      "tags": ["spirit", "rum"],
+      "bottleVolumeCl": 70
+    },
+    {
+      "key": "bourbon",
+      "name": { "de": "Bourbon Whiskey", "en": "Bourbon Whiskey" },
+      "shortName": { "de": "Bourbon", "en": "Bourbon" },
+      "abv": 40,
+      "allergens": [],
+      "additives": [],
+      "tags": ["spirit", "whiskey"],
+      "bottleVolumeCl": 70
+    },
+    {
+      "key": "rye-whiskey",
+      "name": { "de": "Rye Whiskey", "en": "Rye Whiskey" },
+      "shortName": { "de": "Rye", "en": "Rye" },
+      "abv": 45,
+      "allergens": [],
+      "additives": [],
+      "tags": ["spirit", "whiskey"],
+      "bottleVolumeCl": 70
+    },
+    {
+      "key": "tequila",
+      "name": { "de": "Tequila Blanco (100 % Agave)", "en": "Tequila Blanco (100% agave)" },
+      "shortName": { "de": "Tequila", "en": "Tequila" },
+      "abv": 38,
+      "allergens": [],
+      "additives": [],
+      "tags": ["spirit", "tequila"],
+      "bottleVolumeCl": 70
+    },
+    {
+      "key": "cachaca",
+      "name": { "de": "Cachaça", "en": "Cachaça" },
+      "abv": 40,
+      "allergens": [],
+      "additives": [],
+      "tags": ["spirit", "cachaca"],
+      "bottleVolumeCl": 70
+    },
+    {
+      "key": "cognac",
+      "name": { "de": "Cognac", "en": "Cognac" },
+      "abv": 40,
+      "allergens": [],
+      "additives": [],
+      "tags": ["spirit", "brandy"],
+      "bottleVolumeCl": 70
+    },
+    {
+      "key": "triple-sec",
+      "name": { "de": "Triple Sec (Orangenlikör)", "en": "Triple Sec (orange liqueur)" },
+      "shortName": { "de": "Triple Sec", "en": "Triple Sec" },
+      "abv": 40,
+      "allergens": [],
+      "additives": [],
+      "tags": ["liqueur", "orange"],
+      "bottleVolumeCl": 70
+    },
+    {
+      "key": "orange-curacao",
+      "name": { "de": "Orange Curaçao", "en": "Orange Curaçao" },
+      "abv": 40,
+      "allergens": [],
+      "additives": [],
+      "tags": ["liqueur", "orange"],
+      "bottleVolumeCl": 70
+    },
+    {
+      "key": "campari",
+      "name": { "de": "Campari", "en": "Campari" },
+      "abv": 25,
+      "allergens": [],
+      "additives": ["COLORING"],
+      "tags": ["aperitif", "bitter"],
+      "bottleVolumeCl": 70
+    },
+    {
+      "key": "aperol",
+      "name": { "de": "Aperol", "en": "Aperol" },
+      "abv": 11,
+      "allergens": [],
+      "additives": ["COLORING"],
+      "tags": ["aperitif", "bitter"],
+      "bottleVolumeCl": 70
+    },
+    {
+      "key": "sweet-vermouth",
+      "name": { "de": "Roter Wermut (süß)", "en": "Sweet Red Vermouth" },
+      "shortName": { "de": "Wermut rot", "en": "Sweet Vermouth" },
+      "abv": 16,
+      "allergens": ["SULPHITES"],
+      "additives": [],
+      "tags": ["aromatised-wine", "vermouth"],
+      "bottleVolumeCl": 75
+    },
+    {
+      "key": "dry-vermouth",
+      "name": { "de": "Trockener Wermut", "en": "Dry Vermouth" },
+      "shortName": { "de": "Wermut dry", "en": "Dry Vermouth" },
+      "abv": 18,
+      "allergens": ["SULPHITES"],
+      "additives": [],
+      "tags": ["aromatised-wine", "vermouth"],
+      "bottleVolumeCl": 75
+    },
+    {
+      "key": "coffee-liqueur",
+      "name": { "de": "Kaffeelikör", "en": "Coffee Liqueur" },
+      "abv": 20,
+      "allergens": [],
+      "additives": ["CAFFEINE"],
+      "tags": ["liqueur", "coffee"],
+      "bottleVolumeCl": 70
+    },
+    {
+      "key": "prosecco",
+      "name": { "de": "Prosecco", "en": "Prosecco" },
+      "abv": 11,
+      "allergens": ["SULPHITES"],
+      "additives": [],
+      "tags": ["wine", "sparkling"],
+      "bottleVolumeCl": 75
+    },
+    {
+      "key": "champagne",
+      "name": { "de": "Champagner", "en": "Champagne" },
+      "abv": 12,
+      "allergens": ["SULPHITES"],
+      "additives": [],
+      "tags": ["wine", "sparkling"],
+      "bottleVolumeCl": 75
+    },
+    {
+      "key": "angostura",
+      "name": { "de": "Angostura Bitter", "en": "Angostura Bitters" },
+      "shortName": { "de": "Angostura", "en": "Angostura" },
+      "abv": 44.7,
+      "allergens": [],
+      "additives": [],
+      "tags": ["bitters"],
+      "bottleVolumeCl": 20
+    },
+    {
+      "key": "lime-juice",
+      "name": { "de": "Limettensaft (frisch)", "en": "Fresh Lime Juice" },
+      "shortName": { "de": "Limettensaft", "en": "Lime Juice" },
+      "abv": 0,
+      "allergens": [],
+      "additives": [],
+      "tags": ["juice", "citrus", "fresh"]
+    },
+    {
+      "key": "lemon-juice",
+      "name": { "de": "Zitronensaft (frisch)", "en": "Fresh Lemon Juice" },
+      "shortName": { "de": "Zitronensaft", "en": "Lemon Juice" },
+      "abv": 0,
+      "allergens": [],
+      "additives": [],
+      "tags": ["juice", "citrus", "fresh"]
+    },
+    {
+      "key": "cranberry-juice",
+      "name": { "de": "Cranberrysaft", "en": "Cranberry Juice" },
+      "abv": 0,
+      "allergens": [],
+      "additives": [],
+      "tags": ["juice"],
+      "bottleVolumeCl": 100
+    },
+    {
+      "key": "pineapple-juice",
+      "name": { "de": "Ananassaft", "en": "Pineapple Juice" },
+      "abv": 0,
+      "allergens": [],
+      "additives": [],
+      "tags": ["juice"],
+      "bottleVolumeCl": 100
+    },
+    {
+      "key": "tomato-juice",
+      "name": { "de": "Tomatensaft", "en": "Tomato Juice" },
+      "abv": 0,
+      "allergens": [],
+      "additives": [],
+      "tags": ["juice"],
+      "bottleVolumeCl": 100
+    },
+    {
+      "key": "espresso",
+      "name": { "de": "Espresso (frisch)", "en": "Fresh Espresso" },
+      "shortName": { "de": "Espresso", "en": "Espresso" },
+      "abv": 0,
+      "allergens": [],
+      "additives": ["CAFFEINE"],
+      "tags": ["coffee", "fresh"]
+    },
+    {
+      "key": "sugar-syrup",
+      "name": { "de": "Zuckersirup (1:1)", "en": "Simple Syrup (1:1)" },
+      "shortName": { "de": "Zuckersirup", "en": "Simple Syrup" },
+      "abv": 0,
+      "allergens": [],
+      "additives": [],
+      "tags": ["syrup", "sweetener"],
+      "bottleVolumeCl": 70
+    },
+    {
+      "key": "orgeat",
+      "name": { "de": "Mandelsirup (Orgeat)", "en": "Orgeat Syrup (almond)" },
+      "shortName": { "de": "Orgeat", "en": "Orgeat" },
+      "abv": 0,
+      "allergens": ["NUTS"],
+      "allergenSources": ["ALMONDS"],
+      "additives": [],
+      "tags": ["syrup", "sweetener"],
+      "bottleVolumeCl": 70
+    },
+    {
+      "key": "coconut-cream",
+      "name": { "de": "Kokoscreme (gesüßt)", "en": "Cream of Coconut (sweetened)" },
+      "shortName": { "de": "Kokoscreme", "en": "Coconut Cream" },
+      "abv": 0,
+      "allergens": [],
+      "additives": [],
+      "tags": ["sweetener", "coconut"]
+    },
+    { "key": "sugar-cube", "name": { "de": "Zuckerwürfel", "en": "Sugar Cube" }, "abv": 0, "allergens": [], "additives": [], "tags": ["sweetener"] },
+    {
+      "key": "white-sugar",
+      "name": { "de": "Weißer Rohrzucker (fein)", "en": "White Cane Sugar (fine)" },
+      "shortName": { "de": "Rohrzucker", "en": "Cane Sugar" },
+      "abv": 0,
+      "allergens": [],
+      "additives": [],
+      "tags": ["sweetener"]
+    },
+    {
+      "key": "soda-water",
+      "name": { "de": "Sodawasser", "en": "Soda Water" },
+      "abv": 0,
+      "allergens": [],
+      "additives": [],
+      "tags": ["filler"],
+      "bottleVolumeCl": 100
+    },
+    {
+      "key": "tonic-water",
+      "name": { "de": "Tonic Water", "en": "Tonic Water" },
+      "abv": 0,
+      "allergens": [],
+      "additives": ["QUININE"],
+      "tags": ["filler"],
+      "bottleVolumeCl": 20
+    },
+    {
+      "key": "ginger-beer",
+      "name": { "de": "Ginger Beer", "en": "Ginger Beer" },
+      "abv": 0,
+      "allergens": [],
+      "additives": [],
+      "tags": ["filler"],
+      "bottleVolumeCl": 20
+    },
+    {
+      "key": "grapefruit-soda",
+      "name": { "de": "Grapefruit-Limonade (rosa)", "en": "Pink Grapefruit Soda" },
+      "shortName": { "de": "Grapefruit-Limo", "en": "Grapefruit Soda" },
+      "abv": 0,
+      "allergens": [],
+      "additives": [],
+      "tags": ["filler"],
+      "bottleVolumeCl": 100
+    },
+    {
+      "key": "worcestershire-sauce",
+      "name": { "de": "Worcestershiresauce", "en": "Worcestershire Sauce" },
+      "shortName": { "de": "Worcester", "en": "Worcestershire" },
+      "abv": 0,
+      "allergens": ["FISH"],
+      "additives": [],
+      "tags": ["seasoning"]
+    },
+    {
+      "key": "hot-sauce",
+      "name": { "de": "Scharfe Chilisauce (z. B. Tabasco)", "en": "Hot Pepper Sauce (e.g. Tabasco)" },
+      "shortName": { "de": "Chilisauce", "en": "Hot Sauce" },
+      "abv": 0,
+      "allergens": [],
+      "additives": [],
+      "tags": ["seasoning"]
+    },
+    { "key": "celery-salt", "name": { "de": "Selleriesalz", "en": "Celery Salt" }, "abv": 0, "allergens": ["CELERY"], "additives": [], "tags": ["seasoning"] },
+    { "key": "black-pepper", "name": { "de": "Schwarzer Pfeffer", "en": "Black Pepper" }, "abv": 0, "allergens": [], "additives": [], "tags": ["seasoning"] },
+    { "key": "salt", "name": { "de": "Salz", "en": "Salt" }, "abv": 0, "allergens": [], "additives": [], "tags": ["seasoning"] },
+    { "key": "egg-white", "name": { "de": "Eiweiß", "en": "Egg White" }, "abv": 0, "allergens": ["EGGS"], "additives": [], "tags": ["texture", "fresh"] },
+    {
+      "key": "mint",
+      "name": { "de": "Minze (frisch)", "en": "Fresh Mint" },
+      "shortName": { "de": "Minze", "en": "Mint" },
+      "abv": 0,
+      "allergens": [],
+      "additives": [],
+      "tags": ["herb", "fresh"]
+    },
+    { "key": "lime", "name": { "de": "Limette", "en": "Lime" }, "abv": 0, "allergens": [], "additives": [], "tags": ["fruit", "citrus", "fresh"] }
+  ],
+  "garnishes": [
+    { "key": "orange-zest", "name": { "de": "Orangenzeste", "en": "Orange Zest" } },
+    { "key": "orange-slice", "name": { "de": "Orangenscheibe", "en": "Orange Slice" } },
+    { "key": "lemon-zest", "name": { "de": "Zitronenzeste", "en": "Lemon Zest" } },
+    { "key": "lemon-slice", "name": { "de": "Zitronenscheibe", "en": "Lemon Slice" } },
+    { "key": "lemon-wedge", "name": { "de": "Zitronenspalte", "en": "Lemon Wedge" } },
+    { "key": "lime-slice", "name": { "de": "Limettenscheibe", "en": "Lime Slice" } },
+    { "key": "lime-wedge", "name": { "de": "Limettenspalte", "en": "Lime Wedge" } },
+    { "key": "lime-zest", "name": { "de": "Limettenzeste", "en": "Lime Zest" } },
+    {
+      "key": "cocktail-cherry",
+      "name": { "de": "Cocktailkirsche", "en": "Cocktail Cherry" },
+      "allergens": ["SULPHITES"],
+      "additives": ["COLORING", "PRESERVATIVE"]
+    },
+    { "key": "green-olive", "name": { "de": "Grüne Olive", "en": "Green Olive" } },
+    { "key": "mint-sprig", "name": { "de": "Minzzweig", "en": "Mint Sprig" } },
+    { "key": "pineapple-wedge", "name": { "de": "Ananasstück", "en": "Pineapple Wedge" } },
+    { "key": "celery-stalk", "name": { "de": "Selleriestange", "en": "Celery Stalk" }, "allergens": ["CELERY"] },
+    { "key": "coffee-beans", "name": { "de": "Kaffeebohnen", "en": "Coffee Beans" }, "additives": ["CAFFEINE"] },
+    { "key": "salt-rim", "name": { "de": "Salzrand", "en": "Salt Rim" } }
+  ],
+  "cocktails": [
+    {
+      "key": "old-fashioned",
+      "name": { "de": "Old Fashioned", "en": "Old Fashioned" },
+      "description": {
+        "de": "Whiskey, ein Hauch Zucker und Bitters, langsam auf Eis gerührt. Kräftig, aromatisch und angenehm schlicht.",
+        "en": "Whiskey with a touch of sugar and bitters, gently stirred over ice. Bold, aromatic and refreshingly simple."
+      },
+      "history": {
+        "de": "Der Name entstand im 19. Jahrhundert in den USA, als Gäste ihren Whiskey-Cocktail ausdrücklich „nach alter Art“ bestellten – nur Spirituose, Zucker, Wasser und Bitters statt der neuen, verspielteren Varianten.",
+        "en": "The name dates back to 19th-century America, when guests asked for their whiskey cocktail made the 'old-fashioned' way – just spirit, sugar, water and bitters instead of the newer, fancier versions."
+      },
+      "tags": ["iba-unforgettables", "whiskey", "stirred", "spirit-forward"],
+      "glass": "tumbler",
+      "ice": "ICE_CUBES",
+      "garnishes": [{ "key": "orange-zest" }, { "key": "cocktail-cherry" }],
+      "steps": [
+        {
+          "action": "MUDDLE",
+          "actionGroup": "MIXING",
+          "ingredients": [
+            { "key": "sugar-cube", "amount": 1, "unit": "PIECE" },
+            { "key": "angostura", "amount": 3, "unit": "DASH" }
+          ]
+        },
+        { "action": "BUILD_IN_GLASS", "actionGroup": "MIXING", "ingredients": [{ "key": "bourbon", "amount": 4.5, "unit": "CL" }] },
+        { "action": "STIR", "actionGroup": "MIXING", "ingredients": [] }
+      ],
+      "image": "file:images/old-fashioned.jpg",
+      "sources": ["https://iba-world.com/iba-cocktail/old-fashioned/", "https://en.wikipedia.org/wiki/Old_fashioned_(cocktail)"]
+    },
+    {
+      "key": "negroni",
+      "name": { "de": "Negroni", "en": "Negroni" },
+      "description": {
+        "de": "Gin, Campari und roter Wermut zu gleichen Teilen – bittersüß, kräftig und der Inbegriff des italienischen Aperitivo.",
+        "en": "Equal parts gin, Campari and sweet vermouth – bittersweet, bold and the essence of the Italian aperitivo."
+      },
+      "history": {
+        "de": "Der Überlieferung nach ließ sich Graf Camillo Negroni um 1919 in Florenz seinen Americano mit Gin statt Soda verstärken. Seitdem trägt der Drink seinen Namen.",
+        "en": "As the story goes, Count Camillo Negroni asked for his Americano to be strengthened with gin instead of soda in Florence around 1919, and the drink has carried his name ever since."
+      },
+      "tags": ["iba-unforgettables", "gin", "bitter", "stirred", "aperitif"],
+      "glass": "tumbler",
+      "ice": "ICE_CUBES",
+      "garnishes": [{ "key": "orange-slice" }],
+      "steps": [
+        {
+          "action": "BUILD_IN_GLASS",
+          "actionGroup": "MIXING",
+          "ingredients": [
+            { "key": "gin", "amount": 3, "unit": "CL" },
+            { "key": "campari", "amount": 3, "unit": "CL" },
+            { "key": "sweet-vermouth", "amount": 3, "unit": "CL" }
+          ]
+        },
+        { "action": "STIR", "actionGroup": "MIXING", "ingredients": [] }
+      ],
+      "image": "file:images/negroni.jpg",
+      "sources": ["https://iba-world.com/iba-cocktail/negroni/", "https://en.wikipedia.org/wiki/Negroni"]
+    },
+    {
+      "key": "daiquiri",
+      "name": { "de": "Daiquiri", "en": "Daiquiri" },
+      "description": {
+        "de": "Weißer Rum, frischer Limettensaft und Zucker, eiskalt geshaked. Ein klarer, spritziger Sour ohne Schnickschnack.",
+        "en": "White rum, fresh lime juice and sugar, shaken ice-cold. A crisp, zesty sour without any frills."
+      },
+      "history": {
+        "de": "Benannt nach dem Ort Daiquirí an der Ostküste Kubas, wo amerikanische Bergbauingenieure die Mischung um 1900 bekannt gemacht haben sollen.",
+        "en": "Named after Daiquirí on Cuba's south-eastern coast, where American mining engineers are said to have popularised the mix around 1900."
+      },
+      "tags": ["iba-unforgettables", "rum", "sour", "shaken"],
+      "glass": "coupe",
+      "ice": "WITHOUT_ICE",
+      "garnishes": [],
+      "steps": [
+        {
+          "action": "SHAKE",
+          "actionGroup": "MIXING",
+          "ingredients": [
+            { "key": "white-rum", "amount": 6, "unit": "CL" },
+            { "key": "lime-juice", "amount": 2, "unit": "CL" },
+            { "key": "white-sugar", "amount": 2, "unit": "BAR_SPOON" }
+          ]
+        },
+        { "action": "SINGLE_STRAIN", "actionGroup": "POURING", "ingredients": [] }
+      ],
+      "image": "file:images/daiquiri.jpg",
+      "sources": ["https://iba-world.com/iba-cocktail/daiquiri/", "https://en.wikipedia.org/wiki/Daiquiri"]
+    },
+    {
+      "key": "margarita",
+      "name": { "de": "Margarita", "en": "Margarita" },
+      "description": {
+        "de": "Tequila, Orangenlikör und Limette, auf Wunsch mit halbem Salzrand. Frisch, herb und perfekt ausbalanciert.",
+        "en": "Tequila, orange liqueur and lime, optionally with a half salt rim. Fresh, tart and perfectly balanced."
+      },
+      "history": {
+        "de": "Wer die Margarita erfunden hat, ist umstritten – mehrere Bars in Mexiko und den USA beanspruchen sie für die 1930er- bis 1940er-Jahre. Der Name („Gänseblümchen“) verweist auf die ältere Drink-Familie der Daisies.",
+        "en": "Who invented the Margarita is disputed – several bars in Mexico and the US claim it for the 1930s or 1940s. Its name, Spanish for 'daisy', points to the older family of Daisy drinks."
+      },
+      "tags": ["iba-contemporary-classics", "tequila", "sour", "shaken"],
+      "glass": "coupe",
+      "ice": "WITHOUT_ICE",
+      "garnishes": [{ "key": "salt-rim", "optional": true }],
+      "steps": [
+        {
+          "action": "SHAKE",
+          "actionGroup": "MIXING",
+          "ingredients": [
+            { "key": "tequila", "amount": 5, "unit": "CL" },
+            { "key": "triple-sec", "amount": 2, "unit": "CL" },
+            { "key": "lime-juice", "amount": 1.5, "unit": "CL" }
+          ]
+        },
+        { "action": "SINGLE_STRAIN", "actionGroup": "POURING", "ingredients": [] }
+      ],
+      "image": "file:images/margarita.jpg",
+      "sources": ["https://iba-world.com/iba-cocktail/margarita/", "https://en.wikipedia.org/wiki/Margarita"]
+    },
+    {
+      "key": "dry-martini",
+      "name": { "de": "Dry Martini", "en": "Dry Martini" },
+      "description": {
+        "de": "Gin und ein Schuss trockener Wermut, kalt gerührt und mit Zitronenzeste oder Olive serviert. Elegant, klar und trocken.",
+        "en": "Gin and a splash of dry vermouth, stirred cold and finished with a lemon twist or olive. Elegant, clean and dry."
+      },
+      "history": {
+        "de": "Der Martini entwickelte sich im späten 19. Jahrhundert aus süßeren Gin-Wermut-Drinks wie dem Martinez und wurde im Lauf des 20. Jahrhunderts immer trockener.",
+        "en": "The Martini grew out of sweeter gin-and-vermouth drinks such as the Martinez in the late 19th century and became steadily drier throughout the 20th century."
+      },
+      "tags": ["iba-unforgettables", "gin", "stirred", "spirit-forward"],
+      "glass": "cocktail-glass",
+      "ice": "WITHOUT_ICE",
+      "garnishes": [{ "key": "lemon-zest" }, { "key": "green-olive", "optional": true }],
+      "steps": [
+        {
+          "action": "STIR",
+          "actionGroup": "MIXING",
+          "ingredients": [
+            { "key": "gin", "amount": 6, "unit": "CL" },
+            { "key": "dry-vermouth", "amount": 1, "unit": "CL" }
+          ]
+        },
+        { "action": "SINGLE_STRAIN", "actionGroup": "POURING", "ingredients": [] }
+      ],
+      "image": "file:images/dry-martini.jpg",
+      "sources": ["https://iba-world.com/iba-cocktail/dry-martini/", "https://en.wikipedia.org/wiki/Martini_(cocktail)"]
+    },
+    {
+      "key": "manhattan",
+      "name": { "de": "Manhattan", "en": "Manhattan" },
+      "description": {
+        "de": "Rye Whiskey, roter Wermut und ein Spritzer Angostura, kalt gerührt. Würzig, samtig und mit Kirsche serviert.",
+        "en": "Rye whiskey, sweet vermouth and a dash of Angostura, stirred cold. Spicy, velvety and served with a cherry."
+      },
+      "history": {
+        "de": "Der Manhattan taucht um 1880 in New York auf. Die beliebte Geschichte, er sei für ein Bankett im Manhattan Club erfunden worden, gilt als Legende.",
+        "en": "The Manhattan appears in New York around the 1880s. The popular tale that it was created for a banquet at the Manhattan Club is generally considered a legend."
+      },
+      "tags": ["iba-unforgettables", "whiskey", "stirred", "spirit-forward"],
+      "glass": "cocktail-glass",
+      "ice": "WITHOUT_ICE",
+      "garnishes": [{ "key": "cocktail-cherry" }],
+      "steps": [
+        {
+          "action": "STIR",
+          "actionGroup": "MIXING",
+          "ingredients": [
+            { "key": "rye-whiskey", "amount": 5, "unit": "CL" },
+            { "key": "sweet-vermouth", "amount": 2, "unit": "CL" },
+            { "key": "angostura", "amount": 1, "unit": "DASH" }
+          ]
+        },
+        { "action": "SINGLE_STRAIN", "actionGroup": "POURING", "ingredients": [] }
+      ],
+      "image": "file:images/manhattan.jpg",
+      "sources": ["https://iba-world.com/iba-cocktail/manhattan/", "https://en.wikipedia.org/wiki/Manhattan_(cocktail)"]
+    },
+    {
+      "key": "mojito",
+      "name": { "de": "Mojito", "en": "Mojito" },
+      "description": {
+        "de": "Frische Minze, Limette und Zucker, mit weißem Rum und Soda aufgefüllt. Kühl, grün und herrlich erfrischend.",
+        "en": "Fresh mint, lime and sugar, lengthened with white rum and soda. Cool, green and wonderfully refreshing."
+      },
+      "history": {
+        "de": "Der Mojito stammt aus Kuba und geht auf ältere Mischungen aus Zuckerrohrschnaps, Limette und Minze zurück. In Havanna wurde er im 20. Jahrhundert zum Klassiker.",
+        "en": "The Mojito comes from Cuba and descends from older mixes of cane spirit, lime and mint. It became a classic in Havana during the 20th century."
+      },
+      "tags": ["iba-contemporary-classics", "rum", "highball", "refreshing"],
+      "glass": "highball",
+      "ice": "ICE_CUBES",
+      "garnishes": [{ "key": "mint-sprig" }, { "key": "lime-slice" }],
+      "steps": [
+        {
+          "action": "MUDDLE",
+          "actionGroup": "MIXING",
+          "ingredients": [
+            { "key": "mint", "amount": 6, "unit": "PIECE" },
+            { "key": "white-sugar", "amount": 2, "unit": "BAR_SPOON" },
+            { "key": "lime-juice", "amount": 2, "unit": "CL" }
+          ]
+        },
+        {
+          "action": "BUILD_IN_GLASS",
+          "actionGroup": "MIXING",
+          "ingredients": [
+            { "key": "white-rum", "amount": 4.5, "unit": "CL" },
+            { "key": "soda-water", "amount": null, "unit": "CL" }
+          ]
+        },
+        { "action": "STIR", "actionGroup": "MIXING", "ingredients": [] }
+      ],
+      "image": "file:images/mojito.jpg",
+      "sources": ["https://iba-world.com/iba-cocktail/mojito/", "https://en.wikipedia.org/wiki/Mojito"]
+    },
+    {
+      "key": "whiskey-sour",
+      "name": { "de": "Whiskey Sour", "en": "Whiskey Sour" },
+      "description": {
+        "de": "Bourbon, Zitrone und Zucker, auf Wunsch mit Eiweiß für eine seidige Schaumkrone. Der Klassiker unter den Sours.",
+        "en": "Bourbon, lemon and sugar, optionally with egg white for a silky foam. The classic among sours."
+      },
+      "history": {
+        "de": "Sours gehören zu den ältesten Cocktailfamilien; ein Whiskey Sour ist bereits in Jerry Thomas’ Barhandbuch von 1862 beschrieben.",
+        "en": "Sours are one of the oldest cocktail families; a Whiskey Sour is already described in Jerry Thomas's bartender's guide of 1862."
+      },
+      "tags": ["iba-unforgettables", "whiskey", "sour", "shaken"],
+      "glass": "tumbler",
+      "ice": "ICE_CUBES",
+      "garnishes": [{ "key": "orange-slice" }, { "key": "cocktail-cherry" }, { "key": "orange-zest", "optional": true }],
+      "steps": [
+        {
+          "action": "SHAKE",
+          "actionGroup": "MIXING",
+          "ingredients": [
+            { "key": "bourbon", "amount": 4.5, "unit": "CL" },
+            { "key": "lemon-juice", "amount": 2.5, "unit": "CL" },
+            { "key": "sugar-syrup", "amount": 2, "unit": "CL" },
+            { "key": "egg-white", "amount": 2, "unit": "CL", "optional": true }
+          ]
+        },
+        { "action": "SINGLE_STRAIN", "actionGroup": "POURING", "ingredients": [] }
+      ],
+      "image": "file:images/whiskey-sour.jpg",
+      "sources": ["https://iba-world.com/iba-cocktail/whiskey-sour/", "https://en.wikipedia.org/wiki/Whiskey_sour"]
+    },
+    {
+      "key": "moscow-mule",
+      "name": { "de": "Moscow Mule", "en": "Moscow Mule" },
+      "description": {
+        "de": "Wodka, würziges Ginger Beer und Limette, eiskalt im Kupferbecher. Scharf, spritzig und unkompliziert.",
+        "en": "Vodka, spicy ginger beer and lime, ice-cold in a copper mug. Zingy, fizzy and easy-going."
+      },
+      "history": {
+        "de": "Entstanden Anfang der 1940er-Jahre in Los Angeles, um den damals in den USA kaum bekannten Wodka und Ginger Beer zu verkaufen. Der Kupferbecher wurde schnell zum Markenzeichen.",
+        "en": "Created in Los Angeles in the early 1940s to help sell vodka and ginger beer, both little known to Americans at the time. The copper mug quickly became its trademark look."
+      },
+      "tags": ["iba-contemporary-classics", "vodka", "highball", "refreshing"],
+      "glass": "copper-mug",
+      "ice": "ICE_CUBES",
+      "garnishes": [{ "key": "lime-slice" }],
+      "steps": [
+        {
+          "action": "BUILD_IN_GLASS",
+          "actionGroup": "MIXING",
+          "ingredients": [
+            { "key": "vodka", "amount": 4.5, "unit": "CL" },
+            { "key": "ginger-beer", "amount": 12, "unit": "CL" },
+            { "key": "lime-juice", "amount": 1, "unit": "CL" }
+          ]
+        },
+        { "action": "STIR", "actionGroup": "MIXING", "ingredients": [] }
+      ],
+      "image": "file:images/moscow-mule.jpg",
+      "sources": ["https://iba-world.com/iba-cocktail/moscow-mule/", "https://en.wikipedia.org/wiki/Moscow_mule"]
+    },
+    {
+      "key": "tom-collins",
+      "name": { "de": "Tom Collins", "en": "Tom Collins" },
+      "description": {
+        "de": "Gin, Zitrone und Zucker, mit Soda zu einem langen, prickelnden Drink aufgefüllt. Eine Art Zitronenlimonade für Erwachsene.",
+        "en": "Gin, lemon and sugar topped with soda for a long, sparkling drink. Essentially a grown-up lemonade."
+      },
+      "history": {
+        "de": "Der Drink wurde in den 1870er-Jahren in den USA populär, angeheizt durch einen bekannten Scherz um einen erfundenen „Tom Collins“. Jerry Thomas veröffentlichte 1876 ein Rezept.",
+        "en": "The drink became popular in the US in the 1870s, helped along by a well-known prank about a fictitious 'Tom Collins'. Jerry Thomas published a recipe in 1876."
+      },
+      "tags": ["iba-unforgettables", "gin", "highball", "sour", "refreshing"],
+      "glass": "highball",
+      "ice": "ICE_CUBES",
+      "garnishes": [{ "key": "lemon-slice" }, { "key": "cocktail-cherry" }],
+      "steps": [
+        {
+          "action": "BUILD_IN_GLASS",
+          "actionGroup": "MIXING",
+          "ingredients": [
+            { "key": "old-tom-gin", "amount": 4.5, "unit": "CL" },
+            { "key": "lemon-juice", "amount": 3, "unit": "CL" },
+            { "key": "sugar-syrup", "amount": 1.5, "unit": "CL" },
+            { "key": "soda-water", "amount": 6, "unit": "CL" }
+          ]
+        },
+        { "action": "STIR", "actionGroup": "MIXING", "ingredients": [] }
+      ],
+      "image": "file:images/tom-collins.jpg",
+      "sources": ["https://iba-world.com/iba-cocktail/john-collins/", "https://en.wikipedia.org/wiki/Tom_Collins"]
+    },
+    {
+      "key": "aperol-spritz",
+      "name": { "de": "Aperol Spritz", "en": "Aperol Spritz" },
+      "description": {
+        "de": "Prosecco, Aperol und ein Spritzer Soda auf viel Eis. Leicht, fruchtig-bitter und der Sommer-Aperitif schlechthin.",
+        "en": "Prosecco, Aperol and a splash of soda over plenty of ice. Light, fruity-bitter and the ultimate summer aperitif."
+      },
+      "history": {
+        "de": "Der Spritz geht auf das 19. Jahrhundert in Venetien zurück, als österreichische Soldaten den Wein mit Wasser verdünnten. Die Variante mit Aperol setzte sich ab der Mitte des 20. Jahrhunderts durch.",
+        "en": "The Spritz goes back to 19th-century Veneto, where Austrian soldiers diluted the local wine with water. The Aperol version took hold from the mid-20th century onwards."
+      },
+      "tags": ["iba-new-era", "wine", "aperitif", "bubbly", "low-abv"],
+      "glass": "wine-glass",
+      "ice": "ICE_CUBES",
+      "garnishes": [{ "key": "orange-slice" }],
+      "steps": [
+        {
+          "action": "BUILD_IN_GLASS",
+          "actionGroup": "MIXING",
+          "ingredients": [
+            { "key": "prosecco", "amount": 9, "unit": "CL" },
+            { "key": "aperol", "amount": 6, "unit": "CL" },
+            { "key": "soda-water", "amount": null, "unit": "CL" }
+          ]
+        },
+        { "action": "STIR", "actionGroup": "MIXING", "ingredients": [] }
+      ],
+      "image": "file:images/aperol-spritz.jpg",
+      "sources": ["https://iba-world.com/iba-cocktail/spritz/", "https://en.wikipedia.org/wiki/Spritz_(cocktail)"]
+    },
+    {
+      "key": "caipirinha",
+      "name": { "de": "Caipirinha", "en": "Caipirinha" },
+      "description": {
+        "de": "Limettenstücke mit Rohrzucker zerstoßen, mit Cachaça auf Crushed Ice. Süß-sauer, rustikal und typisch brasilianisch.",
+        "en": "Lime wedges muddled with cane sugar and topped with cachaça over crushed ice. Sweet-sour, rustic and quintessentially Brazilian."
+      },
+      "history": {
+        "de": "Brasiliens Nationalcocktail stammt vermutlich aus dem ländlichen Bundesstaat São Paulo des frühen 20. Jahrhunderts. Der Name ist eine Verkleinerungsform von „caipira“, einem Wort für Landbewohner.",
+        "en": "Brazil's national cocktail most likely comes from the countryside of São Paulo state in the early 20th century. Its name is a diminutive of 'caipira', a word for country folk."
+      },
+      "tags": ["iba-contemporary-classics", "cachaca", "muddled", "refreshing"],
+      "glass": "double-old-fashioned",
+      "ice": "ICE_CRUSHED",
+      "garnishes": [],
+      "steps": [
+        {
+          "action": "MUDDLE",
+          "actionGroup": "MIXING",
+          "ingredients": [
+            { "key": "lime", "amount": 1, "unit": "PIECE" },
+            { "key": "white-sugar", "amount": 4, "unit": "BAR_SPOON" }
+          ]
+        },
+        { "action": "BUILD_IN_GLASS", "actionGroup": "MIXING", "ingredients": [{ "key": "cachaca", "amount": 6, "unit": "CL" }] },
+        { "action": "STIR", "actionGroup": "MIXING", "ingredients": [] }
+      ],
+      "image": "file:images/caipirinha.jpg",
+      "sources": ["https://iba-world.com/iba-cocktail/caipirinha/", "https://en.wikipedia.org/wiki/Caipirinha"]
+    },
+    {
+      "key": "cosmopolitan",
+      "name": { "de": "Cosmopolitan", "en": "Cosmopolitan" },
+      "description": {
+        "de": "Zitronen-Wodka, Orangenlikör, Limette und Cranberry, geshaked und zartrosa serviert. Fruchtig, herb und elegant.",
+        "en": "Citrus vodka, orange liqueur, lime and cranberry, shaken and served a delicate pink. Fruity, tart and elegant."
+      },
+      "history": {
+        "de": "Mehrere Barkeeper beanspruchen die Erfindung in den 1980er-Jahren für sich. Weltweit berühmt wurde der „Cosmo“ in den 1990ern, nicht zuletzt durch eine bekannte New Yorker TV-Serie.",
+        "en": "Several bartenders claim to have created it in the 1980s. The 'Cosmo' became world-famous in the 1990s, not least thanks to a well-known New York TV series."
+      },
+      "tags": ["iba-contemporary-classics", "vodka", "sour", "shaken", "fruity"],
+      "glass": "cocktail-glass",
+      "ice": "WITHOUT_ICE",
+      "garnishes": [{ "key": "lemon-zest" }],
+      "steps": [
+        {
+          "action": "SHAKE",
+          "actionGroup": "MIXING",
+          "ingredients": [
+            { "key": "citrus-vodka", "amount": 4, "unit": "CL" },
+            { "key": "triple-sec", "amount": 1.5, "unit": "CL" },
+            { "key": "lime-juice", "amount": 1.5, "unit": "CL" },
+            { "key": "cranberry-juice", "amount": 3, "unit": "CL" }
+          ]
+        },
+        { "action": "SINGLE_STRAIN", "actionGroup": "POURING", "ingredients": [] }
+      ],
+      "image": "file:images/cosmopolitan.jpg",
+      "sources": ["https://iba-world.com/iba-cocktail/cosmopolitan/", "https://en.wikipedia.org/wiki/Cosmopolitan_(cocktail)"]
+    },
+    {
+      "key": "espresso-martini",
+      "name": { "de": "Espresso Martini", "en": "Espresso Martini" },
+      "description": {
+        "de": "Wodka, Kaffeelikör und frischer Espresso, kräftig geshaked für eine dichte Crema. Belebend, cremig und leicht süß.",
+        "en": "Vodka, coffee liqueur and fresh espresso, shaken hard for a dense crema. Energising, creamy and lightly sweet."
+      },
+      "history": {
+        "de": "Der Londoner Barkeeper Dick Bradsell soll ihn Ende der 1980er-Jahre für einen Gast kreiert haben, der einen Drink zum Wachwerden und gleichzeitig Entspannen wollte.",
+        "en": "London bartender Dick Bradsell is credited with creating it in the late 1980s for a guest who wanted a drink that would both wake them up and help them unwind."
+      },
+      "tags": ["iba-new-era", "vodka", "coffee", "shaken", "after-dinner"],
+      "glass": "cocktail-glass",
+      "ice": "WITHOUT_ICE",
+      "garnishes": [{ "key": "coffee-beans" }],
+      "steps": [
+        {
+          "action": "SHAKE",
+          "actionGroup": "MIXING",
+          "ingredients": [
+            { "key": "vodka", "amount": 5, "unit": "CL" },
+            { "key": "coffee-liqueur", "amount": 3, "unit": "CL" },
+            { "key": "sugar-syrup", "amount": 1, "unit": "CL" },
+            { "key": "espresso", "amount": 3, "unit": "CL" }
+          ]
+        },
+        { "action": "SINGLE_STRAIN", "actionGroup": "POURING", "ingredients": [] }
+      ],
+      "image": "file:images/espresso-martini.jpg",
+      "sources": ["https://iba-world.com/iba-cocktail/espresso-martini/", "https://en.wikipedia.org/wiki/Espresso_martini"]
+    },
+    {
+      "key": "mai-tai",
+      "name": { "de": "Mai Tai", "en": "Mai Tai" },
+      "description": {
+        "de": "Zwei Rums, Orange Curaçao, Mandelsirup und Limette auf Crushed Ice. Vollmundig, nussig und der Star der Tiki-Kultur.",
+        "en": "Two rums, orange curaçao, almond syrup and lime over crushed ice. Rich, nutty and the star of tiki culture."
+      },
+      "history": {
+        "de": "Victor „Trader Vic“ Bergeron mixte den Mai Tai 1944 in seinem Restaurant in Oakland. Der Name geht auf das tahitianische „maita'i“ für „gut“ zurück.",
+        "en": "Victor 'Trader Vic' Bergeron mixed the Mai Tai at his Oakland restaurant in 1944. The name comes from the Tahitian word 'maita'i', meaning 'good'."
+      },
+      "tags": ["iba-contemporary-classics", "rum", "tiki", "shaken"],
+      "glass": "double-old-fashioned",
+      "ice": "ICE_CRUSHED",
+      "garnishes": [{ "key": "pineapple-wedge" }, { "key": "mint-sprig" }, { "key": "lime-zest" }],
+      "steps": [
+        {
+          "action": "SHAKE",
+          "actionGroup": "MIXING",
+          "ingredients": [
+            { "key": "jamaican-rum", "amount": 3, "unit": "CL" },
+            { "key": "martinique-rum", "amount": 3, "unit": "CL" },
+            { "key": "orange-curacao", "amount": 1.5, "unit": "CL" },
+            { "key": "orgeat", "amount": 1.5, "unit": "CL" },
+            { "key": "lime-juice", "amount": 3, "unit": "CL" },
+            { "key": "sugar-syrup", "amount": 0.75, "unit": "CL" }
+          ]
+        },
+        { "action": "DIRTY_ICE", "actionGroup": "POURING", "ingredients": [] }
+      ],
+      "image": "file:images/mai-tai.jpg",
+      "sources": ["https://iba-world.com/iba-cocktail/mai-tai/", "https://en.wikipedia.org/wiki/Mai_Tai"]
+    },
+    {
+      "key": "pina-colada",
+      "name": { "de": "Piña Colada", "en": "Piña Colada" },
+      "description": {
+        "de": "Weißer Rum, Kokoscreme und Ananassaft, cremig gemixt. Süß, tropisch und wie ein Kurzurlaub im Glas.",
+        "en": "White rum, cream of coconut and pineapple juice, blended until creamy. Sweet, tropical and a short holiday in a glass."
+      },
+      "history": {
+        "de": "Die Piña Colada stammt aus Puerto Rico, wo mehrere Bars in San Juan die Erfindung in den 1950er- und 1960er-Jahren für sich beanspruchen. Seit 1978 gilt sie als Nationalgetränk der Insel.",
+        "en": "The Piña Colada comes from Puerto Rico, where several San Juan bars claim to have invented it in the 1950s and 1960s. It has been the island's official national drink since 1978."
+      },
+      "tags": ["iba-contemporary-classics", "rum", "tropical", "blended", "creamy"],
+      "glass": "hurricane",
+      "ice": "ICE_CRUSHED",
+      "garnishes": [{ "key": "pineapple-wedge" }, { "key": "cocktail-cherry" }],
+      "steps": [
+        {
+          "action": "BLENDER",
+          "actionGroup": "MIXING",
+          "ingredients": [
+            { "key": "white-rum", "amount": 5, "unit": "CL" },
+            { "key": "coconut-cream", "amount": 3, "unit": "CL" },
+            { "key": "pineapple-juice", "amount": 5, "unit": "CL" }
+          ]
+        },
+        { "action": "WITHOUT", "actionGroup": "POURING", "ingredients": [] }
+      ],
+      "image": "file:images/pina-colada.jpg",
+      "sources": ["https://iba-world.com/iba-cocktail/pina-colada/", "https://en.wikipedia.org/wiki/Pi%C3%B1a_colada"]
+    },
+    {
+      "key": "bloody-mary",
+      "name": { "de": "Bloody Mary", "en": "Bloody Mary" },
+      "description": {
+        "de": "Wodka und Tomatensaft, gewürzt mit Zitrone, Worcestershiresauce, Chili, Selleriesalz und Pfeffer. Herzhaft, würzig und ein Brunch-Klassiker.",
+        "en": "Vodka and tomato juice seasoned with lemon, Worcestershire sauce, chilli, celery salt and pepper. Savoury, spicy and a brunch favourite."
+      },
+      "history": {
+        "de": "Als Urheber gilt meist der Barkeeper Fernand Petiot, der in den 1920er-Jahren in Paris arbeitete und den Drink später in New York verfeinerte. Die genaue Herkunft ist jedoch umstritten.",
+        "en": "It is usually credited to bartender Fernand Petiot, who worked in Paris in the 1920s and later refined the drink in New York, though its exact origin is disputed."
+      },
+      "tags": ["iba-contemporary-classics", "vodka", "savoury", "stirred", "brunch"],
+      "glass": "highball",
+      "ice": "ICE_CUBES",
+      "garnishes": [{ "key": "celery-stalk" }, { "key": "lemon-wedge", "optional": true }],
+      "steps": [
+        {
+          "action": "STIR",
+          "actionGroup": "MIXING",
+          "ingredients": [
+            { "key": "vodka", "amount": 4.5, "unit": "CL" },
+            { "key": "tomato-juice", "amount": 9, "unit": "CL" },
+            { "key": "lemon-juice", "amount": 1.5, "unit": "CL" },
+            { "key": "worcestershire-sauce", "amount": 2, "unit": "DASH" },
+            { "key": "hot-sauce", "amount": null, "unit": "DASH" },
+            { "key": "celery-salt", "amount": null, "unit": "PIECE" },
+            { "key": "black-pepper", "amount": null, "unit": "PIECE" }
+          ]
+        },
+        { "action": "SINGLE_STRAIN", "actionGroup": "POURING", "ingredients": [] }
+      ],
+      "image": "file:images/bloody-mary.jpg",
+      "sources": ["https://iba-world.com/iba-cocktail/bloody-mary/", "https://en.wikipedia.org/wiki/Bloody_Mary_(cocktail)"]
+    },
+    {
+      "key": "sidecar",
+      "name": { "de": "Sidecar", "en": "Sidecar" },
+      "description": {
+        "de": "Cognac, Orangenlikör und Zitrone, geshaked und eiskalt serviert. Fruchtig, warm und elegant.",
+        "en": "Cognac, orange liqueur and lemon, shaken and served ice-cold. Fruity, warming and elegant."
+      },
+      "history": {
+        "de": "Der Sidecar entstand um das Ende des Ersten Weltkriegs, vermutlich in Paris oder London. Erste gedruckte Rezepte erschienen 1922.",
+        "en": "The Sidecar emerged around the end of the First World War, probably in Paris or London. The first printed recipes appeared in 1922."
+      },
+      "tags": ["iba-unforgettables", "brandy", "sour", "shaken"],
+      "glass": "coupe",
+      "ice": "WITHOUT_ICE",
+      "garnishes": [],
+      "steps": [
+        {
+          "action": "SHAKE",
+          "actionGroup": "MIXING",
+          "ingredients": [
+            { "key": "cognac", "amount": 5, "unit": "CL" },
+            { "key": "triple-sec", "amount": 2, "unit": "CL" },
+            { "key": "lemon-juice", "amount": 2, "unit": "CL" }
+          ]
+        },
+        { "action": "SINGLE_STRAIN", "actionGroup": "POURING", "ingredients": [] }
+      ],
+      "image": "file:images/sidecar.jpg",
+      "sources": ["https://iba-world.com/iba-cocktail/sidecar/", "https://en.wikipedia.org/wiki/Sidecar_(cocktail)"]
+    },
+    {
+      "key": "french-75",
+      "name": { "de": "French 75", "en": "French 75" },
+      "description": {
+        "de": "Gin, Zitrone und Zucker, geshaked und mit Champagner aufgefüllt. Prickelnd, frisch und festlich.",
+        "en": "Gin, lemon and sugar, shaken and topped with Champagne. Sparkling, fresh and festive."
+      },
+      "history": {
+        "de": "Benannt nach dem französischen 75-mm-Feldgeschütz des Ersten Weltkriegs – wegen seiner durchschlagenden Wirkung. Rezepte finden sich in Barbüchern der 1920er-Jahre.",
+        "en": "Named after the French 75 mm field gun of the First World War, a nod to its kick. Recipes appear in bar books from the 1920s."
+      },
+      "tags": ["iba-contemporary-classics", "gin", "bubbly", "shaken"],
+      "glass": "champagne-flute",
+      "ice": "WITHOUT_ICE",
+      "garnishes": [],
+      "steps": [
+        {
+          "action": "SHAKE",
+          "actionGroup": "MIXING",
+          "ingredients": [
+            { "key": "gin", "amount": 3, "unit": "CL" },
+            { "key": "lemon-juice", "amount": 1.5, "unit": "CL" },
+            { "key": "sugar-syrup", "amount": 1.5, "unit": "CL" }
+          ]
+        },
+        { "action": "SINGLE_STRAIN", "actionGroup": "POURING", "ingredients": [] },
+        { "action": "BUILD_IN_GLASS", "actionGroup": "MIXING", "ingredients": [{ "key": "champagne", "amount": 6, "unit": "CL" }] }
+      ],
+      "image": "file:images/french-75.jpg",
+      "sources": ["https://iba-world.com/iba-cocktail/french-75/", "https://en.wikipedia.org/wiki/French_75_(cocktail)"]
+    },
+    {
+      "key": "paloma",
+      "name": { "de": "Paloma", "en": "Paloma" },
+      "description": {
+        "de": "Tequila, Limette und eine Prise Salz, aufgefüllt mit Grapefruit-Limonade. Spritzig, leicht bitter und unkompliziert.",
+        "en": "Tequila, lime and a pinch of salt, topped with grapefruit soda. Bright, slightly bitter and easy-going."
+      },
+      "history": {
+        "de": "Die Herkunft der Paloma („Taube“) ist nicht eindeutig belegt; sie entstand vermutlich Mitte des 20. Jahrhunderts in Mexiko und gilt dort als einer der beliebtesten Tequila-Drinks.",
+        "en": "The origin of the Paloma ('dove') is not clearly documented; it probably arose in Mexico in the mid-20th century and is one of the country's most popular tequila drinks."
+      },
+      "tags": ["iba-new-era", "tequila", "highball", "refreshing"],
+      "glass": "highball",
+      "ice": "ICE_CUBES",
+      "garnishes": [{ "key": "lime-slice" }],
+      "steps": [
+        {
+          "action": "BUILD_IN_GLASS",
+          "actionGroup": "MIXING",
+          "ingredients": [
+            { "key": "tequila", "amount": 5, "unit": "CL" },
+            { "key": "lime-juice", "amount": 0.5, "unit": "CL" },
+            { "key": "salt", "amount": 1, "unit": "PIECE" },
+            { "key": "grapefruit-soda", "amount": 10, "unit": "CL" }
+          ]
+        },
+        { "action": "STIR", "actionGroup": "MIXING", "ingredients": [] }
+      ],
+      "image": "file:images/paloma.jpg",
+      "sources": ["https://iba-world.com/iba-cocktail/paloma/", "https://en.wikipedia.org/wiki/Paloma_(cocktail)"]
+    },
+    {
+      "key": "boulevardier",
+      "name": { "de": "Boulevardier", "en": "Boulevardier" },
+      "description": {
+        "de": "Bourbon, Campari und roter Wermut, kalt gerührt. Der wärmere, würzigere Verwandte des Negroni.",
+        "en": "Bourbon, Campari and sweet vermouth, stirred cold. The warmer, spicier cousin of the Negroni."
+      },
+      "history": {
+        "de": "Benannt nach einer Pariser Zeitschrift des amerikanischen Autors Erskine Gwynne. Das Rezept erschien 1927 in Harry MacElhones Barbuch.",
+        "en": "Named after a Paris magazine run by American writer Erskine Gwynne. The recipe appeared in Harry MacElhone's bar book in 1927."
+      },
+      "tags": ["iba-unforgettables", "whiskey", "bitter", "stirred", "spirit-forward"],
+      "glass": "coupe",
+      "ice": "WITHOUT_ICE",
+      "garnishes": [{ "key": "orange-zest" }, { "key": "lemon-zest", "optional": true }],
+      "steps": [
+        {
+          "action": "STIR",
+          "actionGroup": "MIXING",
+          "ingredients": [
+            { "key": "bourbon", "amount": 4.5, "unit": "CL" },
+            { "key": "campari", "amount": 3, "unit": "CL" },
+            { "key": "sweet-vermouth", "amount": 3, "unit": "CL" }
+          ]
+        },
+        { "action": "SINGLE_STRAIN", "actionGroup": "POURING", "ingredients": [] }
+      ],
+      "image": "file:images/boulevardier.jpg",
+      "sources": ["https://iba-world.com/iba-cocktail/boulevardier/", "https://en.wikipedia.org/wiki/Boulevardier_(cocktail)"]
+    },
+    {
+      "key": "gin-tonic",
+      "name": { "de": "Gin Tonic", "en": "Gin & Tonic" },
+      "description": {
+        "de": "Gin und Tonic Water auf viel Eis, mit Limette serviert. Herb, prickelnd und der meistbestellte Longdrink an vielen Bars.",
+        "en": "Gin and tonic water over plenty of ice, served with lime. Bitter-crisp, sparkling and one of the most-ordered long drinks at many bars."
+      },
+      "history": {
+        "de": "Im 19. Jahrhundert mischten britische Offiziere in Indien ihr chininhaltiges Tonic zur Malariavorbeugung mit Gin, Zucker und Limette – so wurde die bittere Medizin trinkbar.",
+        "en": "In the 19th century, British officers in India mixed their quinine tonic – taken against malaria – with gin, sugar and lime to make the bitter medicine more palatable."
+      },
+      "tags": ["gin", "highball", "refreshing"],
+      "glass": "balloon-glass",
+      "ice": "ICE_CUBES",
+      "garnishes": [{ "key": "lime-wedge" }],
+      "steps": [
+        {
+          "action": "BUILD_IN_GLASS",
+          "actionGroup": "MIXING",
+          "ingredients": [
+            { "key": "gin", "amount": 4, "unit": "CL" },
+            { "key": "tonic-water", "amount": 12, "unit": "CL" }
+          ]
+        },
+        { "action": "STIR", "actionGroup": "MIXING", "ingredients": [] }
+      ],
+      "image": "file:images/gin-tonic.jpg",
+      "sources": ["https://en.wikipedia.org/wiki/Gin_and_tonic"]
+    }
+  ]
+}
