@@ -34,8 +34,7 @@ const nextConfig = {
   env: {
     GIT_SHA: process.env.GIT_SHA,
     DEPLOYMENT: process.env.DEPLOYMENT,
-    DEMO_MODE: process.env.DEMO_MODE,
-    NEXT_PUBLIC_DEMO_MODE: process.env.DEMO_MODE,
+    // DEMO_MODE is read at runtime (lib/demo/config.ts, /api/config/demo), never inlined.
   },
   webpack: (config, { isServer }) => {
     if (isServer) {

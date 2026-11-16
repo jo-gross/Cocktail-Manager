@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import ReactSelect from 'react-select';
 import { useTranslation } from 'react-i18next';
 import { Button, cn } from '@components/ui';
@@ -15,13 +15,21 @@ interface AdditionalContentLanguagesProps {
 /** Search to add a language; selected languages remain in a separate, removable list. */
 export function AdditionalContentLanguages({ inputId, options, primary, value, languageName, onChange }: AdditionalContentLanguagesProps) {
   const { t, i18n } = useTranslation(['settings', 'common']);
+  const containerRef = useRef<HTMLDivElement>(null);
+  // The menu is portalled out of the surrounding cards (they clip with `overflow-hidden`): into the open
+  // dialog when used inside one (top layer), otherwise into the body.
+  const [menuPortalTarget, setMenuPortalTarget] = useState<HTMLElement | null>(null);
+
+  useEffect(() => {
+    setMenuPortalTarget(containerRef.current?.closest('dialog') ?? document.body);
+  }, []);
   const available = options
     .filter((locale) => locale !== primary && !value.includes(locale))
     .map((locale) => ({ value: locale, label: `${languageName(locale)} (${locale})` }))
     .sort((a, b) => a.label.localeCompare(b.label, i18n.language));
 
   return (
-    <div className="space-y-3">
+    <div ref={containerRef} className="space-y-3">
       <ReactSelect
         inputId={inputId}
         instanceId={inputId}
@@ -36,6 +44,10 @@ export function AdditionalContentLanguages({ inputId, options, primary, value, l
         noOptionsMessage={() => t('settings:noMoreContentLanguages')}
         screenReaderStatus={({ count }) => t('settings:contentLanguagesAvailable', { count })}
         unstyled
+        menuPortalTarget={menuPortalTarget}
+        menuPosition="fixed"
+        menuPlacement="auto"
+        styles={{ menuPortal: (base) => ({ ...base, zIndex: 50 }) }}
         classNames={{
           control: ({ isFocused }) =>
             cn(
@@ -45,7 +57,7 @@ export function AdditionalContentLanguages({ inputId, options, primary, value, l
           input: () => 'text-base-content',
           placeholder: () => 'text-base-content/50',
           dropdownIndicator: () => 'text-base-content/50',
-          menu: () => 'relative z-50 mt-1 overflow-hidden rounded-field border border-base-300 bg-base-100 shadow-lg',
+          menu: () => 'my-1 overflow-hidden rounded-field border border-base-300 bg-base-100 shadow-lg',
           menuList: () => 'max-h-60 overflow-auto py-1',
           option: ({ isFocused }) => cn('cursor-pointer px-3 py-2 text-sm text-base-content', isFocused && 'bg-base-200'),
           noOptionsMessage: () => 'px-3 py-3 text-sm text-base-content/60',

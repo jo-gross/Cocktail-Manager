@@ -2,6 +2,7 @@ import { alertService } from '../alertService';
 import { i18n } from '@lib/i18n/client';
 import { ApiV1RequestError, apiV1Mutate, alertApiV1Error } from './apiV1';
 import { addToQueue, removeFromQueue, updateQueueItem } from './queue';
+import { tourEvents } from '@lib/tours/events';
 
 export async function addCocktailToStatistic({
   workspaceId,
@@ -34,6 +35,7 @@ export async function addCocktailToStatistic({
       ignoreQueue,
     });
     onSuccess?.();
+    tourEvents.emit('statistic.added');
     alertService.success(i18n.t('cocktail:tracking.markedAsMade'));
   } catch (error) {
     if (error instanceof ApiV1RequestError && error.code === 'STATISTIC_QUEUE_AMBIGUOUS') {
@@ -64,6 +66,7 @@ export async function addCocktailToQueue({
   try {
     setSubmitting(true);
     await addToQueue(workspaceId, { cocktailId, notes, amount });
+    tourEvents.emit('queue.added');
     if (onSuccess) {
       onSuccess();
     } else {

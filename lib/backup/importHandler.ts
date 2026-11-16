@@ -19,6 +19,7 @@ import {
   type BackupImportReport,
 } from '@lib/backup/backupSecurity';
 import { BackupImportSchema, findBackupReferenceIssues, type BackupImportData } from '@lib/backup/backupSchema';
+import { parseTranslationCatalog } from '@lib/translations/workspaceTranslations';
 
 /** Long (large backups with images) but bounded; validation happens before the transaction. */
 const IMPORT_TRANSACTION_TIMEOUT_MS = 10 * 60 * 1000;
@@ -143,7 +144,15 @@ function readBody(req: NextApiRequest): unknown {
   }
 }
 
-interface PreparedImport {
+/** Backup id → id of an existing record in the target workspace (linked instead of created; templates). */
+export interface LinkedIds {
+  glass?: Map<string, string>;
+  ingredient?: Map<string, string>;
+  garnish?: Map<string, string>;
+  cocktail?: Map<string, string>;
+}
+
+export interface PreparedImport {
   data: BackupImportData;
   report: BackupImportReport;
   settings: Array<{ setting: Prisma.WorkspaceSettingCreateManyInput['setting']; value: string | null }>;
@@ -160,14 +169,45 @@ interface PreparedImport {
     calculation: Map<string, string>;
     template: Map<string, string>;
   };
+  /** Backup ids that map onto existing records (not created again, nor their images/volumes/translations/steps). */
+  linked: { glass: Set<string>; ingredient: Set<string>; garnish: Set<string>; cocktail: Set<string> };
 }
+
+/** For internal callers (templates); the backup endpoint uses the defaults. */
+export interface BackupImportOptions {
+  /**
+   * Keep `enabled`/`isDefault` and publish the (remapped) draft of menus that were published in the backup (DEMO templates).
+   * `ifNoMenus`: only when the workspace has no guest menu yet (checked under the guest menu lock; CATALOG templates).
+   */
+  keepGuestMenuState?: boolean | 'ifNoMenus';
+  /** Import without prices and deposits (catalog templates). */
+  stripPrices?: boolean;
+  /** Ingredients/garnishes come with allergens and ABV, but `guestInfoComplete = false` (to be confirmed by the bar). */
+  guestInfoUnconfirmed?: boolean;
+  /** `replace` (default) overwrites settings and tag definitions; `merge` only adds missing settings, missing labels of `translations` and missing tag definitions. */
+  settings?: 'replace' | 'merge';
+  /** Audit log entry (default: `WorkspaceBackup` / `IMPORT`). */
+  audit?: { entityType: string; action: string; details?: Record<string, unknown> };
+}
+
+export type BackupImportCounts = {
+  cocktails: number;
+  ingredients: number;
+  garnishes: number;
+  glasses: number;
+  cards: number;
+  calculations: number;
+  signageSlides: number;
+  guestMenus: number;
+  skipped: number;
+};
 
 /**
  * Validates the whole backup without touching the database: structure (zod), references inside
  * the backup (400 on any broken one) and the per-item security rules for settings, custom
  * templates and guest menu documents (those invalid items are skipped and reported, as before).
  */
-export function prepareBackupImport(body: unknown): PreparedImport {
+export function prepareBackupImport(body: unknown, link: LinkedIds = {}): PreparedImport {
   const parsed = BackupImportSchema.safeParse(body);
   if (!parsed.success) {
     throw new ApiError(400, 'VALIDATION_ERROR', 'The backup file is invalid', parsed.error.issues.slice(0, MAX_REPORTED_VALIDATION_ISSUES));
@@ -197,6 +237,14 @@ export function prepareBackupImport(body: unknown): PreparedImport {
     calculation: newIds(data.calculation),
     template: new Map(),
   };
+  const linked: PreparedImport['linked'] = { glass: new Set(), ingredient: new Set(), garnish: new Set(), cocktail: new Set() };
+  for (const kind of ['glass', 'ingredient', 'garnish', 'cocktail'] as const) {
+    for (const [backupId, existingId] of link[kind] ?? []) {
+      if (!ids[kind].has(backupId)) continue;
+      ids[kind].set(backupId, existingId);
+      linked[kind].add(backupId);
+    }
+  }
 
   const templates: PreparedImport['templates'] = [];
   for (const template of data.guestMenuTemplates ?? []) {
@@ -219,24 +267,86 @@ export function prepareBackupImport(body: unknown): PreparedImport {
     else report.skipped.push({ type: 'guestMenu', name: String(menu.name), reason: draft.reason });
   }
 
-  return { data, report, settings, templates, guestMenus, ids };
+  return { data, report, settings, templates, guestMenus, ids, linked };
 }
 
-/** Calculations need a real user (required FK); the master key acts as the workspace's owner. */
-async function resolveCalculationUserId(tx: Tx, user: User, workspaceId: string): Promise<string> {
-  if (user.id !== MASTER_API_KEY_USER_ID) return user.id;
+/**
+ * Calculations need a real user (required FK); the master key acts as the workspace's owner.
+ * Without a user (system imports, e.g. templates) they are attributed to the owner or skipped (null).
+ */
+async function resolveCalculationUserId(tx: Tx, user: Pick<User, 'id'> | null, workspaceId: string): Promise<string | null> {
+  if (user && user.id !== MASTER_API_KEY_USER_ID) return user.id;
   const owner = await tx.workspaceUser.findFirst({
     where: { workspaceId, role: { in: [Role.OWNER, Role.ADMIN] } },
     orderBy: { role: 'desc' },
     select: { userId: true },
   });
-  if (!owner) throw new ApiError(403, 'REAL_USER_REQUIRED', 'Importing calculations with the master key requires a workspace owner or admin');
-  return owner.userId;
+  if (owner) return owner.userId;
+  if (!user) return null;
+  throw new ApiError(403, 'REAL_USER_REQUIRED', 'Importing calculations with the master key requires a workspace owner or admin');
 }
 
-/** Writes a prepared backup. Runs inside ONE transaction: any error rolls back everything. */
-async function executeBackupImport(tx: Tx, prepared: PreparedImport, user: User, workspaceId: string) {
-  const { data, ids } = prepared;
+/** Drops linked records (and their dependent rows) and applies the price/guest-info options. */
+function dataToWrite(prepared: PreparedImport, options: BackupImportOptions): BackupImportData {
+  const { linked } = prepared;
+  const data = prepared.data;
+  const linkedStepIds = new Set(data.cocktailRecipeStep.filter((step) => linked.cocktail.has(step.cocktailRecipeId)).map((step) => step.id));
+  const price = <T extends { price: number | null }>(row: T): T => (options.stripPrices ? { ...row, price: null } : row);
+  const guestInfo = <T extends { guestInfoComplete: boolean }>(row: T): T => (options.guestInfoUnconfirmed ? { ...row, guestInfoComplete: false } : row);
+  return {
+    ...data,
+    garnish: data.garnish.filter((row) => !linked.garnish.has(row.id)).map((row) => guestInfo(price(row))),
+    garnishImages: data.garnishImages.filter((row) => !linked.garnish.has(row.garnishId)),
+    ingredient: data.ingredient.filter((row) => !linked.ingredient.has(row.id)).map((row) => guestInfo(price(row))),
+    ingredientVolumes: data.ingredientVolumes.filter((row) => !linked.ingredient.has(row.ingredientId)),
+    ingredientImages: data.ingredientImages.filter((row) => !linked.ingredient.has(row.ingredientId)),
+    glass: data.glass.filter((row) => !linked.glass.has(row.id)).map((row) => (options.stripPrices ? { ...row, deposit: 0 } : row)),
+    glassImages: data.glassImages.filter((row) => !linked.glass.has(row.glassId)),
+    cocktailRecipe: data.cocktailRecipe.filter((row) => !linked.cocktail.has(row.id)).map(price),
+    cocktailRecipeImage: data.cocktailRecipeImage.filter((row) => !linked.cocktail.has(row.cocktailRecipeId)),
+    cocktailRecipeStep: data.cocktailRecipeStep.filter((row) => !linkedStepIds.has(row.id)),
+    cocktailRecipeGarnish: data.cocktailRecipeGarnish.filter((row) => !linked.cocktail.has(row.cocktailRecipeId)),
+    cocktailRecipeIngredient: data.cocktailRecipeIngredient.filter((row) => !linkedStepIds.has(row.cocktailRecipeStepId)),
+    cocktailCardGroup: data.cocktailCardGroup.map((row) => (options.stripPrices ? { ...row, groupPrice: null } : row)),
+    cocktailCardGroupItem: data.cocktailCardGroupItem.map((row) => (options.stripPrices ? { ...row, specialPrice: null } : row)),
+    calculationItems: data.calculationItems.map((row) => (options.stripPrices ? { ...row, customPrice: null } : row)),
+    cocktailRecipeTranslations: data.cocktailRecipeTranslations?.filter((row) => !linked.cocktail.has(row.cocktailId)),
+    ingredientTranslations: data.ingredientTranslations?.filter((row) => !linked.ingredient.has(row.ingredientId)),
+    garnishTranslations: data.garnishTranslations?.filter((row) => !linked.garnish.has(row.garnishId)),
+    glassTranslations: data.glassTranslations?.filter((row) => !linked.glass.has(row.glassId)),
+  };
+}
+
+/** Adds the settings of the backup that the workspace does not have yet; `translations` labels are merged (existing win). */
+async function mergeSettings(tx: Tx, workspaceId: string, settings: PreparedImport['settings']) {
+  await lockWorkspaceScope(tx, workspaceId, 'workspace-translations');
+  for (const { setting, value } of settings) {
+    const existing = await tx.workspaceSetting.findFirst({ where: { workspaceId, setting } });
+    if (existing && setting === 'translations') {
+      const catalog = parseTranslationCatalog(existing.value);
+      for (const [lang, texts] of Object.entries(parseTranslationCatalog(value))) {
+        catalog[lang] = Object.assign(Object.create(null), texts, catalog[lang] ?? {});
+      }
+      await tx.workspaceSetting.update({ where: { workspaceId_setting: { workspaceId, setting } }, data: { value: JSON.stringify(catalog) } });
+    } else if (!existing) {
+      await tx.workspaceSetting.create({ data: { workspaceId, setting, value } });
+    }
+  }
+}
+
+/**
+ * Writes a prepared backup. Runs inside ONE transaction: any error rolls back everything.
+ * `user` null = system import (templates): audit entry without actor, calculations go to the owner or are skipped.
+ */
+export async function executeBackupImport(
+  tx: Tx,
+  prepared: PreparedImport,
+  user: Pick<User, 'id'> | null,
+  workspaceId: string,
+  options: BackupImportOptions = {},
+): Promise<BackupImportCounts> {
+  const { ids } = prepared;
+  const data = dataToWrite(prepared, options);
   const importLogger = createImportLogger(workspaceId);
 
   // Same scopes as the regular endpoints (slide order, tag categories, conversions, menu slugs).
@@ -245,12 +355,16 @@ async function executeBackupImport(tx: Tx, prepared: PreparedImport, user: User,
   await lockWorkspaceScope(tx, workspaceId, 'tag-categories');
   await lockWorkspaceScope(tx, workspaceId, 'unit-conversions');
 
-  for (const { setting, value } of prepared.settings) {
-    await tx.workspaceSetting.upsert({
-      where: { workspaceId_setting: { workspaceId, setting } },
-      update: { value },
-      create: { workspaceId, setting, value },
-    });
+  if (options.settings === 'merge') {
+    await mergeSettings(tx, workspaceId, prepared.settings);
+  } else {
+    for (const { setting, value } of prepared.settings) {
+      await tx.workspaceSetting.upsert({
+        where: { workspaceId_setting: { workspaceId, setting } },
+        update: { value },
+        create: { workspaceId, setting, value },
+      });
+    }
   }
 
   const unitIdsByName = new Map<string, string>();
@@ -306,7 +420,9 @@ async function executeBackupImport(tx: Tx, prepared: PreparedImport, user: User,
   }
   const garnishImages = [
     ...data.garnish.flatMap((garnish) => (garnish.image ? [{ garnishId: ids.garnish.get(garnish.id)!, image: garnish.image }] : [])),
-    ...data.garnishImages.flatMap((row) => (ids.garnish.has(row.garnishId) ? [{ garnishId: ids.garnish.get(row.garnishId)!, image: row.image }] : [])),
+    ...data.garnishImages.flatMap((row) =>
+      ids.garnish.has(row.garnishId) ? [{ garnishId: ids.garnish.get(row.garnishId)!, image: row.image, credit: row.credit }] : [],
+    ),
   ];
   await tx.garnishImage.createMany({ data: garnishImages, skipDuplicates: true });
 
@@ -344,7 +460,7 @@ async function executeBackupImport(tx: Tx, prepared: PreparedImport, user: User,
   const ingredientImages = [
     ...data.ingredient.flatMap((ingredient) => (ingredient.image ? [{ ingredientId: ids.ingredient.get(ingredient.id)!, image: ingredient.image }] : [])),
     ...data.ingredientImages.flatMap((row) =>
-      ids.ingredient.has(row.ingredientId) ? [{ ingredientId: ids.ingredient.get(row.ingredientId)!, image: row.image }] : [],
+      ids.ingredient.has(row.ingredientId) ? [{ ingredientId: ids.ingredient.get(row.ingredientId)!, image: row.image, credit: row.credit }] : [],
     ),
   ];
   await tx.ingredientImage.createMany({ data: ingredientImages, skipDuplicates: true });
@@ -358,7 +474,7 @@ async function executeBackupImport(tx: Tx, prepared: PreparedImport, user: User,
   }
   const glassImages = [
     ...data.glass.flatMap((glass) => (glass.image ? [{ glassId: ids.glass.get(glass.id)!, image: glass.image }] : [])),
-    ...data.glassImages.flatMap((row) => (ids.glass.has(row.glassId) ? [{ glassId: ids.glass.get(row.glassId)!, image: row.image }] : [])),
+    ...data.glassImages.flatMap((row) => (ids.glass.has(row.glassId) ? [{ glassId: ids.glass.get(row.glassId)!, image: row.image, credit: row.credit }] : [])),
   ];
   await tx.glassImage.createMany({ data: glassImages, skipDuplicates: true });
 
@@ -394,7 +510,7 @@ async function executeBackupImport(tx: Tx, prepared: PreparedImport, user: User,
   const cocktailImages = [
     ...data.cocktailRecipe.flatMap((cocktail) => (cocktail.image ? [{ cocktailRecipeId: ids.cocktail.get(cocktail.id)!, image: cocktail.image }] : [])),
     ...data.cocktailRecipeImage.flatMap((row) =>
-      ids.cocktail.has(row.cocktailRecipeId) ? [{ cocktailRecipeId: ids.cocktail.get(row.cocktailRecipeId)!, image: row.image }] : [],
+      ids.cocktail.has(row.cocktailRecipeId) ? [{ cocktailRecipeId: ids.cocktail.get(row.cocktailRecipeId)!, image: row.image, credit: row.credit }] : [],
     ),
   ];
   await tx.cocktailRecipeImage.createMany({ data: cocktailImages, skipDuplicates: true });
@@ -501,9 +617,10 @@ async function executeBackupImport(tx: Tx, prepared: PreparedImport, user: User,
     }
   }
 
-  if (data.calculation.length > 0) {
+  const updatedByUserId = data.calculation.length > 0 ? await resolveCalculationUserId(tx, user, workspaceId) : null;
+  if (updatedByUserId == null && data.calculation.length > 0) importLogger.step('Skipping calculations (no user)', { count: data.calculation.length });
+  if (updatedByUserId != null) {
     importLogger.step('Importing calculations', { count: data.calculation.length });
-    const updatedByUserId = await resolveCalculationUserId(tx, user, workspaceId);
     await tx.cocktailCalculation.createMany({
       data: data.calculation.map((calculation) => ({
         id: ids.calculation.get(calculation.id)!,
@@ -516,7 +633,7 @@ async function executeBackupImport(tx: Tx, prepared: PreparedImport, user: User,
       skipDuplicates: true,
     });
   }
-  if (data.calculationItems.length > 0) {
+  if (updatedByUserId != null && data.calculationItems.length > 0) {
     await tx.cocktailCalculationItems.createMany({
       data: data.calculationItems.map((item) => ({
         plannedAmount: item.plannedAmount,
@@ -613,7 +730,8 @@ async function executeBackupImport(tx: Tx, prepared: PreparedImport, user: User,
     await tx.tagDefinition.upsert({
       where: { workspaceId_tag: { workspaceId, tag: definition.tag } },
       create: { workspaceId, tag: definition.tag, ...values },
-      update: values,
+      // Templates (`merge`) keep the workspace's own label/category/visibility of a tag.
+      update: options.settings === 'merge' ? {} : values,
     });
   }
 
@@ -662,13 +780,24 @@ async function executeBackupImport(tx: Tx, prepared: PreparedImport, user: User,
   const guestMenuMapping = new Map<string, string>();
   if (prepared.guestMenus.length > 0) {
     importLogger.step('Importing guest menus', { count: prepared.guestMenus.length });
-    const takenSlugs = new Set((await tx.guestMenu.findMany({ where: { workspaceId }, select: { slug: true } })).map((menu) => menu.slug));
+    const existingMenus = await tx.guestMenu.findMany({ where: { workspaceId }, select: { slug: true, isDefault: true } });
+    const takenSlugs = new Set(existingMenus.map((menu) => menu.slug));
+    let hasDefaultMenu = existingMenus.some((menu) => menu.isDefault);
+    const keepState = options.keepGuestMenuState === true || (options.keepGuestMenuState === 'ifNoMenus' && existingMenus.length === 0);
     for (const { menu, draft } of prepared.guestMenus) {
       const baseSlug = normalizeBackupGuestMenuSlug(menu.slug);
       let slug = baseSlug;
       for (let i = 2; takenSlugs.has(slug); i++) slug = `${baseSlug}-${i}`;
       takenSlugs.add(slug);
       const sourceCardId = menu.sourceCardId ? (ids.card.get(menu.sourceCardId) ?? null) : null;
+      const keptState: Partial<Prisma.GuestMenuCreateManyInput> = keepState
+        ? {
+            enabled: menu.enabled ?? false,
+            isDefault: !hasDefaultMenu && (menu.isDefault ?? false),
+            ...(menu.published != null ? { published: draft as unknown as Prisma.InputJsonValue, publishedAt: new Date() } : {}),
+          }
+        : {};
+      if (keptState.isDefault) hasDefaultMenu = true;
       const createdMenu = await tx.guestMenu.create({
         data: {
           workspaceId,
@@ -676,6 +805,8 @@ async function executeBackupImport(tx: Tx, prepared: PreparedImport, user: User,
           slug,
           // Never live after an import: disabled, unpublished, not default, no access code, new preview token.
           ...importedGuestMenuSafeState(),
+          // Templates (DEMO; CATALOG into a workspace without menus) keep their state; the published document is the validated, remapped draft.
+          ...keptState,
           priority: menu.priority ?? 0,
           validFrom: parseBackupDate(menu.validFrom),
           validTo: parseBackupDate(menu.validTo),
@@ -699,19 +830,21 @@ async function executeBackupImport(tx: Tx, prepared: PreparedImport, user: User,
     if (guestMenuId) await tx.signageSlide.update({ where: { id: link.slideId }, data: { guestMenuId } });
   }
 
-  const counts = {
+  const counts: BackupImportCounts = {
     cocktails: data.cocktailRecipe.length,
     ingredients: data.ingredient.length,
     garnishes: data.garnish.length,
     glasses: data.glass.length,
     cards: data.cocktailCard.length,
-    calculations: data.calculation.length,
+    calculations: updatedByUserId != null ? data.calculation.length : 0,
     signageSlides: slides.length,
     guestMenus: guestMenuMapping.size,
     skipped: prepared.report.skipped.length,
   };
-  await createLog(tx, workspaceId, user.id, 'WorkspaceBackup', workspaceId, 'CREATE', null, { action: 'IMPORT', ...counts });
+  const audit = options.audit ?? { entityType: 'WorkspaceBackup', action: 'IMPORT' };
+  await createLog(tx, workspaceId, user?.id, audit.entityType, workspaceId, 'CREATE', null, { action: audit.action, ...audit.details, ...counts });
   importLogger.step('Import transaction finished', counts);
+  return counts;
 }
 
 async function importBackup(req: NextApiRequest, res: NextApiResponse, user: User, workspace: Workspace) {

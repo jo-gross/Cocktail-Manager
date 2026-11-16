@@ -14,6 +14,7 @@ import { Button, Divider, Skeleton } from '@components/ui';
 import { formatDateLocal, getLogicalDate } from '@lib/dateHelpers';
 import { apiV1FetchSafe } from '@lib/network/apiV1';
 import { fetchWorkspaceSettingsSafe } from '@lib/network/workspaces';
+import { tourTarget } from '@lib/tours/targets';
 
 function cardFilter(filterString: string) {
   const normalizedFilter = filterString.trim().toLowerCase();
@@ -77,7 +78,7 @@ const CardsOverviewPage: NextPageWithPullToRefresh = () => {
       title={t('nav:cards')}
       actions={
         userContext.isUserPermitted(Role.MANAGER) ? (
-          <Link href={`/workspaces/${workspaceId}/manage/cards/create`}>
+          <Link href={`/workspaces/${workspaceId}/manage/cards/create`} {...tourTarget('manage.cards.create')}>
             <Button variant="primary" shape="square" size="sm" className="md:h-10 md:min-h-10 md:w-10">
               <FaPlus />
             </Button>

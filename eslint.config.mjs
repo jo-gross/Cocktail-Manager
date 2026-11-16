@@ -118,17 +118,7 @@ const eslintConfig = defineConfig([
       'i18next/no-literal-string': 'off',
     },
   },
-  globalIgnores([
-    '.next/**',
-    'node_modules/**',
-    'public/**',
-    'generated/**',
-    'docs/**',
-    'scripts/cleanup-demo-workspaces.js',
-    'next-env.d.ts',
-    'eslint.config.mjs',
-    'i18next-parser.config.cjs',
-  ]),
+  globalIgnores(['.next/**', 'node_modules/**', 'public/**', 'generated/**', 'docs/**', 'next-env.d.ts', 'eslint.config.mjs', 'i18next-parser.config.cjs']),
 ]);
 
 export default eslintConfig;

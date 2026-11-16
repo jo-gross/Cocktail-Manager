@@ -112,6 +112,294 @@
         ],
         "description": "Granular API-key permission scopes. See Authentication → Permissions for the full matrix."
       },
+      "AdminTemplate": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "workspaceId": {
+            "type": "string"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/TemplateKind"
+          },
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "description": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "locales": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "source": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "builtIn": {
+            "type": "boolean",
+            "description": "Shipped with the app (`templates/<key>/`); read-only, replaced by newer releases."
+          },
+          "version": {
+            "type": "integer"
+          },
+          "published": {
+            "type": "boolean"
+          },
+          "isDefault": {
+            "type": "boolean"
+          },
+          "sortOrder": {
+            "type": "integer"
+          },
+          "memberCount": {
+            "type": "integer"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-07-04T12:00:00.000Z",
+            "description": "ISO 8601 timestamp"
+          }
+        },
+        "required": [
+          "key",
+          "workspaceId",
+          "kind",
+          "name",
+          "description",
+          "locales",
+          "source",
+          "builtIn",
+          "version",
+          "published",
+          "isDefault",
+          "sortOrder",
+          "memberCount",
+          "updatedAt"
+        ]
+      },
+      "TemplateKind": {
+        "type": "string",
+        "enum": [
+          "BASE",
+          "CATALOG",
+          "DEMO"
+        ],
+        "description": "`BASE`: defaults of every new workspace, `CATALOG`: start content collection, `DEMO`: complete example bar."
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string",
+                "example": "VALIDATION_ERROR"
+              },
+              "message": {
+                "type": "string"
+              },
+              "issues": {}
+            },
+            "required": [
+              "code",
+              "message"
+            ]
+          }
+        },
+        "required": [
+          "error"
+        ]
+      },
+      "AdminTemplateCreateInput": {
+        "type": "object",
+        "properties": {
+          "workspaceId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "description": "Existing (non-demo) workspace that becomes the template."
+          },
+          "key": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/TemplateKind"
+          },
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            },
+            "description": "Text per language, e.g. `{ \"de\": \"Klassiker\", \"en\": \"Classics\" }`."
+          },
+          "description": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "additionalProperties": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            },
+            "description": "Text per language, e.g. `{ \"de\": \"Klassiker\", \"en\": \"Classics\" }`."
+          },
+          "locales": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 35
+            },
+            "minItems": 1,
+            "maxItems": 20,
+            "description": "Content languages; the first one is the primary language."
+          },
+          "source": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 500
+          },
+          "published": {
+            "type": "boolean"
+          },
+          "isDefault": {
+            "type": "boolean",
+            "description": "Default template of its kind (only one per kind; setting it clears the others)."
+          },
+          "sortOrder": {
+            "type": "integer",
+            "minimum": -10000,
+            "maximum": 10000
+          }
+        },
+        "required": [
+          "workspaceId",
+          "key",
+          "kind",
+          "name",
+          "locales"
+        ]
+      },
+      "AdminTemplateUpdateInput": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            },
+            "description": "Text per language, e.g. `{ \"de\": \"Klassiker\", \"en\": \"Classics\" }`."
+          },
+          "description": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "additionalProperties": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            },
+            "description": "Text per language, e.g. `{ \"de\": \"Klassiker\", \"en\": \"Classics\" }`."
+          },
+          "locales": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 35
+            },
+            "minItems": 1,
+            "maxItems": 20,
+            "description": "Content languages; the first one is the primary language."
+          },
+          "source": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 500
+          },
+          "published": {
+            "type": "boolean"
+          },
+          "isDefault": {
+            "type": "boolean",
+            "description": "Default template of its kind (only one per kind; setting it clears the others)."
+          },
+          "sortOrder": {
+            "type": "integer",
+            "minimum": -10000,
+            "maximum": 10000
+          }
+        }
+      },
+      "AdminTemplateAccess": {
+        "type": "object",
+        "properties": {
+          "template": {
+            "$ref": "#/components/schemas/AdminTemplate"
+          },
+          "joinCode": {
+            "type": "string",
+            "description": "One-time join code for the template workspace; the first member becomes its owner."
+          }
+        },
+        "required": [
+          "template",
+          "joinCode"
+        ]
+      },
+      "AdminTemplateCloneInput": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+            "description": "Key of the new (custom) template."
+          },
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            },
+            "description": "Name of the clone; default: name of the source."
+          }
+        },
+        "required": [
+          "key"
+        ]
+      },
       "Me": {
         "type": "object",
         "properties": {
@@ -181,30 +469,338 @@
           "name"
         ]
       },
-      "ErrorResponse": {
+      "GuideProgress": {
         "type": "object",
         "properties": {
-          "error": {
-            "type": "object",
-            "properties": {
-              "code": {
-                "type": "string",
-                "example": "VALIDATION_ERROR"
-              },
-              "message": {
-                "type": "string"
-              },
-              "issues": {}
-            },
-            "required": [
-              "code",
-              "message"
-            ]
+          "guideId": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/GuideStatus"
+          },
+          "version": {
+            "type": "integer",
+            "description": "Version of the guide the status refers to."
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-07-04T12:00:00.000Z",
+            "description": "ISO 8601 timestamp"
           }
         },
         "required": [
-          "error"
+          "guideId",
+          "status",
+          "version",
+          "updatedAt"
         ]
+      },
+      "GuideStatus": {
+        "type": "string",
+        "enum": [
+          "STARTED",
+          "COMPLETED",
+          "DISMISSED"
+        ]
+      },
+      "GuideProgressUpdateInput": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/GuideStatus"
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100000
+          }
+        },
+        "required": [
+          "status",
+          "version"
+        ]
+      },
+      "TemplateSummary": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/TemplateKind"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "locales": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Content languages; the first one is the primary language."
+          },
+          "source": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Origin and license summary of the content (e.g. recipe sources, photo licenses); show it with the template. Per-image credits: `imageCredit` of the items."
+          },
+          "builtIn": {
+            "type": "boolean"
+          },
+          "version": {
+            "type": "integer"
+          },
+          "isDefault": {
+            "type": "boolean"
+          },
+          "sortOrder": {
+            "type": "integer"
+          },
+          "counts": {
+            "$ref": "#/components/schemas/TemplateCounts"
+          }
+        },
+        "required": [
+          "key",
+          "kind",
+          "name",
+          "description",
+          "locales",
+          "source",
+          "builtIn",
+          "version",
+          "isDefault",
+          "sortOrder",
+          "counts"
+        ]
+      },
+      "TemplateCounts": {
+        "type": "object",
+        "properties": {
+          "glasses": {
+            "type": "integer"
+          },
+          "ingredients": {
+            "type": "integer"
+          },
+          "garnishes": {
+            "type": "integer"
+          },
+          "cocktails": {
+            "type": "integer"
+          },
+          "cards": {
+            "type": "integer"
+          },
+          "guestMenus": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "glasses",
+          "ingredients",
+          "garnishes",
+          "cocktails",
+          "cards",
+          "guestMenus"
+        ]
+      },
+      "TemplateItems": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "locale": {
+            "type": "string",
+            "description": "Language of the names."
+          },
+          "glasses": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "hasImage": {
+                  "type": "boolean"
+                },
+                "imageCredit": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Attribution of the image (title, author, source, license), to be shown wherever the image is displayed; null = none required or known."
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "hasImage",
+                "imageCredit"
+              ]
+            }
+          },
+          "ingredients": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "hasImage": {
+                  "type": "boolean"
+                },
+                "imageCredit": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Attribution of the image (title, author, source, license), to be shown wherever the image is displayed; null = none required or known."
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "hasImage",
+                "imageCredit"
+              ]
+            }
+          },
+          "garnishes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "hasImage": {
+                  "type": "boolean"
+                },
+                "imageCredit": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Attribution of the image (title, author, source, license), to be shown wherever the image is displayed; null = none required or known."
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "hasImage",
+                "imageCredit"
+              ]
+            }
+          },
+          "cocktails": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "hasImage": {
+                  "type": "boolean"
+                },
+                "imageCredit": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Attribution of the image (title, author, source, license), to be shown wherever the image is displayed; null = none required or known."
+                },
+                "glassId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "ingredientIds": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "garnishIds": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "hasImage",
+                "imageCredit",
+                "glassId",
+                "ingredientIds",
+                "garnishIds"
+              ]
+            }
+          },
+          "cards": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "cocktailIds": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "cocktailIds"
+              ]
+            }
+          }
+        },
+        "required": [
+          "key",
+          "locale",
+          "glasses",
+          "ingredients",
+          "garnishes",
+          "cocktails",
+          "cards"
+        ],
+        "description": "Items of a template for a selection dialog; ids are only valid as selection of this template."
       },
       "UserSetting": {
         "type": "object",
@@ -313,6 +909,19 @@
             ],
             "description": "Public slug for guest menus (`/m/{publicSlug}`), or null."
           },
+          "setupCompletedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "example": "2026-07-04T12:00:00.000Z",
+            "description": "When the setup assistant was completed; null = not yet."
+          },
+          "isTemplate": {
+            "type": "boolean",
+            "description": "The workspace is a template (start content); it cannot be deleted."
+          },
           "settings": {
             "$ref": "#/components/schemas/WorkspaceSettings"
           },
@@ -332,6 +941,8 @@
           "expiresAt",
           "isExternallyManaged",
           "publicSlug",
+          "setupCompletedAt",
+          "isTemplate",
           "settings",
           "members"
         ]
@@ -370,6 +981,12 @@
             ]
           },
           "contentLocales": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "onboardingChecklistSkipped": {
             "type": [
               "string",
               "null"
@@ -2388,6 +3005,13 @@
             ],
             "description": "URL to fetch the cocktail image bytes, or null when hasImage is false."
           },
+          "imageCredit": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Attribution of the image (author, source, license), to be shown with it; null = none."
+          },
           "glass": {
             "$ref": "#/components/schemas/CocktailGlassRef"
           },
@@ -2416,6 +3040,7 @@
           "unavailableUntil",
           "hasImage",
           "imageUrl",
+          "imageCredit",
           "glass"
         ]
       },
@@ -2535,6 +3160,13 @@
             ],
             "description": "URL to fetch the cocktail image bytes, or null when hasImage is false."
           },
+          "imageCredit": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Attribution of the image (author, source, license), to be shown with it; null = none."
+          },
           "glass": {
             "$ref": "#/components/schemas/CocktailGlassRef"
           },
@@ -2606,6 +3238,7 @@
           "unavailableUntil",
           "hasImage",
           "imageUrl",
+          "imageCredit",
           "glass",
           "notes",
           "history",
@@ -2988,6 +3621,15 @@
             "description": "Base64-encoded raster image (data URI) to attach.",
             "example": "data:image/png;base64,iVBORw0KGgo="
           },
+          "imageCredit": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 1000,
+            "description": "Attribution of the image (author, source, license), shown wherever the image is displayed. Omitted: kept while the image stays the same, cleared when a new image is uploaded; null or empty clears it.",
+            "example": "\"Negroni\" by Jane Doe, https://commons.wikimedia.org/wiki/File:Negroni.jpg, CC BY-SA 4.0"
+          },
           "steps": {
             "type": "array",
             "items": {
@@ -3239,6 +3881,15 @@
             "pattern": "^data:image\\/(?:png|jpeg|jpg|gif|webp|avif|bmp|heic|heif|tiff);base64,[A-Za-z0-9+/]+={0,2}$",
             "description": "Base64 raster image (data URI); omitting it removes the current image.",
             "example": "data:image/png;base64,iVBORw0KGgo="
+          },
+          "imageCredit": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 1000,
+            "description": "Attribution of the image (author, source, license), shown wherever the image is displayed. Omitted: kept while the image stays the same, cleared when a new image is uploaded; null or empty clears it.",
+            "example": "\"Negroni\" by Jane Doe, https://commons.wikimedia.org/wiki/File:Negroni.jpg, CC BY-SA 4.0"
           },
           "steps": {
             "type": "array",
@@ -3938,6 +4589,13 @@
             ],
             "description": "URL to fetch the garnish image bytes, or null when hasImage is false."
           },
+          "imageCredit": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Attribution of the image (author, source, license), to be shown with it; null = none."
+          },
           "allergens": {
             "type": "array",
             "items": {
@@ -3968,6 +4626,7 @@
           "price",
           "hasImage",
           "imageUrl",
+          "imageCredit",
           "allergens",
           "allergenSources",
           "additives",
@@ -4020,6 +4679,15 @@
             "pattern": "^data:image\\/(?:png|jpeg|jpg|gif|webp|avif|bmp|heic|heif|tiff);base64,[A-Za-z0-9+/]+={0,2}$",
             "description": "Base64-encoded raster image (data URI) to attach.",
             "example": "data:image/png;base64,iVBORw0KGgo="
+          },
+          "imageCredit": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 1000,
+            "description": "Attribution of the image (author, source, license), shown wherever the image is displayed. Omitted: kept while the image stays the same, cleared when a new image is uploaded; null or empty clears it.",
+            "example": "\"Negroni\" by Jane Doe, https://commons.wikimedia.org/wiki/File:Negroni.jpg, CC BY-SA 4.0"
           },
           "allergens": {
             "type": "array",
@@ -4091,6 +4759,15 @@
             "pattern": "^data:image\\/(?:png|jpeg|jpg|gif|webp|avif|bmp|heic|heif|tiff);base64,[A-Za-z0-9+/]+={0,2}$",
             "description": "Base64 raster image (data URI); omitting it removes the current image.",
             "example": "data:image/png;base64,iVBORw0KGgo="
+          },
+          "imageCredit": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 1000,
+            "description": "Attribution of the image (author, source, license), shown wherever the image is displayed. Omitted: kept while the image stays the same, cleared when a new image is uploaded; null or empty clears it.",
+            "example": "\"Negroni\" by Jane Doe, https://commons.wikimedia.org/wiki/File:Negroni.jpg, CC BY-SA 4.0"
           },
           "allergens": {
             "type": "array",
@@ -4267,6 +4944,13 @@
               "null"
             ],
             "description": "URL to fetch the glass image bytes, or null when hasImage is false."
+          },
+          "imageCredit": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Attribution of the image (author, source, license), to be shown with it; null = none."
           }
         },
         "required": [
@@ -4276,7 +4960,8 @@
           "volume",
           "deposit",
           "hasImage",
-          "imageUrl"
+          "imageUrl",
+          "imageCredit"
         ]
       },
       "GlassCreateInput": {
@@ -4320,6 +5005,15 @@
             "pattern": "^data:image\\/(?:png|jpeg|jpg|gif|webp|avif|bmp|heic|heif|tiff);base64,[A-Za-z0-9+/]+={0,2}$",
             "description": "Base64-encoded raster image (data URI) to attach.",
             "example": "data:image/png;base64,iVBORw0KGgo="
+          },
+          "imageCredit": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 1000,
+            "description": "Attribution of the image (author, source, license), shown wherever the image is displayed. Omitted: kept while the image stays the same, cleared when a new image is uploaded; null or empty clears it.",
+            "example": "\"Negroni\" by Jane Doe, https://commons.wikimedia.org/wiki/File:Negroni.jpg, CC BY-SA 4.0"
           }
         },
         "required": [
@@ -4360,6 +5054,15 @@
             "pattern": "^data:image\\/(?:png|jpeg|jpg|gif|webp|avif|bmp|heic|heif|tiff);base64,[A-Za-z0-9+/]+={0,2}$",
             "description": "Base64 raster image (data URI); omitting it removes the current image.",
             "example": "data:image/png;base64,iVBORw0KGgo="
+          },
+          "imageCredit": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 1000,
+            "description": "Attribution of the image (author, source, license), shown wherever the image is displayed. Omitted: kept while the image stays the same, cleared when a new image is uploaded; null or empty clears it.",
+            "example": "\"Negroni\" by Jane Doe, https://commons.wikimedia.org/wiki/File:Negroni.jpg, CC BY-SA 4.0"
           }
         },
         "required": [
@@ -7931,6 +8634,13 @@
             ],
             "description": "URL to fetch the ingredient image bytes, or null when hasImage is false."
           },
+          "imageCredit": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Attribution of the image (author, source, license), to be shown with it; null = none."
+          },
           "abv": {
             "type": [
               "number",
@@ -7981,6 +8691,7 @@
           "volumes",
           "hasImage",
           "imageUrl",
+          "imageCredit",
           "abv",
           "allergens",
           "allergenSources",
@@ -8121,6 +8832,15 @@
             "pattern": "^data:image\\/(?:png|jpeg|jpg|gif|webp|avif|bmp|heic|heif|tiff);base64,[A-Za-z0-9+/]+={0,2}$",
             "description": "Base64-encoded raster image (data URI) to attach.",
             "example": "data:image/png;base64,iVBORw0KGgo="
+          },
+          "imageCredit": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 1000,
+            "description": "Attribution of the image (author, source, license), shown wherever the image is displayed. Omitted: kept while the image stays the same, cleared when a new image is uploaded; null or empty clears it.",
+            "example": "\"Negroni\" by Jane Doe, https://commons.wikimedia.org/wiki/File:Negroni.jpg, CC BY-SA 4.0"
           },
           "abv": {
             "type": [
@@ -8264,6 +8984,15 @@
             "pattern": "^data:image\\/(?:png|jpeg|jpg|gif|webp|avif|bmp|heic|heif|tiff);base64,[A-Za-z0-9+/]+={0,2}$",
             "description": "Base64 raster image (data URI); omitting it removes the current image.",
             "example": "data:image/png;base64,iVBORw0KGgo="
+          },
+          "imageCredit": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 1000,
+            "description": "Attribution of the image (author, source, license), shown wherever the image is displayed. Omitted: kept while the image stays the same, cleared when a new image is uploaded; null or empty clears it.",
+            "example": "\"Negroni\" by Jane Doe, https://commons.wikimedia.org/wiki/File:Negroni.jpg, CC BY-SA 4.0"
           },
           "abv": {
             "type": [
@@ -8576,6 +9305,82 @@
           "ok"
         ]
       },
+      "Onboarding": {
+        "type": "object",
+        "properties": {
+          "setupCompletedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "example": "2026-07-04T12:00:00.000Z",
+            "description": "When the setup assistant was completed; null = not yet."
+          },
+          "checklist": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OnboardingChecklistItem"
+            }
+          }
+        },
+        "required": [
+          "setupCompletedAt",
+          "checklist"
+        ]
+      },
+      "OnboardingChecklistItem": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/OnboardingChecklistItemId"
+          },
+          "done": {
+            "type": "boolean",
+            "description": "The condition is met by the data of the workspace."
+          },
+          "skipped": {
+            "type": "boolean",
+            "description": "A manager marked the item as done without doing it. Progress counts `done || skipped`."
+          },
+          "open": {
+            "type": "integer",
+            "description": "Items that still need work (e.g. cocktails without price); 0 when done."
+          }
+        },
+        "required": [
+          "id",
+          "done",
+          "skipped",
+          "open"
+        ]
+      },
+      "OnboardingChecklistItemId": {
+        "type": "string",
+        "enum": [
+          "glasses",
+          "ingredients",
+          "cocktails",
+          "cards",
+          "prices",
+          "guestInfo",
+          "team",
+          "guestMenu"
+        ],
+        "description": "`glasses`/`ingredients`/`cocktails`/`cards`: at least one exists, `prices`: every active cocktail has a price, `guestInfo`: guest information of all ingredients and garnishes is confirmed, `team`: more than one member or a join code, `guestMenu`: a published, enabled guest menu."
+      },
+      "OnboardingChecklistItemUpdateInput": {
+        "type": "object",
+        "properties": {
+          "skipped": {
+            "type": "boolean",
+            "description": "true marks the item as done without doing it, false reverts that."
+          }
+        },
+        "required": [
+          "skipped"
+        ]
+      },
       "QueueItem": {
         "type": "object",
         "properties": {
@@ -8696,7 +9501,7 @@
               "null"
             ],
             "maxLength": 10000,
-            "description": "New value for the setting; null clears it. `timezone` must be an IANA time zone (default Europe/Berlin), `currency` an ISO 4217 code (default EUR), `contentLocales` a JSON string `{\"primary\":\"de\",\"additional\":[\"en\"]}`."
+            "description": "New value for the setting; null clears it. `timezone` must be an IANA time zone (default Europe/Berlin), `currency` an ISO 4217 code (default EUR), `contentLocales` a JSON string `{\"primary\":\"de\",\"additional\":[\"en\"]}`, `onboardingChecklistSkipped` a JSON array of checklist item ids (prefer `PUT /onboarding/checklist/{itemId}`)."
           }
         },
         "required": [
@@ -8711,7 +9516,8 @@
           "statisticDayStartTime",
           "timezone",
           "currency",
-          "contentLocales"
+          "contentLocales",
+          "onboardingChecklistSkipped"
         ]
       },
       "AdvancedStatisticsCocktailRanking": {
@@ -9501,6 +10307,137 @@
           "tag"
         ]
       },
+      "TemplateApplyResult": {
+        "type": "object",
+        "properties": {
+          "template": {
+            "type": "string"
+          },
+          "created": {
+            "$ref": "#/components/schemas/TemplateCounts"
+          },
+          "linked": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TemplateCounts"
+              },
+              {
+                "description": "Items that already existed (same name in any language) and were reused."
+              }
+            ]
+          },
+          "skipped": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TemplateCounts"
+              },
+              {
+                "description": "Items that were not imported (cards with an existing name and guest menus built on them)."
+              }
+            ]
+          }
+        },
+        "required": [
+          "template",
+          "created",
+          "linked",
+          "skipped"
+        ]
+      },
+      "TemplateApplyInput": {
+        "type": "object",
+        "properties": {
+          "mode": {
+            "$ref": "#/components/schemas/TemplateApplyMode"
+          },
+          "selection": {
+            "$ref": "#/components/schemas/TemplateSelection"
+          },
+          "locale": {
+            "type": "string",
+            "maxLength": 35,
+            "description": "Content language of the workspace; template texts in this language become the primary texts. Default: primary content language of the workspace."
+          },
+          "businessType": {
+            "type": "string",
+            "enum": [
+              "bar",
+              "restaurant",
+              "event",
+              "private"
+            ],
+            "description": "Business type from the setup wizard; picks the built-in design of guest menus that come with the template (`bar`: speakeasy, `restaurant`: classic + elegant print, `event`: modern, `private`: minimal). Default: the design of the template."
+          }
+        },
+        "required": [
+          "mode"
+        ]
+      },
+      "TemplateApplyMode": {
+        "type": "string",
+        "enum": [
+          "all",
+          "basics",
+          "selection"
+        ],
+        "description": "`all`: whole template, `basics`: glasses, ingredients and garnishes only, `selection`: the selected items plus their dependencies."
+      },
+      "TemplateSelection": {
+        "type": "object",
+        "properties": {
+          "glasses": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            },
+            "maxItems": 1000,
+            "default": []
+          },
+          "ingredients": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            },
+            "maxItems": 1000,
+            "default": []
+          },
+          "garnishes": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            },
+            "maxItems": 1000,
+            "default": []
+          },
+          "cocktails": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            },
+            "maxItems": 1000,
+            "default": []
+          },
+          "cards": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            },
+            "maxItems": 1000,
+            "default": []
+          }
+        },
+        "description": "Ids from `GET /templates/{key}/items`. Dependencies (glass, ingredients, garnishes of cocktails; cocktails of cards) are added."
+      },
       "Translations": {
         "type": "object",
         "additionalProperties": {
@@ -9851,6 +10788,570 @@
     "parameters": {}
   },
   "paths": {
+    "/api/admin/templates": {
+      "get": {
+        "summary": "List all templates",
+        "description": "**Authentication:** instance master API key only (instance administration).\n\nAll templates including unpublished ones (built-in templates are synced into the database first).",
+        "tags": [
+          "Admin / Templates"
+        ],
+        "security": [
+          {
+            "InstanceApiKeyAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List all templates",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/AdminTemplate"
+                      }
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Mark workspace as template",
+        "description": "**Authentication:** instance master API key only (instance administration).\n\nMarks an existing workspace as (custom) template. Template workspaces cannot be deleted while marked.",
+        "tags": [
+          "Admin / Templates"
+        ],
+        "security": [
+          {
+            "InstanceApiKeyAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminTemplateCreateInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Mark workspace as template",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/AdminTemplate"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Workspace not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Key taken (`TEMPLATE_KEY_TAKEN`) or workspace already a template (`ALREADY_TEMPLATE`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/templates/{key}": {
+      "patch": {
+        "summary": "Update template metadata",
+        "description": "**Authentication:** instance master API key only (instance administration).\n\nUpdates name, description, languages, source, `published`, `isDefault` (one default per kind) and `sortOrder`.",
+        "tags": [
+          "Admin / Templates"
+        ],
+        "security": [
+          {
+            "InstanceApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64,
+              "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "description": "Template key",
+              "example": "all-time-classics"
+            },
+            "required": true,
+            "description": "Template key",
+            "name": "key",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminTemplateUpdateInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Update template metadata",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/AdminTemplate"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Template not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Unmark template",
+        "description": "**Authentication:** instance master API key only (instance administration).\n\nRemoves the template mark of a custom template; its workspace stays. Built-in templates cannot be removed (409 `BUILT_IN_TEMPLATE`).",
+        "tags": [
+          "Admin / Templates"
+        ],
+        "security": [
+          {
+            "InstanceApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64,
+              "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "description": "Template key",
+              "example": "all-time-classics"
+            },
+            "required": true,
+            "description": "Template key",
+            "name": "key",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Unmark template",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/AdminTemplate"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Template not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Built-in template.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/templates/{key}/access": {
+      "post": {
+        "summary": "Create join code for a template",
+        "description": "**Authentication:** instance master API key only (instance administration).\n\nOne-time join code for editing a custom template (memberless: the first member becomes owner; otherwise a join request). Built-in templates are read-only (409 `BUILT_IN_TEMPLATE`) – clone them instead.",
+        "tags": [
+          "Admin / Templates"
+        ],
+        "security": [
+          {
+            "InstanceApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64,
+              "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "description": "Template key",
+              "example": "all-time-classics"
+            },
+            "required": true,
+            "description": "Template key",
+            "name": "key",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Create join code for a template",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/AdminTemplateAccess"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Template not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Built-in template.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/templates/{key}/clone": {
+      "post": {
+        "summary": "Clone template",
+        "description": "**Authentication:** instance master API key only (instance administration).\n\nCopies the template into a new memberless workspace with a new key (custom, unpublished) and returns a one-time join code; the first member becomes its owner.",
+        "tags": [
+          "Admin / Templates"
+        ],
+        "security": [
+          {
+            "InstanceApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64,
+              "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "description": "Template key",
+              "example": "all-time-classics"
+            },
+            "required": true,
+            "description": "Template key",
+            "name": "key",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminTemplateCloneInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Clone template",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/AdminTemplateAccess"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Template not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Key taken (`TEMPLATE_KEY_TAKEN`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/me": {
       "get": {
         "summary": "Get token identity",
@@ -9907,6 +11408,354 @@
           },
           "403": {
             "description": "Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/me/guides": {
+      "get": {
+        "summary": "List guide progress",
+        "description": "**Authentication:** requires a logged-in session (any user). API keys are NOT accepted.\n\nProgress of all tours and checklists of the session user.",
+        "tags": [
+          "User / Guides"
+        ],
+        "security": [
+          {
+            "SessionCookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List guide progress",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/GuideProgress"
+                      }
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/me/guides/{guideId}": {
+      "put": {
+        "summary": "Set guide progress",
+        "description": "**Authentication:** requires a logged-in session (any user). API keys are NOT accepted.\n\nCreates or updates the status of a guide for the session user.",
+        "tags": [
+          "User / Guides"
+        ],
+        "security": [
+          {
+            "SessionCookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9:._-]*$",
+              "description": "Guide id, e.g. `tour:basics-bar` or `checklist:<workspaceId>`.",
+              "example": "tour:basics-bar"
+            },
+            "required": true,
+            "description": "Guide id, e.g. `tour:basics-bar` or `checklist:<workspaceId>`.",
+            "name": "guideId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GuideProgressUpdateInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Set guide progress",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/GuideProgress"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/templates": {
+      "get": {
+        "summary": "List templates",
+        "description": "**Authentication:** requires a logged-in session (any user). API keys are NOT accepted.\n\nPublished templates with names in the requested language and item counts, ordered by `sortOrder`.",
+        "tags": [
+          "Templates / Core"
+        ],
+        "security": [
+          {
+            "SessionCookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "$ref": "#/components/schemas/TemplateKind"
+            },
+            "required": false,
+            "description": "`BASE`: defaults of every new workspace, `CATALOG`: start content collection, `DEMO`: complete example bar.",
+            "name": "kind",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 35,
+              "description": "Language for names and descriptions (falls back to the primary language of the template).",
+              "example": "en"
+            },
+            "required": false,
+            "description": "Language for names and descriptions (falls back to the primary language of the template).",
+            "name": "locale",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List templates",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/TemplateSummary"
+                      }
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/templates/{key}/items": {
+      "get": {
+        "summary": "List template items",
+        "description": "**Authentication:** requires a logged-in session (any user). API keys are NOT accepted.\n\nGlasses, ingredients, garnishes, cocktails (with their dependencies) and cards of a published template, for selecting what to apply.",
+        "tags": [
+          "Templates / Core"
+        ],
+        "security": [
+          {
+            "SessionCookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64,
+              "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "description": "Template key",
+              "example": "all-time-classics"
+            },
+            "required": true,
+            "description": "Template key",
+            "name": "key",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 35,
+              "description": "Language for names and descriptions (falls back to the primary language of the template).",
+              "example": "en"
+            },
+            "required": false,
+            "description": "Language for names and descriptions (falls back to the primary language of the template).",
+            "name": "locale",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List template items",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/TemplateItems"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Template not found or not published.",
             "content": {
               "application/json": {
                 "schema": {
@@ -10185,7 +12034,7 @@
       },
       "delete": {
         "summary": "Delete workspace",
-        "description": "**Authentication:** requires a logged-in workspace-member session. API keys (workspace or the instance master key) are NOT accepted for this operation.\n\nPermanently delete the workspace and all its data. Owner session only.",
+        "description": "**Authentication:** requires a logged-in workspace-member session. API keys (workspace or the instance master key) are NOT accepted for this operation.\n\nPermanently delete the workspace and all its data. Owner session only. Workspaces marked as template cannot be deleted.",
         "tags": [
           "Workspace / Core"
         ],
@@ -10248,6 +12097,16 @@
           },
           "403": {
             "description": "Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The workspace is a template (`TEMPLATE_IN_USE`).",
             "content": {
               "application/json": {
                 "schema": {
@@ -23277,6 +25136,273 @@
         }
       }
     },
+    "/api/v1/workspaces/{workspaceId}/onboarding": {
+      "get": {
+        "summary": "Get setup state and checklist",
+        "description": "**Required API-key permission:** `WORKSPACE_READ` — Read workspace settings and audit logs\n\nSetup state of the workspace and the checklist computed from its data.",
+        "tags": [
+          "Onboarding / Core"
+        ],
+        "security": [
+          {
+            "WorkspaceApiKeyAuth": [
+              "WORKSPACE_READ"
+            ]
+          },
+          {
+            "InstanceApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "Workspace ID",
+              "example": "ckw0a1b2c3d4e5f6g7h8"
+            },
+            "required": true,
+            "description": "Workspace ID",
+            "name": "workspaceId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Get setup state and checklist",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Onboarding"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-required-permission": "WORKSPACE_READ"
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/onboarding/checklist/{itemId}": {
+      "put": {
+        "summary": "Mark checklist item as done",
+        "description": "**Required API-key permission:** `WORKSPACE_UPDATE` — Update workspace settings\n\nMarks a checklist item as done without doing it (`skipped: true`, e.g. a bar that does not want a guest menu) or reverts that. Applies to the whole workspace; idempotent. Stored in the workspace setting `onboardingChecklistSkipped`.",
+        "tags": [
+          "Onboarding / Core"
+        ],
+        "security": [
+          {
+            "WorkspaceApiKeyAuth": [
+              "WORKSPACE_UPDATE"
+            ]
+          },
+          {
+            "InstanceApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "Workspace ID",
+              "example": "ckw0a1b2c3d4e5f6g7h8"
+            },
+            "required": true,
+            "description": "Workspace ID",
+            "name": "workspaceId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "$ref": "#/components/schemas/OnboardingChecklistItemId"
+            },
+            "required": true,
+            "description": "`glasses`/`ingredients`/`cocktails`/`cards`: at least one exists, `prices`: every active cocktail has a price, `guestInfo`: guest information of all ingredients and garnishes is confirmed, `team`: more than one member or a join code, `guestMenu`: a published, enabled guest menu.",
+            "name": "itemId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OnboardingChecklistItemUpdateInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Mark checklist item as done",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Onboarding"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-required-permission": "WORKSPACE_UPDATE"
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/onboarding/complete": {
+      "post": {
+        "summary": "Complete setup",
+        "description": "**Required API-key permission:** `WORKSPACE_UPDATE` — Update workspace settings\n\nMarks the setup assistant as completed (idempotent: keeps the first completion time).",
+        "tags": [
+          "Onboarding / Core"
+        ],
+        "security": [
+          {
+            "WorkspaceApiKeyAuth": [
+              "WORKSPACE_UPDATE"
+            ]
+          },
+          {
+            "InstanceApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "Workspace ID",
+              "example": "ckw0a1b2c3d4e5f6g7h8"
+            },
+            "required": true,
+            "description": "Workspace ID",
+            "name": "workspaceId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Complete setup",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Onboarding"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-required-permission": "WORKSPACE_UPDATE"
+      }
+    },
     "/api/v1/workspaces/{workspaceId}/queue": {
       "get": {
         "summary": "List queue",
@@ -26695,6 +28821,122 @@
         "x-required-permission": "TAGS_UPDATE"
       }
     },
+    "/api/v1/workspaces/{workspaceId}/templates/{key}/apply": {
+      "post": {
+        "summary": "Apply template",
+        "description": "**Required API-key permission:** `COCKTAILS_CREATE` — Create cocktail recipes\n\nImports a published template (all, basics or a selection) in one transaction. Items with a name that already exists in the workspace (any language) are linked instead of created; catalog templates come without prices and with unconfirmed guest information. Guest menus of the template (with `all`, or built on a selected card) are enabled, published and default only when the workspace has no guest menu yet; otherwise they are created disabled and unpublished. API keys additionally need `INGREDIENTS_CREATE`, `GLASSES_CREATE`, `GARNISHES_CREATE` and `CARDS_CREATE`.",
+        "tags": [
+          "Templates / Core"
+        ],
+        "security": [
+          {
+            "WorkspaceApiKeyAuth": [
+              "COCKTAILS_CREATE"
+            ]
+          },
+          {
+            "InstanceApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "Workspace ID",
+              "example": "ckw0a1b2c3d4e5f6g7h8"
+            },
+            "required": true,
+            "description": "Workspace ID",
+            "name": "workspaceId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64,
+              "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "description": "Template key",
+              "example": "all-time-classics"
+            },
+            "required": true,
+            "description": "Template key",
+            "name": "key",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TemplateApplyInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Apply template",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/TemplateApplyResult"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid selection (`INVALID_SELECTION`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Template not found or not published.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-required-permission": "COCKTAILS_CREATE"
+      }
+    },
     "/api/v1/workspaces/{workspaceId}/translations": {
       "get": {
         "summary": "Get translations",
@@ -28419,6 +30661,30 @@
       "description": "Authenticated user preferences (theme, language, display flags).",
       "x-displayName": "Settings",
       "x-position": 1
+    },
+    {
+      "name": "User / Guides",
+      "description": "Progress of tours and checklists of the authenticated user.",
+      "x-displayName": "Guides",
+      "x-position": 2
+    },
+    {
+      "name": "Templates / Core",
+      "description": "Published templates (start content collections) and applying them to a workspace.",
+      "x-displayName": "Core",
+      "x-position": 1
+    },
+    {
+      "name": "Onboarding / Core",
+      "description": "Setup state and checklist of a workspace.",
+      "x-displayName": "Core",
+      "x-position": 1
+    },
+    {
+      "name": "Admin / Templates",
+      "description": "Instance administration of templates (master key only).",
+      "x-displayName": "Templates",
+      "x-position": 1
     }
   ],
   "x-tagGroups": [
@@ -28567,7 +30833,26 @@
     {
       "name": "User",
       "tags": [
-        "User / Settings"
+        "User / Settings",
+        "User / Guides"
+      ]
+    },
+    {
+      "name": "Templates",
+      "tags": [
+        "Templates / Core"
+      ]
+    },
+    {
+      "name": "Onboarding",
+      "tags": [
+        "Onboarding / Core"
+      ]
+    },
+    {
+      "name": "Admin",
+      "tags": [
+        "Admin / Templates"
       ]
     }
   ]

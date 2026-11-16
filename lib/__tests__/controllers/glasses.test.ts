@@ -42,13 +42,24 @@ describe('glasses controller', () => {
   describe('listGlasses', () => {
     it('returns DTOs for all glasses in workspace', async () => {
       mockPrisma.glass.findMany.mockResolvedValue([
-        { id: 'g1', name: 'Tumbler', notes: null, volume: 20, deposit: 0, workspaceId: 'ws-1', _count: { GlassImage: 0 } },
+        { id: 'g1', name: 'Tumbler', notes: null, volume: 20, deposit: 0, workspaceId: 'ws-1', _count: { GlassImage: 0 }, GlassImage: [] },
+        {
+          id: 'g2',
+          name: 'Coupe',
+          notes: null,
+          volume: 15,
+          deposit: 0,
+          workspaceId: 'ws-1',
+          _count: { GlassImage: 1 },
+          GlassImage: [{ credit: 'Photo by A' }],
+        },
       ]);
 
       const result = await glassesController.listGlasses(workspace, {});
-      expect(result).toHaveLength(1);
+      expect(result).toHaveLength(2);
       expect(GlassDtoSchema.safeParse(result[0]).success).toBe(true);
-      expect(result[0]).toMatchObject({ id: 'g1', name: 'Tumbler', hasImage: false });
+      expect(result[0]).toMatchObject({ id: 'g1', name: 'Tumbler', hasImage: false, imageCredit: null });
+      expect(result[1]).toMatchObject({ id: 'g2', hasImage: true, imageCredit: 'Photo by A' });
     });
 
     it('filters by search term', async () => {

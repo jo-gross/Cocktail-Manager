@@ -1,7 +1,8 @@
 /**
  * Builds the OpenAPI 3.1 document from the collected ResourceApiDocs.
  * Each operation is emitted at /api/v1{basePath}. The unversioned /api paths
- * were removed; /api/v1 is the only API surface.
+ * were removed; /api/v1 is the only API surface (plus the master-key instance
+ * admin routes under /api/admin, `pathPrefix: '/api'`).
  *
  * The required API-key permission is surfaced three ways per operation:
  *  - as a 3.1 security "role name"        → security: [{ ApiKeyAuth: ['X'] }]
@@ -21,6 +22,12 @@ const HTTP_METHODS = ['get', 'put', 'post', 'delete', 'patch', 'options', 'head'
 const errorContent = { 'application/json': { schema: ErrorResponse } };
 
 function authNote(spec: RouteSpec): string {
+  if (spec.auth === 'master') {
+    return '**Authentication:** instance master API key only (instance administration).';
+  }
+  if (spec.auth === 'user') {
+    return '**Authentication:** requires a logged-in session (any user). API keys are NOT accepted.';
+  }
   if (spec.sessionOnly) {
     return '**Authentication:** requires a logged-in workspace-member session. API keys (workspace or the instance master key) are NOT accepted for this operation.';
   }
@@ -107,11 +114,13 @@ export function buildOpenApiDocument(resources: ResourceApiDoc[]) {
       summary: spec.summary,
       description,
       tags: spec.tags,
-      security: spec.sessionOnly
-        ? [{ SessionCookieAuth: [] }]
+      security: spec.auth === 'master'
+        ? [{ InstanceApiKeyAuth: [] }]
+        : spec.sessionOnly
+          ? [{ SessionCookieAuth: [] }]
         : spec.permission
           ? [{ WorkspaceApiKeyAuth: [spec.permission] }, { InstanceApiKeyAuth: [] }]
-          : [{ WorkspaceApiKeyAuth: [] }, { InstanceApiKeyAuth: [] }],
+            : [{ WorkspaceApiKeyAuth: [] }, { InstanceApiKeyAuth: [] }],
       request: Object.keys(request).length > 0 ? request : undefined,
       responses: responses as Parameters<typeof registry.registerPath>[0]['responses'],
     });
@@ -119,7 +128,7 @@ export function buildOpenApiDocument(resources: ResourceApiDoc[]) {
 
   for (const resource of resources) {
     for (const [method, spec] of Object.entries(resource.operations) as Array<[HttpVerb, RouteSpec]>) {
-      registerOperation(`/api/v1${resource.basePath}`, method, spec);
+      registerOperation(`${resource.pathPrefix ?? '/api/v1'}${resource.basePath}`, method, spec);
     }
   }
 

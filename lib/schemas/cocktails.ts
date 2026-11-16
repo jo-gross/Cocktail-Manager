@@ -20,6 +20,7 @@ import { WorkspaceIdParam, DeletionResult, DateTimeString } from '@lib/schemas/c
 import type { ResourceApiDoc } from '@lib/openapi/types';
 import { CocktailGuestInfoDtoShape, CocktailGuestInfoInputShape } from '@lib/schemas/guestInfo';
 import { ImageDataUriSchema } from '@lib/images/imageSchema';
+import { IMAGE_CREDIT_MAX_LENGTH, ImageCreditInputSchema } from '@lib/images/imageCredit';
 
 /** Slim glass reference embedded in a cocktail (Prisma `Glass` → clean shape). */
 export const CocktailGlassRefSchema = z
@@ -136,6 +137,7 @@ const CocktailBaseSchema = z.object({
   }),
   hasImage: z.boolean().openapi({ description: 'Whether the cocktail has an image.' }),
   imageUrl: z.string().nullable().openapi({ description: 'URL to fetch the cocktail image bytes, or null when hasImage is false.' }),
+  imageCredit: z.string().nullable().openapi({ description: 'Attribution of the image (author, source, license), to be shown with it; null = none.' }),
   glass: CocktailGlassRefSchema.nullable(),
 });
 
@@ -256,6 +258,7 @@ export const CocktailCreateSchema = z
     iceId: RefId.nullish().openapi({ description: 'Ice id, or null.' }),
     glassId: RefId.nullish().openapi({ description: 'Glass id, or null.' }),
     image: ImageDataUriSchema.nullish().openapi({ description: 'Base64-encoded raster image (data URI) to attach.' }),
+    imageCredit: ImageCreditInputSchema,
     steps: z.array(CocktailStepInputSchema).max(COCKTAIL_LIMITS.steps).optional().openapi({ description: 'Preparation steps (with their ingredients).' }),
     garnishes: z
       .array(CocktailGarnishInputSchema)
@@ -278,6 +281,7 @@ export const CocktailUpdateSchema = z
     iceId: RefId.nullish().openapi({ description: 'Ice id, or null.' }),
     glassId: RefId.nullish().openapi({ description: 'Glass id, or null.' }),
     image: ImageDataUriSchema.nullish().openapi({ description: 'Base64 raster image (data URI); omitting it removes the current image.' }),
+    imageCredit: ImageCreditInputSchema,
     steps: z.array(CocktailStepInputSchema).max(COCKTAIL_LIMITS.steps).optional().openapi({
       description:
         'Steps (with ingredients). Differentially applied via ids: lines with ids are updated, without ids created, missing ids deleted. Ids must belong to this cocktail.',
@@ -365,6 +369,7 @@ export type CocktailImportJsonInput = z.infer<typeof CocktailImportJsonSchema>;
 
 const IMPORT_MAX_ITEMS = 10_000;
 const DumpId = z.string().min(1).max(100);
+const DumpImageCredit = z.string().max(IMAGE_CREDIT_MAX_LENGTH).nullish();
 const DumpNumber = z.number().min(-1_000_000).max(1_000_000);
 const dumpList = <T extends z.ZodTypeAny>(item: T) => z.array(item).max(IMPORT_MAX_ITEMS).default([]);
 
@@ -430,16 +435,16 @@ export const CocktailImportDumpSchema = z
   .object({
     exportVersion: z.string().min(1).max(50),
     cocktailRecipes: z.array(DumpCocktailSchema).max(COCKTAIL_LIMITS.exportJson),
-    cocktailRecipeImages: dumpList(z.object({ cocktailRecipeId: DumpId, image: ImageDataUriSchema }).passthrough()),
+    cocktailRecipeImages: dumpList(z.object({ cocktailRecipeId: DumpId, image: ImageDataUriSchema, credit: DumpImageCredit }).passthrough()),
     cocktailRecipeSteps: dumpList(DumpStepSchema),
     cocktailRecipeGarnishes: dumpList(DumpCocktailGarnishSchema),
     cocktailRecipeIngredients: dumpList(DumpStepIngredientSchema),
     glasses: dumpList(DumpDependencySchema),
-    glassImages: dumpList(z.object({ glassId: DumpId, image: ImageDataUriSchema }).passthrough()),
+    glassImages: dumpList(z.object({ glassId: DumpId, image: ImageDataUriSchema, credit: DumpImageCredit }).passthrough()),
     garnishes: dumpList(DumpDependencySchema),
-    garnishImages: dumpList(z.object({ garnishId: DumpId, image: ImageDataUriSchema }).passthrough()),
+    garnishImages: dumpList(z.object({ garnishId: DumpId, image: ImageDataUriSchema, credit: DumpImageCredit }).passthrough()),
     ingredients: dumpList(DumpDependencySchema),
-    ingredientImages: dumpList(z.object({ ingredientId: DumpId, image: ImageDataUriSchema }).passthrough()),
+    ingredientImages: dumpList(z.object({ ingredientId: DumpId, image: ImageDataUriSchema, credit: DumpImageCredit }).passthrough()),
     ingredientVolumes: dumpList(z.object({ ingredientId: DumpId, unitId: DumpId, volume: DumpNumber }).passthrough()),
     ice: dumpList(DumpEntitySchema),
     units: dumpList(DumpEntitySchema),

@@ -28,7 +28,9 @@ describe('API contract guards', () => {
     const operations = await flattenOperations();
 
     for (const op of operations) {
-      expect(Array.isArray(op.spec.roles) && op.spec.roles.length > 0, `${op.method} ${op.basePath} roles`).toBe(true);
+      // Master-key-only operations have no session roles.
+      const hasRoles = op.spec.auth === 'master' ? op.spec.roles.length === 0 : op.spec.roles.length > 0;
+      expect(Array.isArray(op.spec.roles) && hasRoles, `${op.method} ${op.basePath} roles`).toBe(true);
       expect('permission' in op.spec, `${op.method} ${op.basePath} permission key`).toBe(true);
     }
   });
@@ -47,6 +49,14 @@ describe('API contract guards', () => {
     const flat = await flattenOperations();
     const expectedCount = resources.reduce((sum, r) => sum + Object.keys(r.operations).length, 0);
     expect(flat.length).toBe(expectedCount);
+  });
+
+  it('user and master operations are not workspace routes and user operations are session-only', async () => {
+    for (const op of await flattenOperations()) {
+      if (op.spec.auth === 'user' || op.spec.auth === 'master') expect(op.basePath.includes('{workspaceId}'), `${op.method} ${op.basePath}`).toBe(false);
+      if (op.spec.auth === 'user') expect(op.spec.sessionOnly, `${op.method} ${op.basePath} sessionOnly`).toBe(true);
+      if (op.spec.auth === 'master') expect(op.v1Path.startsWith('/api/admin/'), `${op.method} ${op.basePath} path`).toBe(true);
+    }
   });
 
   it('flattenResourceApiDoc builds correct v1 paths', () => {

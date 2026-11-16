@@ -114,25 +114,27 @@ The `API_KEY_REVOKED_CACHE_TTL_MINUTES` controls how long revoked API keys are c
 
 ### Demo Mode
 
-| Variable                     | Description                                        | Default | Example                                  |
-|------------------------------|----------------------------------------------------|---------|------------------------------------------|
-| `DEMO_MODE`                  | Enables demo mode (set to `"true"` to enable)      | `false` | `"true"`                                 |
-| `DEMO_WORKSPACE_CONFIG_PATH` | Path to the demo workspace configuration JSON file | -       | `/app/config/demo-workspace-config.json` |
-| `DEMO_TTL_HOURS`             | Time-to-live for demo workspaces in hours          | `24`    | `24`                                     |
-| `DEMO_CLEANUP_SECRET`        | Bearer secret for `POST /api/demo/cleanup` (alternatively the `INSTANCE_MASTER_API_KEY`); without it only the master key can trigger the cleanup | - | `openssl rand -hex 32` |
+| Variable              | Description                                                                                                                                          | Default | Example                |
+|-----------------------|------------------------------------------------------------------------------------------------------------------------------------------------------|---------|------------------------|
+| `DEMO_MODE`           | Turns the instance into a demo instance (`"true"`); read at runtime, the regular image is used                                                       | `false` | `"true"`               |
+| `DEMO_TTL_HOURS`      | Time-to-live for demo workspaces in hours                                                                                                            | `24`    | `24`                   |
+| `DEMO_CLEANUP_SECRET` | Bearer secret for `POST /api/demo/cleanup` (alternatively the `INSTANCE_MASTER_API_KEY`); without it only the master key can trigger the cleanup | -       | `openssl rand -hex 32` |
 
 **Note:** When `DEMO_MODE` is enabled:
 
-- Normal authentication/login is disabled
-- Users can create demo workspaces without login
-- Demo workspaces are automatically deleted after the TTL expires
+- The start page offers "Start demo" (sample bar) and "Try the setup" (empty workspace in the setup assistant)
+  instead of the login providers; the client reads the flag from `GET /api/config/demo`.
+- Each demo is a throw-away user plus a workspace created from the default `DEMO` template (`templates/demo/`, see
+  [`templates/demo/README.md`](../templates/demo/README.md)) in the visitor's language, with generated sample activity
+  (statistics of the last 14 days, ratings, queue).
+- Demo workspaces are deleted after the TTL: the app process runs the cleanup hourly (`instrumentation.ts`).
 - Demo mode configuration is loaded at runtime. Changes take effect after restarting the container (no rebuild
   required).
-- `POST /api/demo/create-workspace` is rate-limited per client IP (5 per hour, see `TRUST_PROXY`) and returns a
-  short-lived (5 min), single-use `loginToken` (HMAC with `BETTER_AUTH_SECRET`); `POST /api/auth/demo-login` only
-  creates a session for that token.
-- `POST /api/demo/cleanup` requires `Authorization: Bearer <DEMO_CLEANUP_SECRET>` or the master key. The cron script
-  `scripts/cleanup-demo-workspaces.js` talks to the database directly and needs no secret.
+- `POST /api/demo/create-workspace` (body `{ "locale": "de" | "en", "mode": "full" | "setup" }`, both optional) is
+  rate-limited per client IP (5 per hour, see `TRUST_PROXY`) and returns a short-lived (5 min), single-use
+  `loginToken` (HMAC with `BETTER_AUTH_SECRET`); `POST /api/auth/demo-login` only creates a session for that token.
+- `POST /api/demo/cleanup` (manual or external trigger) requires `Authorization: Bearer <DEMO_CLEANUP_SECRET>` or the
+  master key.
 
 ### Backups
 

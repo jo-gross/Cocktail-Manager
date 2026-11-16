@@ -1,6 +1,7 @@
 import React, { useId, useState } from 'react';
 import { FaChevronDown } from 'react-icons/fa';
 import { Card, cn } from '@components/ui';
+import { tourTarget as tourTargetProps, type TourTargetId } from '@lib/tours/targets';
 
 export interface FormSectionProps {
   title: React.ReactNode;
@@ -21,6 +22,8 @@ export interface FormSectionProps {
   /** Shown next to the title, e.g. a status badge of a collapsed section. */
   badge?: React.ReactNode;
   className?: string;
+  /** Tour anchor (`data-tour`) on the section card. */
+  tourTarget?: TourTargetId;
   children?: React.ReactNode;
 }
 
@@ -40,6 +43,7 @@ export function FormSection({
   forceOpen = false,
   badge,
   className,
+  tourTarget,
   children,
 }: FormSectionProps) {
   const headingId = useId();
@@ -58,7 +62,7 @@ export function FormSection({
   );
 
   return (
-    <Card id={id} className={cn(tone === 'danger' && 'border border-error/60', className)}>
+    <Card id={id} className={cn(tone === 'danger' && 'border border-error/60', className)} {...(tourTarget ? tourTargetProps(tourTarget) : {})}>
       <section aria-labelledby={headingId} className="flex flex-col">
         {collapsible ? (
           <button

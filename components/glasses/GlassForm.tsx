@@ -27,6 +27,7 @@ export interface GlassFormValues {
   deposit: number;
   image: string | undefined;
   originalImage: File | undefined;
+  imageCredit: string;
   volume: number;
 }
 
@@ -59,6 +60,7 @@ function toComparableGlass(values: GlassFormValues) {
     deposit: values.deposit,
     volume: values.volume == 0 ? undefined : values.volume,
     image: values.image,
+    imageCredit: values.image ? values.imageCredit.trim() : '',
   };
 }
 
@@ -115,6 +117,7 @@ export function GlassForm(props: GlassFormProps) {
         deposit: props.glass?.deposit ?? 0,
         image: hydratedImage,
         originalImage: hydratedImage ? convertBase64ToFile(hydratedImage) : undefined,
+        imageCredit: props.glass?.imageCredit ?? '',
         volume: props.glass?.volume ?? 0,
       }}
       onSubmit={async (values) => {
@@ -131,6 +134,7 @@ export function GlassForm(props: GlassFormProps) {
           // Omitting `image` on update removes it; re-send hydrated/kept base64.
           if (values.image != undefined && values.image !== '') {
             body.image = values.image;
+            body.imageCredit = values.imageCredit.trim() || null;
           }
           if (props.glass == undefined) {
             const created = await createGlass(workspaceId, body);

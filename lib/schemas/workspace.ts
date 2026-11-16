@@ -18,7 +18,7 @@ const RoleEnum = z.enum(['OWNER', 'ADMIN', 'MANAGER', 'USER']).openapi('Workspac
 
 /** Known workspace setting keys (mirrors Prisma WorkspaceSettingKey). */
 const WorkspaceSettingKeyEnum = z
-  .enum(['translations', 'usePrices', 'statisticDayStartTime', 'timezone', 'currency', 'contentLocales'])
+  .enum(['translations', 'usePrices', 'statisticDayStartTime', 'timezone', 'currency', 'contentLocales', 'onboardingChecklistSkipped'])
   .openapi('WorkspaceSettingKey');
 
 /** A workspace member — public user fields plus their role in this workspace. */
@@ -49,6 +49,8 @@ export const WorkspaceDtoSchema = z
     expiresAt: DateTimeString.nullable().openapi({ description: 'When a demo workspace expires, or null.' }),
     isExternallyManaged: z.boolean().openapi({ description: 'Whether membership/roles are managed via an external identity provider.' }),
     publicSlug: z.string().nullable().openapi({ description: 'Public slug for guest menus (`/m/{publicSlug}`), or null.' }),
+    setupCompletedAt: DateTimeString.nullable().openapi({ description: 'When the setup assistant was completed; null = not yet.' }),
+    isTemplate: z.boolean().openapi({ description: 'The workspace is a template (start content); it cannot be deleted.' }),
     settings: WorkspaceSettingsDtoSchema,
     members: z.array(WorkspaceMemberDtoSchema),
   })
@@ -95,7 +97,7 @@ export const WorkspaceSettingUpdateSchema = z
     setting: WorkspaceSettingKeyEnum,
     value: z.string().max(10_000).nullish().openapi({
       description:
-        'New value for the setting; null clears it. `timezone` must be an IANA time zone (default Europe/Berlin), `currency` an ISO 4217 code (default EUR), `contentLocales` a JSON string `{"primary":"de","additional":["en"]}`.',
+        'New value for the setting; null clears it. `timezone` must be an IANA time zone (default Europe/Berlin), `currency` an ISO 4217 code (default EUR), `contentLocales` a JSON string `{"primary":"de","additional":["en"]}`, `onboardingChecklistSkipped` a JSON array of checklist item ids (prefer `PUT /onboarding/checklist/{itemId}`).',
     }),
   })
   .superRefine((input, ctx) => {
@@ -142,9 +144,10 @@ export const workspaceItemApiDoc = {
       sessionOnly: true,
       tags: [ApiTags.workspaceCore],
       summary: 'Delete workspace',
-      description: 'Permanently delete the workspace and all its data. Owner session only.',
+      description: 'Permanently delete the workspace and all its data. Owner session only. Workspaces marked as template cannot be deleted.',
       params: WorkspaceIdParam,
       response: DeletionResult,
+      errorResponses: { 409: 'The workspace is a template (`TEMPLATE_IN_USE`).' },
     },
   },
 } satisfies ResourceApiDoc;

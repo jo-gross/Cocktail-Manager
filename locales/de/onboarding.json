@@ -1,0 +1,248 @@
+{
+  "title": "Einrichtung",
+  "continueLater": "Später fortsetzen",
+  "stepper": {
+    "label": "Schritte der Einrichtung",
+    "progress": "Schritt {{current}} von {{total}}"
+  },
+  "steps": {
+    "language": {
+      "title": "Sprache & Region",
+      "description": "In welcher Sprache arbeitest du, und wo steht deine Bar?"
+    },
+    "basics": {
+      "title": "Grunddaten",
+      "description": "Name, Logo, Art deines Betriebs und Beginn des Bar-Tags."
+    },
+    "content": {
+      "title": "Startinhalte",
+      "description": "Starte mit fertigen Gläsern, Zutaten, Garnituren und Cocktails – oder ganz leer."
+    },
+    "team": {
+      "title": "Team",
+      "description": "Lade Kolleginnen und Kollegen ein. Das geht auch später in den Einstellungen."
+    },
+    "done": {
+      "title": "Fertig",
+      "description": "Dein Workspace ist eingerichtet."
+    }
+  },
+  "kinds": {
+    "glasses": "Gläser",
+    "ingredients": "Zutaten",
+    "garnishes": "Garnituren",
+    "cocktails": "Cocktails",
+    "cards": "Karten"
+  },
+  "counts": {
+    "glasses_one": "{{count}} Glas",
+    "glasses_other": "{{count}} Gläser",
+    "ingredients_one": "{{count}} Zutat",
+    "ingredients_other": "{{count}} Zutaten",
+    "garnishes_one": "{{count}} Garnitur",
+    "garnishes_other": "{{count}} Garnituren",
+    "cocktails_one": "{{count}} Cocktail",
+    "cocktails_other": "{{count}} Cocktails",
+    "cards_one": "{{count}} Karte",
+    "cards_other": "{{count}} Karten"
+  },
+  "language": {
+    "uiTitle": "Sprache der App",
+    "uiHelp": "Gilt nur für dich. Andere Mitglieder wählen ihre Sprache selbst.",
+    "contentTitle": "Sprache der Inhalte",
+    "contentHelp": "In dieser Sprache pflegst du Cocktails, Zutaten und Karten. Startinhalte werden in dieser Sprache angelegt.",
+    "regionTitle": "Region",
+    "regionHelp": "Zeitzone und Währung haben wir aus deinem Browser übernommen – bitte kurz prüfen."
+  },
+  "basics": {
+    "nameTitle": "Name",
+    "typeTitle": "Art des Betriebs",
+    "typeHelp": "Damit stellen wir den Bar-Tag und das Design von Gästekarten passend ein – du kannst alles später ändern. Die Art selbst wird nicht gespeichert.",
+    "types": {
+      "bar": {
+        "title": "Bar",
+        "help": "Cocktailbar, Kneipe, Club"
+      },
+      "restaurant": {
+        "title": "Restaurant & Hotel",
+        "help": "Bar als Teil von Gastronomie oder Hotel"
+      },
+      "event": {
+        "title": "Event & Catering",
+        "help": "Mobile Bar, Veranstaltungen, Festivals"
+      },
+      "private": {
+        "title": "Privat",
+        "help": "Hausbar, Partys, eigene Rezeptsammlung"
+      }
+    },
+    "effects": {
+      "label": "Das bewirkt die Auswahl",
+      "dayStart": "Bar-Tag beginnt um {{time}} Uhr (unten vorausgewählt)",
+      "skipTeam": "Der Team-Schritt wird übersprungen (oben weiterhin erreichbar)",
+      "guestMenuDesign": "Gästekarten aus Startinhalten bekommen ein passendes Design"
+    },
+    "dayStartTitle": "Wann beginnt dein Bar-Tag?",
+    "dayStartHelp": "Ab dieser Uhrzeit zählt ein neuer Tag – für Statistiken, die aktive Karte und „heute aus“. Läuft dein Betrieb über Mitternacht hinaus, wähle eine Zeit nach Feierabend (z. B. 06:00 Uhr), damit eine Nacht als ein Tag zählt.",
+    "dayStartPreselected": "Vorausgewählt für „{{type}}“"
+  },
+  "content": {
+    "choiceTitle": "Womit möchtest du starten?",
+    "choiceHelp": "Wähle genau eine Option. Erst der Button unten fügt die gewählte Sammlung hinzu. Vorhandene Einträge mit gleichem Namen werden wiederverwendet.",
+    "applying": "Wird hinzugefügt …",
+    "empty": {
+      "title": "Leer starten",
+      "help": "Keine Sammlung hinzufügen – du legst alles selbst an oder importierst ein Backup."
+    },
+    "nothingMore": {
+      "title": "Keine weitere Sammlung hinzufügen",
+      "help": "Du machst mit den bereits hinzugefügten Inhalten weiter."
+    },
+    "action": {
+      "empty": "Leer weiter",
+      "pick": "Einträge auswählen …",
+      "apply": {
+        "all": "„{{template}}“ hinzufügen & weiter",
+        "basics": "Grundausstattung hinzufügen & weiter",
+        "selection": "Auswahl hinzufügen & weiter"
+      },
+      "applyAgain": {
+        "all": "„{{template}}“ erneut hinzufügen & weiter",
+        "basics": "Grundausstattung erneut hinzufügen & weiter",
+        "selection": "Auswahl erneut hinzufügen & weiter"
+      }
+    },
+    "pending": {
+      "title": "Sammlung noch nicht hinzugefügt",
+      "message": "Du hast „{{template}}“ gewählt, aber noch nicht hinzugefügt. Soll die Sammlung jetzt hinzugefügt werden?",
+      "apply": "Hinzufügen & weiter",
+      "skip": "Ohne Sammlung weiter"
+    },
+    "loadError": "Die Sammlungen konnten nicht geladen werden. Du kannst sie später unter „Hilfe & Tutorials“ hinzufügen.",
+    "none": "Für diese Sprache gibt es noch keine Sammlungen.",
+    "otherLanguage": "Für deine Inhaltssprache gibt es noch keine Sammlungen. Diese hier sind in einer anderen Sprache.",
+    "modeLabel": "Umfang für {{template}}",
+    "mode": {
+      "all": "Alles",
+      "basics": "Nur Grundausstattung",
+      "selection": "Auswählen …",
+      "selectionHelp": "Einzelne Cocktails, Zutaten, Gläser … wählen"
+    },
+    "selectionCount_one": "{{count}} Eintrag ausgewählt",
+    "selectionCount_other": "{{count}} Einträge ausgewählt",
+    "editSelection": "Auswahl ändern",
+    "apply": "Hinzufügen",
+    "applyAgain": "Erneut hinzufügen",
+    "applied": "Hinzugefügt",
+    "appliedToast": "„{{template}}“ wurde hinzugefügt.",
+    "applyError": "Die Sammlung konnte nicht hinzugefügt werden.",
+    "result": {
+      "title": "Ergebnis",
+      "created": "Neu angelegt: {{items}}",
+      "linked": "Schon vorhanden, verknüpft: {{items}}",
+      "skipped": "Übersprungen (Name existiert): {{items}}",
+      "none": "nichts"
+    },
+    "hintPrices": "Preise bleiben leer – trage deine eigenen Preise ein.",
+    "hintAllergens": "Allergene und Alkoholgehalt sind vorausgefüllt, müssen aber von dir bestätigt werden.",
+    "hintAllergensLink": "Zu Allergene & Alkohol",
+    "importBackup": "Stattdessen Backup importieren",
+    "attribution": "Quellen & Bildnachweise",
+    "itemCredit": "{{name}}: {{credit}}",
+    "imageCredit": "Bild: {{credit}}",
+    "noAttribution": "Keine Angaben.",
+    "modalTitle": "Startinhalte hinzufügen",
+    "modalHelp": "Füge Sammlungen ganz oder teilweise hinzu. Vorhandene Einträge mit gleichem Namen werden wiederverwendet.",
+    "picker": {
+      "title": "{{template}}: Auswahl",
+      "help": "Was ein Cocktail braucht (Glas, Zutaten, Garnituren) und die Cocktails einer Karte werden automatisch mit ausgewählt.",
+      "tabsLabel": "Bereiche",
+      "search": "Suchen",
+      "selectAll": "Alle auswählen",
+      "selectNone": "Keine auswählen",
+      "loadError": "Die Einträge konnten nicht geladen werden.",
+      "empty": "Keine Treffer.",
+      "requiredBy": "Benötigt von {{names}}",
+      "requiredByMore_one": "Benötigt von {{names}} und {{count}} weiteren",
+      "requiredByMore_other": "Benötigt von {{names}} und {{count}} weiteren",
+      "selected_one": "{{count}} Eintrag ausgewählt",
+      "selected_other": "{{count}} Einträge ausgewählt",
+      "confirm": "Auswahl übernehmen"
+    }
+  },
+  "team": {
+    "linkTitle": "Einladungslink",
+    "linkHelp": "Wer den Link öffnet, sendet eine Beitrittsanfrage. Du bestätigst sie unter Einstellungen → Benutzer und vergibst dort die Rolle.",
+    "link": "Link",
+    "copy": "Kopieren",
+    "copied": "Link kopiert",
+    "copyError": "Der Link konnte nicht kopiert werden.",
+    "code": "Beitrittscode: {{code}}",
+    "qrAlt": "QR-Code zum Einladungslink",
+    "create": "Einladungslink erstellen",
+    "rolesTitle": "Rollen",
+    "rolesHelp": "Jede Rolle enthält die Rechte der Rollen darüber.",
+    "roles": {
+      "USER": {
+        "name": "Benutzer",
+        "help": "Bar-Ansicht: Rezepte ansehen, Cocktails zubereiten und buchen."
+      },
+      "MANAGER": {
+        "name": "Manager",
+        "help": "Pflegt Cocktails, Zutaten, Karten und Gästekarten, nimmt Mitglieder auf."
+      },
+      "ADMIN": {
+        "name": "Admin",
+        "help": "Ändert Einstellungen, Sprachen, API-Schlüssel und Daten."
+      },
+      "OWNER": {
+        "name": "Owner",
+        "help": "Darf den Workspace löschen."
+      }
+    },
+    "manage": "Mitglieder & Beitrittscodes verwalten"
+  },
+  "done": {
+    "title": "{{workspace}} ist bereit",
+    "body": "Eine kurze Tour zeigt dir die Bar-Ansicht. Danach hilft dir die Checkliste unter „Hilfe & Tutorials“ bei den nächsten Schritten.",
+    "summaryTitle": "Zusammenfassung",
+    "summary": {
+      "language": "Inhaltssprache",
+      "content": "Startinhalte",
+      "contentApplied": "{{templates}} – {{items}}",
+      "contentEmpty": "Leer gestartet",
+      "team": "Team",
+      "teamLink": "Einladungslink erstellt",
+      "teamNone": "Noch niemand eingeladen",
+      "guestMenuLink_one": "Gästekarte ansehen",
+      "guestMenuLink_other": "Gästekarten ansehen"
+    },
+    "pricesHint": "Denk daran: Preise eintragen und Allergene bestätigen.",
+    "startTour": "Grundlagen-Tour starten",
+    "later": "Später",
+    "helpHint": "Touren, Checkliste und Neuigkeiten findest du jederzeit unter",
+    "helpLink": "Hilfe & Tutorials"
+  },
+  "banner": {
+    "setupTitle": "Einrichtung fortsetzen",
+    "setupBody": "Ein paar Schritte fehlen noch: Sprache, Startinhalte und Team.",
+    "setupAction": "Fortsetzen",
+    "template": "Vorlage: Änderungen gelten für neu angelegte Workspaces."
+  },
+  "help": {
+    "title": "Einrichtung",
+    "startContent": {
+      "title": "Startinhalte hinzufügen",
+      "description": "Gläser, Zutaten, Garnituren und Cocktails aus fertigen Sammlungen übernehmen.",
+      "action": "Sammlungen öffnen"
+    },
+    "wizard": {
+      "title": "Einrichtungsassistent erneut öffnen",
+      "description": "Sprache, Region, Name, Logo und Team noch einmal Schritt für Schritt durchgehen.",
+      "action": "Assistent öffnen"
+    }
+  },
+  "emptyState": {
+    "addFromTemplates": "Aus Vorlagen hinzufügen"
+  }
+}

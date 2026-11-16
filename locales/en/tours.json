@@ -1,0 +1,172 @@
+{
+  "engine": {
+    "next": "Next",
+    "back": "Back",
+    "done": "Done",
+    "skip": "Skip",
+    "end": "End tour",
+    "progress": "{{current}} / {{total}}",
+    "actionHint": "Try it: tap the highlighted area.",
+    "resume": "Resume tour",
+    "paused": {
+      "title": "Tour paused",
+      "body": "You left the page of the tour. Do you want to continue?"
+    },
+    "notAvailable": "This tour is not available here."
+  },
+  "basicsBar": {
+    "title": "Basics: bar view",
+    "description": "Cards, search, queue and view options – in two minutes.",
+    "steps": {
+      "welcome": {
+        "title": "Welcome to the bar view",
+        "body": "This is where you work during service: look up recipes, take orders and check them off. Here is a quick look at the essentials."
+      },
+      "cardSelection": {
+        "title": "Choose a card",
+        "body": "Choose which card is shown – or switch to the search across all cocktails or to the order view."
+      },
+      "search": {
+        "title": "Search",
+        "body": "Find any cocktail by name or ingredient. Tip: Shift + F opens the search at any time."
+      },
+      "cocktailCard": {
+        "title": "Cocktail",
+        "body": "Each tile shows recipe, glass and price. Tap it to open all details including preparation, ratings and notes."
+      },
+      "addToQueue": {
+        "title": "Add to the list",
+        "body": "“List” puts the cocktail into the queue – optionally with a note such as “no ice”."
+      },
+      "queue": {
+        "title": "Queue",
+        "body": "Open orders collect here. The check mark marks a cocktail as done – it then counts towards the statistics."
+      },
+      "viewOptions": {
+        "title": "View options",
+        "body": "Adjust the display here: images, tags, description, ratings and the statistic actions for list and queue."
+      },
+      "manage": {
+        "title": "Manage",
+        "body": "The gear takes you to management: recipes, ingredients, cards and statistics. Under “Help & tutorials” you can repeat this tour at any time."
+      }
+    }
+  },
+  "basicsManage": {
+    "title": "Basics: management",
+    "description": "From ingredient to recipe to card.",
+    "steps": {
+      "welcome": {
+        "title": "Management",
+        "body": "This is where you maintain everything shown in the bar view. Let's go from ingredient to card together."
+      },
+      "ingredients": {
+        "title": "Ingredients",
+        "body": "Cocktails are made of ingredients. Open the ingredient list."
+      },
+      "createIngredient": {
+        "title": "New ingredient",
+        "body": "The plus button creates an ingredient."
+      },
+      "ingredientForm": {
+        "title": "Enter an ingredient",
+        "body": "Name, bottle price and volume are enough to start – the app calculates the cost per cocktail from them. You can save later, let's continue."
+      },
+      "cocktails": {
+        "title": "Cocktails",
+        "body": "On to the recipes."
+      },
+      "createCocktail": {
+        "title": "New cocktail",
+        "body": "The plus button creates a recipe."
+      },
+      "cocktailForm": {
+        "title": "Enter a recipe",
+        "body": "Glass, ingredients with amounts, preparation steps and price – afterwards the cocktail shows up in search and cards."
+      },
+      "cards": {
+        "title": "Cards",
+        "body": "Cards define what the bar view shows."
+      },
+      "createCard": {
+        "title": "Create a card",
+        "body": "Put together groups such as “Sours” or “Highballs” and choose the days the card is active."
+      },
+      "help": {
+        "title": "Help & tutorials",
+        "body": "All tours, the setup checklist and what's new are collected here."
+      }
+    }
+  },
+  "help": {
+    "title": "Help & tutorials",
+    "newBadge": "New",
+    "checklist": {
+      "title": "Setup",
+      "progress": "{{done}} of {{total}} done",
+      "unavailable": "The checklist is currently not available.",
+      "openCount": "{{count}} open",
+      "done": "Done",
+      "open": "Open",
+      "skipped": "Skipped",
+      "markDone": "Mark as done",
+      "markDoneLabel": "Mark “{{item}}” as done",
+      "undo": "Undo",
+      "undoLabel": "Reopen “{{item}}”",
+      "saveError": "The item could not be saved.",
+      "items": {
+        "glasses": "Add glasses",
+        "ingredients": "Add ingredients",
+        "cocktails": "Add cocktails",
+        "cards": "Put together a card",
+        "prices": "Enter prices",
+        "guestInfo": "Check allergens & alcohol",
+        "team": "Invite your team",
+        "guestMenu": "Publish a guest menu"
+      }
+    },
+    "tours": {
+      "title": "Tours",
+      "empty": "No tours available.",
+      "start": "Start",
+      "restart": "Start again",
+      "markDone": "Mark as done",
+      "markDoneLabel": "Mark the tour “{{tour}}” as done",
+      "steps": "{{count}} steps",
+      "category": {
+        "basics": "Basics",
+        "feature": "New feature"
+      },
+      "status": {
+        "NEW": "New",
+        "STARTED": "Started",
+        "COMPLETED": "Completed",
+        "DISMISSED": "Hidden"
+      }
+    },
+    "changelog": {
+      "title": "What's new",
+      "empty": "No entries yet.",
+      "error": "Could not load what's new."
+    }
+  },
+  "offers": {
+    "welcome": {
+      "title": "Welcome to {{workspace}} – quick tour?",
+      "body": "In two minutes we'll show you the bar view.",
+      "start": "Start tour",
+      "later": "Later",
+      "never": "No thanks"
+    },
+    "checklist": {
+      "title": "Setup: {{done}} of {{total}} done",
+      "next": "Next up: {{item}}",
+      "open": "Open checklist",
+      "dismiss": "Hide"
+    }
+  },
+  "changelog": {
+    "toursTitle": "Tours for new features",
+    "startTour": "Start tour"
+  }
+}

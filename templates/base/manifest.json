@@ -1,0 +1,17 @@
+{
+  "key": "base",
+  "kind": "BASE",
+  "version": 1,
+  "name": {
+    "de": "Grundausstattung",
+    "en": "Basics"
+  },
+  "description": {
+    "de": "Einheiten, Umrechnungen, Eis, Zubereitungsarten, Labels und Tag-Kategorien für jeden neuen Workspace.",
+    "en": "Units, conversions, ice, step actions, labels and tag categories for every new workspace."
+  },
+  "locales": ["de", "en"],
+  "published": true,
+  "isDefault": true,
+  "sortOrder": 0
+}

@@ -16,6 +16,7 @@ import { OfflineContextProvider } from '@lib/context/OfflineContextProvider';
 import { OfflineBanner } from '@components/layout/OfflineBanner';
 import { useTranslation } from 'react-i18next';
 import { initI18n } from '@lib/i18n/client';
+import { TourProvider } from '@components/tour/TourProvider';
 
 const i18n = initI18n();
 
@@ -95,13 +96,13 @@ const App = ({ Component, pageProps: { session: _session, ...pageProps } }: AppP
                 <GlobalModal>
                   <ThemeBoundary>
                     <LanguageBoundary>
-                      <>
+                      <TourProvider>
                         <AppHead />
                         <OfflineBanner />
                         <PullToRefresh onRefresh={customRefresh}>
                           <Component {...pageProps} />
                         </PullToRefresh>
-                      </>
+                      </TourProvider>
                     </LanguageBoundary>
                   </ThemeBoundary>
                 </GlobalModal>

@@ -28,6 +28,8 @@ type IngredientWithVolumes = Pick<
   | 'guestName'
 > & {
   IngredientVolume: IngredientVolumeWithUnit[];
+  /** Image row(s) with the credit (optional: without it the credit is null). */
+  IngredientImage?: Array<{ credit: string | null }>;
 };
 
 export function toIngredientDto(ingredient: IngredientWithVolumes, hasImage: boolean, workspaceId: string): IngredientDto {
@@ -47,6 +49,7 @@ export function toIngredientDto(ingredient: IngredientWithVolumes, hasImage: boo
     })),
     hasImage,
     imageUrl: hasImage ? `/api/v1/workspaces/${workspaceId}/ingredients/${ingredient.id}/image` : null,
+    imageCredit: hasImage ? (ingredient.IngredientImage?.[0]?.credit ?? null) : null,
     abv: ingredient.abv,
     allergens: ingredient.allergens,
     allergenSources: ingredient.allergenSources,

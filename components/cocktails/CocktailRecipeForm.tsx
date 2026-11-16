@@ -74,6 +74,7 @@ export interface CocktailRecipeFormValues extends CocktailGuestInfoFormValues {
   iceId: string | null;
   image: string | undefined;
   originalImage: File | undefined;
+  imageCredit: string;
   glassId: string | undefined;
   ice: IceDto | null;
   glass: GlassModel | null;
@@ -165,6 +166,7 @@ function toComparableCocktail(values: CocktailRecipeFormValues) {
     iceId: values.iceId,
     glassId: values.glassId,
     image: values.image,
+    imageCredit: values.image ? values.imageCredit.trim() : '',
     abvOverride: values.abvOverride,
     extraAllergens: [...values.extraAllergens].sort(),
     extraAdditives: [...values.extraAdditives].sort(),
@@ -473,6 +475,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
     iceId,
     image: hydratedImage,
     originalImage: hydratedImage ? convertBase64ToFile(hydratedImage) : undefined,
+    imageCredit: props.cocktailRecipe?.imageCredit ?? '',
     glassId,
     ice: iceOptions.find((i) => i.id == iceId) ?? null,
     glass: glasses.find((g) => g.id == glassId) ?? null,
@@ -559,6 +562,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
           // Update always deleteMany's the image row; re-send base64 to keep, omit to clear.
           if (values.image != undefined && values.image !== '') {
             body.image = values.image;
+            body.imageCredit = values.imageCredit.trim() || null;
           }
           if (!workspaceId) return;
           if (props.cocktailRecipe == undefined) {
@@ -639,6 +643,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                             {
                               hasImage: values.image != undefined,
                               imageUrl: null,
+                              imageCredit: values.imageCredit.trim() || null,
                               id: values.id,
                               name: values.name,
                               description: values.description.trim() == '' ? null : values.description.trim(),
@@ -684,7 +689,7 @@ export function CocktailRecipeForm(props: CocktailRecipeFormProps) {
                 />
               }
             >
-              <FormSection id="cocktail-general" title={t('common:form.section.general')}>
+              <FormSection id="cocktail-general" title={t('common:form.section.general')} tourTarget="manage.cocktailForm">
                 <FormField
                   label={t('cocktail:name')}
                   htmlFor="name"

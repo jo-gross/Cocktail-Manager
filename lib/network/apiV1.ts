@@ -12,6 +12,7 @@ import type { PaginationMeta } from '@lib/http/responses';
 import { resolveApiErrorMessage } from '@lib/i18n/apiErrors';
 import { i18n } from '@lib/i18n/client';
 import { invalidateOfflineCacheForMutation } from '@lib/offline/invalidation';
+import { isAbortError, shouldAlertRequestError } from './requestErrors';
 
 export interface ApiV1ErrorBody {
   code: string;
@@ -66,7 +67,8 @@ export function alertApiV1Error(error: unknown, fallbackMessage: string) {
     return;
   }
   console.error(fallbackMessage, error);
-  alertService.error(fallbackMessage);
+  // Used for user actions: a save failing offline is still reported, only intentional aborts are not
+  if (!isAbortError(error)) alertService.error(fallbackMessage);
 }
 
 /**
@@ -120,7 +122,8 @@ export async function apiV1Mutate<T>(path: string, method: 'POST' | 'PUT' | 'PAT
 
 /**
  * Like {@link apiV1Fetch} but reports failures via alertService and resolves to
- * `undefined` instead of throwing — for fire-and-forget UI loads.
+ * `undefined` instead of throwing — for fire-and-forget UI loads. Aborted loads and
+ * loads failing while offline (offline banner) raise no alert.
  */
 export async function apiV1FetchSafe<T>(path: string, init?: RequestInit, errorMessage?: string): Promise<T | undefined> {
   try {
@@ -134,7 +137,7 @@ export async function apiV1FetchSafe<T>(path: string, init?: RequestInit, errorM
       );
     } else {
       console.error('apiV1FetchSafe', path, error);
-      alertService.error(errorMessage ?? (i18n.t('errors:network' as never) as string));
+      if (shouldAlertRequestError(error)) alertService.error(errorMessage ?? (i18n.t('errors:network' as never) as string));
     }
     return undefined;
   }
@@ -159,7 +162,7 @@ export async function apiV1FetchPaginatedSafe<T>(
       );
     } else {
       console.error('apiV1FetchPaginatedSafe', path, error);
-      alertService.error(errorMessage ?? (i18n.t('errors:network' as never) as string));
+      if (shouldAlertRequestError(error)) alertService.error(errorMessage ?? (i18n.t('errors:network' as never) as string));
     }
     return undefined;
   }

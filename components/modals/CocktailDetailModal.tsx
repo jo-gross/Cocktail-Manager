@@ -12,6 +12,7 @@ import Image from 'next/image';
 import AvatarImage from '../AvatarImage';
 import { Alert, Badge, Button, ButtonGroup, CardBody, CardTitle, Divider, FormControl, Input, Label, Loading, Tooltip } from '@components/ui';
 import ImageModal from './ImageModal';
+import { ImageCredit } from '../ImageCredit';
 import { calcCocktailTotalPrice } from '@lib/CocktailRecipeCalculation';
 import { fetchIngredients } from '@lib/network/ingredients';
 import { IngredientModel } from '../../models/IngredientModel';
@@ -345,16 +346,17 @@ export function CocktailDetailModal(props: CocktailDetailModalProps) {
                     ))}
                 </div>
                 {loadedCocktail.hasImage && (
-                  <div className={'col-span-2'}>
+                  <div className={'relative col-span-2'}>
                     <Image
                       className={'h-full w-full flex-none cursor-pointer rounded-lg object-cover object-center shadow-md'}
                       src={loadedCocktail.imageUrl ?? ''}
                       alt={t('cocktail:cocktailImageAlt')}
-                      onClick={() => modalContext.openModal(<ImageModal image={loadedCocktail.imageUrl ?? ''} />)}
+                      onClick={() => modalContext.openModal(<ImageModal image={loadedCocktail.imageUrl ?? ''} credit={loadedCocktail.imageCredit} />)}
                       width={100}
                       height={300}
                       unoptimized={true}
                     />
+                    <ImageCredit credit={loadedCocktail.imageCredit} variant={'overlay'} className={'rounded-b-lg'} />
                   </div>
                 )}
               </div>

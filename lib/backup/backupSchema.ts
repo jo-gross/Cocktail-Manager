@@ -19,6 +19,7 @@ import {
   SignageSlideType,
 } from '@generated/prisma/client';
 import { ImageDataUriSchema } from '@lib/images/imageSchema';
+import { IMAGE_CREDIT_MAX_LENGTH, normalizeImageCredit } from '@lib/images/imageCredit';
 
 export const BACKUP_LIMITS = {
   itemsPerCollection: 100_000,
@@ -147,10 +148,12 @@ const CocktailCardGroupItemSchema = z.object({ itemNumber: Int.optional(), cockt
 const CalculationSchema = z.object({ id: Id, name: Name, showSalesStuff: z.boolean().default(true), groupId: NullableId });
 const CalculationGroupSchema = z.object({ id: Id, name: Name, isDefaultExpanded: z.boolean().default(false) });
 const CalculationItemSchema = z.object({ plannedAmount: Int, customPrice: NullableNumber, cocktailId: Id, calculationId: Id });
-const GarnishImageSchema = z.object({ garnishId: Id, image: Image });
-const IngredientImageSchema = z.object({ ingredientId: Id, image: Image });
-const GlassImageSchema = z.object({ glassId: Id, image: Image });
-const CocktailRecipeImageSchema = z.object({ cocktailRecipeId: Id, image: Image });
+/** Attribution of an image (missing in older backups). */
+const ImageCredit = z.string().max(IMAGE_CREDIT_MAX_LENGTH).nullish().transform(normalizeImageCredit);
+const GarnishImageSchema = z.object({ garnishId: Id, image: Image, credit: ImageCredit });
+const IngredientImageSchema = z.object({ ingredientId: Id, image: Image, credit: ImageCredit });
+const GlassImageSchema = z.object({ glassId: Id, image: Image, credit: ImageCredit });
+const CocktailRecipeImageSchema = z.object({ cocktailRecipeId: Id, image: Image, credit: ImageCredit });
 
 const SignageSchema = z.object({
   format: z.enum(MonitorFormat),
@@ -207,6 +210,10 @@ const GuestMenuSchema = z.object({
   sourceCardId: NullableId,
   locales: z.array(Locale).max(50).nullish(),
   draft: BoundedJson,
+  /** Only used by template imports (`keepGuestMenuState`); backup imports always create disabled, unpublished menus. */
+  enabled: z.boolean().nullish(),
+  isDefault: z.boolean().nullish(),
+  published: BoundedJson.nullish(),
 });
 
 export const BackupImportSchema = z.object({

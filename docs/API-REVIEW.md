@@ -31,7 +31,8 @@ All operations are additionally covered by three generic suites:
 | API keys, audit logs, /me, user settings | | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | Key permissions from DB; key dies with creator's ADMIN role; constant-time master key compare; `limit ≤ 200` |
 | Backups | export, import | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | Export in RepeatableRead snapshot; import parsed + validated before the tx, ids regenerated, audited, 100 MB limit |
 | Demo | create-workspace, demo-login, cleanup | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | Signed one-time login token; cleanup needs `DEMO_CLEANUP_SECRET` or master key; rate limits |
-| Admin (master key) | create workspace | ✅ | n/a | ✅ | ✅ | ✅ | – | ✅ | Shared handler on `createWorkspaceWithDefaults` |
+| Admin (master key) | create workspace, templates (list, mark, update, unmark, clone, access) | ✅ | n/a | ✅ | ✅ | ✅ | – | ✅ | Every creation path uses `createWorkspace()` (BASE template in one tx); template metadata/defaults under a global lock; built-ins read-only |
+| Templates, onboarding, guides | list, items, apply, checklist, complete, guide progress | ✅ | ✅ | ✅ | ✅ | ✅ | – | ✅ | Apply: selection ids only resolve inside the template, links re-checked in the tx, one import tx; API keys need all `*_CREATE` scopes; guides session-only, rows per user bounded |
 | Scraper | ingredient, image | ✅ | n/a | ✅ | n/a | ✅ | ✅ | ✅ (metro manual) | SSRF fixed via `safeFetch` (host allow-list, public IPs only, size/time limits); image proxy raster-only with sandbox CSP |
 | Public | menus, images, signage feed, health | ✅ | ✅ | ✅ | n/a | ✅ | ✅ | ✅ | `/api/health/ready` (DB + migrations) added |
 

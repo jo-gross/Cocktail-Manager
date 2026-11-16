@@ -43,6 +43,8 @@ import {
   useSortableData,
 } from '@components/ui';
 import type { SortDirection } from '@components/ui';
+import { tourTarget } from '@lib/tours/targets';
+import { AddFromTemplatesButton } from '@components/onboarding/AddFromTemplatesButton';
 
 const IngredientsOverviewPage: NextPageWithPullToRefresh = () => {
   const { t } = useTranslation(['manage', 'common', 'nav', 'entity', 'errors']);
@@ -262,7 +264,7 @@ const IngredientsOverviewPage: NextPageWithPullToRefresh = () => {
             </DropdownContent>
           </Dropdown>
           {userContext.isUserPermitted(Role.MANAGER) && (
-            <Link href={`/workspaces/${workspaceId}/manage/ingredients/create`}>
+            <Link href={`/workspaces/${workspaceId}/manage/ingredients/create`} {...tourTarget('manage.ingredients.create')}>
               <Button variant="primary" shape="square" size="sm" className="md:h-10 md:min-h-10 md:w-10">
                 <FaPlus />
               </Button>
@@ -313,7 +315,10 @@ const IngredientsOverviewPage: NextPageWithPullToRefresh = () => {
                 ) : sortedIngredients.length == 0 ? (
                   <TableRow>
                     <TableCell colSpan={12} className="text-center">
-                      {t('manage:noEntriesFound')}
+                      <div className="flex flex-col items-center gap-2">
+                        <span>{t('manage:noEntriesFound')}</span>
+                        {ingredients.length == 0 && <AddFromTemplatesButton onApplied={() => fetchIngredients(workspaceId, setIngredients, setLoading)} />}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ) : (

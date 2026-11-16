@@ -41,6 +41,7 @@ import {
   useSortableData,
 } from '@components/ui';
 import type { SortDirection } from '@components/ui';
+import { AddFromTemplatesButton } from '@components/onboarding/AddFromTemplatesButton';
 
 const ManageGarnishesOverviewPage: NextPageWithPullToRefresh = () => {
   const router = useRouter();
@@ -281,7 +282,10 @@ const ManageGarnishesOverviewPage: NextPageWithPullToRefresh = () => {
                 ) : sortedGarnishes.length == 0 ? (
                   <TableRow>
                     <TableCell colSpan={5} className={'text-center'}>
-                      {t('manage:noEntriesFound')}
+                      <div className="flex flex-col items-center gap-2">
+                        <span>{t('manage:noEntriesFound')}</span>
+                        {garnishes.length == 0 && <AddFromTemplatesButton onApplied={() => fetchGarnishes(workspaceId, setGarnishes, setLoading)} />}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ) : (

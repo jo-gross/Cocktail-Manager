@@ -1,0 +1,2737 @@
+{
+  "units": [
+    {
+      "id": "unit-cl",
+      "name": "CL"
+    },
+    {
+      "id": "unit-piece",
+      "name": "PIECE"
+    },
+    {
+      "id": "unit-gramm",
+      "name": "GRAMM"
+    },
+    {
+      "id": "unit-dash",
+      "name": "DASH"
+    }
+  ],
+  "unitConversions": [],
+  "workspaceSettings": [
+    {
+      "setting": "timezone",
+      "value": "Europe/Berlin"
+    },
+    {
+      "setting": "currency",
+      "value": "EUR"
+    },
+    {
+      "setting": "statisticDayStartTime",
+      "value": "05:00"
+    },
+    {
+      "setting": "contentLocales",
+      "value": "{\"primary\":\"de\",\"additional\":[\"en\"]}"
+    }
+  ],
+  "stepActions": [
+    {
+      "id": "action-shake",
+      "name": "SHAKE",
+      "actionGroup": "MIXING",
+      "dilutionPercent": null
+    },
+    {
+      "id": "action-stir",
+      "name": "STIR",
+      "actionGroup": "MIXING",
+      "dilutionPercent": null
+    },
+    {
+      "id": "action-float",
+      "name": "FLOAT",
+      "actionGroup": "MIXING",
+      "dilutionPercent": null
+    },
+    {
+      "id": "action-build-in-glass",
+      "name": "BUILD_IN_GLASS",
+      "actionGroup": "MIXING",
+      "dilutionPercent": null
+    },
+    {
+      "id": "action-blender",
+      "name": "BLENDER",
+      "actionGroup": "MIXING",
+      "dilutionPercent": null
+    },
+    {
+      "id": "action-muddle",
+      "name": "MUDDLE",
+      "actionGroup": "MIXING",
+      "dilutionPercent": null
+    },
+    {
+      "id": "action-foam",
+      "name": "FOAM",
+      "actionGroup": "MIXING",
+      "dilutionPercent": null
+    },
+    {
+      "id": "action-single-strain",
+      "name": "SINGLE_STRAIN",
+      "actionGroup": "POURING",
+      "dilutionPercent": null
+    },
+    {
+      "id": "action-double-strain",
+      "name": "DOUBLE_STRAIN",
+      "actionGroup": "POURING",
+      "dilutionPercent": null
+    },
+    {
+      "id": "action-without",
+      "name": "WITHOUT",
+      "actionGroup": "POURING",
+      "dilutionPercent": null
+    },
+    {
+      "id": "action-dirty-ice",
+      "name": "DIRTY_ICE",
+      "actionGroup": "POURING",
+      "dilutionPercent": null
+    }
+  ],
+  "ice": [
+    {
+      "id": "ice-ice-crushed",
+      "name": "ICE_CRUSHED"
+    },
+    {
+      "id": "ice-ice-cubes",
+      "name": "ICE_CUBES"
+    },
+    {
+      "id": "ice-without-ice",
+      "name": "WITHOUT_ICE"
+    }
+  ],
+  "tagCategories": [
+    {
+      "id": "tag-category-0",
+      "name": {
+        "de": "Geschmack",
+        "en": "Flavor"
+      },
+      "order": 0,
+      "showAsGuestFilter": true
+    },
+    {
+      "id": "tag-category-1",
+      "name": {
+        "de": "Spirituose",
+        "en": "Spirit"
+      },
+      "order": 1,
+      "showAsGuestFilter": true
+    },
+    {
+      "id": "tag-category-2",
+      "name": {
+        "de": "Stil",
+        "en": "Style"
+      },
+      "order": 2,
+      "showAsGuestFilter": true
+    },
+    {
+      "id": "tag-category-3",
+      "name": {
+        "de": "Eigenschaften",
+        "en": "Properties"
+      },
+      "order": 3,
+      "showAsGuestFilter": true
+    },
+    {
+      "id": "tag-category-4",
+      "name": {
+        "de": "Saison",
+        "en": "Season"
+      },
+      "order": 4,
+      "showAsGuestFilter": false
+    }
+  ],
+  "tagDefinitions": [
+    {
+      "tag": "fresh",
+      "label": {
+        "de": "Frisch",
+        "en": "Fresh"
+      },
+      "categoryId": "tag-category-0",
+      "color": "#22c55e",
+      "isPublic": true
+    },
+    {
+      "tag": "sour",
+      "label": {
+        "de": "Sauer",
+        "en": "Sour"
+      },
+      "categoryId": "tag-category-0",
+      "color": "#eab308",
+      "isPublic": true
+    },
+    {
+      "tag": "sweet",
+      "label": {
+        "de": "Süß",
+        "en": "Sweet"
+      },
+      "categoryId": "tag-category-0",
+      "color": "#ec4899",
+      "isPublic": true
+    },
+    {
+      "tag": "bitter",
+      "label": {
+        "de": "Bitter",
+        "en": "Bitter"
+      },
+      "categoryId": "tag-category-0",
+      "color": "#f97316",
+      "isPublic": true
+    },
+    {
+      "tag": "fruity",
+      "label": {
+        "de": "Fruchtig",
+        "en": "Fruity"
+      },
+      "categoryId": "tag-category-0",
+      "color": "#ef4444",
+      "isPublic": true
+    },
+    {
+      "tag": "herbal",
+      "label": {
+        "de": "Kräuterig",
+        "en": "Herbal"
+      },
+      "categoryId": "tag-category-0",
+      "color": "#16a34a",
+      "isPublic": true
+    },
+    {
+      "tag": "spicy",
+      "label": {
+        "de": "Würzig",
+        "en": "Spicy"
+      },
+      "categoryId": "tag-category-0",
+      "color": "#b45309",
+      "isPublic": true
+    },
+    {
+      "tag": "gin",
+      "label": {
+        "de": "Gin",
+        "en": "Gin"
+      },
+      "categoryId": "tag-category-1",
+      "color": null,
+      "isPublic": true
+    },
+    {
+      "tag": "vodka",
+      "label": {
+        "de": "Wodka",
+        "en": "Vodka"
+      },
+      "categoryId": "tag-category-1",
+      "color": null,
+      "isPublic": true
+    },
+    {
+      "tag": "rum",
+      "label": {
+        "de": "Rum",
+        "en": "Rum"
+      },
+      "categoryId": "tag-category-1",
+      "color": null,
+      "isPublic": true
+    },
+    {
+      "tag": "tequila",
+      "label": {
+        "de": "Tequila",
+        "en": "Tequila"
+      },
+      "categoryId": "tag-category-1",
+      "color": null,
+      "isPublic": true
+    },
+    {
+      "tag": "whiskey",
+      "label": {
+        "de": "Whiskey",
+        "en": "Whiskey"
+      },
+      "categoryId": "tag-category-1",
+      "color": null,
+      "isPublic": true
+    },
+    {
+      "tag": "aperitivo",
+      "label": {
+        "de": "Aperitivo",
+        "en": "Aperitivo"
+      },
+      "categoryId": "tag-category-1",
+      "color": null,
+      "isPublic": true
+    },
+    {
+      "tag": "highball",
+      "label": {
+        "de": "Longdrink",
+        "en": "Highball"
+      },
+      "categoryId": "tag-category-2",
+      "color": null,
+      "isPublic": true
+    },
+    {
+      "tag": "shortdrink",
+      "label": {
+        "de": "Shortdrink",
+        "en": "Short drink"
+      },
+      "categoryId": "tag-category-2",
+      "color": null,
+      "isPublic": true
+    },
+    {
+      "tag": "stirred",
+      "label": {
+        "de": "Gerührt",
+        "en": "Stirred"
+      },
+      "categoryId": "tag-category-2",
+      "color": null,
+      "isPublic": true
+    },
+    {
+      "tag": "spritz",
+      "label": {
+        "de": "Spritz",
+        "en": "Spritz"
+      },
+      "categoryId": "tag-category-2",
+      "color": null,
+      "isPublic": true
+    },
+    {
+      "tag": "classic",
+      "label": {
+        "de": "Klassiker",
+        "en": "Classic"
+      },
+      "categoryId": "tag-category-3",
+      "color": "#6366f1",
+      "isPublic": true
+    },
+    {
+      "tag": "alcohol-free",
+      "label": {
+        "de": "Alkoholfrei",
+        "en": "Alcohol-free"
+      },
+      "categoryId": "tag-category-3",
+      "color": "#0ea5e9",
+      "isPublic": true
+    },
+    {
+      "tag": "strong",
+      "label": {
+        "de": "Stark",
+        "en": "Strong"
+      },
+      "categoryId": "tag-category-3",
+      "color": "#7c2d12",
+      "isPublic": true
+    },
+    {
+      "tag": "summer",
+      "label": {
+        "de": "Sommer",
+        "en": "Summer"
+      },
+      "categoryId": "tag-category-4",
+      "color": "#f59e0b",
+      "isPublic": true
+    },
+    {
+      "tag": "liqueur",
+      "label": {
+        "de": "Likör",
+        "en": "Liqueur"
+      },
+      "categoryId": null,
+      "color": null,
+      "isPublic": false
+    },
+    {
+      "tag": "wine",
+      "label": {
+        "de": "Wein",
+        "en": "Wine"
+      },
+      "categoryId": null,
+      "color": null,
+      "isPublic": false
+    },
+    {
+      "tag": "bitters",
+      "label": {
+        "de": "Bitter (Aroma)",
+        "en": "Bitters"
+      },
+      "categoryId": null,
+      "color": null,
+      "isPublic": false
+    },
+    {
+      "tag": "juice",
+      "label": {
+        "de": "Saft",
+        "en": "Juice"
+      },
+      "categoryId": null,
+      "color": null,
+      "isPublic": false
+    },
+    {
+      "tag": "syrup",
+      "label": {
+        "de": "Sirup",
+        "en": "Syrup"
+      },
+      "categoryId": null,
+      "color": null,
+      "isPublic": false
+    },
+    {
+      "tag": "mixer",
+      "label": {
+        "de": "Filler",
+        "en": "Mixer"
+      },
+      "categoryId": null,
+      "color": null,
+      "isPublic": false
+    },
+    {
+      "tag": "herbs",
+      "label": {
+        "de": "Kräuter",
+        "en": "Herbs"
+      },
+      "categoryId": null,
+      "color": null,
+      "isPublic": false
+    }
+  ],
+  "glass": [
+    {
+      "id": "glass-highball",
+      "name": "Highball-Glas",
+      "notes": "Longdrinks und Highballs",
+      "volume": 350,
+      "deposit": 0
+    },
+    {
+      "id": "glass-old-fashioned",
+      "name": "Tumbler",
+      "notes": "Stirred Drinks und Sours auf Eis",
+      "volume": 300,
+      "deposit": 0
+    },
+    {
+      "id": "glass-coupe",
+      "name": "Coupette",
+      "notes": "Shortdrinks ohne Eis",
+      "volume": 180,
+      "deposit": 0
+    },
+    {
+      "id": "glass-martini",
+      "name": "Martini-Glas",
+      "notes": null,
+      "volume": 200,
+      "deposit": 0
+    },
+    {
+      "id": "glass-wine",
+      "name": "Weinglas",
+      "notes": "Spritz",
+      "volume": 450,
+      "deposit": 0
+    }
+  ],
+  "glassImages": [
+    {
+      "glassId": "glass-highball",
+      "image": "file:images/glass-highball.jpg"
+    },
+    {
+      "glassId": "glass-old-fashioned",
+      "image": "file:images/glass-old-fashioned.jpg"
+    },
+    {
+      "glassId": "glass-coupe",
+      "image": "file:images/glass-coupe.png"
+    },
+    {
+      "glassId": "glass-martini",
+      "image": "file:images/glass-martini.jpg"
+    }
+  ],
+  "glassTranslations": [
+    {
+      "glassId": "glass-highball",
+      "locale": "en",
+      "name": "Highball glass"
+    },
+    {
+      "glassId": "glass-old-fashioned",
+      "locale": "en",
+      "name": "Rocks glass"
+    },
+    {
+      "glassId": "glass-coupe",
+      "locale": "en",
+      "name": "Coupe"
+    },
+    {
+      "glassId": "glass-martini",
+      "locale": "en",
+      "name": "Martini glass"
+    },
+    {
+      "glassId": "glass-wine",
+      "locale": "en",
+      "name": "Wine glass"
+    }
+  ],
+  "garnish": [
+    {
+      "id": "garnish-lime-wedge",
+      "name": "Limettenspalte",
+      "description": "Frische Limettenspalte",
+      "notes": null,
+      "price": 0.1,
+      "allergens": [],
+      "allergenSources": [],
+      "additives": [],
+      "guestInfoComplete": true
+    },
+    {
+      "id": "garnish-orange-slice",
+      "name": "Orangenscheibe",
+      "description": "Frische Orangenscheibe",
+      "notes": null,
+      "price": 0.1,
+      "allergens": [],
+      "allergenSources": [],
+      "additives": [],
+      "guestInfoComplete": true
+    },
+    {
+      "id": "garnish-orange-zest",
+      "name": "Orangenzeste",
+      "description": "Über dem Drink ausdrücken",
+      "notes": null,
+      "price": 0.05,
+      "allergens": [],
+      "allergenSources": [],
+      "additives": [],
+      "guestInfoComplete": true
+    },
+    {
+      "id": "garnish-mint-sprig",
+      "name": "Minzzweig",
+      "description": "Frischer Minzzweig",
+      "notes": null,
+      "price": 0.15,
+      "allergens": [],
+      "allergenSources": [],
+      "additives": [],
+      "guestInfoComplete": true
+    },
+    {
+      "id": "garnish-cherry",
+      "name": "Cocktailkirsche",
+      "description": "Amarena-Kirsche",
+      "notes": null,
+      "price": 0.2,
+      "allergens": [],
+      "allergenSources": [],
+      "additives": [],
+      "guestInfoComplete": true
+    },
+    {
+      "id": "garnish-lemon-zest",
+      "name": "Zitronenzeste",
+      "description": "Über dem Drink ausdrücken",
+      "notes": null,
+      "price": 0.05,
+      "allergens": [],
+      "allergenSources": [],
+      "additives": [],
+      "guestInfoComplete": true
+    }
+  ],
+  "garnishImages": [],
+  "garnishTranslations": [
+    {
+      "garnishId": "garnish-lime-wedge",
+      "locale": "en",
+      "name": "Lime wedge",
+      "description": "Fresh lime wedge"
+    },
+    {
+      "garnishId": "garnish-orange-slice",
+      "locale": "en",
+      "name": "Orange slice",
+      "description": "Fresh orange slice"
+    },
+    {
+      "garnishId": "garnish-orange-zest",
+      "locale": "en",
+      "name": "Orange peel",
+      "description": "Express over the drink"
+    },
+    {
+      "garnishId": "garnish-mint-sprig",
+      "locale": "en",
+      "name": "Mint sprig",
+      "description": "Fresh mint sprig"
+    },
+    {
+      "garnishId": "garnish-cherry",
+      "locale": "en",
+      "name": "Cocktail cherry",
+      "description": "Amarena cherry"
+    },
+    {
+      "garnishId": "garnish-lemon-zest",
+      "locale": "en",
+      "name": "Lemon peel",
+      "description": "Express over the drink"
+    }
+  ],
+  "ingredient": [
+    {
+      "id": "ingredient-vodka",
+      "name": "Wodka",
+      "shortName": null,
+      "description": "Neutraler Wodka aus Getreide",
+      "notes": null,
+      "price": 15.99,
+      "link": null,
+      "tags": ["vodka"],
+      "abv": 40,
+      "allergens": ["GLUTEN"],
+      "allergenSources": ["WHEAT"],
+      "additives": [],
+      "guestInfoComplete": true,
+      "hideOnGuestMenu": false,
+      "guestName": null
+    },
+    {
+      "id": "ingredient-gin",
+      "name": "Gin",
+      "shortName": null,
+      "description": "London Dry Gin mit Wacholder und Zitrus",
+      "notes": null,
+      "price": 18.99,
+      "link": null,
+      "tags": ["gin"],
+      "abv": 40,
+      "allergens": [],
+      "allergenSources": [],
+      "additives": [],
+      "guestInfoComplete": true,
+      "hideOnGuestMenu": false,
+      "guestName": null
+    },
+    {
+      "id": "ingredient-rum-white",
+      "name": "Weißer Rum",
+      "shortName": "Rum",
+      "description": "Leichter, weißer Rum",
+      "notes": null,
+      "price": 16.99,
+      "link": null,
+      "tags": ["rum"],
+      "abv": 37.5,
+      "allergens": [],
+      "allergenSources": [],
+      "additives": [],
+      "guestInfoComplete": true,
+      "hideOnGuestMenu": false,
+      "guestName": null
+    },
+    {
+      "id": "ingredient-tequila",
+      "name": "Tequila Blanco",
+      "shortName": "Tequila",
+      "description": "100 % Agave",
+      "notes": null,
+      "price": 24.99,
+      "link": null,
+      "tags": ["tequila"],
+      "abv": 38,
+      "allergens": [],
+      "allergenSources": [],
+      "additives": [],
+      "guestInfoComplete": true,
+      "hideOnGuestMenu": false,
+      "guestName": null
+    },
+    {
+      "id": "ingredient-bourbon",
+      "name": "Bourbon Whiskey",
+      "shortName": "Bourbon",
+      "description": "Amerikanischer Whiskey aus Mais",
+      "notes": null,
+      "price": 22.99,
+      "link": null,
+      "tags": ["whiskey"],
+      "abv": 40,
+      "allergens": [],
+      "allergenSources": [],
+      "additives": [],
+      "guestInfoComplete": true,
+      "hideOnGuestMenu": false,
+      "guestName": null
+    },
+    {
+      "id": "ingredient-triple-sec",
+      "name": "Triple Sec",
+      "shortName": null,
+      "description": "Orangenlikör",
+      "notes": null,
+      "price": 12.99,
+      "link": null,
+      "tags": ["liqueur"],
+      "abv": 30,
+      "allergens": [],
+      "allergenSources": [],
+      "additives": [],
+      "guestInfoComplete": true,
+      "hideOnGuestMenu": false,
+      "guestName": null
+    },
+    {
+      "id": "ingredient-campari",
+      "name": "Campari",
+      "shortName": null,
+      "description": "Bitterer Aperitif",
+      "notes": null,
+      "price": 16.99,
+      "link": null,
+      "tags": ["aperitivo"],
+      "abv": 25,
+      "allergens": [],
+      "allergenSources": [],
+      "additives": ["COLORING"],
+      "guestInfoComplete": true,
+      "hideOnGuestMenu": false,
+      "guestName": null
+    },
+    {
+      "id": "ingredient-vermouth-rosso",
+      "name": "Roter Wermut",
+      "shortName": null,
+      "description": "Süßer, roter Wermut",
+      "notes": null,
+      "price": 11.99,
+      "link": null,
+      "tags": ["aperitivo"],
+      "abv": 16,
+      "allergens": ["SULPHITES"],
+      "allergenSources": [],
+      "additives": ["COLORING"],
+      "guestInfoComplete": true,
+      "hideOnGuestMenu": false,
+      "guestName": null
+    },
+    {
+      "id": "ingredient-aperol",
+      "name": "Aperol",
+      "shortName": null,
+      "description": "Orangenbitter-Aperitif",
+      "notes": null,
+      "price": 13.99,
+      "link": null,
+      "tags": ["aperitivo"],
+      "abv": 11,
+      "allergens": [],
+      "allergenSources": [],
+      "additives": ["COLORING"],
+      "guestInfoComplete": true,
+      "hideOnGuestMenu": false,
+      "guestName": null
+    },
+    {
+      "id": "ingredient-prosecco",
+      "name": "Prosecco",
+      "shortName": null,
+      "description": "Trockener Schaumwein",
+      "notes": null,
+      "price": 7.99,
+      "link": null,
+      "tags": ["wine"],
+      "abv": 11,
+      "allergens": ["SULPHITES"],
+      "allergenSources": [],
+      "additives": [],
+      "guestInfoComplete": true,
+      "hideOnGuestMenu": false,
+      "guestName": null
+    },
+    {
+      "id": "ingredient-angostura",
+      "name": "Angostura Bitters",
+      "shortName": "Angostura",
+      "description": "Aromatischer Bitter",
+      "notes": null,
+      "price": 14.99,
+      "link": null,
+      "tags": ["bitters"],
+      "abv": 44.7,
+      "allergens": [],
+      "allergenSources": [],
+      "additives": ["COLORING"],
+      "guestInfoComplete": true,
+      "hideOnGuestMenu": false,
+      "guestName": null
+    },
+    {
+      "id": "ingredient-lime-juice",
+      "name": "Limettensaft",
+      "shortName": null,
+      "description": "Frisch gepresst",
+      "notes": null,
+      "price": 0.5,
+      "link": null,
+      "tags": ["juice"],
+      "abv": 0,
+      "allergens": [],
+      "allergenSources": [],
+      "additives": [],
+      "guestInfoComplete": true,
+      "hideOnGuestMenu": false,
+      "guestName": "Limette"
+    },
+    {
+      "id": "ingredient-lemon-juice",
+      "name": "Zitronensaft",
+      "shortName": null,
+      "description": "Frisch gepresst",
+      "notes": null,
+      "price": 0.4,
+      "link": null,
+      "tags": ["juice"],
+      "abv": 0,
+      "allergens": [],
+      "allergenSources": [],
+      "additives": [],
+      "guestInfoComplete": true,
+      "hideOnGuestMenu": false,
+      "guestName": "Zitrone"
+    },
+    {
+      "id": "ingredient-cranberry-juice",
+      "name": "Cranberrysaft",
+      "shortName": "Cranberry",
+      "description": "Cranberry-Nektar",
+      "notes": null,
+      "price": 2.49,
+      "link": null,
+      "tags": ["juice"],
+      "abv": 0,
+      "allergens": [],
+      "allergenSources": [],
+      "additives": [],
+      "guestInfoComplete": true,
+      "hideOnGuestMenu": false,
+      "guestName": null
+    },
+    {
+      "id": "ingredient-simple-syrup",
+      "name": "Zuckersirup",
+      "shortName": null,
+      "description": "Zucker und Wasser 1:1",
+      "notes": null,
+      "price": 2.5,
+      "link": null,
+      "tags": ["syrup"],
+      "abv": 0,
+      "allergens": [],
+      "allergenSources": [],
+      "additives": [],
+      "guestInfoComplete": true,
+      "hideOnGuestMenu": true,
+      "guestName": null
+    },
+    {
+      "id": "ingredient-soda",
+      "name": "Sodawasser",
+      "shortName": "Soda",
+      "description": "Mit Kohlensäure",
+      "notes": null,
+      "price": 0.99,
+      "link": null,
+      "tags": ["mixer"],
+      "abv": 0,
+      "allergens": [],
+      "allergenSources": [],
+      "additives": [],
+      "guestInfoComplete": true,
+      "hideOnGuestMenu": false,
+      "guestName": null
+    },
+    {
+      "id": "ingredient-tonic",
+      "name": "Tonic Water",
+      "shortName": "Tonic",
+      "description": "Herb mit Chinin",
+      "notes": null,
+      "price": 1.29,
+      "link": null,
+      "tags": ["mixer"],
+      "abv": 0,
+      "allergens": [],
+      "allergenSources": [],
+      "additives": ["QUININE"],
+      "guestInfoComplete": true,
+      "hideOnGuestMenu": false,
+      "guestName": null
+    },
+    {
+      "id": "ingredient-ginger-beer",
+      "name": "Ginger Beer",
+      "shortName": null,
+      "description": "Scharfe Ingwerlimonade",
+      "notes": null,
+      "price": 1.49,
+      "link": null,
+      "tags": ["mixer"],
+      "abv": 0,
+      "allergens": [],
+      "allergenSources": [],
+      "additives": [],
+      "guestInfoComplete": true,
+      "hideOnGuestMenu": false,
+      "guestName": null
+    },
+    {
+      "id": "ingredient-cola",
+      "name": "Cola",
+      "shortName": null,
+      "description": "Koffeinhaltige Limonade",
+      "notes": null,
+      "price": 1.29,
+      "link": null,
+      "tags": ["mixer"],
+      "abv": 0,
+      "allergens": [],
+      "allergenSources": [],
+      "additives": ["CAFFEINE", "COLORING", "PHOSPHATE"],
+      "guestInfoComplete": true,
+      "hideOnGuestMenu": false,
+      "guestName": null
+    },
+    {
+      "id": "ingredient-mint",
+      "name": "Minze",
+      "shortName": null,
+      "description": "Frische Minzblätter (Bund ≈ 40 Blätter)",
+      "notes": null,
+      "price": 1.49,
+      "link": null,
+      "tags": ["herbs"],
+      "abv": 0,
+      "allergens": [],
+      "allergenSources": [],
+      "additives": [],
+      "guestInfoComplete": true,
+      "hideOnGuestMenu": false,
+      "guestName": null
+    },
+    {
+      "id": "ingredient-egg-white",
+      "name": "Eiweiß",
+      "shortName": null,
+      "description": "Pasteurisiert, für Schaum",
+      "notes": null,
+      "price": 0.25,
+      "link": null,
+      "tags": [],
+      "abv": 0,
+      "allergens": ["EGGS"],
+      "allergenSources": [],
+      "additives": [],
+      "guestInfoComplete": true,
+      "hideOnGuestMenu": false,
+      "guestName": null
+    }
+  ],
+  "ingredientVolumes": [
+    {
+      "ingredientId": "ingredient-vodka",
+      "unitId": "unit-cl",
+      "volume": 70
+    },
+    {
+      "ingredientId": "ingredient-gin",
+      "unitId": "unit-cl",
+      "volume": 70
+    },
+    {
+      "ingredientId": "ingredient-rum-white",
+      "unitId": "unit-cl",
+      "volume": 70
+    },
+    {
+      "ingredientId": "ingredient-tequila",
+      "unitId": "unit-cl",
+      "volume": 70
+    },
+    {
+      "ingredientId": "ingredient-bourbon",
+      "unitId": "unit-cl",
+      "volume": 70
+    },
+    {
+      "ingredientId": "ingredient-triple-sec",
+      "unitId": "unit-cl",
+      "volume": 50
+    },
+    {
+      "ingredientId": "ingredient-campari",
+      "unitId": "unit-cl",
+      "volume": 70
+    },
+    {
+      "ingredientId": "ingredient-vermouth-rosso",
+      "unitId": "unit-cl",
+      "volume": 75
+    },
+    {
+      "ingredientId": "ingredient-aperol",
+      "unitId": "unit-cl",
+      "volume": 70
+    },
+    {
+      "ingredientId": "ingredient-prosecco",
+      "unitId": "unit-cl",
+      "volume": 75
+    },
+    {
+      "ingredientId": "ingredient-angostura",
+      "unitId": "unit-cl",
+      "volume": 20
+    },
+    {
+      "ingredientId": "ingredient-lime-juice",
+      "unitId": "unit-cl",
+      "volume": 2.5
+    },
+    {
+      "ingredientId": "ingredient-lemon-juice",
+      "unitId": "unit-cl",
+      "volume": 3
+    },
+    {
+      "ingredientId": "ingredient-cranberry-juice",
+      "unitId": "unit-cl",
+      "volume": 100
+    },
+    {
+      "ingredientId": "ingredient-simple-syrup",
+      "unitId": "unit-cl",
+      "volume": 70
+    },
+    {
+      "ingredientId": "ingredient-soda",
+      "unitId": "unit-cl",
+      "volume": 100
+    },
+    {
+      "ingredientId": "ingredient-tonic",
+      "unitId": "unit-cl",
+      "volume": 50
+    },
+    {
+      "ingredientId": "ingredient-ginger-beer",
+      "unitId": "unit-cl",
+      "volume": 33
+    },
+    {
+      "ingredientId": "ingredient-cola",
+      "unitId": "unit-cl",
+      "volume": 100
+    },
+    {
+      "ingredientId": "ingredient-mint",
+      "unitId": "unit-piece",
+      "volume": 40
+    },
+    {
+      "ingredientId": "ingredient-egg-white",
+      "unitId": "unit-cl",
+      "volume": 3
+    }
+  ],
+  "ingredientImages": [],
+  "ingredientTranslations": [
+    {
+      "ingredientId": "ingredient-vodka",
+      "locale": "en",
+      "name": "Vodka",
+      "guestName": null,
+      "description": "Neutral grain vodka"
+    },
+    {
+      "ingredientId": "ingredient-gin",
+      "locale": "en",
+      "name": "Gin",
+      "guestName": null,
+      "description": "London dry gin with juniper and citrus"
+    },
+    {
+      "ingredientId": "ingredient-rum-white",
+      "locale": "en",
+      "name": "White rum",
+      "guestName": null,
+      "description": "Light white rum"
+    },
+    {
+      "ingredientId": "ingredient-tequila",
+      "locale": "en",
+      "name": "Tequila blanco",
+      "guestName": null,
+      "description": "100% agave"
+    },
+    {
+      "ingredientId": "ingredient-bourbon",
+      "locale": "en",
+      "name": "Bourbon whiskey",
+      "guestName": null,
+      "description": "American corn whiskey"
+    },
+    {
+      "ingredientId": "ingredient-triple-sec",
+      "locale": "en",
+      "name": "Triple sec",
+      "guestName": null,
+      "description": "Orange liqueur"
+    },
+    {
+      "ingredientId": "ingredient-campari",
+      "locale": "en",
+      "name": "Campari",
+      "guestName": null,
+      "description": "Bitter aperitivo"
+    },
+    {
+      "ingredientId": "ingredient-vermouth-rosso",
+      "locale": "en",
+      "name": "Sweet vermouth",
+      "guestName": null,
+      "description": "Sweet red vermouth"
+    },
+    {
+      "ingredientId": "ingredient-aperol",
+      "locale": "en",
+      "name": "Aperol",
+      "guestName": null,
+      "description": "Bitter orange aperitivo"
+    },
+    {
+      "ingredientId": "ingredient-prosecco",
+      "locale": "en",
+      "name": "Prosecco",
+      "guestName": null,
+      "description": "Dry sparkling wine"
+    },
+    {
+      "ingredientId": "ingredient-angostura",
+      "locale": "en",
+      "name": "Angostura bitters",
+      "guestName": null,
+      "description": "Aromatic bitters"
+    },
+    {
+      "ingredientId": "ingredient-lime-juice",
+      "locale": "en",
+      "name": "Lime juice",
+      "guestName": "Lime",
+      "description": "Freshly squeezed"
+    },
+    {
+      "ingredientId": "ingredient-lemon-juice",
+      "locale": "en",
+      "name": "Lemon juice",
+      "guestName": "Lemon",
+      "description": "Freshly squeezed"
+    },
+    {
+      "ingredientId": "ingredient-cranberry-juice",
+      "locale": "en",
+      "name": "Cranberry juice",
+      "guestName": null,
+      "description": "Cranberry nectar"
+    },
+    {
+      "ingredientId": "ingredient-simple-syrup",
+      "locale": "en",
+      "name": "Simple syrup",
+      "guestName": null,
+      "description": "Sugar and water 1:1"
+    },
+    {
+      "ingredientId": "ingredient-soda",
+      "locale": "en",
+      "name": "Soda water",
+      "guestName": null,
+      "description": "Carbonated water"
+    },
+    {
+      "ingredientId": "ingredient-tonic",
+      "locale": "en",
+      "name": "Tonic water",
+      "guestName": null,
+      "description": "Bitter, with quinine"
+    },
+    {
+      "ingredientId": "ingredient-ginger-beer",
+      "locale": "en",
+      "name": "Ginger beer",
+      "guestName": null,
+      "description": "Spicy ginger soda"
+    },
+    {
+      "ingredientId": "ingredient-cola",
+      "locale": "en",
+      "name": "Cola",
+      "guestName": null,
+      "description": "Caffeinated soft drink"
+    },
+    {
+      "ingredientId": "ingredient-mint",
+      "locale": "en",
+      "name": "Mint",
+      "guestName": null,
+      "description": "Fresh mint leaves (bunch ≈ 40 leaves)"
+    },
+    {
+      "ingredientId": "ingredient-egg-white",
+      "locale": "en",
+      "name": "Egg white",
+      "guestName": null,
+      "description": "Pasteurised, for foam"
+    }
+  ],
+  "cocktailRecipe": [
+    {
+      "id": "cocktail-gin-tonic",
+      "name": "Gin & Tonic",
+      "description": "Gin, Tonic Water und viel Eis – einfach und erfrischend.",
+      "notes": null,
+      "history": "Britische Offiziere in Indien mischten ihr chininhaltiges Tonic gegen Malaria mit Gin.",
+      "tags": ["fresh", "bitter", "gin", "highball", "classic"],
+      "price": 8.5,
+      "iceId": "ice-ice-cubes",
+      "glassId": "glass-highball",
+      "isArchived": false,
+      "abvOverride": null,
+      "extraAllergens": [],
+      "extraAdditives": []
+    },
+    {
+      "id": "cocktail-moscow-mule",
+      "name": "Moscow Mule",
+      "description": "Wodka, Limette und scharfes Ginger Beer.",
+      "notes": null,
+      "history": "Entstand 1941 in Los Angeles, um Wodka und Ginger Beer in den USA bekannt zu machen.",
+      "tags": ["fresh", "spicy", "vodka", "highball", "classic"],
+      "price": 9,
+      "iceId": "ice-ice-cubes",
+      "glassId": "glass-highball",
+      "isArchived": false,
+      "abvOverride": null,
+      "extraAllergens": [],
+      "extraAdditives": []
+    },
+    {
+      "id": "cocktail-cuba-libre",
+      "name": "Cuba Libre",
+      "description": "Weißer Rum, Cola und ein Spritzer Limette.",
+      "notes": null,
+      "history": null,
+      "tags": ["sweet", "rum", "highball", "classic"],
+      "price": 8,
+      "iceId": "ice-ice-cubes",
+      "glassId": "glass-highball",
+      "isArchived": false,
+      "abvOverride": null,
+      "extraAllergens": [],
+      "extraAdditives": []
+    },
+    {
+      "id": "cocktail-mojito",
+      "name": "Mojito",
+      "description": "Kubanischer Klassiker mit Rum, Minze und Limette.",
+      "notes": null,
+      "history": "Der Lieblingsdrink Ernest Hemingways in der Bodeguita del Medio in Havanna.",
+      "tags": ["fresh", "herbal", "rum", "highball", "classic", "summer"],
+      "price": 9.5,
+      "iceId": "ice-ice-crushed",
+      "glassId": "glass-highball",
+      "isArchived": false,
+      "abvOverride": null,
+      "extraAllergens": [],
+      "extraAdditives": []
+    },
+    {
+      "id": "cocktail-margarita",
+      "name": "Margarita",
+      "description": "Tequila, Orangenlikör und Limette – kräftig und sauer.",
+      "notes": null,
+      "history": null,
+      "tags": ["sour", "tequila", "shortdrink", "classic"],
+      "price": 9.5,
+      "iceId": "ice-without-ice",
+      "glassId": "glass-coupe",
+      "isArchived": false,
+      "abvOverride": null,
+      "extraAllergens": [],
+      "extraAdditives": []
+    },
+    {
+      "id": "cocktail-daiquiri",
+      "name": "Daiquiri",
+      "description": "Rum, Limette und Zucker – der Sour in Reinform.",
+      "notes": null,
+      "history": null,
+      "tags": ["sour", "fresh", "rum", "shortdrink", "classic"],
+      "price": 9,
+      "iceId": "ice-without-ice",
+      "glassId": "glass-coupe",
+      "isArchived": false,
+      "abvOverride": null,
+      "extraAllergens": [],
+      "extraAdditives": []
+    },
+    {
+      "id": "cocktail-whiskey-sour",
+      "name": "Whiskey Sour",
+      "description": "Bourbon, Zitrone und Zucker, optional mit Eiweiß für Schaum.",
+      "notes": null,
+      "history": null,
+      "tags": ["sour", "whiskey", "shortdrink", "classic"],
+      "price": 10,
+      "iceId": "ice-ice-cubes",
+      "glassId": "glass-old-fashioned",
+      "isArchived": false,
+      "abvOverride": null,
+      "extraAllergens": [],
+      "extraAdditives": []
+    },
+    {
+      "id": "cocktail-cosmopolitan",
+      "name": "Cosmopolitan",
+      "description": "Wodka, Orangenlikör, Cranberry und Limette.",
+      "notes": null,
+      "history": null,
+      "tags": ["fruity", "sour", "vodka", "shortdrink", "classic"],
+      "price": 10,
+      "iceId": "ice-without-ice",
+      "glassId": "glass-martini",
+      "isArchived": false,
+      "abvOverride": null,
+      "extraAllergens": [],
+      "extraAdditives": []
+    },
+    {
+      "id": "cocktail-old-fashioned",
+      "name": "Old Fashioned",
+      "description": "Bourbon, ein Hauch Zucker und Angostura, kalt gerührt.",
+      "notes": null,
+      "history": "Einer der ältesten Cocktails überhaupt: Spirituose, Zucker, Wasser und Bitter.",
+      "tags": ["bitter", "whiskey", "stirred", "classic", "strong"],
+      "price": 11,
+      "iceId": "ice-ice-cubes",
+      "glassId": "glass-old-fashioned",
+      "isArchived": false,
+      "abvOverride": null,
+      "extraAllergens": [],
+      "extraAdditives": []
+    },
+    {
+      "id": "cocktail-negroni",
+      "name": "Negroni",
+      "description": "Gin, Campari und roter Wermut zu gleichen Teilen.",
+      "notes": null,
+      "history": "Angeblich 1919 in Florenz für Graf Camillo Negroni erfunden.",
+      "tags": ["bitter", "gin", "stirred", "classic", "strong"],
+      "price": 10.5,
+      "iceId": "ice-ice-cubes",
+      "glassId": "glass-old-fashioned",
+      "isArchived": false,
+      "abvOverride": null,
+      "extraAllergens": [],
+      "extraAdditives": []
+    },
+    {
+      "id": "cocktail-aperol-spritz",
+      "name": "Aperol Spritz",
+      "description": "Prosecco, Aperol und ein Schuss Soda.",
+      "notes": null,
+      "history": null,
+      "tags": ["bitter", "fruity", "aperitivo", "spritz", "summer"],
+      "price": 8.5,
+      "iceId": "ice-ice-cubes",
+      "glassId": "glass-wine",
+      "isArchived": false,
+      "abvOverride": null,
+      "extraAllergens": [],
+      "extraAdditives": []
+    },
+    {
+      "id": "cocktail-nojito",
+      "name": "Nojito",
+      "description": "Der alkoholfreie Mojito mit Minze, Limette und Soda.",
+      "notes": null,
+      "history": null,
+      "tags": ["fresh", "herbal", "highball", "alcohol-free", "summer"],
+      "price": 6.5,
+      "iceId": "ice-ice-crushed",
+      "glassId": "glass-highball",
+      "isArchived": false,
+      "abvOverride": null,
+      "extraAllergens": [],
+      "extraAdditives": []
+    }
+  ],
+  "cocktailRecipeImage": [
+    {
+      "cocktailRecipeId": "cocktail-gin-tonic",
+      "image": "file:images/cocktail-gin-tonic.jpg"
+    },
+    {
+      "cocktailRecipeId": "cocktail-moscow-mule",
+      "image": "file:images/cocktail-moscow-mule.jpg"
+    },
+    {
+      "cocktailRecipeId": "cocktail-mojito",
+      "image": "file:images/cocktail-mojito.jpg"
+    },
+    {
+      "cocktailRecipeId": "cocktail-margarita",
+      "image": "file:images/cocktail-margarita.jpg"
+    },
+    {
+      "cocktailRecipeId": "cocktail-cosmopolitan",
+      "image": "file:images/cocktail-cosmopolitan.jpg"
+    },
+    {
+      "cocktailRecipeId": "cocktail-old-fashioned",
+      "image": "file:images/cocktail-old-fashioned.jpg"
+    }
+  ],
+  "cocktailRecipeTranslations": [
+    {
+      "cocktailId": "cocktail-gin-tonic",
+      "locale": "en",
+      "name": "Gin & Tonic",
+      "description": "Gin, tonic water and plenty of ice – simple and refreshing.",
+      "history": "British officers in India mixed their quinine tonic against malaria with gin."
+    },
+    {
+      "cocktailId": "cocktail-moscow-mule",
+      "locale": "en",
+      "name": "Moscow Mule",
+      "description": "Vodka, lime and spicy ginger beer.",
+      "history": "Created in 1941 in Los Angeles to popularise vodka and ginger beer in the US."
+    },
+    {
+      "cocktailId": "cocktail-cuba-libre",
+      "locale": "en",
+      "name": "Cuba Libre",
+      "description": "White rum, cola and a squeeze of lime.",
+      "history": null
+    },
+    {
+      "cocktailId": "cocktail-mojito",
+      "locale": "en",
+      "name": "Mojito",
+      "description": "Cuban classic with rum, mint and lime.",
+      "history": "Ernest Hemingway's favourite at La Bodeguita del Medio in Havana."
+    },
+    {
+      "cocktailId": "cocktail-margarita",
+      "locale": "en",
+      "name": "Margarita",
+      "description": "Tequila, orange liqueur and lime – bold and sour.",
+      "history": null
+    },
+    {
+      "cocktailId": "cocktail-daiquiri",
+      "locale": "en",
+      "name": "Daiquiri",
+      "description": "Rum, lime and sugar – the sour in its purest form.",
+      "history": null
+    },
+    {
+      "cocktailId": "cocktail-whiskey-sour",
+      "locale": "en",
+      "name": "Whiskey Sour",
+      "description": "Bourbon, lemon and sugar, optionally with egg white for foam.",
+      "history": null
+    },
+    {
+      "cocktailId": "cocktail-cosmopolitan",
+      "locale": "en",
+      "name": "Cosmopolitan",
+      "description": "Vodka, orange liqueur, cranberry and lime.",
+      "history": null
+    },
+    {
+      "cocktailId": "cocktail-old-fashioned",
+      "locale": "en",
+      "name": "Old Fashioned",
+      "description": "Bourbon, a touch of sugar and Angostura, stirred cold.",
+      "history": "One of the oldest cocktails: spirit, sugar, water and bitters."
+    },
+    {
+      "cocktailId": "cocktail-negroni",
+      "locale": "en",
+      "name": "Negroni",
+      "description": "Equal parts gin, Campari and sweet vermouth.",
+      "history": "Said to have been created in 1919 in Florence for Count Camillo Negroni."
+    },
+    {
+      "cocktailId": "cocktail-aperol-spritz",
+      "locale": "en",
+      "name": "Aperol Spritz",
+      "description": "Prosecco, Aperol and a splash of soda.",
+      "history": null
+    },
+    {
+      "cocktailId": "cocktail-nojito",
+      "locale": "en",
+      "name": "Nojito",
+      "description": "The alcohol-free mojito with mint, lime and soda.",
+      "history": null
+    }
+  ],
+  "cocktailRecipeStep": [
+    {
+      "id": "step-gin-tonic-1",
+      "stepNumber": 0,
+      "optional": false,
+      "actionId": "action-build-in-glass",
+      "cocktailRecipeId": "cocktail-gin-tonic"
+    },
+    {
+      "id": "step-moscow-mule-1",
+      "stepNumber": 0,
+      "optional": false,
+      "actionId": "action-build-in-glass",
+      "cocktailRecipeId": "cocktail-moscow-mule"
+    },
+    {
+      "id": "step-cuba-libre-1",
+      "stepNumber": 0,
+      "optional": false,
+      "actionId": "action-build-in-glass",
+      "cocktailRecipeId": "cocktail-cuba-libre"
+    },
+    {
+      "id": "step-mojito-1",
+      "stepNumber": 0,
+      "optional": false,
+      "actionId": "action-muddle",
+      "cocktailRecipeId": "cocktail-mojito"
+    },
+    {
+      "id": "step-mojito-2",
+      "stepNumber": 1,
+      "optional": false,
+      "actionId": "action-build-in-glass",
+      "cocktailRecipeId": "cocktail-mojito"
+    },
+    {
+      "id": "step-margarita-1",
+      "stepNumber": 0,
+      "optional": false,
+      "actionId": "action-shake",
+      "cocktailRecipeId": "cocktail-margarita"
+    },
+    {
+      "id": "step-margarita-2",
+      "stepNumber": 1,
+      "optional": false,
+      "actionId": "action-double-strain",
+      "cocktailRecipeId": "cocktail-margarita"
+    },
+    {
+      "id": "step-daiquiri-1",
+      "stepNumber": 0,
+      "optional": false,
+      "actionId": "action-shake",
+      "cocktailRecipeId": "cocktail-daiquiri"
+    },
+    {
+      "id": "step-daiquiri-2",
+      "stepNumber": 1,
+      "optional": false,
+      "actionId": "action-double-strain",
+      "cocktailRecipeId": "cocktail-daiquiri"
+    },
+    {
+      "id": "step-whiskey-sour-1",
+      "stepNumber": 0,
+      "optional": false,
+      "actionId": "action-shake",
+      "cocktailRecipeId": "cocktail-whiskey-sour"
+    },
+    {
+      "id": "step-whiskey-sour-2",
+      "stepNumber": 1,
+      "optional": false,
+      "actionId": "action-single-strain",
+      "cocktailRecipeId": "cocktail-whiskey-sour"
+    },
+    {
+      "id": "step-cosmopolitan-1",
+      "stepNumber": 0,
+      "optional": false,
+      "actionId": "action-shake",
+      "cocktailRecipeId": "cocktail-cosmopolitan"
+    },
+    {
+      "id": "step-cosmopolitan-2",
+      "stepNumber": 1,
+      "optional": false,
+      "actionId": "action-double-strain",
+      "cocktailRecipeId": "cocktail-cosmopolitan"
+    },
+    {
+      "id": "step-old-fashioned-1",
+      "stepNumber": 0,
+      "optional": false,
+      "actionId": "action-stir",
+      "cocktailRecipeId": "cocktail-old-fashioned"
+    },
+    {
+      "id": "step-negroni-1",
+      "stepNumber": 0,
+      "optional": false,
+      "actionId": "action-stir",
+      "cocktailRecipeId": "cocktail-negroni"
+    },
+    {
+      "id": "step-aperol-spritz-1",
+      "stepNumber": 0,
+      "optional": false,
+      "actionId": "action-build-in-glass",
+      "cocktailRecipeId": "cocktail-aperol-spritz"
+    },
+    {
+      "id": "step-nojito-1",
+      "stepNumber": 0,
+      "optional": false,
+      "actionId": "action-muddle",
+      "cocktailRecipeId": "cocktail-nojito"
+    },
+    {
+      "id": "step-nojito-2",
+      "stepNumber": 1,
+      "optional": false,
+      "actionId": "action-build-in-glass",
+      "cocktailRecipeId": "cocktail-nojito"
+    }
+  ],
+  "cocktailRecipeIngredient": [
+    {
+      "ingredientNumber": 0,
+      "optional": false,
+      "amount": 4,
+      "unitId": "unit-cl",
+      "ingredientId": "ingredient-gin",
+      "cocktailRecipeStepId": "step-gin-tonic-1"
+    },
+    {
+      "ingredientNumber": 1,
+      "optional": false,
+      "amount": 12,
+      "unitId": "unit-cl",
+      "ingredientId": "ingredient-tonic",
+      "cocktailRecipeStepId": "step-gin-tonic-1"
+    },
+    {
+      "ingredientNumber": 0,
+      "optional": false,
+      "amount": 5,
+      "unitId": "unit-cl",
+      "ingredientId": "ingredient-vodka",
+      "cocktailRecipeStepId": "step-moscow-mule-1"
+    },
+    {
+      "ingredientNumber": 1,
+      "optional": false,
+      "amount": 1.5,
+      "unitId": "unit-cl",
+      "ingredientId": "ingredient-lime-juice",
+      "cocktailRecipeStepId": "step-moscow-mule-1"
+    },
+    {
+      "ingredientNumber": 2,
+      "optional": false,
+      "amount": 12,
+      "unitId": "unit-cl",
+      "ingredientId": "ingredient-ginger-beer",
+      "cocktailRecipeStepId": "step-moscow-mule-1"
+    },
+    {
+      "ingredientNumber": 0,
+      "optional": false,
+      "amount": 5,
+      "unitId": "unit-cl",
+      "ingredientId": "ingredient-rum-white",
+      "cocktailRecipeStepId": "step-cuba-libre-1"
+    },
+    {
+      "ingredientNumber": 1,
+      "optional": false,
+      "amount": 1,
+      "unitId": "unit-cl",
+      "ingredientId": "ingredient-lime-juice",
+      "cocktailRecipeStepId": "step-cuba-libre-1"
+    },
+    {
+      "ingredientNumber": 2,
+      "optional": false,
+      "amount": 12,
+      "unitId": "unit-cl",
+      "ingredientId": "ingredient-cola",
+      "cocktailRecipeStepId": "step-cuba-libre-1"
+    },
+    {
+      "ingredientNumber": 0,
+      "optional": false,
+      "amount": 8,
+      "unitId": "unit-piece",
+      "ingredientId": "ingredient-mint",
+      "cocktailRecipeStepId": "step-mojito-1"
+    },
+    {
+      "ingredientNumber": 1,
+      "optional": false,
+      "amount": 2.5,
+      "unitId": "unit-cl",
+      "ingredientId": "ingredient-lime-juice",
+      "cocktailRecipeStepId": "step-mojito-1"
+    },
+    {
+      "ingredientNumber": 2,
+      "optional": false,
+      "amount": 2,
+      "unitId": "unit-cl",
+      "ingredientId": "ingredient-simple-syrup",
+      "cocktailRecipeStepId": "step-mojito-1"
+    },
+    {
+      "ingredientNumber": 0,
+      "optional": false,
+      "amount": 5,
+      "unitId": "unit-cl",
+      "ingredientId": "ingredient-rum-white",
+      "cocktailRecipeStepId": "step-mojito-2"
+    },
+    {
+      "ingredientNumber": 1,
+      "optional": false,
+      "amount": 4,
+      "unitId": "unit-cl",
+      "ingredientId": "ingredient-soda",
+      "cocktailRecipeStepId": "step-mojito-2"
+    },
+    {
+      "ingredientNumber": 0,
+      "optional": false,
+      "amount": 5,
+      "unitId": "unit-cl",
+      "ingredientId": "ingredient-tequila",
+      "cocktailRecipeStepId": "step-margarita-1"
+    },
+    {
+      "ingredientNumber": 1,
+      "optional": false,
+      "amount": 2,
+      "unitId": "unit-cl",
+      "ingredientId": "ingredient-triple-sec",
+      "cocktailRecipeStepId": "step-margarita-1"
+    },
+    {
+      "ingredientNumber": 2,
+      "optional": false,
+      "amount": 2.5,
+      "unitId": "unit-cl",
+      "ingredientId": "ingredient-lime-juice",
+      "cocktailRecipeStepId": "step-margarita-1"
+    },
+    {
+      "ingredientNumber": 0,
+      "optional": false,
+      "amount": 6,
+      "unitId": "unit-cl",
+      "ingredientId": "ingredient-rum-white",
+      "cocktailRecipeStepId": "step-daiquiri-1"
+    },
+    {
+      "ingredientNumber": 1,
+      "optional": false,
+      "amount": 2.5,
+      "unitId": "unit-cl",
+      "ingredientId": "ingredient-lime-juice",
+      "cocktailRecipeStepId": "step-daiquiri-1"
+    },
+    {
+      "ingredientNumber": 2,
+      "optional": false,
+      "amount": 1.5,
+      "unitId": "unit-cl",
+      "ingredientId": "ingredient-simple-syrup",
+      "cocktailRecipeStepId": "step-daiquiri-1"
+    },
+    {
+      "ingredientNumber": 0,
+      "optional": false,
+      "amount": 5,
+      "unitId": "unit-cl",
+      "ingredientId": "ingredient-bourbon",
+      "cocktailRecipeStepId": "step-whiskey-sour-1"
+    },
+    {
+      "ingredientNumber": 1,
+      "optional": false,
+      "amount": 2.5,
+      "unitId": "unit-cl",
+      "ingredientId": "ingredient-lemon-juice",
+      "cocktailRecipeStepId": "step-whiskey-sour-1"
+    },
+    {
+      "ingredientNumber": 2,
+      "optional": false,
+      "amount": 2,
+      "unitId": "unit-cl",
+      "ingredientId": "ingredient-simple-syrup",
+      "cocktailRecipeStepId": "step-whiskey-sour-1"
+    },
+    {
+      "ingredientNumber": 3,
+      "optional": true,
+      "amount": 2,
+      "unitId": "unit-cl",
+      "ingredientId": "ingredient-egg-white",
+      "cocktailRecipeStepId": "step-whiskey-sour-1"
+    },
+    {
+      "ingredientNumber": 0,
+      "optional": false,
+      "amount": 4,
+      "unitId": "unit-cl",
+      "ingredientId": "ingredient-vodka",
+      "cocktailRecipeStepId": "step-cosmopolitan-1"
+    },
+    {
+      "ingredientNumber": 1,
+      "optional": false,
+      "amount": 1.5,
+      "unitId": "unit-cl",
+      "ingredientId": "ingredient-triple-sec",
+      "cocktailRecipeStepId": "step-cosmopolitan-1"
+    },
+    {
+      "ingredientNumber": 2,
+      "optional": false,
+      "amount": 3,
+      "unitId": "unit-cl",
+      "ingredientId": "ingredient-cranberry-juice",
+      "cocktailRecipeStepId": "step-cosmopolitan-1"
+    },
+    {
+      "ingredientNumber": 3,
+      "optional": false,
+      "amount": 1.5,
+      "unitId": "unit-cl",
+      "ingredientId": "ingredient-lime-juice",
+      "cocktailRecipeStepId": "step-cosmopolitan-1"
+    },
+    {
+      "ingredientNumber": 0,
+      "optional": false,
+      "amount": 6,
+      "unitId": "unit-cl",
+      "ingredientId": "ingredient-bourbon",
+      "cocktailRecipeStepId": "step-old-fashioned-1"
+    },
+    {
+      "ingredientNumber": 1,
+      "optional": false,
+      "amount": 0.75,
+      "unitId": "unit-cl",
+      "ingredientId": "ingredient-simple-syrup",
+      "cocktailRecipeStepId": "step-old-fashioned-1"
+    },
+    {
+      "ingredientNumber": 2,
+      "optional": false,
+      "amount": 2,
+      "unitId": "unit-dash",
+      "ingredientId": "ingredient-angostura",
+      "cocktailRecipeStepId": "step-old-fashioned-1"
+    },
+    {
+      "ingredientNumber": 0,
+      "optional": false,
+      "amount": 3,
+      "unitId": "unit-cl",
+      "ingredientId": "ingredient-gin",
+      "cocktailRecipeStepId": "step-negroni-1"
+    },
+    {
+      "ingredientNumber": 1,
+      "optional": false,
+      "amount": 3,
+      "unitId": "unit-cl",
+      "ingredientId": "ingredient-campari",
+      "cocktailRecipeStepId": "step-negroni-1"
+    },
+    {
+      "ingredientNumber": 2,
+      "optional": false,
+      "amount": 3,
+      "unitId": "unit-cl",
+      "ingredientId": "ingredient-vermouth-rosso",
+      "cocktailRecipeStepId": "step-negroni-1"
+    },
+    {
+      "ingredientNumber": 0,
+      "optional": false,
+      "amount": 9,
+      "unitId": "unit-cl",
+      "ingredientId": "ingredient-prosecco",
+      "cocktailRecipeStepId": "step-aperol-spritz-1"
+    },
+    {
+      "ingredientNumber": 1,
+      "optional": false,
+      "amount": 6,
+      "unitId": "unit-cl",
+      "ingredientId": "ingredient-aperol",
+      "cocktailRecipeStepId": "step-aperol-spritz-1"
+    },
+    {
+      "ingredientNumber": 2,
+      "optional": false,
+      "amount": 3,
+      "unitId": "unit-cl",
+      "ingredientId": "ingredient-soda",
+      "cocktailRecipeStepId": "step-aperol-spritz-1"
+    },
+    {
+      "ingredientNumber": 0,
+      "optional": false,
+      "amount": 8,
+      "unitId": "unit-piece",
+      "ingredientId": "ingredient-mint",
+      "cocktailRecipeStepId": "step-nojito-1"
+    },
+    {
+      "ingredientNumber": 1,
+      "optional": false,
+      "amount": 2.5,
+      "unitId": "unit-cl",
+      "ingredientId": "ingredient-lime-juice",
+      "cocktailRecipeStepId": "step-nojito-1"
+    },
+    {
+      "ingredientNumber": 2,
+      "optional": false,
+      "amount": 2,
+      "unitId": "unit-cl",
+      "ingredientId": "ingredient-simple-syrup",
+      "cocktailRecipeStepId": "step-nojito-1"
+    },
+    {
+      "ingredientNumber": 0,
+      "optional": false,
+      "amount": 12,
+      "unitId": "unit-cl",
+      "ingredientId": "ingredient-soda",
+      "cocktailRecipeStepId": "step-nojito-2"
+    }
+  ],
+  "cocktailRecipeGarnish": [
+    {
+      "cocktailRecipeId": "cocktail-gin-tonic",
+      "garnishId": "garnish-lime-wedge",
+      "description": null,
+      "garnishNumber": 0,
+      "optional": false,
+      "isAlternative": false
+    },
+    {
+      "cocktailRecipeId": "cocktail-moscow-mule",
+      "garnishId": "garnish-lime-wedge",
+      "description": null,
+      "garnishNumber": 0,
+      "optional": false,
+      "isAlternative": false
+    },
+    {
+      "cocktailRecipeId": "cocktail-moscow-mule",
+      "garnishId": "garnish-mint-sprig",
+      "description": null,
+      "garnishNumber": 1,
+      "optional": true,
+      "isAlternative": false
+    },
+    {
+      "cocktailRecipeId": "cocktail-cuba-libre",
+      "garnishId": "garnish-lime-wedge",
+      "description": null,
+      "garnishNumber": 0,
+      "optional": false,
+      "isAlternative": false
+    },
+    {
+      "cocktailRecipeId": "cocktail-mojito",
+      "garnishId": "garnish-mint-sprig",
+      "description": null,
+      "garnishNumber": 0,
+      "optional": false,
+      "isAlternative": false
+    },
+    {
+      "cocktailRecipeId": "cocktail-mojito",
+      "garnishId": "garnish-lime-wedge",
+      "description": null,
+      "garnishNumber": 1,
+      "optional": false,
+      "isAlternative": false
+    },
+    {
+      "cocktailRecipeId": "cocktail-margarita",
+      "garnishId": "garnish-lime-wedge",
+      "description": null,
+      "garnishNumber": 0,
+      "optional": false,
+      "isAlternative": false
+    },
+    {
+      "cocktailRecipeId": "cocktail-daiquiri",
+      "garnishId": "garnish-lime-wedge",
+      "description": null,
+      "garnishNumber": 0,
+      "optional": true,
+      "isAlternative": false
+    },
+    {
+      "cocktailRecipeId": "cocktail-whiskey-sour",
+      "garnishId": "garnish-orange-slice",
+      "description": null,
+      "garnishNumber": 0,
+      "optional": false,
+      "isAlternative": false
+    },
+    {
+      "cocktailRecipeId": "cocktail-whiskey-sour",
+      "garnishId": "garnish-cherry",
+      "description": null,
+      "garnishNumber": 1,
+      "optional": true,
+      "isAlternative": false
+    },
+    {
+      "cocktailRecipeId": "cocktail-cosmopolitan",
+      "garnishId": "garnish-orange-zest",
+      "description": null,
+      "garnishNumber": 0,
+      "optional": false,
+      "isAlternative": false
+    },
+    {
+      "cocktailRecipeId": "cocktail-old-fashioned",
+      "garnishId": "garnish-orange-zest",
+      "description": null,
+      "garnishNumber": 0,
+      "optional": false,
+      "isAlternative": false
+    },
+    {
+      "cocktailRecipeId": "cocktail-old-fashioned",
+      "garnishId": "garnish-cherry",
+      "description": null,
+      "garnishNumber": 1,
+      "optional": true,
+      "isAlternative": false
+    },
+    {
+      "cocktailRecipeId": "cocktail-negroni",
+      "garnishId": "garnish-orange-slice",
+      "description": null,
+      "garnishNumber": 0,
+      "optional": false,
+      "isAlternative": false
+    },
+    {
+      "cocktailRecipeId": "cocktail-aperol-spritz",
+      "garnishId": "garnish-orange-slice",
+      "description": null,
+      "garnishNumber": 0,
+      "optional": false,
+      "isAlternative": false
+    },
+    {
+      "cocktailRecipeId": "cocktail-nojito",
+      "garnishId": "garnish-mint-sprig",
+      "description": null,
+      "garnishNumber": 0,
+      "optional": false,
+      "isAlternative": false
+    },
+    {
+      "cocktailRecipeId": "cocktail-nojito",
+      "garnishId": "garnish-lime-wedge",
+      "description": null,
+      "garnishNumber": 1,
+      "optional": false,
+      "isAlternative": false
+    }
+  ],
+  "cocktailCard": [
+    {
+      "id": "card-classics",
+      "name": "Classics",
+      "date": null,
+      "archived": false
+    },
+    {
+      "id": "card-summer",
+      "name": "Summer Specials",
+      "date": null,
+      "archived": false
+    }
+  ],
+  "cocktailCardGroup": [
+    {
+      "id": "group-classics-highballs",
+      "groupNumber": 0,
+      "name": "Highballs",
+      "cocktailCardId": "card-classics",
+      "groupPrice": null
+    },
+    {
+      "id": "group-classics-sours",
+      "groupNumber": 1,
+      "name": "Sours",
+      "cocktailCardId": "card-classics",
+      "groupPrice": null
+    },
+    {
+      "id": "group-classics-stirred",
+      "groupNumber": 2,
+      "name": "Stirred",
+      "cocktailCardId": "card-classics",
+      "groupPrice": null
+    },
+    {
+      "id": "group-summer-spritz",
+      "groupNumber": 0,
+      "name": "Spritz & Highballs",
+      "cocktailCardId": "card-summer",
+      "groupPrice": null
+    },
+    {
+      "id": "group-summer-zero",
+      "groupNumber": 1,
+      "name": "Zero Proof",
+      "cocktailCardId": "card-summer",
+      "groupPrice": null
+    }
+  ],
+  "cocktailCardGroupItem": [
+    {
+      "itemNumber": 0,
+      "cocktailCardGroupId": "group-classics-highballs",
+      "cocktailId": "cocktail-gin-tonic",
+      "specialPrice": null
+    },
+    {
+      "itemNumber": 1,
+      "cocktailCardGroupId": "group-classics-highballs",
+      "cocktailId": "cocktail-moscow-mule",
+      "specialPrice": null
+    },
+    {
+      "itemNumber": 2,
+      "cocktailCardGroupId": "group-classics-highballs",
+      "cocktailId": "cocktail-cuba-libre",
+      "specialPrice": null
+    },
+    {
+      "itemNumber": 0,
+      "cocktailCardGroupId": "group-classics-sours",
+      "cocktailId": "cocktail-margarita",
+      "specialPrice": null
+    },
+    {
+      "itemNumber": 1,
+      "cocktailCardGroupId": "group-classics-sours",
+      "cocktailId": "cocktail-daiquiri",
+      "specialPrice": null
+    },
+    {
+      "itemNumber": 2,
+      "cocktailCardGroupId": "group-classics-sours",
+      "cocktailId": "cocktail-whiskey-sour",
+      "specialPrice": null
+    },
+    {
+      "itemNumber": 3,
+      "cocktailCardGroupId": "group-classics-sours",
+      "cocktailId": "cocktail-cosmopolitan",
+      "specialPrice": null
+    },
+    {
+      "itemNumber": 0,
+      "cocktailCardGroupId": "group-classics-stirred",
+      "cocktailId": "cocktail-old-fashioned",
+      "specialPrice": null
+    },
+    {
+      "itemNumber": 1,
+      "cocktailCardGroupId": "group-classics-stirred",
+      "cocktailId": "cocktail-negroni",
+      "specialPrice": null
+    },
+    {
+      "itemNumber": 0,
+      "cocktailCardGroupId": "group-summer-spritz",
+      "cocktailId": "cocktail-aperol-spritz",
+      "specialPrice": null
+    },
+    {
+      "itemNumber": 1,
+      "cocktailCardGroupId": "group-summer-spritz",
+      "cocktailId": "cocktail-mojito",
+      "specialPrice": 8.5
+    },
+    {
+      "itemNumber": 2,
+      "cocktailCardGroupId": "group-summer-spritz",
+      "cocktailId": "cocktail-moscow-mule",
+      "specialPrice": null
+    },
+    {
+      "itemNumber": 0,
+      "cocktailCardGroupId": "group-summer-zero",
+      "cocktailId": "cocktail-nojito",
+      "specialPrice": null
+    }
+  ],
+  "calculation": [
+    {
+      "id": "calculation-summer-party",
+      "name": "Summer Party (120)",
+      "showSalesStuff": true,
+      "groupId": null
+    }
+  ],
+  "calculationGroups": [],
+  "calculationItems": [
+    {
+      "plannedAmount": 80,
+      "customPrice": null,
+      "cocktailId": "cocktail-aperol-spritz",
+      "calculationId": "calculation-summer-party"
+    },
+    {
+      "plannedAmount": 60,
+      "customPrice": null,
+      "cocktailId": "cocktail-gin-tonic",
+      "calculationId": "calculation-summer-party"
+    },
+    {
+      "plannedAmount": 50,
+      "customPrice": null,
+      "cocktailId": "cocktail-mojito",
+      "calculationId": "calculation-summer-party"
+    },
+    {
+      "plannedAmount": 40,
+      "customPrice": null,
+      "cocktailId": "cocktail-moscow-mule",
+      "calculationId": "calculation-summer-party"
+    },
+    {
+      "plannedAmount": 30,
+      "customPrice": null,
+      "cocktailId": "cocktail-nojito",
+      "calculationId": "calculation-summer-party"
+    }
+  ],
+  "signage": [
+    {
+      "format": "LANDSCAPE",
+      "backgroundColor": "#121110",
+      "backgroundMode": "COLOR",
+      "slideDurationSeconds": 30,
+      "mirrorSourceFormat": null
+    }
+  ],
+  "signageSlides": [
+    {
+      "format": "LANDSCAPE",
+      "type": "GUEST_MENU",
+      "content": "",
+      "guestMenuId": "guest-menu-main",
+      "options": null,
+      "order": 0,
+      "enabled": true,
+      "weekdays": [],
+      "dateExclusive": false
+    }
+  ],
+  "guestMenuTemplates": [],
+  "guestMenus": [
+    {
+      "id": "guest-menu-main",
+      "name": "Cocktailkarte",
+      "slug": "cocktails",
+      "priority": 0,
+      "weekdays": [],
+      "inactiveBehavior": "NOTICE_WITH_LINK",
+      "sourceMode": "FIXED_CARD",
+      "sourceCardId": "card-classics",
+      "locales": [],
+      "enabled": true,
+      "isDefault": true,
+      "draft": {
+        "schemaVersion": 1,
+        "title": {
+          "de": "Cocktailkarte",
+          "en": "Cocktail menu"
+        },
+        "subtitle": {
+          "de": "Klassiker & Sommer-Specials",
+          "en": "Classics & summer specials"
+        },
+        "theme": {
+          "preset": "speakeasy",
+          "tokens": {
+            "colors": {
+              "bg": "#121110",
+              "surface": "#1d1b19",
+              "text": "#f3ead7",
+              "muted": "#b6a888",
+              "accent": "#c9a24d",
+              "accentContrast": "#121110"
+            },
+            "fontHeading": "cormorant-garamond",
+            "fontBody": "josefin-sans",
+            "radius": 2,
+            "density": "comfortable"
+          }
+        },
+        "templates": {
+          "web": {
+            "templateId": "speakeasy"
+          },
+          "monitor": {
+            "templateId": "speakeasy"
+          },
+          "print": {
+            "templateId": "speakeasy"
+          }
+        },
+        "outputs": {
+          "web": {
+            "enabled": true,
+            "layout": "list",
+            "fields": {
+              "image": "list",
+              "description": "list"
+            },
+            "search": {
+              "enabled": true,
+              "includeOnRequest": false,
+              "ingredientsSearchable": true
+            },
+            "filters": {
+              "categories": "auto",
+              "allergens": true,
+              "alcohol": true,
+              "custom": [
+                {
+                  "id": "f-zero",
+                  "label": {
+                    "de": "Alkoholfrei",
+                    "en": "Alcohol-free"
+                  },
+                  "tags": ["alcohol-free"],
+                  "quick": true
+                }
+              ]
+            },
+            "sort": "menu",
+            "noindex": true
+          },
+          "monitor": {
+            "enabled": true,
+            "layout": "compact",
+            "fields": {
+              "image": "off",
+              "description": "off",
+              "ingredients": "list",
+              "flavors": "off",
+              "badges": "list",
+              "allergens": "off",
+              "additives": "off"
+            },
+            "columns": "auto",
+            "pageDurationSeconds": 15,
+            "showQrCode": true,
+            "localeMode": "rotate",
+            "locale": null
+          },
+          "print": {
+            "enabled": true,
+            "layout": "list",
+            "fields": {
+              "image": "off",
+              "description": "list",
+              "glass": "off",
+              "garnish": "off",
+              "history": "off",
+              "allergens": "list",
+              "additives": "list",
+              "allergenDisplay": "codes"
+            },
+            "paper": "A4",
+            "locale": null,
+            "showQrCode": true
+          }
+        },
+        "defaults": {
+          "fields": {
+            "price": "list",
+            "ingredients": "list",
+            "amounts": "off",
+            "flavors": "list",
+            "badges": "list",
+            "image": "list",
+            "description": "detail",
+            "history": "detail",
+            "glass": "detail",
+            "garnish": "detail",
+            "rating": "off",
+            "alcohol": "list",
+            "allergens": "detail",
+            "additives": "detail",
+            "alcoholDisplay": "category",
+            "allergenDisplay": "icons",
+            "additiveDisplay": "footnotes"
+          }
+        },
+        "blocks": [
+          {
+            "id": "header",
+            "type": "header",
+            "showLogo": true,
+            "showTitle": true,
+            "showSubtitle": true
+          },
+          {
+            "id": "intro",
+            "type": "text",
+            "content": {
+              "de": "Willkommen! Alle Drinks werden frisch für dich gemixt. Frag gerne nach Empfehlungen.",
+              "en": "Welcome! Every drink is mixed fresh for you. Feel free to ask for recommendations."
+            },
+            "outputs": {
+              "monitor": false
+            }
+          },
+          {
+            "id": "section-summer",
+            "type": "section",
+            "title": {
+              "de": "Sommer-Specials",
+              "en": "Summer specials"
+            },
+            "description": {
+              "de": "Nur solange die Sonne scheint.",
+              "en": "Only while the sun shines."
+            },
+            "source": {
+              "kind": "manual",
+              "cocktailIds": ["cocktail-aperol-spritz", "cocktail-mojito", "cocktail-nojito"]
+            },
+            "layout": "cards",
+            "overrides": {
+              "cocktail-aperol-spritz": {
+                "highlight": "new"
+              },
+              "cocktail-mojito": {
+                "highlight": "recommendation"
+              }
+            }
+          },
+          {
+            "id": "divider",
+            "type": "divider"
+          },
+          {
+            "id": "section-classics",
+            "type": "section",
+            "title": {},
+            "source": {
+              "kind": "cardAllGroups"
+            },
+            "overrides": {
+              "cocktail-negroni": {
+                "highlight": "signature"
+              }
+            }
+          },
+          {
+            "id": "notice-allergens",
+            "type": "notice",
+            "preset": "allergens"
+          }
+        ]
+      },
+      "published": {
+        "schemaVersion": 1,
+        "title": {
+          "de": "Cocktailkarte",
+          "en": "Cocktail menu"
+        },
+        "subtitle": {
+          "de": "Klassiker & Sommer-Specials",
+          "en": "Classics & summer specials"
+        },
+        "theme": {
+          "preset": "speakeasy",
+          "tokens": {
+            "colors": {
+              "bg": "#121110",
+              "surface": "#1d1b19",
+              "text": "#f3ead7",
+              "muted": "#b6a888",
+              "accent": "#c9a24d",
+              "accentContrast": "#121110"
+            },
+            "fontHeading": "cormorant-garamond",
+            "fontBody": "josefin-sans",
+            "radius": 2,
+            "density": "comfortable"
+          }
+        },
+        "templates": {
+          "web": {
+            "templateId": "speakeasy"
+          },
+          "monitor": {
+            "templateId": "speakeasy"
+          },
+          "print": {
+            "templateId": "speakeasy"
+          }
+        },
+        "outputs": {
+          "web": {
+            "enabled": true,
+            "layout": "list",
+            "fields": {
+              "image": "list",
+              "description": "list"
+            },
+            "search": {
+              "enabled": true,
+              "includeOnRequest": false,
+              "ingredientsSearchable": true
+            },
+            "filters": {
+              "categories": "auto",
+              "allergens": true,
+              "alcohol": true,
+              "custom": [
+                {
+                  "id": "f-zero",
+                  "label": {
+                    "de": "Alkoholfrei",
+                    "en": "Alcohol-free"
+                  },
+                  "tags": ["alcohol-free"],
+                  "quick": true
+                }
+              ]
+            },
+            "sort": "menu",
+            "noindex": true
+          },
+          "monitor": {
+            "enabled": true,
+            "layout": "compact",
+            "fields": {
+              "image": "off",
+              "description": "off",
+              "ingredients": "list",
+              "flavors": "off",
+              "badges": "list",
+              "allergens": "off",
+              "additives": "off"
+            },
+            "columns": "auto",
+            "pageDurationSeconds": 15,
+            "showQrCode": true,
+            "localeMode": "rotate",
+            "locale": null
+          },
+          "print": {
+            "enabled": true,
+            "layout": "list",
+            "fields": {
+              "image": "off",
+              "description": "list",
+              "glass": "off",
+              "garnish": "off",
+              "history": "off",
+              "allergens": "list",
+              "additives": "list",
+              "allergenDisplay": "codes"
+            },
+            "paper": "A4",
+            "locale": null,
+            "showQrCode": true
+          }
+        },
+        "defaults": {
+          "fields": {
+            "price": "list",
+            "ingredients": "list",
+            "amounts": "off",
+            "flavors": "list",
+            "badges": "list",
+            "image": "list",
+            "description": "detail",
+            "history": "detail",
+            "glass": "detail",
+            "garnish": "detail",
+            "rating": "off",
+            "alcohol": "list",
+            "allergens": "detail",
+            "additives": "detail",
+            "alcoholDisplay": "category",
+            "allergenDisplay": "icons",
+            "additiveDisplay": "footnotes"
+          }
+        },
+        "blocks": [
+          {
+            "id": "header",
+            "type": "header",
+            "showLogo": true,
+            "showTitle": true,
+            "showSubtitle": true
+          },
+          {
+            "id": "intro",
+            "type": "text",
+            "content": {
+              "de": "Willkommen! Alle Drinks werden frisch für dich gemixt. Frag gerne nach Empfehlungen.",
+              "en": "Welcome! Every drink is mixed fresh for you. Feel free to ask for recommendations."
+            },
+            "outputs": {
+              "monitor": false
+            }
+          },
+          {
+            "id": "section-summer",
+            "type": "section",
+            "title": {
+              "de": "Sommer-Specials",
+              "en": "Summer specials"
+            },
+            "description": {
+              "de": "Nur solange die Sonne scheint.",
+              "en": "Only while the sun shines."
+            },
+            "source": {
+              "kind": "manual",
+              "cocktailIds": ["cocktail-aperol-spritz", "cocktail-mojito", "cocktail-nojito"]
+            },
+            "layout": "cards",
+            "overrides": {
+              "cocktail-aperol-spritz": {
+                "highlight": "new"
+              },
+              "cocktail-mojito": {
+                "highlight": "recommendation"
+              }
+            }
+          },
+          {
+            "id": "divider",
+            "type": "divider"
+          },
+          {
+            "id": "section-classics",
+            "type": "section",
+            "title": {},
+            "source": {
+              "kind": "cardAllGroups"
+            },
+            "overrides": {
+              "cocktail-negroni": {
+                "highlight": "signature"
+              }
+            }
+          },
+          {
+            "id": "notice-allergens",
+            "type": "notice",
+            "preset": "allergens"
+          }
+        ]
+      }
+    }
+  ]
+}

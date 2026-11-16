@@ -42,6 +42,7 @@ import {
   useSortableData,
 } from '@components/ui';
 import type { SortDirection } from '@components/ui';
+import { AddFromTemplatesButton } from '@components/onboarding/AddFromTemplatesButton';
 
 const ManageGlassesOverviewPage: NextPageWithPullToRefresh = () => {
   const router = useRouter();
@@ -282,7 +283,10 @@ const ManageGlassesOverviewPage: NextPageWithPullToRefresh = () => {
                 ) : sortedGlasses.length == 0 ? (
                   <TableRow>
                     <TableCell colSpan={5} className={'text-center'}>
-                      {t('manage:noEntriesFound')}
+                      <div className="flex flex-col items-center gap-2">
+                        <span>{t('manage:noEntriesFound')}</span>
+                        {glasses.length == 0 && <AddFromTemplatesButton onApplied={() => fetchGlasses(workspaceId, setGlasses, setLoading)} />}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ) : (

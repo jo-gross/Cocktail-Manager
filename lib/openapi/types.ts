@@ -26,6 +26,12 @@ export interface RouteSpec {
    * own identity or write a real-user FK: `leave`, api-key create/delete, join-request self-cancel.
    */
   sessionOnly?: boolean;
+  /**
+   * Who the operation is for (default `workspace`: `{workspaceId}` routes, see `roles`/`permission`).
+   * `user`: any logged-in session, no workspace (needs `sessionOnly: true`); `master`: instance master key only
+   * (`roles` empty). The handler ctx has no workspace for both.
+   */
+  auth?: 'workspace' | 'user' | 'master';
   summary: string;
   description?: string;
   tags: string[];
@@ -53,6 +59,8 @@ export interface ResourceApiDoc {
    * e.g. '/workspaces/{workspaceId}/glasses'. The generator emits it at /api/v1{basePath}.
    */
   basePath: string;
+  /** Path prefix in the spec (default `/api/v1`); instance admin routes live under `/api`. */
+  pathPrefix?: '/api/v1' | '/api';
   operations: ApiDoc;
 }
 

@@ -8,6 +8,7 @@ import { z } from '@lib/openapi/zod';
 import { WorkspaceIdParam, DeletionResult } from '@lib/schemas/common';
 import { ApiTags } from '@lib/openapi/tags';
 import { ImageDataUriSchema } from '@lib/images/imageSchema';
+import { ImageCreditInputSchema } from '@lib/images/imageCredit';
 import type { ResourceApiDoc } from '@lib/openapi/types';
 
 const ID_MAX = 128;
@@ -29,6 +30,7 @@ export const GlassDtoSchema = z
     deposit: z.number().openapi({ description: 'Deposit in currency units.' }),
     hasImage: z.boolean().openapi({ description: 'Whether the glass has an image.' }),
     imageUrl: z.string().nullable().openapi({ description: 'URL to fetch the glass image bytes, or null when hasImage is false.' }),
+    imageCredit: z.string().nullable().openapi({ description: 'Attribution of the image (author, source, license), to be shown with it; null = none.' }),
   })
   .openapi('Glass');
 
@@ -41,6 +43,7 @@ export const GlassCreateSchema = z
     deposit: z.coerce.number().min(0).max(AMOUNT_MAX).openapi({ description: 'Deposit in currency units.' }),
     volume: z.coerce.number().min(0).max(AMOUNT_MAX).nullish().openapi({ description: 'Volume in cl.' }),
     image: ImageDataUriSchema.nullish().openapi({ description: 'Base64-encoded raster image (data URI) to attach.' }),
+    imageCredit: ImageCreditInputSchema,
   })
   .openapi('GlassCreateInput');
 
@@ -50,6 +53,7 @@ export const GlassUpdateSchema = z
     deposit: z.coerce.number().min(0).max(AMOUNT_MAX),
     volume: z.coerce.number().min(0).max(AMOUNT_MAX).nullish(),
     image: ImageDataUriSchema.nullish().openapi({ description: 'Base64 raster image (data URI); omitting it removes the current image.' }),
+    imageCredit: ImageCreditInputSchema,
   })
   .openapi('GlassUpdateInput');
 

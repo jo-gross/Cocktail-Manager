@@ -46,17 +46,23 @@ export function fetchCocktail(
 }
 
 /**
- * Loads the cocktail detail DTO for edit forms. Image bytes live at `imageUrl`
- * and are hydrated by the form via `fetchImageAsBase64` — v1 no longer embeds base64.
+ * Loads the cocktail detail DTO for the edit form (network first, offline cache as fallback);
+ * reports a failure and resolves to `undefined`. Image bytes live at `imageUrl` and are
+ * hydrated by the form via `fetchImageAsBase64` — v1 no longer embeds base64.
  */
-export function fetchCocktailWithImage(
-  workspaceId: string | string[] | undefined,
-  cocktailId: string,
-  setCocktail: (cocktail: CocktailDto) => void,
-  setCocktailLoading: (loading: boolean) => void,
-  onCacheFallback?: () => void,
-) {
-  fetchCocktail(workspaceId, cocktailId, setCocktail, setCocktailLoading, onCacheFallback);
+export async function loadCocktailDetail(workspaceId: string, cocktailId: string): Promise<CocktailDto | undefined> {
+  const { data, error } = await fetchWithCache<CocktailDto>({
+    url: `/api/v1/workspaces/${workspaceId}/cocktails/${cocktailId}`,
+    storeName: 'cocktails',
+    workspaceId,
+    resourceId: `${cocktailId}-full`,
+    onNetworkError: (networkError) => {
+      console.error('loadCocktailDetail network error:', networkError);
+    },
+  });
+  if (data) return data;
+  if (error) alertService.error(i18n.t('errors:loadCocktail'));
+  return undefined;
 }
 
 /**

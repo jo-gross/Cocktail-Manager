@@ -10,6 +10,7 @@ import { createCocktailRecipeAuditLog, createLog } from '@lib/auditLog';
 import { assertIdsInWorkspace } from '@lib/api/scope';
 import { lockWorkspaceScope, runTx, type Tx } from '@lib/db/tx';
 import { decodeStoredImage, type DecodedImage } from '@lib/images/imageResponse';
+import { nextImageCredit } from '@lib/images/imageCredit';
 import { calculateCocktailRecipeSimilarity } from '@lib/findSimilarEntities';
 import { normalizeString } from '@lib/StringUtils';
 import { ApiError } from '@lib/http/ApiError';
@@ -30,6 +31,7 @@ import type {
 /** Full include used for the detail DTO (with nested image counts + rating aggregates). */
 const fullInclude = {
   _count: { select: { CocktailRecipeImage: true } },
+  CocktailRecipeImage: { select: { credit: true } },
   ice: true,
   glass: { include: { _count: { select: { GlassImage: true } } } },
   garnishes: {
@@ -63,6 +65,7 @@ const auditInclude = {
 /** Slim include for list/summary views. */
 const summaryInclude = {
   _count: { select: { CocktailRecipeImage: true } },
+  CocktailRecipeImage: { select: { credit: true } },
   glass: { include: { _count: { select: { GlassImage: true } } } },
 } satisfies Prisma.CocktailRecipeInclude;
 
@@ -196,7 +199,7 @@ export async function createCocktail(workspace: Workspace, user: User, input: Co
 
     if (input.image) {
       await tx.cocktailRecipeImage.create({
-        data: { image: input.image, cocktailRecipeId: createdCocktail.id },
+        data: { image: input.image, credit: nextImageCredit({ image: input.image, credit: input.imageCredit }, null), cocktailRecipeId: createdCocktail.id },
       });
     }
 
@@ -286,10 +289,12 @@ export async function updateCocktail(workspace: Workspace, user: User, cocktailI
       },
     });
 
-    // Image handling (max. one image): drop and re-create when provided.
+    // Image handling (max. one image): drop and re-create when provided. A new image drops the
+    // credit of the old one unless the request sets it.
+    const imageCredit = nextImageCredit({ image: input.image, credit: input.imageCredit }, oldCocktail.CocktailRecipeImage[0]);
     await tx.cocktailRecipeImage.deleteMany({ where: { cocktailRecipeId: cocktailId } });
     if (input.image != undefined) {
-      await tx.cocktailRecipeImage.create({ data: { cocktailRecipeId: cocktailId, image: input.image } });
+      await tx.cocktailRecipeImage.create({ data: { cocktailRecipeId: cocktailId, image: input.image, credit: imageCredit } });
     }
 
     // ---- Steps & ingredient lines: differential update via ids ----
@@ -449,7 +454,7 @@ export async function cloneCocktail(workspace: Workspace, user: User, cocktailId
     const existing = await tx.cocktailRecipe.findFirst({
       where: { id: cocktailId, workspaceId: workspace.id },
       include: {
-        CocktailRecipeImage: { select: { image: true } },
+        CocktailRecipeImage: { select: { image: true, credit: true } },
         garnishes: true,
         steps: { include: { ingredients: true }, orderBy: { stepNumber: 'asc' } },
       },
@@ -476,7 +481,7 @@ export async function cloneCocktail(workspace: Workspace, user: User, cocktailId
 
     if (existing.CocktailRecipeImage.length > 0) {
       await tx.cocktailRecipeImage.create({
-        data: { image: existing.CocktailRecipeImage[0].image, cocktailRecipeId: createClone.id },
+        data: { image: existing.CocktailRecipeImage[0].image, credit: existing.CocktailRecipeImage[0].credit, cocktailRecipeId: createClone.id },
       });
     }
 

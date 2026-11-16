@@ -49,7 +49,7 @@ export interface DemoCleanupResult {
 /**
  * Deletes expired demo workspaces (each together with its now orphaned demo users)
  * and sweeps orphaned demo users left behind by older code paths.
- * Called from `/api/demo/cleanup`; `scripts/cleanup-demo-workspaces.js` mirrors it for cron.
+ * Called hourly by the app process on demo instances (`lib/demo/scheduler.ts`) and from `/api/demo/cleanup`.
  */
 export async function cleanupExpiredDemoWorkspaces(now = new Date()): Promise<DemoCleanupResult> {
   const expiredWorkspaces = await prisma.workspace.findMany({ where: { isDemo: true, expiresAt: { lte: now } }, select: { id: true } });

@@ -24,7 +24,8 @@
     "details": "Details",
     "noPrice": "Preis auf Anfrage",
     "optional": "optional",
-    "incomplete": "Angaben unvollständig"
+    "incomplete": "Angaben unvollständig",
+    "photo": "Foto"
   },
   "alcohol": {
     "approx": "ca. {{value}}",
@@ -34,7 +35,8 @@
   "footer": {
     "allergens": "Allergene",
     "additives": "Zusatzstoffe",
-    "legend": "Kennzeichnung"
+    "legend": "Kennzeichnung",
+    "imageCredits": "Bildnachweise"
   },
   "notice": {
     "allergens": "Informationen zu Allergenen und Zusatzstoffen erhalten Sie bei unserem Personal.",

@@ -1,0 +1,17 @@
+{
+  "key": "demo",
+  "kind": "DEMO",
+  "version": 1,
+  "name": {
+    "de": "Demo-Bar",
+    "en": "Demo bar"
+  },
+  "description": {
+    "de": "Komplette Beispiel-Bar für die Demo-Instanz: Rezepte, Karten, Gästekarte, Monitor und Kalkulation.",
+    "en": "Complete sample bar for the demo instance: recipes, cards, guest menu, signage and calculation."
+  },
+  "locales": ["de", "en"],
+  "published": true,
+  "isDefault": true,
+  "sortOrder": 0
+}

@@ -18,11 +18,13 @@
  *   `item | footnote_marks: includeAllergens, includeAdditives`
  * - `allergen_marks` – item → HTML per `allergenDisplay` (icons / codes / footnotes) (raw)
  * - `alcohol_label` – item → text per `alcoholDisplay` ("ca. 12 % vol", "leicht", …)
+ * - `short_credit` – image credit → "Author · License" (full credit: the value itself)
  */
 import { Liquid, type FilterImplOptions } from 'liquidjs';
 import type { AllergenDisplay, AlcoholDisplay, FieldConfig, PublicAlcoholDto, PublicAllergenDto, PublicAdditiveDto } from '../schema';
 import { formatMoney } from '../format';
 import { escapeHtml, markdownToHtml } from './markdown';
+import { shortImageCredit } from '@lib/images/imageCredit';
 
 export { formatMoney };
 import { translateGuestText, type GuestUiLocale } from './uiTexts';
@@ -210,6 +212,7 @@ export function createLiquidEngine(options: LiquidRenderContextOptions, partials
       return allergenMarksHtml(item as MarkItem, fields?.allergenDisplay, translateGuestText('item.optional', options.uiLocale, {}, options.uiTexts));
     },
   });
+  engine.registerFilter('short_credit', (value: unknown) => (typeof value === 'string' && value ? shortImageCredit(value) : ''));
   engine.registerFilter('alcohol_label', function (this: ScopeImpl, item: unknown) {
     const fields = (item as MarkItem | null)?.fields ?? fieldsFromScope(this);
     return alcoholLabel((item as MarkItem | null)?.alcohol, fields?.alcoholDisplay, options);

@@ -8,6 +8,7 @@ import AddCocktailToQueueModal from './modals/AddCocktailToQueueModal';
 import SelectSpecifyCocktailForStatisticModal from './modals/SelectSpecifyCocktailForStatisticModal';
 import { useOffline } from '@lib/context/OfflineContextProvider';
 import { Button, Loading, Tooltip } from '@components/ui';
+import { tourTarget } from '@lib/tours/targets';
 
 interface StatisticActionsProps {
   workspaceId: string;
@@ -53,6 +54,7 @@ export default function StatisticActions({
             variant="outline"
             className="w-full flex-1"
             type="button"
+            {...tourTarget('bar.addToQueue')}
             onClick={() =>
               addCocktailToQueue({
                 workspaceId: workspaceId,

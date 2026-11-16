@@ -1,4 +1,4 @@
-import { randomBytes, randomUUID } from 'crypto';
+import { createHmac, randomBytes, randomUUID } from 'crypto';
 import { NextApiRequest, NextApiResponse } from 'next';
 import HTTPMethod from 'http-method-enum';
 import { z } from 'zod';
@@ -8,6 +8,8 @@ import { ApiError } from '@lib/http/ApiError';
 import { sendFail } from '@lib/http/responses';
 import { applyRateLimit, getClientIp, TokenBucketRateLimiter } from '@lib/http/rateLimit';
 import { verifyDemoLoginToken } from '@lib/demo/loginToken';
+import { isDemoMode } from '@lib/demo/config';
+import { auth } from '@lib/auth';
 
 const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -17,6 +19,25 @@ const DemoLoginBodySchema = z.object({
   /** Optional, must match the token's user. */
   userId: z.string().min(1).max(128).optional(),
 });
+
+/**
+ * Session cookie exactly as better-auth sets it (name, attributes and the HMAC signature
+ * `token.signature`), so the client session (`/api/auth/get-session`) accepts it, not only the API.
+ */
+async function sessionCookie(token: string, expiresAt: Date): Promise<string> {
+  const context = await auth.$context;
+  const { name, attributes } = context.authCookies.sessionToken;
+  const signature = createHmac('sha256', context.secret).update(token).digest('base64');
+  const parts = [
+    `${name}=${encodeURIComponent(`${token}.${signature}`)}`,
+    `Path=${attributes.path ?? '/'}`,
+    'HttpOnly',
+    'SameSite=Lax',
+    `Expires=${expiresAt.toUTCString()}`,
+  ];
+  if (attributes.secure) parts.push('Secure');
+  return parts.join('; ');
+}
 
 const demoLoginLimiter = new TokenBucketRateLimiter({ capacity: 20, refillPerSecond: 20 / 600 });
 
@@ -28,7 +49,7 @@ const demoLoginLimiter = new TokenBucketRateLimiter({ capacity: 20, refillPerSec
  */
 export default withHttpMethods({
   [HTTPMethod.POST]: async (req: NextApiRequest, res: NextApiResponse) => {
-    if (process.env.DEMO_MODE !== 'true') {
+    if (!isDemoMode()) {
       return sendFail(res, 404, 'DEMO_DISABLED', 'Demo mode is not enabled');
     }
     if (!applyRateLimit(demoLoginLimiter, req, res, 'demo-login')) return;
@@ -71,13 +92,7 @@ export default withHttpMethods({
       return { user, session: created };
     });
 
-    // better-auth's default cookie name; the session fallback in authenticationMiddleware reads it.
-    const cookieName = 'better-auth.session_token';
-    const isSecure = process.env.NODE_ENV === 'production';
-    res.setHeader(
-      'Set-Cookie',
-      `${cookieName}=${session.session.token}; Path=/; HttpOnly; SameSite=Lax; Expires=${session.session.expiresAt.toUTCString()}${isSecure ? '; Secure' : ''}`,
-    );
+    res.setHeader('Set-Cookie', await sessionCookie(session.session.token, session.session.expiresAt));
 
     return res.status(200).json({
       success: true,

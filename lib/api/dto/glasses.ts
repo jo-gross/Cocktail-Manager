@@ -6,7 +6,12 @@
 import type { Glass } from '@generated/prisma/client';
 import type { GlassDto } from '@lib/schemas/glasses';
 
-export function toGlassDto(glass: Pick<Glass, 'id' | 'name' | 'notes' | 'volume' | 'deposit'>, hasImage: boolean, workspaceId: string): GlassDto {
+export function toGlassDto(
+  glass: Pick<Glass, 'id' | 'name' | 'notes' | 'volume' | 'deposit'>,
+  hasImage: boolean,
+  workspaceId: string,
+  imageCredit: string | null = null,
+): GlassDto {
   return {
     id: glass.id,
     name: glass.name,
@@ -15,5 +20,6 @@ export function toGlassDto(glass: Pick<Glass, 'id' | 'name' | 'notes' | 'volume'
     deposit: glass.deposit,
     hasImage,
     imageUrl: hasImage ? `/api/v1/workspaces/${workspaceId}/glasses/${glass.id}/image` : null,
+    imageCredit: hasImage ? imageCredit : null,
   };
 }

@@ -56,7 +56,6 @@ services:
       dockerfile: Dockerfile
     #      args:
     #        DEPLOYMENT: 'staging' # or "production" or "development"
-    #        DEMO_MODE: 'true' # Enable demo mode
     ports:
       - '3000:3000'
     env_file:
@@ -70,7 +69,6 @@ services:
       - WORKSPACE_CREATION_DISABLED_MESSAGE=Du benötigst eine Workspace?<br/>Schreibe einfach eine <a href="mailto:info@cocktail-manager.de">Mail ans Team</a>!
       # Demo Mode Configuration (uncomment to enable)
       # - DEMO_MODE=true
-      # - DEMO_WORKSPACE_CONFIG_PATH=/app/config/demo-workspace-config.json
       # - DEMO_TTL_HOURS=24
       # Email (e.g. for join requests; with fake-smtp: SMTP_HOST=fake-smtp, SMTP_PORT=8025; EMAIL_TEMPLATE_CONFIG JSON with appUrl, supportEmail)
       # - SMTP_HOST=fake-smtp

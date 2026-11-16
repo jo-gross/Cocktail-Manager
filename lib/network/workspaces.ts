@@ -29,7 +29,8 @@ export function fetchWorkspacesSafe(
     .finally(() => setLoading?.(false));
 }
 
-export function createWorkspace(body: { name: string }): Promise<WorkspaceListItem> {
+/** `locale`: primary content language of the new workspace (default: app default). */
+export function createWorkspace(body: { name: string; locale?: string }): Promise<WorkspaceListItem> {
   return apiV1Mutate<WorkspaceListItem>('/api/v1/workspaces', 'POST', body);
 }
 

@@ -10,7 +10,7 @@ import Link from 'next/link';
 import AvatarImage from '../../../../components/AvatarImage';
 import { WorkspaceLogo } from '@components/workspaces/WorkspaceLogo';
 import { FaCalculator, FaCocktail, FaGlassMartiniAlt, FaUsers } from 'react-icons/fa';
-import { LuCitrus, LuHistory, LuMonitorPlay, LuShieldAlert } from 'react-icons/lu';
+import { LuCitrus, LuHistory, LuLifeBuoy, LuMonitorPlay, LuShieldAlert } from 'react-icons/lu';
 import { PiBeerBottleBold, PiCards } from 'react-icons/pi';
 import { FaGear } from 'react-icons/fa6';
 import { IoMdStats } from 'react-icons/io';
@@ -18,10 +18,14 @@ import { MdOutlineMenuBook, MdOutlineSell } from 'react-icons/md';
 import packageInfo from '../../../../package.json';
 import LanguageChanger from '@components/LanguageChanger';
 import { Button, Divider, Dropdown, DropdownContent, Menu } from '@components/ui';
+import { useNewFeatureTours } from '@components/tour/useNewFeatureTours';
+import { WorkspaceStatusBanner } from '@components/onboarding/WorkspaceStatusBanner';
 
 export default function ManagePage() {
   const router = useRouter();
-  const { t } = useTranslation(['nav', 'auth', 'common']);
+  const { t } = useTranslation(['nav', 'auth', 'common', 'tours']);
+  const newFeatureTours = useNewFeatureTours();
+  const newBadge = (target: Parameters<typeof newFeatureTours.isNew>[0]) => (newFeatureTours.isNew(target) ? t('tours:help.newBadge') : undefined);
 
   const userContext = useContext(UserContext);
 
@@ -76,6 +80,14 @@ export default function ManagePage() {
                     </Button>
                   </Link>
                 </li>
+                <li>
+                  <Link href={`/workspaces/${workspaceId}/manage/help`}>
+                    <Button variant="outline" size="sm" className="w-full">
+                      <LuLifeBuoy aria-hidden="true" />
+                      {t('nav:help')}
+                    </Button>
+                  </Link>
+                </li>
                 <Divider size="sm" />
                 <li className="flex justify-center px-1 py-1">
                   <LanguageChanger size="sm" />
@@ -107,6 +119,7 @@ export default function ManagePage() {
           </Dropdown>,
         ]}
       >
+        <WorkspaceStatusBanner className="mx-auto mb-6 w-full max-w-5xl" />
         <div className="mx-auto grid w-full max-w-5xl grid-cols-1 gap-6 lg:grid-cols-2">
           <div className="flex flex-col gap-6">
             <ManageGroup title={t('nav:section.recipes')}>
@@ -115,12 +128,16 @@ export default function ManagePage() {
                 title={t('nav:cocktails')}
                 description={t('nav:overview.description.cocktails')}
                 link={`/workspaces/${workspaceId}/manage/cocktails`}
+                tourTarget="manage.cocktails"
+                badge={newBadge('manage.cocktails')}
               />
               <ManageLink
                 icon={<PiBeerBottleBold />}
                 title={t('nav:ingredients')}
                 description={t('nav:overview.description.ingredients')}
                 link={`/workspaces/${workspaceId}/manage/ingredients`}
+                tourTarget="manage.ingredients"
+                badge={newBadge('manage.ingredients')}
               />
               <ManageLink
                 icon={<LuCitrus />}
@@ -158,6 +175,8 @@ export default function ManagePage() {
                   title={t('nav:cards')}
                   description={t('nav:overview.description.cards')}
                   link={`/workspaces/${workspaceId}/manage/cards`}
+                  tourTarget="manage.cards"
+                  badge={newBadge('manage.cards')}
                 />
                 <ManageLink
                   icon={<MdOutlineMenuBook />}
@@ -210,6 +229,16 @@ export default function ManagePage() {
                 link={`/workspaces/${workspaceId}/manage/settings/users`}
               />
             )}
+          </ManageGroup>
+          <ManageGroup title={t('nav:section.help')} className="lg:col-span-2">
+            <ManageLink
+              icon={<LuLifeBuoy />}
+              title={t('nav:help')}
+              description={t('nav:overview.description.help')}
+              link={`/workspaces/${workspaceId}/manage/help`}
+              tourTarget="manage.help"
+              badge={newFeatureTours.unseen.length > 0 ? t('tours:help.newBadge') : undefined}
+            />
           </ManageGroup>
         </div>
       </ManageEntityLayout>

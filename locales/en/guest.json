@@ -24,7 +24,8 @@
     "details": "Details",
     "noPrice": "Price on request",
     "optional": "optional",
-    "incomplete": "Information incomplete"
+    "incomplete": "Information incomplete",
+    "photo": "Photo"
   },
   "alcohol": {
     "approx": "approx. {{value}}",
@@ -34,7 +35,8 @@
   "footer": {
     "allergens": "Allergens",
     "additives": "Additives",
-    "legend": "Legend"
+    "legend": "Legend",
+    "imageCredits": "Image credits"
   },
   "notice": {
     "allergens": "Please ask our staff for information about allergens and additives.",

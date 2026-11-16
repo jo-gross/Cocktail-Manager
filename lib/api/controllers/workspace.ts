@@ -9,6 +9,8 @@ import prisma from '../../../prisma/prisma';
 import { isWorkspaceExternallyManaged } from '@lib/config/externalWorkspace';
 import { ApiError } from '@lib/http/ApiError';
 import { deleteDemoWorkspace } from '@lib/demo/cleanup';
+import { runTx } from '@lib/db/tx';
+import { lockTemplates } from '@lib/templates/sync';
 import { toWorkspaceDto, toWorkspaceSettingsDto } from '@lib/api/dto/workspace';
 import type { User, Workspace } from '@generated/prisma/client';
 import {
@@ -27,11 +29,11 @@ const memberSelect = {
 
 async function loadWorkspaceDto(workspaceId: string): Promise<WorkspaceDto> {
   const [full, settings, members] = await Promise.all([
-    prisma.workspace.findUniqueOrThrow({ where: { id: workspaceId } }),
+    prisma.workspace.findUniqueOrThrow({ where: { id: workspaceId }, include: { template: { select: { key: true } } } }),
     prisma.workspaceSetting.findMany({ where: { workspaceId } }),
     prisma.workspaceUser.findMany({ where: { workspaceId }, select: memberSelect }),
   ]);
-  return toWorkspaceDto(full, settings, members, isWorkspaceExternallyManaged(workspaceId));
+  return toWorkspaceDto(full, settings, members, isWorkspaceExternallyManaged(workspaceId), full.template != null);
 }
 
 /**
@@ -85,8 +87,16 @@ export async function updateWorkspace(workspace: Workspace, input: WorkspaceUpda
   return loadWorkspaceDto(workspace.id);
 }
 
+/** Template workspaces cannot be deleted while they are marked as template (409 `TEMPLATE_IN_USE`). */
 export async function deleteWorkspace(workspace: Workspace): Promise<{ count: number }> {
-  await prisma.workspace.delete({ where: { id: workspace.id } });
+  await runTx(async (tx) => {
+    // Same lock as marking a workspace as template.
+    await lockTemplates(tx);
+    if (await tx.workspaceTemplate.findUnique({ where: { workspaceId: workspace.id }, select: { key: true } })) {
+      throw new ApiError(409, 'TEMPLATE_IN_USE', 'The workspace is a template and cannot be deleted');
+    }
+    await tx.workspace.delete({ where: { id: workspace.id } });
+  });
   return { count: 1 };
 }
 
