@@ -6,6 +6,7 @@ import { UserContext } from '@lib/context/UserContextProvider';
 import Image, { ImageProps } from 'next/image';
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import ImageModal from '../modals/ImageModal';
+import { ImageCredit } from '../ImageCredit';
 import StarsComponent from '../StarsComponent';
 import type { RatingDto } from '@lib/schemas/ratings';
 import { Badge, Skeleton } from '@components/ui';
@@ -192,9 +193,11 @@ export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeIns
         {props.imageSlot != undefined ? (
           <div className={'col-span-2 w-full self-start'}>{props.imageSlot}</div>
         ) : props.showImage && props.cocktailRecipe.hasImage ? (
-          <div className={'col-span-2 h-full w-full items-start self-start justify-self-center'}>
+          <div className={'relative col-span-2 h-full w-full items-start self-start justify-self-center'}>
             <ImageWithSkeleton
-              onClick={() => modalContext.openModal(<ImageModal image={props.image ?? props.cocktailRecipe.imageUrl ?? ''} />)}
+              onClick={() =>
+                modalContext.openModal(<ImageModal image={props.image ?? props.cocktailRecipe.imageUrl ?? ''} credit={props.cocktailRecipe.imageCredit} />)
+              }
               src={props.image ?? props.cocktailRecipe.imageUrl ?? ''}
               className="h-full w-full flex-grow rounded-xl object-cover"
               skeletonClassName="aspect-9/16 h-full w-full rounded-xl"
@@ -203,6 +206,7 @@ export function CompactCocktailRecipeInstruction(props: CompactCocktailRecipeIns
               height={534}
               unoptimized={true}
             />
+            <ImageCredit credit={props.cocktailRecipe.imageCredit} variant={'overlay'} />
           </div>
         ) : (
           <></>

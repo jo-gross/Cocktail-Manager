@@ -124,6 +124,8 @@ const OverviewPage: NextPageWithPullToRefresh = () => {
             (activeElement as HTMLElement).isContentEditable);
 
         if (!isInputFocused && !(document.querySelector('#globalModal') as HTMLDialogElement | null)?.open) {
+          // Otherwise the "F" lands in the autofocused search input and triggers a filtered search.
+          event.preventDefault();
           modalContext.openModal(<SearchModal showStatisticActions={showStatisticActions} />);
         }
       }

@@ -6,6 +6,7 @@ import { z } from '@lib/openapi/zod';
 import { ApiTags } from '@lib/openapi/tags';
 import { WorkspaceIdParam } from '@lib/schemas/common';
 import { TEMPLATE_KINDS, TemplateKeySchema, TemplateLocaleSchema } from '@lib/templates/manifest';
+import { BUSINESS_TYPES } from '@lib/onboarding/setupWizard';
 import type { ResourceApiDoc } from '@lib/openapi/types';
 
 export const TemplateKindEnum = z.enum(TEMPLATE_KINDS).openapi('TemplateKind', {
@@ -33,6 +34,7 @@ export const TemplateCountsSchema = z
     garnishes: z.number().int(),
     cocktails: z.number().int(),
     cards: z.number().int(),
+    guestMenus: z.number().int(),
   })
   .openapi('TemplateCounts');
 
@@ -98,6 +100,10 @@ export const TemplateApplyInputSchema = z
       description:
         'Content language of the workspace; template texts in this language become the primary texts. Default: primary content language of the workspace.',
     }),
+    businessType: z.enum(BUSINESS_TYPES).optional().openapi({
+      description:
+        'Business type from the setup wizard; picks the built-in design of guest menus that come with the template (`bar`: speakeasy, `restaurant`: classic + elegant print, `event`: modern, `private`: minimal). Default: the design of the template.',
+    }),
   })
   .superRefine((input, ctx) => {
     if (input.mode === 'selection' && !input.selection)
@@ -110,7 +116,7 @@ export const TemplateApplyResultDtoSchema = z
     template: z.string(),
     created: TemplateCountsSchema,
     linked: TemplateCountsSchema.openapi({ description: 'Items that already existed (same name in any language) and were reused.' }),
-    skipped: TemplateCountsSchema.openapi({ description: 'Items that were not imported (cards with an existing name).' }),
+    skipped: TemplateCountsSchema.openapi({ description: 'Items that were not imported (cards with an existing name and guest menus built on them).' }),
   })
   .openapi('TemplateApplyResult');
 
@@ -168,7 +174,7 @@ export const templatesApplyApiDoc = {
       tags: [ApiTags.templatesCore],
       summary: 'Apply template',
       description:
-        'Imports a published template (all, basics or a selection) in one transaction. Items with a name that already exists in the workspace (any language) are linked instead of created; catalog templates come without prices and with unconfirmed guest information. API keys additionally need `INGREDIENTS_CREATE`, `GLASSES_CREATE`, `GARNISHES_CREATE` and `CARDS_CREATE`.',
+        'Imports a published template (all, basics or a selection) in one transaction. Items with a name that already exists in the workspace (any language) are linked instead of created; catalog templates come without prices and with unconfirmed guest information. Guest menus of the template (with `all`, or built on a selected card) are enabled, published and default only when the workspace has no guest menu yet; otherwise they are created disabled and unpublished. API keys additionally need `INGREDIENTS_CREATE`, `GLASSES_CREATE`, `GARNISHES_CREATE` and `CARDS_CREATE`.',
       params: WorkspaceIdParam.merge(TemplateKeyParam),
       body: TemplateApplyInputSchema,
       response: TemplateApplyResultDtoSchema,

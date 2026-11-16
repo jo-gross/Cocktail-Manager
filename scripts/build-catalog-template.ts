@@ -18,6 +18,17 @@ import { BackupImportSchema, findBackupReferenceIssues } from '../lib/backup/bac
 import { DEFAULT_TAG_CATEGORIES } from '../lib/tags/defaultTagCategories';
 import { TEMPLATES_DIR, TEMPLATE_IMAGE_PREFIX, resolveTemplateImages } from '../lib/templates/builtIn';
 import { TEMPLATE_KEY_PATTERN, TemplateManifestSchema, type TemplateManifest } from '../lib/templates/manifest';
+import { withAttributedImageCredits } from '../lib/templates/credits';
+import {
+  DEFAULT_FIELD_CONFIG,
+  GUEST_MENU_OUTPUTS,
+  GUEST_MENU_SCHEMA_VERSION,
+  GuestMenuDocumentSchema,
+  createDefaultOutputs,
+  type GuestMenuDocument,
+  type GuestMenuOutput,
+} from '../lib/guest-menu/schema';
+import { getBuiltInTemplate } from '../lib/guest-menu/templates';
 
 type Localized = Record<string, string>;
 type BackupInput = Required<z.input<typeof BackupImportSchema>>;
@@ -33,6 +44,18 @@ interface Draft {
   meta: { key: string; kind: string; languages: string[] };
   tags: Record<string, { category: string; label: Localized; public?: boolean }>;
   cards: Array<{ key: string; name: string; groups: Array<{ key: string; name: string; cocktails: string[] }> }>;
+  /** Guest menus on a card (`FIXED_CARD`, one section per card group), live after applying into a workspace without menus. */
+  guestMenus?: Array<{
+    key: string;
+    name: string;
+    card: string;
+    /** Built-in template per output; theme tokens and web layout come from the `web` one. */
+    design: Record<GuestMenuOutput, string>;
+    title: Localized;
+    subtitle?: Localized;
+    /** Markdown text below the header (not on monitors). */
+    intro?: Localized;
+  }>;
   glasses: Array<{ key: string; name: Localized; volumeMl?: number; image?: string }>;
   ingredients: Array<{
     key: string;
@@ -313,6 +336,29 @@ function buildBackup(draft: Draft) {
     ),
   );
 
+  const cardIds = new Map(draft.cards.map((card) => [card.key, `card-${card.key}`]));
+  uniqueKeys(draft.guestMenus ?? [], 'Guest menu');
+  const guestMenus = (draft.guestMenus ?? []).map((menu) => {
+    const what = `Guest menu "${menu.key}"`;
+    const document = buildGuestMenuDocument(menu, locales, what);
+    return {
+      id: `guest-menu-${menu.key}`,
+      name: menu.name,
+      slug: menu.key,
+      priority: 0,
+      weekdays: [],
+      inactiveBehavior: 'NOTICE_WITH_LINK' as const,
+      sourceMode: 'FIXED_CARD' as const,
+      sourceCardId: ref(cardIds, menu.card, `card in ${what}`),
+      locales: [],
+      // Applied as is only into a workspace without guest menus (setup wizard); otherwise disabled and unpublished.
+      enabled: true,
+      isDefault: true,
+      published: document,
+      draft: document,
+    };
+  });
+
   const unused = Object.keys(draft.tags).filter((tag) => !usedTags.has(tag));
   if (unused.length > 0) fail(`Tags defined but not used: ${unused.join(', ')}`);
   const translationsSetting = base.workspaceSettings.find((row) => row.setting === 'translations');
@@ -365,8 +411,36 @@ function buildBackup(draft: Draft) {
         draft.garnishes.map((row) => ({ garnishId: garnishIds.get(row.key)!, locale, name: row.name[locale]!, description: null })),
       ),
       glassTranslations: translated.flatMap((locale) => draft.glasses.map((row) => ({ glassId: glassIds.get(row.key)!, locale, name: row.name[locale]! }))),
+      guestMenus,
     },
   };
+}
+
+/** Deterministic guest menu document: header, intro, all groups of the card, allergen notice; design of built-in templates. */
+function buildGuestMenuDocument(menu: NonNullable<Draft['guestMenus']>[number], locales: string[], what: string): GuestMenuDocument {
+  for (const output of GUEST_MENU_OUTPUTS) {
+    if (!getBuiltInTemplate(menu.design[output])) fail(`${what}: unknown built-in template "${menu.design[output]}" for ${output}`);
+  }
+  const web = getBuiltInTemplate(menu.design.web)!;
+  const outputs = createDefaultOutputs();
+  const document: GuestMenuDocument = {
+    schemaVersion: GUEST_MENU_SCHEMA_VERSION,
+    title: texts(menu.title, locales, `${what} title`),
+    ...(menu.subtitle ? { subtitle: texts(menu.subtitle, locales, `${what} subtitle`) } : {}),
+    theme: { preset: web.id, tokens: structuredClone(web.defaultTokens) },
+    templates: { web: { templateId: menu.design.web }, monitor: { templateId: menu.design.monitor }, print: { templateId: menu.design.print } },
+    outputs: { ...outputs, web: { ...outputs.web, layout: web.layout } },
+    defaults: { fields: { ...DEFAULT_FIELD_CONFIG } },
+    blocks: [
+      { id: 'header', type: 'header', showLogo: true, showTitle: true, showSubtitle: true },
+      ...(menu.intro ? [{ id: 'intro', type: 'text' as const, content: texts(menu.intro, locales, `${what} intro`), outputs: { monitor: false } }] : []),
+      { id: 'section-card', type: 'section', title: {}, source: { kind: 'cardAllGroups' }, overrides: {} },
+      { id: 'notice-allergens', type: 'notice', preset: 'allergens' },
+    ],
+  };
+  const parsed = GuestMenuDocumentSchema.safeParse(document);
+  if (!parsed.success) fail(`${what}: invalid document: ${JSON.stringify(parsed.error.issues.slice(0, 3))}`);
+  return parsed.data;
 }
 
 async function writeFormatted(path: string, value: unknown) {
@@ -384,7 +458,7 @@ async function main() {
   if (draft.meta.key !== key) fail(`content-draft.json meta.key "${draft.meta.key}" does not match "${key}"`);
   if (draft.meta.kind !== 'CATALOG') fail('Only CATALOG drafts are supported');
 
-  const { backup, images } = buildBackup(draft);
+  const { backup: uncredited, images } = buildBackup(draft);
 
   // Image credits: every referenced image needs one; files in images/ must be referenced.
   const attribution = parseAttribution(readFileSync(join(dir, 'ATTRIBUTION.md'), 'utf-8'));
@@ -397,6 +471,8 @@ async function main() {
     if (!credit) fail(`ATTRIBUTION.md has no credit line for images/${name}`);
     attributions[name] = credit.credit;
   }
+  // Credits travel with the image rows (template workspace → every workspace the template is applied to).
+  const backup = withAttributedImageCredits(uncredited, attributions);
 
   // Same checks as the loader/import (images resolved).
   const parsed = BackupImportSchema.parse(resolveTemplateImages(JSON.parse(JSON.stringify(backup)), dir));
@@ -420,7 +496,7 @@ async function main() {
   TemplateManifestSchema.parse(next);
   await writeFormatted(manifestPath, next);
 
-  const counts = `${backup.glass.length} glasses, ${backup.ingredient.length} ingredients, ${backup.garnish.length} garnishes, ${backup.cocktailRecipe.length} cocktails, ${backup.cocktailCard.length} cards, ${images.size} images`;
+  const counts = `${backup.glass.length} glasses, ${backup.ingredient.length} ingredients, ${backup.garnish.length} garnishes, ${backup.cocktailRecipe.length} cocktails, ${backup.cocktailCard.length} cards, ${backup.guestMenus.length} guest menus, ${images.size} images`;
   console.info(`[${key}] ${counts}`);
   console.info(`[${key}] backup.json ${changed ? 'updated' : 'unchanged'}, credits ${creditsChanged ? 'updated' : 'unchanged'}, manifest version ${version}`);
   if ((changed || creditsChanged) && !bump && previous !== null) {

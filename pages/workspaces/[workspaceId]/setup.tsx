@@ -164,6 +164,7 @@ function SetupPage() {
               workspaceId={workspaceId}
               saveRef={saveRef}
               locale={contentLocale}
+              businessType={businessType}
               applied={applied}
               onApplied={(entry) => setApplied((previous) => [...previous, entry])}
               choice={contentChoice}

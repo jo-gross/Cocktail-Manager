@@ -226,5 +226,11 @@
     "addImage": "Add image",
     "editImage": "Edit image",
     "chooseNewImage": "Choose new image"
+  },
+  "imageCredit": {
+    "photo": "Photo: {{credit}}",
+    "source": "Source",
+    "label": "Image credit",
+    "hint": "Author, source and license, e.g. \"Photo: Jane Doe, CC BY 4.0\". Required for third-party images under a CC license; shown with the image."
   }
 }

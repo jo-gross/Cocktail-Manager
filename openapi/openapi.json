@@ -600,6 +600,9 @@
           },
           "cards": {
             "type": "integer"
+          },
+          "guestMenus": {
+            "type": "integer"
           }
         },
         "required": [
@@ -607,7 +610,8 @@
           "ingredients",
           "garnishes",
           "cocktails",
-          "cards"
+          "cards",
+          "guestMenus"
         ]
       },
       "TemplateItems": {
@@ -3001,6 +3005,13 @@
             ],
             "description": "URL to fetch the cocktail image bytes, or null when hasImage is false."
           },
+          "imageCredit": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Attribution of the image (author, source, license), to be shown with it; null = none."
+          },
           "glass": {
             "$ref": "#/components/schemas/CocktailGlassRef"
           },
@@ -3029,6 +3040,7 @@
           "unavailableUntil",
           "hasImage",
           "imageUrl",
+          "imageCredit",
           "glass"
         ]
       },
@@ -3148,6 +3160,13 @@
             ],
             "description": "URL to fetch the cocktail image bytes, or null when hasImage is false."
           },
+          "imageCredit": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Attribution of the image (author, source, license), to be shown with it; null = none."
+          },
           "glass": {
             "$ref": "#/components/schemas/CocktailGlassRef"
           },
@@ -3219,6 +3238,7 @@
           "unavailableUntil",
           "hasImage",
           "imageUrl",
+          "imageCredit",
           "glass",
           "notes",
           "history",
@@ -3601,6 +3621,15 @@
             "description": "Base64-encoded raster image (data URI) to attach.",
             "example": "data:image/png;base64,iVBORw0KGgo="
           },
+          "imageCredit": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 1000,
+            "description": "Attribution of the image (author, source, license), shown wherever the image is displayed. Omitted: kept while the image stays the same, cleared when a new image is uploaded; null or empty clears it.",
+            "example": "\"Negroni\" by Jane Doe, https://commons.wikimedia.org/wiki/File:Negroni.jpg, CC BY-SA 4.0"
+          },
           "steps": {
             "type": "array",
             "items": {
@@ -3852,6 +3881,15 @@
             "pattern": "^data:image\\/(?:png|jpeg|jpg|gif|webp|avif|bmp|heic|heif|tiff);base64,[A-Za-z0-9+/]+={0,2}$",
             "description": "Base64 raster image (data URI); omitting it removes the current image.",
             "example": "data:image/png;base64,iVBORw0KGgo="
+          },
+          "imageCredit": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 1000,
+            "description": "Attribution of the image (author, source, license), shown wherever the image is displayed. Omitted: kept while the image stays the same, cleared when a new image is uploaded; null or empty clears it.",
+            "example": "\"Negroni\" by Jane Doe, https://commons.wikimedia.org/wiki/File:Negroni.jpg, CC BY-SA 4.0"
           },
           "steps": {
             "type": "array",
@@ -4551,6 +4589,13 @@
             ],
             "description": "URL to fetch the garnish image bytes, or null when hasImage is false."
           },
+          "imageCredit": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Attribution of the image (author, source, license), to be shown with it; null = none."
+          },
           "allergens": {
             "type": "array",
             "items": {
@@ -4581,6 +4626,7 @@
           "price",
           "hasImage",
           "imageUrl",
+          "imageCredit",
           "allergens",
           "allergenSources",
           "additives",
@@ -4633,6 +4679,15 @@
             "pattern": "^data:image\\/(?:png|jpeg|jpg|gif|webp|avif|bmp|heic|heif|tiff);base64,[A-Za-z0-9+/]+={0,2}$",
             "description": "Base64-encoded raster image (data URI) to attach.",
             "example": "data:image/png;base64,iVBORw0KGgo="
+          },
+          "imageCredit": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 1000,
+            "description": "Attribution of the image (author, source, license), shown wherever the image is displayed. Omitted: kept while the image stays the same, cleared when a new image is uploaded; null or empty clears it.",
+            "example": "\"Negroni\" by Jane Doe, https://commons.wikimedia.org/wiki/File:Negroni.jpg, CC BY-SA 4.0"
           },
           "allergens": {
             "type": "array",
@@ -4704,6 +4759,15 @@
             "pattern": "^data:image\\/(?:png|jpeg|jpg|gif|webp|avif|bmp|heic|heif|tiff);base64,[A-Za-z0-9+/]+={0,2}$",
             "description": "Base64 raster image (data URI); omitting it removes the current image.",
             "example": "data:image/png;base64,iVBORw0KGgo="
+          },
+          "imageCredit": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 1000,
+            "description": "Attribution of the image (author, source, license), shown wherever the image is displayed. Omitted: kept while the image stays the same, cleared when a new image is uploaded; null or empty clears it.",
+            "example": "\"Negroni\" by Jane Doe, https://commons.wikimedia.org/wiki/File:Negroni.jpg, CC BY-SA 4.0"
           },
           "allergens": {
             "type": "array",
@@ -4880,6 +4944,13 @@
               "null"
             ],
             "description": "URL to fetch the glass image bytes, or null when hasImage is false."
+          },
+          "imageCredit": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Attribution of the image (author, source, license), to be shown with it; null = none."
           }
         },
         "required": [
@@ -4889,7 +4960,8 @@
           "volume",
           "deposit",
           "hasImage",
-          "imageUrl"
+          "imageUrl",
+          "imageCredit"
         ]
       },
       "GlassCreateInput": {
@@ -4933,6 +5005,15 @@
             "pattern": "^data:image\\/(?:png|jpeg|jpg|gif|webp|avif|bmp|heic|heif|tiff);base64,[A-Za-z0-9+/]+={0,2}$",
             "description": "Base64-encoded raster image (data URI) to attach.",
             "example": "data:image/png;base64,iVBORw0KGgo="
+          },
+          "imageCredit": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 1000,
+            "description": "Attribution of the image (author, source, license), shown wherever the image is displayed. Omitted: kept while the image stays the same, cleared when a new image is uploaded; null or empty clears it.",
+            "example": "\"Negroni\" by Jane Doe, https://commons.wikimedia.org/wiki/File:Negroni.jpg, CC BY-SA 4.0"
           }
         },
         "required": [
@@ -4973,6 +5054,15 @@
             "pattern": "^data:image\\/(?:png|jpeg|jpg|gif|webp|avif|bmp|heic|heif|tiff);base64,[A-Za-z0-9+/]+={0,2}$",
             "description": "Base64 raster image (data URI); omitting it removes the current image.",
             "example": "data:image/png;base64,iVBORw0KGgo="
+          },
+          "imageCredit": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 1000,
+            "description": "Attribution of the image (author, source, license), shown wherever the image is displayed. Omitted: kept while the image stays the same, cleared when a new image is uploaded; null or empty clears it.",
+            "example": "\"Negroni\" by Jane Doe, https://commons.wikimedia.org/wiki/File:Negroni.jpg, CC BY-SA 4.0"
           }
         },
         "required": [
@@ -8544,6 +8634,13 @@
             ],
             "description": "URL to fetch the ingredient image bytes, or null when hasImage is false."
           },
+          "imageCredit": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Attribution of the image (author, source, license), to be shown with it; null = none."
+          },
           "abv": {
             "type": [
               "number",
@@ -8594,6 +8691,7 @@
           "volumes",
           "hasImage",
           "imageUrl",
+          "imageCredit",
           "abv",
           "allergens",
           "allergenSources",
@@ -8734,6 +8832,15 @@
             "pattern": "^data:image\\/(?:png|jpeg|jpg|gif|webp|avif|bmp|heic|heif|tiff);base64,[A-Za-z0-9+/]+={0,2}$",
             "description": "Base64-encoded raster image (data URI) to attach.",
             "example": "data:image/png;base64,iVBORw0KGgo="
+          },
+          "imageCredit": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 1000,
+            "description": "Attribution of the image (author, source, license), shown wherever the image is displayed. Omitted: kept while the image stays the same, cleared when a new image is uploaded; null or empty clears it.",
+            "example": "\"Negroni\" by Jane Doe, https://commons.wikimedia.org/wiki/File:Negroni.jpg, CC BY-SA 4.0"
           },
           "abv": {
             "type": [
@@ -8877,6 +8984,15 @@
             "pattern": "^data:image\\/(?:png|jpeg|jpg|gif|webp|avif|bmp|heic|heif|tiff);base64,[A-Za-z0-9+/]+={0,2}$",
             "description": "Base64 raster image (data URI); omitting it removes the current image.",
             "example": "data:image/png;base64,iVBORw0KGgo="
+          },
+          "imageCredit": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 1000,
+            "description": "Attribution of the image (author, source, license), shown wherever the image is displayed. Omitted: kept while the image stays the same, cleared when a new image is uploaded; null or empty clears it.",
+            "example": "\"Negroni\" by Jane Doe, https://commons.wikimedia.org/wiki/File:Negroni.jpg, CC BY-SA 4.0"
           },
           "abv": {
             "type": [
@@ -10216,7 +10332,7 @@
                 "$ref": "#/components/schemas/TemplateCounts"
               },
               {
-                "description": "Items that were not imported (cards with an existing name)."
+                "description": "Items that were not imported (cards with an existing name and guest menus built on them)."
               }
             ]
           }
@@ -10241,6 +10357,16 @@
             "type": "string",
             "maxLength": 35,
             "description": "Content language of the workspace; template texts in this language become the primary texts. Default: primary content language of the workspace."
+          },
+          "businessType": {
+            "type": "string",
+            "enum": [
+              "bar",
+              "restaurant",
+              "event",
+              "private"
+            ],
+            "description": "Business type from the setup wizard; picks the built-in design of guest menus that come with the template (`bar`: speakeasy, `restaurant`: classic + elegant print, `event`: modern, `private`: minimal). Default: the design of the template."
           }
         },
         "required": [
@@ -28698,7 +28824,7 @@
     "/api/v1/workspaces/{workspaceId}/templates/{key}/apply": {
       "post": {
         "summary": "Apply template",
-        "description": "**Required API-key permission:** `COCKTAILS_CREATE` — Create cocktail recipes\n\nImports a published template (all, basics or a selection) in one transaction. Items with a name that already exists in the workspace (any language) are linked instead of created; catalog templates come without prices and with unconfirmed guest information. API keys additionally need `INGREDIENTS_CREATE`, `GLASSES_CREATE`, `GARNISHES_CREATE` and `CARDS_CREATE`.",
+        "description": "**Required API-key permission:** `COCKTAILS_CREATE` — Create cocktail recipes\n\nImports a published template (all, basics or a selection) in one transaction. Items with a name that already exists in the workspace (any language) are linked instead of created; catalog templates come without prices and with unconfirmed guest information. Guest menus of the template (with `all`, or built on a selected card) are enabled, published and default only when the workspace has no guest menu yet; otherwise they are created disabled and unpublished. API keys additionally need `INGREDIENTS_CREATE`, `GLASSES_CREATE`, `GARNISHES_CREATE` and `CARDS_CREATE`.",
         "tags": [
           "Templates / Core"
         ],

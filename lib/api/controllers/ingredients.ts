@@ -9,6 +9,7 @@ import levenshtein from 'js-levenshtein';
 import { ApiError } from '@lib/http/ApiError';
 import { assertIdsInWorkspace, assertInWorkspace } from '@lib/api/scope';
 import { BULK_TX_TIMEOUT_MS, runTx, type Db, type Tx } from '@lib/db/tx';
+import { nextImageCredit } from '@lib/images/imageCredit';
 import { decodeStoredImage, type DecodedImage } from '@lib/images/imageResponse';
 import { toIngredientDto } from '@lib/api/dto/ingredients';
 import { ingredientGuestInfoImportData } from '@lib/guest-info/sanitize';
@@ -22,6 +23,7 @@ import type { IngredientCreateInput, IngredientDto, IngredientExportItem, Ingred
 const ingredientInclude = {
   IngredientVolume: { include: { unit: true } },
   _count: { select: { IngredientImage: true } },
+  IngredientImage: { select: { credit: true } },
 } satisfies Prisma.IngredientInclude;
 
 const auditInclude = { IngredientVolume: { include: { unit: true } }, IngredientImage: true } satisfies Prisma.IngredientInclude;
@@ -105,7 +107,8 @@ export async function createIngredient(workspace: Workspace, user: User, input: 
     }
 
     if (input.image) {
-      await tx.ingredientImage.create({ data: { image: input.image, ingredientId: result.id } });
+      const credit = nextImageCredit({ image: input.image, credit: input.imageCredit }, null);
+      await tx.ingredientImage.create({ data: { image: input.image, credit, ingredientId: result.id } });
     }
 
     const fullIngredient = await tx.ingredient.findUniqueOrThrow({ where: { id: result.id }, include: ingredientInclude });
@@ -137,9 +140,11 @@ export async function updateIngredient(workspace: Workspace, user: User, ingredi
       },
     });
 
+    // A new image drops the credit of the old one unless the request sets it.
+    const credit = nextImageCredit({ image: input.image, credit: input.imageCredit }, oldIngredient.IngredientImage[0]);
     await tx.ingredientImage.deleteMany({ where: { ingredientId } });
     if (input.image) {
-      await tx.ingredientImage.create({ data: { ingredientId, image: input.image } });
+      await tx.ingredientImage.create({ data: { ingredientId, image: input.image, credit } });
     }
 
     if (input.units) {
@@ -211,7 +216,7 @@ export async function cloneIngredient(workspace: Workspace, user: User, ingredie
       where: { id: ingredientId, workspaceId: workspace.id },
       include: {
         IngredientVolume: { where: { unit: { workspaceId: workspace.id } } },
-        IngredientImage: { select: { image: true } },
+        IngredientImage: { select: { image: true, credit: true } },
       },
     });
 
@@ -238,7 +243,9 @@ export async function cloneIngredient(workspace: Workspace, user: User, ingredie
     });
 
     if (existing.IngredientImage.length > 0) {
-      await tx.ingredientImage.create({ data: { ingredientId: createClone.id, image: existing.IngredientImage[0].image } });
+      await tx.ingredientImage.create({
+        data: { ingredientId: createClone.id, image: existing.IngredientImage[0].image, credit: existing.IngredientImage[0].credit },
+      });
     }
 
     await createVolumes(tx, workspace.id, createClone.id, existing.IngredientVolume);

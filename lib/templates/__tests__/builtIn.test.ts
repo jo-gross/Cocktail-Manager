@@ -12,7 +12,8 @@ import {
   readTemplateImage,
   resolveTemplateImages,
 } from '@lib/templates/builtIn';
-import { builtInImageCredits, resolveImageCredits } from '@lib/templates/credits';
+import { builtInImageCredits, fillImageCreditsByName, resolveImageCredits, withAttributedImageCredits } from '@lib/templates/credits';
+import { safeParseGuestMenuDocument } from '@lib/guest-menu/schema';
 import { TemplateManifestSchema } from '@lib/templates/manifest';
 
 const PNG = Buffer.from('89504e470d0a1a0a0000000d4948445200000001000000010806000000', 'hex');
@@ -132,6 +133,22 @@ describe('built-in templates in the repo', () => {
     expect(credited.filter((credit) => /CC BY-SA \d/.test(credit))).toHaveLength(12);
     expect(credited.filter((credit) => /CC BY \d/.test(credit))).toHaveLength(5);
     expect(readdirSync(join(TEMPLATES_DIR, 'all-time-classics', 'images')).sort()).toEqual(Object.keys(manifest.attributions ?? {}).sort());
+    // The credits are also written into the image rows (they travel with the images).
+    expect(
+      [...data.cocktailRecipeImage, ...data.glassImages].every((row) => row.credit && Object.values(manifest.attributions ?? {}).includes(row.credit)),
+    ).toBe(true);
+  });
+
+  it('all-time-classics has a live guest menu on its card', () => {
+    const data = BackupImportSchema.parse(loadBuiltInTemplate('all-time-classics').backup);
+    expect(data.guestMenus).toHaveLength(1);
+    const menu = data.guestMenus![0]!;
+    expect(menu).toMatchObject({ sourceMode: 'FIXED_CARD', sourceCardId: data.cocktailCard[0]!.id, enabled: true, isDefault: true });
+    const document = safeParseGuestMenuDocument(menu.draft);
+    expect(document.success).toBe(true);
+    expect(document.data?.blocks.map((block) => block.type)).toEqual(['header', 'text', 'section', 'notice']);
+    expect(document.data?.title).toEqual({ de: 'All Time Classics', en: 'All Time Classics' });
+    expect(menu.published).toEqual(menu.draft);
   });
 });
 
@@ -154,6 +171,45 @@ describe('image credits', () => {
     expect(Object.fromEntries(credits.cocktail)).toEqual({ Daiquiri: 'Photo by A, CC BY 2.0' });
     expect(Object.fromEntries(credits.glass)).toEqual({ Coupette: 'Icon by B, CC0' });
     expect(credits.ingredient.size).toBe(0);
+  });
+
+  it('writes the attributions into image rows of a raw backup, keeping existing credits', () => {
+    const backup = {
+      glassImages: [{ glassId: 'g1', image: 'file:images/coupe.png' }],
+      cocktailRecipeImage: [
+        { cocktailRecipeId: 'c1', image: 'file:images/daiquiri.jpg' },
+        { cocktailRecipeId: 'c2', image: 'file:images/daiquiri.jpg', credit: 'Own credit' },
+        { cocktailRecipeId: 'c3', image: 'file:images/unknown.jpg' },
+      ],
+    };
+    const result = withAttributedImageCredits(backup, { 'daiquiri.jpg': 'Photo by A', 'coupe.png': 'Icon by B' });
+    expect(result.glassImages).toEqual([{ glassId: 'g1', image: 'file:images/coupe.png', credit: 'Icon by B' }]);
+    expect(result.cocktailRecipeImage.map((row) => (row as { credit?: string }).credit)).toEqual(['Photo by A', 'Own credit', undefined]);
+    expect(withAttributedImageCredits(backup, undefined)).toBe(backup);
+  });
+
+  it('fills missing credits of a parsed backup by the primary item name', () => {
+    const data = BackupImportSchema.parse({
+      cocktailRecipe: [
+        { id: 'c1', name: 'Daiquiri' },
+        { id: 'c2', name: 'Negroni' },
+      ],
+      cocktailRecipeImage: [
+        { cocktailRecipeId: 'c1', image: 'data:image/png;base64,AA==' },
+        { cocktailRecipeId: 'c2', image: 'data:image/png;base64,AA==', credit: 'Kept' },
+      ],
+    });
+    const credits = {
+      glass: new Map(),
+      ingredient: new Map(),
+      garnish: new Map(),
+      cocktail: new Map([
+        ['Daiquiri', 'Photo by A'],
+        ['Negroni', 'Other'],
+      ]),
+    };
+    expect(fillImageCreditsByName(data, credits).cocktailRecipeImage.map((row) => row.credit)).toEqual(['Photo by A', 'Kept']);
+    expect(fillImageCreditsByName(data, null)).toBe(data);
   });
 
   it('only applies to built-in templates of the repo version', () => {

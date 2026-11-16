@@ -48,6 +48,10 @@ function template(): BackupImportData {
 
 const ids = <T extends { id: string }>(rows: T[]) => rows.map((row) => row.id).sort();
 
+function menu(id: string, sourceMode: 'NONE' | 'FIXED_CARD' | 'ACTIVE_CARD', sourceCardId: string | null) {
+  return BackupImportSchema.parse({ guestMenus: [{ id, name: id, sourceMode, sourceCardId, draft: {} }] }).guestMenus![0]!;
+}
+
 describe('selectTemplateContent', () => {
   it('keeps everything for "all"', () => {
     const data = template();
@@ -66,6 +70,13 @@ describe('selectTemplateContent', () => {
     expect(selected.ingredientTranslations?.map((row) => row.ingredientId)).toEqual(['in-rum']);
     expect(selected.units).toHaveLength(1);
     expect(findBackupReferenceIssues(selected)).toEqual([]);
+  });
+
+  it('keeps guest menus built on a selected card', () => {
+    const data = { ...template(), guestMenus: [menu('m-card', 'FIXED_CARD', 'card-summer'), menu('m-active', 'ACTIVE_CARD', null)] };
+    expect(selectTemplateContent(data, 'selection', { cards: ['card-summer'] }).guestMenus?.map((row) => row.id)).toEqual(['m-card']);
+    expect(selectTemplateContent(data, 'selection', { cocktails: ['c-daiquiri'] }).guestMenus).toEqual([]);
+    expect(selectTemplateContent(data, 'basics').guestMenus).toEqual([]);
   });
 
   it('selects single items without cocktails', () => {
@@ -154,5 +165,19 @@ describe('duplicate matching', () => {
     expect(data.cocktailCard).toEqual([]);
     expect(data.cocktailCardGroup).toEqual([]);
     expect(data.cocktailCardGroupItem).toEqual([]);
+  });
+
+  it('drops guest menus built on an existing card; other menus only lose the reference', () => {
+    const data = {
+      ...template(),
+      guestMenus: [menu('m-card', 'FIXED_CARD', 'card-summer'), menu('m-none', 'NONE', 'card-summer'), menu('m-active', 'ACTIVE_CARD', null)],
+    };
+    const result = dropExistingCards(data, ['Sommer']);
+    expect(result.skippedGuestMenus).toBe(1);
+    expect(result.data.guestMenus?.map((row) => [row.id, row.sourceCardId])).toEqual([
+      ['m-none', null],
+      ['m-active', null],
+    ]);
+    expect(dropExistingCards(data, []).skippedGuestMenus).toBe(0);
   });
 });

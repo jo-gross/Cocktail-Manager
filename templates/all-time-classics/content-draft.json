@@ -81,6 +81,20 @@
       ]
     }
   ],
+  "guestMenus": [
+    {
+      "key": "all-time-classics",
+      "name": "All Time Classics",
+      "card": "all-time-classics",
+      "design": { "web": "modern", "monitor": "modern", "print": "print-elegant" },
+      "title": { "de": "All Time Classics", "en": "All Time Classics" },
+      "subtitle": { "de": "Zeitlose Cocktail-Klassiker", "en": "Timeless cocktail classics" },
+      "intro": {
+        "de": "Unsere Auswahl der großen Klassiker – frisch für dich gemixt. Tippe auf einen Drink für Beschreibung, Geschichte und Allergene.",
+        "en": "Our pick of the great classics – mixed fresh for you. Tap a drink for its description, history and allergens."
+      }
+    }
+  ],
   "glasses": [
     { "key": "tumbler", "name": { "de": "Tumbler (Old Fashioned)", "en": "Old Fashioned Glass" }, "volumeMl": 300, "image": "file:images/glass-tumbler.png" },
     {
@@ -804,7 +818,7 @@
         },
         { "action": "STIR", "actionGroup": "MIXING", "ingredients": [] }
       ],
-      "image": "file:images/tom-collins.jpg",
+      "image": "file:images/tom-collins.png",
       "sources": ["https://iba-world.com/iba-cocktail/john-collins/", "https://en.wikipedia.org/wiki/Tom_Collins"]
     },
     {

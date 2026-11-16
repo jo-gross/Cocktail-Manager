@@ -1004,15 +1004,51 @@
     { "id": "glass-balloon-glass", "name": "Ballonglas", "notes": null, "volume": 60, "deposit": 0 }
   ],
   "glassImages": [
-    { "glassId": "glass-tumbler", "image": "file:images/glass-tumbler.png" },
-    { "glassId": "glass-double-old-fashioned", "image": "file:images/glass-double-old-fashioned.png" },
-    { "glassId": "glass-highball", "image": "file:images/glass-highball.png" },
-    { "glassId": "glass-cocktail-glass", "image": "file:images/glass-cocktail.png" },
-    { "glassId": "glass-coupe", "image": "file:images/glass-coupe.png" },
-    { "glassId": "glass-champagne-flute", "image": "file:images/glass-champagne-flute.png" },
-    { "glassId": "glass-wine-glass", "image": "file:images/glass-wine.png" },
-    { "glassId": "glass-hurricane", "image": "file:images/glass-hurricane.png" },
-    { "glassId": "glass-balloon-glass", "image": "file:images/glass-balloon.png" }
+    {
+      "glassId": "glass-tumbler",
+      "image": "file:images/glass-tumbler.png",
+      "credit": "Glass illustrations by Will Murray (Willscrlt), http://willmurray.name, via Wikimedia Commons, CC0 1.0, rasterised"
+    },
+    {
+      "glassId": "glass-double-old-fashioned",
+      "image": "file:images/glass-double-old-fashioned.png",
+      "credit": "Glass illustrations by Will Murray (Willscrlt), http://willmurray.name, via Wikimedia Commons, CC0 1.0, rasterised"
+    },
+    {
+      "glassId": "glass-highball",
+      "image": "file:images/glass-highball.png",
+      "credit": "Glass illustrations by Will Murray (Willscrlt), http://willmurray.name, via Wikimedia Commons, CC0 1.0, rasterised"
+    },
+    {
+      "glassId": "glass-cocktail-glass",
+      "image": "file:images/glass-cocktail.png",
+      "credit": "Glass illustrations by Will Murray (Willscrlt), http://willmurray.name, via Wikimedia Commons, CC0 1.0, rasterised"
+    },
+    {
+      "glassId": "glass-coupe",
+      "image": "file:images/glass-coupe.png",
+      "credit": "Glass illustrations by Will Murray (Willscrlt), http://willmurray.name, via Wikimedia Commons, CC0 1.0, rasterised"
+    },
+    {
+      "glassId": "glass-champagne-flute",
+      "image": "file:images/glass-champagne-flute.png",
+      "credit": "Glass illustrations by Will Murray (Willscrlt), http://willmurray.name, via Wikimedia Commons, CC0 1.0, rasterised"
+    },
+    {
+      "glassId": "glass-wine-glass",
+      "image": "file:images/glass-wine.png",
+      "credit": "Glass illustrations by Will Murray (Willscrlt), http://willmurray.name, via Wikimedia Commons, CC0 1.0, rasterised"
+    },
+    {
+      "glassId": "glass-hurricane",
+      "image": "file:images/glass-hurricane.png",
+      "credit": "Glass illustrations by Will Murray (Willscrlt), http://willmurray.name, via Wikimedia Commons, CC0 1.0, rasterised"
+    },
+    {
+      "glassId": "glass-balloon-glass",
+      "image": "file:images/glass-balloon.png",
+      "credit": "Glass illustrations by Will Murray (Willscrlt), http://willmurray.name, via Wikimedia Commons, CC0 1.0, rasterised"
+    }
   ],
   "cocktailRecipe": [
     {
@@ -1347,28 +1383,116 @@
     }
   ],
   "cocktailRecipeImage": [
-    { "cocktailRecipeId": "cocktail-old-fashioned", "image": "file:images/old-fashioned.jpg" },
-    { "cocktailRecipeId": "cocktail-negroni", "image": "file:images/negroni.jpg" },
-    { "cocktailRecipeId": "cocktail-daiquiri", "image": "file:images/daiquiri.jpg" },
-    { "cocktailRecipeId": "cocktail-margarita", "image": "file:images/margarita.jpg" },
-    { "cocktailRecipeId": "cocktail-dry-martini", "image": "file:images/dry-martini.jpg" },
-    { "cocktailRecipeId": "cocktail-manhattan", "image": "file:images/manhattan.jpg" },
-    { "cocktailRecipeId": "cocktail-mojito", "image": "file:images/mojito.jpg" },
-    { "cocktailRecipeId": "cocktail-whiskey-sour", "image": "file:images/whiskey-sour.jpg" },
-    { "cocktailRecipeId": "cocktail-moscow-mule", "image": "file:images/moscow-mule.jpg" },
-    { "cocktailRecipeId": "cocktail-tom-collins", "image": "file:images/tom-collins.jpg" },
-    { "cocktailRecipeId": "cocktail-aperol-spritz", "image": "file:images/aperol-spritz.jpg" },
-    { "cocktailRecipeId": "cocktail-caipirinha", "image": "file:images/caipirinha.jpg" },
-    { "cocktailRecipeId": "cocktail-cosmopolitan", "image": "file:images/cosmopolitan.jpg" },
-    { "cocktailRecipeId": "cocktail-espresso-martini", "image": "file:images/espresso-martini.jpg" },
-    { "cocktailRecipeId": "cocktail-mai-tai", "image": "file:images/mai-tai.jpg" },
-    { "cocktailRecipeId": "cocktail-pina-colada", "image": "file:images/pina-colada.jpg" },
-    { "cocktailRecipeId": "cocktail-bloody-mary", "image": "file:images/bloody-mary.jpg" },
-    { "cocktailRecipeId": "cocktail-sidecar", "image": "file:images/sidecar.jpg" },
-    { "cocktailRecipeId": "cocktail-french-75", "image": "file:images/french-75.jpg" },
-    { "cocktailRecipeId": "cocktail-paloma", "image": "file:images/paloma.jpg" },
-    { "cocktailRecipeId": "cocktail-boulevardier", "image": "file:images/boulevardier.jpg" },
-    { "cocktailRecipeId": "cocktail-gin-tonic", "image": "file:images/gin-tonic.jpg" }
+    {
+      "cocktailRecipeId": "cocktail-old-fashioned",
+      "image": "file:images/old-fashioned.jpg",
+      "credit": "\"Whiskey Old Fashioned1\" © Erich Wagner (www.eventografie.de), https://commons.wikimedia.org/wiki/File:Whiskey_Old_Fashioned1.jpg, CC BY-SA 4.0 https://creativecommons.org/licenses/by-sa/4.0/, scaled"
+    },
+    {
+      "cocktailRecipeId": "cocktail-negroni",
+      "image": "file:images/negroni.jpg",
+      "credit": "\"Cóctel Negroni Campari\" by Desdealbert00, https://commons.wikimedia.org/wiki/File:C%C3%B3ctel_Negroni_Campari.jpg, CC BY-SA 4.0 https://creativecommons.org/licenses/by-sa/4.0/"
+    },
+    {
+      "cocktailRecipeId": "cocktail-daiquiri",
+      "image": "file:images/daiquiri.jpg",
+      "credit": "\"Daiquiri\" by Cocktailmarler, https://commons.wikimedia.org/wiki/File:Daiquiri.jpg, CC BY-SA 3.0 https://creativecommons.org/licenses/by-sa/3.0/, scaled"
+    },
+    {
+      "cocktailRecipeId": "cocktail-margarita",
+      "image": "file:images/margarita.jpg",
+      "credit": "\"MargaritaReal\" by Akke Monasso, https://commons.wikimedia.org/wiki/File:MargaritaReal.jpg, CC BY-SA 3.0 https://creativecommons.org/licenses/by-sa/3.0/, scaled"
+    },
+    {
+      "cocktailRecipeId": "cocktail-dry-martini",
+      "image": "file:images/dry-martini.jpg",
+      "credit": "\"Martini\" by Ralf Roletschek, https://commons.wikimedia.org/wiki/File:15-09-26-RalfR-WLC-0084.jpg, CC BY-SA 3.0 https://creativecommons.org/licenses/by-sa/3.0/, scaled"
+    },
+    {
+      "cocktailRecipeId": "cocktail-manhattan",
+      "image": "file:images/manhattan.jpg",
+      "credit": "\"A Manhattan\" by Graeme Maclean, https://commons.wikimedia.org/wiki/File:A_Manhattan.jpg, CC BY 2.0 https://creativecommons.org/licenses/by/2.0/, scaled"
+    },
+    {
+      "cocktailRecipeId": "cocktail-mojito",
+      "image": "file:images/mojito.jpg",
+      "credit": "\"Mojito\" by Ralf Roletschek, https://commons.wikimedia.org/wiki/File:15-09-26-RalfR-WLC-0072.jpg, CC BY-SA 3.0 https://creativecommons.org/licenses/by-sa/3.0/, scaled"
+    },
+    {
+      "cocktailRecipeId": "cocktail-whiskey-sour",
+      "image": "file:images/whiskey-sour.jpg",
+      "credit": "\"Whiskey Sour\" by Jgilgamesh, https://commons.wikimedia.org/wiki/File:Whiskey_Sour.jpg, CC BY-SA 3.0 https://creativecommons.org/licenses/by-sa/3.0/, scaled"
+    },
+    {
+      "cocktailRecipeId": "cocktail-moscow-mule",
+      "image": "file:images/moscow-mule.jpg",
+      "credit": "\"Cocktail Moscow Mule im Kupferbecher mit Minze\" by Gordito1869, https://commons.wikimedia.org/wiki/File:Cocktail_Moscow_Mule_im_Kupferbecher_mit_Minze.jpg, CC BY-SA 4.0 https://creativecommons.org/licenses/by-sa/4.0/, scaled"
+    },
+    {
+      "cocktailRecipeId": "cocktail-tom-collins",
+      "image": "file:images/tom-collins.png",
+      "credit": "\"Tom Tonic Collins\" © Matthias Friedlein (www.augustine-bar.de), https://commons.wikimedia.org/wiki/File:Tom_Tonic_Collins.png, CC BY-SA 4.0 https://creativecommons.org/licenses/by-sa/4.0/, scaled"
+    },
+    {
+      "cocktailRecipeId": "cocktail-aperol-spritz",
+      "image": "file:images/aperol-spritz.jpg",
+      "credit": "\"Aperol Spritz - July 2024\" by Sarah Stierch, https://commons.wikimedia.org/wiki/File:Aperol_Spritz_-_July_2024_-_Sarah_Stierch.jpg, CC0 1.0"
+    },
+    {
+      "cocktailRecipeId": "cocktail-caipirinha",
+      "image": "file:images/caipirinha.jpg",
+      "credit": "\"Caipirinha\" by Ralf Roletschek, https://commons.wikimedia.org/wiki/File:15-09-26-RalfR-WLC-0048.jpg, CC BY-SA 3.0 https://creativecommons.org/licenses/by-sa/3.0/, scaled"
+    },
+    {
+      "cocktailRecipeId": "cocktail-cosmopolitan",
+      "image": "file:images/cosmopolitan.jpg",
+      "credit": "\"Cosmopolitan\" by TheCulinaryGeek, https://commons.wikimedia.org/wiki/File:Cosmopolitan_(5076906532).jpg, CC BY 2.0 https://creativecommons.org/licenses/by/2.0/"
+    },
+    {
+      "cocktailRecipeId": "cocktail-espresso-martini",
+      "image": "file:images/espresso-martini.jpg",
+      "credit": "\"Espresso martini - November 2024\" by Sarah Stierch, https://commons.wikimedia.org/wiki/File:Espresso_martini_-_November_2024_-_Sarah_Stierch.jpg, CC0 1.0"
+    },
+    {
+      "cocktailRecipeId": "cocktail-mai-tai",
+      "image": "file:images/mai-tai.jpg",
+      "credit": "\"MAI TAI - Efes Town Turkish Cuisine\" by Andy Li, https://commons.wikimedia.org/wiki/File:MAI_TAI_-_Efes_Town_Turkish_Cuisine_2026-01-27.jpg, CC0 1.0"
+    },
+    {
+      "cocktailRecipeId": "cocktail-pina-colada",
+      "image": "file:images/pina-colada.jpg",
+      "credit": "\"Piña Colada\" by Mario Trefz (Barmix), https://commons.wikimedia.org/wiki/File:Pi%C3%B1a_Colada.jpg, Public Domain"
+    },
+    {
+      "cocktailRecipeId": "cocktail-bloody-mary",
+      "image": "file:images/bloody-mary.jpg",
+      "credit": "\"Bloody Mary Coctail with celery stalk\" by Evan Swigart, https://commons.wikimedia.org/wiki/File:Bloody_Mary_Coctail_with_celery_stalk_-_Evan_Swigart.jpg, CC BY 2.0 https://creativecommons.org/licenses/by/2.0/"
+    },
+    {
+      "cocktailRecipeId": "cocktail-sidecar",
+      "image": "file:images/sidecar.jpg",
+      "credit": "\"Sidecar Cocktail\" by Evan Swigart, https://commons.wikimedia.org/wiki/File:Sidecar-cocktail.jpg, CC BY 2.0 https://creativecommons.org/licenses/by/2.0/"
+    },
+    {
+      "cocktailRecipeId": "cocktail-french-75",
+      "image": "file:images/french-75.jpg",
+      "credit": "\"Cocktail French 75\" by Ralf Roletschek, https://commons.wikimedia.org/wiki/File:15-09-26-RalfR-WLC-0310.jpg, CC BY-SA 3.0 https://creativecommons.org/licenses/by-sa/3.0/, scaled"
+    },
+    {
+      "cocktailRecipeId": "cocktail-paloma",
+      "image": "file:images/paloma.jpg",
+      "credit": "\"TequilaPaloma\" by Antonio Cavallo, https://commons.wikimedia.org/wiki/File:TequilaPaloma.JPG, Public Domain"
+    },
+    {
+      "cocktailRecipeId": "cocktail-boulevardier",
+      "image": "file:images/boulevardier.jpg",
+      "credit": "\"Society Lounge - Boulevardier\" by Edsel Little, https://commons.wikimedia.org/wiki/File:Society_Lounge_-_Boulevardier.jpg, CC BY-SA 2.0 https://creativecommons.org/licenses/by-sa/2.0/, scaled"
+    },
+    {
+      "cocktailRecipeId": "cocktail-gin-tonic",
+      "image": "file:images/gin-tonic.jpg",
+      "credit": "\"Gin and tonic at the Fairmont Washington DC\" by Sarah Stierch, https://commons.wikimedia.org/wiki/File:Gin_and_tonic_at_the_Fairmont_Washington_DC_-_Sarah_Stierch.jpg, CC BY 4.0 https://creativecommons.org/licenses/by/4.0/, scaled"
+    }
   ],
   "cocktailRecipeStep": [
     { "id": "step-old-fashioned-0", "stepNumber": 0, "optional": false, "actionId": "action-muddle", "cocktailRecipeId": "cocktail-old-fashioned" },
@@ -2647,5 +2771,218 @@
     { "glassId": "glass-copper-mug", "locale": "en", "name": "Copper Mug" },
     { "glassId": "glass-hurricane", "locale": "en", "name": "Hurricane Glass" },
     { "glassId": "glass-balloon-glass", "locale": "en", "name": "Balloon Glass" }
+  ],
+  "guestMenus": [
+    {
+      "id": "guest-menu-all-time-classics",
+      "name": "All Time Classics",
+      "slug": "all-time-classics",
+      "priority": 0,
+      "weekdays": [],
+      "inactiveBehavior": "NOTICE_WITH_LINK",
+      "sourceMode": "FIXED_CARD",
+      "sourceCardId": "card-all-time-classics",
+      "locales": [],
+      "enabled": true,
+      "isDefault": true,
+      "published": {
+        "schemaVersion": 1,
+        "title": { "de": "All Time Classics", "en": "All Time Classics" },
+        "subtitle": { "de": "Zeitlose Cocktail-Klassiker", "en": "Timeless cocktail classics" },
+        "theme": {
+          "preset": "modern",
+          "tokens": {
+            "colors": { "bg": "#f5f5f4", "surface": "#ffffff", "text": "#18181b", "muted": "#71717a", "accent": "#0f766e", "accentContrast": "#ffffff" },
+            "fontHeading": "dm-sans",
+            "fontBody": "inter",
+            "radius": 16,
+            "density": "comfortable"
+          }
+        },
+        "templates": { "web": { "templateId": "modern" }, "monitor": { "templateId": "modern" }, "print": { "templateId": "print-elegant" } },
+        "outputs": {
+          "web": {
+            "enabled": true,
+            "layout": "cards",
+            "fields": {},
+            "search": { "enabled": true, "includeOnRequest": false, "ingredientsSearchable": true },
+            "filters": { "categories": "auto", "allergens": true, "alcohol": true },
+            "sort": "menu"
+          },
+          "monitor": {
+            "enabled": true,
+            "layout": "compact",
+            "fields": {
+              "flavors": "off",
+              "image": "off",
+              "description": "off",
+              "history": "off",
+              "glass": "off",
+              "garnish": "off",
+              "alcohol": "off",
+              "allergens": "off",
+              "additives": "off"
+            },
+            "columns": "auto",
+            "pageDurationSeconds": 15,
+            "showQrCode": true,
+            "localeMode": "primary",
+            "locale": null
+          },
+          "print": {
+            "enabled": true,
+            "layout": "list",
+            "fields": {
+              "flavors": "off",
+              "image": "off",
+              "description": "list",
+              "history": "off",
+              "glass": "off",
+              "garnish": "off",
+              "allergens": "list",
+              "additives": "list",
+              "allergenDisplay": "footnotes"
+            },
+            "paper": "A4",
+            "locale": null,
+            "showQrCode": true
+          }
+        },
+        "defaults": {
+          "fields": {
+            "price": "list",
+            "ingredients": "list",
+            "amounts": "off",
+            "flavors": "list",
+            "badges": "list",
+            "image": "list",
+            "description": "detail",
+            "history": "detail",
+            "glass": "detail",
+            "garnish": "detail",
+            "rating": "off",
+            "alcohol": "list",
+            "allergens": "detail",
+            "additives": "detail",
+            "alcoholDisplay": "category",
+            "allergenDisplay": "icons",
+            "additiveDisplay": "footnotes"
+          }
+        },
+        "blocks": [
+          { "id": "header", "type": "header", "showLogo": true, "showTitle": true, "showSubtitle": true },
+          {
+            "id": "intro",
+            "type": "text",
+            "content": {
+              "de": "Unsere Auswahl der großen Klassiker – frisch für dich gemixt. Tippe auf einen Drink für Beschreibung, Geschichte und Allergene.",
+              "en": "Our pick of the great classics – mixed fresh for you. Tap a drink for its description, history and allergens."
+            },
+            "outputs": { "monitor": false }
+          },
+          { "id": "section-card", "type": "section", "title": {}, "source": { "kind": "cardAllGroups" }, "overrides": {} },
+          { "id": "notice-allergens", "type": "notice", "preset": "allergens" }
+        ]
+      },
+      "draft": {
+        "schemaVersion": 1,
+        "title": { "de": "All Time Classics", "en": "All Time Classics" },
+        "subtitle": { "de": "Zeitlose Cocktail-Klassiker", "en": "Timeless cocktail classics" },
+        "theme": {
+          "preset": "modern",
+          "tokens": {
+            "colors": { "bg": "#f5f5f4", "surface": "#ffffff", "text": "#18181b", "muted": "#71717a", "accent": "#0f766e", "accentContrast": "#ffffff" },
+            "fontHeading": "dm-sans",
+            "fontBody": "inter",
+            "radius": 16,
+            "density": "comfortable"
+          }
+        },
+        "templates": { "web": { "templateId": "modern" }, "monitor": { "templateId": "modern" }, "print": { "templateId": "print-elegant" } },
+        "outputs": {
+          "web": {
+            "enabled": true,
+            "layout": "cards",
+            "fields": {},
+            "search": { "enabled": true, "includeOnRequest": false, "ingredientsSearchable": true },
+            "filters": { "categories": "auto", "allergens": true, "alcohol": true },
+            "sort": "menu"
+          },
+          "monitor": {
+            "enabled": true,
+            "layout": "compact",
+            "fields": {
+              "flavors": "off",
+              "image": "off",
+              "description": "off",
+              "history": "off",
+              "glass": "off",
+              "garnish": "off",
+              "alcohol": "off",
+              "allergens": "off",
+              "additives": "off"
+            },
+            "columns": "auto",
+            "pageDurationSeconds": 15,
+            "showQrCode": true,
+            "localeMode": "primary",
+            "locale": null
+          },
+          "print": {
+            "enabled": true,
+            "layout": "list",
+            "fields": {
+              "flavors": "off",
+              "image": "off",
+              "description": "list",
+              "history": "off",
+              "glass": "off",
+              "garnish": "off",
+              "allergens": "list",
+              "additives": "list",
+              "allergenDisplay": "footnotes"
+            },
+            "paper": "A4",
+            "locale": null,
+            "showQrCode": true
+          }
+        },
+        "defaults": {
+          "fields": {
+            "price": "list",
+            "ingredients": "list",
+            "amounts": "off",
+            "flavors": "list",
+            "badges": "list",
+            "image": "list",
+            "description": "detail",
+            "history": "detail",
+            "glass": "detail",
+            "garnish": "detail",
+            "rating": "off",
+            "alcohol": "list",
+            "allergens": "detail",
+            "additives": "detail",
+            "alcoholDisplay": "category",
+            "allergenDisplay": "icons",
+            "additiveDisplay": "footnotes"
+          }
+        },
+        "blocks": [
+          { "id": "header", "type": "header", "showLogo": true, "showTitle": true, "showSubtitle": true },
+          {
+            "id": "intro",
+            "type": "text",
+            "content": {
+              "de": "Unsere Auswahl der großen Klassiker – frisch für dich gemixt. Tippe auf einen Drink für Beschreibung, Geschichte und Allergene.",
+              "en": "Our pick of the great classics – mixed fresh for you. Tap a drink for its description, history and allergens."
+            },
+            "outputs": { "monitor": false }
+          },
+          { "id": "section-card", "type": "section", "title": {}, "source": { "kind": "cardAllGroups" }, "overrides": {} },
+          { "id": "notice-allergens", "type": "notice", "preset": "allergens" }
+        ]
+      }
+    }
   ]
 }

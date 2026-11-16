@@ -82,6 +82,9 @@ Vorschau: `?preview={previewToken}` zeigt Entwurf, ignoriert Zeitplan.
 - Theme-Tokens → CSS-Variablen (`--gm-bg, --gm-surface, --gm-text, --gm-muted, --gm-accent, --gm-accent-contrast, --gm-font-heading, --gm-font-body, --gm-radius, --gm-density`).
 - Eigenes CSS: postcss, gescoped auf `.gm-root`, `@import`/externe `url()` entfernt.
 - Liquid-Ausgabe mit DOMPurify sanitisiert. Liquid-Kontext = nur Resolver-Output.
+- Bildnachweise: `credit` der Bildtabellen (z. B. CC BY/BY-SA aus Vorlagen) → `item.imageCredit` (Partial
+  `gm_image_credit` unter dem Bild im Detail) und `image_credits` (Partial `gm_image_credits` im Footer aller Ausgaben,
+  sobald Cocktailbilder gezeigt werden). Eigene Footer-Vorlagen sollten `{% include 'gm_image_credits' %}` enthalten.
 - Adaptive Shell: Container Queries; Filterkategorien nur bei ≥2 Werten, Chips mit Zählern, 0-Treffer-Chips deaktiviert; <10 Cocktails → nur Suche; Filter & Suche in URL; innerhalb Kategorie OR, zwischen Kategorien AND, „Ohne“ schließt aus.
 
 ## Ausgaben

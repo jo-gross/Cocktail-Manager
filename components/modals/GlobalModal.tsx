@@ -50,13 +50,29 @@ export function GlobalModal(props: GlobalModalProps) {
         </div>
         <ModalBox className="relative z-10 p-2 md:p-4 print:top-0 print:shadow-none">
           {!hideCloseButton && (
+            // z-20: modal content rendered later in the DOM with positioned elements (e.g. `sticky` headers)
+            // would otherwise paint over the buttons and swallow their clicks.
             <form method="dialog" className={'print:hidden'}>
               {modalContext.content.length > 1 && (
-                <Button type="button" variant="outline" shape="circle" size="sm" onClick={() => modalContext.closeModal()} className="absolute top-2 left-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  shape="circle"
+                  size="sm"
+                  onClick={() => modalContext.closeModal()}
+                  className="absolute top-2 left-2 z-20"
+                >
                   <FaArrowLeft />
                 </Button>
               )}
-              <Button type="button" variant="outline" shape="circle" size="sm" onClick={() => modalContext.closeAllModals()} className="absolute top-2 right-2">
+              <Button
+                type="button"
+                variant="outline"
+                shape="circle"
+                size="sm"
+                onClick={() => modalContext.closeAllModals()}
+                className="absolute top-2 right-2 z-20"
+              >
                 <FaTimes />
               </Button>
             </form>

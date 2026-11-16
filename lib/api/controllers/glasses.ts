@@ -9,6 +9,7 @@ import { ApiError } from '@lib/http/ApiError';
 import { assertIdsInWorkspace, assertInWorkspace } from '@lib/api/scope';
 import { BULK_TX_TIMEOUT_MS, runTx, type Tx } from '@lib/db/tx';
 import { decodeStoredImage, type DecodedImage } from '@lib/images/imageResponse';
+import { nextImageCredit } from '@lib/images/imageCredit';
 import { toGlassDto } from '@lib/api/dto/glasses';
 import packageJson from '../../../package.json';
 import type { GlassExportStructure } from '@lib/auditExport';
@@ -16,7 +17,7 @@ import type { Prisma, User, Workspace } from '@generated/prisma/client';
 import { GlassExportItemSchema } from '@lib/schemas/glasses';
 import type { GlassCreateInput, GlassDto, GlassExportItem, GlassImportJsonBody, GlassUpdateInput } from '@lib/schemas/glasses';
 
-const includeImageCount = { _count: { select: { GlassImage: true } } } satisfies Prisma.GlassInclude;
+const includeImageCount = { _count: { select: { GlassImage: true } }, GlassImage: { select: { credit: true } } } satisfies Prisma.GlassInclude;
 
 /**
  * Locks the glass row for the rest of the transaction and proves it belongs to
@@ -34,7 +35,7 @@ export async function listGlasses(workspace: Workspace, opts: { search?: string 
     where.name = { contains: opts.search, mode: 'insensitive' };
   }
   const glasses = await prisma.glass.findMany({ where, include: includeImageCount });
-  return glasses.map((glass) => toGlassDto(glass, glass._count.GlassImage > 0, workspace.id));
+  return glasses.map((glass) => toGlassDto(glass, glass._count.GlassImage > 0, workspace.id, glass.GlassImage[0]?.credit));
 }
 
 export async function getGlass(workspace: Workspace, glassId: string): Promise<GlassDto | null> {
@@ -42,7 +43,7 @@ export async function getGlass(workspace: Workspace, glassId: string): Promise<G
     where: { id: glassId, workspaceId: workspace.id },
     include: includeImageCount,
   });
-  return glass ? toGlassDto(glass, glass._count.GlassImage > 0, workspace.id) : null;
+  return glass ? toGlassDto(glass, glass._count.GlassImage > 0, workspace.id, glass.GlassImage[0]?.credit) : null;
 }
 
 export async function createGlass(workspace: Workspace, user: User, input: GlassCreateInput): Promise<GlassDto> {
@@ -57,16 +58,17 @@ export async function createGlass(workspace: Workspace, user: User, input: Glass
       },
     });
 
+    const credit = nextImageCredit({ image: input.image, credit: input.imageCredit }, null);
     if (input.image) {
-      await tx.glassImage.create({ data: { image: input.image, glassId: created.id } });
+      await tx.glassImage.create({ data: { image: input.image, credit, glassId: created.id } });
     }
 
     const fullGlass = await tx.glass.findUnique({ where: { id: created.id }, include: { GlassImage: true } });
     await createLog(tx, workspace.id, user.id, 'Glass', created.id, 'CREATE', null, fullGlass);
-    return created;
+    return { ...created, credit };
   });
 
-  return toGlassDto(createdGlass, Boolean(input.image), workspace.id);
+  return toGlassDto(createdGlass, Boolean(input.image), workspace.id, createdGlass.credit);
 }
 
 export async function updateGlass(workspace: Workspace, user: User, glassId: string, input: GlassUpdateInput): Promise<GlassDto> {
@@ -83,17 +85,19 @@ export async function updateGlass(workspace: Workspace, user: User, glassId: str
       },
     });
 
+    // A new image drops the credit of the old one unless the request sets it.
+    const credit = nextImageCredit({ image: input.image, credit: input.imageCredit }, oldGlass.GlassImage[0]);
     await tx.glassImage.deleteMany({ where: { glassId } });
     if (input.image) {
-      await tx.glassImage.create({ data: { glassId, image: input.image } });
+      await tx.glassImage.create({ data: { glassId, image: input.image, credit } });
     }
 
     const fullNewGlass = await tx.glass.findUnique({ where: { id: glassId }, include: { GlassImage: true } });
     await createLog(tx, workspace.id, user.id, 'Glass', glassId, 'UPDATE', oldGlass, fullNewGlass);
-    return updated;
+    return { ...updated, credit };
   });
 
-  return toGlassDto(updatedGlass, Boolean(input.image), workspace.id);
+  return toGlassDto(updatedGlass, Boolean(input.image), workspace.id, updatedGlass.credit);
 }
 
 export async function deleteGlass(workspace: Workspace, user: User, glassId: string): Promise<{ count: number }> {
@@ -132,14 +136,14 @@ export async function checkGlass(workspace: Workspace, name: string): Promise<Gl
     }
   }
 
-  return best && maxSimilarity > 0.5 ? toGlassDto(best, best._count.GlassImage > 0, workspace.id) : null;
+  return best && maxSimilarity > 0.5 ? toGlassDto(best, best._count.GlassImage > 0, workspace.id, best.GlassImage[0]?.credit) : null;
 }
 
 export async function cloneGlass(workspace: Workspace, user: User, glassId: string, name: string): Promise<GlassDto> {
   return runTx(async (tx) => {
     const existing = await tx.glass.findFirst({
       where: { id: glassId, workspaceId: workspace.id },
-      include: { GlassImage: { select: { image: true } } },
+      include: { GlassImage: { select: { image: true, credit: true } } },
     });
 
     if (!existing) throw new ApiError(404, 'NOT_FOUND', 'Glass not found');
@@ -156,13 +160,13 @@ export async function cloneGlass(workspace: Workspace, user: User, glassId: stri
 
     const hasImage = existing.GlassImage.length > 0;
     if (hasImage) {
-      await tx.glassImage.create({ data: { glassId: createClone.id, image: existing.GlassImage[0].image } });
+      await tx.glassImage.create({ data: { glassId: createClone.id, image: existing.GlassImage[0].image, credit: existing.GlassImage[0].credit } });
     }
 
     const fullClone = await tx.glass.findUnique({ where: { id: createClone.id }, include: { GlassImage: true } });
     await createLog(tx, workspace.id, user.id, 'Glass', createClone.id, 'CREATE', null, fullClone);
 
-    return toGlassDto(createClone, hasImage, workspace.id);
+    return toGlassDto(createClone, hasImage, workspace.id, existing.GlassImage[0]?.credit);
   });
 }
 

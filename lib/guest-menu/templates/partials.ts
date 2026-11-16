@@ -6,7 +6,7 @@
  * Item-slot scope: `item` (PublicMenuItemDto), `section`, `fields` (effective
  * FieldConfig), `show.<field>` (true if the field is shown in this slot),
  * `expand.<field>` (true if shown behind a <details> toggle in the list),
- * `menu`, `theme`, `output`, `locale`, `ui_locale`, `layout`, `currency`.
+ * `menu`, `theme`, `output`, `locale`, `ui_locale`, `layout`, `currency`, `image_credits`.
  */
 
 export const GM_BADGES = `{%- capture gm_badges_out -%}
@@ -36,6 +36,16 @@ export const GM_INGREDIENTS = `{%- if show.amounts and item.amounts.size > 0 -%}
 <p class="gm-ingredients">{%- for entry in item.ingredients -%}{{ entry.name }}{% if entry.optional %} ({{ 'item.optional' | t }}){% endif %}{% unless forloop.last %}, {% endunless %}{%- endfor -%}</p>
 {%- endif -%}`;
 
+/** Caption below/on a large item image: short credit, the full credit on click (and hover). */
+export const GM_IMAGE_CREDIT = `{%- if item.imageCredit -%}<details class="gm-image-credit"><summary title="{{ item.imageCredit }}">{{ 'item.photo' | t }}: {{ item.imageCredit | short_credit }}</summary><span class="gm-image-credit-full">{{ item.imageCredit }}</span></details>{%- endif -%}`;
+
+/** Credits of all shown cocktail images (footer); collapsed on the web, small print elsewhere. */
+export const GM_IMAGE_CREDITS = `{%- if image_credits.size > 0 -%}
+{%- if output == 'web' -%}<details class="gm-image-credits"><summary>{{ 'footer.imageCredits' | t }}</summary>{%- else -%}<div class="gm-image-credits"><span class="gm-image-credits-title">{{ 'footer.imageCredits' | t }}:</span>{%- endif -%}
+<ul class="gm-image-credits-list">{%- for entry in image_credits -%}<li><b>{{ entry.name }}</b>: {{ entry.credit }}</li>{%- endfor -%}</ul>
+{%- if output == 'web' -%}</details>{%- else -%}</div>{%- endif -%}
+{%- endif -%}`;
+
 /** Fields rendered behind a toggle in the list (`expandable` mode). */
 export const GM_EXPANDABLES = `{%- if expand.any -%}
 <details class="gm-expand">
@@ -56,7 +66,7 @@ export const GM_EXPANDABLES = `{%- if expand.any -%}
 
 /** Default `item_detail` slot (web detail sheet); all non-`off` fields are shown. */
 export const DEFAULT_ITEM_DETAIL = `<div class="gm-detail{% if item.unavailable %} is-unavailable{% endif %}">
-{%- if show.image and item.imageUrl -%}<img class="gm-detail-image" src="{{ item.imageUrl }}" alt="{{ item.name }}" loading="lazy">{%- endif -%}
+{%- if show.image and item.imageUrl -%}<img class="gm-detail-image" src="{{ item.imageUrl }}" alt="{{ item.name }}" loading="lazy">{%- include 'gm_image_credit' -%}{%- endif -%}
 <div class="gm-detail-head">
 <h2 class="gm-detail-name">{{ item.name }}</h2>
 {%- include 'gm_price' -%}
@@ -109,6 +119,7 @@ export const DEFAULT_FOOTER = `<footer class="gm-footer">
 <div class="gm-legend"><h4 class="gm-legend-title">{{ 'footer.additives' | t }}</h4><ul class="gm-legend-list">{%- for additive in footnotes.additives -%}<li><b>{{ additive.number }}</b> {{ additive.label }}</li>{%- endfor -%}</ul></div>
 {%- endif -%}
 {%- for notice in notices -%}<div class="gm-footer-notice">{{ notice.markdown | markdown }}</div>{%- endfor -%}
+{%- include 'gm_image_credits' -%}
 </footer>`;
 
 export const GUEST_MENU_PARTIALS: Record<string, string> = {
@@ -121,4 +132,6 @@ export const GUEST_MENU_PARTIALS: Record<string, string> = {
   gm_ingredients: GM_INGREDIENTS,
   gm_expandables: GM_EXPANDABLES,
   gm_item_detail: DEFAULT_ITEM_DETAIL,
+  gm_image_credit: GM_IMAGE_CREDIT,
+  gm_image_credits: GM_IMAGE_CREDITS,
 };

@@ -2,10 +2,14 @@
  * Image credits of built-in templates: `attributions` of the manifest (image file → credit line)
  * resolved to the items of the template. The template workspace is a read-only copy of
  * `backup.json` with new ids, so items are matched to the backup by their primary name.
+ * The generator writes the credits into the image rows of `backup.json` (`credit`), so they are
+ * carried into the template workspace and on into every workspace the template is applied to;
+ * {@link fillImageCreditsByName} covers template copies without them.
  */
 import { existsSync, readFileSync } from 'fs';
 import { join } from 'path';
 import type { WorkspaceTemplate } from '@generated/prisma/client';
+import type { BackupImportData } from '@lib/backup/backupSchema';
 import { TEMPLATES_DIR, TEMPLATE_IMAGE_PREFIX, listBuiltInTemplateKeys, readBuiltInManifest } from '@lib/templates/builtIn';
 
 export type TemplateCreditKind = 'glass' | 'ingredient' | 'garnish' | 'cocktail';
@@ -45,6 +49,59 @@ export function resolveImageCredits(backup: Record<string, unknown>, attribution
     result[kind] = credits;
   }
   return result;
+}
+
+/**
+ * Pure: sets `credit` of the image rows of a raw (unresolved) backup from the manifest attributions
+ * (`file:images/<name>` → credit line). Rows that already have a credit keep it.
+ */
+export function withAttributedImageCredits<T>(backup: T, attributions: Record<string, string> | undefined): T {
+  if (!attributions || !backup || typeof backup !== 'object') return backup;
+  const result = { ...(backup as Record<string, unknown>) };
+  for (const { images } of Object.values(COLLECTIONS)) {
+    const rows = result[images];
+    if (!Array.isArray(rows)) continue;
+    result[images] = rows.map((row: Record<string, unknown>) => {
+      if (row.credit || typeof row.image !== 'string' || !row.image.startsWith(TEMPLATE_IMAGE_PREFIX)) return row;
+      const credit = attributions[row.image.slice(TEMPLATE_IMAGE_PREFIX.length)];
+      return credit ? { ...row, credit } : row;
+    });
+  }
+  return result as T;
+}
+
+/** Image rows of a parsed template backup per kind: entity collection, image collection and the entity field. */
+type ParsedImageRows = Pick<
+  BackupImportData,
+  'glass' | 'glassImages' | 'ingredient' | 'ingredientImages' | 'garnish' | 'garnishImages' | 'cocktailRecipe' | 'cocktailRecipeImage'
+>;
+
+/**
+ * Pure: fills missing `credit`s of image rows by the primary name of their item (credits of a
+ * built-in template, see {@link builtInImageCredits}). Call before the language pivot.
+ */
+export function fillImageCreditsByName<T extends ParsedImageRows>(data: T, credits: TemplateImageCredits | null): T {
+  if (!credits) return data;
+  const fill = <R extends { image: string; credit?: string | null }>(
+    kind: TemplateCreditKind,
+    rows: R[],
+    entities: Array<{ id: string; name: string }>,
+    idOf: (row: R) => string,
+  ) => {
+    const names = new Map(entities.map((entity) => [entity.id, entity.name]));
+    return rows.map((row) => {
+      if (row.credit) return row;
+      const credit = credits[kind].get(names.get(idOf(row)) ?? '');
+      return credit ? { ...row, credit } : row;
+    });
+  };
+  return {
+    ...data,
+    glassImages: fill('glass', data.glassImages, data.glass, (row) => row.glassId),
+    ingredientImages: fill('ingredient', data.ingredientImages, data.ingredient, (row) => row.ingredientId),
+    garnishImages: fill('garnish', data.garnishImages, data.garnish, (row) => row.garnishId),
+    cocktailRecipeImage: fill('cocktail', data.cocktailRecipeImage, data.cocktailRecipe, (row) => row.cocktailRecipeId),
+  };
 }
 
 const cache = new Map<string, TemplateImageCredits | null>();

@@ -93,6 +93,7 @@ export interface FormValue extends IngredientGuestInfoFormValues {
   tags: string[];
   image: string | undefined;
   originalImage?: File | undefined;
+  imageCredit: string;
   fetchingExternalData?: boolean;
   volume?: number;
   selectedUnit?: string;
@@ -110,6 +111,7 @@ function toComparableIngredient(values: FormValue) {
     link: trimmed(values.link),
     tags: values.tags,
     image: trimmed(values.image),
+    imageCredit: values.image ? values.imageCredit.trim() : '',
     abv: values.abv,
     allergens: [...values.allergens].sort(),
     allergenSources: [...values.allergenSources].sort(),
@@ -188,6 +190,7 @@ export function IngredientForm(props: IngredientFormProps) {
     tags: props.ingredient?.tags ?? [],
     image: hydratedImage,
     originalImage: hydratedImage ? convertBase64ToFile(hydratedImage) : undefined,
+    imageCredit: props.ingredient?.imageCredit ?? '',
     abv: props.ingredient?.abv ?? '',
     allergens: props.ingredient?.allergens ?? [],
     allergenSources: props.ingredient?.allergenSources ?? [],
@@ -272,6 +275,7 @@ export function IngredientForm(props: IngredientFormProps) {
           // Omitting `image` on update removes it; re-send hydrated/kept base64.
           if (values.image != undefined && values.image.trim() !== '') {
             body.image = values.image.trim();
+            body.imageCredit = values.imageCredit.trim() || null;
           }
           if (props.ingredient == undefined) {
             const created = await createIngredient(workspaceId, body);
@@ -414,6 +418,7 @@ export function IngredientForm(props: IngredientFormProps) {
                                           await convertToBase64(new File([compressedImageFile], 'image.png', { type: 'image/png' })),
                                         );
                                         await setFieldValue('originalImage', imageFile);
+                                        await setFieldValue('imageCredit', '');
                                       } else {
                                         alertService.error(t('ingredient:error.imageScale'));
                                       }

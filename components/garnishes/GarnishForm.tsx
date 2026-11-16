@@ -31,6 +31,7 @@ export interface GarnishFormValues extends GarnishGuestInfoFormValues {
   notes: string;
   image: string | undefined;
   originalImage: File | undefined;
+  imageCredit: string;
 }
 
 function createGarnishFormSchema(requiredMessage: string, imageNotCroppedMessage: string) {
@@ -68,6 +69,7 @@ function toComparableGarnish(values: GarnishFormValues) {
     description: trimmed(values.description),
     notes: trimmed(values.notes),
     image: values.image,
+    imageCredit: values.image ? values.imageCredit.trim() : '',
     allergens: [...values.allergens].sort(),
     allergenSources: [...values.allergenSources].sort(),
     additives: [...values.additives].sort(),
@@ -130,6 +132,7 @@ export function GarnishForm(props: GarnishFormProps) {
         notes: props.garnish?.notes ?? '',
         image: hydratedImage,
         originalImage: hydratedImage ? convertBase64ToFile(hydratedImage) : undefined,
+        imageCredit: props.garnish?.imageCredit ?? '',
         allergens: props.garnish?.allergens ?? [],
         allergenSources: props.garnish?.allergenSources ?? [],
         additives: props.garnish?.additives ?? [],
@@ -154,6 +157,7 @@ export function GarnishForm(props: GarnishFormProps) {
           // Omitting `image` on update removes it; re-send hydrated/kept base64.
           if (values.image != undefined && values.image !== '') {
             body.image = values.image;
+            body.imageCredit = values.imageCredit.trim() || null;
           }
           if (props.garnish == undefined) {
             const created = await createGarnish(workspaceId, body);

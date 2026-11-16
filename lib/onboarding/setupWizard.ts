@@ -14,7 +14,7 @@ import {
 export const SETUP_STEPS = ['language', 'basics', 'content', 'team', 'done'] as const;
 export type SetupStep = (typeof SETUP_STEPS)[number];
 
-/** Not persisted – only drives suggestions in the wizard. */
+/** Not persisted – drives preselections in the wizard and the design of guest menus from added collections. */
 export const BUSINESS_TYPES = ['bar', 'restaurant', 'event', 'private'] as const;
 export type BusinessType = (typeof BUSINESS_TYPES)[number];
 
@@ -34,7 +34,7 @@ export function setupSteps(options: { isExternallyManaged: boolean }): SetupStep
 }
 
 export interface BusinessTypePreselection {
-  /** Suggested start of the statistics day; `null` = keep. */
+  /** Day start preselected in the business type step; `null` = no type chosen, keep the value. */
   dayStart: string | null;
   /** The team step is skipped by "Next" (still reachable via the stepper). */
   skipTeam: boolean;
@@ -46,15 +46,17 @@ export function businessTypePreselection(type: BusinessType | null | undefined):
     case 'bar':
     case 'event':
       return { dayStart: '06:00', skipTeam: false };
+    case 'restaurant':
+      return { dayStart: DEFAULT_DAY_START, skipTeam: false };
     case 'private':
-      return { dayStart: null, skipTeam: true };
+      return { dayStart: DEFAULT_DAY_START, skipTeam: true };
     default:
       return { dayStart: null, skipTeam: false };
   }
 }
 
 /** What choosing a business type changes in the wizard, as shown to the user (`onboarding:basics.effects.<kind>`). */
-export type BusinessTypeEffect = { kind: 'dayStart'; time: string } | { kind: 'skipTeam' } | { kind: 'none' };
+export type BusinessTypeEffect = { kind: 'dayStart'; time: string } | { kind: 'skipTeam' } | { kind: 'guestMenuDesign' };
 
 /** Derived from {@link businessTypePreselection}, so the texts can never promise more than the rules do. */
 export function businessTypeEffects(type: BusinessType): BusinessTypeEffect[] {
@@ -62,14 +64,28 @@ export function businessTypeEffects(type: BusinessType): BusinessTypeEffect[] {
   const effects: BusinessTypeEffect[] = [];
   if (dayStart) effects.push({ kind: 'dayStart', time: dayStart });
   if (skipTeam) effects.push({ kind: 'skipTeam' });
-  return effects.length > 0 ? effects : [{ kind: 'none' }];
+  // The type is sent along when a collection is added; its guest menus get a matching design.
+  effects.push({ kind: 'guestMenuDesign' });
+  return effects;
 }
 
-/** Day start to suggest for the business type, only while the workspace still uses the default. */
-export function suggestedDayStart(type: BusinessType | null | undefined, currentDayStart: string | null | undefined): string | null {
+export function isValidDayStart(value: string): boolean {
+  return /^\d{2}:\d{2}$/.test(value);
+}
+
+/**
+ * Whether a stored day start counts as the user's own choice: anything but unset or a value the
+ * business types preselect (those may stem from an earlier run of the wizard).
+ */
+export function isCustomDayStart(stored: string | null | undefined): boolean {
+  if (!stored) return false;
+  return !BUSINESS_TYPES.some((type) => businessTypePreselection(type).dayStart === stored);
+}
+
+/** Day start after choosing a business type: the type's preselection, unless the user set the time themselves. */
+export function dayStartForBusinessType(type: BusinessType, current: string, edited: boolean): string {
   const { dayStart } = businessTypePreselection(type);
-  const current = currentDayStart || DEFAULT_DAY_START;
-  return dayStart && current === DEFAULT_DAY_START && dayStart !== current ? dayStart : null;
+  return edited || !dayStart ? current : dayStart;
 }
 
 /** Step after `current`; skips the team step when the business type says so. */
@@ -158,9 +174,14 @@ export function suggestCurrency(languages: readonly string[]): string {
   return DEFAULT_WORKSPACE_CURRENCY;
 }
 
-export interface RegionValues {
+/** Time zone and currency (first step of the wizard). */
+export interface LocaleRegionValues {
   timezone: string;
   currency: string;
+}
+
+/** Region settings of a workspace; the day start is asked together with the business type in the wizard. */
+export interface RegionValues extends LocaleRegionValues {
   dayStart: string;
 }
 
@@ -180,12 +201,11 @@ export function initialContentLocales(
 
 /** Stored values win; unset ones are filled from the browser (time zone, languages). */
 export function initialRegionValues(
-  settings: Partial<Record<'timezone' | 'currency' | 'statisticDayStartTime', string | null | undefined>>,
+  settings: Partial<Record<'timezone' | 'currency', string | null | undefined>>,
   browser: { timezone?: string | null; languages: readonly string[] },
-): RegionValues {
+): LocaleRegionValues {
   return {
     timezone: settings.timezone || detectTimezone(browser.timezone),
     currency: settings.currency || suggestCurrency(browser.languages),
-    dayStart: settings.statisticDayStartTime || DEFAULT_DAY_START,
   };
 }

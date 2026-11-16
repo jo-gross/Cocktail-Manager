@@ -13,7 +13,9 @@ import {
   setupSteps,
   shouldShowSetupBanner,
   suggestCurrency,
-  suggestedDayStart,
+  dayStartForBusinessType,
+  isCustomDayStart,
+  isValidDayStart,
 } from '../setupWizard';
 
 describe('setupSteps', () => {
@@ -27,47 +29,68 @@ describe('setupSteps', () => {
 });
 
 describe('business type preselection', () => {
-  it('suggests 06:00 as day start for bars and events (they run past midnight)', () => {
+  it('preselects 06:00 as day start for bars and events (they run past midnight)', () => {
     expect(businessTypePreselection('bar')).toEqual({ dayStart: '06:00', skipTeam: false });
     expect(businessTypePreselection('event')).toEqual({ dayStart: '06:00', skipTeam: false });
   });
 
-  it('skips the team step for private use', () => {
-    expect(businessTypePreselection('private')).toEqual({ dayStart: null, skipTeam: true });
+  it('preselects midnight for restaurants and private use; private use skips the team step', () => {
+    expect(businessTypePreselection('restaurant')).toEqual({ dayStart: '00:00', skipTeam: false });
+    expect(businessTypePreselection('private')).toEqual({ dayStart: '00:00', skipTeam: true });
   });
 
-  it('keeps everything for the other types and without a choice', () => {
-    for (const type of ['restaurant', null, undefined] as const) {
+  it('keeps everything without a choice', () => {
+    for (const type of [null, undefined] as const) {
       expect(businessTypePreselection(type)).toEqual({ dayStart: null, skipTeam: false });
     }
   });
+});
 
-  it('only suggests the day start while the default is used', () => {
-    expect(suggestedDayStart('bar', null)).toBe('06:00');
-    expect(suggestedDayStart('bar', '00:00')).toBe('06:00');
-    expect(suggestedDayStart('bar', '05:00')).toBeNull();
-    expect(suggestedDayStart('bar', '06:00')).toBeNull();
-    expect(suggestedDayStart('event', '00:00')).toBe('06:00');
-    expect(suggestedDayStart('restaurant', '00:00')).toBeNull();
-    expect(suggestedDayStart(null, '00:00')).toBeNull();
+describe('day start in the business type step', () => {
+  it('follows the business type while the user has not set it', () => {
+    expect(dayStartForBusinessType('bar', '00:00', false)).toBe('06:00');
+    expect(dayStartForBusinessType('event', '00:00', false)).toBe('06:00');
+    expect(dayStartForBusinessType('restaurant', '06:00', false)).toBe('00:00');
+    expect(dayStartForBusinessType('private', '06:00', false)).toBe('00:00');
+  });
+
+  it('keeps a value the user set', () => {
+    expect(dayStartForBusinessType('bar', '05:00', true)).toBe('05:00');
+    expect(dayStartForBusinessType('restaurant', '06:00', true)).toBe('06:00');
+  });
+
+  it('treats unset and preselected stored values as not set by the user', () => {
+    expect(isCustomDayStart(null)).toBe(false);
+    expect(isCustomDayStart(undefined)).toBe(false);
+    expect(isCustomDayStart('')).toBe(false);
+    expect(isCustomDayStart('00:00')).toBe(false);
+    expect(isCustomDayStart('06:00')).toBe(false);
+    expect(isCustomDayStart('05:00')).toBe(true);
+    expect(isCustomDayStart('18:00')).toBe(true);
+  });
+
+  it('validates the time format', () => {
+    expect(isValidDayStart('06:00')).toBe(true);
+    expect(isValidDayStart('6:00')).toBe(false);
+    expect(isValidDayStart('')).toBe(false);
   });
 });
 
 describe('business type effects', () => {
   it('describes exactly what the preselection changes', () => {
-    expect(businessTypeEffects('bar')).toEqual([{ kind: 'dayStart', time: '06:00' }]);
-    expect(businessTypeEffects('event')).toEqual([{ kind: 'dayStart', time: '06:00' }]);
-    expect(businessTypeEffects('private')).toEqual([{ kind: 'skipTeam' }]);
-    expect(businessTypeEffects('restaurant')).toEqual([{ kind: 'none' }]);
+    expect(businessTypeEffects('bar')).toEqual([{ kind: 'dayStart', time: '06:00' }, { kind: 'guestMenuDesign' }]);
+    expect(businessTypeEffects('event')).toEqual([{ kind: 'dayStart', time: '06:00' }, { kind: 'guestMenuDesign' }]);
+    expect(businessTypeEffects('restaurant')).toEqual([{ kind: 'dayStart', time: '00:00' }, { kind: 'guestMenuDesign' }]);
+    expect(businessTypeEffects('private')).toEqual([{ kind: 'dayStart', time: '00:00' }, { kind: 'skipTeam' }, { kind: 'guestMenuDesign' }]);
   });
 
   it('stays in sync with the rules for every type', () => {
     for (const type of BUSINESS_TYPES) {
       const { dayStart, skipTeam } = businessTypePreselection(type);
-      const kinds = businessTypeEffects(type).map((effect) => effect.kind);
-      expect(kinds.includes('dayStart')).toBe(dayStart !== null);
-      expect(kinds.includes('skipTeam')).toBe(skipTeam);
-      expect(kinds.includes('none')).toBe(dayStart === null && !skipTeam);
+      const effects = businessTypeEffects(type);
+      expect(effects.find((effect) => effect.kind === 'dayStart')).toEqual(dayStart ? { kind: 'dayStart', time: dayStart } : undefined);
+      expect(effects.some((effect) => effect.kind === 'skipTeam')).toBe(skipTeam);
+      expect(effects.some((effect) => effect.kind === 'guestMenuDesign')).toBe(true);
     }
   });
 
@@ -122,17 +145,13 @@ describe('regional suggestions', () => {
   });
 
   it('prefers stored settings over browser values', () => {
-    expect(
-      initialRegionValues({ timezone: 'Europe/Vienna', currency: 'CHF', statisticDayStartTime: '05:00' }, { timezone: 'UTC', languages: ['en-GB'] }),
-    ).toEqual({
+    expect(initialRegionValues({ timezone: 'Europe/Vienna', currency: 'CHF' }, { timezone: 'UTC', languages: ['en-GB'] })).toEqual({
       timezone: 'Europe/Vienna',
       currency: 'CHF',
-      dayStart: '05:00',
     });
-    expect(initialRegionValues({ timezone: null, currency: null, statisticDayStartTime: null }, { timezone: 'Europe/London', languages: ['en-GB'] })).toEqual({
+    expect(initialRegionValues({ timezone: null, currency: null }, { timezone: 'Europe/London', languages: ['en-GB'] })).toEqual({
       timezone: 'Europe/London',
       currency: 'GBP',
-      dayStart: '00:00',
     });
   });
 });

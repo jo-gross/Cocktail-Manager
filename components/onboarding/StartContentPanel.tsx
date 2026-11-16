@@ -353,3 +353,8 @@ export function sumCreated(applied: AppliedTemplate[]): Record<TemplateItemKind,
   for (const entry of applied) for (const kind of TEMPLATE_ITEM_KINDS) total[kind] += entry.result.created[kind];
   return total;
 }
+
+/** Guest menus created by the applied templates (`created.guestMenus` is optional: older servers do not report it). */
+export function sumCreatedGuestMenus(applied: AppliedTemplate[]): number {
+  return applied.reduce((total, entry) => total + (entry.result.created.guestMenus ?? 0), 0);
+}

@@ -9,6 +9,7 @@ import { ApiTags } from '@lib/openapi/tags';
 import { WorkspaceIdParam, DeletionResult } from '@lib/schemas/common';
 import type { ResourceApiDoc } from '@lib/openapi/types';
 import { ImageDataUriSchema } from '@lib/images/imageSchema';
+import { ImageCreditInputSchema } from '@lib/images/imageCredit';
 import { IngredientGuestInfoDtoShape, IngredientGuestInfoInputShape } from '@lib/schemas/guestInfo';
 
 const ID_MAX = 128;
@@ -58,6 +59,7 @@ export const IngredientDtoSchema = z
     volumes: z.array(IngredientVolumeDtoSchema),
     hasImage: z.boolean().openapi({ description: 'Whether the ingredient has an image.' }),
     imageUrl: z.string().nullable().openapi({ description: 'URL to fetch the ingredient image bytes, or null when hasImage is false.' }),
+    imageCredit: z.string().nullable().openapi({ description: 'Attribution of the image (author, source, license), to be shown with it; null = none.' }),
     ...IngredientGuestInfoDtoShape,
   })
   .openapi('Ingredient');
@@ -88,6 +90,7 @@ export const IngredientCreateSchema = z
     tags: TagList.optional(),
     units: IngredientUnitsInput.openapi({ description: 'Unit volumes to attach (units of this workspace, each at most once).' }),
     image: ImageDataUriSchema.nullish().openapi({ description: 'Base64-encoded raster image (data URI) to attach.' }),
+    imageCredit: ImageCreditInputSchema,
     ...IngredientGuestInfoInputShape,
   })
   .openapi('IngredientCreateInput');
@@ -105,6 +108,7 @@ export const IngredientUpdateSchema = z
       description: 'Unit volumes (units of this workspace, each at most once). Replaces the existing volumes; omitting it keeps them unchanged.',
     }),
     image: ImageDataUriSchema.nullish().openapi({ description: 'Base64 raster image (data URI); omitting it removes the current image.' }),
+    imageCredit: ImageCreditInputSchema,
     ...IngredientGuestInfoInputShape,
   })
   .openapi('IngredientUpdateInput');

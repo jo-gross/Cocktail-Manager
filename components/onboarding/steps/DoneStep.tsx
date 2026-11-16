@@ -12,7 +12,7 @@ import { alertApiV1Error } from '@lib/network/apiV1';
 import { completeOnboarding } from '@lib/network/onboarding';
 import { basicsBarTour } from '@lib/tours/definitions/basicsBar';
 import { TEMPLATE_ITEM_KINDS } from '@lib/onboarding/templateSelection';
-import { sumCreated, useFormatCounts, type AppliedTemplate } from '../StartContentPanel';
+import { sumCreated, sumCreatedGuestMenus, useFormatCounts, type AppliedTemplate } from '../StartContentPanel';
 import { SetupHint } from '../SetupHint';
 import type { SetupStepProps } from './types';
 
@@ -29,7 +29,8 @@ export function DoneStep({ workspaceId, saveRef, contentLocale, applied, teamLin
   const { startTour } = useTour();
   const { workspace, refreshWorkspace } = useContext(UserContext);
   const [completing, setCompleting] = useState(true);
-  const [leaving, setLeaving] = useState(false);
+  // Each button shows its own progress; both are disabled while one of them navigates.
+  const [leaving, setLeaving] = useState<'tour' | 'later' | null>(null);
   const formatCounts = useFormatCounts();
   const completed = useRef(false);
 
@@ -49,13 +50,16 @@ export function DoneStep({ workspaceId, saveRef, contentLocale, applied, teamLin
   const created = sumCreated(applied);
   const hasContent = TEMPLATE_ITEM_KINDS.some((kind) => created[kind] > 0);
 
+  const guestMenus = sumCreatedGuestMenus(applied);
+  const busy = completing || leaving !== null;
+
   const openBar = async (withTour: boolean) => {
-    setLeaving(true);
+    setLeaving(withTour ? 'tour' : 'later');
     try {
       await router.push(`/workspaces/${workspaceId}`);
       if (withTour) startTour(basicsBarTour.id, { workspaceId });
     } finally {
-      setLeaving(false);
+      setLeaving(null);
     }
   };
 
@@ -71,11 +75,12 @@ export function DoneStep({ workspaceId, saveRef, contentLocale, applied, teamLin
             <p className="max-w-prose text-base-content/70">{t('onboarding:done.body')}</p>
           </div>
           <div className="flex flex-wrap justify-center gap-2">
-            <Button type="button" variant="primary" disabled={completing || leaving} onClick={() => void openBar(true)}>
-              {completing || leaving ? <Loading size="sm" /> : null}
+            <Button type="button" variant="primary" disabled={busy} aria-busy={leaving === 'tour' || undefined} onClick={() => void openBar(true)}>
+              {leaving === 'tour' ? <Loading size="sm" /> : null}
               {t('onboarding:done.startTour')}
             </Button>
-            <Button type="button" variant="outline" disabled={completing || leaving} onClick={() => void openBar(false)}>
+            <Button type="button" variant="outline" disabled={busy} aria-busy={leaving === 'later' || undefined} onClick={() => void openBar(false)}>
+              {leaving === 'later' ? <Loading size="sm" /> : null}
               {t('onboarding:done.later')}
             </Button>
           </div>
@@ -94,6 +99,14 @@ export function DoneStep({ workspaceId, saveRef, contentLocale, applied, teamLin
               {hasContent
                 ? t('onboarding:done.summary.contentApplied', { templates: applied.map((entry) => entry.name).join(', '), items: formatCounts(created) })
                 : t('onboarding:done.summary.contentEmpty')}
+              {guestMenus > 0 ? (
+                <>
+                  {' '}
+                  <Link href={`/workspaces/${workspaceId}/manage/guest-menus`} className="link font-medium">
+                    {t('onboarding:done.summary.guestMenuLink', { count: guestMenus })}
+                  </Link>
+                </>
+              ) : null}
             </dd>
           </div>
           <div className="flex flex-col gap-0.5 px-3 py-2.5 sm:flex-row sm:gap-4">

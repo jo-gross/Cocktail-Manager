@@ -218,6 +218,7 @@ export function renderMenuSlots(
     layout: dto.layout,
     currency: dto.currency,
     footnotes: dto.footnotes,
+    image_credits: dto.imageCredits ?? [],
     notices: dto.notices,
   });
 

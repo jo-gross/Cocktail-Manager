@@ -50,6 +50,7 @@ export const CODE_REFERENCE: ReferenceGroup[] = [
       { label: 'item.amounts', snippet: '{% for entry in item.amounts %}{{ entry.amount }} {{ entry.unit }} {{ entry.name }}{% endfor %}' },
       { label: 'item.unavailable', snippet: '{% if item.unavailable %}{% endif %}' },
       { label: 'item.onRequest', snippet: '{% if item.onRequest %}{% endif %}' },
+      { label: 'item.imageCredit', snippet: "{% if item.imageCredit %}{{ 'item.photo' | t }}: {{ item.imageCredit | short_credit }}{% endif %}" },
     ],
   },
   {
@@ -102,6 +103,7 @@ export const CODE_REFERENCE: ReferenceGroup[] = [
       { label: 'footnotes.allergens', snippet: '{% for allergen in footnotes.allergens %}{{ allergen.short }} {{ allergen.label }}{% endfor %}' },
       { label: 'footnotes.additives', snippet: '{% for additive in footnotes.additives %}{{ additive.number }} {{ additive.label }}{% endfor %}' },
       { label: 'notices', snippet: '{% for notice in notices %}{{ notice.markdown | markdown }}{% endfor %}' },
+      { label: 'image_credits', snippet: "{%- include 'gm_image_credits' -%}" },
     ],
   },
   {
@@ -114,6 +116,7 @@ export const CODE_REFERENCE: ReferenceGroup[] = [
       { label: 'footnote_marks', snippet: '{{ item | footnote_marks }}' },
       { label: 'allergen_marks', snippet: '{{ item | allergen_marks }}' },
       { label: 'alcohol_label', snippet: '{{ item | alcohol_label }}' },
+      { label: 'short_credit', snippet: '{{ item.imageCredit | short_credit }}' },
       { label: 'raw', snippet: '{{ value | raw }}' },
     ],
   },

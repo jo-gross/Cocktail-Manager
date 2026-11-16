@@ -9,6 +9,7 @@ import { WorkspaceIdParam, DeletionResult } from '@lib/schemas/common';
 import { ApiTags } from '@lib/openapi/tags';
 import type { ResourceApiDoc } from '@lib/openapi/types';
 import { ImageDataUriSchema } from '@lib/images/imageSchema';
+import { ImageCreditInputSchema } from '@lib/images/imageCredit';
 import { GarnishGuestInfoDtoShape, GarnishGuestInfoInputShape } from '@lib/schemas/guestInfo';
 
 const ID_MAX = 128;
@@ -32,6 +33,7 @@ export const GarnishDtoSchema = z
     price: z.number().nullable().openapi({ description: 'Price in currency units.' }),
     hasImage: z.boolean().openapi({ description: 'Whether the garnish has an image.' }),
     imageUrl: z.string().nullable().openapi({ description: 'URL to fetch the garnish image bytes, or null when hasImage is false.' }),
+    imageCredit: z.string().nullable().openapi({ description: 'Attribution of the image (author, source, license), to be shown with it; null = none.' }),
     ...GarnishGuestInfoDtoShape,
   })
   .openapi('Garnish');
@@ -46,6 +48,7 @@ export const GarnishCreateSchema = z
     description: z.string().max(TEXT_MAX).nullish(),
     notes: z.string().max(TEXT_MAX).nullish(),
     image: ImageDataUriSchema.nullish().openapi({ description: 'Base64-encoded raster image (data URI) to attach.' }),
+    imageCredit: ImageCreditInputSchema,
     ...GarnishGuestInfoInputShape,
   })
   .openapi('GarnishCreateInput');
@@ -57,6 +60,7 @@ export const GarnishUpdateSchema = z
     description: z.string().max(TEXT_MAX).nullish(),
     notes: z.string().max(TEXT_MAX).nullish(),
     image: ImageDataUriSchema.nullish().openapi({ description: 'Base64 raster image (data URI); omitting it removes the current image.' }),
+    imageCredit: ImageCreditInputSchema,
     ...GarnishGuestInfoInputShape,
   })
   .openapi('GarnishUpdateInput');

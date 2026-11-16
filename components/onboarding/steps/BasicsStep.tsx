@@ -2,15 +2,23 @@ import React, { useContext, useEffect, useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FaCheckCircle, FaGlassMartiniAlt, FaHome, FaMagic, FaUtensils } from 'react-icons/fa';
 import { MdCelebration } from 'react-icons/md';
-import { Button, Loading, cn } from '@components/ui';
+import { Loading, Skeleton, cn } from '@components/ui';
 import { FormSection } from '@components/forms/FormSection';
 import { isValidWorkspaceName, WorkspaceNameField } from '@components/settings/WorkspaceNameField';
 import { WorkspaceLogoField } from '@components/settings/WorkspaceLogoField';
-import { SetupHint } from '../SetupHint';
+import { DayStartField } from '@components/settings/RegionFields';
 import { UserContext } from '@lib/context/UserContextProvider';
 import { alertApiV1Error } from '@lib/network/apiV1';
 import { getWorkspaceSettings, updateWorkspace, updateWorkspaceSetting } from '@lib/network/workspaces';
-import { BUSINESS_TYPES, businessTypeEffects, suggestedDayStart, type BusinessType } from '@lib/onboarding/setupWizard';
+import {
+  BUSINESS_TYPES,
+  businessTypeEffects,
+  DEFAULT_DAY_START,
+  dayStartForBusinessType,
+  isCustomDayStart,
+  isValidDayStart,
+  type BusinessType,
+} from '@lib/onboarding/setupWizard';
 import type { SetupStepProps } from './types';
 
 const BUSINESS_TYPE_ICONS: Record<BusinessType, React.ReactNode> = {
@@ -25,49 +33,65 @@ interface BasicsStepProps extends SetupStepProps {
   onBusinessTypeChange: (type: BusinessType) => void;
 }
 
-/** Step 2: name, logo and business type (the type only drives suggestions and is not saved). */
+interface DayStartState {
+  /** Stored value (`null` = unset). */
+  saved: string | null;
+  /** Value in the field. */
+  value: string;
+  /** Set by the user (typed here or a custom stored value): the business type no longer preselects it. */
+  edited: boolean;
+}
+
+/** Step 2: name, logo, business type (not saved) and the day start it preselects. */
 export function BasicsStep({ workspaceId, saveRef, businessType, onBusinessTypeChange }: BasicsStepProps) {
   const { t } = useTranslation(['onboarding', 'settings', 'errors']);
   const { workspace, refreshWorkspace } = useContext(UserContext);
   const [name, setName] = useState<string | null>(null);
   const [logoBusy, setLogoBusy] = useState(false);
   const [logoKey, setLogoKey] = useState(0);
-  const [dayStart, setDayStart] = useState<string | null | undefined>(undefined);
-  const [dayStartSaving, setDayStartSaving] = useState(false);
+  const [dayStart, setDayStart] = useState<DayStartState | null>(null);
   const typeIdPrefix = useId();
   const currentName = workspace?.name ?? '';
   const value = name ?? currentName;
+  // Derived, so the field follows every change of the business type until the user sets the time.
+  const shownDayStart = dayStart ? (businessType ? dayStartForBusinessType(businessType, dayStart.value, dayStart.edited) : dayStart.value) : null;
 
   useEffect(() => {
     let cancelled = false;
     getWorkspaceSettings(workspaceId)
       .then((settings) => {
-        if (!cancelled) setDayStart(settings.statisticDayStartTime ?? null);
+        if (cancelled) return;
+        const saved = settings.statisticDayStartTime || null;
+        setDayStart({ saved, value: saved ?? DEFAULT_DAY_START, edited: isCustomDayStart(saved) });
       })
-      .catch(() => {
-        if (!cancelled) setDayStart(null);
-      });
+      .catch((error) => alertApiV1Error(error, t('errors:loadSettings')));
     return () => {
       cancelled = true;
     };
-  }, [workspaceId]);
+  }, [workspaceId, t]);
 
   useEffect(() => {
     saveRef.current = async () => {
       if (!isValidWorkspaceName(value)) return false;
+      if (!dayStart || shownDayStart === null || !isValidDayStart(shownDayStart)) return false;
       const trimmed = value.trim();
-      if (trimmed === currentName) return true;
       try {
-        await updateWorkspace(workspaceId, { name: trimmed });
-        await refreshWorkspace();
-        setName(null);
+        if (trimmed !== currentName) {
+          await updateWorkspace(workspaceId, { name: trimmed });
+          await refreshWorkspace();
+          setName(null);
+        }
+        if (shownDayStart !== dayStart.saved) {
+          await updateWorkspaceSetting(workspaceId, { setting: 'statisticDayStartTime', value: shownDayStart });
+          setDayStart({ ...dayStart, saved: shownDayStart, value: shownDayStart });
+        }
         return true;
       } catch (error) {
-        alertApiV1Error(error, t('errors:renameWorkspace'));
+        alertApiV1Error(error, t('errors:save'));
         return false;
       }
     };
-  }, [saveRef, value, currentName, workspaceId, refreshWorkspace, t]);
+  }, [saveRef, value, currentName, dayStart, shownDayStart, workspaceId, refreshWorkspace, t]);
 
   const saveLogo = async (image: string | null) => {
     setLogoBusy(true);
@@ -79,20 +103,6 @@ export function BasicsStep({ workspaceId, saveRef, businessType, onBusinessTypeC
     } finally {
       setLogoBusy(false);
       setLogoKey((key) => key + 1);
-    }
-  };
-
-  const suggestion = dayStart === undefined ? null : suggestedDayStart(businessType, dayStart);
-
-  const applyDayStart = async (time: string) => {
-    setDayStartSaving(true);
-    try {
-      await updateWorkspaceSetting(workspaceId, { setting: 'statisticDayStartTime', value: time });
-      setDayStart(time);
-    } catch (error) {
-      alertApiV1Error(error, t('errors:save'));
-    } finally {
-      setDayStartSaving(false);
     }
   };
 
@@ -145,11 +155,8 @@ export function BasicsStep({ workspaceId, saveRef, businessType, onBusinessTypeC
                   <span id={`${typeIdPrefix}-${type}-effects`} className="mt-2 flex flex-col gap-1 border-t border-base-300 pt-2 text-xs">
                     <span className="sr-only">{t('onboarding:basics.effects.label')}</span>
                     {businessTypeEffects(type).map((effect) => (
-                      <span
-                        key={effect.kind}
-                        className={cn('flex items-start gap-1.5', effect.kind === 'none' ? 'text-base-content/50' : 'text-base-content/80')}
-                      >
-                        <FaMagic aria-hidden className={cn('mt-0.5 shrink-0', effect.kind === 'none' ? 'invisible' : 'text-primary')} />
+                      <span key={effect.kind} className="flex items-start gap-1.5 text-base-content/80">
+                        <FaMagic aria-hidden className="mt-0.5 shrink-0 text-primary" />
                         {effect.kind === 'dayStart'
                           ? t('onboarding:basics.effects.dayStart', { time: effect.time })
                           : t(`onboarding:basics.effects.${effect.kind}`)}
@@ -162,24 +169,25 @@ export function BasicsStep({ workspaceId, saveRef, businessType, onBusinessTypeC
             );
           })}
         </div>
-        {suggestion ? (
-          <SetupHint>
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <span>{t('onboarding:basics.dayStartSuggestion', { time: suggestion })}</span>
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                className="shrink-0 border-info-content/50 text-info-content hover:bg-info-content/10"
-                disabled={dayStartSaving}
-                onClick={() => void applyDayStart(suggestion)}
-              >
-                {dayStartSaving ? <Loading size="sm" /> : null}
-                {t('onboarding:basics.dayStartApply', { time: suggestion })}
-              </Button>
-            </div>
-          </SetupHint>
-        ) : null}
+        <div className="flex flex-col gap-3 rounded-xl border border-base-300 bg-base-100 p-4 md:flex-row md:items-start md:gap-6">
+          {shownDayStart !== null ? (
+            <DayStartField
+              id="setup-day-start"
+              className="md:w-56 md:shrink-0"
+              label={t('onboarding:basics.dayStartTitle')}
+              value={shownDayStart}
+              onChange={(time) => setDayStart((previous) => (previous ? { ...previous, value: time, edited: true } : previous))}
+              hint={
+                businessType && !dayStart?.edited
+                  ? t('onboarding:basics.dayStartPreselected', { type: t(`onboarding:basics.types.${businessType}.title`) })
+                  : undefined
+              }
+            />
+          ) : (
+            <Skeleton className="h-16 w-full md:w-56" />
+          )}
+          <p className="text-sm text-base-content/70 md:pt-6">{t('onboarding:basics.dayStartHelp')}</p>
+        </div>
       </FormSection>
     </div>
   );

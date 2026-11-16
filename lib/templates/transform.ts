@@ -39,8 +39,8 @@ export function findUnknownSelectionIds(data: BackupImportData, selection: Templ
 /**
  * Reduces the template to the selected items plus everything they need: card → cocktails,
  * cocktail → glass, ingredients, garnishes (units, ice, step actions, tag categories and settings are
- * always kept; tag definitions only for tags of the kept cocktails and ingredients). `basics` = all glasses, ingredients and garnishes. Calculations, signage and guest
- * menus are only part of `all`.
+ * always kept; tag definitions only for tags of the kept cocktails and ingredients). `basics` = all glasses, ingredients and garnishes. Calculations and signage
+ * are only part of `all`; guest menus also come with a selected card they are built on (`FIXED_CARD`).
  */
 export function selectTemplateContent(data: BackupImportData, mode: TemplateApplyMode, selection: TemplateSelection = {}): BackupImportData {
   if (mode === 'all') return data;
@@ -99,7 +99,8 @@ export function selectTemplateContent(data: BackupImportData, mode: TemplateAppl
     ingredientTranslations: data.ingredientTranslations?.filter((row) => ingredients.has(row.ingredientId)),
     garnishTranslations: data.garnishTranslations?.filter((row) => garnishes.has(row.garnishId)),
     glassTranslations: data.glassTranslations?.filter((row) => glasses.has(row.glassId)),
-    guestMenus: [],
+    // Guest menus built on a selected card come along (without custom designs: they fall back to the built-in template).
+    guestMenus: data.guestMenus?.filter((menu) => menu.sourceMode === 'FIXED_CARD' && menu.sourceCardId != null && cards.has(menu.sourceCardId)),
     guestMenuTemplates: [],
   };
 }
@@ -259,20 +260,27 @@ export function findExistingMatches(data: BackupImportData, existing: ExistingWo
   };
 }
 
-/** Drops cards whose name already exists in the target workspace (with their groups and items). */
-export function dropExistingCards(data: BackupImportData, existingCardNames: string[]): { data: BackupImportData; skipped: number } {
+/**
+ * Drops cards whose name already exists in the target workspace (with their groups and items).
+ * Guest menus built on such a card (`FIXED_CARD`) are dropped too (applied again: the bar already
+ * has them, or deliberately removed them); other menus only lose the card reference.
+ */
+export function dropExistingCards(data: BackupImportData, existingCardNames: string[]): { data: BackupImportData; skipped: number; skippedGuestMenus: number } {
   const existing = new Set(existingCardNames.map(normalizeTemplateName));
   const dropped = new Set(data.cocktailCard.filter((card) => existing.has(normalizeTemplateName(card.name))).map((card) => card.id));
-  if (dropped.size === 0) return { data, skipped: 0 };
+  if (dropped.size === 0) return { data, skipped: 0, skippedGuestMenus: 0 };
   const groups = new Set(data.cocktailCardGroup.filter((group) => dropped.has(group.cocktailCardId)).map((group) => group.id));
+  const onDroppedCard = (menu: NonNullable<BackupImportData['guestMenus']>[number]) => menu.sourceCardId != null && dropped.has(menu.sourceCardId);
+  const guestMenus = data.guestMenus?.filter((menu) => !(onDroppedCard(menu) && menu.sourceMode === 'FIXED_CARD'));
   return {
     data: {
       ...data,
       cocktailCard: data.cocktailCard.filter((card) => !dropped.has(card.id)),
       cocktailCardGroup: data.cocktailCardGroup.filter((group) => !groups.has(group.id)),
       cocktailCardGroupItem: data.cocktailCardGroupItem.filter((item) => !groups.has(item.cocktailCardGroupId)),
-      guestMenus: data.guestMenus?.map((menu) => (menu.sourceCardId && dropped.has(menu.sourceCardId) ? { ...menu, sourceCardId: null } : menu)),
+      guestMenus: guestMenus?.map((menu) => (onDroppedCard(menu) ? { ...menu, sourceCardId: null } : menu)),
     },
     skipped: dropped.size,
+    skippedGuestMenus: (data.guestMenus?.length ?? 0) - (guestMenus?.length ?? 0),
   };
 }

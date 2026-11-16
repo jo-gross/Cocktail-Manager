@@ -206,7 +206,9 @@ export const SearchModal = forwardRef<SearchModalRef, SearchModalProps>((props, 
   const groupedCocktails = _.groupBy(cocktails, 'isArchived');
 
   return (
-    <div className={`grid w-full grid-cols-1 gap-3 ${props.customWidthClassName ? props.customWidthClassName : 'md:max-w-2xl'}`}>
+    // The modal box shrink-wraps its content (w-max), so a definite width keeps the modal from jumping
+    // while skeletons, results and recipe images load; max-w-full caps it to the box on small screens.
+    <div className={`grid grid-cols-1 gap-3 ${props.customWidthClassName ?? 'w-2xl max-w-full'}`}>
       <div className={'sticky w-full'}>
         <div className={'w-max text-2xl font-bold'}>{t('cocktail:searchTitle')}</div>
         <ButtonGroup className="w-full pb-2">

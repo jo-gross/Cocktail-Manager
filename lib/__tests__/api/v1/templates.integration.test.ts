@@ -27,6 +27,8 @@ import { applyTemplate } from '@lib/templates/applyTemplate';
 import { listBuiltInTemplateKeys } from '@lib/templates/builtIn';
 import { createWorkspace } from '@lib/templates/createWorkspace';
 import { ensureBuiltInTemplates, syncBuiltInTemplates } from '@lib/templates/sync';
+import { loadPublicMenu } from '@lib/guest-menu/public.server';
+import { createDefaultGuestMenuDocument } from '@lib/guest-menu/schema';
 import { createLegacyWorkspaceWithDefaults } from '@test/helpers/fixtures/legacyWorkspaceDefaults';
 import { invokeHandler } from '@test/helpers/invokeHandler';
 import { asMasterKey, bearerToken, sessionCookie } from '@test/helpers/authFixtures';
@@ -152,6 +154,7 @@ async function workspaceContent(workspaceId: string) {
     garnishes: await prisma.garnish.count({ where: { workspaceId } }),
     cocktails: await prisma.cocktailRecipe.count({ where: { workspaceId } }),
     cards: await prisma.cocktailCard.count({ where: { workspaceId } }),
+    guestMenus: await prisma.guestMenu.count({ where: { workspaceId } }),
     units: await prisma.unit.count({ where: { workspaceId } }),
     settings: await prisma.workspaceSetting.findMany({ where: { workspaceId }, orderBy: { setting: 'asc' }, select: { setting: true, value: true } }),
   };
@@ -267,7 +270,7 @@ describe('templates API', () => {
         key: 'classics',
         name: 'Classics',
         source: null,
-        counts: { glasses: 2, ingredients: 3, garnishes: 1, cocktails: 1, cards: 1 },
+        counts: { glasses: 2, ingredients: 3, garnishes: 1, cocktails: 1, cards: 1, guestMenus: 0 },
       }),
     ]);
 
@@ -307,9 +310,9 @@ describe('templates API', () => {
     expect(result.status, JSON.stringify(result.json)).toBe(200);
     expect(dataOf<TemplateApplyResultDto>(result)).toEqual({
       template: 'classics',
-      created: { glasses: 1, ingredients: 2, garnishes: 1, cocktails: 1, cards: 1 },
-      linked: { glasses: 0, ingredients: 0, garnishes: 0, cocktails: 0, cards: 0 },
-      skipped: { glasses: 0, ingredients: 0, garnishes: 0, cocktails: 0, cards: 0 },
+      created: { glasses: 1, ingredients: 2, garnishes: 1, cocktails: 1, cards: 1, guestMenus: 0 },
+      linked: { glasses: 0, ingredients: 0, garnishes: 0, cocktails: 0, cards: 0, guestMenus: 0 },
+      skipped: { glasses: 0, ingredients: 0, garnishes: 0, cocktails: 0, cards: 0, guestMenus: 0 },
     });
 
     const glass = await prisma.glass.findFirstOrThrow({ where: { workspaceId: target }, include: { translations: true } });
@@ -357,13 +360,13 @@ describe('templates API', () => {
     expect(recipeIngredientIds.map((row) => row.ingredientId)).toContain(ownRum.id);
 
     const second = dataOf<TemplateApplyResultDto>(await apply({ mode: 'all' }));
-    expect(second.created).toEqual({ glasses: 0, ingredients: 0, garnishes: 0, cocktails: 0, cards: 0 });
-    expect(second.linked).toEqual({ glasses: 2, ingredients: 3, garnishes: 1, cocktails: 1, cards: 0 });
+    expect(second.created).toEqual({ glasses: 0, ingredients: 0, garnishes: 0, cocktails: 0, cards: 0, guestMenus: 0 });
+    expect(second.linked).toEqual({ glasses: 2, ingredients: 3, garnishes: 1, cocktails: 1, cards: 0, guestMenus: 0 });
     expect(second.skipped.cards).toBe(1);
     expect(await prisma.cocktailCard.count({ where: { workspaceId: target } })).toBe(1);
 
     const basics = dataOf<TemplateApplyResultDto>(await apply({ mode: 'basics' }));
-    expect(basics.created).toEqual({ glasses: 0, ingredients: 0, garnishes: 0, cocktails: 0, cards: 0 });
+    expect(basics.created).toEqual({ glasses: 0, ingredients: 0, garnishes: 0, cocktails: 0, cards: 0, guestMenus: 0 });
   });
 
   it('rejects foreign or unknown selection ids, unpublished templates and missing rights without changes', async () => {
@@ -419,8 +422,8 @@ describe('templates API', () => {
 
 describe('All Time Classics (built-in catalog)', () => {
   const KEY = 'all-time-classics';
-  const COUNTS = { glasses: 10, ingredients: 45, garnishes: 15, cocktails: 22, cards: 1 };
-  const NONE = { glasses: 0, ingredients: 0, garnishes: 0, cocktails: 0, cards: 0 };
+  const COUNTS = { glasses: 10, ingredients: 45, garnishes: 15, cocktails: 22, cards: 1, guestMenus: 1 };
+  const NONE = { glasses: 0, ingredients: 0, garnishes: 0, cocktails: 0, cards: 0, guestMenus: 0 };
 
   async function metadataCounts(workspaceId: string) {
     return {
@@ -548,7 +551,7 @@ describe('All Time Classics (built-in catalog)', () => {
     await prisma.tagDefinition.create({ data: { workspaceId, tag: 'gin', label: { de: 'Wacholder' }, isPublic: false } });
 
     const result = await applyTemplate(workspaceId, KEY, { mode: 'basics' });
-    expect(result.created).toEqual({ glasses: 10, ingredients: 45, garnishes: 15, cocktails: 0, cards: 0 });
+    expect(result.created).toEqual({ glasses: 10, ingredients: 45, garnishes: 15, cocktails: 0, cards: 0, guestMenus: 0 });
     expect(await prisma.cocktailRecipe.count({ where: { workspaceId } })).toBe(0);
     expect(await prisma.cocktailCard.count({ where: { workspaceId } })).toBe(0);
     expect(await prisma.glassImage.count({ where: { glass: { workspaceId } } })).toBe(9);
@@ -563,8 +566,93 @@ describe('All Time Classics (built-in catalog)', () => {
 
     // Applying everything afterwards adds the cocktails and links the existing basics.
     const all = await applyTemplate(workspaceId, KEY, { mode: 'all' });
-    expect(all.created).toEqual({ ...NONE, cocktails: 22, cards: 1 });
-    expect(all.linked).toEqual({ glasses: 10, ingredients: 45, garnishes: 15, cocktails: 0, cards: 0 });
+    expect(all.created).toEqual({ ...NONE, cocktails: 22, cards: 1, guestMenus: 1 });
+    expect(all.linked).toEqual({ glasses: 10, ingredients: 45, garnishes: 15, cocktails: 0, cards: 0, guestMenus: 0 });
+  });
+
+  it('brings image credits and a live guest menu in the design of the business type into a fresh workspace', async () => {
+    await syncBuiltInTemplates();
+    const { a } = await seedTenantPair();
+    const workspaceId = a.workspace.id;
+    const manager = roleUser(a, 'MANAGER');
+    const apply = (body: unknown) => callAs(manager, applyHandler, { method: 'POST', query: { workspaceId, key: KEY }, body });
+
+    const list = dataOf<TemplateSummaryDto[]>(await callAs(manager, templatesHandler, { method: 'GET', query: { kind: 'CATALOG' } }));
+    expect(list.find((template) => template.key === KEY)?.counts.guestMenus).toBe(1);
+
+    expect((await apply({ mode: 'all', businessType: 'nightclub' })).status).toBe(400);
+    const result = await apply({ mode: 'all', locale: 'en', businessType: 'bar' });
+    expect(result.status, JSON.stringify(result.json)).toBe(200);
+    expect(dataOf<TemplateApplyResultDto>(result).created).toEqual(COUNTS);
+
+    // Credits of the manifest travel with the images.
+    const cocktailImages = await prisma.cocktailRecipeImage.findMany({ where: { cocktailRecipe: { workspaceId } }, include: { cocktailRecipe: true } });
+    expect(cocktailImages).toHaveLength(22);
+    expect(cocktailImages.every((image) => image.credit && image.credit.length > 10)).toBe(true);
+    expect(cocktailImages.find((image) => image.cocktailRecipe.name === 'Old Fashioned')?.credit).toContain('© Erich Wagner (www.eventografie.de)');
+    expect(await prisma.glassImage.count({ where: { glass: { workspaceId }, credit: { contains: 'Will Murray' } } })).toBe(9);
+
+    // The guest menu is live: enabled, default, published, built on the card, speakeasy design.
+    const card = await prisma.cocktailCard.findFirstOrThrow({ where: { workspaceId } });
+    const menus = await prisma.guestMenu.findMany({ where: { workspaceId } });
+    expect(menus).toHaveLength(1);
+    expect(menus[0]).toMatchObject({ name: 'All Time Classics', enabled: true, isDefault: true, sourceMode: 'FIXED_CARD', sourceCardId: card.id });
+    expect(menus[0]!.published).not.toBeNull();
+    expect(menus[0]!.draft).toMatchObject({
+      theme: { preset: 'speakeasy' },
+      templates: { web: { templateId: 'speakeasy' }, print: { templateId: 'speakeasy' } },
+    });
+    const publicMenu = await loadPublicMenu({ bar: workspaceId, locale: 'en' });
+    expect(publicMenu.kind).toBe('menu');
+    if (publicMenu.kind !== 'menu' || !publicMenu.menu) throw new Error('menu expected');
+    expect(publicMenu.menu.dto.blocks.filter((block) => block.type === 'section')).toHaveLength(6);
+    expect(publicMenu.menu.dto.imageCredits).toHaveLength(22);
+    expect(publicMenu.menu.rendered.footer).toContain('Erich Wagner');
+
+    // Applied again: the card exists, so its guest menu is not created a second time.
+    const again = dataOf<TemplateApplyResultDto>(await apply({ mode: 'all', businessType: 'event' }));
+    expect(again.created.guestMenus).toBe(0);
+    expect(again.skipped).toMatchObject({ cards: 1, guestMenus: 1 });
+    expect(await prisma.guestMenu.count({ where: { workspaceId } })).toBe(1);
+  });
+
+  it('adds the guest menu disabled and unpublished when the workspace already has guest menus (restaurant design)', async () => {
+    await syncBuiltInTemplates();
+    const { a } = await seedTenantPair();
+    const workspaceId = a.workspace.id;
+    const own = createDefaultGuestMenuDocument({ title: 'Bar', withCardSection: false });
+    const existing = await prisma.guestMenu.create({
+      data: { workspaceId, name: 'Bar', slug: 'bar', isDefault: true, draft: own, published: own, publishedAt: new Date() },
+    });
+
+    // A selection with the card brings its guest menu; without, none.
+    const items = dataOf<TemplateItemsDto>(await callAs(roleUser(a, 'ADMIN'), templateItemsHandler, { method: 'GET', query: { key: KEY } }));
+    const withoutCard = await applyTemplate(workspaceId, KEY, { mode: 'selection', selection: { cocktails: [items.cocktails[0]!.id] } });
+    expect(withoutCard.created.guestMenus).toBe(0);
+    const withCard = await applyTemplate(workspaceId, KEY, { mode: 'selection', selection: { cards: [items.cards[0]!.id] }, businessType: 'restaurant' });
+    expect(withCard.created).toMatchObject({ cards: 1, guestMenus: 1 });
+
+    const menu = await prisma.guestMenu.findFirstOrThrow({ where: { workspaceId, id: { not: existing.id } } });
+    expect(menu).toMatchObject({ enabled: false, isDefault: false, published: null, sourceMode: 'FIXED_CARD' });
+    expect(menu.draft).toMatchObject({ theme: { preset: 'classic' }, templates: { web: { templateId: 'classic' }, print: { templateId: 'print-elegant' } } });
+    expect(await prisma.guestMenu.findUniqueOrThrow({ where: { id: existing.id } })).toMatchObject({ isDefault: true, enabled: true });
+    // The public URL still shows the bar's own menu.
+    const publicMenu = await loadPublicMenu({ bar: workspaceId });
+    expect(publicMenu.kind === 'menu' ? publicMenu.menuName : null).toBe('Bar');
+  });
+
+  it('fills missing credits of an older database copy from the manifest when applied', async () => {
+    await syncBuiltInTemplates();
+    const template = await prisma.workspaceTemplate.findUniqueOrThrow({ where: { key: KEY } });
+    await prisma.cocktailRecipeImage.updateMany({ where: { cocktailRecipe: { workspaceId: template.workspaceId } }, data: { credit: null } });
+    const target = await createWorkspace({ name: 'Bar credits', locale: 'de' });
+
+    await applyTemplate(target.id, KEY, { mode: 'all' });
+    const ginTonic = await prisma.cocktailRecipe.findFirstOrThrow({
+      where: { workspaceId: target.id, name: 'Gin Tonic' },
+      include: { CocktailRecipeImage: true },
+    });
+    expect(ginTonic.CocktailRecipeImage[0]?.credit).toContain('CC BY 4.0');
   });
 });
 
@@ -613,7 +701,7 @@ describe('onboarding', () => {
     const query = { workspaceId };
     const admin = roleUser(a, 'ADMIN');
     const KEY = 'all-time-classics';
-    const NONE = { glasses: 0, ingredients: 0, garnishes: 0, cocktails: 0, cards: 0 };
+    const NONE = { glasses: 0, ingredients: 0, garnishes: 0, cocktails: 0, cards: 0, guestMenus: 0 };
     const apply = (body: unknown) => callAs(admin, applyHandler, { method: 'POST', query: { workspaceId, key: KEY }, body });
     const onboarding = async () => dataOf<OnboardingDto>(await callAs(admin, onboardingHandler, { method: 'GET', query }));
 
@@ -624,6 +712,7 @@ describe('onboarding', () => {
       garnishes: 15,
       cocktails: 22,
       cards: 1,
+      guestMenus: 1,
     });
     const completedAt = dataOf<OnboardingDto>(await callAs(admin, completeHandler, { method: 'POST', query })).setupCompletedAt;
     expect(completedAt).not.toBeNull();

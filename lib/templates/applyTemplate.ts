@@ -15,6 +15,8 @@ import { regenerateUnitConversionsTx } from '@lib/api/controllers/units';
 import { parseContentLocales } from '@lib/workspace/workspaceLocaleSettings';
 import { loadWorkspaceLocaleSettings } from '@lib/workspace/workspaceLocaleSettings.server';
 import { ensureBuiltInTemplates } from '@lib/templates/sync';
+import { builtInImageCredits, fillImageCreditsByName } from '@lib/templates/credits';
+import { withGuestMenuTheme, type BusinessType } from '@lib/templates/guestMenuTheme';
 import {
   dropExistingCards,
   findExistingMatches,
@@ -31,6 +33,7 @@ export interface TemplateItemCounts {
   garnishes: number;
   cocktails: number;
   cards: number;
+  guestMenus: number;
 }
 
 export interface ApplyTemplateResult {
@@ -38,7 +41,7 @@ export interface ApplyTemplateResult {
   created: TemplateItemCounts;
   /** Matched an existing record by name and reused it. */
   linked: TemplateItemCounts;
-  /** Already present (cards with the same name). */
+  /** Already present (cards with the same name, and guest menus built on them). */
   skipped: TemplateItemCounts;
 }
 
@@ -51,11 +54,14 @@ export interface ApplyTemplateOptions {
   user?: Pick<User, 'id'> | null;
   /** API callers may only apply published templates. */
   publishedOnly?: boolean;
+  /** Design of the guest menus that come with the template (setup wizard); default: the template's own. */
+  businessType?: BusinessType;
 }
 
 const IMPORT_OPTIONS: Record<TemplateKind, BackupImportOptions> = {
   BASE: {},
-  CATALOG: { stripPrices: true, guestInfoUnconfirmed: true },
+  // A guest menu of a catalog goes live only in a workspace without guest menus (fresh from the setup wizard).
+  CATALOG: { stripPrices: true, guestInfoUnconfirmed: true, keepGuestMenuState: 'ifNoMenus' },
   DEMO: { keepGuestMenuState: true },
 };
 
@@ -126,14 +132,16 @@ export async function applyTemplate(targetWorkspaceId: string, templateKey: stri
       throw new ApiError(400, 'INVALID_SELECTION', 'The selection contains items that are not part of the template', unknown.slice(0, 100));
   }
   const targetLocale = options.locale ?? (await loadWorkspaceLocaleSettings(targetWorkspaceId)).contentLocales.primary;
+  // Credits are matched by the primary names of the template, so before the pivot.
+  const credited = fillImageCreditsByName(content.data, builtInImageCredits(template));
   const selected = pivotTemplateLocale(
-    withoutContentLocales(selectTemplateContent(content.data, options.mode, options.selection)),
+    withGuestMenuTheme(withoutContentLocales(selectTemplateContent(credited, options.mode, options.selection)), options.businessType),
     content.locale,
     targetLocale,
   );
 
   const existing = await loadExistingContent(targetWorkspaceId);
-  const { data, skipped: skippedCards } = dropExistingCards(selected, existing.cardNames);
+  const { data, skipped: skippedCards, skippedGuestMenus } = dropExistingCards(selected, existing.cardNames);
   const links = findExistingMatches(data, existing.content);
   const prepared = prepareBackupImport(data, links);
 
@@ -163,14 +171,22 @@ export async function applyTemplate(targetWorkspaceId: string, templateKey: stri
 
   return {
     template: template.key,
-    created: { glasses: counts.glasses, ingredients: counts.ingredients, garnishes: counts.garnishes, cocktails: counts.cocktails, cards: counts.cards },
+    created: {
+      glasses: counts.glasses,
+      ingredients: counts.ingredients,
+      garnishes: counts.garnishes,
+      cocktails: counts.cocktails,
+      cards: counts.cards,
+      guestMenus: counts.guestMenus,
+    },
     linked: {
       glasses: prepared.linked.glass.size,
       ingredients: prepared.linked.ingredient.size,
       garnishes: prepared.linked.garnish.size,
       cocktails: prepared.linked.cocktail.size,
       cards: 0,
+      guestMenus: 0,
     },
-    skipped: { glasses: 0, ingredients: 0, garnishes: 0, cocktails: 0, cards: skippedCards },
+    skipped: { glasses: 0, ingredients: 0, garnishes: 0, cocktails: 0, cards: skippedCards, guestMenus: skippedGuestMenus },
   };
 }

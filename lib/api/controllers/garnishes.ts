@@ -10,6 +10,7 @@ import { ApiError } from '@lib/http/ApiError';
 import { assertIdsInWorkspace } from '@lib/api/scope';
 import { BULK_TX_TIMEOUT_MS, runTx, type Tx } from '@lib/db/tx';
 import { decodeStoredImage, type DecodedImage } from '@lib/images/imageResponse';
+import { nextImageCredit } from '@lib/images/imageCredit';
 import { toGarnishDto } from '@lib/api/dto/garnishes';
 import { garnishGuestInfoImportData } from '@lib/guest-info/sanitize';
 import packageJson from '../../../package.json';
@@ -18,7 +19,7 @@ import type { Prisma, User, Workspace } from '@generated/prisma/client';
 import { GarnishExportItemSchema } from '@lib/schemas/garnishes';
 import type { GarnishCreateInput, GarnishDto, GarnishExportItem, GarnishImportJsonBody, GarnishUpdateInput } from '@lib/schemas/garnishes';
 
-const includeImageCount = { _count: { select: { GarnishImage: true } } } satisfies Prisma.GarnishInclude;
+const includeImageCount = { _count: { select: { GarnishImage: true } }, GarnishImage: { select: { credit: true } } } satisfies Prisma.GarnishInclude;
 
 /** Locks the garnish row for the rest of the transaction and proves it belongs to the workspace (404 otherwise). */
 async function lockGarnish(tx: Tx, workspaceId: string, garnishId: string): Promise<void> {
@@ -32,7 +33,7 @@ export async function listGarnishes(workspace: Workspace, opts: { search?: strin
     where.name = { contains: opts.search, mode: 'insensitive' };
   }
   const garnishes = await prisma.garnish.findMany({ where, include: includeImageCount });
-  return garnishes.map((garnish) => toGarnishDto(garnish, garnish._count.GarnishImage > 0, workspace.id));
+  return garnishes.map((garnish) => toGarnishDto(garnish, garnish._count.GarnishImage > 0, workspace.id, garnish.GarnishImage[0]?.credit));
 }
 
 export async function getGarnish(workspace: Workspace, garnishId: string): Promise<GarnishDto | null> {
@@ -40,7 +41,7 @@ export async function getGarnish(workspace: Workspace, garnishId: string): Promi
     where: { id: garnishId, workspaceId: workspace.id },
     include: includeImageCount,
   });
-  return garnish ? toGarnishDto(garnish, garnish._count.GarnishImage > 0, workspace.id) : null;
+  return garnish ? toGarnishDto(garnish, garnish._count.GarnishImage > 0, workspace.id, garnish.GarnishImage[0]?.credit) : null;
 }
 
 export async function createGarnish(workspace: Workspace, user: User, input: GarnishCreateInput): Promise<GarnishDto> {
@@ -60,16 +61,17 @@ export async function createGarnish(workspace: Workspace, user: User, input: Gar
       },
     });
 
+    const credit = nextImageCredit({ image: input.image, credit: input.imageCredit }, null);
     if (input.image) {
-      await tx.garnishImage.create({ data: { image: input.image, garnishId: created.id } });
+      await tx.garnishImage.create({ data: { image: input.image, credit, garnishId: created.id } });
     }
 
     const fullGarnish = await tx.garnish.findUnique({ where: { id: created.id }, include: { GarnishImage: true } });
     await createLog(tx, workspace.id, user.id, 'Garnish', created.id, 'CREATE', null, fullGarnish);
-    return created;
+    return { ...created, credit };
   });
 
-  return toGarnishDto(createdGarnish, Boolean(input.image), workspace.id);
+  return toGarnishDto(createdGarnish, Boolean(input.image), workspace.id, createdGarnish.credit);
 }
 
 export async function updateGarnish(workspace: Workspace, user: User, garnishId: string, input: GarnishUpdateInput): Promise<GarnishDto> {
@@ -91,17 +93,19 @@ export async function updateGarnish(workspace: Workspace, user: User, garnishId:
       },
     });
 
+    // A new image drops the credit of the old one unless the request sets it.
+    const credit = nextImageCredit({ image: input.image, credit: input.imageCredit }, oldGarnish.GarnishImage[0]);
     await tx.garnishImage.deleteMany({ where: { garnishId } });
     if (input.image) {
-      await tx.garnishImage.create({ data: { garnishId, image: input.image } });
+      await tx.garnishImage.create({ data: { garnishId, image: input.image, credit } });
     }
 
     const fullNewGarnish = await tx.garnish.findUnique({ where: { id: garnishId }, include: { GarnishImage: true } });
     await createLog(tx, workspace.id, user.id, 'Garnish', garnishId, 'UPDATE', oldGarnish, fullNewGarnish);
-    return updated;
+    return { ...updated, credit };
   });
 
-  return toGarnishDto(updatedGarnish, Boolean(input.image), workspace.id);
+  return toGarnishDto(updatedGarnish, Boolean(input.image), workspace.id, updatedGarnish.credit);
 }
 
 /** Deleting a garnish removes it from the cocktails that use it (CocktailRecipeGarnish cascades). */
@@ -131,14 +135,14 @@ export async function checkGarnish(workspace: Workspace, name: string): Promise<
     }
   }
 
-  return best && maxSimilarity > 0.5 ? toGarnishDto(best, best._count.GarnishImage > 0, workspace.id) : null;
+  return best && maxSimilarity > 0.5 ? toGarnishDto(best, best._count.GarnishImage > 0, workspace.id, best.GarnishImage[0]?.credit) : null;
 }
 
 export async function cloneGarnish(workspace: Workspace, user: User, garnishId: string, name: string): Promise<GarnishDto> {
   return runTx(async (tx) => {
     const existing = await tx.garnish.findFirst({
       where: { id: garnishId, workspaceId: workspace.id },
-      include: { GarnishImage: { select: { image: true } } },
+      include: { GarnishImage: { select: { image: true, credit: true } } },
     });
 
     if (!existing) throw new ApiError(404, 'NOT_FOUND', 'Garnish not found');
@@ -159,13 +163,15 @@ export async function cloneGarnish(workspace: Workspace, user: User, garnishId: 
 
     const hasImage = existing.GarnishImage.length > 0;
     if (hasImage) {
-      await tx.garnishImage.create({ data: { garnishId: createClone.id, image: existing.GarnishImage[0].image } });
+      await tx.garnishImage.create({
+        data: { garnishId: createClone.id, image: existing.GarnishImage[0].image, credit: existing.GarnishImage[0].credit },
+      });
     }
 
     const fullClone = await tx.garnish.findUnique({ where: { id: createClone.id }, include: { GarnishImage: true } });
     await createLog(tx, workspace.id, user.id, 'Garnish', createClone.id, 'CREATE', null, fullClone);
 
-    return toGarnishDto(createClone, hasImage, workspace.id);
+    return toGarnishDto(createClone, hasImage, workspace.id, existing.GarnishImage[0]?.credit);
   });
 }
 

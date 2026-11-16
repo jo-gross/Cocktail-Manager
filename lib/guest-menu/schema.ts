@@ -746,6 +746,8 @@ export interface PublicMenuItemDto {
   tags?: PublicTagDto[];
   badges?: PublicBadgeDto[];
   imageUrl?: string | null;
+  /** Attribution of the image (author, source, license); only with `imageUrl`. */
+  imageCredit?: string | null;
   description?: string | null;
   history?: string | null;
   glass?: { name: string } | null;
@@ -867,6 +869,8 @@ export interface PublicMenuDto {
     allergens: PublicAllergenDto[];
     additives: PublicAdditiveDto[];
   };
+  /** Credits of the cocktail images shown in the menu (sections only), in menu order. */
+  imageCredits?: { name: string; credit: string }[];
   notices: PublicNoticeDto[];
   /** Overrides for guest UI strings for the current locale. */
   uiTexts: Record<string, string>;

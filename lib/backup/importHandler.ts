@@ -175,8 +175,11 @@ export interface PreparedImport {
 
 /** For internal callers (templates); the backup endpoint uses the defaults. */
 export interface BackupImportOptions {
-  /** Keep `enabled`/`isDefault` and publish the (remapped) draft of menus that were published in the backup (DEMO templates). */
-  keepGuestMenuState?: boolean;
+  /**
+   * Keep `enabled`/`isDefault` and publish the (remapped) draft of menus that were published in the backup (DEMO templates).
+   * `ifNoMenus`: only when the workspace has no guest menu yet (checked under the guest menu lock; CATALOG templates).
+   */
+  keepGuestMenuState?: boolean | 'ifNoMenus';
   /** Import without prices and deposits (catalog templates). */
   stripPrices?: boolean;
   /** Ingredients/garnishes come with allergens and ABV, but `guestInfoComplete = false` (to be confirmed by the bar). */
@@ -417,7 +420,9 @@ export async function executeBackupImport(
   }
   const garnishImages = [
     ...data.garnish.flatMap((garnish) => (garnish.image ? [{ garnishId: ids.garnish.get(garnish.id)!, image: garnish.image }] : [])),
-    ...data.garnishImages.flatMap((row) => (ids.garnish.has(row.garnishId) ? [{ garnishId: ids.garnish.get(row.garnishId)!, image: row.image }] : [])),
+    ...data.garnishImages.flatMap((row) =>
+      ids.garnish.has(row.garnishId) ? [{ garnishId: ids.garnish.get(row.garnishId)!, image: row.image, credit: row.credit }] : [],
+    ),
   ];
   await tx.garnishImage.createMany({ data: garnishImages, skipDuplicates: true });
 
@@ -455,7 +460,7 @@ export async function executeBackupImport(
   const ingredientImages = [
     ...data.ingredient.flatMap((ingredient) => (ingredient.image ? [{ ingredientId: ids.ingredient.get(ingredient.id)!, image: ingredient.image }] : [])),
     ...data.ingredientImages.flatMap((row) =>
-      ids.ingredient.has(row.ingredientId) ? [{ ingredientId: ids.ingredient.get(row.ingredientId)!, image: row.image }] : [],
+      ids.ingredient.has(row.ingredientId) ? [{ ingredientId: ids.ingredient.get(row.ingredientId)!, image: row.image, credit: row.credit }] : [],
     ),
   ];
   await tx.ingredientImage.createMany({ data: ingredientImages, skipDuplicates: true });
@@ -469,7 +474,7 @@ export async function executeBackupImport(
   }
   const glassImages = [
     ...data.glass.flatMap((glass) => (glass.image ? [{ glassId: ids.glass.get(glass.id)!, image: glass.image }] : [])),
-    ...data.glassImages.flatMap((row) => (ids.glass.has(row.glassId) ? [{ glassId: ids.glass.get(row.glassId)!, image: row.image }] : [])),
+    ...data.glassImages.flatMap((row) => (ids.glass.has(row.glassId) ? [{ glassId: ids.glass.get(row.glassId)!, image: row.image, credit: row.credit }] : [])),
   ];
   await tx.glassImage.createMany({ data: glassImages, skipDuplicates: true });
 
@@ -505,7 +510,7 @@ export async function executeBackupImport(
   const cocktailImages = [
     ...data.cocktailRecipe.flatMap((cocktail) => (cocktail.image ? [{ cocktailRecipeId: ids.cocktail.get(cocktail.id)!, image: cocktail.image }] : [])),
     ...data.cocktailRecipeImage.flatMap((row) =>
-      ids.cocktail.has(row.cocktailRecipeId) ? [{ cocktailRecipeId: ids.cocktail.get(row.cocktailRecipeId)!, image: row.image }] : [],
+      ids.cocktail.has(row.cocktailRecipeId) ? [{ cocktailRecipeId: ids.cocktail.get(row.cocktailRecipeId)!, image: row.image, credit: row.credit }] : [],
     ),
   ];
   await tx.cocktailRecipeImage.createMany({ data: cocktailImages, skipDuplicates: true });
@@ -778,13 +783,14 @@ export async function executeBackupImport(
     const existingMenus = await tx.guestMenu.findMany({ where: { workspaceId }, select: { slug: true, isDefault: true } });
     const takenSlugs = new Set(existingMenus.map((menu) => menu.slug));
     let hasDefaultMenu = existingMenus.some((menu) => menu.isDefault);
+    const keepState = options.keepGuestMenuState === true || (options.keepGuestMenuState === 'ifNoMenus' && existingMenus.length === 0);
     for (const { menu, draft } of prepared.guestMenus) {
       const baseSlug = normalizeBackupGuestMenuSlug(menu.slug);
       let slug = baseSlug;
       for (let i = 2; takenSlugs.has(slug); i++) slug = `${baseSlug}-${i}`;
       takenSlugs.add(slug);
       const sourceCardId = menu.sourceCardId ? (ids.card.get(menu.sourceCardId) ?? null) : null;
-      const keptState: Partial<Prisma.GuestMenuCreateManyInput> = options.keepGuestMenuState
+      const keptState: Partial<Prisma.GuestMenuCreateManyInput> = keepState
         ? {
             enabled: menu.enabled ?? false,
             isDefault: !hasDefaultMenu && (menu.isDefault ?? false),
@@ -799,7 +805,7 @@ export async function executeBackupImport(
           slug,
           // Never live after an import: disabled, unpublished, not default, no access code, new preview token.
           ...importedGuestMenuSafeState(),
-          // Templates (DEMO) keep their state; the published document is the validated, remapped draft.
+          // Templates (DEMO; CATALOG into a workspace without menus) keep their state; the published document is the validated, remapped draft.
           ...keptState,
           priority: menu.priority ?? 0,
           validFrom: parseBackupDate(menu.validFrom),

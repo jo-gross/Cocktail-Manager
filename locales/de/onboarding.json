@@ -12,7 +12,7 @@
     },
     "basics": {
       "title": "Grunddaten",
-      "description": "Name, Logo und Art deines Betriebs."
+      "description": "Name, Logo, Art deines Betriebs und Beginn des Bar-Tags."
     },
     "content": {
       "title": "Startinhalte",
@@ -57,7 +57,7 @@
   "basics": {
     "nameTitle": "Name",
     "typeTitle": "Art des Betriebs",
-    "typeHelp": "Wir passen damit Vorschläge im Assistenten an – du kannst alles später ändern. Die Auswahl wird nicht gespeichert.",
+    "typeHelp": "Damit stellen wir den Bar-Tag und das Design von Gästekarten passend ein – du kannst alles später ändern. Die Art selbst wird nicht gespeichert.",
     "types": {
       "bar": {
         "title": "Bar",
@@ -78,12 +78,13 @@
     },
     "effects": {
       "label": "Das bewirkt die Auswahl",
-      "dayStart": "Vorschlag: Der Statistik-Tag beginnt um {{time}} Uhr statt um Mitternacht",
+      "dayStart": "Bar-Tag beginnt um {{time}} Uhr (unten vorausgewählt)",
       "skipTeam": "Der Team-Schritt wird übersprungen (oben weiterhin erreichbar)",
-      "none": "Keine besonderen Voreinstellungen"
+      "guestMenuDesign": "Gästekarten aus Startinhalten bekommen ein passendes Design"
     },
-    "dayStartSuggestion": "Dein Betrieb läuft oft über Mitternacht hinaus. Lass den Tag für Statistiken um {{time}} Uhr beginnen, damit eine Nacht als ein Tag zählt.",
-    "dayStartApply": "{{time}} Uhr übernehmen"
+    "dayStartTitle": "Wann beginnt dein Bar-Tag?",
+    "dayStartHelp": "Ab dieser Uhrzeit zählt ein neuer Tag – für Statistiken, die aktive Karte und „heute aus“. Läuft dein Betrieb über Mitternacht hinaus, wähle eine Zeit nach Feierabend (z. B. 06:00 Uhr), damit eine Nacht als ein Tag zählt.",
+    "dayStartPreselected": "Vorausgewählt für „{{type}}“"
   },
   "content": {
     "choiceTitle": "Womit möchtest du starten?",
@@ -167,6 +168,12 @@
       "selected_one": "{{count}} Eintrag ausgewählt",
       "selected_other": "{{count}} Einträge ausgewählt",
       "confirm": "Auswahl übernehmen"
+    },
+    "guestMenu": {
+      "included_one": "„{{template}}“ enthält eine Gästekarte; sie wird nur mit „Alles“ angelegt.",
+      "included_other": "„{{template}}“ enthält {{count}} Gästekarten; sie werden nur mit „Alles“ angelegt.",
+      "design": "Ihr Design passt zur Betriebsart „{{type}}“.",
+      "designDefault": "Wähle im Schritt „Grunddaten“ eine Betriebsart, damit das Design dazu passt."
     }
   },
   "team": {
@@ -212,7 +219,9 @@
       "contentEmpty": "Leer gestartet",
       "team": "Team",
       "teamLink": "Einladungslink erstellt",
-      "teamNone": "Noch niemand eingeladen"
+      "teamNone": "Noch niemand eingeladen",
+      "guestMenuLink_one": "Gästekarte ansehen",
+      "guestMenuLink_other": "Gästekarten ansehen"
     },
     "pricesHint": "Denk daran: Preise eintragen und Allergene bestätigen.",
     "startTour": "Grundlagen-Tour starten",

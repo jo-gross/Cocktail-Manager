@@ -226,5 +226,11 @@
     "addImage": "Bild hinzufügen",
     "editImage": "Bild bearbeiten",
     "chooseNewImage": "Neues Bild wählen"
+  },
+  "imageCredit": {
+    "photo": "Foto: {{credit}}",
+    "source": "Quelle",
+    "label": "Bildnachweis",
+    "hint": "Urheber, Quelle und Lizenz, z. B. „Foto: Max Muster, CC BY 4.0“. Nötig bei fremden Bildern mit CC-Lizenz; wird beim Bild angezeigt."
   }
 }

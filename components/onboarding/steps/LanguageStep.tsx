@@ -11,7 +11,7 @@ import { changeAppLanguage } from '@lib/i18n/client';
 import { LOCALE_FLAGS, SUPPORTED_LOCALES, type AppLocale } from '@lib/i18n/locales';
 import { alertApiV1Error } from '@lib/network/apiV1';
 import { getWorkspaceSettings, updateWorkspaceSetting } from '@lib/network/workspaces';
-import { initialContentLocales, initialRegionValues, type RegionValues } from '@lib/onboarding/setupWizard';
+import { initialContentLocales, initialRegionValues, type LocaleRegionValues } from '@lib/onboarding/setupWizard';
 import { serializeContentLocales, type ContentLocales } from '@lib/workspace/workspaceLocaleSettings';
 import type { WorkspaceSettingsDto } from '@lib/schemas/workspace';
 import type { SetupStepProps } from './types';
@@ -32,7 +32,7 @@ function browserDefaults() {
   return { timezone, languages };
 }
 
-/** Step 1: UI language, content languages, time zone, currency and day start. */
+/** Step 1: UI language, content languages, time zone and currency (the day start comes with the business type). */
 export function LanguageStep({ workspaceId, saveRef, onContentLocaleChange }: SetupStepProps & { onContentLocaleChange: (locale: string) => void }) {
   const { t } = useTranslation(['onboarding', 'settings', 'errors']);
   const userContext = useContext(UserContext);
@@ -41,7 +41,7 @@ export function LanguageStep({ workspaceId, saveRef, onContentLocaleChange }: Se
   const [contentLocales, setContentLocales] = useState<ContentLocales | null>(null);
   // In a first setup the primary content language follows the UI language until it is changed here (not in a reopened one).
   const [followUiLanguage, setFollowUiLanguage] = useState(false);
-  const [region, setRegion] = useState<RegionValues | null>(null);
+  const [region, setRegion] = useState<LocaleRegionValues | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -87,9 +87,6 @@ export function LanguageStep({ workspaceId, saveRef, onContentLocaleChange }: Se
         }
         if (settings.timezone !== region.timezone) await updateWorkspaceSetting(workspaceId, { setting: 'timezone', value: region.timezone });
         if (settings.currency !== region.currency) await updateWorkspaceSetting(workspaceId, { setting: 'currency', value: region.currency });
-        if ((settings.statisticDayStartTime ?? null) !== region.dayStart) {
-          await updateWorkspaceSetting(workspaceId, { setting: 'statisticDayStartTime', value: region.dayStart });
-        }
         const updated = await getWorkspaceSettings(workspaceId);
         setLoaded({ settings: updated, contentLocales });
         await refreshWorkspace();

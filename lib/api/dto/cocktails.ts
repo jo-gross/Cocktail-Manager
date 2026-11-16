@@ -49,6 +49,8 @@ type GarnishWithGarnish = Pick<CocktailRecipeGarnish, 'garnishId' | 'garnishNumb
 /** Minimal shape needed for the slim summary (list view). */
 type CocktailSummaryShape = Pick<CocktailRecipe, 'id' | 'name' | 'description' | 'tags' | 'price' | 'isArchived' | 'unavailableUntil'> & {
   _count?: { CocktailRecipeImage: number };
+  /** Image row(s) with the credit (optional: without it the credit is null). */
+  CocktailRecipeImage?: Array<{ credit: string | null }>;
   glass?: GlassWithCount | null;
 };
 
@@ -64,10 +66,16 @@ type CocktailFullShape = CocktailSummaryShape &
     ratings: Pick<CocktailRating, 'rating'>[];
   };
 
-function imageFields(hasImage: boolean, workspaceId: string, cocktailId: string): { hasImage: boolean; imageUrl: string | null } {
+function imageFields(
+  hasImage: boolean,
+  workspaceId: string,
+  cocktailId: string,
+  credit: string | null,
+): { hasImage: boolean; imageUrl: string | null; imageCredit: string | null } {
   return {
     hasImage,
     imageUrl: hasImage ? `/api/v1/workspaces/${workspaceId}/cocktails/${cocktailId}/image` : null,
+    imageCredit: hasImage ? credit : null,
   };
 }
 
@@ -90,7 +98,7 @@ export function toCocktailSummaryDto(
     price: cocktail.price,
     isArchived: cocktail.isArchived,
     unavailableUntil: cocktail.unavailableUntil?.toISOString() ?? null,
-    ...imageFields(hasImage, workspaceId, cocktail.id),
+    ...imageFields(hasImage, workspaceId, cocktail.id, cocktail.CocktailRecipeImage?.[0]?.credit ?? null),
     glass: cocktail.glass
       ? { id: cocktail.glass.id, name: cocktail.glass.name, deposit: cocktail.glass.deposit, hasImage: cocktail.glass._count.GlassImage > 0 }
       : null,

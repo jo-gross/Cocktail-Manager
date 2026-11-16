@@ -9,7 +9,9 @@ import { applyTemplate, ensureBuiltInTemplatesSafe, findTemplate } from '@lib/te
 import { builtInImageCredits, type TemplateCreditKind } from '@lib/templates/credits';
 import type { TemplateApplyInput, TemplateApplyResultDto, TemplateItemsDto, TemplateListQuery, TemplateSummaryDto } from '@lib/schemas/templates';
 
-const countSelect = { _count: { select: { Glass: true, Ingredient: true, Garnish: true, CocktailRecipe: true, CocktailCard: true } } } as const;
+const countSelect = {
+  _count: { select: { Glass: true, Ingredient: true, Garnish: true, CocktailRecipe: true, CocktailCard: true, GuestMenu: true } },
+} as const;
 
 function localized(text: unknown, locale: string | undefined, locales: string[]): string {
   const primary = locales[0] ?? 'de';
@@ -47,6 +49,7 @@ export async function listTemplates(query: TemplateListQuery): Promise<TemplateS
         garnishes: counts.Garnish,
         cocktails: counts.CocktailRecipe,
         cards: counts.CocktailCard,
+        guestMenus: counts.GuestMenu,
       },
     };
   });
@@ -126,6 +129,7 @@ export function applyTemplateToWorkspace(workspace: Workspace, user: User, key: 
     mode: input.mode,
     selection: input.selection,
     locale: input.locale,
+    businessType: input.businessType,
     user,
     publishedOnly: true,
   });

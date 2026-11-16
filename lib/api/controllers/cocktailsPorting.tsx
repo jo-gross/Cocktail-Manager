@@ -24,6 +24,7 @@ import { createCocktailRecipeAuditLog, createLog } from '@lib/auditLog';
 import { assertIdsInWorkspace, type ScopedEntity } from '@lib/api/scope';
 import { BULK_TX_TIMEOUT_MS, lockWorkspaceScope, runTx, type Tx } from '@lib/db/tx';
 import { ApiError } from '@lib/http/ApiError';
+import { normalizeImageCredit } from '@lib/images/imageCredit';
 import { prismaErrorToApiError } from '@lib/http/prismaErrors';
 import type { RequestApiKeyPermissions } from '@lib/http/requestAuth';
 import { cocktailGuestInfoImportData, garnishGuestInfoImportData, ingredientGuestInfoImportData, parsePercent } from '@lib/guest-info/sanitize';
@@ -729,7 +730,7 @@ async function executeImport(
       data: { name: data.name, workspaceId, deposit: data.deposit ?? 0, volume: data.volume ?? null, notes: data.notes ?? null },
     });
     const image = dump.glassImages.find((img) => img.glassId === exportId);
-    if (image) await tx.glassImage.create({ data: { glassId: created.id, image: image.image } });
+    if (image) await tx.glassImage.create({ data: { glassId: created.id, image: image.image, credit: normalizeImageCredit(image.credit) } });
     const full = await tx.glass.findUniqueOrThrow({ where: { id: created.id }, include: { GlassImage: true } });
     await createLog(tx, workspaceId, user.id, 'Glass', created.id, 'CREATE', null, full);
     counts.created.glasses++;
@@ -750,7 +751,7 @@ async function executeImport(
       },
     });
     const image = dump.garnishImages.find((img) => img.garnishId === exportId);
-    if (image) await tx.garnishImage.create({ data: { garnishId: created.id, image: image.image } });
+    if (image) await tx.garnishImage.create({ data: { garnishId: created.id, image: image.image, credit: normalizeImageCredit(image.credit) } });
     const full = await tx.garnish.findUniqueOrThrow({ where: { id: created.id }, include: { GarnishImage: true } });
     await createLog(tx, workspaceId, user.id, 'Garnish', created.id, 'CREATE', null, full);
     counts.created.garnishes++;
@@ -774,7 +775,7 @@ async function executeImport(
       },
     });
     const image = dump.ingredientImages.find((img) => img.ingredientId === exportId);
-    if (image) await tx.ingredientImage.create({ data: { ingredientId: created.id, image: image.image } });
+    if (image) await tx.ingredientImage.create({ data: { ingredientId: created.id, image: image.image, credit: normalizeImageCredit(image.credit) } });
 
     const seenUnits = new Set<string>();
     for (const volume of dump.ingredientVolumes.filter((vol) => vol.ingredientId === exportId)) {
@@ -828,7 +829,7 @@ async function executeImport(
     counts.imported.cocktails++;
 
     const image = dump.cocktailRecipeImages.find((img) => img.cocktailRecipeId === decision.exportId);
-    if (image) await tx.cocktailRecipeImage.create({ data: { cocktailRecipeId: cocktailId, image: image.image } });
+    if (image) await tx.cocktailRecipeImage.create({ data: { cocktailRecipeId: cocktailId, image: image.image, credit: normalizeImageCredit(image.credit) } });
 
     const steps = dump.cocktailRecipeSteps.filter((step) => step.cocktailRecipeId === decision.exportId);
     const stepMapping = new Map<string, string>();

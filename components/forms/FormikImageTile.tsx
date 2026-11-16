@@ -6,10 +6,13 @@ import { FaCamera, FaPen } from 'react-icons/fa';
 import { cn } from '@components/ui';
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import { ImageEditorModal } from './ImageEditorModal';
+import { shortImageCredit } from '@lib/images/imageCredit';
 
 interface ImageFormValues {
   image: string | undefined;
   originalImage?: File | undefined;
+  /** Attribution of the image; forms without the field have no credit editing. */
+  imageCredit?: string;
 }
 
 interface FormikImageTileProps {
@@ -28,12 +31,15 @@ interface FormikImageTileProps {
 /**
  * The image of an entity form (Formik fields `image` + `originalImage`) as one tap target: shows the
  * image or an "add image" placeholder and opens the {@link ImageEditorModal} (upload, crop, remove).
+ * With an `imageCredit` field, the credit is shown below the tile, editable in the modal and
+ * cleared when another image is chosen.
  */
 export function FormikImageTile({ aspect, width, height, alt, cropInfo, size = 'md', className }: FormikImageTileProps) {
   const { t } = useTranslation(['common']);
   const { values, setFieldValue } = useFormikContext<ImageFormValues>();
   const modalContext = useContext(ModalContext);
   const hasImage = values.image != undefined;
+  const withCredit = 'imageCredit' in values;
 
   const openEditor = () =>
     modalContext.openModal(
@@ -48,7 +54,10 @@ export function FormikImageTile({ aspect, width, height, alt, cropInfo, size = '
         onChange={async (next) => {
           await setFieldValue('image', next?.image);
           await setFieldValue('originalImage', next?.originalImage);
+          if (withCredit && (next == undefined || next.replaced)) await setFieldValue('imageCredit', '');
         }}
+        credit={values.imageCredit}
+        onCreditChange={withCredit ? (credit) => void setFieldValue('imageCredit', credit) : undefined}
       />,
     );
 
@@ -70,6 +79,14 @@ export function FormikImageTile({ aspect, width, height, alt, cropInfo, size = '
       {hasImage ? (
         <>
           <Image src={values.image ?? ''} alt={alt} fill unoptimized className="object-contain" />
+          {withCredit && values.imageCredit?.trim() ? (
+            <span
+              className="absolute bottom-0 left-0 max-w-[calc(100%-2.75rem)] truncate rounded-tr-lg bg-black/55 px-1.5 py-0.5 text-left text-[10px] text-white"
+              title={values.imageCredit}
+            >
+              {t('common:imageCredit.photo', { credit: shortImageCredit(values.imageCredit) })}
+            </span>
+          ) : null}
           <span className="absolute right-1.5 bottom-1.5 flex h-8 w-8 items-center justify-center rounded-full bg-base-100/90 text-xs text-base-content shadow">
             <FaPen aria-hidden />
           </span>

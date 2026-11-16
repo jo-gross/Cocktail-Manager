@@ -10,6 +10,7 @@ export function toGarnishDto(
   garnish: Pick<Garnish, 'id' | 'name' | 'description' | 'notes' | 'price' | 'allergens' | 'allergenSources' | 'additives' | 'guestInfoComplete'>,
   hasImage: boolean,
   workspaceId: string,
+  imageCredit: string | null = null,
 ): GarnishDto {
   return {
     id: garnish.id,
@@ -19,6 +20,7 @@ export function toGarnishDto(
     price: garnish.price,
     hasImage,
     imageUrl: hasImage ? `/api/v1/workspaces/${workspaceId}/garnishes/${garnish.id}/image` : null,
+    imageCredit: hasImage ? imageCredit : null,
     allergens: garnish.allergens,
     allergenSources: garnish.allergenSources,
     additives: garnish.additives,

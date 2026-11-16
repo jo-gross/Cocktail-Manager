@@ -116,6 +116,17 @@ a { color: var(--gm-accent); }
 .gm-footer { padding: calc(var(--gm-space) * 1.5) var(--gm-space); color: var(--gm-muted); font-size: 0.82rem; display: grid; gap: var(--gm-space); }
 .gm-legend-title { font-size: 0.85rem; margin-bottom: 0.3rem; font-family: var(--gm-font-body); }
 .gm-legend-list { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 0.2rem 0.9rem; }
+.gm-image-credits { font-size: 0.72rem; opacity: 0.85; overflow-wrap: anywhere; }
+.gm-image-credits > summary { cursor: pointer; }
+.gm-image-credits-title { font-weight: 600; margin-right: 0.3em; }
+.gm-image-credits-list { list-style: none; padding: 0; margin: 0.3rem 0 0; display: grid; gap: 0.15rem; }
+div.gm-image-credits .gm-image-credits-list { display: inline; }
+div.gm-image-credits .gm-image-credits-list li { display: inline; }
+div.gm-image-credits .gm-image-credits-list li + li::before { content: " · "; }
+.gm-image-credit { font-size: 0.72rem; color: var(--gm-muted); margin-top: -0.4rem; overflow-wrap: anywhere; }
+.gm-image-credit > summary { cursor: pointer; list-style: none; }
+.gm-image-credit > summary::-webkit-details-marker { display: none; }
+.gm-image-credit-full { display: block; margin-top: 0.2rem; }
 
 .gm-detail { display: grid; gap: 0.7rem; }
 .gm-detail-image { width: 100%; max-height: 50vh; object-fit: cover; border-radius: var(--gm-radius); }

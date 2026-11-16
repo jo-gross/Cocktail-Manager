@@ -1,7 +1,7 @@
 {
   "key": "all-time-classics",
   "kind": "CATALOG",
-  "version": 2,
+  "version": 3,
   "name": { "de": "All Time Classics", "en": "All Time Classics" },
   "description": {
     "de": "22 weltbekannte Klassiker, orientiert an gängigen Bar-Standards (u. a. IBA; keine Verbindung zur IBA) – mit Gläsern, Zutaten, Garnituren, Fotos und einer fertigen Karte. Ohne Preise; Allergene und Alkoholgehalt sind Richtwerte zum Prüfen.",
@@ -18,7 +18,7 @@
     "boulevardier.jpg": "\"Society Lounge - Boulevardier\" by Edsel Little, https://commons.wikimedia.org/wiki/File:Society_Lounge_-_Boulevardier.jpg, CC BY-SA 2.0 https://creativecommons.org/licenses/by-sa/2.0/, scaled",
     "caipirinha.jpg": "\"Caipirinha\" by Ralf Roletschek, https://commons.wikimedia.org/wiki/File:15-09-26-RalfR-WLC-0048.jpg, CC BY-SA 3.0 https://creativecommons.org/licenses/by-sa/3.0/, scaled",
     "cosmopolitan.jpg": "\"Cosmopolitan\" by TheCulinaryGeek, https://commons.wikimedia.org/wiki/File:Cosmopolitan_(5076906532).jpg, CC BY 2.0 https://creativecommons.org/licenses/by/2.0/",
-    "daiquiri.jpg": "\"Classic Daiquiri in Cocktail Glass\" by Will Shenton, https://commons.wikimedia.org/wiki/File:Classic_Daiquiri_in_Cocktail_Glass.jpg, CC BY-SA 3.0 https://creativecommons.org/licenses/by-sa/3.0/, scaled",
+    "daiquiri.jpg": "\"Daiquiri\" by Cocktailmarler, https://commons.wikimedia.org/wiki/File:Daiquiri.jpg, CC BY-SA 3.0 https://creativecommons.org/licenses/by-sa/3.0/, scaled",
     "dry-martini.jpg": "\"Martini\" by Ralf Roletschek, https://commons.wikimedia.org/wiki/File:15-09-26-RalfR-WLC-0084.jpg, CC BY-SA 3.0 https://creativecommons.org/licenses/by-sa/3.0/, scaled",
     "espresso-martini.jpg": "\"Espresso martini - November 2024\" by Sarah Stierch, https://commons.wikimedia.org/wiki/File:Espresso_martini_-_November_2024_-_Sarah_Stierch.jpg, CC0 1.0",
     "french-75.jpg": "\"Cocktail French 75\" by Ralf Roletschek, https://commons.wikimedia.org/wiki/File:15-09-26-RalfR-WLC-0310.jpg, CC BY-SA 3.0 https://creativecommons.org/licenses/by-sa/3.0/, scaled",
@@ -42,7 +42,7 @@
     "paloma.jpg": "\"TequilaPaloma\" by Antonio Cavallo, https://commons.wikimedia.org/wiki/File:TequilaPaloma.JPG, Public Domain",
     "pina-colada.jpg": "\"Piña Colada\" by Mario Trefz (Barmix), https://commons.wikimedia.org/wiki/File:Pi%C3%B1a_Colada.jpg, Public Domain",
     "sidecar.jpg": "\"Sidecar Cocktail\" by Evan Swigart, https://commons.wikimedia.org/wiki/File:Sidecar-cocktail.jpg, CC BY 2.0 https://creativecommons.org/licenses/by/2.0/",
-    "tom-collins.jpg": "\"Tom Collins\" by Will Shenton, https://commons.wikimedia.org/wiki/File:Tom_Collins.jpg, CC BY-SA 3.0 https://creativecommons.org/licenses/by-sa/3.0/, scaled",
+    "tom-collins.png": "\"Tom Tonic Collins\" © Matthias Friedlein (www.augustine-bar.de), https://commons.wikimedia.org/wiki/File:Tom_Tonic_Collins.png, CC BY-SA 4.0 https://creativecommons.org/licenses/by-sa/4.0/, scaled",
     "whiskey-sour.jpg": "\"Whiskey Sour\" by Jgilgamesh, https://commons.wikimedia.org/wiki/File:Whiskey_Sour.jpg, CC BY-SA 3.0 https://creativecommons.org/licenses/by-sa/3.0/, scaled"
   }
 }

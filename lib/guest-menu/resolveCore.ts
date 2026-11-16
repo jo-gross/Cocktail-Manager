@@ -91,6 +91,8 @@ export interface ResolverCocktail {
   isArchived: boolean;
   unavailableUntil: Date | string | null;
   hasImage: boolean;
+  /** Attribution of the image (shown with it; public by nature). */
+  imageCredit?: string | null;
   glass: { id: string; name: string; translations: Translation<{ name: string | null }>[] } | null;
   garnishes: { optional: boolean; isAlternative: boolean; garnish: { id: string; name: string; translations: Translation<{ name: string | null }>[] } }[];
   steps: {
@@ -295,6 +297,8 @@ export function buildPublicMenuDto(input: BuildPublicMenuInput, data: ResolverDa
   const meta: ResolvedMenuMeta = { cocktailImageIds: [], menuAssets: [], workspaceLogo: false, cocktailIds: [] };
   const imageIds = new Set<string>();
   const shownIds = new Set<string>();
+  /** Credits of the cocktail images shown in this response (footer list), keyed by cocktail id. */
+  const imageCredits = new Map<string, { name: string; credit: string }>();
 
   // Tags -------------------------------------------------------------------
   const tagDefinitions = new Map(data.tagDefinitions.map((definition) => [definition.tag, definition]));
@@ -415,6 +419,10 @@ export function buildPublicMenuDto(input: BuildPublicMenuInput, data: ResolverDa
     if (isTruthyMode(fields.image)) {
       item.imageUrl = cocktail.hasImage ? imageUrls.cocktail(cocktail.id) : null;
       if (cocktail.hasImage) imageIds.add(cocktail.id);
+      if (cocktail.hasImage && cocktail.imageCredit) {
+        item.imageCredit = cocktail.imageCredit;
+        if (!onRequest) imageCredits.set(cocktail.id, { name: item.name, credit: cocktail.imageCredit });
+      }
     }
     if (isTruthyMode(fields.description)) {
       const description = override?.description ? text(override.description) : null;
@@ -774,6 +782,7 @@ export function buildPublicMenuDto(input: BuildPublicMenuInput, data: ResolverDa
       alcoholCategories: isWeb && webOutput.filters.alcohol ? ALCOHOL_CATEGORIES.filter((category) => alcoholSet.has(category)) : [],
     },
     footnotes: { allergens: footnoteAllergens, additives: footnoteAdditives },
+    imageCredits: [...imageCredits.values()],
     notices,
     uiTexts,
     ...(onRequestItems ? { onRequestItems } : {}),

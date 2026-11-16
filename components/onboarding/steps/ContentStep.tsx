@@ -20,10 +20,14 @@ import {
   type AppliedTemplate,
 } from '../StartContentPanel';
 import { TemplatePickerDialog } from '../TemplatePickerDialog';
+import { SetupHint } from '../SetupHint';
+import type { BusinessType } from '@lib/onboarding/setupWizard';
 import type { SetupStepProps } from './types';
 
 interface ContentStepProps extends SetupStepProps {
   locale: string;
+  /** Sent along when a collection is added: the server picks the design of its guest menus. */
+  businessType: BusinessType | null;
   applied: AppliedTemplate[];
   onApplied: (applied: AppliedTemplate) => void;
   /** Kept by the wizard so the choice survives going back; `null` = the default choice. */
@@ -134,7 +138,7 @@ function ChoiceTemplateTile({
 }
 
 /** Step 3: exactly one start choice – a collection (with its scope) or an empty start; the wizard's primary button applies it. */
-export function ContentStep({ workspaceId, saveRef, locale, applied, onApplied, choice, onChoiceChange, onPrimaryChange }: ContentStepProps) {
+export function ContentStep({ workspaceId, saveRef, locale, businessType, applied, onApplied, choice, onChoiceChange, onPrimaryChange }: ContentStepProps) {
   const { t } = useTranslation(['onboarding']);
   const modalContext = useContext(ModalContext);
   const groupName = useId();
@@ -193,6 +197,7 @@ export function ContentStep({ workspaceId, saveRef, locale, applied, onApplied, 
         const result = await applyTemplate(workspaceId, template.key, {
           mode: current.mode,
           ...(current.mode === 'selection' ? { selection: current.selection } : {}),
+          ...(businessType ? { businessType } : {}),
         });
         onApplied({ key: template.key, name: template.name, result });
         // Applied: nothing is pending anymore, the button turns into a plain "Next".
@@ -228,7 +233,7 @@ export function ContentStep({ workspaceId, saveRef, locale, applied, onApplied, 
       }
       return apply();
     };
-  }, [saveRef, action, current, template, catalog.loading, workspaceId, locale, modalContext, onApplied, onChoiceChange, t]);
+  }, [saveRef, action, current, template, catalog.loading, workspaceId, locale, businessType, modalContext, onApplied, onChoiceChange, t]);
 
   return (
     <div className="flex flex-col gap-4 md:gap-6">
@@ -263,6 +268,7 @@ export function ContentStep({ workspaceId, saveRef, locale, applied, onApplied, 
             onSelect={() => onChoiceChange({ kind: 'empty' })}
           />
         </div>
+        {catalog.loading ? null : <GuestMenuHints templates={catalog.offered} businessType={businessType} />}
       </FormSection>
 
       <StartContentHints workspaceId={workspaceId} />
@@ -311,5 +317,24 @@ function EmptyOption({
         </Link>
       )}
     </div>
+  );
+}
+
+/** Collections that bring a guest menu (`counts.guestMenus` is optional: older servers do not report it). */
+function GuestMenuHints({ templates, businessType }: { templates: TemplateSummaryDto[]; businessType: BusinessType | null }) {
+  const { t } = useTranslation(['onboarding']);
+  const withGuestMenu = templates.filter((template) => (template.counts.guestMenus ?? 0) > 0);
+  if (withGuestMenu.length === 0) return null;
+  return (
+    <>
+      {withGuestMenu.map((template) => (
+        <SetupHint key={template.key}>
+          {t('onboarding:content.guestMenu.included', { template: template.name, count: template.counts.guestMenus })}{' '}
+          {businessType
+            ? t('onboarding:content.guestMenu.design', { type: t(`onboarding:basics.types.${businessType}.title`) })
+            : t('onboarding:content.guestMenu.designDefault')}
+        </SetupHint>
+      ))}
+    </>
   );
 }

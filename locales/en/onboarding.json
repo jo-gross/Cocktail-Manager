@@ -12,7 +12,7 @@
     },
     "basics": {
       "title": "Basics",
-      "description": "Name, logo and type of your business."
+      "description": "Name, logo, type of business and the start of your bar day."
     },
     "content": {
       "title": "Start content",
@@ -57,7 +57,7 @@
   "basics": {
     "nameTitle": "Name",
     "typeTitle": "Type of business",
-    "typeHelp": "We use it to tailor the suggestions in this assistant – you can change everything later. The choice is not saved.",
+    "typeHelp": "We use it to set up the bar day and the design of guest menus – you can change everything later. The type itself is not saved.",
     "types": {
       "bar": {
         "title": "Bar",
@@ -78,12 +78,13 @@
     },
     "effects": {
       "label": "What this choice does",
-      "dayStart": "Suggestion: the statistics day starts at {{time}} instead of midnight",
+      "dayStart": "Bar day starts at {{time}} (preselected below)",
       "skipTeam": "The team step is skipped (still reachable above)",
-      "none": "No special defaults"
+      "guestMenuDesign": "Guest menus from start content get a matching design"
     },
-    "dayStartSuggestion": "Your business often runs past midnight. Start the statistics day at {{time}} so that one night counts as one day.",
-    "dayStartApply": "Use {{time}}"
+    "dayStartTitle": "When does your bar day start?",
+    "dayStartHelp": "A new day starts at this time – for statistics, the active card and “out today”. If your business runs past midnight, choose a time after closing (e.g. 06:00) so that one night counts as one day.",
+    "dayStartPreselected": "Preselected for “{{type}}”"
   },
   "content": {
     "choiceTitle": "How do you want to start?",
@@ -167,6 +168,12 @@
       "selected_one": "{{count}} item selected",
       "selected_other": "{{count}} items selected",
       "confirm": "Use selection"
+    },
+    "guestMenu": {
+      "included_one": "“{{template}}” includes a guest menu; it is only created with “Everything”.",
+      "included_other": "“{{template}}” includes {{count}} guest menus; they are only created with “Everything”.",
+      "design": "Its design matches the business type “{{type}}”.",
+      "designDefault": "Choose a business type in the “Basics” step to get a matching design."
     }
   },
   "team": {
@@ -212,7 +219,9 @@
       "contentEmpty": "Started empty",
       "team": "Team",
       "teamLink": "Invitation link created",
-      "teamNone": "Nobody invited yet"
+      "teamNone": "Nobody invited yet",
+      "guestMenuLink_one": "View guest menu",
+      "guestMenuLink_other": "View guest menus"
     },
     "pricesHint": "Remember: enter prices and confirm allergens.",
     "startTour": "Start the basics tour",

@@ -54,6 +54,7 @@ export const publicCocktailSelect = {
   isArchived: true,
   unavailableUntil: true,
   _count: { select: { CocktailRecipeImage: true } },
+  CocktailRecipeImage: { select: { credit: true } },
   glass: { select: { id: true, name: true, translations: { select: { locale: true, name: true } } } },
   garnishes: {
     orderBy: { garnishNumber: 'asc' },
@@ -103,6 +104,7 @@ function toResolverCocktail(row: PublicCocktailRow): ResolverCocktail {
     isArchived: row.isArchived,
     unavailableUntil: row.unavailableUntil,
     hasImage: row._count.CocktailRecipeImage > 0,
+    imageCredit: row.CocktailRecipeImage[0]?.credit ?? null,
     glass: row.glass,
     garnishes: row.garnishes.map((entry) => ({ optional: entry.optional ?? false, isAlternative: entry.isAlternative ?? false, garnish: entry.garnish })),
     steps: row.steps.map((step) => ({
