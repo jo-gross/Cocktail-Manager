@@ -2,12 +2,13 @@ import { ManageGroup, ManageLink } from '@components/manage/ManageCard';
 import { ManageEntityLayout } from '@components/layout/ManageEntityLayout';
 import { useRouter } from 'next/router';
 import { UserContext } from '@lib/context/UserContextProvider';
-import React, { useContext } from 'react';
+import React, { useContext, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { authClient } from '@lib/auth-client';
 import LoadingText from '../../../../components/LoadingText';
 import Link from 'next/link';
-import AvatarImage from '../../../../components/AvatarImage';
+import { ManageProfileButton } from '@components/manage/ManageProfileButton';
+import { NotificationBadge } from '@components/manage/NotificationBadge';
 import { WorkspaceLogo } from '@components/workspaces/WorkspaceLogo';
 import { FaCalculator, FaCocktail, FaGlassMartiniAlt, FaUsers } from 'react-icons/fa';
 import { LuCitrus, LuHistory, LuLifeBuoy, LuMonitorPlay, LuShieldAlert } from 'react-icons/lu';
@@ -17,9 +18,13 @@ import { IoMdStats } from 'react-icons/io';
 import { MdOutlineMenuBook, MdOutlineSell } from 'react-icons/md';
 import packageInfo from '../../../../package.json';
 import LanguageChanger from '@components/LanguageChanger';
-import { Button, Divider, Dropdown, DropdownContent, Menu } from '@components/ui';
+import { Badge, Button, Divider, Dropdown, DropdownContent, Menu } from '@components/ui';
 import { useNewFeatureTours } from '@components/tour/useNewFeatureTours';
 import { WorkspaceStatusBanner } from '@components/onboarding/WorkspaceStatusBanner';
+import { useOnboardingStatus } from '@components/tour/useOnboardingStatus';
+import { useTourAction } from '@components/tour/TourContext';
+import { summarizeChecklist } from '@lib/tours/checklist';
+import { tourTarget } from '@lib/tours/targets';
 
 export default function ManagePage() {
   const router = useRouter();
@@ -30,6 +35,13 @@ export default function ManagePage() {
   const userContext = useContext(UserContext);
 
   const { workspaceId } = router.query;
+  const canManage = userContext.isUserPermitted('MANAGER');
+  const { status } = useOnboardingStatus(typeof workspaceId === 'string' ? workspaceId : undefined, canManage);
+  const checklist = summarizeChecklist(canManage ? (status?.checklist ?? []) : []);
+  const pendingCount = checklist.total - checklist.done;
+  const profileButtonRef = useRef<HTMLButtonElement>(null);
+  useTourAction('manage.openProfileMenu', () => profileButtonRef.current?.focus());
+
   return (
     <>
       <ManageEntityLayout
@@ -48,22 +60,14 @@ export default function ManagePage() {
         }
         actions={[
           <Dropdown key="profile" align="end">
-            <Button type="button" variant="outline" tabIndex={0}>
-              {userContext.user?.image && (
-                <div className="h-10 w-10 overflow-hidden rounded-full">
-                  <AvatarImage alt={t('common:profileImageAlt')} src={userContext.user.image} />
-                </div>
-              )}
-              <div className={'hidden md:flex md:flex-col md:items-start'}>
-                <span>{userContext.user?.name || t('auth:demoUser')}</span>
-                {userContext.workspace?.members && (
-                  <span className="text-xs font-normal opacity-70">
-                    {userContext.workspace.members.find((m) => m.userId === userContext.user?.id)?.role || 'MANAGER'}
-                  </span>
-                )}
-              </div>
-            </Button>
-            <DropdownContent tabIndex={0} className="z-[1] mt-2 block w-52">
+            <ManageProfileButton
+              name={userContext.user?.name || t('auth:demoUser')}
+              image={userContext.user?.image}
+              role={userContext.workspace?.members.find((m) => m.userId === userContext.user?.id)?.role}
+              pendingCount={pendingCount}
+              buttonRef={profileButtonRef}
+            />
+            <DropdownContent tabIndex={0} className="z-[1] mt-2 block w-64 p-2!">
               <Menu size="sm" className="gap-2">
                 <div className={'pt-1 text-center md:hidden'}>
                   <div className="text-lg font-bold">{userContext.user?.name || t('auth:demoUser')}</div>
@@ -82,15 +86,21 @@ export default function ManagePage() {
                 </li>
                 <li>
                   <Link href={`/workspaces/${workspaceId}/manage/help`}>
-                    <Button variant="outline" size="sm" className="w-full">
+                    <Button variant="outline" size="sm" className="w-full" {...tourTarget('manage.help')}>
                       <LuLifeBuoy aria-hidden="true" />
                       {t('nav:help')}
+                      <NotificationBadge count={pendingCount} />
+                      {newFeatureTours.unseen.length > 0 && (
+                        <Badge size="xs" variant="primary">
+                          {t('tours:help.newBadge')}
+                        </Badge>
+                      )}
                     </Button>
                   </Link>
                 </li>
                 <Divider size="sm" />
-                <li className="flex justify-center px-1 py-1">
-                  <LanguageChanger size="sm" />
+                <li>
+                  <LanguageChanger size="sm" fullWidth />
                 </li>
                 <Divider size="sm" />
                 <li>
@@ -229,16 +239,6 @@ export default function ManagePage() {
                 link={`/workspaces/${workspaceId}/manage/settings/users`}
               />
             )}
-          </ManageGroup>
-          <ManageGroup title={t('nav:section.help')} className="lg:col-span-2">
-            <ManageLink
-              icon={<LuLifeBuoy />}
-              title={t('nav:help')}
-              description={t('nav:overview.description.help')}
-              link={`/workspaces/${workspaceId}/manage/help`}
-              tourTarget="manage.help"
-              badge={newFeatureTours.unseen.length > 0 ? t('tours:help.newBadge') : undefined}
-            />
           </ManageGroup>
         </div>
       </ManageEntityLayout>
