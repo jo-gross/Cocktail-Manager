@@ -168,12 +168,6 @@
       "selected_one": "{{count}} item selected",
       "selected_other": "{{count}} items selected",
       "confirm": "Use selection"
-    },
-    "guestMenu": {
-      "included_one": "“{{template}}” includes a guest menu; it is only created with “Everything”.",
-      "included_other": "“{{template}}” includes {{count}} guest menus; they are only created with “Everything”.",
-      "design": "Its design matches the business type “{{type}}”.",
-      "designDefault": "Choose a business type in the “Basics” step to get a matching design."
     }
   },
   "team": {

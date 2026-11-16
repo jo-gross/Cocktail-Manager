@@ -20,7 +20,6 @@ import {
   type AppliedTemplate,
 } from '../StartContentPanel';
 import { TemplatePickerDialog } from '../TemplatePickerDialog';
-import { SetupHint } from '../SetupHint';
 import type { BusinessType } from '@lib/onboarding/setupWizard';
 import type { SetupStepProps } from './types';
 
@@ -268,7 +267,6 @@ export function ContentStep({ workspaceId, saveRef, locale, businessType, applie
             onSelect={() => onChoiceChange({ kind: 'empty' })}
           />
         </div>
-        {catalog.loading ? null : <GuestMenuHints templates={catalog.offered} businessType={businessType} />}
       </FormSection>
 
       <StartContentHints workspaceId={workspaceId} />
@@ -317,24 +315,5 @@ function EmptyOption({
         </Link>
       )}
     </div>
-  );
-}
-
-/** Collections that bring a guest menu (`counts.guestMenus` is optional: older servers do not report it). */
-function GuestMenuHints({ templates, businessType }: { templates: TemplateSummaryDto[]; businessType: BusinessType | null }) {
-  const { t } = useTranslation(['onboarding']);
-  const withGuestMenu = templates.filter((template) => (template.counts.guestMenus ?? 0) > 0);
-  if (withGuestMenu.length === 0) return null;
-  return (
-    <>
-      {withGuestMenu.map((template) => (
-        <SetupHint key={template.key}>
-          {t('onboarding:content.guestMenu.included', { template: template.name, count: template.counts.guestMenus })}{' '}
-          {businessType
-            ? t('onboarding:content.guestMenu.design', { type: t(`onboarding:basics.types.${businessType}.title`) })
-            : t('onboarding:content.guestMenu.designDefault')}
-        </SetupHint>
-      ))}
-    </>
   );
 }

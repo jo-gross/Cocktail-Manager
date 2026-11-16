@@ -168,12 +168,6 @@
       "selected_one": "{{count}} Eintrag ausgewählt",
       "selected_other": "{{count}} Einträge ausgewählt",
       "confirm": "Auswahl übernehmen"
-    },
-    "guestMenu": {
-      "included_one": "„{{template}}“ enthält eine Gästekarte; sie wird nur mit „Alles“ angelegt.",
-      "included_other": "„{{template}}“ enthält {{count}} Gästekarten; sie werden nur mit „Alles“ angelegt.",
-      "design": "Ihr Design passt zur Betriebsart „{{type}}“.",
-      "designDefault": "Wähle im Schritt „Grunddaten“ eine Betriebsart, damit das Design dazu passt."
     }
   },
   "team": {
