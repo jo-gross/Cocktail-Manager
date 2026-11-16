@@ -60,5 +60,8 @@
   },
   "guestInfo": "Gästeinformationen",
   "guestMenus": "Gästekarten",
-  "help": "Hilfe & Tutorials"
+  "help": "Hilfe & Tutorials",
+  "profileMenu": "Profilmenü für {{name}}",
+  "openTodos_one": "{{count}} offener Checklistenpunkt",
+  "openTodos_other": "{{count}} offene Checklistenpunkte"
 }
