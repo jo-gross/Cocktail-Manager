@@ -57,43 +57,50 @@ export function SetupStepper({ steps, current, skipped = [], disabled = false, o
           const active = step === current;
           const isSkipped = skipped.includes(step) && !active;
           return (
-            <li
-              key={step}
-              className={cn(
-                'relative flex flex-1 flex-col items-center gap-2',
-                // Connector to the previous step, drawn behind the circles.
-                index > 0 && 'before:absolute before:top-[1.125rem] before:right-1/2 before:-left-1/2 before:h-0.5 before:-translate-y-1/2',
-                index > 0 && (index <= currentIndex ? 'before:bg-primary' : 'before:bg-base-300'),
-              )}
-            >
+            <li key={step} className="relative flex flex-1 justify-center">
+              {index > 0 ? (
+                // Connector to the previous step: a separate segment that ends short of both circles (and their hover/focus
+                // rings), so it never shows through a circle or a label.
+                <span
+                  aria-hidden
+                  className={cn(
+                    'pointer-events-none absolute top-[1.125rem] right-[calc(50%+1.125rem+0.5rem)] left-[calc(-50%+1.125rem+0.5rem)] h-0.5 -translate-y-1/2 rounded-full',
+                    index <= currentIndex ? 'bg-primary' : 'bg-base-300',
+                  )}
+                />
+              ) : null}
               <button
                 type="button"
                 disabled={disabled || active}
                 aria-current={active ? 'step' : undefined}
                 onClick={() => onSelect(step)}
-                className={cn(
-                  'relative z-[1] flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border-2 bg-base-100 text-sm font-semibold transition-colors focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-base-100 focus-visible:outline-none disabled:cursor-default',
-                  active
-                    ? 'border-primary bg-primary text-primary-content'
-                    : done
-                      ? 'border-primary text-primary hover:bg-primary/10'
-                      : 'border-base-300 text-base-content/60 hover:bg-base-200',
-                  isSkipped && 'border-dashed text-base-content/40',
-                )}
+                className="group flex max-w-full cursor-pointer flex-col items-center gap-2 rounded-lg px-1 focus-visible:outline-none disabled:cursor-default"
               >
-                {done && !isSkipped ? <FaCheck aria-hidden /> : index + 1}
-                <span className="sr-only">{t(`onboarding:steps.${step}.title`)}</span>
+                <span
+                  aria-hidden
+                  className={cn(
+                    'flex h-9 w-9 items-center justify-center rounded-full border-2 text-sm font-semibold transition-colors',
+                    'group-focus-visible:ring-2 group-focus-visible:ring-primary group-focus-visible:ring-offset-2 group-focus-visible:ring-offset-base-100',
+                    active
+                      ? 'border-primary bg-primary text-primary-content'
+                      : done
+                        ? 'border-primary bg-base-100 text-primary group-hover:ring-4 group-hover:ring-primary/25'
+                        : 'border-base-300 bg-base-100 text-base-content/60 group-hover:border-base-400 group-hover:text-base-content group-hover:ring-4 group-hover:ring-base-300/60',
+                    isSkipped && 'border-dashed text-base-content/40',
+                  )}
+                >
+                  {done && !isSkipped ? <FaCheck /> : index + 1}
+                </span>
+                <span
+                  className={cn(
+                    'text-center text-xs leading-tight underline-offset-2',
+                    active ? 'font-semibold text-base-content' : 'text-base-content/60 group-hover:text-base-content group-hover:underline',
+                    isSkipped && 'text-base-content/40',
+                  )}
+                >
+                  {t(`onboarding:steps.${step}.title`)}
+                </span>
               </button>
-              <span
-                aria-hidden
-                className={cn(
-                  'px-1 text-center text-xs leading-tight',
-                  active ? 'font-semibold text-base-content' : 'text-base-content/60',
-                  isSkipped && 'text-base-content/40',
-                )}
-              >
-                {t(`onboarding:steps.${step}.title`)}
-              </span>
             </li>
           );
         })}

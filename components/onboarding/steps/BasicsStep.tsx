@@ -1,6 +1,6 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FaCheckCircle, FaGlassMartiniAlt, FaHome, FaUtensils } from 'react-icons/fa';
+import { FaCheckCircle, FaGlassMartiniAlt, FaHome, FaMagic, FaUtensils } from 'react-icons/fa';
 import { MdCelebration } from 'react-icons/md';
 import { Button, Loading, cn } from '@components/ui';
 import { FormSection } from '@components/forms/FormSection';
@@ -10,7 +10,7 @@ import { SetupHint } from '../SetupHint';
 import { UserContext } from '@lib/context/UserContextProvider';
 import { alertApiV1Error } from '@lib/network/apiV1';
 import { getWorkspaceSettings, updateWorkspace, updateWorkspaceSetting } from '@lib/network/workspaces';
-import { BUSINESS_TYPES, suggestedDayStart, type BusinessType } from '@lib/onboarding/setupWizard';
+import { BUSINESS_TYPES, businessTypeEffects, suggestedDayStart, type BusinessType } from '@lib/onboarding/setupWizard';
 import type { SetupStepProps } from './types';
 
 const BUSINESS_TYPE_ICONS: Record<BusinessType, React.ReactNode> = {
@@ -34,6 +34,7 @@ export function BasicsStep({ workspaceId, saveRef, businessType, onBusinessTypeC
   const [logoKey, setLogoKey] = useState(0);
   const [dayStart, setDayStart] = useState<string | null | undefined>(undefined);
   const [dayStartSaving, setDayStartSaving] = useState(false);
+  const typeIdPrefix = useId();
   const currentName = workspace?.name ?? '';
   const value = name ?? currentName;
 
@@ -116,6 +117,8 @@ export function BasicsStep({ workspaceId, saveRef, businessType, onBusinessTypeC
                 type="button"
                 role="radio"
                 aria-checked={selected}
+                aria-labelledby={`${typeIdPrefix}-${type}-title`}
+                aria-describedby={`${typeIdPrefix}-${type}-help ${typeIdPrefix}-${type}-effects`}
                 onClick={() => onBusinessTypeChange(type)}
                 className={cn(
                   'flex h-full min-h-11 cursor-pointer items-start gap-3 rounded-xl border bg-base-100 p-4 text-left transition-colors focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none',
@@ -132,8 +135,27 @@ export function BasicsStep({ workspaceId, saveRef, businessType, onBusinessTypeC
                   {BUSINESS_TYPE_ICONS[type]}
                 </span>
                 <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-                  <span className="font-medium">{t(`onboarding:basics.types.${type}.title`)}</span>
-                  <span className="text-sm text-base-content/60">{t(`onboarding:basics.types.${type}.help`)}</span>
+                  <span id={`${typeIdPrefix}-${type}-title`} className="font-medium">
+                    {t(`onboarding:basics.types.${type}.title`)}
+                  </span>
+                  <span id={`${typeIdPrefix}-${type}-help`} className="text-sm text-base-content/60">
+                    {t(`onboarding:basics.types.${type}.help`)}
+                  </span>
+                  {/* What the type changes, derived from the preselection rules (phrasing content only inside the button). */}
+                  <span id={`${typeIdPrefix}-${type}-effects`} className="mt-2 flex flex-col gap-1 border-t border-base-300 pt-2 text-xs">
+                    <span className="sr-only">{t('onboarding:basics.effects.label')}</span>
+                    {businessTypeEffects(type).map((effect) => (
+                      <span
+                        key={effect.kind}
+                        className={cn('flex items-start gap-1.5', effect.kind === 'none' ? 'text-base-content/50' : 'text-base-content/80')}
+                      >
+                        <FaMagic aria-hidden className={cn('mt-0.5 shrink-0', effect.kind === 'none' ? 'invisible' : 'text-primary')} />
+                        {effect.kind === 'dayStart'
+                          ? t('onboarding:basics.effects.dayStart', { time: effect.time })
+                          : t(`onboarding:basics.effects.${effect.kind}`)}
+                      </span>
+                    ))}
+                  </span>
                 </span>
                 <FaCheckCircle aria-hidden className={cn('mt-0.5 shrink-0 text-primary', !selected && 'invisible')} />
               </button>
@@ -158,7 +180,6 @@ export function BasicsStep({ workspaceId, saveRef, businessType, onBusinessTypeC
             </div>
           </SetupHint>
         ) : null}
-        {businessType === 'private' ? <SetupHint>{t('onboarding:basics.privateHint')}</SetupHint> : null}
       </FormSection>
     </div>
   );

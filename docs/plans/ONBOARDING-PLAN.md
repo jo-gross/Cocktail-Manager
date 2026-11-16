@@ -168,3 +168,4 @@ wird OWNER (`lib/api/v1/join.ts:47`).
 | 3 Touren & Hilfe | Engine, Registry, Fortschritt-API, CI-Check, `basics-bar`, `basics-manage`, Hilfe-Seite, Checkliste, Begrüßung |
 | 4 Demo-Umbau | `DEMO`-Vorlage, Aktivitätsgenerator, Laufzeit-Flag, In-Prozess-Cleanup, Altteile entfernen, Doku |
 | 5 Ausbau | Ankündigungen, weitere Touren/Sammlungen, „Aus Vorlagen hinzufügen“ in Empty States |
+| 6 Funktionsprofile (Idee) | Betriebsart (Bar, Restaurant & Hotel, Event & Catering, Privat) wird gespeichert und kapselt Funktionen: z. B. Privat ohne Preise/Kalkulation/Team, Event mit Kalkulation im Fokus. Bereiche lassen sich je Workspace ein-/ausblenden (Manage-Seite, Navigation, Touren, Checkliste). Bis dahin wirkt die Betriebsart nur als Vorauswahl im Assistenten. |

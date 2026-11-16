@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
+import de from '../../../locales/de/onboarding.json';
+import en from '../../../locales/en/onboarding.json';
 import {
+  BUSINESS_TYPES,
+  businessTypeEffects,
   businessTypePreselection,
   detectTimezone,
   initialContentLocales,
@@ -23,8 +27,9 @@ describe('setupSteps', () => {
 });
 
 describe('business type preselection', () => {
-  it('suggests 06:00 as day start for bars', () => {
+  it('suggests 06:00 as day start for bars and events (they run past midnight)', () => {
     expect(businessTypePreselection('bar')).toEqual({ dayStart: '06:00', skipTeam: false });
+    expect(businessTypePreselection('event')).toEqual({ dayStart: '06:00', skipTeam: false });
   });
 
   it('skips the team step for private use', () => {
@@ -32,7 +37,7 @@ describe('business type preselection', () => {
   });
 
   it('keeps everything for the other types and without a choice', () => {
-    for (const type of ['restaurant', 'event', null, undefined] as const) {
+    for (const type of ['restaurant', null, undefined] as const) {
       expect(businessTypePreselection(type)).toEqual({ dayStart: null, skipTeam: false });
     }
   });
@@ -42,8 +47,40 @@ describe('business type preselection', () => {
     expect(suggestedDayStart('bar', '00:00')).toBe('06:00');
     expect(suggestedDayStart('bar', '05:00')).toBeNull();
     expect(suggestedDayStart('bar', '06:00')).toBeNull();
+    expect(suggestedDayStart('event', '00:00')).toBe('06:00');
     expect(suggestedDayStart('restaurant', '00:00')).toBeNull();
     expect(suggestedDayStart(null, '00:00')).toBeNull();
+  });
+});
+
+describe('business type effects', () => {
+  it('describes exactly what the preselection changes', () => {
+    expect(businessTypeEffects('bar')).toEqual([{ kind: 'dayStart', time: '06:00' }]);
+    expect(businessTypeEffects('event')).toEqual([{ kind: 'dayStart', time: '06:00' }]);
+    expect(businessTypeEffects('private')).toEqual([{ kind: 'skipTeam' }]);
+    expect(businessTypeEffects('restaurant')).toEqual([{ kind: 'none' }]);
+  });
+
+  it('stays in sync with the rules for every type', () => {
+    for (const type of BUSINESS_TYPES) {
+      const { dayStart, skipTeam } = businessTypePreselection(type);
+      const kinds = businessTypeEffects(type).map((effect) => effect.kind);
+      expect(kinds.includes('dayStart')).toBe(dayStart !== null);
+      expect(kinds.includes('skipTeam')).toBe(skipTeam);
+      expect(kinds.includes('none')).toBe(dayStart === null && !skipTeam);
+    }
+  });
+
+  it('has a text for every effect in both languages', () => {
+    for (const type of BUSINESS_TYPES) {
+      for (const effect of businessTypeEffects(type)) {
+        for (const locale of [de, en]) {
+          const text = locale.basics.effects[effect.kind];
+          expect(text).toBeTruthy();
+          if (effect.kind === 'dayStart') expect(text).toContain('{{time}}');
+        }
+      }
+    }
   });
 });
 

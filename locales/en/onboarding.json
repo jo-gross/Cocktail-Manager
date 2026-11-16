@@ -57,7 +57,7 @@
   "basics": {
     "nameTitle": "Name",
     "typeTitle": "Type of business",
-    "typeHelp": "Helps us suggest sensible defaults. It is not saved.",
+    "typeHelp": "We use it to tailor the suggestions in this assistant – you can change everything later. The choice is not saved.",
     "types": {
       "bar": {
         "title": "Bar",
@@ -76,15 +76,47 @@
         "help": "Home bar, parties, your own recipe collection"
       }
     },
-    "dayStartSuggestion": "Bars often close after midnight. Start the statistics day at {{time}} so that one night counts as one day.",
-    "dayStartApply": "Use {{time}}",
-    "privateHint": "For private use we skip the team step. You can still open it above."
+    "effects": {
+      "label": "What this choice does",
+      "dayStart": "Suggestion: the statistics day starts at {{time}} instead of midnight",
+      "skipTeam": "The team step is skipped (still reachable above)",
+      "none": "No special defaults"
+    },
+    "dayStartSuggestion": "Your business often runs past midnight. Start the statistics day at {{time}} so that one night counts as one day.",
+    "dayStartApply": "Use {{time}}"
   },
   "content": {
-    "collectionsTitle": "Collections",
-    "emptyTitle": "Start empty",
-    "emptyHelp": "You create everything yourself or import a backup.",
-    "startEmpty": "Start empty",
+    "choiceTitle": "How do you want to start?",
+    "choiceHelp": "Choose exactly one option. The button below adds the chosen collection. Existing items with the same name are reused.",
+    "applying": "Adding …",
+    "empty": {
+      "title": "Start empty",
+      "help": "Don't add a collection – you create everything yourself or import a backup."
+    },
+    "nothingMore": {
+      "title": "Don't add another collection",
+      "help": "Continue with the content you already added."
+    },
+    "action": {
+      "empty": "Continue empty",
+      "pick": "Choose items …",
+      "apply": {
+        "all": "Add “{{template}}” & continue",
+        "basics": "Add basics & continue",
+        "selection": "Add selection & continue"
+      },
+      "applyAgain": {
+        "all": "Add “{{template}}” again & continue",
+        "basics": "Add basics again & continue",
+        "selection": "Add selection again & continue"
+      }
+    },
+    "pending": {
+      "title": "Collection not added yet",
+      "message": "You chose “{{template}}” but haven't added it yet. Add the collection now?",
+      "apply": "Add & continue",
+      "skip": "Continue without collection"
+    },
     "loadError": "The collections could not be loaded. You can add them later under “Help & tutorials”.",
     "none": "There are no collections for this language yet.",
     "otherLanguage": "There are no collections for your content language yet. These are in another language.",

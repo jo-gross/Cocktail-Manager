@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { withPagePermission } from '@middleware/ui/withPagePermission';
 import { ManageEntityLayout } from '@components/layout/ManageEntityLayout';
 import { FaArrowLeft, FaArrowRight } from 'react-icons/fa';
-import { Button, Loading, Skeleton } from '@components/ui';
+import { Button, Loading, Skeleton, cn } from '@components/ui';
 import { SetupStepper } from '@components/onboarding/SetupStepper';
 import { LanguageStep } from '@components/onboarding/steps/LanguageStep';
 import { BasicsStep } from '@components/onboarding/steps/BasicsStep';
@@ -14,6 +14,7 @@ import { TeamStep } from '@components/onboarding/steps/TeamStep';
 import { DoneStep } from '@components/onboarding/steps/DoneStep';
 import type { StepSave } from '@components/onboarding/steps/types';
 import type { AppliedTemplate } from '@components/onboarding/StartContentPanel';
+import type { StartContentChoice } from '@lib/onboarding/startContentChoice';
 import { UserContext } from '@lib/context/UserContextProvider';
 import {
   businessTypePreselection,
@@ -58,6 +59,10 @@ function SetupPage() {
   const [businessType, setBusinessType] = useState<BusinessType | null>(null);
   const [contentLocaleDraft, setContentLocaleDraft] = useState<string | null>(null);
   const [applied, setApplied] = useState<AppliedTemplate[]>([]);
+  const [contentChoice, setContentChoice] = useState<StartContentChoice | null>(null);
+  const [contentPrimary, setContentPrimary] = useState<{ label: string | null; loading: boolean } | null>(null);
+  const primary = step === 'content' ? contentPrimary : null;
+  const wideFooter = !!primary?.label;
   const [teamLink, setTeamLink] = useState<string | null>(null);
   const { skipTeam } = businessTypePreselection(businessType);
   const contentLocale = contentLocaleDraft ?? userContext.contentLocales?.primary ?? userContext.uiLocale;
@@ -81,11 +86,15 @@ function SetupPage() {
   );
 
   const goTo = useCallback(
-    async (target: SetupStep, options: { save: boolean }) => {
+    async (target: SetupStep, options: { save: false } | { save: true; via: 'next' | 'stepper' }): Promise<void> => {
       if (navigating) return;
       setNavigating(true);
       try {
-        if (options.save && saveRef.current && !(await saveRef.current())) return;
+        if (options.save && saveRef.current) {
+          const forward = steps.indexOf(target) > steps.indexOf(step);
+          const proceed = () => void goTo(target, { save: false });
+          if (!(await saveRef.current({ via: options.via, forward, proceed }))) return;
+        }
         saveRef.current = null;
         await router.replace({ pathname: router.pathname, query: { ...router.query, step: target } }, undefined, { shallow: true });
         window.scrollTo({ top: 0 });
@@ -95,10 +104,11 @@ function SetupPage() {
         setNavigating(false);
       }
     },
-    [navigating, router],
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `steps` is derived per render from the workspace
+    [navigating, router, step, workspace?.isExternallyManaged],
   );
 
-  const next = () => void goTo(nextSetupStep(steps, step, { skipTeam }), { save: true });
+  const next = () => void goTo(nextSetupStep(steps, step, { skipTeam }), { save: true, via: 'next' });
   const skip = () => void goTo(nextSetupStep(steps, step, { skipTeam }), { save: false });
   const back = () => void goTo(previousSetupStep(steps, step, { skipTeam }), { save: false });
   const isFirst = steps.indexOf(step) === 0;
@@ -126,7 +136,7 @@ function SetupPage() {
           current={step}
           skipped={skipTeam ? ['team'] : []}
           disabled={navigating}
-          onSelect={(target) => void goTo(target, { save: true })}
+          onSelect={(target) => void goTo(target, { save: true, via: 'stepper' })}
         />
 
         <div className="flex flex-col gap-4 md:gap-6">
@@ -156,7 +166,9 @@ function SetupPage() {
               locale={contentLocale}
               applied={applied}
               onApplied={(entry) => setApplied((previous) => [...previous, entry])}
-              onStartEmpty={skip}
+              choice={contentChoice}
+              onChoiceChange={setContentChoice}
+              onPrimaryChange={setContentPrimary}
             />
           ) : step === 'team' ? (
             <TeamStep workspaceId={workspaceId} saveRef={saveRef} onLinkChange={setTeamLink} />
@@ -169,19 +181,31 @@ function SetupPage() {
       {step !== 'done' ? (
         // Full-bleed action bar; the primary action always sits at the right edge of the content column.
         <div className="sticky bottom-0 z-10 -mx-4 mt-8 -mb-4 border-t border-base-300 bg-base-100/95 backdrop-blur md:-mx-5 md:-mb-5">
-          <div className="mx-auto flex w-full max-w-3xl items-center justify-between gap-2 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:px-0">
+          <div
+            className={cn(
+              'mx-auto flex w-full max-w-3xl items-center justify-between gap-2 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:px-0',
+              // A long primary label ("Add … & continue") gets its own full-width row on phones.
+              wideFooter && 'max-sm:flex-wrap',
+            )}
+          >
             <Button type="button" variant="ghost" disabled={navigating} onClick={back} className={isFirst ? 'invisible' : undefined}>
               <FaArrowLeft aria-hidden />
               {t('common:back')}
             </Button>
-            <div className="flex items-center gap-2">
+            <div className={cn('flex items-center gap-2', wideFooter && 'max-sm:contents')}>
               <Button type="button" variant="ghost" disabled={navigating} onClick={skip}>
                 {t('common:skip')}
               </Button>
-              <Button type="button" variant="primary" disabled={navigating} onClick={next}>
-                {navigating ? <Loading size="sm" /> : null}
-                {t('common:next')}
-                {navigating ? null : <FaArrowRight aria-hidden />}
+              <Button
+                type="button"
+                variant="primary"
+                disabled={navigating || primary?.loading}
+                onClick={next}
+                className={cn(wideFooter && 'max-sm:order-first max-sm:w-full')}
+              >
+                {navigating || primary?.loading ? <Loading size="sm" /> : null}
+                {primary?.label ?? t('common:next')}
+                {navigating || primary?.loading ? null : <FaArrowRight aria-hidden />}
               </Button>
             </div>
           </div>

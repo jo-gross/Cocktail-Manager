@@ -42,14 +42,27 @@ export interface BusinessTypePreselection {
 
 export function businessTypePreselection(type: BusinessType | null | undefined): BusinessTypePreselection {
   switch (type) {
-    // Bars close after midnight: the bar day should not end at 00:00.
+    // Bars and events run past midnight: their day should not end at 00:00.
     case 'bar':
+    case 'event':
       return { dayStart: '06:00', skipTeam: false };
     case 'private':
       return { dayStart: null, skipTeam: true };
     default:
       return { dayStart: null, skipTeam: false };
   }
+}
+
+/** What choosing a business type changes in the wizard, as shown to the user (`onboarding:basics.effects.<kind>`). */
+export type BusinessTypeEffect = { kind: 'dayStart'; time: string } | { kind: 'skipTeam' } | { kind: 'none' };
+
+/** Derived from {@link businessTypePreselection}, so the texts can never promise more than the rules do. */
+export function businessTypeEffects(type: BusinessType): BusinessTypeEffect[] {
+  const { dayStart, skipTeam } = businessTypePreselection(type);
+  const effects: BusinessTypeEffect[] = [];
+  if (dayStart) effects.push({ kind: 'dayStart', time: dayStart });
+  if (skipTeam) effects.push({ kind: 'skipTeam' });
+  return effects.length > 0 ? effects : [{ kind: 'none' }];
 }
 
 /** Day start to suggest for the business type, only while the workspace still uses the default. */

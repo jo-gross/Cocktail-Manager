@@ -57,7 +57,7 @@
   "basics": {
     "nameTitle": "Name",
     "typeTitle": "Art des Betriebs",
-    "typeHelp": "Hilft uns bei sinnvollen Voreinstellungen. Wird nicht gespeichert.",
+    "typeHelp": "Wir passen damit Vorschläge im Assistenten an – du kannst alles später ändern. Die Auswahl wird nicht gespeichert.",
     "types": {
       "bar": {
         "title": "Bar",
@@ -76,15 +76,47 @@
         "help": "Hausbar, Partys, eigene Rezeptsammlung"
       }
     },
-    "dayStartSuggestion": "Bars schließen oft nach Mitternacht. Lass den Tag für Statistiken um {{time}} Uhr beginnen, damit eine Nacht als ein Tag zählt.",
-    "dayStartApply": "{{time}} Uhr übernehmen",
-    "privateHint": "Für die private Nutzung überspringen wir den Team-Schritt. Du kannst ihn oben trotzdem öffnen."
+    "effects": {
+      "label": "Das bewirkt die Auswahl",
+      "dayStart": "Vorschlag: Der Statistik-Tag beginnt um {{time}} Uhr statt um Mitternacht",
+      "skipTeam": "Der Team-Schritt wird übersprungen (oben weiterhin erreichbar)",
+      "none": "Keine besonderen Voreinstellungen"
+    },
+    "dayStartSuggestion": "Dein Betrieb läuft oft über Mitternacht hinaus. Lass den Tag für Statistiken um {{time}} Uhr beginnen, damit eine Nacht als ein Tag zählt.",
+    "dayStartApply": "{{time}} Uhr übernehmen"
   },
   "content": {
-    "collectionsTitle": "Sammlungen",
-    "emptyTitle": "Leer starten",
-    "emptyHelp": "Du legst alles selbst an oder importierst ein Backup.",
-    "startEmpty": "Leer starten",
+    "choiceTitle": "Womit möchtest du starten?",
+    "choiceHelp": "Wähle genau eine Option. Erst der Button unten fügt die gewählte Sammlung hinzu. Vorhandene Einträge mit gleichem Namen werden wiederverwendet.",
+    "applying": "Wird hinzugefügt …",
+    "empty": {
+      "title": "Leer starten",
+      "help": "Keine Sammlung hinzufügen – du legst alles selbst an oder importierst ein Backup."
+    },
+    "nothingMore": {
+      "title": "Keine weitere Sammlung hinzufügen",
+      "help": "Du machst mit den bereits hinzugefügten Inhalten weiter."
+    },
+    "action": {
+      "empty": "Leer weiter",
+      "pick": "Einträge auswählen …",
+      "apply": {
+        "all": "„{{template}}“ hinzufügen & weiter",
+        "basics": "Grundausstattung hinzufügen & weiter",
+        "selection": "Auswahl hinzufügen & weiter"
+      },
+      "applyAgain": {
+        "all": "„{{template}}“ erneut hinzufügen & weiter",
+        "basics": "Grundausstattung erneut hinzufügen & weiter",
+        "selection": "Auswahl erneut hinzufügen & weiter"
+      }
+    },
+    "pending": {
+      "title": "Sammlung noch nicht hinzugefügt",
+      "message": "Du hast „{{template}}“ gewählt, aber noch nicht hinzugefügt. Soll die Sammlung jetzt hinzugefügt werden?",
+      "apply": "Hinzufügen & weiter",
+      "skip": "Ohne Sammlung weiter"
+    },
     "loadError": "Die Sammlungen konnten nicht geladen werden. Du kannst sie später unter „Hilfe & Tutorials“ hinzufügen.",
     "none": "Für diese Sprache gibt es noch keine Sammlungen.",
     "otherLanguage": "Für deine Inhaltssprache gibt es noch keine Sammlungen. Diese hier sind in einer anderen Sprache.",
