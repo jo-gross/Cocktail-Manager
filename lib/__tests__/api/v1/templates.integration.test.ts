@@ -10,9 +10,9 @@ import prisma from '../../../../prisma/prisma';
 import createWorkspaceRoute from '../../../../pages/api/v1/workspaces/index';
 import adminWorkspaceRoute from '../../../../pages/api/admin/workspace';
 import joinHandler from '@lib/api/v1/join';
-import { itemHandler as workspaceItemHandler } from '@lib/api/v1/workspace';
+import { settingsHandler, itemHandler as workspaceItemHandler } from '@lib/api/v1/workspace';
 import { applyHandler, collectionHandler as templatesHandler, itemsHandler as templateItemsHandler } from '@lib/api/v1/templates';
-import { completeHandler, onboardingHandler } from '@lib/api/v1/onboarding';
+import { checklistItemHandler, completeHandler, onboardingHandler } from '@lib/api/v1/onboarding';
 import { collectionHandler as guidesHandler, itemHandler as guideItemHandler } from '@lib/api/v1/guides';
 import {
   accessHandler as adminAccessHandler,
@@ -604,6 +604,63 @@ describe('onboarding', () => {
 
     const workspace = await callAs(roleUser(seeded, 'USER'), workspaceItemHandler, { method: 'GET', query });
     expect(dataOf<{ setupCompletedAt: string | null; isTemplate: boolean }>(workspace)).toMatchObject({ setupCompletedAt: completedAt, isTemplate: false });
+  });
+
+  it('runs every step of a reopened setup again without errors (settings, start content in every mode, completion)', async () => {
+    await syncBuiltInTemplates();
+    const { a } = await seedTenantPair();
+    const workspaceId = a.workspace.id;
+    const query = { workspaceId };
+    const admin = roleUser(a, 'ADMIN');
+    const KEY = 'all-time-classics';
+    const NONE = { glasses: 0, ingredients: 0, garnishes: 0, cocktails: 0, cards: 0 };
+    const apply = (body: unknown) => callAs(admin, applyHandler, { method: 'POST', query: { workspaceId, key: KEY }, body });
+    const onboarding = async () => dataOf<OnboardingDto>(await callAs(admin, onboardingHandler, { method: 'GET', query }));
+
+    // First run: start content, completion, then a checklist item marked as done.
+    expect(dataOf<TemplateApplyResultDto>(await apply({ mode: 'all' })).created).toEqual({
+      glasses: 10,
+      ingredients: 45,
+      garnishes: 15,
+      cocktails: 22,
+      cards: 1,
+    });
+    const completedAt = dataOf<OnboardingDto>(await callAs(admin, completeHandler, { method: 'POST', query })).setupCompletedAt;
+    expect(completedAt).not.toBeNull();
+    expect((await callAs(admin, checklistItemHandler, { method: 'PUT', query: { workspaceId, itemId: 'guestMenu' }, body: { skipped: true } })).status).toBe(
+      200,
+    );
+    const content = await workspaceContent(workspaceId);
+
+    // Reopened: the checklist loads, the language step saves the settings again ...
+    expect((await onboarding()).setupCompletedAt).toBe(completedAt);
+    const settings: Array<[string, string]> = [
+      ['contentLocales', JSON.stringify({ primary: 'de', additional: ['en'] })],
+      ['timezone', 'Europe/Vienna'],
+      ['currency', 'CHF'],
+      ['statisticDayStartTime', '05:00'],
+    ];
+    for (const [setting, value] of settings) {
+      const result = await callAs(admin, settingsHandler, { method: 'PUT', query, body: { setting, value } });
+      expect(result.status, JSON.stringify(result.json)).toBe(200);
+    }
+
+    // ... the content step applies the collection again in every mode (everything is linked or skipped) ...
+    const items = dataOf<TemplateItemsDto>(await callAs(admin, templateItemsHandler, { method: 'GET', query: { key: KEY, locale: 'de' } }));
+    const selection = { cocktails: items.cocktails.slice(0, 3).map((item) => item.id), cards: items.cards.map((item) => item.id) };
+    for (const body of [{ mode: 'all' }, { mode: 'basics' }, { mode: 'selection', selection }, { mode: 'all', locale: 'en' }]) {
+      const result = await apply(body);
+      expect(result.status, `${JSON.stringify(body)}: ${JSON.stringify(result.json)}`).toBe(200);
+      expect(dataOf<TemplateApplyResultDto>(result).created).toEqual(NONE);
+    }
+    const { settings: _settings, ...counts } = await workspaceContent(workspaceId);
+    const { settings: _before, ...countsBefore } = content;
+    expect(counts).toEqual(countsBefore);
+
+    // ... and the done step completes it again: first completion time and the workspace's checklist state are kept.
+    const again = dataOf<OnboardingDto>(await callAs(admin, completeHandler, { method: 'POST', query }));
+    expect(again.setupCompletedAt).toBe(completedAt);
+    expect(again.checklist.find((item) => item.id === 'guestMenu')).toMatchObject({ skipped: true });
   });
 });
 

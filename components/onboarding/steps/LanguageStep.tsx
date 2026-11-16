@@ -11,8 +11,8 @@ import { changeAppLanguage } from '@lib/i18n/client';
 import { LOCALE_FLAGS, SUPPORTED_LOCALES, type AppLocale } from '@lib/i18n/locales';
 import { alertApiV1Error } from '@lib/network/apiV1';
 import { getWorkspaceSettings, updateWorkspaceSetting } from '@lib/network/workspaces';
-import { initialRegionValues, type RegionValues } from '@lib/onboarding/setupWizard';
-import { getWorkspaceContentLocales, serializeContentLocales, type ContentLocales } from '@lib/workspace/workspaceLocaleSettings';
+import { initialContentLocales, initialRegionValues, type RegionValues } from '@lib/onboarding/setupWizard';
+import { serializeContentLocales, type ContentLocales } from '@lib/workspace/workspaceLocaleSettings';
 import type { WorkspaceSettingsDto } from '@lib/schemas/workspace';
 import type { SetupStepProps } from './types';
 
@@ -32,19 +32,15 @@ function browserDefaults() {
   return { timezone, languages };
 }
 
-function initialContentLocales(settings: WorkspaceSettingsDto, fallbackPrimary: string): ContentLocales {
-  return settings.contentLocales ? getWorkspaceContentLocales(settings) : { primary: fallbackPrimary, additional: [] };
-}
-
 /** Step 1: UI language, content languages, time zone, currency and day start. */
 export function LanguageStep({ workspaceId, saveRef, onContentLocaleChange }: SetupStepProps & { onContentLocaleChange: (locale: string) => void }) {
   const { t } = useTranslation(['onboarding', 'settings', 'errors']);
   const userContext = useContext(UserContext);
-  const { uiLocale, updateUserSetting, refreshWorkspace } = userContext;
+  const { uiLocale, workspace, updateUserSetting, refreshWorkspace } = userContext;
   const [loaded, setLoaded] = useState<Loaded | null>(null);
   const [contentLocales, setContentLocales] = useState<ContentLocales | null>(null);
-  // The primary content language follows the UI language until it is changed here.
-  const [contentTouched, setContentTouched] = useState(false);
+  // In a first setup the primary content language follows the UI language until it is changed here (not in a reopened one).
+  const [followUiLanguage, setFollowUiLanguage] = useState(false);
   const [region, setRegion] = useState<RegionValues | null>(null);
 
   useEffect(() => {
@@ -52,9 +48,10 @@ export function LanguageStep({ workspaceId, saveRef, onContentLocaleChange }: Se
     getWorkspaceSettings(workspaceId)
       .then((settings) => {
         if (cancelled) return;
-        const initial = initialContentLocales(settings, uiLocale);
-        setLoaded({ settings, contentLocales: initial });
-        setContentLocales(initial);
+        const initial = initialContentLocales(settings.contentLocales, uiLocale, workspace?.setupCompletedAt != null);
+        setLoaded({ settings, contentLocales: initial.contentLocales });
+        setContentLocales(initial.contentLocales);
+        setFollowUiLanguage(initial.follow);
         setRegion(initialRegionValues(settings, browserDefaults()));
       })
       .catch((error) => alertApiV1Error(error, t('errors:loadSettings')));
@@ -68,7 +65,7 @@ export function LanguageStep({ workspaceId, saveRef, onContentLocaleChange }: Se
   const chooseUiLanguage = async (locale: AppLocale) => {
     await changeAppLanguage(locale);
     updateUserSetting(Setting.language, locale);
-    if (!contentTouched) {
+    if (followUiLanguage) {
       setContentLocales((previous) => (previous ? { primary: locale, additional: previous.additional.filter((entry) => entry !== locale) } : previous));
     }
   };
@@ -122,7 +119,7 @@ export function LanguageStep({ workspaceId, saveRef, onContentLocaleChange }: Se
             idPrefix="setup-content-language"
             value={contentLocales}
             onChange={(value) => {
-              setContentTouched(true);
+              setFollowUiLanguage(false);
               setContentLocales(value);
             }}
           />

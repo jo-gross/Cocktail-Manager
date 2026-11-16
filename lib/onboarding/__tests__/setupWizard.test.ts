@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   businessTypePreselection,
   detectTimezone,
+  initialContentLocales,
   initialRegionValues,
   nextSetupStep,
   previousSetupStep,
@@ -96,6 +97,21 @@ describe('regional suggestions', () => {
       currency: 'GBP',
       dayStart: '00:00',
     });
+  });
+});
+
+describe('initialContentLocales', () => {
+  const stored = JSON.stringify({ primary: 'de', additional: ['en'] });
+
+  it('follows the UI language in a first setup', () => {
+    expect(initialContentLocales(null, 'en', false)).toEqual({ contentLocales: { primary: 'en', additional: [] }, follow: true });
+    expect(initialContentLocales(stored, 'en', false)).toEqual({ contentLocales: { primary: 'de', additional: ['en'] }, follow: true });
+  });
+
+  it('keeps the stored or default content languages of a completed setup', () => {
+    expect(initialContentLocales(stored, 'en', true)).toEqual({ contentLocales: { primary: 'de', additional: ['en'] }, follow: false });
+    // Older workspaces without the setting: their content is in the default language, not in the UI language.
+    expect(initialContentLocales(null, 'en', true)).toEqual({ contentLocales: { primary: 'de', additional: [] }, follow: false });
   });
 });
 

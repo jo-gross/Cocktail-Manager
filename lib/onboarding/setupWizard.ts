@@ -2,7 +2,14 @@
  * Pure rules of the setup wizard (`/workspaces/[id]/setup`, docs/plans/ONBOARDING-PLAN.md §2):
  * steps, preselection by business type and regional suggestions. No React, no network.
  */
-import { DEFAULT_WORKSPACE_CURRENCY, DEFAULT_WORKSPACE_TIMEZONE, isValidCurrency, isValidTimezone } from '@lib/workspace/workspaceLocaleSettings';
+import {
+  DEFAULT_WORKSPACE_CURRENCY,
+  DEFAULT_WORKSPACE_TIMEZONE,
+  isValidCurrency,
+  isValidTimezone,
+  parseContentLocales,
+  type ContentLocales,
+} from '@lib/workspace/workspaceLocaleSettings';
 
 export const SETUP_STEPS = ['language', 'basics', 'content', 'team', 'done'] as const;
 export type SetupStep = (typeof SETUP_STEPS)[number];
@@ -142,6 +149,20 @@ export interface RegionValues {
   timezone: string;
   currency: string;
   dayStart: string;
+}
+
+/**
+ * Content languages the language step starts with and whether the primary one follows the UI language
+ * (`follow`). Only in a first setup: a reopened assistant (setup completed) may already have content in
+ * the stored – or, for older workspaces without the setting, the default – primary language.
+ */
+export function initialContentLocales(
+  storedContentLocales: string | null | undefined,
+  uiLocale: string,
+  setupCompleted: boolean,
+): { contentLocales: ContentLocales; follow: boolean } {
+  if (setupCompleted) return { contentLocales: parseContentLocales(storedContentLocales), follow: false };
+  return { contentLocales: storedContentLocales ? parseContentLocales(storedContentLocales) : { primary: uiLocale, additional: [] }, follow: true };
 }
 
 /** Stored values win; unset ones are filled from the browser (time zone, languages). */
