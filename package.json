@@ -111,7 +111,7 @@
   },
   "devDependencies": {
     "@next/bundle-analyzer": "16.4.5",
-    "@playwright/test": "^1.65.0",
+    "@playwright/test": "^1.65.1",
     "@readme/openapi-parser": "^10.0.0",
     "@tailwindcss/postcss": "^4.3.5",
     "@types/bcrypt": "^6.0.0",
