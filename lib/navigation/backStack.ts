@@ -6,9 +6,8 @@
  * {@link BACK_STACK_MARKER} with a per-stack token and the entry's depth (base = 0, layer n = n).
  *
  * - Browser/Android back or iOS swipe back moves to a lower depth of our stack → the layers above it
- *   are closed (top-most first) and the `popstate` event is consumed in a capture-phase listener
- *   (`stopImmediatePropagation`), so neither Next's router nor `router.beforePopState` (owned by
- *   ./navigationGuards.ts) ever see it. No route change, no data refetch.
+ *   are closed (top-most first) and the `popstate` event is consumed, so neither Next's router nor the
+ *   leave guards of ./navigationGuards.ts act on it. No route change, no data refetch (see {@link connectPopState}).
  * - Closing a layer from the UI (X, Esc, backdrop, after save) removes its entry with an own
  *   `history.go(-n)`. History changes are deferred to a microtask, so closing one overlay and opening
  *   the next one in the same tick re-uses the entry. While such a traversal is in flight, further
@@ -28,7 +27,7 @@
  * ({@link BackStack}) and the browser installation ({@link getBackStack}).
  */
 import Router from 'next/router';
-import { isSamePage } from './navigationGuards';
+import { isSamePage, navigationGuards } from './navigationGuards';
 
 export const BACK_STACK_MARKER = '__backStack';
 
@@ -375,12 +374,45 @@ export class BackStack {
   }
 }
 
+/** The two places a `popstate` can reach the stack (see {@link connectPopState}). */
+export interface PopStateSources {
+  /** Adds the stack's own `popstate` listener on `window`. */
+  addListener(listener: (event: PopStateEvent) => void): void;
+  /** Asks the handler from Next's `beforePopState` (./navigationGuards.ts); `true` = Next ignores the popstate. */
+  interceptRouterPops(handler: (state: unknown) => boolean): void;
+}
+
+/**
+ * Routes every `popstate` through {@link BackStack.handlePopState} before Next's router acts on it.
+ *
+ * Next's router adds its `popstate` listener when it is created, i.e. before this stack exists, and for events
+ * dispatched at `window` listeners run in registration order – `capture` does not move ours in front. So Next
+ * sees every popstate first: the internal `history.go(-n)` of a closing overlay re-routed to the shown page and,
+ * when that happened in the click that also navigates (menu item / modal button → `router.push`), cancelled
+ * that navigation. Next asks `beforePopState` before it acts, so the stack decides there; the own listener covers
+ * the popstates Next ignores without asking (e.g. before the first client-side navigation). Both see the same
+ * event (same `state` object), which is handled once.
+ */
+export function connectPopState(stack: BackStack, sources: PopStateSources): void {
+  let last: { state: object; consumed: boolean } | null = null;
+  const handle = (state: unknown) => {
+    if (last && last.state === state) return last.consumed;
+    const consumed = stack.handlePopState(state);
+    last = isObject(state) ? { state, consumed } : null;
+    return consumed;
+  };
+  sources.interceptRouterPops(handle);
+  sources.addListener((event) => {
+    if (handle(event.state)) event.stopImmediatePropagation();
+  });
+}
+
 let instance: BackStack | null = null;
 
 /**
  * The app-wide stack. Installs itself on first use in the browser: patches `history.pushState`,
- * `replaceState`, `back` and `go`, adds a capture-phase `popstate` listener and listens to Next's
- * router events. Returns `null` on the server.
+ * `replaceState`, `back` and `go`, hooks into `popstate` handling ({@link connectPopState}) and listens to
+ * Next's router events. Returns `null` on the server.
  */
 export function getBackStack(): BackStack | null {
   if (typeof window === 'undefined') return null;
@@ -410,14 +442,10 @@ export function getBackStack(): BackStack | null {
   history.back = () => stack.go(-1);
   history.go = (delta?: number) => (delta ? stack.go(delta) : go(delta));
 
-  // Capture listeners on the target run before Next's (bubble) popstate listener.
-  window.addEventListener(
-    'popstate',
-    (event) => {
-      if (stack.handlePopState(event.state)) event.stopImmediatePropagation();
-    },
-    { capture: true },
-  );
+  connectPopState(stack, {
+    addListener: (listener) => window.addEventListener('popstate', listener, { capture: true }),
+    interceptRouterPops: (handler) => navigationGuards.interceptPopState(handler),
+  });
 
   Router.events.on('beforeHistoryChange', (as: string, { shallow }: { shallow: boolean }) => {
     stack.beforeNavigation(isSamePage(window.location.pathname, as), shallow);

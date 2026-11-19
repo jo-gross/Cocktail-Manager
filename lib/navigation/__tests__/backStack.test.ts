@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { BACK_STACK_MARKER, BackStack, readMarker, type BackStackHistory } from '../backStack';
+import { BACK_STACK_MARKER, BackStack, connectPopState, readMarker, type BackStackHistory } from '../backStack';
 
 interface Entry {
   state: unknown;
@@ -326,5 +326,66 @@ describe('BackStack', () => {
     stack.close(id);
     settle();
     expect(history.entries[0].scroll).toBe('auto');
+  });
+});
+
+describe('connectPopState', () => {
+  /** Browser order: Next's popstate listener (registered first) runs before the stack's own listener. */
+  function wire() {
+    const { history, stack, settle } = setup();
+    let routerHandler: ((state: unknown) => boolean) | undefined;
+    let ownListener: ((event: PopStateEvent) => void) | undefined;
+    connectPopState(stack, {
+      addListener: (listener) => (ownListener = listener),
+      interceptRouterPops: (handler) => (routerHandler = handler),
+    });
+    const handlePopState = vi.spyOn(stack, 'handlePopState');
+    /** Dispatches a popstate for the shown entry; returns whether Next would navigate. */
+    const dispatch = (asksBeforePopState = true) => {
+      const event = { state: history.state(), stopImmediatePropagation: vi.fn() };
+      const nextNavigates = asksBeforePopState ? !routerHandler!(event.state) : false;
+      ownListener!(event as unknown as PopStateEvent);
+      return { nextNavigates, stopped: event.stopImmediatePropagation.mock.calls.length > 0 };
+    };
+    return { history, stack, settle, handlePopState, dispatch };
+  }
+
+  it('keeps Next from re-routing on the close traversal of an overlay (menu item / modal button that navigates)', () => {
+    const { history, stack, settle, handlePopState, dispatch } = wire();
+    const id = stack.open(vi.fn());
+    settle();
+
+    // Click on "Bearbeiten": the menu closes (history.go(-1)) while router.push is still loading the page.
+    stack.close(id);
+    (stack as unknown as { flush(): void }).flush();
+    expect(history.queued).toEqual([-1]);
+    history.queued = [];
+    history.index = 0;
+
+    const { nextNavigates } = dispatch();
+    expect(nextNavigates).toBe(false);
+    expect(handlePopState).toHaveBeenCalledTimes(1);
+    expect(stack.size).toBe(0);
+  });
+
+  it('handles each popstate once, also when Next does not ask beforePopState', () => {
+    const { stack, settle, handlePopState, dispatch, history } = wire();
+    stack.open(vi.fn());
+    settle();
+    history.index = 0;
+
+    // Before the first client-side navigation Next ignores the pop without asking: the own listener consumes it.
+    expect(dispatch(false)).toEqual({ nextNavigates: false, stopped: true });
+    expect(handlePopState).toHaveBeenCalledTimes(1);
+    expect(stack.size).toBe(0);
+  });
+
+  it('leaves real page changes to Next and the guards', () => {
+    const { history, stack, handlePopState, dispatch } = wire();
+    stack.push(nextState('/b', 'kb'), '/b');
+    history.index = 0;
+
+    expect(dispatch()).toEqual({ nextNavigates: true, stopped: false });
+    expect(handlePopState).toHaveBeenCalledTimes(1);
   });
 });

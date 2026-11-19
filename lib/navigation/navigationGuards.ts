@@ -37,8 +37,9 @@ export interface NavigationGuardOptions {
 
 /**
  * Suggested priorities so features compose predictably. Overlays (modals, sheets) don't need a guard:
- * ./backStack.ts consumes their history entries' `popstate` before it reaches `beforePopState`, and
- * extends app-level `history.go(-1)` (as used by {@link NavigationGuardRegistry.proceed}) past them.
+ * ./backStack.ts consumes their history entries' `popstate` through {@link NavigationGuardRegistry.interceptPopState}
+ * before the guards are asked, and extends app-level `history.go(-1)` (as used by
+ * {@link NavigationGuardRegistry.proceed}) past them.
  */
 export const NAVIGATION_GUARD_PRIORITY = {
   /** Guards that must run before leave confirmations. */
@@ -81,6 +82,11 @@ export interface NavigationGuardRegistry {
   proceed(intent: NavigationIntent): void;
   /** Lets the next navigation pass all guards (e.g. right before redirecting after save/delete). */
   allowNextNavigation(): void;
+  /**
+   * Asks `handler` first on every popstate Next's router acts on. Returning `true` consumes it: no guard is
+   * asked and Next does not navigate. Used by ./backStack.ts for pops between the overlay entries of the shown page.
+   */
+  interceptPopState(handler: (state: unknown) => boolean): void;
   /** Installs the router/history hooks. Called lazily on the first registration in the browser. */
   install(environment: NavigationEnvironment): void;
 }
@@ -112,6 +118,7 @@ export function createNavigationGuardRegistry(defaultEnvironment?: () => Navigat
   let bypass = false;
   /** A pop already passed `beforePopState`; the `routeChangeStart` it causes must not be asked again. */
   let popInProgress = false;
+  let popInterceptor: ((state: unknown) => boolean) | undefined;
 
   const consumeBypass = () => {
     const value = bypass;
@@ -163,6 +170,8 @@ export function createNavigationGuardRegistry(defaultEnvironment?: () => Navigat
     env.router.events.on('routeChangeError', resetTransientState);
 
     env.router.beforePopState((state) => {
+      // Overlay entries (./backStack.ts): not a navigation – Next must not re-route (that would cancel a running push).
+      if (popInterceptor?.(state)) return false;
       if (consumeBypass() || !isBlocked({ kind: 'pop', url: state.as, samePage: isSamePage(env.router.asPath, state.as) })) {
         popInProgress = true;
         return true;
@@ -208,6 +217,10 @@ export function createNavigationGuardRegistry(defaultEnvironment?: () => Navigat
     },
     allowNextNavigation() {
       bypass = true;
+    },
+    interceptPopState(handler) {
+      popInterceptor = handler;
+      ensureInstalled();
     },
     install,
   };
