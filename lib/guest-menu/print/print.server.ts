@@ -20,6 +20,7 @@ import { loadWorkspaceImage } from '../workspaceImage.server';
 import { getPublicOrigin, parseStoredDocument, renderGuestMenu } from '../server';
 import { buildInlineFontCss } from './fonts.server';
 import { buildPrintBaseCss, buildTableTentCss, safeCssValue, type TableTentPaper } from './printCss';
+import { POWERED_BY_PRINT_CSS, poweredByHtml, showPoweredBy } from '../branding.server';
 
 type RequestLike = Parameters<typeof getPublicOrigin>[0];
 
@@ -162,11 +163,12 @@ export async function buildGuestMenuPrintHtml(workspace: Workspace, menu: GuestM
 
   // QR + footer share the root's theme colors: the QR block sits inside a themed wrapper.
   const qrBlock = qr ? `<div class="${escapeHtml(rendered.rootAttributes.class)}" data-gm="${escapeHtml(rendered.rootAttributes['data-gm'])}">${qr}</div>` : '';
+  const branding = (await showPoweredBy(workspace.id)) ? poweredByHtml(dto.uiLocale ?? toGuestUiLocale(dto.locale)) : '';
   const html = wrapDocument({
     lang: dto.locale,
     title: dto.menu.title || menu.name,
-    css: [fontCss, buildPrintBaseCss(paper, background)],
-    body: `<div class="gm-print" data-paper="${paper}">${menuHtml}${qrBlock}</div>`,
+    css: [fontCss, buildPrintBaseCss(paper, background), branding ? POWERED_BY_PRINT_CSS : ''],
+    body: `<div class="gm-print" data-paper="${paper}">${menuHtml}${qrBlock}${branding}</div>`,
   });
   return { html, paper, locale: dto.locale, fileName: `${fileSafe(menu.slug)}-${paper.toLowerCase()}-${dto.locale}.pdf` };
 }
@@ -219,8 +221,9 @@ export async function buildTableTentHtml(workspace: Workspace, menu: GuestMenu, 
 <h1 class="tt-title">${escapeHtml(title)}</h1>
 <div class="tt-qr">${await qrSvg(url)}</div>
 <div><p class="tt-hint">${escapeHtml(hint)}</p><p class="tt-url">${escapeHtml(url.replace(/^https?:\/\//, ''))}</p></div>
+${(await showPoweredBy(workspace.id)) ? poweredByHtml(uiLocale) : ''}
 </div>`;
-  const html = wrapDocument({ lang: uiLocale, title: `${workspace.name} – ${title}`, css: [fontCss, css], body });
+  const html = wrapDocument({ lang: uiLocale, title: `${workspace.name} – ${title}`, css: [fontCss, css, POWERED_BY_PRINT_CSS], body });
   return {
     html,
     paper,

@@ -95,11 +95,16 @@
     "lockSubmit": "Open menu",
     "lockInvalid": "The code is not correct. Please try again.",
     "lockRateLimited": "Too many attempts. Please wait {{seconds}} seconds and try again.",
-    "lockFailed": "Something went wrong. Please try again."
+    "lockFailed": "Something went wrong. Please try again.",
+    "unavailableTitle": "Currently not available",
+    "unavailableText": "This is currently not available."
   },
   "print": {
     "qrHint": "Digital menu with allergens & details",
     "tableTentTitle": "Our menu",
     "tableTentHint": "Scan the QR code to explore our menu"
+  },
+  "branding": {
+    "poweredBy": "Powered by Cocktail-Manager"
   }
 }

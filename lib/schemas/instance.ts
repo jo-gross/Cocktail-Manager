@@ -102,7 +102,9 @@ export const InstanceWorkspaceSummarySchema = z
     memberCount: z.number().int().min(0),
     lastActivityAt: NullableDateTime.openapi({ description: 'Newest audit log entry or member visit.' }),
     usage: InstanceUsageCountsSchema,
-    entitlement: InstanceEntitlementRefSchema.nullable().openapi({ description: 'Applied entitlement snapshot; always null in this version.' }),
+    entitlement: InstanceEntitlementRefSchema.nullable().openapi({
+      description: 'Applied entitlement snapshot of the workspace (version, hash, plan key); null if the control plane has not pushed one.',
+    }),
   })
   .openapi('InstanceWorkspaceSummary');
 

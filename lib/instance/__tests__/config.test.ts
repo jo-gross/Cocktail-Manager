@@ -49,6 +49,6 @@ describe('instance capabilities', () => {
   });
 
   it('advertises announcements and support.write only when managed', () => {
-    expect(instanceCapabilities('managed')).toEqual(['instance.read', 'announcements', 'support.write']);
+    expect(instanceCapabilities('managed')).toEqual(['instance.read', 'entitlements', 'announcements', 'support.write']);
   });
 });

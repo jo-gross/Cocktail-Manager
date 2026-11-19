@@ -30,11 +30,13 @@ operator of the instance has.
 | Capability | Operations | Status |
 | --- | --- | --- |
 | `instance.read` | `GET /api/v1/instance`, `GET /api/v1/instance/workspaces`, `GET /api/v1/instance/workspaces/{id}`, `GET /api/v1/instance/users` | served |
-| `entitlements` | `PUT /api/v1/instance/entitlements/default`, `PUT /api/v1/instance/workspaces/{id}/entitlements` | not yet |
+| `entitlements` | `PUT /api/v1/instance/entitlements/default`, `PUT /api/v1/instance/workspaces/{id}/entitlements` | served with `ENTITLEMENTS_MODE=managed` ([ENTITLEMENTS.md](ENTITLEMENTS.md)) |
 | `announcements` | `PUT /api/v1/instance/announcements` | served in `managed` mode |
 | `support.write` | `POST …/transfer-ownership`, `DELETE /api/v1/instance/users/{id}/sessions`, `DELETE /api/v1/instance/workspaces/{id}` | served in `managed` mode |
 
-`entitlementsMode` comes from `ENTITLEMENTS_MODE` (`off` default, `managed`; see [ENV.md](ENV.md)).
+`entitlementsMode` comes from `ENTITLEMENTS_MODE` (`off` default, `managed`; see [ENV.md](ENV.md)). Capabilities that
+only make sense in `managed` mode (`MANAGED_INSTANCE_CAPABILITIES`: `entitlements`, `announcements`, `support.write`) are
+reported only then, so an instance in `off` never receives calls it would ignore.
 
 ## Operations
 
@@ -58,7 +60,7 @@ The workspace inventory, `{ data, pagination: { nextCursor } }`.
 - **`updatedSince`:** ISO 8601 timestamp; only workspaces with `updatedAt >= updatedSince`. See below.
 - **Per item:** `createdAt`, `updatedAt`, `owner` (the longest-registered owner, `null` without owner),
   `memberCount`, `lastActivityAt` (newest audit log entry or member visit, `null` if neither exists), `usage` and
-  `entitlement` (`null` until the `entitlements` capability exists).
+  `entitlement` (`{ version, hash, planKey }` of the stored snapshot, `null` if the control plane has not pushed one).
 
 Owner, member count, activity and usage are computed per page with a fixed number of grouped queries
 (`lib/api/controllers/instance.ts`, mapping in `lib/instance/usage.ts`).
@@ -68,6 +70,12 @@ Owner, member count, activity and usage are computed per page with a fixed numbe
 The summary plus `members` (user id, email, name, role, `lastOpened`; owners first), `template` (`{ key }` if the
 workspace itself is a template workspace, otherwise `null`; the app does not record which template a workspace was
 created from) and `pendingJoinRequests`. Unknown id → `404 NOT_FOUND`.
+
+### `PUT /api/v1/instance/entitlements/default`, `PUT /api/v1/instance/workspaces/{id}/entitlements`
+
+Snapshot pushes with the version rule of the contract (`applied`, `currentVersion`, `currentHash`), forward-compatible
+validation (unknown fields stripped), written through `runControlPlaneWrite` (`InstanceAuditLog` with
+`X-CM-Actor`/`X-CM-Reason`, `Idempotency-Key`, 409 `IDEMPOTENCY_KEY_REUSED`). Details: [ENTITLEMENTS.md](ENTITLEMENTS.md).
 
 ### `GET /api/v1/instance/users?q=`
 
@@ -133,7 +141,7 @@ answer commit in one transaction. It knows nothing about the operation; a caller
 the request body and the change.
 
 - **Audit:** one row in `InstanceAuditLog` per applied write: `action` (`announcements.replace`,
-  `workspace.transferOwnership`, `user.revokeSessions`, `workspace.delete`), target, `actor` (`X-CM-Actor`), `reason`
+  `workspace.transferOwnership`, `user.revokeSessions`, `workspace.delete`, `entitlements.default`, `entitlements.workspace`), target, `actor` (`X-CM-Actor`), `reason`
   (`X-CM-Reason`) and `details` (e.g. name, member count and owners of a deleted workspace, whose own audit log is
   deleted with it). Both headers are optional; the control plane always sends them. Secrets such as session tokens
   are never stored.

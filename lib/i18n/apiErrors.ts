@@ -51,6 +51,10 @@ const CODE_TO_KEY: Record<string, string> = {
   MASTER_KEY_NOT_ALLOWED: 'errors:masterKeyNotAllowed',
   INVALID_EXPIRY: 'errors:invalidExpiry',
   RATE_LIMITED: 'errors:rateLimited',
+  PLAN_LIMIT_REACHED: 'plan:errors.limitReached',
+  PLAN_FEATURE_MISSING: 'plan:errors.featureMissing',
+  WORKSPACE_READ_ONLY: 'plan:errors.readOnly',
+  WORKSPACE_SUSPENDED: 'plan:errors.suspended',
 };
 
 /** Legacy German (and English) server messages → i18n keys when no code is available. */

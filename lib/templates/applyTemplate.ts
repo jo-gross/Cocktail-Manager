@@ -7,6 +7,7 @@ import type { TemplateKind, User, WorkspaceTemplate } from '@generated/prisma/cl
 import prisma from '../../prisma/prisma';
 import { ApiError } from '@lib/http/ApiError';
 import { BULK_TX_TIMEOUT_MS, runTx } from '@lib/db/tx';
+import { IMPORT_LIMIT_KEYS, trackLimits } from '@lib/entitlements/guards';
 import { assertIdsInWorkspace } from '@lib/api/scope';
 import { readWorkspaceBackup } from '@lib/backup/readWorkspaceBackup';
 import { BackupImportSchema, type BackupImportData } from '@lib/backup/backupSchema';
@@ -147,6 +148,8 @@ export async function applyTemplate(targetWorkspaceId: string, templateKey: stri
 
   const counts = await runTx(
     async (tx) => {
+      // Plan limits: the resulting counts are checked before commit; over a limit nothing is applied.
+      const limits = await trackLimits(tx, targetWorkspaceId, IMPORT_LIMIT_KEYS);
       // The links come from the target workspace; re-checked in the transaction.
       await assertIdsInWorkspace(tx, targetWorkspaceId, {
         glass: links.glass.values(),
@@ -164,6 +167,7 @@ export async function applyTemplate(targetWorkspaceId: string, templateKey: stri
         },
       });
       await regenerateUnitConversionsTx(tx, targetWorkspaceId);
+      await limits.check();
       return result;
     },
     { timeout: BULK_TX_TIMEOUT_MS },

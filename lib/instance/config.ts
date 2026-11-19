@@ -12,8 +12,11 @@ export type InstanceCapability = 'instance.read' | 'entitlements' | 'announcemen
 /** Capabilities this build serves in every mode. Add a value once its routes exist. */
 export const INSTANCE_CAPABILITIES: readonly InstanceCapability[] = ['instance.read'];
 
-/** Capabilities only advertised with `ENTITLEMENTS_MODE=managed`: a self-hosted instance never gets these calls. */
-export const MANAGED_INSTANCE_CAPABILITIES: readonly InstanceCapability[] = ['announcements', 'support.write'];
+/**
+ * Capabilities only advertised with `ENTITLEMENTS_MODE=managed`: a self-hosted instance never gets these calls (it would
+ * ignore entitlement pushes, and announcements and support writes belong to hosting).
+ */
+export const MANAGED_INSTANCE_CAPABILITIES: readonly InstanceCapability[] = ['entitlements', 'announcements', 'support.write'];
 
 export const ENTITLEMENTS_MODES = ['off', 'managed'] as const;
 export type EntitlementsMode = (typeof ENTITLEMENTS_MODES)[number];

@@ -31,6 +31,7 @@ import {
 import { defineApiHandlers } from '@lib/openapi/apiDoc';
 import * as cocktails from '@lib/api/controllers/cocktails';
 import * as cocktailsPorting from '@lib/api/controllers/cocktailsPorting';
+import { EXPORT_STATUS_EXEMPTION, withStatusExemption } from '@lib/entitlements/statusGate';
 
 export const collectionHandler = defineApiHandlers(cocktailsCollectionApiDoc.operations, {
   GET: ({ workspace, query }) => cocktails.listCocktails(workspace, query),
@@ -90,7 +91,7 @@ function sendInvalidBody(res: NextApiResponse, issues: unknown) {
 }
 
 const exportJsonSpec = cocktailsExportJsonApiDoc.operations.POST!;
-export const exportJsonHandler = withHttpMethods({
+const exportJsonRoutes = withHttpMethods({
   [HTTPMethod.POST]: withWorkspacePermission(
     exportJsonSpec.roles,
     exportJsonSpec.permission,
@@ -102,9 +103,11 @@ export const exportJsonHandler = withHttpMethods({
     },
   ),
 });
+// Exports stay available in a read-only or suspended workspace (docs/ENTITLEMENTS.md "Status").
+export const exportJsonHandler = withStatusExemption(EXPORT_STATUS_EXEMPTION, exportJsonRoutes);
 
 const exportPdfSpec = cocktailsExportPdfApiDoc.operations.POST!;
-export const exportPdfHandler = withHttpMethods({
+const exportPdfRoutes = withHttpMethods({
   [HTTPMethod.POST]: withWorkspacePermission(
     exportPdfSpec.roles,
     exportPdfSpec.permission,
@@ -121,6 +124,8 @@ export const exportPdfHandler = withHttpMethods({
     },
   ),
 });
+// Exports stay available in a read-only or suspended workspace (docs/ENTITLEMENTS.md "Status").
+export const exportPdfHandler = withStatusExemption(EXPORT_STATUS_EXEMPTION, exportPdfRoutes);
 
 const importJsonSpec = cocktailsImportJsonApiDoc.operations.POST!;
 export const importJsonHandler = withHttpMethods({

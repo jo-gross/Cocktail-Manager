@@ -9,6 +9,7 @@
  * 200 { status: 'ok' | 'inactive', menu: { dto, rendered } | null, notice: PublicMenuNotice | null, isPreview }
  * 200 { status: 'redirect', location }   404 { status: 'notFound' | 'noMenu', barPath }
  * 403 { status: 'locked', lock: { title, logoUrl, numeric, unlockPath } } – access code required
+ * 503 { status: 'unavailable', barPath } – the workspace is suspended (hosted instances, docs/ENTITLEMENTS.md)
  * ETag + `Cache-Control: public, max-age=60, stale-while-revalidate=300` (previews/protected: private, no-store).
  * Rate limited per IP (token bucket, 429 + Retry-After); unlock: 5 attempts/min per IP + menu.
  *
@@ -93,6 +94,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     res.setHeader('Vary', 'Accept-Encoding, Cookie, X-Guest-Menu-Access');
 
     if (result.kind === 'notFound') return res.status(404).json({ status: 'notFound', barPath: result.barPath });
+    if (result.kind === 'unavailable') {
+      res.setHeader('Cache-Control', 'private, no-store');
+      return res.status(503).json({ status: 'unavailable', barPath: result.barPath });
+    }
     if (result.kind === 'noMenu') {
       res.setHeader('Cache-Control', 'public, max-age=30');
       return res.status(404).json({ status: 'noMenu', barPath: result.barPath });

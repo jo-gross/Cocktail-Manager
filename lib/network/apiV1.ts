@@ -13,6 +13,7 @@ import { resolveApiErrorMessage } from '@lib/i18n/apiErrors';
 import { i18n } from '@lib/i18n/client';
 import { invalidateOfflineCacheForMutation } from '@lib/offline/invalidation';
 import { isAbortError, shouldAlertRequestError } from './requestErrors';
+import { reportPlanError } from '@lib/entitlements/planEvents';
 
 export interface ApiV1ErrorBody {
   code: string;
@@ -81,6 +82,8 @@ export async function apiV1Fetch<T>(path: string, init?: RequestInit): Promise<T
 
   if (!response.ok) {
     const error = (body?.error ?? {}) as Partial<ApiV1ErrorBody>;
+    // 402 from the plan guards opens the plan dialog (hosted instances only).
+    reportPlanError(response.status, error.code, error.issues);
     throw new ApiV1RequestError(response.status, error.code ?? 'ERROR', error.message ?? response.statusText, error.issues);
   }
 
@@ -97,6 +100,8 @@ export async function apiV1FetchPaginated<T>(path: string, init?: RequestInit): 
 
   if (!response.ok) {
     const error = (body?.error ?? {}) as Partial<ApiV1ErrorBody>;
+    // 402 from the plan guards opens the plan dialog (hosted instances only).
+    reportPlanError(response.status, error.code, error.issues);
     throw new ApiV1RequestError(response.status, error.code ?? 'ERROR', error.message ?? response.statusText, error.issues);
   }
 

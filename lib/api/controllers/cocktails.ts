@@ -9,6 +9,7 @@ import prisma from '../../../prisma/prisma';
 import { createCocktailRecipeAuditLog, createLog } from '@lib/auditLog';
 import { assertIdsInWorkspace } from '@lib/api/scope';
 import { lockWorkspaceScope, runTx, type Tx } from '@lib/db/tx';
+import { assertWithinLimit, trackLimits } from '@lib/entitlements/guards';
 import { decodeStoredImage, type DecodedImage } from '@lib/images/imageResponse';
 import { nextImageCredit } from '@lib/images/imageCredit';
 import { calculateCocktailRecipeSimilarity } from '@lib/findSimilarEntities';
@@ -177,6 +178,7 @@ function garnishData(garnish: CocktailGarnishInput) {
 
 export async function createCocktail(workspace: Workspace, user: User, input: CocktailCreateInput): Promise<CocktailDto> {
   const createdId = await runTx(async (tx) => {
+    await assertWithinLimit(tx, workspace.id, 'cocktails');
     await assertCocktailRefsInWorkspace(tx, workspace.id, input);
 
     const createdCocktail = await tx.cocktailRecipe.create({
@@ -389,6 +391,8 @@ async function updateCocktailFlags(
   data: { isArchived?: boolean; unavailableUntil?: Date | null },
 ): Promise<void> {
   await runTx(async (tx) => {
+    // Unarchiving raises the number of active cocktails (plan limit `cocktails`).
+    const limits = data.isArchived === false ? await trackLimits(tx, workspace.id, ['cocktails']) : null;
     const old = await tx.cocktailRecipe.findFirst({
       where: { id: cocktailId, workspaceId: workspace.id },
       select: { name: true, isArchived: true, unavailableUntil: true },
@@ -406,6 +410,7 @@ async function updateCocktailFlags(
       ...('isArchived' in data ? { isArchived: row.isArchived } : {}),
       ...('unavailableUntil' in data ? { unavailableUntil: row.unavailableUntil?.toISOString() ?? null } : {}),
     });
+    await limits?.check();
     await createLog(tx, workspace.id, user.id, 'CocktailRecipe', cocktailId, 'UPDATE', pick(old), pick(updated));
   });
 }
@@ -449,6 +454,7 @@ export async function setCocktailAvailability(
 
 export async function cloneCocktail(workspace: Workspace, user: User, cocktailId: string, name: string): Promise<CocktailDto> {
   const cloneId = await runTx(async (tx) => {
+    await assertWithinLimit(tx, workspace.id, 'cocktails');
     // Deep copy incl. image, steps, ingredients and garnishes. All referenced ids come
     // from the scoped source cocktail, so they belong to this workspace.
     const existing = await tx.cocktailRecipe.findFirst({

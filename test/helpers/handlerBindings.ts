@@ -40,6 +40,7 @@ import * as units from '@lib/api/v1/units';
 import * as userSettings from '@lib/api/v1/userSettings';
 import * as workspace from '@lib/api/v1/workspace';
 import * as workspaceUsers from '@lib/api/v1/workspaceUsers';
+import * as entitlements from '@lib/api/v1/entitlements';
 
 import { actionsCollectionApiDoc, actionsItemApiDoc } from '@lib/schemas/actions';
 import { adminTemplatesAccessApiDoc, adminTemplatesCloneApiDoc, adminTemplatesCollectionApiDoc, adminTemplatesItemApiDoc } from '@lib/schemas/adminTemplates';
@@ -71,6 +72,7 @@ import { instanceApiDoc, instanceUsersCollectionApiDoc, instanceWorkspacesCollec
 import { instanceUsersSessionsApiDoc, instanceWorkspacesTransferOwnershipApiDoc } from '@lib/schemas/instanceSupport';
 import { announcementsCollectionApiDoc, instanceAnnouncementsApiDoc, workspaceAnnouncementsCollectionApiDoc } from '@lib/schemas/announcements';
 import { auditLogsCollectionApiDoc } from '@lib/schemas/auditLogs';
+import { instanceDefaultEntitlementsApiDoc, instanceWorkspaceEntitlementsApiDoc, workspaceEntitlementApiDoc } from '@lib/schemas/entitlements';
 import {
   calculationGroupsAssignApiDoc,
   calculationGroupsCollectionApiDoc,
@@ -198,6 +200,9 @@ export const handlerBindings: HandlerBinding[] = [
   { apiDoc: apiKeysCollectionApiDoc, handler: apiKeys.collectionHandler },
   { apiDoc: apiKeysItemApiDoc, handler: apiKeys.itemHandler },
   { apiDoc: auditLogsCollectionApiDoc, handler: auditLogs.collectionHandler },
+  { apiDoc: instanceDefaultEntitlementsApiDoc, handler: entitlements.instanceDefaultHandler },
+  { apiDoc: instanceWorkspaceEntitlementsApiDoc, handler: entitlements.instanceWorkspaceHandler },
+  { apiDoc: workspaceEntitlementApiDoc, handler: entitlements.workspaceHandler },
   { apiDoc: calculationsCollectionApiDoc, handler: calculations.collectionHandler },
   { apiDoc: calculationsItemApiDoc, handler: calculations.itemHandler },
   { apiDoc: calculationGroupsCollectionApiDoc, handler: calculations.groupsCollectionHandler },

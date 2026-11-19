@@ -47,6 +47,12 @@ export async function getInstanceInfo(): Promise<InstanceInfoDto> {
   };
 }
 
+/** Applied snapshot of a workspace as the inventory reports it (`EntitlementRef` of the contract). */
+function entitlementRef(row: { version: number; hash: string; snapshot: Prisma.JsonValue }): InstanceWorkspaceSummaryDto['entitlement'] {
+  const planKey = (row.snapshot as { planKey?: unknown } | null)?.planKey;
+  return { version: row.version, hash: row.hash, planKey: typeof planKey === 'string' ? planKey : '' };
+}
+
 /**
  * Owner, member count, last activity and usage for a page of workspaces: a fixed number of grouped queries per page,
  * independent of the page size.
@@ -57,7 +63,7 @@ async function summarize(rows: SummaryRow[]): Promise<InstanceWorkspaceSummaryDt
   const inPage = { workspaceId: { in: ids } };
   const now = new Date();
 
-  const [cocktails, members, calculations, guestMenusPublished, signageScreens, apiKeys, auditLogs, owners] = await Promise.all([
+  const [cocktails, members, calculations, guestMenusPublished, signageScreens, apiKeys, auditLogs, owners, entitlements] = await Promise.all([
     prisma.cocktailRecipe.groupBy({ by: ['workspaceId'], where: { ...inPage, isArchived: false }, _count: { _all: true } }),
     prisma.workspaceUser.groupBy({ by: ['workspaceId'], where: inPage, _count: { _all: true }, _max: { lastOpened: true } }),
     prisma.cocktailCalculation.groupBy({ by: ['workspaceId'], where: inPage, _count: { _all: true } }),
@@ -73,6 +79,7 @@ async function summarize(rows: SummaryRow[]): Promise<InstanceWorkspaceSummaryDt
       where: { ...inPage, role: 'OWNER' },
       select: { workspaceId: true, user: { select: { id: true, email: true, name: true, createdAt: true } } },
     }),
+    prisma.workspaceEntitlement.findMany({ where: inPage, select: { workspaceId: true, version: true, hash: true, snapshot: true } }),
   ]);
 
   const usage = mapUsage(ids, { cocktails, members, calculations, guestMenusPublished, signageScreens, apiKeys });
@@ -81,6 +88,7 @@ async function summarize(rows: SummaryRow[]): Promise<InstanceWorkspaceSummaryDt
     members.map((group) => ({ workspaceId: group.workspaceId, at: group._max.lastOpened })),
   );
   const ownerByWorkspace = pickOwners(owners);
+  const entitlementByWorkspace = new Map(entitlements.map((row) => [row.workspaceId, entitlementRef(row)]));
 
   return rows.map((row) => {
     const counts = usage.get(row.id)!;
@@ -93,8 +101,7 @@ async function summarize(rows: SummaryRow[]): Promise<InstanceWorkspaceSummaryDt
       memberCount: counts.members,
       lastActivityAt: iso(lastActivity.get(row.id)),
       usage: counts,
-      // Entitlement snapshots arrive with the `entitlements` capability.
-      entitlement: null,
+      entitlement: entitlementByWorkspace.get(row.id) ?? null,
     };
   });
 }

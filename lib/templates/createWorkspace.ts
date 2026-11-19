@@ -30,6 +30,8 @@ export interface CreateWorkspaceOptions {
   id?: string;
   /** Skip the setup assistant (`setupCompletedAt = now`). */
   setupCompleted?: boolean;
+  /** Runs first in the creating transaction, e.g. the plan check `freeWorkspacesPerOwner`; throw to refuse. */
+  guard?: (tx: Tx) => Promise<void>;
 }
 
 export interface PreparedBaseTemplate {
@@ -86,5 +88,8 @@ export async function createWorkspaceTx(tx: Tx, options: CreateWorkspaceOptions,
 
 export async function createWorkspace(options: CreateWorkspaceOptions): Promise<Workspace> {
   const base = await loadBaseTemplate();
-  return runTx((tx) => createWorkspaceTx(tx, options, base));
+  return runTx(async (tx) => {
+    await options.guard?.(tx);
+    return createWorkspaceTx(tx, options, base);
+  });
 }

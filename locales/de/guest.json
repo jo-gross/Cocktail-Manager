@@ -95,11 +95,16 @@
     "lockSubmit": "Karte öffnen",
     "lockInvalid": "Der Code ist nicht korrekt. Bitte versuch es erneut.",
     "lockRateLimited": "Zu viele Versuche. Bitte warte {{seconds}} Sekunden und versuch es dann erneut.",
-    "lockFailed": "Das hat nicht geklappt. Bitte versuch es erneut."
+    "lockFailed": "Das hat nicht geklappt. Bitte versuch es erneut.",
+    "unavailableTitle": "Derzeit nicht verfügbar",
+    "unavailableText": "Dieses Angebot ist derzeit nicht verfügbar."
   },
   "print": {
     "qrHint": "Digitale Karte mit Allergenen & Details",
     "tableTentTitle": "Unsere Karte",
     "tableTentHint": "QR-Code scannen und Karte entdecken"
+  },
+  "branding": {
+    "poweredBy": "Powered by Cocktail-Manager"
   }
 }

@@ -5,6 +5,7 @@ import { alertService } from '@lib/alertService';
 import { toIntlLocale } from '@lib/i18n/format';
 import { FaUpload } from 'react-icons/fa';
 import { Alert, Button, Card, CardBody, Checkbox, Loading, Table, TableBody, TableCell, TableHead, TableHeaderCell, TableRow } from '@components/ui';
+import { reportPlanErrorResponse } from '@lib/entitlements/planEvents';
 
 interface UploadAndPreviewStepProps {
   workspaceId: string;
@@ -44,6 +45,7 @@ export function UploadAndPreviewStep({ workspaceId, onComplete, onCancel }: Uplo
 
       if (!response.ok) {
         const error = await response.json();
+        reportPlanErrorResponse(response.status, error);
         setValidationError(error.message || t('errors:generic'));
         alertService.error(t('errors:invalidJson'));
         return;

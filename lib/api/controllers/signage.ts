@@ -9,6 +9,7 @@
 import prisma from '../../../prisma/prisma';
 import { ApiError } from '@lib/http/ApiError';
 import { lockWorkspaceScope, runTx, type Tx } from '@lib/db/tx';
+import { trackLimits } from '@lib/entitlements/guards';
 import { decodeStoredImage, type DecodedImage } from '@lib/images/imageResponse';
 import { ensureSignageContainer } from '@lib/signage/signageApiHelpers';
 import { validateExclusiveOverlap } from '@lib/signage/validateExclusiveOverlap';
@@ -90,9 +91,12 @@ export async function getSignage(workspace: Workspace): Promise<SignageFormatDto
 
 export async function updateSignage(workspace: Workspace, input: SignageSettingsUpdateInput): Promise<SignageFormatDto[]> {
   await runTx(async (tx) => {
+    // Plan limit `signageScreens`: a format gets its `Signage` row on first use.
+    const limits = await trackLimits(tx, workspace.id, ['signageScreens']);
     await lockWorkspaceScope(tx, workspace.id, SLIDES_LOCK);
     await updateSignageFormatSettings(tx, workspace.id, 'LANDSCAPE', input.landscape);
     await updateSignageFormatSettings(tx, workspace.id, 'PORTRAIT', input.portrait);
+    await limits.check();
   });
   return getSignage(workspace);
 }
@@ -100,8 +104,10 @@ export async function updateSignage(workspace: Workspace, input: SignageSettings
 export async function createSlides(workspace: Workspace, input: SignageSlideCreateInput): Promise<SignageSlideDto[]> {
   const format = input.format;
   const created = await runTx(async (tx) => {
+    const limits = await trackLimits(tx, workspace.id, ['signageScreens']);
     await lockWorkspaceScope(tx, workspace.id, SLIDES_LOCK);
     await ensureSignageContainer(tx, workspace.id, format);
+    await limits.check();
 
     let order = await nextSlideOrder(tx, workspace.id, format);
     const slides = [];
@@ -179,9 +185,11 @@ function toOptionsJson(options: SignageGuestMenuSlideCreateInput['options']) {
 
 export async function createGuestMenuSlide(workspace: Workspace, input: SignageGuestMenuSlideCreateInput): Promise<SignageSlideDto> {
   const slide = await runTx(async (tx) => {
+    const limits = await trackLimits(tx, workspace.id, ['signageScreens']);
     await assertGuestMenuInWorkspace(tx, workspace.id, input.guestMenuId);
     await lockWorkspaceScope(tx, workspace.id, SLIDES_LOCK);
     await ensureSignageContainer(tx, workspace.id, input.format);
+    await limits.check();
     return tx.signageSlide.create({
       data: {
         workspaceId: workspace.id,

@@ -257,6 +257,7 @@ model Workspace {
   GuestMenuTemplate                 GuestMenuTemplate[]
   TagCategory                       TagCategory[]
   TagDefinition                     TagDefinition[]
+  entitlement                       WorkspaceEntitlement?
 
   @@index([updatedAt])
 }
@@ -1048,7 +1049,7 @@ model InstanceAnnouncement {
 /// workspace deletion, ownership transfer). Also stores the answer per `Idempotency-Key` for retries.
 model InstanceAuditLog {
   id             String   @id @default(cuid())
-  /// e.g. `announcements.replace`, `workspace.transferOwnership`, `workspace.delete`, `user.revokeSessions`.
+  /// e.g. `announcements.replace`, `workspace.transferOwnership`, `workspace.delete`, `user.revokeSessions`, `entitlements.workspace`.
   action         String
   /// `instance`, `workspace` or `user`.
   targetType     String
@@ -1067,4 +1068,29 @@ model InstanceAuditLog {
 
   @@index([targetType, targetId])
   @@index([createdAt])
+}
+
+// ---------------------------------------------------------------------------
+// Entitlements (hosted instances, see docs/ENTITLEMENTS.md). Only the control plane writes these tables
+// through the instance API; they are never part of backups or templates.
+// ---------------------------------------------------------------------------
+
+/// Entitlement snapshot of a workspace as pushed by the control plane (`PUT /api/v1/instance/workspaces/{id}/entitlements`).
+model WorkspaceEntitlement {
+  workspaceId String    @id
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  /// Version of the snapshot; a push only applies when its version is higher.
+  version     Int
+  /// SHA-256 (hex) of the snapshot content, computed by the control plane.
+  hash        String
+  /// The validated snapshot (`SnapshotWire` of the contract).
+  snapshot    Json
+  appliedAt   DateTime  @default(now())
+}
+
+/// Instance-wide settings written by the control plane, e.g. `entitlements.default` (the instance default snapshot).
+model InstanceSetting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
 }

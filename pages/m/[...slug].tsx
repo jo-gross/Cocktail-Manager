@@ -44,6 +44,7 @@ type PageProps =
       retryAfterSeconds: number | null;
     }
   | { kind: 'noMenu'; barPath: string; uiLocale: GuestUiLocale; title: string }
+  | { kind: 'unavailable'; uiLocale: GuestUiLocale; title: string }
   | {
       kind: 'menu';
       barPath: string;
@@ -58,6 +59,8 @@ type PageProps =
       noindex: boolean;
       initialState: ShellUrlState;
       langFromQuery: boolean;
+      /** Hosted instances: "Powered by" unless the plan includes `branding.remove`. */
+      poweredBy: boolean;
     };
 
 function first(value: string | string[] | undefined): string | undefined {
@@ -100,6 +103,7 @@ export const getServerSideProps: GetServerSideProps<PageProps> = async (context)
   const { loadPublicMenu } = await import('@lib/guest-menu/public.server');
   const { getPublicOrigin } = await import('@lib/guest-menu/server');
   const { appendUnlockQuery, attemptUnlock, collectAccessTokens, createMenuAccess } = await import('@lib/guest-menu/access');
+  const { showPoweredBy } = await import('@lib/guest-menu/branding.server');
   const { req, res, query } = context;
   const slug = Array.isArray(context.params?.slug) ? (context.params!.slug as string[]) : [];
   const acceptLanguages = parseAcceptLanguage(req.headers['accept-language']);
@@ -169,6 +173,12 @@ export const getServerSideProps: GetServerSideProps<PageProps> = async (context)
     };
     return { props: JSON.parse(JSON.stringify(props)) as PageProps };
   }
+  if (result.kind === 'unavailable') {
+    res.statusCode = 503;
+    res.setHeader('Cache-Control', 'private, no-store');
+    res.setHeader('X-Robots-Tag', 'noindex');
+    return { props: { kind: 'unavailable', uiLocale, title: result.workspace.name } };
+  }
   if (result.kind === 'noMenu') {
     res.setHeader('Cache-Control', 'public, max-age=30');
     res.setHeader('X-Robots-Tag', 'noindex');
@@ -194,6 +204,7 @@ export const getServerSideProps: GetServerSideProps<PageProps> = async (context)
     noindex,
     initialState: parseShellUrlState(new URLSearchParams(Object.entries(query).flatMap(([k, v]) => (typeof v === 'string' ? [[k, v]] : []))).toString()),
     langFromQuery: !!lang,
+    poweredBy: await showPoweredBy(result.workspace.id),
   };
   // Props must be JSON-serializable (no `undefined`).
   return { props: JSON.parse(JSON.stringify(props)) as PageProps };
@@ -450,6 +461,17 @@ const GuestMenuPage: NextPageWithPullToRefresh<PageProps> = (props) => {
       </>
     );
   }
+  if (props.kind === 'unavailable') {
+    return (
+      <>
+        <Head>
+          <title>{`${t('page.unavailableTitle')} – ${props.title}`}</title>
+          <meta name="robots" content="noindex" />
+        </Head>
+        <StatusPage title={t('page.unavailableTitle')} text={t('page.unavailableText')} link={null} linkLabel="" uiLocale={props.uiLocale} />
+      </>
+    );
+  }
   if (props.kind === 'noMenu') {
     return (
       <>
@@ -523,6 +545,15 @@ const GuestMenuPage: NextPageWithPullToRefresh<PageProps> = (props) => {
         syncUrl
         banner={notice}
       />
+      {props.poweredBy ? (
+        <p
+          className="gm-powered-by"
+          lang={props.uiLocale}
+          style={{ margin: 0, padding: '12px 16px 20px', textAlign: 'center', fontSize: '12px', opacity: 0.6 }}
+        >
+          {t('branding.poweredBy')}
+        </p>
+      ) : null}
     </>
   );
 };

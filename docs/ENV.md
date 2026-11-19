@@ -120,13 +120,17 @@ The `API_KEY_REVOKED_CACHE_TTL_MINUTES` controls how long revoked API keys are c
 | Variable            | Description                                                                                                  | Default | Example   |
 | ------------------- | ------------------------------------------------------------------------------------------------------------ | ------- | --------- |
 | `ENTITLEMENTS_MODE` | `off`: self-hosted, no plan limits. `managed`: the instance is hosted and a control plane manages entitlements | `off`   | `managed` |
+| `ENTITLEMENTS_FREE_WORKSPACES_PER_OWNER` | Only with `managed`: how many workspaces on the default (free) plan a user may own when creating one in the app; unset = unlimited | - | `1` |
 
-Self-hosted instances leave `ENTITLEMENTS_MODE` unset. The value is reported as `entitlementsMode` by
-`GET /api/v1/instance` (see [Instance API](INSTANCE-API.md)). With `managed` the instance also advertises the
-capabilities `announcements` (banners pushed by the control plane) and `support.write` (ownership transfer, session
-revocation, workspace deletion) to the control plane; nothing changes for users until the control plane calls them.
-Values other than
-`off` and `managed` (case-insensitive) count as `off` and are logged once at runtime as a warning.
+Self-hosted instances leave both unset. `ENTITLEMENTS_MODE` is reported as `entitlementsMode` by
+`GET /api/v1/instance` (see [Instance API](INSTANCE-API.md)). With `managed` the instance advertises the capabilities
+`entitlements`, `announcements` (banners pushed by the control plane) and `support.write` (ownership transfer, session
+revocation, workspace deletion) to the control plane, enforces the plan snapshots the control plane pushes (limits,
+features, workspace status) and shows the plan UI; until the first push nothing is limited. See
+[Entitlements](ENTITLEMENTS.md). Values other than `off` and `managed` (case-insensitive) count as `off` and are logged
+once at runtime as a warning.
+`ENTITLEMENTS_FREE_WORKSPACES_PER_OWNER` takes a non-negative integer; other values count as unlimited. It applies only
+after the control plane pushed a default snapshot.
 
 ### Demo Mode
 

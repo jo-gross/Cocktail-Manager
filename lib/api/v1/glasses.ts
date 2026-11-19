@@ -26,6 +26,7 @@ import {
 } from '@lib/schemas/glasses';
 import { defineApiHandlers } from '@lib/openapi/apiDoc';
 import * as glasses from '@lib/api/controllers/glasses';
+import { EXPORT_STATUS_EXEMPTION, withStatusExemption } from '@lib/entitlements/statusGate';
 
 export const collectionHandler = defineApiHandlers(glassesCollectionApiDoc.operations, {
   GET: ({ workspace, query }) => glasses.listGlasses(workspace, query),
@@ -70,7 +71,7 @@ function sendRawError(res: NextApiResponse, error: unknown, fallbackMessage: str
 // export→import round-trip keeps working; hence they are hand-wired instead of
 // going through defineApiHandlers (which JSON-envelopes via sendOk).
 const exportSpec = glassesExportJsonApiDoc.operations.POST;
-export const exportJsonHandler = withHttpMethods({
+const exportJsonRoutes = withHttpMethods({
   [HTTPMethod.POST]: withWorkspacePermission(exportSpec.roles, exportSpec.permission, async (req: NextApiRequest, res: NextApiResponse, _user, workspace) => {
     const parsed = GlassExportJsonBodySchema.safeParse(req.body);
     if (!parsed.success) return sendRawError(res, new ApiError(400, 'VALIDATION_ERROR', 'No valid glasses selected', parsed.error.issues), 'Failed to export');
@@ -82,6 +83,8 @@ export const exportJsonHandler = withHttpMethods({
     }
   }),
 });
+// Exports stay available in a read-only or suspended workspace (docs/ENTITLEMENTS.md "Status").
+export const exportJsonHandler = withStatusExemption(EXPORT_STATUS_EXEMPTION, exportJsonRoutes);
 
 const importSpec = glassesImportJsonApiDoc.operations.POST;
 export const importJsonHandler = withHttpMethods({

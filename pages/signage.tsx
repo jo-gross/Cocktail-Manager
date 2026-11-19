@@ -28,7 +28,7 @@ function subscribeToOrientation(onStoreChange: () => void) {
 
 export default function SignagePage() {
   const router = useRouter();
-  const { t } = useTranslation(['errors', 'manage', 'common']);
+  const { t } = useTranslation(['errors', 'manage', 'common', 'plan']);
   const { id, key } = router.query;
   // Monitor key: required for PIN-protected guest menu slides (skipped without it).
   const signageKey = typeof key === 'string' ? key : '';
@@ -36,6 +36,10 @@ export default function SignagePage() {
   const format = useSyncExternalStore(subscribeToOrientation, getMonitorFormat, () => MonitorFormat.LANDSCAPE);
   const [content, setContent] = useState<SignageFormatView>();
   const [imageLoading, setImageLoading] = useState<boolean>(false);
+  // Hosted instances: the plan of the workspace does not include signage (feed answers 402).
+  const [planRequired, setPlanRequired] = useState<boolean>(false);
+  // Hosted instances: the workspace is suspended (feed answers 503).
+  const [unavailable, setUnavailable] = useState<boolean>(false);
 
   const fetchData = useCallback(
     (options?: { silent?: boolean }) => {
@@ -45,7 +49,11 @@ export default function SignagePage() {
       }
       const keyQuery = signageKey ? `&key=${encodeURIComponent(signageKey)}` : '';
       fetch(`/api/signage/${id}?format=${format}${keyQuery}`)
-        .then((response) => response.json())
+        .then(async (response) => {
+          setPlanRequired(response.status === 402);
+          setUnavailable(response.status === 503);
+          return response.json();
+        })
         .then((data) => {
           setContent(data.content);
         })
@@ -92,6 +100,14 @@ export default function SignagePage() {
       {imageLoading ? (
         <PageCenter>
           <Loading />
+        </PageCenter>
+      ) : unavailable ? (
+        <PageCenter>
+          <p className="text-center text-xl">{t('plan:signage.unavailable')}</p>
+        </PageCenter>
+      ) : planRequired ? (
+        <PageCenter>
+          <p className="text-center text-xl">{t('plan:signage.planRequired')}</p>
         </PageCenter>
       ) : (
         <SignageSlideDisplay
