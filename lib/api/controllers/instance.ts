@@ -8,7 +8,7 @@ import packageJson from '../../../package.json';
 import { ApiError } from '@lib/http/ApiError';
 import { allChecksOk, readinessChecks } from '@lib/health/readiness';
 import { isPdfServiceConfigured } from '@lib/pdf/browser';
-import { INSTANCE_API_VERSION, INSTANCE_CAPABILITIES, entitlementsMode } from '@lib/instance/config';
+import { INSTANCE_API_VERSION, entitlementsMode, instanceCapabilities } from '@lib/instance/config';
 import { decodeWorkspaceCursor, encodeWorkspaceCursor } from '@lib/instance/cursor';
 import { latestPerWorkspace, mapUsage, pickOwners } from '@lib/instance/usage';
 import {
@@ -33,13 +33,14 @@ const iso = (date: Date | null | undefined): string | null => (date ? date.toISO
 
 export async function getInstanceInfo(): Promise<InstanceInfoDto> {
   const checks = await readinessChecks();
+  const mode = entitlementsMode();
   const [workspaces, users] = checks.database?.ok ? await Promise.all([prisma.workspace.count({ where: INVENTORY_WHERE }), prisma.user.count()]) : [0, 0];
   return {
     apiVersion: INSTANCE_API_VERSION,
     appVersion: packageJson.version,
     commit: process.env.GIT_SHA || null,
-    capabilities: [...INSTANCE_CAPABILITIES],
-    entitlementsMode: entitlementsMode(),
+    capabilities: instanceCapabilities(mode),
+    entitlementsMode: mode,
     migrationsReady: allChecksOk(checks),
     chromiumAvailable: isPdfServiceConfigured(),
     counts: { workspaces, users },

@@ -6,6 +6,7 @@ import { cursorPaginated } from '@lib/http/responses';
 import { instanceApiDoc, instanceUsersCollectionApiDoc, instanceWorkspacesCollectionApiDoc, instanceWorkspacesItemApiDoc } from '@lib/schemas/instance';
 import { defineApiHandlers } from '@lib/openapi/apiDoc';
 import * as instance from '@lib/api/controllers/instance';
+import * as support from '@lib/api/controllers/instanceSupport';
 
 export const instanceHandler = defineApiHandlers(instanceApiDoc.operations, {
   GET: () => instance.getInstanceInfo(),
@@ -20,6 +21,7 @@ export const workspacesCollectionHandler = defineApiHandlers(instanceWorkspacesC
 
 export const workspacesItemHandler = defineApiHandlers(instanceWorkspacesItemApiDoc.operations, {
   GET: ({ params }) => instance.getInstanceWorkspace(params.id),
+  DELETE: ({ req, params }) => support.deleteInstanceWorkspace(req.headers, params.id),
 });
 
 export const usersCollectionHandler = defineApiHandlers(instanceUsersCollectionApiDoc.operations, {

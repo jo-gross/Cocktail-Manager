@@ -96,6 +96,9 @@
   "totalPrice": "Gesamtpreis",
   "offlineUnavailable": "Nicht verfügbar im Offline-Modus",
   "offlineBanner": "Du bist offline – Einige Funktionen sind eingeschränkt. Daten werden aus dem Cache geladen.",
+  "announcements": {
+    "dismiss": "Hinweis ausblenden"
+  },
   "appName": "The Cocktail-Manager",
   "byAuthor": "by",
   "authorName": "Johannes Groß",

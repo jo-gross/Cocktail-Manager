@@ -5,7 +5,8 @@ in the control plane repository (`contracts/instance-api.openapi.yaml`); the app
 `openapi/openapi.json` (tags `Instance / …`).
 
 Self-hosted instances are not affected: the routes only answer the instance master key, and without
-`INSTANCE_MASTER_API_KEY` every call gets `401`.
+`INSTANCE_MASTER_API_KEY` every call gets `401`. Announcements and support writes are only advertised with
+`ENTITLEMENTS_MODE=managed`.
 
 ## Authentication and scope
 
@@ -13,21 +14,25 @@ Self-hosted instances are not affected: the routes only answer the instance mast
   API keys and wrong keys get `401 UNAUTHORIZED` (`auth: 'master'` in the `ResourceApiDoc`).
 - The routes are **instance-wide by design**: they list and read every workspace and user of the instance. They have
   no `{workspaceId}` scope, so tenant isolation does not apply. No workspace route changed behaviour.
-- `X-CM-Actor` (email of the acting administrator) is accepted on every call. Reads do not store it. Writes of later
-  stages put `X-CM-Actor` and `X-CM-Reason` into the app audit log and honour `Idempotency-Key`
+- `X-CM-Actor` (email of the acting administrator) is accepted on every call. Reads do not store it. Writes put
+  `X-CM-Actor` and `X-CM-Reason` into the audit log and honour `Idempotency-Key`, see [Writes](#writes-audit-and-idempotency)
   (`lib/instance/controlPlaneHeaders.ts` parses and bounds these headers).
 
 ## Capabilities
 
-`GET /api/v1/instance` reports the capabilities this build serves (`INSTANCE_CAPABILITIES` in
+`GET /api/v1/instance` reports the capabilities this instance serves (`instanceCapabilities()` in
 `lib/instance/config.ts`). The control plane only calls operations whose capability is listed.
+
+`INSTANCE_CAPABILITIES` are advertised in every mode, `MANAGED_INSTANCE_CAPABILITIES` only with
+`ENTITLEMENTS_MODE=managed`. The routes themselves do not check the mode: they need the master key, which only the
+operator of the instance has.
 
 | Capability | Operations | Status |
 | --- | --- | --- |
 | `instance.read` | `GET /api/v1/instance`, `GET /api/v1/instance/workspaces`, `GET /api/v1/instance/workspaces/{id}`, `GET /api/v1/instance/users` | served |
 | `entitlements` | `PUT /api/v1/instance/entitlements/default`, `PUT /api/v1/instance/workspaces/{id}/entitlements` | not yet |
-| `announcements` | `PUT /api/v1/instance/announcements` | not yet |
-| `support.write` | `POST …/transfer-ownership`, `DELETE /api/v1/instance/users/{id}/sessions`, `DELETE /api/v1/instance/workspaces/{id}` | not yet |
+| `announcements` | `PUT /api/v1/instance/announcements` | served in `managed` mode |
+| `support.write` | `POST …/transfer-ownership`, `DELETE /api/v1/instance/users/{id}/sessions`, `DELETE /api/v1/instance/workspaces/{id}` | served in `managed` mode |
 
 `entitlementsMode` comes from `ENTITLEMENTS_MODE` (`off` default, `managed`; see [ENV.md](ENV.md)).
 
@@ -72,6 +77,73 @@ email. Per user: `createdAt`, `providers` (login providers such as `google`, `cu
 
 Missing emails or names are returned as empty strings (the contract requires strings).
 
+### `PUT /api/v1/instance/announcements`
+
+Replaces the full set of announcements; `{ "announcements": [] }` removes all. Answers `{ count }`.
+
+| Field | Rules |
+| --- | --- |
+| `id` | id in the control plane, unique within the set |
+| `level` | `info`, `warning` or `critical`, lowercase; anything else → `400` |
+| `title` | optional `{ de, en }`, both required and not empty, at most 200 characters each |
+| `body` | required `{ de, en }`, both required and not empty, at most 2000 characters each |
+| `startsAt`, `endsAt` | optional ISO 8601 timestamps; `endsAt` must be after `startsAt` |
+| `workspaceIds` | targeted workspaces (at most 1000); empty = all workspaces. Unknown ids are stored and match nothing |
+
+At most 50 announcements per set.
+
+**Texts per language:** `title` and `body` are `LocalizedText` objects of the contract. The banner shows `de` to users
+with a German UI and `en` to everyone else. A plain string, a missing language or an empty text → `400`; there is no
+fallback between the languages. Texts are trimmed.
+
+**In the app:** a banner on the workspace overview (announcements for all workspaces) and inside a workspace (for all
+and for this workspace), most severe first, only within the time window (`components/announcements/`). Users can
+dismiss `info` announcements; the dismissal is stored in the browser per announcement id and content, so a changed
+announcement shows again. `warning` and `critical` stay until the control plane removes them or `endsAt` passes. The
+banner reads `GET /api/v1/announcements` and `GET /api/v1/workspaces/{workspaceId}/announcements` (session only, every
+member) and refreshes every five minutes.
+
+### `POST /api/v1/instance/workspaces/{id}/transfer-ownership`
+
+Body `{ userId }`, answers `{ ownerId }`. The user must be a member of the workspace and becomes its only owner; every
+other owner becomes `ADMIN`. Unknown workspace, unknown user or a user who is not a member → `404 NOT_FOUND`. The role
+changes are written to the audit log of the workspace (entity `WorkspaceUser`, with actor and reason of the control
+plane) and run `Serializable`, like the other owner changes.
+
+A workspace with several owners therefore has exactly one owner afterwards. Nobody loses access: the former owners
+keep every right except the owner-only ones. Transferring to the member who already is the only owner changes nothing.
+
+### `DELETE /api/v1/instance/users/{id}/sessions`
+
+Deletes every session of the user and answers `{ revoked }`, the number of sessions that had not expired. Unknown user
+→ `404 NOT_FOUND`. The account, its memberships and API keys stay. A browser can keep working for up to five minutes
+after the call: the session cookie cache of the app (`session.cookieCache` in `lib/auth.ts`) is not invalidated from
+the server.
+
+### `DELETE /api/v1/instance/workspaces/{id}`
+
+Deletes the workspace with all of its content, like an owner deleting it, and answers `{ deleted: true }`. Users stay.
+Unknown workspace → `404 NOT_FOUND`; a template workspace → `409 TEMPLATE_IN_USE`.
+
+## Writes: audit and idempotency
+
+Every write of the control plane runs through `runControlPlaneWrite` (`lib/instance/controlPlaneWrite.ts`), the shared
+helper for all capabilities (announcements, support writes, entitlements): the change, its audit entry and the stored
+answer commit in one transaction. It knows nothing about the operation; a caller passes the action name, the target,
+the request body and the change.
+
+- **Audit:** one row in `InstanceAuditLog` per applied write: `action` (`announcements.replace`,
+  `workspace.transferOwnership`, `user.revokeSessions`, `workspace.delete`), target, `actor` (`X-CM-Actor`), `reason`
+  (`X-CM-Reason`) and `details` (e.g. name, member count and owners of a deleted workspace, whose own audit log is
+  deleted with it). Both headers are optional; the control plane always sends them. Secrets such as session tokens
+  are never stored.
+- **`Idempotency-Key`** (UUID): a retry with the same key and the same request (operation, target, body) gets the
+  first answer and changes nothing, also when the state has changed since. Failed writes (4xx/5xx) store nothing, so a
+  retry runs again. Without a key every call is applied.
+- **`409`** (contract `components.responses.Conflict`, documented for every write): `IDEMPOTENCY_KEY_REUSED` when the
+  key was already used for another request, and conflicting states such as `TEMPLATE_IN_USE`.
+- Invalid headers (key that is no UUID, actor over 254 or reason over 500 characters) → `400 VALIDATION_ERROR`.
+
 ## Usage counts
 
 | Field | Definition |
@@ -114,13 +186,21 @@ The migration back-fills `createdAt` from the oldest audit log entry of the work
   setting changes, search, 401 cases.
 - `lib/__tests__/api/v1/workspaceTimestampsMigration.integration.test.ts`: the back-fill on a scratch database with
   existing workspaces and the triggers.
+- `lib/__tests__/api/v1/instanceAnnouncements.integration.test.ts`: the push (replace, validation, 401 cases, audit,
+  idempotent retries, concurrent retries), banner targeting (all, listed workspaces, time window) and capabilities
+  per mode.
+- `lib/__tests__/api/v1/instanceSupport.integration.test.ts`: ownership transfer, session revocation and workspace
+  deletion: effect, unknown ids, validation, 401 cases, audit entries, idempotent retries and reused keys.
+- `components/announcements/__tests__/` and `lib/announcements/__tests__/`: banner rendering, texts per language and
+  dismissal.
 - The auth matrix checks every `auth: 'master'` operation (401 without credentials, with a wrong key, a session or a
   workspace API key). The tenant isolation suite only covers `{workspaceId}` routes; instance routes have no tenant.
 
 ## Adding operations (later stages)
 
-1. Schema and `ResourceApiDoc` in `lib/schemas/instance.ts` (spread `instanceOperation`; `auth: 'master'`).
-2. Controller in `lib/api/controllers/instance.ts`, wiring in `lib/api/v1/instance.ts`, route file under
-   `pages/api/v1/instance/`, binding in `test/helpers/handlerBindings.ts`.
-3. Writes: parse `parseControlPlaneHeaders(req.headers)`, audit actor and reason, honour `Idempotency-Key`.
-4. Add the capability to `INSTANCE_CAPABILITIES` once all of its operations exist.
+1. Schema and `ResourceApiDoc` in `lib/schemas/instance.ts` or a file next to it (spread `instanceOperation`, for
+   writes `instanceWriteOperation`; `auth: 'master'`).
+2. Controller in `lib/api/controllers/`, wiring in `lib/api/v1/`, route file under `pages/api/v1/instance/`, binding
+   in `test/helpers/handlerBindings.ts`.
+3. Writes: run the change in `runControlPlaneWrite` (audit entry with actor and reason, `Idempotency-Key`).
+4. Add the capability to `INSTANCE_CAPABILITIES` or `MANAGED_INSTANCE_CAPABILITIES` once all of its operations exist.

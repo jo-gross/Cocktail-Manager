@@ -133,9 +133,10 @@ describe('master key only', () => {
     }
   });
 
-  it('answers 405 for methods the read stage does not serve', async () => {
+  it('answers 405 for methods the instance API does not serve', async () => {
     const seeded = await seedWorkspace({ users: [{ role: 'OWNER' }] });
-    expect((await callAs('master', workspacesItemHandler, { method: 'DELETE', query: { id: seeded.workspace.id } })).status).toBe(405);
+    expect((await callAs('master', workspacesItemHandler, { method: 'PATCH', query: { id: seeded.workspace.id }, body: { name: 'x' } })).status).toBe(405);
+    expect((await callAs('master', workspacesCollectionHandler, { method: 'DELETE' })).status).toBe(405);
     expect(await prisma.workspace.count({ where: { id: seeded.workspace.id } })).toBe(1);
   });
 });

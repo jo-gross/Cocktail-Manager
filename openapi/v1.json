@@ -400,6 +400,72 @@
           "key"
         ]
       },
+      "Announcement": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "level": {
+            "type": "string",
+            "enum": [
+              "info",
+              "warning",
+              "critical"
+            ]
+          },
+          "title": {
+            "$ref": "#/components/schemas/AnnouncementText"
+          },
+          "body": {
+            "$ref": "#/components/schemas/AnnouncementText"
+          },
+          "dismissible": {
+            "type": "boolean",
+            "description": "True for `info` announcements."
+          },
+          "revision": {
+            "type": "string",
+            "description": "Changes when level, texts or time window change; dismissals are stored per id and revision."
+          },
+          "endsAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "example": "2026-07-04T12:00:00.000Z",
+            "description": "ISO 8601 timestamp"
+          }
+        },
+        "required": [
+          "id",
+          "level",
+          "title",
+          "body",
+          "dismissible",
+          "revision",
+          "endsAt"
+        ]
+      },
+      "AnnouncementText": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "de": {
+            "type": "string"
+          },
+          "en": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "de",
+          "en"
+        ]
+      },
       "InstanceInfo": {
         "type": "object",
         "properties": {
@@ -471,6 +537,124 @@
           "counts"
         ]
       },
+      "InstanceAnnouncementsResult": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "count"
+        ]
+      },
+      "InstanceAnnouncementsInput": {
+        "type": "object",
+        "properties": {
+          "announcements": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InstanceAnnouncementInput"
+            },
+            "maxItems": 50
+          }
+        },
+        "required": [
+          "announcements"
+        ]
+      },
+      "InstanceAnnouncementInput": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "description": "Id of the announcement in the control plane; unique within the set."
+          },
+          "level": {
+            "type": "string",
+            "enum": [
+              "info",
+              "warning",
+              "critical"
+            ],
+            "description": "Severity. Users can dismiss `info` announcements.",
+            "example": "info"
+          },
+          "title": {
+            "type": "object",
+            "properties": {
+              "de": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200
+              },
+              "en": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200
+              }
+            },
+            "required": [
+              "de",
+              "en"
+            ],
+            "description": "Title per language; shown in the language of the user."
+          },
+          "body": {
+            "type": "object",
+            "properties": {
+              "de": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2000
+              },
+              "en": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2000
+              }
+            },
+            "required": [
+              "de",
+              "en"
+            ],
+            "description": "Text per language; shown in the language of the user.",
+            "example": {
+              "de": "Wartung am Sonntag ab 22 Uhr.",
+              "en": "Maintenance on Sunday from 10 pm."
+            }
+          },
+          "startsAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Shown from this time on; without it immediately."
+          },
+          "endsAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Shown until this time (exclusive); without it until it is replaced."
+          },
+          "workspaceIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            },
+            "maxItems": 1000,
+            "description": "Targeted workspaces; an empty array means all workspaces. Unknown ids are stored and match nothing."
+          }
+        },
+        "required": [
+          "id",
+          "level",
+          "body",
+          "workspaceIds"
+        ]
+      },
       "InstanceUser": {
         "type": "object",
         "properties": {
@@ -535,6 +719,19 @@
           "id",
           "name",
           "role"
+        ]
+      },
+      "InstanceRevokeSessionsResult": {
+        "type": "object",
+        "properties": {
+          "revoked": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Sessions that had not expired."
+          }
+        },
+        "required": [
+          "revoked"
         ]
       },
       "InstanceWorkspaceSummary": {
@@ -806,6 +1003,45 @@
           "email",
           "name",
           "createdAt"
+        ]
+      },
+      "InstanceWorkspaceDeleteResult": {
+        "type": "object",
+        "properties": {
+          "deleted": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          }
+        },
+        "required": [
+          "deleted"
+        ]
+      },
+      "InstanceTransferOwnershipResult": {
+        "type": "object",
+        "properties": {
+          "ownerId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "ownerId"
+        ]
+      },
+      "InstanceTransferOwnershipInput": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "description": "User ID of the new owner; must be a member of the workspace."
+          }
+        },
+        "required": [
+          "userId"
         ]
       },
       "Me": {
@@ -11760,6 +11996,73 @@
         }
       }
     },
+    "/api/v1/announcements": {
+      "get": {
+        "summary": "List active announcements for all workspaces",
+        "description": "**Authentication:** requires a logged-in session (any user). API keys are NOT accepted.\n\nAnnouncements of the hosting provider that are active now and target all workspaces (shown on the workspace overview). Always empty on self-hosted instances.",
+        "tags": [
+          "User / Announcements"
+        ],
+        "security": [
+          {
+            "SessionCookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List active announcements for all workspaces",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Announcement"
+                      }
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/instance": {
       "get": {
         "summary": "Instance metadata and capabilities",
@@ -11826,6 +12129,124 @@
           },
           "403": {
             "description": "Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/instance/announcements": {
+      "put": {
+        "summary": "Replace the instance announcements",
+        "description": "**Authentication:** instance master API key only (instance administration). Sessions and workspace API keys get 401.\n\nReplaces the full set of announcements shown as banners in the app; an empty array removes all. Each announcement has a level, a text in German and English, an optional time window and its target: all workspaces or the listed ones. Capability `announcements`.",
+        "tags": [
+          "Instance / Announcements"
+        ],
+        "security": [
+          {
+            "InstanceApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 254,
+              "description": "Email of the acting control plane administrator; written to the audit log."
+            },
+            "required": false,
+            "description": "Email of the acting control plane administrator; written to the audit log.",
+            "name": "X-CM-Actor",
+            "in": "header"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 500,
+              "description": "Reason for the write; written to the audit log."
+            },
+            "required": false,
+            "description": "Reason for the write; written to the audit log.",
+            "name": "X-CM-Reason",
+            "in": "header"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Unique key of the write. A retry with the same key and the same request gets the first answer and changes nothing; the same key with another request is refused with 409."
+            },
+            "required": false,
+            "description": "Unique key of the write. A retry with the same key and the same request gets the first answer and changes nothing; the same key with another request is refused with 409.",
+            "name": "Idempotency-Key",
+            "in": "header"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InstanceAnnouncementsInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Replace the instance announcements",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/InstanceAnnouncementsResult"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The Idempotency-Key was already used for another request.",
             "content": {
               "application/json": {
                 "schema": {
@@ -11917,6 +12338,137 @@
           },
           "403": {
             "description": "Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/instance/users/{id}/sessions": {
+      "delete": {
+        "summary": "Revoke all sessions of a user",
+        "description": "**Authentication:** instance master API key only (instance administration). Sessions and workspace API keys get 401.\n\nDeletes every session of the user, who has to sign in again. A browser can keep working for up to five minutes (session cookie cache). Capability `support.write`.",
+        "tags": [
+          "Instance / Users"
+        ],
+        "security": [
+          {
+            "InstanceApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128,
+              "description": "User ID"
+            },
+            "required": true,
+            "description": "User ID",
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 254,
+              "description": "Email of the acting control plane administrator; written to the audit log."
+            },
+            "required": false,
+            "description": "Email of the acting control plane administrator; written to the audit log.",
+            "name": "X-CM-Actor",
+            "in": "header"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 500,
+              "description": "Reason for the write; written to the audit log."
+            },
+            "required": false,
+            "description": "Reason for the write; written to the audit log.",
+            "name": "X-CM-Reason",
+            "in": "header"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Unique key of the write. A retry with the same key and the same request gets the first answer and changes nothing; the same key with another request is refused with 409."
+            },
+            "required": false,
+            "description": "Unique key of the write. A retry with the same key and the same request gets the first answer and changes nothing; the same key with another request is refused with 409.",
+            "name": "Idempotency-Key",
+            "in": "header"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Revoke all sessions of a user",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/InstanceRevokeSessionsResult"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The Idempotency-Key was already used for another request.",
             "content": {
               "application/json": {
                 "schema": {
@@ -12146,6 +12698,275 @@
           },
           "404": {
             "description": "Workspace not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete a workspace of the instance",
+        "description": "**Authentication:** instance master API key only (instance administration). Sessions and workspace API keys get 401.\n\nDeletes the workspace with all of its content, like an owner deleting it. For staging copies and support. Capability `support.write`.",
+        "tags": [
+          "Instance / Workspaces"
+        ],
+        "security": [
+          {
+            "InstanceApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128,
+              "description": "Workspace ID"
+            },
+            "required": true,
+            "description": "Workspace ID",
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 254,
+              "description": "Email of the acting control plane administrator; written to the audit log."
+            },
+            "required": false,
+            "description": "Email of the acting control plane administrator; written to the audit log.",
+            "name": "X-CM-Actor",
+            "in": "header"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 500,
+              "description": "Reason for the write; written to the audit log."
+            },
+            "required": false,
+            "description": "Reason for the write; written to the audit log.",
+            "name": "X-CM-Reason",
+            "in": "header"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Unique key of the write. A retry with the same key and the same request gets the first answer and changes nothing; the same key with another request is refused with 409."
+            },
+            "required": false,
+            "description": "Unique key of the write. A retry with the same key and the same request gets the first answer and changes nothing; the same key with another request is refused with 409.",
+            "name": "Idempotency-Key",
+            "in": "header"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Delete a workspace of the instance",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/InstanceWorkspaceDeleteResult"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Workspace not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The workspace is a template (`TEMPLATE_IN_USE`), or the Idempotency-Key was already used for another request.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/instance/workspaces/{id}/transfer-ownership": {
+      "post": {
+        "summary": "Transfer workspace ownership to a member",
+        "description": "**Authentication:** instance master API key only (instance administration). Sessions and workspace API keys get 401.\n\nMakes the member the only owner of the workspace; every other owner becomes `ADMIN`. The role changes are written to the audit log of the workspace. Capability `support.write`.",
+        "tags": [
+          "Instance / Workspaces"
+        ],
+        "security": [
+          {
+            "InstanceApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128,
+              "description": "Workspace ID"
+            },
+            "required": true,
+            "description": "Workspace ID",
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 254,
+              "description": "Email of the acting control plane administrator; written to the audit log."
+            },
+            "required": false,
+            "description": "Email of the acting control plane administrator; written to the audit log.",
+            "name": "X-CM-Actor",
+            "in": "header"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 500,
+              "description": "Reason for the write; written to the audit log."
+            },
+            "required": false,
+            "description": "Reason for the write; written to the audit log.",
+            "name": "X-CM-Reason",
+            "in": "header"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Unique key of the write. A retry with the same key and the same request gets the first answer and changes nothing; the same key with another request is refused with 409."
+            },
+            "required": false,
+            "description": "Unique key of the write. A retry with the same key and the same request gets the first answer and changes nothing; the same key with another request is refused with 409.",
+            "name": "Idempotency-Key",
+            "in": "header"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InstanceTransferOwnershipInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Transfer workspace ownership to a member",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/InstanceTransferOwnershipResult"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Workspace not found, or the user is not a member of it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The Idempotency-Key was already used for another request.",
             "content": {
               "application/json": {
                 "schema": {
@@ -14395,6 +15216,86 @@
           }
         },
         "x-required-permission": "WORKSPACE_UPDATE"
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/announcements": {
+      "get": {
+        "summary": "List active announcements for a workspace",
+        "description": "**Authentication:** requires a logged-in workspace-member session. API keys (workspace or the instance master key) are NOT accepted for this operation.\n\nAnnouncements of the hosting provider that are active now and target all workspaces or this workspace. Always empty on self-hosted instances.",
+        "tags": [
+          "User / Announcements"
+        ],
+        "security": [
+          {
+            "SessionCookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "Workspace ID",
+              "example": "ckw0a1b2c3d4e5f6g7h8"
+            },
+            "required": true,
+            "description": "Workspace ID",
+            "name": "workspaceId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List active announcements for a workspace",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Announcement"
+                      }
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/v1/workspaces/{workspaceId}/api-keys": {
@@ -31474,6 +32375,12 @@
       "x-position": 2
     },
     {
+      "name": "User / Announcements",
+      "description": "Active announcements of the hosting provider, shown as banners.",
+      "x-displayName": "Announcements",
+      "x-position": 3
+    },
+    {
       "name": "Templates / Core",
       "description": "Published templates (start content collections) and applying them to a workspace.",
       "x-displayName": "Core",
@@ -31505,9 +32412,15 @@
     },
     {
       "name": "Instance / Users",
-      "description": "Instance-wide user lookup for the control plane (master key only).",
+      "description": "Instance-wide user lookup and session handling for the control plane (master key only).",
       "x-displayName": "Users",
       "x-position": 3
+    },
+    {
+      "name": "Instance / Announcements",
+      "description": "Announcement banners pushed by the control plane (master key only).",
+      "x-displayName": "Announcements",
+      "x-position": 4
     }
   ],
   "x-tagGroups": [
@@ -31657,7 +32570,8 @@
       "name": "User",
       "tags": [
         "User / Settings",
-        "User / Guides"
+        "User / Guides",
+        "User / Announcements"
       ]
     },
     {
@@ -31683,7 +32597,8 @@
       "tags": [
         "Instance / Core",
         "Instance / Workspaces",
-        "Instance / Users"
+        "Instance / Users",
+        "Instance / Announcements"
       ]
     }
   ]

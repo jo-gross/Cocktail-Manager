@@ -19,6 +19,8 @@ import * as guestInfo from '@lib/api/v1/guestInfo';
 import * as guestMenus from '@lib/api/v1/guestMenus';
 import * as ices from '@lib/api/v1/ices';
 import * as instance from '@lib/api/v1/instance';
+import * as instanceSupport from '@lib/api/v1/instanceSupport';
+import * as announcements from '@lib/api/v1/announcements';
 import * as ingredients from '@lib/api/v1/ingredients';
 import * as joinCodes from '@lib/api/v1/joinCodes';
 import * as joinRequests from '@lib/api/v1/joinRequests';
@@ -66,6 +68,8 @@ import {
 } from '@lib/schemas/guestMenus';
 import { apiKeysCollectionApiDoc, apiKeysItemApiDoc } from '@lib/schemas/apiKeys';
 import { instanceApiDoc, instanceUsersCollectionApiDoc, instanceWorkspacesCollectionApiDoc, instanceWorkspacesItemApiDoc } from '@lib/schemas/instance';
+import { instanceUsersSessionsApiDoc, instanceWorkspacesTransferOwnershipApiDoc } from '@lib/schemas/instanceSupport';
+import { announcementsCollectionApiDoc, instanceAnnouncementsApiDoc, workspaceAnnouncementsCollectionApiDoc } from '@lib/schemas/announcements';
 import { auditLogsCollectionApiDoc } from '@lib/schemas/auditLogs';
 import {
   calculationGroupsAssignApiDoc,
@@ -186,6 +190,11 @@ export const handlerBindings: HandlerBinding[] = [
   { apiDoc: instanceWorkspacesCollectionApiDoc, handler: instance.workspacesCollectionHandler },
   { apiDoc: instanceWorkspacesItemApiDoc, handler: instance.workspacesItemHandler },
   { apiDoc: instanceUsersCollectionApiDoc, handler: instance.usersCollectionHandler },
+  { apiDoc: instanceWorkspacesTransferOwnershipApiDoc, handler: instanceSupport.transferOwnershipHandler },
+  { apiDoc: instanceUsersSessionsApiDoc, handler: instanceSupport.userSessionsHandler },
+  { apiDoc: instanceAnnouncementsApiDoc, handler: announcements.instanceAnnouncementsHandler },
+  { apiDoc: announcementsCollectionApiDoc, handler: announcements.collectionHandler },
+  { apiDoc: workspaceAnnouncementsCollectionApiDoc, handler: announcements.workspaceCollectionHandler },
   { apiDoc: apiKeysCollectionApiDoc, handler: apiKeys.collectionHandler },
   { apiDoc: apiKeysItemApiDoc, handler: apiKeys.itemHandler },
   { apiDoc: auditLogsCollectionApiDoc, handler: auditLogs.collectionHandler },

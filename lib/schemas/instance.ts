@@ -7,7 +7,7 @@ import { z } from '@lib/openapi/zod';
 import { ApiTags } from '@lib/openapi/tags';
 import { DateTimeString } from '@lib/schemas/common';
 import { decodeWorkspaceCursor } from '@lib/instance/cursor';
-import { MAX_ACTOR_LENGTH } from '@lib/instance/controlPlaneHeaders';
+import { MAX_ACTOR_LENGTH, MAX_REASON_LENGTH } from '@lib/instance/controlPlaneHeaders';
 import type { ResourceApiDoc, RouteSpec } from '@lib/openapi/types';
 
 export const INSTANCE_WORKSPACES_DEFAULT_LIMIT = 50;
@@ -25,6 +25,24 @@ export const InstanceReadHeadersSchema = z.object({
     .max(MAX_ACTOR_LENGTH)
     .optional()
     .openapi({ description: 'Email of the acting control plane administrator. Reads do not write it anywhere.' }),
+});
+
+/** Documents the write headers of the contract (`components.parameters.Actor`, `Reason`, `IdempotencyKey`). */
+export const InstanceWriteHeadersSchema = z.object({
+  'X-CM-Actor': z
+    .string()
+    .max(MAX_ACTOR_LENGTH)
+    .optional()
+    .openapi({ description: 'Email of the acting control plane administrator; written to the audit log.' }),
+  'X-CM-Reason': z.string().max(MAX_REASON_LENGTH).optional().openapi({ description: 'Reason for the write; written to the audit log.' }),
+  'Idempotency-Key': z
+    .uuid()
+    .optional()
+    .openapi({
+      description:
+        'Unique key of the write. A retry with the same key and the same request gets the first answer and changes nothing; the same key with ' +
+        'another request is refused with 409.',
+    }),
 });
 
 const SearchText = z.string().trim().max(MAX_SEARCH_LENGTH);
@@ -174,6 +192,14 @@ const instanceOperation: Pick<RouteSpec, 'roles' | 'permission' | 'auth' | 'head
   headers: InstanceReadHeadersSchema,
 };
 
+/** Common part of every instance write: like `instanceOperation`, with the documented write headers. */
+export const instanceWriteOperation: Pick<RouteSpec, 'roles' | 'permission' | 'auth' | 'headers'> = {
+  ...instanceOperation,
+  headers: InstanceWriteHeadersSchema,
+};
+
+export const InstanceWorkspaceDeleteResultSchema = z.object({ deleted: z.literal(true) }).openapi('InstanceWorkspaceDeleteResult');
+
 export const instanceApiDoc = {
   basePath: '/instance',
   operations: {
@@ -215,6 +241,18 @@ export const instanceWorkspacesItemApiDoc = {
       params: InstanceWorkspaceIdParam,
       response: InstanceWorkspaceDetailSchema,
       errorResponses: { 404: 'Workspace not found.' },
+    },
+    DELETE: {
+      ...instanceWriteOperation,
+      tags: [ApiTags.instanceWorkspaces],
+      summary: 'Delete a workspace of the instance',
+      description: 'Deletes the workspace with all of its content, like an owner deleting it. For staging copies and support. Capability `support.write`.',
+      params: InstanceWorkspaceIdParam,
+      response: InstanceWorkspaceDeleteResultSchema,
+      errorResponses: {
+        404: 'Workspace not found.',
+        409: 'The workspace is a template (`TEMPLATE_IN_USE`), or the Idempotency-Key was already used for another request.',
+      },
     },
   },
 } satisfies ResourceApiDoc;

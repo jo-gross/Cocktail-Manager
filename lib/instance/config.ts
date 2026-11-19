@@ -9,8 +9,11 @@ export const INSTANCE_API_VERSION = '1';
 /** Capability names of the contract. Only the ones in `INSTANCE_CAPABILITIES` are served by this build. */
 export type InstanceCapability = 'instance.read' | 'entitlements' | 'announcements' | 'support.write';
 
-/** Capabilities this build serves, reported by `GET /api/v1/instance`. Add a value once its routes exist. */
+/** Capabilities this build serves in every mode. Add a value once its routes exist. */
 export const INSTANCE_CAPABILITIES: readonly InstanceCapability[] = ['instance.read'];
+
+/** Capabilities only advertised with `ENTITLEMENTS_MODE=managed`: a self-hosted instance never gets these calls. */
+export const MANAGED_INSTANCE_CAPABILITIES: readonly InstanceCapability[] = ['announcements', 'support.write'];
 
 export const ENTITLEMENTS_MODES = ['off', 'managed'] as const;
 export type EntitlementsMode = (typeof ENTITLEMENTS_MODES)[number];
@@ -33,4 +36,9 @@ export function entitlementsMode(): EntitlementsMode {
     console.warn('ENTITLEMENTS_MODE has an invalid value; allowed are "off" and "managed". Using "off".');
   }
   return mode;
+}
+
+/** Capabilities reported by `GET /api/v1/instance` for the current (or given) mode. */
+export function instanceCapabilities(mode: EntitlementsMode = entitlementsMode()): InstanceCapability[] {
+  return mode === 'managed' ? [...INSTANCE_CAPABILITIES, ...MANAGED_INSTANCE_CAPABILITIES] : [...INSTANCE_CAPABILITIES];
 }

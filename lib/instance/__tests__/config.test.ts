@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { INSTANCE_CAPABILITIES, entitlementsMode, parseEntitlementsMode } from '@lib/instance/config';
+import { INSTANCE_CAPABILITIES, entitlementsMode, instanceCapabilities, parseEntitlementsMode } from '@lib/instance/config';
 
 describe('parseEntitlementsMode', () => {
   it('defaults to off when unset or empty', () => {
@@ -42,8 +42,13 @@ describe('entitlementsMode', () => {
   });
 });
 
-describe('INSTANCE_CAPABILITIES', () => {
-  it('serves only instance.read in this stage', () => {
+describe('instance capabilities', () => {
+  it('serves only instance.read in every mode', () => {
     expect(INSTANCE_CAPABILITIES).toEqual(['instance.read']);
+    expect(instanceCapabilities('off')).toEqual(['instance.read']);
+  });
+
+  it('advertises announcements and support.write only when managed', () => {
+    expect(instanceCapabilities('managed')).toEqual(['instance.read', 'announcements', 'support.write']);
   });
 });
