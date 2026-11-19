@@ -226,6 +226,10 @@ model Workspace {
   signageKey                        String?
   /// null = setup assistant not completed
   setupCompletedAt                  DateTime?
+  createdAt                         DateTime                            @default(now())
+  /// Last change the control plane mirrors (workspace row, members and roles, member name/email, settings, template mark).
+  /// Database triggers keep it current (migration 20261119004919_workspace_timestamps), see docs/INSTANCE-API.md.
+  updatedAt                         DateTime                            @default(now()) @updatedAt
   template                          WorkspaceTemplate?
   users                             WorkspaceUser[]
   Glass                             Glass[]
@@ -253,6 +257,8 @@ model Workspace {
   GuestMenuTemplate                 GuestMenuTemplate[]
   TagCategory                       TagCategory[]
   TagDefinition                     TagDefinition[]
+
+  @@index([updatedAt])
 }
 
 enum TemplateKind {

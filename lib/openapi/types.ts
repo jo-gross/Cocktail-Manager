@@ -41,8 +41,12 @@ export interface RouteSpec {
   query?: z.ZodTypeAny;
   /** JSON request body. */
   body?: z.ZodTypeAny;
+  /** Request headers, documentation only (handlers read and validate them themselves). */
+  headers?: z.ZodObject;
   /** Success response payload (documented; wrapped in { data } by ok()). Required unless rawResponse is set. */
   response?: z.ZodTypeAny;
+  /** `cursor`: the handler sends `{ data, pagination: { nextCursor } }` (see `cursorPaginated`) instead of `{ data }`. */
+  pagination?: 'cursor';
   /** Binary/non-JSON success response instead of a JSON `data` envelope. */
   rawResponse?: RawResponse;
   /** Success status code (default 200). */
@@ -59,7 +63,7 @@ export interface ResourceApiDoc {
    * e.g. '/workspaces/{workspaceId}/glasses'. The generator emits it at /api/v1{basePath}.
    */
   basePath: string;
-  /** Path prefix in the spec (default `/api/v1`); instance admin routes live under `/api`. */
+  /** Path prefix in the spec (default `/api/v1`); the template admin routes live under `/api`. */
   pathPrefix?: '/api/v1' | '/api';
   operations: ApiDoc;
 }

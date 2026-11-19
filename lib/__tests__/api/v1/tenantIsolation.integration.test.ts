@@ -9,6 +9,10 @@
  *
  * New operations are covered automatically; a body sample that fails validation
  * fails the suite, so every operation is exercised past validation.
+ *
+ * Master-key operations (`auth: 'master'`: the instance API under /api/v1/instance and the template
+ * admin under /api/admin) are instance-wide by design and have no tenant; they are not part of this
+ * suite. The auth matrix checks that only the master key reaches them.
  */
 import { describe, expect, it } from 'vitest';
 import { flattenOperations, type FlatOperation } from '@lib/openapi/flattenOperations';

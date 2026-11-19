@@ -108,9 +108,22 @@ The `INSTANCE_MASTER_API_KEY` provides unrestricted access to all workspaces in 
 
 When set, this key can be used in the `Authorization: Bearer <key>` header to access any workspace endpoint with full permissions.
 
+The master key also authenticates the read-only instance API for a hosting control plane (`/api/v1/instance/**`, see
+[Instance API](INSTANCE-API.md)). Without the key these routes answer `401`.
+
 The `API_KEY_JWT_SECRET` is used to sign and verify JWT tokens for workspace API keys. If not set, it falls back to `BETTER_AUTH_SECRET`. For production, it's recommended to use a separate secret for API keys.
 
 The `API_KEY_REVOKED_CACHE_TTL_MINUTES` controls how long revoked API keys are cached in memory before checking the database again. This reduces database load when checking if a key is revoked. The default is 15 minutes. Set to a higher value (e.g., 30) for better performance at the cost of slightly delayed revocation propagation, or lower (e.g., 5) for faster revocation but more database queries.
+
+### Hosting / Control Plane
+
+| Variable            | Description                                                                                                  | Default | Example   |
+| ------------------- | ------------------------------------------------------------------------------------------------------------ | ------- | --------- |
+| `ENTITLEMENTS_MODE` | `off`: self-hosted, no plan limits. `managed`: the instance is hosted and a control plane manages entitlements | `off`   | `managed` |
+
+Self-hosted instances leave `ENTITLEMENTS_MODE` unset. The value is reported as `entitlementsMode` by
+`GET /api/v1/instance` (see [Instance API](INSTANCE-API.md)); in this version it changes nothing else. Values other than
+`off` and `managed` (case-insensitive) count as `off` and are logged once at runtime as a warning.
 
 ### Demo Mode
 

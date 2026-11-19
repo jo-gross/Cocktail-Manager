@@ -18,6 +18,7 @@ import * as guides from '@lib/api/v1/guides';
 import * as guestInfo from '@lib/api/v1/guestInfo';
 import * as guestMenus from '@lib/api/v1/guestMenus';
 import * as ices from '@lib/api/v1/ices';
+import * as instance from '@lib/api/v1/instance';
 import * as ingredients from '@lib/api/v1/ingredients';
 import * as joinCodes from '@lib/api/v1/joinCodes';
 import * as joinRequests from '@lib/api/v1/joinRequests';
@@ -64,6 +65,7 @@ import {
   guestMenuTemplatesItemApiDoc,
 } from '@lib/schemas/guestMenus';
 import { apiKeysCollectionApiDoc, apiKeysItemApiDoc } from '@lib/schemas/apiKeys';
+import { instanceApiDoc, instanceUsersCollectionApiDoc, instanceWorkspacesCollectionApiDoc, instanceWorkspacesItemApiDoc } from '@lib/schemas/instance';
 import { auditLogsCollectionApiDoc } from '@lib/schemas/auditLogs';
 import {
   calculationGroupsAssignApiDoc,
@@ -180,6 +182,10 @@ export const handlerBindings: HandlerBinding[] = [
   { apiDoc: adminTemplatesItemApiDoc, handler: adminTemplates.itemHandler },
   { apiDoc: adminTemplatesCloneApiDoc, handler: adminTemplates.cloneHandler },
   { apiDoc: adminTemplatesAccessApiDoc, handler: adminTemplates.accessHandler },
+  { apiDoc: instanceApiDoc, handler: instance.instanceHandler },
+  { apiDoc: instanceWorkspacesCollectionApiDoc, handler: instance.workspacesCollectionHandler },
+  { apiDoc: instanceWorkspacesItemApiDoc, handler: instance.workspacesItemHandler },
+  { apiDoc: instanceUsersCollectionApiDoc, handler: instance.usersCollectionHandler },
   { apiDoc: apiKeysCollectionApiDoc, handler: apiKeys.collectionHandler },
   { apiDoc: apiKeysItemApiDoc, handler: apiKeys.itemHandler },
   { apiDoc: auditLogsCollectionApiDoc, handler: auditLogs.collectionHandler },

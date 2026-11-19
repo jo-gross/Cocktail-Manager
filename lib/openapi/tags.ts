@@ -75,6 +75,9 @@ export const ApiTags = {
   templatesCore: 'Templates / Core',
   onboardingCore: 'Onboarding / Core',
   adminTemplates: 'Admin / Templates',
+  instanceCore: 'Instance / Core',
+  instanceWorkspaces: 'Instance / Workspaces',
+  instanceUsers: 'Instance / Users',
 } as const;
 
 export type ApiTagName = (typeof ApiTags)[keyof typeof ApiTags];
@@ -156,6 +159,9 @@ export const OPENAPI_TAGS: OpenApiTagObject[] = [
   { name: ApiTags.templatesCore, ...subTag('Core', 'Published templates (start content collections) and applying them to a workspace.', 1) },
   { name: ApiTags.onboardingCore, ...subTag('Core', 'Setup state and checklist of a workspace.', 1) },
   { name: ApiTags.adminTemplates, ...subTag('Templates', 'Instance administration of templates (master key only).', 1) },
+  { name: ApiTags.instanceCore, ...subTag('Core', 'Instance metadata and capabilities for the control plane (master key only).', 1) },
+  { name: ApiTags.instanceWorkspaces, ...subTag('Workspaces', 'Instance-wide workspace inventory for the control plane (master key only).', 2) },
+  { name: ApiTags.instanceUsers, ...subTag('Users', 'Instance-wide user lookup for the control plane (master key only).', 3) },
 ];
 
 /** One x-tagGroup per resource. Every tag must appear in exactly one group. */
@@ -225,4 +231,5 @@ export const OPENAPI_TAG_GROUPS: Array<{ name: string; tags: ApiTagName[] }> = [
   { name: 'Templates', tags: [ApiTags.templatesCore] },
   { name: 'Onboarding', tags: [ApiTags.onboardingCore] },
   { name: 'Admin', tags: [ApiTags.adminTemplates] },
+  { name: 'Instance', tags: [ApiTags.instanceCore, ApiTags.instanceWorkspaces, ApiTags.instanceUsers] },
 ];

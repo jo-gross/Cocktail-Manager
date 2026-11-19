@@ -400,6 +400,414 @@
           "key"
         ]
       },
+      "InstanceInfo": {
+        "type": "object",
+        "properties": {
+          "apiVersion": {
+            "type": "string",
+            "enum": [
+              "1"
+            ]
+          },
+          "appVersion": {
+            "type": "string"
+          },
+          "commit": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "capabilities": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Served capabilities; known values are instance.read, entitlements, announcements, support.write."
+          },
+          "entitlementsMode": {
+            "type": "string",
+            "enum": [
+              "off",
+              "managed"
+            ],
+            "description": "Value of `ENTITLEMENTS_MODE` (invalid values count as `off`)."
+          },
+          "migrationsReady": {
+            "type": "boolean",
+            "description": "Database reachable and every migration of this build applied (as `/api/health/ready`)."
+          },
+          "chromiumAvailable": {
+            "type": "boolean",
+            "description": "A Chromium (PDF) service is configured."
+          },
+          "counts": {
+            "type": "object",
+            "properties": {
+              "workspaces": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Workspaces the inventory lists (without template and demo workspaces)."
+              },
+              "users": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "workspaces",
+              "users"
+            ]
+          }
+        },
+        "required": [
+          "apiVersion",
+          "appVersion",
+          "commit",
+          "capabilities",
+          "entitlementsMode",
+          "migrationsReady",
+          "chromiumAvailable",
+          "counts"
+        ]
+      },
+      "InstanceUser": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-07-04T12:00:00.000Z",
+            "description": "ISO 8601 timestamp"
+          },
+          "providers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Login providers, e.g. `google`, `custom_oidc`, `credential`."
+          },
+          "workspaces": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InstanceUserWorkspace"
+            }
+          },
+          "activeSessions": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Sessions that have not expired."
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "name",
+          "createdAt",
+          "providers",
+          "workspaces",
+          "activeSessions"
+        ]
+      },
+      "InstanceUserWorkspace": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "role"
+        ]
+      },
+      "InstanceWorkspaceSummary": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "example": "2026-07-04T12:00:00.000Z",
+            "description": "ISO 8601 timestamp"
+          },
+          "updatedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "example": "2026-07-04T12:00:00.000Z",
+            "description": "Last change of the workspace, its members and roles or its settings (not of its content)."
+          },
+          "owner": {
+            "$ref": "#/components/schemas/InstanceOwnerRef"
+          },
+          "memberCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "lastActivityAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "example": "2026-07-04T12:00:00.000Z",
+            "description": "Newest audit log entry or member visit."
+          },
+          "usage": {
+            "$ref": "#/components/schemas/InstanceUsageCounts"
+          },
+          "entitlement": {
+            "$ref": "#/components/schemas/InstanceEntitlementRef"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "createdAt",
+          "updatedAt",
+          "owner",
+          "memberCount",
+          "lastActivityAt",
+          "usage",
+          "entitlement"
+        ]
+      },
+      "InstanceOwnerRef": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "description": "Empty string if the user has no email."
+          },
+          "name": {
+            "type": "string",
+            "description": "Empty string if the user has no name."
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "name"
+        ],
+        "description": "The longest-registered owner, or null for a workspace without owner."
+      },
+      "InstanceUsageCounts": {
+        "type": "object",
+        "properties": {
+          "cocktails": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Cocktails that are not archived."
+          },
+          "members": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "calculations": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "guestMenusPublished": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Guest menus with a published version."
+          },
+          "signageScreens": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Configured monitor formats (landscape, portrait)."
+          },
+          "apiKeys": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Workspace API keys that are neither revoked nor expired."
+          }
+        },
+        "required": [
+          "cocktails",
+          "members",
+          "calculations",
+          "guestMenusPublished",
+          "signageScreens",
+          "apiKeys"
+        ]
+      },
+      "InstanceEntitlementRef": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "version": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "hash": {
+            "type": "string"
+          },
+          "planKey": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "hash",
+          "planKey"
+        ],
+        "description": "Applied entitlement snapshot; always null in this version."
+      },
+      "CursorPagination": {
+        "type": "object",
+        "properties": {
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Opaque cursor for the next page, null on the last page."
+          }
+        },
+        "required": [
+          "nextCursor"
+        ]
+      },
+      "InstanceWorkspaceDetail": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/InstanceWorkspaceSummary"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "members": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/InstanceWorkspaceMember"
+                }
+              },
+              "template": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "key": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "key"
+                ],
+                "description": "Template key if the workspace itself is a template workspace, otherwise null."
+              },
+              "pendingJoinRequests": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/InstancePendingJoinRequest"
+                }
+              }
+            },
+            "required": [
+              "members",
+              "template",
+              "pendingJoinRequests"
+            ]
+          }
+        ]
+      },
+      "InstanceWorkspaceMember": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "description": "`OWNER`, `ADMIN`, `MANAGER` or `USER`."
+          },
+          "lastOpened": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "example": "2026-07-04T12:00:00.000Z",
+            "description": "ISO 8601 timestamp"
+          }
+        },
+        "required": [
+          "userId",
+          "email",
+          "name",
+          "role",
+          "lastOpened"
+        ]
+      },
+      "InstancePendingJoinRequest": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-07-04T12:00:00.000Z",
+            "description": "ISO 8601 timestamp"
+          }
+        },
+        "required": [
+          "userId",
+          "email",
+          "name",
+          "createdAt"
+        ]
+      },
       "Me": {
         "type": "object",
         "properties": {
@@ -10791,7 +11199,7 @@
     "/api/admin/templates": {
       "get": {
         "summary": "List all templates",
-        "description": "**Authentication:** instance master API key only (instance administration).\n\nAll templates including unpublished ones (built-in templates are synced into the database first).",
+        "description": "**Authentication:** instance master API key only (instance administration). Sessions and workspace API keys get 401.\n\nAll templates including unpublished ones (built-in templates are synced into the database first).",
         "tags": [
           "Admin / Templates"
         ],
@@ -10856,7 +11264,7 @@
       },
       "post": {
         "summary": "Mark workspace as template",
-        "description": "**Authentication:** instance master API key only (instance administration).\n\nMarks an existing workspace as (custom) template. Template workspaces cannot be deleted while marked.",
+        "description": "**Authentication:** instance master API key only (instance administration). Sessions and workspace API keys get 401.\n\nMarks an existing workspace as (custom) template. Template workspaces cannot be deleted while marked.",
         "tags": [
           "Admin / Templates"
         ],
@@ -10949,7 +11357,7 @@
     "/api/admin/templates/{key}": {
       "patch": {
         "summary": "Update template metadata",
-        "description": "**Authentication:** instance master API key only (instance administration).\n\nUpdates name, description, languages, source, `published`, `isDefault` (one default per kind) and `sortOrder`.",
+        "description": "**Authentication:** instance master API key only (instance administration). Sessions and workspace API keys get 401.\n\nUpdates name, description, languages, source, `published`, `isDefault` (one default per kind) and `sortOrder`.",
         "tags": [
           "Admin / Templates"
         ],
@@ -11046,7 +11454,7 @@
       },
       "delete": {
         "summary": "Unmark template",
-        "description": "**Authentication:** instance master API key only (instance administration).\n\nRemoves the template mark of a custom template; its workspace stays. Built-in templates cannot be removed (409 `BUILT_IN_TEMPLATE`).",
+        "description": "**Authentication:** instance master API key only (instance administration). Sessions and workspace API keys get 401.\n\nRemoves the template mark of a custom template; its workspace stays. Built-in templates cannot be removed (409 `BUILT_IN_TEMPLATE`).",
         "tags": [
           "Admin / Templates"
         ],
@@ -11146,7 +11554,7 @@
     "/api/admin/templates/{key}/access": {
       "post": {
         "summary": "Create join code for a template",
-        "description": "**Authentication:** instance master API key only (instance administration).\n\nOne-time join code for editing a custom template (memberless: the first member becomes owner; otherwise a join request). Built-in templates are read-only (409 `BUILT_IN_TEMPLATE`) – clone them instead.",
+        "description": "**Authentication:** instance master API key only (instance administration). Sessions and workspace API keys get 401.\n\nOne-time join code for editing a custom template (memberless: the first member becomes owner; otherwise a join request). Built-in templates are read-only (409 `BUILT_IN_TEMPLATE`) – clone them instead.",
         "tags": [
           "Admin / Templates"
         ],
@@ -11246,7 +11654,7 @@
     "/api/admin/templates/{key}/clone": {
       "post": {
         "summary": "Clone template",
-        "description": "**Authentication:** instance master API key only (instance administration).\n\nCopies the template into a new memberless workspace with a new key (custom, unpublished) and returns a one-time join code; the first member becomes its owner.",
+        "description": "**Authentication:** instance master API key only (instance administration). Sessions and workspace API keys get 401.\n\nCopies the template into a new memberless workspace with a new key (custom, unpublished) and returns a one-time join code; the first member becomes its owner.",
         "tags": [
           "Admin / Templates"
         ],
@@ -11341,6 +11749,403 @@
           },
           "409": {
             "description": "Key taken (`TEMPLATE_KEY_TAKEN`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/instance": {
+      "get": {
+        "summary": "Instance metadata and capabilities",
+        "description": "**Authentication:** instance master API key only (instance administration). Sessions and workspace API keys get 401.\n\nVersion, served capabilities, entitlement mode, readiness and counts. The control plane detects the instance API with this call.",
+        "tags": [
+          "Instance / Core"
+        ],
+        "security": [
+          {
+            "InstanceApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 254,
+              "description": "Email of the acting control plane administrator. Reads do not write it anywhere."
+            },
+            "required": false,
+            "description": "Email of the acting control plane administrator. Reads do not write it anywhere.",
+            "name": "X-CM-Actor",
+            "in": "header"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Instance metadata and capabilities",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/InstanceInfo"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/instance/users": {
+      "get": {
+        "summary": "Search users of the instance",
+        "description": "**Authentication:** instance master API key only (instance administration). Sessions and workspace API keys get 401.\n\nUsers with login providers, workspace memberships and the number of active sessions.",
+        "tags": [
+          "Instance / Users"
+        ],
+        "security": [
+          {
+            "InstanceApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 200,
+              "description": "Case-insensitive search in email and name; without `q` the first users by email. At most 50 results."
+            },
+            "required": false,
+            "description": "Case-insensitive search in email and name; without `q` the first users by email. At most 50 results.",
+            "name": "q",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 254,
+              "description": "Email of the acting control plane administrator. Reads do not write it anywhere."
+            },
+            "required": false,
+            "description": "Email of the acting control plane administrator. Reads do not write it anywhere.",
+            "name": "X-CM-Actor",
+            "in": "header"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Search users of the instance",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/InstanceUser"
+                      }
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/instance/workspaces": {
+      "get": {
+        "summary": "List workspaces of the instance",
+        "description": "**Authentication:** instance master API key only (instance administration). Sessions and workspace API keys get 401.\n\nEvery workspace of the instance except template and demo workspaces, ordered by ID, with owner, member count, last activity and usage. Cursor-paginated: the response is `{ data, pagination: { nextCursor } }`.",
+        "tags": [
+          "Instance / Workspaces"
+        ],
+        "security": [
+          {
+            "InstanceApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 400,
+              "description": "Opaque cursor returned as `pagination.nextCursor`."
+            },
+            "required": false,
+            "description": "Opaque cursor returned as `pagination.nextCursor`.",
+            "name": "cursor",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 50,
+              "description": "Items per page (1–200)."
+            },
+            "required": false,
+            "description": "Items per page (1–200).",
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "description": "Only workspaces whose `updatedAt` is at or after this ISO 8601 timestamp."
+            },
+            "required": false,
+            "description": "Only workspaces whose `updatedAt` is at or after this ISO 8601 timestamp.",
+            "name": "updatedSince",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 200,
+              "description": "Case-insensitive search in the workspace name and the owner email."
+            },
+            "required": false,
+            "description": "Case-insensitive search in the workspace name and the owner email.",
+            "name": "q",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 254,
+              "description": "Email of the acting control plane administrator. Reads do not write it anywhere."
+            },
+            "required": false,
+            "description": "Email of the acting control plane administrator. Reads do not write it anywhere.",
+            "name": "X-CM-Actor",
+            "in": "header"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List workspaces of the instance",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/InstanceWorkspaceSummary"
+                      }
+                    },
+                    "pagination": {
+                      "$ref": "#/components/schemas/CursorPagination"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "pagination"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/instance/workspaces/{id}": {
+      "get": {
+        "summary": "Get a workspace of the instance",
+        "description": "**Authentication:** instance master API key only (instance administration). Sessions and workspace API keys get 401.\n\nSummary plus members with roles, template mark and open join requests. Also serves template and demo workspaces.",
+        "tags": [
+          "Instance / Workspaces"
+        ],
+        "security": [
+          {
+            "InstanceApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128,
+              "description": "Workspace ID"
+            },
+            "required": true,
+            "description": "Workspace ID",
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 254,
+              "description": "Email of the acting control plane administrator. Reads do not write it anywhere."
+            },
+            "required": false,
+            "description": "Email of the acting control plane administrator. Reads do not write it anywhere.",
+            "name": "X-CM-Actor",
+            "in": "header"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Get a workspace of the instance",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/InstanceWorkspaceDetail"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Workspace not found.",
             "content": {
               "application/json": {
                 "schema": {
@@ -30685,6 +31490,24 @@
       "description": "Instance administration of templates (master key only).",
       "x-displayName": "Templates",
       "x-position": 1
+    },
+    {
+      "name": "Instance / Core",
+      "description": "Instance metadata and capabilities for the control plane (master key only).",
+      "x-displayName": "Core",
+      "x-position": 1
+    },
+    {
+      "name": "Instance / Workspaces",
+      "description": "Instance-wide workspace inventory for the control plane (master key only).",
+      "x-displayName": "Workspaces",
+      "x-position": 2
+    },
+    {
+      "name": "Instance / Users",
+      "description": "Instance-wide user lookup for the control plane (master key only).",
+      "x-displayName": "Users",
+      "x-position": 3
     }
   ],
   "x-tagGroups": [
@@ -30853,6 +31676,14 @@
       "name": "Admin",
       "tags": [
         "Admin / Templates"
+      ]
+    },
+    {
+      "name": "Instance",
+      "tags": [
+        "Instance / Core",
+        "Instance / Workspaces",
+        "Instance / Users"
       ]
     }
   ]

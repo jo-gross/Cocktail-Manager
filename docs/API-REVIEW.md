@@ -10,7 +10,7 @@ Legend for the checklist columns: **Auth** (role + API-key scope) · **Scope** (
 All operations are additionally covered by three generic suites:
 
 - `tenantIsolation.integration.test.ts` — every operation with tenant-B ids (owner session and master key): 400/404, no leak, no row changed.
-- `authMatrix.integration.test.ts` — every operation: 401 without credentials, 403 below the minimum role, 403 for a key without the permission, session-only ops reject keys.
+- `authMatrix.integration.test.ts` — every operation: 401 without credentials, 403 below the minimum role, 403 for a key without the permission, session-only ops reject keys; master-key operations (instance API, template admin) answer 401 to everything but the master key.
 - API coverage gate (`API_COVERAGE_ENFORCE=1`) — every operation answers 2xx in at least one test (allowlist: 3 PDF exports that need Chromium).
 
 | Group | Operations | Auth | Scope | Val | Tx | Err | Lim | Test | Notable changes |
@@ -32,6 +32,7 @@ All operations are additionally covered by three generic suites:
 | Backups | export, import | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | Export in RepeatableRead snapshot; import parsed + validated before the tx, ids regenerated, audited, 100 MB limit |
 | Demo | create-workspace, demo-login, cleanup | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | Signed one-time login token; cleanup needs `DEMO_CLEANUP_SECRET` or master key; rate limits |
 | Admin (master key) | create workspace, templates (list, mark, update, unmark, clone, access) | ✅ | n/a | ✅ | ✅ | ✅ | – | ✅ | Every creation path uses `createWorkspace()` (BASE template in one tx); template metadata/defaults under a global lock; built-ins read-only |
+| Instance API (master key) | instance info, workspace inventory, workspace detail, user search | ✅ | n/a | ✅ | n/a | ✅ | ✅ | ✅ | Instance-wide by design for the control plane ([INSTANCE-API.md](INSTANCE-API.md)): master key only (sessions and workspace keys 401), no `{workspaceId}` scope, so tenant isolation does not apply; read-only; `limit ≤ 200`, user search ≤ 50 results, `q ≤ 200` chars; fixed number of grouped queries per page; no workspace route changed |
 | Templates, onboarding, guides | list, items, apply, checklist, complete, guide progress | ✅ | ✅ | ✅ | ✅ | ✅ | – | ✅ | Apply: selection ids only resolve inside the template, links re-checked in the tx, one import tx; API keys need all `*_CREATE` scopes; guides session-only, rows per user bounded |
 | Scraper | ingredient, image | ✅ | n/a | ✅ | n/a | ✅ | ✅ | ✅ (metro manual) | SSRF fixed via `safeFetch` (host allow-list, public IPs only, size/time limits); image proxy raster-only with sandbox CSP |
 | Public | menus, images, signage feed, health | ✅ | ✅ | ✅ | n/a | ✅ | ✅ | ✅ | `/api/health/ready` (DB + migrations) added |
