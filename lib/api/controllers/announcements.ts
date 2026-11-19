@@ -8,6 +8,7 @@ import type { IncomingHttpHeaders } from 'node:http';
 import type { InstanceAnnouncement, Prisma } from '@generated/prisma/client';
 import prisma from '../../../prisma/prisma';
 import { lockWorkspaceScope } from '@lib/db/tx';
+import { entitlementsMode } from '@lib/instance/config';
 import { runControlPlaneWrite } from '@lib/instance/controlPlaneWrite';
 import { canonicalJson } from '@lib/instance/fingerprint';
 import { compareAnnouncements, isAnnouncementLevel, isDismissible, readStoredAnnouncementText } from '@lib/announcements/text';
@@ -71,8 +72,12 @@ function toDto(row: InstanceAnnouncement): AnnouncementDto | null {
 /**
  * Announcements that are active at `now`: for a workspace those targeting all workspaces or this one, without a
  * workspace (workspace overview) only those targeting all. Most severe first.
+ *
+ * Only in `managed` mode: outside it the control plane can no longer replace or remove the set (the capability is
+ * not advertised), so stored announcements must not show. The rows stay and show again after switching back.
  */
 export async function listActiveAnnouncements(workspaceId: string | null, now: Date = new Date()): Promise<AnnouncementDto[]> {
+  if (entitlementsMode() !== 'managed') return [];
   const forAll: Prisma.InstanceAnnouncementWhereInput = { workspaceIds: { isEmpty: true } };
   const rows = await prisma.instanceAnnouncement.findMany({
     where: {

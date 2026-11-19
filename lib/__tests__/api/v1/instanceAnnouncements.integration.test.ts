@@ -3,7 +3,7 @@
  * idempotency) and the banner reads, which target all workspaces or the listed ones within a time window.
  */
 import { randomUUID } from 'node:crypto';
-import { describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import prisma from '../../../../prisma/prisma';
 import { collectionHandler, instanceAnnouncementsHandler, workspaceCollectionHandler } from '@lib/api/v1/announcements';
 import { instanceHandler } from '@lib/api/v1/instance';
@@ -216,6 +216,17 @@ describe('PUT /api/v1/instance/announcements', () => {
 });
 
 describe('banner reads', () => {
+  // Announcements come from the control plane, which only manages instances in managed mode.
+  let originalMode: string | undefined;
+  beforeAll(() => {
+    originalMode = process.env.ENTITLEMENTS_MODE;
+    process.env.ENTITLEMENTS_MODE = 'managed';
+  });
+  afterAll(() => {
+    if (originalMode === undefined) delete process.env.ENTITLEMENTS_MODE;
+    else process.env.ENTITLEMENTS_MODE = originalMode;
+  });
+
   it('shows announcements for all workspaces everywhere and listed ones only in their workspaces', async () => {
     const a = await seedWorkspace({ users: [{ role: 'USER' }] });
     const b = await seedWorkspace({ users: [{ role: 'USER' }] });
@@ -302,6 +313,20 @@ describe('banner reads', () => {
     const foreign = await callAs(ownerA, workspaceCollectionHandler, { method: 'GET', query: { workspaceId: b.workspace.id } });
     expect(foreign.status).not.toBe(200);
     expect(JSON.stringify(foreign.json)).not.toContain('only-b');
+  });
+
+  it('hides stored announcements outside managed mode and shows them again after switching back', async () => {
+    const seeded = await seedWorkspace({ users: [{ role: 'USER' }] });
+    const user = findUserByRole(seeded, 'USER');
+    await pushed([announcement({ id: 'mode-switch', level: 'warning' })]);
+    try {
+      process.env.ENTITLEMENTS_MODE = 'off';
+      expect(await forOverview(user)).toEqual([]);
+      expect(await forWorkspace(user, seeded.workspace.id)).toEqual([]);
+    } finally {
+      process.env.ENTITLEMENTS_MODE = 'managed';
+    }
+    expect(idsOf(await forWorkspace(user, seeded.workspace.id))).toContain('mode-switch');
   });
 
   it('is empty without a push (self-hosted instance)', async () => {
