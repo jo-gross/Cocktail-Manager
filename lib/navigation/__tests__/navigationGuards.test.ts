@@ -153,6 +153,24 @@ describe('navigation guard registry', () => {
     expect(() => emit('routeChangeStart', '/y')).not.toThrow();
   });
 
+  it('lets the pop interceptor consume overlay pops before guards and Next', () => {
+    const { registry, pop, history, emit } = setup();
+    const guard = vi.fn(() => true);
+    registry.register(guard);
+    registry.interceptPopState((state) => (state as { as: string }).as === '/overlay');
+
+    // Consumed: Next must not re-route (false), no guard asked, no history repair.
+    expect(pop('/overlay')).toBe(false);
+    expect(guard).not.toHaveBeenCalled();
+    expect(history.pushState).not.toHaveBeenCalled();
+    // No route change follows a consumed pop, so the next push is still guarded.
+    expect(() => emit('routeChangeStart', '/elsewhere')).toThrow(NAVIGATION_ABORTED);
+
+    // Not consumed: the guards decide as before.
+    expect(pop('/prev')).toBe(false);
+    expect(guard).toHaveBeenCalledWith({ kind: 'pop', url: '/prev', samePage: false });
+  });
+
   it('re-pushes the state of the page shown last after navigation completed', () => {
     const { registry, pop, history, emit } = setup();
     registry.register(() => true);
