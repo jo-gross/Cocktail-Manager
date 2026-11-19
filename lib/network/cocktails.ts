@@ -11,7 +11,8 @@ export function fetchCocktail(
   setCocktailLoading: (loading: boolean) => void,
   onCacheFallback?: () => void,
 ) {
-  if (!workspaceId) return;
+  // An unsaved cocktail (create form preview) has no id yet: `cocktails/` would hit the list endpoint.
+  if (!workspaceId || !cocktailId) return;
   const wsId = Array.isArray(workspaceId) ? workspaceId[0] : workspaceId;
 
   setCocktailLoading(true);

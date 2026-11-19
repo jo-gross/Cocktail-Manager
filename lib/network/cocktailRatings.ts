@@ -9,7 +9,8 @@ export function fetchCocktailRatings(
   setCocktailRatingLoading: (loading: boolean) => void,
   setCocktailRatingError: (hasError: boolean) => void,
 ) {
-  if (!workspaceId) return;
+  // An unsaved cocktail (create form preview) has no id yet: `cocktails//ratings` answers 404 "Cocktail not found".
+  if (!workspaceId || !cocktailId) return;
   setCocktailRatingLoading(true);
   apiV1FetchSafe<RatingDto[]>(
     `/api/v1/workspaces/${workspaceId}/cocktails/${cocktailId}/ratings`,

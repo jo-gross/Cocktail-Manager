@@ -57,6 +57,8 @@ const CocktailRecipeCardItem = forwardRef<CocktailRecipeOverviewItemRef, Cocktai
   const cocktailId = typeof props.cocktailRecipe === 'string' ? props.cocktailRecipe : props.cocktailRecipe.id;
 
   const refresh = useCallback(() => {
+    // The create form previews a cocktail without id: nothing to load yet.
+    if (!cocktailId) return;
     fetchCocktail(workspaceId, cocktailId, setLoadedCocktailRecipe, setCocktailRecipeLoading);
     fetchCocktailRatings(workspaceId, cocktailId, setCocktailRatings, setCocktailRatingsLoading, setCocktailRatingsError);
   }, [workspaceId, cocktailId]);
