@@ -1,5 +1,13 @@
 [
   {
+    "version": "1.22.1",
+    "date": "2026-11-19",
+    "highlights": [
+      "Bug fix: Solved edit cocktail from detail form",
+      "Workspace onboarding, reusable tutorials and template-based demo"
+    ]
+  },
+  {
     "version": "1.22.0",
     "date": "2026-11-13",
     "highlights": [

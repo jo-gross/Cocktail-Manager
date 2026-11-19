@@ -1,3 +1,30 @@
+## [1.22.1](https://github.com/jo-gross/Cocktail-Manager/releases/tag/v1.22.1) (2026-11-19)
+
+## What's Changed
+
+- fix: solved edit cocktail from detail form (#1477) @jo-gross
+- chore: enhanced profile nav item (#1462) @jo-gross
+- feat: workspace onboarding, reusable tutorials and template-based demo (#1460) @jo-gross
+
+## Dependencies
+
+- build(deps): bump postcss from 8.5.32 to 8.5.33 (#1476) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps): bump better-auth from 1.7.18 to 1.7.25 (#1471) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps-dev): bump @next/bundle-analyzer from 16.4.5 to 16.4.6 (#1473) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps-dev): bump dotenv from 18.0.9 to 18.0.10 (#1474) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps): bump puppeteer-core from 25.16.0 to 25.17.0 (#1475) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps-dev): bump prettier from 3.9.10 to 3.10.1 (#1464) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps): bump motion from 14.10.1 to 14.14.0 (#1472) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps): bump nodemailer from 10.4.0 to 10.5.0 (#1470) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps-dev): bump @playwright/test from 1.65.0 to 1.65.1 (#1469) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps): bump postcss-selector-parser from 7.2.0 to 7.2.1 (#1468) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps-dev): bump eslint from 10.14.0 to 10.15.0 (#1466) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps): bump i18next from 27.0.1 to 27.1.2 (#1465) @[dependabot[bot]](https://github.com/apps/dependabot)
+- build(deps-dev): bump playwright from 1.65.0 to 1.65.1 (#1463) @[dependabot[bot]](https://github.com/apps/dependabot)
+
+**Full Changelog**: https://github.com/jo-gross/Cocktail-Manager/compare/v1.22.0...v1.22.1
+
+
 ## [1.22.0](https://github.com/jo-gross/Cocktail-Manager/releases/tag/v1.22.0) (2026-11-13)
 
 ## What's Changed
