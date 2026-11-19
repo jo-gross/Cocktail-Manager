@@ -7,11 +7,15 @@ import type { WorkspaceEntitlementDto } from '@lib/schemas/entitlements';
 import { ManageSubscriptionButton } from './ManageSubscriptionButton';
 import { planDisplayName, usagePercent } from './planLabels';
 
+/** The end of a subscription is shown in the same time zone as in the mail and the portal of the control plane. */
+const SCHEDULED_END_DATE = { timeZone: 'Europe/Berlin', dateStyle: 'long' } as const;
+
 const STATUS_BADGE = { ACTIVE: 'success', GRACE: 'warning', READ_ONLY: 'error', SUSPENDED: 'error' } as const;
 
 /**
  * Plan card of the workspace settings (only with `ENTITLEMENTS_MODE=managed`): plan name, status, usage against the
- * limits, features and "Abo verwalten" (`billing: portal`) or a contact hint (`billing: contact`).
+ * limits, features and "Abo verwalten" (`billing: portal`) or a contact hint (`billing: contact`). A cancelled
+ * subscription (`scheduledEnd`) shows its end date and the plan that follows, with "Abo verwalten" to reactivate.
  */
 export function PlanCard({ entitlement, workspaceId }: { entitlement: WorkspaceEntitlementDto | null; workspaceId: string }) {
   const { t, i18n } = useTranslation(['plan']);
@@ -77,7 +81,18 @@ export function PlanCard({ entitlement, workspaceId }: { entitlement: WorkspaceE
             </div>
           )}
         </div>
-        {plan.nextChangeAt ? (
+        {plan.scheduledEnd ? (
+          <div className="flex flex-wrap items-center justify-between gap-2" data-testid="plan-scheduled-end">
+            <p className="text-sm">
+              {t('plan:card.scheduledEnd', {
+                date: new Date(plan.scheduledEnd.at).toLocaleDateString(i18n.language, SCHEDULED_END_DATE),
+                plan: planDisplayName(plan.scheduledEnd, i18n.language),
+              })}
+            </p>
+            {/* With `billing: portal` the header already carries the button. */}
+            {plan.billing === 'portal' ? null : <ManageSubscriptionButton workspaceId={workspaceId} available={entitlement.portalHandoff} />}
+          </div>
+        ) : plan.nextChangeAt ? (
           <p className="text-sm text-base-content/70">{t('plan:card.nextChange', { date: new Date(plan.nextChangeAt).toLocaleDateString(i18n.language) })}</p>
         ) : null}
         {plan.billing === 'contact' ? <p className="text-sm">{t('plan:billing.contact')}</p> : null}

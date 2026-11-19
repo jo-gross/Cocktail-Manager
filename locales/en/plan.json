@@ -9,6 +9,7 @@
     "features": "Included features",
     "noFeatures": "No additional features",
     "nextChange": "Next change on {{date}}",
+    "scheduledEnd": "Your subscription ends on {{date}}. After that, {{plan}} applies.",
     "noPlan": "No limits apply to this workspace."
   },
   "status": {

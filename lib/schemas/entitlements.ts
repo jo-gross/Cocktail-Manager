@@ -9,7 +9,7 @@ import { z } from '@lib/openapi/zod';
 import { ApiTags } from '@lib/openapi/tags';
 import { WorkspaceIdParam } from '@lib/schemas/common';
 import { InstanceUsageCountsSchema, InstanceWorkspaceIdParam, instanceWriteOperation } from '@lib/schemas/instance';
-import { ENTITLEMENT_STATUSES, LocalizedNameSchema, SnapshotLimitsSchema, SnapshotWireSchema } from '@lib/entitlements/snapshot';
+import { ENTITLEMENT_STATUSES, LocalizedNameSchema, ScheduledEndSchema, SnapshotLimitsSchema, SnapshotWireSchema } from '@lib/entitlements/snapshot';
 import type { ResourceApiDoc } from '@lib/openapi/types';
 
 export const EntitlementApplyResultSchema = z
@@ -75,6 +75,9 @@ export const WorkspacePlanSchema = z
     status: z.enum(ENTITLEMENT_STATUSES),
     billing: z.enum(['portal', 'contact']).openapi({ description: '`portal`: manage the subscription in the portal; `contact`: individual terms.' }),
     nextChangeAt: z.string().nullable(),
+    scheduledEnd: ScheduledEndSchema.nullable().openapi({
+      description: 'The subscription was cancelled: it ends at `at`, then the named plan applies. Null when nothing ends.',
+    }),
     limits: SnapshotLimitsSchema,
     features: z.array(z.string()),
     source: z.enum(['workspace', 'default']).openapi({ description: 'Own snapshot of the workspace or the instance default.' }),

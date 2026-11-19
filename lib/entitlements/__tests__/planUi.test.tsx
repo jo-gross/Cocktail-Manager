@@ -49,6 +49,7 @@ function managed(plan: Partial<NonNullable<WorkspaceEntitlementDto['plan']>> = {
       status: 'ACTIVE',
       billing: 'portal',
       nextChangeAt: null,
+      scheduledEnd: null,
       limits: { cocktails: 50, members: 2, calculations: null, guestMenusPublished: 1, signageScreens: 0, apiKeys: 0 },
       features: ['statistics.advanced'],
       source: 'default',
@@ -106,6 +107,57 @@ describe('PlanCard', () => {
 
   it('says that nothing is limited before the first push', async () => {
     expect(await render(<PlanCard entitlement={{ mode: 'managed', plan: null, usage: managed().usage }} workspaceId="ws1" />)).toContain('keine Limits');
+  });
+
+  describe('cancelled subscription (scheduledEnd)', () => {
+    const scheduledEnd = { at: '2026-12-31T12:00:00.000Z', planKey: 'homebar_free', planName: { de: 'Homebar Gratis', en: 'Homebar Free' } };
+    const cancelled = (plan: Partial<NonNullable<WorkspaceEntitlementDto['plan']>> = {}) =>
+      managed({ planKey: 'bar_pro', planName: { de: 'Bar Pro', en: 'Bar Pro' }, source: 'workspace', nextChangeAt: scheduledEnd.at, scheduledEnd, ...plan });
+
+    it('shows the end date and the plan afterwards instead of the generic next change, with one manage button', async () => {
+      const html = await render(<PlanCard entitlement={cancelled()} workspaceId="ws1" />);
+      expect(html).toContain('Dein Abo endet am 31. Dezember 2026. Danach gilt Homebar Gratis.');
+      expect(html).not.toContain('Nächste Änderung');
+      expect(html).toMatch(ENABLED_MANAGE);
+      expect(html.match(/Abo verwalten/g)).toHaveLength(1);
+
+      const en = await render(<PlanCard entitlement={cancelled()} workspaceId="ws1" />, 'en');
+      expect(en).toContain('Your subscription ends on December 31, 2026. After that, Homebar Free applies.');
+      expect(en).not.toContain('Next change');
+      expect(en).toContain('>Manage subscription</button>');
+    });
+
+    it('shows the end date in Europe/Berlin, whatever the time zone of the viewer', async () => {
+      const at = (value: string) => cancelled({ scheduledEnd: { ...scheduledEnd, at: value } });
+      const afterMidnight = await render(<PlanCard entitlement={at('2026-12-31T23:30:00.000Z')} workspaceId="ws1" />);
+      expect(afterMidnight).toContain('Dein Abo endet am 1. Januar 2027.');
+      const beforeMidnight = await render(<PlanCard entitlement={at('2026-12-31T22:59:59.000Z')} workspaceId="ws1" />);
+      expect(beforeMidnight).toContain('Dein Abo endet am 31. Dezember 2026.');
+      expect(await render(<PlanCard entitlement={at('2026-12-31T23:30:00.000Z')} workspaceId="ws1" />, 'en')).toContain('ends on January 1, 2027.');
+    });
+
+    it('keeps the generic next change line without scheduledEnd', async () => {
+      const html = await render(<PlanCard entitlement={cancelled({ scheduledEnd: null })} workspaceId="ws1" />);
+      expect(html).toContain('Nächste Änderung am 31.12.2026');
+      expect(html).not.toContain('Dein Abo endet');
+    });
+
+    it('offers the manage button next to the text when the header has none (billing contact)', async () => {
+      const html = await render(<PlanCard entitlement={cancelled({ billing: 'contact' })} workspaceId="ws1" />);
+      expect(html).toContain('Dein Abo endet am 31. Dezember 2026.');
+      expect(html).toMatch(ENABLED_MANAGE);
+      expect(html.match(/Abo verwalten/g)).toHaveLength(1);
+    });
+
+    it('tells non-owners once that only owners can manage it', async () => {
+      const html = await render(<PlanCard entitlement={cancelled()} workspaceId="ws1" />, 'de', { owner: false });
+      expect(html).toContain('Dein Abo endet am 31. Dezember 2026.');
+      expect(html.match(/Nur Inhaberinnen und Inhaber/g)).toHaveLength(1);
+    });
+
+    it('shows nothing of it on self-hosted instances', async () => {
+      expect(await render(<PlanCard entitlement={{ ...OFF, plan: cancelled().plan }} workspaceId="ws1" />)).toBe('');
+    });
   });
 });
 

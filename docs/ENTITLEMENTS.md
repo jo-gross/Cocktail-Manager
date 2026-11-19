@@ -16,9 +16,15 @@ in `lib/api/controllers/entitlements.ts`, UI in `components/plan/`. See also [In
 
 The snapshot is the `SnapshotWire` of the contract (`contracts/instance-api.openapi.yaml` of the control plane):
 `version`, `hash`, `planKey`, `planName` (de/en), `status`, `limits` (all six keys, `null` = unlimited), `features`,
-`billing` (`portal` or `contact`) and `nextChangeAt`. Validation is forward compatible: every known field is required
-and strictly typed (otherwise `400 VALIDATION_ERROR`), while unknown top-level fields and unknown limit keys of a newer
-control plane are stripped. The stored `hash` is always the one the control plane sent.
+`billing` (`portal` or `contact`), `nextChangeAt` and `scheduledEnd`. Validation is forward compatible: every known
+field is required and strictly typed (otherwise `400 VALIDATION_ERROR`), while unknown top-level fields and unknown
+limit keys of a newer control plane are stripped. The stored `hash` is always the one the control plane sent.
+
+`scheduledEnd` is the only field that may be missing (older control planes); a missing field counts as `null`. When
+present it is `null` or `{ at, planKey, planName: { de, en } }`, strictly typed: the subscription was cancelled and
+ends at `at`, then the named plan (the instance default plan) applies. It is stored with the snapshot and only
+displayed. The app never switches the plan at `at` itself; the control plane pushes the new snapshot when the
+subscription has ended.
 
 | Operation | Storage |
 | --- | --- |
@@ -133,7 +139,7 @@ public signage feed.
 ## Workspace plan for the UI
 
 `GET /api/v1/workspaces/{workspaceId}/entitlement` (any member, API keys need `WORKSPACE_READ`) answers
-`{ mode, plan, usage, portalHandoff }`. With `off` it is `{ mode: 'off', plan: null, usage: null, portalHandoff: false }`
+`{ mode, plan, usage, portalHandoff }`; `plan.scheduledEnd` is the `scheduledEnd` of the snapshot or `null`. With `off` it is `{ mode: 'off', plan: null, usage: null, portalHandoff: false }`
 without a database query. `portalHandoff` says whether the instance offers the customer portal (see
 [Portal handoff](#portal-handoff)).
 
@@ -144,7 +150,11 @@ UI (only shown with `managed`, German and English, namespace `plan`):
   replaces the page by a status view while the workspace is suspended (the settings pages *Data* and *Danger zone*
   stay reachable for export, leaving and deleting; with `billing: portal` the status view also offers "Abo verwalten").
 - `PlanCard` on the general settings page: plan name, status, usage against the limits, features and "Abo verwalten"
-  (`billing: portal`) or a contact hint (`billing: contact`).
+  (`billing: portal`) or a contact hint (`billing: contact`). With `scheduledEnd` it shows "Dein Abo endet am … Danach
+  gilt …" instead of the generic "Nächste Änderung am …" line of `nextChangeAt`. The end date is shown in
+  `Europe/Berlin`, like the mail and the portal of the control plane; `nextChangeAt` stays in the browser's time zone.
+  "Abo verwalten" (`intent: manage`) is the button of the card header, or sits next to the text when the header has
+  none.
 - `PlanLimitDialog`: opens on every 402 of a plan guard that reaches `apiV1Fetch` (`lib/entitlements/planEvents.ts`).
   Raw `fetch` writes report it with `reportPlanErrorResponse`: the cocktail import wizard (validate and execute), the
   JSON import of glasses/garnishes/ingredients/calculations, the backup import and archive/unarchive on the cocktail

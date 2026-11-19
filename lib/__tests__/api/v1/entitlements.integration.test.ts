@@ -196,6 +196,78 @@ describe('PUT /api/v1/instance/workspaces/{id}/entitlements', () => {
   });
 });
 
+describe('scheduledEnd (cancelled subscription)', () => {
+  const scheduledEnd = { at: '2026-12-31T23:59:59.000Z', planKey: 'homebar_free', planName: { de: 'Homebar Free', en: 'Homebar Free' } };
+  const get = async (caller: Caller, workspaceId: string) => {
+    const result = await callAs(caller, entitlementHandler, { method: 'GET', query: { workspaceId } });
+    expect(result.status, JSON.stringify(result.json)).toBe(200);
+    return WorkspaceEntitlementDtoSchema.strict().parse(dataOf(result));
+  };
+
+  it('is stored with the snapshot and returned by the plan endpoint: set, moved, cleared and missing', async () => {
+    managed();
+    const { a } = await seedTenantPair();
+    const user = roleUser(a, 'USER');
+    const pro = { planKey: 'bar_pro', planName: { de: 'Bar Pro', en: 'Bar Pro' } };
+
+    // Older control planes do not send the field.
+    const v1 = snapshotWire({ ...pro, version: 1 });
+    expect(v1).not.toHaveProperty('scheduledEnd');
+    applyResult(await pushWorkspace(a.workspace.id, v1));
+    expect((await get(user, a.workspace.id)).plan).toMatchObject({ planKey: 'bar_pro', scheduledEnd: null });
+
+    const v2 = snapshotWire({ ...pro, version: 2, nextChangeAt: scheduledEnd.at, scheduledEnd });
+    expect(applyResult(await pushWorkspace(a.workspace.id, v2))).toEqual({ applied: true, currentVersion: 2, currentHash: v2.hash });
+    const stored = await prisma.workspaceEntitlement.findUniqueOrThrow({ where: { workspaceId: a.workspace.id } });
+    expect(stored.snapshot).toEqual(v2);
+    expect((await get(user, a.workspace.id)).plan).toMatchObject({ planKey: 'bar_pro', nextChangeAt: scheduledEnd.at, scheduledEnd });
+    const audit = await prisma.auditLog.findFirstOrThrow({
+      where: { workspaceId: a.workspace.id, entityType: 'WorkspaceEntitlement' },
+      orderBy: { createdAt: 'desc' },
+    });
+    expect(audit.snapshot).toMatchObject({ version: 2, scheduledEnd });
+
+    const moved = { ...scheduledEnd, at: '2027-01-31T23:59:59.000Z' };
+    applyResult(await pushWorkspace(a.workspace.id, snapshotWire({ ...pro, version: 3, nextChangeAt: moved.at, scheduledEnd: moved })));
+    expect((await get(user, a.workspace.id)).plan!.scheduledEnd).toEqual(moved);
+
+    // Reactivated.
+    applyResult(await pushWorkspace(a.workspace.id, snapshotWire({ ...pro, version: 4, scheduledEnd: null })));
+    expect((await get(user, a.workspace.id)).plan).toMatchObject({ nextChangeAt: null, scheduledEnd: null });
+  });
+
+  it('is accepted by the default push as well', async () => {
+    managed();
+    const { a } = await seedTenantPair();
+    const snapshot = snapshotWire({ scheduledEnd });
+    applyResult(await pushDefault(snapshot));
+    const stored = await prisma.instanceSetting.findUniqueOrThrow({ where: { key: 'entitlements.default' } });
+    expect(stored.value).toEqual({ snapshot });
+    expect((await get(roleUser(a, 'USER'), a.workspace.id)).plan).toMatchObject({ source: 'default', scheduledEnd });
+  });
+
+  it('is refused with 400 when wrongly typed, nothing is stored', async () => {
+    const { workspace } = await seedWorkspace({ users: [{ role: 'OWNER' }] });
+    const valid = snapshotWire();
+    for (const value of [
+      '2026-12-31T23:59:59.000Z',
+      {},
+      { ...scheduledEnd, at: 'soon' },
+      { ...scheduledEnd, at: null },
+      { ...scheduledEnd, planKey: 7 },
+      { at: scheduledEnd.at, planKey: scheduledEnd.planKey },
+      { ...scheduledEnd, planName: { de: 'Homebar Free' } },
+    ]) {
+      for (const result of [await pushWorkspace(workspace.id, { ...valid, scheduledEnd: value }), await pushDefault({ ...valid, scheduledEnd: value })]) {
+        expect(result.status, JSON.stringify(value)).toBe(400);
+        expect(errorCodeOf(result)).toBe('VALIDATION_ERROR');
+      }
+    }
+    expect(await prisma.workspaceEntitlement.count()).toBe(0);
+    expect(await prisma.instanceSetting.findUnique({ where: { key: 'entitlements.default' } })).toBeNull();
+  });
+});
+
 describe('PUT /api/v1/instance/entitlements/default', () => {
   it('applies only higher versions, keeps actor and reason and honours Idempotency-Key', async () => {
     const v1 = snapshotWire({ version: 1 });

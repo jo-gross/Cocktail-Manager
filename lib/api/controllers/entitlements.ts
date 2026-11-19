@@ -32,6 +32,7 @@ function auditSnapshot(snapshot: SnapshotWire, headers: ControlPlaneHeaders) {
     features: snapshot.features,
     billing: snapshot.billing,
     nextChangeAt: snapshot.nextChangeAt,
+    scheduledEnd: snapshot.scheduledEnd ?? null,
     controlPlane: { actor: headers.actor, reason: headers.reason },
   };
 }
@@ -129,6 +130,7 @@ export async function getWorkspaceEntitlement(workspace: Workspace): Promise<Wor
       status: snapshot.status,
       billing: snapshot.billing,
       nextChangeAt: snapshot.nextChangeAt,
+      scheduledEnd: snapshot.scheduledEnd ?? null,
       limits: snapshot.limits,
       features: snapshot.features,
       source,

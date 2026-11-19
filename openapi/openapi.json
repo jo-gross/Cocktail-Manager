@@ -735,6 +735,9 @@
               "null"
             ],
             "format": "date-time"
+          },
+          "scheduledEnd": {
+            "$ref": "#/components/schemas/EntitlementScheduledEnd"
           }
         },
         "required": [
@@ -834,6 +837,32 @@
           "apiKeys"
         ],
         "description": "Complete limit set; `null` means unlimited."
+      },
+      "EntitlementScheduledEnd": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "planKey": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "planName": {
+            "$ref": "#/components/schemas/EntitlementPlanName"
+          }
+        },
+        "required": [
+          "at",
+          "planKey",
+          "planName"
+        ],
+        "description": "Scheduled end of the subscription and the plan that applies afterwards."
       },
       "InstanceUser": {
         "type": "object",
@@ -5449,6 +5478,16 @@
               "null"
             ]
           },
+          "scheduledEnd": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EntitlementScheduledEnd"
+              },
+              {
+                "description": "The subscription was cancelled: it ends at `at`, then the named plan applies. Null when nothing ends."
+              }
+            ]
+          },
           "limits": {
             "$ref": "#/components/schemas/EntitlementLimits"
           },
@@ -5473,6 +5512,7 @@
           "status",
           "billing",
           "nextChangeAt",
+          "scheduledEnd",
           "limits",
           "features",
           "source"

@@ -32,6 +32,38 @@ describe('SnapshotWireSchema', () => {
     expect(parsed.hash).toBe(base.hash);
   });
 
+  it('accepts scheduledEnd set, null or missing and strips unknown fields inside it', () => {
+    const scheduledEnd = { at: '2026-12-31T23:59:59.000Z', planKey: 'homebar_free', planName: { de: 'Homebar Free', en: 'Homebar Free' } };
+    const base = snapshot({ planKey: 'bar_pro' });
+    expect(SnapshotWireSchema.parse({ ...base, scheduledEnd }).scheduledEnd).toEqual(scheduledEnd);
+    expect(SnapshotWireSchema.parse({ ...base, scheduledEnd: { ...scheduledEnd, at: '2026-12-31T23:59:59+01:00', reason: 'x' } }).scheduledEnd).toEqual({
+      ...scheduledEnd,
+      at: '2026-12-31T23:59:59+01:00',
+    });
+    expect(SnapshotWireSchema.parse({ ...base, scheduledEnd: null }).scheduledEnd).toBeNull();
+    expect(SnapshotWireSchema.parse(base)).not.toHaveProperty('scheduledEnd');
+  });
+
+  it('refuses a wrongly typed scheduledEnd', () => {
+    const scheduledEnd = { at: '2026-12-31T23:59:59.000Z', planKey: 'homebar_free', planName: { de: 'Homebar Free', en: 'Homebar Free' } };
+    const { planKey: _planKey, ...withoutPlanKey } = scheduledEnd;
+    const invalid: unknown[] = [
+      '2026-12-31T23:59:59.000Z',
+      true,
+      [],
+      {},
+      withoutPlanKey,
+      { ...scheduledEnd, at: '2026-12-31' },
+      { ...scheduledEnd, at: null },
+      { ...scheduledEnd, at: 1798761599 },
+      { ...scheduledEnd, planKey: '' },
+      { ...scheduledEnd, planKey: 7 },
+      { ...scheduledEnd, planName: 'Homebar Free' },
+      { ...scheduledEnd, planName: { de: 'Homebar Free' } },
+    ];
+    for (const value of invalid) expect(SnapshotWireSchema.safeParse({ ...snapshot(), scheduledEnd: value }).success, JSON.stringify(value)).toBe(false);
+  });
+
   it('refuses missing and wrongly typed known fields', () => {
     const base = snapshot();
     const { billing: _billing, ...withoutBilling } = base;

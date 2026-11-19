@@ -39,9 +39,25 @@ export const SnapshotLimitsSchema = z
   .openapi('EntitlementLimits', { description: 'Complete limit set; `null` means unlimited.' });
 
 /**
+ * End of a cancelled subscription: until `at` the plan of the snapshot applies, then `planKey`/`planName` (the instance
+ * default plan). Information for the plan card only: the app never switches plans itself, the control plane pushes the
+ * new snapshot when the subscription has ended.
+ */
+export const ScheduledEndSchema = z
+  .object({
+    at: z.iso.datetime({ offset: true }),
+    planKey: z.string().min(1).max(64),
+    planName: LocalizedNameSchema,
+  })
+  .openapi('EntitlementScheduledEnd', { description: 'Scheduled end of the subscription and the plan that applies afterwards.' });
+
+export type ScheduledEnd = z.infer<typeof ScheduledEndSchema>;
+
+/**
  * Validation of a pushed snapshot. Forward compatible: unknown top-level fields and unknown limit keys are stripped, so a
- * newer control plane can add fields; every known field is required and strictly typed. The stored `hash` stays the one
- * the control plane computed over its full content.
+ * newer control plane can add fields; every known field is required and strictly typed. Only `scheduledEnd` may be
+ * missing (older control planes); when present it is `null` or strictly typed. The stored `hash` stays the one the
+ * control plane computed over its full content.
  */
 export const SnapshotWireSchema = z
   .object({
@@ -54,6 +70,7 @@ export const SnapshotWireSchema = z
     features: z.array(z.string().min(1).max(100)).max(MAX_FEATURES),
     billing: z.enum(['portal', 'contact']),
     nextChangeAt: z.iso.datetime({ offset: true }).nullable(),
+    scheduledEnd: ScheduledEndSchema.nullable().optional(),
   })
   .openapi('EntitlementSnapshot', { description: 'Snapshot as pushed by the control plane (`SnapshotWire` of the contract).' });
 
