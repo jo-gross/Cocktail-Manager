@@ -57,6 +57,7 @@ export const STATUS_EXEMPT_OPERATIONS: Partial<Record<OperationKey, readonly Res
   [`DELETE ${W}`]: BOTH,
   [`POST ${W}/leave`]: BOTH,
   [`GET ${W}/entitlement`]: ['SUSPENDED'],
+  [`POST ${W}/portal/handoff`]: BOTH,
   [`POST ${W}/cocktails/export/json`]: BOTH,
   [`POST ${W}/cocktails/export/pdf`]: BOTH,
   [`POST ${W}/calculations/export/json`]: BOTH,

@@ -256,7 +256,7 @@ describe('GET /api/v1/workspaces/{workspaceId}/entitlement', () => {
   it('reports mode off without plan and usage on self-hosted instances', async () => {
     const { a } = await seedTenantPair();
     await pushDefault(snapshotWire());
-    expect(await get(roleUser(a, 'USER'), a.workspace.id)).toEqual({ mode: 'off', plan: null, usage: null });
+    expect(await get(roleUser(a, 'USER'), a.workspace.id)).toEqual({ mode: 'off', plan: null, usage: null, portalHandoff: false });
   });
 
   it('reports usage, then the default plan, then the own plan in managed mode', async () => {

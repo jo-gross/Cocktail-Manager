@@ -9,6 +9,7 @@ import type { Prisma, Workspace } from '@generated/prisma/client';
 import { lockWorkspaceScope } from '@lib/db/tx';
 import { ApiError } from '@lib/http/ApiError';
 import { entitlementsMode } from '@lib/instance/config';
+import { portalHandoffAvailable } from '@lib/portal/handoffConfig';
 import type { ControlPlaneHeaders } from '@lib/instance/controlPlaneHeaders';
 import { runControlPlaneWrite } from '@lib/instance/controlPlaneWrite';
 import { shouldApply, type SnapshotWire } from '@lib/entitlements/snapshot';
@@ -115,9 +116,10 @@ export async function putWorkspaceEntitlements(req: NextApiRequest, workspaceId:
 /** Plan of the workspace for the UI. With `ENTITLEMENTS_MODE=off` it answers without touching the database. */
 export async function getWorkspaceEntitlement(workspace: Workspace): Promise<WorkspaceEntitlementDto> {
   const mode = entitlementsMode();
-  if (mode !== 'managed') return { mode, plan: null, usage: null };
+  if (mode !== 'managed') return { mode, plan: null, usage: null, portalHandoff: false };
   const [effective, usage] = await Promise.all([loadEffectiveSnapshot(workspace.id), countAllUsage(prisma, workspace.id)]);
-  if (!effective) return { mode, plan: null, usage };
+  const portalHandoff = portalHandoffAvailable();
+  if (!effective) return { mode, plan: null, usage, portalHandoff };
   const { snapshot, source } = effective;
   return {
     mode,
@@ -132,5 +134,6 @@ export async function getWorkspaceEntitlement(workspace: Workspace): Promise<Wor
       source,
     },
     usage,
+    portalHandoff,
   };
 }

@@ -11,17 +11,21 @@ function keyLabel(t: (key: string, options?: Record<string, unknown>) => string,
 
 /**
  * Content of the dialog shown when the server refuses a request with 402: what was reached and, for `billing: portal`,
- * "Abo verwalten". `billing` is `null` when the plan is unknown (e.g. outside a workspace); then no button is shown.
+ * "Upgrade" (limit or feature, `intent: upgrade`) or "Abo verwalten" (read-only or suspended, `intent: manage`).
+ * `billing` is `null` when the plan is unknown (e.g. outside a workspace); then no button is shown. `portalHandoff`
+ * says whether the instance offers the portal (`portalHandoff` of the workspace plan).
  */
 export function PlanLimitDialog({
   event,
   workspaceId,
   billing,
+  portalHandoff = false,
   onClose,
 }: {
   event: PlanErrorEvent;
   workspaceId: string | null;
   billing: 'portal' | 'contact' | null;
+  portalHandoff?: boolean;
   onClose: () => void;
 }) {
   const { t } = useTranslation(['plan']);
@@ -58,7 +62,14 @@ export function PlanLimitDialog({
         <Button type="button" variant="outline" onClick={onClose}>
           {t('plan:dialog.close')}
         </Button>
-        {billing === 'portal' && workspaceId && event.code !== 'WORKSPACE_SUSPENDED' ? <ManageSubscriptionButton workspaceId={workspaceId} size="md" /> : null}
+        {billing === 'portal' && workspaceId ? (
+          <ManageSubscriptionButton
+            workspaceId={workspaceId}
+            available={portalHandoff}
+            intent={event.code === 'PLAN_LIMIT_REACHED' || event.code === 'PLAN_FEATURE_MISSING' ? 'upgrade' : 'manage'}
+            size="md"
+          />
+        ) : null}
       </div>
     </div>
   );

@@ -41,6 +41,7 @@ import * as userSettings from '@lib/api/v1/userSettings';
 import * as workspace from '@lib/api/v1/workspace';
 import * as workspaceUsers from '@lib/api/v1/workspaceUsers';
 import * as entitlements from '@lib/api/v1/entitlements';
+import * as portalHandoff from '@lib/api/v1/portalHandoff';
 
 import { actionsCollectionApiDoc, actionsItemApiDoc } from '@lib/schemas/actions';
 import { adminTemplatesAccessApiDoc, adminTemplatesCloneApiDoc, adminTemplatesCollectionApiDoc, adminTemplatesItemApiDoc } from '@lib/schemas/adminTemplates';
@@ -129,6 +130,7 @@ import {
 import { joinCodesCollectionApiDoc, joinCodesItemApiDoc } from '@lib/schemas/joinCodes';
 import { joinRequestsAcceptApiDoc, joinRequestsCollectionApiDoc, joinRequestsRejectApiDoc } from '@lib/schemas/joinRequests';
 import { leaveApiDoc } from '@lib/schemas/leave';
+import { portalHandoffApiDoc } from '@lib/schemas/portalHandoff';
 import { meApiDoc } from '@lib/schemas/me';
 import { queueAddApiDoc, queueCollectionApiDoc, queueItemApiDoc, queueRemoveApiDoc } from '@lib/schemas/queue';
 import { ratingsCollectionApiDoc, ratingsItemApiDoc } from '@lib/schemas/ratings';
@@ -203,6 +205,7 @@ export const handlerBindings: HandlerBinding[] = [
   { apiDoc: instanceDefaultEntitlementsApiDoc, handler: entitlements.instanceDefaultHandler },
   { apiDoc: instanceWorkspaceEntitlementsApiDoc, handler: entitlements.instanceWorkspaceHandler },
   { apiDoc: workspaceEntitlementApiDoc, handler: entitlements.workspaceHandler },
+  { apiDoc: portalHandoffApiDoc, handler: portalHandoff.handoffHandler },
   { apiDoc: calculationsCollectionApiDoc, handler: calculations.collectionHandler },
   { apiDoc: calculationsItemApiDoc, handler: calculations.itemHandler },
   { apiDoc: calculationGroupsCollectionApiDoc, handler: calculations.groupsCollectionHandler },

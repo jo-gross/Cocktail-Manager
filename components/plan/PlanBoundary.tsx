@@ -8,15 +8,17 @@ import { settingsHref } from '@components/settings/settingsNavigation';
 import { ModalContext } from '@lib/context/ModalContextProvider';
 import { UserContext } from '@lib/context/UserContextProvider';
 import { onPlanError } from '@lib/entitlements/planEvents';
+import type { WorkspaceEntitlementDto } from '@lib/schemas/entitlements';
 import { PlanProvider, usePlan } from './PlanContext';
+import { ManageSubscriptionButton } from './ManageSubscriptionButton';
 import { PlanLimitDialog } from './PlanLimitDialog';
 import { PlanStatusBanner } from './PlanStatusBanner';
 
 /** Pages a suspended workspace still opens: export (data) and leave/delete (danger). */
 const SUSPENDED_PAGES = ['/workspaces/[workspaceId]/manage/settings/data', '/workspaces/[workspaceId]/manage/settings/danger'];
 
-/** Status view instead of the page content while the workspace is suspended. */
-export function SuspendedWorkspaceView({ workspaceId }: { workspaceId: string }) {
+/** Status view instead of the page content while the workspace is suspended; paying stays possible (`billing: portal`). */
+export function SuspendedWorkspaceView({ workspaceId, entitlement = null }: { workspaceId: string; entitlement?: WorkspaceEntitlementDto | null }) {
   const { t } = useTranslation(['plan']);
   return (
     <PageCenter>
@@ -32,6 +34,11 @@ export function SuspendedWorkspaceView({ workspaceId }: { workspaceId: string })
               <Button variant="outline">{t('plan:suspended.leaveOrDelete')}</Button>
             </Link>
           </div>
+          {entitlement?.plan?.billing === 'portal' ? (
+            <div className="flex justify-end">
+              <ManageSubscriptionButton workspaceId={workspaceId} available={entitlement.portalHandoff} size="md" />
+            </div>
+          ) : null}
         </CardBody>
       </Card>
     </PageCenter>
@@ -49,14 +56,22 @@ function PlanGate({ children }: { children: React.ReactNode }) {
       onPlanError((event) => {
         refresh();
         const billing = entitlement?.plan?.billing ?? null;
-        modalContext.openModal(<PlanLimitDialog event={event} workspaceId={workspaceId} billing={billing} onClose={() => modalContext.closeModal()} />);
+        modalContext.openModal(
+          <PlanLimitDialog
+            event={event}
+            workspaceId={workspaceId}
+            billing={billing}
+            portalHandoff={entitlement?.portalHandoff ?? false}
+            onClose={() => modalContext.closeModal()}
+          />,
+        );
       }),
     [entitlement, modalContext, refresh, workspaceId],
   );
 
   if (!workspaceId || entitlement?.mode !== 'managed') return <>{children}</>;
   if (entitlement.plan?.status === 'SUSPENDED' && !SUSPENDED_PAGES.includes(router.pathname)) {
-    return <SuspendedWorkspaceView workspaceId={workspaceId} />;
+    return <SuspendedWorkspaceView workspaceId={workspaceId} entitlement={entitlement} />;
   }
   return (
     <>

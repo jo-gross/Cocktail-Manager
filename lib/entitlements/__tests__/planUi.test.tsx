@@ -12,18 +12,33 @@ import { PlanLimitDialog } from '@components/plan/PlanLimitDialog';
 import { PlanStatusBanner } from '@components/plan/PlanStatusBanner';
 import { SuspendedWorkspaceView } from '@components/plan/PlanBoundary';
 import type { WorkspaceEntitlementDto } from '@lib/schemas/entitlements';
+import { UserContext } from '@lib/context/UserContextProvider';
 
 vi.mock('next/router', () => ({ useRouter: () => ({ query: { workspaceId: 'ws1' }, pathname: '/workspaces/[workspaceId]/manage' }) }));
 
-async function render(content: React.ReactNode, language = 'de') {
+/** The signed-in user: owner with a verified email address unless stated otherwise. */
+interface Viewer {
+  owner?: boolean;
+  emailVerified?: boolean;
+}
+
+async function render(content: React.ReactNode, language = 'de', { owner = true, emailVerified = true }: Viewer = {}) {
   const i18n = createInstance();
   await i18n.init({
     lng: language,
     resources: { de: { plan: dePlan, common: deCommon }, en: { plan: enPlan, common: enCommon } },
     defaultNS: 'plan',
   });
-  return renderToStaticMarkup(<I18nextProvider i18n={i18n}>{content}</I18nextProvider>);
+  const user = { isUserPermitted: (role: string) => owner || role !== 'OWNER', user: { emailVerified } } as never;
+  return renderToStaticMarkup(
+    <I18nextProvider i18n={i18n}>
+      <UserContext.Provider value={user}>{content}</UserContext.Provider>
+    </I18nextProvider>,
+  );
 }
+
+/** The portal button is shown and can be clicked. */
+const ENABLED_MANAGE = /<button[^>]*type="button"(?![^>]*disabled="")[^>]*>Abo verwalten<\/button>/;
 
 function managed(plan: Partial<NonNullable<WorkspaceEntitlementDto['plan']>> = {}): WorkspaceEntitlementDto {
   return {
@@ -40,10 +55,11 @@ function managed(plan: Partial<NonNullable<WorkspaceEntitlementDto['plan']>> = {
       ...plan,
     },
     usage: { cocktails: 50, members: 1, calculations: 7, guestMenusPublished: 0, signageScreens: 0, apiKeys: 0 },
+    portalHandoff: true,
   };
 }
 
-const OFF: WorkspaceEntitlementDto = { mode: 'off', plan: null, usage: null };
+const OFF: WorkspaceEntitlementDto = { mode: 'off', plan: null, usage: null, portalHandoff: false };
 
 describe('PlanCard', () => {
   it('renders nothing on self-hosted instances', async () => {
@@ -58,8 +74,27 @@ describe('PlanCard', () => {
     expect(html).toContain('50 von 50');
     expect(html).toContain('7 · unbegrenzt');
     expect(html).toContain('Erweiterte Statistik');
-    expect(html).toContain('Abo verwalten');
+    expect(html).toMatch(ENABLED_MANAGE);
     expect(html).not.toContain('individuelle Konditionen');
+  });
+
+  it('disables the manage button when the instance offers no portal handoff', async () => {
+    const html = await render(<PlanCard entitlement={{ ...managed(), portalHandoff: false }} workspaceId="ws1" />);
+    expect(html).toMatch(/<button[^>]*disabled=""[^>]*>Abo verwalten<\/button>/);
+  });
+
+  it('tells non-owners that only owners can manage the subscription', async () => {
+    const html = await render(<PlanCard entitlement={managed()} workspaceId="ws1" />, 'de', { owner: false });
+    expect(html).toContain('Nur Inhaberinnen und Inhaber können das Abo verwalten.');
+    expect(html).not.toContain('<button');
+    const en = await render(<PlanCard entitlement={managed()} workspaceId="ws1" />, 'en', { owner: false });
+    expect(en).toContain('Only owners can manage the subscription.');
+  });
+
+  it('explains why the button is unavailable while the email address is not verified', async () => {
+    const html = await render(<PlanCard entitlement={managed()} workspaceId="ws1" />, 'de', { emailVerified: false });
+    expect(html).toMatch(/<button[^>]*disabled=""[^>]*>Abo verwalten<\/button>/);
+    expect(html).toContain('Bestätige zuerst deine E-Mail-Adresse');
   });
 
   it('shows a contact hint instead of the button for billing contact, in English', async () => {
@@ -84,7 +119,7 @@ describe('PlanStatusBanner', () => {
     const html = await render(<PlanStatusBanner entitlement={managed({ status: 'GRACE' })} workspaceId="ws1" />);
     expect(html).toContain('Zahlung für diesen Workspace ist offen');
     expect(html).toContain('bg-warning');
-    expect(html).toContain('Abo verwalten');
+    expect(html).toMatch(ENABLED_MANAGE);
   });
 
   it('shows READ_ONLY and SUSPENDED as errors', async () => {
@@ -93,25 +128,39 @@ describe('PlanStatusBanner', () => {
     expect(readOnly).toContain('bg-error');
     const suspended = await render(<PlanStatusBanner entitlement={managed({ status: 'SUSPENDED' })} workspaceId="ws1" />, 'en');
     expect(suspended).toContain('This workspace is suspended.');
-    expect(suspended).not.toContain('Manage subscription');
+    // Paying stays possible in a suspended workspace (the handoff is exempt from the status gate).
+    expect(suspended).toContain('>Manage subscription</button>');
   });
 });
 
 describe('PlanLimitDialog', () => {
   const close = () => undefined;
 
-  it('names the reached limit with its numbers and offers the manage button', async () => {
+  it('names the reached limit with its numbers and offers the upgrade', async () => {
     const html = await render(
       <PlanLimitDialog
         event={{ code: 'PLAN_LIMIT_REACHED', details: { key: 'cocktails', limit: 50, current: 50 } }}
         workspaceId="ws1"
         billing="portal"
+        portalHandoff
         onClose={close}
       />,
     );
     expect(html).toContain('Limit erreicht');
     expect(html).toContain('höchstens 50 (Cocktails). Aktuell: 50.');
-    expect(html).toContain('Abo verwalten');
+    expect(html).toMatch(/<button[^>]*type="button"(?![^>]*disabled="")[^>]*>Upgrade<\/button>/);
+    expect(html).not.toContain('Abo verwalten');
+  });
+
+  it('offers "Abo verwalten" for read-only and suspended workspaces, disabled without handoff', async () => {
+    for (const code of ['WORKSPACE_READ_ONLY', 'WORKSPACE_SUSPENDED'] as const) {
+      const html = await render(<PlanLimitDialog event={{ code, details: null }} workspaceId="ws1" billing="portal" portalHandoff onClose={close} />);
+      expect(html, code).toMatch(ENABLED_MANAGE);
+    }
+    const without = await render(
+      <PlanLimitDialog event={{ code: 'PLAN_FEATURE_MISSING', details: null }} workspaceId="ws1" billing="portal" onClose={close} />,
+    );
+    expect(without).toMatch(/<button[^>]*disabled=""[^>]*>Upgrade<\/button>/);
   });
 
   it('names a missing feature and shows the contact hint for billing contact', async () => {
@@ -153,5 +202,13 @@ describe('SuspendedWorkspaceView', () => {
     expect(html).toContain('Workspace gesperrt');
     expect(html).toContain('/workspaces/ws1/manage/settings/data');
     expect(html).toContain('/workspaces/ws1/manage/settings/danger');
+    expect(html).not.toContain('Abo verwalten');
+  });
+
+  it('offers "Abo verwalten" for billing portal, so a suspended workspace can still pay', async () => {
+    const html = await render(<SuspendedWorkspaceView workspaceId="ws1" entitlement={managed({ status: 'SUSPENDED' })} />);
+    expect(html).toMatch(ENABLED_MANAGE);
+    const contact = await render(<SuspendedWorkspaceView workspaceId="ws1" entitlement={managed({ status: 'SUSPENDED', billing: 'contact' })} />);
+    expect(contact).not.toContain('Abo verwalten');
   });
 });

@@ -132,6 +132,39 @@ once at runtime as a warning.
 `ENTITLEMENTS_FREE_WORKSPACES_PER_OWNER` takes a non-negative integer; other values count as unlimited. It applies only
 after the control plane pushed a default snapshot.
 
+#### Customer portal ("Abo verwalten")
+
+| Variable                     | Description                                                                                                       | Default | Example                      |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------- | ------- | ---------------------------- |
+| `PORTAL_HANDOFF_PRIVATE_KEY` | Ed25519 private key (PKCS#8 PEM) that signs the handoff into the customer portal. **Secret.**                       | -       | see below                    |
+| `PORTAL_URL`                 | Base URL of the customer portal of the hosting provider; the app sends owners to `<PORTAL_URL>/sso?token=…`       | -       | `https://portal.example.com` |
+
+Owners of a workspace with a verified email address get "Abo verwalten" (plan card, status banner, suspended view) and
+"Upgrade" (limit dialog), which sign them in on the page of their bar in the customer portal (see
+[Entitlements](ENTITLEMENTS.md#portal-handoff)). The handoff is offered only when **all** of these hold; otherwise the
+app behaves as without the variables and self-hosted instances see nothing:
+
+- `ENTITLEMENTS_MODE=managed`
+- `PORTAL_HANDOFF_PRIVATE_KEY` is a valid Ed25519 private key
+- `PORTAL_URL` is an http(s) URL
+- the public URL of the app is set: `BETTER_AUTH_URL`, else `NEXTAUTH_URL`, else `NEXT_PUBLIC_APP_URL` (the same order
+  as the auth base URL). Its origin (scheme, host, port; no path, no default port) is the issuer (`iss`) of the token
+  and must equal the origin of the public URL registered for the instance in the backoffice ("Aussteller (iss) im
+  Token").
+
+The backoffice generates the key pair (instance detail page, "Wechsel aus der App") and shows the private key once as
+an env line. Both spellings are accepted: the PEM with real line breaks, or one line with `\n` for each line break,
+optionally in double quotes:
+
+```bash
+PORTAL_HANDOFF_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nMC4CAQAw…\n-----END PRIVATE KEY-----"
+```
+
+A key made elsewhere: `openssl genpkey -algorithm ed25519 -out handoff.pem` (private key for the app) and
+`openssl pkey -in handoff.pem -pubout` (public key for the backoffice). An invalid key, an invalid `PORTAL_URL` or a
+missing public URL is logged once as a warning, never with the value. To rotate, enter the new key in the backoffice,
+then set it here and restart the app; until then handoffs fail.
+
 ### Demo Mode
 
 | Variable              | Description                                                                                                                                          | Default | Example                |

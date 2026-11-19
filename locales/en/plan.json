@@ -34,7 +34,11 @@
   },
   "billing": {
     "manage": "Manage subscription",
-    "manageUnavailable": "Subscription management will be available soon.",
+    "upgrade": "Upgrade",
+    "manageUnavailable": "Subscription management is currently not available on this instance.",
+    "ownersOnly": "Only owners can manage the subscription.",
+    "emailNotVerified": "Verify your email address first to manage the subscription.",
+    "handoffFailed": "The customer portal could not be opened. Please try again.",
     "contact": "Individual terms apply to this workspace. Please contact us for changes."
   },
   "banner": {

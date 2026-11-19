@@ -7,7 +7,7 @@
  * - exports (backup, JSON, PDF): `READ_ONLY` and `SUSPENDED`
  * - leaving the workspace, deleting the workspace: `READ_ONLY` and `SUSPENDED`
  * - status view (`GET` workspace, `GET` entitlement): `SUSPENDED` (reads are open in `READ_ONLY` anyway)
- * - portal handoff (task A3): `READ_ONLY` and `SUSPENDED` (paying must stay possible); wrap the handoff handler with `HANDOFF_STATUS_EXEMPTION`
+ * - portal handoff (`POST …/portal/handoff`): `READ_ONLY` and `SUSPENDED` (paying must stay possible), `HANDOFF_STATUS_EXEMPTION`
  */
 import type { NextApiRequest, NextApiResponse } from 'next';
 import type { HttpVerb } from '@lib/openapi/types';
@@ -25,7 +25,7 @@ export const ALWAYS_AVAILABLE: readonly RestrictedStatus[] = ['READ_ONLY', 'SUSP
 export const STATUS_VIEW: readonly RestrictedStatus[] = ['SUSPENDED'];
 /** Data exports (backup, JSON, PDF, print HTML) stay available in every status. */
 export const EXPORT_STATUS_EXEMPTION: StatusExemptions = { GET: ALWAYS_AVAILABLE, POST: ALWAYS_AVAILABLE };
-/** Integration point for the portal handoff (A3): paying must stay possible in a read-only or suspended workspace. */
+/** The portal handoff: paying must stay possible in a read-only or suspended workspace. */
 export const HANDOFF_STATUS_EXEMPTION: StatusExemptions = { POST: ['READ_ONLY', 'SUSPENDED'] };
 
 export function withStatusExemption<H extends RequestHandler>(exemptions: StatusExemptions, handler: H): H {

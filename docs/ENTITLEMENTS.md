@@ -105,7 +105,7 @@ workspace API keys. The instance master key (operator access of the control plan
 | `ACTIVE` | normal |
 | `GRACE` | normal, plus a warning banner |
 | `READ_ONLY` | `GET`/`HEAD`/`OPTIONS` only; other methods answer `402 WORKSPACE_READ_ONLY`. Exceptions: exports, leaving, deleting the workspace, the portal handoff |
-| `SUSPENDED` | every request answers `402 WORKSPACE_SUSPENDED`, reads included. Exceptions: the status view (`GET` workspace, `GET entitlement`), exports, leaving, deleting the workspace |
+| `SUSPENDED` | every request answers `402 WORKSPACE_SUSPENDED`, reads included. Exceptions: the status view (`GET` workspace, `GET entitlement`), exports, leaving, deleting the workspace, the portal handoff |
 
 Exempt routes wrap their handler with `withStatusExemption` (`lib/entitlements/statusGate.ts`):
 
@@ -114,7 +114,7 @@ Exempt routes wrap their handler with `withStatusExemption` (`lib/entitlements/s
 | Exports: `admin/backups/export`, `cocktails/export/json`, `cocktails/export/pdf`, `calculations/export/json`, `glasses/export/json`, `garnishes/export/json`, `ingredients/export/json`, `guest-menus/{menuId}/export/{pdf,html,table-tent.pdf}` | ✓ | ✓ |
 | `POST leave`, `DELETE /api/v1/workspaces/{workspaceId}` | ✓ | ✓ |
 | `GET /api/v1/workspaces/{workspaceId}`, `GET entitlement` | (reads) | ✓ |
-| Portal handoff (task A3): wrap with `HANDOFF_STATUS_EXEMPTION`, so a customer can pay | ✓ | ✓ |
+| `POST portal/handoff` (`HANDOFF_STATUS_EXEMPTION`), so a customer can pay | ✓ | ✓ |
 
 Public pages: with `SUSPENDED` the guest menu page `/m/…` shows a neutral "currently not available" page (503), the
 public menu JSON `/api/public/menus/…` (also used by signage menu slides and the public `print`/`monitor` outputs) answers
@@ -133,14 +133,16 @@ public signage feed.
 ## Workspace plan for the UI
 
 `GET /api/v1/workspaces/{workspaceId}/entitlement` (any member, API keys need `WORKSPACE_READ`) answers
-`{ mode, plan, usage }`. With `off` it is `{ mode: 'off', plan: null, usage: null }` without a database query.
+`{ mode, plan, usage, portalHandoff }`. With `off` it is `{ mode: 'off', plan: null, usage: null, portalHandoff: false }`
+without a database query. `portalHandoff` says whether the instance offers the customer portal (see
+[Portal handoff](#portal-handoff)).
 
 UI (only shown with `managed`, German and English, namespace `plan`):
 
 - `PlanBoundary` (mounted in `_app.tsx`): loads the plan of the current workspace, shows the status banner
   (`PlanStatusBanner`, its own component so the announcement banner can stack next to it), opens the limit dialog and
   replaces the page by a status view while the workspace is suspended (the settings pages *Data* and *Danger zone*
-  stay reachable for export, leaving and deleting).
+  stay reachable for export, leaving and deleting; with `billing: portal` the status view also offers "Abo verwalten").
 - `PlanCard` on the general settings page: plan name, status, usage against the limits, features and "Abo verwalten"
   (`billing: portal`) or a contact hint (`billing: contact`).
 - `PlanLimitDialog`: opens on every 402 of a plan guard that reaches `apiV1Fetch` (`lib/entitlements/planEvents.ts`).
@@ -148,14 +150,71 @@ UI (only shown with `managed`, German and English, namespace `plan`):
   JSON import of glasses/garnishes/ingredients/calculations, the backup import and archive/unarchive on the cocktail
   page. Remaining exceptions: exports (exempt from the status gate), public pages and reads through `fetchWithCache` (a
   suspended workspace shows the status view instead).
-- "Abo verwalten" (`ManageSubscriptionButton`) calls `openSubscriptionPortal` in
-  `lib/entitlements/subscriptionPortal.ts`. Until the portal handoff (A3) exists, it is disabled with a hint; A3
-  implements the function and sets `SUBSCRIPTION_PORTAL_AVAILABLE`.
+- "Abo verwalten" / "Upgrade" (`ManageSubscriptionButton`, only for `billing: portal`): see [Portal handoff](#portal-handoff).
+
+## Portal handoff
+
+An owner clicks "Abo verwalten" or "Upgrade" and lands signed in on the page of this bar in the customer portal of the
+hosting provider. The app signs a short-lived token; the portal checks it at `/sso`. The app never calls the control
+plane for this. Contract: `contracts/portal-handoff.md` of the control plane (claims, keys, checks, result codes and a
+test vector). Code: `lib/portal/` (signer, env), `lib/api/controllers/portalHandoff.ts`,
+`lib/entitlements/subscriptionPortal.ts` and `components/plan/ManageSubscriptionButton.tsx`.
+
+**Availability.** Only with `ENTITLEMENTS_MODE=managed`, a valid `PORTAL_HANDOFF_PRIVATE_KEY`, a valid `PORTAL_URL`
+and a public URL of the app (`BETTER_AUTH_URL`, else `NEXTAUTH_URL`, else `NEXT_PUBLIC_APP_URL`), see
+[ENV.md](ENV.md#customer-portal-abo-verwalten). The plan of the workspace reports it as `portalHandoff`; otherwise the
+endpoint answers `404 PORTAL_HANDOFF_UNAVAILABLE`.
+
+**`POST /api/v1/workspaces/{workspaceId}/portal/handoff`**, body `{ intent: 'manage' | 'upgrade', locale?: 'de' | 'en' }`,
+answers `{ url: '<PORTAL_URL>/sso?token=…' }` with `Cache-Control: no-store`. The client then navigates there (a
+top-level navigation, so the portal can set its cookie). A POST plus client-side navigation keeps the token out of the
+access logs of the app.
+
+- **Who:** a signed-in session with role `OWNER` in the workspace (`sessionOnly`: workspace API keys and the master
+  key get `401`; lower roles `403`). An unverified or missing email address answers `403 EMAIL_NOT_VERIFIED`, so the UI
+  can explain it. Allowed in `READ_ONLY` and `SUSPENDED` (`HANDOFF_STATUS_EXEMPTION`).
+- **Token:** compact JWS, `{"alg":"EdDSA","typ":"JWT"}`, Ed25519 with Node's `crypto` (no JWT dependency), signed per
+  click. Claims in the order of the contract:
+
+  | Claim | Value |
+  | --- | --- |
+  | `iss` | origin of the app's public URL, as `new URL(url).origin` spells it (no path, no trailing slash, lowercase host, no default port) |
+  | `aud` | `portal` |
+  | `sub`, `email`, `name` | user id, email as stored, display name (empty string without one; cut to 200 characters) |
+  | `email_verified` | `true` only for the boolean `true` of `User.emailVerified` |
+  | `wid`, `wname` | workspace id and name (cut to 200 characters) |
+  | `role` | the membership role as is (`OWNER`) |
+  | `locale` | `locale` of the request (the UI language), else the user's language setting, else `de` |
+  | `intent` | `manage` or `upgrade`; the portal picks the target page (no return URL, no open redirect) |
+  | `iat`, `exp` | now and now + 120 s |
+  | `jti` | 16 random bytes, base64url (22 characters) |
+
+- **Audit:** one entry in the audit log of the workspace per handoff: `entityType` `PortalHandoff`, action `CREATE`,
+  the user, `snapshot: { event: 'portal handoff', intent, locale }`. Neither the token, its `jti` nor the URL are logged
+  or stored.
+- **Errors of the portal** (`invalid`, `expired`, `replayed`, `unknown_instance`, `workspace_unavailable`, …) land on the
+  portal's own `/handoff` page; the app needs nothing for them. `unknown_instance` usually means the public key is not
+  registered in the backoffice or the `iss` origin differs from the registered public URL; `invalid` a key mismatch
+  (rotation) or a wrong server clock.
+
+**UI** (de/en, only for `billing: portal`): the plan card and the status banner (every status, also `SUSPENDED`) show
+"Abo verwalten" (`intent: manage`); the limit dialog shows "Upgrade" (`intent: upgrade`) for limits and features and
+"Abo verwalten" for read-only and suspended workspaces; the suspended status view shows "Abo verwalten".
+
+| Situation | Button |
+| --- | --- |
+| `portalHandoff: false` | disabled, hint "currently not available" |
+| not an owner | no button, "Nur Inhaberinnen und Inhaber können das Abo verwalten." |
+| owner, email not verified | disabled, with the reason |
+| owner, verified | enabled; spinner while the handoff is requested and the browser leaves; an error text if it fails |
 
 ## Tests
 
 - Unit: `lib/entitlements/__tests__/` (effective snapshot, version rule, limit and status decisions, plan events,
-  status exemptions, UI components).
+  status exemptions, UI components, portal button states and the handoff request), `lib/portal/__tests__/` (the
+  contract's test vector byte for byte, claims, `iss` normalisation, both key spellings, invalid keys, env).
 - Integration: `lib/__tests__/api/v1/entitlements.integration.test.ts` (pushes, idempotency, validation, auth, every
   guard at the limit boundary, imports, parallel creates, statuses, API keys, `freeWorkspacesPerOwner`, branding,
-  `ENTITLEMENTS_MODE=off`).
+  `ENTITLEMENTS_MODE=off`), `lib/__tests__/api/v1/portalHandoff.integration.test.ts` (owner token verifies with the
+  public key, claims and lifetime, refused roles, unverified email, API key and master key, other tenants, availability
+  per mode and env, `READ_ONLY` and `SUSPENDED`, audit without the token).

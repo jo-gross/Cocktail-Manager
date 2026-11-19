@@ -86,6 +86,11 @@ export const WorkspaceEntitlementDtoSchema = z
     mode: z.enum(['off', 'managed']).openapi({ description: '`ENTITLEMENTS_MODE`; with `off` nothing is limited and `plan` and `usage` are null.' }),
     plan: WorkspacePlanSchema.nullable().openapi({ description: 'The plan that applies; null when nothing is limited (yet).' }),
     usage: InstanceUsageCountsSchema.nullable().openapi({ description: 'Usage per limit key; null with `ENTITLEMENTS_MODE=off`.' }),
+    portalHandoff: z.boolean().openapi({
+      description:
+        'The instance offers "Abo verwalten" in the customer portal (`POST …/portal/handoff`): `ENTITLEMENTS_MODE=managed` with a valid ' +
+        '`PORTAL_HANDOFF_PRIVATE_KEY` and `PORTAL_URL`. Whether the caller may use it (owner, verified email) is checked by the handoff.',
+    }),
   })
   .openapi('WorkspaceEntitlement');
 

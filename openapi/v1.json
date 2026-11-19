@@ -5401,12 +5401,17 @@
                 "description": "Usage per limit key; null with `ENTITLEMENTS_MODE=off`."
               }
             ]
+          },
+          "portalHandoff": {
+            "type": "boolean",
+            "description": "The instance offers \"Abo verwalten\" in the customer portal (`POST …/portal/handoff`): `ENTITLEMENTS_MODE=managed` with a valid `PORTAL_HANDOFF_PRIVATE_KEY` and `PORTAL_URL`. Whether the caller may use it (owner, verified email) is checked by the handoff."
           }
         },
         "required": [
           "mode",
           "plan",
-          "usage"
+          "usage",
+          "portalHandoff"
         ]
       },
       "WorkspacePlan": {
@@ -10303,6 +10308,42 @@
         },
         "required": [
           "skipped"
+        ]
+      },
+      "PortalHandoffResult": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "`<PORTAL_URL>/sso?token=…` with a fresh token (single use, valid for 120 s). The client navigates there at once."
+          }
+        },
+        "required": [
+          "url"
+        ]
+      },
+      "PortalHandoffInput": {
+        "type": "object",
+        "properties": {
+          "intent": {
+            "type": "string",
+            "enum": [
+              "manage",
+              "upgrade"
+            ],
+            "description": "`manage` (\"Abo verwalten\") or `upgrade` (limit dialog); the portal picks the page."
+          },
+          "locale": {
+            "type": "string",
+            "enum": [
+              "de",
+              "en"
+            ],
+            "description": "UI language for the portal pages; default: the language setting of the user, otherwise `de`."
+          }
+        },
+        "required": [
+          "intent"
         ]
       },
       "QueueItem": {
@@ -29088,6 +29129,102 @@
           }
         },
         "x-required-permission": "WORKSPACE_UPDATE"
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/portal/handoff": {
+      "post": {
+        "summary": "Open the customer portal",
+        "description": "**Authentication:** requires a logged-in workspace-member session. API keys (workspace or the instance master key) are NOT accepted for this operation.\n\nSigns a short-lived token for the customer portal of the hosting provider and answers the URL that signs the owner in on the page of this workspace there. Hosted instances only (`ENTITLEMENTS_MODE=managed` with `PORTAL_HANDOFF_PRIVATE_KEY` and `PORTAL_URL`). Owners with a verified email address only; session only. Also available in a read-only or suspended workspace.",
+        "tags": [
+          "Workspace / Plan"
+        ],
+        "security": [
+          {
+            "SessionCookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "Workspace ID",
+              "example": "ckw0a1b2c3d4e5f6g7h8"
+            },
+            "required": true,
+            "description": "Workspace ID",
+            "name": "workspaceId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PortalHandoffInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Open the customer portal",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PortalHandoffResult"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Below OWNER, or the email address of the user is not verified (`EMAIL_NOT_VERIFIED`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The instance offers no portal handoff (`PORTAL_HANDOFF_UNAVAILABLE`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/v1/workspaces/{workspaceId}/queue": {

@@ -35,7 +35,7 @@ export function PlanCard({ entitlement, workspaceId }: { entitlement: WorkspaceE
           {t(`plan:status.${plan.status}`)}
         </Badge>
       }
-      actions={plan.billing === 'portal' ? <ManageSubscriptionButton workspaceId={workspaceId} /> : null}
+      actions={plan.billing === 'portal' ? <ManageSubscriptionButton workspaceId={workspaceId} available={entitlement.portalHandoff} /> : null}
     >
       <div className="flex flex-col gap-4" data-testid="plan-card">
         <div className="flex flex-col gap-2">

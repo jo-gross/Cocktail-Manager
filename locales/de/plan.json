@@ -34,7 +34,11 @@
   },
   "billing": {
     "manage": "Abo verwalten",
-    "manageUnavailable": "Die Abo-Verwaltung ist bald verfügbar.",
+    "upgrade": "Upgrade",
+    "manageUnavailable": "Die Abo-Verwaltung ist auf dieser Instanz derzeit nicht verfügbar.",
+    "ownersOnly": "Nur Inhaberinnen und Inhaber können das Abo verwalten.",
+    "emailNotVerified": "Bestätige zuerst deine E-Mail-Adresse, um das Abo zu verwalten.",
+    "handoffFailed": "Das Kundenportal konnte nicht geöffnet werden. Bitte versuche es erneut.",
     "contact": "Für diesen Workspace gelten individuelle Konditionen. Für Änderungen melde dich bitte bei uns."
   },
   "banner": {

@@ -25,7 +25,7 @@ export function PlanStatusBanner({
     <div className={cn('print:hidden', className)} data-testid="plan-status-banner">
       <Alert variant={plan.status === 'GRACE' ? 'warning' : 'error'} className="items-center justify-between">
         <span>{t(`plan:banner.${plan.status}`)}</span>
-        {plan.billing === 'portal' && plan.status !== 'SUSPENDED' ? <ManageSubscriptionButton workspaceId={workspaceId} /> : null}
+        {plan.billing === 'portal' ? <ManageSubscriptionButton workspaceId={workspaceId} available={entitlement?.portalHandoff ?? false} /> : null}
       </Alert>
     </div>
   );
