@@ -22,6 +22,7 @@ import { resolveLocalizedText } from './localizedText';
 import { themeToCssVariables } from './theme';
 import { publicRenderKey, RenderCache } from './renderCache';
 import { isSafeRelativeUrl } from './render/urlPolicy';
+import { isWorkspaceSuspended } from '@lib/entitlements/guards';
 
 const publicRenderCache = new RenderCache<RenderedGuestMenu>();
 
@@ -54,6 +55,8 @@ export type PublicMenuResult =
   | { kind: 'notFound'; barPath: string | null; workspaceName: string | null }
   | { kind: 'locked'; workspace: PublicWorkspace; barPath: string; lock: PublicMenuLock }
   | { kind: 'noMenu'; workspace: PublicWorkspace; barPath: string }
+  /** The workspace is suspended (hosted instances, docs/ENTITLEMENTS.md): neutral "currently not available". */
+  | { kind: 'unavailable'; workspace: PublicWorkspace; barPath: string }
   | { kind: 'redirect'; location: string }
   | {
       kind: 'menu';
@@ -133,6 +136,7 @@ export async function loadPublicMenu(input: LoadPublicMenuInput): Promise<Public
   const workspace = await findPublicWorkspace(input.bar);
   if (!workspace) return { kind: 'notFound', barPath: null, workspaceName: null };
   const barPath = `/m/${encodeURIComponent(getBarSlug(workspace))}`;
+  if (await isWorkspaceSuspended(workspace.id)) return { kind: 'unavailable', workspace, barPath };
 
   const [menus, settings] = await Promise.all([prisma.guestMenu.findMany({ where: { workspaceId: workspace.id } }), loadWorkspaceGuestSettings(workspace.id)]);
   const scheduleNow = getScheduleNow(now, settings);

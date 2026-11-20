@@ -27,8 +27,11 @@ Helpers: `test/helpers/scenario.ts` (`seedTenantPair`, `callAs`, `roleUser`, `da
   (owner session and master key) with tenant B's ids. Expects 400/404, no B data in the response and an unchanged
   database fingerprint. New operations are covered automatically; request bodies are generated from the zod schema
   (`test/helpers/sampleFromSchema.ts`) and can be overridden in the suite when a schema needs special values.
+  Master-key operations (the instance API under `/api/v1/instance`, the template admin) are instance-wide by design and
+  not part of this suite.
 - **Auth matrix** (`authMatrix.integration.test.ts`): every operation — 401 without credentials, 403 for the role below
-  the minimum, 403 for an API key without the required permission, session-only operations reject keys.
+  the minimum, 403 for an API key without the required permission, session-only operations reject keys, master-key
+  operations answer 401 without credentials, with a wrong key, a session or a workspace API key.
 - **Operation coverage gate**: with `API_COVERAGE_ENFORCE=1` (set in CI) every documented operation must answer 2xx in at
   least one test, otherwise the run fails and lists the operations. Exceptions live in `test/api-coverage-allowlist.json`
   (currently the three PDF exports, which need the Chromium service). `operationCoverage.integration.test.ts` holds

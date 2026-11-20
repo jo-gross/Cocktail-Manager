@@ -5,6 +5,7 @@ import { MappingDecisions } from '../modals/CocktailImportWizardModal';
 import { alertService } from '@lib/alertService';
 import { FaCheckCircle, FaExclamationCircle, FaChevronDown, FaChevronUp } from 'react-icons/fa';
 import { Alert, Button, Card, CardBody, Loading } from '@components/ui';
+import { reportPlanErrorResponse } from '@lib/entitlements/planEvents';
 
 interface ConfirmationStepProps {
   workspaceId: string;
@@ -80,6 +81,7 @@ export function ConfirmationStep({ workspaceId, exportData, mappingDecisions, se
 
       if (!response.ok) {
         const errorData = await response.json();
+        reportPlanErrorResponse(response.status, errorData);
         setError(errorData.message || t('errors:import'));
         if (errorData.errors && Array.isArray(errorData.errors)) {
           setErrors(errorData.errors);

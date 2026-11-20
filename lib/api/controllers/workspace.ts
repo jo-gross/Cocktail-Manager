@@ -9,7 +9,7 @@ import prisma from '../../../prisma/prisma';
 import { isWorkspaceExternallyManaged } from '@lib/config/externalWorkspace';
 import { ApiError } from '@lib/http/ApiError';
 import { deleteDemoWorkspace } from '@lib/demo/cleanup';
-import { runTx } from '@lib/db/tx';
+import { runTx, type Tx } from '@lib/db/tx';
 import { lockTemplates } from '@lib/templates/sync';
 import { toWorkspaceDto, toWorkspaceSettingsDto } from '@lib/api/dto/workspace';
 import type { User, Workspace } from '@generated/prisma/client';
@@ -88,15 +88,17 @@ export async function updateWorkspace(workspace: Workspace, input: WorkspaceUpda
 }
 
 /** Template workspaces cannot be deleted while they are marked as template (409 `TEMPLATE_IN_USE`). */
+export async function deleteWorkspaceInTx(tx: Tx, workspaceId: string): Promise<void> {
+  // Same lock as marking a workspace as template.
+  await lockTemplates(tx);
+  if (await tx.workspaceTemplate.findUnique({ where: { workspaceId }, select: { key: true } })) {
+    throw new ApiError(409, 'TEMPLATE_IN_USE', 'The workspace is a template and cannot be deleted');
+  }
+  await tx.workspace.delete({ where: { id: workspaceId } });
+}
+
 export async function deleteWorkspace(workspace: Workspace): Promise<{ count: number }> {
-  await runTx(async (tx) => {
-    // Same lock as marking a workspace as template.
-    await lockTemplates(tx);
-    if (await tx.workspaceTemplate.findUnique({ where: { workspaceId: workspace.id }, select: { key: true } })) {
-      throw new ApiError(409, 'TEMPLATE_IN_USE', 'The workspace is a template and cannot be deleted');
-    }
-    await tx.workspace.delete({ where: { id: workspace.id } });
-  });
+  await runTx((tx) => deleteWorkspaceInTx(tx, workspace.id));
   return { count: 1 };
 }
 

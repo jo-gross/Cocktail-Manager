@@ -10,6 +10,7 @@ import { formatDate } from '@lib/DateUtils';
 import type { BackupStructure } from '@lib/backup/backupStructure';
 import type { BackupImportReport, BackupImportSkippedItem } from '@lib/backup/backupSecurity';
 import { SettingsSection } from './SettingsSection';
+import { reportPlanErrorResponse } from '@lib/entitlements/planEvents';
 
 /** Full workspace backup: export as JSON and import a previous export. */
 export function DataTransferSection({ workspaceId }: { workspaceId: string }) {
@@ -60,6 +61,7 @@ export function DataTransferSection({ workspaceId }: { workspaceId: string }) {
         else router.reload();
       } else {
         const body = await response.json();
+        reportPlanErrorResponse(response.status, body);
         console.error('DataTransferSection -> importBackup', response);
         alertService.error(body.error?.message ?? body.message ?? t('errors:import'), response.status, response.statusText);
       }

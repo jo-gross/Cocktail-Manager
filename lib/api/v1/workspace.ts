@@ -7,8 +7,9 @@ import { defineApiHandlers } from '@lib/openapi/apiDoc';
 import { ApiError } from '@lib/http/ApiError';
 import { getRequestApiKeyPermissions } from '@lib/http/requestAuth';
 import * as workspace from '@lib/api/controllers/workspace';
+import { ALWAYS_AVAILABLE, STATUS_VIEW, withStatusExemption } from '@lib/entitlements/statusGate';
 
-export const itemHandler = defineApiHandlers(workspaceItemApiDoc.operations, {
+const itemRoutes = defineApiHandlers(workspaceItemApiDoc.operations, {
   GET: ({ workspace: ws, user }) => workspace.getWorkspace(ws, user),
   PUT: ({ req, workspace: ws, body }) => {
     // The public slug publishes guest menus under a new URL — the GUEST_MENUS_PUBLISH scope.
@@ -20,6 +21,8 @@ export const itemHandler = defineApiHandlers(workspaceItemApiDoc.operations, {
   },
   DELETE: ({ workspace: ws }) => workspace.deleteWorkspace(ws),
 });
+// Status view (GET) and deleting stay available in a read-only or suspended workspace (docs/ENTITLEMENTS.md "Status").
+export const itemHandler = withStatusExemption({ GET: STATUS_VIEW, DELETE: ALWAYS_AVAILABLE }, itemRoutes);
 
 export const settingsHandler = defineApiHandlers(workspaceSettingsApiDoc.operations, {
   GET: ({ workspace: ws }) => workspace.getWorkspaceSettings(ws),

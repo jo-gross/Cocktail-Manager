@@ -1,0 +1,83 @@
+{
+  "card": {
+    "title": "Plan",
+    "description": "Dein Plan legt fest, wie viel dieser Workspace nutzen kann.",
+    "status": "Status",
+    "usage": "Nutzung",
+    "unlimited": "unbegrenzt",
+    "usageOf": "{{used}} von {{limit}}",
+    "features": "Enthaltene Funktionen",
+    "noFeatures": "Keine Zusatzfunktionen",
+    "nextChange": "Nächste Änderung am {{date}}",
+    "scheduledEnd": "Dein Abo endet am {{date}}. Danach gilt {{plan}}.",
+    "noPlan": "Für diesen Workspace gelten keine Limits."
+  },
+  "status": {
+    "ACTIVE": "Aktiv",
+    "GRACE": "Zahlung offen",
+    "READ_ONLY": "Nur lesen",
+    "SUSPENDED": "Gesperrt"
+  },
+  "limits": {
+    "cocktails": "Cocktails",
+    "members": "Mitglieder",
+    "calculations": "Party-Kalkulationen",
+    "guestMenusPublished": "Öffentliche Gästekarten",
+    "signageScreens": "Monitor-Bildschirme",
+    "apiKeys": "API-Keys",
+    "freeWorkspacesPerOwner": "Kostenlose Workspaces"
+  },
+  "features": {
+    "statistics.advanced": "Erweiterte Statistik",
+    "signage": "Monitor/Signage",
+    "api": "API-Zugriff",
+    "branding.remove": "Gästekarten ohne „Powered by“"
+  },
+  "billing": {
+    "manage": "Abo verwalten",
+    "upgrade": "Upgrade",
+    "manageUnavailable": "Die Abo-Verwaltung ist auf dieser Instanz derzeit nicht verfügbar.",
+    "ownersOnly": "Nur Inhaberinnen und Inhaber können das Abo verwalten.",
+    "emailNotVerified": "Bestätige zuerst deine E-Mail-Adresse, um das Abo zu verwalten.",
+    "handoffFailed": "Das Kundenportal konnte nicht geöffnet werden. Bitte versuche es erneut.",
+    "contact": "Für diesen Workspace gelten individuelle Konditionen. Für Änderungen melde dich bitte bei uns."
+  },
+  "banner": {
+    "GRACE": "Die letzte Zahlung für diesen Workspace ist offen. Bitte aktualisiere deine Zahlungsdaten, damit alles weiterläuft.",
+    "READ_ONLY": "Dieser Workspace ist nur noch lesbar. Exportieren, Verlassen und Löschen gehen weiterhin.",
+    "SUSPENDED": "Dieser Workspace ist gesperrt."
+  },
+  "suspended": {
+    "title": "Workspace gesperrt",
+    "text": "Dieser Workspace ist gesperrt. Du kannst deine Daten exportieren oder den Workspace verlassen; Inhaberinnen und Inhaber können ihn auch löschen.",
+    "export": "Komplettes Backup",
+    "exports": {
+      "cocktails": "Cocktails exportieren (JSON)",
+      "calculations": "Kalkulationen exportieren (JSON)"
+    },
+    "leaveOrDelete": "Verlassen oder löschen",
+    "leave": "Workspace verlassen"
+  },
+  "dialog": {
+    "limitTitle": "Limit erreicht",
+    "limitText": "Dein Plan erlaubt höchstens {{limit}} ({{key}}). Aktuell: {{current}}.",
+    "featureTitle": "Im Plan nicht enthalten",
+    "featureText": "„{{key}}“ ist in deinem Plan nicht enthalten.",
+    "readOnlyTitle": "Nur lesen",
+    "readOnlyText": "Dieser Workspace ist nur noch lesbar; Änderungen sind nicht möglich.",
+    "suspendedTitle": "Workspace gesperrt",
+    "suspendedText": "Dieser Workspace ist gesperrt.",
+    "close": "Schließen"
+  },
+  "errors": {
+    "limitReached": "Das Limit deines Plans ist erreicht.",
+    "featureMissing": "Diese Funktion ist in deinem Plan nicht enthalten.",
+    "readOnly": "Dieser Workspace ist nur noch lesbar.",
+    "suspended": "Dieser Workspace ist gesperrt."
+  },
+  "signage": {
+    "planRequired": "Für die Monitor-Anzeige ist ein Plan mit Signage erforderlich.",
+    "unavailable": "Dieses Angebot ist derzeit nicht verfügbar."
+  },
+  "poweredBy": "Powered by Cocktail-Manager"
+}

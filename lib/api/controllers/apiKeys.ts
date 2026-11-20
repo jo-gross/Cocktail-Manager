@@ -12,6 +12,7 @@ import crypto from 'crypto';
 import prisma from '../../../prisma/prisma';
 import { ApiError } from '@lib/http/ApiError';
 import { runTx } from '@lib/db/tx';
+import { assertFeature, assertWithinLimit } from '@lib/entitlements/guards';
 import { createLog } from '@lib/auditLog';
 import { createApiKeyJwt, invalidateKeyCache } from '@middleware/api/jwtApiKeyMiddleware';
 import { toApiKeyDto } from '@lib/api/dto/apiKeys';
@@ -41,7 +42,9 @@ export async function createApiKey(workspace: Workspace, user: User, input: ApiK
     throw new ApiError(400, 'INVALID_EXPIRY', 'The expiry date must be in the future');
   }
 
+  await assertFeature(workspace.id, 'api');
   const createdKey = await runTx(async (tx) => {
+    await assertWithinLimit(tx, workspace.id, 'apiKeys');
     const created = await tx.workspaceApiKey.create({
       data: {
         name: input.name,

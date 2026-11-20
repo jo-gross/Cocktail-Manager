@@ -196,11 +196,13 @@ export type CalculationGroupCreateInput = z.infer<typeof CalculationGroupCreateS
 export type CalculationGroupUpdateInput = z.infer<typeof CalculationGroupUpdateSchema>;
 export type CalculationGroupAssignInput = z.infer<typeof CalculationGroupAssignSchema>;
 
-/** Export request body — ids of the calculations to dump (mirrors the legacy handler). */
+/** Export request body — ids of the calculations to dump (mirrors the legacy handler), or `all: true`. */
 export const CalculationExportJsonSchema = z
   .object({
-    ids: z.array(IdString).max(MAX_CALCULATION_IDS).openapi({ description: 'Ids of the calculations to export.' }),
+    ids: z.array(IdString).max(MAX_CALCULATION_IDS).optional().openapi({ description: 'Ids of the calculations to export.' }),
+    all: z.literal(true).optional().openapi({ description: 'Export every calculation of the workspace instead of `ids`.' }),
   })
+  .refine((value) => (value.all === true) !== (value.ids !== undefined), { message: 'Send either ids or all: true' })
   .openapi('CalculationExportJsonInput');
 export type CalculationExportJsonInput = z.infer<typeof CalculationExportJsonSchema>;
 

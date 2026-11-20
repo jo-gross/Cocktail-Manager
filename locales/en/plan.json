@@ -1,0 +1,83 @@
+{
+  "card": {
+    "title": "Plan",
+    "description": "Your plan defines how much this workspace can use.",
+    "status": "Status",
+    "usage": "Usage",
+    "unlimited": "unlimited",
+    "usageOf": "{{used}} of {{limit}}",
+    "features": "Included features",
+    "noFeatures": "No additional features",
+    "nextChange": "Next change on {{date}}",
+    "scheduledEnd": "Your subscription ends on {{date}}. After that, {{plan}} applies.",
+    "noPlan": "No limits apply to this workspace."
+  },
+  "status": {
+    "ACTIVE": "Active",
+    "GRACE": "Payment due",
+    "READ_ONLY": "Read-only",
+    "SUSPENDED": "Suspended"
+  },
+  "limits": {
+    "cocktails": "Cocktails",
+    "members": "Members",
+    "calculations": "Party calculations",
+    "guestMenusPublished": "Published guest menus",
+    "signageScreens": "Signage screens",
+    "apiKeys": "API keys",
+    "freeWorkspacesPerOwner": "Free workspaces"
+  },
+  "features": {
+    "statistics.advanced": "Advanced statistics",
+    "signage": "Monitor/signage",
+    "api": "API access",
+    "branding.remove": "Guest menus without “Powered by”"
+  },
+  "billing": {
+    "manage": "Manage subscription",
+    "upgrade": "Upgrade",
+    "manageUnavailable": "Subscription management is currently not available on this instance.",
+    "ownersOnly": "Only owners can manage the subscription.",
+    "emailNotVerified": "Verify your email address first to manage the subscription.",
+    "handoffFailed": "The customer portal could not be opened. Please try again.",
+    "contact": "Individual terms apply to this workspace. Please contact us for changes."
+  },
+  "banner": {
+    "GRACE": "The last payment for this workspace is due. Please update your payment details to keep everything running.",
+    "READ_ONLY": "This workspace is read-only. Exporting, leaving and deleting still work.",
+    "SUSPENDED": "This workspace is suspended."
+  },
+  "suspended": {
+    "title": "Workspace suspended",
+    "text": "This workspace is suspended. You can export your data or leave the workspace; owners can also delete it.",
+    "export": "Full backup",
+    "exports": {
+      "cocktails": "Export cocktails (JSON)",
+      "calculations": "Export calculations (JSON)"
+    },
+    "leaveOrDelete": "Leave or delete",
+    "leave": "Leave workspace"
+  },
+  "dialog": {
+    "limitTitle": "Limit reached",
+    "limitText": "Your plan allows at most {{limit}} ({{key}}). Currently: {{current}}.",
+    "featureTitle": "Not included in your plan",
+    "featureText": "“{{key}}” is not included in your plan.",
+    "readOnlyTitle": "Read-only",
+    "readOnlyText": "This workspace is read-only; changes are not possible.",
+    "suspendedTitle": "Workspace suspended",
+    "suspendedText": "This workspace is suspended.",
+    "close": "Close"
+  },
+  "errors": {
+    "limitReached": "Your plan's limit has been reached.",
+    "featureMissing": "This feature is not included in your plan.",
+    "readOnly": "This workspace is read-only.",
+    "suspended": "This workspace is suspended."
+  },
+  "signage": {
+    "planRequired": "The monitor display requires a plan with signage.",
+    "unavailable": "This is currently not available."
+  },
+  "poweredBy": "Powered by Cocktail-Manager"
+}

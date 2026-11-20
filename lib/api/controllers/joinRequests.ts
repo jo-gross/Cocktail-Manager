@@ -6,6 +6,7 @@ import prisma from '../../../prisma/prisma';
 import { Role } from '@generated/prisma/client';
 import { ApiError } from '@lib/http/ApiError';
 import { runTx, type Db } from '@lib/db/tx';
+import { assertWithinLimit } from '@lib/entitlements/guards';
 import { createLog } from '@lib/auditLog';
 import { sendJoinRequestAcceptedToUser, sendJoinRequestRejectedToUser } from '@lib/email/joinRequestNotifications';
 import { toJoinRequestDto } from '@lib/api/dto/joinRequests';
@@ -43,6 +44,7 @@ export async function acceptJoinRequest(workspace: Workspace, actor: User, userI
       select: { role: true },
     });
     if (!existingMembership) {
+      await assertWithinLimit(tx, workspace.id, 'members');
       await tx.workspaceUser.create({ data: { userId, workspaceId: workspace.id, role: Role.USER } });
       await createLog(tx, workspace.id, actor.id, 'WorkspaceUser', userId, 'CREATE', null, { userId, role: Role.USER });
     }

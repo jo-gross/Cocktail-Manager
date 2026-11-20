@@ -25,6 +25,7 @@ import {
 } from '@lib/schemas/garnishes';
 import { defineApiHandlers } from '@lib/openapi/apiDoc';
 import * as garnishes from '@lib/api/controllers/garnishes';
+import { EXPORT_STATUS_EXEMPTION, withStatusExemption } from '@lib/entitlements/statusGate';
 
 export const collectionHandler = defineApiHandlers(garnishesCollectionApiDoc.operations, {
   GET: ({ workspace, query }) => garnishes.listGarnishes(workspace, query),
@@ -65,7 +66,7 @@ function sendRawError(res: NextApiResponse, error: unknown, fallbackMessage: str
 // export→import round-trip keeps working; hence they are hand-wired instead of
 // going through defineApiHandlers (which JSON-envelopes via sendOk).
 const exportSpec = garnishesExportJsonApiDoc.operations.POST;
-export const exportJsonHandler = withHttpMethods({
+const exportJsonRoutes = withHttpMethods({
   [HTTPMethod.POST]: withWorkspacePermission(exportSpec.roles, exportSpec.permission, async (req: NextApiRequest, res: NextApiResponse, _user, workspace) => {
     const parsed = GarnishExportJsonBodySchema.safeParse(req.body);
     if (!parsed.success)
@@ -78,6 +79,8 @@ export const exportJsonHandler = withHttpMethods({
     }
   }),
 });
+// Exports stay available in a read-only or suspended workspace (docs/ENTITLEMENTS.md "Status").
+export const exportJsonHandler = withStatusExemption(EXPORT_STATUS_EXEMPTION, exportJsonRoutes);
 
 const importSpec = garnishesImportJsonApiDoc.operations.POST;
 export const importJsonHandler = withHttpMethods({

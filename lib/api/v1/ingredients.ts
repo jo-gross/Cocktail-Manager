@@ -26,6 +26,7 @@ import {
 } from '@lib/schemas/ingredients';
 import { defineApiHandlers } from '@lib/openapi/apiDoc';
 import * as ingredients from '@lib/api/controllers/ingredients';
+import { EXPORT_STATUS_EXEMPTION, withStatusExemption } from '@lib/entitlements/statusGate';
 
 export const collectionHandler = defineApiHandlers(ingredientsCollectionApiDoc.operations, {
   GET: ({ workspace, query }) => ingredients.listIngredients(workspace, query),
@@ -70,7 +71,7 @@ function sendRawError(res: NextApiResponse, error: unknown, fallbackMessage: str
 // export→import round-trip keeps working; hence they are hand-wired instead of
 // going through defineApiHandlers (which JSON-envelopes via sendOk).
 const exportSpec = ingredientsExportJsonApiDoc.operations.POST;
-export const exportJsonHandler = withHttpMethods({
+const exportJsonRoutes = withHttpMethods({
   [HTTPMethod.POST]: withWorkspacePermission(exportSpec.roles, exportSpec.permission, async (req: NextApiRequest, res: NextApiResponse, _user, workspace) => {
     const parsed = IngredientExportJsonBodySchema.safeParse(req.body);
     if (!parsed.success)
@@ -83,6 +84,8 @@ export const exportJsonHandler = withHttpMethods({
     }
   }),
 });
+// Exports stay available in a read-only or suspended workspace (docs/ENTITLEMENTS.md "Status").
+export const exportJsonHandler = withStatusExemption(EXPORT_STATUS_EXEMPTION, exportJsonRoutes);
 
 const importSpec = ingredientsImportJsonApiDoc.operations.POST;
 export const importJsonHandler = withHttpMethods({

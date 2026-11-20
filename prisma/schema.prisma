@@ -226,6 +226,11 @@ model Workspace {
   signageKey                        String?
   /// null = setup assistant not completed
   setupCompletedAt                  DateTime?
+  /// Defaults in UTC independent of the session time zone (migration 20261119004919_workspace_timestamps).
+  createdAt                         DateTime                            @default(dbgenerated("timezone('UTC'::text, now())"))
+  /// Last change the control plane mirrors (workspace row, members and roles, settings, template mark; not member names).
+  /// Database triggers keep it current (migration 20261119004919_workspace_timestamps), see docs/INSTANCE-API.md.
+  updatedAt                         DateTime                            @default(dbgenerated("timezone('UTC'::text, now())")) @updatedAt
   template                          WorkspaceTemplate?
   users                             WorkspaceUser[]
   Glass                             Glass[]
@@ -253,6 +258,9 @@ model Workspace {
   GuestMenuTemplate                 GuestMenuTemplate[]
   TagCategory                       TagCategory[]
   TagDefinition                     TagDefinition[]
+  entitlement                       WorkspaceEntitlement?
+
+  @@index([updatedAt])
 }
 
 enum TemplateKind {
@@ -823,6 +831,7 @@ model AuditLog {
   createdAt   DateTime  @default(now())
 
   @@index([workspaceId])
+  @@index([workspaceId, createdAt])
   @@index([entityId])
   @@index([entityType])
 }
@@ -1013,4 +1022,77 @@ model GlassTranslation {
   name    String?
 
   @@id([glassId, locale])
+}
+
+// ---------------------------------------------------------------------------
+// Control plane (see docs/INSTANCE-API.md). Only the instance API writes these tables.
+// ---------------------------------------------------------------------------
+
+/// Announcement banner pushed by the control plane (`PUT /api/v1/instance/announcements` replaces the full set).
+model InstanceAnnouncement {
+  /// Id given by the control plane.
+  id           String    @id
+  /// `info`, `warning` or `critical`.
+  level        String
+  /// `{ de, en }` or null.
+  title        Json?
+  /// `{ de, en }`.
+  body         Json
+  startsAt     DateTime?
+  endsAt       DateTime?
+  /// Targeted workspace ids; empty = all workspaces. No foreign key: targets may be deleted or not exist yet.
+  workspaceIds String[]  @default([])
+  createdAt    DateTime  @default(now())
+
+  @@index([endsAt])
+}
+
+/// Audit log of control plane writes that are not bound to a workspace that keeps existing (announcements, sessions,
+/// workspace deletion, ownership transfer). Also stores the answer per `Idempotency-Key` for retries.
+model InstanceAuditLog {
+  id             String   @id @default(cuid())
+  /// e.g. `announcements.replace`, `workspace.transferOwnership`, `workspace.delete`, `user.revokeSessions`, `entitlements.workspace`.
+  action         String
+  /// `instance`, `workspace` or `user`.
+  targetType     String
+  targetId       String?
+  /// `X-CM-Actor`: email of the acting control plane administrator.
+  actor          String?
+  /// `X-CM-Reason`.
+  reason         String?
+  idempotencyKey String?  @unique
+  /// SHA-256 of operation, target and body; a key reused for another request is refused.
+  requestHash    String
+  /// `data` of the answer, replayed for a retry with the same key.
+  response       Json
+  details        Json?
+  createdAt      DateTime @default(now())
+
+  @@index([targetType, targetId])
+  @@index([createdAt])
+}
+
+// ---------------------------------------------------------------------------
+// Entitlements (hosted instances, see docs/ENTITLEMENTS.md). Only the control plane writes these tables
+// through the instance API; they are never part of backups or templates.
+// ---------------------------------------------------------------------------
+
+/// Entitlement snapshot of a workspace as pushed by the control plane (`PUT /api/v1/instance/workspaces/{id}/entitlements`).
+model WorkspaceEntitlement {
+  workspaceId String    @id
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  /// Version of the snapshot; a push only applies when its version is higher.
+  version     Int
+  /// SHA-256 (hex) of the snapshot content, computed by the control plane.
+  hash        String
+  /// The validated snapshot (`SnapshotWire` of the contract).
+  snapshot    Json
+  appliedAt   DateTime  @default(now())
+}
+
+/// Instance-wide settings written by the control plane, e.g. `entitlements.default` (the instance default snapshot).
+model InstanceSetting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
 }

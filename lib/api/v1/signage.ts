@@ -21,32 +21,39 @@ import {
   signageSlidesApiDoc,
 } from '@lib/schemas/signage';
 import * as signage from '@lib/api/controllers/signage';
+import { assertFeature } from '@lib/entitlements/guards';
+
+/** Admin signage writes need the plan feature `signage` (reads stay open). */
+async function signageWrite<T>(workspaceId: string, write: () => Promise<T>): Promise<T> {
+  await assertFeature(workspaceId, 'signage');
+  return write();
+}
 
 export const signageHandler = defineApiHandlers(signageApiDoc.operations, {
   GET: ({ workspace }) => signage.getSignage(workspace),
-  PUT: ({ workspace, body }) => signage.updateSignage(workspace, body),
+  PUT: ({ workspace, body }) => signageWrite(workspace.id, () => signage.updateSignage(workspace, body)),
 });
 
 export const slidesHandler = defineApiHandlers(signageSlidesApiDoc.operations, {
-  POST: ({ workspace, body }) => signage.createSlides(workspace, body),
-  PATCH: ({ workspace, body }) => signage.patchSlides(workspace, body),
+  POST: ({ workspace, body }) => signageWrite(workspace.id, () => signage.createSlides(workspace, body)),
+  PATCH: ({ workspace, body }) => signageWrite(workspace.id, () => signage.patchSlides(workspace, body)),
 });
 
 export const slideItemHandler = defineApiHandlers(signageSlideItemApiDoc.operations, {
-  DELETE: ({ workspace, params }) => signage.deleteSlide(workspace, params.slideId),
+  DELETE: ({ workspace, params }) => signageWrite(workspace.id, () => signage.deleteSlide(workspace, params.slideId)),
 });
 
 export const guestMenuSlidesHandler = defineApiHandlers(signageGuestMenuSlidesApiDoc.operations, {
-  POST: ({ workspace, body }) => signage.createGuestMenuSlide(workspace, body),
+  POST: ({ workspace, body }) => signageWrite(workspace.id, () => signage.createGuestMenuSlide(workspace, body)),
 });
 
 export const guestMenuSlideItemHandler = defineApiHandlers(signageGuestMenuSlideItemApiDoc.operations, {
-  PATCH: ({ workspace, params, body }) => signage.updateGuestMenuSlide(workspace, params.slideId, body),
+  PATCH: ({ workspace, params, body }) => signageWrite(workspace.id, () => signage.updateGuestMenuSlide(workspace, params.slideId, body)),
 });
 
 export const signageKeyHandler = defineApiHandlers(signageKeyApiDoc.operations, {
   GET: ({ workspace }) => signage.getSignageKey(workspace),
-  POST: ({ workspace }) => signage.regenerateSignageKey(workspace),
+  POST: ({ workspace }) => signageWrite(workspace.id, () => signage.regenerateSignageKey(workspace)),
 });
 
 export const slideImageHandler = withHttpMethods({

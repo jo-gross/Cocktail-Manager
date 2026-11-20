@@ -14,6 +14,7 @@ export const ApiTags = {
   workspaceApiKeys: 'Workspace / API keys',
   workspaceJoinCodes: 'Workspace / Join codes',
   workspaceMembership: 'Workspace / Membership',
+  workspacePlan: 'Workspace / Plan',
   workspaceUsersCore: 'Workspace Users / Core',
   auditLogsCore: 'Audit Logs / Core',
 
@@ -71,10 +72,16 @@ export const ApiTags = {
 
   userSettings: 'User / Settings',
   userGuides: 'User / Guides',
+  userAnnouncements: 'User / Announcements',
 
   templatesCore: 'Templates / Core',
   onboardingCore: 'Onboarding / Core',
   adminTemplates: 'Admin / Templates',
+  instanceCore: 'Instance / Core',
+  instanceWorkspaces: 'Instance / Workspaces',
+  instanceUsers: 'Instance / Users',
+  instanceAnnouncements: 'Instance / Announcements',
+  instanceEntitlements: 'Instance / Entitlements',
 } as const;
 
 export type ApiTagName = (typeof ApiTags)[keyof typeof ApiTags];
@@ -97,6 +104,7 @@ export const OPENAPI_TAGS: OpenApiTagObject[] = [
   { name: ApiTags.workspaceApiKeys, ...subTag('API keys', 'Create, list and revoke workspace API keys.', 3) },
   { name: ApiTags.workspaceJoinCodes, ...subTag('Join codes', 'Invite codes for joining a workspace.', 4) },
   { name: ApiTags.workspaceMembership, ...subTag('Membership', 'Join requests and leaving a workspace.', 5) },
+  { name: ApiTags.workspacePlan, ...subTag('Plan', 'Plan, limits and usage of a hosted workspace (ENTITLEMENTS_MODE=managed).', 6) },
   { name: ApiTags.workspaceUsersCore, ...subTag('Core', 'Workspace member list and roles.', 1) },
   { name: ApiTags.auditLogsCore, ...subTag('Core', 'Audit log entries.', 1) },
 
@@ -153,9 +161,15 @@ export const OPENAPI_TAGS: OpenApiTagObject[] = [
   { name: ApiTags.ratingsCore, ...subTag('Core', 'Cocktail ratings.', 1) },
   { name: ApiTags.userSettings, ...subTag('Settings', 'Authenticated user preferences (theme, language, display flags).', 1) },
   { name: ApiTags.userGuides, ...subTag('Guides', 'Progress of tours and checklists of the authenticated user.', 2) },
+  { name: ApiTags.userAnnouncements, ...subTag('Announcements', 'Active announcements of the hosting provider, shown as banners.', 3) },
   { name: ApiTags.templatesCore, ...subTag('Core', 'Published templates (start content collections) and applying them to a workspace.', 1) },
   { name: ApiTags.onboardingCore, ...subTag('Core', 'Setup state and checklist of a workspace.', 1) },
   { name: ApiTags.adminTemplates, ...subTag('Templates', 'Instance administration of templates (master key only).', 1) },
+  { name: ApiTags.instanceCore, ...subTag('Core', 'Instance metadata and capabilities for the control plane (master key only).', 1) },
+  { name: ApiTags.instanceWorkspaces, ...subTag('Workspaces', 'Instance-wide workspace inventory for the control plane (master key only).', 2) },
+  { name: ApiTags.instanceUsers, ...subTag('Users', 'Instance-wide user lookup and session handling for the control plane (master key only).', 3) },
+  { name: ApiTags.instanceAnnouncements, ...subTag('Announcements', 'Announcement banners pushed by the control plane (master key only).', 4) },
+  { name: ApiTags.instanceEntitlements, ...subTag('Entitlements', 'Entitlement snapshots pushed by the control plane (master key only).', 5) },
 ];
 
 /** One x-tagGroup per resource. Every tag must appear in exactly one group. */
@@ -168,6 +182,7 @@ export const OPENAPI_TAG_GROUPS: Array<{ name: string; tags: ApiTagName[] }> = [
       ApiTags.workspaceApiKeys,
       ApiTags.workspaceJoinCodes,
       ApiTags.workspaceMembership,
+      ApiTags.workspacePlan,
     ],
   },
   { name: 'Workspace Users', tags: [ApiTags.workspaceUsersCore] },
@@ -221,8 +236,12 @@ export const OPENAPI_TAG_GROUPS: Array<{ name: string; tags: ApiTagName[] }> = [
   { name: 'Queue', tags: [ApiTags.queueCore] },
   { name: 'Statistics', tags: [ApiTags.statisticsLogging, ApiTags.statisticsAdvanced] },
   { name: 'Ratings', tags: [ApiTags.ratingsCore] },
-  { name: 'User', tags: [ApiTags.userSettings, ApiTags.userGuides] },
+  { name: 'User', tags: [ApiTags.userSettings, ApiTags.userGuides, ApiTags.userAnnouncements] },
   { name: 'Templates', tags: [ApiTags.templatesCore] },
   { name: 'Onboarding', tags: [ApiTags.onboardingCore] },
   { name: 'Admin', tags: [ApiTags.adminTemplates] },
+  {
+    name: 'Instance',
+    tags: [ApiTags.instanceCore, ApiTags.instanceWorkspaces, ApiTags.instanceUsers, ApiTags.instanceAnnouncements, ApiTags.instanceEntitlements],
+  },
 ];

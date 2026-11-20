@@ -15,6 +15,7 @@ import {
 } from '@lib/schemas/calculations';
 import { defineApiHandlers } from '@lib/openapi/apiDoc';
 import * as calculations from '@lib/api/controllers/calculations';
+import { EXPORT_STATUS_EXEMPTION, withStatusExemption } from '@lib/entitlements/statusGate';
 
 export const collectionHandler = defineApiHandlers(calculationsCollectionApiDoc.operations, {
   GET: ({ workspace }) => calculations.listCalculations(workspace),
@@ -48,12 +49,14 @@ export const groupsAssignHandler = defineApiHandlers(calculationGroupsAssignApiD
 // The export/import JSON payloads are round-trip formats returned VERBATIM
 // (not wrapped in a { data } envelope). The handlers write the response
 // directly and return undefined so withValidation skips re-sending.
-export const exportJsonHandler = defineApiHandlers(calculationsExportJsonApiDoc.operations, {
+const exportJsonRoutes = defineApiHandlers(calculationsExportJsonApiDoc.operations, {
   POST: async ({ res, workspace, body }) => {
     const result = await calculations.exportCalculationsJson(workspace, body);
     res.status(200).json(result);
   },
 });
+// Exports stay available in a read-only or suspended workspace (docs/ENTITLEMENTS.md "Status").
+export const exportJsonHandler = withStatusExemption(EXPORT_STATUS_EXEMPTION, exportJsonRoutes);
 
 export const importJsonHandler = defineApiHandlers(calculationsImportJsonApiDoc.operations, {
   POST: async ({ res, workspace, user, body }) => {

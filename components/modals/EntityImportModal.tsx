@@ -21,6 +21,7 @@ import {
   TableHeaderCell,
   TableRow,
 } from '@components/ui';
+import { reportPlanErrorResponse } from '@lib/entitlements/planEvents';
 
 // ────────────── Types ──────────────
 
@@ -319,6 +320,7 @@ export default function EntityImportModal({ workspaceId, entityType, onImportCom
       });
 
       if (!response.ok) {
+        reportPlanErrorResponse(response.status, await response.json().catch(() => null));
         alertService.error(t('errors:checkConflicts'));
         return;
       }
@@ -419,6 +421,7 @@ export default function EntityImportModal({ workspaceId, entityType, onImportCom
       const result = await response.json().catch(() => ({}));
       // Imports are all-or-nothing: a failed request wrote nothing.
       if (!response.ok) {
+        reportPlanErrorResponse(response.status, result);
         alertService.error(result.message ?? result.error?.message ?? t('errors:import'));
         return;
       }

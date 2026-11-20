@@ -13,6 +13,7 @@ export interface PaginationMeta {
 
 export type ApiOk<T> = { data: T };
 export type ApiPaginated<T> = { data: T; pagination: PaginationMeta };
+export type ApiCursorPaginated<T> = { data: T; pagination: { nextCursor: string | null } };
 export type ApiError = { error: { code: string; message: string; issues?: unknown } };
 
 export function ok<T>(data: T): ApiOk<T> {
@@ -21,6 +22,10 @@ export function ok<T>(data: T): ApiOk<T> {
 
 export function paginated<T>(data: T, pagination: PaginationMeta): ApiPaginated<T> {
   return { data, pagination };
+}
+
+export function cursorPaginated<T>(data: T, nextCursor: string | null): ApiCursorPaginated<T> {
+  return { data, pagination: { nextCursor } };
 }
 
 export function fail(code: string, message: string, issues?: unknown): ApiError {
